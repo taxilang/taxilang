@@ -1,0 +1,18 @@
+namespace lang.taxi
+
+/**
+ * Comment on a type
+ */
+type Person {
+   // Single line comment
+   title : String?
+
+   /**
+    * Comment on a field
+    */
+   firstName : String
+
+   lastName : String
+   friends : Person[]
+   emailAddresses : String[]
+}

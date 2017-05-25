@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+
+   <groupId>lang.taxi</groupId>
+   <artifactId>parent</artifactId>
+   <packaging>pom</packaging>
+   <version>0.1.0-SNAPSHOT</version>
+   <description>taxi is a language for defining API contracts.  A Dsl that sits atop RAML for resource definition.  Taxi (short for Taxonomy)</description>
+   <modules>
+      <module>grammar</module>
+   </modules>
+
+   <properties>
+      <kotlin.version>1.1.2-4</kotlin.version>
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.jetbrains.kotlin</groupId>
+         <artifactId>kotlin-stdlib-jre8</artifactId>
+         <version>${kotlin.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.jetbrains.kotlin</groupId>
+         <artifactId>kotlin-test</artifactId>
+         <version>${kotlin.version}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>com.winterbe</groupId>
+         <artifactId>expekt</artifactId>
+         <version>0.5.0</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
+         <version>4.12</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>com.nhaarman</groupId>
+         <artifactId>mockito-kotlin</artifactId>
+         <version>1.2.0</version>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
+
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.1</version>
+            <configuration>
+               <source>1.8</source>
+               <target>1.8</target>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-maven-plugin</artifactId>
+            <version>${kotlin.version}</version>
+            <executions>
+               <execution>
+                  <id>compile</id>
+                  <phase>compile</phase>
+                  <goals>
+                     <goal>compile</goal>
+                  </goals>
+               </execution>
+               <execution>
+                  <id>test-compile</id>
+                  <phase>test-compile</phase>
+                  <goals>
+                     <goal>test-compile</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+   </build>
+
+</project>

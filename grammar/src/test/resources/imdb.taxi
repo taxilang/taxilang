@@ -1,0 +1,26 @@
+/**
+ * Multi line comment
+ */
+namespace imdb {
+   enum Category {
+      HORROR,
+      COMEDY,
+      MUSICAL,
+      DRAMA
+   }
+   type Actor {
+      firstName : String
+      lastName : String
+      age : Int
+   }
+
+   // This is a single line comment
+   @Translated("French")
+   type Movie {
+      title : String
+      @SomeAnnotation(foo1 = "bar", foo2 = "bar2")
+      category : Category
+      actors : Actor[]
+      ratings : Int[]
+   }
+}
