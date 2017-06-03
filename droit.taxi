@@ -1,0 +1,64 @@
+namespace droit {
+   enum ReportSize {
+      MINIMAL, FULL
+   }
+   enum MifidExemption {
+      ...
+   }
+   enum PartyRole {
+   }
+   type DroitRequest {
+      size : Size,
+      counterparty : Party,
+      contraparty : Party
+   }
+   type Party {
+      aifManager: Boolean,
+      appropriatenessInfoAndWarnings: Boolean?,
+      branch: Boolean,
+      clientType: EligibleCounterparty,
+      energyOperator: Boolean,
+      investmentFirm: Boolean,
+      nonFinancialCounterpartyMinus: Boolean,
+      nonFinancialCounterpartyPlus: Boolean,
+      limitedCostsAndChargesDetail: Boolean,
+      miFID2Exemptions: MifidExemption[],
+      partyRole: PartyRole,
+      ucitsManagementCo: Boolean,
+      accountName: String,
+      legalEntityID: String
+   }
+   type Trade {
+      abovePostTradeLis : Boolean
+      nonFinancialCounterpartyMinus: Boolean,
+      nonFinancialCounterpartyPlus: Boolean,
+   }
+}
+
+import oxford.Alias
+import oxford.LinkedDataResource
+import oxford.Derived
+
+namespace oxford {
+   extension PartyOxfordMappings : droit.Party {
+      @Alias("cema4:aifManager")
+      aifManager,
+      appropriatenessInfoAndWarnings
+   }
+
+   @LinkedDataResource(namespace = "droit")
+   extension TradeOxfordMappings : droit.Trade {
+      @Derived("cema4:notional(ccy = 'EUR') > cema4:lisNotionalLimit(instrument = this.cema4:instrument(taxonomy:isma)")
+      abovePostTradeLis
+   }
+}
+
+namespace oxford {
+   annotation LinkedDataResource(
+      value : String
+      namespace : String
+   )
+   annotation Alias(
+      value : String
+   )
+}

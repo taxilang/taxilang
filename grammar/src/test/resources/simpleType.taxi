@@ -3,9 +3,13 @@ namespace lang.taxi
 /**
  * Comment on a type
  */
+ @MyTypeAnnotation
+ @MyTypeWithParams(param1 = "foo")
 type Person {
    // Single line comment
    title : String?
+
+   gender : Gender
 
    /**
     * Comment on a field
@@ -15,4 +19,12 @@ type Person {
    lastName : String
    friends : Person[]
    emailAddresses : String[]
+}
+
+@MyEnumAnnotation
+enum Gender {
+
+   @MyEnumPropertyAnnotation
+   Male,
+   Female
 }

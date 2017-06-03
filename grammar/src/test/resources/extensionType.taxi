@@ -1,0 +1,4 @@
+type extension Person {
+   @MyAnnotation(param2 = "bar")
+   title
+}

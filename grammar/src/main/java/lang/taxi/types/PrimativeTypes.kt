@@ -7,6 +7,10 @@ enum class PrimitiveType(val declaration: String) : Type {
    BOOLEAN("Boolean"),
    STRING("String"),
    INTEGER("Int"),
+   LOCAL_DATE("Date"),
+   TIME("Time"),
+   DATE_TIME("DateTime"),
+   Instant("Instant"),
    DOUBLE("Double");
 
    override val qualifiedName: String

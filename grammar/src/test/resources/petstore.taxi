@@ -1,0 +1,65 @@
+type Order {
+   id : String?
+   petId : String?
+   quantity : String?
+   shipDate : String?
+
+   /**
+    * Order Status
+    */
+   status : Status?
+   complete : String?
+}
+
+type Category {
+   id : String?
+   name : String?
+}
+
+type User {
+   id : String?
+   username : String?
+   firstName : String?
+   lastName : String?
+   email : String?
+   password : String?
+   phone : String?
+
+   /**
+    * User Status
+    */
+   userStatus : String?
+}
+
+type Tag {
+   id : String?
+   name : String?
+}
+
+/**
+ * Love pets
+ */
+type Pet {
+   id : String?
+   category : String?
+   name : String
+   photoUrls : String
+   tags : String?
+
+   /**
+    * pet status in the store
+    */
+   status : Status?
+}
+
+type ApiResponse {
+   code : String?
+   type : String?
+   message : String?
+}
+
+enum Status {
+   available,
+   pending,
+   sold
+}

@@ -14,16 +14,50 @@ class GrammarTest {
    val rule = ExpectedException.none()
 
    @Test
+   fun canParsePetstore() {
+      val doc = Compiler(testResource("petstore.taxi")).compile()
+   }
+   @Test
    fun canParseSimpleDocument() {
       val doc = Compiler(testResource("simpleType.taxi")).compile()
       expect(doc.namespace).to.equal("lang.taxi")
-      val personType = doc.objectType("Person")
+      val personType = doc.objectType("lang.taxi.Person")
       expect(personType.field("firstName").type).to.equal(PrimitiveType.STRING)
       expect(personType.field("firstName").nullable).to.be.`false`
       expect(personType.field("title").nullable).to.be.`true`
       expect(personType.field("friends").type).to.be.instanceof(ArrayType::class.java)
+
+      // Arrays
       val friendArray = personType.field("friends").type as ArrayType
       expect(friendArray.type).to.equal(personType)
+
+      // Type annotations
+      expect(personType.annotations).to.have.size(2)
+      expect(personType.annotation("MyTypeAnnotation")).not.to.be.`null`
+      val annotationWithParams = personType.annotation("MyTypeWithParams")
+      expect(annotationWithParams).not.to.be.`null`
+      expect(annotationWithParams.parameters).to.have.size(1)
+
+      // Enums
+      val enumType = doc.enumType("lang.taxi.Gender")
+      expect(enumType.annotations).to.have.size(1)
+      expect(enumType.values).to.have.size(2)
+      expect(enumType.value("Male").annotations).to.have.size(1)
+   }
+
+   @Test
+   fun parsesAnnotationsCorrectly() {
+      val source = """
+@StringAnnotation(value = "foo")
+@BooleanAnnotation(value = true)
+@IntegerAnnotation(value = 123)
+type Test {}
+"""
+      val doc = Compiler(source).compile()
+      val type = doc.objectType("Test")
+      expect(type.annotation("StringAnnotation").parameters["value"]).to.equal("foo")
+      expect(type.annotation("BooleanAnnotation").parameters["value"]).to.equal(true)
+      expect(type.annotation("IntegerAnnotation").parameters["value"]).to.equal(123)
    }
 
    @Test
@@ -42,6 +76,18 @@ type Email {
    }
 
    @Test
+   fun canDeclareAnnotationsOnFields() {
+val source = """
+type Person {
+   @SomeAnnotation(foo = "bar")
+   email : String
+}
+"""
+      val doc = Compiler(source).compile()
+      expect(doc.objectType("Person").field("email").annotations).size.to.equal(1)
+   }
+
+   @Test
    fun throwsExceptionOnUnresolvedType() {
       rule.expect(CompilationException::class.java)
       rule.expectMessage(ErrorMessages.unresolvedType("Bar"))
@@ -51,10 +97,31 @@ type Foo {
 }
 """
       Compiler(source).compile()
+   }
 
+   @Test
+   fun canCompileExtensionType() {
+      val source = """
+type Person {
+   name : String
+}
+@TypeAnnotation
+type extension Person {
+   @MyAnnotation(param2 = "bar")
+   name
+}
+type extension Person {
+   @AnotherAnnotation(param2 = "bar")
+   name
+}
+"""
+      val doc = Compiler(source).compile()
+      val person = doc.objectType("Person")
+      expect(person.field("name").annotations).size.to.equal(2)
+      expect(person.annotations).size.to.equal(1)
    }
 
    private fun testResource(s: String): File {
-      return File(this::class.java.classLoader.getResource(s).toURI())
+      return File(this.javaClass.classLoader.getResource(s).toURI())
    }
 }

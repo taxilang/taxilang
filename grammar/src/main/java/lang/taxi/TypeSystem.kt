@@ -45,19 +45,19 @@ class TypeSystem {
       return types.containsKey(qualifiedName)
    }
 
-   fun register(type: ObjectType) {
+   fun register(type: UserType<*, *>) {
       if (types.containsKey(type.qualifiedName)) {
-         val registeredType = types[type.qualifiedName]!! as ObjectType
+         val registeredType = types[type.qualifiedName]!! as UserType<Any, Any>
          if (registeredType.definition != null && type.definition != null) {
             throw IllegalArgumentException("Attempting to redefine type ${type.qualifiedName}")
          }
          registeredType.definition = type.definition
-         registeredType.extensions.addAll(type.extensions)
+         // Nasty for-each stuff here because of generic oddness
+         type.extensions.forEach { registeredType.extensions.add(it!!) }
       } else {
-         types.put(type.qualifiedName,type)
+         types.put(type.qualifiedName, type)
       }
 
-      types.put(type.qualifiedName, type)
    }
 
    fun getType(qualifiedName: String): Type {

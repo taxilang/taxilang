@@ -16,12 +16,13 @@ importDeclaration
 toplevelObject
     :   typeDeclaration
     |   enumDeclaration
+    |   typeExtensionDeclaration
 //    |   annotationTypeDeclaration
     ;
 
 
 typeDeclaration
-    :  'type' Identifier
+    :  annotation* 'type' Identifier
 //        ('extends' typeType)?
         typeBody
     ;
@@ -31,7 +32,7 @@ typeBody
     ;
 
  typeMemberDeclaration
-     :   fieldDeclaration
+     :   annotation* fieldDeclaration
      ;
 
  fieldDeclaration
@@ -49,7 +50,7 @@ classOrInterfaceType
 
 
 enumDeclaration
-    :   'enum' Identifier
+    :   annotation* 'enum' Identifier
         '{' enumConstants? '}'
     ;
 
@@ -63,10 +64,8 @@ enumConstant
 
 // Annotations
 annotation
-    :   '@' annotationName ( '(' ( elementValuePairs | elementValue )? ')' )?
+    :   '@' qualifiedName ( '(' ( elementValuePairs | elementValue )? ')' )?
     ;
-
-annotationName : qualifiedName ;
 
 elementValuePairs
     :   elementValuePair (',' elementValuePair)*
@@ -77,7 +76,7 @@ elementValuePair
     ;
 
 elementValue
-    :   expression
+    :   literal
     |   annotation
     ;
 
@@ -100,31 +99,55 @@ qualifiedName
     :   Identifier ('.' Identifier)*
     ;
 
-Identifier
-    :   Letter LetterOrDigit*
-    ;
-
 primitiveType
     :   'Boolean'
     |   'String'
     |   'Int'
     |   'Double'
+//    The "full-date" notation of RFC3339, namely yyyy-mm-dd. Does not support time or time zone-offset notation.
+    |   'Date'
+//    The "partial-time" notation of RFC3339, namely hh:mm:ss[.ff...]. Does not support date or time zone-offset notation.
+    |   'Time'
+// Combined date-only and time-only with a separator of "T", namely yyyy-mm-ddThh:mm:ss[.ff...]. Does not support a time zone offset.
+    |   'DateTime'
+// A timestamp, indicating an absolute point in time.  Includes timestamp.  Should be rfc3339 format.  (eg: 2016-02-28T16:41:41.090Z)
+    |   'Instant'
     ;
-
+// https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md#date
 literal
     :   IntegerLiteral
-    |   StringLiteral
     |   BooleanLiteral
+    |   StringLiteral
     |   'null'
     ;
+
+typeExtensionDeclaration
+   :  annotation* 'type extension' Identifier typeExtensionBody
+   ;
+
+typeExtensionBody
+    :   '{' typeExtensionMemberDeclaration* '}'
+    ;
+
+ typeExtensionMemberDeclaration
+     :   annotation* typeExtensionFieldDeclaration
+     ;
+
+ typeExtensionFieldDeclaration
+     :   Identifier
+     ;
+
+Identifier
+    :   Letter LetterOrDigit*
+    ;
+
 
 StringLiteral
     :   '"' StringCharacters? '"'
     ;
 
 BooleanLiteral
-    :   'true'
-    |   'false'
+    :   'true' | 'false'
     ;
 
 fragment
@@ -220,10 +243,6 @@ STRING
    : '"' ( ESC | ~ ["\\] )* '"'
    ;
 
-
-BOOLEAN
-   : 'true' | 'false'
-   ;
 
 fragment ESC
    : '\\' ( ["\\/bfnrt] | UNICODE )
