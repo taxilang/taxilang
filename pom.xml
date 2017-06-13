@@ -31,6 +31,11 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>org.jetbrains.kotlin</groupId>
+         <artifactId>kotlin-reflect</artifactId>
+         <version>${kotlin.version}</version>
+      </dependency>
+      <dependency>
          <groupId>com.winterbe</groupId>
          <artifactId>expekt</artifactId>
          <version>0.5.0</version>
