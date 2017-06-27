@@ -54,7 +54,7 @@ type Pet {
 
 type ApiResponse {
    code : String?
-   type : String?
+   responseType : String?
    message : String?
 }
 

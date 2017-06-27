@@ -93,13 +93,17 @@ private class DocumentListener : TaxiBaseListener() {
 
     private fun compileToken(tokenName: String) {
         val tokenRule = unparsedTypes[tokenName]
-        if (typeSystem.contains())
+        if (typeSystem.isDefined(tokenName) && typeSystem.getType(tokenName) is TypeAlias) {
+            // As type aliases can be defined inline, it's perfectly acceptable for
+            // this to already exist
+            return
+        }
         when (tokenRule) {
             is TaxiParser.TypeDeclarationContext -> compileType(tokenName, tokenRule)
             is TaxiParser.EnumDeclarationContext -> compileEnum(tokenName, tokenRule)
             is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(tokenName, tokenRule)
-            // TODO : This is a bit broad - assuming that all typeType's that hit this
-            // line will be a TypeAlias inline.  It could be a normal field declaration.
+        // TODO : This is a bit broad - assuming that all typeType's that hit this
+        // line will be a TypeAlias inline.  It could be a normal field declaration.
             is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(tokenRule)
             else -> TODO("Not handled: $tokenRule")
         }
