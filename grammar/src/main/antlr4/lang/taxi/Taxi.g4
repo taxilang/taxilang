@@ -17,6 +17,7 @@ toplevelObject
     :   typeDeclaration
     |   enumDeclaration
     |   typeExtensionDeclaration
+    |   typeAliasDeclaration
 //    |   annotationTypeDeclaration
     ;
 
@@ -40,7 +41,7 @@ typeBody
      ;
 
 typeType
-    :   classOrInterfaceType listType? optionalType?
+    :   classOrInterfaceType listType? optionalType? aliasedType?
     |   primitiveType listType? optionalType?
     ;
 
@@ -61,7 +62,14 @@ enumConstants
 enumConstant
     :   annotation* Identifier
     ;
+// type aliases
+typeAliasDeclaration
+    : annotation* 'type alias' Identifier aliasedType
+    ;
 
+aliasedType
+   : 'as' typeType
+   ;
 // Annotations
 annotation
     :   '@' qualifiedName ( '(' ( elementValuePairs | elementValue )? ')' )?
@@ -104,6 +112,7 @@ primitiveType
     |   'String'
     |   'Int'
     |   'Double'
+    |   'Decimal'
 //    The "full-date" notation of RFC3339, namely yyyy-mm-dd. Does not support time or time zone-offset notation.
     |   'Date'
 //    The "partial-time" notation of RFC3339, namely hh:mm:ss[.ff...]. Does not support date or time zone-offset notation.
