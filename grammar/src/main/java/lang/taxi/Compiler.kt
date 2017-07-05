@@ -235,8 +235,7 @@ private class DocumentListener : TaxiBaseListener() {
             compileToken(typeName)
             return typeSystem.getType(typeName)
         }
-
-        TODO("Throw a decent compilation error here -- the type was unknown")
+        throw CompilationException(classType.start, "Unresolved type : $typeName")
     }
 
     override fun exitEnumDeclaration(ctx: TaxiParser.EnumDeclarationContext) {

@@ -1,15 +1,15 @@
 # Taxi
 
 Taxi is a language for defining resources and contracts between systems.
-Similar to Swagger / BAML, and protobuf specs.  (Note - not a serialization format.)
+Similar to Swagger / RAML, and protobuf specs.  (Note - not a serialization format.)
 
 ## Design goals:
 
 ### Language agnostic
-Taxi will (initally) compile to BAML, which can then be output
+Taxi will (initially) compile to RAML, which can then be output
 to many different languages.
 
-Eventually, the BAML step should be removed.
+Eventually, the RAML step should be removed.
 
 ### Concise & expressive
 Steal ideas from Kotlin & GraphQL for expressiveness

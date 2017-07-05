@@ -112,6 +112,7 @@ primitiveType
     |   'String'
     |   'Int'
     |   'Double'
+    |   'Decimal'
 //    The "full-date" notation of RFC3339, namely yyyy-mm-dd. Does not support time or time zone-offset notation.
     |   'Date'
 //    The "partial-time" notation of RFC3339, namely hh:mm:ss[.ff...]. Does not support date or time zone-offset notation.

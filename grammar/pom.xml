@@ -42,12 +42,6 @@
             <artifactId>slf4j-log4j12</artifactId>
             <version>1.7.13</version>
         </dependency>
-        <dependency>
-            <groupId>com.nhaarman</groupId>
-            <artifactId>mockito-kotlin</artifactId>
-            <version>1.2.0</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
     <build>
         <plugins>
