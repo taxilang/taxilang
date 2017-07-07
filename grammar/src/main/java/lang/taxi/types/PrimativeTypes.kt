@@ -3,6 +3,13 @@ package lang.taxi.types
 import lang.taxi.Type
 import java.lang.IllegalArgumentException
 
+
+enum class VoidType : Type {
+    VOID;
+
+    override val qualifiedName: String = "lang.taxi.Void"
+}
+
 enum class PrimitiveType(val declaration: String) : Type {
     BOOLEAN("Boolean"),
     STRING("String"),

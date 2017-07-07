@@ -98,9 +98,16 @@ serviceBody
     ;
 
  serviceFunctionDeclaration
-     :   annotation* serviceFunction
+     :   annotation* 'fun' functionSignature
      ;
 
+functionSignature
+     :   annotation* Identifier '(' functionParameter* ')' ':' typeType
+     ;
+
+functionParameter
+     :   annotation* typeType
+     ;
 expression
     :   primary
     ;

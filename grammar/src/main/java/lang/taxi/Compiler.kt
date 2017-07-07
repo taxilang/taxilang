@@ -1,5 +1,8 @@
 package lang.taxi
 
+import lang.taxi.services.Method
+import lang.taxi.services.Parameter
+import lang.taxi.services.Service
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import org.antlr.v4.runtime.*
@@ -51,11 +54,13 @@ private class DocumentListener : TaxiBaseListener() {
     val exceptions = mutableMapOf<ParserRuleContext, Exception>()
     private var namespace: String? = null
     private val typeSystem = TypeSystem()
+    private val services = mutableListOf<Service>()
     private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
     private val unparsedExtensions = mutableListOf<ParserRuleContext>()
+    private val unparsedServices = mutableMapOf<String, TaxiParser.ServiceDeclarationContext>()
     fun buildTaxiDocument(): TaxiDocument {
         compile()
-        return TaxiDocument(namespace, typeSystem.typeList())
+        return TaxiDocument(namespace, typeSystem.typeList(), services)
     }
 
     private fun qualify(name: String): String {
@@ -69,11 +74,20 @@ private class DocumentListener : TaxiBaseListener() {
         super.exitNamespaceDeclaration(ctx)
     }
 
+    override fun exitServiceDeclaration(ctx: TaxiParser.ServiceDeclarationContext) {
+        collateExceptions(ctx)
+        val qualifiedName = qualify(ctx.Identifier().text)
+        unparsedServices[qualifiedName] = ctx
+        super.exitServiceDeclaration(ctx)
+    }
+
     private fun compile() {
         createEmptyTypes()
         compileTokens()
         compileTypeExtensions()
+        compileServices()
     }
+
 
     private fun createEmptyTypes() {
         unparsedTypes.forEach { tokenName, token ->
@@ -197,6 +211,14 @@ private class DocumentListener : TaxiBaseListener() {
         }
     }
 
+    private fun parseTypeOrVoid(typeType: TaxiParser.TypeTypeContext?): Type {
+        return if (typeType == null) {
+            VoidType.VOID
+        } else {
+            parseType(typeType)
+        }
+    }
+
     private fun parseType(typeType: TaxiParser.TypeTypeContext): Type {
         val type = when {
 //            typeType.aliasedType() != null -> compileInlineTypeAlias(typeType)
@@ -261,6 +283,22 @@ private class DocumentListener : TaxiBaseListener() {
         val enumType = EnumType(typeName, EnumDefinition(enumValues, annotations))
         typeSystem.register(enumType)
     }
+
+    private fun compileServices() {
+        val services = this.unparsedServices.map { (qualifiedName, serviceToken) ->
+            val methods = serviceToken.serviceBody().serviceFunctionDeclaration().map { functionDeclaration ->
+                val signature = functionDeclaration.functionSignature()
+                Method(name = signature.Identifier().text,
+                        annotations = collateAnnotations(functionDeclaration.annotation()),
+                        parameters = signature.functionParameter().map { Parameter(collateAnnotations(it.annotation()), parseType(it.typeType())) },
+                        returnType = parseTypeOrVoid(signature.typeType())
+                )
+            }
+            Service(qualifiedName, methods, collateAnnotations(serviceToken.annotation()))
+        }
+        this.services.addAll(services)
+    }
+
 
 }
 
