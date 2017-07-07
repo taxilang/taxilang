@@ -18,6 +18,7 @@ toplevelObject
     |   enumDeclaration
     |   typeExtensionDeclaration
     |   typeAliasDeclaration
+    |   serviceDeclaration
 //    |   annotationTypeDeclaration
     ;
 
@@ -87,6 +88,18 @@ elementValue
     :   literal
     |   annotation
     ;
+
+serviceDeclaration
+    :   annotation* 'service' Identifier serviceBody
+    ;
+
+serviceBody
+    :   '{' serviceFunctionDeclaration* '}'
+    ;
+
+ serviceFunctionDeclaration
+     :   annotation* serviceFunction
+     ;
 
 expression
     :   primary
