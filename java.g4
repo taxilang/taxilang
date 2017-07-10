@@ -157,7 +157,7 @@ memberDeclaration
     |   enumDeclaration
     ;
 
-/* We use rule this even for void methods which cannot have [] after parameters.
+/* We use rule this even for void operations which cannot have [] after parameters.
    This simplifies grammar and we can consider void to be a type, which
    renders the [] matching as a context-sensitive issue or a semantic check
    for invalid return type after parsing.

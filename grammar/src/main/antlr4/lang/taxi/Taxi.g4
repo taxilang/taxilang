@@ -94,18 +94,18 @@ serviceDeclaration
     ;
 
 serviceBody
-    :   '{' serviceFunctionDeclaration* '}'
+    :   '{' serviceOperationDeclaration* '}'
     ;
 
- serviceFunctionDeclaration
-     :   annotation* 'fun' functionSignature
+ serviceOperationDeclaration
+     :   annotation* 'operation' operationSignature
      ;
 
-functionSignature
-     :   annotation* Identifier '(' functionParameter* ')' ':' typeType
+operationSignature
+     :   annotation* Identifier '(' operationParameter* ')' ':' typeType
      ;
 
-functionParameter
+operationParameter
      :   annotation* typeType
      ;
 expression

@@ -14,7 +14,7 @@ type Person {
 
 @RestService
 service PersonService {
-    // Design notes : Is "fun" a readable name for methods?  What about B.A's?  Would they understand it?
+    // Design notes : Is "fun" a readable name for operations?  What about B.A's?  Would they understand it?
     // Design notes : Purposefully excluding the variable name here,
     // as it's not currently needed.
     @Get("/foo/bar")
@@ -26,9 +26,9 @@ service PersonService {
         val personService = doc.service("PersonService")
         expect(personService).to.not.be.`null`
         expect(personService.annotations).to.have.size(1)
-        expect(personService.methods).to.have.size(1)
-        expect(personService.method("getPerson")).to.not.be.`null`
-        val getPersonMethod = personService.method("getPerson")
+        expect(personService.operations).to.have.size(1)
+        expect(personService.operation("getPerson")).to.not.be.`null`
+        val getPersonMethod = personService.operation("getPerson")
         expect(getPersonMethod.annotations).size.equal(1)
         expect(getPersonMethod.parameters).size.equal(1)
         expect(getPersonMethod.parameters.first().type).to.equal(doc.type("PersonId"))

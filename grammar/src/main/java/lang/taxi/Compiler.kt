@@ -1,6 +1,6 @@
 package lang.taxi
 
-import lang.taxi.services.Method
+import lang.taxi.services.Operation
 import lang.taxi.services.Parameter
 import lang.taxi.services.Service
 import lang.taxi.types.*
@@ -286,11 +286,11 @@ private class DocumentListener : TaxiBaseListener() {
 
     private fun compileServices() {
         val services = this.unparsedServices.map { (qualifiedName, serviceToken) ->
-            val methods = serviceToken.serviceBody().serviceFunctionDeclaration().map { functionDeclaration ->
-                val signature = functionDeclaration.functionSignature()
-                Method(name = signature.Identifier().text,
-                        annotations = collateAnnotations(functionDeclaration.annotation()),
-                        parameters = signature.functionParameter().map { Parameter(collateAnnotations(it.annotation()), parseType(it.typeType())) },
+            val methods = serviceToken.serviceBody().serviceOperationDeclaration().map { operationDeclaration ->
+                val signature = operationDeclaration.operationSignature()
+                Operation(name = signature.Identifier().text,
+                        annotations = collateAnnotations(operationDeclaration.annotation()),
+                        parameters = signature.operationParameter().map { Parameter(collateAnnotations(it.annotation()), parseType(it.typeType())) },
                         returnType = parseTypeOrVoid(signature.typeType())
                 )
             }
