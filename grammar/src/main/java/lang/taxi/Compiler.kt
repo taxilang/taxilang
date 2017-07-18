@@ -203,11 +203,21 @@ private class DocumentListener : TaxiBaseListener() {
 
     private fun collateAnnotations(annotations: List<TaxiParser.AnnotationContext>): List<Annotation> {
         return annotations.map { annotation ->
+            val params: Map<String, Any> = mapAnnotationParams(annotation)
             val name = annotation.qualifiedName().text
-            val parameters: Map<String, Any?> = annotation.elementValuePairs()?.elementValuePair()?.map {
-                it.Identifier().text to it.elementValue().literal()?.value()
+            Annotation(name, params)
+        }
+    }
+
+    private fun mapAnnotationParams(annotation: TaxiParser.AnnotationContext): Map<String, Any> {
+        if (annotation.elementValue() != null) {
+            return mapOf("value" to annotation.elementValue().literal().value())
+        } else if (annotation.elementValuePairs() != null) {
+            return annotation.elementValuePairs()!!.elementValuePair()?.map {
+                it.Identifier().text to it.elementValue().literal()?.value()!!
             }?.toMap() ?: emptyMap()
-            Annotation(name, parameters)
+        } else {
+            throw NotImplementedError()
         }
     }
 
