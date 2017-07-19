@@ -12,6 +12,7 @@
    <modules>
       <module>grammar</module>
       <module>converters</module>
+      <module>annotations</module>
    </modules>
 
    <properties>
