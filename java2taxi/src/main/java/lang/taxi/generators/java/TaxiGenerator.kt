@@ -12,21 +12,18 @@ class TaxiGenerator(val typeMapper: TypeMapper = DefaultTypeMapper(), val schema
         return this
     }
 
-    private fun generateModel(): List<TaxiDocument> {
-        // Note : Use a forEach, rather than map here.
-        // We need to stick partially built types into the
-        // 'buildTypes' set, so that when types are self-referential,
-        // we don't end up in an infinite loop.
-        return this.classes.map { javaClass ->
-            val taxiType = typeMapper.getTaxiType(javaClass, generatedTypes)
-            TaxiDocument(namespace = null, types = generatedTypes.toList(), services = emptyList())
+    private fun generateModel(): TaxiDocument {
+        this.classes.forEach { javaClass ->
+            typeMapper.getTaxiType(javaClass, generatedTypes)
         }
+
+        return TaxiDocument(generatedTypes.toList(), services = emptyList())
     }
 
 
     fun generateAsStrings(): List<String> {
         val taxiDocs = generateModel()
-        return schemaWriter.generateSchemas(taxiDocs)
+        return schemaWriter.generateSchemas(listOf(taxiDocs))
     }
 
 

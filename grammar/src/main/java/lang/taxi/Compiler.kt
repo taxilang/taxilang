@@ -5,85 +5,79 @@ import lang.taxi.services.Parameter
 import lang.taxi.services.Service
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import org.antlr.v4.runtime.*
+import org.antlr.v4.runtime.CharStream
+import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.io.File
-import java.lang.Exception
 import java.lang.IllegalArgumentException
 import java.lang.RuntimeException
 import java.nio.file.Path
 
+object Namespaces {
+    const val DEFAULT_NAMESPACE = ""
+}
 data class CompilationError(val offendingToken: Token, val detailMessage: String?)
 class CompilationException(val errors: List<CompilationError>) : RuntimeException(errors.map { it.detailMessage }.filterNotNull().joinToString()) {
     constructor(offendingToken: Token, detailMessage: String?) : this(listOf(CompilationError(offendingToken, detailMessage)))
 }
 
-class Compiler(val input: CharStream) {
+class Compiler(val inputs: List<CharStream>) {
+    constructor(input: CharStream) : this(listOf(input))
     constructor(path: Path) : this(CharStreams.fromPath(path))
     constructor(source: String) : this(CharStreams.fromString(source))
     constructor(file: File) : this(CharStreams.fromPath(file.toPath()))
 
     companion object {
-        fun main(args: Array<String>) {
-        }
+        fun fromStrings(sources: List<String>) = Compiler(sources.mapIndexed { index, source -> CharStreams.fromString(source, "StringSource-$index") })
     }
 
     fun compile(): TaxiDocument {
         // TODO : Can probably be smarter about this, and
         // stream the source, rather than returning a string from the
         // source provider
-        val lexer = TaxiLexer(input)
-        val parser = TaxiParser(CommonTokenStream(lexer))
+        val tokensCollection = inputs.map { input ->
+            val listener = TokenCollator()
+            val lexer = TaxiLexer(input)
+            val parser = TaxiParser(CommonTokenStream(lexer))
+            parser.addParseListener(listener)
+            val doc = parser.document()
+            doc.exception?.let {
+                throw CompilationException(it.offendingToken, it.message)
+            }
+            val errors = listener.exceptions.map { (context, exception) ->
+                CompilationError(context.start, exception.message)
+            }
+            if (errors.isNotEmpty())
+                throw CompilationException(errors)
 
-        val listener = DocumentListener()
-        parser.addParseListener(listener)
-        val doc = parser.document()
-        doc.exception?.let {
-            throw CompilationException(it.offendingToken, it.message)
+            listener.tokens()
         }
-        val errors = listener.exceptions.map { (context, exception) ->
-            CompilationError(context.start, exception.message)
-        }
-        if (errors.isNotEmpty())
-            throw CompilationException(errors)
+        val tokens = tokensCollection.reduce { acc, tokens -> acc.plus(tokens) }
 
-        return listener.buildTaxiDocument()
+        val builder = DocumentListener(tokens)
+        return builder.buildTaxiDocument()
     }
 }
 
-private class DocumentListener : TaxiBaseListener() {
-    val exceptions = mutableMapOf<ParserRuleContext, Exception>()
-    private var namespace: String? = null
+private class DocumentListener(val tokens: Tokens)  {
     private val typeSystem = TypeSystem()
     private val services = mutableListOf<Service>()
-    private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
-    private val unparsedExtensions = mutableListOf<ParserRuleContext>()
-    private val unparsedServices = mutableMapOf<String, TaxiParser.ServiceDeclarationContext>()
     fun buildTaxiDocument(): TaxiDocument {
         compile()
-        return TaxiDocument(namespace, typeSystem.typeList(), services)
+        return TaxiDocument(typeSystem.typeList(), services)
     }
 
 
-    private fun qualify(name: String): String {
+    private fun qualify(namespace:Namespace, name: String): String {
         if (name.contains("."))
         // This is already qualified
             return name
-        if (namespace == null) return name
+        if (namespace.isEmpty()) {
+            return name
+        }
         return "$namespace.$name"
-    }
-
-    override fun exitNamespaceDeclaration(ctx: TaxiParser.NamespaceDeclarationContext) {
-        collateExceptions(ctx)
-        this.namespace = (ctx.payload as ParserRuleContext).children[1].text
-        super.exitNamespaceDeclaration(ctx)
-    }
-
-    override fun exitServiceDeclaration(ctx: TaxiParser.ServiceDeclarationContext) {
-        collateExceptions(ctx)
-        val qualifiedName = qualify(ctx.Identifier().text)
-        unparsedServices[qualifiedName] = ctx
-        super.exitServiceDeclaration(ctx)
     }
 
     private fun compile() {
@@ -95,7 +89,7 @@ private class DocumentListener : TaxiBaseListener() {
 
 
     private fun createEmptyTypes() {
-        unparsedTypes.forEach { tokenName, token ->
+        tokens.unparsedTypes.forEach { tokenName, (_, token) ->
             when (token) {
                 is TaxiParser.EnumDeclarationContext -> typeSystem.register(EnumType.undefined(tokenName))
                 is TaxiParser.TypeDeclarationContext -> typeSystem.register(ObjectType.undefined(tokenName))
@@ -105,31 +99,31 @@ private class DocumentListener : TaxiBaseListener() {
     }
 
     private fun compileTokens() {
-        unparsedTypes.forEach { tokenName, _ ->
+        tokens.unparsedTypes.forEach { (tokenName,_) ->
             compileToken(tokenName)
         }
     }
 
     private fun compileToken(tokenName: String) {
-        val tokenRule = unparsedTypes[tokenName]
+        val (namespace,tokenRule) = tokens.unparsedTypes[tokenName]!!
         if (typeSystem.isDefined(tokenName) && typeSystem.getType(tokenName) is TypeAlias) {
             // As type aliases can be defined inline, it's perfectly acceptable for
             // this to already exist
             return
         }
         when (tokenRule) {
-            is TaxiParser.TypeDeclarationContext -> compileType(tokenName, tokenRule)
+            is TaxiParser.TypeDeclarationContext -> compileType(namespace, tokenName, tokenRule)
             is TaxiParser.EnumDeclarationContext -> compileEnum(tokenName, tokenRule)
             is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(tokenName, tokenRule)
         // TODO : This is a bit broad - assuming that all typeType's that hit this
         // line will be a TypeAlias inline.  It could be a normal field declaration.
-            is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(tokenRule)
+            is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(namespace , tokenRule)
             else -> TODO("Not handled: $tokenRule")
         }
     }
 
     private fun compileTypeExtensions() {
-        unparsedExtensions.forEach { typeRule ->
+        tokens.unparsedExtensions.forEach { (_,typeRule) ->
             when (typeRule) {
                 is TaxiParser.TypeExtensionDeclarationContext -> compileTypeExtension(typeRule)
                 else -> TODO("Not handled: $typeRule")
@@ -160,49 +154,17 @@ private class DocumentListener : TaxiBaseListener() {
     }
 
 
-    override fun exitTypeExtensionDeclaration(ctx: TaxiParser.TypeExtensionDeclarationContext) {
-        collateExceptions(ctx)
-        val typeName = qualify(ctx.Identifier().text)
-        unparsedExtensions.add(ctx)
-        super.exitTypeExtensionDeclaration(ctx)
-    }
-
-    override fun exitFieldDeclaration(ctx: TaxiParser.FieldDeclarationContext) {
-        collateExceptions(ctx)
-        // Check to see if an inline type alias is declared
-        // If so, mark it for processing later
-        val typeType = ctx.typeType()
-        if (typeType.aliasedType() != null) {
-            val classOrInterfaceType = typeType.classOrInterfaceType()
-            unparsedTypes.put(qualify(classOrInterfaceType.Identifier().text()), typeType)
-        }
-        super.exitFieldDeclaration(ctx)
-    }
 
     fun List<TerminalNode>.text(): String {
         return this.joinToString(".")
     }
 
 
-    override fun exitTypeDeclaration(ctx: TaxiParser.TypeDeclarationContext) {
-        collateExceptions(ctx)
-        val typeName = qualify(ctx.Identifier().text)
-        unparsedTypes.put(typeName, ctx)
-        super.exitTypeDeclaration(ctx)
-    }
-
-    override fun exitTypeAliasDeclaration(ctx: TaxiParser.TypeAliasDeclarationContext) {
-        collateExceptions(ctx)
-        val typeName = qualify(ctx.Identifier().text)
-        unparsedTypes.put(typeName, ctx)
-        super.exitTypeAliasDeclaration(ctx)
-    }
-
-    private fun compileType(typeName: String, ctx: TaxiParser.TypeDeclarationContext) {
+    private fun compileType(namespace:Namespace, typeName: String, ctx: TaxiParser.TypeDeclarationContext) {
         val fields = ctx.typeBody().typeMemberDeclaration().map { member ->
             val fieldAnnotations = collateAnnotations(member.annotation())
             Field(name = member.fieldDeclaration().Identifier().text,
-                    type = parseType(member.fieldDeclaration().typeType()),
+                    type = parseType(namespace, member.fieldDeclaration().typeType()),
                     nullable = member.fieldDeclaration().typeType().optionalType() != null,
                     annotations = fieldAnnotations
             )
@@ -232,18 +194,18 @@ private class DocumentListener : TaxiBaseListener() {
         }
     }
 
-    private fun parseTypeOrVoid(typeType: TaxiParser.TypeTypeContext?): Type {
+    private fun parseTypeOrVoid(namespace:Namespace, typeType: TaxiParser.TypeTypeContext?): Type {
         return if (typeType == null) {
             VoidType.VOID
         } else {
-            parseType(typeType)
+            parseType(namespace, typeType)
         }
     }
 
-    private fun parseType(typeType: TaxiParser.TypeTypeContext): Type {
+    private fun parseType(namespace: Namespace, typeType: TaxiParser.TypeTypeContext): Type {
         val type = when {
 //            typeType.aliasedType() != null -> compileInlineTypeAlias(typeType)
-            typeType.classOrInterfaceType() != null -> resolveUserType(typeType.classOrInterfaceType())
+            typeType.classOrInterfaceType() != null -> resolveUserType(namespace,typeType.classOrInterfaceType())
             typeType.primitiveType() != null -> PrimitiveType.fromDeclaration(typeType.getChild(0).text)
             else -> throw IllegalArgumentException()
         }
@@ -258,9 +220,9 @@ private class DocumentListener : TaxiBaseListener() {
      * Handles type aliases that are declared inline (firstName : PersonFirstName as String)
      * rather than those declared explicitly (type alias PersonFirstName as String)
      */
-    private fun compileInlineTypeAlias(aliasTypeDefinition: TaxiParser.TypeTypeContext): Type {
-        val aliasedType = parseType(aliasTypeDefinition.aliasedType().typeType())
-        val typeAliasName = qualify(aliasTypeDefinition.classOrInterfaceType().Identifier().text())
+    private fun compileInlineTypeAlias(namespace:Namespace, aliasTypeDefinition: TaxiParser.TypeTypeContext): Type {
+        val aliasedType = parseType(namespace, aliasTypeDefinition.aliasedType().typeType())
+        val typeAliasName = qualify(namespace, aliasTypeDefinition.classOrInterfaceType().Identifier().text())
         // Annotations not supported on Inline type aliases
         val annotations = emptyList<Annotation>()
         val typeAlias = TypeAlias(typeAliasName, TypeAliasDefinition(aliasedType, annotations))
@@ -268,31 +230,20 @@ private class DocumentListener : TaxiBaseListener() {
         return typeAlias
     }
 
-    private fun resolveUserType(classType: TaxiParser.ClassOrInterfaceTypeContext): Type {
-        val typeName = qualify(classType.Identifier().text())
+    private fun resolveUserType(namespace: Namespace, classType: TaxiParser.ClassOrInterfaceTypeContext): Type {
+        val typeName = qualify(namespace, classType.Identifier().text())
         if (typeSystem.contains(typeName)) {
             return typeSystem.getType(typeName)
         }
 
-        if (unparsedTypes.contains(typeName)) {
+        if (tokens.unparsedTypes.contains(typeName)) {
             compileToken(typeName)
             return typeSystem.getType(typeName)
         }
-        throw CompilationException(classType.start, "Unresolved type : $typeName")
+        throw CompilationException(classType.start, ErrorMessages.unresolvedType(typeName))
     }
 
-    override fun exitEnumDeclaration(ctx: TaxiParser.EnumDeclarationContext) {
-        collateExceptions(ctx)
-        val name = qualify(ctx.classOrInterfaceType().Identifier().text())
-        unparsedTypes.put(name, ctx)
-        super.exitEnumDeclaration(ctx)
-    }
 
-    private fun collateExceptions(ctx: ParserRuleContext) {
-        if (ctx.exception != null) {
-            exceptions.put(ctx, ctx.exception)
-        }
-    }
 
     private fun compileEnum(typeName: String, ctx: TaxiParser.EnumDeclarationContext) {
         val enumValues = ctx.enumConstants().enumConstant().map { enumConstant ->
@@ -306,13 +257,14 @@ private class DocumentListener : TaxiBaseListener() {
     }
 
     private fun compileServices() {
-        val services = this.unparsedServices.map { (qualifiedName, serviceToken) ->
+        val services = this.tokens.unparsedServices.map { (qualifiedName, serviceTokenPair) ->
+            val (namespace, serviceToken) = serviceTokenPair
             val methods = serviceToken.serviceBody().serviceOperationDeclaration().map { operationDeclaration ->
                 val signature = operationDeclaration.operationSignature()
                 Operation(name = signature.Identifier().text,
                         annotations = collateAnnotations(operationDeclaration.annotation()),
-                        parameters = signature.operationParameter().map { Parameter(collateAnnotations(it.annotation()), parseType(it.typeType())) },
-                        returnType = parseTypeOrVoid(signature.typeType())
+                        parameters = signature.operationParameter().map { Parameter(collateAnnotations(it.annotation()), parseType(namespace, it.typeType())) },
+                        returnType = parseTypeOrVoid(namespace,signature.typeType())
                 )
             }
             Service(qualifiedName, methods, collateAnnotations(serviceToken.annotation()))
