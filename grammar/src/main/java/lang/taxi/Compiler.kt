@@ -6,6 +6,7 @@ import lang.taxi.services.Service
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import org.antlr.v4.runtime.*
+import org.antlr.v4.runtime.tree.TerminalNode
 import java.io.File
 import java.lang.Exception
 import java.lang.IllegalArgumentException
@@ -63,7 +64,11 @@ private class DocumentListener : TaxiBaseListener() {
         return TaxiDocument(namespace, typeSystem.typeList(), services)
     }
 
+
     private fun qualify(name: String): String {
+        if (name.contains("."))
+        // This is already qualified
+            return name
         if (namespace == null) return name
         return "$namespace.$name"
     }
@@ -169,10 +174,15 @@ private class DocumentListener : TaxiBaseListener() {
         val typeType = ctx.typeType()
         if (typeType.aliasedType() != null) {
             val classOrInterfaceType = typeType.classOrInterfaceType()
-            unparsedTypes.put(qualify(classOrInterfaceType.Identifier().text), typeType)
+            unparsedTypes.put(qualify(classOrInterfaceType.Identifier().text()), typeType)
         }
         super.exitFieldDeclaration(ctx)
     }
+
+    fun List<TerminalNode>.text(): String {
+        return this.joinToString(".")
+    }
+
 
     override fun exitTypeDeclaration(ctx: TaxiParser.TypeDeclarationContext) {
         collateExceptions(ctx)
@@ -217,7 +227,8 @@ private class DocumentListener : TaxiBaseListener() {
                 it.Identifier().text to it.elementValue().literal()?.value()!!
             }?.toMap() ?: emptyMap()
         } else {
-            throw NotImplementedError()
+            // No params specified
+            return emptyMap()
         }
     }
 
@@ -249,7 +260,7 @@ private class DocumentListener : TaxiBaseListener() {
      */
     private fun compileInlineTypeAlias(aliasTypeDefinition: TaxiParser.TypeTypeContext): Type {
         val aliasedType = parseType(aliasTypeDefinition.aliasedType().typeType())
-        val typeAliasName = qualify(aliasTypeDefinition.classOrInterfaceType().Identifier().text)
+        val typeAliasName = qualify(aliasTypeDefinition.classOrInterfaceType().Identifier().text())
         // Annotations not supported on Inline type aliases
         val annotations = emptyList<Annotation>()
         val typeAlias = TypeAlias(typeAliasName, TypeAliasDefinition(aliasedType, annotations))
@@ -258,7 +269,7 @@ private class DocumentListener : TaxiBaseListener() {
     }
 
     private fun resolveUserType(classType: TaxiParser.ClassOrInterfaceTypeContext): Type {
-        val typeName = qualify(classType.Identifier().text)
+        val typeName = qualify(classType.Identifier().text())
         if (typeSystem.contains(typeName)) {
             return typeSystem.getType(typeName)
         }
@@ -272,7 +283,7 @@ private class DocumentListener : TaxiBaseListener() {
 
     override fun exitEnumDeclaration(ctx: TaxiParser.EnumDeclarationContext) {
         collateExceptions(ctx)
-        val name = qualify(ctx.Identifier().text)
+        val name = qualify(ctx.classOrInterfaceType().Identifier().text())
         unparsedTypes.put(name, ctx)
         super.exitEnumDeclaration(ctx)
     }

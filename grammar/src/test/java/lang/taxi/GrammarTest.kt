@@ -172,20 +172,22 @@ type extension Person {
     @Test
     fun canCompileWhenUsingFullyQualifiedNames() {
         val source = """
-type taxi.example.Invoice {
+namespace taxi.example
+type Invoice {
     clientId : taxi.example.ClientId
     invoiceValue : taxi.example.InvoiceValue
     previousInvoice : taxi.example.Invoice
 }
 
-type alias taxi.example.ClientId as lang.taxi.String
+type alias ClientId as lang.taxi.String
 
-type alias taxi.example.InvoiceValue as lang.taxi.Decimal
+type alias InvoiceValue as lang.taxi.Decimal
 """
         val doc = Compiler(source).compile()
         val invoice = doc.objectType("taxi.example.Invoice")
-        expect(invoice.field("clientId"))
-
+        expect(invoice.field("clientId").type).to.be.instanceof(TypeAlias::class.java)
+        val typeAlias = invoice.field("clientId").type as TypeAlias
+        expect(typeAlias.aliasType).to.equal(PrimitiveType.STRING)
     }
 
     private fun testResource(s: String): File {

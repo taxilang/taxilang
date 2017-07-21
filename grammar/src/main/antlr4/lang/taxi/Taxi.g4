@@ -47,12 +47,12 @@ typeType
     ;
 
 classOrInterfaceType
-    :   Identifier /* typeArguments? ('.' Identifier typeArguments? )* */
+    :   Identifier /* typeArguments? */ ('.' Identifier /* typeArguments? */ )*
     ;
 
 
 enumDeclaration
-    :   annotation* 'enum' Identifier
+    :   annotation* 'enum' classOrInterfaceType
         '{' enumConstants? '}'
     ;
 
