@@ -12,6 +12,7 @@ data class TypeAlias(
         override var definition: TypeAliasDefinition?,
         override val extensions: MutableList<TypeAliasExtension> = mutableListOf()
 ) : UserType<TypeAliasDefinition, TypeAliasExtension>, Annotatable {
+    constructor(qualifiedName: String, aliasedType: Type) : this(qualifiedName, TypeAliasDefinition(aliasedType))
 
     companion object {
         fun undefined(name: String): TypeAlias {

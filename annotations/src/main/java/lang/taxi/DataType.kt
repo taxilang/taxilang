@@ -1,11 +1,30 @@
 package lang.taxi
 
+@Target(AnnotationTarget.CLASS, AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)
+@Retention(AnnotationRetention.RUNTIME)
 annotation class DataType(
-   /**
-    * The qualified name of the attribute within a taxonomy.
-    */
-   val value: String
+        /**
+         * The qualified name of the attribute within a taxonomy.
+         * If blank, will be inferred from the class name
+         */
+        val value: String = ""
 )
+
+fun DataType.hasNamespace(): Boolean = this.value.contains(".")
+fun DataType.namespace(): String? {
+    if (!this.hasNamespace()) return null
+    return this.value.split(".")
+            .dropLast(1)
+            .joinToString(".")
+}
+
+fun DataType.declaresName(): Boolean {
+    return this.value.isNotEmpty()
+}
+
+fun DataType.qualifiedName(defaultNamespace: String): String {
+    return if (this.hasNamespace()) this.value else "$defaultNamespace.${this.value}"
+}
 
 /**
  * Specifies that an input must be provided in a specific format.

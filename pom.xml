@@ -13,6 +13,7 @@
       <module>grammar</module>
       <module>converters</module>
       <module>annotations</module>
+      <module>java2taxi</module>
    </modules>
 
    <properties>

@@ -169,6 +169,25 @@ type extension Person {
         expect(person.annotations).size.to.equal(1)
     }
 
+    @Test
+    fun canCompileWhenUsingFullyQualifiedNames() {
+        val source = """
+type taxi.example.Invoice {
+    clientId : taxi.example.ClientId
+    invoiceValue : taxi.example.InvoiceValue
+    previousInvoice : taxi.example.Invoice
+}
+
+type alias taxi.example.ClientId as lang.taxi.String
+
+type alias taxi.example.InvoiceValue as lang.taxi.Decimal
+"""
+        val doc = Compiler(source).compile()
+        val invoice = doc.objectType("taxi.example.Invoice")
+        expect(invoice.field("clientId"))
+
+    }
+
     private fun testResource(s: String): File {
         return File(this.javaClass.classLoader.getResource(s).toURI())
     }
