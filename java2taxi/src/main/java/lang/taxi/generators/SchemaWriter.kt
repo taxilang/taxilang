@@ -2,6 +2,8 @@ package lang.taxi.generators
 
 import lang.taxi.TaxiDocument
 import lang.taxi.Type
+import lang.taxi.services.Operation
+import lang.taxi.services.Service
 import lang.taxi.types.Field
 import lang.taxi.types.ObjectType
 import lang.taxi.types.TypeAlias
@@ -15,14 +17,41 @@ class SchemaWriter {
     private fun generateSchema(doc: TaxiDocument): List<String> {
         return doc.toNamespacedDocs().map { namespacedDoc ->
             val types = namespacedDoc.types.map { generateTypeDeclaration(it, namespacedDoc.namespace) }
-            val typeString = types.joinToString("\n\n")
+            val typesTaxiString = types.joinToString("\n\n")
 
+            val servicesTaxiString = namespacedDoc.services.map { generateServiceDeclaration(it, namespacedDoc.namespace) }.joinToString("\n")
             //return:
             """namespace ${namespacedDoc.namespace}
 
-$typeString
+$typesTaxiString
+
+$servicesTaxiString
 """
         }
+    }
+
+    private fun generateServiceDeclaration(service: Service, namespace: String): String {
+        val operations = service.operations
+                .map { generateOperationDeclaration(it, namespace) }
+                .joinToString("\n").prependIndent()
+//        service PersonService {
+//            @Get("/foo/bar")
+//            operation getPerson(@AnotherAnnotation PersonId):Person
+//        }
+
+        return """
+service ${service.toQualifiedName().qualifiedRelativeTo(namespace)} {
+$operations
+}"""
+    }
+
+    private fun generateOperationDeclaration(operation: Operation, namespace: String): String {
+        val params = operation.parameters.map { it.type.toQualifiedName().qualifiedRelativeTo(namespace) }.joinToString(", ")
+        val returnType = operation.returnType.toQualifiedName().qualifiedRelativeTo(namespace)
+        val operationName = operation.name
+
+        // TODO : Annotations
+        return "operation $operationName($params) : $returnType"
     }
 
     private fun generateTypeDeclaration(type: Type, currentNamespace: String): String {

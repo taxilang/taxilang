@@ -1,7 +1,6 @@
 package lang.taxi.generators.java
 
 import com.winterbe.expekt.expect
-import lang.taxi.Compiler
 import lang.taxi.DataType
 import lang.taxi.Namespace
 import org.junit.Test
@@ -39,12 +38,8 @@ type Client {
     clientId : ClientId as String
 }
 """.split("---")
-        expectToCompileTheSame(taxiDef, expected)
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
     }
 
-    private fun expectToCompileTheSame(generated: List<String>, expected: List<String>) {
-        val generatedDoc = Compiler.fromStrings(generated).compile()
-        val expectedDoc = Compiler.fromStrings(expected).compile()
-        expect(generatedDoc).to.equal(expectedDoc)
-    }
+
 }

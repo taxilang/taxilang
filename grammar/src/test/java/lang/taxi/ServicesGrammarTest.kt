@@ -14,11 +14,8 @@ type Person {
 
 @RestService
 service PersonService {
-    // Design notes : Is "fun" a readable name for operations?  What about B.A's?  Would they understand it?
-    // Design notes : Purposefully excluding the variable name here,
-    // as it's not currently needed.
     @Get("/foo/bar")
-    fun getPerson(@AnotherAnnotation PersonId):Person
+    operation getPerson(@AnotherAnnotation PersonId):Person
 }
 
 """

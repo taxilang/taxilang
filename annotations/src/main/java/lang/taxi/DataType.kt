@@ -10,21 +10,14 @@ annotation class DataType(
         val value: String = ""
 )
 
-fun DataType.hasNamespace(): Boolean = this.value.contains(".")
-fun DataType.namespace(): String? {
-    if (!this.hasNamespace()) return null
-    return this.value.split(".")
-            .dropLast(1)
-            .joinToString(".")
-}
+fun DataType.hasNamespace(): Boolean = Namespaces.hasNamespace(this.value)
+fun DataType.namespace(): String? = Namespaces.pluckNamespace(this.value)
 
 fun DataType.declaresName(): Boolean {
     return this.value.isNotEmpty()
 }
 
-fun DataType.qualifiedName(defaultNamespace: String): String {
-    return if (this.hasNamespace()) this.value else "$defaultNamespace.${this.value}"
-}
+fun DataType.qualifiedName(defaultNamespace: String): String  = Namespaces.qualifiedName(this.value,defaultNamespace)
 
 /**
  * Specifies that an input must be provided in a specific format.

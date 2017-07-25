@@ -1,6 +1,9 @@
 package lang.taxi.generators.java
 
-import lang.taxi.*
+import lang.taxi.DataType
+import lang.taxi.Type
+import lang.taxi.declaresName
+import lang.taxi.qualifiedName
 import lang.taxi.types.Annotation
 import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
@@ -8,6 +11,7 @@ import lang.taxi.types.TypeAlias
 import org.jetbrains.annotations.NotNull
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
+import java.lang.reflect.Parameter
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Instant
@@ -17,21 +21,11 @@ import java.util.*
 
 interface TypeMapper {
     fun getTaxiType(element: Class<*>, existingTypes: MutableSet<Type>): Type {
-        val namespace = this.deriveNamespace(element)
+        val namespace = Namespaces.deriveNamespace(element)
         return getTaxiType(element, existingTypes, namespace)
     }
 
     fun getTaxiType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String): Type
-
-    fun deriveNamespace(javaClass: Class<*>): String {
-        val dataType = javaClass.getAnnotation(DataType::class.java)
-        val namespaceAnnotation = javaClass.getAnnotation(Namespace::class.java)
-        return when {
-            namespaceAnnotation != null -> namespaceAnnotation.value
-            dataType != null && dataType.hasNamespace() -> dataType.namespace()!!
-            else -> javaClass.`package`.name
-        }
-    }
 
     fun deriveTypeName(element: AnnotatedElement, defaultNamespace: String): String {
         if (element.isAnnotationPresent(DataType::class.java)) {
@@ -53,6 +47,7 @@ interface TypeMapper {
         val type = when (element) {
             is Class<*> -> element
             is Field -> element.type
+            is Parameter -> element.type
             else -> error("Unhandled type : $element")
         }
         return type
@@ -91,15 +86,14 @@ class DefaultTypeMapper : TypeMapper {
     }
 
     override fun getTaxiType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String): Type {
-        val type = typeFromElement(element)
         val targetTypeName = deriveTypeName(element, defaultNamespace)
 
         if (declaresTypeAlias(element)) {
             val typeAliasName = getDeclaredTypeAliasName(element, defaultNamespace)!!
             return getOrCreateTypeAlias(element, typeAliasName, existingTypes)
         }
-        if (PrimitiveTypes.isTaxiPrimitive(type.name)) {
-            return PrimitiveTypes.getTaxiPrimitive(type.name)
+        if (PrimitiveTypes.isTaxiPrimitive(targetTypeName)) {
+            return PrimitiveTypes.getTaxiPrimitive(targetTypeName)
         }
 
 
