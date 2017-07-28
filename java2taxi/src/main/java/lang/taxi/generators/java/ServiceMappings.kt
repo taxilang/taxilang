@@ -1,9 +1,10 @@
 package lang.taxi.generators.java
 
-import lang.taxi.Operation
 import lang.taxi.Type
-import lang.taxi.declaresName
-import lang.taxi.qualifiedName
+import lang.taxi.TypeNames
+import lang.taxi.annotations.Operation
+import lang.taxi.annotations.declaresName
+import lang.taxi.annotations.qualifiedName
 import lang.taxi.services.Parameter
 import lang.taxi.services.Service
 
@@ -13,7 +14,7 @@ interface ServiceMapper {
 
 class DefaultServiceMapper : ServiceMapper {
     override fun getTaxiServices(type: Class<*>, typeMapper: TypeMapper, mappedTypes: MutableSet<Type>): Set<Service> {
-        val namespace = Namespaces.deriveNamespace(type)
+        val namespace = TypeNames.deriveNamespace(type)
         val serviceName = deriveServiceName(type,namespace)
         val operations = type.methods.filter {
             it.isAnnotationPresent(Operation::class.java)
@@ -40,8 +41,8 @@ class DefaultServiceMapper : ServiceMapper {
     }
 
     fun deriveServiceName(element: Class<*>, defaultNamespace: String): String {
-        if (element.isAnnotationPresent(lang.taxi.Service::class.java)) {
-            val annotation = element.getAnnotation(lang.taxi.Service::class.java)
+        if (element.isAnnotationPresent(lang.taxi.annotations.Service::class.java)) {
+            val annotation = element.getAnnotation(lang.taxi.annotations.Service::class.java)
             if (annotation.declaresName()) {
                 return annotation.qualifiedName(defaultNamespace)
             }

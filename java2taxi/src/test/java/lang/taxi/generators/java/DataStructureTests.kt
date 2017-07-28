@@ -1,8 +1,8 @@
 package lang.taxi.generators.java
 
 import com.winterbe.expekt.expect
-import lang.taxi.DataType
-import lang.taxi.Namespace
+import lang.taxi.annotations.DataType
+import lang.taxi.annotations.Namespace
 import org.junit.Test
 import java.math.BigDecimal
 

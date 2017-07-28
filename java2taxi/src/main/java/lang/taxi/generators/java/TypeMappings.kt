@@ -1,9 +1,9 @@
 package lang.taxi.generators.java
 
-import lang.taxi.DataType
-import lang.taxi.Type
-import lang.taxi.declaresName
-import lang.taxi.qualifiedName
+import lang.taxi.*
+import lang.taxi.annotations.DataType
+import lang.taxi.annotations.declaresName
+import lang.taxi.annotations.qualifiedName
 import lang.taxi.types.Annotation
 import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
@@ -11,7 +11,6 @@ import lang.taxi.types.TypeAlias
 import org.jetbrains.annotations.NotNull
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
-import java.lang.reflect.Parameter
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Instant
@@ -21,37 +20,13 @@ import java.util.*
 
 interface TypeMapper {
     fun getTaxiType(element: Class<*>, existingTypes: MutableSet<Type>): Type {
-        val namespace = Namespaces.deriveNamespace(element)
+        val namespace = TypeNames.deriveNamespace(element)
         return getTaxiType(element, existingTypes, namespace)
     }
 
     fun getTaxiType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String): Type
 
-    fun deriveTypeName(element: AnnotatedElement, defaultNamespace: String): String {
-        if (element.isAnnotationPresent(DataType::class.java)) {
-            val annotation = element.getAnnotation(DataType::class.java)
-            if (annotation.declaresName()) {
-                return annotation.qualifiedName(defaultNamespace)
-            }
-        }
 
-        val type = typeFromElement(element)
-        // If it's an inner class, trim the qualifier
-        // This may cause problems with duplicates, but let's encourage
-        // peeps to solve that via the DataType annotation.
-        val typeName = type.simpleName.split("$").last()
-        return "$defaultNamespace.$typeName"
-    }
-
-    fun typeFromElement(element: AnnotatedElement): Class<*> {
-        val type = when (element) {
-            is Class<*> -> element
-            is Field -> element.type
-            is Parameter -> element.type
-            else -> error("Unhandled type : $element")
-        }
-        return type
-    }
 }
 
 object PrimitiveTypes {
@@ -86,7 +61,7 @@ class DefaultTypeMapper : TypeMapper {
     }
 
     override fun getTaxiType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String): Type {
-        val targetTypeName = deriveTypeName(element, defaultNamespace)
+        val targetTypeName = TypeNames.deriveTypeName(element, defaultNamespace)
 
         if (declaresTypeAlias(element)) {
             val typeAliasName = getDeclaredTypeAliasName(element, defaultNamespace)!!
@@ -110,7 +85,7 @@ class DefaultTypeMapper : TypeMapper {
         if (existingAlias != null) {
             return existingAlias as TypeAlias
         } else {
-            val aliasedJavaType = typeFromElement(element)
+            val aliasedJavaType = TypeNames.typeFromElement(element)
             val aliasedTaxiType = getTaxiType(aliasedJavaType, existingTypes)
             val typeAlias = TypeAlias(typeAliasName, aliasedTaxiType)
             existingTypes.add(typeAlias)
@@ -134,11 +109,11 @@ class DefaultTypeMapper : TypeMapper {
     }
 
     private fun mapNewObjectType(element: AnnotatedElement, defaultNamespace: String, existingTypes: MutableSet<Type>): ObjectType {
-        val name = deriveTypeName(element, defaultNamespace)
+        val name = TypeNames.deriveTypeName(element, defaultNamespace)
         val fields = mutableListOf<lang.taxi.types.Field>()
         val objectType = ObjectType(name, fields)
         existingTypes.add(objectType)
-        fields.addAll(this.mapTaxiFields(typeFromElement(element), defaultNamespace, existingTypes))
+        fields.addAll(this.mapTaxiFields(lang.taxi.TypeNames.typeFromElement(element), defaultNamespace, existingTypes))
         return objectType
     }
 

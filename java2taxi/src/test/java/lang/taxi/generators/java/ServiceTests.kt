@@ -1,10 +1,10 @@
 package lang.taxi.generators.java
 
 import com.winterbe.expekt.expect
-import lang.taxi.DataType
+import lang.taxi.annotations.DataType
 import lang.taxi.Namespace
-import lang.taxi.Operation
-import lang.taxi.Service
+import lang.taxi.annotations.Operation
+import lang.taxi.annotations.Service
 import org.junit.Test
 import org.springframework.web.bind.annotation.RestController
 

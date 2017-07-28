@@ -1,9 +1,9 @@
 package lang.taxi.generators.java
 
-import lang.taxi.DataType
-import lang.taxi.Service
 import lang.taxi.TaxiDocument
 import lang.taxi.Type
+import lang.taxi.annotations.DataType
+import lang.taxi.annotations.Service
 import lang.taxi.generators.SchemaWriter
 
 class TaxiGenerator(val typeMapper: TypeMapper = DefaultTypeMapper(),
@@ -13,6 +13,11 @@ class TaxiGenerator(val typeMapper: TypeMapper = DefaultTypeMapper(),
     private val generatedTypes = mutableSetOf<Type>()
     private val services = mutableSetOf<lang.taxi.services.Service>()
     fun forClasses(vararg classes: Class<*>): TaxiGenerator {
+        this.classes.addAll(classes)
+        return this
+    }
+
+    fun forClasses(classes: List<Class<*>>): TaxiGenerator {
         this.classes.addAll(classes)
         return this
     }

@@ -1,4 +1,4 @@
-package lang.taxi
+package lang.taxi.annotations
 
 annotation class Namespace(val value: String)
 
@@ -18,3 +18,4 @@ internal object Namespaces {
         return if (hasNamespace(name)) name else "$defaultNamespace.$name"
     }
 }
+

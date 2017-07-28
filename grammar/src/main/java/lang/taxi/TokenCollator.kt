@@ -5,7 +5,7 @@ import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.lang.Exception
 
-typealias Namespace = String
+internal typealias Namespace = String
 data class Tokens(val unparsedTypes: Map<String, Pair<Namespace, ParserRuleContext>>,
                   val unparsedExtensions: List<Pair<Namespace, ParserRuleContext>>,
                   val unparsedServices: Map<String, Pair<Namespace, ServiceDeclarationContext>>) {

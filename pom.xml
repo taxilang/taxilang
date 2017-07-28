@@ -12,7 +12,7 @@
    <modules>
       <module>grammar</module>
       <module>converters</module>
-      <module>annotations</module>
+      <module>taxi-annotations</module>
       <module>java2taxi</module>
    </modules>
 

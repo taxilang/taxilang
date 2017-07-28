@@ -1,4 +1,4 @@
-package lang.taxi
+package lang.taxi.annotations
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
