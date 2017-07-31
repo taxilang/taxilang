@@ -3,10 +3,21 @@ package lang.taxi.generators.java
 import com.winterbe.expekt.expect
 import lang.taxi.annotations.DataType
 import lang.taxi.annotations.Namespace
+import lang.taxi.types.PrimitiveType
 import org.junit.Test
 import java.math.BigDecimal
 
 class DataStructureTests {
+
+    @Test
+    fun given_structDoesNotMapPrimativeType_then_itIsMappedToTaxiPrimative() {
+        @DataType
+        @Namespace("taxi.example")
+        data class Client(val clientId: String)
+
+        val taxiDef = TaxiGenerator().forClasses(Client::class.java).generateModel()
+        expect(taxiDef.objectType("taxi.example.Client").field("clientId").type).to.equal(PrimitiveType.STRING)
+    }
 
     @Test
     fun given_structThatIsAnnotated_then_schemaIsGeneratedCorrectly() {

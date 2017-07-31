@@ -1,5 +1,6 @@
 package lang.taxi.annotations
 
+@Retention(AnnotationRetention.RUNTIME)
 annotation class Namespace(val value: String)
 
 internal object Namespaces {

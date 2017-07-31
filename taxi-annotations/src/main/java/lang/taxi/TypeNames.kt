@@ -1,15 +1,19 @@
 package lang.taxi
 
-import lang.taxi.annotations.*
+import lang.taxi.annotations.declaresName
+import lang.taxi.annotations.hasNamespace
+import lang.taxi.annotations.namespace
+import lang.taxi.annotations.qualifiedName
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
 import java.lang.reflect.Parameter
 
 object TypeNames {
     fun deriveNamespace(javaClass: Class<*>): String {
-        val dataType = javaClass.getAnnotation(DataType::class.java)
-        val service = javaClass.getAnnotation(Service::class.java)
-        val namespaceAnnotation = javaClass.getAnnotation(Namespace::class.java)
+        val dataType = javaClass.getAnnotation(lang.taxi.annotations.DataType::class.java)
+        val service = javaClass.getAnnotation(lang.taxi.annotations.Service::class.java)
+        val namespaceAnnotation = javaClass.getAnnotation(lang.taxi.annotations.Namespace::class.java)
+
         return when {
             namespaceAnnotation != null -> namespaceAnnotation.value
             dataType != null && dataType.hasNamespace() -> dataType.namespace()!!
@@ -23,15 +27,19 @@ object TypeNames {
         return deriveTypeName(type, namespace)
     }
 
+    fun declaresDataType(element:AnnotatedElement):Boolean {
+        return element.isAnnotationPresent(lang.taxi.annotations.DataType::class.java)
+    }
     fun deriveTypeName(element: AnnotatedElement, defaultNamespace: String): String {
-        if (element.isAnnotationPresent(DataType::class.java)) {
-            val annotation = element.getAnnotation(DataType::class.java)
+        if (declaresDataType(element)) {
+            val annotation = element.getAnnotation(lang.taxi.annotations.DataType::class.java)
             if (annotation.declaresName()) {
                 return annotation.qualifiedName(defaultNamespace)
             }
         }
 
         val type = typeFromElement(element)
+
         // If it's an inner class, trim the qualifier
         // This may cause problems with duplicates, but let's encourage
         // peeps to solve that via the DataType annotation.

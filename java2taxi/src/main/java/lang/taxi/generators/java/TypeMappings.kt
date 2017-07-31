@@ -1,6 +1,7 @@
 package lang.taxi.generators.java
 
-import lang.taxi.*
+import lang.taxi.Type
+import lang.taxi.TypeNames
 import lang.taxi.annotations.DataType
 import lang.taxi.annotations.declaresName
 import lang.taxi.annotations.qualifiedName
@@ -25,8 +26,6 @@ interface TypeMapper {
     }
 
     fun getTaxiType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String): Type
-
-
 }
 
 object PrimitiveTypes {
@@ -43,6 +42,14 @@ object PrimitiveTypes {
     private val javaTypeToPrimitive: Map<Class<out Any>, PrimitiveType> = taxiPrimitiveToJavaTypes.flatMap { (primitive, javaTypes) ->
         javaTypes.map { it to primitive }
     }.toMap()
+
+    /**
+     * Only considers the class itself, and not any declared
+     * annotationed datatypes
+     */
+    fun isClassTaxiPrimitive(rawType: Class<*>): Boolean {
+        return isTaxiPrimitive(rawType.typeName)
+    }
 
     fun isTaxiPrimitive(javaTypeQualifiedName: String): Boolean {
         return this.javaTypeToPrimitive.keys.any { it.canonicalName == javaTypeQualifiedName }
@@ -61,7 +68,14 @@ class DefaultTypeMapper : TypeMapper {
     }
 
     override fun getTaxiType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String): Type {
-        val targetTypeName = TypeNames.deriveTypeName(element, defaultNamespace)
+        val elementType = TypeNames.typeFromElement(element)
+
+        if (isTaxiPrimitiveWithoutAnnotation(element)) {
+            // If the type has a DataType annotation, we use that
+            // Otherwise, return the primitive
+            return PrimitiveTypes.getTaxiPrimitive(elementType.typeName)
+        }
+        val targetTypeName = getTargetTypeName(element, defaultNamespace)
 
         if (declaresTypeAlias(element)) {
             val typeAliasName = getDeclaredTypeAliasName(element, defaultNamespace)!!
@@ -78,6 +92,10 @@ class DefaultTypeMapper : TypeMapper {
         }
 
         return mapNewObjectType(element, defaultNamespace, existingTypes)
+    }
+
+    private fun isTaxiPrimitiveWithoutAnnotation(element: AnnotatedElement): Boolean {
+        return (!TypeNames.declaresDataType(element) && PrimitiveTypes.isClassTaxiPrimitive(TypeNames.typeFromElement(element)))
     }
 
     private fun getOrCreateTypeAlias(element: AnnotatedElement, typeAliasName: String, existingTypes: MutableSet<Type>): TypeAlias {
@@ -109,12 +127,20 @@ class DefaultTypeMapper : TypeMapper {
     }
 
     private fun mapNewObjectType(element: AnnotatedElement, defaultNamespace: String, existingTypes: MutableSet<Type>): ObjectType {
-        val name = TypeNames.deriveTypeName(element, defaultNamespace)
+        val name = getTargetTypeName(element, defaultNamespace)
         val fields = mutableListOf<lang.taxi.types.Field>()
         val objectType = ObjectType(name, fields)
         existingTypes.add(objectType)
         fields.addAll(this.mapTaxiFields(lang.taxi.TypeNames.typeFromElement(element), defaultNamespace, existingTypes))
         return objectType
+    }
+
+    private fun getTargetTypeName(element: AnnotatedElement, defaultNamespace: String): String {
+        val rawType = TypeNames.typeFromElement(element)
+        if (!TypeNames.declaresDataType(element) && PrimitiveTypes.isClassTaxiPrimitive(rawType)) {
+            return PrimitiveTypes.getTaxiPrimitive(rawType.typeName).qualifiedName
+        }
+        return TypeNames.deriveTypeName(element, defaultNamespace)
     }
 
 
