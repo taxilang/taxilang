@@ -17,15 +17,16 @@ class SchemaWriter {
     private fun generateSchema(doc: TaxiDocument): List<String> {
         return doc.toNamespacedDocs().map { namespacedDoc ->
             val types = namespacedDoc.types.map { generateTypeDeclaration(it, namespacedDoc.namespace) }
-            val typesTaxiString = types.joinToString("\n\n")
+            val typesTaxiString = types.joinToString("\n\n").trim()
 
-            val servicesTaxiString = namespacedDoc.services.map { generateServiceDeclaration(it, namespacedDoc.namespace) }.joinToString("\n")
+            val servicesTaxiString = namespacedDoc.services.map { generateServiceDeclaration(it, namespacedDoc.namespace) }.joinToString("\n").trim()
             //return:
-            """namespace ${namespacedDoc.namespace}
+            """namespace ${namespacedDoc.namespace} {
 
-$typesTaxiString
+${typesTaxiString.prependIndent()}
 
-$servicesTaxiString
+${servicesTaxiString.prependIndent()}
+}
 """
         }
     }
