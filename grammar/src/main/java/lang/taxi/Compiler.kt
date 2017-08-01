@@ -18,7 +18,11 @@ import java.nio.file.Path
 object Namespaces {
     const val DEFAULT_NAMESPACE = ""
 }
-data class CompilationError(val offendingToken: Token, val detailMessage: String?)
+data class CompilationError(val offendingToken: Token, val detailMessage: String?) {
+    val line = offendingToken.line
+    val char = offendingToken.charPositionInLine
+}
+
 class CompilationException(val errors: List<CompilationError>) : RuntimeException(errors.map { it.detailMessage }.filterNotNull().joinToString()) {
     constructor(offendingToken: Token, detailMessage: String?) : this(listOf(CompilationError(offendingToken, detailMessage)))
 }
@@ -39,18 +43,20 @@ class Compiler(val inputs: List<CharStream>) {
         // source provider
         val tokensCollection = inputs.map { input ->
             val listener = TokenCollator()
+            val errorListener = CollectingErrorListener()
             val lexer = TaxiLexer(input)
             val parser = TaxiParser(CommonTokenStream(lexer))
             parser.addParseListener(listener)
+            parser.addErrorListener(errorListener)
             val doc = parser.document()
             doc.exception?.let {
                 throw CompilationException(it.offendingToken, it.message)
             }
-            val errors = listener.exceptions.map { (context, exception) ->
-                CompilationError(context.start, exception.message)
-            }
-            if (errors.isNotEmpty())
-                throw CompilationException(errors)
+//            val errors = listener.exceptions.map { (context, exception) ->
+//                CompilationError(context.start, exception.message)
+//            }
+            if (errorListener.errors.isNotEmpty())
+                throw CompilationException(errorListener.errors)
 
             listener.tokens()
         }

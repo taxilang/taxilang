@@ -10,6 +10,30 @@ import java.math.BigDecimal
 class DataStructureTests {
 
     @Test
+    fun when_structMixesNamespaces_then_validSchemaIsGenerated() {
+        @DataType("polymer.creditInc.Client")
+        data class Client(@field:DataType("polymer.creditInc.ClientId") val clientId: String,
+                          @field:DataType("polymer.creditInc.ClientName") val clientName: String,
+                          @field:DataType("isic.uk.SIC2008") val sicCode: String
+        )
+
+        val taxiDef = TaxiGenerator().forClasses(Client::class.java).generateAsStrings()
+        val expected = """
+namespace polymer.creditInc {
+    type Client {
+        clientId : ClientId as String
+        clientName : ClientName as String
+        sicCode : isic.uk.SIC2008
+    }
+}
+
+namespace isic.uk {
+    type alias SIC2008 as String
+}"""
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
+
+    @Test
     fun given_structDoesNotMapPrimativeType_then_itIsMappedToTaxiPrimative() {
         @DataType
         @Namespace("taxi.example")

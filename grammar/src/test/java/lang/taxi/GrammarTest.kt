@@ -19,6 +19,32 @@ class GrammarTest {
         val doc = Compiler(testResource("petstore.taxi")).compile()
     }
 
+    @Test(expected = CompilationException::class)
+    fun itIsInvalidToDeclareTwoNamespaceElementsWithoutUsingBlocks() {
+        val source = """
+namespace foo
+type FooType {}
+
+namespace bar
+type BarType {}
+"""
+        val doc = Compiler(source).compile()
+        expect(doc).to.be.`null`
+    }
+
+    @Test
+    fun canLeverageNamespaceBlocksWithinDocument() {
+        val source = """
+namespace foo {
+    type FooType {}
+}
+namespace bar {
+    type BarType {}
+}"""
+        val doc = Compiler(source).compile()
+        expect(doc.objectType("foo.FooType")).not.to.be.`null`
+        expect(doc.objectType("bar.BarType")).not.to.be.`null`
+    }
     @Test
     fun canParseSimpleDocument() {
         val doc = Compiler(testResource("simpleType.taxi")).compile()
@@ -179,9 +205,13 @@ type Invoice {
     previousInvoice : taxi.example.Invoice
 }
 
-type alias ClientId as lang.taxi.String
+// Note : Fully qualified primitives not currently working.
+// https://gitlab.com/osmosis-platform/taxi-lang/issues/5
+//type alias ClientId as lang.taxi.String
+//type alias InvoiceValue as lang.taxi.Decimal
 
-type alias InvoiceValue as lang.taxi.Decimal
+type alias ClientId as String
+type alias InvoiceValue as Decimal
 """
         val doc = Compiler(source).compile()
         val invoice = doc.objectType("taxi.example.Invoice")

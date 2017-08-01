@@ -2,15 +2,31 @@ grammar Taxi;
 
 // starting point for parsing a taxi file
 document
-    :   namespaceDeclaration? importDeclaration* toplevelObject* EOF
+    :   (singleNamespaceDocument | multiNamespaceDocument)
     ;
 
+singleNamespaceDocument
+    :   namespaceDeclaration? /*importDeclaration**/ toplevelObject* EOF
+    ;
+
+multiNamespaceDocument
+    : /*importDeclaration**/  namespaceBlock* EOF
+    ;
+// Imports not yet supported
+//importDeclaration
+//    :   'import' qualifiedName ('.' '*')? ';'
+//    ;
 namespaceDeclaration
     :   'namespace' qualifiedName
     ;
 
-importDeclaration
-    :   'import' qualifiedName ('.' '*')? ';'
+namespaceBlock
+    :   'namespace' qualifiedName namespaceBody
+    ;
+
+
+namespaceBody
+    : '{' toplevelObject* '}'
     ;
 
 toplevelObject
@@ -126,6 +142,7 @@ primary
 qualifiedName
     :   Identifier ('.' Identifier)*
     ;
+
 
 primitiveType
     :   'Boolean'

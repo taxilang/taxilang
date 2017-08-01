@@ -21,6 +21,7 @@ class TokenCollator : TaxiBaseListener() {
     val exceptions = mutableMapOf<ParserRuleContext, Exception>()
     private var namespace: String = Namespaces.DEFAULT_NAMESPACE
 
+
     private val unparsedTypes = mutableMapOf<String, Pair<Namespace, ParserRuleContext>>()
     private val unparsedExtensions = mutableListOf<Pair<Namespace, ParserRuleContext>>()
     private val unparsedServices = mutableMapOf<String, Pair<Namespace, ServiceDeclarationContext>>()
@@ -53,8 +54,23 @@ class TokenCollator : TaxiBaseListener() {
 
     override fun exitNamespaceDeclaration(ctx: TaxiParser.NamespaceDeclarationContext) {
         collateExceptions(ctx)
-        this.namespace = (ctx.payload as ParserRuleContext).children[1].text
+        this.namespace = ctx.qualifiedName().Identifier().text()
         super.exitNamespaceDeclaration(ctx)
+    }
+
+    override fun enterNamespaceBody(ctx: TaxiParser.NamespaceBodyContext) {
+        val parent = ctx.parent as ParserRuleContext
+        val namespaceNode = parent.getChild(TaxiParser.QualifiedNameContext::class.java,0)
+        this.namespace = namespaceNode.Identifier().text()
+        super.enterNamespaceBody(ctx)
+    }
+
+    override fun enterNamespaceBlock(ctx: TaxiParser.NamespaceBlockContext) {
+//        collateExceptions(ctx)
+        // Naive implementation ... let's just shift the namesapce.
+        // This probably won't work, but let's see
+//        this.namespace = ctx.qualifiedName().Identifier().text()
+//        super.exitNamespaceBlock(ctx)
     }
 
     override fun exitServiceDeclaration(ctx: ServiceDeclarationContext) {
