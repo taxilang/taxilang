@@ -1,8 +1,6 @@
 package lang.taxi
 
-import lang.taxi.services.Operation
-import lang.taxi.services.Parameter
-import lang.taxi.services.Service
+import lang.taxi.services.*
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import org.antlr.v4.runtime.CharStream
@@ -18,6 +16,7 @@ import java.nio.file.Path
 object Namespaces {
     const val DEFAULT_NAMESPACE = ""
 }
+
 data class CompilationError(val offendingToken: Token, val detailMessage: String?) {
     val line = offendingToken.line
     val char = offendingToken.charPositionInLine
@@ -31,6 +30,7 @@ class Compiler(val inputs: List<CharStream>) {
     constructor(input: CharStream) : this(listOf(input))
     constructor(path: Path) : this(CharStreams.fromPath(path))
     constructor(source: String) : this(CharStreams.fromString(source))
+    constructor(vararg sources: String) : this(sources.map { CharStreams.fromString(it) })
     constructor(file: File) : this(CharStreams.fromPath(file.toPath()))
 
     companion object {
@@ -67,7 +67,7 @@ class Compiler(val inputs: List<CharStream>) {
     }
 }
 
-private class DocumentListener(val tokens: Tokens)  {
+private class DocumentListener(val tokens: Tokens) {
     private val typeSystem = TypeSystem()
     private val services = mutableListOf<Service>()
     fun buildTaxiDocument(): TaxiDocument {
@@ -76,7 +76,7 @@ private class DocumentListener(val tokens: Tokens)  {
     }
 
 
-    private fun qualify(namespace:Namespace, name: String): String {
+    private fun qualify(namespace: Namespace, name: String): String {
         if (name.contains("."))
         // This is already qualified
             return name
@@ -105,13 +105,13 @@ private class DocumentListener(val tokens: Tokens)  {
     }
 
     private fun compileTokens() {
-        tokens.unparsedTypes.forEach { (tokenName,_) ->
+        tokens.unparsedTypes.forEach { (tokenName, _) ->
             compileToken(tokenName)
         }
     }
 
     private fun compileToken(tokenName: String) {
-        val (namespace,tokenRule) = tokens.unparsedTypes[tokenName]!!
+        val (namespace, tokenRule) = tokens.unparsedTypes[tokenName]!!
         if (typeSystem.isDefined(tokenName) && typeSystem.getType(tokenName) is TypeAlias) {
             // As type aliases can be defined inline, it's perfectly acceptable for
             // this to already exist
@@ -123,13 +123,13 @@ private class DocumentListener(val tokens: Tokens)  {
             is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(tokenName, tokenRule)
         // TODO : This is a bit broad - assuming that all typeType's that hit this
         // line will be a TypeAlias inline.  It could be a normal field declaration.
-            is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(namespace , tokenRule)
+            is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(namespace, tokenRule)
             else -> TODO("Not handled: $tokenRule")
         }
     }
 
     private fun compileTypeExtensions() {
-        tokens.unparsedExtensions.forEach { (_,typeRule) ->
+        tokens.unparsedExtensions.forEach { (_, typeRule) ->
             when (typeRule) {
                 is TaxiParser.TypeExtensionDeclarationContext -> compileTypeExtension(typeRule)
                 else -> TODO("Not handled: $typeRule")
@@ -160,13 +160,12 @@ private class DocumentListener(val tokens: Tokens)  {
     }
 
 
-
     fun List<TerminalNode>.text(): String {
         return this.joinToString(".")
     }
 
 
-    private fun compileType(namespace:Namespace, typeName: String, ctx: TaxiParser.TypeDeclarationContext) {
+    private fun compileType(namespace: Namespace, typeName: String, ctx: TaxiParser.TypeDeclarationContext) {
         val fields = ctx.typeBody().typeMemberDeclaration().map { member ->
             val fieldAnnotations = collateAnnotations(member.annotation())
             Field(name = member.fieldDeclaration().Identifier().text,
@@ -200,7 +199,7 @@ private class DocumentListener(val tokens: Tokens)  {
         }
     }
 
-    private fun parseTypeOrVoid(namespace:Namespace, typeType: TaxiParser.TypeTypeContext?): Type {
+    private fun parseTypeOrVoid(namespace: Namespace, typeType: TaxiParser.TypeTypeContext?): Type {
         return if (typeType == null) {
             VoidType.VOID
         } else {
@@ -211,7 +210,7 @@ private class DocumentListener(val tokens: Tokens)  {
     private fun parseType(namespace: Namespace, typeType: TaxiParser.TypeTypeContext): Type {
         val type = when {
 //            typeType.aliasedType() != null -> compileInlineTypeAlias(typeType)
-            typeType.classOrInterfaceType() != null -> resolveUserType(namespace,typeType.classOrInterfaceType())
+            typeType.classOrInterfaceType() != null -> resolveUserType(namespace, typeType.classOrInterfaceType())
             typeType.primitiveType() != null -> PrimitiveType.fromDeclaration(typeType.getChild(0).text)
             else -> throw IllegalArgumentException()
         }
@@ -226,7 +225,7 @@ private class DocumentListener(val tokens: Tokens)  {
      * Handles type aliases that are declared inline (firstName : PersonFirstName as String)
      * rather than those declared explicitly (type alias PersonFirstName as String)
      */
-    private fun compileInlineTypeAlias(namespace:Namespace, aliasTypeDefinition: TaxiParser.TypeTypeContext): Type {
+    private fun compileInlineTypeAlias(namespace: Namespace, aliasTypeDefinition: TaxiParser.TypeTypeContext): Type {
         val aliasedType = parseType(namespace, aliasTypeDefinition.aliasedType().typeType())
         val typeAliasName = qualify(namespace, aliasTypeDefinition.classOrInterfaceType().Identifier().text())
         // Annotations not supported on Inline type aliases
@@ -250,7 +249,6 @@ private class DocumentListener(val tokens: Tokens)  {
     }
 
 
-
     private fun compileEnum(typeName: String, ctx: TaxiParser.EnumDeclarationContext) {
         val enumValues = ctx.enumConstants().enumConstant().map { enumConstant ->
             val annotations = collateAnnotations(enumConstant.annotation())
@@ -267,10 +265,18 @@ private class DocumentListener(val tokens: Tokens)  {
             val (namespace, serviceToken) = serviceTokenPair
             val methods = serviceToken.serviceBody().serviceOperationDeclaration().map { operationDeclaration ->
                 val signature = operationDeclaration.operationSignature()
+                val returnType = parseTypeOrVoid(namespace, signature.typeType())
                 Operation(name = signature.Identifier().text,
                         annotations = collateAnnotations(operationDeclaration.annotation()),
-                        parameters = signature.operationParameter().map { Parameter(collateAnnotations(it.annotation()), parseType(namespace, it.typeType())) },
-                        returnType = parseTypeOrVoid(namespace,signature.typeType())
+                        parameters = signature.operationParameterList().operationParameter().map {
+                            val paramType = parseType(namespace, it.typeType())
+                            Parameter(collateAnnotations(it.annotation()), paramType,
+                                    name = it.parameterName()?.Identifier()?.text,
+                                    constraints = mapConstraints(it, paramType))
+                        },
+                        returnType = returnType,
+                        contract = parseOperationContract(operationDeclaration, returnType)
+
                 )
             }
             Service(qualifiedName, methods, collateAnnotations(serviceToken.annotation()))
@@ -278,12 +284,40 @@ private class DocumentListener(val tokens: Tokens)  {
         this.services.addAll(services)
     }
 
+    private fun parseOperationContract(operationDeclaration: TaxiParser.ServiceOperationDeclarationContext, returnType: Type): OperationContract? {
+        val signature = operationDeclaration.operationSignature()
+        if (signature.operationContract() == null) {
+            return null
+        }
+        val contract = signature.operationContract()
+
+        if (contract.operationParameterConstraintExpressionList() == null) {
+            return null
+        }
+
+        val constraints = OperationConstraintConverter(contract.operationParameterConstraintExpressionList(), returnType).constraints()
+        return OperationContract(returnType, constraints)
+    }
+
+    private fun mapConstraints(operationParameterContext: TaxiParser.OperationParameterContext, paramType: Type): List<Constraint> {
+        if (operationParameterContext.operationParameterConstraint() == null) {
+            return emptyList()
+        }
+        return OperationConstraintConverter(operationParameterContext
+                .operationParameterConstraint().operationParameterConstraintExpressionList(),
+                paramType).constraints()
+    }
+
 
 }
 
-private fun TaxiParser.LiteralContext.value(): Any {
+fun TaxiParser.LiteralContext.value(): Any {
     return when {
-        this.StringLiteral() != null -> this.StringLiteral().text.trim('"')
+        this.StringLiteral() != null -> {
+            // can be either ' or "
+            val firstChar = this.StringLiteral().text.toCharArray()[0]
+            this.StringLiteral().text.trim(firstChar)
+        }
         this.IntegerLiteral() != null -> this.IntegerLiteral().text.toInt()
         this.BooleanLiteral() != null -> this.BooleanLiteral().text.toBoolean()
         else -> TODO()

@@ -118,12 +118,41 @@ serviceBody
      ;
 
 operationSignature
-     :   annotation* Identifier '(' operationParameter* ')' ':' typeType
+     :   annotation* Identifier '(' operationParameterList? ')' ':' typeType operationContract?
      ;
 
+operationParameterList
+    :   operationParameter (',' operationParameter)*
+    ;
+
 operationParameter
-     :   annotation* typeType
+// Note that only one operationParameterConstraint can exist per parameter, but it can contain
+// multiple expressions
+     :   annotation* (parameterName)? typeType operationParameterConstraint?
      ;
+
+// Parameter names are optional.
+// But, they must be used to be referenced in return contracts
+parameterName
+    :   Identifier ':'
+    ;
+
+operationParameterConstraint
+    :   '(' operationParameterConstraintExpressionList ')'
+    ;
+
+
+operationParameterConstraintExpressionList
+    :  operationParameterConstraintExpression (',' operationParameterConstraintExpression)*
+    ;
+
+operationParameterConstraintExpression
+    :  Identifier '=' expression
+    ;
+
+operationContract
+    : '(' operationParameterConstraintExpressionList ')'
+    ;
 expression
     :   primary
     ;
@@ -190,6 +219,7 @@ Identifier
 
 StringLiteral
     :   '"' StringCharacters? '"'
+    |   '\'' StringCharacters? '\''
     ;
 
 BooleanLiteral

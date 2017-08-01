@@ -65,13 +65,7 @@ class TokenCollator : TaxiBaseListener() {
         super.enterNamespaceBody(ctx)
     }
 
-    override fun enterNamespaceBlock(ctx: TaxiParser.NamespaceBlockContext) {
-//        collateExceptions(ctx)
-        // Naive implementation ... let's just shift the namesapce.
-        // This probably won't work, but let's see
-//        this.namespace = ctx.qualifiedName().Identifier().text()
-//        super.exitNamespaceBlock(ctx)
-    }
+
 
     override fun exitServiceDeclaration(ctx: ServiceDeclarationContext) {
         collateExceptions(ctx)
