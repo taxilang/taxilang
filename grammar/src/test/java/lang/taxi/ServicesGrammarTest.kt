@@ -3,6 +3,7 @@ package lang.taxi
 import com.winterbe.expekt.expect
 import lang.taxi.services.AttributeConstantValueConstraint
 import lang.taxi.services.AttributeValueFromParameterConstraint
+import lang.taxi.services.ReturnValueDerivedFromParameterConstraint
 import org.junit.Test
 
 class ServicesGrammarTest {
@@ -88,17 +89,23 @@ service MyService {
     fun servicesCanDeclareContractsOnReturnValues() {
         val source = """
 service MyService {
-    operation convertCurrency(source : Money, target : Currency) : Money( currency = target )
+    operation convertCurrency(source : Money, target : Currency) : Money( from source,  currency = target )
 }
 """
         val doc = Compiler(moneyType, source).compile()
         val operation = doc.service("MyService").operation("convertCurrency")
         expect(operation.contract).to.not.be.`null`
-        expect(operation.contract!!.returnTypeConstraints).to.have.size(1)
-        val constraint = operation.contract!!.returnTypeConstraints[0]
+        val contract = operation.contract!!
+        expect(contract.returnTypeConstraints).to.have.size(2)
+        val constraint = contract.returnTypeConstraints[1]
         expect(constraint).instanceof(AttributeValueFromParameterConstraint::class.java)
         val valueConstraint = constraint as AttributeValueFromParameterConstraint
         expect(valueConstraint.fieldName).to.equal("currency")
         expect(valueConstraint.parameterName).to.equal("target")
+
+        expect(contract.returnTypeConstraints[0]).instanceof(ReturnValueDerivedFromParameterConstraint::class.java)
+        val originConstraint = contract.returnTypeConstraints[0] as ReturnValueDerivedFromParameterConstraint
+        expect(originConstraint.parameterName).to.equal("source")
+
     }
 }

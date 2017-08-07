@@ -147,8 +147,18 @@ operationParameterConstraintExpressionList
     ;
 
 operationParameterConstraintExpression
+    :  operationParameterExpectedValueConstraintExpression
+    |  operationReturnValueOriginExpression
+    ;
+
+operationReturnValueOriginExpression
+    :  'from' Identifier
+    ;
+
+operationParameterExpectedValueConstraintExpression
     :  Identifier '=' expression
     ;
+
 
 operationContract
     : '(' operationParameterConstraintExpressionList ')'

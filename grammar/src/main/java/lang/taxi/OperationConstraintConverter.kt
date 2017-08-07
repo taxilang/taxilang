@@ -3,6 +3,7 @@ package lang.taxi
 import lang.taxi.services.AttributeConstantValueConstraint
 import lang.taxi.services.AttributeValueFromParameterConstraint
 import lang.taxi.services.Constraint
+import lang.taxi.services.ReturnValueDerivedFromParameterConstraint
 import lang.taxi.types.ObjectType
 
 interface ConstraintProvider {
@@ -14,7 +15,8 @@ interface ConstraintProvider {
 class OperationConstraintConverter(val expressionList: TaxiParser.OperationParameterConstraintExpressionListContext, val paramType: Type) {
     private val constraintProviders = listOf(
             AttributeConstantConstraintProvider(),
-            AttributeValueFromParameterConstraintProvider()
+            AttributeValueFromParameterConstraintProvider(),
+            ReturnValueDerivedFromInputConstraintProvider()
     )
 
     fun constraints(): List<Constraint> {
@@ -23,43 +25,60 @@ class OperationConstraintConverter(val expressionList: TaxiParser.OperationParam
     }
 
     private fun buildConstraint(constraint: TaxiParser.OperationParameterConstraintExpressionContext, paramType: Type): Constraint {
-        validateTargetFieldIsPresentOnType(constraint, paramType)
         return constraintProviders
                 .first { it.applies(constraint) }
                 .build(constraint, paramType)
 
     }
 
-    private fun validateTargetFieldIsPresentOnType(it: TaxiParser.OperationParameterConstraintExpressionContext, paramType: Type) {
-        val targetField = it.Identifier().text
-        if (paramType !is ObjectType) {
-            throw CompilationException(it.start, "Constraints are only supported on Object types.")
-        }
-        val hasField = paramType.fields.any { it.name == targetField }
-        if (!hasField) {
-            throw CompilationException(it.start, "Constraint field ('$targetField') is not present on type ${paramType.qualifiedName}")
-        }
-    }
 }
 
 
 class AttributeConstantConstraintProvider : ConstraintProvider {
     override fun applies(constraint: TaxiParser.OperationParameterConstraintExpressionContext): Boolean {
-        return constraint.expression().primary().literal() != null
+        val constraintDefinition = constraint.operationParameterExpectedValueConstraintExpression()
+        return constraintDefinition != null && constraintDefinition.expression().primary().literal() != null
     }
 
     override fun build(constraint: TaxiParser.OperationParameterConstraintExpressionContext, type: Type): Constraint {
-        return AttributeConstantValueConstraint(constraint.Identifier().text, constraint.expression().primary().literal().value())
+        val constraintDefinition = constraint.operationParameterExpectedValueConstraintExpression()!!
+        return AttributeConstantValueConstraint(constraintDefinition.Identifier().text, constraintDefinition.expression().primary().literal().value())
+    }
+
+    private fun validateTargetFieldIsPresentOnType(constraint: TaxiParser.OperationParameterConstraintExpressionContext, paramType: Type) {
+        val constraintDefinition = constraint.operationParameterExpectedValueConstraintExpression()!!
+
+        val targetField = constraintDefinition.Identifier().text
+        if (paramType !is ObjectType) {
+            throw CompilationException(constraintDefinition.start, "Constraints are only supported on Object types.")
+        }
+        val hasField = paramType.fields.any { it.name == targetField }
+        if (!hasField) {
+            throw CompilationException(constraintDefinition.start, "Constraint field ('$targetField') is not present on type ${paramType.qualifiedName}")
+        }
     }
 }
 
 class AttributeValueFromParameterConstraintProvider : ConstraintProvider {
     override fun applies(constraint: TaxiParser.OperationParameterConstraintExpressionContext): Boolean {
-        return constraint.expression().primary().Identifier() != null
+        val constraintDefinition = constraint.operationParameterExpectedValueConstraintExpression()
+        return constraintDefinition != null && constraintDefinition.expression().primary().Identifier() != null
+    }
+
+
+    override fun build(constraint: TaxiParser.OperationParameterConstraintExpressionContext, type: Type): Constraint {
+        val constraintDefinition = constraint.operationParameterExpectedValueConstraintExpression()!!
+        return AttributeValueFromParameterConstraint(constraintDefinition.Identifier().text, constraintDefinition.expression().primary().Identifier().text)
+    }
+}
+
+class ReturnValueDerivedFromInputConstraintProvider : ConstraintProvider {
+    override fun applies(constraint: TaxiParser.OperationParameterConstraintExpressionContext): Boolean {
+        return constraint.operationReturnValueOriginExpression() != null
     }
 
     override fun build(constraint: TaxiParser.OperationParameterConstraintExpressionContext, type: Type): Constraint {
-        return AttributeValueFromParameterConstraint(constraint.Identifier().text, constraint.expression().primary().Identifier().text)
+        return ReturnValueDerivedFromParameterConstraint(constraint.operationReturnValueOriginExpression().Identifier().text)
     }
 
 }
