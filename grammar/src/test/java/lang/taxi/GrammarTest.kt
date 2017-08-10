@@ -1,7 +1,9 @@
 package lang.taxi
 
 import com.winterbe.expekt.expect
+import lang.taxi.services.AttributeConstantValueConstraint
 import lang.taxi.types.ArrayType
+import lang.taxi.types.Modifier
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TypeAlias
 import org.junit.Rule
@@ -45,6 +47,7 @@ namespace bar {
         expect(doc.objectType("foo.FooType")).not.to.be.`null`
         expect(doc.objectType("bar.BarType")).not.to.be.`null`
     }
+
     @Test
     fun canParseSimpleDocument() {
         val doc = Compiler(testResource("simpleType.taxi")).compile()
@@ -218,6 +221,37 @@ type alias InvoiceValue as Decimal
         expect(invoice.field("clientId").type).to.be.instanceof(TypeAlias::class.java)
         val typeAlias = invoice.field("clientId").type as TypeAlias
         expect(typeAlias.aliasType).to.equal(PrimitiveType.STRING)
+    }
+
+    @Test
+    fun canDeclareConstraintsOnTypes() {
+        val source = """
+type Money {
+   amount : Amount as Decimal
+   currency : Currency as String
+}
+type SomeServiceRequest {
+   amount : Money(currency = 'GBP')
+   clientId : ClientId as String
+}
+"""
+        val doc = Compiler(source).compile()
+        val request = doc.objectType("SomeServiceRequest")
+
+        val amountField = request.field("amount")
+        expect(amountField.constraints).to.have.size(1)
+        expect(amountField.constraints[0]).to.be.instanceof(AttributeConstantValueConstraint::class.java)
+    }
+
+    @Test
+    fun canDetectParameterTypes() {
+        val source = """
+parameter type ClientRiskRequest {
+   amount : Amount as Decimal
+}"""
+        val doc = Compiler(source).compile()
+        val money = doc.objectType("ClientRiskRequest")
+        expect(money.modifiers).to.contain(Modifier.PARAMETER_TYPE)
     }
 
     private fun testResource(s: String): File {

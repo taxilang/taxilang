@@ -5,6 +5,7 @@ import lang.taxi.Annotatable
 import lang.taxi.Type
 import lang.taxi.UserType
 import lang.taxi.annotations
+import lang.taxi.services.Constraint
 
 data class FieldExtension(val name: String, override val annotations: List<Annotation>) : Annotatable
 data class ObjectTypeExtension(val annotations: List<Annotation> = emptyList(),
@@ -14,7 +15,7 @@ data class ObjectTypeExtension(val annotations: List<Annotation> = emptyList(),
     }
 }
 
-data class ObjectTypeDefinition(val fields: List<Field> = emptyList(), val annotations: List<Annotation> = emptyList()) {
+data class ObjectTypeDefinition(val fields: List<Field> = emptyList(), val annotations: List<Annotation> = emptyList(), val modifiers: List<Modifier> = emptyList()) {
     private fun fieldNames() = fields.map { it.name to it.type.qualifiedName }
     override fun hashCode(): Int {
         return Objects.hashCode(fieldNames(), annotations)
@@ -27,10 +28,27 @@ data class ObjectTypeDefinition(val fields: List<Field> = emptyList(), val annot
     }
 }
 
+enum class Modifier(val token: String) {
+
+    // A Parameter type indicates that the object
+// is used when constructing requests,
+// and that frameworks should freely construct
+// these types based on known values.
+    PARAMETER_TYPE("parameter");
+
+    companion object {
+        fun fromToken(token: String): Modifier {
+            return Modifier.values().first { it.token == token }
+        }
+    }
+
+}
+
 data class ObjectType(
         override val qualifiedName: String,
         override var definition: ObjectTypeDefinition?,
         override val extensions: MutableList<ObjectTypeExtension> = mutableListOf()
+
 ) : UserType<ObjectTypeDefinition, ObjectTypeExtension>, Annotatable {
     constructor(qualifiedName: String, fields: List<Field>) : this(qualifiedName, ObjectTypeDefinition(fields))
 
@@ -43,6 +61,11 @@ data class ObjectType(
     override fun toString(): String {
         return qualifiedName
     }
+
+    val modifiers: List<Modifier>
+        get() {
+            return this.definition?.modifiers ?: emptyList()
+        }
 
     val fields: List<Field>
         get() {
@@ -73,6 +96,7 @@ data class Field(
         val name: String,
         val type: Type,
         val nullable: Boolean = false,
-        val annotations: List<Annotation> = emptyList()
+        val annotations: List<Annotation> = emptyList(),
+        val constraints: List<Constraint> = emptyList()
 )
 

@@ -79,6 +79,7 @@ service MyService {
     currency : Currency as String
 }
 service MyService {
+    // Invalid, because the parameter name is incorrect
     operation calculateCreditRisk(amount : Money(ccy = 'GBP')) : Decimal
 }
 """

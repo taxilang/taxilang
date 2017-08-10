@@ -38,9 +38,16 @@ toplevelObject
 //    |   annotationTypeDeclaration
     ;
 
+typeModifier
+// A Parameter type indicates that the object
+// is used when constructing requests,
+// and that frameworks should freely construct
+// these types based on known values.
+    : 'parameter'
+    ;
 
 typeDeclaration
-    :  annotation* 'type' Identifier
+    :  typeModifier? annotation* 'type' Identifier
 //        ('extends' typeType)?
         typeBody
     ;
@@ -58,8 +65,8 @@ typeBody
      ;
 
 typeType
-    :   classOrInterfaceType listType? optionalType? aliasedType?
-    |   primitiveType listType? optionalType?
+    :   classOrInterfaceType parameterConstraint? listType? optionalType? aliasedType?
+    |   primitiveType parameterConstraint? listType? optionalType?
     ;
 
 classOrInterfaceType
@@ -118,7 +125,7 @@ serviceBody
      ;
 
 operationSignature
-     :   annotation* Identifier '(' operationParameterList? ')' ':' typeType operationContract?
+     :   annotation* Identifier '(' operationParameterList? ')' ':' typeType
      ;
 
 operationParameterList
@@ -128,7 +135,7 @@ operationParameterList
 operationParameter
 // Note that only one operationParameterConstraint can exist per parameter, but it can contain
 // multiple expressions
-     :   annotation* (parameterName)? typeType operationParameterConstraint?
+     :   annotation* (parameterName)? typeType
      ;
 
 // Parameter names are optional.
@@ -137,17 +144,17 @@ parameterName
     :   Identifier ':'
     ;
 
-operationParameterConstraint
-    :   '(' operationParameterConstraintExpressionList ')'
+parameterConstraint
+    :   '(' parameterConstraintExpressionList ')'
     ;
 
 
-operationParameterConstraintExpressionList
-    :  operationParameterConstraintExpression (',' operationParameterConstraintExpression)*
+parameterConstraintExpressionList
+    :  parameterConstraintExpression (',' parameterConstraintExpression)*
     ;
 
-operationParameterConstraintExpression
-    :  operationParameterExpectedValueConstraintExpression
+parameterConstraintExpression
+    :  parameterExpectedValueConstraintExpression
     |  operationReturnValueOriginExpression
     ;
 
@@ -155,14 +162,11 @@ operationReturnValueOriginExpression
     :  'from' Identifier
     ;
 
-operationParameterExpectedValueConstraintExpression
+parameterExpectedValueConstraintExpression
     :  Identifier '=' expression
     ;
 
 
-operationContract
-    : '(' operationParameterConstraintExpressionList ')'
-    ;
 expression
     :   primary
     ;

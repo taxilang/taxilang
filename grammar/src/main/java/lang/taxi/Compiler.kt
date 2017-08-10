@@ -168,14 +168,24 @@ private class DocumentListener(val tokens: Tokens) {
     private fun compileType(namespace: Namespace, typeName: String, ctx: TaxiParser.TypeDeclarationContext) {
         val fields = ctx.typeBody().typeMemberDeclaration().map { member ->
             val fieldAnnotations = collateAnnotations(member.annotation())
+            val type = parseType(namespace, member.fieldDeclaration().typeType())
             Field(name = member.fieldDeclaration().Identifier().text,
-                    type = parseType(namespace, member.fieldDeclaration().typeType()),
+                    type = type,
                     nullable = member.fieldDeclaration().typeType().optionalType() != null,
-                    annotations = fieldAnnotations
+                    annotations = fieldAnnotations,
+                    constraints = mapConstraints(member.fieldDeclaration().typeType(), type)
             )
         }
         val annotations = collateAnnotations(ctx.annotation())
-        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields, annotations)))
+        val modifiers = parseModifiers(ctx.typeModifier())
+        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields, annotations, modifiers)))
+    }
+
+    private fun  parseModifiers(typeModifier: TaxiParser.TypeModifierContext?): List<Modifier> {
+        typeModifier?.apply {
+            return listOf(Modifier.fromToken(typeModifier.text))
+        }
+        return emptyList()
     }
 
     private fun collateAnnotations(annotations: List<TaxiParser.AnnotationContext>): List<Annotation> {
@@ -272,7 +282,7 @@ private class DocumentListener(val tokens: Tokens) {
                             val paramType = parseType(namespace, it.typeType())
                             Parameter(collateAnnotations(it.annotation()), paramType,
                                     name = it.parameterName()?.Identifier()?.text,
-                                    constraints = mapConstraints(it, paramType))
+                                    constraints = mapConstraints(it.typeType(), paramType))
                         },
                         returnType = returnType,
                         contract = parseOperationContract(operationDeclaration, returnType)
@@ -286,25 +296,21 @@ private class DocumentListener(val tokens: Tokens) {
 
     private fun parseOperationContract(operationDeclaration: TaxiParser.ServiceOperationDeclarationContext, returnType: Type): OperationContract? {
         val signature = operationDeclaration.operationSignature()
-        if (signature.operationContract() == null) {
-            return null
-        }
-        val contract = signature.operationContract()
+        val constraintList = signature.typeType()
+                ?.parameterConstraint()
+                ?.parameterConstraintExpressionList()
+                ?: return null
 
-        if (contract.operationParameterConstraintExpressionList() == null) {
-            return null
-        }
-
-        val constraints = OperationConstraintConverter(contract.operationParameterConstraintExpressionList(), returnType).constraints()
+        val constraints = OperationConstraintConverter(constraintList, returnType).constraints()
         return OperationContract(returnType, constraints)
     }
 
-    private fun mapConstraints(operationParameterContext: TaxiParser.OperationParameterContext, paramType: Type): List<Constraint> {
-        if (operationParameterContext.operationParameterConstraint() == null) {
+    private fun mapConstraints(typeType: TaxiParser.TypeTypeContext, paramType: Type): List<Constraint> {
+        if (typeType.parameterConstraint() == null) {
             return emptyList()
         }
-        return OperationConstraintConverter(operationParameterContext
-                .operationParameterConstraint().operationParameterConstraintExpressionList(),
+        return OperationConstraintConverter(typeType.parameterConstraint()
+                .parameterConstraintExpressionList(),
                 paramType).constraints()
     }
 
