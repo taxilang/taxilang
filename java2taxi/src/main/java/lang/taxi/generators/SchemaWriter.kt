@@ -2,7 +2,9 @@ package lang.taxi.generators
 
 import lang.taxi.TaxiDocument
 import lang.taxi.Type
+import lang.taxi.services.Constraint
 import lang.taxi.services.Operation
+import lang.taxi.services.OperationContract
 import lang.taxi.services.Service
 import lang.taxi.types.Field
 import lang.taxi.types.ObjectType
@@ -47,12 +49,33 @@ $operations
     }
 
     private fun generateOperationDeclaration(operation: Operation, namespace: String): String {
-        val params = operation.parameters.map { it.type.toQualifiedName().qualifiedRelativeTo(namespace) }.joinToString(", ")
+        val params = operation.parameters.map { param ->
+            val constraintString = constraintString(param.constraints)
+            val paramName = if (!param.name.isNullOrEmpty()) param.name + " : " else ""
+            val paramDeclaration = param.type.toQualifiedName().qualifiedRelativeTo(namespace)
+            paramName + paramDeclaration + constraintString
+        }.joinToString(", ")
         val returnType = operation.returnType.toQualifiedName().qualifiedRelativeTo(namespace)
+        val returnContract = if (operation.contract != null) generateReturnContract(operation.contract!!) else ""
         val operationName = operation.name
 
         // TODO : Annotations
-        return "operation $operationName($params) : $returnType"
+        return "operation $operationName( $params ) : $returnType$returnContract"
+    }
+
+    private fun generateReturnContract(contract: OperationContract): String {
+        return constraintString(contract.returnTypeConstraints)
+    }
+
+    private fun constraintString(constraints: List<Constraint>): String {
+        if (constraints.isEmpty()) {
+            return ""
+        }
+        val constraintString = constraints
+                .map { it.asTaxi() }
+                .joinToString(", ")
+
+        return "( $constraintString )"
     }
 
     private fun generateTypeDeclaration(type: Type, currentNamespace: String): String {

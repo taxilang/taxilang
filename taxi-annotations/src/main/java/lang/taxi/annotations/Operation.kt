@@ -11,8 +11,43 @@ fun Service.declaresName(): Boolean {
     return this.value.isNotEmpty()
 }
 
-@Target(AnnotationTarget.FUNCTION)
+
 @Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.FUNCTION)
 annotation class Operation(
         /** The name of the operation */
         val value: String = "")
+
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.FUNCTION)
+annotation class ResponseContract(
+        val basedOn: String,
+        vararg val constraints: ResponseConstraint
+)
+
+@Target()
+@Retention(AnnotationRetention.RUNTIME)
+annotation class ResponseConstraint(
+        val value: String
+)
+
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.VALUE_PARAMETER)
+annotation class Parameter(
+        val name: String = "",
+        vararg val constraints: Constraint
+)
+
+@Target()
+@Retention(AnnotationRetention.RUNTIME)
+annotation class Constraint(
+        val value: String
+)
+
+/**
+ * Provides a polymorphic way of reading thw two constraint annotations.
+ */
+data class ConstraintAnnotationModel(val value: String, val annotation: Annotation) {
+    constructor(constraint: Constraint) : this(constraint.value, constraint)
+    constructor(constraint: ResponseConstraint) : this(constraint.value, constraint)
+}

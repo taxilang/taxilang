@@ -1,6 +1,10 @@
 package lang.taxi.annotations
 
-@Target(AnnotationTarget.CLASS, AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.VALUE_PARAMETER,
+        AnnotationTarget.PROPERTY, AnnotationTarget.FIELD,
+        // When on a Function, indicates the return type.
+        // Useful for methods that return String etc.
+        AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DataType(
         /**
@@ -17,7 +21,7 @@ fun DataType.declaresName(): Boolean {
     return this.value.isNotEmpty()
 }
 
-fun DataType.qualifiedName(defaultNamespace: String): String  = Namespaces.qualifiedName(this.value,defaultNamespace)
+fun DataType.qualifiedName(defaultNamespace: String): String = Namespaces.qualifiedName(this.value, defaultNamespace)
 
 /**
  * Specifies that an input must be provided in a specific format.

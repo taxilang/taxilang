@@ -12,6 +12,8 @@ import lang.taxi.types.TypeAlias
 import org.jetbrains.annotations.NotNull
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.lang.reflect.Parameter
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Instant
@@ -25,7 +27,7 @@ interface TypeMapper {
         return getTaxiType(element, existingTypes, namespace)
     }
 
-    fun getTaxiType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String): Type
+    fun getTaxiType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String, containingMember: AnnotatedElement? = null): Type
 }
 
 object PrimitiveTypes {
@@ -67,20 +69,36 @@ class DefaultTypeMapper : TypeMapper {
         return this.firstOrNull { it.qualifiedName == qualifiedTypeName }
     }
 
-    override fun getTaxiType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String): Type {
+    // A containingMember is typically a function, which has declared a returnType.
+    // Since the annotations can't go directly on the return type, they go on the function itself,
+    // meaning we need to evaluate the function when considering the type.
+    override fun getTaxiType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String, containingMember: AnnotatedElement?): Type {
         val elementType = TypeNames.typeFromElement(element)
 
         if (isTaxiPrimitiveWithoutAnnotation(element)) {
-            // If the type has a DataType annotation, we use that
-            // Otherwise, return the primitive
-            return PrimitiveTypes.getTaxiPrimitive(elementType.typeName)
+            if (containingMember == null) return PrimitiveTypes.getTaxiPrimitive(elementType.typeName)
+            if (isTaxiPrimitiveWithoutAnnotation(containingMember) ) {
+                // If the type has a DataType annotation, we use that
+                // Otherwise, return the primitive
+                return PrimitiveTypes.getTaxiPrimitive(elementType.typeName)
+            }
         }
-        val targetTypeName = getTargetTypeName(element, defaultNamespace)
+
+        val targetTypeName = getTargetTypeName(element, defaultNamespace, containingMember)
 
         if (declaresTypeAlias(element)) {
             val typeAliasName = getDeclaredTypeAliasName(element, defaultNamespace)!!
             return getOrCreateTypeAlias(element, typeAliasName, existingTypes)
         }
+
+        if (containingMember != null && declaresTypeAlias(containingMember)) {
+            val typeAliasName = getDeclaredTypeAliasName(containingMember, defaultNamespace)!!
+            return getOrCreateTypeAlias(containingMember, typeAliasName, existingTypes)
+        }
+
+//        if (isImplicitAliasForPrimitiveType(targetTypeName,element)) {
+//
+//        }
         if (PrimitiveTypes.isTaxiPrimitive(targetTypeName)) {
             return PrimitiveTypes.getTaxiPrimitive(targetTypeName)
         }
@@ -94,7 +112,15 @@ class DefaultTypeMapper : TypeMapper {
         return mapNewObjectType(element, defaultNamespace, existingTypes)
     }
 
-    private fun isTaxiPrimitiveWithoutAnnotation(element: AnnotatedElement): Boolean {
+//    // This is typically for functions who's parameters are
+//    // a primitive type (eg., String).  These
+//    private fun isImplicitAliasForPrimitiveType(targetTypeName: String, element: AnnotatedElement): Boolean {
+//
+//    }
+
+    private fun isTaxiPrimitiveWithoutAnnotation(element: AnnotatedElement?): Boolean {
+        if (element == null)
+            return false
         return (!TypeNames.declaresDataType(element) && PrimitiveTypes.isClassTaxiPrimitive(TypeNames.typeFromElement(element)))
     }
 
@@ -117,7 +143,7 @@ class DefaultTypeMapper : TypeMapper {
 
     private fun getDeclaredTypeAliasName(element: AnnotatedElement, defaultNamespace: String): String? {
         // TODO : We may consider type aliases for Objects later.
-        if (element !is Field) return null
+        if (element !is Field && element !is Parameter && element !is Method) return null
         val dataType = element.getAnnotation(DataType::class.java) ?: return null
         if (dataType.declaresName()) {
             return dataType.qualifiedName(defaultNamespace)
@@ -135,8 +161,12 @@ class DefaultTypeMapper : TypeMapper {
         return objectType
     }
 
-    private fun getTargetTypeName(element: AnnotatedElement, defaultNamespace: String): String {
+    private fun getTargetTypeName(element: AnnotatedElement, defaultNamespace: String, containingMember: AnnotatedElement? = null): String {
         val rawType = TypeNames.typeFromElement(element)
+
+        if (containingMember != null && TypeNames.declaresDataType(containingMember)) {
+            return TypeNames.deriveTypeName(containingMember, defaultNamespace)
+        }
         if (!TypeNames.declaresDataType(element) && PrimitiveTypes.isClassTaxiPrimitive(rawType)) {
             return PrimitiveTypes.getTaxiPrimitive(rawType.typeName).qualifiedName
         }

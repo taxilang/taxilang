@@ -6,6 +6,7 @@ import lang.taxi.annotations.namespace
 import lang.taxi.annotations.qualifiedName
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
+import java.lang.reflect.Method
 import java.lang.reflect.Parameter
 
 object TypeNames {
@@ -52,6 +53,7 @@ object TypeNames {
             is Class<*> -> element
             is Field -> element.type
             is Parameter -> element.type
+            is Method -> element.returnType
             else -> error("Unhandled type : $element")
         }
         return type
