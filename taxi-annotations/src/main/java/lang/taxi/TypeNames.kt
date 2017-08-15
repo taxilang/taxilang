@@ -28,24 +28,35 @@ object TypeNames {
         return deriveTypeName(type, namespace)
     }
 
-    fun declaresDataType(element:AnnotatedElement):Boolean {
+    fun declaresDataType(element: AnnotatedElement): Boolean {
         return element.isAnnotationPresent(lang.taxi.annotations.DataType::class.java)
     }
+
     fun deriveTypeName(element: AnnotatedElement, defaultNamespace: String): String {
         if (declaresDataType(element)) {
-            val annotation = element.getAnnotation(lang.taxi.annotations.DataType::class.java)
-            if (annotation.declaresName()) {
-                return annotation.qualifiedName(defaultNamespace)
-            }
+            val typeNameOnElement = detectDeclaredTypeName(element, defaultNamespace)
+            if (typeNameOnElement != null) return typeNameOnElement
         }
 
         val type = typeFromElement(element)
+        if (declaresDataType(type)) {
+            val typeNameOnType = detectDeclaredTypeName(type, defaultNamespace)
+            if (typeNameOnType != null) return typeNameOnType
+        }
 
         // If it's an inner class, trim the qualifier
         // This may cause problems with duplicates, but let's encourage
         // peeps to solve that via the DataType annotation.
         val typeName = type.simpleName.split("$").last()
         return "$defaultNamespace.$typeName"
+    }
+
+    private fun detectDeclaredTypeName(element:AnnotatedElement, defaultNamespace: String):String? {
+        val annotation = element.getAnnotation(lang.taxi.annotations.DataType::class.java)
+        if (annotation.declaresName()) {
+            return annotation.qualifiedName(defaultNamespace)
+        }
+        return null
     }
 
     fun typeFromElement(element: AnnotatedElement): Class<*> {

@@ -9,6 +9,7 @@ import lang.taxi.types.Annotation
 import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TypeAlias
+import lang.taxi.utils.log
 import org.jetbrains.annotations.NotNull
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
@@ -88,7 +89,14 @@ class DefaultTypeMapper : TypeMapper {
 
         if (declaresTypeAlias(element)) {
             val typeAliasName = getDeclaredTypeAliasName(element, defaultNamespace)!!
-            return getOrCreateTypeAlias(element, typeAliasName, existingTypes)
+            val aliasedTaxiType = getTypeDeclaredOnClass(element, existingTypes)
+            if (typeAliasName != aliasedTaxiType.qualifiedName) {
+                return getOrCreateTypeAlias(element, typeAliasName, existingTypes)
+            } else {
+                log().warn("Element $element declares a redundant type alias of $typeAliasName, which is already " +
+                        "declared on the type itself.  Consider removing this name (replacing it with an " +
+                        "empty @DataType annotation, otherwise future refactoring bugs are likely to occur")
+            }
         }
 
         if (containingMember != null && declaresTypeAlias(containingMember)) {
@@ -129,12 +137,16 @@ class DefaultTypeMapper : TypeMapper {
         if (existingAlias != null) {
             return existingAlias as TypeAlias
         } else {
-            val aliasedJavaType = TypeNames.typeFromElement(element)
-            val aliasedTaxiType = getTaxiType(aliasedJavaType, existingTypes)
+            val aliasedTaxiType = getTypeDeclaredOnClass(element, existingTypes)
             val typeAlias = TypeAlias(typeAliasName, aliasedTaxiType)
             existingTypes.add(typeAlias)
             return typeAlias
         }
+    }
+
+    fun getTypeDeclaredOnClass(element: AnnotatedElement, existingTypes: MutableSet<Type>): Type {
+        val typeName = TypeNames.typeFromElement(element)
+        return getTaxiType(typeName, existingTypes)
     }
 
     private fun declaresTypeAlias(element: AnnotatedElement): Boolean {
@@ -156,6 +168,9 @@ class DefaultTypeMapper : TypeMapper {
         val name = getTargetTypeName(element, defaultNamespace)
         val fields = mutableListOf<lang.taxi.types.Field>()
         val objectType = ObjectType(name, fields)
+
+        // Note: Add the type while it's empty, and then collect the fields.
+        // This allows circular references to resolve
         existingTypes.add(objectType)
         fields.addAll(this.mapTaxiFields(lang.taxi.TypeNames.typeFromElement(element), defaultNamespace, existingTypes))
         return objectType
