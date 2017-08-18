@@ -3,12 +3,11 @@ package lang.taxi.generators.java
 import lang.taxi.Type
 import lang.taxi.TypeNames
 import lang.taxi.annotations.DataType
+import lang.taxi.annotations.ParameterType
 import lang.taxi.annotations.declaresName
 import lang.taxi.annotations.qualifiedName
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.ObjectType
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.TypeAlias
 import lang.taxi.utils.log
 import org.jetbrains.annotations.NotNull
 import java.lang.reflect.AnnotatedElement
@@ -145,8 +144,8 @@ class DefaultTypeMapper : TypeMapper {
     }
 
     fun getTypeDeclaredOnClass(element: AnnotatedElement, existingTypes: MutableSet<Type>): Type {
-        val typeName = TypeNames.typeFromElement(element)
-        return getTaxiType(typeName, existingTypes)
+        val rawType = TypeNames.typeFromElement(element)
+        return getTaxiType(rawType, existingTypes)
     }
 
     private fun declaresTypeAlias(element: AnnotatedElement): Boolean {
@@ -167,7 +166,11 @@ class DefaultTypeMapper : TypeMapper {
     private fun mapNewObjectType(element: AnnotatedElement, defaultNamespace: String, existingTypes: MutableSet<Type>): ObjectType {
         val name = getTargetTypeName(element, defaultNamespace)
         val fields = mutableListOf<lang.taxi.types.Field>()
-        val objectType = ObjectType(name, fields)
+        val modifiers = if (element.getAnnotation(ParameterType::class.java) != null) {
+            listOf(Modifier.PARAMETER_TYPE)
+        } else emptyList()
+        val definition = ObjectTypeDefinition(fields, emptyList(), modifiers)
+        val objectType = ObjectType(name, definition)
 
         // Note: Add the type while it's empty, and then collect the fields.
         // This allows circular references to resolve

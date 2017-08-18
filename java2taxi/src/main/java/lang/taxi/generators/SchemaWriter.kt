@@ -93,7 +93,8 @@ $operations
     private fun generateObjectTypeDeclaration(type: ObjectType, currentNamespace: String): String {
 
         val fieldDelcarations = type.fields.map { generateFieldDeclaration(it, currentNamespace) }.joinToString("\n").prependIndent()
-        return """type ${type.toQualifiedName().typeName} {
+        val modifiers = type.modifiers.map { it.token }.joinToString(" ")
+        return """$modifiers type ${type.toQualifiedName().typeName} {
 $fieldDelcarations
 }"""
     }

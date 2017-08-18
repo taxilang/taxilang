@@ -19,7 +19,7 @@ object TypeNames {
             namespaceAnnotation != null -> namespaceAnnotation.value
             dataType != null && dataType.hasNamespace() -> dataType.namespace()!!
             service != null && service.hasNamespace() -> dataType.namespace()!!
-            else -> javaClass.`package`.name
+            else -> javaClass.`package`?.name ?: ""
         }
     }
 

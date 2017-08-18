@@ -3,6 +3,7 @@ package lang.taxi.generators.java
 import com.winterbe.expekt.expect
 import lang.taxi.annotations.DataType
 import lang.taxi.annotations.Namespace
+import lang.taxi.annotations.ParameterType
 import lang.taxi.types.PrimitiveType
 import org.junit.Test
 import java.math.BigDecimal
@@ -124,5 +125,23 @@ namespace namespaceB {
     }
 }"""
         TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
+
+    @Test
+    fun given_typeIsAParameterType_that_schemaIsGeneratedCorrectly() {
+        @DataType("namespaceA.Money")
+        @ParameterType
+        data class Money(val amount: BigDecimal)
+
+        val taxiDef = TaxiGenerator().forClasses(Money::class.java).generateAsStrings()
+        val expected = """
+namespace namespaceA {
+    parameter type Money {
+        amount : Decimal
+    }
+}"""
+
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+
     }
 }
