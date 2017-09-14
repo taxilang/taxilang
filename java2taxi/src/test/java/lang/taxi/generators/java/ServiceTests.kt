@@ -50,12 +50,10 @@ type Money {
     currency : Currency as String
     value : MoneyAmount as Decimal
 }
-type alias EmailAddress as String
 service PersonService {
     operation findPerson(PersonId) : Person
     operation convertRates( Money( currency = "GBP" ),
         targetCurrency : String ) : Money( from source, currency = targetCurrency )
-    operation findEmail(PersonId):EmailAddress
 }
 
 """

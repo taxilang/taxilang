@@ -21,6 +21,10 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.util.*
 
+interface ExtensionProvider
+interface ServiceExtensionProvider : ExtensionProvider
+
+
 interface TypeMapper {
     fun getTaxiType(element: Class<*>, existingTypes: MutableSet<Type>): Type {
         val namespace = TypeNames.deriveNamespace(element)
@@ -63,6 +67,7 @@ object PrimitiveTypes {
     }
 }
 
+
 class DefaultTypeMapper : TypeMapper {
 
     fun MutableSet<Type>.findByName(qualifiedTypeName: String): Type? {
@@ -77,7 +82,7 @@ class DefaultTypeMapper : TypeMapper {
 
         if (isTaxiPrimitiveWithoutAnnotation(element)) {
             if (containingMember == null) return PrimitiveTypes.getTaxiPrimitive(elementType.typeName)
-            if (isTaxiPrimitiveWithoutAnnotation(containingMember) ) {
+            if (isTaxiPrimitiveWithoutAnnotation(containingMember)) {
                 // If the type has a DataType annotation, we use that
                 // Otherwise, return the primitive
                 return PrimitiveTypes.getTaxiPrimitive(elementType.typeName)
