@@ -9,8 +9,7 @@ import lang.taxi.generators.SchemaWriter
 
 class TaxiGenerator(val typeMapper: TypeMapper = DefaultTypeMapper(),
                     val serviceMapper: ServiceMapper = DefaultServiceMapper(),
-                    val schemaWriter: SchemaWriter = SchemaWriter(),
-                    val extensions: ) {
+                    val schemaWriter: SchemaWriter = SchemaWriter()) {
     private val classes = mutableSetOf<Class<*>>()
     private val generatedTypes = mutableSetOf<Type>()
     private val services = mutableSetOf<lang.taxi.services.Service>()

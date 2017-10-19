@@ -38,9 +38,9 @@ class ServiceTests {
     // TODO : This test sometimes fails, which is annoying.
     @Test
     fun generatesServiceTemplate() {
-        val taxiDef = TaxiGenerator().forClasses(MyService::class.java, Person::class.java).generateAsStrings()
-        expect(taxiDef).to.have.size(1)
-        val expected = """
+       val taxiDef = TaxiGenerator().forClasses(MyService::class.java, Person::class.java).generateAsStrings()
+       expect(taxiDef).to.have.size(1)
+       val expected = """
 namespace taxi.example
 
 type Person {

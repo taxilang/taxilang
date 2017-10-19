@@ -21,9 +21,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.util.*
 
-interface ExtensionProvider
-interface ServiceExtensionProvider : ExtensionProvider
-
+interface MapperExtension
 
 interface TypeMapper {
     fun getTaxiType(element: Class<*>, existingTypes: MutableSet<Type>): Type {
