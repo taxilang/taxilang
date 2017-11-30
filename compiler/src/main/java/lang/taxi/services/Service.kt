@@ -1,17 +1,17 @@
 package lang.taxi.services
 
-import lang.taxi.Annotatable
-import lang.taxi.Named
-import lang.taxi.Type
+import lang.taxi.*
 import lang.taxi.types.Annotation
 
 data class Parameter(override val annotations: List<Annotation>, val type: Type, val name: String?, val constraints: List<Constraint>) : Annotatable
 
 data class Operation(val name: String, override val annotations: List<Annotation>, val parameters: List<Parameter>, val returnType: Type, val contract: OperationContract? = null) : Annotatable
-data class Service(override val qualifiedName: String, val operations: List<Operation>, override val annotations: List<Annotation>) : Annotatable, Named {
+data class Service(override val qualifiedName: String, val operations: List<Operation>, override val annotations: List<Annotation>, val sourceCode: SourceCode) : Annotatable, Named, Compiled {
+    override val sources: List<SourceCode> = listOf(sourceCode)
     fun operation(name: String): Operation {
         return this.operations.first { it.name == name }
     }
+    fun containsOperation(name:String) = operations.any { it.name == name }
 }
 
 

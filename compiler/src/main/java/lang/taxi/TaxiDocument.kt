@@ -37,7 +37,21 @@ interface Named {
     }
 }
 
-interface Type : Named
+interface Compiled {
+    val sources:List<SourceCode>
+}
+
+data class SourceCode(
+        val origin:String,
+        val content:String
+) {
+    companion object {
+        fun unspecified():SourceCode = SourceCode("Not specified","")
+    }
+}
+
+
+interface Type : Named, Compiled
 
 /**
  * A type that can be declared by users explicity.
@@ -75,6 +89,9 @@ open class TaxiDocument(val types: List<Type>,
     fun type(name: String): Type {
         return typeMap[name]!!
     }
+
+    fun containsType(typeName:String) = typeMap.containsKey(typeName)
+    fun containsService(serviceName:String) = servicesMap.containsKey(serviceName)
 
     override fun hashCode(): Int {
         return Objects.hash(typeMap,servicesMap)

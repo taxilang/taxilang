@@ -1,5 +1,6 @@
 package lang.taxi.generators.java
 
+import lang.taxi.SourceCode
 import lang.taxi.Type
 import lang.taxi.TypeNames
 import lang.taxi.annotations.DataType
@@ -140,7 +141,7 @@ class DefaultTypeMapper : TypeMapper {
             return existingAlias as TypeAlias
         } else {
             val aliasedTaxiType = getTypeDeclaredOnClass(element, existingTypes)
-            val typeAlias = TypeAlias(typeAliasName, aliasedTaxiType)
+            val typeAlias = TypeAlias(typeAliasName, aliasedTaxiType, SourceCode("Exported from annotation", "Annotation"))
             existingTypes.add(typeAlias)
             return typeAlias
         }

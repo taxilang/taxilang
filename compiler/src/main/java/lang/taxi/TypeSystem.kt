@@ -18,6 +18,8 @@ internal data class TypeProxy(override val qualifiedName: String, private val ty
             throw IllegalAccessError("Can't read values of a proxy type until it's resolved")
         }
     }
+
+    override val sources: List<SourceCode> = listOf(SourceCode.unspecified())
 }
 
 class TypeSystem {

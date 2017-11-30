@@ -1,21 +1,19 @@
 package lang.taxi.types
 
 import com.google.common.base.Objects
-import lang.taxi.Annotatable
-import lang.taxi.Type
-import lang.taxi.UserType
-import lang.taxi.annotations
+import lang.taxi.*
 import lang.taxi.services.Constraint
 
 data class FieldExtension(val name: String, override val annotations: List<Annotation>) : Annotatable
 data class ObjectTypeExtension(val annotations: List<Annotation> = emptyList(),
-                               val fieldExtensions: List<FieldExtension> = emptyList()) {
+                               val fieldExtensions: List<FieldExtension> = emptyList(),
+                               val source:SourceCode = SourceCode.unspecified()) {
     fun fieldExtensions(name: String): List<FieldExtension> {
         return this.fieldExtensions.filter { it.name == name }
     }
 }
 
-data class ObjectTypeDefinition(val fields: List<Field> = emptyList(), val annotations: List<Annotation> = emptyList(), val modifiers: List<Modifier> = emptyList()) {
+data class ObjectTypeDefinition(val fields: List<Field> = emptyList(), val annotations: List<Annotation> = emptyList(), val modifiers: List<Modifier> = emptyList(), val source:SourceCode = SourceCode.unspecified()) {
     private fun fieldNames() = fields.map { it.name to it.type.qualifiedName }
     override fun hashCode(): Int {
         return Objects.hashCode(fieldNames(), annotations)
@@ -50,7 +48,6 @@ data class ObjectType(
         override val extensions: MutableList<ObjectTypeExtension> = mutableListOf()
 
 ) : UserType<ObjectTypeDefinition, ObjectTypeExtension>, Annotatable {
-    constructor(qualifiedName: String, fields: List<Field>) : this(qualifiedName, ObjectTypeDefinition(fields))
 
     companion object {
         fun undefined(name: String): ObjectType {
@@ -61,6 +58,9 @@ data class ObjectType(
     override fun toString(): String {
         return qualifiedName
     }
+
+    override val sources: List<SourceCode>
+        get() = (this.extensions.map { it.source } + this.definition?.source).filterNotNull()
 
     val modifiers: List<Modifier>
         get() {

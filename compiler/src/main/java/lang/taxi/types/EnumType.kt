@@ -1,12 +1,14 @@
 package lang.taxi.types
 
 import lang.taxi.Annotatable
+import lang.taxi.SourceCode
 import lang.taxi.UserType
 import lang.taxi.annotations
 
 data class EnumValue(val name: String, override val annotations: List<Annotation>) : Annotatable
 data class EnumDefinition(val values: List<EnumValue>,
-                          val annotations: List<Annotation> = emptyList())
+                          val annotations: List<Annotation> = emptyList(),
+                          val source:SourceCode = SourceCode.unspecified())
 
 data class EnumType(override val qualifiedName: String,
                     override var definition: EnumDefinition?,
@@ -16,6 +18,9 @@ data class EnumType(override val qualifiedName: String,
          return EnumType(name, definition = null)
       }
    }
+
+   override val sources: List<SourceCode>
+      get() = (this.extensions.map { it.source } + this.definition?.source).filterNotNull()
 
    val values: List<EnumValue>
       get() {

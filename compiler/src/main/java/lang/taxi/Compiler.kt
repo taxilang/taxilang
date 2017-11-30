@@ -3,15 +3,12 @@ package lang.taxi
 import lang.taxi.services.*
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import org.antlr.v4.runtime.CharStream
-import org.antlr.v4.runtime.CharStreams
-import org.antlr.v4.runtime.CommonTokenStream
-import org.antlr.v4.runtime.Token
+import org.antlr.v4.runtime.*
+import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.io.File
 import java.lang.IllegalArgumentException
 import java.lang.RuntimeException
-import java.nio.file.Path
 
 object Namespaces {
     const val DEFAULT_NAMESPACE = ""
@@ -28,9 +25,7 @@ class CompilationException(val errors: List<CompilationError>) : RuntimeExceptio
 
 class Compiler(val inputs: List<CharStream>) {
     constructor(input: CharStream) : this(listOf(input))
-    constructor(path: Path) : this(CharStreams.fromPath(path))
-    constructor(source: String) : this(CharStreams.fromString(source))
-    constructor(vararg sources: String) : this(sources.map { CharStreams.fromString(it) })
+    constructor(source: String, name:String = "<unknown>") : this(CharStreams.fromString(source,name))
     constructor(file: File) : this(CharStreams.fromPath(file.toPath()))
 
     companion object {
@@ -155,7 +150,7 @@ private class DocumentListener(val tokens: Tokens) {
         val typePointedTo = typeSystem.getType(qualifiedName)
         val annotations = collateAnnotations(tokenRule.annotation())
 
-        val definition = TypeAliasDefinition(typePointedTo, annotations)
+        val definition = TypeAliasDefinition(typePointedTo, annotations, tokenRule.source())
         this.typeSystem.register(TypeAlias(tokenName, definition))
     }
 
@@ -178,7 +173,7 @@ private class DocumentListener(val tokens: Tokens) {
         }
         val annotations = collateAnnotations(ctx.annotation())
         val modifiers = parseModifiers(ctx.typeModifier())
-        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields, annotations, modifiers)))
+        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields, annotations, modifiers, ctx.source())))
     }
 
     private fun  parseModifiers(typeModifier: TaxiParser.TypeModifierContext?): List<Modifier> {
@@ -225,7 +220,7 @@ private class DocumentListener(val tokens: Tokens) {
             else -> throw IllegalArgumentException()
         }
         if (typeType.listType() != null) {
-            return ArrayType(type)
+            return ArrayType(type, typeType.source())
         } else {
             return type
         }
@@ -240,7 +235,7 @@ private class DocumentListener(val tokens: Tokens) {
         val typeAliasName = qualify(namespace, aliasTypeDefinition.classOrInterfaceType().Identifier().text())
         // Annotations not supported on Inline type aliases
         val annotations = emptyList<Annotation>()
-        val typeAlias = TypeAlias(typeAliasName, TypeAliasDefinition(aliasedType, annotations))
+        val typeAlias = TypeAlias(typeAliasName, TypeAliasDefinition(aliasedType, annotations, aliasTypeDefinition.source()))
         typeSystem.register(typeAlias)
         return typeAlias
     }
@@ -266,7 +261,7 @@ private class DocumentListener(val tokens: Tokens) {
             EnumValue(value, annotations)
         }
         val annotations = collateAnnotations(ctx.annotation())
-        val enumType = EnumType(typeName, EnumDefinition(enumValues, annotations))
+        val enumType = EnumType(typeName, EnumDefinition(enumValues, annotations, ctx.source()))
         typeSystem.register(enumType)
     }
 
@@ -289,7 +284,7 @@ private class DocumentListener(val tokens: Tokens) {
 
                 )
             }
-            Service(qualifiedName, methods, collateAnnotations(serviceToken.annotation()))
+            Service(qualifiedName, methods, collateAnnotations(serviceToken.annotation()), serviceToken.source())
         }
         this.services.addAll(services)
     }
@@ -317,6 +312,11 @@ private class DocumentListener(val tokens: Tokens) {
 
 }
 
+fun ParserRuleContext.source():SourceCode {
+    val text = this.start.inputStream.getText(Interval(this.start.startIndex, this.stop.stopIndex))
+    val origin = this.start.inputStream.sourceName
+    return SourceCode(origin,text)
+}
 fun TaxiParser.LiteralContext.value(): Any {
     return when {
         this.StringLiteral() != null -> {
