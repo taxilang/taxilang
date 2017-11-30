@@ -6,6 +6,7 @@ import lang.taxi.annotations.namespace
 import lang.taxi.annotations.qualifiedName
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
+import java.lang.reflect.Method
 import java.lang.reflect.Parameter
 
 object TypeNames {
@@ -18,7 +19,7 @@ object TypeNames {
             namespaceAnnotation != null -> namespaceAnnotation.value
             dataType != null && dataType.hasNamespace() -> dataType.namespace()!!
             service != null && service.hasNamespace() -> dataType.namespace()!!
-            else -> javaClass.`package`.name
+            else -> javaClass.`package`?.name ?: ""
         }
     }
 
@@ -27,18 +28,21 @@ object TypeNames {
         return deriveTypeName(type, namespace)
     }
 
-    fun declaresDataType(element:AnnotatedElement):Boolean {
+    fun declaresDataType(element: AnnotatedElement): Boolean {
         return element.isAnnotationPresent(lang.taxi.annotations.DataType::class.java)
     }
+
     fun deriveTypeName(element: AnnotatedElement, defaultNamespace: String): String {
         if (declaresDataType(element)) {
-            val annotation = element.getAnnotation(lang.taxi.annotations.DataType::class.java)
-            if (annotation.declaresName()) {
-                return annotation.qualifiedName(defaultNamespace)
-            }
+            val typeNameOnElement = detectDeclaredTypeName(element, defaultNamespace)
+            if (typeNameOnElement != null) return typeNameOnElement
         }
 
         val type = typeFromElement(element)
+        if (declaresDataType(type)) {
+            val typeNameOnType = detectDeclaredTypeName(type, defaultNamespace)
+            if (typeNameOnType != null) return typeNameOnType
+        }
 
         // If it's an inner class, trim the qualifier
         // This may cause problems with duplicates, but let's encourage
@@ -47,11 +51,20 @@ object TypeNames {
         return "$defaultNamespace.$typeName"
     }
 
+    private fun detectDeclaredTypeName(element:AnnotatedElement, defaultNamespace: String):String? {
+        val annotation = element.getAnnotation(lang.taxi.annotations.DataType::class.java)
+        if (annotation.declaresName()) {
+            return annotation.qualifiedName(defaultNamespace)
+        }
+        return null
+    }
+
     fun typeFromElement(element: AnnotatedElement): Class<*> {
         val type = when (element) {
             is Class<*> -> element
             is Field -> element.type
             is Parameter -> element.type
+            is Method -> element.returnType
             else -> error("Unhandled type : $element")
         }
         return type

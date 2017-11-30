@@ -3,6 +3,7 @@ package lang.taxi.generators.java
 import com.winterbe.expekt.expect
 import lang.taxi.annotations.DataType
 import lang.taxi.annotations.Namespace
+import lang.taxi.annotations.ParameterType
 import lang.taxi.types.PrimitiveType
 import org.junit.Test
 import java.math.BigDecimal
@@ -77,4 +78,70 @@ type Client {
     }
 
 
+    @Test
+    fun given_structureDeclaresParamFromAnotherNamespace_then_itIsParsedToTheNamespaceCorrectly() {
+        @DataType("namespaceA.Money")
+        data class Money(val amount: BigDecimal)
+
+        @DataType("namespaceB.Invoice")
+        // Note - this is a redundant (but still valid) type alias
+        data class Invoice(@field:DataType("namespaceA.Money") val money: Money)
+
+        val taxiDef = TaxiGenerator().forClasses(Invoice::class.java, Money::class.java).generateAsStrings()
+        val expected = """
+namespace namespaceA {
+    type Money {
+       amount : Decimal
+    }
+}
+namespace namespaceB {
+    type Invoice {
+       money : namespaceA.Money
+    }
+}"""
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
+
+    @Test
+    fun given_typeContainsReferenceToAnotherType_when_anEmptyDataTypeAnnotationIsUsed_then_theTypeIsMappedCorrectly() {
+        @DataType("namespaceA.Money")
+        data class Money(val amount: BigDecimal)
+
+        @DataType("namespaceB.Invoice")
+        // Same test as above, but the DataType doesn't contain anything -- should
+        // detect the data type from the annotated value on Money
+        data class Invoice(@field:DataType val money: Money)
+
+        val taxiDef = TaxiGenerator().forClasses(Invoice::class.java, Money::class.java).generateAsStrings()
+        val expected = """
+namespace namespaceA {
+    type Money {
+       amount : Decimal
+    }
+}
+namespace namespaceB {
+    type Invoice {
+       money : namespaceA.Money
+    }
+}"""
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
+
+    @Test
+    fun given_typeIsAParameterType_that_schemaIsGeneratedCorrectly() {
+        @DataType("namespaceA.Money")
+        @ParameterType
+        data class Money(val amount: BigDecimal)
+
+        val taxiDef = TaxiGenerator().forClasses(Money::class.java).generateAsStrings()
+        val expected = """
+namespace namespaceA {
+    parameter type Money {
+        amount : Decimal
+    }
+}"""
+
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+
+    }
 }

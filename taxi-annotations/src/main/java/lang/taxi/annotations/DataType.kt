@@ -1,6 +1,10 @@
 package lang.taxi.annotations
 
-@Target(AnnotationTarget.CLASS, AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.VALUE_PARAMETER,
+        AnnotationTarget.PROPERTY, AnnotationTarget.FIELD,
+        // When on a Function, indicates the return type.
+        // Useful for methods that return String etc.
+        AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DataType(
         /**
@@ -10,6 +14,15 @@ annotation class DataType(
         val value: String = ""
 )
 
+/**
+ * Indicates that a class is a Parameter type, meaning that
+ * it's valid to be constructed during query time for passing
+ * to another service.
+ */
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class ParameterType
+
 fun DataType.hasNamespace(): Boolean = Namespaces.hasNamespace(this.value)
 fun DataType.namespace(): String? = Namespaces.pluckNamespace(this.value)
 
@@ -17,7 +30,7 @@ fun DataType.declaresName(): Boolean {
     return this.value.isNotEmpty()
 }
 
-fun DataType.qualifiedName(defaultNamespace: String): String  = Namespaces.qualifiedName(this.value,defaultNamespace)
+fun DataType.qualifiedName(defaultNamespace: String): String = Namespaces.qualifiedName(this.value, defaultNamespace)
 
 /**
  * Specifies that an input must be provided in a specific format.
