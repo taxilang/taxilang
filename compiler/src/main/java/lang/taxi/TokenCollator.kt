@@ -10,10 +10,25 @@ data class Tokens(val unparsedTypes: Map<String, Pair<Namespace, ParserRuleConte
                   val unparsedExtensions: List<Pair<Namespace, ParserRuleContext>>,
                   val unparsedServices: Map<String, Pair<Namespace, ServiceDeclarationContext>>) {
     fun plus(others: Tokens): Tokens {
+        val errors = collectDuplicateTypes(others) + collectDuplicateServices(others)
+        if (errors.isNotEmpty()) {
+            throw CompilationException(errors)
+        }
         return Tokens(this.unparsedTypes + others.unparsedTypes,
                 this.unparsedExtensions + others.unparsedExtensions,
                 this.unparsedServices + others.unparsedServices
         )
+    }
+
+    private fun collectDuplicateTypes(others: Tokens): List<CompilationError> {
+        val duplicateTypes = this.unparsedTypes.keys.filter { others.unparsedTypes.containsKey(it) }
+        val errors = duplicateTypes.map { CompilationError(others.unparsedTypes[it]!!.second.start, "Attempt to redefine type $it. Types may be extended (using an extension), but not redefined") }
+        return errors
+    }
+    private fun collectDuplicateServices(others: Tokens): List<CompilationError> {
+        val duplicateTypes = this.unparsedServices.keys.filter { others.unparsedServices.containsKey(it) }
+        val errors = duplicateTypes.map { CompilationError(others.unparsedServices[it]!!.second.start, "Attempt to redefine service $it. Services may be extended (using an extension), but not redefined") }
+        return errors
     }
 }
 

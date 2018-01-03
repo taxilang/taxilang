@@ -77,6 +77,16 @@ namespace bar {
     }
 
     @Test
+    fun cannotRedeclareAnExistingType() {
+        val source = """
+namespace foo {
+    type FooType {}
+}"""
+        rule.expect(CompilationException::class.java)
+        Compiler.fromStrings(listOf(source,source)).compile()
+    }
+
+    @Test
     fun parsesAnnotationsCorrectly() {
         val source = """
 @StringAnnotation(value = "foo")
