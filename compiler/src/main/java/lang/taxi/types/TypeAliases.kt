@@ -1,20 +1,27 @@
 package lang.taxi.types
 
-import lang.taxi.Annotatable
-import lang.taxi.SourceCode
-import lang.taxi.Type
-import lang.taxi.UserType
+import lang.taxi.*
 
-data class TypeAliasExtension(val annotations: List<Annotation>, val source:SourceCode = SourceCode.unspecified())
-data class TypeAliasDefinition(val aliasType: Type, val annotations: List<Annotation> = emptyList(), val source:SourceCode)
+data class TypeAliasExtension(val annotations: List<Annotation>, override val compilationUnit: CompilationUnit) : TypeDefinition {
+    private val equalty = Equality(this,TypeAliasExtension::annotations)
+
+    override fun hashCode() = equalty.hash()
+    override fun equals(other: Any?) = equalty.isEqualTo(other)
+}
+
+data class TypeAliasDefinition(val aliasType: Type, val annotations: List<Annotation> = emptyList(), override val compilationUnit: CompilationUnit) : TypeDefinition {
+    private val equalty = Equality(this,TypeAliasDefinition::aliasType,TypeAliasDefinition::annotations)
+
+    override fun hashCode() = equalty.hash()
+    override fun equals(other: Any?) = equalty.isEqualTo(other)
+}
 
 data class TypeAlias(
         override val qualifiedName: String,
         override var definition: TypeAliasDefinition?,
         override val extensions: MutableList<TypeAliasExtension> = mutableListOf()
 ) : UserType<TypeAliasDefinition, TypeAliasExtension>, Annotatable {
-    constructor(qualifiedName: String, aliasedType: Type, source: SourceCode) : this(qualifiedName, TypeAliasDefinition(aliasedType,source = source))
-
+    constructor(qualifiedName: String, aliasedType: Type, compilationUnit: CompilationUnit) : this(qualifiedName, TypeAliasDefinition(aliasedType, compilationUnit = compilationUnit))
     companion object {
         fun undefined(name: String): TypeAlias {
             return TypeAlias(name, definition = null)
@@ -33,6 +40,4 @@ data class TypeAlias(
             return collatedAnnotations.toList()
         }
 
-    override val sources: List<SourceCode>
-        get() = (this.extensions.map { it.source } + definition?.source).filterNotNull()
 }

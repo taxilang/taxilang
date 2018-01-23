@@ -6,6 +6,7 @@ import lang.taxi.types.ArrayType
 import lang.taxi.types.Modifier
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TypeAlias
+import org.antlr.v4.runtime.CharStreams
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -13,8 +14,9 @@ import java.io.File
 
 class GrammarTest {
 
-    @Rule @JvmField
-    val rule = ExpectedException.none()
+    @Rule
+    @JvmField
+    val expectedException = ExpectedException.none()
 
     @Test
     fun canParsePetstore() {
@@ -77,13 +79,49 @@ namespace bar {
     }
 
     @Test
-    fun cannotRedeclareAnExistingType() {
-        val source = """
+    fun given_typeIsRedeclaredWithSemanticallyEquivalentDefinition_then_itIsValid() {
+        val source1 = """
 namespace foo {
-    type FooType {}
+    type Person {
+        firstName : FirstName as String
+        lastName : LastName as String
+    }
 }"""
-        rule.expect(CompilationException::class.java)
-        Compiler.fromStrings(listOf(source,source)).compile()
+        val source2 = """
+namespace foo {
+    // type alias FirstName as String
+    // type alias LastName as String
+    type Person {
+        lastName : LastName as String
+        firstName : FirstName as String
+    }
+}
+            """
+        Compiler(listOf(CharStreams.fromString(source1, "source1"), CharStreams.fromString(source2, "source2"))).compile()
+    }
+
+    @Test
+    fun given_typeIsRedeclaredWithDifferentDefinition_then_exceptionIsThrown() {
+        val source1 = """
+namespace foo {
+    type Person {
+        firstName : FirstName as String
+        lastName : LastName as String
+    }
+}"""
+        val source2 = """
+namespace foo {
+    type Person {
+        age : Int
+        firstName : FirstName as String
+        lastName : LastName as String
+
+    }
+}
+            """
+
+        expectedException.expect(CompilationException::class.java)
+        Compiler(listOf(CharStreams.fromString(source1, "source1"), CharStreams.fromString(source2, "source2"))).compile()
     }
 
     @Test
@@ -176,8 +214,8 @@ type Person {
 
     @Test
     fun throwsExceptionOnUnresolvedType() {
-        rule.expect(CompilationException::class.java)
-        rule.expectMessage(ErrorMessages.unresolvedType("Bar"))
+        expectedException.expect(CompilationException::class.java)
+        expectedException.expectMessage(ErrorMessages.unresolvedType("Bar"))
         val source = """
 type Foo {
    bar : Bar

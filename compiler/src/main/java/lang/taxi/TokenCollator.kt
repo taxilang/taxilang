@@ -21,13 +21,37 @@ data class Tokens(val unparsedTypes: Map<String, Pair<Namespace, ParserRuleConte
     }
 
     private fun collectDuplicateTypes(others: Tokens): List<CompilationError> {
-        val duplicateTypes = this.unparsedTypes.keys.filter { others.unparsedTypes.containsKey(it) }
-        val errors = duplicateTypes.map { CompilationError(others.unparsedTypes[it]!!.second.start, "Attempt to redefine type $it. Types may be extended (using an extension), but not redefined") }
+        val duplicateTypeNames = this.unparsedTypes.keys.filter { others.unparsedTypes.containsKey(it) }
+        val errors = if (duplicateTypeNames.isNotEmpty()) {
+            val existingDefinition = DocumentListener(this).buildTaxiDocument()
+            val newDefinition = DocumentListener(others).buildTaxiDocument()
+            val compilationErrors = duplicateTypeNames.filter {
+                // We only care about scenarios where sources compile to different objects
+                // If two sources declare the same type, but they're equivalent declarations, then that's ok
+                existingDefinition.type(it) != newDefinition.type(it)
+            }.map {
+                CompilationError(others.unparsedTypes[it]!!.second.start, "Attempt to redefine type $it. Types may be extended (using an extension), but not redefined")
+            }
+            compilationErrors
+        } else emptyList()
         return errors
     }
+
+    /**
+     * Compares two contexts to decide if they compile to the same object
+     * Note - the actual text declaration in source format isn't compared - the underlying definition
+     * is
+     */
+    private fun compileToDifferentObjects(first: ParserRuleContext, second: ParserRuleContext): Boolean {
+        val firstHash = first.children.toSet().hashCode()
+        val secondHash = second.children.toSet().hashCode()
+
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     private fun collectDuplicateServices(others: Tokens): List<CompilationError> {
-        val duplicateTypes = this.unparsedServices.keys.filter { others.unparsedServices.containsKey(it) }
-        val errors = duplicateTypes.map { CompilationError(others.unparsedServices[it]!!.second.start, "Attempt to redefine service $it. Services may be extended (using an extension), but not redefined") }
+        val duplicateServices = this.unparsedServices.keys.filter { others.unparsedServices.containsKey(it) }
+        val errors = duplicateServices.map { CompilationError(others.unparsedServices[it]!!.second.start, "Attempt to redefine service $it. Services may be extended (using an extension), but not redefined") }
         return errors
     }
 }

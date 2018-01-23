@@ -1,28 +1,28 @@
 package lang.taxi.types
 
-import com.google.common.base.Objects
 import lang.taxi.*
 import lang.taxi.services.Constraint
+import kotlin.reflect.KProperty1
 
 data class FieldExtension(val name: String, override val annotations: List<Annotation>) : Annotatable
 data class ObjectTypeExtension(val annotations: List<Annotation> = emptyList(),
                                val fieldExtensions: List<FieldExtension> = emptyList(),
-                               val source:SourceCode = SourceCode.unspecified()) {
+                               override val compilationUnit: CompilationUnit) : TypeDefinition {
     fun fieldExtensions(name: String): List<FieldExtension> {
         return this.fieldExtensions.filter { it.name == name }
     }
 }
 
-data class ObjectTypeDefinition(val fields: List<Field> = emptyList(), val annotations: List<Annotation> = emptyList(), val modifiers: List<Modifier> = emptyList(), val source:SourceCode = SourceCode.unspecified()) {
-    private fun fieldNames() = fields.map { it.name to it.type.qualifiedName }
-    override fun hashCode(): Int {
-        return Objects.hashCode(fieldNames(), annotations)
-    }
+data class ObjectTypeDefinition(val fields: List<Field> = emptyList(), val annotations: List<Annotation> = emptyList(), val modifiers: List<Modifier> = emptyList(), override val compilationUnit: CompilationUnit) : TypeDefinition {
+    private val equality = Equality(this,ObjectTypeDefinition::fields.toSet(),ObjectTypeDefinition::annotations.toSet(), ObjectTypeDefinition::modifiers.toSet())
+    override fun equals(other: Any?) = equality.isEqualTo(other)
+    override fun hashCode(): Int = equality.hash()
+}
 
-    override fun equals(other: Any?): Boolean {
-        if (other == null || other !is ObjectTypeDefinition)
-            return false
-        return java.util.Objects.equals(this.fieldNames(), other.fieldNames()) && Objects.equal(annotations, other.annotations)
+private fun <T, R> KProperty1<T, List<R>>.toSet(): T.() -> Set<R>? {
+    val prop = this
+    return {
+        prop.get(this).toSet()
     }
 }
 
@@ -58,9 +58,6 @@ data class ObjectType(
     override fun toString(): String {
         return qualifiedName
     }
-
-    override val sources: List<SourceCode>
-        get() = (this.extensions.map { it.source } + this.definition?.source).filterNotNull()
 
     val modifiers: List<Modifier>
         get() {

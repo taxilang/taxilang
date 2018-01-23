@@ -17,7 +17,7 @@
    </modules>
 
    <properties>
-      <kotlin.version>1.2.0</kotlin.version>
+      <kotlin.version>1.2.10</kotlin.version>
    </properties>
 
    <dependencies>

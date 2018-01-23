@@ -5,6 +5,7 @@ import lang.taxi.services.Service
 import lang.taxi.types.Annotation
 import lang.taxi.types.EnumType
 import lang.taxi.types.ObjectType
+import org.antlr.v4.runtime.ParserRuleContext
 import java.util.*
 
 data class QualifiedName(val namespace: String, val typeName: String) {
@@ -38,7 +39,23 @@ interface Named {
 }
 
 interface Compiled {
-    val sources:List<SourceCode>
+    val compilationUnits:List<CompilationUnit>
+}
+
+data class CompilationUnit(val ruleContext:ParserRuleContext?,
+                           val source:SourceCode) {
+    companion object {
+        fun unspecified():CompilationUnit {
+            return CompilationUnit(ruleContext = null, source = SourceCode.unspecified())
+        }
+        fun ofSource(source:SourceCode): CompilationUnit {
+            return CompilationUnit(null,source)
+        }
+
+        fun of(typeRule: ParserRuleContext): CompilationUnit {
+            return CompilationUnit(typeRule, typeRule.source())
+        }
+    }
 }
 
 data class SourceCode(
@@ -59,7 +76,7 @@ interface Type : Named, Compiled
  * ArrayType is excluded (as arrays are primitive, and the inner
  * type will be a UserType)
  */
-interface UserType<TDef, TExt> : Type {
+interface UserType<TDef : TypeDefinition, TExt : TypeDefinition> : Type {
     var definition: TDef?
     val extensions: MutableList<TExt>
 
@@ -67,6 +84,13 @@ interface UserType<TDef, TExt> : Type {
         get() {
             return this.definition != null
         }
+
+    override val compilationUnits: List<CompilationUnit>
+        get() = (this.extensions.map { it.compilationUnit } + this.definition?.compilationUnit).filterNotNull()
+}
+
+interface TypeDefinition {
+    val compilationUnit:CompilationUnit
 }
 
 interface Annotatable {

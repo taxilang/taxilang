@@ -6,8 +6,7 @@ import lang.taxi.types.Annotation
 data class Parameter(override val annotations: List<Annotation>, val type: Type, val name: String?, val constraints: List<Constraint>) : Annotatable
 
 data class Operation(val name: String, override val annotations: List<Annotation>, val parameters: List<Parameter>, val returnType: Type, val contract: OperationContract? = null) : Annotatable
-data class Service(override val qualifiedName: String, val operations: List<Operation>, override val annotations: List<Annotation>, val sourceCode: SourceCode) : Annotatable, Named, Compiled {
-    override val sources: List<SourceCode> = listOf(sourceCode)
+data class Service(override val qualifiedName: String, val operations: List<Operation>, override val annotations: List<Annotation>, override val compilationUnits: List<CompilationUnit>) : Annotatable, Named, Compiled {
     fun operation(name: String): Operation {
         return this.operations.first { it.name == name }
     }

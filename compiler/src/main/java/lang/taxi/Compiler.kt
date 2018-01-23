@@ -47,13 +47,10 @@ class Compiler(val inputs: List<CharStream>) {
             doc.exception?.let {
                 throw CompilationException(it.offendingToken, it.message)
             }
-//            val errors = listener.exceptions.map { (context, exception) ->
-//                CompilationError(context.start, exception.message)
-//            }
             if (errorListener.errors.isNotEmpty())
                 throw CompilationException(errorListener.errors)
 
-            listener.tokens()
+            listener.tokens() // return..
         }
         val tokens = tokensCollection.reduce { acc, tokens -> acc.plus(tokens) }
 
@@ -62,7 +59,7 @@ class Compiler(val inputs: List<CharStream>) {
     }
 }
 
-private class DocumentListener(val tokens: Tokens) {
+internal class DocumentListener(val tokens: Tokens) {
     private val typeSystem = TypeSystem()
     private val services = mutableListOf<Service>()
     fun buildTaxiDocument(): TaxiDocument {
@@ -141,7 +138,7 @@ private class DocumentListener(val tokens: Tokens) {
             val fieldAnnotations = collateAnnotations(member.annotation())
             FieldExtension(fieldName, fieldAnnotations)
         }
-        type.extensions.add(ObjectTypeExtension(annotations, fieldExtensions))
+        type.extensions.add(ObjectTypeExtension(annotations, fieldExtensions,CompilationUnit.of(typeRule)))
 
     }
 
@@ -150,7 +147,7 @@ private class DocumentListener(val tokens: Tokens) {
         val typePointedTo = typeSystem.getType(qualifiedName)
         val annotations = collateAnnotations(tokenRule.annotation())
 
-        val definition = TypeAliasDefinition(typePointedTo, annotations, tokenRule.source())
+        val definition = TypeAliasDefinition(typePointedTo, annotations, CompilationUnit.of(tokenRule))
         this.typeSystem.register(TypeAlias(tokenName, definition))
     }
 
@@ -173,7 +170,7 @@ private class DocumentListener(val tokens: Tokens) {
         }
         val annotations = collateAnnotations(ctx.annotation())
         val modifiers = parseModifiers(ctx.typeModifier())
-        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields, annotations, modifiers, ctx.source())))
+        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields, annotations, modifiers, CompilationUnit.of(ctx))))
     }
 
     private fun  parseModifiers(typeModifier: TaxiParser.TypeModifierContext?): List<Modifier> {
@@ -220,7 +217,7 @@ private class DocumentListener(val tokens: Tokens) {
             else -> throw IllegalArgumentException()
         }
         if (typeType.listType() != null) {
-            return ArrayType(type, typeType.source())
+            return ArrayType(type, CompilationUnit.of(typeType))
         } else {
             return type
         }
@@ -235,7 +232,7 @@ private class DocumentListener(val tokens: Tokens) {
         val typeAliasName = qualify(namespace, aliasTypeDefinition.classOrInterfaceType().Identifier().text())
         // Annotations not supported on Inline type aliases
         val annotations = emptyList<Annotation>()
-        val typeAlias = TypeAlias(typeAliasName, TypeAliasDefinition(aliasedType, annotations, aliasTypeDefinition.source()))
+        val typeAlias = TypeAlias(typeAliasName, TypeAliasDefinition(aliasedType, annotations, CompilationUnit.of(aliasTypeDefinition)))
         typeSystem.register(typeAlias)
         return typeAlias
     }
@@ -261,7 +258,7 @@ private class DocumentListener(val tokens: Tokens) {
             EnumValue(value, annotations)
         }
         val annotations = collateAnnotations(ctx.annotation())
-        val enumType = EnumType(typeName, EnumDefinition(enumValues, annotations, ctx.source()))
+        val enumType = EnumType(typeName, EnumDefinition(enumValues, annotations, CompilationUnit.of(ctx)))
         typeSystem.register(enumType)
     }
 
@@ -284,7 +281,7 @@ private class DocumentListener(val tokens: Tokens) {
 
                 )
             }
-            Service(qualifiedName, methods, collateAnnotations(serviceToken.annotation()), serviceToken.source())
+            Service(qualifiedName, methods, collateAnnotations(serviceToken.annotation()), listOf(CompilationUnit.of(serviceToken)))
         }
         this.services.addAll(services)
     }

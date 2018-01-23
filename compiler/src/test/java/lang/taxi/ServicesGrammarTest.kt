@@ -5,6 +5,7 @@ import lang.taxi.services.AttributeConstantValueConstraint
 import lang.taxi.services.AttributeValueFromParameterConstraint
 import lang.taxi.services.ReturnValueDerivedFromParameterConstraint
 import org.junit.Test
+import kotlin.test.fail
 
 class ServicesGrammarTest {
     @Test
@@ -107,6 +108,25 @@ service MyService {
         expect(contract.returnTypeConstraints[0]).instanceof(ReturnValueDerivedFromParameterConstraint::class.java)
         val originConstraint = contract.returnTypeConstraints[0] as ReturnValueDerivedFromParameterConstraint
         expect(originConstraint.parameterName).to.equal("source")
+    }
 
+    @Test
+    fun servicesCanDeclareContractsWithNestedPropertiesOnReturnValues() {
+        val source = """
+type ConversionRequest {
+    source : Money,
+    target : Currency
+}
+service MyService {
+    operation convertCurrency(request : ConversionRequest) : Money( from request.source,  currency = request.target )
+}
+"""
+        val doc = Compiler(moneyType, source).compile()
+        val operation = doc.service("MyService").operation("convertCurrency")
+
+        expect(operation.contract).to.not.be.`null`
+        val contract = operation.contract!!
+
+        fail("Not implemented")
     }
 }

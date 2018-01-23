@@ -19,7 +19,7 @@ internal data class TypeProxy(override val qualifiedName: String, private val ty
         }
     }
 
-    override val sources: List<SourceCode> = listOf(SourceCode.unspecified())
+    override val compilationUnits = listOf(CompilationUnit.unspecified())
 }
 
 class TypeSystem {
@@ -49,13 +49,13 @@ class TypeSystem {
 
     fun isDefined(qualifiedName: String): Boolean {
         if (!contains(qualifiedName)) return false;
-        val registeredType = types[qualifiedName]!! as UserType<Any, Any>
+        val registeredType = types[qualifiedName]!! as UserType<TypeDefinition, TypeDefinition>
         return registeredType.definition != null
     }
 
     fun register(type: UserType<*, *>) {
         if (types.containsKey(type.qualifiedName)) {
-            val registeredType = types[type.qualifiedName]!! as UserType<Any, Any>
+            val registeredType = types[type.qualifiedName]!! as UserType<TypeDefinition, TypeDefinition>
             if (registeredType.definition != null && type.definition != null) {
                 throw IllegalArgumentException("Attempting to redefine type ${type.qualifiedName}")
             }

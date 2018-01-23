@@ -1,5 +1,6 @@
 package lang.taxi.types
 
+import lang.taxi.CompilationUnit
 import lang.taxi.SourceCode
 import lang.taxi.Type
 import java.lang.IllegalArgumentException
@@ -9,8 +10,7 @@ enum class VoidType : Type {
     VOID;
 
     override val qualifiedName: String = "lang.taxi.Void"
-    override val sources: List<SourceCode> = listOf(SourceCode("Built in", "// Built-in type"))
-
+    override val compilationUnits: List<CompilationUnit> = listOf(CompilationUnit.ofSource(SourceCode("Built in", "// Built-in type")))
 }
 
 enum class PrimitiveType(val declaration: String) : Type {
@@ -27,7 +27,7 @@ enum class PrimitiveType(val declaration: String) : Type {
     override val qualifiedName: String
         get() = "lang.taxi.$declaration"
 
-    override val sources: List<SourceCode> = listOf(SourceCode("Built in", "// Built-in type"))
+    override val compilationUnits: List<CompilationUnit> = listOf(CompilationUnit.ofSource(SourceCode("Built in", "// Built-in type")))
 
     companion object {
         private val typesByName = values().associateBy { it.declaration }

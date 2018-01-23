@@ -43,6 +43,13 @@
             <version>1.7.13</version>
             <scope>provided</scope>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.github.pvdberg1998/hashkode -->
+        <dependency>
+            <groupId>com.github.pvdberg1998</groupId>
+            <artifactId>hashkode</artifactId>
+            <version>1.2.3</version>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>
