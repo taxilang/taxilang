@@ -6,7 +6,6 @@ import lang.taxi.types.Annotation
 import lang.taxi.types.EnumType
 import lang.taxi.types.ObjectType
 import org.antlr.v4.runtime.ParserRuleContext
-import java.util.*
 
 data class QualifiedName(val namespace: String, val typeName: String) {
     companion object {
@@ -39,17 +38,18 @@ interface Named {
 }
 
 interface Compiled {
-    val compilationUnits:List<CompilationUnit>
+    val compilationUnits: List<CompilationUnit>
 }
 
-data class CompilationUnit(val ruleContext:ParserRuleContext?,
-                           val source:SourceCode) {
+data class CompilationUnit(val ruleContext: ParserRuleContext?,
+                           val source: SourceCode) {
     companion object {
-        fun unspecified():CompilationUnit {
+        fun unspecified(): CompilationUnit {
             return CompilationUnit(ruleContext = null, source = SourceCode.unspecified())
         }
-        fun ofSource(source:SourceCode): CompilationUnit {
-            return CompilationUnit(null,source)
+
+        fun ofSource(source: SourceCode): CompilationUnit {
+            return CompilationUnit(null, source)
         }
 
         fun of(typeRule: ParserRuleContext): CompilationUnit {
@@ -59,11 +59,11 @@ data class CompilationUnit(val ruleContext:ParserRuleContext?,
 }
 
 data class SourceCode(
-        val origin:String,
-        val content:String
+        val origin: String,
+        val content: String
 ) {
     companion object {
-        fun unspecified():SourceCode = SourceCode("Not specified","")
+        fun unspecified(): SourceCode = SourceCode("Not specified", "")
     }
 }
 
@@ -87,10 +87,12 @@ interface UserType<TDef : TypeDefinition, TExt : TypeDefinition> : Type {
 
     override val compilationUnits: List<CompilationUnit>
         get() = (this.extensions.map { it.compilationUnit } + this.definition?.compilationUnit).filterNotNull()
+
+
 }
 
 interface TypeDefinition {
-    val compilationUnit:CompilationUnit
+    val compilationUnit: CompilationUnit
 }
 
 interface Annotatable {
@@ -108,24 +110,18 @@ class NamespacedTaxiDocument(val namespace: String,
 open class TaxiDocument(val types: List<Type>,
                         val services: List<Service>
 ) {
+    private val equality = Equality(this, TaxiDocument::types, TaxiDocument::services)
     private val typeMap = types.associateBy { it.qualifiedName }
     private val servicesMap = services.associateBy { it.qualifiedName }
     fun type(name: String): Type {
         return typeMap[name]!!
     }
 
-    fun containsType(typeName:String) = typeMap.containsKey(typeName)
-    fun containsService(serviceName:String) = servicesMap.containsKey(serviceName)
+    fun containsType(typeName: String) = typeMap.containsKey(typeName)
+    fun containsService(serviceName: String) = servicesMap.containsKey(serviceName)
 
-    override fun hashCode(): Int {
-        return Objects.hash(typeMap,servicesMap)
-    }
-    override fun equals(other: Any?): Boolean {
-        if (other == null || other !is TaxiDocument)
-            return false
-        return Objects.equals(typeMap, other.typeMap)
-                && Objects.equals(servicesMap, other.servicesMap)
-    }
+    override fun hashCode() = equality.hash()
+    override fun equals(other: Any?) = equality.isEqualTo(other)
 
     fun toNamespacedDocs(): List<NamespacedTaxiDocument> {
         val typesByNamespace = Multimaps.index(types, { it!!.toQualifiedName().namespace })
@@ -149,5 +145,27 @@ open class TaxiDocument(val types: List<Type>,
 
     fun service(qualifiedName: String): Service {
         return servicesMap[qualifiedName]!!
+    }
+
+    fun merge(other: TaxiDocument): TaxiDocument {
+        val duplicates: List<Named> = collectDuplicateTypes(other) + collectDuplicateServices(other)
+        if (duplicates.isNotEmpty()) {
+            val namesInError = duplicates.joinToString { it.qualifiedName }
+            throw IllegalArgumentException("Attemped to redefined types with conflicting definitions: $namesInError")
+        }
+        return TaxiDocument(this.types + other.types,
+                this.services + other.services)
+    }
+
+    private fun collectDuplicateServices(other: TaxiDocument): List<Service> {
+        val duplicateServices = this.services.filter { other.containsService(it.qualifiedName) }
+        return duplicateServices.filter { it != other.service(it.qualifiedName) }
+
+    }
+
+    private fun collectDuplicateTypes(other: TaxiDocument): List<Type> {
+        val duplicateTypes = this.types.filter { other.containsType(it.qualifiedName) }
+        return duplicateTypes.filter { it != other.type(it.qualifiedName) }
+
     }
 }

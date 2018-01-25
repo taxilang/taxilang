@@ -1,5 +1,6 @@
 package lang.taxi.generators.java
 
+import lang.taxi.CompilationUnit
 import lang.taxi.SourceCode
 import lang.taxi.Type
 import lang.taxi.TypeNames
@@ -141,7 +142,7 @@ class DefaultTypeMapper : TypeMapper {
             return existingAlias as TypeAlias
         } else {
             val aliasedTaxiType = getTypeDeclaredOnClass(element, existingTypes)
-            val typeAlias = TypeAlias(typeAliasName, aliasedTaxiType, SourceCode("Exported from annotation", "Annotation"))
+            val typeAlias = TypeAlias(typeAliasName, aliasedTaxiType, CompilationUnit.ofSource(SourceCode("Exported from annotation", "Annotation")))
             existingTypes.add(typeAlias)
             return typeAlias
         }
@@ -173,7 +174,7 @@ class DefaultTypeMapper : TypeMapper {
         val modifiers = if (element.getAnnotation(ParameterType::class.java) != null) {
             listOf(Modifier.PARAMETER_TYPE)
         } else emptyList()
-        val definition = ObjectTypeDefinition(fields, emptyList(), modifiers)
+        val definition = ObjectTypeDefinition(fields, emptyList(), modifiers, CompilationUnit.ofSource(SourceCode("Exported from type $name", "Exported")))
         val objectType = ObjectType(name, definition)
 
         // Note: Add the type while it's empty, and then collect the fields.

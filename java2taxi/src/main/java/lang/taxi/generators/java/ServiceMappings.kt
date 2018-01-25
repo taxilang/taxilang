@@ -1,6 +1,6 @@
 package lang.taxi.generators.java
 
-import lang.taxi.SourceCode
+import lang.taxi.CompilationUnit
 import lang.taxi.Type
 import lang.taxi.TypeNames
 import lang.taxi.annotations.Operation
@@ -56,7 +56,7 @@ class DefaultServiceMapper(private val constraintAnnotationMapper: ConstraintAnn
          operationExtensions.fold(operation, { operation, extension -> extension.update(operation, type, method, typeMapper, mappedTypes) })
       }
 
-      val service = serviceExtensions.fold(Service(serviceName, operations, annotations = emptyList(), sourceCode = SourceCode.unspecified()), { service, extension -> extension.update(service, type, typeMapper, mappedTypes) })
+      val service = serviceExtensions.fold(Service(serviceName, operations, annotations = emptyList(), compilationUnits = listOf(CompilationUnit.unspecified())), { service, extension -> extension.update(service, type, typeMapper, mappedTypes) })
       return setOf(service)
    }
 

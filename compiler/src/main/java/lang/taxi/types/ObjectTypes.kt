@@ -14,7 +14,7 @@ data class ObjectTypeExtension(val annotations: List<Annotation> = emptyList(),
 }
 
 data class ObjectTypeDefinition(val fields: List<Field> = emptyList(), val annotations: List<Annotation> = emptyList(), val modifiers: List<Modifier> = emptyList(), override val compilationUnit: CompilationUnit) : TypeDefinition {
-    private val equality = Equality(this,ObjectTypeDefinition::fields.toSet(),ObjectTypeDefinition::annotations.toSet(), ObjectTypeDefinition::modifiers.toSet())
+    private val equality = Equality(this, ObjectTypeDefinition::fields.toSet(), ObjectTypeDefinition::annotations.toSet(), ObjectTypeDefinition::modifiers.toSet())
     override fun equals(other: Any?) = equality.isEqualTo(other)
     override fun hashCode(): Int = equality.hash()
 }
@@ -46,9 +46,7 @@ data class ObjectType(
         override val qualifiedName: String,
         override var definition: ObjectTypeDefinition?,
         override val extensions: MutableList<ObjectTypeExtension> = mutableListOf()
-
 ) : UserType<ObjectTypeDefinition, ObjectTypeExtension>, Annotatable {
-
     companion object {
         fun undefined(name: String): ObjectType {
             return ObjectType(name, definition = null)
