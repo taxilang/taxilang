@@ -12,7 +12,7 @@ Signal that an object isn't part of the domain, and is constructed for sending d
 eg: Where a function may be defined as:
 
 ```
-operation calculateRisk(ClientId, Money)
+profilerOperation calculateRisk(ClientId, Money)
 ```
 
 However, some transports / protocols don't work well with collections of arguments.  

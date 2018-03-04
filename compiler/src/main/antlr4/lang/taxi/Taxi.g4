@@ -121,7 +121,7 @@ serviceBody
     ;
 
  serviceOperationDeclaration
-     :   annotation* 'operation' operationSignature
+     :   annotation* 'profilerOperation' operationSignature
      ;
 
 operationSignature

@@ -37,18 +37,6 @@ data class Tokens(val unparsedTypes: Map<String, Pair<Namespace, ParserRuleConte
         return errors
     }
 
-    /**
-     * Compares two contexts to decide if they compile to the same object
-     * Note - the actual text declaration in source format isn't compared - the underlying definition
-     * is
-     */
-    private fun compileToDifferentObjects(first: ParserRuleContext, second: ParserRuleContext): Boolean {
-        val firstHash = first.children.toSet().hashCode()
-        val secondHash = second.children.toSet().hashCode()
-
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
     private fun collectDuplicateServices(others: Tokens): List<CompilationError> {
         val duplicateServices = this.unparsedServices.keys.filter { others.unparsedServices.containsKey(it) }
         val errors = duplicateServices.map { CompilationError(others.unparsedServices[it]!!.second.start, "Attempt to redefine service $it. Services may be extended (using an extension), but not redefined") }

@@ -23,6 +23,8 @@ class CompilationException(val errors: List<CompilationError>) : RuntimeExceptio
     constructor(offendingToken: Token, detailMessage: String?) : this(listOf(CompilationError(offendingToken, detailMessage)))
 }
 
+data class DocumentStrucutreError(val detailMessage:String)
+class DocumentMalformedException(val errors:List<DocumentStrucutreError>) : RuntimeException(errors.joinToString { it.detailMessage })
 class Compiler(val inputs: List<CharStream>) {
     constructor(input: CharStream) : this(listOf(input))
     constructor(source: String, name:String = "<unknown>") : this(CharStreams.fromString(source,name))

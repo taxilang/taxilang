@@ -2,7 +2,12 @@ package lang.taxi
 
 import nl.pvdberg.hashkode.HashKode
 
+
 class Equality<T : Any>(val target: T, vararg val properties: T.() -> Any?) {
+    companion object {
+        var DEFAULT_INITIAL_ODD_NUMBER = 17
+        var DEFAULT_MULTIPLIER_PRIME = 37
+    }
     fun isEqualTo(other: Any?): Boolean {
         if (other == null) return false
         if (other === this) return true

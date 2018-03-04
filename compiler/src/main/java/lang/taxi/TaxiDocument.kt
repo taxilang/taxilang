@@ -147,13 +147,26 @@ open class TaxiDocument(val types: List<Type>,
         return servicesMap[qualifiedName]!!
     }
 
+    private fun Iterable<CompilationUnit>.declarationSites(): String {
+        return this.joinToString { it.source.origin }
+    }
+
     fun merge(other: TaxiDocument): TaxiDocument {
-        val duplicates: List<Named> = collectDuplicateTypes(other) + collectDuplicateServices(other)
-        if (duplicates.isNotEmpty()) {
-            val namesInError = duplicates.joinToString { it.qualifiedName }
-            throw IllegalArgumentException("Attemped to redefined types with conflicting definitions: $namesInError")
+        val conflicts: List<Named> = collectConflictingTypes(other) + collectDuplicateServices(other)
+        val errors = conflicts.map {
+            val site1 = this.type(it.qualifiedName).compilationUnits.declarationSites()
+            val site2 = other.type(it.qualifiedName).compilationUnits.declarationSites()
+            DocumentStrucutreError("Attempted to redefine types with conflicting definition - ${it.qualifiedName} is defined in the following locations: $site1 which conflicts with the definition at $site2")
         }
-        return TaxiDocument(this.types + other.types,
+        if (errors.isNotEmpty()) {
+            throw DocumentMalformedException(errors)
+        }
+
+        // TODO : We should be merging where there are extensions in otherwise
+        // equal type definitions.
+        val duplicateNames = this.types.filter { other.containsType(it.qualifiedName) }.map { it.qualifiedName }
+
+        return TaxiDocument(this.types + other.types.filterNot { duplicateNames.contains(it.qualifiedName) },
                 this.services + other.services)
     }
 
@@ -163,8 +176,11 @@ open class TaxiDocument(val types: List<Type>,
 
     }
 
-    private fun collectDuplicateTypes(other: TaxiDocument): List<Type> {
+    private fun collectConflictingTypes(other: TaxiDocument): List<Type> {
         val duplicateTypes = this.types.filter { other.containsType(it.qualifiedName) }
+        // TODO : This should consider extensions.
+        // If the underlying type definitions are the same, but one adds extensions,
+        // that's valid.
         return duplicateTypes.filter { it != other.type(it.qualifiedName) }
 
     }
