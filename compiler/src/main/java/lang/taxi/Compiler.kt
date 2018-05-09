@@ -17,9 +17,11 @@ object Namespaces {
 data class CompilationError(val offendingToken: Token, val detailMessage: String?) {
     val line = offendingToken.line
     val char = offendingToken.charPositionInLine
+
+    override fun toString(): String = "Compilation Error: ($line,$char) $detailMessage"
 }
 
-class CompilationException(val errors: List<CompilationError>) : RuntimeException(errors.map { it.detailMessage }.filterNotNull().joinToString()) {
+class CompilationException(val errors: List<CompilationError>) : RuntimeException(errors.joinToString { it.toString() }) {
     constructor(offendingToken: Token, detailMessage: String?) : this(listOf(CompilationError(offendingToken, detailMessage)))
 }
 
@@ -27,11 +29,12 @@ data class DocumentStrucutreError(val detailMessage:String)
 class DocumentMalformedException(val errors:List<DocumentStrucutreError>) : RuntimeException(errors.joinToString { it.detailMessage })
 class Compiler(val inputs: List<CharStream>) {
     constructor(input: CharStream) : this(listOf(input))
-    constructor(source: String, name:String = "<unknown>") : this(CharStreams.fromString(source,name))
+    constructor(source: String) : this(CharStreams.fromString(source,"[unknown source]"))
     constructor(file: File) : this(CharStreams.fromPath(file.toPath()))
 
     companion object {
-        fun fromStrings(sources: List<String>) = Compiler(sources.mapIndexed { index, source -> CharStreams.fromString(source, "StringSource-$index") })
+        fun forStrings(sources: List<String>) = Compiler(sources.mapIndexed { index, source -> CharStreams.fromString(source, "StringSource-$index") })
+        fun forStrings(vararg source:String) = forStrings(source.toList())
     }
 
     fun compile(): TaxiDocument {

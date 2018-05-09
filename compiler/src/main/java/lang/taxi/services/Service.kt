@@ -33,12 +33,15 @@ data class AttributeConstantValueConstraint(
  * Indicates that an attribute will be returned updated to a value
  * provided by a parameter (ie., an input on a function)
  */
-data class AttributeValueFromParameterConstraint(val fieldName: String, val parameterName: String) : Constraint {
-    override fun asTaxi(): String = "$fieldName = $parameterName"
+data class AttributeValueFromParameterConstraint(val fieldName: String, val attributePath: AttributePath) : Constraint {
+    override fun asTaxi(): String = "$fieldName = ${attributePath.path}"
 }
 
-data class ReturnValueDerivedFromParameterConstraint(val parameterName: String) : Constraint {
-    override fun asTaxi(): String = "from $parameterName"
+data class ReturnValueDerivedFromParameterConstraint(val attributePath: AttributePath) : Constraint {
+    override fun asTaxi(): String = "from $attributePath"
+
+    val path = attributePath.path
+
 
 }
 

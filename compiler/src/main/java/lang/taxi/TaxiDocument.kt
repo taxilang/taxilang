@@ -7,6 +7,24 @@ import lang.taxi.types.EnumType
 import lang.taxi.types.ObjectType
 import org.antlr.v4.runtime.ParserRuleContext
 
+/**
+ * A series of named atributes on an entity that describe a path
+ * eg foo.baz.bar
+ */
+data class AttributePath(val parts: List<String>) {
+    constructor(qualifiedName: TaxiParser.QualifiedNameContext) : this(qualifiedName.Identifier().map { it.text })
+
+    companion object {
+        fun from(value: String): AttributePath {
+            return AttributePath(value.split("."))
+        }
+    }
+
+    val path = parts.joinToString(".")
+
+    override fun toString() = "AttributePath ($path)"
+}
+
 data class QualifiedName(val namespace: String, val typeName: String) {
     companion object {
         private val nativeNamespaces = listOf("lang.taxi")

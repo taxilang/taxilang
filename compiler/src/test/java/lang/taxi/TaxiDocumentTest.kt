@@ -44,7 +44,7 @@ class TaxiDocumentTest {
         expect(doc.containsType("Author")).to.be.`true`
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test(expected = DocumentMalformedException::class)
     fun given_documentsContainingConflictingDefinitions_when_mergingDocuments_then_exceptionIsThrown() {
         val src1 = """
             type Person {

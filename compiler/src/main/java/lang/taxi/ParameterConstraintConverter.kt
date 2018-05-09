@@ -37,12 +37,12 @@ class OperationConstraintConverter(val expressionList: TaxiParser.ParameterConst
 class AttributeConstantConstraintProvider : ConstraintProvider {
     override fun applies(constraint: TaxiParser.ParameterConstraintExpressionContext): Boolean {
         val constraintDefinition = constraint.parameterExpectedValueConstraintExpression()
-        return constraintDefinition != null && constraintDefinition.expression().primary().literal() != null
+        return constraintDefinition?.literal() != null
     }
 
     override fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type): Constraint {
         val constraintDefinition = constraint.parameterExpectedValueConstraintExpression()!!
-        return AttributeConstantValueConstraint(constraintDefinition.Identifier().text, constraintDefinition.expression().primary().literal().value())
+        return AttributeConstantValueConstraint(constraintDefinition.Identifier().text, constraintDefinition.literal().value())
     }
 
     private fun validateTargetFieldIsPresentOnType(constraint: TaxiParser.ParameterConstraintExpressionContext, paramType: Type) {
@@ -62,13 +62,13 @@ class AttributeConstantConstraintProvider : ConstraintProvider {
 class AttributeValueFromParameterConstraintProvider : ConstraintProvider {
     override fun applies(constraint: TaxiParser.ParameterConstraintExpressionContext): Boolean {
         val constraintDefinition = constraint.parameterExpectedValueConstraintExpression()
-        return constraintDefinition != null && constraintDefinition.expression().primary().Identifier() != null
+        return constraintDefinition?.qualifiedName() != null
     }
 
 
     override fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type): Constraint {
         val constraintDefinition = constraint.parameterExpectedValueConstraintExpression()!!
-        return AttributeValueFromParameterConstraint(constraintDefinition.Identifier().text, constraintDefinition.expression().primary().Identifier().text)
+        return AttributeValueFromParameterConstraint(constraintDefinition.Identifier().text, AttributePath(constraintDefinition.qualifiedName()))
     }
 }
 
@@ -78,7 +78,7 @@ class ReturnValueDerivedFromInputConstraintProvider : ConstraintProvider {
     }
 
     override fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type): Constraint {
-        return ReturnValueDerivedFromParameterConstraint(constraint.operationReturnValueOriginExpression().Identifier().text)
+        return ReturnValueDerivedFromParameterConstraint(AttributePath(constraint.operationReturnValueOriginExpression().qualifiedName()))
     }
 
 }

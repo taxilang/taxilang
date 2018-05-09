@@ -1,5 +1,6 @@
 package lang.taxi.generators.java
 
+import lang.taxi.AttributePath
 import lang.taxi.annotations.ConstraintAnnotationModel
 import lang.taxi.annotations.ResponseContract
 import lang.taxi.services.AttributeConstantValueConstraint
@@ -25,7 +26,7 @@ class ConstraintAnnotationMapper(val converters: List<ConstraintAnnotationConver
     }
 
     fun convert(contract: ResponseContract): List<Constraint> {
-        val basedOn = ReturnValueDerivedFromParameterConstraint(contract.basedOn)
+        val basedOn = ReturnValueDerivedFromParameterConstraint(AttributePath.from(contract.basedOn))
         val mappedConstraints = doConvert(contract.constraints
                 .map { ConstraintAnnotationModel(it) })
         // Note: basedOn MUST come first to ensure order
@@ -58,7 +59,7 @@ class AttributeValueFromParameterConstraintConvert : ConstraintAnnotationConvert
 
     override fun provide(constraint: ConstraintAnnotationModel): Constraint {
         val parts = constraint.value.split("=")
-        return AttributeValueFromParameterConstraint(parts[0].trim(), parts[1].trim())
+        return AttributeValueFromParameterConstraint(parts[0].trim(), AttributePath.from(parts[1].trim()))
     }
 
 }

@@ -5,7 +5,6 @@ import lang.taxi.services.AttributeConstantValueConstraint
 import lang.taxi.services.AttributeValueFromParameterConstraint
 import lang.taxi.services.ReturnValueDerivedFromParameterConstraint
 import org.junit.Test
-import kotlin.test.fail
 
 class ServicesGrammarTest {
     @Test
@@ -65,7 +64,7 @@ service MyService {
     operation calculateCreditRisk(Money(currency = 'GBP')) : Decimal
 }
 """
-        val doc = Compiler(moneyType, source).compile()
+        val doc = Compiler.forStrings(moneyType, source).compile()
         val param = doc.service("MyService").operation("calculateCreditRisk").parameters[0]
         expect(param.constraints).to.have.size(1)
         val constraint = param.constraints[0] as AttributeConstantValueConstraint
@@ -94,7 +93,7 @@ service MyService {
     operation convertCurrency(source : Money, target : Currency) : Money( from source,  currency = target )
 }
 """
-        val doc = Compiler(moneyType, source).compile()
+        val doc = Compiler.forStrings(moneyType, source).compile()
         val operation = doc.service("MyService").operation("convertCurrency")
         expect(operation.contract).to.not.be.`null`
         val contract = operation.contract!!
@@ -103,30 +102,42 @@ service MyService {
         expect(constraint).instanceof(AttributeValueFromParameterConstraint::class.java)
         val valueConstraint = constraint as AttributeValueFromParameterConstraint
         expect(valueConstraint.fieldName).to.equal("currency")
-        expect(valueConstraint.parameterName).to.equal("target")
+        expect(valueConstraint.attributePath.path).to.equal("target")
 
         expect(contract.returnTypeConstraints[0]).instanceof(ReturnValueDerivedFromParameterConstraint::class.java)
         val originConstraint = contract.returnTypeConstraints[0] as ReturnValueDerivedFromParameterConstraint
-        expect(originConstraint.parameterName).to.equal("source")
+        expect(originConstraint.attributePath.path).to.equal("source")
     }
 
     @Test
     fun servicesCanDeclareContractsWithNestedPropertiesOnReturnValues() {
         val source = """
 type ConversionRequest {
-    source : Money,
+    source : Money
     target : Currency
 }
 service MyService {
     operation convertCurrency(request : ConversionRequest) : Money( from request.source,  currency = request.target )
 }
 """
-        val doc = Compiler(moneyType, source).compile()
+        val doc = Compiler.forStrings(moneyType, source).compile()
         val operation = doc.service("MyService").operation("convertCurrency")
 
         expect(operation.contract).to.not.be.`null`
         val contract = operation.contract!!
 
-        fail("Not implemented")
+        expect(contract.returnType.qualifiedName).to.equal("Money")
+        expect(contract.returnTypeConstraints).to.have.size(2)
+
+        expect(contract.returnTypeConstraints[0]).to.be.instanceof(ReturnValueDerivedFromParameterConstraint::class.java)
+        val returnValueFromInputConstraiint = contract.returnTypeConstraints[0] as ReturnValueDerivedFromParameterConstraint
+        expect(returnValueFromInputConstraiint.path).to.equal("request.source")
+        expect(returnValueFromInputConstraiint.attributePath.parts).to.contain.elements("request","source")
+
+        expect(contract.returnTypeConstraints[1]).to.be.instanceof(AttributeValueFromParameterConstraint::class.java)
+        val attributeValueFromInputConstraiint = contract.returnTypeConstraints[1] as AttributeValueFromParameterConstraint
+        expect(attributeValueFromInputConstraiint.fieldName).to.equal("currency")
+        expect(attributeValueFromInputConstraiint.attributePath.path).to.equal("request.target")
+        expect(attributeValueFromInputConstraiint.attributePath.parts).to.contain.elements("request","target")
     }
 }

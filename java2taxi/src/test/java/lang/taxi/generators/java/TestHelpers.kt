@@ -11,8 +11,8 @@ object TestHelpers {
         return expectToCompileTheSame(generated, listOf(expected))
     }
     fun expectToCompileTheSame(generated: List<String>, expected: List<String>) {
-        val generatedDoc = Compiler.fromStrings(generated).compile()
-        val expectedDoc = Compiler.fromStrings(expected).compile()
+        val generatedDoc = Compiler.forStrings(generated).compile()
+        val expectedDoc = Compiler.forStrings(expected).compile()
         if (generatedDoc == expectedDoc) return
 
         val typeErros = expectedDoc.types.flatMap { type -> collateTypeErrors(type, generatedDoc) }

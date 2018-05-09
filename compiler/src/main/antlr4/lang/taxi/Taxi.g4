@@ -121,7 +121,7 @@ serviceBody
     ;
 
  serviceOperationDeclaration
-     :   annotation* 'profilerOperation' operationSignature
+     :   annotation* 'operation' operationSignature
      ;
 
 operationSignature
@@ -158,12 +158,16 @@ parameterConstraintExpression
     |  operationReturnValueOriginExpression
     ;
 
+// The return value will have a relationship to a property
+// received in an input (incl. nested properties)
 operationReturnValueOriginExpression
-    :  'from' Identifier
+    :  'from' qualifiedName
     ;
 
+// A parameter will have a specific constnat value.
 parameterExpectedValueConstraintExpression
-    :  Identifier '=' expression
+    : Identifier '=' literal
+    | Identifier '=' qualifiedName
     ;
 
 
