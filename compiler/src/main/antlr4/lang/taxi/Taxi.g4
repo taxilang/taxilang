@@ -64,10 +64,21 @@ typeBody
      :   Identifier ':' typeType
      ;
 
+// TODO : typeType is over-used as the moment, as it looks more like
+// a type declaration, allowing type aliases
+// This allows param declarations like:
+// type Foo { name : FirstName as String }
+// Which is a GoodThing.
+// However, by definition, it also allows:
+// type Foo { name : FirstName as LastName as AnotherName as String }
+// which isn't supported.
+// Need to give thought to where typeType is used, and consider
+// replacing it with a more appropriately token.
 typeType
     :   classOrInterfaceType parameterConstraint? listType? optionalType? aliasedType?
     |   primitiveType parameterConstraint? listType? optionalType?
     ;
+
 
 classOrInterfaceType
     :   Identifier /* typeArguments? */ ('.' Identifier /* typeArguments? */ )*
@@ -88,7 +99,7 @@ enumConstant
     ;
 // type aliases
 typeAliasDeclaration
-    : annotation* 'type alias' Identifier aliasedType
+    : annotation* 'type alias' typeType aliasedType
     ;
 
 aliasedType
