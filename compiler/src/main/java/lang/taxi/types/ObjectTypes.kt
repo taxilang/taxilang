@@ -13,13 +13,13 @@ data class ObjectTypeExtension(val annotations: List<Annotation> = emptyList(),
     }
 }
 
-data class ObjectTypeDefinition(val fields: List<Field> = emptyList(), val annotations: List<Annotation> = emptyList(), val modifiers: List<Modifier> = emptyList(), override val compilationUnit: CompilationUnit) : TypeDefinition {
+data class ObjectTypeDefinition(val fields: Set<Field> = emptySet(), val annotations: Set<Annotation> = emptySet(), val modifiers: List<Modifier> = emptyList(), override val compilationUnit: CompilationUnit) : TypeDefinition {
     private val equality = Equality(this, ObjectTypeDefinition::fields.toSet(), ObjectTypeDefinition::annotations.toSet(), ObjectTypeDefinition::modifiers.toSet())
     override fun equals(other: Any?) = equality.isEqualTo(other)
     override fun hashCode(): Int = equality.hash()
 }
 
-private fun <T, R> KProperty1<T, List<R>>.toSet(): T.() -> Set<R>? {
+private fun <T, R> KProperty1<T, Collection<R>>.toSet(): T.() -> Set<R>? {
     val prop = this
     return {
         prop.get(this).toSet()
@@ -93,5 +93,14 @@ data class Field(
         val nullable: Boolean = false,
         val annotations: List<Annotation> = emptyList(),
         val constraints: List<Constraint> = emptyList()
-)
+) {
 
+    // For equality - don't compare on the type (as this can cause stackOverflow when the type is an Object type)
+    private val typeName = type.qualifiedName
+    private val equality = Equality(this, Field::name, Field::typeName, Field::nullable, Field::annotations, Field::constraints)
+
+    override fun equals(other: Any?) = equality.isEqualTo(other)
+    override fun hashCode(): Int = equality.hash()
+
+
+}
