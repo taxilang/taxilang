@@ -1,6 +1,7 @@
 package lang.taxi.generators.java
 
 import com.winterbe.expekt.expect
+import lang.taxi.annotations.CollectionOf
 import lang.taxi.annotations.DataType
 import lang.taxi.annotations.Namespace
 import lang.taxi.annotations.ParameterType
@@ -144,4 +145,62 @@ namespace namespaceA {
         TestHelpers.expectToCompileTheSame(taxiDef, expected)
 
     }
+
+
+    @Test
+    fun given_typeIsCollection_that_schemaIsGeneratedCorrectly() {
+        @DataType("foo.Person")
+        data class Person(val name: String)
+
+        @DataType("foo.AddressBook")
+        data class AddressBook(@CollectionOf(Person::class) val peopleList: List<Person>,
+                               @CollectionOf(Person::class) val peopleSet: Set<Person>)
+
+        val taxiDef = TaxiGenerator().forClasses(AddressBook::class.java).generateAsStrings()
+
+        val expected = """
+            namespace foo {
+                type Person {
+                   name : String
+                }
+                type AddressBook {
+                    peopleList : Person[]
+                    peopleSet : Person[]
+                }
+            }
+        """.trimIndent()
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
+
+    @Test
+    fun given_typeContainsEnum_that_schemaIsGeneratedCorrectly() {
+
+        @DataType("foo.Book")
+        data class Book(val title: String, val classification: Classification)
+
+        val taxiDef = TaxiGenerator().forClasses(Book::class.java).generateAsStrings()
+
+        // Note: It's actually wrong that Classification ends up in the foo namespace.
+        // But, I'll fix that later.
+        val expected = """
+            namespace foo {
+                enum Classification {
+                    FICTION,
+                    NON_FICTION
+                }
+                type Book {
+                    title:String
+                    classification:Classification
+                }
+            }
+        """.trimIndent()
+
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+
+    }
+
+    enum class Classification {
+        FICTION, NON_FICTION
+    }
+
 }

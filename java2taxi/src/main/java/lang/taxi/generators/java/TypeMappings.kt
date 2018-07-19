@@ -1,5 +1,7 @@
 package lang.taxi.generators.java
 
+import com.google.common.base.Enums
+import com.google.common.reflect.TypeToken
 import lang.taxi.CompilationUnit
 import lang.taxi.SourceCode
 import lang.taxi.Type
@@ -12,6 +14,8 @@ import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.utils.log
 import org.jetbrains.annotations.NotNull
+import org.springframework.core.GenericCollectionTypeResolver.getCollectionType
+import org.springframework.core.ResolvableType
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
 import java.lang.reflect.Method
@@ -103,6 +107,11 @@ class DefaultTypeMapper : TypeMapper {
             }
         }
 
+        if (isCollection(element)) {
+            val collectionType = findCollectionType(element, existingTypes, defaultNamespace)
+            return ArrayType(collectionType, exportedCompilationUnit(element))
+        }
+
         if (containingMember != null && declaresTypeAlias(containingMember)) {
             val typeAliasName = getDeclaredTypeAliasName(containingMember, defaultNamespace)!!
             return getOrCreateTypeAlias(containingMember, typeAliasName, existingTypes)
@@ -121,7 +130,54 @@ class DefaultTypeMapper : TypeMapper {
             return existing
         }
 
+        if (isEnum(element)) {
+            val enumType = mapEnumType(element, defaultNamespace)
+            // Note: We have to mutate the collection of types within the parent
+            // loop, as adding objectTypes needs to be able to pre-emptively add empty types
+            // before the definition is encountered.
+            // This feels ugly, but it works for now.
+            existingTypes.add(enumType)
+            return enumType
+        }
+
         return mapNewObjectType(element, defaultNamespace, existingTypes)
+    }
+
+    private fun mapEnumType(element: AnnotatedElement, defaultNamespace: String): EnumType {
+        val enum = TypeNames.typeFromElement(element)
+        val enumValues = enum.getDeclaredField("\$VALUES").let {
+            // This is a hack, as for some reason in tests enum.enumConstants is returning null.
+            it.isAccessible = true
+            it.get(null) as Array<Enum<*>>
+        }.map {
+            EnumValue(
+                    name = it.name,
+                    annotations = emptyList() // TODO : Support annotations on EnumValues when exporting
+            )
+        }
+        return EnumType(
+                getTargetTypeName(element, defaultNamespace),
+                EnumDefinition(
+                        values = enumValues,
+                        annotations = emptyList(), // TODO : Support annotations on Enums when exporting
+                        compilationUnit = exportedCompilationUnit(element)
+                )
+        )
+    }
+
+    private fun isEnum(element: AnnotatedElement) = TypeNames.typeFromElement(element).isEnum
+
+    private fun findCollectionType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String): Type {
+        val collectionType = when (element) {
+            is Field -> ResolvableType.forField(element).generics[0] // returns T of List<T> / Set<T>
+            else -> TODO("Collection types that aren't fields not supported yet - (got $element)")
+        }
+        return getTaxiType(collectionType.resolve(), existingTypes, defaultNamespace)
+    }
+
+    private fun isCollection(element: AnnotatedElement): Boolean {
+        val clazz = TypeNames.typeFromElement(element)
+        return (clazz.isArray) || Collection::class.java.isAssignableFrom(clazz)
     }
 
 //    // This is typically for functions who's parameters are
@@ -138,13 +194,13 @@ class DefaultTypeMapper : TypeMapper {
 
     private fun getOrCreateTypeAlias(element: AnnotatedElement, typeAliasName: String, existingTypes: MutableSet<Type>): TypeAlias {
         val existingAlias = existingTypes.findByName(typeAliasName)
-        if (existingAlias != null) {
-            return existingAlias as TypeAlias
+        return if (existingAlias != null) {
+            existingAlias as TypeAlias
         } else {
             val aliasedTaxiType = getTypeDeclaredOnClass(element, existingTypes)
             val typeAlias = TypeAlias(typeAliasName, aliasedTaxiType, CompilationUnit.ofSource(SourceCode("Exported from annotation", "Annotation")))
             existingTypes.add(typeAlias)
-            return typeAlias
+            typeAlias
         }
     }
 
@@ -161,20 +217,20 @@ class DefaultTypeMapper : TypeMapper {
         // TODO : We may consider type aliases for Objects later.
         if (element !is Field && element !is Parameter && element !is Method) return null
         val dataType = element.getAnnotation(DataType::class.java) ?: return null
-        if (dataType.declaresName()) {
-            return dataType.qualifiedName(defaultNamespace)
+        return if (dataType.declaresName()) {
+            dataType.qualifiedName(defaultNamespace)
         } else {
-            return null
+            null
         }
     }
 
     private fun mapNewObjectType(element: AnnotatedElement, defaultNamespace: String, existingTypes: MutableSet<Type>): ObjectType {
         val name = getTargetTypeName(element, defaultNamespace)
-        val fields = mutableListOf<lang.taxi.types.Field>()
+        val fields = mutableSetOf<lang.taxi.types.Field>()
         val modifiers = if (element.getAnnotation(ParameterType::class.java) != null) {
             listOf(Modifier.PARAMETER_TYPE)
         } else emptyList()
-        val definition = ObjectTypeDefinition(fields, emptyList(), modifiers, CompilationUnit.ofSource(SourceCode("Exported from type $name", "Exported")))
+        val definition = ObjectTypeDefinition(fields, emptySet(), modifiers, exportedCompilationUnit(element))
         val objectType = ObjectType(name, definition)
 
         // Note: Add the type while it's empty, and then collect the fields.
@@ -183,6 +239,9 @@ class DefaultTypeMapper : TypeMapper {
         fields.addAll(this.mapTaxiFields(lang.taxi.TypeNames.typeFromElement(element), defaultNamespace, existingTypes))
         return objectType
     }
+
+    private fun exportedCompilationUnit(element: AnnotatedElement) =
+            CompilationUnit.ofSource(SourceCode("Exported from type $element", "Exported"))
 
     private fun getTargetTypeName(element: AnnotatedElement, defaultNamespace: String, containingMember: AnnotatedElement? = null): String {
         val rawType = TypeNames.typeFromElement(element)

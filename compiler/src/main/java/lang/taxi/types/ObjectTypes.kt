@@ -19,7 +19,7 @@ data class ObjectTypeDefinition(val fields: Set<Field> = emptySet(), val annotat
     override fun hashCode(): Int = equality.hash()
 }
 
-private fun <T, R> KProperty1<T, Collection<R>>.toSet(): T.() -> Set<R>? {
+internal fun <T, R> KProperty1<T, Collection<R>>.toSet(): T.() -> Set<R>? {
     val prop = this
     return {
         prop.get(this).toSet()

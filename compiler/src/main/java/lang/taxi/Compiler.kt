@@ -69,7 +69,7 @@ internal class DocumentListener(val tokens: Tokens) {
     private val services = mutableListOf<Service>()
     fun buildTaxiDocument(): TaxiDocument {
         compile()
-        return TaxiDocument(typeSystem.typeList(), services)
+        return TaxiDocument(typeSystem.typeList().toSet(), services.toSet())
     }
 
 
@@ -175,7 +175,7 @@ internal class DocumentListener(val tokens: Tokens) {
         }
         val annotations = collateAnnotations(ctx.annotation())
         val modifiers = parseModifiers(ctx.typeModifier())
-        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields, annotations, modifiers, CompilationUnit.of(ctx))))
+        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields.toSet(), annotations.toSet(), modifiers, CompilationUnit.of(ctx))))
     }
 
     private fun  parseModifiers(typeModifier: TaxiParser.TypeModifierContext?): List<Modifier> {

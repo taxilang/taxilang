@@ -1,5 +1,7 @@
 package lang.taxi.annotations
 
+import kotlin.reflect.KClass
+
 @Target(AnnotationTarget.CLASS, AnnotationTarget.VALUE_PARAMETER,
         AnnotationTarget.PROPERTY, AnnotationTarget.FIELD,
         // When on a Function, indicates the return type.
@@ -12,6 +14,14 @@ annotation class DataType(
          * If blank, will be inferred from the class name
          */
         val value: String = ""
+)
+
+/**
+ * Used on fields that are collections, where the type is erased
+ */
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)
+annotation class CollectionOf(
+        val valu: KClass<*>
 )
 
 /**

@@ -122,11 +122,14 @@ fun List<Annotatable>.annotations(): List<Annotation> {
 }
 
 class NamespacedTaxiDocument(val namespace: String,
-                             types: List<Type>,
-                             services: List<Service>) : TaxiDocument(types, services)
+                             types: Set<Type>,
+                             services: Set<Service>) : TaxiDocument(types, services)
 
-open class TaxiDocument(val types: List<Type>,
-                        val services: List<Service>
+// Note:  Changed types & services from List<> to Set<>
+// as ordering shouldn't matter, only content.
+// However, I suspect there was a reason these were Lists, so leaving this note here to remind me
+open class TaxiDocument(val types: Set<Type>,
+                        val services: Set<Service>
 ) {
     private val equality = Equality(this, TaxiDocument::types, TaxiDocument::services)
     private val typeMap = types.associateBy { it.qualifiedName }
@@ -148,8 +151,8 @@ open class TaxiDocument(val types: List<Type>,
 
         return namespaces.map { namespace ->
             NamespacedTaxiDocument(namespace,
-                    types = typesByNamespace.get(namespace) ?: emptyList(),
-                    services = servicesByNamespace.get(namespace) ?: emptyList())
+                    types = typesByNamespace.get(namespace)?.toSet() ?: emptySet(),
+                    services = servicesByNamespace.get(namespace)?.toSet() ?: emptySet())
         }
     }
 
