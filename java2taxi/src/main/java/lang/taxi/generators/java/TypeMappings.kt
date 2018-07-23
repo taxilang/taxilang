@@ -1,20 +1,16 @@
 package lang.taxi.generators.java
 
-import com.google.common.base.Enums
-import com.google.common.reflect.TypeToken
-import lang.taxi.CompilationUnit
-import lang.taxi.SourceCode
-import lang.taxi.Type
-import lang.taxi.TypeNames
+import lang.taxi.*
 import lang.taxi.annotations.DataType
+import lang.taxi.annotations.Namespaces
 import lang.taxi.annotations.ParameterType
 import lang.taxi.annotations.declaresName
 import lang.taxi.annotations.qualifiedName
+import lang.taxi.kapt.KotlinTypeAlias
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.utils.log
 import org.jetbrains.annotations.NotNull
-import org.springframework.core.GenericCollectionTypeResolver.getCollectionType
 import org.springframework.core.ResolvableType
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
@@ -26,6 +22,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.*
+import kotlin.reflect.jvm.kotlinFunction
+import kotlin.reflect.jvm.kotlinProperty
 
 interface MapperExtension
 
@@ -84,7 +82,8 @@ class DefaultTypeMapper : TypeMapper {
     override fun getTaxiType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String, containingMember: AnnotatedElement?): Type {
         val elementType = TypeNames.typeFromElement(element)
 
-        if (isTaxiPrimitiveWithoutAnnotation(element)) {
+        val declaresTypeAlias = declaresTypeAlias(element)
+        if (isTaxiPrimitiveWithoutAnnotation(element) && !declaresTypeAlias) {
             if (containingMember == null) return PrimitiveTypes.getTaxiPrimitive(elementType.typeName)
             if (isTaxiPrimitiveWithoutAnnotation(containingMember)) {
                 // If the type has a DataType annotation, we use that
@@ -93,9 +92,7 @@ class DefaultTypeMapper : TypeMapper {
             }
         }
 
-        val targetTypeName = getTargetTypeName(element, defaultNamespace, containingMember)
-
-        if (declaresTypeAlias(element)) {
+        if (declaresTypeAlias) {
             val typeAliasName = getDeclaredTypeAliasName(element, defaultNamespace)!!
             val aliasedTaxiType = getTypeDeclaredOnClass(element, existingTypes)
             if (typeAliasName != aliasedTaxiType.qualifiedName) {
@@ -106,6 +103,8 @@ class DefaultTypeMapper : TypeMapper {
                         "empty @DataType annotation, otherwise future refactoring bugs are likely to occur")
             }
         }
+
+        val targetTypeName = getTargetTypeName(element, defaultNamespace, containingMember)
 
         if (isCollection(element)) {
             val collectionType = findCollectionType(element, existingTypes, defaultNamespace)
@@ -216,12 +215,23 @@ class DefaultTypeMapper : TypeMapper {
     private fun getDeclaredTypeAliasName(element: AnnotatedElement, defaultNamespace: String): String? {
         // TODO : We may consider type aliases for Objects later.
         if (element !is Field && element !is Parameter && element !is Method) return null
+        val kotlinType = when (element) {
+            is Field -> element.kotlinProperty
+            is Method -> element.kotlinFunction
+            else -> null
+        }
+        val kotlinTypeAlias = TypeAliasRegistry.findTypeAlias(kotlinType)
+        if (kotlinTypeAlias != null) return deriveQualifiedAliasName(kotlinTypeAlias)
         val dataType = element.getAnnotation(DataType::class.java) ?: return null
         return if (dataType.declaresName()) {
             dataType.qualifiedName(defaultNamespace)
         } else {
             null
         }
+    }
+
+    private fun deriveQualifiedAliasName(kotlinTypeAlias: KotlinTypeAlias): String {
+        return kotlinTypeAlias.deriveNamespace() + "." + kotlinTypeAlias.simpleName
     }
 
     private fun mapNewObjectType(element: AnnotatedElement, defaultNamespace: String, existingTypes: MutableSet<Type>): ObjectType {
@@ -258,6 +268,7 @@ class DefaultTypeMapper : TypeMapper {
 
     private fun mapTaxiFields(javaClass: Class<*>, defaultNamespace: String, existingTypes: MutableSet<Type>): List<lang.taxi.types.Field> {
         return javaClass.declaredFields.map { field ->
+            val kprop = field.kotlinProperty
             lang.taxi.types.Field(name = field.name,
                     type = getTaxiType(field, existingTypes, defaultNamespace),
                     nullable = isNullable(field),
@@ -278,3 +289,15 @@ class DefaultTypeMapper : TypeMapper {
 }
 
 
+fun KotlinTypeAlias.deriveNamespace(): String {
+    // Note : These rules should match whats in TypeNames.deriveNamespace.
+    // In future, we should collapse the two functions, but right now, that's not happening
+    val dataType = this.getAnnotation(DataType::class.qualifiedName!!)
+    val namespaceAnnotation = this.getAnnotation(lang.taxi.annotations.Namespace::class.qualifiedName!!)
+    val dataTypeValue = dataType?.arg("value")
+    return when {
+        namespaceAnnotation != null -> namespaceAnnotation.arg("value")!!
+        dataTypeValue != null && Namespaces.hasNamespace(dataTypeValue) -> Namespaces.pluckNamespace(dataTypeValue)!!
+        else -> this.qualifiedName
+    }
+}

@@ -28,7 +28,8 @@ data class ParsedAnnotation(
         return source
     }
 
-    private fun argsMapName(packageName: String, simpleName: String) = "${packageName.replace(".", "_")}_${simpleName}_annotationArgs"
+    private fun String.packageEscpaed() = this.replace(".","_")
+    private fun argsMapName(packageName: String, simpleName: String) = "${packageName.packageEscpaed()}_${simpleName}_${this.name.packageEscpaed()}_annotationArgs"
 
 
     fun toJavaSource(packageName: String, simpleName: String): String {
@@ -40,9 +41,11 @@ data class ParsedAnnotation(
             )
         """.trimIndent()
     }
+
+    fun arg(name: String): String? = this.args[name]
 }
 
-data class TypeAlias(
+data class KotlinTypeAlias(
         val packageName: String,
         val simpleName: String,
         val resolvedType: String,
@@ -60,7 +63,7 @@ data class TypeAlias(
         return """
             $annotationArgsMaps
             TypeAliasRegistry.register(
-                new TypeAlias(
+                new KotlinTypeAlias(
                     ${packageName.quoted()},
                     ${simpleName.quoted()},
                     ${resolvedType.quoted()},
@@ -68,6 +71,10 @@ data class TypeAlias(
                 )
             );
         """.trimIndent()
+    }
+
+    fun getAnnotation(qualifiedName: String): ParsedAnnotation? {
+        return this.annotations.firstOrNull { it.name == qualifiedName }
     }
 }
 
@@ -90,7 +97,7 @@ class TypeAliasEmitter : KotlinMetadataUtils, KotlinAbstractProcessor() {
         return true
     }
 
-    private fun writeTypeAliases(typeAliases: Map<Element, List<TypeAlias>>) {
+    private fun writeTypeAliases(typeAliases: Map<Element, List<KotlinTypeAlias>>) {
         typeAliases.forEach { (_, aliases) ->
             if (aliases.isNotEmpty()) {
                 val (packageName, source) = generateSource(aliases)
@@ -104,7 +111,7 @@ class TypeAliasEmitter : KotlinMetadataUtils, KotlinAbstractProcessor() {
 
     }
 
-    private fun generateSource(aliases: List<TypeAlias>): Pair<String, String> {
+    private fun generateSource(aliases: List<KotlinTypeAlias>): Pair<String, String> {
         val packageName = aliases.first().packageName
         val registrationStatements = aliases.map {
             it.registrationStatement()
@@ -116,7 +123,7 @@ class TypeAliasEmitter : KotlinMetadataUtils, KotlinAbstractProcessor() {
             |import lang.taxi.TypeAliasRegistrar;
             |import lang.taxi.TypeAliasRegistry;
             |import lang.taxi.kapt.ParsedAnnotation;
-            |import lang.taxi.kapt.TypeAlias;
+            |import lang.taxi.kapt.KotlinTypeAlias;
             |import javax.annotation.Generated;
             |import java.util.HashMap;
             |import java.util.HashSet;
@@ -133,7 +140,7 @@ class TypeAliasEmitter : KotlinMetadataUtils, KotlinAbstractProcessor() {
         return packageName to source
     }
 
-    private fun parseAliasesFromMeta(meta: KotlinFileMetadata, element: Element): List<TypeAlias> {
+    private fun parseAliasesFromMeta(meta: KotlinFileMetadata, element: Element): List<KotlinTypeAlias> {
         val aliases = meta.data.packageProto.typeAliasOrBuilderList.map { typeAliasMeta ->
             val nameResolver = meta.data.nameResolver
 
@@ -150,7 +157,7 @@ class TypeAliasEmitter : KotlinMetadataUtils, KotlinAbstractProcessor() {
                 }.toMap()
                 ParsedAnnotation(annotationName, arguments)
             }.toSet()
-            TypeAlias(packageName, typeAliasName, resolvedType, parsedAnnotations)
+            KotlinTypeAlias(packageName, typeAliasName, resolvedType, parsedAnnotations)
         }
         return aliases
     }

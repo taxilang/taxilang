@@ -149,7 +149,7 @@ internal class DocumentListener(val tokens: Tokens) {
 
     private fun compileTypeAlias(tokenName: String, tokenRule: TaxiParser.TypeAliasDeclarationContext) {
         val qualifiedName = tokenRule.aliasedType().typeType().text
-        val typePointedTo = typeSystem.getType(qualifiedName)
+        val typePointedTo = typeSystem.getOrCreate(qualifiedName, tokenRule.start)
         val annotations = collateAnnotations(tokenRule.annotation())
 
         val definition = TypeAliasDefinition(typePointedTo, annotations, CompilationUnit.of(tokenRule))

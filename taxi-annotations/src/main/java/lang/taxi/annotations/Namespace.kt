@@ -1,9 +1,10 @@
 package lang.taxi.annotations
 
 @Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.CLASS,AnnotationTarget.TYPE,AnnotationTarget.TYPEALIAS)
 annotation class Namespace(val value: String)
 
-internal object Namespaces {
+object Namespaces {
     fun hasNamespace(value: String): Boolean {
         return value.contains(".")
     }

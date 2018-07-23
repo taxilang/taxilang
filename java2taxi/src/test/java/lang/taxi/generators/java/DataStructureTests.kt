@@ -1,6 +1,8 @@
 package lang.taxi.generators.java
 
 import com.winterbe.expekt.expect
+import lang.taxi.Compiler
+import lang.taxi.TypeAliasRegistry
 import lang.taxi.annotations.DataType
 import lang.taxi.annotations.Namespace
 import lang.taxi.annotations.ParameterType
@@ -198,22 +200,28 @@ namespace namespaceA {
 
     }
 
+
+
     @Test
     fun given_typeDeclaresFieldUsingTypeAlias_then_typeAliasIsCorrectlyEmitted() {
+        TypeAliasRegistry.register(TypeAliases::class)
         val taxiDef = TaxiGenerator().forClasses(Car::class.java).generateAsStrings()
         val expected = """
             namespace foo {
+                type alias PersonName as String
                 type Person {
-                    name : PersonName as String
+                    name : PersonName
                 }
+
+                type alias Adult as Person
                 type Car {
-                    driver : Adult as Person
+                    driver : Adult
                     passenger : Person
                 }
             }
         """.trimIndent()
 
-        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+        TestHelpers.expectToCompileTheSame(taxiDef ,expected)
     }
 
     enum class Classification {
@@ -222,14 +230,18 @@ namespace namespaceA {
 
 }
 
+@Namespace("foo")
 @DataType
 data class Person(val name: PersonName)
 
 @DataType
+@Namespace("foo")
 data class Car(val driver: Adult, val passenger: Person)
 
 @DataType
+@Namespace("foo")
 typealias PersonName = String
 
 @DataType
+@Namespace("foo")
 typealias Adult = Person

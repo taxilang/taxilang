@@ -17,6 +17,7 @@ annotation class DataType(
          * If blank, will be inferred from the class name
          */
         val value: String = ""
+
 )
 
 class Foo

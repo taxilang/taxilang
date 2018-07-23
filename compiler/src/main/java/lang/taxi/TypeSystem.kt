@@ -40,6 +40,9 @@ class TypeSystem {
     }
 
     fun getOrCreate(typeName: String): Type {
+        if (PrimitiveType.isPrimitiveType(typeName)) {
+            return PrimitiveType.fromDeclaration(typeName)
+        }
         return types.getOrPut(typeName, { ObjectType.undefined(typeName) })
     }
 
