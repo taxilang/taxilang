@@ -6,7 +6,10 @@ import kotlin.reflect.KClass
         AnnotationTarget.PROPERTY, AnnotationTarget.FIELD,
         // When on a Function, indicates the return type.
         // Useful for methods that return String etc.
-        AnnotationTarget.FUNCTION)
+        AnnotationTarget.FUNCTION,
+        // TypeAliases don't work yet, because of missing Kotlin features,
+        // but allow the annotation
+        AnnotationTarget.TYPEALIAS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DataType(
         /**
@@ -16,13 +19,7 @@ annotation class DataType(
         val value: String = ""
 )
 
-/**
- * Used on fields that are collections, where the type is erased
- */
-@Target(AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)
-annotation class CollectionOf(
-        val valu: KClass<*>
-)
+class Foo
 
 /**
  * Indicates that a class is a Parameter type, meaning that

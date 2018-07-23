@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <parent>
+      <artifactId>parent</artifactId>
+      <groupId>lang.taxi</groupId>
+      <version>0.1.0-SNAPSHOT</version>
+   </parent>
+   <modelVersion>4.0.0</modelVersion>
+
+   <artifactId>taxi-annotation-processor</artifactId>
+
+
+   <dependencies>
+      <dependency>
+         <groupId>lang.taxi</groupId>
+         <artifactId>taxi-annotations</artifactId>
+         <version>0.1.0-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+         <groupId>com.google.auto.service</groupId>
+         <artifactId>auto-service</artifactId>
+         <version>1.0-rc2</version>
+         <optional>true</optional>
+      </dependency>
+      <!-- https://mvnrepository.com/artifact/me.eugeniomarletti.kotlin.metadata/kotlin-metadata -->
+      <dependency>
+         <groupId>me.eugeniomarletti.kotlin.metadata</groupId>
+         <artifactId>kotlin-metadata</artifactId>
+         <version>1.4.0</version>
+      </dependency>
+
+      <!--<dependency>-->
+         <!--<groupId>com.squareup</groupId>-->
+         <!--<artifactId>kotlinpoet</artifactId>-->
+         <!--<version>1.0.0-RC1</version>-->
+      <!--</dependency>-->
+
+   </dependencies>
+
+   <build>
+      <plugins>
+         <plugin>
+            <artifactId>kotlin-maven-plugin</artifactId>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <version>${kotlin.version}</version>
+            <executions>
+               <execution>
+                  <id>kapt</id>
+                  <goals>
+                     <goal>kapt</goal>
+                  </goals>
+                  <configuration>
+                     <sourceDirs>
+                        <sourceDir>src/main/java</sourceDir>
+                     </sourceDirs>
+                     <annotationProcessorPaths>
+                        <!-- Specify your annotation processors here. -->
+                        <annotationProcessorPath>
+                           <groupId>com.google.auto.service</groupId>
+                           <artifactId>auto-service</artifactId>
+                           <version>1.0-rc2</version>
+                        </annotationProcessorPath>
+                     </annotationProcessorPaths>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+
+      </plugins>
+   </build>
+</project>

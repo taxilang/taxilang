@@ -8,7 +8,7 @@ import lang.taxi.types.ObjectType
 import org.antlr.v4.runtime.ParserRuleContext
 
 /**
- * A series of named atributes on an entity that describe a path
+ * A series of named attributes on an entity that describe a path
  * eg foo.baz.bar
  */
 data class AttributePath(val parts: List<String>) {

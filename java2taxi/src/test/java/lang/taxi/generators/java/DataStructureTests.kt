@@ -1,7 +1,6 @@
 package lang.taxi.generators.java
 
 import com.winterbe.expekt.expect
-import lang.taxi.annotations.CollectionOf
 import lang.taxi.annotations.DataType
 import lang.taxi.annotations.Namespace
 import lang.taxi.annotations.ParameterType
@@ -153,8 +152,8 @@ namespace namespaceA {
         data class Person(val name: String)
 
         @DataType("foo.AddressBook")
-        data class AddressBook(@CollectionOf(Person::class) val peopleList: List<Person>,
-                               @CollectionOf(Person::class) val peopleSet: Set<Person>)
+        data class AddressBook(val peopleList: List<Person>,
+                               val peopleSet: Set<Person>)
 
         val taxiDef = TaxiGenerator().forClasses(AddressBook::class.java).generateAsStrings()
 
@@ -199,8 +198,38 @@ namespace namespaceA {
 
     }
 
+    @Test
+    fun given_typeDeclaresFieldUsingTypeAlias_then_typeAliasIsCorrectlyEmitted() {
+        val taxiDef = TaxiGenerator().forClasses(Car::class.java).generateAsStrings()
+        val expected = """
+            namespace foo {
+                type Person {
+                    name : PersonName as String
+                }
+                type Car {
+                    driver : Adult as Person
+                    passenger : Person
+                }
+            }
+        """.trimIndent()
+
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
+
     enum class Classification {
         FICTION, NON_FICTION
     }
 
 }
+
+@DataType
+data class Person(val name: PersonName)
+
+@DataType
+data class Car(val driver: Adult, val passenger: Person)
+
+@DataType
+typealias PersonName = String
+
+@DataType
+typealias Adult = Person
