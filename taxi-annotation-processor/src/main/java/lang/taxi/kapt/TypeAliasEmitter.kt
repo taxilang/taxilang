@@ -13,6 +13,7 @@ import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
+import javax.tools.Diagnostic
 
 fun String.quoted(): String = "\"$this\""
 data class ParsedAnnotation(
@@ -80,20 +81,31 @@ data class KotlinTypeAlias(
 
 @AutoService(Processor::class)
 class TypeAliasEmitter : KotlinMetadataUtils, KotlinAbstractProcessor() {
+    init {
+        println("TypeAliaseEmitter initiated")
+    }
 
     override fun process(annotations: Set<TypeElement>, roundEnvironment: RoundEnvironment): Boolean {
+        messager.printMessage(Diagnostic.Kind.OTHER, "Looking for TypeAliases")
         val typeAliases = roundEnvironment.rootElements
                 .filter { element -> element.kotlinMetadata != null }
                 .map { element ->
                     val meta = element.kotlinMetadata!!
                     val typeAliases = when (meta) {
                         is KotlinFileMetadata -> parseAliasesFromMeta(meta, element)
-                        else -> emptyList()
+                        else -> {
+                            messager.printMessage(Diagnostic.Kind.NOTE, "Skipping meta kind ${meta.multiFileClassKind?.javaClass?.name} from elmeent ${element.simpleName}")
+                            emptyList()
+                        }
                     }
                     element to typeAliases
                 }.toMap()
 
         writeTypeAliases(typeAliases)
+
+        roundEnvironment.getElementsAnnotatedWith(DataType::class.java).forEach {
+            messager.printMessage(Diagnostic.Kind.NOTE,"found annotation on type ${it.simpleName}")
+        }
         return true
     }
 
@@ -141,6 +153,7 @@ class TypeAliasEmitter : KotlinMetadataUtils, KotlinAbstractProcessor() {
     }
 
     private fun parseAliasesFromMeta(meta: KotlinFileMetadata, element: Element): List<KotlinTypeAlias> {
+        messager.printMessage(Diagnostic.Kind.NOTE, "Examining KotlinFileMetadata from element ${element.simpleName}")
         val aliases = meta.data.packageProto.typeAliasOrBuilderList.map { typeAliasMeta ->
             val nameResolver = meta.data.nameResolver
 
@@ -158,6 +171,11 @@ class TypeAliasEmitter : KotlinMetadataUtils, KotlinAbstractProcessor() {
                 ParsedAnnotation(annotationName, arguments)
             }.toSet()
             KotlinTypeAlias(packageName, typeAliasName, resolvedType, parsedAnnotations)
+        }
+        if (aliases.isNotEmpty()) {
+            messager.printMessage(Diagnostic.Kind.NOTE, "Found ${aliases.size} aliases - ${aliases.joinToString(", ") { it.simpleName }}")
+        } else {
+            messager.printMessage(Diagnostic.Kind.NOTE, "No aliases present")
         }
         return aliases
     }

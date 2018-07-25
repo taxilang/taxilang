@@ -113,7 +113,13 @@ $enumValueDeclarations
     }
 
     private fun generateTypeAliasDeclaration(type: TypeAlias, currentNamespace: String): String {
-        return "type alias ${type.toQualifiedName().typeName} as ${type.aliasType!!.toQualifiedName().qualifiedRelativeTo(currentNamespace)}"
+        val aliasType = type.aliasType!!
+        val aliasTypeString = when(aliasType) {
+            is ArrayType -> aliasType.type.toQualifiedName().qualifiedRelativeTo(currentNamespace) + "[]"
+            else -> aliasType.toQualifiedName().qualifiedRelativeTo(currentNamespace)
+        }
+
+        return "type alias ${type.toQualifiedName().typeName} as $aliasTypeString"
     }
 
     private fun generateObjectTypeDeclaration(type: ObjectType, currentNamespace: String): String {

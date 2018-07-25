@@ -201,7 +201,6 @@ namespace namespaceA {
     }
 
 
-
     @Test
     fun given_typeDeclaresFieldUsingTypeAlias_then_typeAliasIsCorrectlyEmitted() {
         TypeAliasRegistry.register(TypeAliases::class)
@@ -221,7 +220,33 @@ namespace namespaceA {
             }
         """.trimIndent()
 
-        TestHelpers.expectToCompileTheSame(taxiDef ,expected)
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
+
+    @Test
+    fun given_typeAliasMapsToList_then_itIsMappedCorrectly() {
+        TypeAliasRegistry.register(TypeAliases::class)
+
+        @DataType("foo.Bus")
+        data class Bus(val passengers: Passengers)
+
+        val taxiDef = TaxiGenerator().forClasses(Bus::class.java).generateAsStrings()
+        val expected = """
+            namespace foo {
+
+            type Bus {
+                passengers : Passengers
+            }
+
+             type Person {
+                name : PersonName
+            }
+
+            type alias PersonName as String
+            type alias Passengers as Person[]
+        }
+        """
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
     }
 
     enum class Classification {
@@ -230,18 +255,19 @@ namespace namespaceA {
 
 }
 
-@Namespace("foo")
-@DataType
+@DataType("foo.Person")
 data class Person(val name: PersonName)
 
 @DataType
 @Namespace("foo")
 data class Car(val driver: Adult, val passenger: Person)
 
-@DataType
-@Namespace("foo")
+
+@DataType("foo.PersonName")
 typealias PersonName = String
 
-@DataType
-@Namespace("foo")
+@DataType("foo.Adult")
 typealias Adult = Person
+
+@DataType("foo.Passengers")
+typealias Passengers = List<Person>

@@ -28,12 +28,12 @@ import kotlin.reflect.jvm.kotlinProperty
 interface MapperExtension
 
 interface TypeMapper {
-    fun getTaxiType(element: Class<*>, existingTypes: MutableSet<Type>): Type {
-        val namespace = TypeNames.deriveNamespace(element)
-        return getTaxiType(element, existingTypes, namespace)
+    fun getTaxiType(sourceType: Class<*>, existingTypes: MutableSet<Type>, containingMember: AnnotatedElement? = null): Type {
+        val namespace = TypeNames.deriveNamespace(sourceType)
+        return getTaxiType(sourceType, existingTypes, namespace)
     }
 
-    fun getTaxiType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String, containingMember: AnnotatedElement? = null): Type
+    fun getTaxiType(source: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String, containingMember: AnnotatedElement? = null): Type
 }
 
 object PrimitiveTypes {
@@ -94,6 +94,12 @@ class DefaultTypeMapper : TypeMapper {
 
         if (declaresTypeAlias) {
             val typeAliasName = getDeclaredTypeAliasName(element, defaultNamespace)!!
+
+            // Don't examine the return type for collections, as the type we care about is lost in generics - just create the type alias
+            if (element.isCollection()) {
+                return getOrCreateTypeAlias(element, typeAliasName, existingTypes)
+            }
+
             val aliasedTaxiType = getTypeDeclaredOnClass(element, existingTypes)
             if (typeAliasName != aliasedTaxiType.qualifiedName) {
                 return getOrCreateTypeAlias(element, typeAliasName, existingTypes)
@@ -107,7 +113,7 @@ class DefaultTypeMapper : TypeMapper {
         val targetTypeName = getTargetTypeName(element, defaultNamespace, containingMember)
 
         if (isCollection(element)) {
-            val collectionType = findCollectionType(element, existingTypes, defaultNamespace)
+            val collectionType = findCollectionType(element, existingTypes, defaultNamespace, containingMember)
             return ArrayType(collectionType, exportedCompilationUnit(element))
         }
 
@@ -166,7 +172,7 @@ class DefaultTypeMapper : TypeMapper {
 
     private fun isEnum(element: AnnotatedElement) = TypeNames.typeFromElement(element).isEnum
 
-    private fun findCollectionType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String): Type {
+    private fun findCollectionType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String, containingMember: AnnotatedElement?): Type {
         val collectionType = when (element) {
             is Field -> ResolvableType.forField(element).generics[0] // returns T of List<T> / Set<T>
             else -> TODO("Collection types that aren't fields not supported yet - (got $element)")
@@ -193,19 +199,25 @@ class DefaultTypeMapper : TypeMapper {
 
     private fun getOrCreateTypeAlias(element: AnnotatedElement, typeAliasName: String, existingTypes: MutableSet<Type>): TypeAlias {
         val existingAlias = existingTypes.findByName(typeAliasName)
-        return if (existingAlias != null) {
-            existingAlias as TypeAlias
-        } else {
-            val aliasedTaxiType = getTypeDeclaredOnClass(element, existingTypes)
-            val typeAlias = TypeAlias(typeAliasName, aliasedTaxiType, CompilationUnit.ofSource(SourceCode("Exported from annotation", "Annotation")))
-            existingTypes.add(typeAlias)
-            typeAlias
+        if (existingAlias != null) {
+            return existingAlias as TypeAlias
         }
+        val compilationUnit = CompilationUnit.ofSource(SourceCode("Exported from annotation", "Annotation"))
+
+        val aliasedTaxiType = if (element.isCollection()) {
+            val collectionType = findCollectionType(element, existingTypes, TypeNames.deriveNamespace(TypeNames.typeFromElement(element)), null)
+            ArrayType(collectionType, compilationUnit)
+        } else {
+            getTypeDeclaredOnClass(element, existingTypes)
+        }
+        val typeAlias = TypeAlias(typeAliasName, aliasedTaxiType, compilationUnit)
+        existingTypes.add(typeAlias)
+        return typeAlias
     }
 
     fun getTypeDeclaredOnClass(element: AnnotatedElement, existingTypes: MutableSet<Type>): Type {
         val rawType = TypeNames.typeFromElement(element)
-        return getTaxiType(rawType, existingTypes)
+        return getTaxiType(rawType, existingTypes, element)
     }
 
     private fun declaresTypeAlias(element: AnnotatedElement): Boolean {
@@ -288,6 +300,11 @@ class DefaultTypeMapper : TypeMapper {
     }
 }
 
+private fun AnnotatedElement.isCollection(): Boolean {
+    val type = TypeNames.typeFromElement(this)
+    return Collection::class.java.isAssignableFrom(type)
+}
+
 
 fun KotlinTypeAlias.deriveNamespace(): String {
     // Note : These rules should match whats in TypeNames.deriveNamespace.
@@ -298,6 +315,6 @@ fun KotlinTypeAlias.deriveNamespace(): String {
     return when {
         namespaceAnnotation != null -> namespaceAnnotation.arg("value")!!
         dataTypeValue != null && Namespaces.hasNamespace(dataTypeValue) -> Namespaces.pluckNamespace(dataTypeValue)!!
-        else -> this.qualifiedName
+        else -> this.packageName
     }
 }
