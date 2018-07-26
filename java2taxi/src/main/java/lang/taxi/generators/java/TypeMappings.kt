@@ -22,6 +22,9 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.*
+import kotlin.reflect.KCallable
+import kotlin.reflect.KParameter
+import kotlin.reflect.KType
 import kotlin.reflect.jvm.kotlinFunction
 import kotlin.reflect.jvm.kotlinProperty
 
@@ -34,6 +37,7 @@ interface TypeMapper {
     }
 
     fun getTaxiType(source: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String, containingMember: AnnotatedElement? = null): Type
+
 }
 
 object PrimitiveTypes {
@@ -57,6 +61,9 @@ object PrimitiveTypes {
      */
     fun isClassTaxiPrimitive(rawType: Class<*>): Boolean {
         return isTaxiPrimitive(rawType.typeName)
+    }
+    fun getTaxiPrimitive(rawType: Class<*>):Type {
+        return javaTypeToPrimitive[rawType]!!
     }
 
     fun isTaxiPrimitive(javaTypeQualifiedName: String): Boolean {
@@ -125,8 +132,8 @@ class DefaultTypeMapper : TypeMapper {
 //        if (isImplicitAliasForPrimitiveType(targetTypeName,element)) {
 //
 //        }
-        if (PrimitiveTypes.isTaxiPrimitive(targetTypeName)) {
-            return PrimitiveTypes.getTaxiPrimitive(targetTypeName)
+        if (PrimitiveTypes.isClassTaxiPrimitive(elementType)) {
+            return PrimitiveTypes.getTaxiPrimitive(elementType)
         }
 
 
@@ -224,22 +231,34 @@ class DefaultTypeMapper : TypeMapper {
         return getDeclaredTypeAliasName(element, "") != null
     }
 
+    // Params are special, as we can't navigate from the Parameter type back to
+    // a kotlin type without access to the Method.  (Unsure
+    private fun findTypeAliasOnParam(element: Parameter, containingMember: Method) {
+    }
+
     private fun getDeclaredTypeAliasName(element: AnnotatedElement, defaultNamespace: String): String? {
         // TODO : We may consider type aliases for Objects later.
-        if (element !is Field && element !is Parameter && element !is Method) return null
-        val kotlinType = when (element) {
-            is Field -> element.kotlinProperty
-            is Method -> element.kotlinFunction
-            else -> null
-        }
-        val kotlinTypeAlias = TypeAliasRegistry.findTypeAlias(kotlinType)
+        val kotlinTypeAlias = kotlinTypeAlias(element)
         if (kotlinTypeAlias != null) return deriveQualifiedAliasName(kotlinTypeAlias)
+        if (element !is Field && element !is Parameter && element !is Method) return null
+
         val dataType = element.getAnnotation(DataType::class.java) ?: return null
         return if (dataType.declaresName()) {
             dataType.qualifiedName(defaultNamespace)
         } else {
             null
         }
+    }
+
+    private fun kotlinTypeAlias(element: Any): KotlinTypeAlias? {
+        val kotlinTypeAlias = when (element) {
+            is KTypeWrapper -> TypeAliasRegistry.findTypeAlias(element.ktype)
+            is Field -> TypeAliasRegistry.findTypeAlias(element.kotlinProperty)
+            is Method -> TypeAliasRegistry.findTypeAlias(element.kotlinFunction)
+            is Parameter -> TypeAliasRegistry.findTypeAlias(element.kotlinParam)
+            else -> null
+        }
+        return kotlinTypeAlias
     }
 
     private fun deriveQualifiedAliasName(kotlinTypeAlias: KotlinTypeAlias): String {
@@ -280,7 +299,6 @@ class DefaultTypeMapper : TypeMapper {
 
     private fun mapTaxiFields(javaClass: Class<*>, defaultNamespace: String, existingTypes: MutableSet<Type>): List<lang.taxi.types.Field> {
         return javaClass.declaredFields.map { field ->
-            val kprop = field.kotlinProperty
             lang.taxi.types.Field(name = field.name,
                     type = getTaxiType(field, existingTypes, defaultNamespace),
                     nullable = isNullable(field),
@@ -299,6 +317,15 @@ class DefaultTypeMapper : TypeMapper {
         return !isNotNull
     }
 }
+
+private val Parameter.kotlinParam: KParameter?
+    get() {
+        val method = this.declaringExecutable as Method
+        val paramIndex = method.parameters.indexOf(this)
+        val function = method.kotlinFunction ?: return null
+        val param = function.parameters[paramIndex + 1] // Note that Kotlin functions have the call site at index 0
+        return param
+    }
 
 private fun AnnotatedElement.isCollection(): Boolean {
     val type = TypeNames.typeFromElement(this)

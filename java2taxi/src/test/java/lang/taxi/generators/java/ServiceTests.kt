@@ -1,6 +1,7 @@
 package lang.taxi.generators.java
 
 import com.winterbe.expekt.expect
+import lang.taxi.TypeAliasRegistry
 import lang.taxi.annotations.*
 import org.junit.Test
 import org.springframework.web.bind.annotation.RestController
@@ -38,9 +39,9 @@ class ServiceTests {
     // TODO : This test sometimes fails, which is annoying.
     @Test
     fun generatesServiceTemplate() {
-       val taxiDef = TaxiGenerator().forClasses(MyService::class.java, Person::class.java).generateAsStrings()
-       expect(taxiDef).to.have.size(1)
-       val expected = """
+        val taxiDef = TaxiGenerator().forClasses(MyService::class.java, Person::class.java).generateAsStrings()
+        expect(taxiDef).to.have.size(1)
+        val expected = """
 namespace taxi.example
 
 type Person {
@@ -87,5 +88,30 @@ service TestService {
     }
 
 
+    @Test
+    fun given_serviceAcceptsTypeAliasedPrimitive_then_signatureIsGeneratedCorrectly() {
+        @Service("TestService")
+        @Namespace("taxi.example")
+        class TestService {
+            @Operation
+            fun findEmail(input: PersonName): PersonName {
+                TODO("Not a real service")
+            }
+        }
+        TypeAliasRegistry.register(TypeAliases::class)
+
+        val taxiDef = TaxiGenerator().forClasses(TestService::class.java).generateAsStrings()
+        val expected = """
+namespace foo {
+    type alias PersonName as String
+}
+namespace taxi.example {
+    service TestService {
+        operation findEmail(  foo.PersonName ) : foo.PersonName
+    }
+}
+        """.trimIndent()
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
 
 }

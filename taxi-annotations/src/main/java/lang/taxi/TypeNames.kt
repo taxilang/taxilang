@@ -61,6 +61,7 @@ object TypeNames {
 
     fun typeFromElement(element: AnnotatedElement): Class<*> {
         val type = when (element) {
+            is AnnotatedElementWrapper -> typeFromElement(element.delegate)
             is Class<*> -> element
             is Field -> element.type
             is Parameter -> element.type
@@ -69,6 +70,8 @@ object TypeNames {
         }
         return type
     }
+}
 
-
+interface AnnotatedElementWrapper {
+    val delegate:AnnotatedElement
 }

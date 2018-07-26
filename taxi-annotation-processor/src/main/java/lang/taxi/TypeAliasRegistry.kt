@@ -33,12 +33,12 @@ object TypeAliasRegistry {
     fun findTypeAlias(kotlinType: KCallable<*>?): KotlinTypeAlias? {
         if (kotlinType == null) return null
         return when (kotlinType) {
-            is KProperty -> AliasHunter.findTypeAlias(kotlinType)
+            is KProperty<*> -> AliasHunter.findTypeAlias(kotlinType)
             else -> null
         }
     }
 
-    fun findTypeAlias(parameter:KParameter):KotlinTypeAlias? {
+    fun findTypeAlias(parameter:KParameter?):KotlinTypeAlias? {
         return AliasHunter.findTypeAlias(parameter)
     }
 

@@ -2,11 +2,17 @@ package lang.taxi.services
 
 import lang.taxi.*
 import lang.taxi.types.Annotation
+import lang.taxi.types.Field
 
 data class Parameter(override val annotations: List<Annotation>, val type: Type, val name: String?, val constraints: List<Constraint>) : Annotatable
 
 data class Operation(val name: String, override val annotations: List<Annotation>, val parameters: List<Parameter>, val returnType: Type, val contract: OperationContract? = null) : Annotatable
 data class Service(override val qualifiedName: String, val operations: List<Operation>, override val annotations: List<Annotation>, override val compilationUnits: List<CompilationUnit>) : Annotatable, Named, Compiled {
+    private val equality = Equality(this, Service::qualifiedName, Service::operations, Service::annotations)
+
+    override fun equals(other: Any?) = equality.isEqualTo(other)
+    override fun hashCode(): Int = equality.hash()
+
     fun operation(name: String): Operation {
         return this.operations.first { it.name == name }
     }
@@ -38,7 +44,7 @@ data class AttributeValueFromParameterConstraint(val fieldName: String, val attr
 }
 
 data class ReturnValueDerivedFromParameterConstraint(val attributePath: AttributePath) : Constraint {
-    override fun asTaxi(): String = "from $attributePath"
+    override fun asTaxi(): String = "from $path"
 
     val path = attributePath.path
 

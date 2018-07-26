@@ -14,11 +14,12 @@ object AliasHunter {
         return findTypeAlias(ktype)
     }
 
-    fun findTypeAlias(parameter:KParameter):KotlinTypeAlias? {
-        return findTypeAlias(parameter.type)
+    fun findTypeAlias(parameter:KParameter?):KotlinTypeAlias? {
+        return findTypeAlias(parameter?.type)
     }
 
-    fun findTypeAlias(ktype: KType): KotlinTypeAlias? {
+    fun findTypeAlias(ktype: KType?): KotlinTypeAlias? {
+        if (ktype == null) return null
         val kTypeClass = ktype::class.java
         val ktypeTypeField = kTypeClass.getDeclaredField("type")
         ktypeTypeField.isAccessible = true
