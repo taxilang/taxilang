@@ -1,11 +1,8 @@
 package lang.taxi.generators.java
 
 import lang.taxi.*
-import lang.taxi.annotations.DataType
+import lang.taxi.annotations.*
 import lang.taxi.annotations.Namespaces
-import lang.taxi.annotations.ParameterType
-import lang.taxi.annotations.declaresName
-import lang.taxi.annotations.qualifiedName
 import lang.taxi.kapt.KotlinTypeAlias
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
@@ -22,9 +19,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.*
-import kotlin.reflect.KCallable
 import kotlin.reflect.KParameter
-import kotlin.reflect.KType
 import kotlin.reflect.jvm.kotlinFunction
 import kotlin.reflect.jvm.kotlinProperty
 
@@ -62,7 +57,8 @@ object PrimitiveTypes {
     fun isClassTaxiPrimitive(rawType: Class<*>): Boolean {
         return isTaxiPrimitive(rawType.typeName)
     }
-    fun getTaxiPrimitive(rawType: Class<*>):Type {
+
+    fun getTaxiPrimitive(rawType: Class<*>): Type {
         return javaTypeToPrimitive[rawType]!!
     }
 
@@ -271,7 +267,9 @@ class DefaultTypeMapper : TypeMapper {
         val modifiers = if (element.getAnnotation(ParameterType::class.java) != null) {
             listOf(Modifier.PARAMETER_TYPE)
         } else emptyList()
-        val definition = ObjectTypeDefinition(fields, emptySet(), modifiers, exportedCompilationUnit(element))
+
+        val inheritance = emptySet<ObjectType>() // TODO
+        val definition = ObjectTypeDefinition(fields, emptySet(), modifiers, inheritance, exportedCompilationUnit(element))
         val objectType = ObjectType(name, definition)
 
         // Note: Add the type while it's empty, and then collect the fields.

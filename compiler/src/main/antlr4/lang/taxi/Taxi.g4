@@ -48,10 +48,13 @@ typeModifier
 
 typeDeclaration
     :  typeModifier? annotation* 'type' Identifier
-//        ('extends' typeType)?
+        ('inherits' listOfInheritedTypes)?
         typeBody
     ;
 
+listOfInheritedTypes
+    : typeType (',' typeType)*
+    ;
 typeBody
     :   '{' typeMemberDeclaration* '}'
     ;

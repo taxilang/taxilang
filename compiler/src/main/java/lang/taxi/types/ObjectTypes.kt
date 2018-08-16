@@ -13,7 +13,13 @@ data class ObjectTypeExtension(val annotations: List<Annotation> = emptyList(),
     }
 }
 
-data class ObjectTypeDefinition(val fields: Set<Field> = emptySet(), val annotations: Set<Annotation> = emptySet(), val modifiers: List<Modifier> = emptyList(), override val compilationUnit: CompilationUnit) : TypeDefinition {
+data class ObjectTypeDefinition(
+        val fields: Set<Field> = emptySet(),
+        val annotations: Set<Annotation> = emptySet(),
+        val modifiers: List<Modifier> = emptyList(),
+        val inheritsFrom: Set<ObjectType> = emptySet(),
+        override val compilationUnit: CompilationUnit
+) : TypeDefinition {
     private val equality = Equality(this, ObjectTypeDefinition::fields.toSet(), ObjectTypeDefinition::annotations.toSet(), ObjectTypeDefinition::modifiers.toSet())
     override fun equals(other: Any?) = equality.isEqualTo(other)
     override fun hashCode(): Int = equality.hash()
@@ -53,6 +59,16 @@ data class ObjectType(
         }
     }
 
+    val inheritsFrom: Set<ObjectType>
+        get() {
+            return definition?.inheritsFrom ?: emptySet()
+        }
+
+    val inheritsFromNames: List<String>
+        get() {
+            return inheritsFrom.map { it.qualifiedName }
+        }
+
     override fun toString(): String {
         return qualifiedName
     }
@@ -60,6 +76,26 @@ data class ObjectType(
     val modifiers: List<Modifier>
         get() {
             return this.definition?.modifiers ?: emptyList()
+        }
+
+    private fun getInheritanceGraph(typesToExclude: Set<ObjectType> = emptySet()): Set<ObjectType> {
+        val allExcludedTypes = typesToExclude + setOf(this)
+        return this.inheritsFrom
+                .flatMap { inheritedType ->
+                    if (!typesToExclude.contains(inheritedType))
+                        setOf(inheritedType) + inheritedType.getInheritanceGraph(allExcludedTypes)
+                    else emptySet()
+                }.toSet()
+    }
+
+    val inheritedFields: List<Field>
+        get() {
+            return getInheritanceGraph().flatMap { it.fields }
+        }
+
+    val allFields: List<Field>
+        get() {
+            return inheritedFields + fields
         }
 
     val fields: List<Field>
@@ -81,7 +117,7 @@ data class ObjectType(
         return this.extensions.flatMap { it.fieldExtensions(fieldName) }
     }
 
-    fun field(name: String): Field = fields.first { it.name == name }
+    fun field(name: String): Field = allFields.first { it.name == name }
     fun annotation(name: String): Annotation = annotations.first { it.name == name }
 
 }

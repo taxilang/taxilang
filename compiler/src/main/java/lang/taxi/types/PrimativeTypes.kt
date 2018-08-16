@@ -2,6 +2,7 @@ package lang.taxi.types
 
 import lang.taxi.CompilationUnit
 import lang.taxi.SourceCode
+import lang.taxi.TaxiParser
 import lang.taxi.Type
 import java.lang.IllegalArgumentException
 
@@ -36,6 +37,10 @@ enum class PrimitiveType(val declaration: String) : Type {
 
         fun fromDeclaration(value: String): PrimitiveType {
             return typesByLookup[value] ?: throw IllegalArgumentException("$value is not a valid primative")
+        }
+
+        fun fromToken(typeToken: TaxiParser.TypeTypeContext): PrimitiveType {
+            return fromDeclaration(typeToken.primitiveType()!!.text)
         }
 
         fun isPrimitiveType(qualifiedName: String): Boolean {

@@ -302,6 +302,46 @@ parameter type ClientRiskRequest {
         expect(money.modifiers).to.contain(Modifier.PARAMETER_TYPE)
     }
 
+
+    @Test
+    fun canExtendAnotherType() {
+        val source = """
+type TypeA {
+    fieldA : String
+}
+type TypeB inherits TypeA {
+    fieldB : String
+}
+type TypeC inherits TypeB {
+    fieldC : String
+}
+
+// TypeD inherits TypeA and TypeB.  TypeB also inherits TypeA.
+// this is intentional for this test
+type TypeD inherits TypeA, TypeB {}
+        """.trimIndent()
+
+        val doc = Compiler(source).compile()
+        val typeB = doc.objectType("TypeB")
+
+        expect(typeB.inheritsFromNames).to.contain("TypeA")
+        expect(typeB.fields).to.have.size(1)
+        expect(typeB.allFields).to.have.size(2)
+        expect(typeB.field("fieldA")).to.be.not.`null`
+        expect(typeB.field("fieldB")).to.be.not.`null`
+
+        val typeD = doc.objectType("TypeD")
+        expect(typeD.allFields).to.have.size(2)
+        expect(typeD.field("fieldA")).to.be.not.`null`
+        expect(typeD.field("fieldB")).to.be.not.`null`
+
+    }
+
+    @Test
+    fun whenExtendingAnotherType_itIsInvalidToRedeclareTheSameProperty() {
+        // TODO
+    }
+
     private fun testResource(s: String): File {
         return File(this.javaClass.classLoader.getResource(s).toURI())
     }

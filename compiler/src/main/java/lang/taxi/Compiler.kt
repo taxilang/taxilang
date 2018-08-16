@@ -25,16 +25,16 @@ class CompilationException(val errors: List<CompilationError>) : RuntimeExceptio
     constructor(offendingToken: Token, detailMessage: String?) : this(listOf(CompilationError(offendingToken, detailMessage)))
 }
 
-data class DocumentStrucutreError(val detailMessage:String)
-class DocumentMalformedException(val errors:List<DocumentStrucutreError>) : RuntimeException(errors.joinToString { it.detailMessage })
+data class DocumentStrucutreError(val detailMessage: String)
+class DocumentMalformedException(val errors: List<DocumentStrucutreError>) : RuntimeException(errors.joinToString { it.detailMessage })
 class Compiler(val inputs: List<CharStream>) {
     constructor(input: CharStream) : this(listOf(input))
-    constructor(source: String) : this(CharStreams.fromString(source,"[unknown source]"))
+    constructor(source: String) : this(CharStreams.fromString(source, "[unknown source]"))
     constructor(file: File) : this(CharStreams.fromPath(file.toPath()))
 
     companion object {
         fun forStrings(sources: List<String>) = Compiler(sources.mapIndexed { index, source -> CharStreams.fromString(source, "StringSource-$index") })
-        fun forStrings(vararg source:String) = forStrings(source.toList())
+        fun forStrings(vararg source: String) = forStrings(source.toList())
     }
 
     fun compile(): TaxiDocument {
@@ -72,6 +72,14 @@ internal class DocumentListener(val tokens: Tokens) {
         return TaxiDocument(typeSystem.typeList().toSet(), services.toSet())
     }
 
+
+    private fun qualify(namespace: Namespace, type: TaxiParser.TypeTypeContext): String {
+        if (type.primitiveType() != null) {
+            return PrimitiveType.fromToken(type).qualifiedName
+        } else {
+            return qualify(namespace, type.classOrInterfaceType().text)
+        }
+    }
 
     private fun qualify(namespace: Namespace, name: String): String {
         if (name.contains("."))
@@ -117,9 +125,9 @@ internal class DocumentListener(val tokens: Tokens) {
         when (tokenRule) {
             is TaxiParser.TypeDeclarationContext -> compileType(namespace, tokenName, tokenRule)
             is TaxiParser.EnumDeclarationContext -> compileEnum(tokenName, tokenRule)
-            is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(tokenName, tokenRule)
-        // TODO : This is a bit broad - assuming that all typeType's that hit this
-        // line will be a TypeAlias inline.  It could be a normal field declaration.
+            is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(namespace, tokenName, tokenRule)
+            // TODO : This is a bit broad - assuming that all typeType's that hit this
+            // line will be a TypeAlias inline.  It could be a normal field declaration.
             is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(namespace, tokenRule)
             else -> TODO("Not handled: $tokenRule")
         }
@@ -143,12 +151,12 @@ internal class DocumentListener(val tokens: Tokens) {
             val fieldAnnotations = collateAnnotations(member.annotation())
             FieldExtension(fieldName, fieldAnnotations)
         }
-        type.extensions.add(ObjectTypeExtension(annotations, fieldExtensions,CompilationUnit.of(typeRule)))
+        type.extensions.add(ObjectTypeExtension(annotations, fieldExtensions, CompilationUnit.of(typeRule)))
 
     }
 
-    private fun compileTypeAlias(tokenName: String, tokenRule: TaxiParser.TypeAliasDeclarationContext) {
-        val qualifiedName = tokenRule.aliasedType().typeType().text
+    private fun compileTypeAlias(namespace: Namespace, tokenName: String, tokenRule: TaxiParser.TypeAliasDeclarationContext) {
+        val qualifiedName = qualify(namespace, tokenRule.aliasedType().typeType())
         val typePointedTo = typeSystem.getOrCreate(qualifiedName, tokenRule.start)
         val annotations = collateAnnotations(tokenRule.annotation())
 
@@ -175,10 +183,18 @@ internal class DocumentListener(val tokens: Tokens) {
         }
         val annotations = collateAnnotations(ctx.annotation())
         val modifiers = parseModifiers(ctx.typeModifier())
-        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields.toSet(), annotations.toSet(), modifiers, CompilationUnit.of(ctx))))
+        val inherits = parseInheritance(namespace, ctx.listOfInheritedTypes())
+        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields.toSet(), annotations.toSet(), modifiers, inherits, CompilationUnit.of(ctx))))
     }
 
-    private fun  parseModifiers(typeModifier: TaxiParser.TypeModifierContext?): List<Modifier> {
+    private fun parseInheritance(namespace: Namespace, listOfInheritedTypes: TaxiParser.ListOfInheritedTypesContext?): Set<ObjectType> {
+        if (listOfInheritedTypes == null) return emptySet()
+        return listOfInheritedTypes.typeType().map { typeTypeContext ->
+            parseType(namespace, typeTypeContext) as ObjectType
+        }.toSet()
+    }
+
+    private fun parseModifiers(typeModifier: TaxiParser.TypeModifierContext?): List<Modifier> {
         typeModifier?.apply {
             return listOf(Modifier.fromToken(typeModifier.text))
         }
@@ -314,11 +330,12 @@ internal class DocumentListener(val tokens: Tokens) {
 
 }
 
-fun ParserRuleContext.source():SourceCode {
+fun ParserRuleContext.source(): SourceCode {
     val text = this.start.inputStream.getText(Interval(this.start.startIndex, this.stop.stopIndex))
     val origin = this.start.inputStream.sourceName
-    return SourceCode(origin,text)
+    return SourceCode(origin, text)
 }
+
 fun TaxiParser.LiteralContext.value(): Any {
     return when {
         this.StringLiteral() != null -> {

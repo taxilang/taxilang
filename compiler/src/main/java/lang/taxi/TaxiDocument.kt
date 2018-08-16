@@ -96,6 +96,7 @@ interface Type : Named, Compiled
  */
 interface UserType<TDef : TypeDefinition, TExt : TypeDefinition> : Type {
     var definition: TDef?
+
     val extensions: MutableList<TExt>
 
     val isDefined: Boolean
