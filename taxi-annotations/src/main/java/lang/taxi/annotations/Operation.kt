@@ -38,7 +38,7 @@ annotation class Parameter(
         vararg val constraints: Constraint
 )
 
-@Target()
+@Target(AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Constraint(
         val value: String

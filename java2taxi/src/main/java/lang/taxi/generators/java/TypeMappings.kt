@@ -19,7 +19,16 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.*
+import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
+import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.allSupertypes
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.javaField
+import kotlin.reflect.jvm.javaGetter
 import kotlin.reflect.jvm.kotlinFunction
 import kotlin.reflect.jvm.kotlinProperty
 
@@ -73,7 +82,7 @@ object PrimitiveTypes {
 }
 
 
-class DefaultTypeMapper : TypeMapper {
+class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnotationMapper = ConstraintAnnotationMapper()) : TypeMapper {
 
     fun MutableSet<Type>.findByName(qualifiedTypeName: String): Type? {
         return this.firstOrNull { it.qualifiedName == qualifiedTypeName }
@@ -227,11 +236,6 @@ class DefaultTypeMapper : TypeMapper {
         return getDeclaredTypeAliasName(element, "") != null
     }
 
-    // Params are special, as we can't navigate from the Parameter type back to
-    // a kotlin type without access to the Method.  (Unsure
-    private fun findTypeAliasOnParam(element: Parameter, containingMember: Method) {
-    }
-
     private fun getDeclaredTypeAliasName(element: AnnotatedElement, defaultNamespace: String): String? {
         // TODO : We may consider type aliases for Objects later.
         val kotlinTypeAlias = kotlinTypeAlias(element)
@@ -268,7 +272,8 @@ class DefaultTypeMapper : TypeMapper {
             listOf(Modifier.PARAMETER_TYPE)
         } else emptyList()
 
-        val inheritance = emptySet<ObjectType>() // TODO
+
+        val inheritance = getInheritedTypes(TypeNames.typeFromElement(element), existingTypes, defaultNamespace) // TODO
         val definition = ObjectTypeDefinition(fields, emptySet(), modifiers, inheritance, exportedCompilationUnit(element))
         val objectType = ObjectType(name, definition)
 
@@ -277,6 +282,16 @@ class DefaultTypeMapper : TypeMapper {
         existingTypes.add(objectType)
         fields.addAll(this.mapTaxiFields(lang.taxi.TypeNames.typeFromElement(element), defaultNamespace, existingTypes))
         return objectType
+    }
+
+    private fun getInheritedTypes(clazz: Class<*>, existingTypes: MutableSet<Type>, defaultNamespace: String): Set<ObjectType> {
+        val superType = clazz.superclass
+        val inheritedTypes = (clazz.interfaces.toList() + listOf(clazz.superclass)).filterNotNull()
+
+        return inheritedTypes
+                .filter { it.isAnnotationPresent(DataType::class.java) }
+                .map { inheritedType -> getTaxiType(inheritedType, existingTypes, defaultNamespace) as ObjectType }
+                .toSet()
     }
 
     private fun exportedCompilationUnit(element: AnnotatedElement) =
@@ -296,16 +311,67 @@ class DefaultTypeMapper : TypeMapper {
 
 
     private fun mapTaxiFields(javaClass: Class<*>, defaultNamespace: String, existingTypes: MutableSet<Type>): List<lang.taxi.types.Field> {
-        return javaClass.declaredFields.map { field ->
-            lang.taxi.types.Field(name = field.name,
-                    type = getTaxiType(field, existingTypes, defaultNamespace),
-                    nullable = isNullable(field),
-                    annotations = mapAnnotations(field))
+        val kClass = javaClass.kotlin
+        val mappedProperties = kClass.memberProperties
+                .filter { !propertyIsInheritedFromMappedSupertype(kClass, it) }
+                .map { property ->
+                    val annotatedElement = when {
+                        property.javaField != null -> property.javaField
+                        property.javaGetter != null -> property.javaGetter
+                        else -> TODO()
+                    } as AnnotatedElement
+
+                    val constraints = annotatedElement.getAnnotationsByType(Constraint::class.java).toList()
+
+                    val mappedConstraints = constraintAnnotationMapper.convert(constraints)
+                    lang.taxi.types.Field(name = property.name,
+                            type = getTaxiType(annotatedElement, existingTypes, defaultNamespace),
+                            nullable = property.returnType.isMarkedNullable,
+                            annotations = mapAnnotations(property),
+                            constraints = mappedConstraints)
+                }
+        return mappedProperties
+//
+//        return javaClass.declaredFields.map { field ->
+//
+//            val constraints = field.getAnnotationsByType(Constraint::class.java).toList()
+//
+//            val mappedConstraints = constraintAnnotationMapper.convert(constraints)
+//            lang.taxi.types.Field(name = field.name,
+//                    type = getTaxiType(field, existingTypes, defaultNamespace),
+//                    nullable = isNullable(field),
+//                    annotations = mapAnnotations(field),
+//                    constraints = mappedConstraints)
+//        }
+    }
+
+    // Indicates if the field is actually present as an inherited / overridden
+    // member from an superType.  (ie., a field declared in an interface, that's overridden on a class)
+    // In Taxi, we want those types to be declared on the supertype (since they're all innherited).
+    private fun propertyIsInheritedFromMappedSupertype(kClass: KClass<out Any>, property: KProperty1<out Any, Any?>): Boolean {
+        val isDeclaredOnSupertype = kClass.allSupertypes.filter { superType ->
+            val classifier = superType.classifier
+            when (classifier) {
+                is KClass<*> -> classifier.findAnnotation<DataType>() != null
+                else -> false
+            }
+        }.any { superType ->
+            val classifer = superType.classifier as KClass<*>
+            classifer.declaredMemberProperties.any { it.name == property.name }
         }
+        return isDeclaredOnSupertype
+    }
+
+    private fun mapAnnotations(property: KProperty<*>): List<Annotation> {
+        // TODO -- as with mapAnnotations(field)
+        return emptyList();
     }
 
     private fun mapAnnotations(field: java.lang.reflect.Field): List<Annotation> {
         // TODO
+        // Note: When I do implement this, consider that fields
+        // will have @Constraint annotations, which shouldn't be handled here,
+        // but are instead handled in the constraint section
         return emptyList()
     }
 
@@ -342,4 +408,8 @@ fun KotlinTypeAlias.deriveNamespace(): String {
         dataTypeValue != null && Namespaces.hasNamespace(dataTypeValue) -> Namespaces.pluckNamespace(dataTypeValue)!!
         else -> this.packageName
     }
+}
+
+fun KProperty<*>.toAnnotatedElement(): KTypeWrapper {
+    return KTypeWrapper(this.returnType)
 }

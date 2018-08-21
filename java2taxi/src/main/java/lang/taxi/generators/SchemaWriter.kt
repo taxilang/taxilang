@@ -114,7 +114,7 @@ $enumValueDeclarations
 
     private fun generateTypeAliasDeclaration(type: TypeAlias, currentNamespace: String): String {
         val aliasType = type.aliasType!!
-        val aliasTypeString = when(aliasType) {
+        val aliasTypeString = when (aliasType) {
             is ArrayType -> aliasType.type.toQualifiedName().qualifiedRelativeTo(currentNamespace) + "[]"
             else -> aliasType.toQualifiedName().qualifiedRelativeTo(currentNamespace)
         }
@@ -126,9 +126,19 @@ $enumValueDeclarations
 
         val fieldDelcarations = type.fields.map { generateFieldDeclaration(it, currentNamespace) }.joinToString("\n").prependIndent()
         val modifiers = type.modifiers.map { it.token }.joinToString(" ")
-        return """$modifiers type ${type.toQualifiedName().typeName} {
+        val inheritanceString = getInheritenceString(type)
+
+        return """$modifiers type ${type.toQualifiedName().typeName}$inheritanceString {
 $fieldDelcarations
 }"""
+    }
+
+    private fun getInheritenceString(type: ObjectType): String {
+        return if (type.inheritsFromNames.isEmpty()) {
+            ""
+        } else {
+            " inherits ${type.inheritsFromNames.joinToString(",")}"
+        }
     }
 
     private fun generateFieldDeclaration(field: Field, currentNamespace: String): String {
@@ -138,7 +148,9 @@ $fieldDelcarations
             else -> fieldType.toQualifiedName().qualifiedRelativeTo(currentNamespace)
         }
 
-        return "${field.name} : $fieldTypeString"
+        val constraints = constraintString(field.constraints)
+
+        return "${field.name} : $fieldTypeString $constraints".trim()
     }
 }
 

@@ -1,8 +1,8 @@
 package lang.taxi.generators.java
 
 import com.winterbe.expekt.expect
-import lang.taxi.Compiler
 import lang.taxi.TypeAliasRegistry
+import lang.taxi.annotations.Constraint
 import lang.taxi.annotations.DataType
 import lang.taxi.annotations.Namespace
 import lang.taxi.annotations.ParameterType
@@ -147,6 +147,83 @@ namespace namespaceA {
 
     }
 
+    @Test
+    fun given_typeExpressesConstraint_that_schemaIsGeneratedCorrectly() {
+        @DataType("vyne.Money")
+        data class Money(val amount: BigDecimal, val currency: String)
+
+        @ParameterType
+        @DataType("vyne.SomeRequest")
+        data class SomeRequest(
+                @Constraint("currency = 'USD'")
+                val amount: Money)
+
+        val taxiDef = TaxiGenerator().forClasses(Money::class.java, SomeRequest::class.java).generateAsStrings()
+        val expected = """
+            namespace vyne {
+                 parameter type SomeRequest {
+                    amount : Money(currency = "USD")
+                 }
+                 type Money {
+                    amount : Decimal
+                    currency : String
+                 }
+            }
+"""
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
+
+    @Test
+    fun given_typeExtendsAnotherType_that_schemaIsGeneratedCorrectly() {
+        @DataType("vyne.BaseType")
+        open class BaseType(val name: String)
+
+        @DataType("vyne.SubType")
+        class SubType(val age: Int, name: String) : BaseType(name)
+
+        val expected = """
+            namespace vyne {
+                type BaseType {
+                    name : String
+                }
+                type SubType inherits BaseType {
+                    age : Int
+                }
+            }
+        """.trimIndent()
+
+        val taxiDef = TaxiGenerator().forClasses(BaseType::class.java, SubType::class.java).generateAsStrings()
+
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
+
+    @Test
+    fun given_typeImplementsAnAnnotatedInterface_that_schemaIsGeneratedCorrectly() {
+        // NOTE:  The property of "name" actually appears on the generated BaseType, not the generated SubType.
+        // This is because ALL taxi properties are inherited (and can't be re-declared), therefore it doesn't
+        // make sense for the property to appear on the subtype.
+        // NB - we may need to revisit this if extensions on inherited fields becomes a thing, and
+        // we have to amend our declarations.
+
+        @DataType("vyne.SubType")
+        class SubType(val age: Int, override val name: String) : BaseType
+
+        val expected = """
+            namespace vyne {
+                type BaseType {
+                    name : String
+                }
+                type SubType inherits BaseType {
+                    age : Int
+                }
+            }
+        """.trimIndent()
+
+        val taxiDef = TaxiGenerator().forClasses(SubType::class.java).generateAsStrings()
+
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
+
 
     @Test
     fun given_typeIsCollection_that_schemaIsGeneratedCorrectly() {
@@ -271,3 +348,8 @@ typealias Adult = Person
 
 @DataType("foo.Passengers")
 typealias Passengers = List<Person>
+
+@DataType("vyne.BaseType")
+interface BaseType {
+    val name: String;
+}
