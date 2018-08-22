@@ -321,7 +321,14 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
                         else -> TODO()
                     } as AnnotatedElement
 
-                    val constraints = annotatedElement.getAnnotationsByType(Constraint::class.java).toList()
+                    // Not sure what's going on here.
+                    // Sometimes the annotations appear on the Kotlin property,
+                    // sometimes they're on the underlying java type.
+                    // (Always for data class with a val).
+                    // For now, check both.  This might result in duplicates,
+                    // but I'll cross that bridge when that happens
+                    val constraints = listOf(property.findAnnotation<Constraint>()).filterNotNull() +
+                            annotatedElement.getAnnotationsByType(Constraint::class.java).distinct().toList()
 
                     val mappedConstraints = constraintAnnotationMapper.convert(constraints)
                     lang.taxi.types.Field(name = property.name,
