@@ -1,9 +1,6 @@
 package lang.taxi
 
-import lang.taxi.annotations.declaresName
-import lang.taxi.annotations.hasNamespace
-import lang.taxi.annotations.namespace
-import lang.taxi.annotations.qualifiedName
+import lang.taxi.annotations.*
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
 import java.lang.reflect.Method
@@ -48,7 +45,15 @@ object TypeNames {
         // This may cause problems with duplicates, but let's encourage
         // peeps to solve that via the DataType annotation.
         val typeName = type.simpleName.split("$").last()
-        return "$defaultNamespace.$typeName"
+
+        // TODO : Why did I think this needed to use a defaultNamespace, rather than the
+        // namespace the class is declared in?
+        // Note : This is probably why some types are appearing under "java.xxxx" namespaces,
+        // as the 'defaultNamespace' does mutate depending on where in the parsing process we are.
+//        return "$defaultNamespace.$typeName"
+
+        val packageName = type.`package`.name
+        return "$packageName.$typeName"
     }
 
     private fun detectDeclaredTypeName(element:AnnotatedElement, defaultNamespace: String):String? {
@@ -73,5 +78,5 @@ object TypeNames {
 }
 
 interface AnnotatedElementWrapper {
-    val delegate:AnnotatedElement
+    val delegate: AnnotatedElement
 }
