@@ -15,6 +15,9 @@
       <module>taxi-annotations</module>
       <module>java2taxi</module>
       <module>taxi-annotation-processor</module>
+      <module>swagger2taxi</module>
+      <module>taxi-writer</module>
+      <module>taxi-stdlib-annotations</module>
    </modules>
 
    <properties>

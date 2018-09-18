@@ -2,7 +2,6 @@ package lang.taxi.services
 
 import lang.taxi.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.Field
 
 data class Parameter(override val annotations: List<Annotation>, val type: Type, val name: String?, val constraints: List<Constraint>) : Annotatable
 
@@ -16,7 +15,8 @@ data class Service(override val qualifiedName: String, val operations: List<Oper
     fun operation(name: String): Operation {
         return this.operations.first { it.name == name }
     }
-    fun containsOperation(name:String) = operations.any { it.name == name }
+
+    fun containsOperation(name: String) = operations.any { it.name == name }
 }
 
 
@@ -57,6 +57,7 @@ interface Constraint {
 
 typealias FieldName = String
 typealias ParamName = String
+
 data class OperationContract(val returnType: Type,
                              val returnTypeConstraints: List<Constraint>
 )

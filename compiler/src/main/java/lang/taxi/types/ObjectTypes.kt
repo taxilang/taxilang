@@ -122,6 +122,15 @@ data class ObjectType(
 
 }
 
+
+interface AnnotationProvider {
+    fun toAnnotation(): Annotation
+}
+
+fun Iterable<AnnotationProvider>.toAnnotations(): List<Annotation> {
+    return this.map { it.toAnnotation() }
+}
+
 data class Annotation(val name: String, val parameters: Map<String, Any?> = emptyMap())
 data class Field(
         val name: String,

@@ -2,27 +2,25 @@ package lang.taxi.generators.java.extensions
 
 import lang.taxi.Type
 import lang.taxi.TypeNames
+import lang.taxi.annotations.HttpOperation
+import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.generators.java.OperationMapperExtension
 import lang.taxi.generators.java.ServiceMapperExtension
 import lang.taxi.generators.java.TypeMapper
 import lang.taxi.services.Operation
 import lang.taxi.services.Service
 import lang.taxi.types.Annotation
+import lang.taxi.types.AnnotationProvider
 import org.springframework.cloud.netflix.feign.support.SpringMvcContract
 import java.lang.reflect.Method
 
-data class HttpOperation(val method: String, val url: String) {
+interface HttpServiceAddressProvider : AnnotationProvider{
 
-    fun toAnnotation(): Annotation = Annotation("HttpOperation", mapOf("method" to method, "url" to url))
-}
-
-interface HttpServiceAddressProvider {
-    fun httpAddress(): Annotation
 }
 
 class SpringMvcHttpServiceExtension(val addressProvider: HttpServiceAddressProvider) : ServiceMapperExtension {
     override fun update(service: Service, type: Class<*>, typeMapper: TypeMapper, mappedTypes: MutableSet<Type>): Service {
-        return service.copy(annotations = service.annotations + addressProvider.httpAddress())
+        return service.copy(annotations = service.annotations + addressProvider.toAnnotation())
     }
 }
 
@@ -46,7 +44,7 @@ class SpringMvcHttpOperationExtension(val springMvcContract: SpringMvcContract =
 
         val updatedParams = if (metadata.bodyIndex() != null) {
             val originalParam = operation.parameters[metadata.bodyIndex()]
-            val paramWithAnnotation = originalParam.copy(annotations = originalParam.annotations + Annotation("RequestBody"))
+            val paramWithAnnotation = originalParam.copy(annotations = originalParam.annotations + HttpRequestBody.toAnnotation())
             // Add the @RequestBody annotation
             operation.parameters.replacing(metadata.bodyIndex(), paramWithAnnotation)
 
