@@ -2,6 +2,7 @@ package lang.taxi.types
 
 import lang.taxi.*
 import lang.taxi.services.Constraint
+import lang.taxi.services.ConstraintTarget
 import kotlin.reflect.KProperty1
 
 data class FieldExtension(val name: String, override val annotations: List<Annotation>) : Annotatable
@@ -136,9 +137,9 @@ data class Field(
         val name: String,
         val type: Type,
         val nullable: Boolean = false,
-        val annotations: List<Annotation> = emptyList(),
-        val constraints: List<Constraint> = emptyList()
-) {
+        override val annotations: List<Annotation> = emptyList(),
+        override val constraints: List<Constraint> = emptyList()
+) : Annotatable, ConstraintTarget {
 
     // For equality - don't compare on the type (as this can cause stackOverflow when the type is an Object type)
     private val typeName = type.qualifiedName

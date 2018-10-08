@@ -3,6 +3,7 @@ package lang.taxi.generators.java
 import com.winterbe.expekt.expect
 import lang.taxi.TypeAliasRegistry
 import lang.taxi.annotations.*
+import lang.taxi.testing.TestHelpers
 import org.junit.Test
 import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal

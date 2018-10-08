@@ -15,7 +15,7 @@ object TypeNames {
         return when {
             namespaceAnnotation != null -> namespaceAnnotation.value
             dataType != null && dataType.hasNamespace() -> dataType.namespace()!!
-            service != null && service.hasNamespace() -> dataType.namespace()!!
+            service != null && service.hasNamespace() -> service.namespace()!!
             else -> javaClass.`package`?.name ?: ""
         }
     }
@@ -53,15 +53,23 @@ object TypeNames {
 //        return "$defaultNamespace.$typeName"
 
         val packageName = type.`package`.name
-        return "$packageName.$typeName"
+        val namespace = getDeclaredNamespace(element) ?: packageName
+        return "$namespace.$typeName"
     }
 
-    private fun detectDeclaredTypeName(element:AnnotatedElement, defaultNamespace: String):String? {
+    private fun detectDeclaredTypeName(element: AnnotatedElement, defaultNamespace: String): String? {
         val annotation = element.getAnnotation(lang.taxi.annotations.DataType::class.java)
         if (annotation.declaresName()) {
             return annotation.qualifiedName(defaultNamespace)
         }
         return null
+    }
+
+    private fun getDeclaredNamespace(element: AnnotatedElement): String? {
+        val target = typeFromElement(element)
+
+        val annotation = target.getAnnotation(Namespace::class.java) ?: return null
+        return annotation.value
     }
 
     fun typeFromElement(element: AnnotatedElement): Class<*> {

@@ -6,6 +6,7 @@ import lang.taxi.annotations.Constraint
 import lang.taxi.annotations.DataType
 import lang.taxi.annotations.Namespace
 import lang.taxi.annotations.ParameterType
+import lang.taxi.testing.TestHelpers
 import lang.taxi.types.PrimitiveType
 import org.junit.Test
 import java.math.BigDecimal
@@ -37,13 +38,24 @@ namespace isic.uk {
     }
 
     @Test
-    fun given_structDoesNotMapPrimativeType_then_itIsMappedToTaxiPrimative() {
+    fun given_structDoesNotMapPrimitiveType_then_itIsMappedToTaxiPrimative() {
         @DataType
         @Namespace("taxi.example")
         data class Client(val clientId: String)
 
         val taxiDef = TaxiGenerator().forClasses(Client::class.java).generateModel()
         expect(taxiDef.objectType("taxi.example.Client").field("clientId").type).to.equal(PrimitiveType.STRING)
+    }
+
+    @Test
+    fun given_typeHasNamespaceAnnotation_then_namespaceIsCorrectlyDefined() {
+        @DataType
+        @Namespace("taxi.example")
+        data class Client(val clientId: String)
+
+        val taxiDef = TaxiGenerator().forClasses(Client::class.java).generateModel()
+
+        expect(taxiDef.containsType("taxi.example.Client")).to.equal(true)
     }
 
     @Test
@@ -326,6 +338,7 @@ namespace namespaceA {
         TestHelpers.expectToCompileTheSame(taxiDef, expected)
     }
 
+    @DataType("foo.Classification")
     enum class Classification {
         FICTION, NON_FICTION
     }

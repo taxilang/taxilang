@@ -4,6 +4,7 @@ import com.winterbe.expekt.expect
 import lang.taxi.services.AttributeConstantValueConstraint
 import lang.taxi.services.AttributeValueFromParameterConstraint
 import lang.taxi.services.ReturnValueDerivedFromParameterConstraint
+import lang.taxi.types.VoidType
 import org.junit.Test
 
 class ServicesGrammarTest {
@@ -72,14 +73,38 @@ service MyService {
         expect(constraint.expectedValue).to.equal("GBP")
     }
 
-    @Test(expected = CompilationException::class)
+    @Test
+    fun operationsMayHaveZeroParameters() {
+        val source = """
+            service MyService {
+                operation doSomething()
+            }
+        """.trimIndent()
+        val doc = Compiler.forStrings(source).compile()
+        val operation = doc.service("MyService").operation("doSomething")
+        expect(operation.parameters).to.be.empty
+    }
+
+    @Test
+    fun operationsThatDontDeclareReturnTypeAreMappedToVoid() {
+        val source = """
+            service MyService {
+                operation doSomething(name:String)
+            }
+        """.trimIndent()
+        val doc = Compiler.forStrings(source).compile()
+        val returnType = doc.service("MyService").operation("doSomething").returnType
+        expect(returnType).to.equal(VoidType.VOID)
+    }
+
+    @Test(expected = MalformedConstraintException::class)
     fun given_serviceConstraintReferencesInvalidAttribute_then_compilationErrorIsThrown() {
         val source =
                 """type Money {
     currency : Currency as String
 }
 service MyService {
-    // Invalid, because the parameter name is incorrect
+    // Invalid, because the parameter name 'ccy' is incorrect (should be 'currency')
     operation calculateCreditRisk(amount : Money(ccy = 'GBP')) : Decimal
 }
 """

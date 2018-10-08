@@ -1,13 +1,14 @@
 package lang.taxi.generators.openApi
 
 import lang.taxi.CompilationUnit
+import lang.taxi.QualifiedName
 import lang.taxi.Type
 import lang.taxi.types.*
 import v2.io.swagger.models.*
 import v2.io.swagger.models.parameters.AbstractSerializableParameter
 import v2.io.swagger.models.properties.*
 
-class SwaggerTypeMapper(val swagger: Swagger) {
+class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String) {
 
     private val swaggerPrimitivies: Map<String, AbstractProperty> = listOf(
             BinaryProperty(),
@@ -63,10 +64,20 @@ class SwaggerTypeMapper(val swagger: Swagger) {
     }
 
     private fun getOrGenerateType(name: String): Type {
-        return generatedTypes.getOrPut(name) {
+        val qualifiedName = qualifyTypeNameIfRaw(name)
+        return generatedTypes.getOrPut(qualifiedName) {
             val model = swagger.definitions[name]
                     ?: error("No definition is present within the swagger file for type $name")
-            generateType(name, model)
+            generateType(qualifiedName, model)
+        }
+    }
+
+    private fun qualifyTypeNameIfRaw(typeName: String): String {
+        val qualifiedName = QualifiedName.from(typeName)
+        return if (qualifiedName.namespace.isEmpty()) {
+            QualifiedName(defaultNamespace, typeName).toString()
+        } else {
+            typeName
         }
     }
 
@@ -79,13 +90,14 @@ class SwaggerTypeMapper(val swagger: Swagger) {
     }
 
     private fun generateType(name: String, model: ModelImpl): Type {
+        val qualifiedName = qualifyTypeNameIfRaw(name)
         val fields = generateFields(model.properties)
 //        val definition = ObjectTypeDefinition(
 //
 //        )
         // TODO: Compililation Units / sourceCode linking
         val typeDef = ObjectTypeDefinition(fields.toSet(), compilationUnit = CompilationUnit.unspecified())
-        return ObjectType(name, typeDef)
+        return ObjectType(qualifiedName, typeDef)
     }
 
     private fun generateFields(properties: Map<String, Property>): Set<Field> {
@@ -98,13 +110,14 @@ class SwaggerTypeMapper(val swagger: Swagger) {
 
 
     private fun generateType(name: String, model: ComposedModel): Type {
+        val qualifiedName = qualifyTypeNameIfRaw(name)
         val interfaces: Map<RefModel, ObjectType> = model.interfaces?.map { it to getOrGenerateType(it.simpleRef) as ObjectType }?.toMap()
                 ?: emptyMap()
 
         // TODO : This could be significantly over-simplifying.
         val fields: Set<Field> = model.allOf.filterNot { interfaces.containsKey(it) }
                 .flatMap { generateFields(it.properties) }.toSet()
-        return ObjectType(name, ObjectTypeDefinition(
+        return ObjectType(qualifiedName, ObjectTypeDefinition(
                 fields,
                 inheritsFrom = interfaces.values.toSet(),
                 compilationUnit = CompilationUnit.unspecified() // TODO

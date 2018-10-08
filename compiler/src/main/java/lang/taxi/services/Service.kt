@@ -3,7 +3,7 @@ package lang.taxi.services
 import lang.taxi.*
 import lang.taxi.types.Annotation
 
-data class Parameter(override val annotations: List<Annotation>, val type: Type, val name: String?, val constraints: List<Constraint>) : Annotatable
+data class Parameter(override val annotations: List<Annotation>, val type: Type, val name: String?, override val constraints: List<Constraint>) : Annotatable, ConstraintTarget
 
 data class Operation(val name: String, override val annotations: List<Annotation>, val parameters: List<Parameter>, val returnType: Type, val contract: OperationContract? = null) : Annotatable
 data class Service(override val qualifiedName: String, val operations: List<Operation>, override val annotations: List<Annotation>, override val compilationUnits: List<CompilationUnit>) : Annotatable, Named, Compiled {
@@ -51,6 +51,10 @@ data class ReturnValueDerivedFromParameterConstraint(val attributePath: Attribut
 
 }
 
+interface ConstraintTarget {
+    val constraints: List<Constraint>
+}
+
 interface Constraint {
     fun asTaxi(): String
 }
@@ -60,4 +64,6 @@ typealias ParamName = String
 
 data class OperationContract(val returnType: Type,
                              val returnTypeConstraints: List<Constraint>
-)
+) : ConstraintTarget {
+    override val constraints: List<Constraint> = returnTypeConstraints
+}

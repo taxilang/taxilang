@@ -1,12 +1,12 @@
 package lang.taxi.generators.java.extensions
 
-import com.winterbe.expekt.expect
 import lang.taxi.annotations.DataType
 import lang.taxi.annotations.Namespace
 import lang.taxi.annotations.Operation
 import lang.taxi.annotations.Service
 import lang.taxi.generators.java.DefaultServiceMapper
 import lang.taxi.generators.java.TaxiGenerator
+import lang.taxi.testing.TestHelpers
 import lang.taxi.types.Annotation
 import org.junit.Test
 import org.springframework.web.bind.annotation.*
@@ -14,42 +14,70 @@ import java.math.BigDecimal
 
 class HttpExtensionTest {
 
-   data class CreditCostRequest(val deets:String)
-   data class CreditCostResponse(val stuff:String)
-   @RestController
-   @RequestMapping("/costs")
-   @Service("CreditCostService")
-   @Namespace("polymer.creditInc.creditMarkup")
-   class CreditCostService {
+    @Namespace("vyne.demo")
+    data class CreditCostRequest(val deets: String)
 
-      @GetMapping("/interestRates")
-      fun getInterestRate(@PathVariable("clientId") clientId:String):BigDecimal = BigDecimal.ONE
+    @Namespace("vyne.demo")
+    data class CreditCostResponse(val stuff: String)
 
-      // Back off, REST snobs.  Method names are here for testing.
-      @PostMapping("/{clientId}/doCalculate")
-      @Operation
-      fun calculateCreditCosts( @PathVariable("clientId") @DataType("ClientId") clientId: String,@RequestBody request: CreditCostRequest): CreditCostResponse = CreditCostResponse("TODO")
-
-   }
+    @RestController
+    @RequestMapping("/costs")
+    @Service("vyne.demo.CreditCostService")
+    class CreditCostService {
 
 
-   @Test
-   fun given_getRequestWithPathVariables_then_taxiAnnotationsAreGeneratedCorrectly() {
-      class MockAddressProvider : HttpServiceAddressProvider {
-         override fun httpAddress(): Annotation = Annotation("ServiceDiscoveryClient", mapOf("serviceName" to "mockService"))
+        @Operation
+        @GetMapping("/interestRates/{clientId}")
+        fun getInterestRate(@PathVariable("clientId") @DataType("vyne.demo.ClientId") clientId: String): BigDecimal = BigDecimal.ONE
 
-      }
-      val taxiDef = TaxiGenerator(serviceMapper = DefaultServiceMapper(
-         operationExtensions = listOf(SpringMvcHttpOperationExtension()),
-         serviceExtensions = listOf(SpringMvcHttpServiceExtension(MockAddressProvider()))
-      )).forClasses(CreditCostRequest::class.java, CreditCostResponse::class.java, CreditCostService::class.java).generateAsStrings()
+        // Back off, REST snobs.  Method names are here for testing.
+        @PostMapping("/{clientId}/doCalculate")
+        @Operation
+        fun calculateCreditCosts(@PathVariable("clientId") @DataType("vyne.demo.ClientId") clientId: String, @RequestBody request: CreditCostRequest): CreditCostResponse = CreditCostResponse("TODO")
 
-      expect(taxiDef.first()).to.equal("")
-   }
+    }
 
-   @Test
-   fun given_requestBodyPresentOnParam_then_taxiAnnotationIsPresentInSchema() {
 
-   }
+    @Test
+    fun given_getRequestWithPathVariables_then_taxiAnnotationsAreGeneratedCorrectly() {
+        class MockAddressProvider : HttpServiceAddressProvider {
+            override fun toAnnotation(): Annotation = Annotation("ServiceDiscoveryClient", mapOf("serviceName" to "mockService"))
+
+        }
+
+        val taxiDef = TaxiGenerator(serviceMapper = DefaultServiceMapper(
+                operationExtensions = listOf(SpringMvcHttpOperationExtension()),
+                serviceExtensions = listOf(SpringMvcHttpServiceExtension(MockAddressProvider()))
+        )).forClasses(CreditCostRequest::class.java, CreditCostResponse::class.java, CreditCostService::class.java).generateAsStrings()
+
+        val expected = """
+namespace vyne.demo {
+
+    type alias ClientId as String
+
+     type CreditCostRequest {
+        deets : String
+    }
+
+     type CreditCostResponse {
+        stuff : String
+    }
+
+    @ServiceDiscoveryClient(serviceName = "mockService")
+    service CreditCostService {
+        @HttpOperation(method = "GET" , url = "/costs/interestRates/{vyne.demo.ClientId}")
+        operation getInterestRate(  ClientId ) : Decimal
+        @HttpOperation(method = "POST" , url = "/costs/{vyne.demo.ClientId}/doCalculate")
+        operation calculateCreditCosts(  ClientId, @RequestBody CreditCostRequest ) : CreditCostResponse
+    }
+}
+        """.trimIndent()
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
+
+    @Test
+    fun given_requestBodyPresentOnParam_then_taxiAnnotationIsPresentInSchema() {
+
+    }
 
 }

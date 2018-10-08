@@ -1,4 +1,4 @@
-package lang.taxi.generators.java
+package lang.taxi.testing
 
 import lang.taxi.Compiler
 import lang.taxi.TaxiDocument
@@ -16,7 +16,7 @@ object TestHelpers {
         if (generatedDoc == expectedDoc) return
 
         val typeErros = expectedDoc.types.flatMap { type -> collateTypeErrors(type, generatedDoc) }
-        val serviceErrors = expectedDoc.services.flatMap { service -> collateServiceErrors(service,generatedDoc) }
+        val serviceErrors = expectedDoc.services.flatMap { service -> collateServiceErrors(service, generatedDoc) }
         val errors = typeErros + serviceErrors
         throw AssertionError("Generated docs did not match expected.  Errors: \n" + errors.joinToString("\n"))
     }

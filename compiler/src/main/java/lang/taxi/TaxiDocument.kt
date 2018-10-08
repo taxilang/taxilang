@@ -36,6 +36,10 @@ data class QualifiedName(val namespace: String, val typeName: String) {
         }
     }
 
+    override fun toString(): String {
+        return "${namespace}.$typeName"
+    }
+
     fun qualifiedRelativeTo(otherNamespace: String): String {
         if (this.namespace == otherNamespace) {
             return typeName
@@ -136,7 +140,7 @@ open class TaxiDocument(val types: Set<Type>,
     private val typeMap = types.associateBy { it.qualifiedName }
     private val servicesMap = services.associateBy { it.qualifiedName }
     fun type(name: String): Type {
-        return typeMap[name]!!
+        return typeMap[name] ?: throw error("No type named $name defined")
     }
 
     fun containsType(typeName: String) = typeMap.containsKey(typeName)

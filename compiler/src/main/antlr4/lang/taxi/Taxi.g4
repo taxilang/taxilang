@@ -47,7 +47,7 @@ typeModifier
     ;
 
 typeDeclaration
-    :  typeModifier? annotation* 'type' Identifier
+    :  annotation* typeModifier? 'type' Identifier
         ('inherits' listOfInheritedTypes)?
         typeBody
     ;
@@ -128,9 +128,12 @@ serviceBody
      ;
 
 operationSignature
-     :   annotation* Identifier '(' operationParameterList? ')' ':' typeType
+     :   annotation* Identifier '(' operationParameterList? ')' operationReturnType?
      ;
 
+operationReturnType
+    : ':' typeType
+    ;
 operationParameterList
     :   operationParameter (',' operationParameter)*
     ;
@@ -193,6 +196,13 @@ qualifiedName
     :   Identifier ('.' Identifier)*
     ;
 
+listType
+   : '[]'
+   ;
+
+optionalType
+   : '?'
+   ;
 
 primitiveType
     :   'Boolean'
@@ -322,14 +332,6 @@ fragment
 Underscores
     :   '_'+
     ;
-
-listType
-   : '[]'
-   ;
-
-optionalType
-   : '?'
-   ;
 
 NAME
    : [_A-Za-z] [_0-9A-Za-z]*

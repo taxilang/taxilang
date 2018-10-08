@@ -1,9 +1,7 @@
 package lang.taxi
 
-import lang.taxi.services.AttributeConstantValueConstraint
-import lang.taxi.services.AttributeValueFromParameterConstraint
-import lang.taxi.services.Constraint
-import lang.taxi.services.ReturnValueDerivedFromParameterConstraint
+import lang.taxi.services.*
+import lang.taxi.types.Field
 import lang.taxi.types.ObjectType
 
 interface ConstraintProvider {
@@ -11,13 +9,54 @@ interface ConstraintProvider {
     fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type): Constraint
 }
 
+interface ValidatingConstraintProvider : ConstraintProvider {
+    fun applies(constraint: Constraint): Boolean
+    fun validate(constraint: Constraint, typeSystem: TypeSystem, target: ConstraintTarget)
+}
 
-class OperationConstraintConverter(val expressionList: TaxiParser.ParameterConstraintExpressionListContext, val paramType: Type) {
-    private val constraintProviders = listOf(
+object ConstraintProviders {
+    val providers = listOf(
             AttributeConstantConstraintProvider(),
             AttributeValueFromParameterConstraintProvider(),
             ReturnValueDerivedFromInputConstraintProvider()
     )
+}
+
+class ConstraintValidator(providers: List<ConstraintProvider> = ConstraintProviders.providers) {
+    private val validatingProviders = providers.filterIsInstance<ValidatingConstraintProvider>()
+    fun validateAll(typeSystem: TypeSystem, services: List<Service>) {
+        typeSystem.typeList().filterIsInstance<ObjectType>()
+                .forEach { type ->
+                    type.allFields.forEach { field ->
+                        field.constraints.forEach { constraint ->
+                            validate(constraint, typeSystem, field)
+                        }
+                    }
+                }
+
+        services.flatMap { it.operations }
+                .forEach { operation ->
+                    operation.contract?.let { contract ->
+                        contract.returnTypeConstraints.forEach {
+                            validate(it, typeSystem, contract)
+                        }
+                    }
+                    operation.parameters.forEach { parameter ->
+                        parameter.constraints.forEach {
+                            validate(it, typeSystem, parameter)
+                        }
+                    }
+                }
+    }
+
+    private fun validate(constraint: Constraint, typeSystem: TypeSystem, target: ConstraintTarget) {
+        this.validatingProviders.filter { it.applies(constraint) }
+                .forEach { it.validate(constraint, typeSystem, target) }
+    }
+}
+
+class OperationConstraintConverter(val expressionList: TaxiParser.ParameterConstraintExpressionListContext, val paramType: Type) {
+    private val constraintProviders = ConstraintProviders.providers
 
     fun constraints(): List<Constraint> {
         return expressionList
@@ -34,7 +73,25 @@ class OperationConstraintConverter(val expressionList: TaxiParser.ParameterConst
 }
 
 
-class AttributeConstantConstraintProvider : ConstraintProvider {
+class AttributeConstantConstraintProvider : ValidatingConstraintProvider {
+    override fun applies(constraint: Constraint): Boolean {
+        return constraint is AttributeConstantValueConstraint
+    }
+
+    override fun validate(constraint: Constraint, typeSystem: TypeSystem, target: ConstraintTarget) {
+        val attributeConstraint = constraint as AttributeConstantValueConstraint
+        val constrainedType = when (target) {
+            is Field -> target.type
+            is Parameter -> target.type
+            else -> throw IllegalArgumentException("Cannot validate constraint on target of type ${target.javaClass.name}")
+        }  as? ObjectType
+                ?: throw MalformedConstraintException("Constraints are only supported on Object types.", constraint)
+
+        if (!constrainedType.allFields.any { it.name == attributeConstraint.fieldName }) {
+            throw MalformedConstraintException("No field named ${attributeConstraint.fieldName} was found", constraint)
+        }
+    }
+
     override fun applies(constraint: TaxiParser.ParameterConstraintExpressionContext): Boolean {
         val constraintDefinition = constraint.parameterExpectedValueConstraintExpression()
         return constraintDefinition?.literal() != null
@@ -45,18 +102,6 @@ class AttributeConstantConstraintProvider : ConstraintProvider {
         return AttributeConstantValueConstraint(constraintDefinition.Identifier().text, constraintDefinition.literal().value())
     }
 
-    private fun validateTargetFieldIsPresentOnType(constraint: TaxiParser.ParameterConstraintExpressionContext, paramType: Type) {
-        val constraintDefinition = constraint.parameterExpectedValueConstraintExpression()!!
-
-        val targetField = constraintDefinition.Identifier().text
-        if (paramType !is ObjectType) {
-            throw CompilationException(constraintDefinition.start, "Constraints are only supported on Object types.")
-        }
-        val hasField = paramType.fields.any { it.name == targetField }
-        if (!hasField) {
-            throw CompilationException(constraintDefinition.start, "Constraint field ('$targetField') is not present on type ${paramType.qualifiedName}")
-        }
-    }
 }
 
 class AttributeValueFromParameterConstraintProvider : ConstraintProvider {
@@ -82,3 +127,5 @@ class ReturnValueDerivedFromInputConstraintProvider : ConstraintProvider {
     }
 
 }
+
+class MalformedConstraintException(message: String, val constraint: Constraint) : RuntimeException(message)

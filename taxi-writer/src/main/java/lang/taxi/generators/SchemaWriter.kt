@@ -65,16 +65,22 @@ $operations
             val paramAnnotations = generateAnnotations(param) + " "
 
             val paramName = if (!param.name.isNullOrEmpty()) param.name + " : " else ""
-            val paramDeclaration = param.type.toQualifiedName().qualifiedRelativeTo(namespace)
+            val paramDeclaration = typeAsTaxi(param.type, namespace)
             paramAnnotations + paramName + paramDeclaration + constraintString
         }.joinToString(", ")
-        val returnType = operation.returnType.toQualifiedName().qualifiedRelativeTo(namespace)
-        val returnContract = if (operation.contract != null) generateReturnContract(operation.contract!!) else ""
+        val returnDeclaration = if (operation.returnType != VoidType.VOID) {
+            val returnType = typeAsTaxi(operation.returnType, namespace)
+            val returnContract = if (operation.contract != null) generateReturnContract(operation.contract!!) else ""
+            " : $returnType$returnContract"
+        } else  {
+            ""
+        }
+
         val operationName = operation.name
 
         val annotations = generateAnnotations(operation)
         return """$annotations
-operation $operationName( $params ) : $returnType$returnContract""".trimIndent().trim()
+operation $operationName( $params )$returnDeclaration""".trimIndent().trim()
     }
 
     private fun generateReturnContract(contract: OperationContract): String {
@@ -114,10 +120,7 @@ $enumValueDeclarations
 
     private fun generateTypeAliasDeclaration(type: TypeAlias, currentNamespace: String): String {
         val aliasType = type.aliasType!!
-        val aliasTypeString = when (aliasType) {
-            is ArrayType -> aliasType.type.toQualifiedName().qualifiedRelativeTo(currentNamespace) + "[]"
-            else -> aliasType.toQualifiedName().qualifiedRelativeTo(currentNamespace)
-        }
+        val aliasTypeString = typeAsTaxi(aliasType, currentNamespace)
 
         return "type alias ${type.toQualifiedName().typeName} as $aliasTypeString"
     }
@@ -143,14 +146,18 @@ $fieldDelcarations
 
     private fun generateFieldDeclaration(field: Field, currentNamespace: String): String {
         val fieldType = field.type
-        val fieldTypeString = when (fieldType) {
-            is ArrayType -> fieldType.type.toQualifiedName().qualifiedRelativeTo(currentNamespace) + "[]"
-            else -> fieldType.toQualifiedName().qualifiedRelativeTo(currentNamespace)
-        }
+        val fieldTypeString = typeAsTaxi(fieldType, currentNamespace)
 
         val constraints = constraintString(field.constraints)
 
         return "${field.name} : $fieldTypeString $constraints".trim()
+    }
+
+    private fun typeAsTaxi(type: Type, currentNamespace: String): String {
+        return when (type) {
+            is ArrayType -> typeAsTaxi(type.type,currentNamespace) + "[]"
+            else -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace)
+        }
     }
 }
 

@@ -7,6 +7,7 @@ import lang.taxi.types.Modifier
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TypeAlias
 import org.antlr.v4.runtime.CharStreams
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -125,18 +126,44 @@ namespace foo {
     }
 
     @Test
-    fun parsesAnnotationsCorrectly() {
+    fun canHaveMultipleAnnotationsOnType() {
         val source = """
 @StringAnnotation(value = "foo")
-@BooleanAnnotation(value = true)
-//@IntegerAnnotation(value = 123)
-type Test {}
+@SomeAnnotation(value = "bar")
+type Test {
+}
 """
         val doc = Compiler(source).compile()
         val type = doc.objectType("Test")
         expect(type.annotation("StringAnnotation").parameters["value"]).to.equal("foo")
-        expect(type.annotation("BooleanAnnotation").parameters["value"]).to.equal(true)
-        expect(type.annotation("IntegerAnnotation").parameters["value"]).to.equal(123)
+        expect(type.annotation("SomeAnnotation").parameters["value"]).to.equal("bar")
+    }
+
+    @Test
+    @Ignore("https://gitlab.com/vyne/taxi-lang/issues/7")
+    fun annotationCanHaveBooleanArgument() {
+        val doc = Compiler("@Bool(value = false) type Test {}").compile()
+        val type = doc.objectType("Test")
+        expect(type.annotation("Bool").parameters["value"]).to.equal(false)
+    }
+
+    @Test
+    fun annotationCanHaveNumericArgument() {
+        val doc = Compiler("@Numeric(value = 96000) type Test {}").compile()
+        val type = doc.objectType("Test")
+        expect(type.annotation("Numeric").parameters["value"]).to.equal(96000)
+    }
+
+    @Test
+    fun canDeclareAnnotationWithoutParenthesis() {
+        val source = """
+            @Hello
+            type Test {}
+        """.trimIndent()
+        val doc = Compiler(source).compile()
+        val type = doc.objectType("Test")
+        expect(type.annotation("Hello")).to.be.not.`null`
+        expect(type.annotation("Hello").parameters).to.be.empty
     }
 
     @Test
@@ -159,11 +186,12 @@ type Email {
         val source = """
 type Person {
    @SomeAnnotation(foo = "bar")
+   @Test
    email : String
 }
 """
         val doc = Compiler(source).compile()
-        expect(doc.objectType("Person").field("email").annotations).size.to.equal(1)
+        expect(doc.objectType("Person").field("email").annotations).size.to.equal(2)
     }
 
     @Test

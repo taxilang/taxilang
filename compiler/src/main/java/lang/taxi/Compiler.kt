@@ -7,8 +7,6 @@ import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.io.File
-import java.lang.IllegalArgumentException
-import java.lang.RuntimeException
 
 object Namespaces {
     const val DEFAULT_NAMESPACE = ""
@@ -67,6 +65,8 @@ class Compiler(val inputs: List<CharStream>) {
 internal class DocumentListener(val tokens: Tokens) {
     private val typeSystem = TypeSystem()
     private val services = mutableListOf<Service>()
+
+    private val constraintValidator = ConstraintValidator()
     fun buildTaxiDocument(): TaxiDocument {
         compile()
         return TaxiDocument(typeSystem.typeList().toSet(), services.toSet())
@@ -96,6 +96,14 @@ internal class DocumentListener(val tokens: Tokens) {
         compileTokens()
         compileTypeExtensions()
         compileServices()
+
+        // Some validations can't be performed at the time, because
+        // they rely on a fully parsed document structure
+        validateConstraints()
+    }
+
+    private fun validateConstraints() {
+        constraintValidator.validateAll(typeSystem, services)
     }
 
 
@@ -222,11 +230,11 @@ internal class DocumentListener(val tokens: Tokens) {
         }
     }
 
-    private fun parseTypeOrVoid(namespace: Namespace, typeType: TaxiParser.TypeTypeContext?): Type {
-        return if (typeType == null) {
+    private fun parseTypeOrVoid(namespace: Namespace, returnType: TaxiParser.OperationReturnTypeContext?): Type {
+        return if (returnType == null) {
             VoidType.VOID
         } else {
-            parseType(namespace, typeType)
+            parseType(namespace, returnType.typeType())
         }
     }
 
@@ -288,10 +296,10 @@ internal class DocumentListener(val tokens: Tokens) {
             val (namespace, serviceToken) = serviceTokenPair
             val methods = serviceToken.serviceBody().serviceOperationDeclaration().map { operationDeclaration ->
                 val signature = operationDeclaration.operationSignature()
-                val returnType = parseTypeOrVoid(namespace, signature.typeType())
+                val returnType = parseTypeOrVoid(namespace, signature.operationReturnType())
                 Operation(name = signature.Identifier().text,
                         annotations = collateAnnotations(operationDeclaration.annotation()),
-                        parameters = signature.operationParameterList().operationParameter().map {
+                        parameters = signature.parameters().map {
                             val paramType = parseType(namespace, it.typeType())
                             Parameter(collateAnnotations(it.annotation()), paramType,
                                     name = it.parameterName()?.Identifier()?.text,
@@ -309,7 +317,8 @@ internal class DocumentListener(val tokens: Tokens) {
 
     private fun parseOperationContract(operationDeclaration: TaxiParser.ServiceOperationDeclarationContext, returnType: Type): OperationContract? {
         val signature = operationDeclaration.operationSignature()
-        val constraintList = signature.typeType()
+        val constraintList = signature.operationReturnType()
+                ?.typeType()
                 ?.parameterConstraint()
                 ?.parameterConstraintExpressionList()
                 ?: return null
@@ -328,6 +337,10 @@ internal class DocumentListener(val tokens: Tokens) {
     }
 
 
+}
+
+private fun TaxiParser.OperationSignatureContext.parameters(): List<TaxiParser.OperationParameterContext> {
+    return this.operationParameterList()?.operationParameter() ?: emptyList()
 }
 
 fun ParserRuleContext.source(): SourceCode {

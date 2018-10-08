@@ -8,9 +8,9 @@ import v2.io.swagger.parser.SwaggerParser
 class TaxiGenerator(
         private val schemaWriter: SchemaWriter = SchemaWriter()
 ) {
-    fun generateAsStrings(source: String): List<String> {
+    fun generateAsStrings(source: String, defaultNamespace: String): List<String> {
         val swagger: Swagger = SwaggerParser().parse(source)
-        val typeGenerator = SwaggerTypeMapper(swagger)
+        val typeGenerator = SwaggerTypeMapper(swagger, defaultNamespace)
         val serviceGenerator = SwaggerServiceGenerator(swagger, typeGenerator)
 
         val types = typeGenerator.generateTypes()

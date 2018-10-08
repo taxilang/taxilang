@@ -1,6 +1,7 @@
 package lang.taxi.types
 
 import lang.taxi.CompilationUnit
+import lang.taxi.Equality
 import lang.taxi.Type
 import lang.taxi.TypeSystem
 
@@ -15,6 +16,9 @@ data class ArrayType(val type: Type, val source: CompilationUnit) : GenericType 
       return this.copy(type = typeSystem.getType(type.qualifiedName))
    }
 
+   private val equality = Equality(this,ArrayType::type)
+   override fun equals(other: Any?) = equality.isEqualTo(other)
+   override fun hashCode(): Int = equality.hash()
 
    override val compilationUnits: List<CompilationUnit> = listOf(source)
    override val qualifiedName: String = "lang.taxi.Array"
