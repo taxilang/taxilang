@@ -9,12 +9,11 @@ import lang.taxi.generators.java.ServiceMapperExtension
 import lang.taxi.generators.java.TypeMapper
 import lang.taxi.services.Operation
 import lang.taxi.services.Service
-import lang.taxi.types.Annotation
 import lang.taxi.types.AnnotationProvider
 import org.springframework.cloud.netflix.feign.support.SpringMvcContract
 import java.lang.reflect.Method
 
-interface HttpServiceAddressProvider : AnnotationProvider{
+interface HttpServiceAddressProvider : AnnotationProvider {
 
 }
 
