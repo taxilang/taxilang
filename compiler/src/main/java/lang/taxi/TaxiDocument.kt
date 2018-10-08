@@ -92,6 +92,8 @@ data class SourceCode(
 
 interface Type : Named, Compiled
 
+typealias ErrorMessage = String
+
 /**
  * A type that can be declared by users explicity.
  * eg:  Object type, Enum type.
@@ -101,7 +103,9 @@ interface Type : Named, Compiled
 interface UserType<TDef : TypeDefinition, TExt : TypeDefinition> : Type {
     var definition: TDef?
 
-    val extensions: MutableList<TExt>
+    val extensions: List<TExt>
+
+    fun addExtension(extension: TExt): ErrorMessage?
 
     val isDefined: Boolean
         get() {

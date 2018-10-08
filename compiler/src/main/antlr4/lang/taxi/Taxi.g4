@@ -235,13 +235,17 @@ typeExtensionBody
     :   '{' typeExtensionMemberDeclaration* '}'
     ;
 
- typeExtensionMemberDeclaration
-     :   annotation* typeExtensionFieldDeclaration
-     ;
+typeExtensionMemberDeclaration
+    :   annotation* typeExtensionFieldDeclaration
+    ;
 
- typeExtensionFieldDeclaration
-     :   Identifier
-     ;
+typeExtensionFieldDeclaration
+    :   Identifier typeExtensionFieldTypeRefinement?
+    ;
+
+typeExtensionFieldTypeRefinement
+    : ':' typeType
+    ;
 
 Identifier
     :   Letter LetterOrDigit*

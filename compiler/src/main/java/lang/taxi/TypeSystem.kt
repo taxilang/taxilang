@@ -64,7 +64,7 @@ class TypeSystem {
             }
             registeredType.definition = type.definition
             // Nasty for-each stuff here because of generic oddness
-            type.extensions.forEach { registeredType.extensions.add(it!!) }
+            type.extensions.forEach { registeredType.addExtension(it!!) }
         } else {
             types.put(type.qualifiedName, type)
         }

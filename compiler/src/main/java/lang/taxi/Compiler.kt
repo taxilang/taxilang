@@ -157,10 +157,29 @@ internal class DocumentListener(val tokens: Tokens) {
         val fieldExtensions = typeRule.typeExtensionBody().typeExtensionMemberDeclaration().map { member ->
             val fieldName = member.typeExtensionFieldDeclaration().Identifier().text
             val fieldAnnotations = collateAnnotations(member.annotation())
-            FieldExtension(fieldName, fieldAnnotations)
-        }
-        type.extensions.add(ObjectTypeExtension(annotations, fieldExtensions, CompilationUnit.of(typeRule)))
+            val refinedType = member.typeExtensionFieldDeclaration()?.typeExtensionFieldTypeRefinement()?.typeType()?.let {
+                val refinedType = typeSystem.getType(it.text)
+                assertTypesCompatible(type.field(fieldName).type, refinedType, fieldName, typeName, typeRule)
+            }
 
+
+            FieldExtension(fieldName, fieldAnnotations, refinedType)
+        }
+        val errorMessage = type.addExtension(ObjectTypeExtension(annotations, fieldExtensions, CompilationUnit.of(typeRule)))
+        if (errorMessage != null) {
+            throw CompilationException(typeRule.start, errorMessage)
+        }
+
+    }
+
+    private fun assertTypesCompatible(originalType: Type, refinedType: Type, fieldName: String, typeName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext): Type {
+        val refinedUnderlyingType = TypeAlias.underlyingType(refinedType)
+        val originalUnderlyingType = TypeAlias.underlyingType(originalType)
+
+        if (originalUnderlyingType != refinedUnderlyingType) {
+            throw CompilationException(typeRule.start, "Cannot refine field $fieldName on $typeName to ${refinedType.qualifiedName} as it maps to ${refinedUnderlyingType.qualifiedName} which is incompatible with the existing type of ${originalType.qualifiedName}")
+        }
+        return refinedType
     }
 
     private fun compileTypeAlias(namespace: Namespace, tokenName: String, tokenRule: TaxiParser.TypeAliasDeclarationContext) {

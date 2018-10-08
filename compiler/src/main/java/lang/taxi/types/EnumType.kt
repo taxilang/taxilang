@@ -21,6 +21,11 @@ data class EnumType(override val qualifiedName: String,
         }
     }
 
+    override fun addExtension(extension: EnumDefinition):ErrorMessage? {
+        this.extensions.add(extension)
+        return null
+    }
+
     val values: List<EnumValue>
         get() {
             return this.definition?.values?.map { value ->

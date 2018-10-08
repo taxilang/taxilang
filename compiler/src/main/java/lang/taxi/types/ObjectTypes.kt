@@ -5,7 +5,7 @@ import lang.taxi.services.Constraint
 import lang.taxi.services.ConstraintTarget
 import kotlin.reflect.KProperty1
 
-data class FieldExtension(val name: String, override val annotations: List<Annotation>) : Annotatable
+data class FieldExtension(val name: String, override val annotations: List<Annotation>, val refinedType: Type?) : Annotatable
 data class ObjectTypeExtension(val annotations: List<Annotation> = emptyList(),
                                val fieldExtensions: List<FieldExtension> = emptyList(),
                                override val compilationUnit: CompilationUnit) : TypeDefinition {
@@ -60,6 +60,25 @@ data class ObjectType(
         }
     }
 
+    override fun addExtension(extension: ObjectTypeExtension): ErrorMessage? {
+        val error = verifyMaxOneTypeRefinementPerField(extension.fieldExtensions)
+        if (error != null) return error
+        this.extensions.add(extension)
+
+        return null
+    }
+
+    private fun verifyMaxOneTypeRefinementPerField(fieldExtensions: List<FieldExtension>): ErrorMessage? {
+        fieldExtensions.filter { it.refinedType != null }
+                .forEach { proposedExtension ->
+                    val existingRefinedType = fieldExtensions(proposedExtension.name).mapNotNull { it.refinedType }
+                    if (existingRefinedType.isNotEmpty() && proposedExtension.refinedType != null) {
+                        return "Cannot refinement field ${proposedExtension.name} to ${proposedExtension.refinedType!!.qualifiedName} as it has already been refined to ${existingRefinedType.first().qualifiedName}"
+                    }
+                }
+        return null;
+    }
+
     val inheritsFrom: Set<ObjectType>
         get() {
             return definition?.inheritsFrom ?: emptySet()
@@ -102,8 +121,10 @@ data class ObjectType(
     val fields: List<Field>
         get() {
             return this.definition?.fields?.map { field ->
-                val collatedAnnotations = field.annotations + fieldExtensions(field.name).annotations()
-                field.copy(annotations = collatedAnnotations)
+                val fieldExtensions = fieldExtensions(field.name)
+                val collatedAnnotations = field.annotations + fieldExtensions.annotations()
+                val refinedType = fieldExtensions.asSequence().mapNotNull { it.refinedType }.firstOrNull() ?: field.type
+                field.copy(annotations = collatedAnnotations, type = refinedType)
             } ?: emptyList()
         }
 

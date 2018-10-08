@@ -23,9 +23,21 @@ data class TypeAlias(
 ) : UserType<TypeAliasDefinition, TypeAliasExtension>, Annotatable {
     constructor(qualifiedName: String, aliasedType: Type, compilationUnit: CompilationUnit) : this(qualifiedName, TypeAliasDefinition(aliasedType, compilationUnit = compilationUnit))
 
+    override fun addExtension(extension: TypeAliasExtension): ErrorMessage? {
+        this.extensions.add(extension)
+        return null
+    }
+
     companion object {
         fun undefined(name: String): TypeAlias {
             return TypeAlias(name, definition = null)
+        }
+
+        fun underlyingType(type: Type): Type {
+            return when (type) {
+                is TypeAlias -> underlyingType(type.aliasType!!)
+                else -> type
+            }
         }
     }
 

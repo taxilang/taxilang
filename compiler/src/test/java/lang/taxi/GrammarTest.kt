@@ -252,27 +252,7 @@ type Foo {
         Compiler(source).compile()
     }
 
-    @Test
-    fun canCompileExtensionType() {
-        val source = """
-type Person {
-   name : String
-}
-@TypeAnnotation
-type extension Person {
-   @MyAnnotation(param2 = "bar")
-   name
-}
-type extension Person {
-   @AnotherAnnotation(param2 = "bar")
-   name
-}
-"""
-        val doc = Compiler(source).compile()
-        val person = doc.objectType("Person")
-        expect(person.field("name").annotations).size.to.equal(2)
-        expect(person.annotations).size.to.equal(1)
-    }
+
 
     @Test
     fun canCompileWhenUsingFullyQualifiedNames() {
