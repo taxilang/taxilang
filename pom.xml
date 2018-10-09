@@ -19,6 +19,7 @@
       <module>taxi-writer</module>
       <module>taxi-stdlib-annotations</module>
       <module>test-utils</module>
+      <module>taxi2kotlin</module>
    </modules>
 
    <properties>
