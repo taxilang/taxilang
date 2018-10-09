@@ -22,6 +22,8 @@
       <module>taxi2kotlin</module>
       <module>taxi-generator-api</module>
       <module>taxi-jvm-common</module>
+      <module>taxi-cli</module>
+      <module>taxi-plugin-api</module>
    </modules>
 
    <properties>

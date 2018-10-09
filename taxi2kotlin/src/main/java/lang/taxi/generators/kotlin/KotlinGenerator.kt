@@ -10,6 +10,7 @@ import lang.taxi.generators.*
 import lang.taxi.jvm.common.PrimitiveTypes
 import lang.taxi.types.*
 import java.nio.file.Path
+import java.nio.file.Paths
 
 
 class KotlinGenerator(override val processors: List<Processor> = emptyList()) : ModelGenerator {
@@ -108,17 +109,21 @@ fun QualifiedName.asClassName(): ClassName {
 }
 
 data class StringWritableSource(val name: QualifiedName, override val content: String) : WritableSource {
-    override val path: Path
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-
+    override val path: Path = name.toPath()
 }
 
 data class TypeSpecWritableSource(val packageName: String, val spec: TypeSpec) : WritableSource {
-    override val path: Path
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+    private val qualifiedName = QualifiedName(packageName, spec.name!!)
+    override val path: Path = qualifiedName.toPath()
     override val content: String
         get() = FileSpec.get(packageName, spec).toString()
 
+}
+
+private fun QualifiedName.toPath(): Path {
+    val rawPath = this.toString().split(".").fold(Paths.get("")) { path, part -> path.resolve(part) }
+    val pathWithSuffix = rawPath.resolveSibling(rawPath.fileName.toString() + ".kt")
+    return pathWithSuffix
 }
 
 internal class ProcessorHelper(private val processors: List<Processor>) {

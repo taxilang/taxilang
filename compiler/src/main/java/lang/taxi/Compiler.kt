@@ -142,23 +142,23 @@ internal class DocumentListener(val tokens: Tokens) {
     }
 
     private fun compileTypeExtensions() {
-        tokens.unparsedExtensions.forEach { (_, typeRule) ->
+        tokens.unparsedExtensions.forEach { (namespace, typeRule) ->
             when (typeRule) {
-                is TaxiParser.TypeExtensionDeclarationContext -> compileTypeExtension(typeRule)
+                is TaxiParser.TypeExtensionDeclarationContext -> compileTypeExtension(namespace, typeRule)
                 else -> TODO("Not handled: $typeRule")
             }
         }
     }
 
-    private fun compileTypeExtension(typeRule: TaxiParser.TypeExtensionDeclarationContext) {
-        val typeName = typeRule.Identifier().text
+    private fun compileTypeExtension(namespace: Namespace, typeRule: TaxiParser.TypeExtensionDeclarationContext) {
+        val typeName = qualify(namespace,typeRule.Identifier().text)
         val type = typeSystem.getType(typeName) as ObjectType
         val annotations = collateAnnotations(typeRule.annotation())
         val fieldExtensions = typeRule.typeExtensionBody().typeExtensionMemberDeclaration().map { member ->
             val fieldName = member.typeExtensionFieldDeclaration().Identifier().text
             val fieldAnnotations = collateAnnotations(member.annotation())
             val refinedType = member.typeExtensionFieldDeclaration()?.typeExtensionFieldTypeRefinement()?.typeType()?.let {
-                val refinedType = typeSystem.getType(it.text)
+                val refinedType = typeSystem.getType(qualify(namespace,it.text))
                 assertTypesCompatible(type.field(fieldName).type, refinedType, fieldName, typeName, typeRule)
             }
 

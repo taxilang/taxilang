@@ -1,0 +1,9 @@
+namespace demo {
+   type alias FirstName as String
+   type alias LastName as String
+
+   type extension Person {
+      firstName : FirstName
+      lastName : LastName
+   }
+}
