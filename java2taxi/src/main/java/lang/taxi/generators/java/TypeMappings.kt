@@ -3,6 +3,7 @@ package lang.taxi.generators.java
 import lang.taxi.*
 import lang.taxi.annotations.*
 import lang.taxi.annotations.Namespaces
+import lang.taxi.jvm.common.PrimitiveTypes
 import lang.taxi.kapt.KotlinTypeAlias
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
@@ -43,44 +44,6 @@ interface TypeMapper {
     fun getTaxiType(source: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String, containingMember: AnnotatedElement? = null): Type
 
 }
-
-object PrimitiveTypes {
-    private val taxiPrimitiveToJavaTypes = mapOf(
-            PrimitiveType.BOOLEAN to listOf(Boolean::class.java),
-            PrimitiveType.STRING to listOf(String::class.java, Char::class.java),
-            PrimitiveType.INTEGER to listOf(Int::class.java, BigInteger::class.java, Short::class.java, Long::class.java),
-            PrimitiveType.DECIMAL to listOf(Float::class.java, BigDecimal::class.java, Double::class.java),
-            PrimitiveType.LOCAL_DATE to listOf(LocalDate::class.java),
-            PrimitiveType.TIME to listOf(LocalTime::class.java),
-            PrimitiveType.DATE_TIME to listOf(Date::class.java),
-            PrimitiveType.INSTANT to listOf(Instant::class.java)
-    )
-    private val javaTypeToPrimitive: Map<Class<out Any>, PrimitiveType> = taxiPrimitiveToJavaTypes.flatMap { (primitive, javaTypes) ->
-        javaTypes.map { it to primitive }
-    }.toMap()
-
-    /**
-     * Only considers the class itself, and not any declared
-     * annotationed datatypes
-     */
-    fun isClassTaxiPrimitive(rawType: Class<*>): Boolean {
-        return isTaxiPrimitive(rawType.typeName)
-    }
-
-    fun getTaxiPrimitive(rawType: Class<*>): Type {
-        return javaTypeToPrimitive[rawType]!!
-    }
-
-    fun isTaxiPrimitive(javaTypeQualifiedName: String): Boolean {
-        return this.javaTypeToPrimitive.keys.any { it.canonicalName == javaTypeQualifiedName }
-    }
-
-    fun getTaxiPrimitive(qualifiedTypeName: String): Type {
-        return this.javaTypeToPrimitive.filterKeys { it.canonicalName == qualifiedTypeName }
-                .values.first()
-    }
-}
-
 
 class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnotationMapper = ConstraintAnnotationMapper()) : TypeMapper {
 

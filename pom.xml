@@ -20,6 +20,8 @@
       <module>taxi-stdlib-annotations</module>
       <module>test-utils</module>
       <module>taxi2kotlin</module>
+      <module>taxi-generator-api</module>
+      <module>taxi-jvm-common</module>
    </modules>
 
    <properties>

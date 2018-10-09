@@ -37,7 +37,11 @@ data class QualifiedName(val namespace: String, val typeName: String) {
     }
 
     override fun toString(): String {
-        return "${namespace}.$typeName"
+        return if (namespace.isNotEmpty()) {
+            "${namespace}.$typeName"
+        } else {
+            typeName
+        }
     }
 
     fun qualifiedRelativeTo(otherNamespace: String): String {
