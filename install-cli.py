@@ -12,10 +12,13 @@ def make_executable(path):
    mode |= (mode & 0o444) >> 2  # copy R bits to X
    os.chmod(path, mode)
 
+print("Installing taxi-cli...")
 
 response = requests.get('https://api.bintray.com/packages/taxi-lang/releases/taxi-cli')
 package = json.loads(response.text)
 latestRel = package['latest_version']
+
+print("The latest version is v" + latestRel)
 
 downloadDir = tempfile.mkdtemp()
 
