@@ -52,14 +52,15 @@ scriptFile = taxiHome + "/taxi"
 if os.path.isfile(scriptFile):
    os.remove(scriptFile)
 
+os.makedirs(taxiHome, exist_ok=True)
+os.makedirs(home + "/bin", exist_ok=True)
+
 with open(scriptFile, 'w') as script:
    script.writelines(["#!/bin/bash\n", 'java -jar ' + destFile + ' "$@" \n'])
 
 # os.chmod(scriptFile, stat.S_IEXEC)
 make_executable(scriptFile)
 
-os.makedirs(taxiHome, exist_ok=True)
-os.makedirs(home + "/bin", exist_ok=True)
 
 if os.path.isfile(taxiSymlink):
    os.remove(taxiSymlink)
