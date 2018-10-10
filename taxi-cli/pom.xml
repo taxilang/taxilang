@@ -191,11 +191,4 @@
          <url>https://dl.bintray.com/config4k/config4k</url>
       </repository>
    </repositories>
-   <distributionManagement>
-      <repository>
-         <id>bintray-taxi-lang-releases</id>
-         <name>taxi-lang-releases</name>
-         <url>https://api.bintray.com/maven/taxi-lang/releases/taxi-cli/;publish=1</url>
-      </repository>
-   </distributionManagement>
 </project>
