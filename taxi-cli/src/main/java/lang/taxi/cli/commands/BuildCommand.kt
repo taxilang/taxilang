@@ -20,7 +20,7 @@ class BuildCommand(val config: TaxiConfig, val pluginManager: PluginRegistry) : 
     override val name = "build"
 
     override fun execute(environment: TaxiEnvironment) {
-        val doc = loadSources(environment.sourcePath)
+        val doc = loadSources(environment.sourcePath) ?: return;
         val sourcesToOutput = pluginManager.declaredPlugins
                 .filterIsInstance<ModelGenerator>()
                 .flatMap {
@@ -43,13 +43,17 @@ class BuildCommand(val config: TaxiConfig, val pluginManager: PluginRegistry) : 
         }
     }
 
-    private fun loadSources(path: Path): TaxiDocument {
+    private fun loadSources(path: Path): TaxiDocument? {
         val files = path.toFile().walkTopDown()
                 .filter { it.isFile }
                 .filter { it.extension == "taxi" }
                 .map { file ->
                     CharStreams.fromPath(file.toPath())
-                }
+                }.toList()
+        if (files.isEmpty()) {
+            log().warn("No sources were found to compile at $path - exiting")
+            return null
+        }
         return Compiler(files.toList()).compile()
     }
 
