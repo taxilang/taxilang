@@ -52,6 +52,9 @@ scriptFile = taxiHome + "/taxi"
 if os.path.isfile(scriptFile):
    os.remove(scriptFile)
 
+if not os.path.exists(taxiHome):
+    os.makedirs(taxiHome)
+
 with open(scriptFile, 'w') as script:
    script.writelines(["#!/bin/bash\n", 'java -jar ' + destFile + ' "$@" \n'])
 
