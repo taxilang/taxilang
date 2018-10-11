@@ -32,6 +32,7 @@
       <module>taxi-jvm-common</module>
       <module>taxi-cli</module>
       <module>taxi-plugin-api</module>
+      <module>taxi-spring-extensions</module>
    </modules>
 
    <properties>
@@ -76,6 +77,11 @@
       </dependency>
    </dependencies>
 
+   <dependencyManagement>
+      <dependencies>
+         
+      </dependencies>
+   </dependencyManagement>
    <build>
       <plugins>
          <plugin>

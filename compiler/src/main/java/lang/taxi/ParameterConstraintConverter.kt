@@ -3,6 +3,7 @@ package lang.taxi
 import lang.taxi.services.*
 import lang.taxi.types.Field
 import lang.taxi.types.ObjectType
+import lang.taxi.types.TypeAlias
 
 interface ConstraintProvider {
     fun applies(constraint: TaxiParser.ParameterConstraintExpressionContext): Boolean
@@ -80,15 +81,23 @@ class AttributeConstantConstraintProvider : ValidatingConstraintProvider {
 
     override fun validate(constraint: Constraint, typeSystem: TypeSystem, target: ConstraintTarget) {
         val attributeConstraint = constraint as AttributeConstantValueConstraint
-        val constrainedType = when (target) {
+        val constrainedType = getUnderlyingType(when (target) {
             is Field -> target.type
             is Parameter -> target.type
             else -> throw IllegalArgumentException("Cannot validate constraint on target of type ${target.javaClass.name}")
-        }  as? ObjectType
-                ?: throw MalformedConstraintException("Constraints are only supported on Object types.", constraint)
+        }, constraint, target)
 
         if (!constrainedType.allFields.any { it.name == attributeConstraint.fieldName }) {
             throw MalformedConstraintException("No field named ${attributeConstraint.fieldName} was found", constraint)
+        }
+    }
+
+    // Unwraps type aliases, if present
+    private fun getUnderlyingType(type: Type, constraint: AttributeConstantValueConstraint, target: ConstraintTarget): ObjectType {
+        return when (type) {
+            is TypeAlias -> getUnderlyingType(type.aliasType!!,constraint, target)
+            is ObjectType -> type
+            else -> throw MalformedConstraintException("Constraint for field ${constraint.fieldName} on ${target.description} is malfored - onstraints are only supported on Object types.", constraint)
         }
     }
 

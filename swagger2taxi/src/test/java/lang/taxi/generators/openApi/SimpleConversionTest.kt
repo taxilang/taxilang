@@ -4,6 +4,7 @@ import lang.taxi.testing.TestHelpers
 import org.apache.commons.io.IOUtils
 import org.junit.Before
 import org.junit.Test
+import java.net.URI
 
 class SimpleConversionTest {
 
@@ -14,7 +15,8 @@ class SimpleConversionTest {
     }
     @Test
     fun canConvertPetstoreToTaxi() {
-        val source = testResource("/openApiSpec/v2.0/yaml/petstore-simple.yaml")
+        val source = IOUtils.toString(URI.create("https://gitlab.com/taxi-lang/taxi-lang/raw/master/swagger2taxi/src/test/resources/openApiSpec/v2.0/yaml/petstore-simple.yaml"))
+//        testResource("/openApiSpec/v2.0/yaml/petstore-simple.yaml")
         val taxiDef = generator.generateAsStrings(source, "vyne.openApi")
 
         val expected = """
