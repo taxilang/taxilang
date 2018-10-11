@@ -2,12 +2,15 @@ package lang.taxi.services
 
 import lang.taxi.*
 import lang.taxi.types.Annotation
+import lang.taxi.types.toSet
 
-data class Parameter(override val annotations: List<Annotation>, val type: Type, val name: String?, override val constraints: List<Constraint>) : Annotatable, ConstraintTarget
+data class Parameter(override val annotations: List<Annotation>, val type: Type, val name: String?, override val constraints: List<Constraint>) : Annotatable, ConstraintTarget {
+    override val description: String = "param $name"
+}
 
 data class Operation(val name: String, override val annotations: List<Annotation>, val parameters: List<Parameter>, val returnType: Type, val contract: OperationContract? = null) : Annotatable
 data class Service(override val qualifiedName: String, val operations: List<Operation>, override val annotations: List<Annotation>, override val compilationUnits: List<CompilationUnit>) : Annotatable, Named, Compiled {
-    private val equality = Equality(this, Service::qualifiedName, Service::operations, Service::annotations)
+    private val equality = Equality(this, Service::qualifiedName, Service::operations.toSet(), Service::annotations)
 
     override fun equals(other: Any?) = equality.isEqualTo(other)
     override fun hashCode(): Int = equality.hash()
@@ -53,6 +56,8 @@ data class ReturnValueDerivedFromParameterConstraint(val attributePath: Attribut
 
 interface ConstraintTarget {
     val constraints: List<Constraint>
+
+    val description: String
 }
 
 interface Constraint {
@@ -65,5 +70,6 @@ typealias ParamName = String
 data class OperationContract(val returnType: Type,
                              val returnTypeConstraints: List<Constraint>
 ) : ConstraintTarget {
+    override val description: String = "Operation returning ${returnType.qualifiedName}"
     override val constraints: List<Constraint> = returnTypeConstraints
 }

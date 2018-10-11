@@ -15,18 +15,18 @@ class DataStructureTests {
 
     @Test
     fun when_structMixesNamespaces_then_validSchemaIsGenerated() {
-        @DataType("polymer.creditInc.Client")
-        data class Client(@field:DataType("polymer.creditInc.ClientId") val clientId: String,
-                          @field:DataType("polymer.creditInc.ClientName") val clientName: String,
+        @DataType("demo.Client")
+        data class Client(@field:DataType("demo.ClientId") val clientId: String,
+                          val clientName: String,
                           @field:DataType("isic.uk.SIC2008") val sicCode: String
         )
 
         val taxiDef = TaxiGenerator().forClasses(Client::class.java).generateAsStrings()
         val expected = """
-namespace polymer.creditInc {
+namespace demo {
     type Client {
         clientId : ClientId as String
-        clientName : ClientName as String
+        clientName : String
         sicCode : isic.uk.SIC2008
     }
 }
@@ -359,7 +359,7 @@ typealias PersonName = String
 @DataType("foo.Adult")
 typealias Adult = Person
 
-@DataType("foo.Passengers")
+@DataType
 typealias Passengers = List<Person>
 
 @DataType("vyne.BaseType")

@@ -7,7 +7,6 @@ import lang.taxi.annotations.Service
 import lang.taxi.generators.java.DefaultServiceMapper
 import lang.taxi.generators.java.TaxiGenerator
 import lang.taxi.testing.TestHelpers
-import lang.taxi.types.Annotation
 import org.junit.Test
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
@@ -40,15 +39,11 @@ class HttpExtensionTest {
 
     @Test
     fun given_getRequestWithPathVariables_then_taxiAnnotationsAreGeneratedCorrectly() {
-        class MockAddressProvider : HttpServiceAddressProvider {
-            override fun toAnnotation(): Annotation = Annotation("ServiceDiscoveryClient", mapOf("serviceName" to "mockService"))
-
-        }
-
         val taxiDef = TaxiGenerator(serviceMapper = DefaultServiceMapper(
                 operationExtensions = listOf(SpringMvcHttpOperationExtension()),
-                serviceExtensions = listOf(SpringMvcHttpServiceExtension(MockAddressProvider()))
-        )).forClasses(CreditCostRequest::class.java, CreditCostResponse::class.java, CreditCostService::class.java).generateAsStrings()
+                serviceExtensions = listOf(SpringMvcHttpServiceExtension(ServiceDiscoveryAddressProvider("mockService")))
+        )).forClasses(CreditCostService::class.java)
+                .generateAsStrings()
 
         val expected = """
 namespace vyne.demo {

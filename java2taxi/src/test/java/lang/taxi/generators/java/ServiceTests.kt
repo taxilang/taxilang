@@ -19,8 +19,7 @@ class ServiceTests {
     data class Person(@field:DataType("taxi.example.PersonId") val personId: String)
 
     @RestController
-    @Namespace("taxi.example")
-    @Service("PersonService")
+    @Service("taxi.example.PersonService")
     class MyService {
         @Operation
         fun findPerson(@DataType("taxi.example.PersonId") personId: String): Person {
