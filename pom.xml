@@ -32,8 +32,7 @@
       <module>taxi-jvm-common</module>
       <module>taxi-cli</module>
       <module>taxi-plugin-api</module>
-      <module>taxi-spring-extensions</module>
-   </modules>
+   </modules>  
 
    <properties>
       <kotlin.version>1.2.60</kotlin.version>
@@ -79,7 +78,7 @@
 
    <dependencyManagement>
       <dependencies>
-         
+
       </dependencies>
    </dependencyManagement>
    <build>
