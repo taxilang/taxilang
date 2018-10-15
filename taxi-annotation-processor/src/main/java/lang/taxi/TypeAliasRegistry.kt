@@ -2,7 +2,6 @@ package lang.taxi
 
 import lang.taxi.kapt.KotlinTypeAlias
 import kotlin.reflect.*
-import kotlin.reflect.full.createInstance
 
 interface TypeAliasRegistrar {
     fun register()
@@ -18,14 +17,24 @@ object TypeAliasRegistry {
     }
 
     @JvmStatic
+    fun register(vararg registrars: Class<out TypeAliasRegistrar>) {
+        doRegister(registrars.toList())
+    }
+
+    @JvmStatic
     fun register(vararg registrars: KClass<out TypeAliasRegistrar>) {
         register(registrars.toList())
     }
 
     @JvmStatic
     fun register(registrars: List<KClass<out TypeAliasRegistrar>>) {
+        doRegister(registrars.map { it.java })
+    }
+
+    @JvmStatic
+    private fun doRegister(registrars: List<Class<out TypeAliasRegistrar>>) {
         registrars.forEach {
-            val instance = it.createInstance()
+            val instance = it.newInstance()
             instance.register()
         }
     }
@@ -38,17 +47,18 @@ object TypeAliasRegistry {
         }
     }
 
-    fun findTypeAlias(parameter:KParameter?):KotlinTypeAlias? {
+    fun findTypeAlias(parameter: KParameter?): KotlinTypeAlias? {
         return AliasHunter.findTypeAlias(parameter)
     }
 
-    fun findTypeAlias(type:KType):KotlinTypeAlias? {
+    fun findTypeAlias(type: KType): KotlinTypeAlias? {
         return AliasHunter.findTypeAlias(type)
     }
 
     fun getAlias(qualifiedTypeAliasName: String): KotlinTypeAlias {
         return findAlias(qualifiedTypeAliasName) ?: error("No type alias registered with name $qualifiedTypeAliasName")
     }
+
     fun findAlias(qualifiedTypeAliasName: String): KotlinTypeAlias? {
         return _aliases[qualifiedTypeAliasName]
     }
