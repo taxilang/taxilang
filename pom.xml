@@ -11,9 +11,9 @@
    </description>
 
    <scm>
-      <url>https://gitlab.com/vyne/taxi-lang</url>
-      <connection>git@gitlab.com:vyne/taxi-lang.git</connection>
-      <developerConnection>scm:git:git@gitlab.com:vyne/taxi-lang.git</developerConnection>
+      <url>https://gitlab.com/taxi-lang/taxi-lang</url>
+      <connection>git@gitlab.com:taxi-lang/taxi-lang.git</connection>
+      <developerConnection>scm:git:git@gitlab.com:taxi-lang/taxi-lang.git</developerConnection>
      <tag>HEAD</tag>
   </scm>
 
@@ -32,7 +32,7 @@
       <module>taxi-jvm-common</module>
       <module>taxi-cli</module>
       <module>taxi-plugin-api</module>
-   </modules>  
+   </modules>
 
    <properties>
       <kotlin.version>1.2.60</kotlin.version>
