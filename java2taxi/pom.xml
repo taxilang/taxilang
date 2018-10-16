@@ -3,12 +3,12 @@
     <parent>
         <artifactId>parent</artifactId>
         <groupId>lang.taxi</groupId>
-        <version>0.1.2</version>
+        <version>0.1.3-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>java2taxi</artifactId>
-    <version>0.1.2</version>
+    <version>0.1.3-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
@@ -20,33 +20,33 @@
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>taxi-annotations</artifactId>
-            <version>0.1.2</version>
+            <version>0.1.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>compiler</artifactId>
-            <version>0.1.2</version>
+            <version>0.1.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>taxi-writer</artifactId>
-            <version>0.1.2</version>
+            <version>0.1.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>taxi-stdlib-annotations</artifactId>
-            <version>0.1.2</version>
+            <version>0.1.3-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>taxi-jvm-common</artifactId>
-            <version>0.1.2</version>
+            <version>0.1.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>test-utils</artifactId>
-            <version>0.1.2</version>
+            <version>0.1.3-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <!-- For SpringMvc to feign support.  Note - once this is split out, spring-webmvc is still required as test scope-->
@@ -72,7 +72,7 @@
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>taxi-annotation-processor</artifactId>
-            <version>0.1.2</version>
+            <version>0.1.3-SNAPSHOT</version>
             <!--<scope>test</scope>-->
         </dependency>
 
