@@ -5,7 +5,7 @@
    <groupId>lang.taxi</groupId>
    <artifactId>parent</artifactId>
    <packaging>pom</packaging>
-   <version>0.1.3</version>
+   <version>0.1.4-SNAPSHOT</version>
    <description>taxi is a language for defining API contracts. A Dsl that sits atop RAML for resource definition. Taxi
       (short for Taxonomy)
    </description>
@@ -14,7 +14,7 @@
       <url>https://gitlab.com/taxi-lang/taxi-lang</url>
       <connection>git@gitlab.com:taxi-lang/taxi-lang.git</connection>
       <developerConnection>scm:git:git@gitlab.com:taxi-lang/taxi-lang.git</developerConnection>
-     <tag>v0.1.3</tag>
+     <tag>HEAD</tag>
   </scm>
 
    <modules>
