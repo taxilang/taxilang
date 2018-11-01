@@ -97,6 +97,20 @@ service MyService {
         expect(returnType).to.equal(VoidType.VOID)
     }
 
+    @Test
+    fun operationsHaveSourceMapped() {
+        val source = """
+            service MyService {
+                operation doSomething(name:String):String
+            }
+        """.trimIndent()
+        val doc = Compiler.forStrings(source).compile()
+        val operation = doc.service("MyService").operation("doSomething")
+        expect(operation.compilationUnits).to.have.size(1)
+        expect(operation.compilationUnits.first().source.content).to.not.be.empty
+
+    }
+
     @Test(expected = MalformedConstraintException::class)
     fun given_serviceConstraintReferencesInvalidAttribute_then_compilationErrorIsThrown() {
         val source =

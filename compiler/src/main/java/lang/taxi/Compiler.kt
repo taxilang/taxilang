@@ -324,6 +324,7 @@ internal class DocumentListener(val tokens: Tokens) {
                                     name = it.parameterName()?.Identifier()?.text,
                                     constraints = mapConstraints(it.typeType(), paramType))
                         },
+                        compilationUnits = listOf(CompilationUnit.of(operationDeclaration)),
                         returnType = returnType,
                         contract = parseOperationContract(operationDeclaration, returnType)
 
