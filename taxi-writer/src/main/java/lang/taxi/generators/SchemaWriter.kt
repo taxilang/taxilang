@@ -11,6 +11,7 @@ import lang.taxi.types.*
 
 
 class SchemaWriter {
+    private val formatter = SourceFormatter()
     fun generateSchemas(docs: List<TaxiDocument>): List<String> {
         return docs.flatMap { generateSchema(it) }
     }
@@ -22,13 +23,14 @@ class SchemaWriter {
 
             val servicesTaxiString = namespacedDoc.services.map { generateServiceDeclaration(it, namespacedDoc.namespace) }.joinToString("\n").trim()
             //return:
-            """namespace ${namespacedDoc.namespace} {
+            val rawTaxi = """namespace ${namespacedDoc.namespace} {
 
 ${typesTaxiString.prependIndent()}
 
 ${servicesTaxiString.prependIndent()}
 }
 """
+            formatter.format(rawTaxi)
         }
     }
 
@@ -72,7 +74,7 @@ $operations
             val returnType = typeAsTaxi(operation.returnType, namespace)
             val returnContract = if (operation.contract != null) generateReturnContract(operation.contract!!) else ""
             " : $returnType$returnContract"
-        } else  {
+        } else {
             ""
         }
 
@@ -155,7 +157,7 @@ $fieldDelcarations
 
     private fun typeAsTaxi(type: Type, currentNamespace: String): String {
         return when (type) {
-            is ArrayType -> typeAsTaxi(type.type,currentNamespace) + "[]"
+            is ArrayType -> typeAsTaxi(type.type, currentNamespace) + "[]"
             else -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace)
         }
     }
