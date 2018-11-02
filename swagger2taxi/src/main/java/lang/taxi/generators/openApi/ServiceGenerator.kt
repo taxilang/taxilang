@@ -1,5 +1,6 @@
 package lang.taxi.generators.openApi
 
+import lang.taxi.CompilationUnit
 import lang.taxi.Type
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpRequestBody
@@ -75,7 +76,8 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
                 swaggerOperation.operationId,
                 annotations.toAnnotations(),
                 parameters,
-                returnType
+                returnType,
+                listOf(CompilationUnit.unspecified())
         )
 
     }
