@@ -112,6 +112,7 @@ However, some cases this isn't possible (eeg., return types from functions),
 so we need to use this special class
  */
 class KTypeWrapper(val ktype: KType) : AnnotatedElement, AnnotatedElementWrapper {
+    val arguments = ktype.arguments
     private val klass = ktype.classifier!! as KClass<*>
     override val delegate: AnnotatedElement = klass.java
 
@@ -126,5 +127,6 @@ class KTypeWrapper(val ktype: KType) : AnnotatedElement, AnnotatedElementWrapper
     override fun getDeclaredAnnotations(): Array<Annotation> {
         return delegate.declaredAnnotations
     }
+
 
 }

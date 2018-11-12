@@ -14,12 +14,6 @@ import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.Parameter
-import java.math.BigDecimal
-import java.math.BigInteger
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalTime
-import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty
@@ -148,6 +142,16 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
     private fun isEnum(element: AnnotatedElement) = TypeNames.typeFromElement(element).isEnum
 
     private fun findCollectionType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String, containingMember: AnnotatedElement?): Type {
+        if (element is KTypeWrapper) {
+            val argments = element.arguments
+            require(argments.size == 1) { "expected type ${element.ktype} to have exactly 1 argument, but found ${argments.size}" }
+            val typeArg = argments.first()
+            val argumentType = typeArg.type
+                    ?: error("Unhandled: The argument type for ${element.ktype} did not return a type - unsure how this can happen")
+            return getTaxiType(KTypeWrapper(argumentType), existingTypes, defaultNamespace)
+        }
+
+
         val collectionType = when (element) {
             is Field -> ResolvableType.forField(element).generics[0] // returns T of List<T> / Set<T>
             else -> TODO("Collection types that aren't fields not supported yet - (got $element)")

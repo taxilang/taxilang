@@ -338,6 +338,7 @@ namespace namespaceA {
         TestHelpers.expectToCompileTheSame(taxiDef, expected)
     }
 
+
     @DataType("foo.Classification")
     enum class Classification {
         FICTION, NON_FICTION

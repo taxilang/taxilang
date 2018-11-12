@@ -18,6 +18,7 @@ class ServiceTests {
     @Namespace("taxi.example")
     data class Person(@field:DataType("taxi.example.PersonId") val personId: String)
 
+
     @RestController
     @Service("taxi.example.PersonService")
     class MyService {
@@ -89,6 +90,61 @@ service TestService {
 
 
     @Test
+    fun givenOperationReturnsTypeAliasedList_then_schemaIsGeneratedCorrectly() {
+        @Service("TestService")
+        @Namespace("foo")
+        class TestService {
+            @Operation
+            fun listPeopleNames(): List<PersonName> {
+                TODO()
+            }
+        }
+        TypeAliasRegistry.register(TypeAliases::class)
+        val taxiDef = TaxiGenerator().forClasses(TestService::class.java).generateAsStrings()
+        val expected = """
+namespace foo {
+
+   type alias PersonName as String
+
+   service TestService {
+      operation listPeopleNames(  ) : PersonName[]
+   }
+}
+        """.trimIndent()
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
+
+    @Test
+    fun givenOperationReturnsList_then_schemaIsGeneratedCorrectly() {
+        @Service("TestService")
+        @Namespace("taxi.example")
+        class TestService {
+            @Operation
+            fun listPeople(): List<ServiceTests.Person> {
+                TODO()
+            }
+        }
+        TypeAliasRegistry.register(TypeAliases::class)
+        val taxiDef = TaxiGenerator().forClasses(TestService::class.java).generateAsStrings()
+        val expected = """
+    namespace taxi.example {
+
+   type Person {
+      personId : PersonId
+   }
+
+   type alias PersonId as String
+
+   service TestService {
+      operation listPeople(  ) : Person[]
+   }
+}
+
+""".trimIndent()
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
+
+    @Test
     fun given_serviceAcceptsTypeAliasedPrimitive_then_signatureIsGeneratedCorrectly() {
         @Service("TestService")
         @Namespace("taxi.example")
@@ -115,3 +171,6 @@ namespace taxi.example {
     }
 
 }
+
+@DataType("taxi.PersonList")
+typealias PersonList = List<ServiceTests.Person>
