@@ -4,11 +4,14 @@ import lang.taxi.Compiler
 import lang.taxi.TaxiDocument
 import lang.taxi.cli.config.TaxiConfig
 import lang.taxi.cli.config.TaxiEnvironment
-import lang.taxi.cli.plugins.Plugin
+import lang.taxi.plugins.Plugin
 import lang.taxi.cli.plugins.PluginRegistry
 import lang.taxi.cli.utils.log
 import lang.taxi.generators.ModelGenerator
+import lang.taxi.generators.Processor
 import lang.taxi.generators.WritableSource
+import lang.taxi.generators.kotlin.BaseAnnotationInjector
+import lang.taxi.plugins.ComponentProviderPlugin
 import org.antlr.v4.runtime.CharStreams
 import org.apache.commons.io.FileUtils
 import org.springframework.stereotype.Component
@@ -21,18 +24,25 @@ class BuildCommand(val config: TaxiConfig, val pluginManager: PluginRegistry) : 
 
     override fun execute(environment: TaxiEnvironment) {
         val doc = loadSources(environment.sourcePath) ?: return;
+        val processorsFromPlugins = collectProcessorsFromPlugins()
+
         val sourcesToOutput = pluginManager.declaredPlugins
                 .filterIsInstance<ModelGenerator>()
                 .flatMap {
                     val plugin = it as Plugin
                     log().info("Running generator ${plugin.id}")
-                    val generated = it.generate(doc)
+                    val generated = it.generate(doc, processorsFromPlugins)
                     log().info("Generator ${plugin.id} generated ${generated.size} files")
                     generated
                 }
 
         writeSources(sourcesToOutput, environment.outputPath)
         log().info("Wrote ${sourcesToOutput.size} files to ${environment.outputPath}")
+    }
+
+    private fun collectProcessorsFromPlugins(): List<Processor> {
+        val injectors = pluginManager.getComponents<Processor>()
+        return injectors
     }
 
     private fun writeSources(sourcesToOutput: List<WritableSource>, outputPath: Path) {

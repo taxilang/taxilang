@@ -4,9 +4,9 @@ import lang.taxi.TaxiDocument
 import java.nio.file.Path
 
 interface ModelGenerator {
-    val processors: List<Processor>
+//    val processors: List<Processor>
 
-    fun generate(taxi: TaxiDocument): List<WritableSource>
+    fun generate(taxi: TaxiDocument, processors: List<Processor>): List<WritableSource>
 }
 
 interface WritableSource {

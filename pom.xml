@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
    <groupId>lang.taxi</groupId>
@@ -14,8 +15,8 @@
       <url>https://gitlab.com/taxi-lang/taxi-lang</url>
       <connection>git@gitlab.com:taxi-lang/taxi-lang.git</connection>
       <developerConnection>scm:git:git@gitlab.com:taxi-lang/taxi-lang.git</developerConnection>
-     <tag>HEAD</tag>
-  </scm>
+      <tag>HEAD</tag>
+   </scm>
 
    <modules>
       <module>compiler</module>
@@ -27,11 +28,12 @@
       <module>taxi-writer</module>
       <module>taxi-stdlib-annotations</module>
       <module>test-utils</module>
-      <module>taxi2kotlin</module>
       <module>taxi-generator-api</module>
       <module>taxi-jvm-common</module>
       <module>taxi-cli</module>
       <module>taxi-plugin-api</module>
+      <module>plugins</module>
+      <module>kotlin</module>
    </modules>
 
    <properties>
@@ -91,33 +93,80 @@
                <tagNameFormat>v@{project.version}</tagNameFormat>
             </configuration>
          </plugin>
+            <plugin>
+               <artifactId>kotlin-maven-plugin</artifactId>
+               <groupId>org.jetbrains.kotlin</groupId>
+               <version>${kotlin.version}</version>
+               <executions>
+                  <execution>
+                     <id>kapt</id>
+                     <goals>
+                        <goal>kapt</goal>
+                     </goals>
+                     <configuration>
+                        <sourceDirs>
+                           <sourceDir>src/main/java</sourceDir>
+                        </sourceDirs>
+                     </configuration>
+                  </execution>
+                  <execution>
+                     <id>compile</id>
+                     <goals>
+                        <goal>compile</goal>
+                     </goals>
+                     <configuration>
+                        <sourceDirs>
+                           <sourceDir>src/main/java</sourceDir>
+                        </sourceDirs>
+                     </configuration>
+                  </execution>
+
+                  <execution>
+                     <id>test-compile</id>
+                     <goals>
+                        <goal>test-compile</goal>
+                     </goals>
+                     <configuration>
+                        <sourceDirs>
+                           <sourceDir>src/test/kotlin</sourceDir>
+                           <sourceDir>src/test/java</sourceDir>
+                           <sourceDir>target/generated-sources/kapt/test</sourceDir>
+                        </sourceDirs>
+                     </configuration>
+                  </execution>
+               </executions>
+         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.1</version>
+            <version>3.8.0</version>
             <configuration>
+               <!--<proc>none</proc>-->
                <source>1.8</source>
                <target>1.8</target>
             </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-maven-plugin</artifactId>
-            <version>${kotlin.version}</version>
             <executions>
+               <!-- Replacing default-compile as it is treated specially by maven -->
                <execution>
-                  <id>compile</id>
+                  <id>default-compile</id>
+                  <phase>none</phase>
+               </execution>
+               <!-- Replacing default-testCompile as it is treated specially by maven -->
+               <execution>
+                  <id>default-testCompile</id>
+                  <phase>none</phase>
+               </execution>
+               <execution>
+                     <id>java-compile</id>
                   <phase>compile</phase>
                   <goals>
                      <goal>compile</goal>
                   </goals>
                </execution>
                <execution>
-                  <id>test-compile</id>
+                     <id>java-test-compile</id>
                   <phase>test-compile</phase>
-                  <goals>
-                     <goal>test-compile</goal>
-                  </goals>
+                     <goals> <goal>testCompile</goal> </goals>
                </execution>
             </executions>
          </plugin>

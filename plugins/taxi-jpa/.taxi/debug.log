@@ -1,0 +1,939 @@
+12:27:02.575 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:27:02.578 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:27:02.581 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:27:12.771 [main] ERROR [SpringApplication.java:863] o.s.boot.SpringApplication - Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'shellRunner' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/ShellRunner.class]: Unsatisfied dependency expressed through constructor parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jCommander$taxi_cli' defined in lang.taxi.cli.TaxiCli: Unsatisfied dependency expressed through method 'jCommander$taxi_cli' parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.IllegalStateException: The following plugins were not resolved: lang.taxi/deploy/latest
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:197)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1267)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1124)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:759)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:869)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:550)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:780)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:412)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:333)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jCommander$taxi_cli' defined in lang.taxi.cli.TaxiCli: Unsatisfied dependency expressed through method 'jCommander$taxi_cli' parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.IllegalStateException: The following plugins were not resolved: lang.taxi/deploy/latest
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:474)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1247)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1096)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1135)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 17 common frames omitted
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.IllegalStateException: The following plugins were not resolved: lang.taxi/deploy/latest
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:197)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1267)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1124)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.addCandidateEntry(DefaultListableBeanFactory.java:1322)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.findAutowireCandidates(DefaultListableBeanFactory.java:1288)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveMultipleBeans(DefaultListableBeanFactory.java:1190)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1093)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 31 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.IllegalStateException: The following plugins were not resolved: lang.taxi/deploy/latest
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:590)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1247)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1096)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1135)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 48 common frames omitted
+Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.IllegalStateException: The following plugins were not resolved: lang.taxi/deploy/latest
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:185)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:582)
+	... 61 common frames omitted
+Caused by: java.lang.IllegalStateException: The following plugins were not resolved: lang.taxi/deploy/latest
+	at lang.taxi.cli.plugins.PluginRegistry.assertAllArtifactsSatisfied(PluginRegistry.kt:86)
+	at lang.taxi.cli.plugins.PluginRegistry.<init>(PluginRegistry.kt:47)
+	at lang.taxi.cli.PluginConfig.pluginRegistry$taxi_cli(PluginConfig.kt:21)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$d1bfeeed.CGLIB$pluginRegistry$taxi_cli$0(<generated>)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$d1bfeeed$$FastClassBySpringCGLIB$$5b00c056.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:228)
+	at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.intercept(ConfigurationClassEnhancer.java:365)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$d1bfeeed.pluginRegistry$taxi_cli(<generated>)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:154)
+	... 62 common frames omitted
+12:27:41.601 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:27:41.608 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:27:41.613 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:27:41.636 [main] ERROR [SpringApplication.java:863] o.s.boot.SpringApplication - Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'shellRunner' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/ShellRunner.class]: Unsatisfied dependency expressed through constructor parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jCommander$taxi_cli' defined in lang.taxi.cli.TaxiCli: Unsatisfied dependency expressed through method 'jCommander$taxi_cli' parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.IllegalStateException: The following plugins were not resolved: lang.taxi/publish/latest
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:197)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1267)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1124)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:759)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:869)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:550)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:780)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:412)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:333)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jCommander$taxi_cli' defined in lang.taxi.cli.TaxiCli: Unsatisfied dependency expressed through method 'jCommander$taxi_cli' parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.IllegalStateException: The following plugins were not resolved: lang.taxi/publish/latest
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:474)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1247)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1096)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1135)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 17 common frames omitted
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.IllegalStateException: The following plugins were not resolved: lang.taxi/publish/latest
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:197)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1267)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1124)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.addCandidateEntry(DefaultListableBeanFactory.java:1322)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.findAutowireCandidates(DefaultListableBeanFactory.java:1288)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveMultipleBeans(DefaultListableBeanFactory.java:1190)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1093)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 31 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.IllegalStateException: The following plugins were not resolved: lang.taxi/publish/latest
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:590)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1247)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1096)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1135)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 48 common frames omitted
+Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.IllegalStateException: The following plugins were not resolved: lang.taxi/publish/latest
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:185)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:582)
+	... 61 common frames omitted
+Caused by: java.lang.IllegalStateException: The following plugins were not resolved: lang.taxi/publish/latest
+	at lang.taxi.cli.plugins.PluginRegistry.assertAllArtifactsSatisfied(PluginRegistry.kt:86)
+	at lang.taxi.cli.plugins.PluginRegistry.<init>(PluginRegistry.kt:47)
+	at lang.taxi.cli.PluginConfig.pluginRegistry$taxi_cli(PluginConfig.kt:21)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$fe73425d.CGLIB$pluginRegistry$taxi_cli$1(<generated>)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$fe73425d$$FastClassBySpringCGLIB$$9d41066e.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:228)
+	at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.intercept(ConfigurationClassEnhancer.java:365)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$fe73425d.pluginRegistry$taxi_cli(<generated>)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:154)
+	... 62 common frames omitted
+12:28:07.162 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:28:07.165 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:28:07.168 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:28:07.186 [main] ERROR [SpringApplication.java:863] o.s.boot.SpringApplication - Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'shellRunner' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/ShellRunner.class]: Unsatisfied dependency expressed through constructor parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jCommander$taxi_cli' defined in lang.taxi.cli.TaxiCli: Unsatisfied dependency expressed through method 'jCommander$taxi_cli' parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.util.NoSuchElementException: Collection is empty.
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:197)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1267)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1124)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:759)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:869)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:550)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:780)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:412)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:333)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jCommander$taxi_cli' defined in lang.taxi.cli.TaxiCli: Unsatisfied dependency expressed through method 'jCommander$taxi_cli' parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.util.NoSuchElementException: Collection is empty.
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:474)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1247)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1096)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1135)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 17 common frames omitted
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.util.NoSuchElementException: Collection is empty.
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:197)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1267)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1124)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.addCandidateEntry(DefaultListableBeanFactory.java:1322)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.findAutowireCandidates(DefaultListableBeanFactory.java:1288)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveMultipleBeans(DefaultListableBeanFactory.java:1190)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1093)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 31 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.util.NoSuchElementException: Collection is empty.
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:590)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1247)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1096)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1135)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 48 common frames omitted
+Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.util.NoSuchElementException: Collection is empty.
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:185)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:582)
+	... 61 common frames omitted
+Caused by: java.util.NoSuchElementException: Collection is empty.
+	at kotlin.collections.CollectionsKt___CollectionsKt.first(_Collections.kt:172)
+	at lang.taxi.cli.plugins.PluginRegistry.configurePlugins(PluginRegistry.kt:61)
+	at lang.taxi.cli.plugins.PluginRegistry.<init>(PluginRegistry.kt:49)
+	at lang.taxi.cli.PluginConfig.pluginRegistry$taxi_cli(PluginConfig.kt:21)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$21d0b2eb.CGLIB$pluginRegistry$taxi_cli$1(<generated>)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$21d0b2eb$$FastClassBySpringCGLIB$$11749c3e.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:228)
+	at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.intercept(ConfigurationClassEnhancer.java:365)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$21d0b2eb.pluginRegistry$taxi_cli(<generated>)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:154)
+	... 62 common frames omitted
+12:29:08.366 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:29:08.368 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:29:08.371 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:31:26.602 [main] ERROR [SpringApplication.java:863] o.s.boot.SpringApplication - Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'shellRunner' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/ShellRunner.class]: Unsatisfied dependency expressed through constructor parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jCommander$taxi_cli' defined in lang.taxi.cli.TaxiCli: Unsatisfied dependency expressed through method 'jCommander$taxi_cli' parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.util.NoSuchElementException: Collection is empty.
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:197)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1267)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1124)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:759)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:869)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:550)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:780)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:412)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:333)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jCommander$taxi_cli' defined in lang.taxi.cli.TaxiCli: Unsatisfied dependency expressed through method 'jCommander$taxi_cli' parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.util.NoSuchElementException: Collection is empty.
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:474)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1247)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1096)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1135)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 17 common frames omitted
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.util.NoSuchElementException: Collection is empty.
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:197)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1267)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1124)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.addCandidateEntry(DefaultListableBeanFactory.java:1322)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.findAutowireCandidates(DefaultListableBeanFactory.java:1288)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveMultipleBeans(DefaultListableBeanFactory.java:1190)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1093)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 31 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.util.NoSuchElementException: Collection is empty.
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:590)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1247)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1096)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1135)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 48 common frames omitted
+Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.util.NoSuchElementException: Collection is empty.
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:185)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:582)
+	... 61 common frames omitted
+Caused by: java.util.NoSuchElementException: Collection is empty.
+	at kotlin.collections.CollectionsKt___CollectionsKt.first(_Collections.kt:172)
+	at lang.taxi.cli.plugins.PluginRegistry.configurePlugins(PluginRegistry.kt:61)
+	at lang.taxi.cli.plugins.PluginRegistry.<init>(PluginRegistry.kt:49)
+	at lang.taxi.cli.PluginConfig.pluginRegistry$taxi_cli(PluginConfig.kt:21)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$5fda2fd3.CGLIB$pluginRegistry$taxi_cli$1(<generated>)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$5fda2fd3$$FastClassBySpringCGLIB$$3f5fd817.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:228)
+	at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.intercept(ConfigurationClassEnhancer.java:365)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$5fda2fd3.pluginRegistry$taxi_cli(<generated>)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:154)
+	... 62 common frames omitted
+12:31:32.473 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:31:32.476 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:31:32.479 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:31:32.514 [main] ERROR [SpringApplication.java:863] o.s.boot.SpringApplication - Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'shellRunner' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/ShellRunner.class]: Unsatisfied dependency expressed through constructor parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jCommander$taxi_cli' defined in lang.taxi.cli.TaxiCli: Unsatisfied dependency expressed through method 'jCommander$taxi_cli' parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.reflect.InvocationTargetException
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:197)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1267)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1124)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:759)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:869)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:550)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:780)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:412)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:333)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jCommander$taxi_cli' defined in lang.taxi.cli.TaxiCli: Unsatisfied dependency expressed through method 'jCommander$taxi_cli' parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.reflect.InvocationTargetException
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:474)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1247)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1096)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1135)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 17 common frames omitted
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.reflect.InvocationTargetException
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:197)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1267)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1124)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.addCandidateEntry(DefaultListableBeanFactory.java:1322)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.findAutowireCandidates(DefaultListableBeanFactory.java:1288)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveMultipleBeans(DefaultListableBeanFactory.java:1190)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1093)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 31 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.reflect.InvocationTargetException
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:590)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1247)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1096)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1135)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 48 common frames omitted
+Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.reflect.InvocationTargetException
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:185)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:582)
+	... 61 common frames omitted
+Caused by: java.lang.reflect.InvocationTargetException: null
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at kotlin.reflect.jvm.internal.FunctionCaller$Constructor.call(FunctionCaller.kt:65)
+	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:106)
+	at kotlin.reflect.jvm.internal.KCallableImpl.callDefaultMethod(KCallableImpl.kt:148)
+	at kotlin.reflect.jvm.internal.KCallableImpl.callBy(KCallableImpl.kt:110)
+	at io.github.config4k.readers.ArbitraryTypeReaderKt.extractWithParameters(ArbitraryTypeReader.kt:33)
+	at io.github.config4k.readers.ArbitraryTypeReader$1.invoke(ArbitraryTypeReader.kt:14)
+	at io.github.config4k.readers.ArbitraryTypeReader$1.invoke(ArbitraryTypeReader.kt:13)
+	at io.github.config4k.readers.Reader$getValue$1.invoke(Reader.kt:16)
+	at io.github.config4k.readers.Reader$getValue$1.invoke(Reader.kt:13)
+	at io.github.config4k.readers.ArbitraryTypeReaderKt.extractWithParameters(ArbitraryTypeReader.kt:30)
+	at io.github.config4k.readers.ArbitraryTypeReaderKt.extractWithParameters$default(ArbitraryTypeReader.kt:19)
+	at io.github.config4k.readers.SelectReader.extractWithoutPath(SelectReader.kt:65)
+	at lang.taxi.cli.plugins.PluginRegistry.configurePlugins(PluginRegistry.kt:65)
+	at lang.taxi.cli.plugins.PluginRegistry.<init>(PluginRegistry.kt:49)
+	at lang.taxi.cli.PluginConfig.pluginRegistry$taxi_cli(PluginConfig.kt:21)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$b98034d6.CGLIB$pluginRegistry$taxi_cli$0(<generated>)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$b98034d6$$FastClassBySpringCGLIB$$e7b44e88.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:228)
+	at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.intercept(ConfigurationClassEnhancer.java:365)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$b98034d6.pluginRegistry$taxi_cli(<generated>)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:154)
+	... 62 common frames omitted
+Caused by: java.lang.IllegalArgumentException: Parameter specified as non-null is null: method lang.taxi.plugins.ArtifactId.<init>, parameter name
+	at lang.taxi.plugins.ArtifactId.<init>(Artifact.kt)
+	... 91 common frames omitted
+12:31:37.261 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:31:37.264 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:31:37.267 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:31:43.252 [main] ERROR [SpringApplication.java:863] o.s.boot.SpringApplication - Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'shellRunner' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/ShellRunner.class]: Unsatisfied dependency expressed through constructor parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jCommander$taxi_cli' defined in lang.taxi.cli.TaxiCli: Unsatisfied dependency expressed through method 'jCommander$taxi_cli' parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.reflect.InvocationTargetException
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:197)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1267)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1124)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:759)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:869)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:550)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:780)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:412)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:333)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'jCommander$taxi_cli' defined in lang.taxi.cli.TaxiCli: Unsatisfied dependency expressed through method 'jCommander$taxi_cli' parameter 0; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.reflect.InvocationTargetException
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:474)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1247)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1096)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1135)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 17 common frames omitted
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'buildCommand' defined in file [/home/martypitt/dev/vyne/taxi-lang/taxi-cli/target/classes/lang/taxi/cli/commands/BuildCommand.class]: Unsatisfied dependency expressed through constructor parameter 1; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.reflect.InvocationTargetException
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:732)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:197)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1267)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1124)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.addCandidateEntry(DefaultListableBeanFactory.java:1322)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.findAutowireCandidates(DefaultListableBeanFactory.java:1288)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveMultipleBeans(DefaultListableBeanFactory.java:1190)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1093)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 31 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'pluginRegistry$taxi_cli' defined in class path resource [lang/taxi/cli/PluginConfig.class]: Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.reflect.InvocationTargetException
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:590)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1247)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1096)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:535)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:495)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:317)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:315)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:251)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1135)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1062)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:818)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:724)
+	... 48 common frames omitted
+Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [lang.taxi.cli.plugins.PluginRegistry]: Factory method 'pluginRegistry$taxi_cli' threw exception; nested exception is java.lang.reflect.InvocationTargetException
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:185)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:582)
+	... 61 common frames omitted
+Caused by: java.lang.reflect.InvocationTargetException: null
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at kotlin.reflect.jvm.internal.FunctionCaller$Constructor.call(FunctionCaller.kt:65)
+	at kotlin.reflect.jvm.internal.KCallableImpl.call(KCallableImpl.kt:106)
+	at kotlin.reflect.jvm.internal.KCallableImpl.callDefaultMethod(KCallableImpl.kt:148)
+	at kotlin.reflect.jvm.internal.KCallableImpl.callBy(KCallableImpl.kt:110)
+	at io.github.config4k.readers.ArbitraryTypeReaderKt.extractWithParameters(ArbitraryTypeReader.kt:33)
+	at io.github.config4k.readers.ArbitraryTypeReader$1.invoke(ArbitraryTypeReader.kt:14)
+	at io.github.config4k.readers.ArbitraryTypeReader$1.invoke(ArbitraryTypeReader.kt:13)
+	at io.github.config4k.readers.Reader$getValue$1.invoke(Reader.kt:16)
+	at io.github.config4k.readers.Reader$getValue$1.invoke(Reader.kt:13)
+	at io.github.config4k.readers.ArbitraryTypeReaderKt.extractWithParameters(ArbitraryTypeReader.kt:30)
+	at io.github.config4k.readers.ArbitraryTypeReaderKt.extractWithParameters$default(ArbitraryTypeReader.kt:19)
+	at io.github.config4k.readers.SelectReader.extractWithoutPath(SelectReader.kt:65)
+	at lang.taxi.cli.plugins.PluginRegistry.configurePlugins(PluginRegistry.kt:65)
+	at lang.taxi.cli.plugins.PluginRegistry.<init>(PluginRegistry.kt:49)
+	at lang.taxi.cli.PluginConfig.pluginRegistry$taxi_cli(PluginConfig.kt:21)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$cc360b45.CGLIB$pluginRegistry$taxi_cli$1(<generated>)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$cc360b45$$FastClassBySpringCGLIB$$f526cfbc.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invokeSuper(MethodProxy.java:228)
+	at org.springframework.context.annotation.ConfigurationClassEnhancer$BeanMethodInterceptor.intercept(ConfigurationClassEnhancer.java:365)
+	at lang.taxi.cli.PluginConfig$$EnhancerBySpringCGLIB$$cc360b45.pluginRegistry$taxi_cli(<generated>)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:154)
+	... 62 common frames omitted
+Caused by: java.lang.IllegalArgumentException: Parameter specified as non-null is null: method lang.taxi.plugins.ArtifactId.<init>, parameter name
+	at lang.taxi.plugins.ArtifactId.<init>(Artifact.kt)
+	... 91 common frames omitted
+12:32:13.938 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:32:13.941 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:32:13.943 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:32:14.084 [main] ERROR [SpringApplication.java:863] o.s.boot.SpringApplication - Application run failed
+java.lang.IllegalStateException: Failed to execute CommandLineRunner
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:821)
+	at org.springframework.boot.SpringApplication.callRunners(SpringApplication.java:802)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:341)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+Caused by: com.beust.jcommander.MissingCommandException: Expected a command, got deploy
+	at com.beust.jcommander.JCommander.parseValues(JCommander.java:779)
+	at com.beust.jcommander.JCommander.parse(JCommander.java:340)
+	at com.beust.jcommander.JCommander.parse(JCommander.java:319)
+	at lang.taxi.cli.ShellRunner.run(ShellRunner.kt:19)
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:818)
+	... 4 common frames omitted
+12:32:54.453 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:32:54.459 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:32:54.462 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:32:54.605 [main] ERROR [SpringApplication.java:863] o.s.boot.SpringApplication - Application run failed
+java.lang.IllegalStateException: Failed to execute CommandLineRunner
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:821)
+	at org.springframework.boot.SpringApplication.callRunners(SpringApplication.java:802)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:341)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+Caused by: com.beust.jcommander.MissingCommandException: Expected a command, got publish
+	at com.beust.jcommander.JCommander.parseValues(JCommander.java:779)
+	at com.beust.jcommander.JCommander.parse(JCommander.java:340)
+	at com.beust.jcommander.JCommander.parse(JCommander.java:319)
+	at lang.taxi.cli.ShellRunner.run(ShellRunner.kt:19)
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:818)
+	... 4 common frames omitted
+12:33:15.136 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:33:15.139 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:33:15.142 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:33:15.303 [main] INFO  [PublishPluginPlugin.kt:30] l.t.c.p.internal.PublishPluginPlugin - Publishing dist at /tmp/taxi.jpak4077031293914807154.zip to http://localhost:9300
+12:33:38.204 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:33:38.207 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:33:38.210 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:33:38.358 [main] INFO  [PublishPluginPlugin.kt:30] l.t.c.p.internal.PublishPluginPlugin - Publishing dist at /tmp/taxi.jpak3022002402082512590.zip to http://localhost:9300
+12:34:29.785 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:34:29.788 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:34:29.791 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:36:43.503 [main] INFO  [PublishPluginPlugin.kt:30] l.t.c.p.internal.PublishPluginPlugin - Publishing dist at /tmp/taxi.jpak8329951765755830324.zip to http://localhost:9300
+12:36:49.604 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:36:49.607 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:36:49.610 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:39:10.284 [main] INFO  [PublishPluginPlugin.kt:30] l.t.c.p.internal.PublishPluginPlugin - Publishing dist at /tmp/taxi.jpak3617541610134335168.zip to http://localhost:9300
+12:39:15.695 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:39:15.698 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:39:15.701 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:39:41.839 [main] INFO  [PublishPluginPlugin.kt:43] l.t.c.p.internal.PublishPluginPlugin - Adding file /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target
+12:39:41.874 [main] ERROR [SpringApplication.java:863] o.s.boot.SpringApplication - Application run failed
+java.lang.IllegalStateException: Failed to execute CommandLineRunner
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:821)
+	at org.springframework.boot.SpringApplication.callRunners(SpringApplication.java:802)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:341)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+Caused by: net.lingala.zip4j.exception.ZipException: Probably not a zip file or a corrupted zip file
+	at net.lingala.zip4j.core.HeaderReader.readEndOfCentralDirectoryRecord(HeaderReader.java:179)
+	at net.lingala.zip4j.core.HeaderReader.readAllHeaders(HeaderReader.java:78)
+	at net.lingala.zip4j.core.ZipFile.readZipInfo(ZipFile.java:425)
+	at net.lingala.zip4j.core.ZipFile.checkZipModel(ZipFile.java:935)
+	at net.lingala.zip4j.core.ZipFile.addFiles(ZipFile.java:263)
+	at net.lingala.zip4j.core.ZipFile.addFile(ZipFile.java:250)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.createZip(PublishPluginPlugin.kt:47)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.publish(PublishPluginPlugin.kt:29)
+	at lang.taxi.cli.commands.PublishPluginCommand.execute(PublishPluginCommand.kt:22)
+	at lang.taxi.cli.ShellRunner.run(ShellRunner.kt:41)
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:818)
+	... 4 common frames omitted
+Caused by: java.io.IOException: Negative seek offset
+	at java.io.RandomAccessFile.seek(RandomAccessFile.java:555)
+	at net.lingala.zip4j.core.HeaderReader.readEndOfCentralDirectoryRecord(HeaderReader.java:117)
+	... 14 common frames omitted
+12:39:47.135 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:39:47.137 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:39:47.140 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:39:47.294 [main] INFO  [PublishPluginPlugin.kt:30] l.t.c.p.internal.PublishPluginPlugin - Publishing dist at /tmp/taxi.jpak4351832529903290967.zip to http://localhost:9300
+12:40:34.692 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:40:34.695 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:40:34.698 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:42:56.905 [main] INFO  [PublishPluginPlugin.kt:30] l.t.c.p.internal.PublishPluginPlugin - Publishing dist at /tmp/taxi.jpak8282452310654048015.zip to http://localhost:9300
+12:43:02.998 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+12:43:03.001 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+12:43:03.003 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+12:43:18.497 [main] INFO  [PublishPluginPlugin.kt:43] l.t.c.p.internal.PublishPluginPlugin - Adding file /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa.jar
+12:43:29.294 [main] ERROR [SpringApplication.java:863] o.s.boot.SpringApplication - Application run failed
+java.lang.IllegalStateException: Failed to execute CommandLineRunner
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:821)
+	at org.springframework.boot.SpringApplication.callRunners(SpringApplication.java:802)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:341)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+Caused by: net.lingala.zip4j.exception.ZipException: Probably not a zip file or a corrupted zip file
+	at net.lingala.zip4j.core.HeaderReader.readEndOfCentralDirectoryRecord(HeaderReader.java:179)
+	at net.lingala.zip4j.core.HeaderReader.readAllHeaders(HeaderReader.java:78)
+	at net.lingala.zip4j.core.ZipFile.readZipInfo(ZipFile.java:425)
+	at net.lingala.zip4j.core.ZipFile.checkZipModel(ZipFile.java:935)
+	at net.lingala.zip4j.core.ZipFile.addFiles(ZipFile.java:263)
+	at net.lingala.zip4j.core.ZipFile.addFile(ZipFile.java:250)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.createZip(PublishPluginPlugin.kt:47)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.publish(PublishPluginPlugin.kt:29)
+	at lang.taxi.cli.commands.PublishPluginCommand.execute(PublishPluginCommand.kt:22)
+	at lang.taxi.cli.ShellRunner.run(ShellRunner.kt:41)
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:818)
+	... 4 common frames omitted
+Caused by: java.io.IOException: Negative seek offset
+	at java.io.RandomAccessFile.seek(RandomAccessFile.java:555)
+	at net.lingala.zip4j.core.HeaderReader.readEndOfCentralDirectoryRecord(HeaderReader.java:117)
+	... 14 common frames omitted
+13:54:15.519 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+13:54:15.522 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+13:54:15.526 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+13:54:15.768 [main] INFO  [PublishPluginPlugin.kt:39] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa.jar to http://localhost:9300
+13:54:15.986 [main] ERROR [PublishPluginPlugin.kt:59] l.t.c.p.internal.PublishPluginPlugin - Failed to upload
+org.springframework.web.client.HttpClientErrorException: 404 null
+	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:94)
+	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:79)
+	at org.springframework.web.client.ResponseErrorHandler.handleError(ResponseErrorHandler.java:63)
+	at org.springframework.web.client.RestTemplate.handleResponse(RestTemplate.java:730)
+	at org.springframework.web.client.RestTemplate.doExecute(RestTemplate.java:688)
+	at org.springframework.web.client.RestTemplate.execute(RestTemplate.java:644)
+	at org.springframework.web.client.RestTemplate.exchange(RestTemplate.java:564)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.upload(PublishPluginPlugin.kt:56)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.publish(PublishPluginPlugin.kt:45)
+	at lang.taxi.cli.commands.PublishPluginCommand.execute(PublishPluginCommand.kt:22)
+	at lang.taxi.cli.ShellRunner.run(ShellRunner.kt:41)
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:818)
+	at org.springframework.boot.SpringApplication.callRunners(SpringApplication.java:802)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:341)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+13:54:58.435 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+13:54:58.438 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+13:54:58.442 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+13:54:58.670 [main] INFO  [PublishPluginPlugin.kt:39] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa.jar to http://localhost:9300
+13:57:04.040 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+13:57:04.044 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+13:57:04.047 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+13:57:04.283 [main] INFO  [PublishPluginPlugin.kt:39] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa.jar to http://localhost:9300
+13:57:28.279 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+13:57:28.288 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+13:57:28.292 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+13:57:28.514 [main] INFO  [PublishPluginPlugin.kt:39] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa.jar to http://localhost:9300
+13:57:46.462 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+13:57:46.465 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+13:57:46.468 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+13:57:46.694 [main] INFO  [PublishPluginPlugin.kt:39] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa.jar to http://localhost:9300
+13:58:08.246 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+13:58:08.251 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+13:58:08.256 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+13:58:08.562 [main] INFO  [PublishPluginPlugin.kt:39] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa.jar to http://localhost:9300
+13:58:22.483 [main] ERROR [PublishPluginPlugin.kt:58] l.t.c.p.internal.PublishPluginPlugin - Failed to upload
+org.springframework.web.client.HttpClientErrorException: 400 null
+	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:94)
+	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:79)
+	at org.springframework.web.client.ResponseErrorHandler.handleError(ResponseErrorHandler.java:63)
+	at org.springframework.web.client.RestTemplate.handleResponse(RestTemplate.java:730)
+	at org.springframework.web.client.RestTemplate.doExecute(RestTemplate.java:688)
+	at org.springframework.web.client.RestTemplate.execute(RestTemplate.java:644)
+	at org.springframework.web.client.RestTemplate.exchange(RestTemplate.java:564)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.upload(PublishPluginPlugin.kt:55)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.publish(PublishPluginPlugin.kt:44)
+	at lang.taxi.cli.commands.PublishPluginCommand.execute(PublishPluginCommand.kt:22)
+	at lang.taxi.cli.ShellRunner.run(ShellRunner.kt:41)
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:818)
+	at org.springframework.boot.SpringApplication.callRunners(SpringApplication.java:802)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:341)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+13:59:32.452 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+13:59:32.455 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+13:59:32.459 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+13:59:32.704 [main] INFO  [PublishPluginPlugin.kt:39] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa.jar to http://localhost:9300
+14:11:11.814 [main] ERROR [SpringApplication.java:863] o.s.boot.SpringApplication - Application run failed
+java.lang.IllegalStateException: Failed to execute CommandLineRunner
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:821)
+	at org.springframework.boot.SpringApplication.callRunners(SpringApplication.java:802)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:341)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+Caused by: org.springframework.web.client.HttpServerErrorException: 500 null
+	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:97)
+	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:79)
+	at org.springframework.web.client.ResponseErrorHandler.handleError(ResponseErrorHandler.java:63)
+	at org.springframework.web.client.RestTemplate.handleResponse(RestTemplate.java:730)
+	at org.springframework.web.client.RestTemplate.doExecute(RestTemplate.java:688)
+	at org.springframework.web.client.RestTemplate.execute(RestTemplate.java:644)
+	at org.springframework.web.client.RestTemplate.exchange(RestTemplate.java:564)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.upload(PublishPluginPlugin.kt:55)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.publish(PublishPluginPlugin.kt:44)
+	at lang.taxi.cli.commands.PublishPluginCommand.execute(PublishPluginCommand.kt:22)
+	at lang.taxi.cli.ShellRunner.run(ShellRunner.kt:41)
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:818)
+	... 4 common frames omitted
+14:11:32.913 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+14:11:32.916 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+14:11:32.919 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+14:11:33.125 [main] INFO  [PublishPluginPlugin.kt:39] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa.jar to http://localhost:9300
+14:11:51.666 [main] ERROR [SpringApplication.java:863] o.s.boot.SpringApplication - Application run failed
+java.lang.IllegalStateException: Failed to execute CommandLineRunner
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:821)
+	at org.springframework.boot.SpringApplication.callRunners(SpringApplication.java:802)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:341)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+Caused by: org.springframework.web.client.HttpServerErrorException: 500 null
+	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:97)
+	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:79)
+	at org.springframework.web.client.ResponseErrorHandler.handleError(ResponseErrorHandler.java:63)
+	at org.springframework.web.client.RestTemplate.handleResponse(RestTemplate.java:730)
+	at org.springframework.web.client.RestTemplate.doExecute(RestTemplate.java:688)
+	at org.springframework.web.client.RestTemplate.execute(RestTemplate.java:644)
+	at org.springframework.web.client.RestTemplate.exchange(RestTemplate.java:564)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.upload(PublishPluginPlugin.kt:55)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.publish(PublishPluginPlugin.kt:44)
+	at lang.taxi.cli.commands.PublishPluginCommand.execute(PublishPluginCommand.kt:22)
+	at lang.taxi.cli.ShellRunner.run(ShellRunner.kt:41)
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:818)
+	... 4 common frames omitted
+14:27:03.812 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+14:27:03.814 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+14:27:03.817 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+14:27:04.027 [main] INFO  [PublishPluginPlugin.kt:39] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa.jar to http://localhost:9300
+14:27:11.620 [main] ERROR [SpringApplication.java:863] o.s.boot.SpringApplication - Application run failed
+java.lang.IllegalStateException: Failed to execute CommandLineRunner
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:821)
+	at org.springframework.boot.SpringApplication.callRunners(SpringApplication.java:802)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:341)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+Caused by: org.springframework.web.client.HttpServerErrorException: 500 null
+	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:97)
+	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:79)
+	at org.springframework.web.client.ResponseErrorHandler.handleError(ResponseErrorHandler.java:63)
+	at org.springframework.web.client.RestTemplate.handleResponse(RestTemplate.java:730)
+	at org.springframework.web.client.RestTemplate.doExecute(RestTemplate.java:688)
+	at org.springframework.web.client.RestTemplate.execute(RestTemplate.java:644)
+	at org.springframework.web.client.RestTemplate.exchange(RestTemplate.java:564)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.upload(PublishPluginPlugin.kt:55)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.publish(PublishPluginPlugin.kt:44)
+	at lang.taxi.cli.commands.PublishPluginCommand.execute(PublishPluginCommand.kt:22)
+	at lang.taxi.cli.ShellRunner.run(ShellRunner.kt:41)
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:818)
+	... 4 common frames omitted
+14:30:52.303 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+14:30:52.308 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+14:30:52.313 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+14:30:52.641 [main] INFO  [PublishPluginPlugin.kt:39] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa.jar to http://localhost:9300
+14:31:16.554 [main] INFO  [PublishPluginPlugin.kt:56] l.t.c.p.internal.PublishPluginPlugin - {"id":"2cd6c8a5-ae1d-46e7-ae28-af143b9b7a3f","project":{"id":"08d46e7d-ec10-43e7-97c0-ee5f15c73b98","name":"publish","owner":"taxi","createdAt":"2018-11-16T14:27:10Z","identifier":"taxi/publish"},"version":"0.1.0","createdAt":"2018-11-16T14:31:10.308Z","createdBy":"FIXME","identifier":"taxi/publish/0.1.0"}
+14:34:19.956 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+14:34:19.964 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+14:34:19.969 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+14:34:20.196 [main] INFO  [PublishPluginPlugin.kt:39] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa.jar to http://localhost:9300
+14:34:20.816 [main] INFO  [PublishPluginPlugin.kt:56] l.t.c.p.internal.PublishPluginPlugin - {"id":"669014c3-3708-476e-b60b-91cee1fc1440","project":{"id":"d4b3246a-b2c1-4a92-8f69-1948a462db02","name":"jpak","owner":"taxi","createdAt":"2018-11-16T14:34:20.657Z","identifier":"taxi/jpak"},"version":"0.1.0","createdAt":"2018-11-16T14:34:20.706Z","createdBy":"FIXME","identifier":"taxi/jpak/0.1.0"}
+14:35:38.297 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+14:35:38.300 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+14:35:38.304 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+14:41:21.783 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+14:41:21.785 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+14:41:21.788 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+14:41:22.009 [main] INFO  [PublishPluginPlugin.kt:39] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa.jar to http://localhost:9300
+14:41:22.624 [main] INFO  [PublishPluginPlugin.kt:56] l.t.c.p.internal.PublishPluginPlugin - {"id":"3b1379fe-c659-420b-86da-209b30b128a7","project":{"id":"17d4bf47-ac6d-4d9d-94fd-ea27f459372d","name":"jpak","owner":"taxi","createdAt":"2018-11-16T14:41:22.446Z","identifier":"taxi/jpak"},"version":"0.1.0","createdAt":"2018-11-16T14:41:22.502Z","createdBy":"FIXME","identifier":"taxi/jpak/0.1.0"}
+14:44:33.450 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+14:44:33.453 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+14:44:33.456 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+14:44:33.675 [main] INFO  [PublishPluginPlugin.kt:40] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa.jar to http://localhost:9300
+14:44:33.822 [main] ERROR [SpringApplication.java:863] o.s.boot.SpringApplication - Application run failed
+java.lang.IllegalStateException: Failed to execute CommandLineRunner
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:821)
+	at org.springframework.boot.SpringApplication.callRunners(SpringApplication.java:802)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:341)
+	at lang.taxi.cli.TaxiCli$Companion.main(TaxiCliApp.kt:28)
+	at lang.taxi.cli.TaxiCli.main(TaxiCliApp.kt)
+Caused by: org.springframework.http.converter.HttpMessageConversionException: Type definition error: [simple type, class java.time.Instant]; nested exception is com.fasterxml.jackson.databind.exc.InvalidDefinitionException: Cannot construct instance of `java.time.Instant` (no Creators, like default construct, exist): no String-argument constructor/factory method to deserialize from String value ('2018-11-16T14:44:33.786Z')
+ at [Source: (PushbackInputStream); line: 1, column: 221] (through reference chain: lang.taxi.cli.plugins.internal.Release["createdAt"])
+	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:240)
+	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.read(AbstractJackson2HttpMessageConverter.java:225)
+	at org.springframework.web.client.HttpMessageConverterExtractor.extractData(HttpMessageConverterExtractor.java:100)
+	at org.springframework.web.client.RestTemplate$ResponseEntityResponseExtractor.extractData(RestTemplate.java:959)
+	at org.springframework.web.client.RestTemplate$ResponseEntityResponseExtractor.extractData(RestTemplate.java:942)
+	at org.springframework.web.client.RestTemplate.doExecute(RestTemplate.java:689)
+	at org.springframework.web.client.RestTemplate.execute(RestTemplate.java:644)
+	at org.springframework.web.client.RestTemplate.exchange(RestTemplate.java:564)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.upload(PublishPluginPlugin.kt:56)
+	at lang.taxi.cli.plugins.internal.PublishPluginPlugin.publish(PublishPluginPlugin.kt:45)
+	at lang.taxi.cli.commands.PublishPluginCommand.execute(PublishPluginCommand.kt:22)
+	at lang.taxi.cli.ShellRunner.run(ShellRunner.kt:41)
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:818)
+	... 4 common frames omitted
+Caused by: com.fasterxml.jackson.databind.exc.InvalidDefinitionException: Cannot construct instance of `java.time.Instant` (no Creators, like default construct, exist): no String-argument constructor/factory method to deserialize from String value ('2018-11-16T14:44:33.786Z')
+ at [Source: (PushbackInputStream); line: 1, column: 221] (through reference chain: lang.taxi.cli.plugins.internal.Release["createdAt"])
+	at com.fasterxml.jackson.databind.exc.InvalidDefinitionException.from(InvalidDefinitionException.java:67)
+	at com.fasterxml.jackson.databind.DeserializationContext.reportBadDefinition(DeserializationContext.java:1451)
+	at com.fasterxml.jackson.databind.DeserializationContext.handleMissingInstantiator(DeserializationContext.java:1027)
+	at com.fasterxml.jackson.databind.deser.ValueInstantiator._createFromStringFallbacks(ValueInstantiator.java:371)
+	at com.fasterxml.jackson.databind.deser.std.StdValueInstantiator.createFromString(StdValueInstantiator.java:323)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializerBase.deserializeFromString(BeanDeserializerBase.java:1373)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer._deserializeOther(BeanDeserializer.java:171)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserialize(BeanDeserializer.java:161)
+	at com.fasterxml.jackson.databind.deser.SettableBeanProperty.deserialize(SettableBeanProperty.java:530)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer._deserializeWithErrorWrapping(BeanDeserializer.java:528)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer._deserializeUsingPropertyBased(BeanDeserializer.java:417)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializerBase.deserializeFromObjectUsingNonDefault(BeanDeserializerBase.java:1287)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserializeFromObject(BeanDeserializer.java:326)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserialize(BeanDeserializer.java:159)
+	at com.fasterxml.jackson.databind.ObjectMapper._readMapAndClose(ObjectMapper.java:4013)
+	at com.fasterxml.jackson.databind.ObjectMapper.readValue(ObjectMapper.java:3084)
+	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:237)
+	... 16 common frames omitted
+14:45:05.166 [main] INFO  [DefaultPluginStatusProvider.java:51] r.f.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+14:45:05.169 [main] INFO  [DefaultPluginStatusProvider.java:55] r.f.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+14:45:05.171 [main] INFO  [DefaultPluginManager.java:107] r.fortsoft.pf4j.DefaultPluginManager - PF4J version 1.3.0 in 'deployment' mode
+14:45:05.395 [main] INFO  [PublishPluginPlugin.kt:40] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa.jar to http://localhost:9300
+14:45:05.508 [main] INFO  [PublishPluginPlugin.kt:58] l.t.c.p.internal.PublishPluginPlugin - Released version 0.3.0 with id of taxi/jpak/0.3.0
+23:44:06.211 [main] INFO  [DefaultPluginStatusProvider.java:49] org.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+23:44:06.227 [main] INFO  [DefaultPluginStatusProvider.java:53] org.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+23:44:06.229 [main] INFO  [DefaultPluginManager.java:122] org.pf4j.DefaultPluginManager - PF4J version 2.4.0 in 'deployment' mode
+23:44:06.641 [main] INFO  [PublishPluginPlugin.kt:40] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa-plugin.jar to http://localhost:9300
+23:44:06.926 [main] INFO  [PublishPluginPlugin.kt:58] l.t.c.p.internal.PublishPluginPlugin - Released version 0.6.0 with id of taxi/jpak/0.6.0
+23:47:05.834 [main] INFO  [DefaultPluginStatusProvider.java:49] org.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+23:47:05.839 [main] INFO  [DefaultPluginStatusProvider.java:53] org.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+23:47:05.842 [main] INFO  [DefaultPluginManager.java:122] org.pf4j.DefaultPluginManager - PF4J version 2.4.0 in 'deployment' mode
+23:47:06.169 [main] INFO  [PublishPluginPlugin.kt:40] l.t.c.p.internal.PublishPluginPlugin - Publishing plugin @taxi/jpak from /home/martypitt/dev/vyne/taxi-lang/plugins/taxi-jpa/target/taxi-jpa-plugin.jar to http://localhost:9300
+23:47:06.297 [main] INFO  [PublishPluginPlugin.kt:58] l.t.c.p.internal.PublishPluginPlugin - Released version 0.7.0 with id of taxi/jpak/0.7.0

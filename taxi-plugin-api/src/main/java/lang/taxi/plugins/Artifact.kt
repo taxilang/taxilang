@@ -9,6 +9,8 @@ import java.io.File
  */
 data class ArtifactId(val group: String, val name: String) {
     override fun toString() = "@$group/$name"
+
+    val fileSafeIdentifier = "$group.$name"
 }
 
 data class Artifact(val id: ArtifactId, val version: String) {
@@ -19,7 +21,7 @@ data class Artifact(val id: ArtifactId, val version: String) {
 
     companion object {
         val UNRESOLVED_VERSIONS = listOf("*", "latest")
-        const val DEFAULT_GROUP = "lang.taxi"
+        const val DEFAULT_GROUP = "taxi"
         const val DEFAULT_VERSION = "latest"
 
         @JvmStatic

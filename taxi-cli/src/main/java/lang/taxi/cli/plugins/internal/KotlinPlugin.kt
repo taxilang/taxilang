@@ -2,7 +2,7 @@ package lang.taxi.cli.plugins.internal
 
 import lang.taxi.TaxiDocument
 import lang.taxi.cli.plugins.InternalPlugin
-import lang.taxi.cli.plugins.PluginWithConfig
+import lang.taxi.plugins.PluginWithConfig
 import lang.taxi.generators.ModelGenerator
 import lang.taxi.generators.Processor
 import lang.taxi.generators.WritableSource
@@ -21,10 +21,10 @@ class KotlinPlugin : InternalPlugin, ModelGenerator, PluginWithConfig<KotlinPlug
 
     val generator: KotlinGenerator = KotlinGenerator()
 
-    override val processors: List<Processor> = generator.processors
+//    override val processors: List<Processor> = generator.processors
 
-    override fun generate(taxi: TaxiDocument): List<WritableSource> {
-        return generator.generate(taxi)
+    override fun generate(taxi: TaxiDocument, processors:List<Processor>): List<WritableSource> {
+        return generator.generate(taxi,processors)
                 .map { RelativeWriteableSource(Paths.get(config.outputPath), it) }
     }
 

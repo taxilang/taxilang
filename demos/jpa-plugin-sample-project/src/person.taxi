@@ -1,0 +1,7 @@
+namespace demo {
+   type Person {
+      id : String
+      firstName : String
+      lastName : String
+   }
+}

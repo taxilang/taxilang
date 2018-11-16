@@ -1,6 +1,7 @@
 package lang.taxi.cli.plugins
 
 import lang.taxi.plugins.Artifact
+import lang.taxi.plugins.Plugin
 
 interface PluginArtifact {
     fun getPlugin(): Plugin

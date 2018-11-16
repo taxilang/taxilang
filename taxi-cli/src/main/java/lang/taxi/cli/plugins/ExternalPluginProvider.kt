@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
+import org.springframework.web.client.RestTemplate
 import java.io.File
 import java.net.URI
 
@@ -28,6 +29,7 @@ class RemoteExternalPluginProvider(val repositories: List<URI>, val pluginsDirec
             if (artifact.isAbsolute() && resolvePluginLocation(artifact).exists()) {
                 artifact to resolvePluginLocation(artifact)
             } else {
+                log().info("$artifact not found locally, will try to download")
                 val plugin = downloadPlugin(uriList, artifact)
                 if (plugin == null) {
                     log().info("$artifact could not be downloaded from any of $uriList")
@@ -85,7 +87,7 @@ class RemoteExternalPluginProvider(val repositories: List<URI>, val pluginsDirec
         val result = ArrayListMultimap.create<Artifact, URI>()
         repositories.forEach { repo: URI ->
             pluginIdentifiers.forEach { artifact ->
-                val uri = repo.concat("/store/repository/${ContentTypes.TAXI_PLUGIN}/${artifact.path()}")
+                val uri = repo.concat("/artifacts/${artifact.path()}")
                 result.put(artifact, uri)
             }
         }

@@ -5,8 +5,11 @@ import io.github.config4k.ClassContainer
 import io.github.config4k.readers.SelectReader
 import lang.taxi.cli.utils.log
 import lang.taxi.plugins.Artifact
-import ro.fortsoft.pf4j.DefaultPluginManager
-import ro.fortsoft.pf4j.PluginManager
+import lang.taxi.plugins.ComponentProviderPlugin
+import lang.taxi.plugins.Plugin
+import lang.taxi.plugins.PluginWithConfig
+import org.pf4j.DefaultPluginManager
+import org.pf4j.PluginManager
 import java.io.File
 import kotlin.reflect.KClass
 
@@ -34,6 +37,16 @@ class PluginRegistry(externalPluginProviders: List<ExternalPluginProvider>,
 
     private val externalPluginProvider: CompositeExternalPluginProvider = CompositeExternalPluginProvider(externalPluginProviders)
 
+    val pluginProvidedComponents: List<Any> by lazy {
+        this.pluginManager.getExtensions(ComponentProviderPlugin::class.java)
+                .flatMap { it.comoponents }
+    }
+
+    inline fun <reified T> getComponents(): List<T> {
+        return this.pluginProvidedComponents
+                .filterIsInstance<T>()
+    }
+
     init {
 
         val externalPluginLocations = externalPluginProvider.resolvePlugins(requiredPlugins.keys.toList())
@@ -54,6 +67,7 @@ class PluginRegistry(externalPluginProviders: List<ExternalPluginProvider>,
 
     private fun configurePlugins(requiredPlugins: Map<Artifact, Config>) {
         this.plugins
+                .filter { plugin -> requiredPlugins.keys.any { it.artifactId == plugin.id } }
                 .filterIsInstance<PluginWithConfig<Any>>()
                 .forEach { plugin ->
                     val pluginConfig = requiredPlugins.filterKeys { artifact -> artifact.artifactId == plugin.id }.values.first()
@@ -65,7 +79,10 @@ class PluginRegistry(externalPluginProviders: List<ExternalPluginProvider>,
     }
 
     private fun loadRemotePlugins(remotePlugins: Iterable<File>): List<Plugin> {
-        remotePlugins.forEach { pluginManager.loadPlugin(it.toPath()) }
+        remotePlugins.forEach {
+            log().info("Loading plugin at ${it.toPath()}")
+            pluginManager.loadPlugin(it.toPath())
+        }
         pluginManager.startPlugins()
         return pluginManager.getExtensions(Plugin::class.java)
     }

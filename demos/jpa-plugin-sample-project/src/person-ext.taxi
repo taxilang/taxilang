@@ -1,0 +1,6 @@
+namespace demo {
+   @Entity
+   type extension Person {
+      @Id id : String
+   }
+}

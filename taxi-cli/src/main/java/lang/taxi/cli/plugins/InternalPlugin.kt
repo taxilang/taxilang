@@ -2,6 +2,7 @@ package lang.taxi.cli.plugins
 
 import lang.taxi.plugins.Artifact
 import lang.taxi.plugins.ArtifactId
+import lang.taxi.plugins.Plugin
 
 /**
  * A InternalPlugin is one that's built in to Shipman -- ie.,

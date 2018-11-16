@@ -6,9 +6,9 @@ import lang.taxi.cli.plugins.InternalPlugin
 import lang.taxi.cli.plugins.PluginRegistry
 import lang.taxi.cli.plugins.RemoteExternalPluginProvider
 import org.apache.http.impl.client.HttpClientBuilder
+import org.pf4j.DefaultPluginManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import ro.fortsoft.pf4j.DefaultPluginManager
 import java.net.URI
 
 @Configuration
