@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
    <groupId>lang.taxi</groupId>
    <artifactId>parent</artifactId>
    <packaging>pom</packaging>
-   <version>0.1.6-SNAPSHOT</version>
+   <version>0.1.6</version>
    <description>taxi is a language for defining API contracts. A Dsl that sits atop RAML for resource definition. Taxi
       (short for Taxonomy)
    </description>
@@ -15,7 +14,7 @@
       <url>https://gitlab.com/taxi-lang/taxi-lang</url>
       <connection>git@gitlab.com:taxi-lang/taxi-lang.git</connection>
       <developerConnection>scm:git:git@gitlab.com:taxi-lang/taxi-lang.git</developerConnection>
-      <tag>HEAD</tag>
+      <tag>v0.1.6</tag>
    </scm>
 
    <modules>
@@ -105,6 +104,7 @@
                      </goals>
                      <configuration>
                         <sourceDirs>
+                           <sourceDir>${project.basedir}/target/generated-sources/antlr4</sourceDir>
                            <sourceDir>src/main/java</sourceDir>
                         </sourceDirs>
                      </configuration>
@@ -116,6 +116,7 @@
                      </goals>
                      <configuration>
                         <sourceDirs>
+                           <sourceDir>${project.basedir}/target/generated-sources/antlr4</sourceDir>
                            <sourceDir>src/main/java</sourceDir>
                         </sourceDirs>
                      </configuration>
@@ -131,6 +132,7 @@
                            <sourceDir>src/test/kotlin</sourceDir>
                            <sourceDir>src/test/java</sourceDir>
                            <sourceDir>target/generated-sources/kapt/test</sourceDir>
+                           <sourceDir>target/generated-sources/kaptKotlin/test</sourceDir>
                         </sourceDirs>
                      </configuration>
                   </execution>
