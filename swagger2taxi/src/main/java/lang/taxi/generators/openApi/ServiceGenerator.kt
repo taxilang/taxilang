@@ -12,6 +12,7 @@ import v2.io.swagger.models.parameters.BodyParameter
 import v2.io.swagger.models.parameters.Parameter
 import v2.io.swagger.models.parameters.PathParameter
 import v2.io.swagger.models.parameters.QueryParameter
+import java.net.URL
 import lang.taxi.services.Operation as TaxiOperation
 import lang.taxi.services.Service as TaxiService
 import v2.io.swagger.models.Operation as SwaggerOperation
@@ -72,8 +73,9 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
             lang.taxi.services.Parameter(annotations, type, swaggerParam.name, constraints)
         }
         val returnType = getReturnType(swaggerOperation)
+        val operationId = OperationIdProvider.getOperationId(swaggerOperation,pathMapping,method)
         return TaxiOperation(
-                swaggerOperation.operationId,
+                operationId,
                 annotations.toAnnotations(),
                 parameters,
                 returnType,
@@ -81,6 +83,8 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
         )
 
     }
+
+
 
     private fun getReturnType(swaggerOperation: SwaggerOperation): Type {
         // First look for responses in the 200 range:
@@ -120,5 +124,19 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
             // TODO : Path variables?
             else -> emptyList()
         }
+    }
+}
+
+object OperationIdProvider {
+    fun getOperationId(operation: v2.io.swagger.models.Operation, pathMapping: String, method: HttpMethod): String {
+        if (operation.operationId != null) {
+            return operation.operationId
+        }
+
+
+        val path = URL(pathMapping).path.split("/")
+        val words = listOf(method.name.toLowerCase()) + path
+        return words.joinToString("") { it.capitalize() }
+
     }
 }
