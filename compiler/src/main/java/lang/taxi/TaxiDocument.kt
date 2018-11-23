@@ -25,7 +25,7 @@ data class AttributePath(val parts: List<String>) {
     override fun toString() = "AttributePath ($path)"
 }
 
-data class QualifiedName(val namespace: String, val typeName: String) {
+data class QualifiedName(val namespace: String, val typeName: String, val parameters: List<QualifiedName> = emptyList()) {
     companion object {
         private val nativeNamespaces = listOf("lang.taxi")
         fun from(value: String): QualifiedName {
