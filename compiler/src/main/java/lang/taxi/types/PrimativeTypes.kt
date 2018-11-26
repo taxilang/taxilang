@@ -24,6 +24,7 @@ enum class PrimitiveType(val declaration: String) : Type {
     DATE_TIME("DateTime"),
     INSTANT("Instant"),
     ARRAY("Array"),
+    ANY("Any"),
     DOUBLE("Double");
 
     override val qualifiedName: String
