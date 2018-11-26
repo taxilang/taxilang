@@ -12,6 +12,7 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String) {
 
     private val swaggerPrimitivies: Map<String, AbstractProperty> = listOf(
             BinaryProperty(),
+            BooleanProperty(),
             DateProperty(),
             DateTimeProperty(),
             DecimalProperty(),
@@ -37,8 +38,21 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String) {
     fun findType(model: Model): Type {
         return when (model) {
             is RefModel -> findTypeByName(model.simpleRef)
+            is ArrayModel -> findArrayType(model)
             else -> TODO()
         }
+    }
+
+    fun findType(property:Property):Type {
+        return when (property) {
+            is RefProperty -> findTypeByName(property.simpleRef)
+            else -> TODO()
+        }
+    }
+
+    private fun findArrayType(model: ArrayModel): Type {
+        val arrayMemberType = findType(model.items)
+        return ArrayType(arrayMemberType, CompilationUnit.unspecified())
     }
 
     fun findType(param: AbstractSerializableParameter<*>): Type {
@@ -130,6 +144,7 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String) {
 
     private fun getPrimitiveType(property: Property): PrimitiveType? {
         return when (property) {
+            is BooleanProperty -> PrimitiveType.BOOLEAN
             is BinaryProperty -> PrimitiveType.BOOLEAN
             is DateProperty -> PrimitiveType.LOCAL_DATE
             is DateTimeProperty -> PrimitiveType.DATE_TIME
@@ -141,6 +156,7 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String) {
             is LongProperty -> PrimitiveType.INTEGER
             is StringProperty -> PrimitiveType.STRING
             is UUIDProperty -> PrimitiveType.STRING
+            is MapProperty -> PrimitiveType.ANY
             else -> null
         }
     }

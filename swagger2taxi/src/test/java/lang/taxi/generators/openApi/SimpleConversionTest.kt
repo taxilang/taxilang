@@ -1,5 +1,7 @@
 package lang.taxi.generators.openApi
 
+import com.winterbe.expekt.expect
+import lang.taxi.TaxiDocument
 import lang.taxi.testing.TestHelpers
 import org.apache.commons.io.IOUtils
 import org.junit.Before
@@ -12,6 +14,15 @@ class SimpleConversionTest {
     @Before
     fun setup() {
         generator = TaxiGenerator();
+    }
+
+    @Test
+    fun canConvertFullPetstoreApiToTaxi() {
+        val source = testResource("/openApiSpec/v2.0/json/pets.json")
+        val taxiDef = generator.generateAsStrings(source, "vyne.openApi")
+        expect(taxiDef).to.be.not.`null`
+        // Should compile
+
     }
     @Test
     fun canConvertPetstoreToTaxi() {

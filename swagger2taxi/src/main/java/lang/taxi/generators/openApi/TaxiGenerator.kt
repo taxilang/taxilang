@@ -20,5 +20,4 @@ class TaxiGenerator(
                 listOf(TaxiDocument(types, services))
         )
     }
-
 }

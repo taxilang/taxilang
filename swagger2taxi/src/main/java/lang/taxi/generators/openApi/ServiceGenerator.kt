@@ -7,11 +7,9 @@ import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.types.Annotation
 import lang.taxi.types.VoidType
 import lang.taxi.types.toAnnotations
+import lang.taxi.utils.log
 import v2.io.swagger.models.*
-import v2.io.swagger.models.parameters.BodyParameter
-import v2.io.swagger.models.parameters.Parameter
-import v2.io.swagger.models.parameters.PathParameter
-import v2.io.swagger.models.parameters.QueryParameter
+import v2.io.swagger.models.parameters.*
 import java.net.URL
 import lang.taxi.services.Operation as TaxiOperation
 import lang.taxi.services.Service as TaxiService
@@ -48,7 +46,9 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
     }
 
     fun generateService(fullPath: String, swaggerPath: Path, relativePath: String): TaxiService {
-        val operations = swaggerPath.operationMap.map { (method, swaggerOperation) -> generateOperation(method, swaggerOperation, fullPath) }
+        val operations = swaggerPath.operationMap
+                .filter { canSupport(it.value) }
+                .map { (method, swaggerOperation) -> generateOperation(method, swaggerOperation, fullPath) }
         val derivedServiceName = relativePath.split("/")
                 .map { it.removeSurrounding("{", "}").capitalize() }
                 .joinToString(separator = "") + "Service"
@@ -59,6 +59,22 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
                 annotations = emptyList(),
                 compilationUnits = emptyList()
         )
+    }
+
+    private fun canSupport(operation: v2.io.swagger.models.Operation?): Boolean {
+        if (operation == null) return false;
+        // We don't support form based submissions yet, but will do later.
+        if (operation.parameters.any { it is FormParameter }) {
+            log().warn("Operation ${operation.operationId} is yet supported, as it consumes form data.  Support is coming soon - https://gitlab.com/vyne/vyne/issues/48")
+            return false
+        }
+
+        if (operation.parameters.any { it is HeaderParameter }) {
+            log().warn("Operation ${operation.operationId} is yet supported, as it consumes header-based params.  Support is coming soon - https://gitlab.com/vyne/vyne/issues/47")
+            return false
+        }
+
+        return true
     }
 
     private fun generateOperation(method: HttpMethod, swaggerOperation: SwaggerOperation, pathMapping: String): TaxiOperation {
@@ -73,7 +89,7 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
             lang.taxi.services.Parameter(annotations, type, swaggerParam.name, constraints)
         }
         val returnType = getReturnType(swaggerOperation)
-        val operationId = OperationIdProvider.getOperationId(swaggerOperation,pathMapping,method)
+        val operationId = OperationIdProvider.getOperationId(swaggerOperation, pathMapping, method)
         return TaxiOperation(
                 operationId,
                 annotations.toAnnotations(),
@@ -83,7 +99,6 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
         )
 
     }
-
 
 
     private fun getReturnType(swaggerOperation: SwaggerOperation): Type {
@@ -98,7 +113,8 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
         if (successfulResponses.isNotEmpty()) {
             return getReturnType(successfulResponses[successfulResponses.firstKey()]!!)
         } else {
-            TODO("No successful response found - not sure what the return type is.")
+            return VoidType.VOID
+//            TODO("No successful response found - not sure what the return type is.")
         }
     }
 
