@@ -3,12 +3,13 @@ package lang.taxi.generators.openApi
 import lang.taxi.CompilationUnit
 import lang.taxi.QualifiedName
 import lang.taxi.Type
+import lang.taxi.generators.Logger
 import lang.taxi.types.*
 import v2.io.swagger.models.*
 import v2.io.swagger.models.parameters.AbstractSerializableParameter
 import v2.io.swagger.models.properties.*
 
-class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String) {
+class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, private val logger:Logger) {
 
     private val swaggerPrimitivies: Map<String, AbstractProperty> = listOf(
             BinaryProperty(),

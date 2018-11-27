@@ -201,7 +201,8 @@ internal class DocumentListener(val tokens: Tokens) {
         val fields = ctx.typeBody().typeMemberDeclaration().map { member ->
             val fieldAnnotations = collateAnnotations(member.annotation())
             val type = parseType(namespace, member.fieldDeclaration().typeType())
-            Field(name = member.fieldDeclaration().Identifier().text,
+            Field(
+                    name = unescape(member.fieldDeclaration().Identifier().text),
                     type = type,
                     nullable = member.fieldDeclaration().typeType().optionalType() != null,
                     annotations = fieldAnnotations,
@@ -212,6 +213,10 @@ internal class DocumentListener(val tokens: Tokens) {
         val modifiers = parseModifiers(ctx.typeModifier())
         val inherits = parseInheritance(namespace, ctx.listOfInheritedTypes())
         this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields.toSet(), annotations.toSet(), modifiers, inherits, CompilationUnit.of(ctx))))
+    }
+
+    private fun unescape(text: String): String {
+        return text.removeSurrounding("`")
     }
 
     private fun parseInheritance(namespace: Namespace, listOfInheritedTypes: TaxiParser.ListOfInheritedTypesContext?): Set<ObjectType> {

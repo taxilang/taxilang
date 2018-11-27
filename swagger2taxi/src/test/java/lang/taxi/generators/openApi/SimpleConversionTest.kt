@@ -20,7 +20,7 @@ class SimpleConversionTest {
     fun canConvertFullPetstoreApiToTaxi() {
         val source = testResource("/openApiSpec/v2.0/json/pets.json")
         val taxiDef = generator.generateAsStrings(source, "vyne.openApi")
-        expect(taxiDef).to.be.not.`null`
+        expect(taxiDef.taxi).to.be.not.`null`
         // Should compile
 
     }
@@ -62,7 +62,7 @@ namespace vyne.openApi  {
 }
 
         """.trimIndent()
-        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+        TestHelpers.expectToCompileTheSame(taxiDef.taxi, expected)
     }
 }
 

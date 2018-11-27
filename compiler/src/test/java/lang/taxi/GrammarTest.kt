@@ -350,6 +350,18 @@ type TypeD inherits TypeA, TypeB {}
         // TODO
     }
 
+    @Test
+    fun canDeclareAPropertyWithAReservedWord() {
+        val source = """
+type ApiResponse {
+  `type` : String
+  message : String
+}
+        """.trimIndent()
+        val taxi = Compiler(source).compile()
+        expect(taxi.objectType("ApiResponse").field("type")).to.be.not.`null`
+        expect(taxi.objectType("ApiResponse").field("message")).to.be.not.`null`
+    }
     private fun testResource(s: String): File {
         return File(this.javaClass.classLoader.getResource(s).toURI())
     }

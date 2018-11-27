@@ -124,7 +124,7 @@ $enumValueDeclarations
         val aliasType = type.aliasType!!
         val aliasTypeString = typeAsTaxi(aliasType, currentNamespace)
 
-        return "type alias ${type.toQualifiedName().typeName} as $aliasTypeString"
+        return "type alias ${type.toQualifiedName().typeName.reservedWordEscaped()} as $aliasTypeString"
     }
 
     private fun generateObjectTypeDeclaration(type: ObjectType, currentNamespace: String): String {
@@ -133,7 +133,7 @@ $enumValueDeclarations
         val modifiers = type.modifiers.map { it.token }.joinToString(" ")
         val inheritanceString = getInheritenceString(type)
 
-        return """$modifiers type ${type.toQualifiedName().typeName}$inheritanceString {
+        return """$modifiers type ${type.toQualifiedName().typeName.reservedWordEscaped()}$inheritanceString {
 $fieldDelcarations
 }"""
     }
@@ -152,7 +152,7 @@ $fieldDelcarations
 
         val constraints = constraintString(field.constraints)
 
-        return "${field.name} : $fieldTypeString $constraints".trim()
+        return "${field.name.reservedWordEscaped()} : $fieldTypeString $constraints".trim()
     }
 
     private fun typeAsTaxi(type: Type, currentNamespace: String): String {

@@ -4,10 +4,10 @@ import lang.taxi.CompilationUnit
 import lang.taxi.Type
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpRequestBody
+import lang.taxi.generators.Logger
 import lang.taxi.types.Annotation
 import lang.taxi.types.VoidType
 import lang.taxi.types.toAnnotations
-import lang.taxi.utils.log
 import v2.io.swagger.models.*
 import v2.io.swagger.models.parameters.*
 import java.net.URL
@@ -16,7 +16,7 @@ import lang.taxi.services.Service as TaxiService
 import v2.io.swagger.models.Operation as SwaggerOperation
 
 
-class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeMapper) {
+class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeMapper, val logger: Logger) {
 
     private val defaultNamespace: String
         get() {
@@ -65,12 +65,12 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
         if (operation == null) return false;
         // We don't support form based submissions yet, but will do later.
         if (operation.parameters.any { it is FormParameter }) {
-            log().warn("Operation ${operation.operationId} is yet supported, as it consumes form data.  Support is coming soon - https://gitlab.com/vyne/vyne/issues/48")
+            logger.warn("Operation ${operation.operationId} has been excluded, as it requires form data, which is not yet supported.  Support is coming soon.", "https://gitlab.com/vyne/vyne/issues/48")
             return false
         }
 
         if (operation.parameters.any { it is HeaderParameter }) {
-            log().warn("Operation ${operation.operationId} is yet supported, as it consumes header-based params.  Support is coming soon - https://gitlab.com/vyne/vyne/issues/47")
+            logger.warn("Operation ${operation.operationId} has been excluded, as it requires header-based params, which is not yet supported.  Support is coming soon.", "https://gitlab.com/vyne/vyne/issues/47")
             return false
         }
 

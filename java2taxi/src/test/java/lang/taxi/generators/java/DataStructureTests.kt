@@ -338,6 +338,23 @@ namespace namespaceA {
         TestHelpers.expectToCompileTheSame(taxiDef, expected)
     }
 
+    @Test
+    fun given_fieldNameIsReservedWord_then_itIsEscaped() {
+        @DataType("foo.Example")
+        data class Example(val type:String)
+
+        val taxiDef = TaxiGenerator().forClasses(Example::class.java).generateAsStrings()
+        val expected = """
+namespace foo {
+    type Example {
+        `type` : String
+    }
+}
+        """.trimIndent()
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+
+    }
+
 
     @DataType("foo.Classification")
     enum class Classification {

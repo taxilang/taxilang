@@ -249,6 +249,7 @@ typeExtensionFieldTypeRefinement
 
 Identifier
     :   Letter LetterOrDigit*
+    | '`' ~('`')+ '`'
     ;
 
 

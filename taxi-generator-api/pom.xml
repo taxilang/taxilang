@@ -9,6 +9,7 @@
 
    <artifactId>taxi-generator-api</artifactId>
 
+   <description>API for code generators that generate language specific output FROM taxi.  </description>
    <dependencies>
       <dependency>
          <groupId>lang.taxi</groupId>
