@@ -25,7 +25,8 @@ enum class PrimitiveType(val declaration: String) : Type {
     INSTANT("Instant"),
     ARRAY("Array"),
     ANY("Any"),
-    DOUBLE("Double");
+    DOUBLE("Double"),
+    VOID("Void");
 
     override val qualifiedName: String
         get() = "lang.taxi.$declaration"
