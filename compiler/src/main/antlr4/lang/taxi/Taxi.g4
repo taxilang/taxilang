@@ -218,6 +218,7 @@ primitiveType
     |   'DateTime'
 // A timestamp, indicating an absolute point in time.  Includes timestamp.  Should be rfc3339 format.  (eg: 2016-02-28T16:41:41.090Z)
     |   'Instant'
+    |  'Any'
     ;
 // https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md#date
 literal

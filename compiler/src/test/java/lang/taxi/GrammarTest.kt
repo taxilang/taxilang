@@ -351,6 +351,19 @@ type TypeD inherits TypeA, TypeB {}
     }
 
     @Test
+    fun canDeclareSomethingAsAnyType() {
+        val source = """
+            type Foo {
+                something : Any
+            }
+        """.trimIndent()
+        val taxi = Compiler(source).compile()
+        val somethingField = taxi.objectType("Foo").field("something")
+        expect(somethingField).to.be.not.`null`
+        expect(somethingField.type).to.equal(PrimitiveType.ANY)
+    }
+
+    @Test
     fun canDeclareAPropertyWithAReservedWord() {
         val source = """
 type ApiResponse {
