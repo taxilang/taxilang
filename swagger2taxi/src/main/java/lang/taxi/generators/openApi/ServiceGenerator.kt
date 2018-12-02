@@ -1,10 +1,13 @@
 package lang.taxi.generators.openApi
 
+import io.swagger.oas.models.Operation
+import io.swagger.oas.models.PathItem
 import lang.taxi.CompilationUnit
 import lang.taxi.Type
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.generators.Logger
+import lang.taxi.generators.openApi.swagger.SwaggerTypeMapper
 import lang.taxi.types.Annotation
 import lang.taxi.types.VoidType
 import lang.taxi.types.toAnnotations
@@ -40,8 +43,15 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
                 Scheme.WSS,
                 Scheme.WS
         )
-        val scheme = orderOfPreference.firstOrNull { swagger.schemes.contains(it) } ?: error("No valid scheme found")
-        return scheme.toValue()
+        val schemes = swagger.schemes ?: emptyList()
+        val scheme = orderOfPreference.firstOrNull { schemes.contains(it) }
+        return if (scheme == null) {
+            logger.warn("Swagger does not specify a scheme, defaulting to HTTP")
+            Scheme.HTTP.toValue()
+        } else {
+            scheme.toValue()
+        }
+
 
     }
 
@@ -145,14 +155,32 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
 
 object OperationIdProvider {
     fun getOperationId(operation: v2.io.swagger.models.Operation, pathMapping: String, method: HttpMethod): String {
-        if (operation.operationId != null) {
+        return if (operation.operationId != null) {
             return operation.operationId
+        } else {
+            generateOperationId(pathMapping, method.name.toLowerCase())
         }
+    }
 
-
-        val path = URL(pathMapping).path.split("/")
-        val words = listOf(method.name.toLowerCase()) + path
+    private fun generateOperationId(pathMapping: String, methodName: String): String {
+        val path = pathMapping.urlPath().split("/")
+        val words = listOf(methodName) + path
         return words.joinToString("") { it.capitalize() }
+    }
 
+    fun getOperationId(operation: Operation, pathMapping: String, method: PathItem.HttpMethod): String {
+        return if (operation.operationId != null) {
+            return operation.operationId
+        } else {
+            generateOperationId(pathMapping, method.name.toLowerCase())
+        }
+    }
+}
+
+private fun String.urlPath(): String {
+    return try {
+        URL(this).path
+    } catch (exception: Exception) {
+        this
     }
 }

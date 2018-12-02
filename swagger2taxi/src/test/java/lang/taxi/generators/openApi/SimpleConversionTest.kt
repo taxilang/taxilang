@@ -1,12 +1,10 @@
 package lang.taxi.generators.openApi
 
 import com.winterbe.expekt.expect
-import lang.taxi.TaxiDocument
 import lang.taxi.testing.TestHelpers
 import org.apache.commons.io.IOUtils
 import org.junit.Before
 import org.junit.Test
-import java.net.URI
 
 class SimpleConversionTest {
 
@@ -24,8 +22,44 @@ class SimpleConversionTest {
         // Should compile
 
     }
+
     @Test
-    fun canConvertPetstoreToTaxi() {
+    fun canImportPetstore() {
+        val source = testResource("/openApiSpec/v2.0/json/petstore.json")
+        val taxiDef = generator.generateAsStrings(source, "vyne.openApi")
+
+        val expected = """
+namespace vyne.openApi {
+
+   type Pet {
+      id : Int
+      name : String
+      tag : String
+   }
+
+   type Error {
+      code : Int
+      message : String
+   }
+
+   service PetsService {
+      @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/v1/pets")
+      operation listPets(  limit : Int ) : Pet[]
+      @HttpOperation(method = "POST" , url = "http://petstore.swagger.io/v1/pets")
+      operation createPets(  )
+   }
+   service PetsPetIdService {
+      @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/v1/pets/{petId}")
+      operation showPetById(  petId : String ) : Pet[]
+   }
+}
+
+        """.trimIndent()
+        TestHelpers.expectToCompileTheSame(taxiDef.taxi, expected)
+    }
+
+    @Test
+    fun canConvertPetstoreSimpleToTaxi() {
 //        val source = IOUtils.toString(URI.create("https://gitlab.com/taxi-lang/taxi-lang/raw/master/swagger2taxi/src/test/resources/openApiSpec/v2.0/yaml/petstore-simple.yaml"))
         val source = testResource("/openApiSpec/v2.0/yaml/petstore-simple.yaml")
         val taxiDef = generator.generateAsStrings(source, "vyne.openApi")
@@ -64,11 +98,55 @@ namespace vyne.openApi  {
         """.trimIndent()
         TestHelpers.expectToCompileTheSame(taxiDef.taxi, expected)
     }
+
+    @Test
+    fun canImportOpenApiV3Spec() {
+        val source = testResource("/openApiSpec/v3.0/petstore.yaml")
+        val taxiDef = generator.generateAsStrings(source, "vyne.openApi")
+        expect(taxiDef.taxi).to.be.not.empty
+        val expected = """
+namespace vyne.openApi {
+
+   type Pet {
+      id : Int
+      name : String
+      tag : String
+   }
+
+   type Error {
+      code : Int
+      message : String
+   }
+
+   service PetsService {
+      @HttpOperation(method = "GET" , url = "/pets")
+      operation listPets(  limit : Int ) : Pet[]
+      @HttpOperation(method = "POST" , url = "/pets")
+      operation createPets(  )
+   }
+   service PetsPetIdService {
+      @HttpOperation(method = "GET" , url = "/pets/{petId}")
+      operation showPetById(  petId : String ) : Pet[]
+   }
+}
+        """.trimIndent()
+        TestHelpers.expectToCompileTheSame(taxiDef.taxi, expected)
+    }
 }
 
 
-
-fun testResource(path:String):String {
+fun testResource(path: String): String {
     val inputStream = SimpleConversionTest::class.java.getResourceAsStream(path)
-    return IOUtils.toString(inputStream)
+    try {
+        return IOUtils.toString(inputStream)
+    } catch (exception: Exception) {
+        System.out.println("Cannot import $path : ${exception.message}")
+        throw exception
+    }
 }
+
+fun testFile(path: String): Pair<Filename, Source> {
+    return path to testResource(path)
+}
+typealias Filename = String
+typealias Source = String

@@ -105,6 +105,7 @@ operation $operationName( $params )$returnDeclaration""".trimIndent().trim()
             is ObjectType -> generateObjectTypeDeclaration(type, currentNamespace)
             is TypeAlias -> generateTypeAliasDeclaration(type, currentNamespace)
             is EnumType -> generateEnumDeclaration(type, currentNamespace)
+            is ArrayType -> "" // We don't generate top-level array types
             else -> TODO("No schema writer defined for type $type")
         }
     }
