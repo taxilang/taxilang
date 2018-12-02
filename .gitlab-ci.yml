@@ -36,15 +36,15 @@ publish-release:
    script:
       # Install ssh-agent if not already installed, it is required by Docker.
       # (change apt-get to yum if you use a CentOS-based image)
-      - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+#      - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
 
       # Run ssh-agent (inside the build environment)
-      - eval $(ssh-agent -s)
-      - mkdir -p ~/.ssh
-      - ssh-keyscan -p 10022 gitlab.com >> ~/.ssh/known_hosts
+#      - eval $(ssh-agent -s)
+#      - mkdir -p ~/.ssh
+#      - ssh-keyscan -p 10022 gitlab.com >> ~/.ssh/known_hosts
 
       # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
-      - ssh-add <(echo "$SSH_PRIVATE_KEY")
+#      - ssh-add <(echo "$SSH_PRIVATE_KEY")
       - git checkout -B master
 
       - git config --global user.name "${GITLAB_USER_NAME}"
