@@ -13,7 +13,7 @@
    <scm>
       <url>https://gitlab.com/taxi-lang/taxi-lang</url>
       <connection>git@gitlab.com:taxi-lang/taxi-lang.git</connection>
-      <developerConnection>scm:git:git@gitlab.com:taxi-lang/taxi-lang.git</developerConnection>
+      <developerConnection>scm:git:ssh://git@gitlab.com:taxi-lang/taxi-lang.git</developerConnection>
       <tag>HEAD</tag>
    </scm>
 

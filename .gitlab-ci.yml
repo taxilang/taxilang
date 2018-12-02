@@ -34,7 +34,17 @@ publish-release:
    image: maven:3.3.9-jdk-8
    stage: build
    script:
+      # Install ssh-agent if not already installed, it is required by Docker.
+      # (change apt-get to yum if you use a CentOS-based image)
+      - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+
+      # Run ssh-agent (inside the build environment)
+      - eval $(ssh-agent -s)
+
+      # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
+      - ssh-add <(echo "$SSH_PRIVATE_KEY")
       - git checkout -B master
+
       - git config --global user.name "${GITLAB_USER_NAME}"
       - git config --global user.email "${GITLAB_USER_EMAIL}"
       - 'mvn $MAVEN_CLI_OPTS release:prepare release:perform'
