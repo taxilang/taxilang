@@ -34,6 +34,7 @@ publish-release:
    image: maven:3.3.9-jdk-8
    stage: build
    script:
+      - git checkout -B master
       - git config --global user.name "${GITLAB_USER_NAME}"
       - git config --global user.email "${GITLAB_USER_EMAIL}"
       - 'mvn $MAVEN_CLI_OPTS release:prepare release:perform'
