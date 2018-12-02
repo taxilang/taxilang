@@ -40,7 +40,7 @@ publish-release:
 
       # Run ssh-agent (inside the build environment)
       - eval $(ssh-agent -s)
-      - echo $SSH_PRIVATE_KEY
+      - ssh-keyscan -p 10022 gitlab.com >> ~/.ssh/known_hosts
 
       # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
       - ssh-add <(echo "$SSH_PRIVATE_KEY")
