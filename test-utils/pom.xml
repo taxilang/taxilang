@@ -14,7 +14,7 @@
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>compiler</artifactId>
-         <version>0.1.8-SNAPSHOT</version>
+         <version>0.1.10-SNAPSHOT</version>
       </dependency>
    </dependencies>
 </project>
