@@ -36,6 +36,7 @@ publish-release:
    image: maven:3.3.9-jdk-8
    stage: build
    script:
+      - echo $USER
              ## clean the working directory
       - BUILD_DIR=/home/gitlab-runner/builds/$RUNNER_TOKEN/0
       - CLONE_DIR="$BUILD_DIR/$CI_PROJECT_PATH"
