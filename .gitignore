@@ -1,4 +1,5 @@
 gen/
+.m2/
 
 ### IntelliJ ###
 *.iml
