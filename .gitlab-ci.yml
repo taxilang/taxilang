@@ -31,9 +31,21 @@ validate:
      - master
 
 publish-release:
+   variables:
+      GIT_STRATEGY: none
    image: maven:3.3.9-jdk-8
    stage: build
    script:
+             ## clean the working directory
+      - BUILD_DIR=/home/gitlab-runner/builds/$RUNNER_TOKEN/0
+      - CLONE_DIR="$BUILD_DIR/$CI_PROJECT_PATH"
+      - cd $BUILD_DIR
+      - rm -rf $CLONE_DIR
+      - mkdir -p $CLONE_DIR
+
+       ## clone the project each time (inefficient, consider performing fetch instead if it already exists)
+      - git clone git@gitlab.com:taxi-lang/taxi-lang.git $CLONE_DIR
+      - cd $CLONE_DIR
       # Install ssh-agent if not already installed, it is required by Docker.
       # (change apt-get to yum if you use a CentOS-based image)
 #      - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'

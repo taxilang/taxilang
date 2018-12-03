@@ -12,8 +12,8 @@
 
    <scm>
       <url>https://gitlab.com/taxi-lang/taxi-lang</url>
-      <connection>scm:git:ssh://gitlab.com:taxi-lang/taxi-lang.git</connection>
-      <developerConnection>scm:git:ssh://gitlab.com/taxi-lang/taxi-lang.git</developerConnection>
+      <connection>scm:git:https://gitlab.com/taxi-lang/taxi-lang.git</connection>
+      <developerConnection>scm:git:https://gitlab.com/taxi-lang/taxi-lang.git</developerConnection>
       <tag>HEAD</tag>
    </scm>
 
