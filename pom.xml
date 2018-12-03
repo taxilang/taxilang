@@ -19,7 +19,6 @@
 
    <modules>
       <module>compiler</module>
-      <!--<module>converters</module>-->
       <module>taxi-annotations</module>
       <module>java2taxi</module>
       <module>taxi-annotation-processor</module>
