@@ -18,22 +18,22 @@
    </scm>
 
    <modules>
-      <!--<module>compiler</module>-->
-      <!--&lt;!&ndash;<module>converters</module>&ndash;&gt;-->
-      <!--<module>taxi-annotations</module>-->
-      <!--<module>java2taxi</module>-->
-      <!--<module>taxi-annotation-processor</module>-->
-      <!--<module>swagger2taxi</module>-->
-      <!--<module>taxi-writer</module>-->
-      <!--<module>taxi-stdlib-annotations</module>-->
-      <!--<module>test-utils</module>-->
-      <!--<module>taxi-generator-api</module>-->
-      <!--<module>taxi-jvm-common</module>-->
-      <!--<module>taxi-cli</module>-->
-      <!--<module>taxi-plugin-api</module>-->
-      <!--<module>plugins</module>-->
-      <!--<module>kotlin</module>-->
-      <!--<module>lang-to-taxi-api</module>-->
+      <module>compiler</module>
+      <!--<module>converters</module>-->
+      <module>taxi-annotations</module>
+      <module>java2taxi</module>
+      <module>taxi-annotation-processor</module>
+      <module>swagger2taxi</module>
+      <module>taxi-writer</module>
+      <module>taxi-stdlib-annotations</module>
+      <module>test-utils</module>
+      <module>taxi-generator-api</module>
+      <module>taxi-jvm-common</module>
+      <module>taxi-cli</module>
+      <module>taxi-plugin-api</module>
+      <module>plugins</module>
+      <module>kotlin</module>
+      <module>lang-to-taxi-api</module>
    </modules>
 
    <properties>
