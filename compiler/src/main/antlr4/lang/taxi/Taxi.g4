@@ -35,6 +35,7 @@ toplevelObject
     |   typeExtensionDeclaration
     |   typeAliasDeclaration
     |   serviceDeclaration
+    |   policyDeclaration
 //    |   annotationTypeDeclaration
     ;
 
@@ -174,6 +175,53 @@ operationReturnValueOriginExpression
 parameterExpectedValueConstraintExpression
     : Identifier '=' literal
     | Identifier '=' qualifiedName
+    ;
+
+policyDeclaration
+    :  annotation* 'policy' policyIdentifier 'against' typeType
+        policyBody
+    ;
+
+policyBody
+    :   '{' policyStatement*  '}'
+    ;
+
+policyIdentifier : Identifier;
+
+policyStatement
+    : policyCase | policyElse;
+
+policyCase
+    : 'case' policyExpression policyOperator policyExpression '->' policyInstruction
+    ;
+
+policyElse
+    : 'else' '->' policyInstruction
+    ;
+policyExpression
+    : callerIdentifer
+    | thisIdentifier
+    | anyOfOperator
+    | literal;
+
+callerIdentifer : 'caller' '.' typeType;
+thisIdentifier : 'this' '.' typeType;
+
+policyOperator
+    : '='
+    | '!='
+    ;
+
+anyOfOperator
+    : 'anyOf' '(' literal (',' literal)* ')'
+    ;
+
+policyInstruction
+    : 'permit'
+    | 'process' 'using' Identifier
+    | 'defer'
+    | 'deny'
+//    | 'defer' 'or' 'deny'
     ;
 
 

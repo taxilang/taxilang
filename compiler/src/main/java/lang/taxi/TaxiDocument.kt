@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.google.common.collect.Multimaps
+import lang.taxi.policies.Policy
 import lang.taxi.services.Service
 import lang.taxi.types.Annotation
 import lang.taxi.types.EnumType
@@ -136,17 +137,20 @@ fun List<Annotatable>.annotations(): List<Annotation> {
 
 class NamespacedTaxiDocument(val namespace: String,
                              types: Set<Type>,
-                             services: Set<Service>) : TaxiDocument(types, services)
+                             services: Set<Service>,
+                             policies: Set<Policy>) : TaxiDocument(types, services, policies)
 
 // Note:  Changed types & services from List<> to Set<>
 // as ordering shouldn't matter, only content.
 // However, I suspect there was a reason these were Lists, so leaving this note here to remind me
 open class TaxiDocument(val types: Set<Type>,
-                        val services: Set<Service>
+                        val services: Set<Service>,
+                        val policies: Set<Policy>
 ) {
     private val equality = Equality(this, TaxiDocument::types, TaxiDocument::services)
     private val typeMap = types.associateBy { it.qualifiedName }
     private val servicesMap = services.associateBy { it.qualifiedName }
+    private val policiesMap = policies.associateBy { it.qualifiedName }
     fun type(name: String): Type {
         return typeMap[name] ?: throw error("No type named $name defined")
     }
@@ -158,14 +162,16 @@ open class TaxiDocument(val types: Set<Type>,
     override fun equals(other: Any?) = equality.isEqualTo(other)
 
     fun toNamespacedDocs(): List<NamespacedTaxiDocument> {
-        val typesByNamespace = Multimaps.index(types, { it!!.toQualifiedName().namespace })
-        val servicesByNamespace = Multimaps.index(services, { it!!.toQualifiedName().namespace })
+        val typesByNamespace = Multimaps.index(types) { it!!.toQualifiedName().namespace }
+        val servicesByNamespace = Multimaps.index(services) { it!!.toQualifiedName().namespace }
+        val policiesByNamespace = Multimaps.index(policies) { it!!.toQualifiedName().namespace }
         val namespaces = typesByNamespace.keySet() + servicesByNamespace.keySet()
 
         return namespaces.map { namespace ->
             NamespacedTaxiDocument(namespace,
                     types = typesByNamespace.get(namespace)?.toSet() ?: emptySet(),
-                    services = servicesByNamespace.get(namespace)?.toSet() ?: emptySet())
+                    services = servicesByNamespace.get(namespace)?.toSet() ?: emptySet(),
+                    policies = policiesByNamespace.get(namespace)?.toSet() ?: emptySet())
         }
     }
 
@@ -180,6 +186,15 @@ open class TaxiDocument(val types: Set<Type>,
     fun service(qualifiedName: String): Service {
         return servicesMap[qualifiedName]!!
     }
+
+    fun policy(qualifiedName: String): Policy {
+        return policiesMap[qualifiedName]!!
+    }
+
+    fun containsPolicy(qualifiedName: String): Boolean {
+        return policiesMap.containsKey(qualifiedName)
+    }
+
 
     private fun Iterable<CompilationUnit>.declarationSites(): String {
         return this.joinToString { it.source.origin }
@@ -201,7 +216,9 @@ open class TaxiDocument(val types: Set<Type>,
         val duplicateNames = this.types.filter { other.containsType(it.qualifiedName) }.map { it.qualifiedName }
 
         return TaxiDocument(this.types + other.types.filterNot { duplicateNames.contains(it.qualifiedName) },
-                this.services + other.services)
+                this.services + other.services,
+                this.policies + other.policies
+        )
     }
 
     private fun collectDuplicateServices(other: TaxiDocument): List<Service> {
@@ -218,4 +235,5 @@ open class TaxiDocument(val types: Set<Type>,
         return duplicateTypes.filter { it != other.type(it.qualifiedName) }
 
     }
+
 }

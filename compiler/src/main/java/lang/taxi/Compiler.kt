@@ -1,5 +1,6 @@
 package lang.taxi
 
+import lang.taxi.policies.*
 import lang.taxi.services.*
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
@@ -65,11 +66,11 @@ class Compiler(val inputs: List<CharStream>) {
 internal class DocumentListener(val tokens: Tokens) {
     private val typeSystem = TypeSystem()
     private val services = mutableListOf<Service>()
-
+    private val policies = mutableListOf<Policy>()
     private val constraintValidator = ConstraintValidator()
     fun buildTaxiDocument(): TaxiDocument {
         compile()
-        return TaxiDocument(typeSystem.typeList().toSet(), services.toSet())
+        return TaxiDocument(typeSystem.typeList().toSet(), services.toSet(), policies.toSet())
     }
 
 
@@ -96,6 +97,7 @@ internal class DocumentListener(val tokens: Tokens) {
         compileTokens()
         compileTypeExtensions()
         compileServices()
+        compilePolicies()
 
         // Some validations can't be performed at the time, because
         // they rely on a fully parsed document structure
@@ -151,14 +153,14 @@ internal class DocumentListener(val tokens: Tokens) {
     }
 
     private fun compileTypeExtension(namespace: Namespace, typeRule: TaxiParser.TypeExtensionDeclarationContext) {
-        val typeName = qualify(namespace,typeRule.Identifier().text)
+        val typeName = qualify(namespace, typeRule.Identifier().text)
         val type = typeSystem.getType(typeName) as ObjectType
         val annotations = collateAnnotations(typeRule.annotation())
         val fieldExtensions = typeRule.typeExtensionBody().typeExtensionMemberDeclaration().map { member ->
             val fieldName = member.typeExtensionFieldDeclaration().Identifier().text
             val fieldAnnotations = collateAnnotations(member.annotation())
             val refinedType = member.typeExtensionFieldDeclaration()?.typeExtensionFieldTypeRefinement()?.typeType()?.let {
-                val refinedType = typeSystem.getType(qualify(namespace,it.text))
+                val refinedType = typeSystem.getType(qualify(namespace, it.text))
                 assertTypesCompatible(type.field(fieldName).type, refinedType, fieldName, typeName, typeRule)
             }
 
@@ -361,6 +363,55 @@ internal class DocumentListener(val tokens: Tokens) {
                 paramType).constraints()
     }
 
+    private fun compilePolicies() {
+        val compiledPolicies = this.tokens.unparsedPolicies.map { (name, namespaceTokenPair) ->
+            val (namespace, token) = namespaceTokenPair
+
+            val targetType = parseType(namespace, token.typeType())
+            val annotations = emptyList<Annotation>() // TODO
+            val statements = compilePolicyStatements(namespace, token)
+            Policy(
+                    name,
+                    targetType,
+                    statements,
+                    annotations,
+                    compilationUnits = listOf(CompilationUnit.of(token))
+            )
+        }
+        this.policies.addAll(compiledPolicies)
+    }
+
+    fun typeResolver(namespace: String): TypeResolver {
+        return { typeTypeContext -> parseType(namespace, typeTypeContext) }
+    }
+
+    private fun compilePolicyStatements(namespace: String, token: TaxiParser.PolicyDeclarationContext): List<PolicyStatement> {
+        return token.policyBody().policyStatement().map { compilePolicyStatement(namespace, it) }
+    }
+
+    private fun compilePolicyStatement(namespace: String, token: TaxiParser.PolicyStatementContext): PolicyStatement {
+        val (condition, instruction) = compileCondition(namespace, token)
+        return PolicyStatement(condition, instruction, CompilationUnit.of(token))
+    }
+
+    private fun compileCondition(namespace: String, token: TaxiParser.PolicyStatementContext): Pair<Condition, Instruction> {
+        return when {
+            token.policyCase() != null -> compileCaseCondition(namespace, token.policyCase())
+            token.policyElse() != null -> ElseCondition() to Instruction.parse(token.policyElse().policyInstruction())
+            else -> error("Invalid condition is neither a case nor an else")
+        }
+    }
+
+    private fun compileCaseCondition(namespace: String, case: TaxiParser.PolicyCaseContext): Pair<Condition, Instruction> {
+        val typeResolver = typeResolver(namespace)
+        val condition = CaseCondition(
+                Subject.parse(case.policyExpression(0), typeResolver),
+                Operator.parse(case.policyOperator().text),
+                Subject.parse(case.policyExpression(1), typeResolver)
+        )
+        val instruction = Instruction.parse(case.policyInstruction())
+        return condition to instruction
+    }
 
 }
 
@@ -387,3 +438,5 @@ fun TaxiParser.LiteralContext.value(): Any {
 //      this.IntegerLiteral() != null -> this.IntegerLiteral()
     }
 }
+
+typealias TypeResolver = (TaxiParser.TypeTypeContext) -> Type

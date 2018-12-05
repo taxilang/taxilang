@@ -3,12 +3,13 @@ package lang.taxi
 import lang.taxi.TaxiParser.ServiceDeclarationContext
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
-import java.lang.Exception
 
 internal typealias Namespace = String
+
 data class Tokens(val unparsedTypes: Map<String, Pair<Namespace, ParserRuleContext>>,
                   val unparsedExtensions: List<Pair<Namespace, ParserRuleContext>>,
-                  val unparsedServices: Map<String, Pair<Namespace, ServiceDeclarationContext>>) {
+                  val unparsedServices: Map<String, Pair<Namespace, ServiceDeclarationContext>>,
+                  val unparsedPolicies: Map<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>) {
     fun plus(others: Tokens): Tokens {
         val errors = collectDuplicateTypes(others) + collectDuplicateServices(others)
         if (errors.isNotEmpty()) {
@@ -16,7 +17,8 @@ data class Tokens(val unparsedTypes: Map<String, Pair<Namespace, ParserRuleConte
         }
         return Tokens(this.unparsedTypes + others.unparsedTypes,
                 this.unparsedExtensions + others.unparsedExtensions,
-                this.unparsedServices + others.unparsedServices
+                this.unparsedServices + others.unparsedServices,
+                this.unparsedPolicies + others.unparsedPolicies
         )
     }
 
@@ -52,12 +54,13 @@ class TokenCollator : TaxiBaseListener() {
     private val unparsedTypes = mutableMapOf<String, Pair<Namespace, ParserRuleContext>>()
     private val unparsedExtensions = mutableListOf<Pair<Namespace, ParserRuleContext>>()
     private val unparsedServices = mutableMapOf<String, Pair<Namespace, ServiceDeclarationContext>>()
+    private val unparsedPolicies = mutableMapOf<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>()
 //    private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
 //    private val unparsedExtensions = mutableListOf<ParserRuleContext>()
 //    private val unparsedServices = mutableMapOf<String, ServiceDeclarationContext>()
 
     fun tokens(): Tokens {
-        return Tokens(unparsedTypes, unparsedExtensions, unparsedServices)
+        return Tokens(unparsedTypes, unparsedExtensions, unparsedServices, unparsedPolicies)
     }
 
     override fun exitFieldDeclaration(ctx: TaxiParser.FieldDeclarationContext) {
@@ -87,12 +90,17 @@ class TokenCollator : TaxiBaseListener() {
 
     override fun enterNamespaceBody(ctx: TaxiParser.NamespaceBodyContext) {
         val parent = ctx.parent as ParserRuleContext
-        val namespaceNode = parent.getChild(TaxiParser.QualifiedNameContext::class.java,0)
+        val namespaceNode = parent.getChild(TaxiParser.QualifiedNameContext::class.java, 0)
         this.namespace = namespaceNode.Identifier().text()
         super.enterNamespaceBody(ctx)
     }
 
-
+    override fun exitPolicyDeclaration(ctx: TaxiParser.PolicyDeclarationContext) {
+        collateExceptions(ctx)
+        val qualifiedName = qualify(ctx.policyIdentifier().Identifier().text)
+        unparsedPolicies[qualifiedName] = namespace to ctx
+        super.exitPolicyDeclaration(ctx)
+    }
 
     override fun exitServiceDeclaration(ctx: ServiceDeclarationContext) {
         collateExceptions(ctx)
