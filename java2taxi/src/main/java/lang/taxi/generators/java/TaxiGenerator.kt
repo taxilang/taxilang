@@ -27,7 +27,7 @@ class TaxiGenerator(val typeMapper: TypeMapper = DefaultTypeMapper(),
     internal fun generateModel(): TaxiDocument {
         generateTaxiTypes()
         generateTaxiServices()
-        return TaxiDocument(generatedTypes.toSet(), services.toSet())
+        return TaxiDocument(generatedTypes.toSet(), services.toSet(), emptySet())
     }
 
     private fun generateTaxiServices() {

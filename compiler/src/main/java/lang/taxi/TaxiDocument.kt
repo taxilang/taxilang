@@ -145,7 +145,7 @@ class NamespacedTaxiDocument(val namespace: String,
 // However, I suspect there was a reason these were Lists, so leaving this note here to remind me
 open class TaxiDocument(val types: Set<Type>,
                         val services: Set<Service>,
-                        val policies: Set<Policy>
+                        val policies: Set<Policy> = emptySet()
 ) {
     private val equality = Equality(this, TaxiDocument::types, TaxiDocument::services)
     private val typeMap = types.associateBy { it.qualifiedName }

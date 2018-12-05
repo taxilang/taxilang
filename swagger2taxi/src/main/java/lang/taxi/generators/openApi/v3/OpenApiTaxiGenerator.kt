@@ -17,7 +17,7 @@ class OpenApiTaxiGenerator(private val schemaWriter: SchemaWriter) {
         val types = typeGenerator.generateTypes()
         val services = serviceGenerator.generateServices()
         val taxi = schemaWriter.generateSchemas(
-                listOf(TaxiDocument(types, services))
+                listOf(TaxiDocument(types, services, emptySet()))
         )
         return GeneratedTaxiCode(taxi, logger.messages)
     }
