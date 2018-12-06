@@ -178,12 +178,18 @@ parameterExpectedValueConstraintExpression
     ;
 
 policyDeclaration
-    :  annotation* 'policy' policyIdentifier 'against' typeType
-        policyBody
-    ;
+    :  annotation* 'policy' policyIdentifier 'against' typeType '{' policyRuleSet* '}';
+
+policyOperationType
+    : Identifier;
+
+policyRuleSet : policyOperationType policyScope? '{' (policyBody | policyInstruction) '}';
+
+policyScope : 'internal' | 'external';
+
 
 policyBody
-    :   '{' policyStatement*  '}'
+    :   policyStatement*
     ;
 
 policyIdentifier : Identifier;

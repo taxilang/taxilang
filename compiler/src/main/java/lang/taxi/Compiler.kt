@@ -369,11 +369,11 @@ internal class DocumentListener(val tokens: Tokens) {
 
             val targetType = parseType(namespace, token.typeType())
             val annotations = emptyList<Annotation>() // TODO
-            val statements = compilePolicyStatements(namespace, token)
+            val ruleSets = compilePolicyRulesets(namespace, token)
             Policy(
                     name,
                     targetType,
-                    statements,
+                    ruleSets,
                     annotations,
                     compilationUnits = listOf(CompilationUnit.of(token))
             )
@@ -385,8 +385,22 @@ internal class DocumentListener(val tokens: Tokens) {
         return { typeTypeContext -> parseType(namespace, typeTypeContext) }
     }
 
-    private fun compilePolicyStatements(namespace: String, token: TaxiParser.PolicyDeclarationContext): List<PolicyStatement> {
-        return token.policyBody().policyStatement().map { compilePolicyStatement(namespace, it) }
+    private fun compilePolicyRulesets(namespace: String, token: TaxiParser.PolicyDeclarationContext): List<RuleSet> {
+        return token.policyScopeBody().map {
+            compilePolicyRuleset(namespace, it)
+        }
+    }
+
+    private fun compilePolicyRuleset(namespace: String, token: TaxiParser.PolicyScopeBodyContext): RuleSet {
+        val operationType = token.policyOperationType().Identifier()?.text
+        val operationScope = OperationScope.parse(token.policyScope()?.text)
+        val scope = PolicyScope.from(operationType, operationScope)
+        val statements = if (token.policyBody() != null) {
+            token.policyBody().policyStatement().map { compilePolicyStatement(namespace, it) }
+        } else {
+            listOf(PolicyStatement(ElseCondition(), Instruction.parse(token.policyInstruction()), CompilationUnit.of(token)))
+        }
+        return RuleSet(scope, statements)
     }
 
     private fun compilePolicyStatement(namespace: String, token: TaxiParser.PolicyStatementContext): PolicyStatement {

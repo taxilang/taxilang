@@ -6,11 +6,48 @@ import lang.taxi.types.Annotation
 data class Policy(
         override val qualifiedName: String,
         val targetType: Type,
-        val statements: List<PolicyStatement>,
+        val ruleSets: List<RuleSet>,
         override val annotations: List<Annotation>,
         override val compilationUnits: List<CompilationUnit>
-) : Annotatable, Named, Compiled {
+) : Annotatable, Named, Compiled
 
+data class RuleSet(
+        val scope: PolicyScope,
+        val statements: List<PolicyStatement>
+)
+
+/**
+ * operationType is a user-defined value, that descrbbes the behaviour of the operation.
+ * Common values would be read,write - but it;s up too the user to ddefine.
+ * These then need to be applied to operations, for the policy to apply.
+ *
+ * Alternatively, a wildcard operationType of '*' may be defined, which matches all
+ * operation
+ *
+ */
+data class PolicyScope(val operationType: String = WILDCARD_OPERATION_TYPE, val operationScope: OperationScope = DEFAULT_SCOPE) {
+    companion object {
+        const val WILDCARD_OPERATION_TYPE = "*"
+        val DEFAULT_SCOPE = OperationScope.INTERNAL_AND_EXTERNAL
+
+        fun from(operationType: String?, operationScope: OperationScope?): PolicyScope {
+            return PolicyScope(operationType ?: WILDCARD_OPERATION_TYPE, operationScope ?: DEFAULT_SCOPE)
+        }
+    }
+}
+
+enum class OperationScope(val symbol: String) {
+    INTERNAL_AND_EXTERNAL("internal"),
+    EXTERNAL("external");
+
+    companion object {
+        private val bySymbol = OperationScope.values().associateBy { it.symbol }
+        fun parse(input: String?): OperationScope? {
+            return if (input == null) null else
+                bySymbol[input] ?: error("Unknown scope - $input")
+        }
+
+    }
 }
 
 data class PolicyStatement(
