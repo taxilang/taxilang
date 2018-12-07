@@ -25,19 +25,59 @@ data class RuleSet(
  * operation
  *
  */
-data class PolicyScope(val operationType: String = WILDCARD_OPERATION_TYPE, val operationScope: OperationScope = DEFAULT_SCOPE) {
+data class PolicyScope(val operationType: String = WILDCARD_OPERATION_TYPE, val operationScope: OperationScope = DEFAULT_OPERATION_SCOPE) {
+    fun appliesTo(operationType: String?, operationScope: OperationScope): Boolean {
+        val operationTypeMatches = operationTypeMatches(this.operationType, operationType)
+        val scopeMatches = operationScopeMatches(this.operationScope, operationScope)
+        return operationTypeMatches && scopeMatches
+    }
+
+    private fun operationScopeMatches(policyScope: OperationScope, operationScope: OperationScope): Boolean {
+        // TODO : Haven't given this much thought, so this needs revisiting.
+        // In theory, if one of the scopes covers both internal & external, then it's a match,
+        // But this is a quick impl, and that thought might be wrong.
+        return when {
+            policyScope == operationScope -> true
+            policyScope == OperationScope.INTERNAL_AND_EXTERNAL -> true
+            operationScope == OperationScope.INTERNAL_AND_EXTERNAL -> true
+            else -> false
+        }
+
+    }
+
+    private fun operationTypeMatches(policyOperationType: String, operationType: String?): Boolean {
+//        The idea here is that if a policy is defined as wildcard, it always matches.
+        // If an operation hasn't defined a scope, then no policies with defined scopes (other than wildcard) match
+        return when {
+            policyOperationType == WILDCARD_OPERATION_TYPE -> true
+            operationType == null -> false
+            policyOperationType == operationType -> true
+            else -> false
+        }
+    }
+
     companion object {
         const val WILDCARD_OPERATION_TYPE = "*"
-        val DEFAULT_SCOPE = OperationScope.INTERNAL_AND_EXTERNAL
+        val DEFAULT_OPERATION_SCOPE = OperationScope.INTERNAL_AND_EXTERNAL
+
+        val DEFAULT_POLICY_SCOPE = PolicyScope()
 
         fun from(operationType: String?, operationScope: OperationScope?): PolicyScope {
-            return PolicyScope(operationType ?: WILDCARD_OPERATION_TYPE, operationScope ?: DEFAULT_SCOPE)
+            return PolicyScope(operationType ?: WILDCARD_OPERATION_TYPE, operationScope ?: DEFAULT_OPERATION_SCOPE)
         }
     }
 }
 
+/**
+ * Differentiates between data returned to a caller (External),
+ * and data collected by Vyne as part of a query plan (Internal).
+ * The idea being you can write more relaxed rules for Vyne to collect data,
+ * and then strict rules about what is actually returned back out to the caller.
+ */
+
 enum class OperationScope(val symbol: String) {
     INTERNAL_AND_EXTERNAL("internal"),
+
     EXTERNAL("external");
 
     companion object {

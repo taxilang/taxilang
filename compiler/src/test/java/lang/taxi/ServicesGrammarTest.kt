@@ -126,6 +126,20 @@ service MyService {
     }
 
     @Test
+    fun operationsCanDeclareScopes() {
+        val source = """
+service MyService {
+    read operation readSomething()
+    write operation writeSomething()
+    operation somethingElse()
+}
+        """.trimIndent()
+        val doc = Compiler.forStrings( source).compile()
+        expect(doc.service("MyService").operation("readSomething").scope).to.equal("read")
+        expect(doc.service("MyService").operation("writeSomething").scope).to.equal("write")
+        expect(doc.service("MyService").operation("somethingElse").scope).to.be.`null`
+    }
+    @Test
     fun servicesCanDeclareContractsOnReturnValues() {
         val source = """
 service MyService {

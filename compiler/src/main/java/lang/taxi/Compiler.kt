@@ -323,7 +323,9 @@ internal class DocumentListener(val tokens: Tokens) {
             val methods = serviceToken.serviceBody().serviceOperationDeclaration().map { operationDeclaration ->
                 val signature = operationDeclaration.operationSignature()
                 val returnType = parseTypeOrVoid(namespace, signature.operationReturnType())
+                val scope = operationDeclaration.operationScope()?.Identifier()?.text
                 Operation(name = signature.Identifier().text,
+                        scope = scope,
                         annotations = collateAnnotations(operationDeclaration.annotation()),
                         parameters = signature.parameters().map {
                             val paramType = parseType(namespace, it.typeType())
@@ -386,12 +388,12 @@ internal class DocumentListener(val tokens: Tokens) {
     }
 
     private fun compilePolicyRulesets(namespace: String, token: TaxiParser.PolicyDeclarationContext): List<RuleSet> {
-        return token.policyScopeBody().map {
+        return token.policyRuleSet().map {
             compilePolicyRuleset(namespace, it)
         }
     }
 
-    private fun compilePolicyRuleset(namespace: String, token: TaxiParser.PolicyScopeBodyContext): RuleSet {
+    private fun compilePolicyRuleset(namespace: String, token: TaxiParser.PolicyRuleSetContext): RuleSet {
         val operationType = token.policyOperationType().Identifier()?.text
         val operationScope = OperationScope.parse(token.policyScope()?.text)
         val scope = PolicyScope.from(operationType, operationScope)

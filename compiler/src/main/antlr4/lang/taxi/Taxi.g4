@@ -125,12 +125,14 @@ serviceBody
     ;
 
  serviceOperationDeclaration
-     :   annotation* 'operation' operationSignature
+     :   annotation* operationScope? 'operation' operationSignature
      ;
 
 operationSignature
      :   annotation* Identifier '(' operationParameterList? ')' operationReturnType?
      ;
+
+operationScope : Identifier;
 
 operationReturnType
     : ':' typeType
