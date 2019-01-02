@@ -441,6 +441,16 @@ fun ParserRuleContext.source(): SourceCode {
     return SourceCode(origin, text)
 }
 
+fun TaxiParser.LiteralContext.isNullValue(): Boolean {
+    return this.text == "null"
+}
+
+// Use in scenarios where null is permitted.  It's preferrable not to allow null,
+// and to vall value()
+fun TaxiParser.LiteralContext.valueOrNull(): Any? {
+    return if (this.isNullValue()) null else this.value()
+}
+
 fun TaxiParser.LiteralContext.value(): Any {
     return when {
         this.StringLiteral() != null -> {
@@ -450,6 +460,7 @@ fun TaxiParser.LiteralContext.value(): Any {
         }
         this.IntegerLiteral() != null -> this.IntegerLiteral().text.toInt()
         this.BooleanLiteral() != null -> this.BooleanLiteral().text.toBoolean()
+        this.isNullValue() -> error("Null is not permitted here")
         else -> TODO()
 //      this.IntegerLiteral() != null -> this.IntegerLiteral()
     }

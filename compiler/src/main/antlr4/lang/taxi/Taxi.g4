@@ -199,6 +199,8 @@ policyIdentifier : Identifier;
 policyStatement
     : policyCase | policyElse;
 
+// TODO: Should consider revisiting this, so that operators are followed by valid tokens.
+// eg: 'in' must be followed by an array.  We could enforce this at the language, to simplify in Vyne
 policyCase
     : 'case' policyExpression policyOperator policyExpression '->' policyInstruction
     ;
@@ -209,26 +211,29 @@ policyElse
 policyExpression
     : callerIdentifer
     | thisIdentifier
-    | anyOfOperator
+    | literalArray
     | literal;
 
 callerIdentifer : 'caller' '.' typeType;
 thisIdentifier : 'this' '.' typeType;
 
+// TODO: Should consider revisiting this, so that operators are followed by valid tokens.
+// eg: 'in' must be followed by an array.  We could enforce this at the language, to simplify in Vyne
 policyOperator
     : '='
     | '!='
+    | 'in'
     ;
 
-anyOfOperator
-    : 'anyOf' '(' literal (',' literal)* ')'
+literalArray
+    : '[' literal (',' literal)* ']'
     ;
 
 policyInstruction
     : 'permit'
     | 'process' 'using' Identifier
-    | 'defer'
-    | 'deny'
+//    | 'defer'
+    | 'filter'
 //    | 'defer' 'or' 'deny'
     ;
 
@@ -314,6 +319,7 @@ StringLiteral
     :   '"' StringCharacters? '"'
     |   '\'' StringCharacters? '\''
     ;
+
 
 BooleanLiteral
     :   'true' | 'false'

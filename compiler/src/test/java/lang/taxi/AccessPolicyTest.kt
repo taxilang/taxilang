@@ -4,7 +4,6 @@ import com.winterbe.expekt.expect
 import lang.taxi.policies.*
 import org.junit.Before
 import org.junit.Test
-import org.omg.CORBA.INTERNAL
 
 class AccessPolicyTest {
 
@@ -32,7 +31,7 @@ namespace test {
     policy TradeDeskPolicy against Trade {
         read external {
             case caller.DeskId = this.DeskId -> permit
-            case caller.Groups = anyOf("ADMIN","COMPLIANCE") -> permit
+            case caller.Groups in ["ADMIN","COMPLIANCE"] -> permit
             case caller.DeskId != this.DeskId -> process using MaskTradeDetailsProcessor
             else -> deny
         }
@@ -41,7 +40,7 @@ namespace test {
         }
         write {
             case caller.DeskId = this.DeskId -> permit
-            case caller.Groups = anyOf("ADMIN","COMPLIANCE") -> permit
+            case caller.Groups in ["ADMIN","COMPLIANCE"] -> permit
             case caller.DeskId != this.DeskId -> process using MaskTradeDetailsProcessor
             else -> deny
         }
@@ -77,7 +76,7 @@ namespace test {
 
         val statement2 = ruleSet.statements[1]
         val condition2 = statement2.condition as CaseCondition
-        val anyOf = condition2.rhSubject as AnyOfValuesSubject
+        val anyOf = condition2.rhSubject as LiteralArraySubject
         expect(anyOf.values).to.equal(listOf("ADMIN","COMPLIANCE"))
 
         // TODO assert the actual policies have been parsed correctly

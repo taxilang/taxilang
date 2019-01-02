@@ -112,8 +112,8 @@ sealed class Subject {
             return when {
                 expression.callerIdentifer() != null -> RelativeSubject(RelativeSubject.RelativeSubjectSource.CALLER, typeResolver.invoke(expression.callerIdentifer().typeType()))
                 expression.thisIdentifier() != null -> RelativeSubject(RelativeSubject.RelativeSubjectSource.THIS, typeResolver.invoke(expression.thisIdentifier().typeType()))
-                expression.anyOfOperator() != null -> AnyOfValuesSubject(expression.anyOfOperator().literal().map { it.value() })
-                expression.literal() != null -> LiteralSubject(expression.literal().value())
+                expression.literalArray() != null -> LiteralArraySubject(expression.literalArray().literal().map { it.value() })
+                expression.literal() != null -> LiteralSubject(expression.literal().valueOrNull())
                 else -> error("Unhandled subject : ${expression.text}")
             }
         }
@@ -130,12 +130,13 @@ data class RelativeSubject(val source: RelativeSubjectSource, val targetType: Ty
     }
 }
 
-data class AnyOfValuesSubject(val values: List<Any>) : Subject()
-data class LiteralSubject(val value: Any) : Subject()
+data class LiteralArraySubject(val values: List<Any>) : Subject()
+data class LiteralSubject(val value: Any?) : Subject()
 
 enum class Operator(val symbol: String) {
     EQUAL("="),
-    NOT_EQUAL("!=");
+    NOT_EQUAL("!="),
+    IN("in");
 
     companion object {
         private val symbols = Operator.values().associateBy { it.symbol }
@@ -157,6 +158,11 @@ data class Instruction(
         }
     }
 
+    override fun toString(): String {
+        val processorString = if (processorName != null) " with processor $processorName" else ""
+        return "Instruction ${type.symbol}$processorString"
+    }
+
     companion object {
         fun parse(instruction: TaxiParser.PolicyInstructionContext): Instruction {
             val type = instruction.getChild(0).text
@@ -168,7 +174,7 @@ data class Instruction(
         PERMIT("permit"),
         PROCESS("process", true),
         DEFER("defer"),
-        DENY("deny");
+        FILTER("filter");
 
         companion object {
             private val bySymbol = InstructionType.values().associateBy { it.symbol }
