@@ -148,25 +148,44 @@ enum class Operator(val symbol: String) {
 
 }
 
+data class InstructionProcessor(
+        val name: String,
+        val args: List<Any> = emptyList()
+)
+
 data class Instruction(
         val type: InstructionType,
-        val processorName: String? = null
+        val processor: InstructionProcessor?
 ) {
     init {
-        if (this.type.requiresProcessor && this.processorName == null) {
+        if (this.type.requiresProcessor && this.processor == null) {
             error("A processor must be specified if using instruction of type ${type.symbol}")
         }
     }
 
     override fun toString(): String {
-        val processorString = if (processorName != null) " with processor $processorName" else ""
+        val processorString = if (processor != null) " with processor ${processor.name}" else ""
         return "Instruction ${type.symbol}$processorString"
     }
 
     companion object {
         fun parse(instruction: TaxiParser.PolicyInstructionContext): Instruction {
-            val type = instruction.getChild(0).text
-            return Instruction(InstructionType.parse(type), instruction.Identifier()?.text)
+            return when {
+                instruction.policyInstructionEnum() != null -> Instruction(InstructionType.parse(instruction.policyInstructionEnum().text), null)
+                instruction.policyProcessorDeclaration() != null -> {
+                    val processor = instruction.policyProcessorDeclaration()
+                    val processorName = processor.qualifiedName().text
+                    val params = processor.policyProcessorParameterList().policyParameter().map { parameter ->
+                        when {
+                            parameter.literal() != null -> parameter.literal().value()
+                            parameter.literalArray() != null -> parameter.literalArray().value()
+                            else -> error("Unhandled param type")
+                        }
+                    }
+                    Instruction(InstructionType.PROCESS, InstructionProcessor(processorName, params))
+                }
+                else -> error("Unhandled policy type")
+            }
         }
     }
 

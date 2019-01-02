@@ -230,13 +230,23 @@ literalArray
     ;
 
 policyInstruction
-    : 'permit'
-    | 'process' 'using' Identifier
-//    | 'defer'
-    | 'filter'
-//    | 'defer' 'or' 'deny'
+    : policyInstructionEnum
+    | policyProcessorDeclaration
     ;
 
+policyInstructionEnum
+    : 'permit' | 'filter' ;
+
+policyProcessorDeclaration
+    : 'process' 'using' qualifiedName policyProcessorParameterList?
+    ;
+
+policyProcessorParameterList
+    : '(' policyParameter (',' policyParameter)* ')'
+    ;
+
+policyParameter
+    : literal | literalArray;
 
 expression
     :   primary

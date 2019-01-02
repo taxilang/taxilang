@@ -75,10 +75,10 @@ internal class DocumentListener(val tokens: Tokens) {
 
 
     private fun qualify(namespace: Namespace, type: TaxiParser.TypeTypeContext): String {
-        if (type.primitiveType() != null) {
-            return PrimitiveType.fromToken(type).qualifiedName
+        return if (type.primitiveType() != null) {
+            PrimitiveType.fromToken(type).qualifiedName
         } else {
-            return qualify(namespace, type.classOrInterfaceType().text)
+            qualify(namespace, type.classOrInterfaceType().text)
         }
     }
 
@@ -244,15 +244,13 @@ internal class DocumentListener(val tokens: Tokens) {
     }
 
     private fun mapAnnotationParams(annotation: TaxiParser.AnnotationContext): Map<String, Any> {
-        if (annotation.elementValue() != null) {
-            return mapOf("value" to annotation.elementValue().literal().value())
-        } else if (annotation.elementValuePairs() != null) {
-            return annotation.elementValuePairs()!!.elementValuePair()?.map {
+        return when {
+            annotation.elementValue() != null -> mapOf("value" to annotation.elementValue().literal().value())
+            annotation.elementValuePairs() != null -> annotation.elementValuePairs()!!.elementValuePair()?.map {
                 it.Identifier().text to it.elementValue().literal()?.value()!!
             }?.toMap() ?: emptyMap()
-        } else {
-            // No params specified
-            return emptyMap()
+            else -> // No params specified
+                emptyMap()
         }
     }
 
@@ -271,10 +269,10 @@ internal class DocumentListener(val tokens: Tokens) {
             typeType.primitiveType() != null -> PrimitiveType.fromDeclaration(typeType.getChild(0).text)
             else -> throw IllegalArgumentException()
         }
-        if (typeType.listType() != null) {
-            return ArrayType(type, CompilationUnit.of(typeType))
+        return if (typeType.listType() != null) {
+            ArrayType(type, CompilationUnit.of(typeType))
         } else {
-            return type
+            type
         }
     }
 
@@ -445,25 +443,6 @@ fun TaxiParser.LiteralContext.isNullValue(): Boolean {
     return this.text == "null"
 }
 
-// Use in scenarios where null is permitted.  It's preferrable not to allow null,
-// and to vall value()
-fun TaxiParser.LiteralContext.valueOrNull(): Any? {
-    return if (this.isNullValue()) null else this.value()
-}
 
-fun TaxiParser.LiteralContext.value(): Any {
-    return when {
-        this.StringLiteral() != null -> {
-            // can be either ' or "
-            val firstChar = this.StringLiteral().text.toCharArray()[0]
-            this.StringLiteral().text.trim(firstChar)
-        }
-        this.IntegerLiteral() != null -> this.IntegerLiteral().text.toInt()
-        this.BooleanLiteral() != null -> this.BooleanLiteral().text.toBoolean()
-        this.isNullValue() -> error("Null is not permitted here")
-        else -> TODO()
-//      this.IntegerLiteral() != null -> this.IntegerLiteral()
-    }
-}
 
 typealias TypeResolver = (TaxiParser.TypeTypeContext) -> Type

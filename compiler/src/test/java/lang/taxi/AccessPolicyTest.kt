@@ -28,12 +28,17 @@ namespace test {
     }
 
 
+    policy TradeCounterpartyPolicy against Trade {
+        read {
+            process using vyne.StringAttributeMasker(['counterParty'])
+        }
+    }
     policy TradeDeskPolicy against Trade {
         read external {
             case caller.DeskId = this.DeskId -> permit
             case caller.Groups in ["ADMIN","COMPLIANCE"] -> permit
-            case caller.DeskId != this.DeskId -> process using MaskTradeDetailsProcessor
-            else -> deny
+            case caller.DeskId != this.DeskId -> filter
+            else -> filter
         }
         read internal {
             permit
@@ -41,8 +46,8 @@ namespace test {
         write {
             case caller.DeskId = this.DeskId -> permit
             case caller.Groups in ["ADMIN","COMPLIANCE"] -> permit
-            case caller.DeskId != this.DeskId -> process using MaskTradeDetailsProcessor
-            else -> deny
+            case caller.DeskId != this.DeskId -> filter
+            else -> filter
         }
     }
 }
@@ -52,7 +57,7 @@ namespace test {
 
     @Test
     fun canCompileBasicAccessPolicy() {
-        expect(doc.policies).to.have.size(1)
+        expect(doc.policies).to.have.size(2)
         expect(doc.containsPolicy("test.TradeDeskPolicy")).to.be.`true`
         val policy = doc.policy("test.TradeDeskPolicy")
         expect(policy).to.be.not.`null`
@@ -95,5 +100,17 @@ namespace test {
         val policy = doc.policy("test.TradeDeskPolicy")
         val ruleSet = policy.ruleSets.first { it.scope.operationType == "write" }
         expect(ruleSet.scope.operationScope).to.equal(OperationScope.INTERNAL_AND_EXTERNAL)
+    }
+
+    @Test
+    fun parsesProcessorDetailsCorrectly() {
+        val policy = doc.policy("test.TradeCounterpartyPolicy")
+        val ruleSet = policy.ruleSets.first { it.scope.operationType == "read" }
+        val instruction = ruleSet.statements.first().instruction
+        expect(instruction.type).to.equal(Instruction.InstructionType.PROCESS)
+        expect(instruction.processor!!.name).to.equal("vyne.StringAttributeMasker")
+        expect(instruction.processor!!.args).to.have.size(1)
+        val arg = instruction.processor!!.args.first()
+        expect(arg).to.equal(listOf("counterParty"))
     }
 }
