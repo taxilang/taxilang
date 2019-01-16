@@ -102,6 +102,7 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
         val operationId = OperationIdProvider.getOperationId(swaggerOperation, pathMapping, method)
         return TaxiOperation(
                 operationId,
+                null, // scope - TODO
                 annotations.toAnnotations(),
                 parameters,
                 returnType,

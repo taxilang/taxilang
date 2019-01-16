@@ -98,8 +98,6 @@ data class PolicyStatement(
 }
 
 interface Condition {
-    // TODO
-//    fun matches(any: Any): Boolean
 }
 
 class ElseCondition : Condition {

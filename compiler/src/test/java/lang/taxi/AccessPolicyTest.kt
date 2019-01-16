@@ -35,7 +35,7 @@ namespace test {
     }
     policy TradeDeskPolicy against Trade {
         read external {
-            case caller.DeskId = this.DeskId -> permit
+            case caller.DeskId = this.test.DeskId -> permit
             case caller.Groups in ["ADMIN","COMPLIANCE"] -> permit
             case caller.DeskId != this.DeskId -> filter
             else -> filter

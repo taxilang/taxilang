@@ -69,6 +69,7 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
 
         return lang.taxi.services.Operation(
                 operationId,
+                null, // scope - TODO
                 annotations.toAnnotations(),
                 parameters,
                 returnType,
