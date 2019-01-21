@@ -26,14 +26,23 @@ class CompilationException(val errors: List<CompilationError>) : RuntimeExceptio
 
 data class DocumentStrucutreError(val detailMessage: String)
 class DocumentMalformedException(val errors: List<DocumentStrucutreError>) : RuntimeException(errors.joinToString { it.detailMessage })
-class Compiler(val inputs: List<CharStream>) {
-    constructor(input: CharStream) : this(listOf(input))
-    constructor(source: String) : this(CharStreams.fromString(source, "[unknown source]"))
-    constructor(file: File) : this(CharStreams.fromPath(file.toPath()))
+class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocument> = emptyList()) {
+    constructor(input: CharStream, importSources: List<TaxiDocument> = emptyList()) : this(listOf(input), importSources)
+    constructor(source: String, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromString(source, "[unknown source]"), importSources)
+    constructor(file: File, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromPath(file.toPath()), importSources)
 
     companion object {
         fun forStrings(sources: List<String>) = Compiler(sources.mapIndexed { index, source -> CharStreams.fromString(source, "StringSource-$index") })
         fun forStrings(vararg source: String) = forStrings(source.toList())
+    }
+
+    fun validate(): List<CompilationError> {
+        try {
+            compile()
+        } catch (e: CompilationException) {
+            return e.errors
+        }
+        return emptyList()
     }
 
     fun compile(): TaxiDocument {
@@ -58,16 +67,26 @@ class Compiler(val inputs: List<CharStream>) {
         }
         val tokens = tokensCollection.reduce { acc, tokens -> acc.plus(tokens) }
 
-        val builder = DocumentListener(tokens)
+        val builder = DocumentListener(tokens, importSources)
         return builder.buildTaxiDocument()
     }
 }
 
-internal class DocumentListener(val tokens: Tokens) {
-    private val typeSystem = TypeSystem()
+internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocument> = emptyList()) {
+    private val typeSystem: TypeSystem
     private val services = mutableListOf<Service>()
     private val policies = mutableListOf<Policy>()
     private val constraintValidator = ConstraintValidator()
+
+    init {
+        val importedTypes = tokens.imports.map { (qualifiedName, token) ->
+            val importSource = importSources.firstOrNull { it.containsType(qualifiedName) }
+                    ?: throw CompilationException(token.start, "Cannot import $qualifiedName as it is not defined")
+            importSource.type(qualifiedName)
+        }
+        typeSystem = TypeSystem(importedTypes)
+    }
+
     fun buildTaxiDocument(): TaxiDocument {
         compile()
         return TaxiDocument(typeSystem.typeList().toSet(), services.toSet(), policies.toSet())

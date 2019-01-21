@@ -6,16 +6,20 @@ import org.antlr.v4.runtime.tree.TerminalNode
 
 internal typealias Namespace = String
 
-data class Tokens(val unparsedTypes: Map<String, Pair<Namespace, ParserRuleContext>>,
-                  val unparsedExtensions: List<Pair<Namespace, ParserRuleContext>>,
-                  val unparsedServices: Map<String, Pair<Namespace, ServiceDeclarationContext>>,
-                  val unparsedPolicies: Map<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>) {
+data class Tokens(
+        val imports: List<Pair<String, TaxiParser.ImportDeclarationContext>>,
+        val unparsedTypes: Map<String, Pair<Namespace, ParserRuleContext>>,
+        val unparsedExtensions: List<Pair<Namespace, ParserRuleContext>>,
+        val unparsedServices: Map<String, Pair<Namespace, ServiceDeclarationContext>>,
+        val unparsedPolicies: Map<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>) {
     fun plus(others: Tokens): Tokens {
         val errors = collectDuplicateTypes(others) + collectDuplicateServices(others)
         if (errors.isNotEmpty()) {
             throw CompilationException(errors)
         }
-        return Tokens(this.unparsedTypes + others.unparsedTypes,
+        return Tokens(
+                this.imports + others.imports,
+                this.unparsedTypes + others.unparsedTypes,
                 this.unparsedExtensions + others.unparsedExtensions,
                 this.unparsedServices + others.unparsedServices,
                 this.unparsedPolicies + others.unparsedPolicies
@@ -49,7 +53,7 @@ data class Tokens(val unparsedTypes: Map<String, Pair<Namespace, ParserRuleConte
 class TokenCollator : TaxiBaseListener() {
     val exceptions = mutableMapOf<ParserRuleContext, Exception>()
     private var namespace: String = Namespaces.DEFAULT_NAMESPACE
-
+    private var imports = mutableListOf<Pair<String, TaxiParser.ImportDeclarationContext>>()
 
     private val unparsedTypes = mutableMapOf<String, Pair<Namespace, ParserRuleContext>>()
     private val unparsedExtensions = mutableListOf<Pair<Namespace, ParserRuleContext>>()
@@ -60,7 +64,14 @@ class TokenCollator : TaxiBaseListener() {
 //    private val unparsedServices = mutableMapOf<String, ServiceDeclarationContext>()
 
     fun tokens(): Tokens {
-        return Tokens(unparsedTypes, unparsedExtensions, unparsedServices, unparsedPolicies)
+        return Tokens(imports, unparsedTypes, unparsedExtensions, unparsedServices, unparsedPolicies)
+    }
+
+    override fun exitImportDeclaration(ctx: TaxiParser.ImportDeclarationContext) {
+        collateExceptions(ctx)
+        imports.add(ctx.qualifiedName().Identifier().text() to ctx)
+
+        super.exitImportDeclaration(ctx)
     }
 
     override fun exitFieldDeclaration(ctx: TaxiParser.FieldDeclarationContext) {

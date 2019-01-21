@@ -6,16 +6,17 @@ document
     ;
 
 singleNamespaceDocument
-    :   namespaceDeclaration? /*importDeclaration**/ toplevelObject* EOF
+    :  importDeclaration* namespaceDeclaration? toplevelObject* EOF
     ;
 
 multiNamespaceDocument
-    : /*importDeclaration**/  namespaceBlock* EOF
+    : importDeclaration* namespaceBlock* EOF
     ;
-// Imports not yet supported
-//importDeclaration
-//    :   'import' qualifiedName ('.' '*')? ';'
-//    ;
+
+importDeclaration
+    :   'import' qualifiedName
+    ;
+
 namespaceDeclaration
     :   'namespace' qualifiedName
     ;

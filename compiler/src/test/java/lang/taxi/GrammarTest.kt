@@ -2,10 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import lang.taxi.services.AttributeConstantValueConstraint
-import lang.taxi.types.ArrayType
-import lang.taxi.types.Modifier
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.TypeAlias
+import lang.taxi.types.*
 import org.antlr.v4.runtime.CharStreams
 import org.junit.Ignore
 import org.junit.Rule
@@ -253,7 +250,6 @@ type Foo {
     }
 
 
-
     @Test
     fun canCompileWhenUsingFullyQualifiedNames() {
         val source = """
@@ -375,7 +371,49 @@ type ApiResponse {
         expect(taxi.objectType("ApiResponse").field("type")).to.be.not.`null`
         expect(taxi.objectType("ApiResponse").field("message")).to.be.not.`null`
     }
+
     private fun testResource(s: String): File {
         return File(this.javaClass.classLoader.getResource(s).toURI())
+    }
+
+
+    @Test
+    fun canImportTypeFromAnotherSchema() {
+        val sourceA = """
+namespace test {
+    type alias FirstName as String
+}
+        """.trimIndent()
+        val schemaA = Compiler(sourceA).compile()
+        val sourceB = """
+import test.FirstName
+
+namespace foo {
+    type Customer {
+        name : test.FirstName
+    }
+}
+        """.trimIndent()
+
+        val schemaB = Compiler(sourceB, listOf(schemaA)).compile()
+        val customer = schemaB.type("foo.Customer") as ObjectType
+        expect(customer.field("name").type.qualifiedName).to.equal("test.FirstName")
+    }
+
+    @Test
+    fun cannotImportTypeThatDoesntExist() {
+        val sourceB = """
+import test.FirstName
+
+namespace foo {
+    type Customer {
+        name : test.FirstName
+    }
+}
+        """.trimIndent()
+        val errors = Compiler(sourceB).validate()
+        expect(errors).to.have.size(1)
+        expect(errors.first().detailMessage).to.equal("Cannot import test.FirstName as it is not defined")
+
     }
 }

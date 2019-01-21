@@ -3,7 +3,6 @@ package lang.taxi
 import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
 import org.antlr.v4.runtime.Token
-import java.lang.IllegalArgumentException
 
 internal data class TypeProxy(override val qualifiedName: String, private val typeSystem: TypeSystem) : Type {
     fun isResolved(): Boolean = typeSystem.contains(this.qualifiedName)
@@ -22,8 +21,9 @@ internal data class TypeProxy(override val qualifiedName: String, private val ty
     override val compilationUnits = listOf(CompilationUnit.unspecified())
 }
 
-class TypeSystem {
+class TypeSystem(importedTypes: List<Type>) {
 
+    private val importedTypeMap: Map<String, Type> = importedTypes.associateBy { it.qualifiedName }
     private val types = mutableMapOf<String, Type>()
     private val referencesToUnresolvedTypes = mutableMapOf<String, Token>()
 
@@ -43,11 +43,23 @@ class TypeSystem {
         if (PrimitiveType.isPrimitiveType(typeName)) {
             return PrimitiveType.fromDeclaration(typeName)
         }
+        if (isImported(typeName)) {
+            return getImportedType(typeName)
+        }
+
         return types.getOrPut(typeName, { ObjectType.undefined(typeName) })
     }
 
+    private fun getImportedType(typeName: String): Type {
+        return importedTypeMap[typeName] ?: error("Type $typeName not imported")
+    }
+
     fun contains(qualifiedName: String): Boolean {
-        return types.containsKey(qualifiedName)
+        return isImported(qualifiedName) || types.containsKey(qualifiedName)
+    }
+
+    private fun isImported(qualifiedName: String): Boolean {
+        return importedTypeMap.containsKey(qualifiedName)
     }
 
     fun isDefined(qualifiedName: String): Boolean {
@@ -75,6 +87,11 @@ class TypeSystem {
         if (PrimitiveType.isPrimitiveType(qualifiedName)) {
             return PrimitiveType.fromDeclaration(qualifiedName)
         }
+
+        if (isImported(qualifiedName)) {
+            return getImportedType(qualifiedName)
+        }
+
         return this.types[qualifiedName] ?: throw IllegalArgumentException("$qualifiedName is not defined as a type")
     }
 
