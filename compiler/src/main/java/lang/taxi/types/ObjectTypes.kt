@@ -60,6 +60,13 @@ data class ObjectType(
         }
     }
 
+    override val referencedTypes: List<Type>
+        get() {
+            val fieldTypes = this.allFields.map { it.type }
+            val inheritedTypes = this.definition?.inheritsFrom?.toList() ?: emptyList()
+            return (fieldTypes + inheritedTypes).filterIsInstance<UserType<*, *>>()
+        }
+
     override fun addExtension(extension: ObjectTypeExtension): ErrorMessage? {
         val error = verifyMaxOneTypeRefinementPerField(extension.fieldExtensions)
         if (error != null) return error

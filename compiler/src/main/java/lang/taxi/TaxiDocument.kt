@@ -120,6 +120,11 @@ interface UserType<TDef : TypeDefinition, TExt : TypeDefinition> : Type {
     override val compilationUnits: List<CompilationUnit>
         get() = (this.extensions.map { it.compilationUnit } + this.definition?.compilationUnit).filterNotNull()
 
+    /**
+     * A list of all the other types this UserType makes reference to.
+     * Used when importing this type, to ensure the full catalogue of types is imported
+     */
+    val referencedTypes:List<Type>
 
 }
 

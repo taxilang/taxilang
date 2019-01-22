@@ -400,6 +400,56 @@ namespace foo {
         expect(customer.field("name").type.qualifiedName).to.equal("test.FirstName")
     }
 
+    // Not sure if this is a good idea or not, that imported types
+    // become present in the final document
+    // May need to split these to distinguish between declaredTypes and importedTypes.
+    // However, at the moment, primitives are present in the types collection, which indicates
+    // that may not be needed.
+    @Test
+    fun importedTypesArePresentInTheDoc() {
+        val sourceA = """
+namespace test {
+    type alias FirstName as String
+}
+        """.trimIndent()
+        val schemaA = Compiler(sourceA).compile()
+        val sourceB = """
+import test.FirstName
+
+namespace foo {
+    type Customer {
+        name : test.FirstName
+    }
+}
+        """.trimIndent()
+
+        val schemaB = Compiler(sourceB, listOf(schemaA)).compile()
+        expect(schemaB.containsType("test.FirstName")).to.be.`true`
+    }
+
+    @Test
+    fun when_importedTypeReferencesOtherTypes_then_thoseTypesAreAlsoPresentInTheDdoc() {
+        val srcA = """
+namespace foo
+
+type Customer {
+    name : FirstName as String
+}
+        """.trimIndent()
+        val schemaA = Compiler(srcA).compile()
+
+        val srcB = """
+import foo.Customer
+
+type Thing {
+    customer : foo.Customer
+}
+        """.trimIndent()
+        val schemaB = Compiler(srcB, listOf(schemaA)).compile()
+        expect(schemaB.containsType("foo.Customer")).to.be.`true`
+        expect(schemaB.containsType("foo.FirstName")).to.be.`true`
+    }
+
     @Test
     fun cannotImportTypeThatDoesntExist() {
         val sourceB = """
@@ -416,4 +466,46 @@ namespace foo {
         expect(errors.first().detailMessage).to.equal("Cannot import test.FirstName as it is not defined")
 
     }
+
+    @Test
+    fun canListDeclaredTypeNamesInSrcFile() {
+        val sourceA = """
+namespace test {
+    type alias FirstName as String
+    type Person {
+        firstName : FirstName
+        lastName : LastName as String
+        nickname : String
+    }
+
+    type Book {
+        author : Person
+    }
+}
+        """.trimIndent()
+
+        val typeNames = Compiler(sourceA).declaredTypeNames()
+        expect(typeNames).to.have.size(4)
+        expect(typeNames).to.contain(QualifiedName.from("test.FirstName"))
+        expect(typeNames).to.contain(QualifiedName.from("test.LastName"))
+        expect(typeNames).to.contain(QualifiedName.from("test.Book"))
+        expect(typeNames).to.contain(QualifiedName.from("test.Person"))
+    }
+
+    @Test
+    fun canListImports() {
+        val sourceB = """
+import test.FirstName
+
+namespace foo {
+    type Customer {
+        name : test.FirstName
+    }
+}
+        """.trimIndent()
+        val imports = Compiler(sourceB).declaredImports()
+        expect(imports).to.have.size(1)
+        expect(imports).to.contain(QualifiedName.from("test.FirstName"))
+    }
+
 }

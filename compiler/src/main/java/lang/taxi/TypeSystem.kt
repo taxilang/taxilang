@@ -27,8 +27,9 @@ class TypeSystem(importedTypes: List<Type>) {
     private val types = mutableMapOf<String, Type>()
     private val referencesToUnresolvedTypes = mutableMapOf<String, Token>()
 
-    fun typeList(): List<Type> {
-        return types.values.toList()
+    fun typeList(includeImportedTypes: Boolean = false): List<Type> {
+        val importedTypes = if (includeImportedTypes) importedTypeMap.values.toList() else emptyList()
+        return types.values.toList() + importedTypes
     }
 
     fun getOrCreate(typeName: String, location: Token): Type {

@@ -8,6 +8,7 @@ import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.io.File
+import java.util.*
 
 object Namespaces {
     const val DEFAULT_NAMESPACE = ""
@@ -45,7 +46,34 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
         return emptyList()
     }
 
+    /**
+     * Returns a list of types declared in this file, including inline type aliases
+     * The source is not validated to perform this task, so compilation errors (beyond grammatical errors) are not thrown,
+     * and the file may not be valid source.
+     */
+    fun declaredTypeNames(): List<QualifiedName> {
+        val tokens = collectTokens()
+        val builder = DocumentListener(tokens, collectImports = false)
+        return builder.findDeclaredTypeNames()
+    }
+
+    /**
+     * Returns a list of imports declared in this file.
+     * The source is not validated to perform this task, so compilation errors (beyond grammatical errors) are not thrown,
+     * and the file may not be valid source.
+     */
+    fun declaredImports(): List<QualifiedName> {
+        val tokens = collectTokens()
+        return tokens.imports.map { (name, _) -> QualifiedName.from(name) }
+    }
+
     fun compile(): TaxiDocument {
+        val tokens = collectTokens()
+        val builder = DocumentListener(tokens, importSources)
+        return builder.buildTaxiDocument()
+    }
+
+    private fun collectTokens(): Tokens {
         // TODO : Can probably be smarter about this, and
         // stream the source, rather than returning a string from the
         // source provider
@@ -66,30 +94,100 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
             listener.tokens() // return..
         }
         val tokens = tokensCollection.reduce { acc, tokens -> acc.plus(tokens) }
-
-        val builder = DocumentListener(tokens, importSources)
-        return builder.buildTaxiDocument()
+        return tokens
     }
 }
 
-internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocument> = emptyList()) {
+private class ImportedTypeCollator(val imports: List<Pair<String, TaxiParser.ImportDeclarationContext>>, val importSources: List<TaxiDocument>) {
+    fun collect(): List<Type> {
+        val collected = mutableMapOf<String, Type>()
+        val importQueue = LinkedList<Pair<String, Token>>()
+
+        imports.forEach { (qualifiedName, ctx) ->
+            importQueue.add(qualifiedName to ctx.start)
+        }
+
+        while (importQueue.isNotEmpty()) {
+            val (name, token) = importQueue.pop()
+            if (collected.containsKey(name)) continue
+            if (PrimitiveType.isPrimitiveType(name)) continue
+
+            val type = getType(name, token)
+            collected[name] = type
+
+            if (type is UserType<*, *>) {
+                type.referencedTypes.forEach { importQueue.add(it.qualifiedName to token) }
+            }
+        }
+        return collected.values.toList()
+    }
+
+
+    private fun getType(name: String, referencingToken: Token): Type {
+        val type = this.importSources.firstOrNull { it.containsType(name) }?.type(name)
+        return type ?: throw CompilationException(referencingToken, "Cannot import $name as it is not defined")
+    }
+}
+
+internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocument> = emptyList(), collectImports: Boolean = true) {
+
+    constructor(tokens: Tokens, collectImports: Boolean) : this(tokens, emptyList(), collectImports)
+
     private val typeSystem: TypeSystem
     private val services = mutableListOf<Service>()
     private val policies = mutableListOf<Policy>()
     private val constraintValidator = ConstraintValidator()
 
     init {
-        val importedTypes = tokens.imports.map { (qualifiedName, token) ->
-            val importSource = importSources.firstOrNull { it.containsType(qualifiedName) }
-                    ?: throw CompilationException(token.start, "Cannot import $qualifiedName as it is not defined")
-            importSource.type(qualifiedName)
+//        val importedTypes = mutableMapOf<String, Type>()
+//        tokens.imports.forEach { (qualifiedName, token) ->
+//
+//        }
+//        tokens.imports.map.mapTo(importedTypes) { (qualifiedName, token) ->
+//            val importSource = importSources.firstOrNull { it.containsType(qualifiedName) }
+//                    ?: throw CompilationException(token.start, "Cannot import $qualifiedName as it is not defined")
+//            importSource.type(qualifiedName)
+//        }
+        val importedTypes = if (collectImports) {
+            ImportedTypeCollator(tokens.imports, importSources).collect()
+        } else {
+            emptyList()
         }
+
         typeSystem = TypeSystem(importedTypes)
     }
 
     fun buildTaxiDocument(): TaxiDocument {
         compile()
-        return TaxiDocument(typeSystem.typeList().toSet(), services.toSet(), policies.toSet())
+        // TODO: Unsure if including the imported types here is a good iddea or not.
+        val types = typeSystem.typeList(includeImportedTypes = true).toSet()
+        return TaxiDocument(types, services.toSet(), policies.toSet())
+    }
+
+    fun findDeclaredTypeNames(): List<QualifiedName> {
+        createEmptyTypes()
+
+        // We need to check all the ObjectTypes, to see if they declare any inline type aliases
+        val inlineTypeAliases = tokens.unparsedTypes.filter { (_, tokenPair) ->
+            val (_, ctx) = tokenPair
+            ctx is TaxiParser.TypeDeclarationContext
+        }.flatMap { (name, tokenPair) ->
+            val (namespace, ctx) = tokenPair
+            val typeCtx = ctx as TaxiParser.TypeDeclarationContext
+            val typeAliasNames = typeCtx.typeBody().typeMemberDeclaration().mapNotNull { memberDeclaration ->
+                val fieldDeclaration = memberDeclaration.fieldDeclaration()
+                if (fieldDeclaration.typeType() != null && fieldDeclaration.typeType().aliasedType() != null) {
+                    // This is an inline type alias
+                    qualify(namespace, memberDeclaration.fieldDeclaration().typeType())
+                } else {
+                    null
+                }
+            }
+            typeAliasNames.map { QualifiedName.from(it) }
+        }
+
+        val declaredTypeNames = typeSystem.typeList().map { it.toQualifiedName() }
+        return declaredTypeNames + inlineTypeAliases
     }
 
 

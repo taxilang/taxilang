@@ -21,7 +21,9 @@ data class EnumType(override val qualifiedName: String,
         }
     }
 
-    override fun addExtension(extension: EnumDefinition):ErrorMessage? {
+    override val referencedTypes: List<Type> = emptyList()
+
+    override fun addExtension(extension: EnumDefinition): ErrorMessage? {
         this.extensions.add(extension)
         return null
     }
