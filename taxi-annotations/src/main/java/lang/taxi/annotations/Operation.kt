@@ -16,7 +16,18 @@ fun Service.declaresName(): Boolean {
 @Target(AnnotationTarget.FUNCTION)
 annotation class Operation(
         /** The name of the operation */
-        val value: String = "")
+        val value: String = "",
+
+        /**
+         * The scope of operation - similar to the  verb in HTTP.
+         * eg:
+         * read, write, etc.
+         *
+         * When policies are defined against a specific operation type, it must match against the
+         * value defined here.
+         */
+        val scope: String = ""
+)
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)

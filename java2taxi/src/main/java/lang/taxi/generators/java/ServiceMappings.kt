@@ -61,6 +61,7 @@ class DefaultServiceMapper(private val constraintAnnotationMapper: ConstraintAnn
                             returnType = returnType,
                             returnTypeConstraints = parseConstraints(method.getAnnotation(ResponseContract::class.java))
                     ),
+                    scope = operationAnnotation.scope,
                     compilationUnits = listOf(CompilationUnit.unspecified()))
             operationExtensions.fold(operation, { operation, extension -> extension.update(operation, type, method, typeMapper, mappedTypes) })
         }

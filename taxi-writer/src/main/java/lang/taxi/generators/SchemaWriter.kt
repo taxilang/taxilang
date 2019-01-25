@@ -81,8 +81,9 @@ $operations
         val operationName = operation.name
 
         val annotations = generateAnnotations(operation)
+        val scope = if (operation.scope != null) operation.scope + " " else ""
         return """$annotations
-operation $operationName( $params )$returnDeclaration""".trimIndent().trim()
+${scope}operation $operationName( $params )$returnDeclaration""".trimIndent().trim()
     }
 
     private fun generateReturnContract(contract: OperationContract): String {
