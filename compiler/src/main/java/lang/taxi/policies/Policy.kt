@@ -151,46 +151,15 @@ data class InstructionProcessor(
         val args: List<Any> = emptyList()
 )
 
-data class Instruction(
-        val type: InstructionType,
-        val processor: InstructionProcessor?
-) {
-    init {
-        if (this.type.requiresProcessor && this.processor == null) {
-            error("A processor must be specified if using instruction of type ${type.symbol}")
-        }
-    }
+interface Instruction {
+    val type: Instruction.InstructionType
 
-    override fun toString(): String {
-        val processorString = if (processor != null) " with processor ${processor.name}" else ""
-        return "Instruction ${type.symbol}$processorString"
-    }
-
-    companion object {
-        fun parse(instruction: TaxiParser.PolicyInstructionContext): Instruction {
-            return when {
-                instruction.policyInstructionEnum() != null -> Instruction(InstructionType.parse(instruction.policyInstructionEnum().text), null)
-                instruction.policyProcessorDeclaration() != null -> {
-                    val processor = instruction.policyProcessorDeclaration()
-                    val processorName = processor.qualifiedName().text
-                    val params = processor.policyProcessorParameterList().policyParameter().map { parameter ->
-                        when {
-                            parameter.literal() != null -> parameter.literal().value()
-                            parameter.literalArray() != null -> parameter.literalArray().value()
-                            else -> error("Unhandled param type")
-                        }
-                    }
-                    Instruction(InstructionType.PROCESS, InstructionProcessor(processorName, params))
-                }
-                else -> error("Unhandled policy type")
-            }
-        }
-    }
-
-    enum class InstructionType(val symbol: String, val requiresProcessor: Boolean = false) {
+    // Processors commend out for now.
+    // https://gitlab.com/vyne/vyne/issues/52
+    enum class InstructionType(val symbol: String /*, val requiresProcessor: Boolean = false */) {
         PERMIT("permit"),
-        PROCESS("process", true),
-        DEFER("defer"),
+        //        PROCESS("process", true),
+//        DEFER("defer"),
         FILTER("filter");
 
         companion object {
@@ -199,4 +168,88 @@ data class Instruction(
             fun parse(symbol: String) = bySymbol[symbol] ?: error("Invalid instruction with symbol $symbol")
         }
     }
+
+    companion object {
+        fun parse(instruction: TaxiParser.PolicyInstructionContext): Instruction {
+            return when {
+                instruction.policyInstructionEnum() != null -> {
+                    require(instruction.policyInstructionEnum().text == Instruction.InstructionType.PERMIT.symbol) { "Only permit or filter currently supported" }
+                    PermitInstruction
+                }
+                instruction.policyFilterDeclaration() != null -> {
+                    val fieldIdentifiers = instruction.policyFilterDeclaration().filterAttributeNameList()?.Identifier()
+                            ?: emptyList()
+                    val fieldNames = fieldIdentifiers.map { it.text }
+                    FilterInstruction(fieldNames)
+                }
+                else -> error("Unhandled instruction type")
+            }
+        }
+    }
 }
+
+object PermitInstruction : Instruction {
+    override val type = Instruction.InstructionType.PERMIT
+
+    override fun toString(): String {
+        return "Instruction permit"
+    }
+
+}
+
+data class FilterInstruction(val fieldNames: List<String> = emptyList()) : Instruction {
+    override val type = Instruction.InstructionType.FILTER
+
+    val isFilterAll = fieldNames.isEmpty()
+
+    override fun toString(): String {
+        val fieldNameList = if (isFilterAll) "all" else fieldNames.joinToString(",")
+        return "Instruction filter $fieldNameList"
+    }
+}
+// TODO : Simplifying instructions at the moment to either Permit, or Filter xxx.
+// Re-introduce processors later.
+// https://gitlab.com/vyne/vyne/issues/52
+//
+//data class Instruction(
+//        val type: InstructionType,
+//        val filteredFields: List<String>?,
+//        val processor: InstructionProcessor?
+//) {
+//    init {
+//        if (this.type.requiresProcessor && this.processor == null) {
+//            error("A processor must be specified if using instruction of type ${type.symbol}")
+//        }
+//    }
+//
+//    override fun toString(): String {
+//        val processorString = if (processor != null) " with processor ${processor.name}" else ""
+//        return "Instruction ${type.symbol}$processorString"
+//    }
+//
+//    companion object {
+//        fun parse(instruction: TaxiParser.PolicyInstructionContext): Instruction {
+//            return when {
+//                instruction.policyInstructionEnum() != null -> Instruction(InstructionType.parse(instruction.policyInstructionEnum().text), null)
+//                instruction.policyFilterDeclaration() != null -> {
+//                    val filterDeclaration = instruction.policyFilterDeclaration()
+//
+//                }
+//
+//                instruction.policyProcessorDeclaration() != null -> {
+//                    val processor = instruction.policyProcessorDeclaration()
+//                    val processorName = processor.qualifiedName().text
+//                    val params = processor.policyProcessorParameterList().policyParameter().map { parameter ->
+//                        when {
+//                            parameter.literal() != null -> parameter.literal().value()
+//                            parameter.literalArray() != null -> parameter.literalArray().value()
+//                            else -> error("Unhandled param type")
+//                        }
+//                    }
+//                    Instruction(InstructionType.PROCESS, InstructionProcessor(processorName, params))
+//                }
+//                else -> error("Unhandled policy type")
+//            }
+//        }
+//    }
+//}

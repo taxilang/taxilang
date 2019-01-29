@@ -232,22 +232,33 @@ literalArray
 
 policyInstruction
     : policyInstructionEnum
-    | policyProcessorDeclaration
+    | policyFilterDeclaration
     ;
 
 policyInstructionEnum
-    : 'permit' | 'filter' ;
+    : 'permit';
 
-policyProcessorDeclaration
-    : 'process' 'using' qualifiedName policyProcessorParameterList?
+policyFilterDeclaration
+    : 'filter' filterAttributeNameList?
     ;
 
-policyProcessorParameterList
-    : '(' policyParameter (',' policyParameter)* ')'
+filterAttributeNameList
+    : '(' Identifier (',' Identifier)* ')'
     ;
 
-policyParameter
-    : literal | literalArray;
+// processors currently disabled
+// https://gitlab.com/vyne/vyne/issues/52
+//policyProcessorDeclaration
+//    : 'process' 'using' qualifiedName policyProcessorParameterList?
+//    ;
+
+//policyProcessorParameterList
+//    : '(' policyParameter (',' policyParameter)* ')'
+//    ;
+
+//policyParameter
+//    : literal | literalArray;
+//
 
 expression
     :   primary
