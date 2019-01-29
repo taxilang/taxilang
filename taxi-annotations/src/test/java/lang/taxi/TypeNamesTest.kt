@@ -8,7 +8,10 @@ class TypeNamesTest {
     @Test
     fun given_typeIsCollection_then_arrayTypeNameIsGenerated() {
         val typeName = TypeNames.deriveTypeName<List<Book>>()
-        expect(typeName).to.equal("foo.Book[]")
+        // Note: this test used to assert the value was foo.Book[].
+        // I've swapped to the parametrized name, as this seems more correct.
+        // However, swap back and note why if there are issues.
+        expect(typeName).to.equal("lang.taxi.Array<foo.Book>")
     }
 
     @Test

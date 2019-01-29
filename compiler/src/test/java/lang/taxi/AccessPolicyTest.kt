@@ -60,7 +60,7 @@ namespace test {
 
     @Test
     fun canCompileBasicAccessPolicy() {
-        expect(doc.policies).to.have.size(2)
+        expect(doc.policies).to.have.size(1)
         expect(doc.containsPolicy("test.TradeDeskPolicy")).to.be.`true`
         val policy = doc.policy("test.TradeDeskPolicy")
         expect(policy).to.be.not.`null`
