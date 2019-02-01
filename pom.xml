@@ -33,6 +33,7 @@
       <module>plugins</module>
       <module>kotlin</module>
       <module>lang-to-taxi-api</module>
+      <module>taxi-typescript/kotlin-to-ts-emitter</module>
    </modules>
 
    <properties>
