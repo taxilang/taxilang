@@ -15,6 +15,11 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>lang.taxi</groupId>
+            <artifactId>core-types</artifactId>
+            <version>0.2.0-SNAPSHOT</version>
+        </dependency>
         <!--<dependency>-->
             <!--<groupId>org.raml</groupId>-->
             <!--<artifactId>raml-api</artifactId>-->

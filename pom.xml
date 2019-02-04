@@ -36,6 +36,7 @@
       <module>lang-to-taxi-api</module>
       <module>taxi-typescript/kotlin-to-ts-emitter</module>
       <module>taxi-writer-js</module>
+      <module>core-types</module>
    </modules>
 
    <properties>

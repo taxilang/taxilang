@@ -14,6 +14,15 @@ object Namespaces {
     const val DEFAULT_NAMESPACE = ""
 }
 
+fun ParserRuleContext?.toCompilationUnit(): lang.taxi.types.CompilationUnit {
+    return if (this == null) {
+        CompilationUnit.unspecified()
+    } else {
+        lang.taxi.types.CompilationUnit(this, this.source());
+    }
+
+}
+
 data class CompilationError(val offendingToken: Token, val detailMessage: String?) {
     val line = offendingToken.line
     val char = offendingToken.charPositionInLine
@@ -284,7 +293,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
 
             FieldExtension(fieldName, fieldAnnotations, refinedType)
         }
-        val errorMessage = type.addExtension(ObjectTypeExtension(annotations, fieldExtensions, CompilationUnit.of(typeRule)))
+        val errorMessage = type.addExtension(ObjectTypeExtension(annotations, fieldExtensions, typeRule.toCompilationUnit()))
         if (errorMessage != null) {
             throw CompilationException(typeRule.start, errorMessage)
         }
@@ -306,7 +315,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
         val typePointedTo = typeSystem.getOrCreate(qualifiedName, tokenRule.start)
         val annotations = collateAnnotations(tokenRule.annotation())
 
-        val definition = TypeAliasDefinition(typePointedTo, annotations, CompilationUnit.of(tokenRule))
+        val definition = TypeAliasDefinition(typePointedTo, annotations, tokenRule.toCompilationUnit())
         this.typeSystem.register(TypeAlias(tokenName, definition))
     }
 
@@ -331,7 +340,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
         val annotations = collateAnnotations(ctx.annotation())
         val modifiers = parseModifiers(ctx.typeModifier())
         val inherits = parseInheritance(namespace, ctx.listOfInheritedTypes())
-        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields.toSet(), annotations.toSet(), modifiers, inherits, CompilationUnit.of(ctx))))
+        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields.toSet(), annotations.toSet(), modifiers, inherits, ctx.toCompilationUnit())))
     }
 
     private fun unescape(text: String): String {
@@ -387,7 +396,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
             else -> throw IllegalArgumentException()
         }
         return if (typeType.listType() != null) {
-            ArrayType(type, CompilationUnit.of(typeType))
+            ArrayType(type, typeType.toCompilationUnit())
         } else {
             type
         }
@@ -402,7 +411,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
         val typeAliasName = qualify(namespace, aliasTypeDefinition.classOrInterfaceType().Identifier().text())
         // Annotations not supported on Inline type aliases
         val annotations = emptyList<Annotation>()
-        val typeAlias = TypeAlias(typeAliasName, TypeAliasDefinition(aliasedType, annotations, CompilationUnit.of(aliasTypeDefinition)))
+        val typeAlias = TypeAlias(typeAliasName, TypeAliasDefinition(aliasedType, annotations, aliasTypeDefinition.toCompilationUnit()))
         typeSystem.register(typeAlias)
         return typeAlias
     }
@@ -428,7 +437,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
             EnumValue(value, annotations)
         }
         val annotations = collateAnnotations(ctx.annotation())
-        val enumType = EnumType(typeName, EnumDefinition(enumValues, annotations, CompilationUnit.of(ctx)))
+        val enumType = EnumType(typeName, EnumDefinition(enumValues, annotations, ctx.toCompilationUnit()))
         typeSystem.register(enumType)
     }
 
@@ -448,13 +457,13 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
                                     name = it.parameterName()?.Identifier()?.text,
                                     constraints = mapConstraints(it.typeType(), paramType))
                         },
-                        compilationUnits = listOf(CompilationUnit.of(operationDeclaration)),
+                        compilationUnits = listOf(operationDeclaration.toCompilationUnit()),
                         returnType = returnType,
                         contract = parseOperationContract(operationDeclaration, returnType)
 
                 )
             }
-            Service(qualifiedName, methods, collateAnnotations(serviceToken.annotation()), listOf(CompilationUnit.of(serviceToken)))
+            Service(qualifiedName, methods, collateAnnotations(serviceToken.annotation()), listOf(serviceToken.toCompilationUnit()))
         }
         this.services.addAll(services)
     }
@@ -492,7 +501,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
                     targetType,
                     ruleSets,
                     annotations,
-                    compilationUnits = listOf(CompilationUnit.of(token))
+                    compilationUnits = listOf(token.toCompilationUnit())
             )
         }
         this.policies.addAll(compiledPolicies)
@@ -515,14 +524,14 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
         val statements = if (token.policyBody() != null) {
             token.policyBody().policyStatement().map { compilePolicyStatement(namespace, it) }
         } else {
-            listOf(PolicyStatement(ElseCondition(), Instruction.parse(token.policyInstruction()), CompilationUnit.of(token)))
+            listOf(PolicyStatement(ElseCondition(), Instruction.parse(token.policyInstruction()), token.toCompilationUnit()))
         }
         return RuleSet(scope, statements)
     }
 
     private fun compilePolicyStatement(namespace: String, token: TaxiParser.PolicyStatementContext): PolicyStatement {
         val (condition, instruction) = compileCondition(namespace, token)
-        return PolicyStatement(condition, instruction, CompilationUnit.of(token))
+        return PolicyStatement(condition, instruction, token.toCompilationUnit())
     }
 
     private fun compileCondition(namespace: String, token: TaxiParser.PolicyStatementContext): Pair<Condition, Instruction> {

@@ -38,10 +38,10 @@
                      <goal>add-source</goal>
                   </goals>
                   <configuration>
-                     <sources>
-                        <source>../taxi-writer/src/main/java</source>
-                        <source>../compiler/src/main/java</source>
-                     </sources>
+                     <!--<sources>-->
+                        <!--<source>../taxi-writer/src/main/java</source>-->
+                        <!--<source>../compiler/src/main/java</source>-->
+                     <!--</sources>-->
                   </configuration>
                </execution>
             </executions>

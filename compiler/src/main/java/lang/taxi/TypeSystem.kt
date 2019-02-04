@@ -1,7 +1,6 @@
 package lang.taxi
 
-import lang.taxi.types.ObjectType
-import lang.taxi.types.PrimitiveType
+import lang.taxi.types.*
 import org.antlr.v4.runtime.Token
 
 internal data class TypeProxy(override val qualifiedName: String, private val typeSystem: TypeSystem) : Type {
@@ -21,7 +20,7 @@ internal data class TypeProxy(override val qualifiedName: String, private val ty
     override val compilationUnits = listOf(CompilationUnit.unspecified())
 }
 
-class TypeSystem(importedTypes: List<Type>) {
+class TypeSystem(importedTypes: List<Type>) : TypeProvider {
 
     private val importedTypeMap: Map<String, Type> = importedTypes.associateBy { it.qualifiedName }
     private val types = mutableMapOf<String, Type>()
@@ -84,7 +83,7 @@ class TypeSystem(importedTypes: List<Type>) {
 
     }
 
-    fun getType(qualifiedName: String): Type {
+    override fun getType(qualifiedName: String): Type {
         if (PrimitiveType.isPrimitiveType(qualifiedName)) {
             return PrimitiveType.fromDeclaration(qualifiedName)
         }

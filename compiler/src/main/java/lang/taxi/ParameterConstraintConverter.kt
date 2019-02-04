@@ -3,6 +3,7 @@ package lang.taxi
 import lang.taxi.services.*
 import lang.taxi.types.Field
 import lang.taxi.types.ObjectType
+import lang.taxi.types.Type
 import lang.taxi.types.TypeAlias
 
 interface ConstraintProvider {
@@ -95,7 +96,7 @@ class AttributeConstantConstraintProvider : ValidatingConstraintProvider {
     // Unwraps type aliases, if present
     private fun getUnderlyingType(type: Type, constraint: AttributeConstantValueConstraint, target: ConstraintTarget): ObjectType {
         return when (type) {
-            is TypeAlias -> getUnderlyingType(type.aliasType!!,constraint, target)
+            is TypeAlias -> getUnderlyingType(type.aliasType!!, constraint, target)
             is ObjectType -> type
             else -> throw MalformedConstraintException("Constraint for field ${constraint.fieldName} on ${target.description} is malfored - onstraints are only supported on Object types.", constraint)
         }
@@ -122,7 +123,7 @@ class AttributeValueFromParameterConstraintProvider : ConstraintProvider {
 
     override fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type): Constraint {
         val constraintDefinition = constraint.parameterExpectedValueConstraintExpression()!!
-        return AttributeValueFromParameterConstraint(constraintDefinition.Identifier().text, AttributePath(constraintDefinition.qualifiedName()))
+        return AttributeValueFromParameterConstraint(constraintDefinition.Identifier().text, constraintDefinition.qualifiedName().toAttributePath())
     }
 }
 
@@ -132,7 +133,7 @@ class ReturnValueDerivedFromInputConstraintProvider : ConstraintProvider {
     }
 
     override fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type): Constraint {
-        return ReturnValueDerivedFromParameterConstraint(AttributePath(constraint.operationReturnValueOriginExpression().qualifiedName()))
+        return ReturnValueDerivedFromParameterConstraint(constraint.operationReturnValueOriginExpression().qualifiedName().toAttributePath())
     }
 
 }

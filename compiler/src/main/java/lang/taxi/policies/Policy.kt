@@ -1,6 +1,7 @@
 package lang.taxi.policies
 
 import lang.taxi.*
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
 
 data class Policy(
