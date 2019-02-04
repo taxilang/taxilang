@@ -1,0 +1,3 @@
+function DataType(name: string = "") {
+
+}

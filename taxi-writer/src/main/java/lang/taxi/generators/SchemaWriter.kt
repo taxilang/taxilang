@@ -10,7 +10,7 @@ import lang.taxi.services.Service
 import lang.taxi.types.*
 
 
-class SchemaWriter {
+open class SchemaWriter {
     private val formatter = SourceFormatter()
     fun generateSchemas(docs: List<TaxiDocument>): List<String> {
         return docs.flatMap { generateSchema(it) }

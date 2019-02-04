@@ -32,6 +32,10 @@ data class PolicyScope(val operationType: String = WILDCARD_OPERATION_TYPE, val 
         return operationTypeMatches && scopeMatches
     }
 
+    override fun toString(): String {
+        return "Policy scope $operationType ${operationScope.symbol}"
+    }
+
     private fun operationScopeMatches(policyScope: OperationScope, operationScope: OperationScope): Boolean {
         // TODO : Haven't given this much thought, so this needs revisiting.
         // In theory, if one of the scopes covers both internal & external, then it's a match,
@@ -153,6 +157,7 @@ data class InstructionProcessor(
 
 interface Instruction {
     val type: Instruction.InstructionType
+    val description: String
 
     // Processors commend out for now.
     // https://gitlab.com/vyne/vyne/issues/52
@@ -190,6 +195,7 @@ interface Instruction {
 
 object PermitInstruction : Instruction {
     override val type = Instruction.InstructionType.PERMIT
+    override val description: String = type.symbol
 
     override fun toString(): String {
         return "Instruction permit"
@@ -199,7 +205,8 @@ object PermitInstruction : Instruction {
 
 data class FilterInstruction(val fieldNames: List<String> = emptyList()) : Instruction {
     override val type = Instruction.InstructionType.FILTER
-
+    override val description: String
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     val isFilterAll = fieldNames.isEmpty()
 
     override fun toString(): String {

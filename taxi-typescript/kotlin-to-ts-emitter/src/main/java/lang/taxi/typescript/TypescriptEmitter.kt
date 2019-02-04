@@ -1,6 +1,7 @@
 package lang.taxi.typescript
 
 import lang.taxi.CompilationUnit
+import lang.taxi.TaxiDocument
 import lang.taxi.Type
 import lang.taxi.services.Operation
 import lang.taxi.services.Service
@@ -22,8 +23,9 @@ object ErrorFixes {
             // Remove references to CompilationUnit - since they're not really relevant
             "compilationUnits: CompilationUnit[];" to "",
             "compilationUnit: CompilationUnit;" to "",
-            "source: CompilationUnit;" to ""
+            "source: CompilationUnit;" to "",
 
+            "interface" to "export interface"
 
     )
 }
@@ -48,18 +50,33 @@ fun main(args: Array<String>) {
                     PrimitiveType::class,
                     TypeAlias::class,
                     Operation::class,
-                    Service::class
+                    Service::class,
+
+                    ObjectTypeDefinition::class,
+                    ObjectTypeExtension::class,
+
+                    TaxiDocument::class
             ),
             ignoreSuperclasses = setOf(
                     CompilationUnit::class
             )
     )
     val file = File(outputPath)
-    val generated = generator.definitionsText
+//    val generated = generator.definitionsText
+    val manuallyManagedTypes = listOf("UserType", "ObjectType","TypeAlias")
+    val manualInterfaceDeclarations = manuallyManagedTypes.flatMap { listOf("interface $it ", "interface $it<") }
+    val generated = generator.individualDefinitions.filter { def ->
+        manualInterfaceDeclarations.none { def.contains(it) }
+    }.joinToString("\n\n")
     val patched = ErrorFixes.replacements.foldRight(generated) { errorFix, definitionText ->
         val (errorToFix, replacement) = errorFix
         definitionText.replace(errorToFix, replacement)
     }
+
+
+    val imports = """
+import { ${manuallyManagedTypes.joinToString(", ")}} from "./types";
+    """.trimIndent()
 
     val prefix = """
 /**
@@ -69,6 +86,8 @@ fun main(args: Array<String>) {
  *
  * To recreate, run the TypescriptEmitter program
  */
+
+ $imports
 
     """.trimIndent()
 
