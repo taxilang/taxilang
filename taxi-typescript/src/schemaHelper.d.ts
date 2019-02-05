@@ -1,8 +1,11 @@
 import * as taxi from './schema';
-import { SchemaWriter } from "./schemaWriter";
+import { Service } from './schema';
+import { Type } from "./types";
 export declare class SchemaHelper {
     readonly doc: taxi.TaxiDocument;
-    writer: SchemaWriter;
     constructor(doc: taxi.TaxiDocument);
-    type(name: string): taxi.Type;
+    hasType(name: string): boolean;
+    type(name: string): Type;
+    readonly schemaText: string;
+    service(name: string): Service;
 }

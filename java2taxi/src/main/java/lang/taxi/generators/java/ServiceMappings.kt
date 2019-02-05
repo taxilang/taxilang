@@ -1,8 +1,6 @@
 package lang.taxi.generators.java
 
 import lang.taxi.AnnotatedElementWrapper
-import lang.taxi.CompilationUnit
-import lang.taxi.Type
 import lang.taxi.TypeNames
 import lang.taxi.annotations.Operation
 import lang.taxi.annotations.ResponseContract
@@ -12,6 +10,8 @@ import lang.taxi.services.Constraint
 import lang.taxi.services.OperationContract
 import lang.taxi.services.Parameter
 import lang.taxi.services.Service
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Type
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Method
 import kotlin.reflect.KClass

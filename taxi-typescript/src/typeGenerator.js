@@ -14,10 +14,35 @@ const _ = __importStar(require("lodash"));
 // https://stackoverflow.com/a/171499/59015
 // I hate regex.
 const QUOTED_VALUE_REGEX = new RegExp(/(["'])(\\?.)*?\1/g);
-class TypeGenerator {
-    constructor(nodes) {
-        this.nodes = nodes;
+class DefaultTypeMapperFactory {
+    build(typeHelper) {
+        return new DefaultTypeGenerator(typeHelper);
+    }
+}
+exports.DefaultTypeMapperFactory = DefaultTypeMapperFactory;
+class DefaultTypeGenerator {
+    constructor(typeHelper) {
+        this.typeHelper = typeHelper;
         this.constructedTypes = new Map();
+        this.build();
+    }
+    build() {
+        this.typeHelper.objectTypeDeclarations
+            .filter(typeNode => {
+            return this.isDeclaredDataType(typeNode);
+        })
+            .map(type => this.generate(type));
+    }
+    getTypeOrDefault(node, defaultType) {
+        if (!node) {
+            return defaultType;
+        }
+        if (ts.isTypeReferenceNode(node)) {
+            return this.getOrBuildType(this.typeHelper.getNameFromIdentifier(node.typeName));
+        }
+        else {
+            throw TODO("Not sure how to lookup type");
+        }
     }
     get types() {
         return Array.from(this.constructedTypes.values());
@@ -29,8 +54,8 @@ class TypeGenerator {
             this.constructedTypes.set(typeAlias.qualifiedName, typeAlias);
             return typeAlias;
         }
-        let typescriptDeclaredName = this.getObjectTypeName(node, false);
-        let typeNameInTaxi = this.getObjectTypeName(node, true);
+        let typescriptDeclaredName = this.typeHelper.getObjectTypeName(node, false);
+        let typeNameInTaxi = this.typeHelper.getObjectTypeName(node, true);
         let type = new types_1.ObjectType(typeNameInTaxi, null);
         // Store the type now, undefined, so that other types may reference it (or it may reference itself)
         // Store the type using it's name as it appears in ts, not as it will be generated in taxi
@@ -38,11 +63,19 @@ class TypeGenerator {
         let fields = Optional.values(node.members
             .map((member) => this.generateField(member)));
         let heritageClauses = node.heritageClauses || [];
-        let inheritetedTypes = _.flatMap(heritageClauses, clause => clause.types.map(inheitedType => this.getOrBuildType(this.getName(inheitedType.expression))));
+        let inheritedTypes = _.flatMap(heritageClauses, clause => clause.types.map(inheritedType => {
+            if (ts.isIdentifier(inheritedType.expression)) {
+                return this.getOrBuildType(inheritedType.expression.escapedText.toString());
+            }
+            else {
+                throw new Error("Not sure what to do here.");
+            }
+            // this.getOrBuildType(inheritedType.expression.escapedText) as ObjectType
+        }));
         type.definition = {
             annotations: [],
             fields: fields,
-            inheritsFrom: inheritetedTypes,
+            inheritsFrom: inheritedTypes,
             modifiers: [] // TODO
         };
         return type;
@@ -78,7 +111,7 @@ class TypeGenerator {
             return Primitives.forNodeKind(type.kind);
         }
         else if (ts.isTypeReferenceNode(type)) {
-            let typeName = this.getName(type.typeName);
+            let typeName = this.typeHelper.getNameFromIdentifier(type.typeName);
             return this.getOrBuildType(typeName);
         }
         else {
@@ -91,14 +124,7 @@ class TypeGenerator {
             return this.constructedTypes.get(typescriptTypeName);
         }
         else {
-            let typeDeclarationNode = this.nodes.find(node => {
-                // Don't consider the @DataType( ... ) name when looking in source, as we're looking for the token, not the compiler type
-                if (ts.isInterfaceDeclaration(node) && this.getObjectTypeName(node, false) == typescriptTypeName)
-                    return true;
-                if (ts.isTypeAliasDeclaration(node) && this.getName(node.name, false) == typescriptTypeName)
-                    return true;
-                return false;
-            });
+            let typeDeclarationNode = this.typeHelper.findType(typescriptTypeName);
             if (!typeDeclarationNode) {
                 throw new Error(`No definition for type ${typescriptTypeName} found, cannot construct typedef.`);
             }
@@ -116,79 +142,24 @@ class TypeGenerator {
             throw Error("Unadanled name type");
         }
     }
-    getName(typeName, considerExplicitNameTags = true) {
-        if (considerExplicitNameTags && this.hasExplicitName(typeName)) {
-            return this.getExplicitName(typeName);
-        }
-        if (ts.isIdentifier(typeName)) {
-            return typeName.escapedText.toString();
-        }
-        else if (ts.isQualifiedName(typeName)) {
-            return typeName.right.escapedText.toString();
-        }
-        else {
-            throw new Error("Unable to get name from node with type " + typeName);
-        }
-    }
-    getObjectTypeName(node, considerExplicitNameTags = true) {
-        if (ts.isInterfaceDeclaration(node)) {
-            return this.getName(node.name, considerExplicitNameTags);
-        }
-        else if (ts.isClassLike(node)) {
-            if (node.name) {
-                return this.getName(node.name, considerExplicitNameTags);
-            }
-            else {
-                throw new Error("Classes without names are not supported");
-            }
-        }
-        else {
-            throw new Error("Unhandled type declaration : " + node.kind);
-        }
-    }
     createTypeAlias(node) {
         const aliasedType = this.lookupType(node.type);
-        const name = this.getName(node.name);
+        const name = this.typeHelper.getName(node);
         const def = {
             aliasType: aliasedType,
             annotations: [] // TODO
         };
         return new types_1.TypeAlias(name, def);
     }
-    getExplicitName(typeName) {
-        let jsDocs;
-        let container = typeName;
-        switch (true) {
-            case container.hasOwnProperty("jsDoc"):
-                jsDocs = container.jsDoc;
-                break;
-            case container.parent.hasOwnProperty("jsDoc"):
-                jsDocs = container.parent.jsDoc;
-                break;
-            default:
-                return undefined;
+    isDeclaredDataType(typeNode) {
+        if (ts.isInterfaceDeclaration(typeNode)) {
+            let dataTypeTags = this.typeHelper.getJsDocTags(typeNode, "DataType");
+            return dataTypeTags.length > 0;
         }
-        let dataTypeTags = jsDocs
-            .filter(doc => doc.tags)
-            .map(doc => {
-            return doc.tags.find(tag => tag.tagName.escapedText === "DataType");
-        });
-        if (!dataTypeTags)
-            return undefined;
-        let dataTypeTag = dataTypeTags[0];
-        if (dataTypeTag && dataTypeTag.comment) {
-            const name = dataTypeTag.comment.match(QUOTED_VALUE_REGEX);
-            return (name) ? name[0].slice(1, -1) : undefined;
-        }
-        else {
-            return undefined;
-        }
-    }
-    hasExplicitName(typeName) {
-        return this.getExplicitName(typeName) !== undefined;
+        return false;
     }
 }
-exports.TypeGenerator = TypeGenerator;
+exports.DefaultTypeGenerator = DefaultTypeGenerator;
 function TODO(message = "TODO") {
     throw new Error(message);
     return new Error(message);
@@ -196,6 +167,7 @@ function TODO(message = "TODO") {
 class PrimitiveType {
     constructor(declaration) {
         this.declaration = declaration;
+        this.kind = types_1.TypeKind.PrimitiveType;
         this.qualifiedName = `lang.taxi.${this.declaration}`;
     }
 }
@@ -221,6 +193,7 @@ Primitives.ANY = new PrimitiveType("Any");
 Primitives.DOUBLE = new PrimitiveType("Double");
 Primitives.VOID = new PrimitiveType("Void");
 Primitives.primitives = new Map();
+exports.Primitives = Primitives;
 Primitives.initialize();
 // class Optional<T> {
 //    const

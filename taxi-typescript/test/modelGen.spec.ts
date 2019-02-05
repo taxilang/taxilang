@@ -1,12 +1,11 @@
 import {SchemaHelper} from "../src/schemaHelper";
 import {expect} from "chai";
-import {SchemaGenerator} from "../src/schemaGenerator";
+import {SchemaGenerator, SchemaGeneratorOptions} from "../src/schemaGenerator";
 import * as ts from 'typescript'
 import {ObjectType} from "../src/types";
+import {schemaFromFile, schemaFromSrc} from "./testUtils";
 
 describe("Taxi model generator", () => {
-
-
    describe("kitchen sink generation", () => {
       const taxiDoc = schemaFromFile("./test/testModels.ts");
       it("should generate a model for a user type correctly", () => {
@@ -17,7 +16,10 @@ describe("Taxi model generator", () => {
          expect(clientType.field("personName").type.qualifiedName).to.equal("foo.PersonName");
          expect(clientType.field("age").type.qualifiedName).to.equal("lang.taxi.Int");
          expect(clientType.field("active").type.qualifiedName).to.equal("lang.taxi.Boolean");
-         expect(clientType.field("referrer").type.qualifiedName).to.equal("Client")
+         expect(clientType.field("referrer").type.qualifiedName).to.equal("Client");
+
+         expect(taxiDoc.type("demo.FirstName")).not.to.be.undefined;
+         expect(taxiDoc.type("LastName")).not.to.be.undefined;
       });
 
    });
@@ -25,7 +27,7 @@ describe("Taxi model generator", () => {
    it("should generate a model with an explicit name correctly", () => {
       const schema = schemaFromSrc(`
 /**
- * @DataType("foo.Client")
+ * @DataType foo.Client
  */
 interface Client {}      
 `);
@@ -42,21 +44,24 @@ interface Client {}
       expect(schema.type("Client")).to.not.be.undefined;
    });
 
-   // TODO : Should probably just skip it if the @DataType tag isn't present?
-   it("should use the class name if no @DataType tag is present", () => {
+   it("should not map an interface no @DataType tag is present", () => {
       const schema = schemaFromSrc(`
 interface Client {}
 `);
-      expect(schema.type("Client")).to.not.be.undefined;
+      expect(schema.hasType("Client")).to.be.false;
    });
 
    it("should map inheritence correctly", () => {
       const schema = schemaFromSrc(`
 interface Foo {}
 /**
- * @DataType("test.Bar")
+ * @DataType test.Bar
  */
 interface Bar {}
+
+/**
+ * @DataType
+ */
 interface Baz extends Foo, Bar
 `);
       let type = schema.type("Baz") as ObjectType;
@@ -65,47 +70,4 @@ interface Baz extends Foo, Bar
       expect(type.inheritsFrom.some(t => t.qualifiedName == "test.Bar")).to.be.true
    })
 });
-
-export function schemaFromFile(fileName: string): SchemaHelper {
-   return new SchemaHelper(new SchemaGenerator([fileName]).generate());
-}
-
-function schemaFromSrc(src: string): SchemaHelper {
-
-   let outputs: any[] = [];
-   let compilerHost: ts.CompilerHost = {
-      getSourceFile: function (filename: any, languageVersion: any) {
-         if (filename === "file.ts")
-            return ts.createSourceFile(filename, src, ts.ScriptTarget.ESNext);
-         if (filename === "lib.d.ts")
-            return ts.createSourceFile(filename, "", ts.ScriptTarget.ESNext);
-      },
-      readFile: function (filename) {
-         if (filename === "file.ts") return src;
-         return undefined
-      },
-      writeFile: function (name: string, text: string, writeByteOrderMark: boolean) {
-         outputs.push({name: name, text: text, writeByteOrderMark: writeByteOrderMark});
-      },
-      getDefaultLibFileName: function () {
-         return "lib.d.ts";
-      },
-      useCaseSensitiveFileNames: function () {
-         return false;
-      },
-      getCanonicalFileName: function (filename: string) {
-         return filename;
-      },
-      getCurrentDirectory: function () {
-         return "";
-      },
-      getNewLine: function () {
-         return "\n";
-      },
-      fileExists(fileName: string): boolean {
-         return fileName === "file.ts" || fileName == "lib.d.ts"
-      }
-   };
-   return new SchemaHelper(new SchemaGenerator(["file.ts"], compilerHost).generate());
-}
 

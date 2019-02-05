@@ -1,8 +1,6 @@
 package lang.taxi.generators
 
-import lang.taxi.Annotatable
 import lang.taxi.TaxiDocument
-import lang.taxi.Type
 import lang.taxi.services.Constraint
 import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract

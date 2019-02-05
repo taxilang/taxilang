@@ -1,19 +1,63 @@
 import * as ts from 'typescript';
-import {Field, Type, TypeAliasDefinition} from "./schema";
-import {ObjectType, TypeAlias, UserType} from "./types";
+import {Field, TypeAliasDefinition} from "./schema";
+import {ObjectType, Type, TypeAlias, TypeKind, UserType} from "./types";
 import * as _ from 'lodash';
+import {TypeHelper} from "./typeHelper";
 
 // Regex for matching values inside a quotation.
 // https://stackoverflow.com/a/171499/59015
 // I hate regex.
 const QUOTED_VALUE_REGEX = new RegExp(/(["'])(\\?.)*?\1/g);
 
-export class TypeGenerator {
-   constructor(readonly nodes: ts.Node[]) {
 
+export interface TypeMapperFactory {
+   build(typeHelper: TypeHelper): TypeMapper
+}
+
+export interface TypeMapper {
+
+   // generate(node: ts.ObjectTypeDeclaration): Type
+
+   // buildTypes(): Type[]
+
+   readonly types: Type[];
+
+   getTypeOrDefault(node: ts.Node | undefined, defaultType: Type): Type;
+}
+
+export class DefaultTypeMapperFactory implements TypeMapperFactory {
+   build(typeHelper: TypeHelper): TypeMapper {
+      return new DefaultTypeGenerator(typeHelper)
+   }
+
+}
+
+export class DefaultTypeGenerator implements TypeMapper {
+   constructor(readonly typeHelper: TypeHelper) {
+      this.build()
    }
 
    private constructedTypes: Map<string, UserType<any, any>> = new Map();
+
+   private build() {
+      this.typeHelper.objectTypeDeclarations
+         .filter(typeNode => {
+            return this.isDeclaredDataType(typeNode);
+         })
+         .map(type => this.generate(type));
+   }
+
+
+   getTypeOrDefault(node: ts.Node, defaultType: Type): Type {
+      if (!node) {
+         return defaultType;
+      }
+      if (ts.isTypeReferenceNode(node)) {
+         return this.getOrBuildType(this.typeHelper.getNameFromIdentifier(node.typeName))
+      } else {
+         throw TODO("Not sure how to lookup type")
+      }
+   }
 
    get types(): Type[] {
       return Array.from(this.constructedTypes.values());
@@ -26,8 +70,8 @@ export class TypeGenerator {
          this.constructedTypes.set(typeAlias.qualifiedName, typeAlias);
          return typeAlias
       }
-      let typescriptDeclaredName = this.getObjectTypeName(node, false);
-      let typeNameInTaxi = this.getObjectTypeName(node, true);
+      let typescriptDeclaredName = this.typeHelper.getObjectTypeName(node, false);
+      let typeNameInTaxi = this.typeHelper.getObjectTypeName(node, true);
       let type = new ObjectType(typeNameInTaxi, null);
 
       // Store the type now, undefined, so that other types may reference it (or it may reference itself)
@@ -38,13 +82,19 @@ export class TypeGenerator {
          .map((member: any) => this.generateField(member)));
 
       let heritageClauses: ts.HeritageClause[] = (<any>node).heritageClauses || [];
-      let inheritetedTypes = _.flatMap(heritageClauses, clause => clause.types.map(inheitedType =>
-         this.getOrBuildType(this.getName(inheitedType.expression as ts.Identifier)) as ObjectType
-      ));
+      let inheritedTypes = _.flatMap(heritageClauses, clause => clause.types.map(inheritedType => {
+         if (ts.isIdentifier(inheritedType.expression)) {
+            return this.getOrBuildType(inheritedType.expression.escapedText.toString()) as ObjectType
+         } else {
+            throw new Error("Not sure what to do here.")
+         }
+
+         // this.getOrBuildType(inheritedType.expression.escapedText) as ObjectType
+      }));
       type.definition = {
          annotations: [], // TODO
          fields: fields,
-         inheritsFrom: inheritetedTypes, // TODO,
+         inheritsFrom: inheritedTypes,
          modifiers: [] // TODO
       };
 
@@ -85,7 +135,7 @@ export class TypeGenerator {
       if (Primitives.forNodeKind(type.kind)) {
          return Primitives.forNodeKind(type.kind) as Type
       } else if (ts.isTypeReferenceNode(type)) {
-         let typeName = this.getName(type.typeName);
+         let typeName = this.typeHelper.getNameFromIdentifier(type.typeName);
          return this.getOrBuildType(typeName)
       } else {
          console.log("Unhanled type.kind:  " + type.kind);
@@ -97,12 +147,7 @@ export class TypeGenerator {
       if (this.constructedTypes.has(typescriptTypeName)) {
          return this.constructedTypes.get(typescriptTypeName) as Type
       } else {
-         let typeDeclarationNode = this.nodes.find(node => {
-            // Don't consider the @DataType( ... ) name when looking in source, as we're looking for the token, not the compiler type
-            if (ts.isInterfaceDeclaration(node) && this.getObjectTypeName(node, false) == typescriptTypeName) return true;
-            if (ts.isTypeAliasDeclaration(node) && this.getName(node.name, false) == typescriptTypeName) return true;
-            return false;
-         });
+         let typeDeclarationNode = this.typeHelper.findType(typescriptTypeName);
          if (!typeDeclarationNode) {
             throw new Error(`No definition for type ${typescriptTypeName} found, cannot construct typedef.`)
          }
@@ -120,37 +165,9 @@ export class TypeGenerator {
       }
    }
 
-   private getName(typeName: ts.EntityName, considerExplicitNameTags: boolean = true): string {
-      if (considerExplicitNameTags && this.hasExplicitName(typeName)) {
-         return this.getExplicitName(typeName)!
-      }
-      if (ts.isIdentifier(typeName)) {
-         return typeName.escapedText.toString()
-      } else if (ts.isQualifiedName(typeName)) {
-         return typeName.right.escapedText.toString()
-      } else {
-         throw new Error("Unable to get name from node with type " + typeName)
-      }
-
-   }
-
-   private getObjectTypeName(node: ts.ObjectTypeDeclaration, considerExplicitNameTags: boolean = true): string {
-      if (ts.isInterfaceDeclaration(node)) {
-         return this.getName(node.name, considerExplicitNameTags)
-      } else if (ts.isClassLike(node)) {
-         if (node.name) {
-            return this.getName(node.name, considerExplicitNameTags)
-         } else {
-            throw new Error("Classes without names are not supported")
-         }
-      } else {
-         throw new Error("Unhandled type declaration : " + node.kind)
-      }
-   }
-
    private createTypeAlias(node: ts.TypeAliasDeclaration): TypeAlias {
       const aliasedType = this.lookupType(node.type);
-      const name = this.getName(node.name);
+      const name = this.typeHelper.getName(node);
       const def: TypeAliasDefinition = {
          aliasType: aliasedType,
          annotations: [] // TODO
@@ -158,40 +175,15 @@ export class TypeGenerator {
       return new TypeAlias(name, def);
    }
 
-   private getExplicitName(typeName: ts.EntityName): string | undefined {
-      let jsDocs: ts.JSDoc[];
-      let container: any = typeName;
-      switch (true) {
-         case container.hasOwnProperty("jsDoc"):
-            jsDocs = container.jsDoc;
-            break;
-         case container.parent.hasOwnProperty("jsDoc"):
-            jsDocs = container.parent.jsDoc;
-            break;
-         default:
-            return undefined;
+
+   private isDeclaredDataType(typeNode: ts.ObjectTypeDeclaration): boolean {
+      if (ts.isInterfaceDeclaration(typeNode)) {
+         let dataTypeTags = this.typeHelper.getJsDocTags(typeNode, "DataType");
+         return dataTypeTags.length > 0;
       }
-      let dataTypeTags = jsDocs
-         .filter(doc => doc.tags)
-         .map(doc => {
-            return doc.tags!.find(tag => tag.tagName.escapedText === "DataType");
-         });
-
-      if (!dataTypeTags) return undefined;
-      let dataTypeTag = dataTypeTags[0];
-
-      if (dataTypeTag && dataTypeTag.comment) {
-         const name = dataTypeTag.comment.match(QUOTED_VALUE_REGEX);
-
-         return (name) ? name[0].slice(1, -1) : undefined;
-      } else {
-         return undefined;
-      }
+      return false;
    }
 
-   private hasExplicitName(typeName: ts.EntityName): boolean {
-      return this.getExplicitName(typeName) !== undefined
-   }
 }
 
 
@@ -201,6 +193,8 @@ function TODO(message: string = "TODO"): Error {
 }
 
 class PrimitiveType implements Type {
+   kind: TypeKind = TypeKind.PrimitiveType;
+
    constructor(readonly declaration: string) {
 
    }
@@ -208,7 +202,7 @@ class PrimitiveType implements Type {
    readonly qualifiedName: string = `lang.taxi.${this.declaration}`
 }
 
-class Primitives {
+export class Primitives {
    static BOOLEAN = new PrimitiveType("Boolean");
    static STRING = new PrimitiveType("String");
    static INTEGER = new PrimitiveType("Int");

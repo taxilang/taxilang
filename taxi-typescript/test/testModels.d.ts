@@ -9,14 +9,15 @@ interface Client {
     referrer: Client;
 }
 /**
- * @DataType("foo.PersonName")
+ * @DataType foo.PersonName
  * tag to ensure we can use names in tags
  */
 interface PersonName {
     firstName: FirstName;
-    lastName: string;
+    lastName: LastName;
 }
 /**
- * @DataType("demo.FirstName")
+ * @DataType demo.FirstName
  */
 declare type FirstName = string;
+declare type LastName = string;

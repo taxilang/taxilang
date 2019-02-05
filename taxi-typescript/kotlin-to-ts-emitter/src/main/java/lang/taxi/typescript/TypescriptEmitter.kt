@@ -1,8 +1,6 @@
 package lang.taxi.typescript
 
-import lang.taxi.CompilationUnit
 import lang.taxi.TaxiDocument
-import lang.taxi.Type
 import lang.taxi.services.Operation
 import lang.taxi.services.Service
 import lang.taxi.types.*
@@ -12,7 +10,8 @@ import java.io.File
 import java.nio.charset.Charset
 import java.time.Instant
 
-const val DEFAULT_PATH = "../../src/schema.ts"
+const val DEFAULT_PATH = "/home/martypitt/dev/vyne/taxi-lang/taxi-typescript/src/schema.ts"
+//const val DEFAULT_PATH = "../../src/schema.ts"
 
 object ErrorFixes {
     val replacements = listOf<Pair<String, String>>(
@@ -45,7 +44,6 @@ fun main(args: Array<String>) {
             rootClasses = setOf(
                     EnumType::class,
                     ArrayType::class,
-                    Type::class,
                     ObjectType::class,
                     PrimitiveType::class,
                     TypeAlias::class,
@@ -63,7 +61,7 @@ fun main(args: Array<String>) {
     )
     val file = File(outputPath)
 //    val generated = generator.definitionsText
-    val manuallyManagedTypes = listOf("UserType", "ObjectType","TypeAlias")
+    val manuallyManagedTypes = listOf("UserType", "ObjectType", "TypeAlias", "Type","EnumType","ArrayType")
     val manualInterfaceDeclarations = manuallyManagedTypes.flatMap { listOf("interface $it ", "interface $it<") }
     val generated = generator.individualDefinitions.filter { def ->
         manualInterfaceDeclarations.none { def.contains(it) }

@@ -35,7 +35,6 @@
       <module>kotlin</module>
       <module>lang-to-taxi-api</module>
       <module>taxi-typescript/kotlin-to-ts-emitter</module>
-      <module>taxi-writer-js</module>
       <module>core-types</module>
    </modules>
 
@@ -83,7 +82,16 @@
 
    <dependencyManagement>
       <dependencies>
-
+         <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib-jdk8</artifactId>
+            <version>${kotlin.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-reflect</artifactId>
+            <version>${kotlin.version}</version>
+         </dependency>
       </dependencies>
    </dependencyManagement>
    <build>
