@@ -178,7 +178,7 @@ export class DefaultTypeGenerator implements TypeMapper {
 
    private isDeclaredDataType(typeNode: ts.ObjectTypeDeclaration): boolean {
       if (ts.isInterfaceDeclaration(typeNode)) {
-         let dataTypeTags = this.typeHelper.getJsDocTags(typeNode, "DataType");
+         let dataTypeTags = this.typeHelper.getJsDocTags(typeNode, "DataType", false);
          return dataTypeTags.length > 0;
       }
       return false;

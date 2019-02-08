@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import {schemaFromFile} from "./testUtils";
+import {schemaFromFile} from "../src/schemaUtils";
 
 describe("generating services", () => {
    it("should generate a service", () => {
@@ -14,4 +14,6 @@ describe("generating services", () => {
       expect(operation.parameters[0].type.qualifiedName).to.equal("foo.EmailAddress");
       expect(operation.returnType.qualifiedName).to.equal("Client")
    });
+
+
 });

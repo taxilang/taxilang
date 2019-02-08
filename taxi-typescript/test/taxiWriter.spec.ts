@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import {schemaFromFile} from "./testUtils";
+import {schemaFromFile} from "../src/schemaUtils";
 
 describe("Taxi writer", () => {
 

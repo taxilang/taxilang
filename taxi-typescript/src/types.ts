@@ -118,7 +118,7 @@ export class QualifiedName {
    }
 
    get fullyQualifiedName(): string {
-      return `${this.namespace}.${this.typeName}`
+      return (this.namespace) ? `${this.namespace}.${this.typeName}` : this.typeName
    }
 
    static forType(type: Named): QualifiedName {

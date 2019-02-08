@@ -3,20 +3,78 @@ import * as _ from "lodash";
 
 export type NodePredicate = (value: ts.Node) => boolean;
 
-
-export class TypeHelper {
-   constructor(readonly nodes: ts.Node[]) {
+export class TypescriptTypeName {
+   constructor(readonly typeName: string, readonly declaringModule?: string) {
    }
 
-   hasJsDocTag(tagName: string): NodePredicate {
+   /**
+    * returns true if type names match, and the module name passed is
+    * a child of the declaring module.
+    *
+    * Used where we don't care which file within a package declares a type - just that the type is within the
+    * package.  (ie; @types/aws-lambda vs @types/aws-lambda/index)
+    * @param moduleName
+    * @param typeName
+    */
+   nameLooksCloseTo(moduleName: string, typeName: string): boolean {
+      return this.moduleIsChildOf(moduleName) && typeName == this.typeName
+   }
+
+   moduleIsChildOf(name: string): boolean {
+      if (!this.declaringModule) return false;
+      return this.declaringModule.includes(name)
+   }
+}
+
+
+export class TypeHelper {
+   private typeChecker: ts.TypeChecker;
+
+   constructor(readonly nodes: ts.Node[], private program: ts.Program) {
+      this.typeChecker = program.getTypeChecker();
+   }
+
+   getFullyQualifiedName(node: ts.Node): TypescriptTypeName {
+      let type = this.typeChecker.getTypeAtLocation(node);
+      if (!type) {
+         throw new Error("Node is not a type")
+      }
+
+      let symbol = type.aliasSymbol;
+      if (!symbol) {
+         throw new Error("Type does not declare an aliasSymbol. This is not yet handled, but could be.")
+      }
+      let declaringModuleName: string | undefined;
+      if (symbol && symbol.hasOwnProperty("parent")) {
+         let parent = (<any>symbol).parent as ts.Symbol;
+
+         // The idea is that node_modules may be nested, so pick the last one.
+         let declaringModules = parent.escapedName.toString().split("node_modules");
+         let declaringModule = declaringModules[declaringModules.length - 1];
+         if (declaringModule.startsWith("/")) {
+            declaringModuleName = declaringModule.substr(1)
+         } else {
+            declaringModuleName = declaringModule;
+         }
+      }
+
+      return new TypescriptTypeName(symbol.escapedName.toString(), declaringModuleName);
+   }
+
+   hasJsDocTag(tagName: string, caseSensitive: boolean = false): NodePredicate {
       return (node: ts.Node) => {
-         return this.getJsDocTags(node, tagName).length > 0;
+         return this.getJsDocTags(node, tagName, caseSensitive).length > 0;
       }
    }
 
-   getTypesWithJsDocTag(tagName: string): ts.ObjectTypeDeclaration[] {
-      return this.getTypeDeclarations(this.hasJsDocTag(tagName));
+   getTypesWithJsDocTag(tagName: string, caseSensitive: boolean = false): ts.ObjectTypeDeclaration[] {
+      return this.getTypeDeclarations(this.hasJsDocTag(tagName, caseSensitive));
    }
+
+   getNodesWithJsDocTag(tagName: string): ts.Node[] {
+      return this.nodes.filter(this.hasJsDocTag(tagName))
+   }
+
 
    getTypeDeclarations(filter: NodePredicate): ts.ObjectTypeDeclaration[] {
       return this.nodes
@@ -44,6 +102,47 @@ export class TypeHelper {
       }
       return typeDeclarationNode as ts.ObjectTypeDeclaration
 
+   }
+
+   findExportedNode(name: string): ts.Node {
+      let parts = name.split(".");
+      // Note : I'm sure there are valid scenarios where the length might be different,
+      // but need to handle those once I understand them
+      if (parts.length !== 2) {
+         throw new Error("Expected the name to be in the format of 'foo.bar', with exactly two parts.")
+      }
+      let [srcFileName, exportName] = parts;
+      let matchingNodes = this.program.getSourceFiles()
+         .map(srcFile => {
+            let srcFileSymbol = this.typeChecker.getSymbolAtLocation(srcFile);
+            return (srcFileSymbol && this.stripQuotes(srcFileSymbol.escapedName.toString()) == srcFileName) ? srcFileSymbol : null;
+         }).filter(o => o) // filter not null
+         .map(srcFileSymbol => {
+            if (srcFileSymbol && srcFileSymbol.exports) {
+               let srcFileExports: ts.SymbolTable = srcFileSymbol.exports;
+               let escapedExportName: ts.__String = exportName as ts.__String;
+               return srcFileExports.get(escapedExportName)
+            }
+            return undefined;
+         }).filter(o => o); // filter not undefined
+
+      if (matchingNodes.length === 0) {
+         throw new Error(`No symbol with name ${name} was found`)
+      } else if (matchingNodes.length > 1) {
+         throw new Error(`Found multiple exported symbols with name ${name}`)
+      }
+      let matchingNode = matchingNodes[0]!;
+      // this.typeChecker.getExportSpecifierLocalTargetSymbol(matchingNode.declarations[0])
+      let matchingSymbol = this.typeChecker.getAliasedSymbol(matchingNode);
+      return matchingSymbol.valueDeclaration;
+   }
+
+   private stripQuotes(input: string, quoteChar: string = '"'): string {
+      if (input.startsWith(quoteChar) && input.endsWith(quoteChar)) {
+         return input.slice(1, -1)
+      } else {
+         return input
+      }
    }
 
    getNameFromIdentifier(identifier: ts.EntityName): string {
@@ -118,7 +217,7 @@ export class TypeHelper {
       return this.getExplicitName(typeName) !== undefined
    }
 
-   getJsDocTags(node: ts.Node, tagName: string): ts.JSDocTag[] {
+   getJsDocTags(node: ts.Node, tagName: string, caseSensitive: boolean): ts.JSDocTag[] {
       if (!this.isJsDocContainer(node)) {
          return [];
       }
@@ -128,7 +227,11 @@ export class TypeHelper {
       let tags = _.flatMap(docsWithTags, jsDoc => {
          return jsDoc.tags || []
       })
-         .filter(tag => tag.tagName.escapedText === tagName);
+         .filter(tag => {
+            return (caseSensitive)
+               ? tag.tagName.escapedText === tagName
+               : tag.tagName.escapedText.toString().toLowerCase() === tagName.toLowerCase()
+         });
       return tags;
    }
 
@@ -136,17 +239,18 @@ export class TypeHelper {
       return node.hasOwnProperty("jsDoc")
    }
 
-   getMembersWithJsDocTag(node: ts.ObjectTypeDeclaration, tagName: string): ts.ClassElement[] | ts.TypeElement[] {
+   getMembersWithJsDocTag(node: ts.ObjectTypeDeclaration, tagName: string, caseSensitive: boolean = false): ts.ClassElement[] | ts.TypeElement[] {
       if (ts.isClassLike(node)) {
-         return node.members.filter(this.hasJsDocTag(tagName))
+         return node.members.filter(this.hasJsDocTag(tagName, caseSensitive))
       } else if (ts.isInterfaceDeclaration(node)) {
-         return node.members.filter(this.hasJsDocTag(tagName))
+         return node.members.filter(this.hasJsDocTag(tagName, caseSensitive))
       } else if (ts.isTypeLiteralNode(node)) {
-         return node.members.filter(this.hasJsDocTag(tagName))
+         return node.members.filter(this.hasJsDocTag(tagName, caseSensitive))
       } else {
          throw new Error("Unhandled members type")
       }
    }
+
 }
 
 export interface JsDocContainer {

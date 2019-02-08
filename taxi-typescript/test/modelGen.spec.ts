@@ -3,7 +3,7 @@ import {expect} from "chai";
 import {SchemaGenerator, SchemaGeneratorOptions} from "../src/schemaGenerator";
 import * as ts from 'typescript'
 import {ObjectType} from "../src/types";
-import {schemaFromFile, schemaFromSrc} from "./testUtils";
+import {schemaFromFile, schemaFromSrc} from "../src/schemaUtils";
 
 describe("Taxi model generator", () => {
    describe("kitchen sink generation", () => {
