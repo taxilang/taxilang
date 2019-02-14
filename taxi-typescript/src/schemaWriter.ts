@@ -96,7 +96,7 @@ ${serviceString}
    }
 
    private generateServiceDeclaration(service: Service, namespace: string): string {
-      let operations = service.operations.map(operation => this.generateOperationDeclaration(operation, namespace))
+      let operations = service.operations.map(operation => this.generateOperationDeclaration(operation, namespace)).join("\n\n");
 
       return `
 ${this.generateAnnotations(service)}
@@ -106,10 +106,10 @@ ${operations}
 
    }
 
-   private generateOperationDeclaration(operation: Operation, namespace: string): string {
+   generateOperationDeclaration(operation: Operation, namespace: string): string {
       let paramsString = operation.parameters.map(param => {
          let constraintString = ""; // TODO
-         let annotations = ""; // TODO
+         let annotations = this.generateAnnotations(param); // TODO
 
          let paramName = (param.name) ? `${param.name} : ` : "";
          let paramDeclaration = this.typeAsTaxi(param.type, namespace);
@@ -151,8 +151,8 @@ ${operations}
             return "@" + annotation.name
          }
          let annotationParams = paramKeys.map(key => {
-            `${key} = ${this.quoteIfNeeded(annotation.parameters[key]!)}`
-         });
+            return `${key} = ${this.quoteIfNeeded(annotation.parameters[key]!)}`
+         }).join(", ");
          return `@${annotation.name}(${annotationParams})`
       }).join("\n")
    }

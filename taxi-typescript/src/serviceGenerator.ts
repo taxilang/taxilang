@@ -61,7 +61,7 @@ export class DefaultServiceMapper implements ServiceMapper {
 
    private generateOperation(member: ts.Node): Operation {
       let provider = this.operationProviders.find(o => o.canProvideFor(member));
-      if (!provider) throw new Error("No provider is found for node");
+      if (!provider) throw new Error("No operation provider was found to generate an operation from source: " + member.getFullText());
       return provider.getOperation(member);
    }
 

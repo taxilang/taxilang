@@ -1,8 +1,14 @@
 import {SchemaHelper} from "./schemaHelper";
 import {SchemaGenerator, SchemaGeneratorOptions} from "./schemaGenerator";
 import * as ts from "typescript";
+import * as fs from "fs";
 
 export function schemaFromFile(fileName: string, options: SchemaGeneratorOptions = new SchemaGeneratorOptions()): SchemaHelper {
+   if (!fs.existsSync(fileName)) {
+      let path = fs.realpathSync(fileName);
+      throw new Error(`Invalid file: ${fileName} (tried at ${path})`)
+   }
+
    if (!options) {
       options = new SchemaGeneratorOptions()
    }

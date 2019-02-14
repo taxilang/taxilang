@@ -1,20 +1,72 @@
 import {expect} from "chai";
-import {schemaFromFile} from "../src/schemaUtils";
+import {Annotation, Operation, Primitives, schemaFromFile, SchemaWriter, Type, TypeKind} from "../src";
 
 describe("Taxi writer", () => {
 
-   describe("Kitchen sink test", () => {
-      it("should generate expected taxi for model", () => {
-         let schema = schemaFromFile("./test/testModels.ts").schemaText;
-         expect(schema).to.equal("")
-         // let taxi = writer.generateSchemas();
-      });
+    describe("Kitchen sink test", () => {
+        it("should generate expected taxi for model", () => {
+            let schema = schemaFromFile("./test/testModels.ts").schemaText;
+            expect(schema).to.equal("")
+            // let taxi = writer.generateSchemas();
+        });
 
-      it("should generate expected taxi for service", () => {
-         let schema = schemaFromFile("./test/testServices.ts").schemaText;
-         expect(schema).to.equal("")
-      })
-   })
+        it("should generate expected taxi for service", () => {
+            let schema = schemaFromFile("./test/testServices.ts").schemaText;
+            expect(schema).to.equal("")
+        });
+
+        it("should generate expected taxi for an operation", () => {
+                let operation = <Operation>{
+                    annotations: [annotation("HttpOperation", {"method": "GET", "baseUrl": "http://foo.bar/{SomeType}"})],
+                    name: "MyOperation",
+                    parameters: [
+                        {
+                            name: "firstArg",
+                            type: <Type>{
+                                qualifiedName: "foo.Client",
+                                kind: TypeKind.PrimitiveType
+                            },
+                            annotations: [],
+                            constraints: [],
+                            description: ""
+                        },
+                        {
+                            name: null,
+                            type: <Type>{
+                                qualifiedName: "foo.Bar",
+                                kind: TypeKind.PrimitiveType
+                            },
+                            annotations: [annotation("RequestBody", {})],
+                        }],
+                    returnType: Primitives.STRING,
+                    contract: null,
+                    scope: null
+
+                };
+
+                let operationTaxi = new SchemaWriter().generateOperationDeclaration(operation, "test.namespace");
+                let expected = `
+@HttpOperation(method = "GET", baseUrl = "http://foo.bar/{SomeType}")
+operation MyOperation( firstArg : foo.Client, @RequestBody foo.Bar ) : lang.taxi.String
+            `.trim();
+                expect(noSpace(operationTaxi)).to.equal(noSpace(expected))
+            }
+        )
+    })
 
 });
 
+/**
+ * Removes all whitespace
+ * @param input
+ */
+function noSpace(input: string): string {
+    return input.replace(/ +?/g, '');
+}
+
+function annotation(name: string, parameters: { [key: string]: any }): Annotation {
+    return <Annotation>{
+        name,
+        parameters
+    }
+}
