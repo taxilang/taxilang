@@ -1,6 +1,6 @@
 package lang.taxi.jvm.common
 
-import lang.taxi.Type
+import lang.taxi.types.Type
 import lang.taxi.types.PrimitiveType
 import java.math.BigDecimal
 import java.math.BigInteger

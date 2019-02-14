@@ -2,7 +2,7 @@
    "name": "@taxilang/taxi-typescript",
    "version": "0.1.0",
    "description": "",
-   "main": "index.js",
+   "main": "dist/index.js",
    "scripts": {
       "link": "npm run build && cd dist && npm link",
       "build": "rm dist/** -rf && tsc -p tsconfig.app.json && cp package.json dist/",

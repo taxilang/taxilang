@@ -4,6 +4,7 @@ import com.winterbe.expekt.expect
 import lang.taxi.services.AttributeConstantValueConstraint
 import lang.taxi.services.AttributeValueFromParameterConstraint
 import lang.taxi.services.ReturnValueDerivedFromParameterConstraint
+import lang.taxi.types.PrimitiveType
 import lang.taxi.types.VoidType
 import org.junit.Test
 
@@ -134,11 +135,12 @@ service MyService {
     operation somethingElse()
 }
         """.trimIndent()
-        val doc = Compiler.forStrings( source).compile()
+        val doc = Compiler.forStrings(source).compile()
         expect(doc.service("MyService").operation("readSomething").scope).to.equal("read")
         expect(doc.service("MyService").operation("writeSomething").scope).to.equal("write")
         expect(doc.service("MyService").operation("somethingElse").scope).to.be.`null`
     }
+
     @Test
     fun servicesCanDeclareContractsOnReturnValues() {
         val source = """
@@ -185,12 +187,27 @@ service MyService {
         expect(contract.returnTypeConstraints[0]).to.be.instanceof(ReturnValueDerivedFromParameterConstraint::class.java)
         val returnValueFromInputConstraiint = contract.returnTypeConstraints[0] as ReturnValueDerivedFromParameterConstraint
         expect(returnValueFromInputConstraiint.path).to.equal("request.source")
-        expect(returnValueFromInputConstraiint.attributePath.parts).to.contain.elements("request","source")
+        expect(returnValueFromInputConstraiint.attributePath.parts).to.contain.elements("request", "source")
 
         expect(contract.returnTypeConstraints[1]).to.be.instanceof(AttributeValueFromParameterConstraint::class.java)
         val attributeValueFromInputConstraiint = contract.returnTypeConstraints[1] as AttributeValueFromParameterConstraint
         expect(attributeValueFromInputConstraiint.fieldName).to.equal("currency")
         expect(attributeValueFromInputConstraiint.attributePath.path).to.equal("request.target")
-        expect(attributeValueFromInputConstraiint.attributePath.parts).to.contain.elements("request","target")
+        expect(attributeValueFromInputConstraiint.attributePath.parts).to.contain.elements("request", "target")
     }
+
+    @Test
+    fun operationsCanReturnFullyQualifiedNameType() {
+        val src = """
+service MyService {
+   operation op1(  ) : lang.taxi.String
+   operation op2(  ) : String
+}
+
+        """.trimIndent()
+        val doc = Compiler.forStrings(src).compile()
+        expect(doc.service("MyService").operation("op1").returnType).to.equal(PrimitiveType.STRING)
+        expect(doc.service("MyService").operation("op2").returnType).to.equal(PrimitiveType.STRING)
+    }
+
 }

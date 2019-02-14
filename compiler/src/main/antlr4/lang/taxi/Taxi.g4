@@ -288,6 +288,11 @@ optionalType
    ;
 
 primitiveType
+    : primitiveTypeName
+    | 'lang.taxi.' primitiveTypeName
+    ;
+
+primitiveTypeName
     :   'Boolean'
     |   'String'
     |   'Int'
