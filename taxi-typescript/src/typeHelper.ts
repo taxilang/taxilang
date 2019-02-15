@@ -145,7 +145,7 @@ export class TypeHelper {
       }
    }
 
-   getNameFromIdentifier(identifier: ts.EntityName): string {
+   static getNameFromIdentifier(identifier: ts.EntityName): string {
       if (ts.isIdentifier(identifier)) {
          return identifier.escapedText.toString()
       } else if (ts.isQualifiedName(identifier)) {

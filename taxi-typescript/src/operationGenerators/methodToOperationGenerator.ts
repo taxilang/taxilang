@@ -19,13 +19,13 @@ export class MethodToOperationGenerator implements OperationProvider {
       if (!ts.isMethodSignature(member)) {
          throw new Error("Cannot generate an operation - looks like the wrong type was provided")
       }
-      let name = this.typeHelper.getNameFromIdentifier(member.name as ts.Identifier);
+      let name = TypeHelper.getNameFromIdentifier(member.name as ts.Identifier);
       let returnType = this.typeMapper.getTypeOrDefault(member.type, Primitives.VOID)
       let parameters = member.parameters.map(param => {
          let paramType = this.typeMapper.getTypeOrDefault(param.type, Primitives.ANY);
          let paramName: string | null;
          if (ts.isIdentifier(param.name)) {
-            paramName = this.typeHelper.getNameFromIdentifier(param.name)
+            paramName = TypeHelper.getNameFromIdentifier(param.name)
          } else {
             paramName = null;
          }

@@ -116,7 +116,7 @@ ${operations}
          return annotations + paramName + paramDeclaration + constraintString
       }).join(", ");
       let returnType: string;
-      if (operation.returnType === Primitives.VOID) {
+      if (!operation.returnType || operation.returnType === Primitives.VOID) {
          returnType = ""
       } else {
          let returnTypeName = this.typeAsTaxi(operation.returnType, namespace);

@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import {Annotation, Operation, Primitives, schemaFromFile, SchemaWriter, Type, TypeKind} from "../src";
+import {Annotation, Operation, Primitives, schemaFromFile, schemaFromSrc, SchemaWriter, Type, TypeKind} from "../src";
 
 describe("Taxi writer", () => {
 
@@ -13,6 +13,21 @@ describe("Taxi writer", () => {
         it("should generate expected taxi for service", () => {
             let schema = schemaFromFile("./test/testServices.ts").schemaText;
             expect(schema).to.equal("")
+        });
+
+        it("should generate arrays correctly", () => {
+           let schema = schemaFromSrc(`
+/**
+ * @DataType
+ */
+ interface Person {
+    friends : Person[]
+ }`).schemaText;
+            expect(noSpace(schema)).to.equal(noSpace(`
+type Person {
+   friends : Person[]
+}`))
+
         });
 
         it("should generate expected taxi for an operation", () => {
@@ -61,7 +76,7 @@ operation MyOperation( firstArg : foo.Client, @RequestBody foo.Bar ) : lang.taxi
  * @param input
  */
 function noSpace(input: string): string {
-    return input.replace(/ +?/g, '');
+    return input.replace(/ +?/g, '').replace(/(\n)+/g,'');
 }
 
 function annotation(name: string, parameters: { [key: string]: any }): Annotation {

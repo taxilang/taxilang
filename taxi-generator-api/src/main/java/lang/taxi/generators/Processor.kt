@@ -1,6 +1,6 @@
 package lang.taxi.generators
 
-import lang.taxi.Type
+import lang.taxi.types.Type
 import lang.taxi.types.Field
 
 interface Processor {
