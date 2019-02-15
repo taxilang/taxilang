@@ -202,7 +202,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
 
     private fun qualify(namespace: Namespace, type: TaxiParser.TypeTypeContext): String {
         return if (type.primitiveType() != null) {
-            PrimitiveType.fromToken(type).qualifiedName
+            PrimitiveType.fromDeclaration(type.primitiveType()!!.text).qualifiedName
         } else {
             qualify(namespace, type.classOrInterfaceType().text)
         }
