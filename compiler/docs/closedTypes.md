@@ -18,9 +18,11 @@ For example, in the `Money` type above, neither the `amount` nor the `currency` 
  A type may close over another type:
  
  ```
+ // OrderItem is open.
  type OrderItem { ... }
  closed type Order {
     items : OrderItem[]
+    // Even though OrderValue isn't a closed type, it becomes "closed" in this context, as it's parent is closed. 
     orderValue : OrderValue as Money
  }
  ```

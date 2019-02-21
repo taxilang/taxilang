@@ -46,6 +46,7 @@ typeModifier
 // and that frameworks should freely construct
 // these types based on known values.
     : 'parameter'
+    | 'closed'
     ;
 
 typeDeclaration
@@ -65,8 +66,11 @@ typeBody
      :   annotation* fieldDeclaration
      ;
 
+ fieldModifier
+    : 'closed'
+    ;
  fieldDeclaration
-     :   Identifier ':' typeType
+     :   fieldModifier? Identifier ':' typeType
      ;
 
 typeType

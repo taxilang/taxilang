@@ -508,4 +508,45 @@ namespace foo {
         expect(imports).to.contain(QualifiedName.from("test.FirstName"))
     }
 
+    @Test
+    fun given_aTypeDoesNotDeclareClosed_then_itDoesNotHaveTheClosedModifier() {
+        val src = """
+type Money {
+    amount : MoneyAmount as Decimal
+    currency : Currency as String
+}
+        """.trimIndent()
+        val taxi = Compiler(src).compile()
+        expect(taxi.objectType("Money").modifiers).to.be.empty
+    }
+
+    @Test
+    fun canDeclareATypeAsClosed() {
+        val src = """
+closed type Money {
+    amount : MoneyAmount as Decimal
+    currency : Currency as String
+}
+        """.trimIndent()
+        val taxi = Compiler(src).compile()
+        val money = taxi.objectType("Money")
+        expect(money.modifiers).to.have.size(1)
+        expect(money.modifiers).to.contain(Modifier.CLOSED)
+    }
+
+
+    @Test
+    fun canDeclareAPropertyAsClosed() {
+        val src = """
+type Trade {
+   trader : UserId as String
+   closed settlementCurrency : Currency as String
+}
+        """.trimIndent()
+        val taxi = Compiler(src).compile()
+        val trade = taxi.objectType("Trade")
+        expect(trade.field("settlementCurrency").modifiers).to.contain(FieldModifier.CLOSED)
+    }
+
+
 }

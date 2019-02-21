@@ -333,6 +333,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
                     name = unescape(member.fieldDeclaration().Identifier().text),
                     type = type,
                     nullable = member.fieldDeclaration().typeType().optionalType() != null,
+                    modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
                     annotations = fieldAnnotations,
                     constraints = mapConstraints(member.fieldDeclaration().typeType(), type)
             )
@@ -341,6 +342,13 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
         val modifiers = parseModifiers(ctx.typeModifier())
         val inherits = parseInheritance(namespace, ctx.listOfInheritedTypes())
         this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields.toSet(), annotations.toSet(), modifiers, inherits, ctx.toCompilationUnit())))
+    }
+
+    private fun mapFieldModifiers(fieldModifier: TaxiParser.FieldModifierContext?): List<FieldModifier> {
+        if (fieldModifier == null) return emptyList();
+        val modifier = FieldModifier.values().firstOrNull { it.token == fieldModifier.text }
+                ?: error("Unknown field modifier: ${fieldModifier.text}")
+        return listOf(modifier)
     }
 
     private fun unescape(text: String): String {
