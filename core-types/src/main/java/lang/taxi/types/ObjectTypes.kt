@@ -33,13 +33,23 @@ internal fun <T, R> KProperty1<T, Collection<R>>.toSet(): T.() -> Set<R>? {
     }
 }
 
+enum class FieldModifier(val token: String) {
+    CLOSED("closed")
+}
+
 enum class Modifier(val token: String) {
 
     // A Parameter type indicates that the object
 // is used when constructing requests,
 // and that frameworks should freely construct
 // these types based on known values.
-    PARAMETER_TYPE("parameter");
+    PARAMETER_TYPE("parameter"),
+
+    /**
+     * Closed types can not be decomponsed into their individual parts,
+     * they only make sense as a single, cohesive unit.
+     */
+    CLOSED("closed");
 
     companion object {
         fun fromToken(token: String): Modifier {
@@ -165,6 +175,7 @@ data class Field(
         val name: String,
         val type: Type,
         val nullable: Boolean = false,
+        val modifiers: List<FieldModifier> = emptyList(),
         override val annotations: List<Annotation> = emptyList(),
         override val constraints: List<Constraint> = emptyList()
 ) : Annotatable, ConstraintTarget {
