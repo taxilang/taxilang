@@ -1,8 +1,11 @@
 package lang.taxi.policies
 
-import lang.taxi.*
+import lang.taxi.TaxiParser
+import lang.taxi.TypeResolver
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
+import lang.taxi.value
+import lang.taxi.valueOrNull
 
 data class Policy(
         override val qualifiedName: String,
@@ -207,7 +210,7 @@ object PermitInstruction : Instruction {
 data class FilterInstruction(val fieldNames: List<String> = emptyList()) : Instruction {
     override val type = Instruction.InstructionType.FILTER
     override val description: String
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = this.toString()
     val isFilterAll = fieldNames.isEmpty()
 
     override fun toString(): String {
