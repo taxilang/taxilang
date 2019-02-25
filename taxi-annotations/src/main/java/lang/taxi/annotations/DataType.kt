@@ -16,7 +16,9 @@ annotation class DataType(
          * The qualified name of the attribute within a taxonomy.
          * If blank, will be inferred from the class name
          */
-        val value: String = ""
+        val value: String = "",
+
+        val closed:Boolean = false
 
 )
 

@@ -1,8 +1,8 @@
 package lang.taxi.generators.java
 
-import lang.taxi.*
+import lang.taxi.TypeAliasRegistry
+import lang.taxi.TypeNames
 import lang.taxi.annotations.*
-import lang.taxi.annotations.Namespaces
 import lang.taxi.jvm.common.PrimitiveTypes
 import lang.taxi.kapt.KotlinTypeAlias
 import lang.taxi.types.*
@@ -235,9 +235,7 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
     private fun mapNewObjectType(element: AnnotatedElement, defaultNamespace: String, existingTypes: MutableSet<Type>): ObjectType {
         val name = getTargetTypeName(element, defaultNamespace)
         val fields = mutableSetOf<lang.taxi.types.Field>()
-        val modifiers = if (element.getAnnotation(ParameterType::class.java) != null) {
-            listOf(Modifier.PARAMETER_TYPE)
-        } else emptyList()
+        val modifiers = getTypeLevelModifiers(element)
 
 
         val inheritance = getInheritedTypes(TypeNames.typeFromElement(element), existingTypes, defaultNamespace) // TODO
@@ -249,6 +247,18 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
         existingTypes.add(objectType)
         fields.addAll(this.mapTaxiFields(lang.taxi.TypeNames.typeFromElement(element), defaultNamespace, existingTypes))
         return objectType
+    }
+
+    private fun getTypeLevelModifiers(element: AnnotatedElement): List<Modifier> {
+        val modifiers = mutableListOf<Modifier>();
+        if (element.getAnnotation(ParameterType::class.java) != null) {
+            modifiers.add(Modifier.PARAMETER_TYPE)
+        }
+        // Odd boolean comparison to account for nulls
+        if(element.getAnnotation(DataType::class.java)?.closed == true) {
+            modifiers.add(Modifier.CLOSED)
+        }
+        return modifiers
     }
 
     private fun getInheritedTypes(clazz: Class<*>, existingTypes: MutableSet<Type>, defaultNamespace: String): Set<ObjectType> {
