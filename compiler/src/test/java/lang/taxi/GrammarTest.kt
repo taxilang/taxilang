@@ -534,6 +534,21 @@ closed type Money {
         expect(money.modifiers).to.contain(Modifier.CLOSED)
     }
 
+    @Test
+    fun typeCanHaveMultipleModifiers() {
+        val src = """
+   parameter closed type Foo {
+      name : String
+   }
+
+        """.trimIndent()
+        val taxi = Compiler(src).compile()
+
+        val type = taxi.objectType("Foo")
+        expect(type.modifiers).to.have.size(2)
+        expect(type.modifiers).to.contain.elements(Modifier.PARAMETER_TYPE,Modifier.CLOSED)
+
+    }
 
     @Test
     fun canDeclareAPropertyAsClosed() {

@@ -50,7 +50,7 @@ typeModifier
     ;
 
 typeDeclaration
-    :  annotation* typeModifier? 'type' Identifier
+    :  annotation* typeModifier* 'type' Identifier
         ('inherits' listOfInheritedTypes)?
         typeBody
     ;

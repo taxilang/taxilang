@@ -362,11 +362,8 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
         }.toSet()
     }
 
-    private fun parseModifiers(typeModifier: TaxiParser.TypeModifierContext?): List<Modifier> {
-        typeModifier?.apply {
-            return listOf(Modifier.fromToken(typeModifier.text))
-        }
-        return emptyList()
+    private fun parseModifiers(typeModifier: MutableList<TaxiParser.TypeModifierContext>): List<Modifier> {
+        return typeModifier.map { Modifier.fromToken(it.text) }
     }
 
     private fun collateAnnotations(annotations: List<TaxiParser.AnnotationContext>): List<Annotation> {
