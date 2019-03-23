@@ -177,7 +177,8 @@ data class Field(
         val nullable: Boolean = false,
         val modifiers: List<FieldModifier> = emptyList(),
         override val annotations: List<Annotation> = emptyList(),
-        override val constraints: List<Constraint> = emptyList()
+        override val constraints: List<Constraint> = emptyList(),
+        val accessor: Accessor? = null
 ) : Annotatable, ConstraintTarget {
 
     override val description: String = "field $name"
@@ -190,3 +191,14 @@ data class Field(
 
 
 }
+
+
+interface Accessor
+interface ExpressionAccessor : Accessor {
+    val expression: String
+}
+
+data class XpathAccessor(override val expression: String) : ExpressionAccessor
+data class JsonPathAccessor(override val expression: String) : ExpressionAccessor
+
+data class DestructuredAccessor(val fields: Map<String, Accessor>) : Accessor
