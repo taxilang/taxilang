@@ -70,13 +70,36 @@ typeBody
     : 'closed'
     ;
  fieldDeclaration
-     :   fieldModifier? Identifier ':' typeType
+     :   fieldModifier? Identifier ':' typeType accessor?
      ;
 
 typeType
     :   classOrInterfaceType parameterConstraint? listType? optionalType? aliasedType?
     |   primitiveType parameterConstraint? listType? optionalType?
     ;
+
+accessor : scalarAccessor | objectAccessor;
+
+scalarAccessor
+    : 'by' scalarAccessorExpression
+    ;
+
+scalarAccessorExpression
+    : xpathAccessorDeclaration
+    | jsonPathAccessorDeclaration
+    ;
+
+xpathAccessorDeclaration : 'xpath' '(' accessorExpression ')';
+jsonPathAccessorDeclaration : 'jsonPath' '(' accessorExpression ')';
+
+objectAccessor
+    : '{' destructuredFieldDeclaration* '}'
+    ;
+
+destructuredFieldDeclaration
+    : Identifier accessor
+    ;
+accessorExpression : StringLiteral;
 
 classOrInterfaceType
     :   Identifier /* typeArguments? */ ('.' Identifier /* typeArguments? */ )*

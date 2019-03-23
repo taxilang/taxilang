@@ -9,6 +9,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
 import java.io.File
+import kotlin.test.fail
 
 class GrammarTest {
 
@@ -546,7 +547,7 @@ closed type Money {
 
         val type = taxi.objectType("Foo")
         expect(type.modifiers).to.have.size(2)
-        expect(type.modifiers).to.contain.elements(Modifier.PARAMETER_TYPE,Modifier.CLOSED)
+        expect(type.modifiers).to.contain.elements(Modifier.PARAMETER_TYPE, Modifier.CLOSED)
 
     }
 
@@ -563,5 +564,132 @@ type Trade {
         expect(trade.field("settlementCurrency").modifiers).to.contain(FieldModifier.CLOSED)
     }
 
+    @Test
+    fun canDeclareAnXpathAccessor() {
+        val src = """
+type alias Instrument as String
+type LegacyTradeNotification {
+   instrument : Instrument by xpath("/some/xpath")
+}
+        """.trimIndent()
+        val taxi = Compiler(src).compile()
+        val notification = taxi.objectType("LegacyTradeNotification")
+        val field = notification.field("instrument")
+        val accessor = field.accessor as XpathAccessor
+        expect(accessor.expression).to.equal("/some/xpath")
+    }
+
+    @Test
+    fun canDeclareAJsonPAthAccessor() {
+        val src = """
+type alias Instrument as String
+type LegacyTradeNotification {
+   instrument : Instrument by jsonPath("$.foo[bar]")
+}
+        """.trimIndent()
+        val taxi = Compiler(src).compile()
+        val notification = taxi.objectType("LegacyTradeNotification")
+        val field = notification.field("instrument")
+        val accessor = field.accessor as JsonPathAccessor
+        expect(accessor.expression).to.equal("$.foo[bar]")
+    }
+
+    @Test
+    fun canDeclareAccessorsOnObjectTypes() {
+        val src = """
+type Money {
+   amount : MoneyAmount as Decimal
+   currency : Currency as String
+}
+type alias Instrument as String
+type NearLegNotional inherits Money {}
+type FarLegNotional inherits Money {}
+
+type LegacyTradeNotification {
+   instrument : Instrument by xpath("/some/xpath")
+   nearLegNotional : NearLegNotional {
+       amount by xpath("/legs[0]/amount")
+       currency by xpath("/legs[0]/currency")
+   }
+   farLegNotional : FarLegNotional {
+       amount by xpath("/legs[1]/amount")
+       currency by xpath("/legs[1]/currency")
+   }
+}
+        """.trimIndent()
+        val taxi = Compiler(src).compile()
+        val notification = taxi.objectType("LegacyTradeNotification")
+        val field = notification.field("nearLegNotional")
+        val accessor = field.accessor as DestructuredAccessor
+        val fieldAccessor = accessor.fields["amount"] as XpathAccessor
+        expect(fieldAccessor.expression).to.equal("/legs[0]/amount")
+    }
+
+    @Test
+    @Ignore("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
+    fun destructuredAccessorsCannotDeclareInvalidPropertyNames() {
+        val src = """
+type Money {
+   amount : MoneyAmount as Decimal
+   currency : Currency as String
+}
+
+type LegacyTradeNotification {
+   nearLegNotional : Money {
+       // value isn't valid
+       value by xpath("/legs[0]/amount")
+       currency by xpath("/legs[0]/currency")
+   }
+}
+"""
+        try {
+            val taxi = Compiler(src).compile()
+            fail("Expected compilation exception")
+        } catch (e: Exception) {
+            TODO()
+        }
+    }
+
+    @Test
+    @Ignore("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
+    fun destructuredAccessorsCanOmitOptionalProperties() {
+        val src = """
+type Money {
+   amount : MoneyAmount? as Decimal
+   currency : Currency as String
+}
+
+type LegacyTradeNotification {
+   nearLegNotional : Money {
+       currency by xpath("/legs[0]/currency")
+   }
+}
+"""
+        val taxi = Compiler(src).compile()
+        TODO()
+    }
+
+    @Test
+    @Ignore("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
+    fun destructuredAccessorsCannotOmitNonNullProperties() {
+        val src = """
+type Money {
+   amount : MoneyAmount as Decimal
+   currency : Currency as String
+}
+
+type LegacyTradeNotification {
+   nearLegNotional : Money {
+       currency by xpath("/legs[0]/currency")
+   }
+}
+"""
+        try {
+            val taxi = Compiler(src).compile()
+            fail("Expected compilation exception")
+        } catch (e: Exception) {
+            TODO()
+        }
+    }
 
 }

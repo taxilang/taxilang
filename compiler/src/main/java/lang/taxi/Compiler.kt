@@ -328,6 +328,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
     private fun compileType(namespace: Namespace, typeName: String, ctx: TaxiParser.TypeDeclarationContext) {
         val fields = ctx.typeBody().typeMemberDeclaration().map { member ->
             val fieldAnnotations = collateAnnotations(member.annotation())
+            val accessor = compileAccessor(member.fieldDeclaration().accessor())
             val type = parseType(namespace, member.fieldDeclaration().typeType())
             Field(
                     name = unescape(member.fieldDeclaration().Identifier().text),
@@ -335,13 +336,46 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
                     nullable = member.fieldDeclaration().typeType().optionalType() != null,
                     modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
                     annotations = fieldAnnotations,
-                    constraints = mapConstraints(member.fieldDeclaration().typeType(), type)
+                    constraints = mapConstraints(member.fieldDeclaration().typeType(), type),
+                    accessor = accessor
             )
         }
         val annotations = collateAnnotations(ctx.annotation())
         val modifiers = parseModifiers(ctx.typeModifier())
         val inherits = parseInheritance(namespace, ctx.listOfInheritedTypes())
         this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields.toSet(), annotations.toSet(), modifiers, inherits, ctx.toCompilationUnit())))
+    }
+
+    private fun compileAccessor(accessor: TaxiParser.AccessorContext?): Accessor? {
+        return when {
+            accessor == null -> null
+            accessor.scalarAccessor() != null -> compileSimpleAccessor(accessor.scalarAccessor())
+            accessor.objectAccessor() != null -> compileDestructuredAccessor(accessor.objectAccessor())
+            else -> null
+        }
+    }
+
+    private fun compileDestructuredAccessor(block: TaxiParser.ObjectAccessorContext): DestructuredAccessor {
+        val fields = block.destructuredFieldDeclaration().map { fieldDeclaration ->
+            val fieldName = fieldDeclaration.Identifier().text
+            val accessor = compileAccessor(fieldDeclaration.accessor())
+                    ?: throw CompilationException(fieldDeclaration.start, "Expected an accessor to be defined")
+            fieldName to accessor
+        }.toMap()
+        // TODO : Validate that the object is fully defined..
+        // No invalid fields declared
+        // No non-null fields omitted
+        return DestructuredAccessor(fields)
+    }
+
+    private fun compileSimpleAccessor(accessor: TaxiParser.ScalarAccessorContext): Accessor? {
+        val declaration = accessor.scalarAccessorExpression()
+        return when {
+            declaration.jsonPathAccessorDeclaration() != null -> JsonPathAccessor(declaration.jsonPathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
+            declaration.xpathAccessorDeclaration() != null -> XpathAccessor(declaration.xpathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
+            else -> error("Unhandled type of accessor expression")
+        }
+
     }
 
     private fun mapFieldModifiers(fieldModifier: TaxiParser.FieldModifierContext?): List<FieldModifier> {

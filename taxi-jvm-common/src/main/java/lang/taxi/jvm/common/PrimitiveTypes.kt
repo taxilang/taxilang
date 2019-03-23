@@ -14,7 +14,7 @@ object PrimitiveTypes {
             PrimitiveType.BOOLEAN to listOf(Boolean::class.java),
             PrimitiveType.STRING to listOf(String::class.java, Char::class.java),
             PrimitiveType.INTEGER to listOf(Int::class.java, BigInteger::class.java, Short::class.java, Long::class.java),
-            PrimitiveType.DECIMAL to listOf(Float::class.java, BigDecimal::class.java, Double::class.java),
+            PrimitiveType.DECIMAL to listOf(BigDecimal::class.java, Double::class.java, Float::class.java),
             PrimitiveType.LOCAL_DATE to listOf(LocalDate::class.java),
             PrimitiveType.TIME to listOf(LocalTime::class.java),
             PrimitiveType.DATE_TIME to listOf(Date::class.java),
@@ -44,6 +44,7 @@ object PrimitiveTypes {
         return this.javaTypeToPrimitive.filterKeys { it.canonicalName == qualifiedTypeName }
                 .values.first()
     }
+
 
     fun getJavaType(type: PrimitiveType): Class<*> {
         return this.taxiPrimitiveToJavaTypes[type]?.first() ?: error("Type ${type.name} is not mapped to a Java type")
