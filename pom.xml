@@ -100,6 +100,13 @@
       </dependencies>
    </dependencyManagement>
    <build>
+      <extensions>
+         <extension>
+            <groupId>org.springframework.build</groupId>
+            <artifactId>aws-maven</artifactId>
+            <version>5.0.0.RELEASE</version>
+         </extension>
+      </extensions>
       <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -212,5 +219,9 @@
          <name>taxi-lang-releases</name>
          <url>https://api.bintray.com/maven/taxi-lang/releases/${project.artifactId}/;publish=1</url>
       </repository>
+      <snapshotRepository>
+         <id>repo.vyne.co</id>
+         <url>s3://repo.vyne.co/snapshot</url>
+      </snapshotRepository>
    </distributionManagement>
 </project>
