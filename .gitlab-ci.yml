@@ -29,6 +29,7 @@ validate:
         - "*/target/surefire-reports/TEST-*.xml"
   except:
      - master
+     - develop
 
 publish-snapshot:
    image: maven:3.3.9-jdk-8
