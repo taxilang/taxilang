@@ -30,6 +30,7 @@ open class TaxiDocument(val types: Set<Type>,
         return typeMap[name] ?: throw error("No type named $name defined")
     }
 
+
     fun containsType(typeName: String) = typeMap.containsKey(typeName)
     fun containsService(serviceName: String) = servicesMap.containsKey(serviceName)
 

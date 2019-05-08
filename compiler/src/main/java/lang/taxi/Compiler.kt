@@ -39,6 +39,7 @@ class DocumentMalformedException(val errors: List<DocumentStrucutreError>) : Run
 class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocument> = emptyList()) {
     constructor(input: CharStream, importSources: List<TaxiDocument> = emptyList()) : this(listOf(input), importSources)
     constructor(source: String, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromString(source, "[unknown source]"), importSources)
+    constructor(source:String, file: File, importSources:List<TaxiDocument> = emptyList()) : this(CharStreams.fromString(source, file.canonicalPath), importSources)
     constructor(file: File, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromPath(file.toPath()), importSources)
 
     companion object {
