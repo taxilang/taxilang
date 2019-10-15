@@ -19,6 +19,7 @@ data class ObjectTypeDefinition(
         val annotations: Set<Annotation> = emptySet(),
         val modifiers: List<Modifier> = emptyList(),
         val inheritsFrom: Set<ObjectType> = emptySet(),
+        val typeDoc:String? = null,
         override val compilationUnit: CompilationUnit
 ) : TypeDefinition {
     private val equality = Equality(this, ObjectTypeDefinition::fields.toSet(), ObjectTypeDefinition::annotations.toSet(), ObjectTypeDefinition::modifiers.toSet())
@@ -135,6 +136,8 @@ data class ObjectType(
             return inheritedFields + fields
         }
 
+   val typeDoc:String?
+      get() { return this.definition?.typeDoc }
     val fields: List<Field>
         get() {
             return this.definition?.fields?.map { field ->

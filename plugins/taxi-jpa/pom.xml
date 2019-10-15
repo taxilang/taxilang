@@ -15,7 +15,7 @@
         <plugin.provider>Marty Pitt</plugin.provider>
         <plugin.dependencies />
     </properties>
-    
+
     <dependencies>
         <dependency>
             <groupId>lang.taxi</groupId>

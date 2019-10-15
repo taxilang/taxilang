@@ -343,8 +343,16 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
         val annotations = collateAnnotations(ctx.annotation())
         val modifiers = parseModifiers(ctx.typeModifier())
         val inherits = parseInheritance(namespace, ctx.listOfInheritedTypes())
-        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields.toSet(), annotations.toSet(), modifiers, inherits, ctx.toCompilationUnit())))
+       val typeDoc = parseTypeDoc(ctx.typeDoc()?.source()?.content)
+        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields.toSet(), annotations.toSet(), modifiers, inherits, typeDoc, CompilationUnit.of(ctx))))
     }
+
+   private fun parseTypeDoc(content: String?): String? {
+      if (content == null) {
+         return null;
+      }
+      return content.removeSurrounding("[[", "]]").trim()
+   }
 
     private fun compileAccessor(accessor: TaxiParser.AccessorContext?): Accessor? {
         return when {
