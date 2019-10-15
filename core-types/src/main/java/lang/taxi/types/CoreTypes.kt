@@ -1,11 +1,14 @@
 package lang.taxi.types
 
-import lang.taxi.*
+import lang.taxi.Equality
 
+interface TypeProvider {
+    fun getType(qualifiedName: String): Type
+}
 interface GenericType : Type {
     val parameters: List<Type>
 
-    fun resolveTypes(typeSystem: TypeSystem): GenericType
+    fun resolveTypes(typeSystem: TypeProvider): GenericType
 
     override fun toQualifiedName(): QualifiedName {
         val qualifiedName = QualifiedName.from(this.qualifiedName)
@@ -15,7 +18,7 @@ interface GenericType : Type {
 }
 
 data class ArrayType(val type: Type, val source: CompilationUnit) : GenericType {
-    override fun resolveTypes(typeSystem: TypeSystem): GenericType {
+    override fun resolveTypes(typeSystem: TypeProvider): GenericType {
         return this.copy(type = typeSystem.getType(type.qualifiedName))
     }
 
@@ -28,4 +31,11 @@ data class ArrayType(val type: Type, val source: CompilationUnit) : GenericType 
     override val parameters: List<Type> = listOf(type)
 
 
+}
+interface Annotatable {
+    val annotations: List<Annotation>
+}
+
+fun List<Annotatable>.annotations(): List<Annotation> {
+    return this.flatMap { it.annotations }
 }

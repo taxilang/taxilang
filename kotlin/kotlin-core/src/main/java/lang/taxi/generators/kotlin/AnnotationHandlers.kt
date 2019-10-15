@@ -3,8 +3,8 @@ package lang.taxi.generators.kotlin
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
-import lang.taxi.Annotatable
-import lang.taxi.Type
+import lang.taxi.types.Annotatable
+import lang.taxi.types.Type
 import lang.taxi.generators.FieldProcessor
 import lang.taxi.generators.TypeProcessor
 import lang.taxi.types.Annotation

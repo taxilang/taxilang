@@ -6,8 +6,8 @@ import io.swagger.oas.models.PathItem
 import io.swagger.oas.models.parameters.Parameter
 import io.swagger.oas.models.parameters.QueryParameter
 import io.swagger.oas.models.responses.ApiResponse
-import lang.taxi.CompilationUnit
-import lang.taxi.Type
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Type
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.OperationIdProvider
@@ -69,6 +69,7 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
 
         return lang.taxi.services.Operation(
                 operationId,
+                null, // scope - TODO
                 annotations.toAnnotations(),
                 parameters,
                 returnType,

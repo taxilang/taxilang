@@ -2,10 +2,10 @@ package lang.taxi.generators.java
 
 import com.google.common.annotations.VisibleForTesting
 import lang.taxi.TaxiDocument
-import lang.taxi.Type
 import lang.taxi.annotations.DataType
 import lang.taxi.annotations.Service
 import lang.taxi.generators.SchemaWriter
+import lang.taxi.types.Type
 
 class TaxiGenerator(val typeMapper: TypeMapper = DefaultTypeMapper(),
                     val serviceMapper: ServiceMapper = DefaultServiceMapper(),
@@ -27,7 +27,7 @@ class TaxiGenerator(val typeMapper: TypeMapper = DefaultTypeMapper(),
     internal fun generateModel(): TaxiDocument {
         generateTaxiTypes()
         generateTaxiServices()
-        return TaxiDocument(generatedTypes.toSet(), services.toSet())
+        return TaxiDocument(generatedTypes.toSet(), services.toSet(), emptySet())
     }
 
     private fun generateTaxiServices() {

@@ -28,10 +28,10 @@ class BuildCommand(val config: TaxiConfig, val pluginManager: PluginRegistry) : 
 
         val sourcesToOutput = pluginManager.declaredPlugins
                 .filterIsInstance<ModelGenerator>()
-                .flatMap {
-                    val plugin = it as Plugin
+                .flatMap { modelGenerator ->
+                    val plugin = modelGenerator as Plugin
                     log().info("Running generator ${plugin.id}")
-                    val generated = it.generate(doc, processorsFromPlugins)
+                    val generated = modelGenerator.generate(doc, processorsFromPlugins)
                     log().info("Generator ${plugin.id} generated ${generated.size} files")
                     generated
                 }

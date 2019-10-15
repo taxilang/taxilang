@@ -1,6 +1,6 @@
 package lang.taxi.generators.openApi
 
-import lang.taxi.QualifiedName
+import lang.taxi.types.QualifiedName
 
 object Utils {
     fun qualifyTypeNameIfRaw(typeName: String, defaultNamespace: String): String {

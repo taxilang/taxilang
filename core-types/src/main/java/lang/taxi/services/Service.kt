@@ -1,20 +1,21 @@
 package lang.taxi.services
 
-import lang.taxi.*
+import lang.taxi.Equality
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.toSet
 
 data class Parameter(override val annotations: List<Annotation>, val type: Type, val name: String?, override val constraints: List<Constraint>) : Annotatable, ConstraintTarget {
     override val description: String = "param $name"
 }
 
-data class Operation(val name: String, override val annotations: List<Annotation>, val parameters: List<Parameter>, val returnType: Type, override val compilationUnits: List<CompilationUnit>, val contract: OperationContract? = null) : Annotatable, Compiled {
+data class Operation(val name: String, val scope: String? = null, override val annotations: List<Annotation>, val parameters: List<Parameter>, val returnType: Type, override val compilationUnits: List<CompilationUnit>, val contract: OperationContract? = null) : Annotatable, Compiled {
     private val equality = Equality(this, Operation::name, Operation::annotations, Operation::parameters, Operation::returnType, Operation::contract)
 
     override fun equals(other: Any?) = equality.isEqualTo(other)
     override fun hashCode(): Int = equality.hash()
 
 }
+
 data class Service(override val qualifiedName: String, val operations: List<Operation>, override val annotations: List<Annotation>, override val compilationUnits: List<CompilationUnit>) : Annotatable, Named, Compiled {
     private val equality = Equality(this, Service::qualifiedName, Service::operations.toSet(), Service::annotations)
 

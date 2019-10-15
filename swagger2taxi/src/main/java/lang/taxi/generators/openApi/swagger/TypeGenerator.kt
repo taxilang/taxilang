@@ -1,7 +1,7 @@
 package lang.taxi.generators.openApi.swagger
 
-import lang.taxi.CompilationUnit
-import lang.taxi.Type
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Type
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.Utils
 import lang.taxi.types.*

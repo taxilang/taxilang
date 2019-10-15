@@ -29,9 +29,9 @@ class ServiceTests {
 
         @Operation
         @ResponseContract(basedOn = "source",
-                constraints = ResponseConstraint("currency = targetCurrency")
+                constraints = [ResponseConstraint("currency = targetCurrency")]
         )
-        fun convertRates(@Parameter(constraints = Constraint("currency = 'GBP'")) source: Money, @Parameter(name = "targetCurrency") targetCurrency: String): Money {
+        fun convertRates(@Parameter(constraints = [Constraint("currency = 'GBP'")]) source: Money, @Parameter(name = "targetCurrency") targetCurrency: String): Money {
             TODO("Not a real service")
         }
 
@@ -170,6 +170,28 @@ namespace taxi.example {
         TestHelpers.expectToCompileTheSame(taxiDef, expected)
     }
 
+
+    @Test
+    fun given_operationDeclaresScope_then_itIsExported() {
+        @Service("TestService")
+        @Namespace("taxi.example")
+        class TestService {
+            @Operation(scope = "read")
+            fun findEmail(input: String): String {
+                TODO("Not a real service")
+            }
+        }
+
+        val taxiDef = TaxiGenerator().forClasses(TestService::class.java).generateAsStrings()
+        val expected = """
+namespace taxi.example {
+    service TestService {
+        read operation findEmail( String ) : String
+    }
+}
+        """.trimIndent()
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
 }
 
 @DataType("taxi.PersonList")

@@ -355,11 +355,29 @@ namespace foo {
 
     }
 
+    @Test
+    fun given_dataTypeIndicatesTypeIsClosed_then_itIsMarkedAsClosedInGeneratedTaxi() {
+        @DataType("foo.Money", closed = true)
+        data class Money(val currency:String, val amount:Int)
+
+        val taxiDef = TaxiGenerator().forClasses(Money::class.java).generateAsStrings()
+        val expected = """
+namespace foo {
+    closed type Money {
+        currency : String
+        amount : Int
+    }
+}
+        """.trimIndent()
+        TestHelpers.expectToCompileTheSame(taxiDef, expected)
+    }
+
 
     @DataType("foo.Classification")
     enum class Classification {
         FICTION, NON_FICTION
     }
+
 
 }
 
@@ -377,7 +395,7 @@ typealias PersonName = String
 @DataType("foo.Adult")
 typealias Adult = Person
 
-@DataType
+@DataType("foo.Passengers")
 typealias Passengers = List<Person>
 
 @DataType("vyne.BaseType")

@@ -23,6 +23,11 @@ data class TypeAlias(
 ) : UserType<TypeAliasDefinition, TypeAliasExtension>, Annotatable {
     constructor(qualifiedName: String, aliasedType: Type, compilationUnit: CompilationUnit) : this(qualifiedName, TypeAliasDefinition(aliasedType, compilationUnit = compilationUnit))
 
+    override val referencedTypes: List<Type>
+        get() {
+            return if (isDefined) listOf(this.aliasType!!) else emptyList()
+        }
+
     override fun addExtension(extension: TypeAliasExtension): ErrorMessage? {
         this.extensions.add(extension)
         return null

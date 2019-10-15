@@ -3,20 +3,26 @@ package lang.taxi
 import lang.taxi.TaxiParser.ServiceDeclarationContext
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
-import java.lang.Exception
 
 internal typealias Namespace = String
-data class Tokens(val unparsedTypes: Map<String, Pair<Namespace, ParserRuleContext>>,
-                  val unparsedExtensions: List<Pair<Namespace, ParserRuleContext>>,
-                  val unparsedServices: Map<String, Pair<Namespace, ServiceDeclarationContext>>) {
+
+data class Tokens(
+        val imports: List<Pair<String, TaxiParser.ImportDeclarationContext>>,
+        val unparsedTypes: Map<String, Pair<Namespace, ParserRuleContext>>,
+        val unparsedExtensions: List<Pair<Namespace, ParserRuleContext>>,
+        val unparsedServices: Map<String, Pair<Namespace, ServiceDeclarationContext>>,
+        val unparsedPolicies: Map<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>) {
     fun plus(others: Tokens): Tokens {
         val errors = collectDuplicateTypes(others) + collectDuplicateServices(others)
         if (errors.isNotEmpty()) {
             throw CompilationException(errors)
         }
-        return Tokens(this.unparsedTypes + others.unparsedTypes,
+        return Tokens(
+                this.imports + others.imports,
+                this.unparsedTypes + others.unparsedTypes,
                 this.unparsedExtensions + others.unparsedExtensions,
-                this.unparsedServices + others.unparsedServices
+                this.unparsedServices + others.unparsedServices,
+                this.unparsedPolicies + others.unparsedPolicies
         )
     }
 
@@ -47,17 +53,25 @@ data class Tokens(val unparsedTypes: Map<String, Pair<Namespace, ParserRuleConte
 class TokenCollator : TaxiBaseListener() {
     val exceptions = mutableMapOf<ParserRuleContext, Exception>()
     private var namespace: String = Namespaces.DEFAULT_NAMESPACE
-
+    private var imports = mutableListOf<Pair<String, TaxiParser.ImportDeclarationContext>>()
 
     private val unparsedTypes = mutableMapOf<String, Pair<Namespace, ParserRuleContext>>()
     private val unparsedExtensions = mutableListOf<Pair<Namespace, ParserRuleContext>>()
     private val unparsedServices = mutableMapOf<String, Pair<Namespace, ServiceDeclarationContext>>()
+    private val unparsedPolicies = mutableMapOf<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>()
 //    private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
 //    private val unparsedExtensions = mutableListOf<ParserRuleContext>()
 //    private val unparsedServices = mutableMapOf<String, ServiceDeclarationContext>()
 
     fun tokens(): Tokens {
-        return Tokens(unparsedTypes, unparsedExtensions, unparsedServices)
+        return Tokens(imports, unparsedTypes, unparsedExtensions, unparsedServices, unparsedPolicies)
+    }
+
+    override fun exitImportDeclaration(ctx: TaxiParser.ImportDeclarationContext) {
+        collateExceptions(ctx)
+        imports.add(ctx.qualifiedName().Identifier().text() to ctx)
+
+        super.exitImportDeclaration(ctx)
     }
 
     override fun exitFieldDeclaration(ctx: TaxiParser.FieldDeclarationContext) {
@@ -87,12 +101,19 @@ class TokenCollator : TaxiBaseListener() {
 
     override fun enterNamespaceBody(ctx: TaxiParser.NamespaceBodyContext) {
         val parent = ctx.parent as ParserRuleContext
-        val namespaceNode = parent.getChild(TaxiParser.QualifiedNameContext::class.java,0)
+        val namespaceNode = parent.getChild(TaxiParser.QualifiedNameContext::class.java, 0)
         this.namespace = namespaceNode.Identifier().text()
         super.enterNamespaceBody(ctx)
     }
 
-
+    override fun exitPolicyDeclaration(ctx: TaxiParser.PolicyDeclarationContext) {
+        collateExceptions(ctx)
+        // TODO : Why did I have to change this?  Why is Identifier() retuning null now?
+        // Was:  qualify(ctx.policyIdentifier().Identifier().text)
+        val qualifiedName = qualify(ctx.policyIdentifier().text)
+        unparsedPolicies[qualifiedName] = namespace to ctx
+        super.exitPolicyDeclaration(ctx)
+    }
 
     override fun exitServiceDeclaration(ctx: ServiceDeclarationContext) {
         collateExceptions(ctx)

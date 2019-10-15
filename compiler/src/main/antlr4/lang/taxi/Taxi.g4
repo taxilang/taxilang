@@ -6,16 +6,17 @@ document
     ;
 
 singleNamespaceDocument
-    :   namespaceDeclaration? /*importDeclaration**/ toplevelObject* EOF
+    :  importDeclaration* namespaceDeclaration? toplevelObject* EOF
     ;
 
 multiNamespaceDocument
-    : /*importDeclaration**/  namespaceBlock* EOF
+    : importDeclaration* namespaceBlock* EOF
     ;
-// Imports not yet supported
-//importDeclaration
-//    :   'import' qualifiedName ('.' '*')? ';'
-//    ;
+
+importDeclaration
+    :   'import' qualifiedName
+    ;
+
 namespaceDeclaration
     :   'namespace' qualifiedName
     ;
@@ -35,6 +36,7 @@ toplevelObject
     |   typeExtensionDeclaration
     |   typeAliasDeclaration
     |   serviceDeclaration
+    |   policyDeclaration
 //    |   annotationTypeDeclaration
     ;
 
@@ -44,6 +46,7 @@ typeModifier
 // and that frameworks should freely construct
 // these types based on known values.
     : 'parameter'
+    | 'closed'
     ;
 
 // Typedoc is a special documentation block that wraps types.
@@ -54,7 +57,7 @@ typeDoc
    : '[[' .*? ']]';
 
 typeDeclaration
-    :  typeDoc? annotation* typeModifier? 'type' Identifier
+    :  typeDoc? annotation* typeModifier* 'type' Identifier
         ('inherits' listOfInheritedTypes)?
         typeBody
     ;
@@ -70,14 +73,40 @@ typeBody
      :   annotation* fieldDeclaration
      ;
 
+ fieldModifier
+    : 'closed'
+    ;
  fieldDeclaration
-     :   Identifier ':' typeType
+     :   fieldModifier? Identifier ':' typeType accessor?
      ;
 
 typeType
     :   classOrInterfaceType parameterConstraint? listType? optionalType? aliasedType?
     |   primitiveType parameterConstraint? listType? optionalType?
     ;
+
+accessor : scalarAccessor | objectAccessor;
+
+scalarAccessor
+    : 'by' scalarAccessorExpression
+    ;
+
+scalarAccessorExpression
+    : xpathAccessorDeclaration
+    | jsonPathAccessorDeclaration
+    ;
+
+xpathAccessorDeclaration : 'xpath' '(' accessorExpression ')';
+jsonPathAccessorDeclaration : 'jsonPath' '(' accessorExpression ')';
+
+objectAccessor
+    : '{' destructuredFieldDeclaration* '}'
+    ;
+
+destructuredFieldDeclaration
+    : Identifier accessor
+    ;
+accessorExpression : StringLiteral;
 
 classOrInterfaceType
     :   Identifier /* typeArguments? */ ('.' Identifier /* typeArguments? */ )*
@@ -131,12 +160,14 @@ serviceBody
     ;
 
  serviceOperationDeclaration
-     :   annotation* 'operation' operationSignature
+     :   annotation* operationScope? 'operation' operationSignature
      ;
 
 operationSignature
      :   annotation* Identifier '(' operationParameterList? ')' operationReturnType?
      ;
+
+operationScope : Identifier;
 
 operationReturnType
     : ':' typeType
@@ -183,6 +214,85 @@ parameterExpectedValueConstraintExpression
     | Identifier '=' qualifiedName
     ;
 
+policyDeclaration
+    :  annotation* 'policy' policyIdentifier 'against' typeType '{' policyRuleSet* '}';
+
+policyOperationType
+    : Identifier;
+
+policyRuleSet : policyOperationType policyScope? '{' (policyBody | policyInstruction) '}';
+
+policyScope : 'internal' | 'external';
+
+
+policyBody
+    :   policyStatement*
+    ;
+
+policyIdentifier : Identifier;
+
+policyStatement
+    : policyCase | policyElse;
+
+// TODO: Should consider revisiting this, so that operators are followed by valid tokens.
+// eg: 'in' must be followed by an array.  We could enforce this at the language, to simplify in Vyne
+policyCase
+    : 'case' policyExpression policyOperator policyExpression '->' policyInstruction
+    ;
+
+policyElse
+    : 'else' '->' policyInstruction
+    ;
+policyExpression
+    : callerIdentifer
+    | thisIdentifier
+    | literalArray
+    | literal;
+
+callerIdentifer : 'caller' '.' typeType;
+thisIdentifier : 'this' '.' typeType;
+
+// TODO: Should consider revisiting this, so that operators are followed by valid tokens.
+// eg: 'in' must be followed by an array.  We could enforce this at the language, to simplify in Vyne
+policyOperator
+    : '='
+    | '!='
+    | 'in'
+    ;
+
+literalArray
+    : '[' literal (',' literal)* ']'
+    ;
+
+policyInstruction
+    : policyInstructionEnum
+    | policyFilterDeclaration
+    ;
+
+policyInstructionEnum
+    : 'permit';
+
+policyFilterDeclaration
+    : 'filter' filterAttributeNameList?
+    ;
+
+filterAttributeNameList
+    : '(' Identifier (',' Identifier)* ')'
+    ;
+
+// processors currently disabled
+// https://gitlab.com/vyne/vyne/issues/52
+//policyProcessorDeclaration
+//    : 'process' 'using' qualifiedName policyProcessorParameterList?
+//    ;
+
+//policyProcessorParameterList
+//    : '(' policyParameter (',' policyParameter)* ')'
+//    ;
+
+//policyParameter
+//    : literal | literalArray;
+//
 
 expression
     :   primary
@@ -212,6 +322,11 @@ optionalType
    ;
 
 primitiveType
+    : primitiveTypeName
+    | 'lang.taxi.' primitiveTypeName
+    ;
+
+primitiveTypeName
     :   'Boolean'
     |   'String'
     |   'Int'
@@ -265,6 +380,7 @@ StringLiteral
     :   '"' StringCharacters? '"'
     |   '\'' StringCharacters? '\''
     ;
+
 
 BooleanLiteral
     :   'true' | 'false'

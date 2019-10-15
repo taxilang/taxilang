@@ -2,10 +2,10 @@ package lang.taxi.generators.kotlin
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.plusParameter
-import lang.taxi.Named
-import lang.taxi.QualifiedName
+import lang.taxi.types.Named
+import lang.taxi.types.QualifiedName
 import lang.taxi.TaxiDocument
-import lang.taxi.Type
+import lang.taxi.types.Type
 import lang.taxi.generators.*
 import lang.taxi.jvm.common.PrimitiveTypes
 import lang.taxi.types.*

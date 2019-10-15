@@ -1,8 +1,6 @@
 package lang.taxi.generators
 
-import lang.taxi.Annotatable
 import lang.taxi.TaxiDocument
-import lang.taxi.Type
 import lang.taxi.services.Constraint
 import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract
@@ -10,7 +8,7 @@ import lang.taxi.services.Service
 import lang.taxi.types.*
 
 
-class SchemaWriter {
+open class SchemaWriter {
     private val formatter = SourceFormatter()
     fun generateSchemas(docs: List<TaxiDocument>): List<String> {
         return docs.flatMap { generateSchema(it) }
@@ -81,8 +79,9 @@ $operations
         val operationName = operation.name
 
         val annotations = generateAnnotations(operation)
+        val scope = if (operation.scope != null) operation.scope + " " else ""
         return """$annotations
-operation $operationName( $params )$returnDeclaration""".trimIndent().trim()
+${scope}operation $operationName( $params )$returnDeclaration""".trimIndent().trim()
     }
 
     private fun generateReturnContract(contract: OperationContract): String {

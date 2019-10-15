@@ -2,7 +2,7 @@ package lang.taxi.testing
 
 import lang.taxi.Compiler
 import lang.taxi.TaxiDocument
-import lang.taxi.Type
+import lang.taxi.types.Type
 import lang.taxi.services.Service
 import java.lang.AssertionError
 

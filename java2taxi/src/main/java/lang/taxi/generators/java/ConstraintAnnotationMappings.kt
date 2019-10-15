@@ -1,6 +1,6 @@
 package lang.taxi.generators.java
 
-import lang.taxi.AttributePath
+import lang.taxi.types.AttributePath
 import lang.taxi.annotations.ConstraintAnnotationModel
 import lang.taxi.annotations.ResponseContract
 import lang.taxi.services.AttributeConstantValueConstraint

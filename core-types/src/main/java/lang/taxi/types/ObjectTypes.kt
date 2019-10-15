@@ -1,6 +1,6 @@
 package lang.taxi.types
 
-import lang.taxi.*
+import lang.taxi.Equality
 import lang.taxi.services.Constraint
 import lang.taxi.services.ConstraintTarget
 import kotlin.reflect.KProperty1
@@ -34,13 +34,23 @@ internal fun <T, R> KProperty1<T, Collection<R>>.toSet(): T.() -> Set<R>? {
     }
 }
 
+enum class FieldModifier(val token: String) {
+    CLOSED("closed")
+}
+
 enum class Modifier(val token: String) {
 
     // A Parameter type indicates that the object
 // is used when constructing requests,
 // and that frameworks should freely construct
 // these types based on known values.
-    PARAMETER_TYPE("parameter");
+    PARAMETER_TYPE("parameter"),
+
+    /**
+     * Closed types can not be decomponsed into their individual parts,
+     * they only make sense as a single, cohesive unit.
+     */
+    CLOSED("closed");
 
     companion object {
         fun fromToken(token: String): Modifier {
@@ -60,6 +70,13 @@ data class ObjectType(
             return ObjectType(name, definition = null)
         }
     }
+
+    override val referencedTypes: List<Type>
+        get() {
+            val fieldTypes = this.allFields.map { it.type }
+            val inheritedTypes = this.definition?.inheritsFrom?.toList() ?: emptyList()
+            return (fieldTypes + inheritedTypes).filterIsInstance<UserType<*, *>>()
+        }
 
     override fun addExtension(extension: ObjectTypeExtension): ErrorMessage? {
         val error = verifyMaxOneTypeRefinementPerField(extension.fieldExtensions)
@@ -161,8 +178,10 @@ data class Field(
         val name: String,
         val type: Type,
         val nullable: Boolean = false,
+        val modifiers: List<FieldModifier> = emptyList(),
         override val annotations: List<Annotation> = emptyList(),
-        override val constraints: List<Constraint> = emptyList()
+        override val constraints: List<Constraint> = emptyList(),
+        val accessor: Accessor? = null
 ) : Annotatable, ConstraintTarget {
 
     override val description: String = "field $name"
@@ -175,3 +194,14 @@ data class Field(
 
 
 }
+
+
+interface Accessor
+interface ExpressionAccessor : Accessor {
+    val expression: String
+}
+
+data class XpathAccessor(override val expression: String) : ExpressionAccessor
+data class JsonPathAccessor(override val expression: String) : ExpressionAccessor
+
+data class DestructuredAccessor(val fields: Map<String, Accessor>) : Accessor

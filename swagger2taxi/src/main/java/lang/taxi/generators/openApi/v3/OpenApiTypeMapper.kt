@@ -2,8 +2,8 @@ package lang.taxi.generators.openApi.v3
 
 import io.swagger.oas.models.OpenAPI
 import io.swagger.oas.models.media.*
-import lang.taxi.CompilationUnit
-import lang.taxi.Type
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Type
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.Utils
 import lang.taxi.types.*

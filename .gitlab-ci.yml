@@ -29,6 +29,19 @@ validate:
         - "*/target/surefire-reports/TEST-*.xml"
   except:
      - master
+     - develop
+
+publish-snapshot:
+   image: maven:3.3.9-jdk-8
+   stage: build
+   script:
+      - 'mvn $MAVEN_CLI_OPTS  deploy'
+   artifacts:
+      reports:
+         junit:
+            - "*/target/surefire-reports/TEST-*.xml"
+   only:
+      - develop
 
 publish-release:
    variables:

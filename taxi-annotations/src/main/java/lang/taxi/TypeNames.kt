@@ -1,10 +1,15 @@
 package lang.taxi
 
 import lang.taxi.annotations.*
-import java.lang.reflect.AnnotatedElement
-import java.lang.reflect.Field
-import java.lang.reflect.Method
+import java.lang.reflect.*
 import java.lang.reflect.Parameter
+
+abstract class TypeReference<T> : Comparable<TypeReference<T>> {
+    val type: Type =
+            (javaClass.genericSuperclass as ParameterizedType).actualTypeArguments[0]
+
+    override fun compareTo(other: TypeReference<T>) = 0
+}
 
 object TypeNames {
     fun deriveNamespace(javaClass: Class<*>): String {
@@ -17,6 +22,28 @@ object TypeNames {
             dataType != null && dataType.hasNamespace() -> dataType.namespace()!!
             service != null && service.hasNamespace() -> service.namespace()!!
             else -> javaClass.`package`?.name ?: ""
+        }
+    }
+
+    inline fun <reified T> deriveTypeName(): String {
+        val typeRef = object : TypeReference<T>() {}
+        return deriveTypeName(typeRef)
+    }
+
+    fun deriveTypeName(typeReference: TypeReference<*>): String {
+        val type = typeReference.type
+        if (type is ParameterizedType) {
+            val rawType = type.rawType as Class<*>
+            if (Collection::class.java.isAssignableFrom(rawType)) {
+                val memberType = type.actualTypeArguments[0] as WildcardType
+                val memberTypeClass = memberType.upperBounds[0] as Class<*>
+                val collectionTypeName = deriveTypeName(memberTypeClass)
+                return "lang.taxi.Array<$collectionTypeName>"
+            } else {
+                return deriveTypeName(rawType)
+            }
+        } else {
+            return deriveTypeName(type as Class<*>)
         }
     }
 

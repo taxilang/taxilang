@@ -1,11 +1,5 @@
 package lang.taxi.types
 
-import lang.taxi.CompilationUnit
-import lang.taxi.SourceCode
-import lang.taxi.TaxiParser
-import lang.taxi.Type
-import java.lang.IllegalArgumentException
-
 
 enum class VoidType : Type {
     VOID;
@@ -42,9 +36,9 @@ enum class PrimitiveType(val declaration: String) : Type {
             return typesByLookup[value] ?: throw IllegalArgumentException("$value is not a valid primative")
         }
 
-        fun fromToken(typeToken: TaxiParser.TypeTypeContext): PrimitiveType {
-            return fromDeclaration(typeToken.primitiveType()!!.text)
-        }
+//        fun fromToken(typeToken: TaxiParser.TypeTypeContext): PrimitiveType {
+//            return fromDeclaration(typeToken.primitiveType()!!.text)
+//        }
 
         fun isPrimitiveType(qualifiedName: String): Boolean {
             return typesByLookup.containsKey(qualifiedName)

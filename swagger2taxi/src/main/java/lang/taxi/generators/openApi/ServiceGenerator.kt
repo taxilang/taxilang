@@ -2,8 +2,8 @@ package lang.taxi.generators.openApi
 
 import io.swagger.oas.models.Operation
 import io.swagger.oas.models.PathItem
-import lang.taxi.CompilationUnit
-import lang.taxi.Type
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Type
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.generators.Logger
@@ -102,6 +102,7 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
         val operationId = OperationIdProvider.getOperationId(swaggerOperation, pathMapping, method)
         return TaxiOperation(
                 operationId,
+                null, // scope - TODO
                 annotations.toAnnotations(),
                 parameters,
                 returnType,

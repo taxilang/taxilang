@@ -1,6 +1,5 @@
 package lang.taxi.generators.java.extensions
 
-import lang.taxi.Type
 import lang.taxi.TypeNames
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpRequestBody
@@ -11,6 +10,7 @@ import lang.taxi.services.Operation
 import lang.taxi.services.Service
 import lang.taxi.types.Annotation
 import lang.taxi.types.AnnotationProvider
+import lang.taxi.types.Type
 import org.springframework.cloud.openfeign.support.SpringMvcContract
 import java.lang.reflect.Method
 
