@@ -344,7 +344,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
         val modifiers = parseModifiers(ctx.typeModifier())
         val inherits = parseInheritance(namespace, ctx.listOfInheritedTypes())
        val typeDoc = parseTypeDoc(ctx.typeDoc()?.source()?.content)
-        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields.toSet(), annotations.toSet(), modifiers, inherits, typeDoc, CompilationUnit.of(ctx))))
+        this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields.toSet(), annotations.toSet(), modifiers, inherits, typeDoc, ctx.toCompilationUnit())))
     }
 
    private fun parseTypeDoc(content: String?): String? {
