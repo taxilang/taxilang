@@ -1,11 +1,13 @@
 package lang.taxi.generators.openApi
 
+import com.winterbe.expekt.expect
 import lang.taxi.generators.Level
 import lang.taxi.generators.Message
 import lang.taxi.generators.hasErrors
 import lang.taxi.generators.hasWarnings
 import lang.taxi.utils.log
 import org.junit.Test
+import kotlin.test.expect
 import kotlin.test.fail
 
 class OpenApiCompatabilityTest {
@@ -30,7 +32,18 @@ class OpenApiCompatabilityTest {
             testFile("/openApiSpec/v3.0/petstore.yaml"),
             testFile("/openApiSpec/v3.0/petstore-expanded.yaml"),
             testFile("/openApiSpec/v3.0/uspto.yaml")
+//        Need to investigate this one:
+//            testFile("/openApiSpec/v3.0/jira-swagger-v3.json")
     )
+
+   @Test
+   fun detectsCorrectVersion() {
+      val generator = TaxiGenerator();
+      expect(generator.detectVersion(testFile("/openApiSpec/v3.0/jira-swagger-v3.json").second)).to.equal(TaxiGenerator.SwaggerVersion.OPEN_API)
+      expect(generator.detectVersion(testFile("/openApiSpec/v3.0/uspto.yaml").second)).to.equal(TaxiGenerator.SwaggerVersion.OPEN_API)
+      expect(generator.detectVersion(testFile("/openApiSpec/v2.0/yaml/petstore-expanded.yaml").second)).to.equal(TaxiGenerator.SwaggerVersion.SWAGGER_2)
+      expect(generator.detectVersion(testFile("/openApiSpec/v2.0/json/pets.json").second)).to.equal(TaxiGenerator.SwaggerVersion.SWAGGER_2)
+   }
 
     @Test
     fun canImportAllSwaggerFiles() {
