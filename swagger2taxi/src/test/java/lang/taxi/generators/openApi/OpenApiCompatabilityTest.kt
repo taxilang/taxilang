@@ -32,9 +32,17 @@ class OpenApiCompatabilityTest {
             testFile("/openApiSpec/v3.0/petstore.yaml"),
             testFile("/openApiSpec/v3.0/petstore-expanded.yaml"),
             testFile("/openApiSpec/v3.0/uspto.yaml")
-//        Need to investigate this one:
+       // Need to address "No URL provided in the set of servers" error to get this importing
 //            testFile("/openApiSpec/v3.0/jira-swagger-v3.json")
     )
+
+   @Test
+   fun canImportJiraSwagger() {
+      val (_,jira) = testFile("/openApiSpec/v3.0/jira-swagger-v3.json")
+      val generator = TaxiGenerator();
+      val taxi = generator.generateAsStrings(jira, "vyne.openApi")
+      expect(taxi.successful).to.be.`true`
+   }
 
    @Test
    fun detectsCorrectVersion() {
