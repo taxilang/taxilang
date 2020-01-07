@@ -81,4 +81,46 @@ type extension Person {
         """
         Compiler(source).compile()
     }
+
+   @Test
+   fun canAddDocumentationThroughExtensions() {
+      val source = """
+type Person {
+   name : String
+}
+
+[[
+A person is a person who persons.
+]]
+type extension Person {
+}
+        """
+      val doc = Compiler(source).compile()
+      val person = doc.objectType("Person")
+      expect(person.typeDoc?.trim()).to.equal("A person is a person who persons.")
+   }
+
+   @Test
+   fun when_documentationExistsOnTypeAndExtension_then_theyAreConcatenated() {
+      val source = """
+[[
+A person.  Little else is known.
+]]
+type Person {
+   name : String
+}
+
+[[
+A person is a person who persons.
+]]
+type extension Person {
+}
+        """
+      val doc = Compiler(source).compile()
+      val person = doc.objectType("Person")
+      expect(person.typeDoc?.trim()).to.equal("""A person.  Little else is known.
+         |A person is a person who persons.
+      """.trimMargin())
+
+   }
 }
