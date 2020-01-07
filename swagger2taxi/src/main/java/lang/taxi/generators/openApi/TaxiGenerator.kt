@@ -8,13 +8,17 @@ import lang.taxi.generators.SchemaWriter
 import lang.taxi.generators.openApi.swagger.SwaggerTaxiGenerator
 import lang.taxi.generators.openApi.v3.OpenApiTaxiGenerator
 
+data class GeneratorOptions(
+   val serviceBasePath:String? = null
+)
+
 class TaxiGenerator(
    private val schemaWriter: SchemaWriter = SchemaWriter()
 ) {
-   fun generateAsStrings(source: String, defaultNamespace: String): GeneratedTaxiCode {
+   fun generateAsStrings(source: String, defaultNamespace: String, generatorOptions: GeneratorOptions = GeneratorOptions()): GeneratedTaxiCode {
       return when (detectVersion(source)) {
          SwaggerVersion.SWAGGER_2 -> SwaggerTaxiGenerator(schemaWriter).parseSwaggerV2(source, defaultNamespace)
-         SwaggerVersion.OPEN_API -> OpenApiTaxiGenerator(schemaWriter).generateAsStrings(source, defaultNamespace)
+         SwaggerVersion.OPEN_API -> OpenApiTaxiGenerator(schemaWriter).generateAsStrings(source, defaultNamespace, generatorOptions)
       }
    }
 

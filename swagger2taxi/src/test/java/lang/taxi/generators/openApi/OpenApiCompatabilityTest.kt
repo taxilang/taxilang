@@ -7,7 +7,6 @@ import lang.taxi.generators.hasErrors
 import lang.taxi.generators.hasWarnings
 import lang.taxi.utils.log
 import org.junit.Test
-import kotlin.test.expect
 import kotlin.test.fail
 
 class OpenApiCompatabilityTest {
@@ -38,10 +37,14 @@ class OpenApiCompatabilityTest {
 
    @Test
    fun canImportJiraSwagger() {
+      // This swagger is interesting because it's big and complex.
+      // Also, it's a consumer proudct, so we had to introduce the ability to generate from swagger
+      // wihtout knowing the end url, and supplying that as an extra param.
       val (_,jira) = testFile("/openApiSpec/v3.0/jira-swagger-v3.json")
-      val generator = TaxiGenerator();
-      val taxi = generator.generateAsStrings(jira, "vyne.openApi")
+      val generator = TaxiGenerator()
+      val taxi = generator.generateAsStrings(jira, "vyne.openApi", GeneratorOptions(serviceBasePath = "http://myjira/"))
       expect(taxi.successful).to.be.`true`
+      expect(taxi.messages.hasErrors()).to.be.`false`
    }
 
    @Test

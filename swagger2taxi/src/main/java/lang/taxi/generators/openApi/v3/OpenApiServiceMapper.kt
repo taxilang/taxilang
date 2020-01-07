@@ -1,5 +1,6 @@
 package lang.taxi.generators.openApi.v3
 
+import com.google.common.base.Objects
 import io.swagger.oas.models.OpenAPI
 import io.swagger.oas.models.Operation
 import io.swagger.oas.models.PathItem
@@ -22,14 +23,15 @@ import v2.io.swagger.models.parameters.BodyParameter
 class OpenApiServiceMapper(private val openAPI: OpenAPI,
                            private val typeGenerator: OpenApiTypeMapper,
                            private val logger: Logger) {
-    fun generateServices(): Set<Service> {
-        val basePath = openAPI.servers.firstOrNull()?.url
-        if (basePath == null) {
-            logger.error("No URL provided in the set of servers")
+    fun generateServices(basePath:String? = null): Set<Service> {
+        val basePathFromSwagger = openAPI.servers.firstOrNull()?.url
+       val basePathToUse = listOfNotNull(basePath, basePathFromSwagger).firstOrNull()
+        if (basePathToUse == null) {
+            logger.error("No URL provided in the set of servers, and no manual basePath provided")
             return emptySet()
         }
         val services = openAPI.paths.map { (pathMapping, pathOperation) ->
-            val qualifiedPath = "$basePath/$pathMapping".replace("//", "/")
+            val qualifiedPath = "$basePathToUse/$pathMapping".replace("//", "/")
             generateService(qualifiedPath, pathOperation, pathMapping)
         }.toSet()
         return services
