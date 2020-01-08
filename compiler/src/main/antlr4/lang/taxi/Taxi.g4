@@ -351,7 +351,7 @@ literal
     ;
 
 typeExtensionDeclaration
-   :  annotation* 'type extension' Identifier typeExtensionBody
+   :  typeDoc? annotation* 'type extension' Identifier typeExtensionBody
    ;
 
 typeExtensionBody
