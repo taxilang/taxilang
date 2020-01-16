@@ -6,6 +6,17 @@ interface TypeDefinition {
     val compilationUnit: CompilationUnit
 }
 
+interface Documented {
+   val typeDoc: String?
+
+   companion object {
+      fun typeDoc(sources:List<Documented?>):String? {
+         return sources.filterNotNull().typeDoc()
+      }
+   }
+
+}
+
 
 /**
  * A type that can be declared by users explicity.
@@ -34,4 +45,9 @@ interface UserType<TDef : TypeDefinition, TExt : TypeDefinition> : Type {
      */
     val referencedTypes: List<Type>
 
+}
+
+
+fun List<Documented>.typeDoc():String? {
+   return this.mapNotNull { it.typeDoc }.joinToString("\n")
 }

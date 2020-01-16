@@ -270,15 +270,29 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
    }
 
    private fun compileTypeExtensions() {
-      tokens.unparsedExtensions.forEach { (namespace, typeRule) ->
+      val errors = tokens.unparsedExtensions.mapNotNull { (namespace, typeRule) ->
          when (typeRule) {
             is TaxiParser.TypeExtensionDeclarationContext -> compileTypeExtension(namespace, typeRule)
+            is TaxiParser.TypeAliasExtensionDeclarationContext -> compileTypeAliasExtension(namespace, typeRule)
+            is TaxiParser.EnumExtensionDeclarationContext -> compileEnumExtension(namespace, typeRule)
             else -> TODO("Not handled: $typeRule")
          }
       }
+      if (errors.isNotEmpty()) {
+         throw CompilationException(errors)
+      }
    }
 
-   private fun compileTypeExtension(namespace: Namespace, typeRule: TaxiParser.TypeExtensionDeclarationContext) {
+   private fun compileTypeAliasExtension(namespace: Namespace, typeRule: TaxiParser.TypeAliasExtensionDeclarationContext):CompilationError? {
+      val typeName = qualify(namespace, typeRule.Identifier().text)
+      val type = typeSystem.getType(typeName) as TypeAlias
+      val annotations = collateAnnotations(typeRule.annotation())
+      val typeDoc = parseTypeDoc(typeRule.typeDoc())
+      return type.addExtension(TypeAliasExtension(annotations, typeRule.toCompilationUnit(), typeDoc)).toCompilationError(typeRule.start)
+   }
+
+
+   private fun compileTypeExtension(namespace: Namespace, typeRule: TaxiParser.TypeExtensionDeclarationContext):CompilationError? {
       val typeName = qualify(namespace, typeRule.Identifier().text)
       val type = typeSystem.getType(typeName) as ObjectType
       val annotations = collateAnnotations(typeRule.annotation())
@@ -295,9 +309,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
          FieldExtension(fieldName, fieldAnnotations, refinedType)
       }
       val errorMessage = type.addExtension(ObjectTypeExtension(annotations, fieldExtensions, typeDoc, typeRule.toCompilationUnit()))
-      if (errorMessage != null) {
-         throw CompilationException(typeRule.start, errorMessage)
-      }
+      return errorMessage.toCompilationError(typeRule.start)
 
    }
 
@@ -316,7 +328,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
       val typePointedTo = typeSystem.getOrCreate(qualifiedName, tokenRule.start)
       val annotations = collateAnnotations(tokenRule.annotation())
 
-      val definition = TypeAliasDefinition(typePointedTo, annotations, tokenRule.toCompilationUnit())
+      val definition = TypeAliasDefinition(typePointedTo, annotations, tokenRule.toCompilationUnit(), typeDoc = parseTypeDoc(tokenRule.typeDoc()))
       this.typeSystem.register(TypeAlias(tokenName, definition))
    }
 
@@ -350,7 +362,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
 
    private fun parseTypeDoc(content: String?): String? {
       if (content == null) {
-         return null;
+         return null
       }
       return content.removeSurrounding("[[", "]]").trim()
    }
@@ -479,14 +491,38 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
 
 
    private fun compileEnum(typeName: String, ctx: TaxiParser.EnumDeclarationContext) {
-      val enumValues = ctx.enumConstants().enumConstant().map { enumConstant ->
-         val annotations = collateAnnotations(enumConstant.annotation())
-         val value = enumConstant.Identifier().text
-         EnumValue(value, annotations)
-      }
+      val enumValues = compileEnumValues(ctx.enumConstants())
       val annotations = collateAnnotations(ctx.annotation())
-      val enumType = EnumType(typeName, EnumDefinition(enumValues, annotations, ctx.toCompilationUnit()))
+      val enumType = EnumType(typeName, EnumDefinition(enumValues, annotations, ctx.toCompilationUnit(), parseTypeDoc(ctx.typeDoc())))
       typeSystem.register(enumType)
+   }
+
+   private fun compileEnumValues(enumConstants: TaxiParser.EnumConstantsContext?): List<EnumValue> {
+      @Suppress("IfThenToElvis")
+      return if (enumConstants == null) {
+          emptyList()
+      } else {
+         enumConstants.enumConstant().map { enumConstant ->
+            val annotations = collateAnnotations(enumConstant.annotation())
+            val value = enumConstant.Identifier().text
+            EnumValue(value, annotations, parseTypeDoc(enumConstant.typeDoc()))
+         }
+      }
+   }
+
+
+   private fun compileEnumExtension(namespace: Namespace, typeRule: TaxiParser.EnumExtensionDeclarationContext):CompilationError? {
+      val enumValues = compileEnumValues(typeRule.enumConstants())
+      val annotations = collateAnnotations(typeRule.annotation())
+      val typeDoc = parseTypeDoc(typeRule.typeDoc())
+
+      val typeName = qualify(namespace, typeRule.Identifier().text)
+      val enum = typeSystem.getType(typeName) as EnumType
+      return enum.addExtension(EnumDefinition(enumValues,annotations, typeRule.toCompilationUnit(), typeDoc)).toCompilationError(typeRule.start)
+   }
+
+   private fun parseTypeDoc(content: TaxiParser.TypeDocContext?): String? {
+      return parseTypeDoc(content?.source()?.content)
    }
 
    private fun compileServices() {
@@ -601,6 +637,13 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
       return condition to instruction
    }
 
+}
+
+private fun ErrorMessage?.toCompilationError(start: Token): CompilationError? {
+   if (this == null) {
+      return null
+   }
+   return CompilationError(start, this)
 }
 
 private fun TaxiParser.OperationSignatureContext.parameters(): List<TaxiParser.OperationParameterContext> {

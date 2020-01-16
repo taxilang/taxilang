@@ -20,9 +20,9 @@ data class ObjectTypeDefinition(
    val annotations: Set<Annotation> = emptySet(),
    val modifiers: List<Modifier> = emptyList(),
    val inheritsFrom: Set<ObjectType> = emptySet(),
-   val typeDoc: String? = null,
+   override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
-) : TypeDefinition {
+) : TypeDefinition, Documented {
    private val equality = Equality(this, ObjectTypeDefinition::fields.toSet(), ObjectTypeDefinition::annotations.toSet(), ObjectTypeDefinition::modifiers.toSet())
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()

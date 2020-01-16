@@ -392,6 +392,42 @@ It should be allowed to [contain square brackets]""".trimIndent()
       expect(thing.typeDoc).to.equal(expected)
    }
 
+   @Test
+   fun canDeclareCommentOnTypeAlias() {
+      val source = """
+[[ This is a comment ]]
+type alias Foo as String
+      """.trimIndent()
+      val taxi = Compiler(source).compile()
+      val thing = taxi.typeAlias("Foo")
+      val expected = """This is a comment""".trimIndent()
+      expect(thing.typeDoc).to.equal(expected)
+   }
+
+   @Test
+   fun canDeclareCommentOnEnum() {
+      val source = """
+[[ This is the enum comment ]]
+enum Color {
+
+   [[ Reddish ]]
+   Red,
+
+   [[ Bluish ]]
+   Blue,
+
+   Green
+}
+      """.trimIndent()
+      val taxi = Compiler(source).compile()
+      val enumType = taxi.enumType("Color")
+      val expected = """This is the enum comment""".trimIndent()
+      expect(enumType.typeDoc).to.equal(expected)
+      expect(enumType.value("Red").typeDoc).to.equal("Reddish")
+      expect(enumType.value("Blue").typeDoc).to.equal("Bluish")
+      expect(enumType.value("Green").typeDoc.isNullOrEmpty()).to.be.`true`
+   }
+
     private fun testResource(s: String): File {
         return File(this.javaClass.classLoader.getResource(s).toURI())
     }

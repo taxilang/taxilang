@@ -33,8 +33,10 @@ namespaceBody
 toplevelObject
     :   typeDeclaration
     |   enumDeclaration
+    |   enumExtensionDeclaration
     |   typeExtensionDeclaration
     |   typeAliasDeclaration
+    |   typeAliasExtensionDeclaration
     |   serviceDeclaration
     |   policyDeclaration
 //    |   annotationTypeDeclaration
@@ -114,7 +116,7 @@ classOrInterfaceType
 
 
 enumDeclaration
-    :   annotation* 'enum' classOrInterfaceType
+    :    typeDoc? annotation* 'enum' classOrInterfaceType
         '{' enumConstants? '}'
     ;
 
@@ -123,15 +125,24 @@ enumConstants
     ;
 
 enumConstant
-    :   annotation* Identifier
+    :   typeDoc? annotation* Identifier
     ;
+
+ enumExtensionDeclaration
+    : typeDoc? annotation* 'enum extension' Identifier  ('{' enumConstants? '}')?
+    ;
+
 // type aliases
 typeAliasDeclaration
-    : annotation* 'type alias' Identifier aliasedType
+    : typeDoc? annotation* 'type alias' Identifier aliasedType
     ;
 
 aliasedType
    : 'as' typeType
+   ;
+
+typeAliasExtensionDeclaration
+   : typeDoc? annotation* 'type alias extension' Identifier
    ;
 // Annotations
 annotation

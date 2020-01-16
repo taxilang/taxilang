@@ -54,6 +54,10 @@ open class TaxiDocument(val types: Set<Type>,
         return type(name) as ObjectType
     }
 
+   fun typeAlias(name: String): TypeAlias {
+      return type(name) as TypeAlias
+   }
+
     fun enumType(qualifiedName: String): EnumType {
         return type(qualifiedName) as EnumType
     }
