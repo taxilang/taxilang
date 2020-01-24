@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.expect
+import com.winterbe.expekt.should
 import junit.framework.Assert.fail
 import org.junit.Test
 
@@ -209,6 +210,8 @@ RED, GREEN
       }
    }
 
+
+
    @Test
    fun declaringAnEnumExtension_when_decoratingASubsetOfMembers_then_theOtherMembersAreUnaffected() {
       val src = """
@@ -220,5 +223,28 @@ enum extension Colors {
 [[ Documented ]]
 RED
 }"""
+   }
+}
+
+
+class MyTest {
+   @Test
+   fun can_declareDependenciesOnImportedTypes() {
+      val srcA = """
+namespace foo
+type Customer {}
+      """.trimIndent()
+      val docA = Compiler(srcA).compile()
+      val srcB = """
+import foo.Customer
+namespace bar
+
+[[ I am the typedoc ]]
+type extension Customer {}
+      """.trimIndent()
+      val docB = Compiler(srcB, listOf(docA)).compile()
+
+      docB.objectType("foo.Customer").typeDoc.should.equal("I am the typedoc")
+
    }
 }

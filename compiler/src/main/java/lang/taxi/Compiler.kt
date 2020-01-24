@@ -209,13 +209,8 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
    }
 
    private fun qualify(namespace: Namespace, name: String): String {
-      if (name.contains("."))
-      // This is already qualified
-         return name
-      if (namespace.isEmpty()) {
-         return name
-      }
-      return "$namespace.$name"
+      return typeSystem.qualify(namespace, name)
+
    }
 
    private fun compile() {
@@ -290,7 +285,6 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
       val typeDoc = parseTypeDoc(typeRule.typeDoc())
       return type.addExtension(TypeAliasExtension(annotations, typeRule.toCompilationUnit(), typeDoc)).toCompilationError(typeRule.start)
    }
-
 
    private fun compileTypeExtension(namespace: Namespace, typeRule: TaxiParser.TypeExtensionDeclarationContext):CompilationError? {
       val typeName = qualify(namespace, typeRule.Identifier().text)
