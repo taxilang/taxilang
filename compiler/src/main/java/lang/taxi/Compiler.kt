@@ -145,6 +145,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
    private val typeSystem: TypeSystem
    private val services = mutableListOf<Service>()
    private val policies = mutableListOf<Policy>()
+   private val dataSources = mutableListOf<DataSource>()
    private val constraintValidator = ConstraintValidator()
 
    init {
@@ -170,7 +171,7 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
       compile()
       // TODO: Unsure if including the imported types here is a good iddea or not.
       val types = typeSystem.typeList(includeImportedTypes = true).toSet()
-      return TaxiDocument(types, services.toSet(), policies.toSet())
+      return TaxiDocument(types, services.toSet(), policies.toSet(), dataSources.toSet())
    }
 
    fun findDeclaredTypeNames(): List<QualifiedName> {
@@ -219,11 +220,14 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
       compileTypeExtensions()
       compileServices()
       compilePolicies()
+      compileDataSources()
 
       // Some validations can't be performed at the time, because
       // they rely on a fully parsed document structure
       validateConstraints()
    }
+
+
 
    private fun validateConstraints() {
       constraintValidator.validateAll(typeSystem, services)
@@ -426,12 +430,16 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
    private fun mapAnnotationParams(annotation: TaxiParser.AnnotationContext): Map<String, Any> {
       return when {
          annotation.elementValue() != null -> mapOf("value" to annotation.elementValue().literal().value())
-         annotation.elementValuePairs() != null -> annotation.elementValuePairs()!!.elementValuePair()?.map {
-            it.Identifier().text to it.elementValue().literal()?.value()!!
-         }?.toMap() ?: emptyMap()
+         annotation.elementValuePairs() != null -> mapElementValuePairs(annotation.elementValuePairs())
          else -> // No params specified
             emptyMap()
       }
+   }
+
+   private fun mapElementValuePairs(pairs: TaxiParser.ElementValuePairsContext):Map<String,Any> {
+      return pairs.elementValuePair()?.map {
+         it.Identifier().text to it.elementValue().literal()?.value()!!
+      }?.toMap() ?: emptyMap()
    }
 
    private fun parseTypeOrVoid(namespace: Namespace, returnType: TaxiParser.OperationReturnTypeContext?): Type {
@@ -517,6 +525,25 @@ internal class DocumentListener(val tokens: Tokens, importSources: List<TaxiDocu
 
    private fun parseTypeDoc(content: TaxiParser.TypeDocContext?): String? {
       return parseTypeDoc(content?.source()?.content)
+   }
+
+   private fun compileDataSources() {
+      val compiledDataSources = tokens.unparsedDataSources.map { (qualifiedName, dataSourceTokenPair) ->
+         val (namespace, dataSourceToken) = dataSourceTokenPair
+         val returnType = ArrayType(parseType(namespace, dataSourceToken.typeType()), dataSourceToken.typeType().toCompilationUnit())
+         val params = mapElementValuePairs(dataSourceToken.elementValuePairs())
+
+         val path = params["path"]?.toString() ?: throw CompilationException(dataSourceToken.start, "path is required when declaring a fileResource")
+         val format = params["format"]?.toString() ?: throw CompilationException(dataSourceToken.start, "path is required when declaring a fileResource")
+         FileDataSource(
+            qualifiedName,
+            path,
+            format,
+            returnType,
+            dataSourceToken.sourceMapping().map { sourceMappingContext ->  ColumnMapping(sourceMappingContext.Identifier().text, sourceMappingContext.columnDefinition().columnIndex().IntegerLiteral().text.toInt()) }
+         )
+      }
+      this.dataSources.addAll(compiledDataSources)
    }
 
    private fun compileServices() {

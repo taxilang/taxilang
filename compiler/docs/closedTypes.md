@@ -1,3 +1,4 @@
+
 # Closed Types
 
 > Note: This is a working name, and not a very good one.  Will be renamed to something more self-descriptive when I can come up with something.

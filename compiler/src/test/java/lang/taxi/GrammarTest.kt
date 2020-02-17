@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.expect
+import com.winterbe.expekt.should
 import lang.taxi.services.AttributeConstantValueConstraint
 import lang.taxi.types.*
 import org.antlr.v4.runtime.CharStreams
@@ -746,5 +747,29 @@ type LegacyTradeNotification {
             TODO()
         }
     }
+
+   @Test
+   fun canDeclareASource() {
+      val src = """
+ type Person {
+   firstName : FirstName as String
+   lastName : LastName as String
+   }
+
+fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {
+   firstName by column(0)
+   lastName by column(1)
+}
+      """.trimIndent()
+      val taxi = Compiler(src).compile()
+      val dataSource = taxi.dataSource("DirectoryOfPerson") as FileDataSource
+      dataSource.returnType.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Person>")
+      dataSource.mappings.should.have.size(2)
+
+      dataSource.mappings[0].propertyName.should.equal("firstName")
+      dataSource.mappings[0].index.should.equal(0)
+      dataSource.mappings[1].propertyName.should.equal("lastName")
+      dataSource.mappings[1].index.should.equal(1)
+   }
 
 }
