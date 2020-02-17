@@ -39,6 +39,7 @@ toplevelObject
     |   typeAliasExtensionDeclaration
     |   serviceDeclaration
     |   policyDeclaration
+    |   fileResourceDeclaration
 //    |   annotationTypeDeclaration
     ;
 
@@ -304,6 +305,25 @@ filterAttributeNameList
 //policyParameter
 //    : literal | literalArray;
 //
+
+// TODO : Revisit this syntax
+// I've decided not to make the parameters of the fileResource(...) part
+// the language, as this mirrors how we've done annotations.
+// Might revisit this later.
+// Also, originally this was more abstract, rather than being linked directly
+// to files.  However, not sure what tne other usecases are, so will revisit then.
+// Also: I feel like we need to roll this into the service / operation concepts somehow.
+// Having an entirely seperate concept for reading data from files vs getting data from
+// services seems wrong.
+fileResourceDeclaration : annotation* 'fileResource' '(' elementValuePairs ')' Identifier 'provides' 'rowsOf' typeType '{' sourceMapping* '}';
+
+// Make this more generic when needed, currently
+// only need to support files stored in columns
+sourceMapping : Identifier 'by' columnDefinition;
+
+columnDefinition : 'column' '(' columnIndex ')' ;
+
+columnIndex: IntegerLiteral;
 
 expression
     :   primary

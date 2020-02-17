@@ -11,6 +11,16 @@ data class QualifiedName(val namespace: String, val typeName: String, val parame
         }
     }
 
+   val parameterizedName: String
+      get() {
+         return if (parameters.isEmpty()) {
+            toString()
+         } else {
+            val params = this.parameters.joinToString(",") { it.parameterizedName }
+            "${toString()}<$params>"
+         }
+      }
+
     override fun toString(): String {
         return if (namespace.isNotEmpty()) {
             "${namespace}.$typeName"
