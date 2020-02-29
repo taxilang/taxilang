@@ -62,19 +62,62 @@ typeDoc
 typeDeclaration
     :  typeDoc? annotation* typeModifier* 'type' Identifier
         ('inherits' listOfInheritedTypes)?
-        typeBody
+        typeBody?
     ;
 
 listOfInheritedTypes
     : typeType (',' typeType)*
     ;
 typeBody
-    :   '{' typeMemberDeclaration* '}'
+    :   '{' (typeMemberDeclaration | conditionalTypeStructureDeclaration)* '}'
     ;
 
- typeMemberDeclaration
+typeMemberDeclaration
      :   annotation* fieldDeclaration
      ;
+
+conditionalTypeStructureDeclaration :
+   '(' typeMemberDeclaration* ')' 'by' conditionalTypeConditionDeclaration
+   ;
+
+conditionalTypeConditionDeclaration:
+// other types of condition declarations can go here.
+   conditionalTypeWhenDeclaration;
+
+conditionalTypeWhenDeclaration:
+   'when' '(' conditionalTypeWhenSelector ')' '{'
+   conditionalTypeWhenCaseDeclaration*
+   '}';
+
+conditionalTypeWhenSelector:
+   mappedExpressionSelector |  // when( xpath('/foo/bar') : SomeType ) ...
+   fieldReferenceSelector; // when( someField ) ...
+
+mappedExpressionSelector: // xpath('/foo/bar') : SomeType
+   scalarAccessorExpression ':' typeType;
+
+fieldReferenceSelector:  Identifier;
+
+conditionalTypeWhenCaseDeclaration:
+   caseDeclarationMatchExpression '->' '{' caseFieldAssigningDeclaration*'}';
+
+caseDeclarationMatchExpression: // when( ... ) {
+   Identifier  | //  someField -> ...
+   literal; //  'foo' -> ...
+
+caseFieldAssigningDeclaration :  // dealtAmount ...  (could be either a destructirng block, or an assignment)
+   Identifier (
+      caseFieldDestructuredAssignment | // dealtAmount ( ...
+      ( '=' ( caseFieldReferenceAssignment | literal)) | // dealtAmount = ccy1Amount | dealtAmount = 'foo'
+      // TODO : How do we model Enum assignments here?
+      // .. some enum assignment ..
+      scalarAccessor
+   );
+
+caseFieldDestructuredAssignment :  // dealtAmount ( ... )
+     '(' caseFieldAssigningDeclaration* ')';
+
+caseFieldReferenceAssignment : Identifier ('.' Identifier)*;
 
  fieldModifier
     : 'closed'

@@ -1,6 +1,7 @@
 package lang.taxi
 
 import lang.taxi.TaxiParser.ServiceDeclarationContext
+import lang.taxi.compiler.TokenProcessor
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 
@@ -32,8 +33,8 @@ data class Tokens(
    private fun collectDuplicateTypes(others: Tokens): List<CompilationError> {
       val duplicateTypeNames = this.unparsedTypes.keys.filter { others.unparsedTypes.containsKey(it) }
       val errors = if (duplicateTypeNames.isNotEmpty()) {
-         val existingDefinition = DocumentListener(this).buildTaxiDocument()
-         val newDefinition = DocumentListener(others).buildTaxiDocument()
+         val existingDefinition = TokenProcessor(this).buildTaxiDocument()
+         val newDefinition = TokenProcessor(others).buildTaxiDocument()
          val compilationErrors = duplicateTypeNames.filter {
             // We only care about scenarios where sources compile to different objects
             // If two sources declare the same type, but they're equivalent declarations, then that's ok

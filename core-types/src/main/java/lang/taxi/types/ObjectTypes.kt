@@ -184,7 +184,8 @@ data class Field(
    val modifiers: List<FieldModifier> = emptyList(),
    override val annotations: List<Annotation> = emptyList(),
    override val constraints: List<Constraint> = emptyList(),
-   val accessor: Accessor? = null
+   val accessor: Accessor? = null,
+   val readCondition: FieldSetCondition? = null
 ) : Annotatable, ConstraintTarget {
 
    override val description: String = "field $name"
