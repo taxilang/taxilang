@@ -102,7 +102,8 @@ open class TaxiDocument(val types: Set<Type>,
 
       return TaxiDocument(this.types + other.types.filterNot { duplicateNames.contains(it.qualifiedName) },
          this.services + other.services,
-         this.policies + other.policies
+         this.policies + other.policies,
+         this.dataSources + other.dataSources
       )
    }
 
