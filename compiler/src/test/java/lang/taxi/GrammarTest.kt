@@ -181,6 +181,15 @@ type Email {
    }
 
    @Test
+   fun canDeclareTypeWithoutBody() {
+      val src = """
+type Person
+      """.trimIndent()
+      val doc = Compiler(src).compile()
+      doc.objectType("Person").fields.should.have.size(0)
+   }
+
+   @Test
    fun canDeclareAnnotationsOnFields() {
       val source = """
 type Person {
