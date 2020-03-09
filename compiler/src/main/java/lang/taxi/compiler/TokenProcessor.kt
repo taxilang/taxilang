@@ -193,10 +193,10 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    private fun compileTypeAlias(namespace: Namespace, tokenName: String, tokenRule: TaxiParser.TypeAliasDeclarationContext) {
       val qualifiedName = qualify(namespace, tokenRule.aliasedType().typeType())
-      val typePointedTo = typeSystem.getOrCreate(qualifiedName, tokenRule.start)
+      val aliasedType = parseType(namespace,tokenRule.aliasedType().typeType())
       val annotations = collateAnnotations(tokenRule.annotation())
 
-      val definition = TypeAliasDefinition(typePointedTo, annotations, tokenRule.toCompilationUnit(), typeDoc = parseTypeDoc(tokenRule.typeDoc()))
+      val definition = TypeAliasDefinition(aliasedType, annotations, tokenRule.toCompilationUnit(), typeDoc = parseTypeDoc(tokenRule.typeDoc()))
       this.typeSystem.register(TypeAlias(tokenName, definition))
    }
 
