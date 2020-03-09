@@ -275,6 +275,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return when {
          expression.jsonPathAccessorDeclaration() != null -> JsonPathAccessor(expression.jsonPathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
          expression.xpathAccessorDeclaration() != null -> XpathAccessor(expression.xpathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
+         expression.columnDefinition() != null -> ColumnAccessor(expression.columnDefinition().columnIndex().IntegerLiteral().text.toInt())
          else -> error("Unhandled type of accessor expression")
       }
    }

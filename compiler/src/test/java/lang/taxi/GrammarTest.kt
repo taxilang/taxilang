@@ -252,9 +252,9 @@ type Foo {
    }
 
 
-    @Test
-    fun canCompileWhenUsingFullyQualifiedNames() {
-        val source = """
+   @Test
+   fun canCompileWhenUsingFullyQualifiedNames() {
+      val source = """
 namespace taxi.example
 type Invoice {
     clientId : taxi.example.ClientId
@@ -369,10 +369,10 @@ type ApiResponse {
   message : String
 }
         """.trimIndent()
-        val taxi = Compiler(source).compile()
-        expect(taxi.objectType("ApiResponse").field("type")).to.be.not.`null`
-        expect(taxi.objectType("ApiResponse").field("message")).to.be.not.`null`
-    }
+      val taxi = Compiler(source).compile()
+      expect(taxi.objectType("ApiResponse").field("type")).to.be.not.`null`
+      expect(taxi.objectType("ApiResponse").field("message")).to.be.not.`null`
+   }
 
    @Test
    fun canDeclareCommentOnType() {
@@ -429,20 +429,20 @@ enum Color {
       expect(enumType.value("Green").typeDoc.isNullOrEmpty()).to.be.`true`
    }
 
-    private fun testResource(s: String): File {
-        return File(this.javaClass.classLoader.getResource(s).toURI())
-    }
+   private fun testResource(s: String): File {
+      return File(this.javaClass.classLoader.getResource(s).toURI())
+   }
 
 
-    @Test
-    fun canImportTypeFromAnotherSchema() {
-        val sourceA = """
+   @Test
+   fun canImportTypeFromAnotherSchema() {
+      val sourceA = """
 namespace test {
     type alias FirstName as String
 }
         """.trimIndent()
-        val schemaA = Compiler(sourceA).compile()
-        val sourceB = """
+      val schemaA = Compiler(sourceA).compile()
+      val sourceB = """
 import test.FirstName
 
 namespace foo {
@@ -452,25 +452,25 @@ namespace foo {
 }
         """.trimIndent()
 
-        val schemaB = Compiler(sourceB, listOf(schemaA)).compile()
-        val customer = schemaB.type("foo.Customer") as ObjectType
-        expect(customer.field("name").type.qualifiedName).to.equal("test.FirstName")
-    }
+      val schemaB = Compiler(sourceB, listOf(schemaA)).compile()
+      val customer = schemaB.type("foo.Customer") as ObjectType
+      expect(customer.field("name").type.qualifiedName).to.equal("test.FirstName")
+   }
 
-    // Not sure if this is a good idea or not, that imported types
-    // become present in the final document
-    // May need to split these to distinguish between declaredTypes and importedTypes.
-    // However, at the moment, primitives are present in the types collection, which indicates
-    // that may not be needed.
-    @Test
-    fun importedTypesArePresentInTheDoc() {
-        val sourceA = """
+   // Not sure if this is a good idea or not, that imported types
+   // become present in the final document
+   // May need to split these to distinguish between declaredTypes and importedTypes.
+   // However, at the moment, primitives are present in the types collection, which indicates
+   // that may not be needed.
+   @Test
+   fun importedTypesArePresentInTheDoc() {
+      val sourceA = """
 namespace test {
     type alias FirstName as String
 }
         """.trimIndent()
-        val schemaA = Compiler(sourceA).compile()
-        val sourceB = """
+      val schemaA = Compiler(sourceA).compile()
+      val sourceB = """
 import test.FirstName
 
 namespace foo {
@@ -480,36 +480,36 @@ namespace foo {
 }
         """.trimIndent()
 
-        val schemaB = Compiler(sourceB, listOf(schemaA)).compile()
-        expect(schemaB.containsType("test.FirstName")).to.be.`true`
-    }
+      val schemaB = Compiler(sourceB, listOf(schemaA)).compile()
+      expect(schemaB.containsType("test.FirstName")).to.be.`true`
+   }
 
-    @Test
-    fun when_importedTypeReferencesOtherTypes_then_thoseTypesAreAlsoPresentInTheDdoc() {
-        val srcA = """
+   @Test
+   fun when_importedTypeReferencesOtherTypes_then_thoseTypesAreAlsoPresentInTheDdoc() {
+      val srcA = """
 namespace foo
 
 type Customer {
     name : FirstName as String
 }
         """.trimIndent()
-        val schemaA = Compiler(srcA).compile()
+      val schemaA = Compiler(srcA).compile()
 
-        val srcB = """
+      val srcB = """
 import foo.Customer
 
 type Thing {
     customer : foo.Customer
 }
         """.trimIndent()
-        val schemaB = Compiler(srcB, listOf(schemaA)).compile()
-        expect(schemaB.containsType("foo.Customer")).to.be.`true`
-        expect(schemaB.containsType("foo.FirstName")).to.be.`true`
-    }
+      val schemaB = Compiler(srcB, listOf(schemaA)).compile()
+      expect(schemaB.containsType("foo.Customer")).to.be.`true`
+      expect(schemaB.containsType("foo.FirstName")).to.be.`true`
+   }
 
-    @Test
-    fun cannotImportTypeThatDoesntExist() {
-        val sourceB = """
+   @Test
+   fun cannotImportTypeThatDoesntExist() {
+      val sourceB = """
 import test.FirstName
 
 namespace foo {
@@ -518,15 +518,15 @@ namespace foo {
     }
 }
         """.trimIndent()
-        val errors = Compiler(sourceB).validate()
-        expect(errors).to.have.size(1)
-        expect(errors.first().detailMessage).to.equal("Cannot import test.FirstName as it is not defined")
+      val errors = Compiler(sourceB).validate()
+      expect(errors).to.have.size(1)
+      expect(errors.first().detailMessage).to.equal("Cannot import test.FirstName as it is not defined")
 
-    }
+   }
 
-    @Test
-    fun canListDeclaredTypeNamesInSrcFile() {
-        val sourceA = """
+   @Test
+   fun canListDeclaredTypeNamesInSrcFile() {
+      val sourceA = """
 namespace test {
     type alias FirstName as String
     type Person {
@@ -541,17 +541,17 @@ namespace test {
 }
         """.trimIndent()
 
-        val typeNames = Compiler(sourceA).declaredTypeNames()
-        expect(typeNames).to.have.size(4)
-        expect(typeNames).to.contain(QualifiedName.from("test.FirstName"))
-        expect(typeNames).to.contain(QualifiedName.from("test.LastName"))
-        expect(typeNames).to.contain(QualifiedName.from("test.Book"))
-        expect(typeNames).to.contain(QualifiedName.from("test.Person"))
-    }
+      val typeNames = Compiler(sourceA).declaredTypeNames()
+      expect(typeNames).to.have.size(4)
+      expect(typeNames).to.contain(QualifiedName.from("test.FirstName"))
+      expect(typeNames).to.contain(QualifiedName.from("test.LastName"))
+      expect(typeNames).to.contain(QualifiedName.from("test.Book"))
+      expect(typeNames).to.contain(QualifiedName.from("test.Person"))
+   }
 
-    @Test
-    fun canListImports() {
-        val sourceB = """
+   @Test
+   fun canListImports() {
+      val sourceB = """
 import test.FirstName
 
 namespace foo {
@@ -560,99 +560,99 @@ namespace foo {
     }
 }
         """.trimIndent()
-        val imports = Compiler(sourceB).declaredImports()
-        expect(imports).to.have.size(1)
-        expect(imports).to.contain(QualifiedName.from("test.FirstName"))
-    }
+      val imports = Compiler(sourceB).declaredImports()
+      expect(imports).to.have.size(1)
+      expect(imports).to.contain(QualifiedName.from("test.FirstName"))
+   }
 
-    @Test
-    fun given_aTypeDoesNotDeclareClosed_then_itDoesNotHaveTheClosedModifier() {
-        val src = """
+   @Test
+   fun given_aTypeDoesNotDeclareClosed_then_itDoesNotHaveTheClosedModifier() {
+      val src = """
 type Money {
     amount : MoneyAmount as Decimal
     currency : Currency as String
 }
         """.trimIndent()
-        val taxi = Compiler(src).compile()
-        expect(taxi.objectType("Money").modifiers).to.be.empty
-    }
+      val taxi = Compiler(src).compile()
+      expect(taxi.objectType("Money").modifiers).to.be.empty
+   }
 
-    @Test
-    fun canDeclareATypeAsClosed() {
-        val src = """
+   @Test
+   fun canDeclareATypeAsClosed() {
+      val src = """
 closed type Money {
     amount : MoneyAmount as Decimal
     currency : Currency as String
 }
         """.trimIndent()
-        val taxi = Compiler(src).compile()
-        val money = taxi.objectType("Money")
-        expect(money.modifiers).to.have.size(1)
-        expect(money.modifiers).to.contain(Modifier.CLOSED)
-    }
+      val taxi = Compiler(src).compile()
+      val money = taxi.objectType("Money")
+      expect(money.modifiers).to.have.size(1)
+      expect(money.modifiers).to.contain(Modifier.CLOSED)
+   }
 
-    @Test
-    fun typeCanHaveMultipleModifiers() {
-        val src = """
+   @Test
+   fun typeCanHaveMultipleModifiers() {
+      val src = """
    parameter closed type Foo {
       name : String
    }
 
         """.trimIndent()
-        val taxi = Compiler(src).compile()
+      val taxi = Compiler(src).compile()
 
-        val type = taxi.objectType("Foo")
-        expect(type.modifiers).to.have.size(2)
-        expect(type.modifiers).to.contain.elements(Modifier.PARAMETER_TYPE, Modifier.CLOSED)
+      val type = taxi.objectType("Foo")
+      expect(type.modifiers).to.have.size(2)
+      expect(type.modifiers).to.contain.elements(Modifier.PARAMETER_TYPE, Modifier.CLOSED)
 
-    }
+   }
 
-    @Test
-    fun canDeclareAPropertyAsClosed() {
-        val src = """
+   @Test
+   fun canDeclareAPropertyAsClosed() {
+      val src = """
 type Trade {
    trader : UserId as String
    closed settlementCurrency : Currency as String
 }
         """.trimIndent()
-        val taxi = Compiler(src).compile()
-        val trade = taxi.objectType("Trade")
-        expect(trade.field("settlementCurrency").modifiers).to.contain(FieldModifier.CLOSED)
-    }
+      val taxi = Compiler(src).compile()
+      val trade = taxi.objectType("Trade")
+      expect(trade.field("settlementCurrency").modifiers).to.contain(FieldModifier.CLOSED)
+   }
 
-    @Test
-    fun canDeclareAnXpathAccessor() {
-        val src = """
+   @Test
+   fun canDeclareAnXpathAccessor() {
+      val src = """
 type alias Instrument as String
 type LegacyTradeNotification {
    instrument : Instrument by xpath("/some/xpath")
 }
         """.trimIndent()
-        val taxi = Compiler(src).compile()
-        val notification = taxi.objectType("LegacyTradeNotification")
-        val field = notification.field("instrument")
-        val accessor = field.accessor as XpathAccessor
-        expect(accessor.expression).to.equal("/some/xpath")
-    }
+      val taxi = Compiler(src).compile()
+      val notification = taxi.objectType("LegacyTradeNotification")
+      val field = notification.field("instrument")
+      val accessor = field.accessor as XpathAccessor
+      expect(accessor.expression).to.equal("/some/xpath")
+   }
 
-    @Test
-    fun canDeclareAJsonPAthAccessor() {
-        val src = """
+   @Test
+   fun canDeclareAJsonPAthAccessor() {
+      val src = """
 type alias Instrument as String
 type LegacyTradeNotification {
    instrument : Instrument by jsonPath("$.foo[bar]")
 }
         """.trimIndent()
-        val taxi = Compiler(src).compile()
-        val notification = taxi.objectType("LegacyTradeNotification")
-        val field = notification.field("instrument")
-        val accessor = field.accessor as JsonPathAccessor
-        expect(accessor.expression).to.equal("$.foo[bar]")
-    }
+      val taxi = Compiler(src).compile()
+      val notification = taxi.objectType("LegacyTradeNotification")
+      val field = notification.field("instrument")
+      val accessor = field.accessor as JsonPathAccessor
+      expect(accessor.expression).to.equal("$.foo[bar]")
+   }
 
-    @Test
-    fun canDeclareAccessorsOnObjectTypes() {
-        val src = """
+   @Test
+   fun canDeclareAccessorsOnObjectTypes() {
+      val src = """
 type Money {
    amount : MoneyAmount as Decimal
    currency : Currency as String
@@ -673,18 +673,18 @@ type LegacyTradeNotification {
    }
 }
         """.trimIndent()
-        val taxi = Compiler(src).compile()
-        val notification = taxi.objectType("LegacyTradeNotification")
-        val field = notification.field("nearLegNotional")
-        val accessor = field.accessor as DestructuredAccessor
-        val fieldAccessor = accessor.fields["amount"] as XpathAccessor
-        expect(fieldAccessor.expression).to.equal("/legs[0]/amount")
-    }
+      val taxi = Compiler(src).compile()
+      val notification = taxi.objectType("LegacyTradeNotification")
+      val field = notification.field("nearLegNotional")
+      val accessor = field.accessor as DestructuredAccessor
+      val fieldAccessor = accessor.fields["amount"] as XpathAccessor
+      expect(fieldAccessor.expression).to.equal("/legs[0]/amount")
+   }
 
-    @Test
-    @Ignore("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
-    fun destructuredAccessorsCannotDeclareInvalidPropertyNames() {
-        val src = """
+   @Test
+   @Ignore("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
+   fun destructuredAccessorsCannotDeclareInvalidPropertyNames() {
+      val src = """
 type Money {
    amount : MoneyAmount as Decimal
    currency : Currency as String
@@ -698,18 +698,18 @@ type LegacyTradeNotification {
    }
 }
 """
-        try {
-            val taxi = Compiler(src).compile()
-            fail("Expected compilation exception")
-        } catch (e: Exception) {
-            TODO()
-        }
-    }
+      try {
+         val taxi = Compiler(src).compile()
+         fail("Expected compilation exception")
+      } catch (e: Exception) {
+         TODO()
+      }
+   }
 
-    @Test
-    @Ignore("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
-    fun destructuredAccessorsCanOmitOptionalProperties() {
-        val src = """
+   @Test
+   @Ignore("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
+   fun destructuredAccessorsCanOmitOptionalProperties() {
+      val src = """
 type Money {
    amount : MoneyAmount? as Decimal
    currency : Currency as String
@@ -721,14 +721,14 @@ type LegacyTradeNotification {
    }
 }
 """
-        val taxi = Compiler(src).compile()
-        TODO()
-    }
+      val taxi = Compiler(src).compile()
+      TODO()
+   }
 
-    @Test
-    @Ignore("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
-    fun destructuredAccessorsCannotOmitNonNullProperties() {
-        val src = """
+   @Test
+   @Ignore("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
+   fun destructuredAccessorsCannotOmitNonNullProperties() {
+      val src = """
 type Money {
    amount : MoneyAmount as Decimal
    currency : Currency as String
@@ -740,13 +740,13 @@ type LegacyTradeNotification {
    }
 }
 """
-        try {
-            val taxi = Compiler(src).compile()
-            fail("Expected compilation exception")
-        } catch (e: Exception) {
-            TODO()
-        }
-    }
+      try {
+         val taxi = Compiler(src).compile()
+         fail("Expected compilation exception")
+      } catch (e: Exception) {
+         TODO()
+      }
+   }
 
    @Test
    fun canDeclareASource() {
@@ -773,6 +773,24 @@ fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson pro
    }
 
    @Test
+   fun canDeclareTypeWithColumnMappingsAndThenUseAsASource() {
+      val src = """
+type alias FirstName as String
+type alias LastName as String
+type Person {
+   firstName : FirstName by column(0)
+   lastName : LastName by column(1)
+}
+
+fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {}
+      """.trimIndent()
+      val taxi = Compiler(src).compile()
+      val person = taxi.objectType("Person")
+      val firstName = person.field("firstName")
+      firstName.accessor.should.be.instanceof(ColumnAccessor::class.java)
+   }
+
+   @Test
    fun dataSourcesCanHaveAnnotations() {
       val src = """
 
@@ -791,7 +809,6 @@ fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson pro
       val dataSource = taxi.dataSource("DirectoryOfPerson") as FileDataSource
       dataSource.annotations.should.have.size(1)
    }
-
 
 
 }

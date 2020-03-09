@@ -207,5 +207,9 @@ interface ExpressionAccessor : Accessor {
 
 data class XpathAccessor(override val expression: String) : ExpressionAccessor
 data class JsonPathAccessor(override val expression: String) : ExpressionAccessor
+// TODO : This is duplicating concepts in ColumnMapping, one should die.
+data class ColumnAccessor(val index: Int) : ExpressionAccessor {
+   override val expression: String = index.toString()
+}
 
 data class DestructuredAccessor(val fields: Map<String, Accessor>) : Accessor

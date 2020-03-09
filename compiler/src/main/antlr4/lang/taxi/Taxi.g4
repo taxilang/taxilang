@@ -140,6 +140,7 @@ scalarAccessor
 scalarAccessorExpression
     : xpathAccessorDeclaration
     | jsonPathAccessorDeclaration
+    | columnDefinition
     ;
 
 xpathAccessorDeclaration : 'xpath' '(' accessorExpression ')';
