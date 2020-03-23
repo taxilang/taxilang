@@ -1,5 +1,6 @@
 package lang.taxi
 
+import org.junit.Ignore
 import org.junit.Test
 
 // NOte : I'm trying to split tests out from GrammarTest
@@ -8,6 +9,7 @@ import org.junit.Test
 class InheritenceTest {
 
    @Test
+   @Ignore("TODO")
    fun canInheritFromCollection() {
       val src = """
 type Person {

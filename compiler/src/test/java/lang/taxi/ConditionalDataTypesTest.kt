@@ -1,5 +1,7 @@
 package lang.taxi
 
+import com.winterbe.expekt.should
+import lang.taxi.types.*
 import org.junit.Test
 
 class ConditionalDataTypesTest {
@@ -37,9 +39,41 @@ type TradeRecord {
 }
       """.trimIndent()
       val doc = Compiler(src).compile()
-      val type = doc.type("TradeRecord")
-      TODO()
+      val type = doc.type("TradeRecord") as ObjectType
+
+      val dealtAmountCondition = type.field("dealtAmount").readCondition!!
+      require(dealtAmountCondition is WhenFieldSetCondition)
+      val selector = dealtAmountCondition.selectorExpression as AccessorExpressionSelector
+      val accessor = selector.accessor as XpathAccessor
+      accessor.expression.should.equal("/foo/bar")
+      selector.declaredType.should.equal(PrimitiveType.STRING)
+
+      dealtAmountCondition.cases.should.have.size(2)
+      val case1 = dealtAmountCondition.cases[0]
+      case1.matchExpression.should.satisfy {
+         require(it is ReferenceCaseMatchExpression)
+         it.reference.should.equal("ccy1")
+         true
+      }
+      val dealtAmountCaseFieldAssignmentExpression = case1.assignments[0]
+      dealtAmountCaseFieldAssignmentExpression.fieldName.should.equal("dealtAmount")
+      val dealtAmountDestructuredAssignment = dealtAmountCaseFieldAssignmentExpression.assignment as DestructuredAssignment
+      dealtAmountDestructuredAssignment.assignments.should.have.size(2)
+      dealtAmountDestructuredAssignment.assignments[0].should.satisfy {
+         it.fieldName.should.equal("quantity")
+         val assignment = it.assignment as ScalarAccessorValueAssignment
+         assignment.accessor.should.equal(XpathAccessor("/foo/bar/quantity1"))
+         true
+      }
+      dealtAmountDestructuredAssignment.assignments[1].should.satisfy {
+         it.fieldName.should.equal("currency")
+         val assignment = it.assignment as ReferenceAssignment
+         assignment.reference.should.equal("ccy1")
+         true
+      }
    }
+
+
    @Test
    fun canDeclareConditionalTypes() {
       val src = """
