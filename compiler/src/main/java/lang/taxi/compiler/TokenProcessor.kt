@@ -55,7 +55,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }.flatMap { (name, tokenPair) ->
          val (namespace, ctx) = tokenPair
          val typeCtx = ctx as TaxiParser.TypeDeclarationContext
-         val typeAliasNames = typeCtx.typeBody().typeMemberDeclaration().mapNotNull { memberDeclaration ->
+         val typeAliasNames = typeCtx.typeBody()?.typeMemberDeclaration()?.mapNotNull { memberDeclaration ->
             val fieldDeclaration = memberDeclaration.fieldDeclaration()
             if (fieldDeclaration.typeType() != null && fieldDeclaration.typeType().aliasedType() != null) {
                // This is an inline type alias
@@ -63,7 +63,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             } else {
                null
             }
-         }
+         } ?: emptyList()
          typeAliasNames.map { QualifiedName.from(it) }
       }
 
@@ -193,7 +193,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    private fun compileTypeAlias(namespace: Namespace, tokenName: String, tokenRule: TaxiParser.TypeAliasDeclarationContext) {
       val qualifiedName = qualify(namespace, tokenRule.aliasedType().typeType())
-      val aliasedType = parseType(namespace,tokenRule.aliasedType().typeType())
+      val aliasedType = parseType(namespace, tokenRule.aliasedType().typeType())
       val annotations = collateAnnotations(tokenRule.annotation())
 
       val definition = TypeAliasDefinition(aliasedType, annotations, tokenRule.toCompilationUnit(), typeDoc = parseTypeDoc(tokenRule.typeDoc()))
@@ -209,7 +209,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    private fun compileType(namespace: Namespace, typeName: String, ctx: TaxiParser.TypeDeclarationContext) {
       val typeBody = ctx.typeBody()
 
-      val conditionalFieldStructures = typeBody?.conditionalTypeStructureDeclaration()?.map {conditionalFieldBlock ->
+      val conditionalFieldStructures = typeBody?.conditionalTypeStructureDeclaration()?.map { conditionalFieldBlock ->
          conditionalFieldSetProcessor.compileConditionalFieldStructure(conditionalFieldBlock, namespace)
       } ?: emptyList()
       val fieldsWithConditions = conditionalFieldStructures.flatMap { it.fields }
@@ -271,7 +271,8 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return compileScalarAccessor(accessor.scalarAccessorExpression())
 
    }
-   internal fun compileScalarAccessor(expression:TaxiParser.ScalarAccessorExpressionContext):Accessor {
+
+   internal fun compileScalarAccessor(expression: TaxiParser.ScalarAccessorExpressionContext): Accessor {
       return when {
          expression.jsonPathAccessorDeclaration() != null -> JsonPathAccessor(expression.jsonPathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
          expression.xpathAccessorDeclaration() != null -> XpathAccessor(expression.xpathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
@@ -291,10 +292,10 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return text.removeSurrounding("`")
    }
 
-   private fun parseInheritance(namespace: Namespace, listOfInheritedTypes: TaxiParser.ListOfInheritedTypesContext?): Set<ObjectType> {
+   private fun parseInheritance(namespace: Namespace, listOfInheritedTypes: TaxiParser.ListOfInheritedTypesContext?): Set<Type> {
       if (listOfInheritedTypes == null) return emptySet()
       return listOfInheritedTypes.typeType().map { typeTypeContext ->
-         parseType(namespace, typeTypeContext) as ObjectType
+         parseType(namespace, typeTypeContext) as Type
       }.toSet()
    }
 
@@ -378,7 +379,13 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    private fun compileEnum(typeName: String, ctx: TaxiParser.EnumDeclarationContext) {
       val enumValues = compileEnumValues(ctx.enumConstants())
       val annotations = collateAnnotations(ctx.annotation())
-      val enumType = EnumType(typeName, EnumDefinition(enumValues, annotations, ctx.toCompilationUnit(), parseTypeDoc(ctx.typeDoc())))
+      val enumType = EnumType(typeName, EnumDefinition(
+         enumValues,
+         annotations,
+         ctx.toCompilationUnit(),
+         inheritsFrom = emptySet(),
+         typeDoc = parseTypeDoc(ctx.typeDoc())
+      ))
       typeSystem.register(enumType)
    }
 
@@ -403,7 +410,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
       val typeName = qualify(namespace, typeRule.Identifier().text)
       val enum = typeSystem.getType(typeName) as EnumType
-      return enum.addExtension(EnumDefinition(enumValues, annotations, typeRule.toCompilationUnit(), typeDoc)).toCompilationError(typeRule.start)
+      return enum.addExtension(EnumDefinition(enumValues, annotations, typeRule.toCompilationUnit(), inheritsFrom = emptySet(), typeDoc = typeDoc)).toCompilationError(typeRule.start)
    }
 
    private fun parseTypeDoc(content: TaxiParser.TypeDocContext?): String? {

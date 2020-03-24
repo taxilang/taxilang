@@ -6,6 +6,7 @@ data class EnumValue(val name: String, override val annotations: List<Annotation
 data class EnumDefinition(val values: List<EnumValue>,
                           override val annotations: List<Annotation> = emptyList(),
                           override val compilationUnit: CompilationUnit,
+                          val inheritsFrom: Set<Type> = emptySet(),
                           override val typeDoc: String? = null) : Annotatable, TypeDefinition, Documented {
    private val equality = Equality(this, EnumDefinition::values.toSet(), EnumDefinition::annotations.toSet())
    override fun equals(other: Any?) = equality.isEqualTo(other)
@@ -21,6 +22,9 @@ data class EnumType(override val qualifiedName: String,
          return EnumType(name, definition = null)
       }
    }
+
+   override val inheritsFrom: Set<Type>
+      get() = definition?.inheritsFrom ?: emptySet()
 
    override val typeDoc: String?
       get() = (listOfNotNull(this.definition) + extensions).typeDoc()

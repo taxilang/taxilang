@@ -23,6 +23,8 @@ data class TypeAlias(
 ) : UserType<TypeAliasDefinition, TypeAliasExtension>, Annotatable, Documented {
    constructor(qualifiedName: String, aliasedType: Type, compilationUnit: CompilationUnit) : this(qualifiedName, TypeAliasDefinition(aliasedType, compilationUnit = compilationUnit))
 
+   override val inheritsFrom: Set<Type> = definition?.aliasType?.inheritsFrom ?: emptySet()
+
    override val typeDoc: String?
       get() = Documented.typeDoc( listOf(definition) + extensions)
 

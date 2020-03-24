@@ -19,7 +19,7 @@ data class ObjectTypeDefinition(
    val fields: Set<Field> = emptySet(),
    val annotations: Set<Annotation> = emptySet(),
    val modifiers: List<Modifier> = emptyList(),
-   val inheritsFrom: Set<ObjectType> = emptySet(),
+   val inheritsFrom: Set<Type> = emptySet(),
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
@@ -98,7 +98,7 @@ data class ObjectType(
       return null;
    }
 
-   val inheritsFrom: Set<ObjectType>
+   override val inheritsFrom: Set<Type>
       get() {
          return definition?.inheritsFrom ?: emptySet()
       }
@@ -117,19 +117,21 @@ data class ObjectType(
          return this.definition?.modifiers ?: emptyList()
       }
 
-   private fun getInheritanceGraph(typesToExclude: Set<ObjectType> = emptySet()): Set<ObjectType> {
-      val allExcludedTypes = typesToExclude + setOf(this)
-      return this.inheritsFrom
-         .flatMap { inheritedType ->
-            if (!typesToExclude.contains(inheritedType))
-               setOf(inheritedType) + inheritedType.getInheritanceGraph(allExcludedTypes)
-            else emptySet()
-         }.toSet()
-   }
+//   private fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
+//      val allExcludedTypes: Set<Type> = typesToExclude + setOf(this)
+//      return this.inheritsFrom
+//         .flatMap { inheritedType ->
+//            if (!typesToExclude.contains(inheritedType))
+//               setOf(inheritedType) + inheritedType.getInheritanceGraph(allExcludedTypes)
+//            else emptySet<Type>()
+//         }.toSet()
+//   }
 
    val inheritedFields: List<Field>
       get() {
-         return getInheritanceGraph().flatMap { it.fields }
+         return allInheritedTypes
+            .filterIsInstance<ObjectType>()
+            .flatMap { it.fields }
       }
 
    val allFields: List<Field>

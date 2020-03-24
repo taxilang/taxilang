@@ -1,5 +1,6 @@
 package lang.taxi
 
+import com.winterbe.expekt.should
 import org.junit.Ignore
 import org.junit.Test
 
@@ -20,5 +21,16 @@ type ListOfPerson inherits Person[]
       val doc = Compiler(src).compile()
       val type = doc.type("ListOfPerson")
       TODO()
+   }
+
+   @Test
+   fun canInheritFromAlias() {
+      val src = """
+   type alias CcySymbol as String
+   type BaseCurrency inherits CcySymbol
+""".trimIndent()
+      val doc = Compiler(src).compile()
+      val type = doc.type("BaseCurrency")
+      type.inheritsFrom.should.have.size(1)
    }
 }

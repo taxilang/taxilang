@@ -18,6 +18,10 @@ internal data class TypeProxy(override val qualifiedName: String, private val ty
       }
    }
 
+   override val inheritsFrom: Set<Type>
+      get() {
+         return resolvedType.inheritsFrom
+      }
    override val compilationUnits = listOf(CompilationUnit.unspecified())
 }
 

@@ -52,13 +52,6 @@ typeModifier
     | 'closed'
     ;
 
-// Typedoc is a special documentation block that wraps types.
-// It's treated as plain text, but we'll eventually support doc tools
-// that speak markdown.
-// Comment markers are [[ .... ]], as this is less likely to generate clashes.
-typeDoc
-   : '[[' .*? ']]';
-
 typeDeclaration
     :  typeDoc? annotation* typeModifier* 'type' Identifier
         ('inherits' listOfInheritedTypes)?
@@ -444,6 +437,14 @@ typeExtensionFieldDeclaration
 typeExtensionFieldTypeRefinement
     : ':' typeType
     ;
+
+// Typedoc is a special documentation block that wraps types.
+// It's treated as plain text, but we'll eventually support doc tools
+// that speak markdown.
+// Comment markers are [[ .... ]], as this is less likely to generate clashes.
+typeDoc
+ : '[[' ( ~']]' | '"' | '\'')* ']]';
+
 
 Identifier
     :   Letter LetterOrDigit*

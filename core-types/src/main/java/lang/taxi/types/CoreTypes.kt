@@ -17,7 +17,7 @@ interface GenericType : Type {
 
 }
 
-data class ArrayType(val type: Type, val source: CompilationUnit) : GenericType {
+data class ArrayType(val type: Type, val source: CompilationUnit, override val inheritsFrom: Set<Type> = emptySet()) : GenericType {
     override fun resolveTypes(typeSystem: TypeProvider): GenericType {
         return this.copy(type = typeSystem.getType(type.qualifiedName))
     }
