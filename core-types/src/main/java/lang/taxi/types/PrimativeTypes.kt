@@ -46,5 +46,34 @@ enum class PrimitiveType(val declaration: String, val typeDoc: String) : Type {
       fun isPrimitiveType(qualifiedName: String): Boolean {
          return typesByLookup.containsKey(qualifiedName)
       }
+
+      fun isAssignableToPrimitiveType(type: Type): Boolean {
+         return getUnderlyingPrimitiveIfExists(type) != null
+      }
+
+      fun getUnderlyingPrimitive(type: Type): PrimitiveType {
+         return getUnderlyingPrimitiveIfExists(type) as PrimitiveType?
+            ?: error("Type ${type.qualifiedName} is not mappable to a primitive type")
+      }
+
+      private fun getUnderlyingPrimitiveIfExists(type: Type): Type? {
+         val primitiveCandidates = getAllUnderlyingPrimitiveIfExists(type)
+         return when {
+            primitiveCandidates.isEmpty() -> null
+            primitiveCandidates.size > 1 -> error("Type ${type.qualifiedName} ambiguously maps to multiple primitive types: ${primitiveCandidates.joinToString { it.qualifiedName }}")
+            else -> primitiveCandidates.first()
+         }
+      }
+
+      private fun getAllUnderlyingPrimitiveIfExists(type: Type, typesToIgnore: Set<Type> = emptySet()): Set<Type> {
+         if (type is PrimitiveType || isPrimitiveType(type.qualifiedName)) {
+            return setOf(type)
+         }
+         if (type is TypeAlias) {
+            return getAllUnderlyingPrimitiveIfExists(type.aliasType!!, typesToIgnore + type.aliasType!!)
+         }
+         val recursiveTypesToIgnore = typesToIgnore + type
+         return type.allInheritedTypes.flatMap { getAllUnderlyingPrimitiveIfExists(it, recursiveTypesToIgnore) }.toSet()
+      }
    }
 }
