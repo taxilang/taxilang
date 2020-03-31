@@ -8,9 +8,36 @@ interface Type : Named, Compiled {
          return getInheritanceGraph()
       }
 
+   val inheritsFromPrimitive: Boolean
+      get() = basePrimitive != null
+
+   val basePrimitive: PrimitiveType?
+      get() {
+         val primitives = (this.allInheritedTypes + this).filterIsInstance<PrimitiveType>()
+         return when {
+            primitives.isEmpty() -> null
+            primitives.size == 1 -> primitives.first()
+            else -> error("Type ${this.qualifiedName} inherits from multiple primitives: ${primitives.joinToString { it.qualifiedName }}")
+         }
+      }
+
    private fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
       val allExcludedTypes: Set<Type> = typesToExclude + setOf(this)
-      return this.inheritsFrom
+      val aliasType = if (this is TypeAlias) {
+         this.aliasType!!
+      } else {
+         null
+      }
+      return (this.inheritsFrom + aliasType)
+         .filterNotNull()
+         .flatMap { type ->
+            // Include aliases if this is a TypeAlias
+            if (type is TypeAlias) {
+               listOf(type, type.aliasType!!)
+            } else {
+               listOf(type)
+            }
+         }
          .flatMap { inheritedType ->
             if (!typesToExclude.contains(inheritedType))
                setOf(inheritedType) + inheritedType.getInheritanceGraph(allExcludedTypes)
