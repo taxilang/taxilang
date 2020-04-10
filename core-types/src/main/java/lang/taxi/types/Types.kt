@@ -13,10 +13,19 @@ interface Type : Named, Compiled {
 
    val basePrimitive: PrimitiveType?
       get() {
-         val primitives = (this.allInheritedTypes + this).filterIsInstance<PrimitiveType>()
+         val primitives = (this.allInheritedTypes + this).filter { it is PrimitiveType || it is EnumType }
          return when {
             primitives.isEmpty() -> null
-            primitives.size == 1 -> primitives.first()
+            primitives.size == 1 -> {
+               val baseType = primitives.first()
+               if (baseType is PrimitiveType) {
+                  baseType
+               } else {
+                  // We can revisit this later if neccessary.
+                  require(baseType is EnumType) { "Expected baseType to be EnumType" }
+                  PrimitiveType.STRING
+               }
+            }
             else -> error("Type ${this.qualifiedName} inherits from multiple primitives: ${primitives.joinToString { it.qualifiedName }}")
          }
       }
