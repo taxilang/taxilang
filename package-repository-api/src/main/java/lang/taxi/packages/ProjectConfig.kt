@@ -8,30 +8,6 @@ data class Repository(
    val name: String? = null
 )
 
-data class PackageIdentifier(val name: ProjectName, val version: Version) {
-   constructor(name: ProjectName, version: String) : this(name, Version.valueOf(version))
-
-   val id = "${name.id}/$version"
-
-   val fileSafeIdentifier = "${name.organisation}.${name.name}.$version"
-
-   companion object {
-      fun fromId(id: String): PackageIdentifier {
-         val parts = id.split("/")
-         require(parts.size == 3) { "Expected a name in the format organisation/name/version" }
-         val (organisation, name, version) = parts
-         return PackageIdentifier(
-            name = ProjectName(organisation, name),
-            version = version
-         )
-      }
-   }
-}
-
-fun List<PackageIdentifier>.asDependencies(): Map<String, String> {
-   return this.map { it.name.id to it.version.toString() }.toMap()
-}
-
 // TODO : This may be redundant.  Leaving it here
 // in case it needs to expand to include the files in the pacakge
 data class Package(
