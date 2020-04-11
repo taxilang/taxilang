@@ -164,6 +164,7 @@ data class ObjectType(
       return this.extensions.flatMap { it.fieldExtensions(fieldName) }
    }
 
+   fun hasField(name:String):Boolean = allFields.any { it.name == name }
    fun field(name: String): Field = allFields.first { it.name == name }
    fun annotation(name: String): Annotation = annotations.first { it.name == name }
 
