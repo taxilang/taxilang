@@ -525,7 +525,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val statements = if (token.policyBody() != null) {
          token.policyBody().policyStatement().map { compilePolicyStatement(namespace, it) }
       } else {
-         listOf(PolicyStatement(ElseCondition(), Instruction.parse(token.policyInstruction()), token.toCompilationUnit()))
+         listOf(PolicyStatement(ElseCondition(), Instructions.parse(token.policyInstruction()), token.toCompilationUnit()))
       }
       return RuleSet(scope, statements)
    }
@@ -538,7 +538,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    private fun compileCondition(namespace: String, token: TaxiParser.PolicyStatementContext): Pair<Condition, Instruction> {
       return when {
          token.policyCase() != null -> compileCaseCondition(namespace, token.policyCase())
-         token.policyElse() != null -> ElseCondition() to Instruction.parse(token.policyElse().policyInstruction())
+         token.policyElse() != null -> ElseCondition() to Instructions.parse(token.policyElse().policyInstruction())
          else -> error("Invalid condition is neither a case nor an else")
       }
    }
@@ -546,11 +546,11 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    private fun compileCaseCondition(namespace: String, case: TaxiParser.PolicyCaseContext): Pair<Condition, Instruction> {
       val typeResolver = typeResolver(namespace)
       val condition = CaseCondition(
-         Subject.parse(case.policyExpression(0), typeResolver),
+         Subjects.parse(case.policyExpression(0), typeResolver),
          Operator.parse(case.policyOperator().text),
-         Subject.parse(case.policyExpression(1), typeResolver)
+         Subjects.parse(case.policyExpression(1), typeResolver)
       )
-      val instruction = Instruction.parse(case.policyInstruction())
+      val instruction = Instructions.parse(case.policyInstruction())
       return condition to instruction
    }
 
