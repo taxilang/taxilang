@@ -19,22 +19,22 @@ fun ParserRuleContext?.toCompilationUnit(): lang.taxi.types.CompilationUnit {
 
 }
 
-data class CompilationError(val offendingToken: Token, val detailMessage: String?) {
+data class CompilationError(val offendingToken: Token, val detailMessage: String?, val sourceName:String? = null) {
    val line = offendingToken.line
    val char = offendingToken.charPositionInLine
 
-   override fun toString(): String = "Compilation Error: ($line,$char) $detailMessage"
+   override fun toString(): String = "Compilation Error: ${sourceName.orEmpty()}($line,$char) $detailMessage"
 }
 
 class CompilationException(val errors: List<CompilationError>) : RuntimeException(errors.joinToString { it.toString() }) {
-   constructor(offendingToken: Token, detailMessage: String?) : this(listOf(CompilationError(offendingToken, detailMessage)))
+   constructor(offendingToken: Token, detailMessage: String?, sourceName:String?) : this(listOf(CompilationError(offendingToken, detailMessage, sourceName)))
 }
 
 data class DocumentStrucutreError(val detailMessage: String)
 class DocumentMalformedException(val errors: List<DocumentStrucutreError>) : RuntimeException(errors.joinToString { it.detailMessage })
 class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocument> = emptyList()) {
    constructor(input: CharStream, importSources: List<TaxiDocument> = emptyList()) : this(listOf(input), importSources)
-   constructor(source: String, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromString(source, "[unknown source]"), importSources)
+   constructor(source: String, sourceName: String = "[unknown source]", importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromString(source, sourceName), importSources)
    constructor(file: File, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromPath(file.toPath()), importSources)
 
    companion object {
@@ -84,14 +84,14 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       // source provider
       val tokensCollection = inputs.map { input ->
          val listener = TokenCollator()
-         val errorListener = CollectingErrorListener()
+         val errorListener = CollectingErrorListener(input.sourceName)
          val lexer = TaxiLexer(input)
          val parser = TaxiParser(CommonTokenStream(lexer))
          parser.addParseListener(listener)
          parser.addErrorListener(errorListener)
          val doc = parser.document()
          doc.exception?.let {
-            throw CompilationException(it.offendingToken, it.message)
+            throw CompilationException(it.offendingToken, it.message, input.sourceName)
          }
          if (errorListener.errors.isNotEmpty())
             throw CompilationException(errorListener.errors)

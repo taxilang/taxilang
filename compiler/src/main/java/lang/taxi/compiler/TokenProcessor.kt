@@ -20,15 +20,6 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    private val conditionalFieldSetProcessor = ConditionalFieldSetProcessor(this)
 
    init {
-//        val importedTypes = mutableMapOf<String, Type>()
-//        tokens.imports.forEach { (qualifiedName, token) ->
-//
-//        }
-//        tokens.imports.map.mapTo(importedTypes) { (qualifiedName, token) ->
-//            val importSource = importSources.firstOrNull { it.containsType(qualifiedName) }
-//                    ?: throw CompilationException(token.start, "Cannot import $qualifiedName as it is not defined")
-//            importSource.type(qualifiedName)
-//        }
       val importedTypes = if (collectImports) {
          ImportedTypeCollator(tokens.imports, importSources).collect()
       } else {
@@ -186,7 +177,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val originalUnderlyingType = TypeAlias.underlyingType(originalType)
 
       if (originalUnderlyingType != refinedUnderlyingType) {
-         throw CompilationException(typeRule.start, "Cannot refine field $fieldName on $typeName to ${refinedType.qualifiedName} as it maps to ${refinedUnderlyingType.qualifiedName} which is incompatible with the existing type of ${originalType.qualifiedName}")
+         throw CompilationException(typeRule.start, "Cannot refine field $fieldName on $typeName to ${refinedType.qualifiedName} as it maps to ${refinedUnderlyingType.qualifiedName} which is incompatible with the existing type of ${originalType.qualifiedName}", typeRule.source().sourceName)
       }
       return refinedType
    }
@@ -258,7 +249,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val fields = block.destructuredFieldDeclaration().map { fieldDeclaration ->
          val fieldName = fieldDeclaration.Identifier().text
          val accessor = compileAccessor(fieldDeclaration.accessor())
-            ?: throw CompilationException(fieldDeclaration.start, "Expected an accessor to be defined")
+            ?: throw CompilationException(fieldDeclaration.start, "Expected an accessor to be defined", block.source().sourceName)
          fieldName to accessor
       }.toMap()
       // TODO : Validate that the object is fully defined..
@@ -372,7 +363,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          compileToken(typeName)
          return typeSystem.getType(typeName)
       }
-      throw CompilationException(classType.start, ErrorMessages.unresolvedType(typeName))
+      throw CompilationException(classType.start, ErrorMessages.unresolvedType(typeName), classType.source().sourceName)
    }
 
 
@@ -424,9 +415,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          val params = mapElementValuePairs(dataSourceToken.elementValuePairs())
 
          val path = params["path"]?.toString()
-            ?: throw CompilationException(dataSourceToken.start, "path is required when declaring a fileResource")
+            ?: throw CompilationException(dataSourceToken.start, "path is required when declaring a fileResource", dataSourceToken.source().sourceName)
          val format = params["format"]?.toString()
-            ?: throw CompilationException(dataSourceToken.start, "path is required when declaring a fileResource")
+            ?: throw CompilationException(dataSourceToken.start, "path is required when declaring a fileResource", dataSourceToken.source().sourceName)
 
          val annotations = collateAnnotations(dataSourceToken.annotation())
          FileDataSource(

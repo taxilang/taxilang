@@ -82,7 +82,7 @@ open class TaxiDocument(val types: Set<Type>,
 
 
    private fun Iterable<CompilationUnit>.declarationSites(): String {
-      return this.joinToString { it.source.origin }
+      return this.joinToString { it.source.sourceName }
    }
 
    fun merge(other: TaxiDocument): TaxiDocument {

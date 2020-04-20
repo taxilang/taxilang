@@ -11,7 +11,7 @@ object ErrorMessages {
    fun unresolvedType(type:String) = "Unresolved type: $type"
 }
 
-class CollectingErrorListener : BaseErrorListener() {
+class CollectingErrorListener(private val sourceName: String) : BaseErrorListener() {
 
    val errors:MutableList<CompilationError> = mutableListOf()
    override fun syntaxError(recognizer: Recognizer<*, *>, offendingSymbol: Any,
@@ -24,13 +24,9 @@ class CollectingErrorListener : BaseErrorListener() {
 //      }
 
       if (offendingSymbol is Token) {
-         errors.add(CompilationError(offendingSymbol,msg))
+         errors.add(CompilationError(offendingSymbol,msg, sourceName))
       } else {
          log().error("Unhandled error situation - offending symbol was not a token")
       }
-   }
-
-   companion object {
-      var INSTANCE = CollectingErrorListener()
    }
 }

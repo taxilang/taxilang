@@ -30,8 +30,8 @@ data class CompilationUnit(val ruleContext: Any?,
 }
 
 data class SourceCode(
-        val origin: String,
-        val content: String
+   val sourceName: String,
+   val content: String
 ) {
     companion object {
         fun unspecified(): SourceCode = SourceCode("Not specified", "")

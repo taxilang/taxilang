@@ -408,7 +408,7 @@ namespace foo {
 }
         """.trimIndent()
 
-      val schemaB = Compiler(sourceB, listOf(schemaA)).compile()
+      val schemaB = Compiler(sourceB, importSources = listOf(schemaA)).compile()
       val customer = schemaB.type("foo.Customer") as ObjectType
       expect(customer.field("name").type.qualifiedName).to.equal("test.FirstName")
    }
@@ -436,7 +436,7 @@ namespace foo {
 }
         """.trimIndent()
 
-      val schemaB = Compiler(sourceB, listOf(schemaA)).compile()
+      val schemaB = Compiler(sourceB, importSources = listOf(schemaA)).compile()
       expect(schemaB.containsType("test.FirstName")).to.be.`true`
    }
 
@@ -458,7 +458,7 @@ type Thing {
     customer : foo.Customer
 }
         """.trimIndent()
-      val schemaB = Compiler(srcB, listOf(schemaA)).compile()
+      val schemaB = Compiler(srcB, importSources = listOf(schemaA)).compile()
       expect(schemaB.containsType("foo.Customer")).to.be.`true`
       expect(schemaB.containsType("foo.FirstName")).to.be.`true`
    }

@@ -242,7 +242,7 @@ namespace bar
 [[ I am the typedoc ]]
 type extension Customer {}
       """.trimIndent()
-      val docB = Compiler(srcB, listOf(docA)).compile()
+      val docB = Compiler(srcB, importSources = listOf(docA)).compile()
 
       docB.objectType("foo.Customer").typeDoc.should.equal("I am the typedoc")
 

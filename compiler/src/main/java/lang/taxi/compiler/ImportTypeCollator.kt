@@ -36,6 +36,6 @@ internal class ImportedTypeCollator(val imports: List<Pair<String, TaxiParser.Im
 
    private fun getType(name: String, referencingToken: Token): Type {
       val type = this.importSources.firstOrNull { it.containsType(name) }?.type(name)
-      return type ?: throw CompilationException(referencingToken, "Cannot import $name as it is not defined")
+      return type ?: throw CompilationException(referencingToken, "Cannot import $name as it is not defined", referencingToken.tokenSource.sourceName)
    }
 }
