@@ -3,6 +3,10 @@
 	"publisher" : "taxi-lang",
 	"displayName": "taxi-language-server",
 	"description": "Language server for Taxi",
+	"repository": {
+		"type": "git",
+		"url": "https://gitlab.com/taxi-lang/language-server"
+	},
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.44.0"
