@@ -37,7 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
         let excecutable: string = path.join(JAVA_HOME, 'bin', 'java');
 
         // path to the launcher.jar
-        let classPath = path.join(__dirname, '..', '..', 'target', 'taxi-lang-server.jar');
+        let classPath = path.join(__dirname, 'taxi-lang-server.jar');
         const debugSettings = '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005,quiet=y';
         const args: string[] = [debugSettings,'-cp', classPath];
         console.log(JSON.stringify(args));

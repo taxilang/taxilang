@@ -1,5 +1,6 @@
 {
 	"name": "taxi-language-server",
+	"publisher" : "taxi-lang",
 	"displayName": "taxi-language-server",
 	"description": "Language server for Taxi",
 	"version": "0.0.1",
@@ -35,7 +36,7 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "npm run compile",
+		"vscode:prepublish": "npm run compile && cp ../target/taxi-lang-server.jar out/",
 		"compile": "tsc -p ./",
 		"lint": "eslint src --ext ts",
 		"watch": "tsc -watch -p ./",
