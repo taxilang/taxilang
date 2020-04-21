@@ -19,9 +19,6 @@ variables:
   # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
   MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
 
-# This template uses jdk8 for verifying and deploying images
-image: maven:3.3.9-jdk-8
-
 # Cache downloaded dependencies and plugins between builds.
 # To keep cache across branches add 'key: "$CI_JOB_NAME"'
 cache:
@@ -30,27 +27,39 @@ cache:
 
 # For merge requests do not `deploy` but only run `verify`.
 # See https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
-.verify: &verify
+build-jar:
+  image: maven:3.3.9-jdk-8
   stage: test
   script:
     - 'mvn $MAVEN_CLI_OPTS verify'
   except:
     - master
 
-# Verify merge requests using JDK8
-verify:jdk8:
-  <<: *verify
-
 # To deploy packages from CI, create a ci_settings.xml file
 # For deploying packages to GitLab's Maven Repository: See https://docs.gitlab.com/ee/user/project/packages/maven_repository.html#creating-maven-packages-with-gitlab-cicd for more details.
 # Please note: The GitLab Maven Repository is currently only available in GitLab Premium / Ultimate.
 # For `master` branch run `mvn deploy` automatically.
-build-jar:
+package-jar:
+  image: maven:3.3.9-jdk-8
   stage: build
   script:
     - 'mvn $MAVEN_CLI_OPTS install -s ci_settings.xml'
   only:
     - master
   artifacts:
-    - 'target/taxi-lang-server.jar'
+    paths:
+      - 'target/taxi-lang-server.jar'
     
+package-plugin:
+  image: node:13
+  stage: build-plugin
+  script:
+    - 'cd taxi-language-server'
+    - 'npm install'
+    - 'npm install -g vsce'
+    - 'vsce package'
+  only:
+    - master
+  artifacts:
+    paths:
+      - 'taxi-language-server/*.vsix'
