@@ -25,11 +25,15 @@ cache:
   paths:
     - .m2/repository
 
+stages:
+  - build
+  - build-plugin
+
 # For merge requests do not `deploy` but only run `verify`.
 # See https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
 build-jar:
   image: maven:3.3.9-jdk-8
-  stage: test
+  stage: build
   script:
     - 'mvn $MAVEN_CLI_OPTS verify'
   except:
