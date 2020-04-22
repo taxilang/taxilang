@@ -65,7 +65,7 @@ data class ObjectType(
    override val qualifiedName: String,
    override var definition: ObjectTypeDefinition?,
    override val extensions: MutableList<ObjectTypeExtension> = mutableListOf()
-) : UserType<ObjectTypeDefinition, ObjectTypeExtension>, Annotatable {
+) : UserType<ObjectTypeDefinition, ObjectTypeExtension>, Annotatable, Documented {
    companion object {
       fun undefined(name: String): ObjectType {
          return ObjectType(name, definition = null)
@@ -139,7 +139,7 @@ data class ObjectType(
          return inheritedFields + fields
       }
 
-   val typeDoc: String?
+   override val typeDoc: String?
       get() {
          return listOfNotNull(this.definition?.typeDoc).plus(this.extensions.mapNotNull { it.typeDoc }).joinToString("\n")
       }
