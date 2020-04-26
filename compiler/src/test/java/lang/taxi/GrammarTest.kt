@@ -260,6 +260,18 @@ type Foo {
       Compiler(source).compile()
    }
 
+   @Test
+   fun canGetTokensAtPositions() {
+      val source = """namespace taxi.example
+
+type Person {
+   name : PersonName as String
+}
+      """.trim()
+      val compiler = Compiler(source)
+      compiler.contextAt(1,2)?.start?.text.should.equal("namespace")
+      compiler.contextAt(4,6)?.start?.text.should.equal("name")
+   }
 
    @Test
    fun canCompileWhenUsingFullyQualifiedNames() {
@@ -382,7 +394,6 @@ type ApiResponse {
       expect(taxi.objectType("ApiResponse").field("type")).to.be.not.`null`
       expect(taxi.objectType("ApiResponse").field("message")).to.be.not.`null`
    }
-
 
 
    private fun testResource(s: String): File {

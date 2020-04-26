@@ -1,8 +1,10 @@
 package lang.taxi
 
+import com.google.common.collect.*
 import lang.taxi.TaxiParser.ServiceDeclarationContext
 import lang.taxi.compiler.TokenProcessor
 import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.TerminalNode
 
 internal typealias Namespace = String
@@ -13,8 +15,9 @@ data class Tokens(
    val unparsedExtensions: List<Pair<Namespace, ParserRuleContext>>,
    val unparsedServices: Map<String, Pair<Namespace, ServiceDeclarationContext>>,
    val unparsedPolicies: Map<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>,
-   val unparsedDataSources : Map<String, Pair<Namespace, TaxiParser.FileResourceDeclarationContext>>
-   ) {
+   val unparsedDataSources: Map<String, Pair<Namespace, TaxiParser.FileResourceDeclarationContext>>,
+   val tokenTable: TokenTable
+) {
    fun plus(others: Tokens): Tokens {
       val errors = collectDuplicateTypes(others) + collectDuplicateServices(others)
       if (errors.isNotEmpty()) {
@@ -26,7 +29,10 @@ data class Tokens(
          this.unparsedExtensions + others.unparsedExtensions,
          this.unparsedServices + others.unparsedServices,
          this.unparsedPolicies + others.unparsedPolicies,
-         this.unparsedDataSources + others.unparsedDataSources
+         this.unparsedDataSources + others.unparsedDataSources,
+         // When appending token sets, this is typeically because we're merging sources
+         // therefore, we don't want to provide the token table, which is source dependent.
+         ImmutableTable.of()
       )
    }
 
@@ -54,6 +60,8 @@ data class Tokens(
    }
 }
 
+typealias TokenTable = Table<Int, Int, ParserRuleContext>
+
 class TokenCollator : TaxiBaseListener() {
    val exceptions = mutableMapOf<ParserRuleContext, Exception>()
    private var namespace: String = Namespaces.DEFAULT_NAMESPACE
@@ -64,12 +72,18 @@ class TokenCollator : TaxiBaseListener() {
    private val unparsedServices = mutableMapOf<String, Pair<Namespace, ServiceDeclarationContext>>()
    private val unparsedPolicies = mutableMapOf<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>()
    private val unparsedSources = mutableMapOf<String, Pair<Namespace, TaxiParser.FileResourceDeclarationContext>>()
-//    private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
+
+   //    private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
 //    private val unparsedExtensions = mutableListOf<ParserRuleContext>()
 //    private val unparsedServices = mutableMapOf<String, ServiceDeclarationContext>()
-
+   private val tokenTable: TokenTable = TreeBasedTable.create<Int, Int, ParserRuleContext>()
    fun tokens(): Tokens {
-      return Tokens(imports, unparsedTypes, unparsedExtensions, unparsedServices, unparsedPolicies, unparsedSources)
+      return Tokens(imports, unparsedTypes, unparsedExtensions, unparsedServices, unparsedPolicies, unparsedSources, tokenTable)
+   }
+
+   override fun exitEveryRule(ctx: ParserRuleContext) {
+      super.exitEveryRule(ctx)
+      tokenTable.put(ctx.start.line, ctx.start.charPositionInLine, ctx)
    }
 
    override fun exitImportDeclaration(ctx: TaxiParser.ImportDeclarationContext) {

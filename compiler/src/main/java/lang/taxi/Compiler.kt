@@ -5,6 +5,7 @@ import lang.taxi.types.*
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
 import java.io.File
+import java.util.*
 
 object Namespaces {
    const val DEFAULT_NAMESPACE = ""
@@ -19,7 +20,7 @@ fun ParserRuleContext?.toCompilationUnit(): lang.taxi.types.CompilationUnit {
 
 }
 
-data class CompilationError(val offendingToken: Token, val detailMessage: String?, val sourceName:String? = null) {
+data class CompilationError(val offendingToken: Token, val detailMessage: String?, val sourceName: String? = null) {
    val line = offendingToken.line
    val char = offendingToken.charPositionInLine
 
@@ -27,7 +28,7 @@ data class CompilationError(val offendingToken: Token, val detailMessage: String
 }
 
 class CompilationException(val errors: List<CompilationError>) : RuntimeException(errors.joinToString { it.toString() }) {
-   constructor(offendingToken: Token, detailMessage: String?, sourceName:String?) : this(listOf(CompilationError(offendingToken, detailMessage, sourceName)))
+   constructor(offendingToken: Token, detailMessage: String?, sourceName: String?) : this(listOf(CompilationError(offendingToken, detailMessage, sourceName)))
 }
 
 data class DocumentStrucutreError(val detailMessage: String)
@@ -40,6 +41,10 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    companion object {
       fun forStrings(sources: List<String>) = Compiler(sources.mapIndexed { index, source -> CharStreams.fromString(source, "StringSource-$index") })
       fun forStrings(vararg source: String) = forStrings(source.toList())
+   }
+
+   private val tokens: Tokens by lazy {
+      collectTokens()
    }
 
    fun validate(): List<CompilationError> {
@@ -57,7 +62,6 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
     * and the file may not be valid source.
     */
    fun declaredTypeNames(): List<QualifiedName> {
-      val tokens = collectTokens()
       val tokenProcessor = TokenProcessor(tokens, collectImports = false)
       return tokenProcessor.findDeclaredTypeNames()
    }
@@ -68,14 +72,25 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
     * and the file may not be valid source.
     */
    fun declaredImports(): List<QualifiedName> {
-      val tokens = collectTokens()
       return tokens.imports.map { (name, _) -> QualifiedName.from(name) }
    }
 
    fun compile(): TaxiDocument {
-      val tokens = collectTokens()
       val builder = TokenProcessor(tokens, importSources)
       return builder.buildTaxiDocument()
+   }
+
+   /**
+    * Note that indexes are 1-Based, not 0-Based
+    */
+   fun contextAt(line: Int, char: Int): ParserRuleContext? {
+      val row = tokens.tokenTable.row(line) as SortedMap
+      if (row.isEmpty()) {
+         return null
+      }
+      val tokenStartIndices = row.keys as SortedSet
+      val nearestStartIndex = tokenStartIndices.takeWhile { startIndex -> startIndex <= char }.lastOrNull()
+      return nearestStartIndex?.let { index -> row.get(index) }
    }
 
    private fun collectTokens(): Tokens {
