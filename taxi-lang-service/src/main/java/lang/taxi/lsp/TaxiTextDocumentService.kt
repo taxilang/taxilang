@@ -3,7 +3,9 @@ package lang.taxi.lsp
 import lang.taxi.CompilationException
 import lang.taxi.Compiler
 import lang.taxi.TaxiDocument
+import lang.taxi.lsp.completion.CompletionService
 import lang.taxi.lsp.completion.TypeProvider
+import lang.taxi.lsp.completion.completions
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.LanguageClient
@@ -13,17 +15,24 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 
 
+/**
+ * Stores the compiled snapshot for a file
+ * Contains both the TaxiDocument - for accessing types, etc,
+ * and the compiler, for accessing tokens and compiler context - useful
+ * for completion
+ */
+data class CompiledFile(val compiler: Compiler, val document: TaxiDocument)
+
 class TaxiTextDocumentService : TextDocumentService, LanguageClientAware {
     private val masterDocument: AtomicReference<TaxiDocument> = AtomicReference();
-    private val compiledDocuments: MutableMap<String, TaxiDocument> = mutableMapOf()
+    private val compiledDocuments: MutableMap<String, CompiledFile> = mutableMapOf()
     private val typeProvider = TypeProvider(masterDocument)
+    private val completionService = CompletionService(typeProvider)
     private lateinit var client: LanguageClient
-    override fun completion(position: CompletionParams?): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
-
-        // Provide completion item.
-        return CompletableFuture.supplyAsync<Either<MutableList<CompletionItem>, CompletionList>> {
-            Either.forLeft(typeProvider.getTypes().toMutableList())
-        }
+    override fun completion(position: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
+        val file = compiledDocuments[position.textDocument.uri]
+                ?: return completions()
+        return completionService.computeCompletions(file, position)
     }
 
     override fun didOpen(params: DidOpenTextDocumentParams?) {
@@ -48,9 +57,12 @@ class TaxiTextDocumentService : TextDocumentService, LanguageClientAware {
         val uri = sourceName
         try {
             val importSources = compiledDocuments.filterKeys { it != sourceName }
-                    .values.toList()
-            val compiled = Compiler(content, sourceName, importSources).compile()
-            compiledDocuments[sourceName] = compiled
+                    .values
+                    .map { it.document }
+                    .toList()
+            val compiler = Compiler(content, sourceName, importSources)
+            val compiled = compiler.compile()
+            compiledDocuments[sourceName] = CompiledFile(compiler, compiled)
             masterDocument.set(compiled)
             client.publishDiagnostics(PublishDiagnosticsParams(sourceName, emptyList(), params.textDocument.version))
         } catch (e: CompilationException) {

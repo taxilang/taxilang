@@ -1,5 +1,6 @@
 package lang.taxi.lsp
 
+import lang.taxi.utils.log
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.services.*
 import java.util.concurrent.CompletableFuture
@@ -8,7 +9,8 @@ import kotlin.system.exitProcess
 
 class TaxiLanguageServer(
         private val workspaceService: WorkspaceService = TaxiWorkspaceService(),
-        private val textDocumentService: TextDocumentService = TaxiTextDocumentService()
+        private val textDocumentService: TextDocumentService = TaxiTextDocumentService(),
+        private val lifecycleHandler: LanguageServerLifecycleHandler = NoOpLifecycleHandler
 
 ) : LanguageServer, LanguageClientAware {
 
@@ -29,7 +31,7 @@ class TaxiLanguageServer(
     }
 
     private fun terminate(exitCode: Int) {
-        exitProcess(exitCode)
+        lifecycleHandler.terminate(exitCode)
     }
 
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
@@ -57,4 +59,17 @@ class TaxiLanguageServer(
                 .forEach { it.connect(client) }
     }
 
+}
+
+interface LanguageServerLifecycleHandler {
+    fun terminate(exitCode: Int) {
+        log().warn("Ignoring request to terminate with exit code $exitCode")
+    }
+}
+
+object NoOpLifecycleHandler : LanguageServerLifecycleHandler
+object ProcessLifecycleHandler : LanguageServerLifecycleHandler {
+    override fun terminate(exitCode: Int) {
+        exitProcess(exitCode)
+    }
 }

@@ -35,7 +35,7 @@ object Launcher {
      */
     private fun startServer(input: InputStream, outputStream: OutputStream) {
         // Initialize the HelloLanguageServer
-        val taxiLanguageServer = TaxiLanguageServer()
+        val taxiLanguageServer = TaxiLanguageServer(lifecycleHandler = ProcessLifecycleHandler)
         // Create JSON RPC launcher for HelloLanguageServer instance.
         val launcher = LSPLauncher.createServerLauncher(taxiLanguageServer, input, outputStream)
 

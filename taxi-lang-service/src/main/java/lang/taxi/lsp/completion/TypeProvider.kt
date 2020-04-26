@@ -17,6 +17,9 @@ class TypeProvider(val taxiDocument: AtomicReference<TaxiDocument>) {
                 }
             }
 
+    /**
+     * Returns all types, including Taxi primitives
+     */
     fun getTypes(): List<CompletionItem> {
         val types = taxiDocument.get()?.types ?: emptySet()
         val completionItems = types.map { type ->

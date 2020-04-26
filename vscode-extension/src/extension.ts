@@ -4,6 +4,7 @@ import {commands, OutputChannel, workspace} from 'vscode';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as WebSocket from 'ws';
+import * as findJavaHome from 'find-java-home';
 
 import {LanguageClient, LanguageClientOptions, ServerOptions, TransportKind} from 'vscode-languageclient';
 
@@ -16,30 +17,36 @@ export function activate(context: vscode.ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     console.log('Congratulations, your extension "taxi-language-server" is now active!');
 
-    const socketPort = workspace.getConfiguration('taxiLanguageServer').get('port', 7000);
-    let socket: WebSocket | null = null;
-    console.log(`taxiLanguageServer streaming port is configured to ${socketPort}`);
-    // commands.registerCommand('taxiLanguageServer.startStreaming', () => {
-        // Establish websocket connection
-	socket = new WebSocket(`ws://localhost:${socketPort}`);
-    // });
 
-    // Get the java home from the process environment.
-    const {JAVA_HOME} = process.env;
-    // If java home is available continue.
-    if (!JAVA_HOME) {
-        console.error('No JAVA_HOME found, so cannot continue');
-        return;
+    const definedJavaHome = workspace.getConfiguration('taxi').get('javaHome', '');
+    if (definedJavaHome !== '') {
+        startPlugin(definedJavaHome, context);
+    } else {
+        findJavaHome({allowJre: true}, (err, home) => {
+            if (err) {
+                return console.log(err);
+            }
+            startPlugin(home, context);
+        });
     }
-    if (JAVA_HOME) {
-        console.log(`Using java from JAVA_HOME: ${JAVA_HOME}`);
+
+}
+
+function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
+    const useDebugJar = workspace.getConfiguration('taxi').get('useDevJar', false);
+    const socketPort = workspace.getConfiguration('taxiLanguageServer').get('port', 7000);
+    let socket: WebSocket = new WebSocket(`ws://localhost:${socketPort}`);
+    console.log(`taxiLanguageServer streaming port is configured to ${socketPort}`);
+    if (javaHome) {
+        console.log(`Using java from ${javaHome}`);
         // Java execution path.
-        let excecutable: string = path.join(JAVA_HOME, 'bin', 'java');
+        let excecutable: string = path.join(javaHome, 'bin', 'java');
 
         // path to the launcher.jar
-        let classPath = path.join(__dirname, 'taxi-lang-server.jar');
+        const jarName = 'taxi-lang-server-standalone.jar';
+        let classPath = (useDebugJar) ? path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', jarName) : path.join(__dirname, jarName);
         const debugSettings = '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005,quiet=y';
-        const args: string[] = [debugSettings,'-cp', classPath];
+        const args: string[] = [debugSettings, '-cp', classPath];
         console.log(JSON.stringify(args));
 
         // Set the server options
@@ -103,5 +110,5 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-    console.log("taxi-language-server is deactivated");
+    console.log('taxi-language-server is deactivated');
 }

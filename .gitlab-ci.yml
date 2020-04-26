@@ -48,7 +48,7 @@ package-jar:
     - master
   artifacts:
     paths:
-      - 'target/taxi-lang-server.jar'
+      - 'taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
     
 package-plugin:
   image: node:13
