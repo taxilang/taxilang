@@ -34,6 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
     const useDebugJar = workspace.getConfiguration('taxi').get('useDevJar', false);
+    const enableDebug = workspace.getConfiguration('taxi').get('enableDebugSession', false);
     const socketPort = workspace.getConfiguration('taxiLanguageServer').get('port', 7000);
     let socket: WebSocket = new WebSocket(`ws://localhost:${socketPort}`);
     console.log(`taxiLanguageServer streaming port is configured to ${socketPort}`);
@@ -45,7 +46,7 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
         // path to the launcher.jar
         const jarName = 'taxi-lang-server-standalone.jar';
         let classPath = (useDebugJar) ? path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', jarName) : path.join(__dirname, jarName);
-        const debugSettings = '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005,quiet=y';
+        const debugSettings = (enableDebug) ? '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005,quiet=y' : '';
         const args: string[] = [debugSettings, '-cp', classPath];
         console.log(JSON.stringify(args));
 
