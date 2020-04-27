@@ -14,24 +14,24 @@ stages:
 
 # For merge requests do not `deploy` but only run `verify`.
 # See https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
-build-jar:
-  image: maven:3.3.9-jdk-8
-  stage: build
-  script:
-    - 'mvn $MAVEN_CLI_OPTS verify'
-  except:
-    - master
-
-package-jar:
-  image: maven:3.3.9-jdk-8
-  stage: build
-  script:
-    - 'mvn $MAVEN_CLI_OPTS install'
-  only:
-    - master
-  artifacts:
-    paths:
-      - 'taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
+#build-jar:
+#  image: maven:3.3.9-jdk-8
+#  stage: build
+#  script:
+#    - 'mvn $MAVEN_CLI_OPTS verify'
+#  except:
+#    - master
+#
+#package-jar:
+#  image: maven:3.3.9-jdk-8
+#  stage: build
+#  script:
+#    - 'mvn $MAVEN_CLI_OPTS install'
+#  only:
+#    - master
+#  artifacts:
+#    paths:
+#      - 'taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
     
 package-plugin:
   image: node:13
