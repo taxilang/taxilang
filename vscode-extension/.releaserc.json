@@ -1,0 +1,21 @@
+{
+  "extends": "@semantic-release/gitlab-config",
+  "pkgRoot": "out",
+  "plugins": [
+    ["@semantic-release/commit-analyzer", {
+      "preset": "angular",
+      "releaseRules" : [
+        { "type" :  "refactor","release": "patch"},
+        { "type" :  "style","release": "patch"}
+      ]
+    }],
+    "@semantic-release/release-notes-generator",
+    ["@semantic-release/changelog", {
+      "changelogFile" : "CHANGELOG.md"
+    }],
+    ["@semantic-release/npm", {
+      "pkgRoot" : "outv"
+    }],
+    "@semantic-release/git"
+  ]
+}
