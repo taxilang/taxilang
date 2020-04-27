@@ -14,7 +14,7 @@
       "changelogFile" : "CHANGELOG.md"
     }],
     ["@semantic-release/exec", {
-      "publishCmd" : "vsce package ${nextRelease.version}"
+      "publishCmd" : "npm version ${nextRelease.version} && vsce package ${nextRelease.version}"
     }],
     "@semantic-release/git"
   ]
