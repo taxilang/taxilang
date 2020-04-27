@@ -14,7 +14,11 @@
       "changelogFile" : "CHANGELOG.md"
     }],
     ["@semantic-release/npm", {
-      "pkgRoot" : "outv"
+      "npmPublish" : false,
+      "pkgRoot" : "out"
+    }],
+    ["@semantic-release/exec", {
+      "publishCmd" : "vsce package ${nextRelease.version}"
     }],
     "@semantic-release/git"
   ]

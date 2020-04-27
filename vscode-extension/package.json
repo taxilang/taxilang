@@ -51,7 +51,8 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile && cp ../taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar out/",
+    "old:vscode:previous": "npm run compile && cp ../taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar out/",
+    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "lint": "eslint src --ext ts",
     "watch": "tsc -watch -p ./",
@@ -60,6 +61,7 @@
   },
   "dependencies": {
     "find-java-home": "^1.1.0",
+    "semantic-release": "^17.0.7",
     "vscode-languageclient": "5.1.1",
     "ws": "^6.0.0"
   },
