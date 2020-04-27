@@ -21,7 +21,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    init {
       val importedTypes = if (collectImports) {
-         ImportedTypeCollator(tokens.imports, importSources).collect()
+         ImportedTypeCollator(tokens, importSources).collect()
       } else {
          emptyList()
       }

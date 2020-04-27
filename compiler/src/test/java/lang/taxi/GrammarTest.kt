@@ -269,8 +269,8 @@ type Person {
 }
       """.trim()
       val compiler = Compiler(source)
-      compiler.contextAt(1,2)?.start?.text.should.equal("namespace")
-      compiler.contextAt(4,6)?.start?.text.should.equal("name")
+      compiler.contextAt(1, 2)?.start?.text.should.equal("namespace")
+      compiler.contextAt(4, 6)?.start?.text.should.equal("name")
    }
 
    @Test
@@ -398,6 +398,21 @@ type ApiResponse {
 
    private fun testResource(s: String): File {
       return File(this.javaClass.classLoader.getResource(s).toURI())
+   }
+
+   @Test
+   fun canHaveCircularReferencesInTypes() {
+      val source = """
+type Person {
+   home : Home
+}
+type Home {
+   owner : Person
+ }
+      """.trimIndent()
+      val doc = Compiler(source).compile()
+      doc.objectType("Person").field("home").type.qualifiedName.should.equal("Home")
+      doc.objectType("Home").field("owner").type.qualifiedName.should.equal("Person")
    }
 
 
@@ -530,6 +545,30 @@ namespace foo {
       val imports = Compiler(sourceB).declaredImports()
       expect(imports).to.have.size(1)
       expect(imports).to.contain(QualifiedName.from("test.FirstName"))
+   }
+
+   @Test
+   fun canHaveImportsAcrossSources() {
+      val sourceA = """
+import Home
+
+type Person {
+   home : Home
+}
+      """.trimIndent()
+      val sourceB = """
+import Person
+
+type Home {
+   owner : Person
+}
+      """.trimIndent()
+      val doc = Compiler(listOf(
+         CharStreams.fromString(sourceA, "sourceA"),
+         CharStreams.fromString(sourceB, "sourceB")
+      )).compile()
+      doc.objectType("Person").field("home").type.qualifiedName.should.equal("Home")
+      doc.objectType("Home").field("owner").type.qualifiedName.should.equal("Person")
    }
 
    @Test

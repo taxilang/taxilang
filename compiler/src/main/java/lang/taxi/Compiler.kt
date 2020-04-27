@@ -94,9 +94,6 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    }
 
    private fun collectTokens(): Tokens {
-      // TODO : Can probably be smarter about this, and
-      // stream the source, rather than returning a string from the
-      // source provider
       val tokensCollection = inputs.map { input ->
          val listener = TokenCollator()
          val errorListener = CollectingErrorListener(input.sourceName)
