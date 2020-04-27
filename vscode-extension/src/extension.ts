@@ -15,7 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
-    console.log('Congratulations, your extension "taxi-language-server" is now active!');
+    console.log('Taxi language extension starting');
 
 
     const definedJavaHome = workspace.getConfiguration('taxi').get('javaHome', '');
@@ -46,8 +46,8 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
         // path to the launcher.jar
         const jarName = 'taxi-lang-server-standalone.jar';
         let classPath = (useDebugJar) ? path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', jarName) : path.join(__dirname, jarName);
-        const debugSettings = (enableDebug) ? '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005,quiet=y' : '';
-        const args: string[] = [debugSettings, '-cp', classPath];
+        const debugSettings = (enableDebug) ? ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005,quiet=y'] : [];
+        const args: string[] = debugSettings.concat(['-cp', classPath]);
         console.log(JSON.stringify(args));
 
         // Set the server options

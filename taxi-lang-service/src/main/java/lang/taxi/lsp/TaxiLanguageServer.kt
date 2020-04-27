@@ -8,8 +8,8 @@ import kotlin.system.exitProcess
 
 
 class TaxiLanguageServer(
-        private val workspaceService: WorkspaceService = TaxiWorkspaceService(),
-        private val textDocumentService: TextDocumentService = TaxiTextDocumentService(),
+        private val workspaceService: TaxiWorkspaceService = TaxiWorkspaceService(),
+        private val textDocumentService: TextDocumentService = TaxiTextDocumentService(workspaceService),
         private val lifecycleHandler: LanguageServerLifecycleHandler = NoOpLifecycleHandler
 
 ) : LanguageServer, LanguageClientAware {

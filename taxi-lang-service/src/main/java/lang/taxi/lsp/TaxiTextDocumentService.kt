@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 data class CompiledFile(val compiler: Compiler, val document: TaxiDocument)
 
-class TaxiTextDocumentService : TextDocumentService, LanguageClientAware {
+class TaxiTextDocumentService(val workspaceService: TaxiWorkspaceService) : TextDocumentService, LanguageClientAware {
     private val masterDocument: AtomicReference<TaxiDocument> = AtomicReference();
     private val compiledDocuments: MutableMap<String, CompiledFile> = mutableMapOf()
     private val typeProvider = TypeProvider(masterDocument)
@@ -35,13 +35,13 @@ class TaxiTextDocumentService : TextDocumentService, LanguageClientAware {
         return completionService.computeCompletions(file, position)
     }
 
-    override fun didOpen(params: DidOpenTextDocumentParams?) {
+    override fun didOpen(params: DidOpenTextDocumentParams) {
     }
 
-    override fun didSave(params: DidSaveTextDocumentParams?) {
+    override fun didSave(params: DidSaveTextDocumentParams) {
     }
 
-    override fun didClose(params: DidCloseTextDocumentParams?) {
+    override fun didClose(params: DidCloseTextDocumentParams) {
     }
 
     override fun didChange(params: DidChangeTextDocumentParams) {
@@ -92,6 +92,7 @@ class TaxiTextDocumentService : TextDocumentService, LanguageClientAware {
 
     override fun connect(client: LanguageClient) {
         this.client = client
+
     }
 
 }
