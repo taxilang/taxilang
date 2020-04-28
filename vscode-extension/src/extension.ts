@@ -44,8 +44,23 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
         let excecutable: string = path.join(javaHome, 'bin', 'java');
 
         // path to the launcher.jar
-        const jarName = 'taxi-lang-server-standalone.jar';
-        let classPath = (useDebugJar) ? path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', jarName) : path.join(__dirname, jarName);
+
+        //  /home/marty/dev/taxi-lang-server/taxi-lang-server-standalone/target/dependency/*.jar
+        //   java -classpath "./classes:./dependency/*" lang.taxi.lsp.Launcher
+        let classPath:string;
+        if (useDebugJar) {
+            classPath = [ 
+                path.join(__dirname, '..', '..','..','taxi-lang','compiler', 'target', 'classes') ,
+                path.join(__dirname, '..', '..', 'taxi-lang-service', 'target', 'classes') ,
+                path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', 'classes') ,
+                path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', 'dependency', '*')  
+            ].join(':');
+        } else {
+            const jarName = 'taxi-lang-server-standalone.jar';
+            classPath = path.join(__dirname, jarName);
+        }
+
+        // let classPath = (useDebugJar) ? path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', jarName) : path.join(__dirname, jarName);
         const debugSettings = (enableDebug) ? ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005,quiet=y'] : [];
         const args: string[] = debugSettings.concat(['-cp', classPath]);
         console.log(JSON.stringify(args));
@@ -63,31 +78,31 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
         };
 
         // The log to send
-        let log = '';
-        const websocketOutputChannel: OutputChannel = {
-            name: 'websocket',
-            // Only append the logs but send them later
-            append(value: string) {
-                log += value;
-                console.log(value);
-            },
-            appendLine(value: string) {
-                log += value;
-                // Don't send logs until WebSocket initialization
-                if (socket && socket.readyState === WebSocket.OPEN) {
-                    socket.send(log);
-                }
-                log = '';
-            },
-            clear() {
-            },
-            show() {
-            },
-            hide() {
-            },
-            dispose() {
-            }
-        };
+        // let log = '';
+        // const websocketOutputChannel: OutputChannel = {
+        //     name: 'websocket',
+        //     // Only append the logs but send them later
+        //     append(value: string) {
+        //         log += value;
+        //         console.log(value);
+        //     },
+        //     appendLine(value: string) {
+        //         log += value;
+        //         // Don't send logs until WebSocket initialization
+        //         if (socket && socket.readyState === WebSocket.OPEN) {
+        //             socket.send(log);
+        //         }
+        //         log = '';
+        //     },
+        //     clear() {
+        //     },
+        //     show() {
+        //     },
+        //     hide() {
+        //     },
+        //     dispose() {
+        //     }
+        // };
 
         // Options to control the language client
         let clientOptions: LanguageClientOptions = {
@@ -98,7 +113,7 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
                 fileEvents: workspace.createFileSystemWatcher('**/*.taxi')
             },
             // Hijacks all LSP logs and redirect them to a specific port through WebSocket connection
-            outputChannel: websocketOutputChannel
+            // outputChannel: websocketOutputChannel
         };
 
         // Create the language client and start the client.

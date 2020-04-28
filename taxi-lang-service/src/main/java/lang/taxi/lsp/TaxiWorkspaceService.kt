@@ -5,11 +5,8 @@ import org.eclipse.lsp4j.services.LanguageClient
 import org.eclipse.lsp4j.services.LanguageClientAware
 import org.eclipse.lsp4j.services.WorkspaceService
 
-class TaxiWorkspaceService : WorkspaceService, LanguageClientAware {
-    private lateinit var client: LanguageClient
+class TaxiWorkspaceService() : WorkspaceService {
     val receivedEvents = mutableListOf<Any>()
-    var workspaceFolders:List<WorkspaceFolder> = emptyList()
-        private set
 
     override fun didChangeWatchedFiles(params: DidChangeWatchedFilesParams) {
         receivedEvents.add(params)
@@ -23,11 +20,7 @@ class TaxiWorkspaceService : WorkspaceService, LanguageClientAware {
         receivedEvents.add(params)
     }
 
-    override fun connect(client: LanguageClient) {
-        this.client = client
-        client.workspaceFolders().handle { folders, throwable ->
-            this.workspaceFolders = folders.toList()
-        }
+    fun initialize(params: InitializeParams) {
     }
 
 }
