@@ -1,3 +1,10 @@
+## [1.1.2](https://gitlab.com/taxi-lang/language-server/compare/v1.1.1...v1.1.2) (2020-04-29)
+
+
+### Bug Fixes
+
+* update to latest taxi to improve windows support ([c555230](https://gitlab.com/taxi-lang/language-server/commit/c5552302148b82072d7bf998b9f8070fdb3a1ccf))
+
 ## [1.1.1](https://gitlab.com/taxi-lang/language-server/compare/v1.1.0...v1.1.1) (2020-04-29)
 
 
