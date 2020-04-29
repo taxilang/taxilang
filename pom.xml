@@ -41,6 +41,7 @@
    </modules>
 
    <properties>
+      <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
       <kotlin.version>1.3.50</kotlin.version>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
    </properties>

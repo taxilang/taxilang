@@ -269,8 +269,8 @@ type Person {
 }
       """.trim()
       val compiler = Compiler(source)
-      compiler.contextAt(1, 2)?.start?.text.should.equal("namespace")
-      compiler.contextAt(4, 6)?.start?.text.should.equal("name")
+      compiler.contextAt(0, 2)?.start?.text.should.equal("namespace")
+      compiler.contextAt(3, 6)?.start?.text.should.equal("name")
    }
 
    @Test
@@ -550,14 +550,18 @@ namespace foo {
    @Test
    fun canHaveImportsAcrossSources() {
       val sourceA = """
-import Home
+import acme.places.Home
+
+namespace acme.people
 
 type Person {
    home : Home
 }
       """.trimIndent()
       val sourceB = """
-import Person
+import acme.people.Person
+
+namespace acme.places
 
 type Home {
    owner : Person
@@ -567,8 +571,8 @@ type Home {
          CharStreams.fromString(sourceA, "sourceA"),
          CharStreams.fromString(sourceB, "sourceB")
       )).compile()
-      doc.objectType("Person").field("home").type.qualifiedName.should.equal("Home")
-      doc.objectType("Home").field("owner").type.qualifiedName.should.equal("Person")
+      doc.objectType("acme.people.Person").field("home").type.qualifiedName.should.equal("acme.places.Home")
+      doc.objectType("acme.places.Home").field("owner").type.qualifiedName.should.equal("acme.people.Person")
    }
 
    @Test

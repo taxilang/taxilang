@@ -1,7 +1,11 @@
 package lang.taxi
 
+import com.google.common.cache.Cache
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
 import lang.taxi.compiler.TokenProcessor
 import lang.taxi.types.*
+import lang.taxi.utils.log
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
 import java.io.File
@@ -33,21 +37,61 @@ class CompilationException(val errors: List<CompilationError>) : RuntimeExceptio
 
 data class DocumentStrucutreError(val detailMessage: String)
 class DocumentMalformedException(val errors: List<DocumentStrucutreError>) : RuntimeException(errors.joinToString { it.detailMessage })
-class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocument> = emptyList()) {
+class CompilerTokenCache {
+   private val streamNameToStream = mutableMapOf<String, CharStream>()
+   private val cache: Cache<CharStream, TokenStreamParseResult> = CacheBuilder.newBuilder()
+      .build<CharStream, TokenStreamParseResult>()
+
+   fun parse(input: CharStream): TokenStreamParseResult {
+      return cache.get(input) {
+         val listener = TokenCollator()
+         val errorListener = CollectingErrorListener(input.sourceName)
+         val lexer = TaxiLexer(input)
+         val parser = TaxiParser(CommonTokenStream(lexer))
+         parser.addParseListener(listener)
+         parser.addErrorListener(errorListener)
+
+         // Calling document triggers the parsing
+         parser.document()
+         val result = TokenStreamParseResult(listener.tokens(), errorListener.errors)
+
+         streamNameToStream.put(input.sourceName, input)?.let { previousVersion ->
+            cache.invalidate(previousVersion)
+         }
+         result
+      }
+   }
+}
+
+data class TokenStreamParseResult(val tokens: Tokens, val errors: List<CompilationError>)
+class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocument> = emptyList(), private val tokenCache: CompilerTokenCache = CompilerTokenCache()) {
    constructor(input: CharStream, importSources: List<TaxiDocument> = emptyList()) : this(listOf(input), importSources)
-   constructor(source: String, sourceName: String = "[unknown source]", importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromString(source, sourceName), importSources)
+   constructor(source: String, sourceName: String = UNKNOWN_SOURCE, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromString(source, sourceName), importSources)
    constructor(file: File, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromPath(file.toPath()), importSources)
 
    companion object {
+      const val UNKNOWN_SOURCE = "UnknownSource"
       fun forStrings(sources: List<String>) = Compiler(sources.mapIndexed { index, source -> CharStreams.fromString(source, "StringSource-$index") })
       fun forStrings(vararg source: String) = forStrings(source.toList())
    }
 
-   private val tokens: Tokens by lazy {
+   private val parseResult: Pair<Tokens, List<CompilationError>> by lazy {
       collectTokens()
    }
 
+   private val tokens: Tokens by lazy {
+      parseResult.first
+   }
+
+   private val syntaxErrors: List<CompilationError> by lazy {
+      parseResult.second
+   }
+
    fun validate(): List<CompilationError> {
+      val compilationErrors = parseResult.second
+      if (compilationErrors.isNotEmpty()) {
+         return compilationErrors
+      }
       try {
          compile()
       } catch (e: CompilationException) {
@@ -76,6 +120,11 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    }
 
    fun compile(): TaxiDocument {
+      // Note - leaving this approach for backwards compatiability
+      // We could try to continue compiling, with the tokens we do have
+      if (syntaxErrors.isNotEmpty()) {
+         throw CompilationException(syntaxErrors)
+      }
       val builder = TokenProcessor(tokens, importSources)
       return builder.buildTaxiDocument()
    }
@@ -83,8 +132,9 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    /**
     * Note that indexes are 1-Based, not 0-Based
     */
-   fun contextAt(line: Int, char: Int): ParserRuleContext? {
-      val row = tokens.tokenTable.row(line) as SortedMap
+   fun contextAt(line: Int, char: Int, sourceName: String = UNKNOWN_SOURCE): ParserRuleContext? {
+      val tokenTable = tokens.tokenStore.tokenTable(sourceName)
+      val row = tokenTable.row(line) as SortedMap
       if (row.isEmpty()) {
          return null
       }
@@ -93,25 +143,39 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       return nearestStartIndex?.let { index -> row.get(index) }
    }
 
-   private fun collectTokens(): Tokens {
-      val tokensCollection = inputs.map { input ->
-         val listener = TokenCollator()
-         val errorListener = CollectingErrorListener(input.sourceName)
-         val lexer = TaxiLexer(input)
-         val parser = TaxiParser(CommonTokenStream(lexer))
-         parser.addParseListener(listener)
-         parser.addErrorListener(errorListener)
-         val doc = parser.document()
-         doc.exception?.let {
-            throw CompilationException(it.offendingToken, it.message, input.sourceName)
-         }
-         if (errorListener.errors.isNotEmpty())
-            throw CompilationException(errorListener.errors)
+   /**
+    * Collect the tokens in the input streams found
+    * Here, errors will get thrown for syntax issues, but not for
+    * semantic issues (eg., invalid types etc).
+    *
+    * We try to collect as many tokens as possible, to have the richest
+    * view of the source.  So, if one stream fails, we'll exclude it and try
+    * to parse the rest of the streams.
+    * This is to allow tooling (such as VSCode / LSP) to get as much token / type data
+    * as possible
+    */
+   private fun collectTokens(): Pair<Tokens, List<CompilationError>> {
 
-         listener.tokens() // return..
+      val collectionResult = inputs.map { input ->
+         // We cache the result.
+         // This is primarily because the input is a stream, and once parsed the first
+         // time, we have to seek back to the start to reparse.
+         // This seems wasteful, so we cache.
+         // There are other benefits in terms of performance, but these are currently a secondary concern
+         tokenCache.parse(input)
       }
+      val tokensCollection = collectionResult.map { it.tokens }
+      val errors = collectionResult.flatMap { it.errors }
       val tokens = tokensCollection.reduce { acc, tokens -> acc.plus(tokens) }
-      return tokens
+      return tokens to errors
+   }
+
+   fun typeNamesForSource(sourceName: String): List<QualifiedName> {
+      return tokens.typeNamesForSource(sourceName)
+   }
+
+   fun importedTypesInSource(sourceName: String): List<QualifiedName> {
+      return tokens.importedTypeNamesInSource(sourceName)
    }
 }
 

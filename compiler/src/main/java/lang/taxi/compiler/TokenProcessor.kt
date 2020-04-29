@@ -354,16 +354,26 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
    private fun resolveUserType(namespace: Namespace, classType: TaxiParser.ClassOrInterfaceTypeContext): Type {
-      val typeName = qualify(namespace, classType.Identifier().text())
-      if (typeSystem.contains(typeName)) {
-         return typeSystem.getType(typeName)
+      val requestedTypeName = classType.Identifier().text()
+      val qualifiedTypeName = qualify(namespace, requestedTypeName)
+      if (typeSystem.contains(qualifiedTypeName)) {
+         return typeSystem.getType(qualifiedTypeName)
       }
 
-      if (tokens.unparsedTypes.contains(typeName)) {
-         compileToken(typeName)
-         return typeSystem.getType(typeName)
+      if (tokens.unparsedTypes.contains(qualifiedTypeName)) {
+         compileToken(qualifiedTypeName)
+         return typeSystem.getType(qualifiedTypeName)
       }
-      throw CompilationException(classType.start, ErrorMessages.unresolvedType(typeName), classType.source().sourceName)
+
+      val requestedNameIsQualified = requestedTypeName.contains(".")
+      if (!requestedNameIsQualified) {
+         val importsInSource = tokens.importedTypeNamesInSource(classType.source().normalizedSourceName)
+         val importedTypeName = importsInSource.firstOrNull { it.typeName == requestedTypeName }
+         if (importedTypeName != null) {
+            return typeSystem.getType(importedTypeName.parameterizedName)
+         }
+      }
+      throw CompilationException(classType.start, ErrorMessages.unresolvedType(qualifiedTypeName), classType.source().sourceName)
    }
 
 

@@ -3,6 +3,7 @@ package lang.taxi
 import com.google.common.collect.*
 import lang.taxi.TaxiParser.ServiceDeclarationContext
 import lang.taxi.compiler.TokenProcessor
+import lang.taxi.types.QualifiedName
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.TerminalNode
@@ -16,8 +17,24 @@ data class Tokens(
    val unparsedServices: Map<String, Pair<Namespace, ServiceDeclarationContext>>,
    val unparsedPolicies: Map<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>,
    val unparsedDataSources: Map<String, Pair<Namespace, TaxiParser.FileResourceDeclarationContext>>,
-   val tokenTable: TokenTable
+   val tokenStore: TokenStore
 ) {
+
+   val unparsedTypeNames: Set<QualifiedName> by lazy {
+      unparsedTypes.keys.map { QualifiedName.from(it) }.toSet()
+   }
+
+   private val typeNamesBySource: Map<String, List<QualifiedName>> by lazy {
+      unparsedTypes.map { (name, namespaceContextPair) ->
+         val (_, context) = namespaceContextPair
+         context.source().normalizedSourceName to QualifiedName.from(name)
+      }.groupBy { it.first }
+         .mapValues { (key, value) -> value.map { it.second } }
+   }
+   private val importsBySourceName: Map<String, List<Pair<String, TaxiParser.ImportDeclarationContext>>> by lazy {
+      imports.groupBy { it.second.source().normalizedSourceName }
+   }
+
    fun plus(others: Tokens): Tokens {
       val errors = collectDuplicateTypes(others) + collectDuplicateServices(others)
       if (errors.isNotEmpty()) {
@@ -30,9 +47,7 @@ data class Tokens(
          this.unparsedServices + others.unparsedServices,
          this.unparsedPolicies + others.unparsedPolicies,
          this.unparsedDataSources + others.unparsedDataSources,
-         // When appending token sets, this is typeically because we're merging sources
-         // therefore, we don't want to provide the token table, which is source dependent.
-         ImmutableTable.of()
+         this.tokenStore + others.tokenStore
       )
    }
 
@@ -58,9 +73,17 @@ data class Tokens(
       val errors = duplicateServices.map { CompilationError(others.unparsedServices[it]!!.second.start, "Attempt to redefine service $it. Services may be extended (using an extension), but not redefined") }
       return errors
    }
+
+   fun importedTypeNamesInSource(sourceName: String): List<QualifiedName> {
+      return importsBySourceName.getOrDefault(sourceName, emptyList())
+         .map { QualifiedName.from(it.first) }
+   }
+
+   fun typeNamesForSource(sourceName: String): List<QualifiedName> {
+      return typeNamesBySource.getValue(sourceName)
+   }
 }
 
-typealias TokenTable = Table<Int, Int, ParserRuleContext>
 
 class TokenCollator : TaxiBaseListener() {
    val exceptions = mutableMapOf<ParserRuleContext, Exception>()
@@ -76,14 +99,15 @@ class TokenCollator : TaxiBaseListener() {
    //    private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
 //    private val unparsedExtensions = mutableListOf<ParserRuleContext>()
 //    private val unparsedServices = mutableMapOf<String, ServiceDeclarationContext>()
-   private val tokenTable: TokenTable = TreeBasedTable.create<Int, Int, ParserRuleContext>()
+   private val tokenStore = TokenStore()
    fun tokens(): Tokens {
-      return Tokens(imports, unparsedTypes, unparsedExtensions, unparsedServices, unparsedPolicies, unparsedSources, tokenTable)
+      return Tokens(imports, unparsedTypes, unparsedExtensions, unparsedServices, unparsedPolicies, unparsedSources, tokenStore)
    }
 
    override fun exitEveryRule(ctx: ParserRuleContext) {
       super.exitEveryRule(ctx)
-      tokenTable.put(ctx.start.line, ctx.start.charPositionInLine, ctx)
+      val zeroBasedLineNumber = ctx.start.line - 1
+      tokenStore.insert(ctx.start.inputStream.sourceName, zeroBasedLineNumber, ctx.start.charPositionInLine, ctx)
    }
 
    override fun exitImportDeclaration(ctx: TaxiParser.ImportDeclarationContext) {
