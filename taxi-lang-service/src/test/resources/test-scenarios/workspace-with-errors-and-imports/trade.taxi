@@ -1,0 +1,5 @@
+import acme.fx.CurrencySymbol
+
+type Trade {
+    symbol : CurrencySymbol
+}

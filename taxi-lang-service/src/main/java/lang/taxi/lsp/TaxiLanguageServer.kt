@@ -8,10 +8,9 @@ import kotlin.system.exitProcess
 
 
 class TaxiLanguageServer(
-        private val workspaceService: WorkspaceService = TaxiWorkspaceService(),
-        private val textDocumentService: TextDocumentService = TaxiTextDocumentService(),
+        private val textDocumentService: TaxiTextDocumentService = TaxiTextDocumentService(),
+        private val workspaceService: TaxiWorkspaceService = TaxiWorkspaceService(),
         private val lifecycleHandler: LanguageServerLifecycleHandler = NoOpLifecycleHandler
-
 ) : LanguageServer, LanguageClientAware {
 
     private lateinit var client: LanguageClient
@@ -35,6 +34,8 @@ class TaxiLanguageServer(
     }
 
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
+        workspaceService.initialize(params)
+        textDocumentService.initialize(params)
         // Copied from:
         // https://github.com/NipunaMarcus/hellols/blob/master/language-server/src/main/java/org/hello/ls/langserver/HelloLanguageServer.java
 
@@ -42,9 +43,14 @@ class TaxiLanguageServer(
         val initializeResult = InitializeResult(ServerCapabilities())
 
         // Set the capabilities of the LS to inform the client.
-        initializeResult.capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
+        val capabilities = initializeResult.capabilities
+        capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
+        capabilities.workspace = WorkspaceServerCapabilities(WorkspaceFoldersOptions().apply {
+            supported = true
+            setChangeNotifications(true)
+        })
         val completionOptions = CompletionOptions()
-        initializeResult.capabilities.completionProvider = completionOptions
+        capabilities.completionProvider = completionOptions
         return CompletableFuture.supplyAsync { initializeResult }
     }
 
@@ -57,6 +63,9 @@ class TaxiLanguageServer(
         listOf(this.textDocumentService, this.workspaceService)
                 .filterIsInstance<LanguageClientAware>()
                 .forEach { it.connect(client) }
+        client.logMessage(MessageParams(
+                MessageType.Info, "Taxi Language Server Connected"
+        ))
     }
 
 }
