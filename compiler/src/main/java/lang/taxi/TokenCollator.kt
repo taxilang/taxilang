@@ -4,6 +4,7 @@ import com.google.common.collect.*
 import lang.taxi.TaxiParser.ServiceDeclarationContext
 import lang.taxi.compiler.TokenProcessor
 import lang.taxi.types.QualifiedName
+import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.TerminalNode
@@ -75,12 +76,12 @@ data class Tokens(
    }
 
    fun importedTypeNamesInSource(sourceName: String): List<QualifiedName> {
-      return importsBySourceName.getOrDefault(sourceName, emptyList())
+      return importsBySourceName.getOrDefault(SourceNames.normalize(sourceName), emptyList())
          .map { QualifiedName.from(it.first) }
    }
 
    fun typeNamesForSource(sourceName: String): List<QualifiedName> {
-      return typeNamesBySource.getValue(sourceName)
+      return typeNamesBySource.getValue(SourceNames.normalize(sourceName))
    }
 }
 
@@ -105,9 +106,9 @@ class TokenCollator : TaxiBaseListener() {
    }
 
    override fun exitEveryRule(ctx: ParserRuleContext) {
-      super.exitEveryRule(ctx)
       val zeroBasedLineNumber = ctx.start.line - 1
-      tokenStore.insert(ctx.start.inputStream.sourceName, zeroBasedLineNumber, ctx.start.charPositionInLine, ctx)
+
+      tokenStore.insert(ctx.source().normalizedSourceName, zeroBasedLineNumber, ctx.start.charPositionInLine, ctx)
    }
 
    override fun exitImportDeclaration(ctx: TaxiParser.ImportDeclarationContext) {

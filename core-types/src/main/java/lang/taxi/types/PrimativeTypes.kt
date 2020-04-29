@@ -28,7 +28,7 @@ enum class PrimitiveType(val declaration: String, val typeDoc: String) : Type {
 
    override val inheritsFrom: Set<Type> = emptySet()
 
-   override val compilationUnits: List<CompilationUnit> = listOf(CompilationUnit.ofSource(SourceCode("Built in", "// Built-in type")))
+   override val compilationUnits: List<CompilationUnit> = listOf(CompilationUnit.ofSource(SourceCode("native.taxi", "// Built-in type")))
 
    companion object {
       private val typesByName = values().associateBy { it.declaration }
