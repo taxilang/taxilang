@@ -1,12 +1,8 @@
 package lang.taxi.lsp
 
-import lang.taxi.CompilationError
-import lang.taxi.CompilationException
-import lang.taxi.Compiler
-import lang.taxi.TaxiDocument
+import lang.taxi.*
 import lang.taxi.lsp.completion.CompletionService
 import lang.taxi.lsp.completion.TypeProvider
-import lang.taxi.lsp.completion.completions
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.eclipse.lsp4j.*
@@ -26,27 +22,43 @@ import java.util.concurrent.atomic.AtomicReference
  * and the compiler, for accessing tokens and compiler context - useful
  * for completion
  */
-data class CompiledFile(val compiler: Compiler, val document: TaxiDocument)
+data class CompilationResult(val compiler: Compiler, val document: TaxiDocument?) {
+    val successful = document != null
+}
+
 
 class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
 
     private val sources: MutableMap<URI, CharStream> = mutableMapOf()
     private lateinit var initializeParams: InitializeParams
-    private val masterDocument: AtomicReference<TaxiDocument> = AtomicReference();
-    private val compiledDocuments: MutableMap<String, CompiledFile> = mutableMapOf()
-    private val typeProvider = TypeProvider(masterDocument)
+    private val lastSuccessfulCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
+    private val lastCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
+    private val tokenCache: CompilerTokenCache = CompilerTokenCache()
+
+    // TODO : We can probably use the unparsedTypes from the tokens for this, rather than the
+    // types themselves, as it'll give better results sooner
+    private val typeProvider = TypeProvider(lastSuccessfulCompilationResult, lastCompilationResult)
     private val completionService = CompletionService(typeProvider)
     private lateinit var client: LanguageClient
     private var rootUri: String? = null
+
+    private var initialized: Boolean = false
+    private var connected: Boolean = false
+
+    private val ready: Boolean
+        get() {
+            return initialized && connected
+        }
 
     var compilerMessages: List<CompilationError> = emptyList()
         private set
 
 
     override fun completion(position: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
-        val file = compiledDocuments[position.textDocument.uri]
-                ?: return completions()
-        return completionService.computeCompletions(file, position)
+        if (lastCompilationResult.get() == null) {
+            compileAndReport()
+        }
+        return completionService.computeCompletions(lastCompilationResult.get(), position)
     }
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
@@ -81,28 +93,33 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     // on every keypress.
     // We need to find a way to only recompile the document that has changed
     private fun compileAndReport() {
+        val charStreams = this.sources.values.toList()
+        val compiler = Compiler(charStreams, tokenCache = tokenCache)
+
         try {
-            val charStreams = this.sources.values.toList()
-            val compiler = Compiler(charStreams)
             val compiled = compiler.compile()
-            masterDocument.set(compiled)
+            val compilationResult = CompilationResult(compiler, compiled)
+            lastSuccessfulCompilationResult.set(compilationResult)
+            lastCompilationResult.set(compilationResult)
             compilerMessages = emptyList()
             clearErrors()
         } catch (e: CompilationException) {
             compilerMessages = e.errors
+            val compilationResult = CompilationResult(compiler, null)
+            lastCompilationResult.set(compilationResult)
         }
         reportMessages()
     }
 
     private fun reportMessages() {
-        if (!this::client.isInitialized) {
+        if (!connected) {
             return
         }
         val diagnostics = this.compilerMessages.map { error ->
             // Note - for VSCode, we can use the same position for start and end, and it
             // highlights the entire word
             val position = Position(
-                    error.offendingToken.line,
+                    error.offendingToken.line - 1,
                     error.offendingToken.charPositionInLine
             )
             (error.sourceName ?: "Unknown source") to Diagnostic(
@@ -122,7 +139,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     }
 
     private fun clearErrors() {
-        if (this::client.isInitialized) {
+        if (connected) {
             // Non-performant - we're destroying the entire set of warnings for each compilation pass
             // (which in practice, is each keypress)
             this.sources.keys.forEach { sourceUri ->
@@ -136,7 +153,10 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
 
     override fun connect(client: LanguageClient) {
         this.client = client
-
+        connected = true
+        if (ready) {
+            compileAndReport()
+        }
     }
 
     fun initialize(params: InitializeParams) {
@@ -150,9 +170,12 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
                 .toMap()
 
         this.sources.putAll(initSources)
-        if (this::client.isInitialized) {
+        initialized = true
+
+        if (ready) {
             client.logMessage(MessageParams(MessageType.Log, "Found ${sources.size} to compile on startup"))
+            compileAndReport()
         }
-        compileAndReport()
+
     }
 }

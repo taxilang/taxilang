@@ -12,16 +12,11 @@ import java.nio.file.Paths
 class TaxiTextDocumentServiceTest {
 
     @Test
-    fun foo() {
-        val service = TaxiTextDocumentService()
+    fun afterEditingWorkspaceFile_then_compilerErrorsAreRemoved() {
+        val (service, workspaceRoot) = documentServiceFor("test-scenarios/workspace-with-errors-and-imports")
 
         // The initial state has a compiler error,
         // that financial-terms.taxi contains "namesapce" instead of "namespace"
-        val workspaceUri = Resources.getResource("test-scenarios/workspace-with-errors-and-imports")
-        val workspaceRoot = Paths.get(workspaceUri.toURI())
-        service.initialize(InitializeParams().apply {
-            rootUri = workspaceUri.toString()
-        })
         service.compilerMessages.should.have.size(1)
 
         // Now fix the type

@@ -1,22 +1,52 @@
 package lang.taxi.lsp.completion
 
+import lang.taxi.Compiler
 import lang.taxi.TaxiParser
-import lang.taxi.lsp.CompiledFile
+import lang.taxi.lsp.CompilationResult
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.Type
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
+import java.net.URI
 import java.util.concurrent.CompletableFuture
 
 class CompletionService(private val typeProvider: TypeProvider) {
-    fun computeCompletions(file: CompiledFile, params: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
-        val context = file.compiler.contextAt(params.position.line, params.position.character)
+    fun computeCompletions(compilationResult: CompilationResult, params: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
+        val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.uriPath())
                 ?: return completions(TopLevelCompletions.topLevelCompletionItems)
 
-        val completionItems = when (context.ruleContext.ruleIndex) {
-            TaxiParser.RULE_fieldDeclaration -> typeProvider.getTypes()
+        val importDecorator = ImportCompletionDecorator(compilationResult.compiler, params.textDocument.uriPath())
+        val completionItems = when (context.ruleIndex) {
+            TaxiParser.RULE_fieldDeclaration -> typeProvider.getTypes(listOf(importDecorator))
+            TaxiParser.RULE_typeMemberDeclaration -> typeProvider.getTypes(listOf(importDecorator))
             else -> emptyList()
         }
         return completions(completionItems)
     }
+}
+
+private class ImportCompletionDecorator(compiler: Compiler, sourceUri: String) : CompletionDecorator {
+    val typesDeclaredInFile = compiler.typeNamesForSource(sourceUri)
+    val importsDeclaredInFile = compiler.importedTypesInSource(sourceUri)
+
+    override fun decorate(typeName: QualifiedName, type: Type?, completionItem: CompletionItem): CompletionItem {
+        // TODO : Insert after other imports
+        val insertPosition = Range(
+                Position(0, 0),
+                Position(0, 0)
+        )
+        if (completionItem.additionalTextEdits == null) {
+            completionItem.additionalTextEdits = mutableListOf()
+        }
+        if (!typesDeclaredInFile.contains(typeName) && !importsDeclaredInFile.contains(typeName)) {
+            completionItem.additionalTextEdits.add(TextEdit(
+                    insertPosition,
+                    "import $typeName\n"
+            ))
+        }
+        return completionItem
+    }
+
 }
 
 fun completions(list: List<CompletionItem> = emptyList()): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
@@ -25,4 +55,8 @@ fun completions(list: List<CompletionItem> = emptyList()): CompletableFuture<Eit
 
 fun markdown(content: String): MarkupContent {
     return MarkupContent("markdown", content)
+}
+
+fun TextDocumentIdentifier.uriPath(): String {
+    return URI.create(this.uri).path
 }

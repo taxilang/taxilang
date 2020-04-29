@@ -63,6 +63,9 @@ class TaxiLanguageServer(
         listOf(this.textDocumentService, this.workspaceService)
                 .filterIsInstance<LanguageClientAware>()
                 .forEach { it.connect(client) }
+        client.logMessage(MessageParams(
+                MessageType.Info, "Taxi Language Server Connected"
+        ))
     }
 
 }
