@@ -1,3 +1,10 @@
+## [1.1.1](https://gitlab.com/taxi-lang/language-server/compare/v1.1.0...v1.1.1) (2020-04-29)
+
+
+### Bug Fixes
+
+* **build:** compiled jar now uber jar again ([b8ab2ad](https://gitlab.com/taxi-lang/language-server/commit/b8ab2ad3f0c00578ca9da0bbd395cd5fbe6add02))
+
 # [1.1.0](https://gitlab.com/taxi-lang/language-server/compare/v1.0.0...v1.1.0) (2020-04-29)
 
 
