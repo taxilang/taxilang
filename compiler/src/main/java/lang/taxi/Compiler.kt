@@ -55,7 +55,7 @@ class CompilerTokenCache {
          parser.document()
          val result = TokenStreamParseResult(listener.tokens(), errorListener.errors)
 
-         streamNameToStream.put(input.sourceName, input)?.let { previousVersion ->
+         streamNameToStream.put(SourceNames.normalize(input.sourceName), input)?.let { previousVersion ->
             cache.invalidate(previousVersion)
          }
          result
