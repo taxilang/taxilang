@@ -1,3 +1,11 @@
+# [1.1.0](https://gitlab.com/taxi-lang/language-server/compare/v1.0.0...v1.1.0) (2020-04-29)
+
+
+### Features
+
+* **imports:** better support for imports - completions and following during compilation ([9efc0f8](https://gitlab.com/taxi-lang/language-server/commit/9efc0f8d406e3d9d9a5dbc7fa9beaaa8ffe5e539))
+* follow imports in workspace when compiling ([85e81fe](https://gitlab.com/taxi-lang/language-server/commit/85e81fe5255db4923eba303034db81a5f0d4cf49))
+
 # 1.0.0 (2020-04-27)
 
 
