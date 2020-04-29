@@ -1,12 +1,12 @@
 package lang.taxi
 
-import com.google.common.collect.*
 import lang.taxi.TaxiParser.ServiceDeclarationContext
 import lang.taxi.compiler.TokenProcessor
 import lang.taxi.types.QualifiedName
+import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.ParserRuleContext
-import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.TerminalNode
+import java.io.File
 
 internal typealias Namespace = String
 
@@ -75,12 +75,27 @@ data class Tokens(
    }
 
    fun importedTypeNamesInSource(sourceName: String): List<QualifiedName> {
-      return importsBySourceName.getOrDefault(sourceName, emptyList())
+      return importsBySourceName.getOrDefault(SourceNames.normalize(sourceName), emptyList())
          .map { QualifiedName.from(it.first) }
    }
 
    fun typeNamesForSource(sourceName: String): List<QualifiedName> {
-      return typeNamesBySource.getValue(sourceName)
+      val normalized = SourceNames.normalize(sourceName)
+      return typeNamesBySource.getOrElse(normalized) {
+         // The sourceName wasn't found in the cache of tokens.
+         // This can happen typically if the file is empty, or failed to compile
+         // and we weren't able to get any tokens.
+         // However, more recently this happens if the file names aren't normalized
+         // consistently.
+         // So, adding this bomb here.
+         // If this hasn't gone off in a while, we can probably delete it.
+         val name = sourceName.split(File.separator).last()
+         if (typeNamesBySource.keys.any { it.endsWith(name) }) {
+            val matches = typeNamesBySource.keys.filter { it.endsWith(name) }.joinToString(",")
+            error("Looks a lot like file uri's aren't getting normalized properly. Looking for $normalized, found nothing, but $matches was")
+         }
+         emptyList()
+      }
    }
 }
 
@@ -105,9 +120,9 @@ class TokenCollator : TaxiBaseListener() {
    }
 
    override fun exitEveryRule(ctx: ParserRuleContext) {
-      super.exitEveryRule(ctx)
       val zeroBasedLineNumber = ctx.start.line - 1
-      tokenStore.insert(ctx.start.inputStream.sourceName, zeroBasedLineNumber, ctx.start.charPositionInLine, ctx)
+
+      tokenStore.insert(ctx.source().normalizedSourceName, zeroBasedLineNumber, ctx.start.charPositionInLine, ctx)
    }
 
    override fun exitImportDeclaration(ctx: TaxiParser.ImportDeclarationContext) {

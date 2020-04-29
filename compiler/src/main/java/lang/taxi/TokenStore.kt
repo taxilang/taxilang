@@ -2,6 +2,7 @@ package lang.taxi
 
 import com.google.common.collect.Table
 import com.google.common.collect.TreeBasedTable
+import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.ParserRuleContext
 import java.net.URI
 
@@ -13,12 +14,15 @@ typealias TokenTable = Table<RowIndex, ColumnIndex, ParserRuleContext>
 class TokenStore {
    private val tables = mutableMapOf<String, TokenTable>()
    fun tokenTable(sourceName: String): TokenTable {
-      val sourcePath = URI.create(sourceName).normalize().path
+      val sourcePath = SourceNames.normalize(sourceName)
+      if (!tables.containsKey(sourcePath)) {
+         error("$sourceName has not been normalized properly.  Current keys are ${tables.keys.joinToString(",")}")
+      }
       return tables.getValue(sourcePath)
    }
 
    fun insert(sourceName: String, rowNumber: RowIndex, columnIndex: ColumnIndex, context: ParserRuleContext) {
-      val sourcePath = URI.create(sourceName).normalize().path
+      val sourcePath = SourceNames.normalize(sourceName)
       tables.getOrPut(sourcePath, { TreeBasedTable.create() })
          .put(rowNumber, columnIndex, context)
    }

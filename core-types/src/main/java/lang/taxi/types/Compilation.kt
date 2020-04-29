@@ -40,10 +40,6 @@ data class SourceCode(
       fun unspecified(): SourceCode = SourceCode("Not specified", "")
    }
 
-   val normalizedSourceName: String = try {
-      URI.create(sourceName).normalize().path
-   } catch (e: Exception) {
-      sourceName
-   }
-   
+   val normalizedSourceName: String = SourceNames.normalize(sourceName)
 }
+
