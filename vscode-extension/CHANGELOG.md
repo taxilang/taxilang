@@ -1,3 +1,10 @@
+## [1.1.3](https://gitlab.com/taxi-lang/language-server/compare/v1.1.2...v1.1.3) (2020-04-30)
+
+
+### Bug Fixes
+
+* **build:** enable gitlab releases in build pipeline ([723dd0f](https://gitlab.com/taxi-lang/language-server/commit/723dd0f93a402ea99483ad3b01dc5c872b343fd9))
+
 ## [1.1.2](https://gitlab.com/taxi-lang/language-server/compare/v1.1.1...v1.1.2) (2020-04-29)
 
 
