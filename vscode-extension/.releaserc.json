@@ -16,6 +16,11 @@
     ["@semantic-release/exec", {
       "publishCmd" : "npm version ${nextRelease.version} && vsce package ${nextRelease.version}"
     }],
-    "@semantic-release/git"
+    "@semantic-release/git",
+    ["@semantic-release/gitlab", {
+      "assets": [
+        {"path": "taxi-language-server-*.vsix ", "label": "VSCode Plugin"}
+      ]
+    }]
   ]
 }
