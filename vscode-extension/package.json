@@ -51,6 +51,7 @@
     }
   },
   "scripts": {
+    "semantic-release": "semantic-release",
     "vscode:prepublish": "npm run compile && cp ../taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar out/",
     "compile": "tsc -p ./",
     "lint": "eslint src --ext ts",
@@ -60,11 +61,12 @@
   },
   "dependencies": {
     "find-java-home": "^1.1.0",
-    "semantic-release": "^17.0.7",
     "vscode-languageclient": "5.1.1",
     "ws": "^6.0.0"
   },
   "devDependencies": {
+    "semantic-release": "^17.0.7",
+    "semantic-release-vsce": "^3.0.1",
     "@semantic-release/changelog": "^5.0.1",
     "@semantic-release/exec": "^5.0.0",
     "@semantic-release/git": "^9.0.0",
@@ -81,5 +83,22 @@
     "mocha": "^7.1.1",
     "typescript": "^3.8.3",
     "vscode-test": "^1.3.0"
+  },
+  "release": {
+    "verifyConditions": [
+      "semantic-release-vsce",
+      "@semantic-release/gitlab"
+    ],
+    "prepare": {
+      "path": "semantic-release-vsce",
+      "packageVsix": "taxi-language-server.vsix"
+    },
+    "publish": [
+      "semantic-release-vsce",
+      {
+        "path": "@semantic-release/gitlab",
+        "assets": "taxi-language-server.vsix"
+      }
+    ]
   }
 }

@@ -19,7 +19,7 @@
     "@semantic-release/git",
     ["@semantic-release/gitlab", {
       "assets": [
-        {"path": "taxi-language-server-*.vsix ", "label": "VSCode Plugin"}
+        {"path": "*.vsix ", "label": "VSCode Plugin"}
       ]
     }]
   ]
