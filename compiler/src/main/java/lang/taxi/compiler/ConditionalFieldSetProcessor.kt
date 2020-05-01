@@ -1,31 +1,36 @@
 package lang.taxi.compiler
 
+import arrow.core.Either
+import arrow.core.right
+import lang.taxi.CompilationError
 import lang.taxi.Namespace
 import lang.taxi.TaxiParser
 import lang.taxi.types.*
 import lang.taxi.value
 
 class ConditionalFieldSetProcessor internal constructor(private val compiler: TokenProcessor) {
-   fun compileConditionalFieldStructure(fieldBlock: TaxiParser.ConditionalTypeStructureDeclarationContext, namespace: Namespace): ConditionalFieldSet {
-      val condition = compileCondition(fieldBlock.conditionalTypeConditionDeclaration(), namespace)
-      val fields = fieldBlock.typeMemberDeclaration().map { fieldDeclaration ->
-         compiler.compileField(fieldDeclaration, namespace).copy(readCondition = condition)
-      }
+   fun compileConditionalFieldStructure(fieldBlock: TaxiParser.ConditionalTypeStructureDeclarationContext, namespace: Namespace): Either<CompilationError, ConditionalFieldSet> {
+      return compileCondition(fieldBlock.conditionalTypeConditionDeclaration(), namespace).map { condition ->
+         val fields = fieldBlock.typeMemberDeclaration().mapNotNull { fieldDeclaration ->
+            compiler.compiledField(fieldDeclaration, namespace)?.copy(readCondition = condition)
+         }
 
-      return ConditionalFieldSet(fields, condition)
+         ConditionalFieldSet(fields, condition)
+      }
    }
 
-   private fun compileCondition(conditionDeclaration: TaxiParser.ConditionalTypeConditionDeclarationContext, namespace: Namespace): FieldSetCondition {
+   private fun compileCondition(conditionDeclaration: TaxiParser.ConditionalTypeConditionDeclarationContext, namespace: Namespace): Either<CompilationError, WhenFieldSetCondition> {
       return when {
          conditionDeclaration.conditionalTypeWhenDeclaration() != null -> compileWhenCondition(conditionDeclaration.conditionalTypeWhenDeclaration(), namespace)
          else -> error("Unhandled condition type")
       }
    }
 
-   private fun compileWhenCondition(whenBlock: TaxiParser.ConditionalTypeWhenDeclarationContext, namespace: Namespace): WhenFieldSetCondition {
-      val selectorExpression = compileSelectorExpression(whenBlock.conditionalTypeWhenSelector(), namespace)
-      val cases = compileWhenCases(whenBlock.conditionalTypeWhenCaseDeclaration())
-      return WhenFieldSetCondition(selectorExpression, cases)
+   private fun compileWhenCondition(whenBlock: TaxiParser.ConditionalTypeWhenDeclarationContext, namespace: Namespace): Either<CompilationError, WhenFieldSetCondition> {
+      return compileSelectorExpression(whenBlock.conditionalTypeWhenSelector(), namespace).map { selectorExpression ->
+         val cases = compileWhenCases(whenBlock.conditionalTypeWhenCaseDeclaration())
+         WhenFieldSetCondition(selectorExpression, cases)
+      }
    }
 
    private fun compileWhenCases(conditionalTypeWhenCaseDeclaration: List<TaxiParser.ConditionalTypeWhenCaseDeclarationContext>): List<WhenCaseBlock> {
@@ -41,7 +46,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
    }
 
    private fun compileFieldAssignment(caseFieldAssignment: TaxiParser.CaseFieldAssigningDeclarationContext): CaseFieldAssignmentExpression {
-      val assignment:ValueAssignment = when {
+      val assignment: ValueAssignment = when {
          caseFieldAssignment.caseFieldDestructuredAssignment() != null -> compileDestructuredValueAssignment(caseFieldAssignment.caseFieldDestructuredAssignment())
          caseFieldAssignment.caseFieldReferenceAssignment() != null -> compileReferenceValueAssignment(caseFieldAssignment.caseFieldReferenceAssignment())
          caseFieldAssignment.literal() != null -> compileLiteralValueAssignment(caseFieldAssignment.literal())
@@ -78,7 +83,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
       }
    }
 
-   private fun compileSelectorExpression(selectorBlock: TaxiParser.ConditionalTypeWhenSelectorContext, namespace: Namespace): WhenSelectorExpression {
+   private fun compileSelectorExpression(selectorBlock: TaxiParser.ConditionalTypeWhenSelectorContext, namespace: Namespace): Either<CompilationError, WhenSelectorExpression> {
       return when {
          selectorBlock.mappedExpressionSelector() != null -> compileTypedAccessor(selectorBlock.mappedExpressionSelector(), namespace)
          selectorBlock.fieldReferenceSelector() != null -> compileFieldReferenceSelector(selectorBlock.fieldReferenceSelector())
@@ -87,14 +92,15 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
 
    }
 
-   private fun compileFieldReferenceSelector(fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext): WhenSelectorExpression {
-      return FieldReferenceSelector(fieldReferenceSelector.text)
+   private fun compileFieldReferenceSelector(fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext): Either<CompilationError, WhenSelectorExpression> {
+      return FieldReferenceSelector(fieldReferenceSelector.text).right()
    }
 
-   private fun compileTypedAccessor(expressionSelector: TaxiParser.MappedExpressionSelectorContext, namespace: Namespace): AccessorExpressionSelector {
+   private fun compileTypedAccessor(expressionSelector: TaxiParser.MappedExpressionSelectorContext, namespace: Namespace): Either<CompilationError, AccessorExpressionSelector> {
       val accessor = compiler.compileScalarAccessor(expressionSelector.scalarAccessorExpression())
-      val type = compiler.parseType(namespace, expressionSelector.typeType())
-      return AccessorExpressionSelector(accessor, type)
+      return compiler.parseType(namespace, expressionSelector.typeType()).map { type ->
+         AccessorExpressionSelector(accessor, type)
+      }
    }
 }
 

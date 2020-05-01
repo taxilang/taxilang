@@ -54,8 +54,8 @@ data class Tokens(
    private fun collectDuplicateTypes(others: Tokens): List<CompilationError> {
       val duplicateTypeNames = this.unparsedTypes.keys.filter { others.unparsedTypes.containsKey(it) }
       val errors = if (duplicateTypeNames.isNotEmpty()) {
-         val existingDefinition = TokenProcessor(this).buildTaxiDocument()
-         val newDefinition = TokenProcessor(others).buildTaxiDocument()
+         val existingDefinition = TokenProcessor(this).buildTaxiDocument().second
+         val newDefinition = TokenProcessor(others).buildTaxiDocument().second
          val compilationErrors = duplicateTypeNames.filter {
             // We only care about scenarios where sources compile to different objects
             // If two sources declare the same type, but they're equivalent declarations, then that's ok
@@ -122,7 +122,8 @@ class TokenCollator : TaxiBaseListener() {
    override fun exitEveryRule(ctx: ParserRuleContext) {
       val zeroBasedLineNumber = ctx.start.line - 1
 
-      tokenStore.insert(ctx.source().normalizedSourceName, zeroBasedLineNumber, ctx.start.charPositionInLine, ctx)
+      val sourceName = SourceNames.normalize(ctx.start.tokenSource.sourceName)
+      tokenStore.insert(sourceName, zeroBasedLineNumber, ctx.start.charPositionInLine, ctx)
    }
 
    override fun exitImportDeclaration(ctx: TaxiParser.ImportDeclarationContext) {

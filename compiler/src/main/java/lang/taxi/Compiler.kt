@@ -1,5 +1,8 @@
 package lang.taxi
 
+import arrow.core.Either
+import arrow.core.getOrElse
+import arrow.core.getOrHandle
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
@@ -126,7 +129,12 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
          throw CompilationException(syntaxErrors)
       }
       val builder = TokenProcessor(tokens, importSources)
-      return builder.buildTaxiDocument()
+      // Similarly to above, we could do somethign with these errors now.
+      val (errors,document)  = builder.buildTaxiDocument()
+      if (errors.isNotEmpty()) {
+         throw CompilationException(errors)
+      }
+      return document
    }
 
    /**
@@ -203,4 +211,12 @@ fun TaxiParser.LiteralContext.isNullValue(): Boolean {
 
 
 
-typealias TypeResolver = (TaxiParser.TypeTypeContext) -> Type
+typealias TypeResolver = (TaxiParser.TypeTypeContext) -> Either<CompilationError, Type>
+
+// A chicken out method, where I can't be bothered
+// wrapping Either<> call sites to handle the error.
+// Just throw the exception.
+// In future, we'll be better, promise.
+fun Either<CompilationError, Type>.orThrowCompilationException(): Type {
+   return this.getOrHandle { e -> throw CompilationException(listOf(e)) }
+}

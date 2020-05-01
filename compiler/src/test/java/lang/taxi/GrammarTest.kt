@@ -821,4 +821,20 @@ fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson pro
    }
 
 
+   @Test
+   fun when_unresolvedTypeExistsInFileWithNamespace_then_namespaceIsNotPrefixedInError() {
+
+   }
+
+   @Test
+   fun reportsMultipleUnresolvedTypes() {
+      val src = """
+type Person {
+   firstName : FirstName
+   lastName : LastName
+}
+      """.trimIndent()
+      val errors = Compiler(src).validate()
+      errors.should.have.size(2)
+   }
 }
