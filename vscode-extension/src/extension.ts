@@ -35,9 +35,6 @@ export function activate(context: vscode.ExtensionContext) {
 function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
     const useDebugJar = workspace.getConfiguration('taxi').get('useDevJar', false);
     const enableDebug = workspace.getConfiguration('taxi').get('enableDebugSession', false);
-    const socketPort = workspace.getConfiguration('taxiLanguageServer').get('port', 7000);
-    let socket: WebSocket = new WebSocket(`ws://localhost:${socketPort}`);
-    console.log(`taxiLanguageServer streaming port is configured to ${socketPort}`);
     if (javaHome) {
         console.log(`Using java from ${javaHome}`);
         // Java execution path.
@@ -76,33 +73,6 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
             args: [...args, main],
             options: {}
         };
-
-        // The log to send
-        // let log = '';
-        // const websocketOutputChannel: OutputChannel = {
-        //     name: 'websocket',
-        //     // Only append the logs but send them later
-        //     append(value: string) {
-        //         log += value;
-        //         console.log(value);
-        //     },
-        //     appendLine(value: string) {
-        //         log += value;
-        //         // Don't send logs until WebSocket initialization
-        //         if (socket && socket.readyState === WebSocket.OPEN) {
-        //             socket.send(log);
-        //         }
-        //         log = '';
-        //     },
-        //     clear() {
-        //     },
-        //     show() {
-        //     },
-        //     hide() {
-        //     },
-        //     dispose() {
-        //     }
-        // };
 
         // Options to control the language client
         let clientOptions: LanguageClientOptions = {

@@ -19,6 +19,7 @@ class CompletionService(private val typeProvider: TypeProvider) {
         val completionItems = when (context.ruleIndex) {
             TaxiParser.RULE_fieldDeclaration -> typeProvider.getTypes(listOf(importDecorator))
             TaxiParser.RULE_typeMemberDeclaration -> typeProvider.getTypes(listOf(importDecorator))
+            TaxiParser.RULE_listOfInheritedTypes -> typeProvider.getTypes(listOf(importDecorator))
             // This next one feels wrong, but it's what I'm seeing debugging.
             // suspect our matching of token to cursor position might be off
             TaxiParser.RULE_typeType -> typeProvider.getTypes(listOf(importDecorator))
