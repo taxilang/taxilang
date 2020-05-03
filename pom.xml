@@ -223,8 +223,8 @@
             </snapshots>
         </repository>
         <repository>
-            <id>repo.vyne.co</id>
-            <url>http://repo.vyne.co/release</url>
+            <id>rtaxi-releases</id>
+            <url>https://dl.bintray.com/taxi-lang/releases</url>
         </repository>
 
     </repositories>
