@@ -3,7 +3,7 @@
     <parent>
         <artifactId>parent</artifactId>
         <groupId>lang.taxi</groupId>
-        <version>0.3.1-SNAPSHOT</version>
+        <version>0.3.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -16,12 +16,12 @@
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>compiler</artifactId>
-            <version>0.3.1-SNAPSHOT</version>
+            <version>0.3.1</version>
         </dependency>
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>taxi-generator-api</artifactId>
-            <version>0.3.1-SNAPSHOT</version>
+            <version>0.3.1</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -52,7 +52,7 @@
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>taxi-plugin-api</artifactId>
-            <version>0.3.1-SNAPSHOT</version>
+            <version>0.3.1</version>
         </dependency>
         <dependency>
             <groupId>org.pf4j</groupId>
@@ -104,7 +104,7 @@
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>taxi2kotlin</artifactId>
-            <version>0.3.1-SNAPSHOT</version>
+            <version>0.3.1</version>
         </dependency>
     </dependencies>
 
