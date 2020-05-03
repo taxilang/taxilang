@@ -222,5 +222,10 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
+        <repository>
+            <id>repo.vyne.co</id>
+            <url>http://repo.vyne.co/release</url>
+        </repository>
+
     </repositories>
 </project>
