@@ -54,9 +54,22 @@ class CompilerTokenCache {
          parser.addParseListener(listener)
          parser.addErrorListener(errorListener)
 
+         // Use CompilerExceptions for runtime exceptions thrown by the compiler
+         // not compilatio errors in the source code being compiled
+         // These exceptions represent bugs in the compiler
+         val compilerExceptions = mutableListOf<CompilationError>()
          // Calling document triggers the parsing
-         parser.document()
-         val result = TokenStreamParseResult(listener.tokens(), errorListener.errors)
+         try {
+            parser.document()
+         } catch (e: Exception) {
+            compilerExceptions.add(
+               CompilationError(
+                  parser.currentToken,
+                  "An exception occurred in the compilation process.  This is likely a bug in the Taxi Compiler. \n ${e.message}", parser.currentToken?.tokenSource?.sourceName
+               ))
+         }
+
+         val result = TokenStreamParseResult(listener.tokens(), compilerExceptions + errorListener.errors)
 
          streamNameToStream.put(SourceNames.normalize(input.sourceName), input)?.let { previousVersion ->
             cache.invalidate(previousVersion)
@@ -130,7 +143,7 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       }
       val builder = TokenProcessor(tokens, importSources)
       // Similarly to above, we could do somethign with these errors now.
-      val (errors,document)  = builder.buildTaxiDocument()
+      val (errors, document) = builder.buildTaxiDocument()
       if (errors.isNotEmpty()) {
          throw CompilationException(errors)
       }

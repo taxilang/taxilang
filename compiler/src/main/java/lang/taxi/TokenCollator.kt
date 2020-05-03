@@ -127,8 +127,10 @@ class TokenCollator : TaxiBaseListener() {
    }
 
    override fun exitImportDeclaration(ctx: TaxiParser.ImportDeclarationContext) {
-      collateExceptions(ctx)
-      imports.add(ctx.qualifiedName().Identifier().text() to ctx)
+      if (collateExceptions(ctx)) {
+         imports.add(ctx.qualifiedName().Identifier().text() to ctx)
+      }
+
 
       super.exitImportDeclaration(ctx)
    }
@@ -138,7 +140,7 @@ class TokenCollator : TaxiBaseListener() {
       // Check to see if an inline type alias is declared
       // If so, mark it for processing later
       val typeType = ctx.typeType()
-      if (typeType.aliasedType() != null) {
+      if (typeType?.aliasedType() != null) {
          val classOrInterfaceType = typeType.classOrInterfaceType()
          unparsedTypes.put(qualify(classOrInterfaceType.Identifier().text()), namespace to typeType)
       }
@@ -146,15 +148,16 @@ class TokenCollator : TaxiBaseListener() {
    }
 
    override fun exitEnumDeclaration(ctx: TaxiParser.EnumDeclarationContext) {
-      collateExceptions(ctx)
-      val name = qualify(ctx.classOrInterfaceType().Identifier().text())
-      unparsedTypes.put(name, namespace to ctx)
+      if (collateExceptions(ctx)) {
+         val name = qualify(ctx.classOrInterfaceType().Identifier().text())
+         unparsedTypes.put(name, namespace to ctx)
+      }
       super.exitEnumDeclaration(ctx)
    }
 
    override fun exitNamespaceDeclaration(ctx: TaxiParser.NamespaceDeclarationContext) {
       collateExceptions(ctx)
-      this.namespace = ctx.qualifiedName().Identifier().text()
+      ctx.qualifiedName()?.Identifier()?.text()?.let { namespace -> this.namespace = namespace }
       super.exitNamespaceDeclaration(ctx)
    }
 
@@ -166,32 +169,36 @@ class TokenCollator : TaxiBaseListener() {
    }
 
    override fun exitPolicyDeclaration(ctx: TaxiParser.PolicyDeclarationContext) {
-      collateExceptions(ctx)
-      // TODO : Why did I have to change this?  Why is Identifier() retuning null now?
-      // Was:  qualify(ctx.policyIdentifier().Identifier().text)
-      val qualifiedName = qualify(ctx.policyIdentifier().text)
-      unparsedPolicies[qualifiedName] = namespace to ctx
+      if (collateExceptions(ctx)) {
+         // TODO : Why did I have to change this?  Why is Identifier() retuning null now?
+         // Was:  qualify(ctx.policyIdentifier().Identifier().text)
+         val qualifiedName = qualify(ctx.policyIdentifier().text)
+         unparsedPolicies[qualifiedName] = namespace to ctx
+      }
       super.exitPolicyDeclaration(ctx)
    }
 
    override fun exitServiceDeclaration(ctx: ServiceDeclarationContext) {
-      collateExceptions(ctx)
-      val qualifiedName = qualify(ctx.Identifier().text)
-      unparsedServices[qualifiedName] = namespace to ctx
+      if (collateExceptions(ctx)) {
+         val qualifiedName = qualify(ctx.Identifier().text)
+         unparsedServices[qualifiedName] = namespace to ctx
+      }
       super.exitServiceDeclaration(ctx)
    }
 
    override fun exitTypeDeclaration(ctx: TaxiParser.TypeDeclarationContext) {
-      collateExceptions(ctx)
-      val typeName = qualify(ctx.Identifier().text)
-      unparsedTypes.put(typeName, namespace to ctx)
+      if (collateExceptions(ctx)) {
+         val typeName = qualify(ctx.Identifier().text)
+         unparsedTypes[typeName] = namespace to ctx
+      }
       super.exitTypeDeclaration(ctx)
    }
 
    override fun exitTypeAliasDeclaration(ctx: TaxiParser.TypeAliasDeclarationContext) {
-      collateExceptions(ctx)
-      val typeName = qualify(ctx.Identifier().text)
-      unparsedTypes.put(typeName, namespace to ctx)
+      if (collateExceptions(ctx)) {
+         val typeName = qualify(ctx.Identifier().text)
+         unparsedTypes.put(typeName, namespace to ctx)
+      }
       super.exitTypeAliasDeclaration(ctx)
    }
 
@@ -214,16 +221,24 @@ class TokenCollator : TaxiBaseListener() {
    }
 
    override fun exitFileResourceDeclaration(ctx: TaxiParser.FileResourceDeclarationContext) {
-      collateExceptions(ctx)
-      val sourceName = qualify(ctx.Identifier().text)
-      unparsedSources[sourceName] = namespace to ctx
+      if (collateExceptions(ctx)) {
+         val sourceName = qualify(ctx.Identifier().text)
+         unparsedSources[sourceName] = namespace to ctx
+      }
       super.exitFileResourceDeclaration(ctx)
    }
 
-   private fun collateExceptions(ctx: ParserRuleContext) {
+   /**
+    * Returns true if the context was valid - ie., no exception was detected.
+    * Returns false if an exception was present, and it's potentially unsafe to process
+    * this context node
+    */
+   private fun collateExceptions(ctx: ParserRuleContext): Boolean {
       if (ctx.exception != null) {
          exceptions.put(ctx, ctx.exception)
+         return false
       }
+      return true
    }
 
    private fun qualify(name: String): String {
