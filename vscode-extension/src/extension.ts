@@ -46,12 +46,13 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
         //   java -classpath "./classes:./dependency/*" lang.taxi.lsp.Launcher
         let classPath:string;
         if (useDebugJar) {
+            const classPathSeperator = (process.platform === "win32") ? ';' : ':';
             classPath = [ 
                 path.join(__dirname, '..', '..','..','taxi-lang','compiler', 'target', 'classes') ,
                 path.join(__dirname, '..', '..', 'taxi-lang-service', 'target', 'classes') ,
                 path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', 'classes') ,
                 path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', 'dependency', '*')  
-            ].join(':');
+            ].join(classPathSeperator);
         } else {
             const jarName = 'taxi-lang-server-standalone.jar';
             classPath = path.join(__dirname, jarName);
