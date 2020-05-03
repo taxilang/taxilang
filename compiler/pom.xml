@@ -3,12 +3,12 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>lang.taxi</groupId>
-      <version>0.3.2-SNAPSHOT</version>
+      <version>0.3.2</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
    <artifactId>compiler</artifactId>
-   <version>0.3.2-SNAPSHOT</version>
+   <version>0.3.2</version>
 
    <properties>
       <antlr.version>4.7</antlr.version>
@@ -19,7 +19,7 @@
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>core-types</artifactId>
-         <version>0.3.2-SNAPSHOT</version>
+         <version>0.3.2</version>
       </dependency>
       <dependency>
          <groupId>io.arrow-kt</groupId>
