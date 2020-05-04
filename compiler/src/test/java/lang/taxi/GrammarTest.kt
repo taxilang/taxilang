@@ -329,6 +329,12 @@ parameter type ClientRiskRequest {
       expect(money.modifiers).to.contain(Modifier.PARAMETER_TYPE)
    }
 
+   @Test
+   fun errorsIncludeTheSourceWithSpaces() {
+      val source = """import foo.internal.Blah"""
+      val errors = Compiler(source).validate()
+      errors.should.have.size(1)
+   }
 
    @Test
    fun canExtendAnotherType() {
