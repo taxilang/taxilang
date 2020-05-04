@@ -507,7 +507,7 @@ namespace foo {
 }
         """.trimIndent()
       val errors = Compiler(sourceB).validate()
-      expect(errors).to.have.size(1)
+      expect(errors).to.have.size(2)
       expect(errors.first().detailMessage).to.equal("Cannot import test.FirstName as it is not defined")
 
    }
