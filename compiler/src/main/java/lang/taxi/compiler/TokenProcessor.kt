@@ -24,7 +24,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    init {
       val importedTypes = if (collectImports) {
-         ImportedTypeCollator(tokens, importSources).collect()
+         val (errorsInImports, types) = ImportedTypeCollator(tokens, importSources).collect()
+         this.errors.addAll(errorsInImports)
+         types
       } else {
          emptyList()
       }
@@ -250,6 +252,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    internal fun compileField(member: TaxiParser.TypeMemberDeclarationContext, namespace: Namespace): Either<CompilationError, Field> {
       val fieldAnnotations = collateAnnotations(member.annotation())
       val accessor = compileAccessor(member.fieldDeclaration().accessor())
+      val typeDoc = parseTypeDoc(member.typeDoc())
       return parseType(namespace, member.fieldDeclaration().typeType()).map { type ->
          Field(
             name = unescape(member.fieldDeclaration().Identifier().text),
@@ -258,7 +261,8 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
             annotations = fieldAnnotations,
             constraints = mapConstraints(member.fieldDeclaration().typeType(), type),
-            accessor = accessor
+            accessor = accessor,
+            typeDoc = typeDoc
          )
       }
    }

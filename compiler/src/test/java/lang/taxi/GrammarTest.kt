@@ -329,6 +329,12 @@ parameter type ClientRiskRequest {
       expect(money.modifiers).to.contain(Modifier.PARAMETER_TYPE)
    }
 
+   @Test
+   fun errorsIncludeTheSourceWithSpaces() {
+      val source = """import foo.internal.Blah"""
+      val errors = Compiler(source).validate()
+      errors.should.have.size(1)
+   }
 
    @Test
    fun canExtendAnotherType() {
@@ -501,7 +507,7 @@ namespace foo {
 }
         """.trimIndent()
       val errors = Compiler(sourceB).validate()
-      expect(errors).to.have.size(1)
+      expect(errors).to.have.size(2)
       expect(errors.first().detailMessage).to.equal("Cannot import test.FirstName as it is not defined")
 
    }
