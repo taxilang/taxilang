@@ -98,6 +98,21 @@ type Foo
    }
 
    @Test
+   fun trimsIndent() {
+      val source = """
+[[
+    ISO currency codes are the three-letter alphabetic codes that
+    are used throughout the world
+]]
+enum CurrencyCode { }
+      """.trimIndent()
+      val taxi = Compiler(source).compile()
+      taxi.enumType("CurrencyCode").typeDoc.should.equal("ISO currency codes are the three-letter alphabetic codes that\n" +
+         "are used throughout the world")
+
+   }
+
+   @Test
    fun canDeclareCommentOnEnum() {
       val source = """
 [[ This is the enum comment ]]

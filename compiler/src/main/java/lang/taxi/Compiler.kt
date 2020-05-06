@@ -1,14 +1,11 @@
 package lang.taxi
 
 import arrow.core.Either
-import arrow.core.getOrElse
 import arrow.core.getOrHandle
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
 import lang.taxi.compiler.TokenProcessor
 import lang.taxi.types.*
-import lang.taxi.utils.log
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
 import java.io.File
@@ -34,7 +31,7 @@ data class CompilationError(val offendingToken: Token, val detailMessage: String
    override fun toString(): String = "Compilation Error: ${sourceName.orEmpty()}($line,$char) $detailMessage"
 }
 
-class CompilationException(val errors: List<CompilationError>) : RuntimeException(errors.joinToString { it.toString() }) {
+class CompilationException(val errors: List<CompilationError>) : RuntimeException(errors.joinToString("\n") { it.toString() }) {
    constructor(offendingToken: Token, detailMessage: String?, sourceName: String?) : this(listOf(CompilationError(offendingToken, detailMessage, sourceName)))
 }
 
