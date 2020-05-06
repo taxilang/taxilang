@@ -36,6 +36,7 @@ data class ProjectName(
 data class ProjectConfig(
    val name: String,
    val version: String,
+   val sourceRoot: String = ".",
    val dependencies: Map<String, String> = emptyMap(),
    val repositories: List<Repository> = emptyList(),
    val publishToRepository: Repository? = null
