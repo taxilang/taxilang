@@ -24,7 +24,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    init {
       val importedTypes = if (collectImports) {
-         ImportedTypeCollator(tokens, importSources).collect()
+         val (errorsInImports, types) = ImportedTypeCollator(tokens, importSources).collect()
+         this.errors.addAll(errorsInImports)
+         types
       } else {
          emptyList()
       }
@@ -49,15 +51,17 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }.flatMap { (name, tokenPair) ->
          val (namespace, ctx) = tokenPair
          val typeCtx = ctx as TaxiParser.TypeDeclarationContext
-         val typeAliasNames = typeCtx.typeBody()?.typeMemberDeclaration()?.mapNotNull { memberDeclaration ->
-            val fieldDeclaration = memberDeclaration.fieldDeclaration()
-            if (fieldDeclaration.typeType() != null && fieldDeclaration.typeType().aliasedType() != null) {
-               // This is an inline type alias
-               qualify(namespace, memberDeclaration.fieldDeclaration().typeType())
-            } else {
-               null
-            }
-         } ?: emptyList()
+         val typeAliasNames = typeCtx.typeBody()?.typeMemberDeclaration()
+            ?.filter { it.exception == null }
+            ?.mapNotNull { memberDeclaration ->
+               val fieldDeclaration = memberDeclaration.fieldDeclaration()
+               if (fieldDeclaration.typeType() != null && fieldDeclaration.typeType().aliasedType() != null) {
+                  // This is an inline type alias
+                  qualify(namespace, memberDeclaration.fieldDeclaration().typeType())
+               } else {
+                  null
+               }
+            } ?: emptyList()
          typeAliasNames.map { QualifiedName.from(it) }
       }
 
@@ -250,6 +254,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    internal fun compileField(member: TaxiParser.TypeMemberDeclarationContext, namespace: Namespace): Either<CompilationError, Field> {
       val fieldAnnotations = collateAnnotations(member.annotation())
       val accessor = compileAccessor(member.fieldDeclaration().accessor())
+      val typeDoc = parseTypeDoc(member.typeDoc())
       return parseType(namespace, member.fieldDeclaration().typeType()).map { type ->
          Field(
             name = unescape(member.fieldDeclaration().Identifier().text),
@@ -258,7 +263,8 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
             annotations = fieldAnnotations,
             constraints = mapConstraints(member.fieldDeclaration().typeType(), type),
-            accessor = accessor
+            accessor = accessor,
+            typeDoc = typeDoc
          )
       }
    }
@@ -267,7 +273,8 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       if (content == null) {
          return null
       }
-      return content.removeSurrounding("[[", "]]").trim()
+
+      return content.removeSurrounding("[[", "]]").trimIndent().trim()
    }
 
    internal fun compileAccessor(accessor: TaxiParser.AccessorContext?): Accessor? {
@@ -413,7 +420,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       if (!requestedNameIsQualified) {
          val importsInSource = tokens.importedTypeNamesInSource(classType.source().normalizedSourceName)
          val importedTypeName = importsInSource.firstOrNull { it.typeName == requestedTypeName }
-         if (importedTypeName != null) {
+         if (importedTypeName != null && typeSystem.contains(importedTypeName.parameterizedName)) {
             return typeSystem.getType(importedTypeName.parameterizedName).right()
          }
       }

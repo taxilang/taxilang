@@ -188,10 +188,12 @@ data class Field(
    override val annotations: List<Annotation> = emptyList(),
    override val constraints: List<Constraint> = emptyList(),
    val accessor: Accessor? = null,
-   val readCondition: FieldSetCondition? = null
-) : Annotatable, ConstraintTarget {
+   val readCondition: FieldSetCondition? = null,
+   override val typeDoc: String? = null
+) : Annotatable, ConstraintTarget, Documented {
 
    override val description: String = "field $name"
+
    // For equality - don't compare on the type (as this can cause stackOverflow when the type is an Object type)
    private val typeName = type.qualifiedName
    private val equality = Equality(this, Field::name, Field::typeName, Field::nullable, Field::annotations, Field::constraints)

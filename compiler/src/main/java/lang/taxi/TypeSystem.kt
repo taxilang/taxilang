@@ -2,7 +2,6 @@ package lang.taxi
 
 import lang.taxi.types.*
 import org.antlr.v4.runtime.Token
-import java.lang.RuntimeException
 
 internal data class TypeProxy(override val qualifiedName: String, private val typeSystem: TypeSystem) : Type {
    fun isResolved(): Boolean = typeSystem.contains(this.qualifiedName)

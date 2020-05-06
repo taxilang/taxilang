@@ -66,7 +66,7 @@ typeBody
     ;
 
 typeMemberDeclaration
-     :   annotation* fieldDeclaration
+     :   typeDoc? annotation* fieldDeclaration
      ;
 
 conditionalTypeStructureDeclaration :

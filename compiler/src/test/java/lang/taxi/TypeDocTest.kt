@@ -98,6 +98,21 @@ type Foo
    }
 
    @Test
+   fun trimsIndent() {
+      val source = """
+[[
+    ISO currency codes are the three-letter alphabetic codes that
+    are used throughout the world
+]]
+enum CurrencyCode { }
+      """.trimIndent()
+      val taxi = Compiler(source).compile()
+      taxi.enumType("CurrencyCode").typeDoc.should.equal("ISO currency codes are the three-letter alphabetic codes that\n" +
+         "are used throughout the world")
+
+   }
+
+   @Test
    fun canDeclareCommentOnEnum() {
       val source = """
 [[ This is the enum comment ]]
@@ -119,5 +134,18 @@ enum Color {
       expect(enumType.value("Red").typeDoc).to.equal("Reddish")
       expect(enumType.value("Blue").typeDoc).to.equal("Bluish")
       expect(enumType.value("Green").typeDoc.isNullOrEmpty()).to.be.`true`
+   }
+
+   @Test
+   fun canDeclareTypeDocOnAttribute() {
+      val source = """
+         type Person {
+            [[ The persons given name ]]
+            firstName : FirstName as String
+         }
+      """.trimIndent()
+      val taxi = Compiler(source).compile()
+      val firstName = taxi.objectType("Person").field("firstName")
+      firstName.typeDoc.should.equal("The persons given name")
    }
 }
