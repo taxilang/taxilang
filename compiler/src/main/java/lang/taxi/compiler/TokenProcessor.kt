@@ -52,8 +52,10 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          val (namespace, ctx) = tokenPair
          val typeCtx = ctx as TaxiParser.TypeDeclarationContext
          val typeAliasNames = typeCtx.typeBody()?.typeMemberDeclaration()?.mapNotNull { memberDeclaration ->
-            val fieldDeclaration = memberDeclaration.fieldDeclaration()
-            if (fieldDeclaration.typeType() != null && fieldDeclaration.typeType().aliasedType() != null) {
+            // fieldDeclaration can be null if the document has compiler errors
+            val fieldDeclaration: TaxiParser.FieldDeclarationContext? = memberDeclaration.fieldDeclaration()
+
+            if (fieldDeclaration?.typeType()?.aliasedType() != null) {
                // This is an inline type alias
                qualify(namespace, memberDeclaration.fieldDeclaration().typeType())
             } else {
