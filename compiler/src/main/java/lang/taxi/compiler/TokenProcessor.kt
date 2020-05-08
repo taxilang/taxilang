@@ -6,6 +6,7 @@ import lang.taxi.policies.*
 import lang.taxi.services.*
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
+import lang.taxi.utils.log
 import org.antlr.v4.runtime.tree.TerminalNode
 
 internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocument> = emptyList(), collectImports: Boolean = true) {
@@ -34,7 +35,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       typeSystem = TypeSystem(importedTypes)
    }
 
-   fun buildTaxiDocument(): Pair<List<CompilationError>,TaxiDocument> {
+   fun buildTaxiDocument(): Pair<List<CompilationError>, TaxiDocument> {
       compile()
       // TODO: Unsure if including the imported types here is a good iddea or not.
       val types = typeSystem.typeList(includeImportedTypes = true).toSet()
@@ -429,14 +430,42 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    private fun compileEnum(typeName: String, ctx: TaxiParser.EnumDeclarationContext) {
       val enumValues = compileEnumValues(ctx.enumConstants())
       val annotations = collateAnnotations(ctx.annotation())
+      val basePrimitive = deriveEnumBaseType(ctx, enumValues)
       val enumType = EnumType(typeName, EnumDefinition(
          enumValues,
          annotations,
          ctx.toCompilationUnit(),
          inheritsFrom = emptySet(),
-         typeDoc = parseTypeDoc(ctx.typeDoc())
+         typeDoc = parseTypeDoc(ctx.typeDoc()),
+         basePrimitive = basePrimitive
       ))
       typeSystem.register(enumType)
+   }
+
+   private fun deriveEnumBaseType(ctx: TaxiParser.EnumDeclarationContext, enumValues: List<EnumValue>): PrimitiveType {
+      val distinctValueTypes = enumValues.map { it.value::class }.distinct()
+      if (distinctValueTypes.size != 1) {
+         return PrimitiveType.STRING
+      } else {
+         return when (val type = distinctValueTypes.first()) {
+            String::class -> PrimitiveType.STRING
+            Int::class -> PrimitiveType.INTEGER
+            else -> {
+               log().warn("Enums of type ${type.simpleName} are not supported, falling back to String")
+               PrimitiveType.STRING
+            }
+         }
+      }
+   }
+
+   private fun compileEnumValueExtensions(enumConstants: TaxiParser.EnumConstantExtensionsContext?): List<EnumValueExtension> {
+      return enumConstants?.enumConstantExtension()?.map { constantExtension ->
+         EnumValueExtension(
+            constantExtension.Identifier().text,
+            collateAnnotations(constantExtension.annotation()),
+            parseTypeDoc(constantExtension.typeDoc())
+         )
+      } ?: emptyList()
    }
 
    private fun compileEnumValues(enumConstants: TaxiParser.EnumConstantsContext?): List<EnumValue> {
@@ -446,21 +475,22 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       } else {
          enumConstants.enumConstant().map { enumConstant ->
             val annotations = collateAnnotations(enumConstant.annotation())
-            val value = enumConstant.Identifier().text
-            EnumValue(value, annotations, parseTypeDoc(enumConstant.typeDoc()))
+            val name = enumConstant.Identifier().text
+            val value = enumConstant.enumValue()?.literal()?.value() ?: name
+            EnumValue(name, value, annotations, parseTypeDoc(enumConstant.typeDoc()))
          }
       }
    }
 
 
    private fun compileEnumExtension(namespace: Namespace, typeRule: TaxiParser.EnumExtensionDeclarationContext): CompilationError? {
-      val enumValues = compileEnumValues(typeRule.enumConstants())
+      val enumValues = compileEnumValueExtensions(typeRule.enumConstantExtensions())
       val annotations = collateAnnotations(typeRule.annotation())
       val typeDoc = parseTypeDoc(typeRule.typeDoc())
 
       val typeName = qualify(namespace, typeRule.Identifier().text)
       val enum = typeSystem.getType(typeName) as EnumType
-      return enum.addExtension(EnumDefinition(enumValues, annotations, typeRule.toCompilationUnit(), inheritsFrom = emptySet(), typeDoc = typeDoc)).toCompilationError(typeRule.start)
+      return enum.addExtension(EnumExtension(enumValues, annotations, typeRule.toCompilationUnit(),typeDoc = typeDoc)).toCompilationError(typeRule.start)
    }
 
    private fun parseTypeDoc(content: TaxiParser.TypeDocContext?): String? {
