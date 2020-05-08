@@ -92,4 +92,12 @@ enum extension Foo {
 """.trimIndent()
       Compiler(src).compile().enumType("Foo").value("One").typeDoc.should.equal("One foo")
    }
+
+   @Test
+   fun canDeclareSynonymBetweenTwoEnums() {
+      val src = """
+
+      """.trimIndent()
+   }
+
 }

@@ -171,9 +171,11 @@ enumValue
    ;
 
 enumSynonymDeclaration
-   : 'synonym' 'of' Identifier
+   : 'synonym' 'of' ( enumSynonymSingleDeclaration | enumSynonymDeclarationList)
    ;
-
+enumSynonymSingleDeclaration : qualifiedName ;
+enumSynonymDeclarationList : '[' qualifiedName (',' qualifiedName)* ']'
+   ;
  enumExtensionDeclaration
     : typeDoc? annotation* 'enum extension' Identifier  ('{' enumConstantExtensions? '}')?
     ;

@@ -2,8 +2,21 @@ package lang.taxi.types
 
 import lang.taxi.*
 
-data class EnumValueExtension(val name: String, override val annotations: List<Annotation>, override val typeDoc: String? = null) : Annotatable, Documented
-data class EnumValue(val name: String, val value: Any, override val annotations: List<Annotation>, override val typeDoc: String? = null) : Annotatable, Documented
+object Enums {
+   fun enumValue(enum:QualifiedName, enumValueName:String):EnumValueQualifiedName {
+      return "${enum.parameterizedName}.$enumValueName"
+   }
+   fun splitEnumValueQualifiedName(name: EnumValueQualifiedName): Pair<QualifiedName, String> {
+      val parts = name.split(".")
+      val enumName = parts.dropLast(1).joinToString(".")
+      val valueName = parts.last()
+      return QualifiedName.from(enumName) to valueName
+   }
+
+}
+typealias EnumValueQualifiedName = String
+data class EnumValueExtension(val name: String, override val annotations: List<Annotation>, val synonyms: List<EnumValueQualifiedName>, override val typeDoc: String? = null, override val compilationUnit: CompilationUnit) : Annotatable, Documented, TypeDefinition
+data class EnumValue(val name: String, val value: Any = name, val qualifiedName:EnumValueQualifiedName, override val annotations: List<Annotation>, val synonyms:List<EnumValueQualifiedName>, override val typeDoc: String? = null) : Annotatable, Documented
 data class EnumDefinition(val values: List<EnumValue>,
                           override val annotations: List<Annotation> = emptyList(),
                           override val compilationUnit: CompilationUnit,
@@ -68,7 +81,8 @@ data class EnumType(override val qualifiedName: String,
             val valueExtensions: List<EnumValueExtension> = valueExtensions(value.name)
             val collatedAnnotations = value.annotations + valueExtensions.annotations()
             val docSources = (listOf(value) + valueExtensions) as List<Documented>
-            value.copy(annotations = collatedAnnotations, typeDoc = docSources.typeDoc())
+            val synonyms = value.synonyms + valueExtensions.flatMap { it.synonyms }
+            value.copy(annotations = collatedAnnotations, typeDoc = docSources.typeDoc(), synonyms = synonyms)
          } ?: emptyList()
       }
 
