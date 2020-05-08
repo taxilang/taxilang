@@ -843,4 +843,71 @@ type Person {
       val errors = Compiler(src).validate()
       errors.should.have.size(2)
    }
+
+   @Test
+   fun `explicitly qualified function return parameter is resolved`() {
+      val sourceA = """
+namespace test {
+    type alias FirstName as String
 }
+        """.trimIndent()
+      val schemaA = Compiler(sourceA).compile()
+      val sourceB = """
+
+namespace foo {
+    service CustomerService {
+        operation getName() : test.FirstName
+    }
+}
+        """.trimIndent()
+
+      val schemaB = Compiler(sourceB, importSources = listOf(schemaA)).compile()
+      expect(schemaB.containsService("foo.CustomerService")).to.be.`true`
+   }
+
+   @Test
+   fun `not explicitly qualified function return param with an import is resolved`() {
+      val sourceA = """
+namespace test {
+    type alias FirstName as String
+}
+        """.trimIndent()
+      val schemaA = Compiler(sourceA).compile()
+      val sourceB = """
+import test.FirstName
+
+namespace foo {
+    service CustomerService {
+        operation getName() : FirstName
+    }
+}
+        """.trimIndent()
+
+      val schemaB = Compiler(sourceB, importSources = listOf(schemaA)).compile()
+      expect(schemaB.containsService("foo.CustomerService")).to.be.`true`
+   }
+
+   @Test
+   fun `not explicitly qualified function return parameter is resolved as it is`() {
+      val sourceA = """
+    type alias FirstName as String
+        """.trimIndent()
+      val schemaA = Compiler(sourceA).compile()
+      val sourceB = """
+namespace foo {
+    service CustomerService {
+        operation getName() : FirstName
+    }
+}
+        """.trimIndent()
+
+      val schemaB = Compiler(sourceB, importSources = listOf(schemaA)).compile()
+      expect(schemaB.containsService("foo.CustomerService")).to.be.`true`
+   }
+}
+
+
+
+
+
+
