@@ -30,13 +30,12 @@ data class QualifiedName(val namespace: String, val typeName: String, val parame
     }
 
     fun qualifiedRelativeTo(otherNamespace: String): String {
-        if (this.namespace == otherNamespace) {
-            return typeName
-        }
-        if (nativeNamespaces.contains(this.namespace)) {
-            return typeName
-        }
-        return "$namespace.$typeName"
+       return when {
+          this.namespace == otherNamespace -> typeName
+          nativeNamespaces.contains(this.namespace) -> typeName
+          this.namespace.isEmpty() -> typeName
+          else -> "$namespace.$typeName"
+       }
     }
 }
 
