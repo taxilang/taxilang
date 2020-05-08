@@ -44,7 +44,12 @@ internal class ImportedTypeCollator(
             }
          }
       }
-      return errors to collected.values.toList()
+
+      return if (importQueue.isEmpty()) {
+         errors to importSources.flatMap { it.types }
+      } else {
+         errors to collected.values.toList()
+      }
    }
 
 
