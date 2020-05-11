@@ -163,12 +163,30 @@ enumConstants
     ;
 
 enumConstant
-    :   typeDoc? annotation* Identifier
+    :   typeDoc? annotation* Identifier enumValue? enumSynonymDeclaration?
     ;
 
+enumValue
+   : '(' literal ')'
+   ;
+
+enumSynonymDeclaration
+   : 'synonym' 'of' ( enumSynonymSingleDeclaration | enumSynonymDeclarationList)
+   ;
+enumSynonymSingleDeclaration : qualifiedName ;
+enumSynonymDeclarationList : '[' qualifiedName (',' qualifiedName)* ']'
+   ;
  enumExtensionDeclaration
-    : typeDoc? annotation* 'enum extension' Identifier  ('{' enumConstants? '}')?
+    : typeDoc? annotation* 'enum extension' Identifier  ('{' enumConstantExtensions? '}')?
     ;
+
+enumConstantExtensions
+    :   enumConstantExtension (',' enumConstantExtension)*
+    ;
+
+enumConstantExtension
+   : typeDoc? annotation* Identifier enumSynonymDeclaration?
+   ;
 
 // type aliases
 typeAliasDeclaration
