@@ -53,7 +53,7 @@ typeModifier
     ;
 
 typeDeclaration
-    :  typeDoc? annotation* typeModifier* 'type' Identifier
+    :  typeDoc? annotation* typeModifier* ('type'|'model') Identifier
         ('inherits' listOfInheritedTypes)?
         typeBody?
     ;
@@ -112,12 +112,12 @@ caseFieldDestructuredAssignment :  // dealtAmount ( ... )
 
 caseFieldReferenceAssignment : Identifier ('.' Identifier)*;
 
- fieldModifier
-    : 'closed'
-    ;
- fieldDeclaration
-     :   fieldModifier? Identifier ':' typeType accessor?
-     ;
+fieldModifier
+   : 'closed'
+   ;
+fieldDeclaration
+  :   fieldModifier? Identifier ':' typeType accessor?
+  ;
 
 typeType
     :   classOrInterfaceType parameterConstraint? listType? optionalType? aliasedType?
