@@ -222,5 +222,10 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
+        <repository>
+            <id>taxi-releases</id>
+            <url>https://dl.bintray.com/taxi-lang/releases</url>
+        </repository>
+
     </repositories>
 </project>
