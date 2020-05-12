@@ -449,7 +449,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val requestedNameIsQualified = requestedTypeName.contains(".")
       if (!requestedNameIsQualified) {
          val importedTypeName = imports.firstOrNull { it.typeName == requestedTypeName }
-         if (importedTypeName != null && typeSystem.contains(importedTypeName.parameterizedName)) {
+         if (importedTypeName != null) {
             return typeSystem.getTypeOrError(importedTypeName.parameterizedName, context)
          }
       }
