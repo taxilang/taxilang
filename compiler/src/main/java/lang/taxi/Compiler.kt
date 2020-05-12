@@ -138,7 +138,7 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       if (syntaxErrors.isNotEmpty()) {
          throw CompilationException(syntaxErrors)
       }
-      val builder = TokenProcessor(tokens, importSources)
+      val builder = TokenProcessor(tokens = tokens, importSources = importSources, collectImports = true)
       // Similarly to above, we could do somethign with these errors now.
       val (errors, document) = builder.buildTaxiDocument()
       if (errors.isNotEmpty()) {

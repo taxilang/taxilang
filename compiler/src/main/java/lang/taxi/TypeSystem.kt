@@ -1,6 +1,10 @@
 package lang.taxi
 
+import arrow.core.Either
+import arrow.core.getOption
 import lang.taxi.types.*
+import lang.taxi.utils.toEither
+import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
 
 internal data class TypeProxy(override val qualifiedName: String, private val typeSystem: TypeSystem) : Type {
@@ -84,7 +88,23 @@ class TypeSystem(importedTypes: List<Type>) : TypeProvider {
       } else {
          types.put(type.qualifiedName, type)
       }
+   }
 
+   fun getTypes(includeImportedTypes: Boolean = false, predicate: (Type) -> Boolean): List<Type> {
+      return this.typeList(includeImportedTypes).filter(predicate).toList()
+   }
+
+   fun getTypeOrError(qualifiedName: String, context: ParserRuleContext): Either<CompilationError, Type> {
+      if (PrimitiveType.isPrimitiveType(qualifiedName)) {
+         return Either.right(PrimitiveType.fromDeclaration(qualifiedName))
+      }
+
+      if (isImported(qualifiedName)) {
+         return Either.right(getImportedType(qualifiedName))
+      }
+
+
+      return this.types[qualifiedName].toEither(valueIfNull = CompilationError(context.start, "$qualifiedName is not defined as a type", context.source().normalizedSourceName))
    }
 
    override fun getType(qualifiedName: String): Type {

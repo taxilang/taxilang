@@ -2,36 +2,65 @@ package lang.taxi.types
 
 import lang.taxi.*
 
-data class EnumValue(val name: String, override val annotations: List<Annotation>, override val typeDoc: String? = null) : Annotatable, Documented
+object Enums {
+   fun enumValue(enum:QualifiedName, enumValueName:String):EnumValueQualifiedName {
+      return "${enum.parameterizedName}.$enumValueName"
+   }
+   fun splitEnumValueQualifiedName(name: EnumValueQualifiedName): Pair<QualifiedName, String> {
+      val parts = name.split(".")
+      val enumName = parts.dropLast(1).joinToString(".")
+      val valueName = parts.last()
+      return QualifiedName.from(enumName) to valueName
+   }
+
+}
+typealias EnumValueQualifiedName = String
+data class EnumValueExtension(val name: String, override val annotations: List<Annotation>, val synonyms: List<EnumValueQualifiedName>, override val typeDoc: String? = null, override val compilationUnit: CompilationUnit) : Annotatable, Documented, TypeDefinition
+data class EnumValue(val name: String, val value: Any = name, val qualifiedName:EnumValueQualifiedName, override val annotations: List<Annotation>, val synonyms:List<EnumValueQualifiedName>, override val typeDoc: String? = null) : Annotatable, Documented
 data class EnumDefinition(val values: List<EnumValue>,
                           override val annotations: List<Annotation> = emptyList(),
                           override val compilationUnit: CompilationUnit,
                           val inheritsFrom: Set<Type> = emptySet(),
+                          val basePrimitive: PrimitiveType,
                           override val typeDoc: String? = null) : Annotatable, TypeDefinition, Documented {
-   private val equality = Equality(this, EnumDefinition::values.toSet(), EnumDefinition::annotations.toSet())
+   private val equality = Equality(this, EnumDefinition::values.toSet(), EnumDefinition::annotations.toSet(), EnumDefinition::typeDoc, EnumDefinition::basePrimitive, EnumDefinition::inheritsFrom.toSet())
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
+}
 
+data class EnumExtension(val values: List<EnumValueExtension>,
+                         override val annotations: List<Annotation> = emptyList(),
+                         override val compilationUnit: CompilationUnit,
+                         override val typeDoc: String? = null) : Annotatable, TypeDefinition, Documented {
+   private val equality = Equality(this, EnumExtension::values.toSet(), EnumExtension::annotations.toSet(), EnumExtension::typeDoc)
+   override fun equals(other: Any?) = equality.isEqualTo(other)
+   override fun hashCode(): Int = equality.hash()
 }
 
 data class EnumType(override val qualifiedName: String,
                     override var definition: EnumDefinition?,
-                    override val extensions: MutableList<EnumDefinition> = mutableListOf()) : UserType<EnumDefinition, EnumDefinition>, Annotatable, Documented {
+                    override val extensions: MutableList<EnumExtension> = mutableListOf()) : UserType<EnumDefinition, EnumExtension>, Annotatable, Documented {
    companion object {
       fun undefined(name: String): EnumType {
          return EnumType(name, definition = null)
       }
    }
 
+   override val basePrimitive: PrimitiveType?
+      get() = definition?.basePrimitive
+
    override val inheritsFrom: Set<Type>
       get() = definition?.inheritsFrom ?: emptySet()
 
    override val typeDoc: String?
-      get() = (listOfNotNull(this.definition) + extensions).typeDoc()
+      get() {
+         val documented = (listOfNotNull(this.definition) + extensions) as List<Documented>
+         return documented.typeDoc()
+      }
 
    override val referencedTypes: List<Type> = emptyList()
 
-   override fun addExtension(extension: EnumDefinition): ErrorMessage? {
+   override fun addExtension(extension: EnumExtension): ErrorMessage? {
       if (!this.isDefined) {
          error("It is invalid to add an extension before the enum is defined")
       }
@@ -49,13 +78,15 @@ data class EnumType(override val qualifiedName: String,
    val values: List<EnumValue>
       get() {
          return this.definition?.values?.map { value ->
-            val valueExtensions: List<EnumValue> = valueExtensions(value.name)
+            val valueExtensions: List<EnumValueExtension> = valueExtensions(value.name)
             val collatedAnnotations = value.annotations + valueExtensions.annotations()
-            value.copy(annotations = collatedAnnotations, typeDoc = (listOf(value) + valueExtensions).typeDoc())
+            val docSources = (listOf(value) + valueExtensions) as List<Documented>
+            val synonyms = value.synonyms + valueExtensions.flatMap { it.synonyms }
+            value.copy(annotations = collatedAnnotations, typeDoc = docSources.typeDoc(), synonyms = synonyms)
          } ?: emptyList()
       }
 
-   private fun valueExtensions(valueName: String): List<EnumValue> {
+   private fun valueExtensions(valueName: String): List<EnumValueExtension> {
       return this.extensions.flatMap { it.values.filter { value -> value.name == valueName } }
    }
 

@@ -13,6 +13,7 @@
    <properties>
       <antlr.version>4.7</antlr.version>
       <arrow.version>0.10.4</arrow.version>
+      <spek.version>2.0.10</spek.version>
    </properties>
 
    <dependencies>
@@ -54,6 +55,18 @@
          <version>1.2.3</version>
       </dependency>
 
+      <dependency>
+         <groupId>org.spekframework.spek2</groupId>
+         <artifactId>spek-dsl-jvm</artifactId>
+         <version>${spek.version}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.spekframework.spek2</groupId>
+         <artifactId>spek-runner-junit5</artifactId>
+         <version>${spek.version}</version>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
    <build>
       <plugins>
@@ -72,4 +85,10 @@
          </plugin>
       </plugins>
    </build>
+   <repositories>
+      <repository>
+         <id>bintray-spekframework-spek</id>
+         <url>https://dl.bintray.com/spekframework/spek</url>
+      </repository>
+   </repositories>
 </project>

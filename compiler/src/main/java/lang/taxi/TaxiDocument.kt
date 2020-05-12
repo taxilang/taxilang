@@ -33,6 +33,9 @@ open class TaxiDocument(val types: Set<Type>,
       return typeMap[name] ?: throw error("No type named $name defined")
    }
 
+   // This is a placeholder for when we start to seperate models and types
+   fun model(name: String) = objectType(name)
+
    fun containsType(typeName: String) = typeMap.containsKey(typeName)
    fun containsService(serviceName: String) = servicesMap.containsKey(serviceName)
 
