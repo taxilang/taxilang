@@ -3,12 +3,12 @@
     <parent>
         <artifactId>parent</artifactId>
         <groupId>lang.taxi</groupId>
-        <version>0.4.1-SNAPSHOT</version>
+        <version>0.3.5-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>java2taxi</artifactId>
-    <version>0.4.1-SNAPSHOT</version>
+    <version>0.3.5-SNAPSHOT</version>
 
     <properties>
         <spring.cloud.version>Finchley.SR1</spring.cloud.version>
