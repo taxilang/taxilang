@@ -111,9 +111,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          .filterIsInstance<EnumType>()
          .map { enum ->
             val valueExtensions = typesWithSynonyms.getValue(enum.toQualifiedName()).flatMap { enumValueQualifiedName ->
-               val (_,enumValueName) = Enums.splitEnumValueQualifiedName(enumValueQualifiedName)
-               val valueExtensions = synonymRegistry.synonymsFor(enumValueQualifiedName).map {(synonym,context) ->
-                  EnumValueExtension(enumValueName, emptyList(),listOf(synonym),compilationUnit = context.toCompilationUnit())
+               val (_, enumValueName) = Enums.splitEnumValueQualifiedName(enumValueQualifiedName)
+               val valueExtensions = synonymRegistry.synonymsFor(enumValueQualifiedName).map { (synonym, context) ->
+                  EnumValueExtension(enumValueName, emptyList(), listOf(synonym), compilationUnit = context.toCompilationUnit())
                }
                valueExtensions
             }
@@ -435,7 +435,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    }
 
-   private fun resolveUserType(namespace: Namespace, requestedTypeName:String, imports:List<QualifiedName>, context: ParserRuleContext) : Either<CompilationError, Type> {
+   private fun resolveUserType(namespace: Namespace, requestedTypeName: String, imports: List<QualifiedName>, context: ParserRuleContext): Either<CompilationError, Type> {
       val qualifiedTypeName = qualify(namespace, requestedTypeName)
       if (typeSystem.contains(qualifiedTypeName)) {
          return typeSystem.getTypeOrError(qualifiedTypeName, context)
@@ -460,12 +460,12 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return resolveUserType(namespace, classType.Identifier().text(), importsInSource(classType), classType);
    }
 
-   private fun importsInSource(context:ParserRuleContext): List<QualifiedName> {
+   private fun importsInSource(context: ParserRuleContext): List<QualifiedName> {
       return tokens.importedTypeNamesInSource(context.source().normalizedSourceName)
    }
 
 
-   private fun compileEnum(namespace:Namespace, typeName: String, ctx: TaxiParser.EnumDeclarationContext) {
+   private fun compileEnum(namespace: Namespace, typeName: String, ctx: TaxiParser.EnumDeclarationContext) {
       compileEnumValues(namespace, typeName, ctx.enumConstants())
          .mapLeft { errors -> throw CompilationException(errors) }
          .map { enumValues ->
@@ -513,7 +513,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       } ?: emptyList()
    }
 
-   private fun compileEnumValues(namespace: Namespace, enumQualifiedName: String, enumConstants: TaxiParser.EnumConstantsContext?): Either<List<CompilationError>,List<EnumValue>> {
+   private fun compileEnumValues(namespace: Namespace, enumQualifiedName: String, enumConstants: TaxiParser.EnumConstantsContext?): Either<List<CompilationError>, List<EnumValue>> {
       @Suppress("IfThenToElvis")
       return if (enumConstants == null) {
          Either.right(emptyList())
@@ -523,7 +523,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             val name = enumConstant.Identifier().text
             val qualifiedName = "$enumQualifiedName.$name"
             val value = enumConstant.enumValue()?.literal()?.value() ?: name
-            parseSynonyms(namespace,enumConstant).map { synonyms ->
+            parseSynonyms(namespace, enumConstant).map { synonyms ->
                synonymRegistry.registerSynonyms(qualifiedName, synonyms, enumConstant)
                EnumValue(name, value, qualifiedName, annotations, synonyms, parseTypeDoc(enumConstant.typeDoc()))
             }
@@ -532,15 +532,15 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
-   private fun parseSynonyms(namespace:Namespace, enumConstant: TaxiParser.EnumConstantContext): Either<List<CompilationError>,List<EnumValueQualifiedName>> {
+   private fun parseSynonyms(namespace: Namespace, enumConstant: TaxiParser.EnumConstantContext): Either<List<CompilationError>, List<EnumValueQualifiedName>> {
       val declaredSynonyms = enumConstant.enumSynonymDeclaration()?.enumSynonymSingleDeclaration()?.let { listOf(it.qualifiedName()) }
          ?: enumConstant.enumSynonymDeclaration()?.enumSynonymDeclarationList()?.qualifiedName()
          ?: emptyList()
       return declaredSynonyms.map { synonym ->
-         val (enumName,enumValueName) = Enums.splitEnumValueQualifiedName(synonym.Identifier().text())
+         val (enumName, enumValueName) = Enums.splitEnumValueQualifiedName(synonym.Identifier().text())
          // TODO : I'm concerned this might cause stackoverflow / loops.
          // Will wait and see
-         resolveUserType(namespace,enumName.parameterizedName,importsInSource(enumConstant),enumConstant)
+         resolveUserType(namespace, enumName.parameterizedName, importsInSource(enumConstant), enumConstant)
             .flatMap { enumType ->
                if (enumType is EnumType) {
                   if (enumType.values.any { it.name == enumValueName }) {

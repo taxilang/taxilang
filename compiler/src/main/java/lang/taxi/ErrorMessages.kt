@@ -8,7 +8,7 @@ import org.antlr.v4.runtime.Token
 
 
 object ErrorMessages {
-   fun unresolvedType(type:String) = "Unresolved type: $type"
+   fun unresolvedType(type:String) = "$type is not defined as a type"
 }
 
 class CollectingErrorListener(private val sourceName: String) : BaseErrorListener() {
