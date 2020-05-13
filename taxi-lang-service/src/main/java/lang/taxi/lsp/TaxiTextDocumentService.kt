@@ -119,8 +119,8 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
             // Note - for VSCode, we can use the same position for start and end, and it
             // highlights the entire word
             val position = Position(
-                    error.offendingToken.line - 1,
-                    error.offendingToken.charPositionInLine
+                    error.line - 1,
+                    error.char
             )
             (error.sourceName ?: "Unknown source") to Diagnostic(
                     Range(position, position),
