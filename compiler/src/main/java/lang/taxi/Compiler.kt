@@ -9,6 +9,7 @@ import lang.taxi.types.*
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
 import java.io.File
+import java.io.Serializable
 import java.util.*
 
 object Namespaces {
@@ -21,18 +22,38 @@ fun ParserRuleContext?.toCompilationUnit(): lang.taxi.types.CompilationUnit {
    } else {
       lang.taxi.types.CompilationUnit(this, this.source());
    }
-
 }
 
-data class CompilationError(val offendingToken: Token, val detailMessage: String?, val sourceName: String? = null) {
-   val line = offendingToken.line
-   val char = offendingToken.charPositionInLine
+fun ParserRuleContext?.toCompilationUnits(): List<CompilationUnit> {
+   return listOf(this.toCompilationUnit())
+}
+
+data class SourceLocation(val line: Int, val char: Int) {
+   companion object {
+      val UNKNOWN_POSITION = SourceLocation(1, 1)
+   }
+}
+
+data class CompilationError(val line: Int,
+                            val char: Int,
+                            val detailMessage: String,
+                            val sourceName: String? = null,
+                            val severity: Severity = Severity.ERROR):Serializable {
+   constructor(position: SourceLocation, detailMessage: String, sourceName: String? = null, severity: Severity = Severity.ERROR) : this(position.line, position.char, detailMessage, sourceName, severity)
+   constructor(offendingToken: Token, detailMessage: String, sourceName: String = offendingToken.tokenSource.sourceName, severity: Severity = Severity.ERROR) : this(offendingToken.line, offendingToken.charPositionInLine, detailMessage, sourceName, severity)
+
+   enum class Severity {
+      INFO,
+      WARNING,
+      ERROR
+   }
 
    override fun toString(): String = "Compilation Error: ${sourceName.orEmpty()}($line,$char) $detailMessage"
 }
 
-class CompilationException(val errors: List<CompilationError>) : RuntimeException(errors.joinToString("\n") { it.toString() }) {
-   constructor(offendingToken: Token, detailMessage: String?, sourceName: String?) : this(listOf(CompilationError(offendingToken, detailMessage, sourceName)))
+open class CompilationException(val errors: List<CompilationError>) : RuntimeException(errors.joinToString("\n") { it.toString() }) {
+   constructor(error: CompilationError) : this(listOf(error))
+   constructor(offendingToken: Token, detailMessage: String, sourceName: String) : this(listOf(CompilationError(offendingToken, detailMessage, sourceName)))
 }
 
 data class DocumentStrucutreError(val detailMessage: String)
@@ -62,7 +83,7 @@ class CompilerTokenCache {
             compilerExceptions.add(
                CompilationError(
                   parser.currentToken,
-                  "An exception occurred in the compilation process.  This is likely a bug in the Taxi Compiler. \n ${e.message}", parser.currentToken?.tokenSource?.sourceName
+                  "An exception occurred in the compilation process.  This is likely a bug in the Taxi Compiler. \n ${e.message}", parser.currentToken?.tokenSource?.sourceName ?: "Unknown"
                ))
          }
 
@@ -197,6 +218,9 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    }
 }
 
+internal fun <B> Either<ErrorMessage, B>.toCompilationError(start: Token): Either<CompilationError, B> {
+   return this.mapLeft { errorMessage -> errorMessage.toCompilationError(start)!! }
+}
 
 internal fun ErrorMessage?.toCompilationError(start: Token): CompilationError? {
    if (this == null) {

@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.expect
+import com.winterbe.expekt.should
 import lang.taxi.services.AttributeConstantValueConstraint
 import lang.taxi.services.AttributeValueFromParameterConstraint
 import lang.taxi.services.ReturnValueDerivedFromParameterConstraint
@@ -112,7 +113,6 @@ service MyService {
 
     }
 
-    @Test(expected = MalformedConstraintException::class)
     fun given_serviceConstraintReferencesInvalidAttribute_then_compilationErrorIsThrown() {
         val source =
                 """type Money {
@@ -123,7 +123,7 @@ service MyService {
     operation calculateCreditRisk(amount : Money(ccy = 'GBP')) : Decimal
 }
 """
-        Compiler(source).compile()
+        Compiler(source).validate().should.have.size(1)
     }
 
     @Test

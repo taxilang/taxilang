@@ -1,5 +1,6 @@
 package lang.taxi.types
 
+import arrow.core.Either
 import lang.taxi.*
 
 data class TypeAliasExtension(val annotations: List<Annotation>, override val compilationUnit: CompilationUnit, override val typeDoc: String? = null) : TypeDefinition, Documented {
@@ -33,9 +34,9 @@ data class TypeAlias(
          return if (isDefined) listOf(this.aliasType!!) else emptyList()
       }
 
-   override fun addExtension(extension: TypeAliasExtension): ErrorMessage? {
+   override fun addExtension(extension: TypeAliasExtension): Either<ErrorMessage, TypeAliasExtension> {
       this.extensions.add(extension)
-      return null
+      return Either.right(extension)
    }
 
    companion object {

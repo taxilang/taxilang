@@ -7,6 +7,7 @@ import lang.taxi.services.AttributeConstantValueConstraint
 import lang.taxi.services.AttributeValueFromParameterConstraint
 import lang.taxi.services.Constraint
 import lang.taxi.services.ReturnValueDerivedFromParameterConstraint
+import lang.taxi.types.CompilationUnit
 
 private val defaultConverters = listOf(
         AttributeConstantConstaintAnnotationCoverter(),
@@ -26,7 +27,7 @@ class ConstraintAnnotationMapper(val converters: List<ConstraintAnnotationConver
     }
 
     fun convert(contract: ResponseContract): List<Constraint> {
-        val basedOn = ReturnValueDerivedFromParameterConstraint(AttributePath.from(contract.basedOn))
+        val basedOn = ReturnValueDerivedFromParameterConstraint(AttributePath.from(contract.basedOn), listOf(CompilationUnit.unspecified()))
         val mappedConstraints = doConvert(contract.constraints
                 .map { ConstraintAnnotationModel(it) })
         // Note: basedOn MUST come first to ensure order
@@ -46,7 +47,7 @@ class AttributeConstantConstaintAnnotationCoverter : ConstraintAnnotationConvert
 
     override fun provide(constraint: ConstraintAnnotationModel): AttributeConstantValueConstraint {
         val parts = constraint.value.split("=")
-        return AttributeConstantValueConstraint(parts[0].trim(), parts[1].trim().removeSurrounding("'"))
+        return AttributeConstantValueConstraint(parts[0].trim(), parts[1].trim().removeSurrounding("'"), listOf(CompilationUnit.unspecified()))
     }
 }
 
@@ -59,7 +60,11 @@ class AttributeValueFromParameterConstraintConvert : ConstraintAnnotationConvert
 
     override fun provide(constraint: ConstraintAnnotationModel): Constraint {
         val parts = constraint.value.split("=")
-        return AttributeValueFromParameterConstraint(parts[0].trim(), AttributePath.from(parts[1].trim()))
+        return AttributeValueFromParameterConstraint(
+           parts[0].trim(),
+           AttributePath.from(parts[1].trim()),
+           listOf(CompilationUnit.unspecified())
+        )
     }
 
 }
