@@ -18,10 +18,26 @@ fun <A, B> List<Either<A, B>>.invertEitherList(): Either<List<A>, List<B>> {
    }
 }
 
-fun <L,R> R?.toEither(valueIfNull:L):Either<L,R> {
+fun <L, R> R?.toEither(valueIfNull: L): Either<L, R> {
    return if (this == null) {
       Either.left(valueIfNull)
    } else {
       Either.right(this)
+   }
+}
+
+fun <A, B> Either<A, B>.leftOr(default: A): A {
+   return when (this) {
+      is Either.Left -> this.a
+      is Either.Right -> default
+   }
+}
+
+// Equivalent methods, I always forget which to call.
+fun <A, B> Either<A, B>.leftOrNull(): A? = errorOrNull()
+fun <A, B> Either<A, B>.errorOrNull(): A? {
+   return when (this) {
+      is Either.Left -> this.a
+      is Either.Right -> null
    }
 }

@@ -1,11 +1,13 @@
 package lang.taxi.types
 
+import arrow.core.Either
 import lang.taxi.*
 
 object Enums {
-   fun enumValue(enum:QualifiedName, enumValueName:String):EnumValueQualifiedName {
+   fun enumValue(enum: QualifiedName, enumValueName: String): EnumValueQualifiedName {
       return "${enum.parameterizedName}.$enumValueName"
    }
+
    fun splitEnumValueQualifiedName(name: EnumValueQualifiedName): Pair<QualifiedName, String> {
       val parts = name.split(".")
       val enumName = parts.dropLast(1).joinToString(".")
@@ -15,8 +17,9 @@ object Enums {
 
 }
 typealias EnumValueQualifiedName = String
+
 data class EnumValueExtension(val name: String, override val annotations: List<Annotation>, val synonyms: List<EnumValueQualifiedName>, override val typeDoc: String? = null, override val compilationUnit: CompilationUnit) : Annotatable, Documented, TypeDefinition
-data class EnumValue(val name: String, val value: Any = name, val qualifiedName:EnumValueQualifiedName, override val annotations: List<Annotation>, val synonyms:List<EnumValueQualifiedName>, override val typeDoc: String? = null) : Annotatable, Documented
+data class EnumValue(val name: String, val value: Any = name, val qualifiedName: EnumValueQualifiedName, override val annotations: List<Annotation>, val synonyms: List<EnumValueQualifiedName>, override val typeDoc: String? = null) : Annotatable, Documented
 data class EnumDefinition(val values: List<EnumValue>,
                           override val annotations: List<Annotation> = emptyList(),
                           override val compilationUnit: CompilationUnit,
@@ -60,19 +63,20 @@ data class EnumType(override val qualifiedName: String,
 
    override val referencedTypes: List<Type> = emptyList()
 
-   override fun addExtension(extension: EnumExtension): ErrorMessage? {
+   override fun addExtension(extension: EnumExtension): Either<ErrorMessage, EnumExtension> {
       if (!this.isDefined) {
          error("It is invalid to add an extension before the enum is defined")
       }
       val definedValueNames = this.definition!!.values.map { it.name }
       // Validate that the extension doesn't modify members
       val illegalValueDefinitions = extension.values.filter { value -> !definedValueNames.contains(value.name) }
-      if (illegalValueDefinitions.isNotEmpty()) {
+      return if (illegalValueDefinitions.isNotEmpty()) {
          val illegalValueNames = illegalValueDefinitions.joinToString(", ") { it.name }
-         return "Cannot modify the members in an enum.  An extension attempted to add a new members $illegalValueNames"
+         Either.left("Cannot modify the members in an enum.  An extension attempted to add a new members $illegalValueNames")
+      } else {
+         this.extensions.add(extension)
+         Either.right(extension)
       }
-      this.extensions.add(extension)
-      return null
    }
 
    val values: List<EnumValue>

@@ -12,6 +12,10 @@
 
    <dependencies>
       <dependency>
+         <groupId>io.arrow-kt</groupId>
+         <artifactId>arrow-core</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.apache.commons</groupId>
          <artifactId>commons-lang3</artifactId>
          <version>3.9</version>

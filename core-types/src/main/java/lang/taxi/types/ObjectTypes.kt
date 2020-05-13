@@ -1,5 +1,6 @@
 package lang.taxi.types
 
+import arrow.core.Either
 import lang.taxi.Equality
 import lang.taxi.services.Constraint
 import lang.taxi.services.ConstraintTarget
@@ -79,12 +80,12 @@ data class ObjectType(
          return (fieldTypes + inheritedTypes).filterIsInstance<UserType<*, *>>()
       }
 
-   override fun addExtension(extension: ObjectTypeExtension): ErrorMessage? {
+   override fun addExtension(extension: ObjectTypeExtension): Either<ErrorMessage, ObjectTypeExtension> {
       val error = verifyMaxOneTypeRefinementPerField(extension.fieldExtensions)
-      if (error != null) return error
+      if (error != null) return Either.left(error)
       this.extensions.add(extension)
 
-      return null
+      return Either.right(extension)
    }
 
    private fun verifyMaxOneTypeRefinementPerField(fieldExtensions: List<FieldExtension>): ErrorMessage? {
