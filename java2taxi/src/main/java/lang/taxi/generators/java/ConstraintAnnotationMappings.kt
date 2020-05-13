@@ -3,10 +3,10 @@ package lang.taxi.generators.java
 import lang.taxi.types.AttributePath
 import lang.taxi.annotations.ConstraintAnnotationModel
 import lang.taxi.annotations.ResponseContract
-import lang.taxi.services.AttributeConstantValueConstraint
+import lang.taxi.services.operations.constraints.NamedFieldConstantValueConstraint
 import lang.taxi.services.AttributeValueFromParameterConstraint
 import lang.taxi.services.Constraint
-import lang.taxi.services.ReturnValueDerivedFromParameterConstraint
+import lang.taxi.services.operations.constraints.ReturnValueDerivedFromParameterConstraint
 
 private val defaultConverters = listOf(
         AttributeConstantConstaintAnnotationCoverter(),
@@ -44,9 +44,9 @@ class AttributeConstantConstaintAnnotationCoverter : ConstraintAnnotationConvert
         return constraint.value.removeSpaces().matches("(\\w+)='(\\w+)'".toRegex())
     }
 
-    override fun provide(constraint: ConstraintAnnotationModel): AttributeConstantValueConstraint {
+    override fun provide(constraint: ConstraintAnnotationModel): NamedFieldConstantValueConstraint {
         val parts = constraint.value.split("=")
-        return AttributeConstantValueConstraint(parts[0].trim(), parts[1].trim().removeSurrounding("'"))
+        return NamedFieldConstantValueConstraint(parts[0].trim(), parts[1].trim().removeSurrounding("'"))
     }
 }
 

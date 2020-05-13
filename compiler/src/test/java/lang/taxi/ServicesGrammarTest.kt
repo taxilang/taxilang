@@ -1,9 +1,10 @@
 package lang.taxi
 
 import com.winterbe.expekt.expect
-import lang.taxi.services.AttributeConstantValueConstraint
-import lang.taxi.services.AttributeValueFromParameterConstraint
-import lang.taxi.services.ReturnValueDerivedFromParameterConstraint
+import lang.taxi.services.operations.constraints.MalformedConstraintException
+import lang.taxi.services.operations.constraints.NamedFieldConstantValueConstraint
+import lang.taxi.services.operations.constraints.NamedFieldValueFromParameterConstraint
+import lang.taxi.services.operations.constraints.ReturnValueDerivedFromParameterConstraint
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.VoidType
 import org.junit.Test
@@ -69,7 +70,7 @@ service MyService {
         val doc = Compiler.forStrings(moneyType, source).compile()
         val param = doc.service("MyService").operation("calculateCreditRisk").parameters[0]
         expect(param.constraints).to.have.size(1)
-        val constraint = param.constraints[0] as AttributeConstantValueConstraint
+        val constraint = param.constraints[0] as NamedFieldConstantValueConstraint
         expect(constraint.fieldName).to.equal("currency")
         expect(constraint.expectedValue).to.equal("GBP")
     }
@@ -145,7 +146,7 @@ service MyService {
     fun servicesCanDeclareContractsOnReturnValues() {
         val source = """
 service MyService {
-    operation convertCurrency(source : Money, target : Currency) : Money( from source,  currency = target )
+    operation convertCurrency(source : Money, target : Currency) : Money( from source,  this.currency = target )
 }
 """
         val doc = Compiler.forStrings(moneyType, source).compile()
@@ -154,9 +155,9 @@ service MyService {
         val contract = operation.contract!!
         expect(contract.returnTypeConstraints).to.have.size(2)
         val constraint = contract.returnTypeConstraints[1]
-        expect(constraint).instanceof(AttributeValueFromParameterConstraint::class.java)
-        val valueConstraint = constraint as AttributeValueFromParameterConstraint
-        expect(valueConstraint.fieldName).to.equal("currency")
+        expect(constraint).instanceof(NamedFieldValueFromParameterConstraint::class.java)
+        val valueConstraint = constraint as NamedFieldValueFromParameterConstraint
+        expect(valueConstraint.parameterName).to.equal("currency")
         expect(valueConstraint.attributePath.path).to.equal("target")
 
         expect(contract.returnTypeConstraints[0]).instanceof(ReturnValueDerivedFromParameterConstraint::class.java)
@@ -172,7 +173,7 @@ type ConversionRequest {
     target : Currency
 }
 service MyService {
-    operation convertCurrency(request : ConversionRequest) : Money( from request.source,  currency = request.target )
+    operation convertCurrency(request : ConversionRequest) : Money( from request.source,  this.currency = request.target )
 }
 """
         val doc = Compiler.forStrings(moneyType, source).compile()
@@ -189,9 +190,9 @@ service MyService {
         expect(returnValueFromInputConstraiint.path).to.equal("request.source")
         expect(returnValueFromInputConstraiint.attributePath.parts).to.contain.elements("request", "source")
 
-        expect(contract.returnTypeConstraints[1]).to.be.instanceof(AttributeValueFromParameterConstraint::class.java)
-        val attributeValueFromInputConstraiint = contract.returnTypeConstraints[1] as AttributeValueFromParameterConstraint
-        expect(attributeValueFromInputConstraiint.fieldName).to.equal("currency")
+        expect(contract.returnTypeConstraints[1]).to.be.instanceof(NamedFieldValueFromParameterConstraint::class.java)
+        val attributeValueFromInputConstraiint = contract.returnTypeConstraints[1] as NamedFieldValueFromParameterConstraint
+        expect(attributeValueFromInputConstraiint.parameterName).to.equal("currency")
         expect(attributeValueFromInputConstraiint.attributePath.path).to.equal("request.target")
         expect(attributeValueFromInputConstraiint.attributePath.parts).to.contain.elements("request", "target")
     }

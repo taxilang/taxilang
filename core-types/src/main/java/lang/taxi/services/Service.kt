@@ -1,6 +1,8 @@
 package lang.taxi.services
 
 import lang.taxi.Equality
+import lang.taxi.services.operations.constraints.Constraint
+import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 
@@ -27,48 +29,6 @@ data class Service(override val qualifiedName: String, val operations: List<Oper
     }
 
     fun containsOperation(name: String) = operations.any { it.name == name }
-}
-
-
-/**
- * Indicates that an attribute of a parameter (which is an Object type)
- * must have a constant value
- * eg:
- * Given Money(amount:Decimal, currency:String),
- * could express that Money.currency must have a value of 'GBP'
- */
-data class AttributeConstantValueConstraint(
-        // TODO : It may be that we're not always adding constraints
-        // to Object types (types with fields).  When I hit a scenario like that,
-        // relax this constraint to make it optional, and update accordingly.
-        val fieldName: String, val expectedValue: Any) : Constraint {
-    override fun asTaxi(): String = "$fieldName = \"$expectedValue\""
-}
-
-/**
- * Indicates that an attribute will be returned updated to a value
- * provided by a parameter (ie., an input on a function)
- */
-data class AttributeValueFromParameterConstraint(val fieldName: String, val attributePath: AttributePath) : Constraint {
-    override fun asTaxi(): String = "$fieldName = ${attributePath.path}"
-}
-
-data class ReturnValueDerivedFromParameterConstraint(val attributePath: AttributePath) : Constraint {
-    override fun asTaxi(): String = "from $path"
-
-    val path = attributePath.path
-
-
-}
-
-interface ConstraintTarget {
-    val constraints: List<Constraint>
-
-    val description: String
-}
-
-interface Constraint {
-    fun asTaxi(): String
 }
 
 typealias FieldName = String

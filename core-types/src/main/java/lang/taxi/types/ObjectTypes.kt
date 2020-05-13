@@ -1,8 +1,8 @@
 package lang.taxi.types
 
 import lang.taxi.Equality
-import lang.taxi.services.Constraint
-import lang.taxi.services.ConstraintTarget
+import lang.taxi.services.operations.constraints.Constraint
+import lang.taxi.services.operations.constraints.ConstraintTarget
 import kotlin.reflect.KProperty1
 
 data class FieldExtension(val name: String, override val annotations: List<Annotation>, val refinedType: Type?) : Annotatable

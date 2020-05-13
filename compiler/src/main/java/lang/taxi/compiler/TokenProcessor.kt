@@ -2,8 +2,11 @@ package lang.taxi.compiler
 
 import arrow.core.*
 import lang.taxi.*
+import lang.taxi.services.operations.constraints.ConstraintValidator
+import lang.taxi.services.operations.constraints.OperationConstraintConverter
 import lang.taxi.policies.*
 import lang.taxi.services.*
+import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.utils.invertEitherList
@@ -230,6 +233,15 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
+   private fun <T> Either<List<CompilationError>, T>.collectErrors(): Either<List<ReportedError>, T> {
+      return this.mapLeft { errors ->
+         errors.map { error ->
+            this@TokenProcessor.errors.add(error)
+            ReportedError(error)
+         }
+      }
+   }
+
    private fun <T> Either<CompilationError, T>.collectError(): Either<ReportedError, T> {
       return this.mapLeft { error ->
          this@TokenProcessor.errors.add(error)
@@ -237,7 +249,16 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
-   private fun <T : Any> Iterable<Either<CompilationError, T>>.reportAndRemoveErrors(): List<T> {
+   private fun <T : Any> List<Either<List<CompilationError>, T>>.reportAndRemoveErrorList(): List<T> {
+      return this.mapNotNull { item ->
+         item.getOrHandle { errors ->
+            this@TokenProcessor.errors.addAll(errors)
+            null
+         }
+      }
+   }
+
+   private fun <T : Any> List<Either<CompilationError, T>>.reportAndRemoveErrors(): List<T> {
       return this.mapNotNull { item ->
          item.getOrHandle { compilationError ->
             this@TokenProcessor.errors.add(compilationError)
@@ -264,7 +285,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          val fieldsWithConditions = conditionalFieldStructures.flatMap { it.fields }
          val fields = (typeBody.typeMemberDeclaration()?.map { member ->
             compileField(member, namespace)
-         } ?: emptyList()).reportAndRemoveErrors() + fieldsWithConditions
+         } ?: emptyList()).reportAndRemoveErrorList() + fieldsWithConditions
 
          fields
       } ?: emptyList()
@@ -278,26 +299,31 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    internal fun compiledField(member: TaxiParser.TypeMemberDeclarationContext, namespace: Namespace): Field? {
       return compileField(member, namespace)
-         .collectError()
+         .collectErrors()
          .orNull()
    }
 
-   private fun compileField(member: TaxiParser.TypeMemberDeclarationContext, namespace: Namespace): Either<CompilationError, Field> {
+   private fun compileField(member: TaxiParser.TypeMemberDeclarationContext, namespace: Namespace): Either<List<CompilationError>, Field> {
       val fieldAnnotations = collateAnnotations(member.annotation())
       val accessor = compileAccessor(member.fieldDeclaration().accessor())
       val typeDoc = parseTypeDoc(member.typeDoc())
-      return parseType(namespace, member.fieldDeclaration().typeType()).map { type ->
-         Field(
-            name = unescape(member.fieldDeclaration().Identifier().text),
-            type = type,
-            nullable = member.fieldDeclaration().typeType().optionalType() != null,
-            modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
-            annotations = fieldAnnotations,
-            constraints = mapConstraints(member.fieldDeclaration().typeType(), type),
-            accessor = accessor,
-            typeDoc = typeDoc
-         )
-      }
+      return parseType(namespace, member.fieldDeclaration().typeType())
+         .mapLeft { listOf(it) }
+         .flatMap { type ->
+            mapConstraints(member.fieldDeclaration().typeType(), type, namespace).map { constraints ->
+               Field(
+                  name = unescape(member.fieldDeclaration().Identifier().text),
+                  type = type,
+                  nullable = member.fieldDeclaration().typeType().optionalType() != null,
+                  modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
+                  annotations = fieldAnnotations,
+                  constraints = constraints,
+                  accessor = accessor,
+                  typeDoc = typeDoc
+               )
+            }
+
+         }
    }
 
    private fun parseTypeDoc(content: String?): String? {
@@ -308,7 +334,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return content.removeSurrounding("[[", "]]").trimIndent().trim()
    }
 
-   internal fun compileAccessor(accessor: TaxiParser.AccessorContext?): Accessor? {
+   private fun compileAccessor(accessor: TaxiParser.AccessorContext?): Accessor? {
       return when {
          accessor == null -> null
          accessor.scalarAccessor() != null -> compileScalarAccessor(accessor.scalarAccessor())
@@ -456,8 +482,13 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       // Note: Use requestedTypeName, as qualifying it to the local namespace didn't help
       return CompilationError(context.start, ErrorMessages.unresolvedType(requestedTypeName), context.source().sourceName).left()
    }
+
    private fun resolveUserType(namespace: Namespace, classType: TaxiParser.ClassOrInterfaceTypeContext): Either<CompilationError, Type> {
-      return resolveUserType(namespace, classType.Identifier().text(), importsInSource(classType), classType);
+      return resolveUserType(namespace, classType.Identifier().text(), classType);
+   }
+
+   private fun resolveUserType(namespace: Namespace, requestedTypeName: String, context: ParserRuleContext): Either<CompilationError, Type> {
+      return resolveUserType(namespace, requestedTypeName, importsInSource(context), context);
    }
 
    private fun importsInSource(context: ParserRuleContext): List<QualifiedName> {
@@ -607,46 +638,55 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             parseTypeOrVoid(namespace, signature.operationReturnType()).map { returnType ->
                val scope = operationDeclaration.operationScope()?.Identifier()?.text
                val operationParameters = signature.parameters().map { operationParameterContext ->
-                  parseType(namespace, operationParameterContext.typeType()).map { paramType ->
-                     Parameter(collateAnnotations(operationParameterContext.annotation()), paramType,
-                        name = operationParameterContext.parameterName()?.Identifier()?.text,
-                        constraints = mapConstraints(operationParameterContext.typeType(), paramType))
-                  }
-               }.reportAndRemoveErrors()
+                  parseType(namespace, operationParameterContext.typeType())
+                     .mapLeft { listOf(it) }
+                     .flatMap { paramType ->
+                        mapConstraints(operationParameterContext.typeType(), paramType, namespace).map { constraints ->
+                           Parameter(collateAnnotations(operationParameterContext.annotation()), paramType,
+                              name = operationParameterContext.parameterName()?.Identifier()?.text,
+                              constraints = constraints)
+                        }
+                     }
+               }.reportAndRemoveErrorList()
 
-               Operation(name = signature.Identifier().text,
-                  scope = scope,
-                  annotations = collateAnnotations(operationDeclaration.annotation()),
-                  parameters = operationParameters,
-                  compilationUnits = listOf(operationDeclaration.toCompilationUnit()),
-                  returnType = returnType,
-                  contract = parseOperationContract(operationDeclaration, returnType))
+               parseOperationContract(operationDeclaration, returnType, namespace).map { contract ->
+                  Operation(name = signature.Identifier().text,
+                     scope = scope,
+                     annotations = collateAnnotations(operationDeclaration.annotation()),
+                     parameters = operationParameters,
+                     compilationUnits = listOf(operationDeclaration.toCompilationUnit()),
+                     returnType = returnType,
+                     contract = contract)
+               }
+
             }
          }.reportAndRemoveErrors()
+            .reportAndRemoveErrorList() // The double chaining seems to work, not a mistake, but not neccessarily readable.
          Service(qualifiedName, methods, collateAnnotations(serviceToken.annotation()), listOf(serviceToken.toCompilationUnit()))
       }
       this.services.addAll(services)
    }
 
-   private fun parseOperationContract(operationDeclaration: TaxiParser.ServiceOperationDeclarationContext, returnType: Type): OperationContract? {
+   private fun parseOperationContract(operationDeclaration: TaxiParser.ServiceOperationDeclarationContext, returnType: Type, namespace: Namespace): Either<List<CompilationError>, OperationContract?> {
       val signature = operationDeclaration.operationSignature()
       val constraintList = signature.operationReturnType()
          ?.typeType()
          ?.parameterConstraint()
          ?.parameterConstraintExpressionList()
-         ?: return null
+         ?: return Either.right(null)
 
-      val constraints = OperationConstraintConverter(constraintList, returnType).constraints()
-      return OperationContract(returnType, constraints)
+      return OperationConstraintConverter(constraintList, returnType, typeResolver(namespace)).constraints().map { constraints ->
+         OperationContract(returnType, constraints)
+      }
    }
 
-   private fun mapConstraints(typeType: TaxiParser.TypeTypeContext, paramType: Type): List<Constraint> {
+   private fun mapConstraints(typeType: TaxiParser.TypeTypeContext, paramType: Type, namespace: Namespace): Either<List<CompilationError>, List<Constraint>> {
       if (typeType.parameterConstraint() == null) {
-         return emptyList()
+         return Either.right(emptyList())
       }
       return OperationConstraintConverter(typeType.parameterConstraint()
          .parameterConstraintExpressionList(),
-         paramType).constraints()
+         paramType, typeResolver(namespace)).constraints()
    }
 
    private fun compilePolicies() {
@@ -668,8 +708,18 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       this.policies.addAll(compiledPolicies)
    }
 
-   fun typeResolver(namespace: String): TypeResolver {
-      return { typeTypeContext -> parseType(namespace, typeTypeContext) }
+   fun typeResolver(namespace: Namespace): NamespaceQualifiedTypeResolver {
+      return object : NamespaceQualifiedTypeResolver {
+         override val namespace: String = namespace
+
+         override fun resolve(context: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
+            return parseType(namespace, context)
+         }
+
+         override fun resolve(requestedTypeName: String, context: ParserRuleContext): Either<CompilationError, Type> {
+            return resolveUserType(namespace, requestedTypeName, context)
+         }
+      }
    }
 
    private fun compilePolicyRulesets(namespace: String, token: TaxiParser.PolicyDeclarationContext): List<RuleSet> {
@@ -715,3 +765,4 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
 }
+

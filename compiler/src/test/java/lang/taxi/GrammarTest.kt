@@ -2,7 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
-import lang.taxi.services.AttributeConstantValueConstraint
+import lang.taxi.services.operations.constraints.NamedFieldConstantValueConstraint
 import lang.taxi.types.*
 import org.antlr.v4.runtime.CharStreams
 import org.junit.Ignore
@@ -306,7 +306,7 @@ type Money {
    currency : Currency as String
 }
 type SomeServiceRequest {
-   amount : Money(currency = 'GBP')
+   amount : Money(this.currency = 'GBP')
    clientId : ClientId as String
 }
 """
@@ -315,7 +315,7 @@ type SomeServiceRequest {
 
       val amountField = request.field("amount")
       expect(amountField.constraints).to.have.size(1)
-      expect(amountField.constraints[0]).to.be.instanceof(AttributeConstantValueConstraint::class.java)
+      expect(amountField.constraints[0]).to.be.instanceof(NamedFieldConstantValueConstraint::class.java)
    }
 
    @Test
