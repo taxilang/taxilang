@@ -175,7 +175,7 @@ namespace namespaceA {
         val expected = """
             namespace vyne {
                  parameter type SomeRequest {
-                    amount : Money(currency = "USD")
+                    amount : Money(this.currency = "USD")
                  }
                  type Money {
                     amount : Decimal

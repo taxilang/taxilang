@@ -2,12 +2,10 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
-import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
-import lang.taxi.services.operations.constraints.ReturnValueDerivedFromParameterConstraint
+import lang.taxi.services.operations.constraints.*
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.VoidType
 import org.junit.Test
-import kotlin.test.fail
 
 class ServicesGrammarTest {
    @Test
@@ -64,16 +62,17 @@ type Money {
    fun servicesCanExpressConstraintsOnParameters() {
       val source = """
 service MyService {
-    operation calculateCreditRisk(Money(currency = 'GBP')) : Decimal
+    operation calculateCreditRisk(Money(this.currency = 'GBP')) : Decimal
 }
 """
       val doc = Compiler.forStrings(moneyType, source).compile()
       val param = doc.service("MyService").operation("calculateCreditRisk").parameters[0]
       expect(param.constraints).to.have.size(1)
       val constraint = param.constraints[0] as PropertyToParameterConstraint
-      fail("Not Implemented")
-//        expect(constraint.fieldName).to.equal("currency")
-//        expect(constraint.expectedValue).to.equal("GBP")
+      val propertyIdentifier = constraint.propertyIdentifier as PropertyFieldNameIdentifier
+      expect(propertyIdentifier.name.path).to.equal("currency")
+      val value = constraint.expectedValue as ConstantValueExpression
+      value.value.should.equal("GBP")
    }
 
    @Test
@@ -157,13 +156,12 @@ service MyService {
       val constraint = contract.returnTypeConstraints[1]
       expect(constraint).instanceof(PropertyToParameterConstraint::class.java)
       val valueConstraint = constraint as PropertyToParameterConstraint
-      fail("not implemente")
-//        expect(valueConstraint.parameterName).to.equal("currency")
-//        expect(valueConstraint.attributePath.path).to.equal("target")
-//
-//        expect(contract.returnTypeConstraints[0]).instanceof(ReturnValueDerivedFromParameterConstraint::class.java)
-//        val originConstraint = contract.returnTypeConstraints[0] as ReturnValueDerivedFromParameterConstraint
-//        expect(originConstraint.attributePath.path).to.equal("source")
+      expect(valueConstraint.propertyIdentifier).to.equal(PropertyFieldNameIdentifier("currency"))
+      expect(valueConstraint.expectedValue).to.equal(RelativeValueExpression("target"))
+
+      expect(contract.returnTypeConstraints[0]).instanceof(ReturnValueDerivedFromParameterConstraint::class.java)
+      val originConstraint = contract.returnTypeConstraints[0] as ReturnValueDerivedFromParameterConstraint
+      expect(originConstraint.attributePath.path).to.equal("source")
    }
 
    @Test
@@ -187,16 +185,14 @@ service MyService {
       expect(contract.returnTypeConstraints).to.have.size(2)
 
       expect(contract.returnTypeConstraints[0]).to.be.instanceof(ReturnValueDerivedFromParameterConstraint::class.java)
-      val returnValueFromInputConstraiint = contract.returnTypeConstraints[0] as ReturnValueDerivedFromParameterConstraint
-      expect(returnValueFromInputConstraiint.path).to.equal("request.source")
-      expect(returnValueFromInputConstraiint.attributePath.parts).to.contain.elements("request", "source")
+      val returnValueDerivedFromParameterConstraint = contract.returnTypeConstraints[0] as ReturnValueDerivedFromParameterConstraint
+      expect(returnValueDerivedFromParameterConstraint.path).to.equal("request.source")
+      expect(returnValueDerivedFromParameterConstraint.attributePath.parts).to.contain.elements("request", "source")
 
       expect(contract.returnTypeConstraints[1]).to.be.instanceof(PropertyToParameterConstraint::class.java)
-      val attributeValueFromInputConstraiint = contract.returnTypeConstraints[1] as PropertyToParameterConstraint
-      fail("not implemented")
-//        expect(attributeValueFromInputConstraiint.parameterName).to.equal("currency")
-//        expect(attributeValueFromInputConstraiint.attributePath.path).to.equal("request.target")
-//        expect(attributeValueFromInputConstraiint.attributePath.parts).to.contain.elements("request", "target")
+      val constraint = contract.returnTypeConstraints[1] as PropertyToParameterConstraint
+      constraint.propertyIdentifier.should.equal(PropertyFieldNameIdentifier("currency"))
+      constraint.expectedValue.should.equal(RelativeValueExpression("request.target"))
    }
 
    @Test

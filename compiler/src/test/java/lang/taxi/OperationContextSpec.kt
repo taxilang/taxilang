@@ -40,6 +40,24 @@ object OperationContextSpec : Spek({
             valueExpression.path.path.should.equal("id")
          }
 
+         // ths is commented, because I can't decide on a syntax that I like.
+         // Once we decide on a syntax, then most of the compiler infra is already in place.
+         xit("compiles return type with property type equal to param identified by type") {
+            val operation = """
+         $taxi
+         service TradeService {
+            operation getTrade(id:TradeId):Trade(
+//            TODO : pick a syntax...
+//               this:TradeId = :TradeId
+//               TradeId = TradeId   // :(
+//               this:TradeId = input:TradeId // most explicit, but kinda ugly
+            )
+         }
+         """.compiled().service("TradeService").operation("getTrade")
+            operation.contract!!.returnTypeConstraints.should.have.size(1)
+
+         }
+
          it("should fail if provided type is not an attribute of the return type") {
             val errors = """
          $taxi
@@ -50,7 +68,7 @@ object OperationContextSpec : Spek({
          }
          """.validated()
             errors.should.have.size(1)
-            TODO("Make sure the error is meaningful")
+            errors.first().detailMessage.should.equal("Type Trade does not have a field with type EmployeeCode")
          }
 
          it("should fail if referenced param is not an input") {
@@ -63,7 +81,7 @@ object OperationContextSpec : Spek({
          }
          """.validated()
             errors.should.have.size(1)
-            TODO("Make sure the error is meaningful")
+            errors.first().detailMessage.should.equal("Operation getTrade does not declare a parameter with name foo")
          }
 
          it("compiles return type with property field equal to param") {
@@ -95,7 +113,7 @@ object OperationContextSpec : Spek({
          }
          """.validated()
             errors.should.have.size(1)
-            TODO("Make sure the error is meaningful")
+            errors.first().detailMessage.should.equal("Type Trade does not contain a property something")
          }
 
 
@@ -143,9 +161,10 @@ object OperationContextSpec : Spek({
    }
 })
 
-fun String.validated():List<CompilationError> {
+fun String.validated(): List<CompilationError> {
    return Compiler(this).validate()
 }
+
 fun String.compiled(): TaxiDocument {
    return Compiler(this).compile()
 }

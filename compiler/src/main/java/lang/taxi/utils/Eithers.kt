@@ -18,6 +18,14 @@ fun <A, B> List<Either<A, B>>.invertEitherList(): Either<List<A>, List<B>> {
    }
 }
 
+fun <L, R> R?.toEither(valueIfNull: () -> L): Either<L, R> {
+   return if (this == null) {
+      Either.left(valueIfNull())
+   } else {
+      Either.right(this)
+   }
+}
+
 fun <L, R> R?.toEither(valueIfNull: L): Either<L, R> {
    return if (this == null) {
       Either.left(valueIfNull)

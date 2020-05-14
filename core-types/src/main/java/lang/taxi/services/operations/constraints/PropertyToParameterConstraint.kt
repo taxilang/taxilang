@@ -23,14 +23,14 @@ import lang.taxi.types.toSet
  * as that allows expressions which aren't bound to field name contracts,
  * making them more polymorphic
  */
-data class PropertyToParameterConstraint(
+open class PropertyToParameterConstraint(
    val propertyIdentifier: PropertyIdentifier,
    val operator: Operator = Operator.EQUAL,
    val expectedValue: ValueExpression,
    override val compilationUnits: List<CompilationUnit>
 ) : Constraint {
    override fun asTaxi(): String {
-      TODO("Not yet implemented")
+      return "${propertyIdentifier.taxi} ${operator.symbol} ${expectedValue.taxi}"
    }
 
    private val equality = Equality(this, PropertyToParameterConstraint::propertyIdentifier, PropertyToParameterConstraint::operator, PropertyToParameterConstraint::expectedValue)
@@ -40,12 +40,21 @@ data class PropertyToParameterConstraint(
 
 }
 
-sealed class PropertyIdentifier(val description:String) {
+sealed class PropertyIdentifier(val description: String, val taxi: String) {
 }
-// Identifies a property by it's name
-data class PropertyFieldNameIdentifier(val name:AttributePath) : PropertyIdentifier("field ${name.path}")
-data class PropertyTypeIdentifier(val type: QualifiedName) : PropertyIdentifier("type ${type.parameterizedName}")
 
-sealed class ValueExpression
-data class ConstantValueExpression(val value:Any):ValueExpression()
-data class RelativeValueExpression(val path:AttributePath):ValueExpression()
+// Identifies a property by it's name
+data class PropertyFieldNameIdentifier(val name: AttributePath) : PropertyIdentifier("field ${name.path}", "this.${name.path}") {
+   constructor(fieldName: String) : this(AttributePath.from(fieldName))
+}
+
+// TODO : Syntax here is still up for discussion.  See OperationContextSpec
+data class PropertyTypeIdentifier(val type: QualifiedName) : PropertyIdentifier("type ${type.parameterizedName}", "this:${type.parameterizedName}")
+
+sealed class ValueExpression(val taxi: String)
+
+// TODO : This won't work with numbers - but neither does the parsing.  Need to fix that.
+data class ConstantValueExpression(val value: Any) : ValueExpression("'$value'")
+data class RelativeValueExpression(val path: AttributePath) : ValueExpression(path.path) {
+   constructor(attributeName: String) : this(AttributePath.from(attributeName))
+}

@@ -20,7 +20,7 @@ fun ParserRuleContext?.toCompilationUnit(): lang.taxi.types.CompilationUnit {
    return if (this == null) {
       CompilationUnit.unspecified()
    } else {
-      lang.taxi.types.CompilationUnit(this, this.source());
+      lang.taxi.types.CompilationUnit(this, this.source(), SourceLocation(this.start.line, this.start.charPositionInLine));
    }
 }
 
@@ -28,17 +28,12 @@ fun ParserRuleContext?.toCompilationUnits(): List<CompilationUnit> {
    return listOf(this.toCompilationUnit())
 }
 
-data class SourceLocation(val line: Int, val char: Int) {
-   companion object {
-      val UNKNOWN_POSITION = SourceLocation(1, 1)
-   }
-}
-
 data class CompilationError(val line: Int,
                             val char: Int,
                             val detailMessage: String,
                             val sourceName: String? = null,
                             val severity: Severity = Severity.ERROR):Serializable {
+   constructor(compiled:Compiled, detailMessage: String, sourceName: String = compiled.compilationUnits.first().source.sourceName, severity: Severity = Severity.ERROR) : this(compiled.compilationUnits.firstOrNull()?.location ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity)
    constructor(position: SourceLocation, detailMessage: String, sourceName: String? = null, severity: Severity = Severity.ERROR) : this(position.line, position.char, detailMessage, sourceName, severity)
    constructor(offendingToken: Token, detailMessage: String, sourceName: String = offendingToken.tokenSource.sourceName, severity: Severity = Severity.ERROR) : this(offendingToken.line, offendingToken.charPositionInLine, detailMessage, sourceName, severity)
 

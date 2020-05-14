@@ -3,8 +3,11 @@ package lang.taxi.services.operations.constraints
 
 import arrow.core.Either
 import lang.taxi.*
+import lang.taxi.services.Operation
 import lang.taxi.services.Service
+import lang.taxi.types.Compiled
 import lang.taxi.types.ObjectType
+import lang.taxi.types.SourceLocation
 import lang.taxi.types.Type
 import lang.taxi.utils.invertEitherList
 
@@ -16,7 +19,7 @@ interface ConstraintProvider {
 
 interface ValidatingConstraintProvider : ConstraintProvider {
    fun applies(constraint: Constraint): Boolean
-   fun validate(constraint: Constraint, typeSystem: TypeSystem, target: ConstraintTarget): List<CompilationError>
+   fun validate(constraint: Constraint, typeSystem: TypeSystem, target: ConstraintTarget, constraintDeclarationSite: Compiled): List<CompilationError>
 }
 
 object ConstraintProviders {
@@ -28,35 +31,37 @@ object ConstraintProviders {
 
 class ConstraintValidator(providers: List<ConstraintProvider> = ConstraintProviders.providers) {
    private val validatingProviders = providers.filterIsInstance<ValidatingConstraintProvider>()
-   fun validateAll(typeSystem: TypeSystem, services: List<Service>):List<CompilationError> {
+   fun validateAll(typeSystem: TypeSystem, services: List<Service>): List<CompilationError> {
       val typeErrors = typeSystem.typeList().filterIsInstance<ObjectType>()
          .flatMap { type ->
             type.allFields.flatMap { field ->
                field.constraints.flatMap { constraint ->
-                  validate(constraint, typeSystem, field)
+                  validate(constraint, typeSystem, field, type)
                }
             }
          }
 
       val serviceErrors = services.flatMap { it.operations }
          .flatMap { operation ->
-            operation.contract?.let { contract ->
-               contract.returnTypeConstraints.forEach {
-                  validate(it, typeSystem, contract)
+            val contractErrors = operation.contract?.let { contract ->
+               contract.returnTypeConstraints.flatMap {
+                  validate(it, typeSystem, contract, operation)
                }
-            }
-            operation.parameters.flatMap { parameter ->
+            } ?: emptyList()
+
+            val paramErrors = operation.parameters.flatMap { parameter ->
                parameter.constraints.flatMap {
-                  validate(it, typeSystem, parameter)
+                  validate(it, typeSystem, parameter, operation)
                }
             }
+            contractErrors + paramErrors
          }
       return typeErrors + serviceErrors
    }
 
-   private fun validate(constraint: Constraint, typeSystem: TypeSystem, target: ConstraintTarget): List<CompilationError> {
+   private fun validate(constraint: Constraint, typeSystem: TypeSystem, target: ConstraintTarget, constraintDeclarationSite: Compiled): List<CompilationError> {
       return this.validatingProviders.filter { it.applies(constraint) }
-         .flatMap { it.validate(constraint, typeSystem, target) }
+         .flatMap { it.validate(constraint, typeSystem, target, constraintDeclarationSite) }
    }
 }
 
@@ -67,13 +72,13 @@ class OperationConstraintConverter(
 ) {
    private val constraintProviders = ConstraintProviders.providers
 
-   fun constraints(): Either<List<CompilationError>,List<Constraint>> {
+   fun constraints(): Either<List<CompilationError>, List<Constraint>> {
       return expressionList
          .parameterConstraintExpression().map { buildConstraint(it, paramType, namespaceQualifiedTypeResolver) }
          .invertEitherList()
    }
 
-   private fun buildConstraint(constraint: TaxiParser.ParameterConstraintExpressionContext, paramType: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<CompilationError, Constraint>  {
+   private fun buildConstraint(constraint: TaxiParser.ParameterConstraintExpressionContext, paramType: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<CompilationError, Constraint> {
       return constraintProviders
          .first { it.applies(constraint) }
          .build(constraint, paramType, typeResolver)
@@ -84,8 +89,6 @@ class OperationConstraintConverter(
 
 object MalformedConstraint {
    fun from(message: String, constraint: Constraint): CompilationError {
-      val sourceName = constraint.compilationUnits.first().source.sourceName
-      // TODO : Find a way to map the error back to the actual position in the source.
-      return CompilationError(SourceLocation.UNKNOWN_POSITION, message, sourceName)
+      return CompilationError(constraint, message)
    }
 }

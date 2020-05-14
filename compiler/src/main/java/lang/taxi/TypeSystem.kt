@@ -104,7 +104,10 @@ class TypeSystem(importedTypes: List<Type>) : TypeProvider {
       }
 
 
-      return this.types[qualifiedName].toEither(valueIfNull = CompilationError(context.start, "$qualifiedName is not defined as a type", context.source().normalizedSourceName))
+      return this.types[qualifiedName].toEither {
+         CompilationError(context.start, "$qualifiedName is not defined as a type", context.source().normalizedSourceName)
+      }
+
    }
 
    override fun getType(qualifiedName: String): Type {

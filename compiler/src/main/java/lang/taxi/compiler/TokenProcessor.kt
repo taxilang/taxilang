@@ -487,7 +487,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
 
          // Note: Use requestedTypeName, as qualifying it to the local namespace didn't help
-         val error: CompilationError = CompilationError(context.start, ErrorMessages.unresolvedType(requestedTypeName), context.source().sourceName)
+         val error = { CompilationError(context.start, ErrorMessages.unresolvedType(requestedTypeName), context.source().sourceName) }
 
          val requestedNameIsQualified = requestedTypeName.contains(".")
          if (!requestedNameIsQualified) {
@@ -495,10 +495,10 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             if (importedTypeName != null) {
                typeSystem.getTypeOrError(importedTypeName.parameterizedName, context)
             } else {
-               Either.left(error)
+               Either.left(error())
             }
          } else {
-            Either.left(error)
+            Either.left(error())
          }
       }
 
@@ -698,7 +698,11 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          ?.parameterConstraintExpressionList()
          ?: return Either.right(null)
 
-      return OperationConstraintConverter(constraintList, returnType, typeResolver(namespace)).constraints().map { constraints ->
+      return OperationConstraintConverter(
+         constraintList,
+         returnType,
+         typeResolver(namespace)
+      ).constraints().map { constraints ->
          OperationContract(returnType, constraints)
       }
    }

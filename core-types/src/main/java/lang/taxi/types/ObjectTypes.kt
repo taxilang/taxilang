@@ -165,9 +165,12 @@ data class ObjectType(
       return this.extensions.flatMap { it.fieldExtensions(fieldName) }
    }
 
-   fun hasField(name:String):Boolean = allFields.any { it.name == name }
+   fun hasField(name: String): Boolean = allFields.any { it.name == name }
    fun field(name: String): Field = allFields.first { it.name == name }
    fun annotation(name: String): Annotation = annotations.first { it.name == name }
+   fun fieldsWithType(typeName: QualifiedName): List<Field> {
+      return this.fields.filter { it.type.toQualifiedName() == typeName }
+   }
 
 }
 
@@ -180,10 +183,16 @@ fun Iterable<AnnotationProvider>.toAnnotations(): List<Annotation> {
    return this.map { it.toAnnotation() }
 }
 
+interface NameTypePair {
+   // Relaxed to Nullable to support Parameters, which don't mandate names
+   val name:String?
+   val type: Type
+
+}
 data class Annotation(val name: String, val parameters: Map<String, Any?> = emptyMap())
 data class Field(
-   val name: String,
-   val type: Type,
+   override val name: String,
+   override val type: Type,
    val nullable: Boolean = false,
    val modifiers: List<FieldModifier> = emptyList(),
    override val annotations: List<Annotation> = emptyList(),
@@ -191,7 +200,7 @@ data class Field(
    val accessor: Accessor? = null,
    val readCondition: FieldSetCondition? = null,
    override val typeDoc: String? = null
-) : Annotatable, ConstraintTarget, Documented {
+) : Annotatable, ConstraintTarget, Documented, NameTypePair {
 
    override val description: String = "field $name"
 
@@ -213,6 +222,7 @@ interface ExpressionAccessor : Accessor {
 
 data class XpathAccessor(override val expression: String) : ExpressionAccessor
 data class JsonPathAccessor(override val expression: String) : ExpressionAccessor
+
 // TODO : This is duplicating concepts in ColumnMapping, one should die.
 data class ColumnAccessor(val index: Int) : ExpressionAccessor {
    override val expression: String = index.toString()
