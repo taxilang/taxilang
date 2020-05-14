@@ -120,8 +120,8 @@ fieldDeclaration
   ;
 
 typeType
-    :   classOrInterfaceType parameterConstraint? listType? optionalType? aliasedType?
-    |   primitiveType parameterConstraint? listType? optionalType?
+    :   classOrInterfaceType listType? optionalType? parameterConstraint? aliasedType?
+    |   primitiveType listType? optionalType? parameterConstraint?
     ;
 
 accessor : scalarAccessor | objectAccessor;
@@ -284,8 +284,10 @@ operationReturnValueOriginExpression
 // The qualifiedName here is used to represent a path to the attribute (this.currency)
 // We could've just used Identifier here, but we'd like to support nested paths
 propertyToParameterConstraintExpression
-   : propertyFieldNameQualifier? qualifiedName comparisonOperator (literal | qualifiedName);
+   : propertyToParameterConstraintLhs comparisonOperator propertyToParameterConstraintRhs;
 
+propertyToParameterConstraintLhs : propertyFieldNameQualifier? qualifiedName;
+propertyToParameterConstraintRhs : (literal | qualifiedName);
 
 propertyFieldNameQualifier : 'this' '.';
 

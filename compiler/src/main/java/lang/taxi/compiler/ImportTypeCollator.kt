@@ -35,7 +35,7 @@ internal class ImportedTypeCollator(
 
          val type = getType(name, token)
          if (type == null) {
-            errors.add(CompilationError(token, "Cannot import $name as it is not defined", SourceNames.normalize(token.tokenSource.sourceName)))
+            errors.add(CompilationError(token, "Cannot import $name as it is not defined", token.tokenSource.sourceName))
          } else {
             collected[name] = type
 

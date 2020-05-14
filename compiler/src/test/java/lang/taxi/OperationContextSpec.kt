@@ -1,6 +1,12 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
+import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
+import lang.taxi.services.operations.constraints.PropertyTypeIdentifier
+import lang.taxi.services.operations.constraints.RelativeValueExpression
+import lang.taxi.types.AttributePath
+import lang.taxi.types.QualifiedName
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -11,6 +17,7 @@ object OperationContextSpec : Spek({
             tradeId : TradeId as String
             tradeDate : TradeDate as Instant
          }
+         type alias EmployeeCode as String
       """.trimIndent()
 
       describe("compiling declaration of context") {
@@ -24,20 +31,71 @@ object OperationContextSpec : Spek({
          }
          """.compiled().service("TradeService").operation("getTrade")
             operation.contract!!.returnTypeConstraints.should.have.size(1)
-            TODO("Validate")
+            val constraint = operation.contract!!.returnTypeConstraints.first() as PropertyToParameterConstraint
+            constraint.operator.should.equal(Operator.EQUAL)
+            val propertyIdentifier = constraint.propertyIdentifier as PropertyTypeIdentifier
+            propertyIdentifier.type.parameterizedName.should.equal("TradeId")
+
+            val valueExpression = constraint.expectedValue as RelativeValueExpression
+            valueExpression.path.path.should.equal("id")
+         }
+
+         it("should fail if provided type is not an attribute of the return type") {
+            val errors = """
+         $taxi
+         service TradeService {
+            operation getTrade(id:TradeId):Trade(
+               EmployeeCode = id
+            )
+         }
+         """.validated()
+            errors.should.have.size(1)
+            TODO("Make sure the error is meaningful")
+         }
+
+         it("should fail if referenced param is not an input") {
+            val errors = """
+         $taxi
+         service TradeService {
+            operation getTrade(id:TradeId):Trade(
+               TradeId = foo
+            )
+         }
+         """.validated()
+            errors.should.have.size(1)
+            TODO("Make sure the error is meaningful")
          }
 
          it("compiles return type with property field equal to param") {
             val operation = """
          $taxi
          service TradeService {
-            operation getTrade(tradeId:TradeId):Trade[](
+            operation getTrade(tradeId:TradeId):Trade(
                this.tradeId = tradeId
             )
          }
          """.compiled().service("TradeService").operation("getTrade")
             operation.contract!!.returnTypeConstraints.should.have.size(1)
-            TODO("Validate")
+            val constraint = operation.contract!!.returnTypeConstraints.first() as PropertyToParameterConstraint
+            constraint.operator.should.equal(Operator.EQUAL)
+            val propertyIdentifier = constraint.propertyIdentifier as PropertyFieldNameIdentifier
+            propertyIdentifier.name.path.should.equal("tradeId")
+
+            val valueExpression = constraint.expectedValue as RelativeValueExpression
+            valueExpression.path.path.should.equal("tradeId")
+         }
+
+         it("should fail if referenced property is not present on target type") {
+            val errors = """
+         $taxi
+         service TradeService {
+            operation getTrade(id:TradeId):Trade(
+               this.something = id
+            )
+         }
+         """.validated()
+            errors.should.have.size(1)
+            TODO("Make sure the error is meaningful")
          }
 
 
@@ -51,7 +109,8 @@ object OperationContextSpec : Spek({
          }
          """.compiled().service("TradeService").operation("getTradesAfter")
             operation.contract!!.returnTypeConstraints.should.have.size(1)
-            TODO("Validate")
+            val constraint = operation.contract!!.returnTypeConstraints.first() as PropertyToParameterConstraint
+            constraint.operator.should.equal(Operator.GREATER_THAN_OR_EQUAL_TO)
          }
 
          it("compiles return type with multiple property params") {
@@ -64,8 +123,19 @@ object OperationContextSpec : Spek({
             )
          }
          """.compiled().service("TradeService").operation("getTradesAfter")
-            operation.contract!!.returnTypeConstraints.should.have.size(2)
-            TODO("Validate")
+            val constraints = operation.contract!!.returnTypeConstraints
+            constraints.should.contain(PropertyToParameterConstraint(
+               PropertyTypeIdentifier(QualifiedName.from("TradeDate")),
+               Operator.GREATER_THAN_OR_EQUAL_TO,
+               RelativeValueExpression(AttributePath.from("startDate")),
+               emptyList()
+            ))
+            constraints.should.contain(PropertyToParameterConstraint(
+               PropertyTypeIdentifier(QualifiedName.from("TradeDate")),
+               Operator.LESS_THAN,
+               RelativeValueExpression(AttributePath.from("endDate")),
+               emptyList()
+            ))
          }
       }
 
@@ -73,6 +143,9 @@ object OperationContextSpec : Spek({
    }
 })
 
+fun String.validated():List<CompilationError> {
+   return Compiler(this).validate()
+}
 fun String.compiled(): TaxiDocument {
    return Compiler(this).compile()
 }

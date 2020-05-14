@@ -1,5 +1,7 @@
 package lang.taxi.types
 
+import arrow.core.Either
+
 interface Type : Named, Compiled {
    val inheritsFrom: Set<Type>
 
@@ -84,7 +86,7 @@ interface UserType<TDef : TypeDefinition, TExt : TypeDefinition> : Type {
 
    val extensions: List<TExt>
 
-   fun addExtension(extension: TExt): ErrorMessage?
+   fun addExtension(extension: TExt): Either<ErrorMessage,TExt>
 
    val isDefined: Boolean
       get() {

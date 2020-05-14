@@ -9,6 +9,7 @@ import lang.taxi.services.*
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
+import lang.taxi.utils.errorOrNull
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.log
 import org.antlr.v4.runtime.ParserRuleContext
@@ -86,6 +87,14 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
+   private fun attemptToQualify(namespace: Namespace, name: String, context: ParserRuleContext): Either<CompilationError, String> {
+      return try {
+         Either.right(qualify(namespace, name))
+      } catch (e: AmbiguousNameException) {
+         Either.left(CompilationError(context.start, e.message!!, context.source().normalizedSourceName))
+      }
+   }
+
    private fun qualify(namespace: Namespace, name: String): String {
       return typeSystem.qualify(namespace, name)
 
@@ -132,7 +141,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
 
    private fun validateConstraints() {
-      constraintValidator.validateAll(typeSystem, services)
+      errors.addAll(constraintValidator.validateAll(typeSystem, services))
    }
 
 
@@ -189,7 +198,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val type = typeSystem.getType(typeName) as TypeAlias
       val annotations = collateAnnotations(typeRule.annotation())
       val typeDoc = parseTypeDoc(typeRule.typeDoc())
-      return type.addExtension(TypeAliasExtension(annotations, typeRule.toCompilationUnit(), typeDoc)).toCompilationError(typeRule.start)
+      return type.addExtension(TypeAliasExtension(annotations, typeRule.toCompilationUnit(), typeDoc))
+         .mapLeft { it.toCompilationError(typeRule.start) }
+         .errorOrNull()
    }
 
    private fun compileTypeExtension(namespace: Namespace, typeRule: TaxiParser.TypeExtensionDeclarationContext): CompilationError? {
@@ -209,7 +220,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          FieldExtension(fieldName, fieldAnnotations, refinedType)
       }
       val errorMessage = type.addExtension(ObjectTypeExtension(annotations, fieldExtensions, typeDoc, typeRule.toCompilationUnit()))
-      return errorMessage.toCompilationError(typeRule.start)
+      return errorMessage
+         .mapLeft { it.toCompilationError(typeRule.start) }
+         .errorOrNull()
 
    }
 
@@ -462,25 +475,33 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
    private fun resolveUserType(namespace: Namespace, requestedTypeName: String, imports: List<QualifiedName>, context: ParserRuleContext): Either<CompilationError, Type> {
-      val qualifiedTypeName = qualify(namespace, requestedTypeName)
-      if (typeSystem.contains(qualifiedTypeName)) {
-         return typeSystem.getTypeOrError(qualifiedTypeName, context)
-      }
+      return attemptToQualify(namespace, requestedTypeName, context).flatMap { qualifiedTypeName ->
+         if (typeSystem.contains(qualifiedTypeName)) {
+            return@flatMap typeSystem.getTypeOrError(qualifiedTypeName, context)
+         }
 
-      if (tokens.unparsedTypes.contains(qualifiedTypeName)) {
-         compileToken(qualifiedTypeName)
-         return typeSystem.getTypeOrError(qualifiedTypeName, context)
-      }
+         if (tokens.unparsedTypes.contains(qualifiedTypeName)) {
+            compileToken(qualifiedTypeName)
+            return@flatMap typeSystem.getTypeOrError(qualifiedTypeName, context)
+         }
 
-      val requestedNameIsQualified = requestedTypeName.contains(".")
-      if (!requestedNameIsQualified) {
-         val importedTypeName = imports.firstOrNull { it.typeName == requestedTypeName }
-         if (importedTypeName != null) {
-            return typeSystem.getTypeOrError(importedTypeName.parameterizedName, context)
+
+         // Note: Use requestedTypeName, as qualifying it to the local namespace didn't help
+         val error: CompilationError = CompilationError(context.start, ErrorMessages.unresolvedType(requestedTypeName), context.source().sourceName)
+
+         val requestedNameIsQualified = requestedTypeName.contains(".")
+         if (!requestedNameIsQualified) {
+            val importedTypeName = imports.firstOrNull { it.typeName == requestedTypeName }
+            if (importedTypeName != null) {
+               typeSystem.getTypeOrError(importedTypeName.parameterizedName, context)
+            } else {
+               Either.left(error)
+            }
+         } else {
+            Either.left(error)
          }
       }
-      // Note: Use requestedTypeName, as qualifying it to the local namespace didn't help
-      return CompilationError(context.start, ErrorMessages.unresolvedType(requestedTypeName), context.source().sourceName).left()
+
    }
 
    private fun resolveUserType(namespace: Namespace, classType: TaxiParser.ClassOrInterfaceTypeContext): Either<CompilationError, Type> {
@@ -593,9 +614,11 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val annotations = collateAnnotations(typeRule.annotation())
       val typeDoc = parseTypeDoc(typeRule.typeDoc())
 
-      val typeName = qualify(namespace, typeRule.Identifier().text)
-      val enum = typeSystem.getType(typeName) as EnumType
-      return enum.addExtension(EnumExtension(enumValues, annotations, typeRule.toCompilationUnit(), typeDoc = typeDoc)).toCompilationError(typeRule.start)
+      return attemptToQualify(namespace, typeRule.Identifier().text, typeRule)
+         .flatMap { typeName ->
+            val enum = typeSystem.getType(typeName) as EnumType
+            enum.addExtension(EnumExtension(enumValues, annotations, typeRule.toCompilationUnit(), typeDoc = typeDoc)).toCompilationError(typeRule.start)
+         }.errorOrNull()
    }
 
    private fun parseTypeDoc(content: TaxiParser.TypeDocContext?): String? {
