@@ -6,12 +6,26 @@ variables:
   # when running from the command line.
   # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
   MAVEN_CLI_OPTS: "-s mvn-settings.xml --batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+  # Used during gitflow interaction.
+  MAJOR_RELEASE_DIGIT: 0
+  MINOR_RELEASE_DIGIT: 1
+  PATCH_RELEASE_DIGIT: 2
+
+.git_template: &git_setup |
+   git remote set-url --push origin "https://oauth2:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+   git config user.name "taxi-cd"
+   git config user.email taxi-cd@vyne.co
 
 # Cache downloaded dependencies and plugins between builds.
 # To keep cache across branches add 'key: "$CI_JOB_REF_NAME"'
 cache:
   paths:
     - .m2/repository
+
+
+stages:
+   - build
+   - release
 
 # This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
 # Because some enforcer rules might check dependency convergence and class duplications
@@ -31,7 +45,7 @@ validate:
      - master
      - develop
 
-publish-snapshot:
+deploy:
    image: maven:3.3.9-jdk-8
    stage: build
    script:
@@ -42,46 +56,41 @@ publish-snapshot:
             - "*/target/surefire-reports/TEST-*.xml"
    only:
       - develop
+      - master
 
-publish-release:
+release-major:
    variables:
       GIT_STRATEGY: none
    image: maven:3.3.9-jdk-8
-   stage: build
+   stage: release
    script:
-      - echo $USER
-             ## clean the working directory
-      - BUILD_DIR=/home/gitlab-runner/builds/$RUNNER_TOKEN/0
-      - CLONE_DIR="$BUILD_DIR/$CI_PROJECT_PATH"
-      - cd $BUILD_DIR
-      - rm -rf $CLONE_DIR
-      - mkdir -p $CLONE_DIR
-
-       ## clone the project each time (inefficient, consider performing fetch instead if it already exists)
-      - git clone git@gitlab.com:taxi-lang/taxi-lang.git $CLONE_DIR
-      - cd $CLONE_DIR
-      # Install ssh-agent if not already installed, it is required by Docker.
-      # (change apt-get to yum if you use a CentOS-based image)
-#      - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-
-      # Run ssh-agent (inside the build environment)
-#      - eval $(ssh-agent -s)
-#      - mkdir -p ~/.ssh
-#      - ssh-keyscan -p 10022 gitlab.com >> ~/.ssh/known_hosts
-
-      # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
-#      - ssh-add <(echo "$SSH_PRIVATE_KEY")
-      - git checkout -B master
-
-      - git config --global user.name "${GITLAB_USER_NAME}"
-      - git config --global user.email "${GITLAB_USER_EMAIL}"
-      - 'mvn $MAVEN_CLI_OPTS release:clean release:prepare release:perform'
-   artifacts:
-      reports:
-         junit:
-            # Note:This won't actually work, b/c of https://gitlab.com/gitlab-org/gitlab-runner/issues/2620
-            # However, leaving this here to pick up later
-            - "*/target/surefire-reports/TEST-*.xml"
+      - *git_setup
+      - 'mvn gitflow:release -B -DversionDigitToIncrement=$MAJOR_RELEASE_DIGIT'
    only:
-      - master
+      - develop
+   when: manual
+
+release-minor:
+   variables:
+      GIT_STRATEGY: none
+   image: maven:3.3.9-jdk-8
+   stage: release
+   script:
+      - *git_setup
+      - 'mvn gitflow:release -B -DversionDigitToIncrement=$MINOR_RELEASE_DIGIT'
+   only:
+      - develop
+   when: manual
+
+release-patch:
+   variables:
+      GIT_STRATEGY: none
+   image: maven:3.3.9-jdk-8
+   stage: release
+   script:
+      - *git_setup
+      - 'mvn gitflow:release -B -DversionDigitToIncrement=$PATCH_RELEASE_DIGIT'
+   only:
+      - develop
+   when: manual
 
