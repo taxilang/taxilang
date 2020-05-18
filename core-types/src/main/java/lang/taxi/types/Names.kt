@@ -1,7 +1,6 @@
 package lang.taxi.types
 
-import lang.taxi.services.Parameter
-import lang.taxi.utils.pop
+import lang.taxi.utils.takeHead
 
 data class QualifiedName(val namespace: String, val typeName: String, val parameters: List<QualifiedName> = emptyList()) {
    companion object {
@@ -72,7 +71,7 @@ data class AttributePath(val parts: List<String>) {
       if (parameters.isEmpty()) {
          return false
       }
-      val (part, remainingParts) = parts.pop()
+      val (part, remainingParts) = parts.takeHead()
       val thisPart = parameters.firstOrNull { it.name == part } ?: return false
       return if (remainingParts.isEmpty()) {
          true

@@ -100,7 +100,7 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       val operator = Operator.parse(constraintDefinition.comparisonOperator().text)
 
       return parseLhs(constraintDefinition, typeResolver).flatMap { propertyIdentifier ->
-         parseRhs(constraintDefinition, typeResolver).map { valueExpression ->
+         parseRhs(constraintDefinition).map { valueExpression ->
             PropertyToParameterConstraint(propertyIdentifier, operator, valueExpression, constraint.toCompilationUnits())
          }
       }
@@ -118,7 +118,7 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       }
    }
 
-   private fun parseRhs(constraintDefinition: TaxiParser.PropertyToParameterConstraintExpressionContext, typeResolver: NamespaceQualifiedTypeResolver): Either<CompilationError, ValueExpression> {
+   private fun parseRhs(constraintDefinition: TaxiParser.PropertyToParameterConstraintExpressionContext): Either<CompilationError, ValueExpression> {
       val rhs = constraintDefinition.propertyToParameterConstraintRhs()
       return when {
          rhs.literal() != null -> Either.right(ConstantValueExpression(rhs.literal().value()))
