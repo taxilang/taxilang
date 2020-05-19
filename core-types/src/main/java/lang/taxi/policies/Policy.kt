@@ -1,5 +1,6 @@
 package lang.taxi.policies
 
+import lang.taxi.Operator
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 
@@ -123,21 +124,6 @@ data class RelativeSubject(val source: RelativeSubjectSource, val targetType: Ty
 
 data class LiteralArraySubject(val values: List<Any>) : Subject()
 data class LiteralSubject(val value: Any?) : Subject()
-
-enum class Operator(val symbol: String) {
-    EQUAL("="),
-    NOT_EQUAL("!="),
-    IN("in");
-
-    companion object {
-        private val symbols = Operator.values().associateBy { it.symbol }
-        fun parse(value: String): Operator {
-            return symbols[value] ?: error("No operator matches symbol $value")
-        }
-    }
-
-
-}
 
 data class InstructionProcessor(
         val name: String,

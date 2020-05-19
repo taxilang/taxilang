@@ -8,6 +8,7 @@ import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.swagger.SwaggerTypeMapper
+import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.Annotation
 import lang.taxi.types.VoidType
 import lang.taxi.types.toAnnotations
@@ -95,7 +96,7 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
         val parameters = swaggerOperation.parameters.map { swaggerParam ->
             val annotations = getParamAnnotations(swaggerParam)
             val type = getParamType(swaggerParam)
-            val constraints = emptyList<lang.taxi.services.Constraint>()
+            val constraints = emptyList<Constraint>()
             lang.taxi.services.Parameter(annotations, type, swaggerParam.name, constraints)
         }
         val returnType = getReturnType(swaggerOperation)

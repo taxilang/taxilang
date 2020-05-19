@@ -12,8 +12,8 @@ import lang.taxi.types.Type
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.OperationIdProvider
-import lang.taxi.services.Constraint
 import lang.taxi.services.Service
+import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.Annotation
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.VoidType

@@ -55,8 +55,8 @@ type Money {
 }
 service PersonService {
     operation findPerson(PersonId) : Person
-    operation convertRates( Money( currency = "GBP" ),
-        targetCurrency : String ) : Money( from source, currency = targetCurrency )
+    operation convertRates( Money( this.currency = "GBP" ),
+        targetCurrency : String ) : Money( from source, this.currency = targetCurrency )
 }
 
 """
