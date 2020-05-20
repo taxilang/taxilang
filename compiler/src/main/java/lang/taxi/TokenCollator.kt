@@ -97,6 +97,7 @@ data class Tokens(
          emptyList()
       }
    }
+
 }
 
 
@@ -248,10 +249,8 @@ class TokenCollator : TaxiBaseListener() {
       if (namespace.isEmpty()) return name
       return "$namespace.$name"
    }
+}
 
-   fun List<TerminalNode>.text(): String {
-      return this.joinToString(".")
-   }
-
-
+fun List<TerminalNode>.text(): String {
+   return this.joinToString(".")
 }
