@@ -3,6 +3,7 @@ package lang.taxi.lsp
 import lang.taxi.*
 import lang.taxi.lsp.completion.CompletionService
 import lang.taxi.lsp.completion.TypeProvider
+import lang.taxi.lsp.gotoDefinition.GotoDefinitionService
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.eclipse.lsp4j.*
@@ -39,6 +40,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     // types themselves, as it'll give better results sooner
     private val typeProvider = TypeProvider(lastSuccessfulCompilationResult, lastCompilationResult)
     private val completionService = CompletionService(typeProvider)
+    private val gotoDefinitionService = GotoDefinitionService(typeProvider)
     private lateinit var client: LanguageClient
     private var rootUri: String? = null
 
@@ -59,6 +61,13 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
             compileAndReport()
         }
         return completionService.computeCompletions(lastCompilationResult.get(), position)
+    }
+
+    override fun definition(params: DefinitionParams): CompletableFuture<Either<MutableList<out Location>, MutableList<out LocationLink>>> {
+        if (lastCompilationResult.get() == null) {
+            compileAndReport()
+        }
+        return gotoDefinitionService.definition(lastCompilationResult.get(), params)
     }
 
     override fun didOpen(params: DidOpenTextDocumentParams) {

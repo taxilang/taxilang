@@ -48,6 +48,7 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
         if (useDebugJar) {
             const classPathSeperator = (process.platform === "win32") ? ';' : ':';
             classPath = [ 
+                path.join(__dirname, '..', '..','..','taxi-lang','core-types', 'target', 'classes') ,
                 path.join(__dirname, '..', '..','..','taxi-lang','compiler', 'target', 'classes') ,
                 path.join(__dirname, '..', '..', 'taxi-lang-service', 'target', 'classes') ,
                 path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', 'classes') ,
