@@ -19,6 +19,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    constructor(tokens: Tokens, collectImports: Boolean) : this(tokens, emptyList(), collectImports)
 
+   private var createEmptyTypesPerformed: Boolean = false
    private val typeSystem: TypeSystem
    private val synonymRegistry: SynonymRegistry<ParserRuleContext>
    private val services = mutableListOf<Service>()
@@ -50,6 +51,15 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return errors to TaxiDocument(types, services.toSet(), policies.toSet(), dataSources.toSet())
    }
 
+   // Primarily for language server tooling, rather than
+   // compile time - though it should be safe to use in all scnearios
+   fun qualify(contextRule: TaxiParser.TypeTypeContext): String {
+      createEmptyTypes()
+      val namespace = contextRule.findNamespace()
+      val imports = contextRule.importsInFile()
+      return qualify(namespace, contextRule, imports)
+   }
+
    fun findDeclaredTypeNames(): List<QualifiedName> {
       createEmptyTypes()
 
@@ -79,11 +89,14 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
 
-   private fun qualify(namespace: Namespace, type: TaxiParser.TypeTypeContext): String {
+   // THe whole additionalImports thing is for when we're
+   // accessing prior to compiling (ie., in the language server).
+   // During normal compilation, don't need to pass anything
+   private fun qualify(namespace: Namespace, type: TaxiParser.TypeTypeContext, additionalImports: List<QualifiedName> = emptyList()): String {
       return if (type.primitiveType() != null) {
          PrimitiveType.fromDeclaration(type.primitiveType()!!.text).qualifiedName
       } else {
-         qualify(namespace, type.classOrInterfaceType().text)
+         qualify(namespace, type.classOrInterfaceType().text, additionalImports)
       }
    }
 
@@ -95,8 +108,11 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
-   private fun qualify(namespace: Namespace, name: String): String {
-      return typeSystem.qualify(namespace, name)
+   // THe whole additionalImports thing is for when we're
+   // accessing prior to compiling (ie., in the language server).
+   // During normal compilation, don't need to pass anything
+   private fun qualify(namespace: Namespace, name: String, additionalImports: List<QualifiedName> = emptyList()): String {
+      return typeSystem.qualify(namespace, name, additionalImports)
 
    }
 
@@ -139,6 +155,17 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    }
 
+   fun findDefinition(qualifiedName: String):ParserRuleContext? {
+      createEmptyTypes()
+      val definitions = this.tokens.unparsedTypes.filter { it.key == qualifiedName }
+      return when {
+         definitions.isEmpty() -> null
+         definitions.size == 1 -> definitions.values.first().second
+         else -> {
+            error("Found multiple definitions for $qualifiedName - this shouldn't happen")
+         }
+      }
+   }
 
    private fun validateConstraints() {
       errors.addAll(constraintValidator.validateAll(typeSystem, services))
@@ -146,6 +173,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
 
    private fun createEmptyTypes() {
+      if (createEmptyTypesPerformed) {
+         return
+      }
       tokens.unparsedTypes.forEach { tokenName, (_, token) ->
          when (token) {
             is TaxiParser.EnumDeclarationContext -> typeSystem.register(EnumType.undefined(tokenName))
@@ -153,6 +183,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             is TaxiParser.TypeAliasDeclarationContext -> typeSystem.register(TypeAlias.undefined(tokenName))
          }
       }
+      createEmptyTypesPerformed = true
    }
 
    private fun compileTokens() {

@@ -143,16 +143,20 @@ class TypeSystem(importedTypes: List<Type>) : TypeProvider {
    }
 
 
-   fun qualify(namespace: Namespace, name: String): String {
+   // THe whole additionalImports thing is for when we're
+   // accessing prior to compiling (ie., in the language server).
+   // During normal compilation, don't need to pass anything
+   fun qualify(namespace: Namespace, name: String, additionalImports:List<QualifiedName> = emptyList()): String {
       if (name.contains("."))
       // This is already qualified
          return name
 
-      val importedTypesWithName = importedTypeMap.values.filter { it.toQualifiedName().typeName == name }
+      val imports = (importedTypeMap.values.map { it.toQualifiedName() } + additionalImports)
+      val importedTypesWithName = imports.filter { it.typeName == name }
       if (importedTypesWithName.size == 1) {
-         return importedTypesWithName.first().qualifiedName
+         return importedTypesWithName.first().toString()
       } else if (importedTypesWithName.size > 1) {
-         val possibleReferences = importedTypesWithName.joinToString { it.qualifiedName }
+         val possibleReferences = importedTypesWithName.joinToString { it.toString() }
          throw AmbiguousNameException("Name reference $name is ambiguous, and could refer to any of the available types $possibleReferences")
       }
 

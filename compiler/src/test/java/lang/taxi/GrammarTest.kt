@@ -5,6 +5,7 @@ import com.winterbe.expekt.should
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.types.*
 import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.RuleContext
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -17,6 +18,90 @@ class GrammarTest {
    @Rule
    @JvmField
    val expectedException = ExpectedException.none()
+
+   @Test
+   fun canFindNamespaces() {
+      val src = """namespace foo.bar.baz
+
+type FooType {
+   thing : SomeThing as String
+}
+      """
+      Compiler(src).contextAt(3, 14)!!.findNamespace().should.equal("foo.bar.baz")
+   }
+
+   @Test
+   fun callingFindNamespaceWithoutANamespaceReturnsDefaultNamespace() {
+      val src = """type FooType {
+   thing : SomeThing as String
+}
+      """
+      Compiler(src).contextAt(1, 14)!!.findNamespace().should.equal(Namespaces.DEFAULT_NAMESPACE)
+   }
+
+
+   @Test
+   fun canFindNamespaceInMultiNamespaceDocument() {
+      val src = """namespace foo.bar {
+   type FooType
+}
+
+namespace foo.baz {
+   type BazType
+}
+      """.trimIndent()
+      val compiler = Compiler(src)
+      compiler.contextAt(1, 11)!!.findNamespace().should.equal("foo.bar")
+      compiler.contextAt(5, 15)!!.findNamespace().should.equal("foo.baz")
+   }
+
+   @Test
+   fun returnsEmptyListWhenNoImportsInFile() {
+      val src = """type FooType {
+   thing : SomeThing as String
+}
+      """
+      val compiler = Compiler(src)
+      compiler.contextAt(0, 28)!!.importsInFile().should.be.empty
+   }
+
+   @Test
+   fun returnsListOfImportsInFile() {
+      val src = """import foo.bar.baz
+import fuzz.bizz.boz
+
+type FooType
+      """.trimIndent()
+      val compiler = Compiler(src)
+      compiler.contextAt(3, 9)!!.importsInFile().should.contain.elements(
+         QualifiedName.from("foo.bar.baz"),
+         QualifiedName.from("fuzz.bizz.boz")
+      )
+   }
+
+   @Test
+   fun importsInMultinamespaceDocumentAreDetectedCorrectly() {
+      val src = """import foo.bar.baz
+import fuzz.bizz.boz
+
+namespace Blah {
+   type FooType
+}
+
+namespace Blurg {
+   type FuzzType
+}
+      """.trimIndent()
+      val compiler = Compiler(src)
+      compiler.contextAt(4, 10)!!.importsInFile().should.contain.elements(
+         QualifiedName.from("foo.bar.baz"),
+         QualifiedName.from("fuzz.bizz.boz")
+      )
+      compiler.contextAt(8,14)!!.importsInFile().should.contain.elements(
+         QualifiedName.from("foo.bar.baz"),
+         QualifiedName.from("fuzz.bizz.boz")
+      )
+   }
 
    @Test
    fun canParsePetstore() {
@@ -905,6 +990,8 @@ namespace foo {
       expect(schemaB.containsService("foo.CustomerService")).to.be.`true`
    }
 }
+
+
 
 
 
