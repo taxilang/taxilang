@@ -1,0 +1,14 @@
+import acme.fx.CurrencySymbol
+namespace test
+enum Foo {
+ a,
+  b,
+ c
+}
+type Trade {
+ symbol:CurrencySymbol
+ }
+
+type Another    {
+
+}

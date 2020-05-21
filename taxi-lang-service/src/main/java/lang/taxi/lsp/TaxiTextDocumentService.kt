@@ -3,6 +3,8 @@ package lang.taxi.lsp
 import lang.taxi.*
 import lang.taxi.lsp.completion.CompletionService
 import lang.taxi.lsp.completion.TypeProvider
+import lang.taxi.lsp.formatter.FormatterService
+import lang.taxi.lsp.gotoDefinition.GotoDefinitionService
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.eclipse.lsp4j.*
@@ -29,7 +31,8 @@ data class CompilationResult(val compiler: Compiler, val document: TaxiDocument?
 
 class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
 
-    private val sources: MutableMap<URI, CharStream> = mutableMapOf()
+    private val sources: MutableMap<URI, String> = mutableMapOf()
+    private val charStreams: MutableMap<URI, CharStream> = mutableMapOf()
     private lateinit var initializeParams: InitializeParams
     private val lastSuccessfulCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
     private val lastCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
@@ -39,6 +42,8 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     // types themselves, as it'll give better results sooner
     private val typeProvider = TypeProvider(lastSuccessfulCompilationResult, lastCompilationResult)
     private val completionService = CompletionService(typeProvider)
+    private val formattingService = FormatterService()
+    private val gotoDefinitionService = GotoDefinitionService(typeProvider)
     private lateinit var client: LanguageClient
     private var rootUri: String? = null
 
@@ -61,6 +66,19 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         return completionService.computeCompletions(lastCompilationResult.get(), position)
     }
 
+    override fun definition(params: DefinitionParams): CompletableFuture<Either<MutableList<out Location>, MutableList<out LocationLink>>> {
+        if (lastCompilationResult.get() == null) {
+            compileAndReport()
+        }
+        return gotoDefinitionService.definition(lastCompilationResult.get(), params)
+    }
+
+    override fun formatting(params: DocumentFormattingParams): CompletableFuture<MutableList<out TextEdit>> {
+        val content = this.sources[URI.create(params.textDocument.uri)]
+                ?: error("Could not find source with url ${params.textDocument.uri}")
+        return formattingService.getChanges(content, params.options)
+    }
+
     override fun didOpen(params: DidOpenTextDocumentParams) {
     }
 
@@ -80,9 +98,10 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         }
         val content = change.text
         val sourceName = params.textDocument.uri
-        val uri = sourceName
 
-        this.sources[URI.create(uri)] = CharStreams.fromString(content, uri)
+        val sourceNameUri = URI.create(sourceName)
+        this.sources[sourceNameUri] = content
+        this.charStreams[sourceNameUri] = CharStreams.fromString(content, sourceName)
         compileAndReport()
 
 
@@ -93,7 +112,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     // on every keypress.
     // We need to find a way to only recompile the document that has changed
     private fun compileAndReport() {
-        val charStreams = this.sources.values.toList()
+        val charStreams = this.charStreams.values.toList()
         val compiler = Compiler(charStreams, tokenCache = tokenCache)
 
         try {
@@ -142,7 +161,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         if (connected) {
             // Non-performant - we're destroying the entire set of warnings for each compilation pass
             // (which in practice, is each keypress)
-            this.sources.keys.forEach { sourceUri ->
+            this.charStreams.keys.forEach { sourceUri ->
                 client.publishDiagnostics(PublishDiagnosticsParams(
                         sourceUri.toString(),
                         emptyList()
@@ -166,14 +185,23 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         val initSources = File(URI.create(params.rootUri))
                 .walk()
                 .filter { it.extension == "taxi" }
-                .map { it.toURI() to CharStreams.fromPath(it.toPath()) }
+                .map {
+                    val source = it.readText()
+
+                    it.toURI() to (source to CharStreams.fromString(source, it.toPath().toString()))
+                }
                 .toMap()
 
-        this.sources.putAll(initSources)
+
+        initSources.forEach { (key, sourceAndCharStream) ->
+            val (source, charStream) = sourceAndCharStream
+            this.charStreams[key] = charStream
+            this.sources[key] = source
+        }
         initialized = true
 
         if (ready) {
-            client.logMessage(MessageParams(MessageType.Log, "Found ${sources.size} to compile on startup"))
+            client.logMessage(MessageParams(MessageType.Log, "Found ${charStreams.size} to compile on startup"))
             compileAndReport()
         }
 

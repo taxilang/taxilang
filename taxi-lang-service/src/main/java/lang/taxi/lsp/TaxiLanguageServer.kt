@@ -45,6 +45,8 @@ class TaxiLanguageServer(
         // Set the capabilities of the LS to inform the client.
         val capabilities = initializeResult.capabilities
         capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
+        capabilities.definitionProvider  = true
+        capabilities.documentFormattingProvider = true
         capabilities.workspace = WorkspaceServerCapabilities(WorkspaceFoldersOptions().apply {
             supported = true
             setChangeNotifications(true)
