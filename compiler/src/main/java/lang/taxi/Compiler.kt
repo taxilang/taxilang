@@ -20,7 +20,7 @@ fun ParserRuleContext?.toCompilationUnit(): lang.taxi.types.CompilationUnit {
    return if (this == null) {
       CompilationUnit.unspecified()
    } else {
-      lang.taxi.types.CompilationUnit(this, this.source());
+      lang.taxi.types.CompilationUnit(this, this.source(), SourceLocation(this.start.line, this.start.charPositionInLine));
    }
 }
 
@@ -28,17 +28,14 @@ fun ParserRuleContext?.toCompilationUnits(): List<CompilationUnit> {
    return listOf(this.toCompilationUnit())
 }
 
-data class SourceLocation(val line: Int, val char: Int) {
-   companion object {
-      val UNKNOWN_POSITION = SourceLocation(1, 1)
-   }
-}
-
 data class CompilationError(val line: Int,
                             val char: Int,
                             val detailMessage: String,
                             val sourceName: String? = null,
-                            val severity: Severity = Severity.ERROR):Serializable {
+                            val severity: Severity = Severity.ERROR) : Serializable {
+   constructor(compiled: Compiled, detailMessage: String, sourceName: String = compiled.compilationUnits.first().source.sourceName, severity: Severity = Severity.ERROR) : this(compiled.compilationUnits.firstOrNull()?.location
+      ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity)
+
    constructor(position: SourceLocation, detailMessage: String, sourceName: String? = null, severity: Severity = Severity.ERROR) : this(position.line, position.char, detailMessage, sourceName, severity)
    constructor(offendingToken: Token, detailMessage: String, sourceName: String = offendingToken.tokenSource.sourceName, severity: Severity = Severity.ERROR) : this(offendingToken.line, offendingToken.charPositionInLine, detailMessage, sourceName, severity)
 
@@ -83,7 +80,8 @@ class CompilerTokenCache {
             compilerExceptions.add(
                CompilationError(
                   parser.currentToken,
-                  "An exception occurred in the compilation process.  This is likely a bug in the Taxi Compiler. \n ${e.message}", parser.currentToken?.tokenSource?.sourceName ?: "Unknown"
+                  "An exception occurred in the compilation process.  This is likely a bug in the Taxi Compiler. \n ${e.message}", parser.currentToken?.tokenSource?.sourceName
+                  ?: "Unknown"
                ))
          }
 
@@ -142,6 +140,24 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    fun declaredTypeNames(): List<QualifiedName> {
       val tokenProcessor = TokenProcessor(tokens, collectImports = false)
       return tokenProcessor.findDeclaredTypeNames()
+   }
+
+   fun getDeclarationSource(typeName: TaxiParser.TypeTypeContext): CompilationUnit? {
+      val processor = TokenProcessor(tokens, importSources)
+      val qualifiedName = processor.qualify(typeName)
+      val definition = processor.findDefinition(qualifiedName) ?: return null
+
+      // don't return the start of the documentation, as that's not really what
+      // was intended
+      val startOfDeclaration = if (definition.children.any { it::class.java == TaxiParser.TypeDocContext::class.java }) {
+         definition.children.filter { it::class.java != TaxiParser.TypeDocContext::class.java }
+            .filterIsInstance<ParserRuleContext>()
+            .firstOrNull() ?: definition
+
+      } else {
+         definition
+      }
+      return startOfDeclaration.toCompilationUnit()
    }
 
    /**
@@ -244,8 +260,18 @@ fun TaxiParser.LiteralContext.isNullValue(): Boolean {
 }
 
 
+interface NamespaceQualifiedTypeResolver {
+   val namespace: String
+   fun resolve(context: TaxiParser.TypeTypeContext): Either<CompilationError, Type>
 
-typealias TypeResolver = (TaxiParser.TypeTypeContext) -> Either<CompilationError, Type>
+   /**
+    * Resolves a type name that has been requested in a source file.
+    * Considers the namespace it's declared in, and declared imports to qualify
+    * short-hand references to fully-qualified imports
+    */
+   fun resolve(requestedTypeName: String, context: ParserRuleContext): Either<CompilationError, Type>
+}
+
 
 // A chicken out method, where I can't be bothered
 // wrapping Either<> call sites to handle the error.
@@ -253,4 +279,62 @@ typealias TypeResolver = (TaxiParser.TypeTypeContext) -> Either<CompilationError
 // In future, we'll be better, promise.
 fun Either<CompilationError, Type>.orThrowCompilationException(): Type {
    return this.getOrHandle { e -> throw CompilationException(listOf(e)) }
+}
+
+fun RuleContext.importsInFile(): List<QualifiedName> {
+   val topLevel = this.searchUpForRule(listOf(TaxiParser.SingleNamespaceDocumentContext::class.java, TaxiParser.MultiNamespaceDocumentContext::class.java))
+   if (topLevel == null || topLevel !is ParserRuleContext) {
+      return emptyList()
+   }
+   val imports = topLevel.children.filterIsInstance<TaxiParser.ImportDeclarationContext>()
+      .map { QualifiedName.from(it.qualifiedName().Identifier().text()) }
+   return imports
+}
+
+tailrec fun RuleContext.searchUpForRule(ruleTypes: List<Class<out RuleContext>>): RuleContext? {
+   fun matches(instance: RuleContext): Boolean {
+      return ruleTypes.any { ruleType -> instance::class.java == ruleType }
+   }
+
+   if (matches(this)) {
+      return this
+   }
+
+   val matchingChild = (0..this.childCount).mapNotNull { childIndex ->
+      val child = this.getChild(childIndex)
+      if (child is RuleContext && matches(child)) {
+         child
+      } else {
+         null
+      }
+   }.firstOrNull()
+   if (matchingChild != null) {
+      return matchingChild
+   }
+
+   if (this.parent == null) {
+      return null
+   }
+
+   return this.parent.searchUpForRule(ruleTypes)
+
+}
+
+fun RuleContext.findNamespace(): String {
+   val namespaceRule = this.searchUpForRule(listOf(
+      TaxiParser.NamespaceDeclarationContext::class.java,
+      TaxiParser.NamespaceBlockContext::class.java,
+      TaxiParser.SingleNamespaceDocumentContext::class.java
+   ))
+   return when (namespaceRule) {
+      is TaxiParser.NamespaceDeclarationContext -> return namespaceRule.qualifiedName().Identifier().text()
+      is TaxiParser.NamespaceBlockContext -> return namespaceRule.children.filterIsInstance<TaxiParser.QualifiedNameContext>().first().Identifier().text()
+      is TaxiParser.SingleNamespaceDocumentContext -> namespaceRule.children.filterIsInstance<TaxiParser.NamespaceDeclarationContext>().firstOrNull()?.qualifiedName()?.Identifier()?.text()
+         ?: Namespaces.DEFAULT_NAMESPACE
+      else -> Namespaces.DEFAULT_NAMESPACE
+   }
+}
+
+fun TaxiParser.NamespaceDeclarationContext.namespace(): String {
+   return this.qualifiedName().Identifier().text()
 }

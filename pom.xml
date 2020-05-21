@@ -5,7 +5,7 @@
    <groupId>lang.taxi</groupId>
    <artifactId>parent</artifactId>
    <packaging>pom</packaging>
-   <version>0.4.1</version>
+   <version>0.4.2-SNAPSHOT</version>
    <description>taxi is a language for defining API contracts. A Dsl that sits atop RAML for resource definition. Taxi
       (short for Taxonomy)
    </description>
@@ -130,12 +130,27 @@
             <version>2.22.0</version>
          </plugin>
          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-release-plugin</artifactId>
-            <version>2.5.3</version>
+            <groupId>com.amashchenko.maven.plugin</groupId>
+            <artifactId>gitflow-maven-plugin</artifactId>
+            <version>1.14.0</version>
             <configuration>
-               <scmCommentPrefix>[ci skip] [mvn-release]</scmCommentPrefix>
-               <tagNameFormat>v@{project.version}</tagNameFormat>
+               <!-- whether to push to the git remote. Very useful for testing locally -->
+               <pushRemote>true</pushRemote>
+               <!-- Set to true to immediately bump the development version when creating a release branch -->
+               <commitDevelopmentVersionAtStart>false</commitDevelopmentVersionAtStart>
+               <!-- Execute mvn compile before release -->
+               <preReleaseGoals>compile</preReleaseGoals>
+               <commitMessages>
+                  <releaseStartMessage>Update versions for release @{version}</releaseStartMessage>
+                  <releaseFinishMessage>Update for next development version @{version}</releaseFinishMessage>
+                  <releaseVersionUpdateMessage>Update for next development version @{version}</releaseVersionUpdateMessage>
+               </commitMessages>
+               <!-- Configure branches -->
+               <gitFlowConfig>
+                  <productionBranch>master</productionBranch>
+                  <!-- default is develop, but we use development -->
+                  <developmentBranch>develop</developmentBranch>
+               </gitFlowConfig>
             </configuration>
          </plugin>
          <plugin>

@@ -1,10 +1,10 @@
 package lang.taxi.generators
 
 import lang.taxi.TaxiDocument
-import lang.taxi.services.Constraint
 import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract
 import lang.taxi.services.Service
+import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.*
 
 

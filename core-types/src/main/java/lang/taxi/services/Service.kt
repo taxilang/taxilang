@@ -1,10 +1,12 @@
 package lang.taxi.services
 
 import lang.taxi.Equality
+import lang.taxi.services.operations.constraints.Constraint
+import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 
-data class Parameter(override val annotations: List<Annotation>, val type: Type, val name: String?, override val constraints: List<Constraint>) : Annotatable, ConstraintTarget {
+data class Parameter(override val annotations: List<Annotation>, override val type: Type, override val name: String?, override val constraints: List<Constraint>) : Annotatable, ConstraintTarget, NameTypePair {
    override val description: String = "param $name"
 }
 
@@ -27,75 +29,6 @@ data class Service(override val qualifiedName: String, val operations: List<Oper
    }
 
    fun containsOperation(name: String) = operations.any { it.name == name }
-}
-
-
-/**
- * Indicates that an attribute of a parameter (which is an Object type)
- * must have a constant value
- * eg:
- * Given Money(amount:Decimal, currency:String),
- * could express that Money.currency must have a value of 'GBP'
- */
-data class AttributeConstantValueConstraint(
-   // TODO : It may be that we're not always adding constraints
-   // to Object types (types with fields).  When I hit a scenario like that,
-   // relax this constraint to make it optional, and update accordingly.
-   val fieldName: String,
-   val expectedValue: Any,
-   override val compilationUnits: List<CompilationUnit>
-) : Constraint {
-   override fun asTaxi(): String = "$fieldName = \"$expectedValue\""
-
-   private val equality = Equality(this, AttributeConstantValueConstraint::fieldName, AttributeConstantValueConstraint::expectedValue)
-
-   override fun equals(other: Any?) = equality.isEqualTo(other)
-   override fun hashCode(): Int = equality.hash()
-
-}
-
-/**
- * Indicates that an attribute will be returned updated to a value
- * provided by a parameter (ie., an input on a function)
- */
-data class AttributeValueFromParameterConstraint(
-   val fieldName: String,
-   val attributePath: AttributePath,
-   override val compilationUnits: List<CompilationUnit>
-) : Constraint {
-   override fun asTaxi(): String = "$fieldName = ${attributePath.path}"
-
-   private val equality = Equality(this, AttributeValueFromParameterConstraint::fieldName, AttributeValueFromParameterConstraint::attributePath)
-
-   override fun equals(other: Any?) = equality.isEqualTo(other)
-   override fun hashCode(): Int = equality.hash()
-
-}
-
-data class ReturnValueDerivedFromParameterConstraint(
-   val attributePath: AttributePath,
-   override val compilationUnits: List<CompilationUnit>
-) : Constraint {
-   override fun asTaxi(): String = "from $path"
-
-   val path = attributePath.path
-
-   private val equality = Equality(this, ReturnValueDerivedFromParameterConstraint::attributePath)
-
-   override fun equals(other: Any?) = equality.isEqualTo(other)
-   override fun hashCode(): Int = equality.hash()
-
-
-}
-
-interface ConstraintTarget {
-   val constraints: List<Constraint>
-
-   val description: String
-}
-
-interface Constraint : Compiled {
-   fun asTaxi(): String
 }
 
 typealias FieldName = String

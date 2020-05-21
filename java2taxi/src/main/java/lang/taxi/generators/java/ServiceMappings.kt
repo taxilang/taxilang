@@ -6,10 +6,10 @@ import lang.taxi.annotations.Operation
 import lang.taxi.annotations.ResponseContract
 import lang.taxi.annotations.declaresName
 import lang.taxi.annotations.qualifiedName
-import lang.taxi.services.Constraint
 import lang.taxi.services.OperationContract
 import lang.taxi.services.Parameter
 import lang.taxi.services.Service
+import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Type
 import java.lang.reflect.AnnotatedElement

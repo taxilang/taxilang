@@ -120,8 +120,8 @@ fieldDeclaration
   ;
 
 typeType
-    :   classOrInterfaceType parameterConstraint? listType? optionalType? aliasedType?
-    |   primitiveType parameterConstraint? listType? optionalType?
+    :   classOrInterfaceType listType? optionalType? parameterConstraint? aliasedType?
+    |   primitiveType listType? optionalType? parameterConstraint?
     ;
 
 accessor : scalarAccessor | objectAccessor;
@@ -265,7 +265,7 @@ parameterConstraintExpressionList
     ;
 
 parameterConstraintExpression
-    :  parameterExpectedValueConstraintExpression
+    :  propertyToParameterConstraintExpression
     |  operationReturnValueOriginExpression
     ;
 
@@ -275,11 +275,29 @@ operationReturnValueOriginExpression
     :  'from' qualifiedName
     ;
 
-// A parameter will have a specific constnat value.
-parameterExpectedValueConstraintExpression
-    : Identifier '=' literal
-    | Identifier '=' qualifiedName
-    ;
+// A parameter will a value that matches a specified expression
+// operation convertCurrency(request : ConversionRequest) : Money( this.currency = request.target )
+// Models a constraint against an attribute on the type (generally return type).
+// The attribute is identified by EITHER
+// - it's name -- using this.fieldName
+// - it's type (preferred) using TheTypeName
+// The qualifiedName here is used to represent a path to the attribute (this.currency)
+// We could've just used Identifier here, but we'd like to support nested paths
+propertyToParameterConstraintExpression
+   : propertyToParameterConstraintLhs comparisonOperator propertyToParameterConstraintRhs;
+
+propertyToParameterConstraintLhs : propertyFieldNameQualifier? qualifiedName;
+propertyToParameterConstraintRhs : (literal | qualifiedName);
+
+propertyFieldNameQualifier : 'this' '.';
+
+comparisonOperator
+   : '='
+   | '>'
+   | '>='
+   | '<='
+   | '<'
+   ;
 
 policyDeclaration
     :  annotation* 'policy' policyIdentifier 'against' typeType '{' policyRuleSet* '}';
