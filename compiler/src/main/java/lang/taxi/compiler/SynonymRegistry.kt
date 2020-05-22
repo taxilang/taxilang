@@ -40,7 +40,9 @@ class SynonymRegistry<TDefinition>(typeSystem: TypeSystem) {
             }
          }
       }
-      return synonyms.toList()
+      return synonyms
+         .filter { it.first != enumValue }
+         .toList()
    }
 
    fun getTypesWithSynonymsRegistered(): Map<QualifiedName, List<EnumValueQualifiedName>> {

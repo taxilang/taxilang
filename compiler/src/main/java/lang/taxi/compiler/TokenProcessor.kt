@@ -140,19 +140,33 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          .map { enum ->
             val valueExtensions = typesWithSynonyms.getValue(enum.toQualifiedName()).flatMap { enumValueQualifiedName ->
                val (_, enumValueName) = Enums.splitEnumValueQualifiedName(enumValueQualifiedName)
-               val valueExtensions = synonymRegistry.synonymsFor(enumValueQualifiedName).map { (synonym, context) ->
-                  EnumValueExtension(enumValueName, emptyList(), listOf(synonym), compilationUnit = context.toCompilationUnit())
-               }
+               val valueExtensions = synonymRegistry.synonymsFor(enumValueQualifiedName)
+                  .distinctBy { it.first }
+                  .filter { (_, parserContext) -> registerErrorsForInvalidSynonyms(enum, enumValueName, parserContext) }
+                  .filter { (synonymEnumValue, _) ->
+                     synonymEnumValue != enumValueQualifiedName &&// Don't allow synonyms to ourselves
+                        enum.value(enumValueName).synonyms.none { it == synonymEnumValue } // Ignore synonyms that are already present
+                  }
+                  .map { (synonym, context) ->
+                     EnumValueExtension(enumValueName, emptyList(), listOf(synonym), compilationUnit = context.toCompilationUnit())
+                  }
                valueExtensions
             }
             if (valueExtensions.isNotEmpty()) {
                // Bit of a hack here on the compilationUnit.  Not sure what to use
                enum.addExtension(EnumExtension(valueExtensions, compilationUnit = valueExtensions.first().compilationUnit))
-            } else {
-               error("Enum had synonyms registered but then none were found.  This shouldn't happen")
             }
          }
 
+   }
+
+   private fun registerErrorsForInvalidSynonyms(enum: EnumType, enumValueName: String, parserContext: ParserRuleContext): Boolean {
+      return if (!enum.hasValueByName(enumValueName)) {
+         errors.add(CompilationError(parserContext.start, "$enumValueName is not defined on type ${enum.qualifiedName}"))
+         false
+      } else {
+         true
+      }
    }
 
    fun findDefinition(qualifiedName: String):ParserRuleContext? {
@@ -615,6 +629,12 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
+   /**
+    * Returns a set of references to enum values that this enum value declares a synonym to.
+    * Note that because of compilation order, a result from this method guarantees that the
+    * enum exists, but NOT that the value on the enum exists.
+    * That's handled later when synonyms are resolved.
+    */
    private fun parseSynonyms(namespace: Namespace, enumConstant: TaxiParser.EnumConstantContext): Either<List<CompilationError>, List<EnumValueQualifiedName>> {
       val declaredSynonyms = enumConstant.enumSynonymDeclaration()?.enumSynonymSingleDeclaration()?.let { listOf(it.qualifiedName()) }
          ?: enumConstant.enumSynonymDeclaration()?.enumSynonymDeclarationList()?.qualifiedName()
@@ -626,11 +646,11 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          resolveUserType(namespace, enumName.parameterizedName, importsInSource(enumConstant), enumConstant)
             .flatMap { enumType ->
                if (enumType is EnumType) {
-                  if (enumType.values.any { it.name == enumValueName }) {
-                     Either.right(Enums.enumValue(enumType.toQualifiedName(), enumValueName))
-                  } else {
-                     Either.left(CompilationError(enumConstant.start, "$enumValueName is not defined on type ${enumType.qualifiedName}", enumConstant.source().normalizedSourceName))
-                  }
+                  // Note - at this point we can be sure that the Enum exists, but it's values
+                  // haven't yet been parsed, so we can assert anything that the enum value we're linking to
+                  // exists
+                  // We'll do that later
+                  Either.right(Enums.enumValue(enumType.toQualifiedName(), enumValueName))
                } else {
                   Either.left(CompilationError(enumConstant.start, "${enumType.qualifiedName} is not an Enum", enumConstant.source().normalizedSourceName))
                }
