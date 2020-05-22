@@ -1,20 +1,17 @@
 package lang.taxi.compiler
 
-import com.google.common.collect.HashBasedTable
 import com.google.common.graph.ValueGraphBuilder
 import lang.taxi.TypeSystem
 import lang.taxi.types.EnumValueQualifiedName
 import lang.taxi.types.Enums.splitEnumValueQualifiedName
 import lang.taxi.types.QualifiedName
-import org.antlr.v4.runtime.Token
-import java.util.*
+import java.util.LinkedList
 
 /**
  * Registers enum synonyms
  */
 class SynonymRegistry<TDefinition>(typeSystem: TypeSystem) {
    private val graph = ValueGraphBuilder.undirected().build<EnumValueQualifiedName, TDefinition>()
-   private val synonyms: HashBasedTable<EnumValueQualifiedName, List<EnumValueQualifiedName>, TDefinition> = HashBasedTable.create()
    fun registerSynonyms(qualifiedName: EnumValueQualifiedName, synonyms: List<EnumValueQualifiedName>, token: TDefinition) {
       if (synonyms.isEmpty()) {
          return
@@ -39,7 +36,7 @@ class SynonymRegistry<TDefinition>(typeSystem: TypeSystem) {
          if (visitedNodes.add(node)) {
             graph.adjacentNodes(node).forEach { synonym ->
                nodesToVisit.offer(synonym)
-               synonyms.add(synonym to graph.edgeValue(node, synonym))
+               synonyms.add(synonym to graph.edgeValue(node, synonym).get())
             }
          }
       }
