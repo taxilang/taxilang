@@ -5,6 +5,8 @@ import arrow.core.getOrHandle
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import lang.taxi.compiler.TokenProcessor
+import lang.taxi.sources.SourceCode
+import lang.taxi.sources.SourceLocation
 import lang.taxi.types.*
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval

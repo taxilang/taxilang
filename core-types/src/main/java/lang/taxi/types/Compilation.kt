@@ -1,5 +1,7 @@
 package lang.taxi.types
 
+import lang.taxi.sources.SourceCode
+import lang.taxi.sources.SourceLocation
 import java.lang.Exception
 import java.net.URI
 
@@ -7,12 +9,6 @@ typealias ErrorMessage = String
 
 interface Compiled {
    val compilationUnits: List<CompilationUnit>
-}
-
-data class SourceLocation(val line: Int, val char: Int) {
-   companion object {
-      val UNKNOWN_POSITION = SourceLocation(1, 1)
-   }
 }
 
 /**
@@ -38,15 +34,3 @@ data class CompilationUnit(val ruleContext: Any?,
 //        }
    }
 }
-
-data class SourceCode(
-   val sourceName: String,
-   val content: String
-) {
-   companion object {
-      fun unspecified(): SourceCode = SourceCode("Not specified", "")
-   }
-
-   val normalizedSourceName: String = SourceNames.normalize(sourceName)
-}
-

@@ -6,11 +6,11 @@ import java.nio.file.Path
 
 class PackageImporter(private val importerConfig: ImporterConfig, private val downloaderFactory: PackageDownloaderFactory = PackageDownloaderFactory(importerConfig)) {
 
-   fun fetchDependencies(projectConfig: ProjectConfig): Set<PackageSource> {
+   fun fetchDependencies(projectConfig: TaxiPackageProject): Set<PackageSource> {
       return projectConfig.dependencyPackages.flatMap { fetchDependency(it,projectConfig) }.toSet()
    }
 
-   private fun fetchDependency(identifier: PackageIdentifier, projectConfig: ProjectConfig): Set<PackageSource> {
+   private fun fetchDependency(identifier: PackageIdentifier, projectConfig: TaxiPackageProject): Set<PackageSource> {
       val fromLocal = fetchFromLocalRepo(identifier)
       if (fromLocal != null) {
          return fromLocal

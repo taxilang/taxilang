@@ -2,12 +2,13 @@ package lang.taxi.services.operations.constraints
 
 
 import arrow.core.Either
-import lang.taxi.*
-import lang.taxi.services.Operation
+import lang.taxi.CompilationError
+import lang.taxi.NamespaceQualifiedTypeResolver
+import lang.taxi.TaxiParser
+import lang.taxi.TypeSystem
 import lang.taxi.services.Service
 import lang.taxi.types.Compiled
 import lang.taxi.types.ObjectType
-import lang.taxi.types.SourceLocation
 import lang.taxi.types.Type
 import lang.taxi.utils.invertEitherList
 
