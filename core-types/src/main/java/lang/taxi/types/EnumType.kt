@@ -90,6 +90,9 @@ data class EnumType(override val qualifiedName: String,
          } ?: emptyList()
       }
 
+   fun hasValueByName(name:String): Boolean {
+      return this.values.any { it.name == name }
+   }
    private fun valueExtensions(valueName: String): List<EnumValueExtension> {
       return this.extensions.flatMap { it.values.filter { value -> value.name == valueName } }
    }
