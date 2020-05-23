@@ -146,7 +146,7 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
 
    fun getDeclarationSource(typeName: TaxiParser.TypeTypeContext): CompilationUnit? {
       val processor = TokenProcessor(tokens, importSources)
-      val qualifiedName = processor.qualify(typeName)
+      val qualifiedName = processor.lookupTypeByName(typeName)
       val definition = processor.findDefinition(qualifiedName) ?: return null
 
       // don't return the start of the documentation, as that's not really what

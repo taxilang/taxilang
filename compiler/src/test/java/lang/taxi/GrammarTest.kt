@@ -594,9 +594,50 @@ namespace foo {
       val errors = Compiler(sourceB).validate()
       expect(errors).to.have.size(2)
       expect(errors.first().detailMessage).to.equal("Cannot import test.FirstName as it is not defined")
-
    }
 
+   @Test
+   fun when_twoTypesExistButOneIsExplicitlyImportedThenTypeResolutionIsUnambiguous() {
+      val sourceA = """
+namespace foo {
+   type alias Name as String
+}
+
+namespace bar {
+   type alias Name as String
+}
+      """.trimIndent()
+      val sourceB = """
+import foo.Name
+namespace car {
+   type Person {
+      name : Name
+   }
+}
+      """.trimIndent()
+      val schemaA = Compiler(sourceA).compile()
+      val schemaB = Compiler(sourceB, importSources = listOf(schemaA)).compile()
+      schemaB.objectType("car.Person").field("name").type.qualifiedName.should.equal("foo.Name")
+   }
+
+   @Test
+   fun `inline type alias can have same name as type in another package`() {
+      val sourceA = """
+namespace foo {
+   type alias Name as String
+}
+      """.trimIndent()
+      val sourceB = """
+namespace baz {
+   type Person {
+      name : Name as String
+   }
+}
+      """.trimIndent()
+      val schemaA = Compiler(sourceA).compile()
+      val schemaB = Compiler(sourceB, importSources = listOf(schemaA)).compile()
+      schemaB.objectType("baz.Person").field("name").type.qualifiedName.should.equal("baz.Name")
+   }
    @Test
    fun canListDeclaredTypeNamesInSrcFile() {
       val sourceA = """
