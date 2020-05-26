@@ -85,7 +85,6 @@ class OperationConstraintConverter(
          .build(constraint, paramType, typeResolver)
 
    }
-
 }
 
 object MalformedConstraint {

@@ -4,6 +4,7 @@ import com.google.common.collect.Multimaps
 import lang.taxi.policies.Policy
 import lang.taxi.services.Service
 import lang.taxi.types.*
+import lang.taxi.utils.log
 
 
 fun TaxiParser.QualifiedNameContext.toAttributePath(): AttributePath {
@@ -29,8 +30,35 @@ open class TaxiDocument(val types: Set<Type>,
    private val servicesMap = services.associateBy { it.qualifiedName }
    private val policiesMap = policies.associateBy { it.qualifiedName }
    private val dataSourcesMap = dataSources.associateBy { it.qualifiedName }
-   fun type(name: String): Type {
-      return typeMap[name] ?: throw error("No type named $name defined")
+   fun type(qualifiedName: String): Type {
+      return type(QualifiedName.from(qualifiedName))
+   }
+
+   fun type(qualifiedName: QualifiedName): Type {
+      if (PrimitiveType.isPrimitiveType(qualifiedName.toString())) {
+         return PrimitiveType.fromDeclaration(qualifiedName.toString())
+      }
+
+      if (Arrays.isArray(qualifiedName)) {
+         return when {
+            qualifiedName.parameters.isEmpty() -> {
+               log().warn("Requested raw array.  This is strongly discouraged.  Tsk Tsk Tsk.")
+               PrimitiveType.ARRAY
+            }
+
+            qualifiedName.parameters.size == 1 -> {
+               val innerType = type(qualifiedName.parameters.first())
+               ArrayType(innerType, CompilationUnit.unspecified())
+            }
+
+            else -> error("Cannot construct an array with multiple type parameters")
+         }
+      }
+
+
+      return typeMap[qualifiedName.toString()] ?:
+         throw error("No type named $qualifiedName defined")
+
    }
 
    // This is a placeholder for when we start to seperate models and types

@@ -144,6 +144,10 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       return tokenProcessor.findDeclaredTypeNames()
    }
 
+   fun lookupTypeByName(typeType: TaxiParser.TypeTypeContext): QualifiedName {
+      return QualifiedName.from(TokenProcessor(tokens, importSources).lookupTypeByName(typeType))
+   }
+
    fun getDeclarationSource(typeName: TaxiParser.TypeTypeContext): CompilationUnit? {
       val processor = TokenProcessor(tokens, importSources)
       val qualifiedName = processor.lookupTypeByName(typeName)
@@ -273,6 +277,8 @@ interface NamespaceQualifiedTypeResolver {
     */
    fun resolve(requestedTypeName: String, context: ParserRuleContext): Either<CompilationError, Type>
 }
+
+
 
 
 // A chicken out method, where I can't be bothered

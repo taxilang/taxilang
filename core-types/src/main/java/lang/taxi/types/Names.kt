@@ -6,10 +6,7 @@ data class QualifiedName(val namespace: String, val typeName: String, val parame
    companion object {
       private val nativeNamespaces = listOf("lang.taxi")
       fun from(value: String): QualifiedName {
-         val parts = value.split(".")
-         val typeName = parts.last()
-         val namespace = parts.dropLast(1).joinToString(".")
-         return QualifiedName(namespace, typeName)
+         return QualifiedNameParser.parse(value)
       }
    }
 
@@ -23,6 +20,7 @@ data class QualifiedName(val namespace: String, val typeName: String, val parame
          }
       }
 
+   val fullyQualifiedName = this.toString()
    override fun toString(): String {
       return if (namespace.isNotEmpty()) {
          "${namespace}.$typeName"
