@@ -509,7 +509,12 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
     */
    private fun compileInlineTypeAlias(namespace: Namespace, aliasTypeDefinition: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
       return parseType(namespace, aliasTypeDefinition.aliasedType().typeType()).map { aliasedType ->
-         val typeAliasName = QualifiedName(namespace, aliasTypeDefinition.classOrInterfaceType().Identifier().text())
+         val declaredTypeName = aliasTypeDefinition.classOrInterfaceType().Identifier().text()
+         val typeAliasName = if (declaredTypeName.contains(".")) {
+            QualifiedNameParser.parse(declaredTypeName)
+         } else {
+            QualifiedName(namespace,declaredTypeName)
+         }
          // Annotations not supported on Inline type aliases
          val annotations = emptyList<Annotation>()
          val typeAlias = TypeAlias(typeAliasName.toString(), TypeAliasDefinition(aliasedType, annotations, aliasTypeDefinition.toCompilationUnit()))
