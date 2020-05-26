@@ -49,3 +49,11 @@ fun <A, B> Either<A, B>.errorOrNull(): A? {
       is Either.Right -> null
    }
 }
+
+fun <A, B> Either<List<List<A>>, B>.flattenErrors(): Either<List<A>, B> {
+   return this.mapLeft { it.flatten() }
+}
+
+fun <A,B> Either<A,B>.wrapErrorsInList():Either<List<A>,B> {
+   return this.mapLeft { listOf(it) }
+}

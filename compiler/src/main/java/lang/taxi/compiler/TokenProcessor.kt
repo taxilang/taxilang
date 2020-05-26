@@ -53,11 +53,10 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    // Primarily for language server tooling, rather than
    // compile time - though it should be safe to use in all scnearios
-   fun qualify(contextRule: TaxiParser.TypeTypeContext): String {
+   fun lookupTypeByName(contextRule: TaxiParser.TypeTypeContext): String {
       createEmptyTypes()
       val namespace = contextRule.findNamespace()
-      val imports = contextRule.importsInFile()
-      return qualify(namespace, contextRule, imports)
+      return lookupTypeByName(namespace, contextRule)
    }
 
    fun findDeclaredTypeNames(): List<QualifiedName> {
@@ -76,7 +75,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                val fieldDeclaration = memberDeclaration.fieldDeclaration()
                if (fieldDeclaration.typeType() != null && fieldDeclaration.typeType().aliasedType() != null) {
                   // This is an inline type alias
-                  qualify(namespace, memberDeclaration.fieldDeclaration().typeType())
+                  lookupTypeByName(namespace, memberDeclaration.fieldDeclaration().typeType())
                } else {
                   null
                }
@@ -89,20 +88,17 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
 
-   // THe whole additionalImports thing is for when we're
-   // accessing prior to compiling (ie., in the language server).
-   // During normal compilation, don't need to pass anything
-   private fun qualify(namespace: Namespace, type: TaxiParser.TypeTypeContext, additionalImports: List<QualifiedName> = emptyList()): String {
+   private fun lookupTypeByName(namespace: Namespace, type: TaxiParser.TypeTypeContext): String {
       return if (type.primitiveType() != null) {
          PrimitiveType.fromDeclaration(type.primitiveType()!!.text).qualifiedName
       } else {
-         qualify(namespace, type.classOrInterfaceType().text, additionalImports)
+         lookupTypeByName(namespace, type.classOrInterfaceType().text, importsInSource(type))
       }
    }
 
-   private fun attemptToQualify(namespace: Namespace, name: String, context: ParserRuleContext): Either<CompilationError, String> {
+   private fun attemptToLookupTypeByName(namespace: Namespace, name: String, context: ParserRuleContext): Either<CompilationError, String> {
       return try {
-         Either.right(qualify(namespace, name))
+         Either.right(lookupTypeByName(namespace, name, importsInSource(context)))
       } catch (e: AmbiguousNameException) {
          Either.left(CompilationError(context.start, e.message!!, context.source().normalizedSourceName))
       }
@@ -111,8 +107,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    // THe whole additionalImports thing is for when we're
    // accessing prior to compiling (ie., in the language server).
    // During normal compilation, don't need to pass anything
-   private fun qualify(namespace: Namespace, name: String, additionalImports: List<QualifiedName> = emptyList()): String {
-      return typeSystem.qualify(namespace, name, additionalImports)
+   @Deprecated("call attemptToQualify, so errors are caught property")
+   private fun lookupTypeByName(namespace: Namespace, name: String, importsInSource: List<QualifiedName>): String {
+      return typeSystem.qualify(namespace, name, importsInSource)
 
    }
 
@@ -169,7 +166,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
-   fun findDefinition(qualifiedName: String):ParserRuleContext? {
+   fun findDefinition(qualifiedName: String): ParserRuleContext? {
       createEmptyTypes()
       val definitions = this.tokens.unparsedTypes.filter { it.key == qualifiedName }
       return when {
@@ -219,7 +216,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(namespace, tokenName, tokenRule)
          // TODO : This is a bit broad - assuming that all typeType's that hit this
          // line will be a TypeAlias inline.  It could be a normal field declaration.
-         is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(namespace, tokenRule)
+         is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(namespace, tokenRule).collectError()
          else -> TODO("Not handled: $tokenRule")
       }
    }
@@ -239,17 +236,20 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
    private fun compileTypeAliasExtension(namespace: Namespace, typeRule: TaxiParser.TypeAliasExtensionDeclarationContext): CompilationError? {
-      val typeName = qualify(namespace, typeRule.Identifier().text)
-      val type = typeSystem.getType(typeName) as TypeAlias
-      val annotations = collateAnnotations(typeRule.annotation())
-      val typeDoc = parseTypeDoc(typeRule.typeDoc())
-      return type.addExtension(TypeAliasExtension(annotations, typeRule.toCompilationUnit(), typeDoc))
-         .mapLeft { it.toCompilationError(typeRule.start) }
-         .errorOrNull()
+      return attemptToLookupTypeByName(namespace, typeRule.Identifier().text, typeRule).flatMap { typeName ->
+         val type = typeSystem.getType(typeName) as TypeAlias
+         val annotations = collateAnnotations(typeRule.annotation())
+         val typeDoc = parseTypeDoc(typeRule.typeDoc())
+         type.addExtension(TypeAliasExtension(annotations, typeRule.toCompilationUnit(), typeDoc))
+            .mapLeft { it.toCompilationError(typeRule.start) }
+      }.errorOrNull()
    }
 
    private fun compileTypeExtension(namespace: Namespace, typeRule: TaxiParser.TypeExtensionDeclarationContext): CompilationError? {
-      val typeName = qualify(namespace, typeRule.Identifier().text)
+      val typeName = when (val typeNameEither = attemptToLookupTypeByName(namespace, typeRule.Identifier().text, typeRule)) {
+         is Either.Left -> return typeNameEither.a // return the compilation error now and stop
+         is Either.Right -> typeNameEither.b
+      }
       val type = typeSystem.getType(typeName) as ObjectType
       val annotations = collateAnnotations(typeRule.annotation())
       val typeDoc = parseTypeDoc(typeRule.typeDoc()?.source()?.content)
@@ -257,7 +257,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          val fieldName = member.typeExtensionFieldDeclaration().Identifier().text
          val fieldAnnotations = collateAnnotations(member.annotation())
          val refinedType = member.typeExtensionFieldDeclaration()?.typeExtensionFieldTypeRefinement()?.typeType()?.let {
-            val refinedType = typeSystem.getType(qualify(namespace, it.text))
+            val refinedType = typeSystem.getType(lookupTypeByName(namespace, it.text, importsInSource(it)))
             assertTypesCompatible(type.field(fieldName).type, refinedType, fieldName, typeName, typeRule)
          }
 
@@ -489,7 +489,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    internal fun parseType(namespace: Namespace, typeType: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
       val type = when {
-//            typeType.aliasedType() != null -> compileInlineTypeAlias(typeType)
+         typeType.aliasedType() != null -> compileInlineTypeAlias(namespace, typeType)
          typeType.classOrInterfaceType() != null -> resolveUserType(namespace, typeType.classOrInterfaceType())
          typeType.primitiveType() != null -> PrimitiveType.fromDeclaration(typeType.getChild(0).text).right()
          else -> throw IllegalArgumentException()
@@ -509,18 +509,22 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
     */
    private fun compileInlineTypeAlias(namespace: Namespace, aliasTypeDefinition: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
       return parseType(namespace, aliasTypeDefinition.aliasedType().typeType()).map { aliasedType ->
-         val typeAliasName = qualify(namespace, aliasTypeDefinition.classOrInterfaceType().Identifier().text())
+         val declaredTypeName = aliasTypeDefinition.classOrInterfaceType().Identifier().text()
+         val typeAliasName = if (declaredTypeName.contains(".")) {
+            QualifiedNameParser.parse(declaredTypeName)
+         } else {
+            QualifiedName(namespace,declaredTypeName)
+         }
          // Annotations not supported on Inline type aliases
          val annotations = emptyList<Annotation>()
-         val typeAlias = TypeAlias(typeAliasName, TypeAliasDefinition(aliasedType, annotations, aliasTypeDefinition.toCompilationUnit()))
+         val typeAlias = TypeAlias(typeAliasName.toString(), TypeAliasDefinition(aliasedType, annotations, aliasTypeDefinition.toCompilationUnit()))
          typeSystem.register(typeAlias)
          typeAlias
       }
-
    }
 
    private fun resolveUserType(namespace: Namespace, requestedTypeName: String, imports: List<QualifiedName>, context: ParserRuleContext): Either<CompilationError, Type> {
-      return attemptToQualify(namespace, requestedTypeName, context).flatMap { qualifiedTypeName ->
+      return attemptToLookupTypeByName(namespace, requestedTypeName, context).flatMap { qualifiedTypeName ->
          if (typeSystem.contains(qualifiedTypeName)) {
             return@flatMap typeSystem.getTypeOrError(qualifiedTypeName, context)
          }
@@ -665,7 +669,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val annotations = collateAnnotations(typeRule.annotation())
       val typeDoc = parseTypeDoc(typeRule.typeDoc())
 
-      return attemptToQualify(namespace, typeRule.Identifier().text, typeRule)
+      return attemptToLookupTypeByName(namespace, typeRule.Identifier().text, typeRule)
          .flatMap { typeName ->
             val enum = typeSystem.getType(typeName) as EnumType
             enum.addExtension(EnumExtension(enumValues, annotations, typeRule.toCompilationUnit(), typeDoc = typeDoc)).toCompilationError(typeRule.start)

@@ -5,6 +5,8 @@ import arrow.core.getOrHandle
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import lang.taxi.compiler.TokenProcessor
+import lang.taxi.sources.SourceCode
+import lang.taxi.sources.SourceLocation
 import lang.taxi.types.*
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
@@ -142,9 +144,13 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       return tokenProcessor.findDeclaredTypeNames()
    }
 
+   fun lookupTypeByName(typeType: TaxiParser.TypeTypeContext): QualifiedName {
+      return QualifiedName.from(TokenProcessor(tokens, importSources).lookupTypeByName(typeType))
+   }
+
    fun getDeclarationSource(typeName: TaxiParser.TypeTypeContext): CompilationUnit? {
       val processor = TokenProcessor(tokens, importSources)
-      val qualifiedName = processor.qualify(typeName)
+      val qualifiedName = processor.lookupTypeByName(typeName)
       val definition = processor.findDefinition(qualifiedName) ?: return null
 
       // don't return the start of the documentation, as that's not really what
@@ -271,6 +277,8 @@ interface NamespaceQualifiedTypeResolver {
     */
    fun resolve(requestedTypeName: String, context: ParserRuleContext): Either<CompilationError, Type>
 }
+
+
 
 
 // A chicken out method, where I can't be bothered

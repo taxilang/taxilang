@@ -1,7 +1,6 @@
 package lang.taxi
 
 import arrow.core.Either
-import arrow.core.getOption
 import lang.taxi.types.*
 import lang.taxi.utils.toEither
 import org.antlr.v4.runtime.ParserRuleContext
@@ -79,12 +78,14 @@ class TypeSystem(importedTypes: List<Type>) : TypeProvider {
    fun register(type: UserType<*, *>) {
       if (types.containsKey(type.qualifiedName)) {
          val registeredType = types[type.qualifiedName]!! as UserType<TypeDefinition, TypeDefinition>
-         if (registeredType.definition != null && type.definition != null) {
+         if (registeredType.definition != null && type.definition != null && registeredType.definition != type.definition) {
             throw IllegalArgumentException("Attempting to redefine type ${type.qualifiedName}")
          }
-         registeredType.definition = type.definition
-         // Nasty for-each stuff here because of generic oddness
-         type.extensions.forEach { registeredType.addExtension(it!!) }
+         if (registeredType.definition != type.definition) {
+            registeredType.definition = type.definition
+            // Nasty for-each stuff here because of generic oddness
+            type.extensions.forEach { registeredType.addExtension(it) }
+         }
       } else {
          types.put(type.qualifiedName, type)
       }
@@ -146,17 +147,29 @@ class TypeSystem(importedTypes: List<Type>) : TypeProvider {
    // THe whole additionalImports thing is for when we're
    // accessing prior to compiling (ie., in the language server).
    // During normal compilation, don't need to pass anything
-   fun qualify(namespace: Namespace, name: String, additionalImports:List<QualifiedName> = emptyList()): String {
-      if (name.contains("."))
-      // This is already qualified
+   fun qualify(namespace: Namespace, name: String, explicitImports:List<QualifiedName> = emptyList()): String {
+      if (name.contains(".")) {
+         // This is already qualified
          return name
+      }
 
-      val imports = (importedTypeMap.values.map { it.toQualifiedName() } + additionalImports)
-      val importedTypesWithName = imports.filter { it.typeName == name }
-      if (importedTypesWithName.size == 1) {
-         return importedTypesWithName.first().toString()
-      } else if (importedTypesWithName.size > 1) {
-         val possibleReferences = importedTypesWithName.joinToString { it.toString() }
+      // If the type was explicitly imported, use that
+      val matchedExplicitImport = explicitImports.filter { it.typeName == name }
+      if (matchedExplicitImport.size == 1) {
+         return matchedExplicitImport.first().toString()
+      }
+
+      // If the type in unambiguous in other import sources, then use that.
+      // Note : This is original behaviour, implemented to reduce the "import" noise.
+      // (ie., help the user - if we can find the type, do so).
+      // However, I'm not sure it makes good sense, as compilation in a file can break
+      // just by adding another type with a similar name elsewhere.
+      // Keeping it for now, but should decide if this is a bad idea.
+      val matchedImplicitImports = importedTypeMap.values.map { it.toQualifiedName() }.filter { it.typeName == name }
+      if (matchedImplicitImports.size == 1) {
+         return matchedImplicitImports.first().toString()
+      } else if (matchedImplicitImports.size > 1) {
+         val possibleReferences = matchedImplicitImports.joinToString { it.toString() }
          throw AmbiguousNameException("Name reference $name is ambiguous, and could refer to any of the available types $possibleReferences")
       }
 
