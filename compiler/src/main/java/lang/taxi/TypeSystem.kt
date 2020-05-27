@@ -159,6 +159,15 @@ class TypeSystem(importedTypes: List<Type>) : TypeProvider {
          return matchedExplicitImport.first().toString()
       }
 
+      // If the type wasn't explicitly imported, but exists in the same namespace, then resolve to that.
+      val matchesInNamespace = this.getTypes(includeImportedTypes = true) { type ->
+         val qualifiedName = type.toQualifiedName()
+         qualifiedName.namespace == namespace && qualifiedName.typeName == name
+      }
+      if (matchesInNamespace.size == 1) {
+         return matchesInNamespace.first().qualifiedName
+      }
+
       // If the type in unambiguous in other import sources, then use that.
       // Note : This is original behaviour, implemented to reduce the "import" noise.
       // (ie., help the user - if we can find the type, do so).
