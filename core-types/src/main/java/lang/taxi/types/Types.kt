@@ -13,6 +13,18 @@ interface Type : Named, Compiled {
    val inheritsFromPrimitive: Boolean
       get() = basePrimitive != null
 
+   val baseEnum: EnumType?
+      get() {
+         val types = (this.allInheritedTypes + this).filterIsInstance<EnumType>()
+         return when {
+            types.isEmpty() -> null
+            types.size == 1 -> types.first()
+            else -> {
+               error("Inheriting from multiple enums isn't supported, and technically shouldn't be possible")
+            }
+         }
+      }
+
    val basePrimitive: PrimitiveType?
       get() {
          val primitives = (this.allInheritedTypes + this).filter { it is PrimitiveType || it is EnumType }
