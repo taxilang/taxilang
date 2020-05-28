@@ -9,7 +9,7 @@ object FormattedTypesSpec : Spek({
    describe("formatted types") {
       it("should expose default formats for date types") {
          val doc  = Compiler("").compile()
-         doc.type(PrimitiveType.INSTANT.toQualifiedName()).format!!.should.equal("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+         doc.type(PrimitiveType.INSTANT.toQualifiedName()).format!!.should.equal("yyyy-MM-dd'T'HH:mm:ss[.SSS]X")
       }
 
       it("should inherit default formats") {
