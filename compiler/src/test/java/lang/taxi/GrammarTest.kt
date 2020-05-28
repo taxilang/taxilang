@@ -899,8 +899,8 @@ type LegacyTradeNotification {
    }
 
 fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {
-   firstName by column(0)
-   lastName by column(1)
+   firstName by column(1)
+   lastName by column(2)
 }
       """.trimIndent()
       val taxi = Compiler(src).compile()
@@ -909,9 +909,9 @@ fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson pro
       dataSource.mappings.should.have.size(2)
 
       dataSource.mappings[0].propertyName.should.equal("firstName")
-      dataSource.mappings[0].index.should.equal(0)
+      dataSource.mappings[0].index.should.equal(1)
       dataSource.mappings[1].propertyName.should.equal("lastName")
-      dataSource.mappings[1].index.should.equal(1)
+      dataSource.mappings[1].index.should.equal(2)
    }
 
    @Test
