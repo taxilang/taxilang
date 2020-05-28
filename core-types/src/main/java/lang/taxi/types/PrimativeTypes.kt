@@ -9,17 +9,18 @@ enum class VoidType : Type {
    override val qualifiedName: String = "lang.taxi.Void"
    override val compilationUnits: List<CompilationUnit> = listOf(CompilationUnit.ofSource(SourceCode("Built in", "// Built-in type")))
    override val inheritsFrom: Set<Type> = emptySet()
+   override val format: String? = null
 }
 
-enum class PrimitiveType(val declaration: String, val typeDoc: String) : Type {
+enum class PrimitiveType(val declaration: String, val typeDoc: String, override val format: String? = null) : Type {
    BOOLEAN("Boolean", "Represents a value which is either `true` or `false`."),
    STRING("String", "A collection of characters."),
    INTEGER("Int", "A signed integer - ie. a whole number (positive or negative), with no decimal places"),
    DECIMAL("Decimal", "A signed decimal number - ie., a whole number with decimal places."),
-   LOCAL_DATE("Date", "A date, without a time or timezone."),
-   TIME("Time", "Time only, excluding the date part"),
-   DATE_TIME("DateTime", "A date and time, without a timezone.  Generally, favour using Instant which represents a point-in-time, as it has a timezone attached"),
-   INSTANT("Instant", "A point in time, with date, time and timezone.  Follows ISO standard convention of YYYY-mm-yyThh:dd:ssZ"),
+   LOCAL_DATE("Date", "A date, without a time or timezone.", format = "yyyy-MM-dd"),
+   TIME("Time", "Time only, excluding the date part", format = "HH:mm:ss"),
+   DATE_TIME("DateTime", "A date and time, without a timezone.  Generally, favour using Instant which represents a point-in-time, as it has a timezone attached", format = "yyyy-MM-dd'T'HH:mm:ss.SSS"),
+   INSTANT("Instant", "A point in time, with date, time and timezone.  Follows ISO standard convention of yyyy-MM-dd'T'HH:mm:ss.SSSZ", format = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"),
    ARRAY("Array", "A collection of things"),
    ANY("Any", "Can be anything.  Try to avoid using 'Any' as it's not descriptive - favour using a strongly typed approach instead"),
    DOUBLE("Double", "Represents a double-precision 64-bit IEEE 754 floating point number."),

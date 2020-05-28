@@ -1,6 +1,9 @@
 package lang.taxi.compiler
 
 import arrow.core.*
+import com.google.common.hash.HashFunction
+import com.google.common.hash.Hasher
+import com.google.common.hash.Hashing
 import lang.taxi.*
 import lang.taxi.services.operations.constraints.ConstraintValidator
 import lang.taxi.services.operations.constraints.OperationConstraintConverter
@@ -14,6 +17,7 @@ import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.log
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
+import java.nio.charset.Charset
 
 internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocument> = emptyList(), collectImports: Boolean = true) {
 
@@ -352,7 +356,16 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val modifiers = parseModifiers(ctx.typeModifier())
       val inherits = parseInheritance(namespace, ctx.listOfInheritedTypes())
       val typeDoc = parseTypeDoc(ctx.typeDoc()?.source()?.content)
-      this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(fields.toSet(), annotations.toSet(), modifiers, inherits, typeDoc, ctx.toCompilationUnit())))
+      val format: String? = null
+      this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(
+         fields = fields.toSet(),
+         annotations = annotations.toSet(),
+         modifiers = modifiers,
+         inheritsFrom = inherits,
+         format = format,
+         typeDoc = typeDoc,
+         compilationUnit = ctx.toCompilationUnit()
+      )))
    }
 
    internal fun compiledField(member: TaxiParser.TypeMemberDeclarationContext, namespace: Namespace): Field? {
@@ -488,19 +501,68 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
    internal fun parseType(namespace: Namespace, typeType: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
-      val type = when {
+      val typeOrError = when {
          typeType.aliasedType() != null -> compileInlineTypeAlias(namespace, typeType)
          typeType.classOrInterfaceType() != null -> resolveUserType(namespace, typeType.classOrInterfaceType())
          typeType.primitiveType() != null -> PrimitiveType.fromDeclaration(typeType.getChild(0).text).right()
          else -> throw IllegalArgumentException()
       }
-      return type.map {
-         if (typeType.listType() != null) {
-            ArrayType(it, typeType.toCompilationUnit())
-         } else {
-            it
+
+
+      return typeOrError.flatMap { type ->
+         parseTypeFormat(typeType).flatMap { format ->
+            if (typeType.listType() != null) {
+               if (format != null) {
+                  Either.left(CompilationError(typeType.start, "It is invalid to declare a format on an array"))
+               } else {
+                  Either.right(ArrayType(type, typeType.toCompilationUnit()))
+               }
+            } else {
+               if (format != null) {
+                  generateFormattedSubtype(type, format, typeType)
+               } else {
+                  Either.right(type)
+               }
+            }
          }
+
       }
+   }
+
+   private fun generateFormattedSubtype(type: Type, format: String, typeType: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
+      val formattedTypeName = QualifiedName.from(type.qualifiedName).let { originalTypeName ->
+         val hash = Hashing.sha256().hashString(format, Charset.defaultCharset()).toString().takeLast(6)
+         originalTypeName.copy(typeName = "Formatted${originalTypeName.typeName}@$hash")
+      }
+
+      return if (typeSystem.contains(formattedTypeName.fullyQualifiedName)) {
+         Either.right(typeSystem.getType(formattedTypeName.fullyQualifiedName))
+      } else {
+         val formattedType = ObjectType(
+            formattedTypeName.fullyQualifiedName,
+            ObjectTypeDefinition(
+               emptySet(),
+               inheritsFrom = setOf(type),
+               format = format,
+               compilationUnit = typeType.toCompilationUnit()
+            )
+         )
+         typeSystem.register(formattedType)
+         Either.right(formattedType)
+      }
+
+
+   }
+
+   private fun parseTypeFormat(typeType: TaxiParser.TypeTypeContext): Either<CompilationError, String?> {
+      val formatExpressions = typeType.parameterConstraint()?.parameterConstraintExpressionList()?.parameterConstraintExpression()
+         ?.mapNotNull { it.propertyFormatExpression() } ?: emptyList()
+      return when {
+         formatExpressions.isEmpty() -> Either.right(null)
+         formatExpressions.size == 1 -> Either.right(stringLiteralValue(formatExpressions.first().StringLiteral()))
+         else -> Either.left(CompilationError(typeType.start, "Mutliple formats are not supported"))
+      }
+
    }
 
    /**
@@ -513,7 +575,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          val typeAliasName = if (declaredTypeName.contains(".")) {
             QualifiedNameParser.parse(declaredTypeName)
          } else {
-            QualifiedName(namespace,declaredTypeName)
+            QualifiedName(namespace, declaredTypeName)
          }
          // Annotations not supported on Inline type aliases
          val annotations = emptyList<Annotation>()

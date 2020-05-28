@@ -22,6 +22,7 @@ object QualifiedNameParser {
       val expandedName = convertArrayShorthand(s)
       val tokenizer = StreamTokenizer(StringReader(expandedName))
       tokenizer.wordChars('_'.toInt(), '_'.toInt())
+      tokenizer.wordChars('@'.toInt(),'@'.toInt())
       try {
          val genericName = parse(tokenizer, listOf(StreamTokenizer.TT_EOF)) // Parse until the end
          return genericName.toQualifiedName()

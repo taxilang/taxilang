@@ -27,8 +27,10 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
     override fun hashCode(): Int = equality.hash()
 
     override val compilationUnits: List<CompilationUnit> = listOf(source)
-    override val qualifiedName: String = "lang.taxi.Array"
+    override val qualifiedName: String = PrimitiveType.ARRAY.qualifiedName
     override val parameters: List<Type> = listOf(type)
+
+   override val format: String? = null
 
 
 }
