@@ -20,7 +20,7 @@ enum class PrimitiveType(val declaration: String, val typeDoc: String, override 
    LOCAL_DATE("Date", "A date, without a time or timezone.", format = "yyyy-MM-dd"),
    TIME("Time", "Time only, excluding the date part", format = "HH:mm:ss"),
    DATE_TIME("DateTime", "A date and time, without a timezone.  Generally, favour using Instant which represents a point-in-time, as it has a timezone attached", format = "yyyy-MM-dd'T'HH:mm:ss.SSS"),
-   INSTANT("Instant", "A point in time, with date, time and timezone.  Follows ISO standard convention of yyyy-MM-dd'T'HH:mm:ss.SSSZ", format = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"),
+   INSTANT("Instant", "A point in time, with date, time and timezone.  Follows ISO standard convention of yyyy-MM-dd'T'HH:mm:ss.SSSZ", format = "yyyy-MM-dd'T'HH:mm:ss[.SSS]X"),
    ARRAY("Array", "A collection of things"),
    ANY("Any", "Can be anything.  Try to avoid using 'Any' as it's not descriptive - favour using a strongly typed approach instead"),
    DOUBLE("Double", "Represents a double-precision 64-bit IEEE 754 floating point number."),
