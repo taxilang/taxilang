@@ -2,7 +2,6 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.types.PrimitiveType
-import org.junit.Ignore
 import org.junit.Test
 
 // NOte : I'm trying to split tests out from GrammarTest
@@ -49,5 +48,20 @@ type ListOfPerson inherits Person[]
       doc.type("BaseCurrency").basePrimitive!!.should.equal(PrimitiveType.STRING)
       doc.type("Person").basePrimitive.should.be.`null`
       PrimitiveType.STRING.basePrimitive.should.equal(PrimitiveType.STRING)
+   }
+
+   @Test
+   fun detectsUnderlyingEnum() {
+      val src = """
+         enum Country {
+            NZ,
+            AUS
+         }
+         type BetterCountry inherits Country
+         type NotAnEnum {}
+      """.trimIndent()
+      val doc = Compiler(src).compile()
+      doc.type("BetterCountry").baseEnum!!.qualifiedName.should.equal("Country")
+      doc.type("NotAnEnum").baseEnum.should.be.`null`
    }
 }
