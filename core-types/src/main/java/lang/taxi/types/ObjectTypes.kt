@@ -21,6 +21,7 @@ data class ObjectTypeDefinition(
    val annotations: Set<Annotation> = emptySet(),
    val modifiers: List<Modifier> = emptyList(),
    val inheritsFrom: Set<Type> = emptySet(),
+   val format: String? = null,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
@@ -72,6 +73,20 @@ data class ObjectType(
          return ObjectType(name, definition = null)
       }
    }
+
+   override val format: String?
+      get() {
+         return if (this.definition?.format != null) {
+            this.definition?.format
+         } else {
+            val inheritedFormats = this.inheritsFrom.filter { it.format != null }
+            when {
+               inheritedFormats.isEmpty() -> null
+               inheritedFormats.size == 1 -> inheritedFormats.first().format
+               else -> error("Multiple formats found in inheritence - this is an error")
+            }
+         }
+      }
 
    override val referencedTypes: List<Type>
       get() {
@@ -185,10 +200,11 @@ fun Iterable<AnnotationProvider>.toAnnotations(): List<Annotation> {
 
 interface NameTypePair {
    // Relaxed to Nullable to support Parameters, which don't mandate names
-   val name:String?
+   val name: String?
    val type: Type
 
 }
+
 data class Annotation(val name: String, val parameters: Map<String, Any?> = emptyMap())
 data class Field(
    override val name: String,

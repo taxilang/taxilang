@@ -6,27 +6,6 @@ import lang.taxi.utils.toEither
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
 
-internal data class TypeProxy(override val qualifiedName: String, private val typeSystem: TypeSystem) : Type {
-   fun isResolved(): Boolean = typeSystem.contains(this.qualifiedName)
-   val resolvedType: ObjectType
-      get() {
-         assertResolved()
-         return typeSystem.getType(this.qualifiedName) as ObjectType
-      }
-
-   private fun assertResolved() {
-      if (!isResolved()) {
-         throw IllegalAccessError("Can't read values of a proxy type until it's resolved")
-      }
-   }
-
-   override val inheritsFrom: Set<Type>
-      get() {
-         return resolvedType.inheritsFrom
-      }
-   override val compilationUnits = listOf(CompilationUnit.unspecified())
-}
-
 class TypeSystem(importedTypes: List<Type>) : TypeProvider {
 
    private val importedTypeMap: Map<String, Type> = importedTypes.associateBy { it.qualifiedName }

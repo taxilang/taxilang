@@ -24,10 +24,15 @@ data class TypeAlias(
 ) : UserType<TypeAliasDefinition, TypeAliasExtension>, Annotatable, Documented {
    constructor(qualifiedName: String, aliasedType: Type, compilationUnit: CompilationUnit) : this(qualifiedName, TypeAliasDefinition(aliasedType, compilationUnit = compilationUnit))
 
+   // Don't support a type alias overriding the format of it's aliased type,
+   // as then they're no longer synonyms
+   override val format: String?
+      get() = definition?.aliasType?.format
+
    override val inheritsFrom: Set<Type> = definition?.aliasType?.inheritsFrom ?: emptySet()
 
    override val typeDoc: String?
-      get() = Documented.typeDoc( listOf(definition) + extensions)
+      get() = Documented.typeDoc(listOf(definition) + extensions)
 
    override val referencedTypes: List<Type>
       get() {

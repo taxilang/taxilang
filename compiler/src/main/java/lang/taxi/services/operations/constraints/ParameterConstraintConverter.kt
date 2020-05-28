@@ -75,7 +75,12 @@ class OperationConstraintConverter(
 
    fun constraints(): Either<List<CompilationError>, List<Constraint>> {
       return expressionList
-         .parameterConstraintExpression().map { buildConstraint(it, paramType, namespaceQualifiedTypeResolver) }
+         .parameterConstraintExpression()
+         // Formats are expressed as constraints, but we handle them elsewhere,
+         // so filter them out.  A good indication that this isn't the correct way
+         // to handle this.
+         .filter { it.propertyFormatExpression() == null }
+         .map { buildConstraint(it, paramType, namespaceQualifiedTypeResolver) }
          .invertEitherList()
    }
 

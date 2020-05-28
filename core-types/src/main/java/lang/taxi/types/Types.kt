@@ -10,6 +10,8 @@ interface Type : Named, Compiled {
          return getInheritanceGraph()
       }
 
+   val format:String?
+
    val inheritsFromPrimitive: Boolean
       get() = basePrimitive != null
 

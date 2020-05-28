@@ -54,6 +54,7 @@ typeModifier
 
 typeDeclaration
     :  typeDoc? annotation* typeModifier* ('type'|'model') Identifier
+
         ('inherits' listOfInheritedTypes)?
         typeBody?
     ;
@@ -267,7 +268,12 @@ parameterConstraintExpressionList
 parameterConstraintExpression
     :  propertyToParameterConstraintExpression
     |  operationReturnValueOriginExpression
+    |  propertyFormatExpression
     ;
+
+// First impl.  This will get richer
+propertyFormatExpression :
+   '@format' '=' StringLiteral;
 
 // The return value will have a relationship to a property
 // received in an input (incl. nested properties)
