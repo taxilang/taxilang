@@ -67,6 +67,10 @@ class CompilerTokenCache {
          val listener = TokenCollator()
          val errorListener = CollectingErrorListener(input.sourceName)
          val lexer = TaxiLexer(input)
+         // We ignore lexer errors, and let the parser handle syntax problems.
+         // Without this, there's just a bunch of noise in the console.
+         lexer.removeErrorListeners()
+
          val parser = TaxiParser(CommonTokenStream(lexer))
          parser.addParseListener(listener)
          parser.addErrorListener(errorListener)
