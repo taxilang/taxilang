@@ -532,7 +532,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    private fun generateFormattedSubtype(type: Type, format: String, typeType: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
       val formattedTypeName = QualifiedName.from(type.qualifiedName).let { originalTypeName ->
          val hash = Hashing.sha256().hashString(format, Charset.defaultCharset()).toString().takeLast(6)
-         originalTypeName.copy(typeName = "Formatted${originalTypeName.typeName}@$hash")
+         originalTypeName.copy(typeName = "Formatted${originalTypeName.typeName}_$hash")
       }
 
       return if (typeSystem.contains(formattedTypeName.fullyQualifiedName)) {
