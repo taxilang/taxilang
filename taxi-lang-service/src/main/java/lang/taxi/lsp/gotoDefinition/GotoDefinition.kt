@@ -14,6 +14,12 @@ class GotoDefinitionService(private val typeProvider: TypeProvider) {
         val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.uriPath())
         val compilationUnit = when (context) {
             is TaxiParser.TypeTypeContext -> compilationResult.compiler.getDeclarationSource(context)
+            is TaxiParser.EnumSynonymSingleDeclarationContext -> {
+                // Drop off the value within the enum for now, we'll navigate to the enum class, but not
+                // the value within it.
+                val enumName = context.text.split(".").dropLast(1).joinToString(".")
+                compilationResult.compiler.getDeclarationSource(enumName, context)
+            }
             else -> null
         }
         val location = if (compilationUnit != null) {
