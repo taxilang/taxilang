@@ -152,9 +152,13 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       return QualifiedName.from(TokenProcessor(tokens, importSources).lookupTypeByName(typeType))
    }
 
-   fun getDeclarationSource(typeName: TaxiParser.TypeTypeContext): CompilationUnit? {
+   fun getDeclarationSource(text: String, context: ParserRuleContext): CompilationUnit? {
       val processor = TokenProcessor(tokens, importSources)
-      val qualifiedName = processor.lookupTypeByName(typeName)
+      val qualifiedName = processor.lookupTypeByName(text, context)
+      return getCompilationUnit(processor, qualifiedName)
+   }
+
+   private fun getCompilationUnit(processor: TokenProcessor, qualifiedName: String): CompilationUnit? {
       val definition = processor.findDefinition(qualifiedName) ?: return null
 
       // don't return the start of the documentation, as that's not really what
@@ -168,6 +172,12 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
          definition
       }
       return startOfDeclaration.toCompilationUnit()
+   }
+
+   fun getDeclarationSource(typeName: TaxiParser.TypeTypeContext): CompilationUnit? {
+      val processor = TokenProcessor(tokens, importSources)
+      val qualifiedName = processor.lookupTypeByName(typeName)
+      return getCompilationUnit(processor, qualifiedName)
    }
 
    /**
@@ -281,8 +291,6 @@ interface NamespaceQualifiedTypeResolver {
     */
    fun resolve(requestedTypeName: String, context: ParserRuleContext): Either<CompilationError, Type>
 }
-
-
 
 
 // A chicken out method, where I can't be bothered

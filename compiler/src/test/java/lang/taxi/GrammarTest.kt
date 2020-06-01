@@ -186,6 +186,7 @@ namespace foo {
    }
 
    @Test
+   @Ignore("Detection of redecalred types is disabled, as was buggy and didn't respect imports")
    fun given_typeIsRedeclaredWithDifferentDefinition_then_exceptionIsThrown() {
       val source1 = """
 namespace foo {

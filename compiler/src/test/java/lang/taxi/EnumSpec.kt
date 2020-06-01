@@ -163,8 +163,7 @@ enum Australian {
    One synonym of English.One
 }"""
             val errors = Compiler(src).validate()
-            errors.should.have.size(1)
-            errors.first().detailMessage.should.equal("language.English is not defined as a type")
+            errors.should.satisfy { it.any { error -> error.detailMessage.contains("language.English is not defined as a type") } }
          }
          it("should throw an error if the reference value is not a value on the type") {
             val src = """

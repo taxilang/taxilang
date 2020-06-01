@@ -63,6 +63,14 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return lookupTypeByName(namespace, contextRule)
    }
 
+   fun lookupTypeByName(text: String, contextRule: ParserRuleContext): String {
+      createEmptyTypes()
+      val namespace = contextRule.findNamespace()
+      return attemptToLookupTypeByName(namespace, text, contextRule).getOrHandle {
+         throw CompilationException(it)
+      }
+   }
+
    fun findDeclaredTypeNames(): List<QualifiedName> {
       createEmptyTypes()
 
@@ -99,6 +107,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          lookupTypeByName(namespace, type.classOrInterfaceType().text, importsInSource(type))
       }
    }
+
 
    private fun attemptToLookupTypeByName(namespace: Namespace, name: String, context: ParserRuleContext): Either<CompilationError, String> {
       return try {
@@ -216,8 +225,8 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
       when (tokenRule) {
          is TaxiParser.TypeDeclarationContext -> compileType(namespace, tokenName, tokenRule)
-         is TaxiParser.EnumDeclarationContext -> compileEnum(namespace, tokenName, tokenRule)
-         is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(namespace, tokenName, tokenRule)
+         is TaxiParser.EnumDeclarationContext -> compileEnum(namespace, tokenName, tokenRule).collectErrors()
+         is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(namespace, tokenName, tokenRule).collectError()
          // TODO : This is a bit broad - assuming that all typeType's that hit this
          // line will be a TypeAlias inline.  It could be a normal field declaration.
          is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(namespace, tokenRule).collectError()
@@ -285,13 +294,13 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return refinedType
    }
 
-   private fun compileTypeAlias(namespace: Namespace, tokenName: String, tokenRule: TaxiParser.TypeAliasDeclarationContext) {
-      val aliasedType: Either<ReportedError, Type> = parseType(namespace, tokenRule.aliasedType().typeType()).collectError()
-      val annotations = collateAnnotations(tokenRule.annotation())
-
-      aliasedType.map {
-         val definition = TypeAliasDefinition(it, annotations, tokenRule.toCompilationUnit(), typeDoc = parseTypeDoc(tokenRule.typeDoc()))
-         this.typeSystem.register(TypeAlias(tokenName, definition))
+   private fun compileTypeAlias(namespace: Namespace, tokenName: String, tokenRule: TaxiParser.TypeAliasDeclarationContext): Either<CompilationError, TypeAlias> {
+      return parseType(namespace, tokenRule.aliasedType().typeType()).map { aliasedType ->
+         val annotations = collateAnnotations(tokenRule.annotation())
+         val definition = TypeAliasDefinition(aliasedType, annotations, tokenRule.toCompilationUnit(), typeDoc = parseTypeDoc(tokenRule.typeDoc()))
+         val typeAlias = TypeAlias(tokenName, definition)
+         this.typeSystem.register(typeAlias)
+         typeAlias
       }
    }
 
@@ -346,7 +355,8 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          }?.reportAndRemoveErrors() ?: emptyList()
          val fieldsWithConditions = conditionalFieldStructures.flatMap { it.fields }
          val fields = (typeBody.typeMemberDeclaration()?.map { member ->
-            compileField(member, namespace)
+            val compiledField = compileField(member, namespace)
+            compiledField
          } ?: emptyList()).reportAndRemoveErrorList() + fieldsWithConditions
 
          fields
@@ -628,9 +638,8 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
 
-   private fun compileEnum(namespace: Namespace, typeName: String, ctx: TaxiParser.EnumDeclarationContext) {
-      compileEnumValues(namespace, typeName, ctx.enumConstants())
-         .mapLeft { errors -> throw CompilationException(errors) }
+   private fun compileEnum(namespace: Namespace, typeName: String, ctx: TaxiParser.EnumDeclarationContext): Either<List<CompilationError>, EnumType> {
+      return compileEnumValues(namespace, typeName, ctx.enumConstants())
          .map { enumValues ->
             val annotations = collateAnnotations(ctx.annotation())
             val basePrimitive = deriveEnumBaseType(ctx, enumValues)
@@ -643,6 +652,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                basePrimitive = basePrimitive
             ))
             typeSystem.register(enumType)
+            enumType
          }
 
 
