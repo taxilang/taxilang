@@ -60,7 +60,7 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
         }
 
         // let classPath = (useDebugJar) ? path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', jarName) : path.join(__dirname, jarName);
-        const debugSettings = (enableDebug) ? ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005,quiet=y'] : [];
+        const debugSettings = (enableDebug) ? ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005,quiet=y'] : [];
         const args: string[] = debugSettings.concat(['-cp', classPath]);
         console.log(JSON.stringify(args));
 
