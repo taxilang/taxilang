@@ -46,6 +46,7 @@ class TaxiLanguageServer(
         val capabilities = initializeResult.capabilities
         capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
         capabilities.definitionProvider  = true
+        capabilities.hoverProvider = true
         capabilities.documentFormattingProvider = true
         capabilities.workspace = WorkspaceServerCapabilities(WorkspaceFoldersOptions().apply {
             supported = true

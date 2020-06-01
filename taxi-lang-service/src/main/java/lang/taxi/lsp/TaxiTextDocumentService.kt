@@ -5,6 +5,8 @@ import lang.taxi.lsp.completion.CompletionService
 import lang.taxi.lsp.completion.TypeProvider
 import lang.taxi.lsp.formatter.FormatterService
 import lang.taxi.lsp.gotoDefinition.GotoDefinitionService
+import lang.taxi.lsp.hover.HoverService
+import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.eclipse.lsp4j.*
@@ -31,6 +33,7 @@ data class CompilationResult(val compiler: Compiler, val document: TaxiDocument?
 
 class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
 
+    private var displayedErrorMessages: List<PublishDiagnosticsParams> = emptyList()
     private val sources: MutableMap<URI, String> = mutableMapOf()
     private val charStreams: MutableMap<URI, CharStream> = mutableMapOf()
     private lateinit var initializeParams: InitializeParams
@@ -44,6 +47,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     private val completionService = CompletionService(typeProvider)
     private val formattingService = FormatterService()
     private val gotoDefinitionService = GotoDefinitionService(typeProvider)
+    private val hoverService = HoverService()
     private lateinit var client: LanguageClient
     private var rootUri: String? = null
 
@@ -73,8 +77,16 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         return gotoDefinitionService.definition(lastCompilationResult.get(), params)
     }
 
+    override fun hover(params: HoverParams): CompletableFuture<Hover> {
+        if (lastCompilationResult.get() == null) {
+            compileAndReport()
+        }
+        return hoverService.hover(lastCompilationResult.get(), lastSuccessfulCompilationResult.get(), params)
+    }
+
     override fun formatting(params: DocumentFormattingParams): CompletableFuture<MutableList<out TextEdit>> {
-        val content = this.sources[URI.create(params.textDocument.uri)]
+        val uri = URI.create(SourceNames.normalize(params.textDocument.uri))
+        val content = this.sources[uri]
                 ?: error("Could not find source with url ${params.textDocument.uri}")
         return formattingService.getChanges(content, params.options)
     }
@@ -99,7 +111,8 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         val content = change.text
         val sourceName = params.textDocument.uri
 
-        val sourceNameUri = URI.create(sourceName)
+        // This seems to normalize nicely on windows.  Will need to check on ubuntu
+        val sourceNameUri = URI.create(SourceNames.normalize(sourceName))
         this.sources[sourceNameUri] = content
         this.charStreams[sourceNameUri] = CharStreams.fromString(content, sourceName)
         compileAndReport()
@@ -149,11 +162,20 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
             )
         }
         clearErrors()
-        diagnostics.groupBy { it.first }.forEach { (sourceUri, diagnostics) ->
-            client.publishDiagnostics(PublishDiagnosticsParams(
-                    sourceUri,
+        this.displayedErrorMessages = diagnostics.groupBy { it.first }.map { (sourceUri, diagnostics) ->
+            // This seems to normalize nicely on windows.  Will need to check on ubuntu
+            val fileUri = SourceNames.normalize(sourceUri)
+            PublishDiagnosticsParams(
+                    fileUri,
                     diagnostics.map { it.second }
-            ))
+            )
+        }
+        publishErrorMessages()
+    }
+
+    private fun publishErrorMessages() {
+        this.displayedErrorMessages.forEach {
+            client.publishDiagnostics(it)
         }
     }
 
@@ -161,12 +183,10 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         if (connected) {
             // Non-performant - we're destroying the entire set of warnings for each compilation pass
             // (which in practice, is each keypress)
-            this.charStreams.keys.forEach { sourceUri ->
-                client.publishDiagnostics(PublishDiagnosticsParams(
-                        sourceUri.toString(),
-                        emptyList()
-                ))
+            this.displayedErrorMessages.forEach { oldErrorMessage ->
+                client.publishDiagnostics(PublishDiagnosticsParams(oldErrorMessage.uri, emptyList()))
             }
+            this.displayedErrorMessages = emptyList()
         }
     }
 

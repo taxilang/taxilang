@@ -14,6 +14,11 @@ class GotoDefinitionService(private val typeProvider: TypeProvider) {
         val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.uriPath())
         val compilationUnit = when (context) {
             is TaxiParser.TypeTypeContext -> compilationResult.compiler.getDeclarationSource(context)
+            is TaxiParser.ListOfInheritedTypesContext -> {
+                // TODO  : For now, let's just use the first type. Not sure we support a list of types here.
+                val inheritedType = context.typeType().first()
+                compilationResult.compiler.getDeclarationSource(inheritedType)
+            }
             is TaxiParser.EnumSynonymSingleDeclarationContext -> {
                 // Drop off the value within the enum for now, we'll navigate to the enum class, but not
                 // the value within it.
