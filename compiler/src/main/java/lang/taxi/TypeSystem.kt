@@ -49,9 +49,12 @@ class TypeSystem(importedTypes: List<Type>) : TypeProvider {
    }
 
    fun isDefined(qualifiedName: String): Boolean {
-      if (!contains(qualifiedName)) return false;
-      val registeredType = types[qualifiedName]!! as UserType<TypeDefinition, TypeDefinition>
-      return registeredType.definition != null
+      if (!contains(qualifiedName)) return false
+      types[qualifiedName]?.let {
+         val registeredType =it as UserType<TypeDefinition, TypeDefinition>
+         return registeredType.definition != null
+      }
+      return false
    }
 
    fun register(type: UserType<*, *>) {
