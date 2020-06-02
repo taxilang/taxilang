@@ -1,0 +1,5 @@
+import testB.Foo
+
+type Trade {
+   foo : Foo
+}

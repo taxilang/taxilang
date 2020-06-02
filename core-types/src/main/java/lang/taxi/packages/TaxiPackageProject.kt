@@ -19,4 +19,4 @@ data class TaxiPackageProject(
    }
 }
 
-data class TaxiPackageSources(val project: TaxiPackageProject, val sources:List<SourceCode>)
+data class TaxiPackageSources(val project: TaxiPackageProject, val sources: List<SourceCode>)
