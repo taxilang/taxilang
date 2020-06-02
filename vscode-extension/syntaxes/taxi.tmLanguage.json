@@ -8,21 +8,9 @@
 		},
 		{
 			"include": "#statements"
-		},
-		{
-			"include": "#shebang"
 		}
 	],
 	"repository": {
-		"shebang": {
-			"name": "comment.line.shebang.taxi",
-			"match": "\\A(#!).*(?=$)",
-			"captures": {
-				"1": {
-					"name": "punctuation.definition.comment.taxi"
-				}
-			}
-		},
 		"statements": {
 			"patterns": [
 				{
@@ -64,6 +52,9 @@
 				},
 				{
 					"include": "#enum-declaration"
+				},
+				{
+					"include": "#service-declaration"
 				},
 				{
 					"include": "#namespace-declaration"
@@ -156,9 +147,6 @@
 				},
 				{
 					"include": "#string"
-				},
-				{
-					"include": "#regex"
 				},
 				{
 					"include": "#comment"
@@ -274,6 +262,90 @@
 				{
 					"name": "keyword.operator.optional.taxi",
 					"match": "\\?"
+				}
+			]
+		},
+		"service-declaration": {
+			"name": "meta.enum.declaration.taxi",
+			"begin": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(?:(\\bexport)\\s+)?(?:(\\bdeclare)\\s+)?(?:\\b(const)\\s+)?\\b(service)\\s+([_$[:alpha:]][_$[:alnum:]]*)",
+			"beginCaptures": {
+				"1": {
+					"name": "keyword.control.export.taxi"
+				},
+				"2": {
+					"name": "storage.modifier.taxi"
+				},
+				"3": {
+					"name": "storage.modifier.taxi"
+				},
+				"4": {
+					"name": "storage.type.enum.taxi"
+				},
+				"5": {
+					"name": "entity.name.type.enum.taxi"
+				}
+			},
+			"end": "(?<=\\})",
+			"patterns": [
+				{
+					"include": "#comment"
+				},
+				{
+					"begin": "\\{",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.definition.block.taxi"
+						}
+					},
+					"end": "\\}",
+					"endCaptures": {
+						"0": {
+							"name": "punctuation.definition.block.taxi"
+						}
+					},
+					"patterns": [
+						{
+							"include": "#comment"
+						},
+						{
+							"begin": "([_$[:alpha:]][_$[:alnum:]]*)",
+							"beginCaptures": {
+								"0": {
+									"name": "variable.other.enummember.taxi"
+								}
+							},
+							"end": "(?=,|\\}|$)",
+							"patterns": [
+								{
+									"include": "#comment"
+								},
+								{
+									"include": "#variable-initializer"
+								}
+							]
+						},
+						{
+							"begin": "(?=((\\'([^\\'\\\\]|\\\\.)*\\')|(\\\"([^\\\"\\\\]|\\\\.)*\\\")|(\\`([^\\`\\\\]|\\\\.)*\\`)|(\\[([^\\[\\]]|\\[[^\\[\\]]*\\])+\\])))",
+							"end": "(?=,|\\}|$)",
+							"patterns": [
+								{
+									"include": "#string"
+								},
+								{
+									"include": "#array-literal"
+								},
+								{
+									"include": "#comment"
+								},
+								{
+									"include": "#variable-initializer"
+								}
+							]
+						},
+						{
+							"include": "#punctuation-comma"
+						}
+					]
 				}
 			]
 		},
@@ -1124,14 +1196,6 @@
 					"match": "\\*=|(?<!\\()/=|%=|\\+=|\\-="
 				},
 				{
-					"name": "keyword.operator.assignment.compound.bitwise.taxi",
-					"match": "\\&=|\\^=|<<=|>>=|>>>=|\\|="
-				},
-				{
-					"name": "keyword.operator.bitwise.shift.taxi",
-					"match": "<<|>>>|>>"
-				},
-				{
 					"name": "keyword.operator.comparison.taxi",
 					"match": "===|!==|==|!="
 				},
@@ -1153,10 +1217,6 @@
 				{
 					"name": "keyword.operator.logical.taxi",
 					"match": "\\!|&&|\\|\\||\\?\\?"
-				},
-				{
-					"name": "keyword.operator.bitwise.taxi",
-					"match": "\\&|~|\\^|\\|"
 				},
 				{
 					"name": "keyword.operator.assignment.taxi",
@@ -1371,248 +1431,6 @@
 				{
 					"name": "constant.language.infinity.taxi",
 					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))Infinity(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
-				}
-			]
-		},
-		"support-objects": {
-			"patterns": [
-				{
-					"name": "variable.language.arguments.taxi",
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(arguments)\\b(?!\\$)"
-				},
-				{
-					"name": "support.class.builtin.taxi",
-					"match": "(?x)(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(Array|ArrayBuffer|Atomics|BigInt|BigInt64Array|BigUint64Array|Boolean|DataView|Date|DateTime|Time|Int|Decimal|Double|Float32Array\n  |Float64Array|Function|Generator|GeneratorFunction|Int8Array|Int16Array|Int32Array|Intl|Map|Number|Object|Proxy\n  |Reflect|RegExp|Set|SharedArrayBuffer|SIMD|String|Symbol|TypedArray\n  |Uint8Array|Uint16Array|Uint32Array|Uint8ClampedArray|WeakMap|WeakSet)\\b(?!\\$)"
-				},
-				{
-					"name": "support.class.error.taxi",
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))((Eval|Internal|Range|Reference|Syntax|Type|URI)?Error)\\b(?!\\$)"
-				},
-				{
-					"name": "support.class.promise.taxi",
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(Promise)\\b(?!\\$)"
-				},
-				{
-					"name": "support.function.taxi",
-					"match": "(?x)(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(clear(Interval|Timeout)|decodeURI|decodeURIComponent|encodeURI|encodeURIComponent|escape|eval|\n  isFinite|isNaN|parseFloat|parseInt|require|set(Interval|Timeout)|super|unescape|uneval)(?=\\s*\\()"
-				},
-				{
-					"match": "(?x)(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(Math)(?:\\s*(?:(\\.)|(\\?\\.(?!\\s*[[:digit:]])))\\s*(?:\n  (abs|acos|acosh|asin|asinh|atan|atan2|atanh|cbrt|ceil|clz32|cos|cosh|exp|\n  expm1|floor|fround|hypot|imul|log|log10|log1p|log2|max|min|pow|random|\n  round|sign|sin|sinh|sqrt|tan|tanh|trunc)\n  |\n  (E|LN10|LN2|LOG10E|LOG2E|PI|SQRT1_2|SQRT2)))?\\b(?!\\$)",
-					"captures": {
-						"1": {
-							"name": "support.constant.math.taxi"
-						},
-						"2": {
-							"name": "punctuation.accessor.taxi"
-						},
-						"3": {
-							"name": "punctuation.accessor.optional.taxi"
-						},
-						"4": {
-							"name": "support.function.math.taxi"
-						},
-						"5": {
-							"name": "support.constant.property.math.taxi"
-						}
-					}
-				},
-				{
-					"match": "(?x)(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(console)(?:\\s*(?:(\\.)|(\\?\\.(?!\\s*[[:digit:]])))\\s*(\n  assert|clear|count|debug|dir|error|group|groupCollapsed|groupEnd|info|log\n  |profile|profileEnd|table|time|timeEnd|timeStamp|trace|warn))?\\b(?!\\$)",
-					"captures": {
-						"1": {
-							"name": "support.class.console.taxi"
-						},
-						"2": {
-							"name": "punctuation.accessor.taxi"
-						},
-						"3": {
-							"name": "punctuation.accessor.optional.taxi"
-						},
-						"4": {
-							"name": "support.function.console.taxi"
-						}
-					}
-				},
-				{
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(JSON)(?:\\s*(?:(\\.)|(\\?\\.(?!\\s*[[:digit:]])))\\s*(parse|stringify))?\\b(?!\\$)",
-					"captures": {
-						"1": {
-							"name": "support.constant.taxion.taxi"
-						},
-						"2": {
-							"name": "punctuation.accessor.taxi"
-						},
-						"3": {
-							"name": "punctuation.accessor.optional.taxi"
-						},
-						"4": {
-							"name": "support.function.taxion.taxi"
-						}
-					}
-				},
-				{
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(import)\\s*(?:(\\.)|(\\?\\.(?!\\s*[[:digit:]])))\\s*(meta)\\b(?!\\$)",
-					"captures": {
-						"1": {
-							"name": "keyword.control.import.taxi"
-						},
-						"2": {
-							"name": "punctuation.accessor.taxi"
-						},
-						"3": {
-							"name": "punctuation.accessor.optional.taxi"
-						},
-						"4": {
-							"name": "support.variable.property.importmeta.taxi"
-						}
-					}
-				},
-				{
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(new)\\s*(?:(\\.)|(\\?\\.(?!\\s*[[:digit:]])))\\s*(target)\\b(?!\\$)",
-					"captures": {
-						"1": {
-							"name": "keyword.operator.new.taxi"
-						},
-						"2": {
-							"name": "punctuation.accessor.taxi"
-						},
-						"3": {
-							"name": "punctuation.accessor.optional.taxi"
-						},
-						"4": {
-							"name": "support.variable.property.target.taxi"
-						}
-					}
-				},
-				{
-					"match": "(?x) (?:(\\.)|(\\?\\.(?!\\s*[[:digit:]]))) \\s* (?:\n  (?:(constructor|length|prototype|__proto__)\\b(?!\\$|\\s*(<\\s*([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\]))([^=<>]|=[^<]|\\<\\s*([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\]))([^=<>]|=[^<]|\\<\\s*([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\]))([^=<>]|=[^<])*\\>)*\\>)*>\\s*)?\\())\n  |\n  (?:(EPSILON|MAX_SAFE_INTEGER|MAX_VALUE|MIN_SAFE_INTEGER|MIN_VALUE|NEGATIVE_INFINITY|POSITIVE_INFINITY)\\b(?!\\$)))",
-					"captures": {
-						"1": {
-							"name": "punctuation.accessor.taxi"
-						},
-						"2": {
-							"name": "punctuation.accessor.optional.taxi"
-						},
-						"3": {
-							"name": "support.variable.property.taxi"
-						},
-						"4": {
-							"name": "support.constant.taxi"
-						}
-					}
-				},
-				{
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(?:(exports)|(module)(?:(?:(\\.)|(\\?\\.(?!\\s*[[:digit:]])))(exports|id|filename|loaded|parent|children))?)\\b(?!\\$)",
-					"captures": {
-						"1": {
-							"name": "support.type.object.module.taxi"
-						},
-						"2": {
-							"name": "support.type.object.module.taxi"
-						},
-						"3": {
-							"name": "punctuation.accessor.taxi"
-						},
-						"4": {
-							"name": "punctuation.accessor.optional.taxi"
-						},
-						"5": {
-							"name": "support.type.object.module.taxi"
-						}
-					}
-				}
-			]
-		},
-		"identifiers": {
-			"patterns": [
-				{
-					"include": "#object-identifiers"
-				},
-				{
-					"match": "(?x)(?:(?:(\\.)|(\\?\\.(?!\\s*[[:digit:]])))\\s*)?([_$[:alpha:]][_$[:alnum:]]*)(?=\\s*=\\s*(\n  ((async\\s+)?(\n    (function\\s*[(<*]) |\n    (function\\s+) |\n    ([_$[:alpha:]][_$[:alnum:]]*\\s*=>)\n  )) |\n  ((async\\s*)?(\n    ((<\\s*$)|([\\(]\\s*((([\\{\\[]\\s*)?$)|((\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})\\s*((:\\s*\\{?$)|((\\s*([^<>\\(\\)\\{\\}]|\\<([^<>]|\\<[^<>]+\\>)+\\>|\\([^\\(\\)]+\\)|\\{[^\\{\\}]+\\})+\\s*)?=\\s*)))|((\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\])\\s*((:\\s*\\[?$)|((\\s*([^<>\\(\\)\\{\\}]|\\<([^<>]|\\<[^<>]+\\>)+\\>|\\([^\\(\\)]+\\)|\\{[^\\{\\}]+\\})+\\s*)?=\\s*)))))) |\n    # sure shot arrow functions even if => is on new line\n(\n  (<\\s*([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\]))([^=<>]|=[^<]|\\<\\s*([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\]))([^=<>]|=[^<]|\\<\\s*([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\]))([^=<>]|=[^<])*\\>)*\\>)*>\\s*)?\n  [(]\\s*(\\/\\*([^\\*]|(\\*[^\\/]))*\\*\\/\\s*)*\n  (\n    ([)]\\s*:) |                                                                                       # ():\n    ((\\.\\.\\.\\s*)?[_$[:alpha:]][_$[:alnum:]]*\\s*:)                                                                  # [(]param: | [(]...param:\n  )\n) |\n(\n  [<]\\s*[_$[:alpha:]][_$[:alnum:]]*\\s+extends\\s*[^=>]                                                              # < typeparam extends\n) |\n# arrow function possible to detect only with => on same line\n(\n  (<\\s*([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\]))([^=<>]|=[^<]|\\<\\s*([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\]))([^=<>]|=[^<]|\\<\\s*([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\]))([^=<>]|=[^<])*\\>)*\\>)*>\\s*)?                                                                                 # typeparameters\n  \\(\\s*(\\/\\*([^\\*]|(\\*[^\\/]))*\\*\\/\\s*)*(([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\])|(\\.\\.\\.\\s*[_$[:alpha:]]))([^()\\'\\\"\\`]|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\'([^\\'\\\\]|\\\\.)*\\')|(\\\"([^\\\"\\\\]|\\\\.)*\\\")|(\\`([^\\`\\\\]|\\\\.)*\\`))*)?\\)   # parameters\n  (\\s*:\\s*([^<>\\(\\)\\{\\}]|\\<([^<>]|\\<[^<>]+\\>)+\\>|\\([^\\(\\)]+\\)|\\{[^\\{\\}]+\\})+)?                                                                        # return type\n  \\s*=>                                                                                               # arrow operator\n)\n  ))\n))",
-					"captures": {
-						"1": {
-							"name": "punctuation.accessor.taxi"
-						},
-						"2": {
-							"name": "punctuation.accessor.optional.taxi"
-						},
-						"3": {
-							"name": "entity.name.function.taxi"
-						}
-					}
-				},
-				{
-					"match": "(?:(\\.)|(\\?\\.(?!\\s*[[:digit:]])))\\s*(\\#?[[:upper:]][_$[:digit:][:upper:]]*)(?![_$[:alnum:]])",
-					"captures": {
-						"1": {
-							"name": "punctuation.accessor.taxi"
-						},
-						"2": {
-							"name": "punctuation.accessor.optional.taxi"
-						},
-						"3": {
-							"name": "variable.other.constant.property.taxi"
-						}
-					}
-				},
-				{
-					"match": "(?:(\\.)|(\\?\\.(?!\\s*[[:digit:]])))\\s*(\\#?[_$[:alpha:]][_$[:alnum:]]*)",
-					"captures": {
-						"1": {
-							"name": "punctuation.accessor.taxi"
-						},
-						"2": {
-							"name": "punctuation.accessor.optional.taxi"
-						},
-						"3": {
-							"name": "variable.other.property.taxi"
-						}
-					}
-				},
-				{
-					"name": "variable.other.constant.taxi",
-					"match": "([[:upper:]][_$[:digit:][:upper:]]*)(?![_$[:alnum:]])"
-				},
-				{
-					"name": "variable.other.readwrite.taxi",
-					"match": "[_$[:alpha:]][_$[:alnum:]]*"
-				}
-			]
-		},
-		"object-identifiers": {
-			"patterns": [
-				{
-					"name": "support.class.taxi",
-					"match": "([_$[:alpha:]][_$[:alnum:]]*)(?=\\s*\\??\\.\\s*prototype\\b(?!\\$))"
-				},
-				{
-					"match": "(?x)(?:(\\.)|(\\?\\.(?!\\s*[[:digit:]])))\\s*(?:\n  (\\#?[[:upper:]][_$[:digit:][:upper:]]*) |\n  (\\#?[_$[:alpha:]][_$[:alnum:]]*)\n)(?=\\s*\\??\\.\\s*\\#?[_$[:alpha:]][_$[:alnum:]]*)",
-					"captures": {
-						"1": {
-							"name": "punctuation.accessor.taxi"
-						},
-						"2": {
-							"name": "punctuation.accessor.optional.taxi"
-						},
-						"3": {
-							"name": "variable.other.constant.object.property.taxi"
-						},
-						"4": {
-							"name": "variable.other.object.property.taxi"
-						}
-					}
-				},
-				{
-					"match": "(?x)(?:\n  ([[:upper:]][_$[:digit:][:upper:]]*) |\n  ([_$[:alpha:]][_$[:alnum:]]*)\n)(?=\\s*\\??\\.\\s*\\#?[_$[:alpha:]][_$[:alnum:]]*)",
-					"captures": {
-						"1": {
-							"name": "variable.other.constant.object.taxi"
-						},
-						"2": {
-							"name": "variable.other.object.taxi"
-						}
-					}
 				}
 			]
 		},
@@ -2161,273 +1979,14 @@
 		"string": {
 			"patterns": [
 				{
-					"include": "#qstring-single"
-				},
-				{
-					"include": "#qstring-double"
-				},
-				{
 					"include": "#template"
 				}
 			]
 		},
-		"qstring-double": {
-			"name": "string.quoted.double.taxi",
-			"begin": "\"",
-			"beginCaptures": {
-				"0": {
-					"name": "punctuation.definition.string.begin.taxi"
-				}
-			},
-			"end": "(\")|((?:[^\\\\\\n])$)",
-			"endCaptures": {
-				"1": {
-					"name": "punctuation.definition.string.end.taxi"
-				},
-				"2": {
-					"name": "invalid.illegal.newline.taxi"
-				}
-			},
-			"patterns": [
-				{
-					"include": "#string-character-escape"
-				}
-			]
-		},
-		"qstring-single": {
-			"name": "string.quoted.single.taxi",
-			"begin": "'",
-			"beginCaptures": {
-				"0": {
-					"name": "punctuation.definition.string.begin.taxi"
-				}
-			},
-			"end": "(\\')|((?:[^\\\\\\n])$)",
-			"endCaptures": {
-				"1": {
-					"name": "punctuation.definition.string.end.taxi"
-				},
-				"2": {
-					"name": "invalid.illegal.newline.taxi"
-				}
-			},
-			"patterns": [
-				{
-					"include": "#string-character-escape"
-				}
-			]
-		},
+	
 		"string-character-escape": {
 			"name": "constant.character.escape.taxi",
 			"match": "\\\\(x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|u\\{[0-9A-Fa-f]+\\}|[0-2][0-7]{0,2}|3[0-6][0-7]?|37[0-7]?|[4-7][0-7]?|.|$)"
-		},
-		"regex": {
-			"patterns": [
-				{
-					"name": "string.regexp.taxi",
-					"begin": "(?<!\\+\\+|--|})(?<=[=(:,\\[?+!]|^return|[^\\._$[:alnum:]]return|^case|[^\\._$[:alnum:]]case|=>|&&|\\|\\||\\*\\/)\\s*(\\/)(?![\\/*])(?=(?:[^\\/\\\\\\[\\()]|\\\\.|\\[([^\\]\\\\]|\\\\.)+\\]|\\(([^\\)\\\\]|\\\\.)+\\))+\\/([gimsuy]+|(?![\\/\\*])|(?=\\/\\*))(?!\\s*[a-zA-Z0-9_$]))",
-					"beginCaptures": {
-						"1": {
-							"name": "punctuation.definition.string.begin.taxi"
-						}
-					},
-					"end": "(/)([gimsuy]*)",
-					"endCaptures": {
-						"1": {
-							"name": "punctuation.definition.string.end.taxi"
-						},
-						"2": {
-							"name": "keyword.other.taxi"
-						}
-					},
-					"patterns": [
-						{
-							"include": "#regexp"
-						}
-					]
-				},
-				{
-					"name": "string.regexp.taxi",
-					"begin": "((?<![_$[:alnum:])\\]]|\\+\\+|--|}|\\*\\/)|((?<=^return|[^\\._$[:alnum:]]return|^case|[^\\._$[:alnum:]]case))\\s*)\\/(?![\\/*])(?=(?:[^\\/\\\\\\[]|\\\\.|\\[([^\\]\\\\]|\\\\.)+\\])+\\/([gimsuy]+|(?![\\/\\*])|(?=\\/\\*))(?!\\s*[a-zA-Z0-9_$]))",
-					"beginCaptures": {
-						"0": {
-							"name": "punctuation.definition.string.begin.taxi"
-						}
-					},
-					"end": "(/)([gimsuy]*)",
-					"endCaptures": {
-						"1": {
-							"name": "punctuation.definition.string.end.taxi"
-						},
-						"2": {
-							"name": "keyword.other.taxi"
-						}
-					},
-					"patterns": [
-						{
-							"include": "#regexp"
-						}
-					]
-				}
-			]
-		},
-		"regexp": {
-			"patterns": [
-				{
-					"name": "keyword.control.anchor.regexp",
-					"match": "\\\\[bB]|\\^|\\$"
-				},
-				{
-					"match": "\\\\[1-9]\\d*|\\\\k<([a-zA-Z_$][\\w$]*)>",
-					"captures": {
-						"0": {
-							"name": "keyword.other.back-reference.regexp"
-						},
-						"1": {
-							"name": "variable.other.regexp"
-						}
-					}
-				},
-				{
-					"name": "keyword.operator.quantifier.regexp",
-					"match": "[?+*]|\\{(\\d+,\\d+|\\d+,|,\\d+|\\d+)\\}\\??"
-				},
-				{
-					"name": "keyword.operator.or.regexp",
-					"match": "\\|"
-				},
-				{
-					"name": "meta.group.assertion.regexp",
-					"begin": "(\\()((\\?=)|(\\?!)|(\\?<=)|(\\?<!))",
-					"beginCaptures": {
-						"1": {
-							"name": "punctuation.definition.group.regexp"
-						},
-						"2": {
-							"name": "punctuation.definition.group.assertion.regexp"
-						},
-						"3": {
-							"name": "meta.assertion.look-ahead.regexp"
-						},
-						"4": {
-							"name": "meta.assertion.negative-look-ahead.regexp"
-						},
-						"5": {
-							"name": "meta.assertion.look-behind.regexp"
-						},
-						"6": {
-							"name": "meta.assertion.negative-look-behind.regexp"
-						}
-					},
-					"end": "(\\))",
-					"endCaptures": {
-						"1": {
-							"name": "punctuation.definition.group.regexp"
-						}
-					},
-					"patterns": [
-						{
-							"include": "#regexp"
-						}
-					]
-				},
-				{
-					"name": "meta.group.regexp",
-					"begin": "\\((?:(\\?:)|(?:\\?<([a-zA-Z_$][\\w$]*)>))?",
-					"beginCaptures": {
-						"0": {
-							"name": "punctuation.definition.group.regexp"
-						},
-						"1": {
-							"name": "punctuation.definition.group.no-capture.regexp"
-						},
-						"2": {
-							"name": "variable.other.regexp"
-						}
-					},
-					"end": "\\)",
-					"endCaptures": {
-						"0": {
-							"name": "punctuation.definition.group.regexp"
-						}
-					},
-					"patterns": [
-						{
-							"include": "#regexp"
-						}
-					]
-				},
-				{
-					"name": "constant.other.character-class.set.regexp",
-					"begin": "(\\[)(\\^)?",
-					"beginCaptures": {
-						"1": {
-							"name": "punctuation.definition.character-class.regexp"
-						},
-						"2": {
-							"name": "keyword.operator.negation.regexp"
-						}
-					},
-					"end": "(\\])",
-					"endCaptures": {
-						"1": {
-							"name": "punctuation.definition.character-class.regexp"
-						}
-					},
-					"patterns": [
-						{
-							"name": "constant.other.character-class.range.regexp",
-							"match": "(?:.|(\\\\(?:[0-7]{3}|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}))|(\\\\c[A-Z])|(\\\\.))\\-(?:[^\\]\\\\]|(\\\\(?:[0-7]{3}|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}))|(\\\\c[A-Z])|(\\\\.))",
-							"captures": {
-								"1": {
-									"name": "constant.character.numeric.regexp"
-								},
-								"2": {
-									"name": "constant.character.control.regexp"
-								},
-								"3": {
-									"name": "constant.character.escape.backslash.regexp"
-								},
-								"4": {
-									"name": "constant.character.numeric.regexp"
-								},
-								"5": {
-									"name": "constant.character.control.regexp"
-								},
-								"6": {
-									"name": "constant.character.escape.backslash.regexp"
-								}
-							}
-						},
-						{
-							"include": "#regex-character-class"
-						}
-					]
-				},
-				{
-					"include": "#regex-character-class"
-				}
-			]
-		},
-		"regex-character-class": {
-			"patterns": [
-				{
-					"name": "constant.other.character-class.regexp",
-					"match": "\\\\[wWsSdDtrnvf]|\\."
-				},
-				{
-					"name": "constant.character.numeric.regexp",
-					"match": "\\\\([0-7]{3}|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4})"
-				},
-				{
-					"name": "constant.character.control.regexp",
-					"match": "\\\\c[A-Z]"
-				},
-				{
-					"name": "constant.character.escape.backslash.regexp",
-					"match": "\\\\."
-				}
-			]
 		},
 		"comment": {
 			"patterns": [
