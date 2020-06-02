@@ -5,6 +5,8 @@ import arrow.core.getOrHandle
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import lang.taxi.compiler.TokenProcessor
+import lang.taxi.packages.TaxiPackageProject
+import lang.taxi.packages.TaxiPackageSources
 import lang.taxi.sources.SourceCode
 import lang.taxi.sources.SourceLocation
 import lang.taxi.types.*
@@ -106,6 +108,7 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    constructor(input: CharStream, importSources: List<TaxiDocument> = emptyList()) : this(listOf(input), importSources)
    constructor(source: String, sourceName: String = UNKNOWN_SOURCE, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromString(source, sourceName), importSources)
    constructor(file: File, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromPath(file.toPath()), importSources)
+   constructor(project: TaxiPackageSources) : this(project.sources.map { CharStreams.fromString(it.content, it.sourceName) })
 
    companion object {
       const val UNKNOWN_SOURCE = "UnknownSource"
