@@ -6,6 +6,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.*
 
@@ -17,7 +18,7 @@ object PrimitiveTypes {
             PrimitiveType.DECIMAL to listOf(BigDecimal::class.java, Double::class.java, Float::class.java),
             PrimitiveType.LOCAL_DATE to listOf(LocalDate::class.java),
             PrimitiveType.TIME to listOf(LocalTime::class.java),
-            PrimitiveType.DATE_TIME to listOf(Date::class.java),
+            PrimitiveType.DATE_TIME to listOf(LocalDateTime::class.java),
             PrimitiveType.INSTANT to listOf(Instant::class.java)
     )
     private val javaTypeToPrimitive: Map<Class<out Any>, PrimitiveType> = taxiPrimitiveToJavaTypes.flatMap { (primitive, javaTypes) ->
