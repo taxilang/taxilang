@@ -46,45 +46,14 @@ interface Type : Named, Compiled {
    val inheritsFrom: Set<Type>
 
    val allInheritedTypes: Set<Type>
-      get() {
-         return getInheritanceGraph()
-      }
 
    val format:String?
 
    val inheritsFromPrimitive: Boolean
-      get() = basePrimitive != null
 
    val baseEnum: EnumType?
-      get() {
-         val types = (this.allInheritedTypes + this).filterIsInstance<EnumType>()
-         return when {
-            types.isEmpty() -> null
-            types.size == 1 -> types.first()
-            else -> {
-               error("Inheriting from multiple enums isn't supported, and technically shouldn't be possible")
-            }
-         }
-      }
 
    val basePrimitive: PrimitiveType?
-      get() {
-         val primitives = (this.allInheritedTypes + this).filter { it is PrimitiveType || it is EnumType }
-         return when {
-            primitives.isEmpty() -> null
-            primitives.size == 1 -> {
-               val baseType = primitives.first()
-               if (baseType is PrimitiveType) {
-                  baseType
-               } else {
-                  // We can revisit this later if neccessary.
-                  require(baseType is EnumType) { "Expected baseType to be EnumType" }
-                  PrimitiveType.STRING
-               }
-            }
-            else -> error("Type ${this.qualifiedName} inherits from multiple primitives: ${primitives.joinToString { it.qualifiedName }}")
-         }
-      }
 
    fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
       val allExcludedTypes: Set<Type> = typesToExclude + setOf(this)
