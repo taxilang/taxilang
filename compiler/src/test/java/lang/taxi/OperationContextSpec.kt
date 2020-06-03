@@ -13,9 +13,11 @@ import org.spekframework.spek2.style.specification.describe
 object OperationContextSpec : Spek({
    describe("declaring context to operations") {
       val taxi = """
+         type TransactionEventDateTime inherits Instant
          type Trade {
             tradeId : TradeId as String
             tradeDate : TradeDate as Instant
+            orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd HH:mm:ss.SSSSSSS")
          }
          type alias EmployeeCode as String
       """.trimIndent()
@@ -154,6 +156,17 @@ object OperationContextSpec : Spek({
                RelativeValueExpression(AttributePath.from("endDate")),
                emptyList()
             ))
+         }
+
+         it("should compile constraints for base types") {
+            val errors = """
+         $taxi
+         service TradeService {
+           operation getTradesAfter(startDateTime:TransactionEventDateTime):Trade[](
+               TransactionEventDateTime >= startDateTime
+            )
+         }
+         """.compiled()
          }
       }
 
