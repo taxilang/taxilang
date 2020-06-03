@@ -2,6 +2,46 @@ package lang.taxi.types
 
 import arrow.core.Either
 
+class LazyLoadingWrapper(private val type:Type) {
+   private val types by lazy {type.allInheritedTypes + type}
+
+   val allInheritedTypes: Set<Type>
+      by lazy { type.getInheritanceGraph() }
+
+   val inheritsFromPrimitive: Boolean
+           by lazy { basePrimitive != null }
+
+   val baseEnum: EnumType? by lazy {
+      val types = types.filterIsInstance<EnumType>()
+      when {
+         types.isEmpty() -> null
+         types.size == 1 -> types.first()
+         else -> {
+            error("Inheriting from multiple enums isn't supported, and technically shouldn't be possible")
+         }
+      }
+   }
+   val basePrimitive: PrimitiveType?
+           by lazy {
+              val primitives = types.filter { it is PrimitiveType || it is EnumType }
+              when {
+                 primitives.isEmpty() -> null
+                 primitives.size == 1 -> {
+                    val baseType = primitives.first()
+                    if (baseType is PrimitiveType) {
+                       baseType
+                    } else {
+                       // We can revisit this later if neccessary.
+                       require(baseType is EnumType) { "Expected baseType to be EnumType" }
+                       PrimitiveType.STRING
+                    }
+                 }
+                 else -> error("Type ${type.qualifiedName} inherits from multiple primitives: ${primitives.joinToString { type.qualifiedName }}")
+              }
+           }
+
+}
+
 interface Type : Named, Compiled {
    val inheritsFrom: Set<Type>
 
@@ -46,7 +86,7 @@ interface Type : Named, Compiled {
          }
       }
 
-   private fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
+   fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
       val allExcludedTypes: Set<Type> = typesToExclude + setOf(this)
       val aliasType = if (this is TypeAlias) {
          this.aliasType!!

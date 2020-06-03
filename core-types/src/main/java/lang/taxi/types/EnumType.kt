@@ -49,6 +49,11 @@ data class EnumType(override val qualifiedName: String,
       }
    }
 
+   private val wrapper = LazyLoadingWrapper(this)
+   override val allInheritedTypes: Set<Type> by lazy { wrapper.allInheritedTypes }
+   override val baseEnum: EnumType? by lazy { wrapper.baseEnum }
+   override val inheritsFromPrimitive: Boolean by lazy { wrapper.inheritsFromPrimitive }
+
    // Not sure it makes sense to support formats on enums.  Let's revisit if there's a usecase.
    override val format: String? = null
 

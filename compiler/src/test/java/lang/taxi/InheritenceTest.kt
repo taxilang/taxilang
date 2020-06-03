@@ -64,4 +64,31 @@ type ListOfPerson inherits Person[]
       doc.type("BetterCountry").baseEnum!!.qualifiedName.should.equal("Country")
       doc.type("NotAnEnum").baseEnum.should.be.`null`
    }
+
+    @Test
+    fun cacheAliasTypeProperties() {
+        val src = """
+         type alias CcySymbol as String""".trimIndent()
+       val doc = Compiler(src).compile()
+       doc.type("CcySymbol").basePrimitive.should.be.equal(PrimitiveType.STRING)
+       doc.type("CcySymbol").basePrimitive.should.be.equal(PrimitiveType.STRING)
+       doc.type("CcySymbol").allInheritedTypes.should.be.equal(setOf(PrimitiveType.STRING))
+       doc.type("CcySymbol").allInheritedTypes.should.be.equal(setOf(PrimitiveType.STRING))
+       doc.type("CcySymbol").inheritsFromPrimitive.should.be.`true`
+       doc.type("CcySymbol").inheritsFromPrimitive.should.be.`true`
+       doc.type("CcySymbol").baseEnum.should.be.`null`
+       doc.type("CcySymbol").baseEnum.should.be.`null`
+    }
+
+   @Test
+   fun cachePrimitiveTypeProperties() {
+      PrimitiveType.INTEGER.basePrimitive.should.be.equal(PrimitiveType.INTEGER)
+      PrimitiveType.INTEGER.basePrimitive.should.be.equal(PrimitiveType.INTEGER)
+      PrimitiveType.INTEGER.allInheritedTypes.should.be.equal(emptySet())
+      PrimitiveType.INTEGER.allInheritedTypes.should.be.equal(emptySet())
+      PrimitiveType.INTEGER.inheritsFromPrimitive.should.be.`true`
+      PrimitiveType.INTEGER.inheritsFromPrimitive.should.be.`true`
+      PrimitiveType.INTEGER.baseEnum.should.be.`null`
+      PrimitiveType.INTEGER.baseEnum.should.be.`null`
+   }
 }
