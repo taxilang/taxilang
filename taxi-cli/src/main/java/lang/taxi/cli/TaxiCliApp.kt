@@ -53,17 +53,17 @@ class TaxiCli {
                 taxiLogger.debug("Debug logging enabled")
             }
         }
-
     }
 
-    @Bean
-    fun cliOptions(): CliOptions {
-        return CliOptions()
-    }
+   // TODO using bootOptions as a static object until cliOptions is arranged.
+//    @Bean
+//    fun cliOptions(): CliOptions {
+//        return CliOptions()
+//    }
 
     @Bean
-    internal fun jCommander(shellCommands: List<ShellCommand>, cliOptions: CliOptions): JCommander {
-        val jCommander = JCommander(cliOptions)
+    internal fun jCommander(shellCommands: List<ShellCommand>): JCommander {
+        val jCommander = JCommander(bootOptions)
         jCommander.programName = "taxi"
         shellCommands.forEach { command -> jCommander.addCommand(command.name, command) }
         return jCommander
@@ -87,7 +87,7 @@ class TaxiCli {
 
 // Extends CliOptions and makes it less strict,
 // to allow parsing before commands have been wired in
-open internal class BootOptions : CliOptions() {
+internal open class BootOptions : CliOptions() {
     @Parameter(description = "Main options")
     var leftOverArgs = ArrayList<String>()
 

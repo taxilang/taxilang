@@ -23,7 +23,7 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
 
    fun load(): List<SourceCode> {
       val sources = sourceRoot.toFile().walkBottomUp()
-         .filter { it.extension == "taxi" }
+         .filter { it.isFile && it.extension == "taxi" }
          .map {
             val pathRelativeToSourceRoot = sourceRoot.relativize(it.toPath()).toString()
             SourceCode(pathRelativeToSourceRoot, it.readText())

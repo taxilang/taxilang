@@ -26,7 +26,9 @@ class ShellRunner(
             return
         }
 
-        if (env.cliOptions.help) {
+       // TODO using bootOptions as a static object until cliOptions is arranged.
+//        if (env.cliOptions.help) {
+        if (TaxiCli.bootOptions.help) {
             if (StringUtils.isEmpty(commandName)) {
                 commander.usage()
             } else {
