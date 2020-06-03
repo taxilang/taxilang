@@ -184,7 +184,11 @@ data class ObjectType(
    fun field(name: String): Field = allFields.first { it.name == name }
    fun annotation(name: String): Annotation = annotations.first { it.name == name }
    fun fieldsWithType(typeName: QualifiedName): List<Field> {
-      return this.fields.filter { it.type.toQualifiedName() == typeName }
+      return this.fields.filter { applicableQualifiedNames(it.type).contains(typeName) }
+   }
+
+   fun applicableQualifiedNames(type: Type): List<QualifiedName> {
+      return type.inheritsFrom.map { it.toQualifiedName() }.plus(type.toQualifiedName())
    }
 
 }
