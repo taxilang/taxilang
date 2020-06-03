@@ -25,10 +25,22 @@ data class TypeAlias(
    constructor(qualifiedName: String, aliasedType: Type, compilationUnit: CompilationUnit) : this(qualifiedName, TypeAliasDefinition(aliasedType, compilationUnit = compilationUnit))
 
    private val wrapper = LazyLoadingWrapper(this)
-   override val allInheritedTypes: Set<Type> by lazy { wrapper.allInheritedTypes }
-   override val baseEnum: EnumType? by lazy { wrapper.baseEnum }
-   override val inheritsFromPrimitive: Boolean by lazy { wrapper.inheritsFromPrimitive }
-   override val basePrimitive: PrimitiveType? by lazy { wrapper.basePrimitive }
+   override val allInheritedTypes: Set<Type>
+      get() {
+         return if (isDefined) wrapper.allInheritedTypes else emptySet()
+      }
+   override val baseEnum: EnumType?
+      get() {
+         return if (isDefined) wrapper.baseEnum else null
+      }
+   override val inheritsFromPrimitive: Boolean
+      get() {
+         return if (isDefined) wrapper.inheritsFromPrimitive else false
+      }
+   override val basePrimitive: PrimitiveType?
+      get() {
+         return if (isDefined) wrapper.basePrimitive else null
+      }
 
    // Don't support a type alias overriding the format of it's aliased type,
    // as then they're no longer synonyms
