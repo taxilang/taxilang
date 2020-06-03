@@ -74,6 +74,24 @@ data class ObjectType(
       }
    }
 
+   private val wrapper = LazyLoadingWrapper(this)
+   override val allInheritedTypes: Set<Type>
+      get() {
+         return if (isDefined) wrapper.allInheritedTypes else emptySet()
+      }
+   override val baseEnum: EnumType?
+      get() {
+         return if (isDefined) wrapper.baseEnum else null
+      }
+   override val inheritsFromPrimitive: Boolean
+      get() {
+         return if (isDefined) wrapper.inheritsFromPrimitive else false
+      }
+   override val basePrimitive: PrimitiveType?
+      get() {
+         return if (isDefined) wrapper.basePrimitive else null
+      }
+
    override val format: String?
       get() {
          return if (this.definition?.format != null) {

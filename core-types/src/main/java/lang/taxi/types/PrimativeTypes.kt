@@ -6,6 +6,12 @@ import lang.taxi.sources.SourceCode
 enum class VoidType : Type {
    VOID;
 
+   private val wrapper = LazyLoadingWrapper(this)
+   override val allInheritedTypes: Set<Type> by lazy { wrapper.allInheritedTypes }
+   override val baseEnum: EnumType? by lazy { wrapper.baseEnum }
+   override val inheritsFromPrimitive: Boolean by lazy { wrapper.inheritsFromPrimitive }
+   override val basePrimitive: PrimitiveType? by lazy { wrapper.basePrimitive }
+
    override val qualifiedName: String = "lang.taxi.Void"
    override val compilationUnits: List<CompilationUnit> = listOf(CompilationUnit.ofSource(SourceCode("Built in", "// Built-in type")))
    override val inheritsFrom: Set<Type> = emptySet()
@@ -25,6 +31,12 @@ enum class PrimitiveType(val declaration: String, val typeDoc: String, override 
    ANY("Any", "Can be anything.  Try to avoid using 'Any' as it's not descriptive - favour using a strongly typed approach instead"),
    DOUBLE("Double", "Represents a double-precision 64-bit IEEE 754 floating point number."),
    VOID("Void", "Nothing.  Represents the return value of operations that don't return anything.");
+
+   private val wrapper = LazyLoadingWrapper(this)
+   override val allInheritedTypes: Set<Type> by lazy { wrapper.allInheritedTypes }
+   override val baseEnum: EnumType? by lazy { wrapper.baseEnum }
+   override val inheritsFromPrimitive: Boolean by lazy { wrapper.inheritsFromPrimitive }
+   override val basePrimitive: PrimitiveType? by lazy { wrapper.basePrimitive }
 
    override val qualifiedName: String
       get() = "lang.taxi.$declaration"
