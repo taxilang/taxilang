@@ -68,11 +68,12 @@ class BuildCommand(val config: TaxiConfig, val pluginManager: PluginRegistry) : 
     }
 
    private fun generatePom(path: Path) {
-      val model = Model()
-      val writer: Writer = FileWriter("${path}/pom.xml")
-      val mavenConfig = config.project.plugins["kotlin"]?.extract<MavenGeneratorPluginConfig>("mavenConfig")
+      val mavenConfig = config.project.plugins["kotlin"]?.extract<MavenGeneratorPluginConfig?>("mavenConfig")
 
       if (mavenConfig != null) {
+         val model = Model()
+         val writer: Writer = FileWriter("${path}/pom.xml")
+
          model.modelVersion = mavenConfig.modelVersion
          model.groupId = mavenConfig.groupId
          model.artifactId = mavenConfig.artifactId
