@@ -10,3 +10,19 @@
 21:17:57.033 [main] INFO  [DefaultPluginStatusProvider.java:49] org.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
 21:17:57.037 [main] INFO  [DefaultPluginStatusProvider.java:53] org.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
 21:17:57.040 [main] INFO  [DefaultPluginManager.java:122] org.pf4j.DefaultPluginManager - PF4J version 2.4.0 in 'deployment' mode
+21:33:18.895 [main] INFO  [DefaultPluginStatusProvider.java:49] org.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+21:33:18.900 [main] INFO  [DefaultPluginStatusProvider.java:53] org.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+21:33:18.903 [main] INFO  [DefaultPluginManager.java:122] org.pf4j.DefaultPluginManager - PF4J version 2.4.0 in 'deployment' mode
+21:33:19.168 [main] INFO  [BuildCommand.kt:32] lang.taxi.cli.commands.BuildCommand - Running generator @taxi/kotlin
+21:36:17.975 [main] INFO  [DefaultPluginStatusProvider.java:49] org.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+21:36:17.979 [main] INFO  [DefaultPluginStatusProvider.java:53] org.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+21:36:17.983 [main] INFO  [DefaultPluginManager.java:122] org.pf4j.DefaultPluginManager - PF4J version 2.4.0 in 'deployment' mode
+21:36:18.244 [main] INFO  [BuildCommand.kt:32] lang.taxi.cli.commands.BuildCommand - Running generator @taxi/kotlin
+21:36:18.285 [main] INFO  [BuildCommand.kt:34] lang.taxi.cli.commands.BuildCommand - Generator @taxi/kotlin generated 4 files
+21:36:18.303 [main] INFO  [BuildCommand.kt:39] lang.taxi.cli.commands.BuildCommand - Wrote 4 files to /tmp/junit403645566358950515/dist
+21:36:36.022 [main] INFO  [DefaultPluginStatusProvider.java:49] org.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+21:36:36.026 [main] INFO  [DefaultPluginStatusProvider.java:53] org.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+21:36:36.029 [main] INFO  [DefaultPluginManager.java:122] org.pf4j.DefaultPluginManager - PF4J version 2.4.0 in 'deployment' mode
+21:36:36.281 [main] INFO  [BuildCommand.kt:32] lang.taxi.cli.commands.BuildCommand - Running generator @taxi/kotlin
+21:36:36.343 [main] INFO  [BuildCommand.kt:34] lang.taxi.cli.commands.BuildCommand - Generator @taxi/kotlin generated 4 files
+21:36:36.355 [main] INFO  [BuildCommand.kt:39] lang.taxi.cli.commands.BuildCommand - Wrote 4 files to /tmp/junit1183917271188475311/dist

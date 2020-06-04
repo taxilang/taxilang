@@ -4,6 +4,7 @@ import com.google.common.io.Resources
 import lang.taxi.cli.commands.BuildCommand
 import lang.taxi.cli.config.CliTaxiEnvironment
 import lang.taxi.cli.config.TaxiProjectLoader
+import lang.taxi.cli.pluginArtifacts
 import lang.taxi.cli.plugins.PluginRegistry
 import org.apache.commons.io.FileUtils
 import org.junit.Before
@@ -25,13 +26,15 @@ class MavenPomProjectTest {
    }
 
    @Test
-   fun buildMavenProject() {
+   fun generateMavenProject() {
       val project = TaxiProjectLoader().withConfigFileAt(folder.root.toPath().resolve("taxi.conf")).load()
       val build = BuildCommand(PluginRegistry(
-         internalPlugins = listOf(KotlinPlugin)
+         internalPlugins = listOf(KotlinPlugin()),
+         requiredPlugins = project.pluginArtifacts()
       ))
       val environment = CliTaxiEnvironment.forRoot(folder.root.toPath(), project)
       build.execute(environment)
+      TODO("Devrim -- assert that the maven pom has been built correctly")
    }
 
 }

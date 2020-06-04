@@ -1,11 +1,12 @@
 package lang.taxi.cli
 
-import lang.taxi.cli.config.TaxiConfig
+import com.typesafe.config.Config
 import lang.taxi.cli.plugins.ExternalPluginProvider
 import lang.taxi.cli.plugins.InternalPlugin
 import lang.taxi.cli.plugins.PluginRegistry
 import lang.taxi.cli.plugins.RemoteExternalPluginProvider
 import lang.taxi.packages.TaxiPackageProject
+import lang.taxi.plugins.Artifact
 import org.apache.http.impl.client.HttpClientBuilder
 import org.pf4j.DefaultPluginManager
 import org.pf4j.PluginManager
@@ -29,7 +30,7 @@ class PluginConfig {
 
     @Bean
     fun pluginRegistry(externalPluginProviders: List<ExternalPluginProvider>, internalPlugins: List<InternalPlugin>, project: TaxiPackageProject, pluginManager: PluginManager): PluginRegistry {
-        return PluginRegistry(externalPluginProviders, internalPlugins, project.pluginArtifacts, pluginManager)
+        return PluginRegistry(externalPluginProviders, internalPlugins, project.pluginArtifacts(), pluginManager)
     }
 
     @Bean
@@ -43,3 +44,6 @@ class PluginConfig {
     }
 }
 
+fun TaxiPackageProject.pluginArtifacts(): Map<Artifact, Config> {
+   return this.plugins.mapKeys { (key, _) -> Artifact.parse(key) }
+}

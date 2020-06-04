@@ -25,11 +25,26 @@ class KotlinPlugin : InternalPlugin, ModelGenerator, PluginWithConfig<KotlinPlug
 //    override val processors: List<Processor> = generator.processors
 
    override fun generate(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiEnvironment): List<WritableSource> {
+      // @Devrim: when we're mapping these to a WriteableSource, we need to consider
+      // if a maven project will be generated.
+      // If one is, then we should ignore the "outputPath" param here, and generate relative
+      // to maven conventions - src/main/java relative to the pom.xml
+
       val sources = generator.generate(taxi, processors, environment)
          .map { RelativeWriteableSource(Paths.get(config.outputPath), it) }
 
       val mavenGenerated = if (config.maven != null) {
-         MavenPomGeneratorPlugin().generate(taxi, processors, environment)
+         val mavenGenerator = MavenPomGeneratorPlugin()
+
+         // @Devrim :  Here you need to enrich the maven generator's settings
+         // so that the kotlin plugin can pass in all the kotlin things that are
+         // needed in a pom to make it compile:
+         //  - The kotlin build plugin
+         //  - kotlin runtime depenencies.
+         mavenGenerator.setConfig(config.maven!!)
+
+         mavenGenerator.generate(taxi, processors, environment)
+
       } else emptyList()
 
       return sources + mavenGenerated
