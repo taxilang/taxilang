@@ -1,30 +1,28 @@
 package lang.taxi.cli.commands
 
-import com.sun.org.apache.xalan.internal.xsltc.cmdline.Compile
+import io.github.config4k.extract
 import lang.taxi.Compiler
 import lang.taxi.TaxiDocument
 import lang.taxi.cli.config.TaxiConfig
 import lang.taxi.cli.config.TaxiEnvironment
 import lang.taxi.cli.plugins.PluginRegistry
+import lang.taxi.cli.plugins.internal.MavenGeneratorPluginConfig
 import lang.taxi.cli.utils.log
 import lang.taxi.generators.ModelGenerator
 import lang.taxi.generators.Processor
 import lang.taxi.generators.WritableSource
 import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.plugins.Plugin
-import org.antlr.v4.runtime.CharStreams
 import org.apache.commons.io.FileUtils
 import org.apache.maven.model.Dependency
+import org.apache.maven.model.DistributionManagement
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.springframework.stereotype.Component
-import java.io.File
 import java.io.FileWriter
 import java.io.Writer
 import java.nio.charset.Charset
 import java.nio.file.Path
-import java.nio.file.Paths
-import java.util.*
 
 
 @Component
@@ -72,23 +70,29 @@ class BuildCommand(val config: TaxiConfig, val pluginManager: PluginRegistry) : 
    private fun generatePom(path: Path) {
       val model = Model()
       val writer: Writer = FileWriter("${path}/pom.xml")
-      val dependencyList: MutableList<Dependency> = ArrayList<Dependency>()
+      val mavenConfig = config.project.plugins["kotlin"]?.extract<MavenGeneratorPluginConfig>("mavenConfig")
 
-      // TODO tidy up
-      model.modelVersion = "4.0.0"
-      model.groupId = "lang.taxi"
-      model.artifactId = "parent"
-      model.version = "0.5.0-SNAPSHOT"
+      if (mavenConfig != null) {
+         model.modelVersion = mavenConfig.modelVersion
+         model.groupId = mavenConfig.groupId
+         model.artifactId = mavenConfig.artifactId
+         model.version = mavenConfig.version
+         // TODO looks like this is not necessary
+         model.distributionManagement = DistributionManagement()
+         model.distributionManagement.downloadUrl = mavenConfig.distributionManagement.url
 
-      val dep = Dependency()
-      dep.groupId = "lang.taxi"
-      dep.artifactId = "taxi-annotations"
-      dep.version = "0.5.0-SNAPSHOT"
-      dependencyList.add(dep)
+         mavenConfig.dependencies.forEach {
+            val dep = Dependency()
+            dep.groupId = it.getString("groupId")
+            dep.artifactId = it.getString("artifactId")
+            dep.version = it.getString("version")
 
-      model.dependencies = dependencyList
-      MavenXpp3Writer().write(writer, model)
-      writer.close()
+            model.dependencies.add(dep)
+         }
+
+         MavenXpp3Writer().write(writer, model)
+         writer.close()
+      }
    }
 
 }
