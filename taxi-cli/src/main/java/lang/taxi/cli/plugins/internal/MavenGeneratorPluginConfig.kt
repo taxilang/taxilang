@@ -8,9 +8,10 @@ data class MavenGeneratorPluginConfig(
    val artifactId: String,
    val version: String,
    val dependencies: List<Config>,
-   val distributionManagement: DistributionManagement
+   val distributionManagement: DistributionManagement?
 )
 
 data class DistributionManagement(
+   val id: String,
    val url: String
 )

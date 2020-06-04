@@ -15,6 +15,7 @@ import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.plugins.Plugin
 import org.apache.commons.io.FileUtils
 import org.apache.maven.model.Dependency
+import org.apache.maven.model.DeploymentRepository
 import org.apache.maven.model.DistributionManagement
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer
@@ -78,9 +79,13 @@ class BuildCommand(val config: TaxiConfig, val pluginManager: PluginRegistry) : 
          model.groupId = mavenConfig.groupId
          model.artifactId = mavenConfig.artifactId
          model.version = mavenConfig.version
-         // TODO looks like this is not necessary
-         model.distributionManagement = DistributionManagement()
-         model.distributionManagement.downloadUrl = mavenConfig.distributionManagement.url
+
+         if(mavenConfig.distributionManagement != null) {
+            model.distributionManagement = DistributionManagement()
+            model.distributionManagement.snapshotRepository = DeploymentRepository()
+            model.distributionManagement.snapshotRepository.id = mavenConfig.distributionManagement.id
+            model.distributionManagement.snapshotRepository.url = mavenConfig.distributionManagement.url
+         }
 
          mavenConfig.dependencies.forEach {
             val dep = Dependency()
