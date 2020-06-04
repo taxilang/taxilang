@@ -1,5 +1,6 @@
 package lang.taxi.generators.kotlin
 
+import com.nhaarman.mockito_kotlin.mock
 import com.winterbe.expekt.expect
 import lang.taxi.Compiler
 import org.junit.Test
@@ -116,7 +117,7 @@ enum class Gender {
 
     private fun compileAndGenerate(taxi: String): String {
         val taxiDoc = Compiler.forStrings(taxi).compile()
-        val output = KotlinGenerator().generate(taxiDoc, emptyList())
+        val output = KotlinGenerator().generate(taxiDoc, emptyList(), mock {  })
         return output.joinToString("\n") { it.content }
     }
 }

@@ -1,14 +1,17 @@
 package lang.taxi.cli.plugins.internal
 
-import com.typesafe.config.Config
-
 data class MavenGeneratorPluginConfig(
-   val modelVersion: String,
    val groupId: String,
    val artifactId: String,
-   val version: String,
-   val dependencies: List<Config>,
+   val modelVersion: String = "4.0.0",
+   val dependencies: List<Dependency> = emptyList(),
    val distributionManagement: DistributionManagement?
+)
+
+data class Dependency(
+   val groupId: String,
+   val artifactId: String,
+   val version: String
 )
 
 data class DistributionManagement(

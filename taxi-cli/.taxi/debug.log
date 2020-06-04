@@ -1,0 +1,12 @@
+20:57:08.390 [main] INFO  [DefaultPluginStatusProvider.java:49] org.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+20:57:08.396 [main] INFO  [DefaultPluginStatusProvider.java:53] org.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+20:57:08.399 [main] INFO  [DefaultPluginManager.java:122] org.pf4j.DefaultPluginManager - PF4J version 2.4.0 in 'deployment' mode
+20:58:24.814 [main] INFO  [DefaultPluginStatusProvider.java:49] org.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+20:58:24.818 [main] INFO  [DefaultPluginStatusProvider.java:53] org.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+20:58:24.821 [main] INFO  [DefaultPluginManager.java:122] org.pf4j.DefaultPluginManager - PF4J version 2.4.0 in 'deployment' mode
+21:09:42.839 [main] INFO  [DefaultPluginStatusProvider.java:49] org.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+21:09:42.845 [main] INFO  [DefaultPluginStatusProvider.java:53] org.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+21:09:42.848 [main] INFO  [DefaultPluginManager.java:122] org.pf4j.DefaultPluginManager - PF4J version 2.4.0 in 'deployment' mode
+21:17:57.033 [main] INFO  [DefaultPluginStatusProvider.java:49] org.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+21:17:57.037 [main] INFO  [DefaultPluginStatusProvider.java:53] org.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+21:17:57.040 [main] INFO  [DefaultPluginManager.java:122] org.pf4j.DefaultPluginManager - PF4J version 2.4.0 in 'deployment' mode

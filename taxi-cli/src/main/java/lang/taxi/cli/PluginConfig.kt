@@ -5,14 +5,13 @@ import lang.taxi.cli.plugins.ExternalPluginProvider
 import lang.taxi.cli.plugins.InternalPlugin
 import lang.taxi.cli.plugins.PluginRegistry
 import lang.taxi.cli.plugins.RemoteExternalPluginProvider
+import lang.taxi.packages.TaxiPackageProject
 import org.apache.http.impl.client.HttpClientBuilder
 import org.pf4j.DefaultPluginManager
-import org.pf4j.PluginClasspath
 import org.pf4j.PluginManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.net.URI
-import java.nio.file.Path
 
 @Configuration
 class PluginConfig {
@@ -23,21 +22,21 @@ class PluginConfig {
     // application classloader, so need to load pluigins into the app classloader
     // to avoid methodNotFound exceptions)
     @Bean
-    fun pluginManager(config: TaxiConfig): PluginManager {
+    fun pluginManager(config: TaxiPackageProject): PluginManager {
         val pluginDirectory = config.pluginSettings.localCachePath.toPath()
         return DefaultPluginManager(pluginDirectory);
     }
 
     @Bean
-    fun pluginRegistry(externalPluginProviders: List<ExternalPluginProvider>, internalPlugins: List<InternalPlugin>, config: TaxiConfig, pluginManager: PluginManager): PluginRegistry {
-        return PluginRegistry(externalPluginProviders, internalPlugins, config.project.pluginArtifacts, pluginManager)
+    fun pluginRegistry(externalPluginProviders: List<ExternalPluginProvider>, internalPlugins: List<InternalPlugin>, project: TaxiPackageProject, pluginManager: PluginManager): PluginRegistry {
+        return PluginRegistry(externalPluginProviders, internalPlugins, project.pluginArtifacts, pluginManager)
     }
 
     @Bean
-    fun pluginDiscoverer(config: TaxiConfig): ExternalPluginProvider {
-        val repositories = config.pluginSettings.repositories
+    fun pluginDiscoverer(project: TaxiPackageProject): ExternalPluginProvider {
+        val repositories = project.pluginSettings.repositories
                 .map { URI.create(it) }
-        val pluginCache = config.pluginSettings.localCachePath
+        val pluginCache = project.pluginSettings.localCachePath
         return RemoteExternalPluginProvider(
                 repositories, pluginCache, HttpClientBuilder.create().build()
         )

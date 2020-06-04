@@ -24,7 +24,7 @@ class KotlinGenerator : ModelGenerator {
 
     }
 
-    override fun generate(taxi: TaxiDocument, processors: List<Processor>): List<WritableSource> {
+    override fun generate(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiEnvironment): List<WritableSource> {
         // TODO : Shouldn't be assinging a field here - should be passing it through
         this.processorHelper = ProcessorHelper(processors)
         return taxi.types.map { generateType(it) }

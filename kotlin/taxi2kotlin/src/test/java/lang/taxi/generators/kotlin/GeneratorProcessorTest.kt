@@ -1,5 +1,6 @@
 package lang.taxi.generators.kotlin
 
+import com.nhaarman.mockito_kotlin.mock
 import com.winterbe.expekt.expect
 import lang.taxi.Compiler
 import lang.taxi.generators.Processor
@@ -56,7 +57,7 @@ data class Person(val id: Int)
 
     private fun compileAndGenerate(taxi: String, processors: List<Processor> = defaultProcessors): String {
         val taxiDoc = Compiler.forStrings(taxi).compile()
-        val output = KotlinGenerator().generate(taxiDoc,processors)
+        val output = KotlinGenerator().generate(taxiDoc,processors, mock {  })
         return output.joinToString("\n") { it.content }
     }
 }
