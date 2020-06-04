@@ -45,9 +45,6 @@
 					"include": "#function-declaration"
 				},
 				{
-					"include": "#class-declaration"
-				},
-				{
 					"include": "#interface-declaration"
 				},
 				{
@@ -143,9 +140,6 @@
 		"expressionWithoutIdentifiers": {
 			"patterns": [
 				{
-					"include": "#taxix"
-				},
-				{
 					"include": "#string"
 				},
 				{
@@ -153,12 +147,6 @@
 				},
 				{
 					"include": "#function-expression"
-				},
-				{
-					"include": "#class-expression"
-				},
-				{
-					"include": "#cast"
 				},
 				{
 					"include": "#ternary-expression"
@@ -171,9 +159,6 @@
 				},
 				{
 					"include": "#object-literal"
-				},
-				{
-					"include": "#expression-operators"
 				},
 				{
 					"include": "#function-call"
@@ -447,7 +432,7 @@
 					"name": "storage.type.namespace.taxi"
 				}
 			},
-			"end": "(?<=\\})|(?=;|(?:^\\s*(?:abstract|async|class|const|declare|enum|export|function|import|interface|let|module|namespace|return|type|var)\\b))",
+			"end": "(?<=\\})|(?=;|(?:^\\s*(?:declare|enum|export|function|import|interface|let|module|namespace|return|type|var)\\b))",
 			"patterns": [
 				{
 					"include": "#comment"
@@ -481,7 +466,7 @@
 					"name": "storage.type.policy.taxi"
 				}
 			},
-			"end": "(?<=\\})|(?=;|(?:^\\s*(?:abstract|async|class|const|declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation| inherits| policy|against|read|write|case|else)\\b))",
+			"end": "(?<=\\})|(?=;|(?:^\\s*(?:declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation|inherits|policy|against|read|write|case|else)\\b))",
 			"patterns": [
 				{
 					"include": "#comment"
@@ -515,7 +500,7 @@
 					"name": "storage.type.policy.taxi"
 				}
 			},
-			"end": "(?<=\\})|(?=;|(?:^\\s*(?:abstract|async|class|const|declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation| inherits| policy|against|read|write|case|else)\\b))",
+			"end": "(?<=\\})|(?=;|(?:^\\s*(?:declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation|inherits|policy|against|read|write|case|else)\\b))",
 			"patterns": [
 				{
 					"include": "#comment"
@@ -549,7 +534,7 @@
 					"name": "storage.type.policy.taxi"
 				}
 			},
-			"end": "(?<=\\})|(?=;|(?:^\\s*(?:abstract|async|class|const|declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation| inherits| policy|against|read|write|case|else)\\b))",
+			"end": "(?<=\\})|(?=;|(?:^\\s*(?:declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation|inherits|policy|against|read|write|case|else)\\b))",
 			"patterns": [
 				{
 					"include": "#comment"
@@ -583,7 +568,7 @@
 					"name": "storage.type.policy.taxi"
 				}
 			},
-			"end": "(?<=\\})|(?=;|(?:^\\s*(?:abstract|async|class|const|declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation| inherits| policy|against|read|write|case|else)\\b))",
+			"end": "(?<=\\})|(?=;|(?:^\\s*(?:declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation|inherits|policy|against|read|write|case|else)\\b))",
 			"patterns": [
 				{
 					"include": "#comment"
@@ -617,7 +602,7 @@
 					"name": "storage.type.policy.taxi"
 				}
 			},
-			"end": "(?<=\\})|(?=;|(?:^\\s*(?:abstract|async|class|const|declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation| inherits| policy|against|read|write|case|else)\\b))",
+			"end": "(?<=\\})|(?=;|(?:^\\s*(?:declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation|inherits|policy|against|read|write|case|else)\\b))",
 			"patterns": [
 				{
 					"include": "#comment"
@@ -651,7 +636,7 @@
 					"name": "storage.type.policy.taxi"
 				}
 			},
-			"end": "(?<=\\})|(?=;|(?:^\\s*(?:abstract|async|class|const|declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation| inherits| policy|against|read|write|case|else)\\b))",
+			"end": "(?<=\\})|(?=;|(?:^\\s*(?:declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation|inherits|policy|against|read|write|case|else)\\b))",
 			"patterns": [
 				{
 					"include": "#comment"
@@ -685,7 +670,7 @@
 					"name": "storage.type.inherits.taxi"
 				}
 			},
-			"end": "(?<=\\})|(?=;|(?:^\\s*(?:abstract|async|class|const|declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation| inherits| policy|against|read|write|case|else)\\b))",
+			"end": "(?<=\\})|(?=;|(?:^\\s*(?:declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation|inherits|policy|against|read|write|case|else)\\b))",
 			"patterns": [
 				{
 					"include": "#comment"
@@ -722,7 +707,7 @@
 					"name": "entity.name.type.alias.taxi"
 				}
 			},
-			"end": "(?=\\}|;|(?:^\\s*(?:abstract|async|class|const|declare|enum|export|function|import|interface|let|module|namespace|return|type|var)\\b))",
+			"end": "(?=\\}|;|(?:^\\s*(?:declare|enum|export|function|import|interface|let|module|namespace|return|type|var)\\b))",
 			"patterns": [
 				{
 					"include": "#comment"
@@ -737,7 +722,7 @@
 							"name": "keyword.operator.assignment.taxi"
 						}
 					},
-					"end": "(?=\\}|;|(?:^\\s*(?:abstract|async|class|const|declare|enum|export|function|import|interface|let|module|namespace|return|type|var)\\b))",
+					"end": "(?=\\}|;|(?:^\\s*(?:declare|enum|export|function|import|interface|let|module|namespace|return|type|var)\\b))",
 					"patterns": [
 						{
 							"include": "#type"
@@ -881,7 +866,7 @@
 							"name": "keyword.control.from.taxi"
 						}
 					},
-					"patterns": [					]
+					"patterns": []
 				}
 			]
 		},
@@ -952,19 +937,7 @@
 						}
 					}
 				},
-				{
-					"name": "meta.object.member.taxi",
-					"match": "(?x)(?:([_$[:alpha:]][_$[:alnum:]]*)\\s*(?=(\\/\\*([^\\*]|(\\*[^\\/]))*\\*\\/\\s*)*:(\\s*\\/\\*([^\\*]|(\\*[^\\/]))*\\*\\/)*\\s*(\n  ((async\\s+)?(\n    (function\\s*[(<*]) |\n    (function\\s+) |\n    ([_$[:alpha:]][_$[:alnum:]]*\\s*=>)\n  )) |\n  ((async\\s*)?(\n    ((<\\s*$)|([\\(]\\s*((([\\{\\[]\\s*)?$)|((\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})\\s*((:\\s*\\{?$)|((\\s*([^<>\\(\\)\\{\\}]|\\<([^<>]|\\<[^<>]+\\>)+\\>|\\([^\\(\\)]+\\)|\\{[^\\{\\}]+\\})+\\s*)?=\\s*)))|((\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\])\\s*((:\\s*\\[?$)|((\\s*([^<>\\(\\)\\{\\}]|\\<([^<>]|\\<[^<>]+\\>)+\\>|\\([^\\(\\)]+\\)|\\{[^\\{\\}]+\\})+\\s*)?=\\s*)))))) |\n    # sure shot arrow functions even if => is on new line\n(\n  (<\\s*([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\]))([^=<>]|=[^<]|\\<\\s*([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\]))([^=<>]|=[^<]|\\<\\s*([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\]))([^=<>]|=[^<])*\\>)*\\>)*>\\s*)?\n  [(]\\s*(\\/\\*([^\\*]|(\\*[^\\/]))*\\*\\/\\s*)*\n  (\n    ([)]\\s*:) |                                                                                       # ():\n    ((\\.\\.\\.\\s*)?[_$[:alpha:]][_$[:alnum:]]*\\s*:)                                                                  # [(]param: | [(]...param:\n  )\n) |\n(\n  [<]\\s*[_$[:alpha:]][_$[:alnum:]]*\\s+extends\\s*[^=>]                                                              # < typeparam extends\n) |\n# arrow function possible to detect only with => on same line\n(\n  (<\\s*([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\]))([^=<>]|=[^<]|\\<\\s*([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\]))([^=<>]|=[^<]|\\<\\s*([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\]))([^=<>]|=[^<])*\\>)*\\>)*>\\s*)?                                                                                 # typeparameters\n  \\(\\s*(\\/\\*([^\\*]|(\\*[^\\/]))*\\*\\/\\s*)*(([_$[:alpha:]]|(\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})|(\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\])|(\\.\\.\\.\\s*[_$[:alpha:]]))([^()\\'\\\"\\`]|(\\(([^\\(\\)]|(\\([^\\(\\)]*\\)))*\\))|(\\'([^\\'\\\\]|\\\\.)*\\')|(\\\"([^\\\"\\\\]|\\\\.)*\\\")|(\\`([^\\`\\\\]|\\\\.)*\\`))*)?\\)   # parameters\n  (\\s*:\\s*([^<>\\(\\)\\{\\}]|\\<([^<>]|\\<[^<>]+\\>)+\\>|\\([^\\(\\)]+\\)|\\{[^\\{\\}]+\\})+)?                                                                        # return type\n  \\s*=>                                                                                               # arrow operator\n)\n  ))\n)))",
-					"captures": {
-						"0": {
-							"name": "meta.object-literal.key.taxi"
-						},
-						"1": {
-							"name": "entity.name.function.taxi"
-						}
-					}
-				},
-				{
+							{
 					"name": "meta.object.member.taxi",
 					"match": "(?:[_$[:alpha:]][_$[:alnum:]]*)\\s*(?=(\\/\\*([^\\*]|(\\*[^\\/]))*\\*\\/\\s*)*:)",
 					"captures": {
@@ -972,21 +945,6 @@
 							"name": "meta.object-literal.key.taxi"
 						}
 					}
-				},
-				{
-					"name": "meta.object.member.taxi",
-					"begin": "\\.\\.\\.",
-					"beginCaptures": {
-						"0": {
-							"name": "keyword.operator.spread.taxi"
-						}
-					},
-					"end": "(?=,|\\})",
-					"patterns": [
-						{
-							"include": "#expression"
-						}
-					]
 				},
 				{
 					"name": "meta.object.member.taxi",
@@ -1072,7 +1030,6 @@
 				}
 			]
 		},
-	
 		"paren-expression": {
 			"begin": "\\(",
 			"beginCaptures": {
@@ -1091,176 +1048,6 @@
 					"include": "#expression"
 				}
 			]
-		},
-		"cast": {
-			"patterns": [
-				{
-					"include": "#taxix"
-				}
-			]
-		},
-		"expression-operators": {
-			"patterns": [
-				{
-					"name": "keyword.control.flow.taxi",
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(await)(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
-				},
-				{
-					"begin": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(yield)(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))(?=\\s*\\/\\*([^\\*]|(\\*[^\\/]))*\\*\\/\\s*\\*)",
-					"beginCaptures": {
-						"1": {
-							"name": "keyword.control.flow.taxi"
-						}
-					},
-					"end": "\\*",
-					"endCaptures": {
-						"0": {
-							"name": "keyword.generator.asterisk.taxi"
-						}
-					},
-					"patterns": [
-						{
-							"include": "#comment"
-						}
-					]
-				},
-				{
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(yield)(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))(?:\\s*(\\*))?",
-					"captures": {
-						"1": {
-							"name": "keyword.control.flow.taxi"
-						},
-						"2": {
-							"name": "keyword.generator.asterisk.taxi"
-						}
-					}
-				},
-				{
-					"name": "keyword.operator.expression.delete.taxi",
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))delete(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
-				},
-				{
-					"name": "keyword.operator.expression.in.taxi",
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))in(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))(?!\\()"
-				},
-				{
-					"name": "keyword.operator.expression.of.taxi",
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))of(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))(?!\\()"
-				},
-				{
-					"name": "keyword.operator.expression.instanceof.taxi",
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))instanceof(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
-				},
-				{
-					"name": "keyword.operator.new.taxi",
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))new(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
-				},
-				{
-					"include": "#typeof-operator"
-				},
-				{
-					"name": "keyword.operator.expression.void.taxi",
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))Void(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
-				},
-				{
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(as)\\s+(const)(?=\\s*($|[;,:})\\]]))",
-					"captures": {
-						"1": {
-							"name": "keyword.control.as.taxi"
-						},
-						"2": {
-							"name": "storage.modifier.taxi"
-						}
-					}
-				},
-				{
-					"begin": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(as)\\s+",
-					"beginCaptures": {
-						"1": {
-							"name": "keyword.control.as.taxi"
-						}
-					},
-					"end": "(?=^|[;),}\\]:?\\-\\+\\>]|\\|\\||\\&\\&|\\!\\=\\=|$|((?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(as)\\s+)|(\\s+\\<))",
-					"patterns": [
-						{
-							"include": "#type"
-						}
-					]
-				},
-				{
-					"name": "keyword.operator.spread.taxi",
-					"match": "\\.\\.\\."
-				},
-				{
-					"name": "keyword.operator.assignment.compound.taxi",
-					"match": "\\*=|(?<!\\()/=|%=|\\+=|\\-="
-				},
-				{
-					"name": "keyword.operator.comparison.taxi",
-					"match": "===|!==|==|!="
-				},
-				{
-					"name": "keyword.operator.relational.taxi",
-					"match": "<=|>=|<>|<|>"
-				},
-				{
-					"match": "(?<=[_$[:alnum:]])(\\!)\\s*(/)(?![/*])",
-					"captures": {
-						"1": {
-							"name": "keyword.operator.logical.taxi"
-						},
-						"2": {
-							"name": "keyword.operator.arithmetic.taxi"
-						}
-					}
-				},
-				{
-					"name": "keyword.operator.logical.taxi",
-					"match": "\\!|&&|\\|\\||\\?\\?"
-				},
-				{
-					"name": "keyword.operator.assignment.taxi",
-					"match": "\\="
-				},
-				{
-					"name": "keyword.operator.decrement.taxi",
-					"match": "--"
-				},
-				{
-					"name": "keyword.operator.increment.taxi",
-					"match": "\\+\\+"
-				},
-				{
-					"name": "keyword.operator.arithmetic.taxi",
-					"match": "%|\\*|/|-|\\+"
-				},
-				{
-					"begin": "(?<=[_$[:alnum:])\\]])\\s*(?=(\\/\\*([^\\*]|(\\*[^\\/]))*\\*\\/\\s*)+(/)(?![/*]))",
-					"end": "(/)(?!\\*([^\\*]|(\\*[^\\/]))*\\*\\/)",
-					"endCaptures": {
-						"1": {
-							"name": "keyword.operator.arithmetic.taxi"
-						}
-					},
-					"patterns": [
-						{
-							"include": "#comment"
-						}
-					]
-				},
-				{
-					"match": "(?<=[_$[:alnum:])\\]])\\s*(/)(?![/*])",
-					"captures": {
-						"1": {
-							"name": "keyword.operator.arithmetic.taxi"
-						}
-					}
-				}
-			]
-		},
-		"typeof-operator": {
-			"name": "keyword.operator.expression.typeof.taxi",
-			"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))typeof(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
 		},
 		"literal": {
 			"patterns": [
@@ -1284,9 +1071,6 @@
 				},
 				{
 					"include": "#this-literal"
-				},
-				{
-					"include": "#super-literal"
 				}
 			]
 		},
@@ -1332,65 +1116,6 @@
 							"name": "storage.type.numeric.bigint.taxi"
 						}
 					}
-				},
-				{
-					"name": "constant.numeric.octal.taxi",
-					"match": "\\b(?<!\\$)0(?:o|O)?[0-7][0-7_]*(n)?\\b(?!\\$)",
-					"captures": {
-						"1": {
-							"name": "storage.type.numeric.bigint.taxi"
-						}
-					}
-				},
-				{
-					"match": "(?x)\n(?<!\\$)(?:\n  (?:\\b[0-9][0-9_]*(\\.)[0-9][0-9_]*[eE][+-]?[0-9][0-9_]*(n)?\\b)| # 1.1E+3\n  (?:\\b[0-9][0-9_]*(\\.)[eE][+-]?[0-9][0-9_]*(n)?\\b)|             # 1.E+3\n  (?:\\B(\\.)[0-9][0-9_]*[eE][+-]?[0-9][0-9_]*(n)?\\b)|             # .1E+3\n  (?:\\b[0-9][0-9_]*[eE][+-]?[0-9][0-9_]*(n)?\\b)|                 # 1E+3\n  (?:\\b[0-9][0-9_]*(\\.)[0-9][0-9_]*(n)?\\b)|                      # 1.1\n  (?:\\b[0-9][0-9_]*(\\.)(n)?\\B)|                                  # 1.\n  (?:\\B(\\.)[0-9][0-9_]*(n)?\\b)|                                  # .1\n  (?:\\b[0-9][0-9_]*(n)?\\b(?!\\.))                                 # 1\n)(?!\\$)",
-					"captures": {
-						"0": {
-							"name": "constant.numeric.decimal.taxi"
-						},
-						"1": {
-							"name": "meta.delimiter.decimal.period.taxi"
-						},
-						"2": {
-							"name": "storage.type.numeric.bigint.taxi"
-						},
-						"3": {
-							"name": "meta.delimiter.decimal.period.taxi"
-						},
-						"4": {
-							"name": "storage.type.numeric.bigint.taxi"
-						},
-						"5": {
-							"name": "meta.delimiter.decimal.period.taxi"
-						},
-						"6": {
-							"name": "storage.type.numeric.bigint.taxi"
-						},
-						"7": {
-							"name": "storage.type.numeric.bigint.taxi"
-						},
-						"8": {
-							"name": "meta.delimiter.decimal.period.taxi"
-						},
-						"9": {
-							"name": "storage.type.numeric.bigint.taxi"
-						},
-						"10": {
-							"name": "meta.delimiter.decimal.period.taxi"
-						},
-						"11": {
-							"name": "storage.type.numeric.bigint.taxi"
-						},
-						"12": {
-							"name": "meta.delimiter.decimal.period.taxi"
-						},
-						"13": {
-							"name": "storage.type.numeric.bigint.taxi"
-						},
-						"14": {
-							"name": "storage.type.numeric.bigint.taxi"
-						}
-					}
 				}
 			]
 		},
@@ -1413,10 +1138,6 @@
 		"this-literal": {
 			"name": "variable.language.this.taxi",
 			"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))this\\b(?!\\$)"
-		},
-		"super-literal": {
-			"name": "variable.language.super.taxi",
-			"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))super\\b(?!\\$)"
 		},
 		"undefined-literal": {
 			"name": "constant.language.undefined.taxi",
@@ -1543,7 +1264,6 @@
 				}
 			]
 		},
-		
 		"type-parameters": {
 			"name": "meta.type.parameters.taxi",
 			"begin": "(<)",
@@ -1652,9 +1372,6 @@
 					"include": "#type-fn-type-parameters"
 				},
 				{
-					"include": "#type-paren-or-function-parameters"
-				},
-				{
 					"include": "#type-function-return-type"
 				},
 				{
@@ -1729,20 +1446,6 @@
 					"include": "#type-annotation"
 				},
 				{
-					"begin": "\\.\\.\\.",
-					"beginCaptures": {
-						"0": {
-							"name": "keyword.operator.spread.taxi"
-						}
-					},
-					"end": "(?=\\}|;|,|$)|(?<=\\})",
-					"patterns": [
-						{
-							"include": "#type"
-						}
-					]
-				},
-				{
 					"include": "#punctuation-comma"
 				},
 				{
@@ -1787,67 +1490,6 @@
 							"include": "#type"
 						}
 					]
-				}
-			]
-		},
-		"type-paren-or-function-parameters": {
-			"name": "meta.type.paren.cover.taxi",
-			"begin": "\\(",
-			"beginCaptures": {
-				"0": {
-					"name": "meta.brace.round.taxi"
-				}
-			},
-			"end": "\\)",
-			"endCaptures": {
-				"0": {
-					"name": "meta.brace.round.taxi"
-				}
-			},
-			"patterns": [
-				{
-					"match": "(?x)(?:(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(public|private|protected|readonly)\\s+)?(?:(\\.\\.\\.)\\s*)?(?<!=|:)(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(?:(this)|([_$[:alpha:]][_$[:alnum:]]*))\\s*(\\??)(?=\\s*(:\\s*(\n  (<) |\n  ([(]\\s*(\n    ([)]) |\n    (\\.\\.\\.) |\n    ([_$[:alnum:]]+\\s*(\n      ([:,?=])|\n      ([)]\\s*=>)\n    ))\n  ))\n)) |\n(:\\s*(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))Function(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))) |\n(:\\s*((<\\s*$)|([\\(]\\s*((([\\{\\[]\\s*)?$)|((\\{([^\\{\\}]|(\\{[^\\{\\}]*\\}))*\\})\\s*((:\\s*\\{?$)|((\\s*([^<>\\(\\)\\{\\}]|\\<([^<>]|\\<[^<>]+\\>)+\\>|\\([^\\(\\)]+\\)|\\{[^\\{\\}]+\\})+\\s*)?=\\s*)))|((\\[([^\\[\\]]|(\\[[^\\[\\]]*\\]))*\\])\\s*((:\\s*\\[?$)|((\\s*([^<>\\(\\)\\{\\}]|\\<([^<>]|\\<[^<>]+\\>)+\\>|\\([^\\(\\)]+\\)|\\{[^\\{\\}]+\\})+\\s*)?=\\s*))))))))",
-					"captures": {
-						"1": {
-							"name": "storage.modifier.taxi"
-						},
-						"2": {
-							"name": "keyword.operator.rest.taxi"
-						},
-						"3": {
-							"name": "entity.name.function.taxi"
-						},
-						"4": {
-							"name": "keyword.operator.optional.taxi"
-						}
-					}
-				},
-				{
-					"match": "(?x)(?:(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(public|private|protected|readonly)\\s+)?(?:(\\.\\.\\.)\\s*)?(?<!=|:)(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(?:(this)|([_$[:alpha:]][_$[:alnum:]]*))\\s*(\\??)(?=:)",
-					"captures": {
-						"1": {
-							"name": "storage.modifier.taxi"
-						},
-						"2": {
-							"name": "keyword.operator.rest.taxi"
-						},
-						"3": {
-							"name": "variable.parameter.taxi"
-						},
-						"4": {
-							"name": "keyword.operator.optional.taxi"
-						}
-					}
-				},
-				{
-					"include": "#type-annotation"
-				},
-				{
-					"name": "punctuation.separator.parameter.taxi",
-					"match": ","
-				},
-				{
-					"include": "#type"
 				}
 			]
 		},
@@ -1910,9 +1552,6 @@
 		"type-operators": {
 			"patterns": [
 				{
-					"include": "#typeof-operator"
-				},
-				{
 					"begin": "([&|])(?=\\s*\\{)",
 					"beginCaptures": {
 						"0": {
@@ -1948,10 +1587,6 @@
 					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))infer(?=\\s+[_$[:alpha:]])"
 				},
 				{
-					"name": "keyword.operator.expression.awaited.taxi",
-					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))awaited(?=\\s+[_$[:alpha:]])"
-				},
-				{
 					"name": "keyword.operator.expression.import.taxi",
 					"match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))import(?=\\s*\\()"
 				}
@@ -1983,7 +1618,6 @@
 				}
 			]
 		},
-	
 		"string-character-escape": {
 			"name": "constant.character.escape.taxi",
 			"match": "\\\\(x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|u\\{[0-9A-Fa-f]+\\}|[0-2][0-7]{0,2}|3[0-6][0-7]?|37[0-7]?|[4-7][0-7]?|.|$)"
