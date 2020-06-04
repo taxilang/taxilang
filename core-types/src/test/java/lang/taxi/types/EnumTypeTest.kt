@@ -100,6 +100,17 @@ class EnumTypeTest {
       enumType.ofValue("EUR")
    }
 
+   fun lookupWithNulls() {
+      val enumType = enumType(listOf(
+         EnumValue("USD", "US Dollars", "Currency.USD", emptyList(), emptyList()),
+         EnumValue("EUR", "Euro", "Currency.EUR", emptyList(), emptyList())
+      ))
+
+      enumType.has(null).should.be.`false`
+      enumType.hasValue(null).should.be.`false`
+      enumType.hasName(null).should.be.`false`
+   }
+
    private fun enumType(values: List<EnumValue>): EnumType {
       val definition = EnumDefinition(values = values, compilationUnit = CompilationUnit(null, SourceCode("", "")), basePrimitive = PrimitiveType.STRING)
       return EnumType("Currency", definition)
