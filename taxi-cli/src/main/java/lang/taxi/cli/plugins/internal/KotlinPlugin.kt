@@ -31,7 +31,7 @@ class KotlinPlugin : InternalPlugin, ModelGenerator, PluginWithConfig<KotlinPlug
     override val artifact = Artifact.parse("kotlin")
 }
 
-data class KotlinPluginConfig(val outputPath: String = "kotlin")
+data class KotlinPluginConfig(val outputPath: String = "kotlin", val mavenConfig: MavenGeneratorPluginConfig)
 
 data class RelativeWriteableSource(val relativePath: Path, val source: WritableSource) : WritableSource by source {
     override val path: Path
