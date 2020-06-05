@@ -12,6 +12,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
 class MavenPomProjectTest {
 
@@ -34,7 +36,12 @@ class MavenPomProjectTest {
       ))
       val environment = CliTaxiEnvironment.forRoot(folder.root.toPath(), project)
       build.execute(environment)
-      TODO("Devrim -- assert that the maven pom has been built correctly")
+
+      assert(this.folder.root.exists())
+      assert(folder.root.list().contains("taxi.conf"))
+      assert(folder.root.list().contains("src"))
+      assert(folder.root.list().contains("dist"))
+      assert(Files.exists(File("${this.folder.root.absolutePath}/dist/pom.xml").toPath()))
    }
 
 }

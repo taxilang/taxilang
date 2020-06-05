@@ -8,7 +8,6 @@ import lang.taxi.generators.ModelGenerator
 import lang.taxi.generators.Processor
 import lang.taxi.generators.TaxiEnvironment
 import lang.taxi.generators.WritableSource
-import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.plugins.Plugin
 import org.apache.commons.io.FileUtils

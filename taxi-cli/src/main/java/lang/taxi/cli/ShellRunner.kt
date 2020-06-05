@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander
 import lang.taxi.cli.commands.ShellCommand
 import lang.taxi.cli.config.CliTaxiEnvironment
 import lang.taxi.cli.utils.log
+import lang.taxi.generators.TaxiEnvironment
 import org.springframework.boot.CommandLineRunner
 import org.springframework.stereotype.Component
 import org.springframework.util.StringUtils
@@ -11,7 +12,7 @@ import org.springframework.util.StringUtils
 @Component
 class ShellRunner(
         val commander: JCommander,
-        val env:CliTaxiEnvironment
+        val env: TaxiEnvironment
 ) : CommandLineRunner {
 
     override fun run(vararg args: String) {
