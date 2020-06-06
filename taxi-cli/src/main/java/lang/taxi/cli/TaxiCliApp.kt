@@ -14,7 +14,6 @@ import org.springframework.boot.Banner
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation.Bean
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 
@@ -59,11 +58,10 @@ class TaxiCli {
       }
    }
 
-   // TODO using bootOptions as a static object until cliOptions is arranged.
-//    @Bean
-//    fun cliOptions(): CliOptions {
-//        return CliOptions()
-//    }
+   @Bean
+   fun cliOptions(): CliOptions {
+      return CliOptions()
+   }
 
    @Bean
    internal fun jCommander(shellCommands: List<ShellCommand>): JCommander {

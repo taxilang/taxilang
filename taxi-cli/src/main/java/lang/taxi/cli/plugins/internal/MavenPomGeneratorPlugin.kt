@@ -13,7 +13,9 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.codehaus.plexus.util.xml.Xpp3Dom
 
 
-class MavenPomGeneratorPlugin : InternalPlugin, ModelGenerator, PluginWithConfig<MavenGeneratorPluginConfig> {
+class MavenPomGeneratorPlugin(private val configurers: List<MavenModelConfigurer> = emptyList()) : InternalPlugin, ModelGenerator, PluginWithConfig<MavenGeneratorPluginConfig> {
+   constructor(vararg configurers: MavenModelConfigurer) : this(configurers.toList())
+
    override val artifact = Artifact.parse("maven")
    private lateinit var config: MavenGeneratorPluginConfig
 
@@ -46,17 +48,20 @@ class MavenPomGeneratorPlugin : InternalPlugin, ModelGenerator, PluginWithConfig
       }
       model.dependencies.addAll(mavenDependencies)
 
-      model.build = Build()
-      model.build.plugins.add(addExecution(addPlugin("org.jetbrains.kotlin", "kotlin-maven-plugin", "1.3.50")))
-      model.build.plugins.add(addPlugin("org.jetbrains.kotlin", "maven-compiler-plugin", "3.3"))
+      val configuredModel = configurers.fold(model) { acc, configurer -> configurer(acc) }
+
+//
+//      model.build = Build()
+//      model.build.plugins.add(addExecution(addPlugin("org.jetbrains.kotlin", "kotlin-maven-plugin", "1.3.50")))
+//      model.build.plugins.add(addPlugin("org.jetbrains.kotlin", "maven-compiler-plugin", "3.3"))
 
 
-      MavenXpp3Writer().write(writer, model)
+      MavenXpp3Writer().write(writer, configuredModel)
       writer.close()
       return listOf(SimpleWriteableSource(environment.outputPath.resolve("pom.xml"), writer.toString()))
    }
 
-   private fun addPlugin(groupId: String, artifactId: String, version: String) : Plugin {
+   private fun addPlugin(groupId: String, artifactId: String, version: String): Plugin {
       val plugin = Plugin()
       plugin.groupId = groupId
       plugin.artifactId = artifactId
@@ -65,7 +70,7 @@ class MavenPomGeneratorPlugin : InternalPlugin, ModelGenerator, PluginWithConfig
       return plugin
    }
 
-   private fun addExecution(plugin: Plugin) : Plugin {
+   private fun addExecution(plugin: Plugin): Plugin {
       val execution = PluginExecution()
       execution.id = "compile"
       execution.goals.add("compile")
@@ -85,3 +90,12 @@ class MavenPomGeneratorPlugin : InternalPlugin, ModelGenerator, PluginWithConfig
 
 
 }
+
+/**
+ * An interface for other plugins etc to provide more advanced
+ * configuration into the Maven build lifecycle.
+ *
+ * This allows configuration options that are more advanced than
+ * we want to necessarily expose via taxi.conf
+ */
+typealias MavenModelConfigurer = (model: Model) -> Model
