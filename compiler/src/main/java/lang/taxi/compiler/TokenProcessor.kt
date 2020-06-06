@@ -171,7 +171,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
    private fun registerErrorsForInvalidSynonyms(enum: EnumType, enumValueName: String, parserContext: ParserRuleContext): Boolean {
-      return if (!enum.hasValueByName(enumValueName)) {
+      return if (!enum.hasName(enumValueName)) {
          errors.add(CompilationError(parserContext.start, "$enumValueName is not defined on type ${enum.qualifiedName}"))
          false
       } else {
