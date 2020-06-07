@@ -38,38 +38,114 @@ class KotlinGenerator : ModelGenerator {
    }
 
    private fun generateType(type: EnumType): WritableSource? {
-      if (type.values.isEmpty()) {
-         log().info("Not generating enum ${type.qualifiedName} as it has no enum properties")
-         return null
-      }
       val builder = TypeSpec.enumBuilder(type.className())
       type.values.forEach { builder.addEnumConstant(it.name) }
-      return FileSpecWritableSource.from(type.qualifiedName, builder.build())
+      return FileSpecWritableSource.from(type.toQualifiedName(), builder.build())
    }
 
    private fun generateType(type: ObjectType): WritableSource {
       val qualifiedName = type.toQualifiedName()
+      // Handle inherited enums as type aliases
+      if (type.baseEnum != null) {
+         return generateInheritedEnum(type)
+      }
+
+      if (type.allFields.isEmpty()) {
+         return generateScalarType(type)
+      }
+
       val properties = mutableListOf<PropertySpec>()
+      val superclassProperties = mutableListOf<Field>()
       val specBuilder = TypeSpec.classBuilder(type.className())
-         .addModifiers(KModifier.DATA)
+         .addModifiers(KModifier.OPEN)
          .primaryConstructor(
             FunSpec.constructorBuilder().apply {
-               type.fields.forEach { field ->
+               type.allFields.forEach { field ->
                   // Note - because we're building a data class, we need
                   // to create "val xxxx:Foo", which is BOTH a constructor param
                   // and a property.  We add the constructor param here, and collect
                   // the property for later
                   val javaType = getJavaType(field.type)
-                  properties.add(processorHelper
-                     .processField(PropertySpec.builder(field.name, javaType).initializer(field.name), field)
-                     .build())
                   this.addParameter(field.name, javaType)
+                  if (type.fields.contains(field)) {
+                     properties.add(processorHelper
+                        .processField(PropertySpec.builder(field.name, javaType).initializer(field.name), field)
+                        .build())
+                  } else {
+                     // This field is inherited
+                     superclassProperties.add(field)
+                  }
+
+
                }
             }.build()
          )
          .addProperties(properties)
+      if (type.inheritsFrom.size == 1) {
+         val superType = type.inheritsFrom.first()
+         if (willGenerateAsInterface(superType)) {
+            specBuilder.addSuperinterface(getJavaType(superType))
+         } else {
+            specBuilder.superclass(getJavaType(superType))
+            superclassProperties.forEach { superclassProperty ->
+               specBuilder.addSuperclassConstructorParameter("%N = %N", superclassProperty.name, superclassProperty.name)
+            }
+
+         }
+      } else if (type.inheritsFrom.size > 1) {
+         error("Types with multiple inheritence is not supported")
+      }
       val spec = processorHelper.processType(specBuilder, type).build()
-      return FileSpecWritableSource.from(qualifiedName.namespace, spec)
+      return FileSpecWritableSource.from(qualifiedName, spec)
+   }
+
+   private fun willGenerateAsInterface(type: Type): Boolean {
+      // This will likely evolve.  For now, we treat empty types
+      // as interfaces.
+      return type is ObjectType && type.allFields.isEmpty()
+   }
+
+   private fun generateScalarType(type: ObjectType): WritableSource {
+      return if (type.inheritsFromPrimitive) {
+         require(type.inheritsFrom.size <= 1) { "Don't know how to generate a scalar type that inherits from multiple types" }
+         generateScalarAsPrimitiveTypeAlias(type)
+      } else {
+         generateScalarAsInterface(type)
+      }
+   }
+
+   private fun generateScalarAsInterface(type: ObjectType): WritableSource {
+      val name = type.toQualifiedName()
+      val spec = TypeSpec.interfaceBuilder(name.asClassName())
+         .build()
+      return FileSpecWritableSource.from(name, spec)
+   }
+
+   private fun generateScalarAsPrimitiveTypeAlias(type: ObjectType): FileSpecWritableSource {
+      val inheritsFrom = type.inheritsFrom.first()
+
+      val typeAliasQualifiedName = type.toQualifiedName()
+      val typeAliasSpec = TypeAliasSpec
+         .builder(typeAliasQualifiedName.typeName, getJavaType(inheritsFrom))
+         .build()
+
+      val fileSpec = FileSpec.builder(typeAliasQualifiedName.namespace, typeAliasQualifiedName.typeName)
+         .addTypeAlias(typeAliasSpec)
+         .build()
+      return FileSpecWritableSource(typeAliasQualifiedName, fileSpec)
+   }
+
+   private fun generateInheritedEnum(type: ObjectType): WritableSource {
+      val typeAliasQualifiedName = type.toQualifiedName()
+      val baseEnumQualifiedName = type.baseEnum!!
+      val typeAliasSpec = TypeAliasSpec
+         .builder(typeAliasQualifiedName.typeName, getJavaType(baseEnumQualifiedName))
+         .build()
+
+      val fileSpec = FileSpec.builder(typeAliasQualifiedName.namespace, typeAliasQualifiedName.typeName)
+         .addTypeAlias(typeAliasSpec)
+         .build()
+      return FileSpecWritableSource(typeAliasQualifiedName, fileSpec)
    }
 
    private fun generateType(typeAlias: TypeAlias): WritableSource {
@@ -128,13 +204,13 @@ data class FileSpecWritableSource(val qualifiedName: QualifiedName, val spec: Fi
    override val content: String = spec.toString()
 
    companion object {
-      fun from(packageName: String, spec: TypeSpec): FileSpecWritableSource {
-         val qualifiedName = QualifiedName(packageName, spec.name!!)
-         val fileSpec = FileSpec.get(packageName, spec)
+      fun from(qualifiedName: QualifiedName, spec: TypeSpec): FileSpecWritableSource {
+         val fileSpec = FileSpec.get(qualifiedName.namespace, spec)
          return FileSpecWritableSource(qualifiedName, fileSpec)
       }
    }
 }
+
 private fun QualifiedName.toPath(): Path {
    val rawPath = this.toString().split(".").fold(Paths.get("")) { path, part -> path.resolve(part) }
    val pathWithSuffix = rawPath.resolveSibling(rawPath.fileName.toString() + ".kt")
