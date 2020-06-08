@@ -1,6 +1,6 @@
 package lang.taxi.compiler
 
-import com.nhaarman.mockito_kotlin.mock
+import com.nhaarman.mockitokotlin2.mock
 import com.winterbe.expekt.should
 import lang.taxi.TypeSystem
 import org.junit.Assert.*

@@ -1,5 +1,6 @@
 package lang.taxi.packages
 
+import com.typesafe.config.Config
 import lang.taxi.sources.SourceCode
 import java.nio.file.Path
 
@@ -8,8 +9,11 @@ data class TaxiPackageProject(
    val name: String,
    val version: String,
    val sourceRoot: String = ".",
+   val output:String = "dist/",
    val dependencies: Map<String, String> = emptyMap(),
    val repositories: List<Repository> = emptyList(),
+   val plugins: Map<String, Config> = emptyMap(),
+   val pluginSettings: PluginSettings = PluginSettings(),
    val publishToRepository: Repository? = null
 ) {
    val identifier: PackageIdentifier = PackageIdentifier(ProjectName.fromId(name), version)

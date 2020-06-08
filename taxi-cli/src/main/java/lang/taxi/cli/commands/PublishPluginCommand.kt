@@ -1,9 +1,8 @@
 package lang.taxi.cli.commands
 
-import lang.taxi.cli.config.TaxiConfig
-import lang.taxi.cli.config.TaxiEnvironment
 import lang.taxi.cli.plugins.PluginRegistry
 import lang.taxi.cli.plugins.internal.PublishPluginPlugin
+import lang.taxi.generators.TaxiEnvironment
 import org.springframework.stereotype.Component
 
 /**
@@ -11,10 +10,10 @@ import org.springframework.stereotype.Component
  * to make it available for other projects
  */
 @Component
-class PublishPluginCommand(val config: TaxiConfig, val pluginManager: PluginRegistry) : ShellCommand {
+class PublishPluginCommand(val pluginManager: PluginRegistry) : ShellCommand {
     override val name: String = "publish"
 
-    override fun execute(env: TaxiEnvironment) {
+    override fun execute(environment: TaxiEnvironment) {
         val plugin = pluginManager.declaredPlugins
                 .filterIsInstance<PublishPluginPlugin>()
                 .first()

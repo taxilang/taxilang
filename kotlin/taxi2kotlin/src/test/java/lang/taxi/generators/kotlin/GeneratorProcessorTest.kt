@@ -1,5 +1,6 @@
 package lang.taxi.generators.kotlin
 
+import com.nhaarman.mockitokotlin2.mock
 import com.winterbe.expekt.expect
 import lang.taxi.Compiler
 import lang.taxi.generators.Processor
@@ -22,12 +23,13 @@ type Person {
         """.trimIndent()
 
         val output = compileAndGenerate(taxi).trimNewLines()
-        val expected = """
-import kotlin.Int
+        val expected = """import kotlin.Int
 import lang.taxi.generators.kotlin.Marker
 
-data class Person(@Marker val id: Int)
-        """.trimNewLines()
+open class Person(
+  @Marker
+  val id: Int
+)""".trimNewLines()
 
         expect(output).to.equal(expected)
     }
@@ -42,13 +44,13 @@ type Person {
         """.trimIndent()
 
         val output = compileAndGenerate(taxi).trimNewLines()
-        val expected = """
-import kotlin.Int
+        val expected = """import kotlin.Int
 import lang.taxi.generators.kotlin.Marker
 
 @Marker
-data class Person(val id: Int)
-        """.trimNewLines()
+open class Person(
+  val id: Int
+)""".trimNewLines()
 
         expect(output).to.equal(expected)
 
@@ -56,7 +58,7 @@ data class Person(val id: Int)
 
     private fun compileAndGenerate(taxi: String, processors: List<Processor> = defaultProcessors): String {
         val taxiDoc = Compiler.forStrings(taxi).compile()
-        val output = KotlinGenerator().generate(taxiDoc,processors)
+        val output = KotlinGenerator().generate(taxiDoc,processors, mock {  })
         return output.joinToString("\n") { it.content }
     }
 }
