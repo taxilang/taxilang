@@ -22,6 +22,7 @@ data class ObjectTypeDefinition(
    val modifiers: List<Modifier> = emptyList(),
    val inheritsFrom: Set<Type> = emptySet(),
    val format: String? = null,
+   val formattedInstanceOfType: Type? = null,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
@@ -105,6 +106,9 @@ data class ObjectType(
             }
          }
       }
+
+   override val formattedInstanceOfType: Type?
+      get() = this.definition?.formattedInstanceOfType
 
    override val referencedTypes: List<Type>
       get() {

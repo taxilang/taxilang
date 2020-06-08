@@ -554,6 +554,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                emptySet(),
                inheritsFrom = setOf(type),
                format = format,
+               formattedInstanceOfType = type,
                compilationUnit = typeType.toCompilationUnit()
             )
          )

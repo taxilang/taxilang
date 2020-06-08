@@ -16,9 +16,10 @@ enum class VoidType : Type {
    override val compilationUnits: List<CompilationUnit> = listOf(CompilationUnit.ofSource(SourceCode("Built in", "// Built-in type")))
    override val inheritsFrom: Set<Type> = emptySet()
    override val format: String? = null
+   override val formattedInstanceOfType: Type? = null
 }
 
-enum class PrimitiveType(val declaration: String, val typeDoc: String, override val format: String? = null) : Type {
+enum class PrimitiveType(val declaration: String, val typeDoc: String, override val format: String? = null, override val formattedInstanceOfType: Type? = null) : Type {
    BOOLEAN("Boolean", "Represents a value which is either `true` or `false`."),
    STRING("String", "A collection of characters."),
    INTEGER("Int", "A signed integer - ie. a whole number (positive or negative), with no decimal places"),

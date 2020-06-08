@@ -19,6 +19,17 @@ object FormattedTypesSpec : Spek({
             .format.should.equal(PrimitiveType.INSTANT.format)
       }
 
+      it("should expose underlying unformatted type") {
+         """type TransactionEventDateTime inherits Instant
+            type Order {
+                orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd HH:mm:ss.SSSSSSS")
+            }
+         """.trimMargin()
+            .compiled()
+            .objectType("Order").field("orderDateTime").type
+            .formattedInstanceOfType?.qualifiedName.should.equal("TransactionEventDateTime")
+      }
+
       it("should parse formatted types") {
          val src = """
             type TradeDate inherits Instant( @format = 'mm/dd/yyThh:nn:ss.mmmmZ' )

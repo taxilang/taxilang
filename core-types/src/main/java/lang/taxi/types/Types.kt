@@ -55,6 +55,8 @@ interface Type : Named, Compiled {
 
    val basePrimitive: PrimitiveType?
 
+   val formattedInstanceOfType:Type?
+
    fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
       val allExcludedTypes: Set<Type> = typesToExclude + setOf(this)
       val aliasType = if (this is TypeAlias) {
@@ -78,8 +80,6 @@ interface Type : Named, Compiled {
             else emptySet<Type>()
          }.toSet()
    }
-
-
 }
 
 interface TypeDefinition {
