@@ -2,146 +2,234 @@ package lang.taxi.generators.kotlin
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.plusParameter
-import lang.taxi.types.Named
-import lang.taxi.types.QualifiedName
 import lang.taxi.TaxiDocument
-import lang.taxi.types.Type
 import lang.taxi.generators.*
 import lang.taxi.jvm.common.PrimitiveTypes
 import lang.taxi.types.*
+import lang.taxi.utils.log
 import java.nio.file.Path
 import java.nio.file.Paths
 
 
 class KotlinGenerator : ModelGenerator {
-    // TODO : This really shouldn't be a field.
-    private lateinit var processorHelper: ProcessorHelper
+   // TODO : This really shouldn't be a field.
+   private lateinit var processorHelper: ProcessorHelper
 
-    companion object {
-        val kotlinPrimtivies = listOf(String::class, Int::class, Boolean::class)
-                .map { it.javaObjectType.name to it }
-                .toMap()
+   companion object {
+      val kotlinPrimtivies = listOf(String::class, Int::class, Boolean::class)
+         .map { it.javaObjectType.name to it }
+         .toMap()
 
-    }
+   }
 
-    override fun generate(taxi: TaxiDocument, processors: List<Processor>): List<WritableSource> {
-        // TODO : Shouldn't be assinging a field here - should be passing it through
-        this.processorHelper = ProcessorHelper(processors)
-        return taxi.types.map { generateType(it) }
-    }
+   override fun generate(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiEnvironment): List<WritableSource> {
+      // TODO : Shouldn't be assinging a field here - should be passing it through
+      this.processorHelper = ProcessorHelper(processors)
+      return taxi.types.mapNotNull { generateType(it) }
+   }
 
-    private fun generateType(type: Type): WritableSource {
-        return when (type) {
-            is ObjectType -> generateType(type)
-            is TypeAlias -> generateType(type)
-            is EnumType -> generateType(type)
-            else -> TODO("Type ${type.javaClass.name} not yet supported")
-        }
-    }
+   private fun generateType(type: Type): WritableSource? {
+      return when (type) {
+         is ObjectType -> generateType(type)
+         is TypeAlias -> generateType(type)
+         is EnumType -> generateType(type)
+         else -> TODO("Type ${type.javaClass.name} not yet supported")
+      }
+   }
 
-    private fun generateType(type: EnumType): WritableSource {
+   private fun generateType(type: EnumType): WritableSource? {
+      val builder = TypeSpec.enumBuilder(type.className())
+      type.values.forEach { builder.addEnumConstant(it.name) }
+      return FileSpecWritableSource.from(type.toQualifiedName(), builder.build())
+   }
 
-        val builder = TypeSpec.enumBuilder(type.className())
-        type.values.forEach { builder.addEnumConstant(it.name) }
-        return TypeSpecWritableSource(type.qualifiedName, builder.build())
-    }
+   private fun generateType(type: ObjectType): WritableSource {
+      val qualifiedName = type.toQualifiedName()
+      // Handle inherited enums as type aliases
+      if (type.baseEnum != null) {
+         return generateInheritedEnum(type)
+      }
 
-    private fun generateType(type: ObjectType): WritableSource {
-        val qualifiedName = type.toQualifiedName()
-        val properties = mutableListOf<PropertySpec>()
-        val specBuilder = TypeSpec.classBuilder(type.className())
-                .addModifiers(KModifier.DATA)
-                .primaryConstructor(
-                        FunSpec.constructorBuilder().apply {
-                            type.fields.forEach { field ->
-                                // Note - because we're building a data class, we need
-                                // to create "val xxxx:Foo", which is BOTH a constructor param
-                                // and a property.  We add the constructor param here, and collect
-                                // the property for later
-                                val javaType = getJavaType(field.type)
-                                properties.add(processorHelper
-                                        .processField(PropertySpec.builder(field.name, javaType).initializer(field.name), field)
-                                        .build())
-                                this.addParameter(field.name, javaType)
-                            }
-                        }.build()
-                )
-                .addProperties(properties)
-        val spec = processorHelper.processType(specBuilder, type).build()
-        return TypeSpecWritableSource(qualifiedName.namespace, spec)
-    }
+      if (type.allFields.isEmpty()) {
+         return generateScalarType(type)
+      }
 
-    private fun generateType(typeAlias: TypeAlias): WritableSource {
-        val spec = TypeAliasSpec.builder(typeAlias.qualifiedName, getJavaType(typeAlias.aliasType!!)).build()
-        return StringWritableSource(typeAlias.toQualifiedName(), spec.toString())
-    }
+      val properties = mutableListOf<PropertySpec>()
+      val superclassProperties = mutableListOf<Field>()
+      val specBuilder = TypeSpec.classBuilder(type.className())
+         .addModifiers(KModifier.OPEN)
+         .primaryConstructor(
+            FunSpec.constructorBuilder().apply {
+               type.allFields.forEach { field ->
+                  // Note - because we're building a data class, we need
+                  // to create "val xxxx:Foo", which is BOTH a constructor param
+                  // and a property.  We add the constructor param here, and collect
+                  // the property for later
+                  val javaType = getJavaType(field.type)
+                  this.addParameter(field.name, javaType)
+                  if (type.fields.contains(field)) {
+                     properties.add(processorHelper
+                        .processField(PropertySpec.builder(field.name, javaType).initializer(field.name), field)
+                        .build())
+                  } else {
+                     // This field is inherited
+                     superclassProperties.add(field)
+                  }
 
-    private fun getJavaType(type: Type): TypeName {
-        return when (type) {
-            is PrimitiveType -> typeNameOf(PrimitiveTypes.getJavaType(type))
-            is ArrayType -> {
-                val innerType = getJavaType(type.type)
-                List::class.asClassName().plusParameter(innerType)
+
+               }
+            }.build()
+         )
+         .addProperties(properties)
+      if (type.inheritsFrom.size == 1) {
+         val superType = type.inheritsFrom.first()
+         if (willGenerateAsInterface(superType)) {
+            specBuilder.addSuperinterface(getJavaType(superType))
+         } else {
+            specBuilder.superclass(getJavaType(superType))
+            superclassProperties.forEach { superclassProperty ->
+               specBuilder.addSuperclassConstructorParameter("%N = %N", superclassProperty.name, superclassProperty.name)
             }
-            else -> ClassName.bestGuess(type.qualifiedName)
+
+         }
+      } else if (type.inheritsFrom.size > 1) {
+         error("Types with multiple inheritence is not supported")
+      }
+      val spec = processorHelper.processType(specBuilder, type).build()
+      return FileSpecWritableSource.from(qualifiedName, spec)
+   }
+
+   private fun willGenerateAsInterface(type: Type): Boolean {
+      // This will likely evolve.  For now, we treat empty types
+      // as interfaces.
+      return type is ObjectType && type.allFields.isEmpty()
+   }
+
+   private fun generateScalarType(type: ObjectType): WritableSource {
+      return if (type.inheritsFromPrimitive) {
+         require(type.inheritsFrom.size <= 1) { "Don't know how to generate a scalar type that inherits from multiple types" }
+         generateScalarAsPrimitiveTypeAlias(type)
+      } else {
+         generateScalarAsInterface(type)
+      }
+   }
+
+   private fun generateScalarAsInterface(type: ObjectType): WritableSource {
+      val name = type.toQualifiedName()
+      val spec = TypeSpec.interfaceBuilder(name.asClassName())
+         .build()
+      return FileSpecWritableSource.from(name, spec)
+   }
+
+   private fun generateScalarAsPrimitiveTypeAlias(type: ObjectType): FileSpecWritableSource {
+      val inheritsFrom = type.inheritsFrom.first()
+
+      val typeAliasQualifiedName = type.toQualifiedName()
+      val typeAliasSpec = TypeAliasSpec
+         .builder(typeAliasQualifiedName.typeName, getJavaType(inheritsFrom))
+         .build()
+
+      val fileSpec = FileSpec.builder(typeAliasQualifiedName.namespace, typeAliasQualifiedName.typeName)
+         .addTypeAlias(typeAliasSpec)
+         .build()
+      return FileSpecWritableSource(typeAliasQualifiedName, fileSpec)
+   }
+
+   private fun generateInheritedEnum(type: ObjectType): WritableSource {
+      val typeAliasQualifiedName = type.toQualifiedName()
+      val baseEnumQualifiedName = type.baseEnum!!
+      val typeAliasSpec = TypeAliasSpec
+         .builder(typeAliasQualifiedName.typeName, getJavaType(baseEnumQualifiedName))
+         .build()
+
+      val fileSpec = FileSpec.builder(typeAliasQualifiedName.namespace, typeAliasQualifiedName.typeName)
+         .addTypeAlias(typeAliasSpec)
+         .build()
+      return FileSpecWritableSource(typeAliasQualifiedName, fileSpec)
+   }
+
+   private fun generateType(typeAlias: TypeAlias): WritableSource {
+      val typeAliasQualifiedName = typeAlias.toQualifiedName()
+      val typeAliasSpec = TypeAliasSpec
+         .builder(typeAliasQualifiedName.typeName, getJavaType(typeAlias.aliasType!!))
+         .build()
+
+      val fileSpec = FileSpec.builder(typeAliasQualifiedName.namespace, typeAliasQualifiedName.typeName)
+         .addTypeAlias(typeAliasSpec)
+         .build()
+      return FileSpecWritableSource(typeAliasQualifiedName, fileSpec)
+   }
+
+   private fun getJavaType(type: Type): TypeName {
+      return when (type) {
+         is PrimitiveType -> typeNameOf(PrimitiveTypes.getJavaType(type))
+         is ArrayType -> {
+            val innerType = getJavaType(type.type)
+            List::class.asClassName().plusParameter(innerType)
+         }
+         else -> ClassName.bestGuess(type.qualifiedName)
 //            else -> TODO("getJavaType for type ${type.javaClass.name} not yet supported")
-        }
-    }
+      }
+   }
 
-    private fun typeNameOf(javaType: Class<*>): TypeName {
-        return preferKotlinType(javaType.asTypeName())
-    }
+   private fun typeNameOf(javaType: Class<*>): TypeName {
+      return preferKotlinType(javaType.asTypeName())
+   }
 
-    private fun preferKotlinType(typeName: TypeName): TypeName {
-        return if (kotlinPrimtivies.containsKey(typeName.toString())) {
-            kotlinPrimtivies[typeName.toString()]!!.asTypeName()
-        } else {
-            typeName
-        }
-    }
+   private fun preferKotlinType(typeName: TypeName): TypeName {
+      return if (kotlinPrimtivies.containsKey(typeName.toString())) {
+         kotlinPrimtivies[typeName.toString()]!!.asTypeName()
+      } else {
+         typeName
+      }
+   }
 
 
 }
 
 fun Named.className(): ClassName {
-    return this.toQualifiedName().asClassName()
+   return this.toQualifiedName().asClassName()
 }
 
 fun QualifiedName.asClassName(): ClassName {
-    return ClassName.bestGuess(this.toString())
+   return ClassName.bestGuess(this.toString())
 }
 
 data class StringWritableSource(val name: QualifiedName, override val content: String) : WritableSource {
-    override val path: Path = name.toPath()
+   override val path: Path = name.toPath()
 }
 
-data class TypeSpecWritableSource(val packageName: String, val spec: TypeSpec) : WritableSource {
-    private val qualifiedName = QualifiedName(packageName, spec.name!!)
-    override val path: Path = qualifiedName.toPath()
-    override val content: String
-        get() = FileSpec.get(packageName, spec).toString()
+data class FileSpecWritableSource(val qualifiedName: QualifiedName, val spec: FileSpec) : WritableSource {
+   override val path: Path = qualifiedName.toPath()
+   override val content: String = spec.toString()
 
+   companion object {
+      fun from(qualifiedName: QualifiedName, spec: TypeSpec): FileSpecWritableSource {
+         val fileSpec = FileSpec.get(qualifiedName.namespace, spec)
+         return FileSpecWritableSource(qualifiedName, fileSpec)
+      }
+   }
 }
 
 private fun QualifiedName.toPath(): Path {
-    val rawPath = this.toString().split(".").fold(Paths.get("")) { path, part -> path.resolve(part) }
-    val pathWithSuffix = rawPath.resolveSibling(rawPath.fileName.toString() + ".kt")
-    return pathWithSuffix
+   val rawPath = this.toString().split(".").fold(Paths.get("")) { path, part -> path.resolve(part) }
+   val pathWithSuffix = rawPath.resolveSibling(rawPath.fileName.toString() + ".kt")
+   return pathWithSuffix
 }
 
 internal class ProcessorHelper(private val processors: List<Processor>) {
 
-    inline fun <reified KBuilderType> processType(builder: KBuilderType, type: Type): KBuilderType {
-        return this.processors
-                .asSequence()
-                .filterIsInstance<TypeProcessor<KBuilderType>>()
-                .fold(builder) { acc: KBuilderType, fieldProcessor: TypeProcessor<KBuilderType> -> fieldProcessor.process(acc, type) }
-    }
+   inline fun <reified KBuilderType> processType(builder: KBuilderType, type: Type): KBuilderType {
+      return this.processors
+         .asSequence()
+         .filterIsInstance<TypeProcessor<KBuilderType>>()
+         .fold(builder) { acc: KBuilderType, fieldProcessor: TypeProcessor<KBuilderType> -> fieldProcessor.process(acc, type) }
+   }
 
-    inline fun <reified KBuilderType> processField(builder: KBuilderType, field: Field): KBuilderType {
-        return this.processors
-                .asSequence()
-                .filterIsInstance<FieldProcessor<KBuilderType>>()
-                .fold(builder) { acc: KBuilderType, fieldProcessor: FieldProcessor<KBuilderType> -> fieldProcessor.process(acc, field) }
-    }
+   inline fun <reified KBuilderType> processField(builder: KBuilderType, field: Field): KBuilderType {
+      return this.processors
+         .asSequence()
+         .filterIsInstance<FieldProcessor<KBuilderType>>()
+         .fold(builder) { acc: KBuilderType, fieldProcessor: FieldProcessor<KBuilderType> -> fieldProcessor.process(acc, field) }
+   }
 }

@@ -23,10 +23,10 @@ import kotlin.reflect.KClass
  * You should interact with this class, not the plugin manager.
  *
  */
-class PluginRegistry(externalPluginProviders: List<ExternalPluginProvider>,
-                     internalPlugins: List<InternalPlugin>,
-                     requiredPlugins: Map<Artifact, Config>,
-                     val pluginManager: PluginManager) {
+class PluginRegistry(externalPluginProviders: List<ExternalPluginProvider> = emptyList(),
+                     internalPlugins: List<InternalPlugin> = emptyList(),
+                     requiredPlugins: Map<Artifact, Config> = emptyMap(),
+                     val pluginManager: PluginManager = DefaultPluginManager()) {
     val artifacts: Set<Artifact>
     val plugins: List<Plugin>
 
