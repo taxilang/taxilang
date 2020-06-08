@@ -47,6 +47,9 @@ data class TypeAlias(
    override val format: String?
       get() = definition?.aliasType?.format
 
+   override val formattedInstanceOfType: Type?
+      get() = definition?.aliasType?.formattedInstanceOfType
+
    override val inheritsFrom: Set<Type> = definition?.aliasType?.inheritsFrom ?: emptySet()
 
    override val typeDoc: String?
