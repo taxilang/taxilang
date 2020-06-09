@@ -62,6 +62,10 @@ data class EnumType(override val qualifiedName: String,
       get() {
          return if (isDefined) wrapper.inheritsFromPrimitive else false
       }
+   override val definitionHash: String?
+      get() {
+         return if (isDefined) wrapper.definitionHash else null
+      }
 
    // Not sure it makes sense to support formats on enums.  Let's revisit if there's a usecase.
    override val format: String? = null

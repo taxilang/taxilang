@@ -1,6 +1,9 @@
 package lang.taxi.types
 
 import arrow.core.Either
+import com.google.common.hash.Hasher
+import com.google.common.hash.Hashing
+
 
 class LazyLoadingWrapper(private val type:Type) {
    private val types by lazy {type.allInheritedTypes + type}
@@ -40,6 +43,33 @@ class LazyLoadingWrapper(private val type:Type) {
               }
            }
 
+   val definitionHash: String by lazy {
+      val hasher = Hashing.sha256().newHasher()
+      computeTypeHash(hasher, type)
+      hasher.hash().toString().substring(0, 6)
+   }
+
+   private fun computeTypeHash(hasher: Hasher, type: Type) {
+      // include sources
+      type.compilationUnits
+         .sortedBy { it.source.normalizedSourceName }
+         .forEach { hasher.putUnencodedChars(it.source.content) }
+
+      when (type) {
+         is UserType<*, *> -> {
+               // changing referenced type changes hash
+               type.referencedTypes
+                  .sortedBy { it.qualifiedName }
+                  .forEach { computeTypeHash(hasher, it) } // recursive call to go through entire hierarchy
+
+               // changing extensions changes hash
+               type.extensions
+                  .sortedBy { it.compilationUnit.source.normalizedSourceName }
+                  .forEach { hasher.putUnencodedChars(it.compilationUnit.source.content) }
+         }
+      }
+   }
+
 }
 
 interface Type : Named, Compiled {
@@ -56,6 +86,8 @@ interface Type : Named, Compiled {
    val basePrimitive: PrimitiveType?
 
    val formattedInstanceOfType:Type?
+
+   val definitionHash: String?
 
    fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
       val allExcludedTypes: Set<Type> = typesToExclude + setOf(this)

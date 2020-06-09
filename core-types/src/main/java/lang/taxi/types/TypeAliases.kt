@@ -41,6 +41,10 @@ data class TypeAlias(
       get() {
          return if (isDefined) wrapper.basePrimitive else null
       }
+   override val definitionHash: String?
+      get() {
+         return if (isDefined) wrapper.definitionHash else null
+      }
 
    // Don't support a type alias overriding the format of it's aliased type,
    // as then they're no longer synonyms
