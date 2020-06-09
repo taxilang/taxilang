@@ -92,6 +92,10 @@ data class ObjectType(
       get() {
          return if (isDefined) wrapper.basePrimitive else null
       }
+   override val definitionHash: String?
+      get() {
+         return if (isDefined) wrapper.definitionHash else null
+      }
 
    override val format: String?
       get() {

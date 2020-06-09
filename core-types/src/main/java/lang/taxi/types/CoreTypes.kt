@@ -27,6 +27,7 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
     override val baseEnum: EnumType? by lazy { wrapper.baseEnum }
     override val inheritsFromPrimitive: Boolean by lazy { wrapper.inheritsFromPrimitive }
     override val basePrimitive: PrimitiveType? by lazy { wrapper.basePrimitive }
+    override val definitionHash: String? by lazy { wrapper.definitionHash }
 
     private val equality = Equality(this, ArrayType::type)
     override fun equals(other: Any?) = equality.isEqualTo(other)
