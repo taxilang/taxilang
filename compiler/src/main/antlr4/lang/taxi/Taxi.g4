@@ -220,7 +220,7 @@ elementValue
     ;
 
 serviceDeclaration
-    :   annotation* 'service' Identifier serviceBody
+    : typeDoc? annotation* 'service' Identifier serviceBody
     ;
 
 serviceBody
@@ -228,7 +228,7 @@ serviceBody
     ;
 
  serviceOperationDeclaration
-     :   annotation* operationScope? 'operation' operationSignature
+     : typeDoc? annotation* operationScope? 'operation' operationSignature
      ;
 
 operationSignature

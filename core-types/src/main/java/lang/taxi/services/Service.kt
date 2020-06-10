@@ -10,7 +10,14 @@ data class Parameter(override val annotations: List<Annotation>, override val ty
    override val description: String = "param $name"
 }
 
-data class Operation(val name: String, val scope: String? = null, override val annotations: List<Annotation>, val parameters: List<Parameter>, val returnType: Type, override val compilationUnits: List<CompilationUnit>, val contract: OperationContract? = null) : Annotatable, Compiled {
+data class Operation(val name: String,
+                     val scope: String? = null,
+                     override val annotations: List<Annotation>,
+                     val parameters: List<Parameter>,
+                     val returnType: Type,
+                     override val compilationUnits: List<CompilationUnit>,
+                     val contract: OperationContract? = null,
+                     override val typeDoc: String? = null) : Annotatable, Compiled, Documented {
    private val equality = Equality(this, Operation::name, Operation::annotations, Operation::parameters, Operation::returnType, Operation::contract)
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
@@ -18,7 +25,11 @@ data class Operation(val name: String, val scope: String? = null, override val a
 
 }
 
-data class Service(override val qualifiedName: String, val operations: List<Operation>, override val annotations: List<Annotation>, override val compilationUnits: List<CompilationUnit>) : Annotatable, Named, Compiled {
+data class Service(override val qualifiedName: String,
+                   val operations: List<Operation>,
+                   override val annotations: List<Annotation>,
+                   override val compilationUnits: List<CompilationUnit>,
+                   override val typeDoc: String? = null) : Annotatable, Named, Compiled, Documented {
    private val equality = Equality(this, Service::qualifiedName, Service::operations.toSet(), Service::annotations)
 
    override fun equals(other: Any?) = equality.isEqualTo(other)

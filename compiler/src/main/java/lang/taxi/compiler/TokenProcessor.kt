@@ -784,6 +784,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    private fun compileServices() {
       val services = this.tokens.unparsedServices.map { (qualifiedName, serviceTokenPair) ->
          val (namespace, serviceToken) = serviceTokenPair
+         val serviceDoc = parseTypeDoc(serviceToken.typeDoc())
          val methods = serviceToken.serviceBody().serviceOperationDeclaration().map { operationDeclaration ->
             val signature = operationDeclaration.operationSignature()
             parseTypeOrVoid(namespace, signature.operationReturnType()).map { returnType ->
@@ -807,13 +808,22 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                      parameters = operationParameters,
                      compilationUnits = listOf(operationDeclaration.toCompilationUnit()),
                      returnType = returnType,
-                     contract = contract)
+                     contract = contract,
+                     typeDoc = parseTypeDoc(operationDeclaration.typeDoc())
+                  )
                }
 
             }
          }.reportAndRemoveErrors()
             .reportAndRemoveErrorList() // The double chaining seems to work, not a mistake, but not neccessarily readable.
-         Service(qualifiedName, methods, collateAnnotations(serviceToken.annotation()), listOf(serviceToken.toCompilationUnit()))
+
+         Service(
+            qualifiedName,
+            methods,
+            collateAnnotations(serviceToken.annotation()),
+            listOf(serviceToken.toCompilationUnit()),
+            serviceDoc
+         )
       }
       this.services.addAll(services)
    }

@@ -16,8 +16,10 @@ type Person {
     name : PersonName as String
 }
 
+[[ Use PersonService whenever you need a person. ]]
 @RestService
 service PersonService {
+    [[ Your favorite persons ]]
     @Get("/foo/bar")
     operation getPerson(@AnotherAnnotation PersonId, PersonName):Person
 }
@@ -28,12 +30,14 @@ service PersonService {
       expect(personService.annotations).to.have.size(1)
       expect(personService.operations).to.have.size(1)
       expect(personService.operation("getPerson")).to.not.be.`null`
+      expect(personService.typeDoc).to.be.equal("Use PersonService whenever you need a person.")
       val getPersonMethod = personService.operation("getPerson")
       expect(getPersonMethod.annotations).size.equal(1)
       expect(getPersonMethod.parameters).size.equal(2)
       expect(getPersonMethod.parameters.first().type).to.equal(doc.type("PersonId"))
       expect(getPersonMethod.parameters.first().annotations).size(1)
       expect(getPersonMethod.parameters.first().name).to.be.`null`
+      expect(getPersonMethod.typeDoc).to.be.equal("Your favorite persons")
       expect(getPersonMethod.returnType).to.equal(doc.type("Person"))
    }
 
