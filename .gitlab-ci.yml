@@ -26,6 +26,7 @@ cache:
 stages:
    - build
    - release
+   - deploy
 
 # This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
 # Because some enforcer rules might check dependency convergence and class duplications
@@ -93,4 +94,13 @@ release-patch:
    only:
       - develop
    when: manual
+
+build-docker-image:
+   #image: maven:3.6.3-jdk-8
+   stage: deploy
+   script:
+      - docker login registry.gitlab.com -u gitlab-runner -p $DEPLOY_TOKEN_PASSWORD
+      - 'mvn $MAVEN_CLI_OPTS -Dmaven.test.skip=true package docker:build docker:push -Ddocker.registry=registry.gitlab.com'
+   only:
+      - master
 
