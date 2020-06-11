@@ -164,7 +164,10 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             }
             if (valueExtensions.isNotEmpty()) {
                // Bit of a hack here on the compilationUnit.  Not sure what to use
-               enum.addExtension(EnumExtension(valueExtensions, compilationUnit = valueExtensions.first().compilationUnit))
+               valueExtensions
+                  .forEach {
+                     enum.addExtension(EnumExtension(listOf(it), compilationUnit = it.compilationUnit))
+                  }
             }
          }
 
