@@ -1,7 +1,7 @@
 package lang.taxi.types
 
 import com.winterbe.expekt.expect
-import org.junit.Assert.*
+import com.winterbe.expekt.should
 import org.junit.Test
 
 class QualifiedNameParserTest {
@@ -55,6 +55,13 @@ class QualifiedNameParserTest {
       expect(fqn.parameters).to.have.size(1)
       expect(fqn.parameters[0].fullyQualifiedName).to.equal("sample.Foo")
       expect(fqn.typeName).to.equal("Array")
+   }
+
+   @Test
+   fun parsesFieldReference() {
+      val fqn = "com.bank.Leg#Field[notional]".fqn()
+      fqn.fullyQualifiedName.should.equal("com.bank.Leg")
+      fqn.typeName.should.equal("Leg")
    }
 }
 

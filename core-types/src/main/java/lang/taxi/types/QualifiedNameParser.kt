@@ -3,7 +3,6 @@ package lang.taxi.types
 import java.io.IOException
 import java.io.StreamTokenizer
 import java.io.StringReader
-import java.lang.Exception
 
 private data class GenericTypeName(val baseType: String, val params: List<GenericTypeName>) {
    fun toQualifiedName(): QualifiedName {
@@ -19,10 +18,14 @@ private data class GenericTypeName(val baseType: String, val params: List<Generi
 //
 object QualifiedNameParser {
    fun parse(s: String): QualifiedName {
-      val expandedName = convertArrayShorthand(s)
+      // If there's a # reference (like for a field reference), we strip it
+      // out before parsing
+      val sanitized = s.split("#")[0]
+      val expandedName = convertArrayShorthand(sanitized)
       val tokenizer = StreamTokenizer(StringReader(expandedName))
       tokenizer.wordChars('_'.toInt(), '_'.toInt())
-      tokenizer.wordChars('@'.toInt(),'@'.toInt())
+      tokenizer.wordChars('@'.toInt(), '@'.toInt())
+      tokenizer.wordChars('#'.toInt(), '#'.toInt())
       try {
          val genericName = parse(tokenizer, listOf(StreamTokenizer.TT_EOF)) // Parse until the end
          return genericName.toQualifiedName()
