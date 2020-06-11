@@ -3,16 +3,22 @@ package lang.taxi.types
 import arrow.core.Either
 import com.google.common.hash.Hasher
 import com.google.common.hash.Hashing
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 
 class LazyLoadingWrapper(private val type:Type) {
+   companion object {
+      val log: Logger = LoggerFactory.getLogger(LazyLoadingWrapper::class.java)
+   }
+
    private val types by lazy {type.allInheritedTypes + type}
 
    val allInheritedTypes: Set<Type>
       by lazy { type.getInheritanceGraph() }
 
    val inheritsFromPrimitive: Boolean
-           by lazy { basePrimitive != null }
+      by lazy { basePrimitive != null }
 
    val baseEnum: EnumType? by lazy {
       val types = types.filterIsInstance<EnumType>()
@@ -25,23 +31,23 @@ class LazyLoadingWrapper(private val type:Type) {
       }
    }
    val basePrimitive: PrimitiveType?
-           by lazy {
-              val primitives = types.filter { it is PrimitiveType || it is EnumType }
-              when {
-                 primitives.isEmpty() -> null
-                 primitives.size == 1 -> {
-                    val baseType = primitives.first()
-                    if (baseType is PrimitiveType) {
-                       baseType
-                    } else {
-                       // We can revisit this later if neccessary.
-                       require(baseType is EnumType) { "Expected baseType to be EnumType" }
-                       PrimitiveType.STRING
-                    }
-                 }
-                 else -> error("Type ${type.qualifiedName} inherits from multiple primitives: ${primitives.joinToString { type.qualifiedName }}")
-              }
-           }
+      by lazy {
+         val primitives = types.filter { it is PrimitiveType || it is EnumType }
+         when {
+            primitives.isEmpty() -> null
+            primitives.size == 1 -> {
+               val baseType = primitives.first()
+               if (baseType is PrimitiveType) {
+                  baseType
+               } else {
+                  // We can revisit this later if neccessary.
+                  require(baseType is EnumType) { "Expected baseType to be EnumType" }
+                  PrimitiveType.STRING
+               }
+            }
+            else -> error("Type ${type.qualifiedName} inherits from multiple primitives: ${primitives.joinToString { type.qualifiedName }}")
+         }
+      }
 
    val definitionHash: String by lazy {
       val hasher = Hashing.sha256().newHasher()
@@ -50,23 +56,47 @@ class LazyLoadingWrapper(private val type:Type) {
    }
 
    private fun computeTypeHash(hasher: Hasher, type: Type) {
+      detectHashCollision(type.compilationUnits)
+
       // include sources
       type.compilationUnits
-         .sortedBy { it.source.normalizedSourceName }
-         .forEach { hasher.putUnencodedChars(it.source.content) }
+         .sortedBy { it.source.hashCode() }
+         .forEach {
+            hasher.putUnencodedChars(it.source.content)
+         }
 
       when (type) {
          is UserType<*, *> -> {
-               // changing referenced type changes hash
-               type.referencedTypes
-                  .sortedBy { it.qualifiedName }
-                  .forEach { computeTypeHash(hasher, it) } // recursive call to go through entire hierarchy
+            // changing referenced type changes hash
+            type.referencedTypes
+               .sortedBy { it.qualifiedName }
+               .forEach {
+                  computeTypeHash(hasher, it)
+               } // recursive call to go through entire hierarchy
 
-               // changing extensions changes hash
-               type.extensions
-                  .sortedBy { it.compilationUnit.source.normalizedSourceName }
-                  .forEach { hasher.putUnencodedChars(it.compilationUnit.source.content) }
+            detectHashCollision(type.extensions.map { it.compilationUnit })
+
+            // changing extensions changes hash
+            type.extensions
+               .sortedBy { it.compilationUnit.source.hashCode()}// we need to add hashcode here as well
+               .forEach {
+                  hasher.putUnencodedChars(it.compilationUnit.source.content)
+               }
          }
+      }
+   }
+
+   private fun detectHashCollision(compilationUnits: List<CompilationUnit>) {
+      val sourcesWithHashCollision = compilationUnits
+         .groupBy { it.source.hashCode() }
+         .filter { it.value.size > 1 }
+         .flatMap { it.value }
+         .map { it.source.normalizedSourceName }
+
+      if (sourcesWithHashCollision.isNotEmpty()) {
+         log.warn(("There's a hash clash in the underlying sources $sourcesWithHashCollision " +
+            "This will generate indeterminate behaviour that can re-trigger recompilation of sources, lost nights, and torn hair. " +
+            "You shouldn't ignore this!"))
       }
    }
 

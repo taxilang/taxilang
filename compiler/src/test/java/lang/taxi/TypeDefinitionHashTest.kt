@@ -1,7 +1,9 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import org.antlr.v4.runtime.CharStreams
 import org.junit.Test
+import java.util.*
 
 class TypeDefinitionHashTest  {
 
@@ -138,6 +140,86 @@ class TypeDefinitionHashTest  {
       val typeV2 = taxiDocV2.type("Order")
 
       typeV1.definitionHash.should.not.be.equal(typeV2.definitionHash)
+   }
+
+   @Test
+   fun `enum synonyms cause non deterministic hash calculation`() {
+      val commonSrcFile = "/common/Common.taxi"
+      val semaforSrcFile = "/cemafor/Orders.taxi"
+      val hpcSrcFile = "/hpc/Orders.taxi"
+      val cacibSrcFile = "/cacib/Orders.taxi"
+      val commonSrc = """
+         namespace common
+         type OrderId inherits String
+         enum OrderEventType {
+            Open,
+            Filled,
+            Withheld
+         }
+         enum extension OrderEventType {
+            @Indexed
+            Open,
+            @Indexed
+            Filled
+         }
+      """.trimIndent()
+      val cacibSrc = """
+         namespace cacib
+         model Order {
+         }
+      """.trimIndent()
+      val semaforSrc = """
+         import cacib.Order
+         import common.OrderId
+         import common.OrderEventType
+         namespace cemafor
+         model Order inherits cacib.Order {
+            orderId: common.OrderId
+            entryType: common.OrderEventType
+         }
+         enum EntryType {
+            Opened synonym of OrderEventType.Open,
+            WithHeld synonym of OrderEventType.Withheld
+         }
+      """.trimIndent()
+      val hpcSrc = """
+         import cacib.Order
+         import common.OrderId
+         import common.OrderEventType
+         namespace hpc
+         model Order inherits cacib.Order {
+            orderId: common.OrderId
+            entryType: EntryType
+         }
+         enum EntryType {
+            Opened synonym of OrderEventType.Open,
+            WithHeld synonym of OrderEventType.Withheld
+         }
+      """.trimIndent()
+
+      for (i in 1..100) {
+         val inputsV1 = listOf(
+            CharStreams.fromString(commonSrc, commonSrcFile),
+            CharStreams.fromString(semaforSrc, semaforSrcFile),
+            CharStreams.fromString(hpcSrc, hpcSrcFile),
+            CharStreams.fromString(cacibSrc, cacibSrcFile)
+         )
+         Collections.shuffle(inputsV1)
+         val docV1 = Compiler(inputsV1).compile()
+         val inputsV2 = listOf(
+            CharStreams.fromString(commonSrc, commonSrcFile),
+            CharStreams.fromString(semaforSrc, semaforSrcFile),
+            CharStreams.fromString(hpcSrc, hpcSrcFile),
+            CharStreams.fromString(cacibSrc, cacibSrcFile)
+         )
+         Collections.shuffle(inputsV2)
+         val docV2 = Compiler(inputsV2).compile()
+
+         docV1.type("cemafor.Order").definitionHash
+            .should.be.equal(docV2.type("cemafor.Order").definitionHash)
+         docV1.type("hpc.Order").definitionHash
+            .should.be.equal(docV2.type("hpc.Order").definitionHash)
+      }
    }
 
 }
