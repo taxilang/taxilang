@@ -48,13 +48,31 @@ class MavenPomGeneratorPlugin(private val configurers: List<MavenModelConfigurer
       }
       model.dependencies.addAll(mavenDependencies)
 
+      model.repositories = mutableListOf()
+      model.repositories.add(
+         Repository().apply {
+            id = "vyne-snapshots"
+            url = "http://repo.vyne.co/snapshot"
+            snapshots = RepositoryPolicy().apply {
+               enabled = "true"
+            }
+         })
+      model.repositories.add(
+         Repository().apply {
+            id = "bintray-taxi-lang-releases"
+            name = "bintray"
+            url = "https://dl.bintray.com/taxi-lang/releases"
+            snapshots = RepositoryPolicy().apply {
+               enabled = "false"
+            }
+         })
+
       val configuredModel = configurers.fold(model) { acc, configurer -> configurer(acc) }
 
       MavenXpp3Writer().write(writer, configuredModel)
       writer.close()
       return listOf(SimpleWriteableSource(environment.outputPath.resolve("pom.xml"), writer.toString()))
    }
-
 }
 
 /**
