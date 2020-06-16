@@ -222,4 +222,141 @@ class TypeDefinitionHashTest  {
       }
    }
 
+   @Test
+   fun `comment added a type that is referenced should change the hash`() {
+      val commonSrcFile = "/common/Common.taxi"
+      val cemaforSrcFile = "/cemafor/Orders.taxi"
+      val commonSrcV1 = """
+         namespace common
+         type OrderId inherits String
+         enum OrderEventType {
+            Open,
+            Filled
+         }
+      """.trimIndent()
+      val commonSrcV2 = """
+         namespace common
+         type OrderId inherits String
+         enum OrderEventType {
+            Open,
+            Filled
+            // added comment that should change hash
+         }
+      """.trimIndent()
+      val cemaforSrc = """
+         namespace cemafor
+         model Order {
+            orderId: common.OrderId
+            entryType: common.OrderEventType
+         }
+      """.trimIndent()
+
+      for (i in 1..100) {
+         val inputsV1 = listOf(CharStreams.fromString(commonSrcV1, commonSrcFile), CharStreams.fromString(cemaforSrc, cemaforSrcFile))
+         Collections.shuffle(inputsV1)
+         val docV1 = Compiler(inputsV1).compile()
+         val inputsV2 = listOf(CharStreams.fromString(commonSrcV2, commonSrcFile), CharStreams.fromString(cemaforSrc, cemaforSrcFile))
+         Collections.shuffle(inputsV2)
+         val docV2 = Compiler(inputsV2).compile()
+         docV1.type("cemafor.Order").definitionHash
+            .should.not.be.equal(docV2.type("cemafor.Order").definitionHash)
+      }
+   }
+
+   @Test
+   fun `comment added to a type that is not reference should not change the hash`() {
+      val commonSrcFile = "/common/Common.taxi"
+      val cemaforSrcFile = "/cemafor/Orders.taxi"
+      val commonSrcV1 = """
+         namespace common
+         type OrderId inherits String
+         enum OrderEventType {
+            Open
+         }
+         model FixedIncomeCrossCurrencySwaps {
+            id: OrderId
+            eventType: OrderEventType
+         }
+      """.trimIndent()
+      val commonSrcV2 = """
+         namespace common
+         type OrderId inherits String
+         enum OrderEventType {
+            Open
+         }
+         model FixedIncomeCrossCurrencySwaps {
+            id: OrderId
+            // commented out in v2 to prove it does not affect hashing
+            //eventType: OrderEventType
+         }
+      """.trimIndent()
+      val cemaforSrc = """
+         namespace cemafor
+         model Order {
+            orderId: common.OrderId
+            entryType: common.OrderEventType
+         }
+      """.trimIndent()
+
+      for (i in 1..100) {
+         val inputsV1 = listOf(CharStreams.fromString(commonSrcV1, commonSrcFile), CharStreams.fromString(cemaforSrc, cemaforSrcFile))
+         Collections.shuffle(inputsV1)
+         val docV1 = Compiler(inputsV1).compile()
+         val inputsV2 = listOf(CharStreams.fromString(commonSrcV2, commonSrcFile), CharStreams.fromString(cemaforSrc, cemaforSrcFile))
+         Collections.shuffle(inputsV2)
+         val docV2 = Compiler(inputsV2).compile()
+         docV1.type("cemafor.Order").definitionHash
+            .should.be.equal(docV2.type("cemafor.Order").definitionHash)
+      }
+   }
+
+   @Test
+   fun `adding new service to the schema should not change the hash`() {
+      val commonSrcFile = "/common/Common.taxi"
+      val cemaforSrcFile = "/cemafor/Orders.taxi"
+      val cemaforServiceSrcFile = "/cemafor/service"
+      val commonSrcV1 = """
+         namespace common
+         type OrderId inherits String
+         enum OrderEventType {
+            Open,
+            Filled
+         }
+      """.trimIndent()
+      val cemaforSrc = """
+         namespace cemafor
+         model Order {
+            orderId: common.OrderId
+            entryType: common.OrderEventType
+         }
+      """.trimIndent()
+      val cemaforServiceSrc = """
+         import common.OrderId
+         namespace cemafor
+
+         service UserService {
+            @HttpOperation(method = "GET" , url = "/client/orderId/{common.OrderId}")
+            operation getOrderById( @PathVariable(name = "userId") userId : common.OrderId) : Order
+         }
+      """.trimIndent()
+
+      for (i in 1..100) {
+         val inputsV1 = listOf(
+            CharStreams.fromString(commonSrcV1, commonSrcFile),
+            CharStreams.fromString(cemaforSrc, cemaforSrcFile))
+         Collections.shuffle(inputsV1)
+         val docV1 = Compiler(inputsV1).compile()
+
+         val inputsV2 = listOf(
+            CharStreams.fromString(commonSrcV1, commonSrcFile),
+            CharStreams.fromString(cemaforSrc, cemaforSrcFile),
+            CharStreams.fromString(cemaforServiceSrc, cemaforServiceSrcFile))
+         Collections.shuffle(inputsV2)
+         val docV2 = Compiler(inputsV2).compile()
+
+         docV1.type("cemafor.Order").definitionHash
+            .should.be.equal(docV2.type("cemafor.Order").definitionHash)
+      }
+   }
+
 }
