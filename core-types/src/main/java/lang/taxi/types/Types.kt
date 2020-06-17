@@ -51,6 +51,7 @@ class LazyLoadingWrapper(private val type:Type) {
 
    val definitionHash: String by lazy {
       val hasher = Hashing.sha256().newHasher()
+      //println("============= ${this.type.qualifiedName} hash debug ==============")// comments kept on purpose, useful when debugging issues
       computeTypeHash(hasher, type)
       hasher.hash().toString().substring(0, 6)
    }
@@ -60,9 +61,10 @@ class LazyLoadingWrapper(private val type:Type) {
 
       // include sources
       type.compilationUnits
-         .sortedBy { it.source.hashCode() }
+         .sortedBy { it.source.content.hashCode() }
          .forEach {
             hasher.putUnencodedChars(it.source.content)
+            //println("CompilationUnit:(hc:${it.source.content.hashCode()}) ${it.source.normalizedSourceName} #${it.source.hashCode()} -> ${type.qualifiedName}: ${it.source.content}")
          }
 
       when (type) {
@@ -71,16 +73,18 @@ class LazyLoadingWrapper(private val type:Type) {
             type.referencedTypes
                .sortedBy { it.qualifiedName }
                .forEach {
+                  //println("Reference: ${type.qualifiedName} ---> ${it.qualifiedName}")
                   computeTypeHash(hasher, it)
-               } // recursive call to go through entire hierarchy
+               }
 
             detectHashCollision(type.extensions.map { it.compilationUnit })
 
             // changing extensions changes hash
             type.extensions
-               .sortedBy { it.compilationUnit.source.hashCode()}// we need to add hashcode here as well
+               .sortedBy { it.compilationUnit.source.content.hashCode()}
                .forEach {
                   hasher.putUnencodedChars(it.compilationUnit.source.content)
+                  //println("Extension:(hc:${it.compilationUnit.source.content.hashCode()}) ${it.compilationUnit.source.normalizedSourceName} #${it.compilationUnit.source.hashCode()}: ${it.compilationUnit.source.content}")
                }
          }
       }

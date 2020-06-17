@@ -1,8 +1,6 @@
 package lang.taxi.compiler
 
 import arrow.core.*
-import com.google.common.hash.HashFunction
-import com.google.common.hash.Hasher
 import com.google.common.hash.Hashing
 import lang.taxi.*
 import lang.taxi.services.operations.constraints.ConstraintValidator
@@ -558,7 +556,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                inheritsFrom = setOf(type),
                format = format,
                formattedInstanceOfType = type,
-               compilationUnit = typeType.toCompilationUnit()
+               compilationUnit = CompilationUnit.generatedFor(type)
             )
          )
          typeSystem.register(formattedType)
