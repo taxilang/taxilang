@@ -2,8 +2,6 @@ package lang.taxi.types
 
 import lang.taxi.sources.SourceCode
 import lang.taxi.sources.SourceLocation
-import java.lang.Exception
-import java.net.URI
 
 typealias ErrorMessage = String
 
@@ -29,8 +27,8 @@ data class CompilationUnit(val ruleContext: Any?,
          return CompilationUnit(null, source)
       }
 
-//        fun <T> of(typeRule: T): CompilationUnit<T> {
-//            return CompilationUnit(typeRule, typeRule.source())
-//        }
+      fun generatedFor(type: Type): CompilationUnit {
+         return CompilationUnit(null, SourceCode("Generated for ${type.qualifiedName}", ""))
+      }
    }
 }
