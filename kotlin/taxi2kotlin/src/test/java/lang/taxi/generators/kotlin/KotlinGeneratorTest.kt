@@ -1,6 +1,5 @@
 package lang.taxi.generators.kotlin
 
-import com.nhaarman.mockitokotlin2.mock
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
 import lang.taxi.Compiler
@@ -27,7 +26,9 @@ type Person {
 import kotlin.Boolean
 import kotlin.Int
 import kotlin.String
+import lang.taxi.annotations.DataType
 
+@DataType("Person")
 open class Person(
   val firstName: String,
   val lastName: String,
@@ -51,8 +52,12 @@ namespace vyne {
 }
         """.trimIndent()
       val output = compileAndGenerate(taxi).trimNewLines()
-      val expected = """package vyne
+      val expected = """
+package vyne
 
+import lang.taxi.annotations.DataType
+
+@DataType("vyne.Person")
 open class Person(
   val firstName: FirstName,
   val lastName: LastName,
@@ -63,25 +68,33 @@ open class Person(
 package vyne
 
 import kotlin.String
+import lang.taxi.annotations.DataType
 
+@DataType("vyne.FirstName")
 typealias FirstName = String
 
 package vyne
 
 import kotlin.String
+import lang.taxi.annotations.DataType
 
+@DataType("vyne.LastName")
 typealias LastName = String
 
 package vyne
 
 import kotlin.Int
+import lang.taxi.annotations.DataType
 
+@DataType("vyne.Age")
 typealias Age = Int
 
 package vyne
 
 import kotlin.Boolean
+import lang.taxi.annotations.DataType
 
+@DataType("vyne.IsAlive")
 typealias IsAlive = Boolean
 """.trimNewLines()
       expect(output).to.equal(expected)
@@ -103,7 +116,9 @@ package vyne
 
 import kotlin.String
 import kotlin.collections.List
+import lang.taxi.annotations.DataType
 
+@DataType("vyne.Person")
 open class Person(
   val firstName: String,
   val friends: List<Person>
@@ -122,7 +137,11 @@ enum Gender {
     FEMALE
 }""".trimIndent()
       val output = compileAndGenerate(taxi).trimNewLines()
-      val expected = """open class Person(
+      val expected = """
+import lang.taxi.annotations.DataType
+
+@DataType("Person")
+open class Person(
   val gender: Gender
 )
 
@@ -142,7 +161,8 @@ enum Direction { Buy, Sell }
 type BankDirection inherits Direction
 """
       val output = compileAndGenerate(taxi).trimNewLines()
-      val expected = """enum class Direction {
+      val expected = """
+enum class Direction {
   Buy,
 
   Sell
@@ -168,6 +188,9 @@ typealias BankDirection = Direction""".trimNewLines()
 
          typealias FirstName = Name
 
+         import lang.taxi.annotations.DataType
+
+         @DataType("GivenName")
          typealias GivenName = FirstName
       """.trimIndent().trimNewLines()
 
@@ -181,6 +204,9 @@ typealias BankDirection = Direction""".trimNewLines()
       """.trimIndent()
       val output = compileAndGenerate(taxi).trimNewLines()
       val expected = """
+         import lang.taxi.annotations.DataType
+
+         @DataType("Person")
          interface Person
       """.trimIndent().trimNewLines()
 
@@ -197,19 +223,30 @@ type Money inherits Instrument {
          }
       """.trimIndent()
       val output = compileAndGenerate(taxi).trimNewLines()
-      val expected = """interface Instrument
+      val expected = """
+import lang.taxi.annotations.DataType
 
+@DataType("Instrument")
+interface Instrument
+
+import lang.taxi.annotations.DataType
+
+@DataType("Money")
 open class Money(
   val currency: CurrencySymbol,
   val amount: MoneyAmount
 ) : Instrument
 
 import kotlin.String
+import lang.taxi.annotations.DataType
 
+@DataType("CurrencySymbol")
 typealias CurrencySymbol = String
 
 import java.math.BigDecimal
+import lang.taxi.annotations.DataType
 
+@DataType("MoneyAmount")
 typealias MoneyAmount = BigDecimal
       """.trimIndent().trimNewLines()
       output.should.equal(expected)
@@ -224,29 +261,38 @@ typealias MoneyAmount = BigDecimal
          type Notional inherits Money
       """.trimIndent()
       val output = compileAndGenerate(taxi).trimNewLines()
-      val expected = """open class Money(
+      val expected = """
+import lang.taxi.annotations.DataType
+
+@DataType("Money")
+open class Money(
   val currency: CurrencySymbol,
   val amount: MoneyAmount
 )
 
+import lang.taxi.annotations.DataType
+
+@DataType("Notional")
 open class Notional(
   currency: CurrencySymbol,
   amount: MoneyAmount
 ) : Money(currency = currency, amount = amount)
 
 import kotlin.String
+import lang.taxi.annotations.DataType
 
+@DataType("CurrencySymbol")
 typealias CurrencySymbol = String
 
 import java.math.BigDecimal
+import lang.taxi.annotations.DataType
 
+@DataType("MoneyAmount")
 typealias MoneyAmount = BigDecimal
       """.trimIndent().trimNewLines()
 
       output.should.equal(expected)
    }
-
-
 
    private fun compileAndGenerate(taxi: String): String {
       val taxiDoc = Compiler.forStrings(taxi).compile()

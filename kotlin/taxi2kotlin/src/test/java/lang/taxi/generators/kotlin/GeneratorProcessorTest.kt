@@ -23,9 +23,12 @@ type Person {
         """.trimIndent()
 
         val output = compileAndGenerate(taxi).trimNewLines()
-        val expected = """import kotlin.Int
+        val expected = """
+import kotlin.Int
+import lang.taxi.annotations.DataType
 import lang.taxi.generators.kotlin.Marker
 
+@DataType("Person")
 open class Person(
   @Marker
   val id: Int
@@ -44,9 +47,12 @@ type Person {
         """.trimIndent()
 
         val output = compileAndGenerate(taxi).trimNewLines()
-        val expected = """import kotlin.Int
+        val expected = """
+import kotlin.Int
+import lang.taxi.annotations.DataType
 import lang.taxi.generators.kotlin.Marker
 
+@DataType("Person")
 @Marker
 open class Person(
   val id: Int
