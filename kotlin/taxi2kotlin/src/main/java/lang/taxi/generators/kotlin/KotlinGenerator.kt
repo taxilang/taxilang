@@ -3,6 +3,8 @@ package lang.taxi.generators.kotlin
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.plusParameter
 import lang.taxi.TaxiDocument
+import lang.taxi.annotations.DataType
+import lang.taxi.annotations.qualifiedName
 import lang.taxi.generators.*
 import lang.taxi.jvm.common.PrimitiveTypes
 import lang.taxi.types.*
@@ -58,6 +60,9 @@ class KotlinGenerator : ModelGenerator {
       val superclassProperties = mutableListOf<Field>()
       val specBuilder = TypeSpec.classBuilder(type.className())
          .addModifiers(KModifier.OPEN)
+         .addAnnotation(AnnotationSpec.builder(DataType::class)
+            .addMember("%S", type.qualifiedName)
+            .build())
          .primaryConstructor(
             FunSpec.constructorBuilder().apply {
                type.allFields.forEach { field ->
@@ -116,7 +121,11 @@ class KotlinGenerator : ModelGenerator {
 
    private fun generateScalarAsInterface(type: ObjectType): WritableSource {
       val name = type.toQualifiedName()
-      val spec = TypeSpec.interfaceBuilder(name.asClassName())
+      val spec = TypeSpec
+         .interfaceBuilder(name.asClassName())
+         .addAnnotation(AnnotationSpec.builder(DataType::class)
+            .addMember("%S", type.qualifiedName)
+            .build())
          .build()
       return FileSpecWritableSource.from(name, spec)
    }
@@ -152,6 +161,9 @@ class KotlinGenerator : ModelGenerator {
       val typeAliasQualifiedName = typeAlias.toQualifiedName()
       val typeAliasSpec = TypeAliasSpec
          .builder(typeAliasQualifiedName.typeName, getJavaType(typeAlias.aliasType!!))
+         .addAnnotation(AnnotationSpec.builder(DataType::class)
+            .addMember("%S", typeAlias.qualifiedName)
+            .build())
          .build()
 
       val fileSpec = FileSpec.builder(typeAliasQualifiedName.namespace, typeAliasQualifiedName.typeName)
