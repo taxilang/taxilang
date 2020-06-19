@@ -49,9 +49,9 @@ class PackageImporterTest {
       )
    }
 
-   private fun configWithDependency(vararg dependencies: String): ProjectConfig {
+   private fun configWithDependency(vararg dependencies: String): TaxiPackageProject {
       val deps = dependencies.map { PackageIdentifier.fromId(it) }.asDependencies()
-      return ProjectConfig(
+      return TaxiPackageProject(
          name = "taxi/TestProject",
          version = "0.1.0",
          dependencies = deps,

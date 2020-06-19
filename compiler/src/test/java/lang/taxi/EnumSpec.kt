@@ -124,9 +124,9 @@ enum Australian {
    One synonym of English.One
 }
             """.trimIndent()
-            Compiler(src).compile().enumType("English").value("One").synonyms.should.contain.elements("Australian.One","French.Un")
-            Compiler(src).compile().enumType("French").value("Un").synonyms.should.contain.elements("Australian.One","English.One")
-            Compiler(src).compile().enumType("Australian").value("One").synonyms.should.contain.elements("French.Un","English.One")
+            Compiler(src).compile().enumType("English").value("One").synonyms.should.contain.elements("Australian.One", "French.Un")
+            Compiler(src).compile().enumType("French").value("Un").synonyms.should.contain.elements("Australian.One", "English.One")
+            Compiler(src).compile().enumType("Australian").value("One").synonyms.should.contain.elements("French.Un", "English.One")
          }
          it("should allow lists of synonyms") {
             val src = """
@@ -136,9 +136,9 @@ enum Australian {
    One synonym of [English.One, French.Un]
 }
             """.trimIndent()
-            Compiler(src).compile().enumType("English").value("One").synonyms.should.contain.elements("Australian.One","French.Un")
-            Compiler(src).compile().enumType("French").value("Un").synonyms.should.contain.elements("Australian.One","English.One")
-            Compiler(src).compile().enumType("Australian").value("One").synonyms.should.contain.elements("French.Un","English.One")
+            Compiler(src).compile().enumType("English").value("One").synonyms.should.contain.elements("Australian.One", "French.Un")
+            Compiler(src).compile().enumType("French").value("Un").synonyms.should.contain.elements("Australian.One", "English.One")
+            Compiler(src).compile().enumType("Australian").value("One").synonyms.should.contain.elements("French.Un", "English.One")
          }
          it("should allow declaration of synonyms with an imported source") {
             val srcA = """
@@ -163,8 +163,7 @@ enum Australian {
    One synonym of English.One
 }"""
             val errors = Compiler(src).validate()
-            errors.should.have.size(1)
-            errors.first().detailMessage.should.equal("language.English is not defined as a type")
+            errors.should.satisfy { it.any { error -> error.detailMessage.contains("language.English is not defined as a type") } }
          }
          it("should throw an error if the reference value is not a value on the type") {
             val src = """
@@ -189,6 +188,33 @@ enum Australian {
             errors.should.have.size(1)
             errors.first().detailMessage.should.equal("Word is not an Enum")
 
+         }
+         it("should support referencing enum synonyms before they have been defined") {
+            val src = """
+enum French {
+   Un synonym of English.One,
+   Deux synonym of English.Two
+}
+enum English {
+   One,
+   Two
+}
+            """.trimIndent()
+            val enumType = Compiler(src).compile().enumType("French")
+            enumType.value("Un").synonyms.should.have.size(1)
+         }
+         it("should support circular references in enum synonyms") {
+            val src = """
+enum French {
+   Un synonym of English.One,
+   Deux synonym of English.Two
+}
+enum English {
+   One synonym of French.Un,
+   Two synonym of French.Deux
+}
+            """.trimIndent()
+            Compiler(src).compile().enumType("French").value("Un").synonyms.should.have.size(1)
          }
          it("should support defining synonyms in extensions") {
 

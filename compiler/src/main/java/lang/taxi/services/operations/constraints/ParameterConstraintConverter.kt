@@ -2,12 +2,13 @@ package lang.taxi.services.operations.constraints
 
 
 import arrow.core.Either
-import lang.taxi.*
-import lang.taxi.services.Operation
+import lang.taxi.CompilationError
+import lang.taxi.NamespaceQualifiedTypeResolver
+import lang.taxi.TaxiParser
+import lang.taxi.TypeSystem
 import lang.taxi.services.Service
 import lang.taxi.types.Compiled
 import lang.taxi.types.ObjectType
-import lang.taxi.types.SourceLocation
 import lang.taxi.types.Type
 import lang.taxi.utils.invertEitherList
 
@@ -74,7 +75,12 @@ class OperationConstraintConverter(
 
    fun constraints(): Either<List<CompilationError>, List<Constraint>> {
       return expressionList
-         .parameterConstraintExpression().map { buildConstraint(it, paramType, namespaceQualifiedTypeResolver) }
+         .parameterConstraintExpression()
+         // Formats are expressed as constraints, but we handle them elsewhere,
+         // so filter them out.  A good indication that this isn't the correct way
+         // to handle this.
+         .filter { it.propertyFormatExpression() == null }
+         .map { buildConstraint(it, paramType, namespaceQualifiedTypeResolver) }
          .invertEitherList()
    }
 
@@ -84,7 +90,6 @@ class OperationConstraintConverter(
          .build(constraint, paramType, typeResolver)
 
    }
-
 }
 
 object MalformedConstraint {

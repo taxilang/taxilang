@@ -36,10 +36,11 @@ data class Tokens(
    }
 
    fun plus(others: Tokens): Tokens {
-      val errors = collectDuplicateTypes(others) + collectDuplicateServices(others)
-      if (errors.isNotEmpty()) {
-         throw CompilationException(errors)
-      }
+      // Duplicate checking is disabled, as it doesn't consider imports, which causes false compilation errors
+//      val errorsFromDuplicates = collectDuplicateTypes(others) + collectDuplicateServices(others)
+//      if (errorsFromDuplicates.isNotEmpty()) {
+//         throw CompilationException(errorsFromDuplicates)
+//      }
       return Tokens(
          this.imports + others.imports,
          this.unparsedTypes + others.unparsedTypes,
@@ -59,7 +60,11 @@ data class Tokens(
          val compilationErrors = duplicateTypeNames.filter {
             // We only care about scenarios where sources compile to different objects
             // If two sources declare the same type, but they're equivalent declarations, then that's ok
-            existingDefinition.type(it) != newDefinition.type(it)
+            val isAttemptedRedefinition = existingDefinition.type(it) != newDefinition.type(it)
+            if (isAttemptedRedefinition) {
+               ""
+            }
+            isAttemptedRedefinition
          }.map {
             CompilationError(others.unparsedTypes[it]!!.second.start, "Attempt to redefine type $it. Types may be extended (using an extension), but not redefined")
          }

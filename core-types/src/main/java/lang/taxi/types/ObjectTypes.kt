@@ -21,6 +21,8 @@ data class ObjectTypeDefinition(
    val annotations: Set<Annotation> = emptySet(),
    val modifiers: List<Modifier> = emptyList(),
    val inheritsFrom: Set<Type> = emptySet(),
+   val format: String? = null,
+   val formattedInstanceOfType: Type? = null,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
@@ -72,6 +74,45 @@ data class ObjectType(
          return ObjectType(name, definition = null)
       }
    }
+
+   private val wrapper = LazyLoadingWrapper(this)
+   override val allInheritedTypes: Set<Type>
+      get() {
+         return if (isDefined) wrapper.allInheritedTypes else emptySet()
+      }
+   override val baseEnum: EnumType?
+      get() {
+         return if (isDefined) wrapper.baseEnum else null
+      }
+   override val inheritsFromPrimitive: Boolean
+      get() {
+         return if (isDefined) wrapper.inheritsFromPrimitive else false
+      }
+   override val basePrimitive: PrimitiveType?
+      get() {
+         return if (isDefined) wrapper.basePrimitive else null
+      }
+   override val definitionHash: String?
+      get() {
+         return if (isDefined) wrapper.definitionHash else null
+      }
+
+   override val format: String?
+      get() {
+         return if (this.definition?.format != null) {
+            this.definition?.format
+         } else {
+            val inheritedFormats = this.inheritsFrom.filter { it.format != null }
+            when {
+               inheritedFormats.isEmpty() -> null
+               inheritedFormats.size == 1 -> inheritedFormats.first().format
+               else -> error("Multiple formats found in inheritence - this is an error")
+            }
+         }
+      }
+
+   override val formattedInstanceOfType: Type?
+      get() = this.definition?.formattedInstanceOfType
 
    override val referencedTypes: List<Type>
       get() {
@@ -169,7 +210,11 @@ data class ObjectType(
    fun field(name: String): Field = allFields.first { it.name == name }
    fun annotation(name: String): Annotation = annotations.first { it.name == name }
    fun fieldsWithType(typeName: QualifiedName): List<Field> {
-      return this.fields.filter { it.type.toQualifiedName() == typeName }
+      return this.fields.filter { applicableQualifiedNames(it.type).contains(typeName) }
+   }
+
+   fun applicableQualifiedNames(type: Type): List<QualifiedName> {
+      return type.inheritsFrom.map { it.toQualifiedName() }.plus(type.toQualifiedName())
    }
 
 }
@@ -185,10 +230,11 @@ fun Iterable<AnnotationProvider>.toAnnotations(): List<Annotation> {
 
 interface NameTypePair {
    // Relaxed to Nullable to support Parameters, which don't mandate names
-   val name:String?
+   val name: String?
    val type: Type
 
 }
+
 data class Annotation(val name: String, val parameters: Map<String, Any?> = emptyMap())
 data class Field(
    override val name: String,

@@ -15,10 +15,10 @@ import java.io.FileOutputStream
 import java.nio.file.Path
 
 class PackageDownloaderFactory(private val importerConfig: ImporterConfig) {
-   fun create(projectConfig: ProjectConfig): PackageDownloader = PackageDownloader(importerConfig, projectConfig)
+   fun create(projectConfig: TaxiPackageProject): PackageDownloader = PackageDownloader(importerConfig, projectConfig)
 }
 
-class PackageDownloader(val config: ImporterConfig, val projectConfig: ProjectConfig) {
+class PackageDownloader(val config: ImporterConfig, val projectConfig: TaxiPackageProject) {
    fun download(identifier: PackageIdentifier): Boolean {
       var downloaded = false
       projectConfig.repositories

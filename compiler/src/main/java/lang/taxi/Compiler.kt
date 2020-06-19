@@ -5,6 +5,10 @@ import arrow.core.getOrHandle
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import lang.taxi.compiler.TokenProcessor
+import lang.taxi.packages.TaxiPackageProject
+import lang.taxi.packages.TaxiPackageSources
+import lang.taxi.sources.SourceCode
+import lang.taxi.sources.SourceLocation
 import lang.taxi.types.*
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
@@ -65,6 +69,10 @@ class CompilerTokenCache {
          val listener = TokenCollator()
          val errorListener = CollectingErrorListener(input.sourceName)
          val lexer = TaxiLexer(input)
+         // We ignore lexer errors, and let the parser handle syntax problems.
+         // Without this, there's just a bunch of noise in the console.
+         lexer.removeErrorListeners()
+
          val parser = TaxiParser(CommonTokenStream(lexer))
          parser.addParseListener(listener)
          parser.addErrorListener(errorListener)
@@ -100,6 +108,7 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    constructor(input: CharStream, importSources: List<TaxiDocument> = emptyList()) : this(listOf(input), importSources)
    constructor(source: String, sourceName: String = UNKNOWN_SOURCE, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromString(source, sourceName), importSources)
    constructor(file: File, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromPath(file.toPath()), importSources)
+   constructor(project: TaxiPackageSources) : this(project.sources.map { CharStreams.fromString(it.content, it.sourceName) })
 
    companion object {
       const val UNKNOWN_SOURCE = "UnknownSource"
@@ -142,9 +151,17 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       return tokenProcessor.findDeclaredTypeNames()
    }
 
-   fun getDeclarationSource(typeName: TaxiParser.TypeTypeContext): CompilationUnit? {
+   fun lookupTypeByName(typeType: TaxiParser.TypeTypeContext): QualifiedName {
+      return QualifiedName.from(TokenProcessor(tokens, importSources).lookupTypeByName(typeType))
+   }
+
+   fun getDeclarationSource(text: String, context: ParserRuleContext): CompilationUnit? {
       val processor = TokenProcessor(tokens, importSources)
-      val qualifiedName = processor.qualify(typeName)
+      val qualifiedName = processor.lookupTypeByName(text, context)
+      return getCompilationUnit(processor, qualifiedName)
+   }
+
+   private fun getCompilationUnit(processor: TokenProcessor, qualifiedName: String): CompilationUnit? {
       val definition = processor.findDefinition(qualifiedName) ?: return null
 
       // don't return the start of the documentation, as that's not really what
@@ -158,6 +175,12 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
          definition
       }
       return startOfDeclaration.toCompilationUnit()
+   }
+
+   fun getDeclarationSource(typeName: TaxiParser.TypeTypeContext): CompilationUnit? {
+      val processor = TokenProcessor(tokens, importSources)
+      val qualifiedName = processor.lookupTypeByName(typeName)
+      return getCompilationUnit(processor, qualifiedName)
    }
 
    /**

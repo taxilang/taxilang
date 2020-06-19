@@ -1,0 +1,9 @@
+import Trade
+
+namespace testB
+
+type Foo inherits String
+
+type Trader {
+   trades : Trade[]
+}

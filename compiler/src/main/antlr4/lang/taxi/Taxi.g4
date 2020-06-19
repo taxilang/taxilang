@@ -54,6 +54,7 @@ typeModifier
 
 typeDeclaration
     :  typeDoc? annotation* typeModifier* ('type'|'model') Identifier
+
         ('inherits' listOfInheritedTypes)?
         typeBody?
     ;
@@ -219,7 +220,7 @@ elementValue
     ;
 
 serviceDeclaration
-    :   annotation* 'service' Identifier serviceBody
+    : typeDoc? annotation* 'service' Identifier serviceBody
     ;
 
 serviceBody
@@ -227,7 +228,7 @@ serviceBody
     ;
 
  serviceOperationDeclaration
-     :   annotation* operationScope? 'operation' operationSignature
+     : typeDoc? annotation* operationScope? 'operation' operationSignature
      ;
 
 operationSignature
@@ -267,7 +268,12 @@ parameterConstraintExpressionList
 parameterConstraintExpression
     :  propertyToParameterConstraintExpression
     |  operationReturnValueOriginExpression
+    |  propertyFormatExpression
     ;
+
+// First impl.  This will get richer
+propertyFormatExpression :
+   '@format' '=' StringLiteral;
 
 // The return value will have a relationship to a property
 // received in an input (incl. nested properties)

@@ -4,27 +4,28 @@ import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigRenderOptions
 import io.github.config4k.extract
+import lang.taxi.packages.TaxiPackageProject
 import org.apache.commons.lang3.SystemUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
-class TaxiEnvLoader {
+class TaxiProjectLoader {
 
     private val pathsToSearch = mutableListOf(
         SystemUtils.getUserHome().toPath().resolve(".taxi/taxi.conf")
     )
 
     companion object {
-        val log: Logger = LoggerFactory.getLogger(TaxiEnvLoader::class.java)
+        val log: Logger = LoggerFactory.getLogger(TaxiProjectLoader::class.java)
     }
 
-    fun withConfigFileAt(path: Path): TaxiEnvLoader {
+    fun withConfigFileAt(path: Path): TaxiProjectLoader {
         pathsToSearch.add(path)
         return this
     }
 
-    fun load(): TaxiConfig {
+    fun load(): TaxiPackageProject {
 
         log.debug("Searching for config files at {}", pathsToSearch.joinToString(" , "))
 

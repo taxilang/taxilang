@@ -1,22 +1,39 @@
 package lang.taxi.types
 
 import arrow.core.Either
+import com.google.common.hash.Hasher
+import com.google.common.hash.Hashing
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-interface Type : Named, Compiled {
-   val inheritsFrom: Set<Type>
+
+class LazyLoadingWrapper(private val type:Type) {
+   companion object {
+      val log: Logger = LoggerFactory.getLogger(LazyLoadingWrapper::class.java)
+   }
+
+   private val types by lazy {type.allInheritedTypes + type}
 
    val allInheritedTypes: Set<Type>
-      get() {
-         return getInheritanceGraph()
-      }
+      by lazy { type.getInheritanceGraph() }
 
    val inheritsFromPrimitive: Boolean
-      get() = basePrimitive != null
+      by lazy { basePrimitive != null }
 
+   val baseEnum: EnumType? by lazy {
+      val types = types.filterIsInstance<EnumType>()
+      when {
+         types.isEmpty() -> null
+         types.size == 1 -> types.first()
+         else -> {
+            error("Inheriting from multiple enums isn't supported, and technically shouldn't be possible")
+         }
+      }
+   }
    val basePrimitive: PrimitiveType?
-      get() {
-         val primitives = (this.allInheritedTypes + this).filter { it is PrimitiveType || it is EnumType }
-         return when {
+      by lazy {
+         val primitives = types.filter { it is PrimitiveType || it is EnumType }
+         when {
             primitives.isEmpty() -> null
             primitives.size == 1 -> {
                val baseType = primitives.first()
@@ -28,11 +45,85 @@ interface Type : Named, Compiled {
                   PrimitiveType.STRING
                }
             }
-            else -> error("Type ${this.qualifiedName} inherits from multiple primitives: ${primitives.joinToString { it.qualifiedName }}")
+            else -> error("Type ${type.qualifiedName} inherits from multiple primitives: ${primitives.joinToString { type.qualifiedName }}")
          }
       }
 
-   private fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
+   val definitionHash: String by lazy {
+      val hasher = Hashing.sha256().newHasher()
+      //println("============= ${this.type.qualifiedName} hash debug ==============")// comments kept on purpose, useful when debugging issues
+      computeTypeHash(hasher, type)
+      hasher.hash().toString().substring(0, 6)
+   }
+
+   private fun computeTypeHash(hasher: Hasher, type: Type) {
+      detectHashCollision(type.compilationUnits)
+
+      // include sources
+      type.compilationUnits
+         .sortedBy { it.source.content.hashCode() }
+         .forEach {
+            hasher.putUnencodedChars(it.source.content)
+            //println("CompilationUnit:(hc:${it.source.content.hashCode()}) ${it.source.normalizedSourceName} #${it.source.hashCode()} -> ${type.qualifiedName}: ${it.source.content}")
+         }
+
+      when (type) {
+         is UserType<*, *> -> {
+            // changing referenced type changes hash
+            type.referencedTypes
+               .sortedBy { it.qualifiedName }
+               .forEach {
+                  //println("Reference: ${type.qualifiedName} ---> ${it.qualifiedName}")
+                  computeTypeHash(hasher, it)
+               }
+
+            detectHashCollision(type.extensions.map { it.compilationUnit })
+
+            // changing extensions changes hash
+            type.extensions
+               .sortedBy { it.compilationUnit.source.content.hashCode()}
+               .forEach {
+                  hasher.putUnencodedChars(it.compilationUnit.source.content)
+                  //println("Extension:(hc:${it.compilationUnit.source.content.hashCode()}) ${it.compilationUnit.source.normalizedSourceName} #${it.compilationUnit.source.hashCode()}: ${it.compilationUnit.source.content}")
+               }
+         }
+      }
+   }
+
+   private fun detectHashCollision(compilationUnits: List<CompilationUnit>) {
+      val sourcesWithHashCollision = compilationUnits
+         .groupBy { it.source.hashCode() }
+         .filter { it.value.size > 1 }
+         .flatMap { it.value }
+         .map { it.source.normalizedSourceName }
+
+      if (sourcesWithHashCollision.isNotEmpty()) {
+         log.warn(("There's a hash clash in the underlying sources $sourcesWithHashCollision " +
+            "This will generate indeterminate behaviour that can re-trigger recompilation of sources, lost nights, and torn hair. " +
+            "You shouldn't ignore this!"))
+      }
+   }
+
+}
+
+interface Type : Named, Compiled {
+   val inheritsFrom: Set<Type>
+
+   val allInheritedTypes: Set<Type>
+
+   val format:String?
+
+   val inheritsFromPrimitive: Boolean
+
+   val baseEnum: EnumType?
+
+   val basePrimitive: PrimitiveType?
+
+   val formattedInstanceOfType:Type?
+
+   val definitionHash: String?
+
+   fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
       val allExcludedTypes: Set<Type> = typesToExclude + setOf(this)
       val aliasType = if (this is TypeAlias) {
          this.aliasType!!
@@ -55,8 +146,6 @@ interface Type : Named, Compiled {
             else emptySet<Type>()
          }.toSet()
    }
-
-
 }
 
 interface TypeDefinition {

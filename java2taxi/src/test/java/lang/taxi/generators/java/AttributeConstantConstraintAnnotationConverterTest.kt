@@ -1,7 +1,7 @@
 package lang.taxi.generators.java
 
-import com.nhaarman.mockito_kotlin.doReturn
-import com.nhaarman.mockito_kotlin.mock
+import com.nhaarman.mockitokotlin2.doReturn
+import com.nhaarman.mockitokotlin2.mock
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
 import lang.taxi.annotations.ConstraintAnnotationModel

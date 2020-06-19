@@ -20,7 +20,7 @@ class TaxiProjectLoader {
       return this
    }
 
-   fun load(): ProjectConfig {
+   fun load(): TaxiPackageProject {
 
       log().debug("Searching for config files at ${pathsToSearch.joinToString(" , ")}")
 

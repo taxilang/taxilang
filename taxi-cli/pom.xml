@@ -3,7 +3,7 @@
     <parent>
         <artifactId>parent</artifactId>
         <groupId>lang.taxi</groupId>
-        <version>0.4.2</version>
+        <version>0.5.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -16,12 +16,12 @@
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>compiler</artifactId>
-            <version>0.4.2</version>
+            <version>0.5.0</version>
         </dependency>
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>taxi-generator-api</artifactId>
-            <version>0.4.2</version>
+            <version>0.5.0</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -38,7 +38,6 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>23.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -52,7 +51,7 @@
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>taxi-plugin-api</artifactId>
-            <version>0.4.2</version>
+            <version>0.5.0</version>
         </dependency>
         <dependency>
             <groupId>org.pf4j</groupId>
@@ -99,12 +98,17 @@
             <artifactId>zip4j</artifactId>
             <version>1.3.2</version>
         </dependency>
+       <dependency>
+          <groupId>org.apache.maven</groupId>
+          <artifactId>maven-model</artifactId>
+          <version>3.3.9</version>
+       </dependency>
 
         <!-- TODO : Move this out so that Kotlin plugin isn't bundled -->
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>taxi2kotlin</artifactId>
-            <version>0.4.2</version>
+            <version>0.5.0</version>
         </dependency>
     </dependencies>
 
@@ -128,10 +132,14 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>2.0.5.RELEASE</version>
-                <executions>
+               <configuration>
+                  <executable>true</executable>
+               </configuration>
+               <executions>
                     <execution>
                         <goals>
-                            <goal>repackage</goal>
+                           <goal>build-info</goal>
+                           <goal>repackage</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -188,6 +196,25 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+           <plugin>
+              <groupId>io.fabric8</groupId>
+              <artifactId>docker-maven-plugin</artifactId>
+              <configuration>
+                 <images>
+                    <image>
+                       <name>taxi-lang/taxi-lang/taxi-cli:${project.version}</name>
+                       <build>
+                          <dockerFile>${project.basedir}/Dockerfile</dockerFile>
+                          <tags>
+                             <!-- defined in profiles.  see root pom.xml -->
+                             <tag>${docker.tag}</tag>
+                             <tag>latest</tag>
+                          </tags>
+                       </build>
+                    </image>
+                 </images>
+              </configuration>
+           </plugin>
         </plugins>
 
     </build>

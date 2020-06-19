@@ -1,7 +1,7 @@
 package lang.taxi.types
 
 import arrow.core.Either
-import lang.taxi.*
+import lang.taxi.Equality
 
 object Enums {
    fun enumValue(enum: QualifiedName, enumValueName: String): EnumValueQualifiedName {
@@ -49,6 +49,28 @@ data class EnumType(override val qualifiedName: String,
       }
    }
 
+   private val wrapper = LazyLoadingWrapper(this)
+   override val allInheritedTypes: Set<Type>
+      get() {
+         return if (isDefined) wrapper.allInheritedTypes else emptySet()
+      }
+   override val baseEnum: EnumType?
+      get() {
+         return if (isDefined) wrapper.baseEnum else null
+      }
+   override val inheritsFromPrimitive: Boolean
+      get() {
+         return if (isDefined) wrapper.inheritsFromPrimitive else false
+      }
+   override val definitionHash: String?
+      get() {
+         return if (isDefined) wrapper.definitionHash else null
+      }
+
+   // Not sure it makes sense to support formats on enums.  Let's revisit if there's a usecase.
+   override val format: String? = null
+   override val formattedInstanceOfType: Type? = null
+
    override val basePrimitive: PrimitiveType?
       get() = definition?.basePrimitive
 
@@ -89,6 +111,22 @@ data class EnumType(override val qualifiedName: String,
             value.copy(annotations = collatedAnnotations, typeDoc = docSources.typeDoc(), synonyms = synonyms)
          } ?: emptyList()
       }
+
+   fun has(valueOrName: Any?): Boolean {
+      return (valueOrName is String && this.hasName(valueOrName)) || this.hasValue(valueOrName)
+   }
+
+   fun hasName(name: String?): Boolean {
+      return this.values.any { it.name == name }
+   }
+
+   fun hasValue(value: Any?): Boolean {
+      return this.values.any { it.value == value }
+   }
+
+   fun ofValue(value: Any?)  = this.values.first { it.value == value}
+   fun ofName(name: String?)  = this.values.first { it.name == name}
+   fun of(valueOrName: Any?) = this.values.first { it.value == valueOrName || it.name == valueOrName }
 
    private fun valueExtensions(valueName: String): List<EnumValueExtension> {
       return this.extensions.flatMap { it.values.filter { value -> value.name == valueName } }
