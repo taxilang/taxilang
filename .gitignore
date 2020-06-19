@@ -70,9 +70,7 @@ local.properties
 .DS_Store
 
 ### Project Specific ###
-LOGS/
-MkvDB/
-
+*/.taxi/
 ### vim ####
 .tags
 
