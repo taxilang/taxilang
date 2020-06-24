@@ -402,7 +402,7 @@ sourceMapping : Identifier 'by' columnDefinition;
 
 columnDefinition : 'column' '(' columnIndex ')' ;
 
-columnIndex: IntegerLiteral;
+columnIndex : IntegerLiteral | StringLiteral;
 
 expression
     :   primary

@@ -1,6 +1,8 @@
 package lang.taxi.compiler
 
 import arrow.core.*
+import com.google.common.hash.HashFunction
+import com.google.common.hash.Hasher
 import com.google.common.hash.Hashing
 import lang.taxi.*
 import lang.taxi.services.operations.constraints.ConstraintValidator
@@ -16,6 +18,7 @@ import lang.taxi.utils.log
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.nio.charset.Charset
+import kotlin.reflect.typeOf
 
 internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocument> = emptyList(), collectImports: Boolean = true) {
 
@@ -416,6 +419,10 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return content.removeSurrounding("[[", "]]").trimIndent().trim()
    }
 
+   private fun parseColumnName(content: String): String {
+      return content.trim('"')
+   }
+
    private fun compileAccessor(accessor: TaxiParser.AccessorContext?): Accessor? {
       return when {
          accessor == null -> null
@@ -447,7 +454,11 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return when {
          expression.jsonPathAccessorDeclaration() != null -> JsonPathAccessor(expression.jsonPathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
          expression.xpathAccessorDeclaration() != null -> XpathAccessor(expression.xpathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
-         expression.columnDefinition() != null -> ColumnAccessor(expression.columnDefinition().columnIndex().IntegerLiteral().text.toInt())
+         expression.columnDefinition() != null -> {
+            ColumnAccessor(
+               expression.columnDefinition().columnIndex().StringLiteral()?.text ?:
+               expression.columnDefinition().columnIndex().IntegerLiteral().text.toInt())
+         }
          else -> error("Unhandled type of accessor expression")
       }
    }
@@ -772,7 +783,15 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                path,
                format,
                returnType,
-               dataSourceToken.sourceMapping().map { sourceMappingContext -> ColumnMapping(sourceMappingContext.Identifier().text, sourceMappingContext.columnDefinition().columnIndex().IntegerLiteral().text.toInt()) },
+               dataSourceToken.sourceMapping().map { sourceMappingContext ->
+                  val intType = sourceMappingContext.columnDefinition().columnIndex().IntegerLiteral()?.text
+
+                  if(intType != null) {
+                     ColumnMapping(sourceMappingContext.Identifier().text, intType.toInt())
+                  } else {
+                     ColumnMapping(sourceMappingContext.Identifier().text, parseColumnName(sourceMappingContext.columnDefinition().columnIndex().StringLiteral().text))
+                  }
+               },
                annotations,
                listOf(dataSourceToken.toCompilationUnit())
             )

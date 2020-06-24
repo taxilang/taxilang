@@ -1,5 +1,7 @@
 package lang.taxi.types
 
+import kotlin.reflect.KType
+
 interface DataSource : Named, Compiled
 
 data class FileDataSource(
@@ -14,5 +16,5 @@ data class FileDataSource(
 
 data class ColumnMapping(
    val propertyName: String,
-   val index: Int
+   val index: Any
 )
