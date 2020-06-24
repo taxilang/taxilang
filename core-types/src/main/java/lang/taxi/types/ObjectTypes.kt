@@ -4,6 +4,7 @@ import arrow.core.Either
 import lang.taxi.Equality
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
+import java.lang.IllegalArgumentException
 import kotlin.reflect.KProperty1
 
 data class FieldExtension(val name: String, override val annotations: List<Annotation>, val refinedType: Type?) : Annotatable
@@ -270,7 +271,7 @@ data class XpathAccessor(override val expression: String) : ExpressionAccessor
 data class JsonPathAccessor(override val expression: String) : ExpressionAccessor
 
 // TODO : This is duplicating concepts in ColumnMapping, one should die.
-data class ColumnAccessor(val index: Int) : ExpressionAccessor {
+data class ColumnAccessor(val index: Any) : ExpressionAccessor {
    override val expression: String = index.toString()
 }
 

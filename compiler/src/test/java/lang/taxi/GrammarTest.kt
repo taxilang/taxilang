@@ -5,7 +5,6 @@ import com.winterbe.expekt.should
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.types.*
 import org.antlr.v4.runtime.CharStreams
-import org.antlr.v4.runtime.RuleContext
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -889,6 +888,49 @@ type LegacyTradeNotification {
       } catch (e: Exception) {
          TODO()
       }
+   }
+
+   @Test
+   fun canDeclareColumnsWithNames() {
+      val src = """
+type Person {
+   firstName : FirstName as String
+   lastName : LastName as String
+   }
+
+fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {
+   firstName by column("firstName")
+   lastName by column(2)
+}
+      """.trimIndent()
+      val taxi = Compiler(src).compile()
+      val dataSource = taxi.dataSource("DirectoryOfPerson") as FileDataSource
+      dataSource.returnType.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Person>")
+      dataSource.mappings.should.have.size(2)
+
+      dataSource.mappings[0].propertyName.should.equal("firstName")
+      expect(dataSource.mappings[0].index is String)
+      dataSource.mappings[0].index.should.equal("firstName")
+      dataSource.mappings[1].propertyName.should.equal("lastName")
+      expect(dataSource.mappings[0].index is Int)
+      dataSource.mappings[1].index.should.equal(2)
+   }
+
+   @Test(expected=CompilationException::class)
+   fun cannotDeclareColumnsWithoutIndex() {
+      val src = """
+type Person {
+   firstName : FirstName as String
+   lastName : LastName as String
+   }
+
+fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {
+   firstName by column()
+   lastName by column()
+}
+      """.trimIndent()
+      val taxi = Compiler(src).compile()
+      taxi.dataSource("DirectoryOfPerson") as FileDataSource
    }
 
    @Test
