@@ -214,6 +214,19 @@
                     </image>
                  </images>
               </configuration>
+
+              <executions>
+                 <execution>
+                    <id>deploy</id>
+                    <phase>deploy</phase>
+                    <goals>
+                       <!-- "build" should be used to create the images with the
+                            artifact -->
+                       <goal>build</goal>
+                       <goal>push</goal>
+                    </goals>
+                 </execution>
+              </executions>
            </plugin>
         </plugins>
 
