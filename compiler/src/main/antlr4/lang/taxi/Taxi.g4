@@ -511,7 +511,7 @@ StringCharacters
 
 fragment
 StringCharacter
-    :   ~["\\]
+    :   ~['"\\]
     |   EscapeSequence
     ;
 
