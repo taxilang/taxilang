@@ -99,8 +99,9 @@ build-docker-image:
    #image: maven:3.6.3-jdk-8
    stage: deploy
    script:
-      - docker login registry.gitlab.com -u gitlab-runner -p $DEPLOY_TOKEN_PASSWORD
-      - 'mvn $MAVEN_CLI_OPTS -Dmaven.test.skip=true package docker:build docker:push -Ddocker.registry=registry.gitlab.com'
+      - docker login -u vynecd -p $DOCKER_HUB_PASSWORD
+      - 'mvn $MAVEN_CLI_OPTS -DskipTests -Dmaven.test.skip=true package docker:build docker:push ' 
+
    only:
       - master
 
