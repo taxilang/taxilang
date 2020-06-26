@@ -275,4 +275,26 @@
          <url>s3://repo.vyne.co/snapshot</url>
       </snapshotRepository>
    </distributionManagement>
+
+
+   <profiles>
+      <profile>
+         <id>snapshot-release</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <docker.tag>latest-snapshot</docker.tag>
+         </properties>
+      </profile>
+      <profile>
+         <id>release</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <docker.tag>latest</docker.tag>
+         </properties>
+      </profile>
+   </profiles>
 </project>
