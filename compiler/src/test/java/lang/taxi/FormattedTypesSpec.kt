@@ -37,6 +37,40 @@ object FormattedTypesSpec : Spek({
 
       }
 
+      it("should parse multiple formatted types with single quotes") {
+         val doc = """
+            type TransactionEventDateTime inherits Instant
+            type TransactionEventDate inherits Date
+            type Order {
+                orderDateTime : TransactionEventDateTime( @format = 'yyyy-MM-dd HH:mm:ss.SSSSSSS')
+                orderDate : TransactionEventDate( @format = 'yyyyMMdd')
+            }
+         """.trimMargin()
+            .compiled()
+
+         doc.objectType("Order").field("orderDateTime").type.format.should.equal("yyyy-MM-dd HH:mm:ss.SSSSSSS")
+         doc.objectType("Order").field("orderDate").type.format.should.equal("yyyyMMdd")
+      }
+
+      it("should parse multiple formatted types with different quotes") {
+         val doc = """
+            type TransactionEventDateTime inherits Instant
+            type TransactionEventDate inherits Date
+            type Order {
+                orderDateTimeQuote : TransactionEventDateTime( @format = 'yyyy-MM-dd HH:mm:ss.SSSSSSS')
+                orderDateTimeDoubleQuote : TransactionEventDateTime( @format = "yyyy/MM/dd HH:mm:ss")
+                orderDateQuote : TransactionEventDate( @format = 'yyyyMMdd')
+                orderDateDoubleQuote : TransactionEventDate( @format = "yyyy/MM/dd")
+            }
+         """.trimMargin()
+            .compiled()
+
+         doc.objectType("Order").field("orderDateTimeQuote").type.format.should.equal("yyyy-MM-dd HH:mm:ss.SSSSSSS")
+         doc.objectType("Order").field("orderDateTimeDoubleQuote").type.format.should.equal("yyyy/MM/dd HH:mm:ss")
+         doc.objectType("Order").field("orderDateQuote").type.format.should.equal("yyyyMMdd")
+         doc.objectType("Order").field("orderDateDoubleQuote").type.format.should.equal("yyyy/MM/dd")
+      }
+
       it("should allow modifying formats inline") {
          """
             type TradeDate inherits Instant( @format = "mm/dd/yyThh:nn:ss.mmmmZ" )
