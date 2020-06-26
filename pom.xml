@@ -296,5 +296,31 @@
             <docker.tag>latest</docker.tag>
          </properties>
       </profile>
+      <profile>
+         <id>deploy-only</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-install-plugin</artifactId>
+                  <version>2.5.2</version>
+                  <executions>
+                     <execution>
+                        <id>default-install</id>
+                        <configuration>
+                           <skip>true</skip>
+                        </configuration>
+                     </execution>
+                     <execution>
+                        <id>default-test</id>
+                        <configuration>
+                           <skip>true</skip>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
    </profiles>
 </project>

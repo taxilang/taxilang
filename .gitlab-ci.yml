@@ -98,8 +98,8 @@ release-patch:
 publish-snapshot:
    stage: deploy
    script:
-      - 'docker login -u vynecd -p $DOCKER_HUB_PASSWORD'
-      - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P snapshot-releases ' # Skip UI and tests. Already there from previous stages and artifacts
+      - docker login -u vynecd -p $DOCKER_HUB_PASSWORD
+      - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P snapshot-release,deploy-only ' # Skip UI and tests. Already there from previous stages and artifacts
    only:
       - develop
 
@@ -109,8 +109,8 @@ publish-release:
    #image: maven:3.6.3-jdk-8
    stage: deploy
    script:
-      - 'docker login -u vynecd -p $DOCKER_HUB_PASSWORD'
-      - 'mvn $MAVEN_CLI_OPTS -DskipTests -Dmaven.test.skip=true package docker:build docker:push '
+      - docker login -u vynecd -p $DOCKER_HUB_PASSWORD
+      - 'mvn $MAVEN_CLI_OPTS -DskipTests -Dmaven.test.skip=true deploy -P release,deploy-only'
 
    only:
       - master
