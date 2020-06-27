@@ -7,6 +7,7 @@ import lang.taxi.cli.utils.log
 import lang.taxi.generators.TaxiEnvironment
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.info.BuildProperties
+import org.springframework.boot.info.GitProperties
 import org.springframework.stereotype.Component
 import org.springframework.util.StringUtils
 
@@ -14,12 +15,14 @@ import org.springframework.util.StringUtils
 class ShellRunner(
    val commander: JCommander,
    val env: TaxiEnvironment,
-   val buildInfo: BuildProperties?
+   val buildInfo: BuildProperties?,
+   val gitProperties: GitProperties?
 ) : CommandLineRunner {
 
    override fun run(vararg args: String) {
       val version = buildInfo?.version ?: "Dev version"
-      log().info("Taxi $version")
+      val gitVersion = if (gitProperties != null) "@${gitProperties!!.shortCommitId}" else ""
+      log().info("Taxi $version $gitVersion")
       commander.parse(*args)
       val parsedCommand: JCommander
       val commandName = commander.parsedCommand
