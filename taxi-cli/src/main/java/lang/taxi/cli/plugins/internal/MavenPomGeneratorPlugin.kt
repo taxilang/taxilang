@@ -8,12 +8,29 @@ import lang.taxi.plugins.PluginWithConfig
 import org.apache.commons.io.output.StringBuilderWriter
 import org.apache.maven.model.*
 import org.apache.maven.model.Dependency
+import org.apache.maven.model.Repository as MavenRepository
 import org.apache.maven.model.DistributionManagement
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.codehaus.plexus.util.xml.Xpp3Dom
 
 
 class MavenPomGeneratorPlugin(private val configurers: List<MavenModelConfigurer> = emptyList()) : InternalPlugin, ModelGenerator, PluginWithConfig<MavenGeneratorPluginConfig> {
+   companion object {
+      val TAXI_REPOSITORIES = listOf(
+         Repository(
+            id = "taxi-snapshots",
+            url = "http://repo.vyne.co/snapshot",
+            snapshots = true
+         ),
+         Repository(
+            id = "taxi-releases",
+            url = "https://dl.bintray.com/taxi-lang/releases",
+            snapshots = false,
+            releases = true
+         )
+      )
+   }
+
    constructor(vararg configurers: MavenModelConfigurer) : this(configurers.toList())
 
    override val artifact = Artifact.parse("maven")
@@ -49,23 +66,25 @@ class MavenPomGeneratorPlugin(private val configurers: List<MavenModelConfigurer
       model.dependencies.addAll(mavenDependencies)
 
       model.repositories = mutableListOf()
-      model.repositories.add(
-         Repository().apply {
-            id = "vyne-snapshots"
-            url = "http://repo.vyne.co/snapshot"
-            snapshots = RepositoryPolicy().apply {
-               enabled = "true"
-            }
-         })
-      model.repositories.add(
-         Repository().apply {
-            id = "bintray-taxi-lang-releases"
-            name = "bintray"
-            url = "https://dl.bintray.com/taxi-lang/releases"
-            snapshots = RepositoryPolicy().apply {
-               enabled = "false"
-            }
-         })
+      (TAXI_REPOSITORIES + config.repositories).forEach { repository ->
+         model.repositories.add(
+            MavenRepository().apply {
+               id = repository.id
+               name = repository.name
+               url = repository.url
+
+               if (repository.snapshots) {
+                  snapshots = RepositoryPolicy().apply {
+                     enabled = "true"
+                  }
+               }
+               if (repository.releases) {
+                  releases = RepositoryPolicy().apply {
+                     enabled = "true"
+                  }
+               }
+            })
+      }
 
       val configuredModel = configurers.fold(model) { acc, configurer -> configurer(acc) }
 

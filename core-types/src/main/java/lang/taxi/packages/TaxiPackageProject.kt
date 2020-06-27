@@ -2,8 +2,6 @@ package lang.taxi.packages
 
 import com.typesafe.config.Config
 import lang.taxi.sources.SourceCode
-import java.nio.file.Path
-
 
 data class TaxiPackageProject(
    val name: String,
@@ -17,7 +15,6 @@ data class TaxiPackageProject(
    val publishToRepository: Repository? = null
 ) {
    val identifier: PackageIdentifier = PackageIdentifier(ProjectName.fromId(name), version)
-
    val dependencyPackages: List<PackageIdentifier> = dependencies.map { (projectId, version) ->
       PackageIdentifier(ProjectName.fromId(projectId), version)
    }

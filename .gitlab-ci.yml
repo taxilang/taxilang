@@ -95,12 +95,23 @@ release-patch:
       - develop
    when: manual
 
-build-docker-image:
+publish-snapshot:
+   stage: deploy
+   script:
+      - docker login -u vynecd -p $DOCKER_HUB_PASSWORD
+      - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P snapshot-release,deploy-only ' # Skip UI and tests. Already there from previous stages and artifacts
+   only:
+      - develop
+
+
+
+publish-release:
    #image: maven:3.6.3-jdk-8
    stage: deploy
    script:
-      - docker login registry.gitlab.com -u gitlab-runner -p $DEPLOY_TOKEN_PASSWORD
-      - 'mvn $MAVEN_CLI_OPTS -Dmaven.test.skip=true package docker:build docker:push -Ddocker.registry=registry.gitlab.com'
+      - docker login -u vynecd -p $DOCKER_HUB_PASSWORD
+      - 'mvn $MAVEN_CLI_OPTS -DskipTests -Dmaven.test.skip=true deploy -P release,deploy-only'
+
    only:
       - master
 

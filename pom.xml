@@ -5,7 +5,7 @@
    <groupId>lang.taxi</groupId>
    <artifactId>parent</artifactId>
    <packaging>pom</packaging>
-   <version>0.5.0</version>
+   <version>0.5.1</version>
    <description>taxi is a language for defining API contracts. A Dsl that sits atop RAML for resource definition. Taxi
       (short for Taxonomy)
    </description>
@@ -95,6 +95,16 @@
 
    <dependencyManagement>
       <dependencies>
+         <dependency>
+            <groupId>io.github.config4k</groupId>
+            <artifactId>config4k</artifactId>
+            <version>0.4.0</version>
+         </dependency>
+         <dependency>
+            <groupId>com.typesafe</groupId>
+            <artifactId>config</artifactId>
+            <version>1.4.0</version>
+         </dependency>
          <dependency>
             <groupId>io.arrow-kt</groupId>
             <artifactId>arrow-core</artifactId>
@@ -275,4 +285,55 @@
          <url>s3://repo.vyne.co/snapshot</url>
       </snapshotRepository>
    </distributionManagement>
+
+
+   <profiles>
+      <profile>
+         <id>snapshot-release</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <docker.tag>latest-snapshot</docker.tag>
+         </properties>
+      </profile>
+      <profile>
+         <id>release</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <docker.tag>latest</docker.tag>
+         </properties>
+      </profile>
+      <profile>
+         <id>deploy-only</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-install-plugin</artifactId>
+                  <version>2.5.2</version>
+                  <executions>
+                     <execution>
+                        <id>default-install</id>
+                        <configuration>
+                           <skip>true</skip>
+                        </configuration>
+                     </execution>
+                     <execution>
+                        <id>default-test</id>
+                        <configuration>
+                           <skip>true</skip>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
 </project>

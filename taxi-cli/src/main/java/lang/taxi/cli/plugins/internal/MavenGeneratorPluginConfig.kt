@@ -5,7 +5,16 @@ data class MavenGeneratorPluginConfig(
    val artifactId: String,
    val modelVersion: String = "4.0.0",
    val dependencies: List<Dependency> = emptyList(),
+   val repositories: List<Repository> = emptyList(),
    val distributionManagement: DistributionManagement?
+)
+
+data class Repository(
+   val id: String,
+   val name: String = id,
+   val url: String,
+   val snapshots: Boolean = false,
+   val releases: Boolean = true
 )
 
 data class Dependency(
