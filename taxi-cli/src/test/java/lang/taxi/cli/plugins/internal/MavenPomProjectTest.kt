@@ -1,6 +1,7 @@
 package lang.taxi.cli.plugins.internal
 
 import com.google.common.io.Resources
+import com.winterbe.expekt.should
 import lang.taxi.cli.commands.BuildCommand
 import lang.taxi.cli.config.CliTaxiEnvironment
 import lang.taxi.cli.config.TaxiProjectLoader
@@ -37,7 +38,6 @@ class MavenPomProjectTest {
       val project = TaxiProjectLoader().withConfigFileAt(folder.root.toPath().resolve("taxi.conf")).load()
       val pom = File(folder.root.absolutePath, "dist/pom.xml")
       var model = Model()
-      var reader: FileReader? = null
       val mvnReader = MavenXpp3Reader()
       val build = BuildCommand(PluginRegistry(
          internalPlugins = listOf(KotlinPlugin(BuildProperties(Properties()))),
@@ -46,10 +46,16 @@ class MavenPomProjectTest {
       val environment = CliTaxiEnvironment.forRoot(folder.root.toPath(), project)
       build.execute(environment)
 
-      reader = FileReader(pom)
+      val reader = FileReader(pom)
       model = mvnReader.read(reader)
       model.pomFile = pom
 
+      model.repositories.should.have.size(3)
+      val internalRepo = model.repositories.first { it.id == "internal-repo" }
+      internalRepo.releases.isEnabled.should.be.`true`
+      internalRepo.snapshots.isEnabled.should.be.`true`
+      internalRepo.url.should.equal("https://newcorp.nexus.com")
+      
       assert(this.folder.root.exists())
       assert(folder.root.list().contains("taxi.conf"))
       assert(folder.root.list().contains("src"))
