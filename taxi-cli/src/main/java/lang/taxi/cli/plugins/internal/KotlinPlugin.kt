@@ -29,7 +29,7 @@ class KotlinPlugin(val buildInfo: BuildProperties) : InternalPlugin, ModelGenera
 
    val taxiVersion: String
       get() {
-         return config.taxiVersion ?: buildInfo.version
+         return config.taxiVersion ?: buildInfo.version ?: "develop"
       }
 
    override fun setConfig(config: KotlinPluginConfig) {
