@@ -55,7 +55,7 @@ class MavenPomProjectTest {
       internalRepo.releases.isEnabled.should.be.`true`
       internalRepo.snapshots.isEnabled.should.be.`true`
       internalRepo.url.should.equal("https://newcorp.nexus.com")
-      
+
       assert(this.folder.root.exists())
       assert(folder.root.list().contains("taxi.conf"))
       assert(folder.root.list().contains("src"))
