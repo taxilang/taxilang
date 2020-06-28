@@ -29,26 +29,20 @@ class MavenPomProjectTest {
 
    @Before
    fun deployTestRepo() {
-      val testProject = File(Resources.getResource("samples/maven").toURI())
+
+   }
+
+   private fun copyProject(path: String) {
+      val testProject = File(Resources.getResource(path).toURI())
       FileUtils.copyDirectory(testProject, folder.root)
    }
 
    @Test
    fun generateMavenProject() {
-      val project = TaxiProjectLoader().withConfigFileAt(folder.root.toPath().resolve("taxi.conf")).load()
-      val pom = File(folder.root.absolutePath, "dist/pom.xml")
-      var model = Model()
-      val mvnReader = MavenXpp3Reader()
-      val build = BuildCommand(PluginRegistry(
-         internalPlugins = listOf(KotlinPlugin(BuildProperties(Properties()))),
-         requiredPlugins = project.pluginArtifacts()
-      ))
-      val environment = CliTaxiEnvironment.forRoot(folder.root.toPath(), project)
-      build.execute(environment)
+      copyProject("samples/maven")
+      executeBuild()
 
-      val reader = FileReader(pom)
-      model = mvnReader.read(reader)
-      model.pomFile = pom
+      val model = loadMavenModel()
 
       model.repositories.should.have.size(3)
       val internalRepo = model.repositories.first { it.id == "internal-repo" }
@@ -62,5 +56,38 @@ class MavenPomProjectTest {
       assert(folder.root.list().contains("dist"))
       assert(File(folder.root.absolutePath, "dist").list().contains("pom.xml"))
    }
+
+
+   @Test
+   fun usesFixedTaxiVersion() {
+      copyProject("samples/maven-fixed-version")
+      executeBuild()
+      val model = loadMavenModel()
+
+      val taxiDependency = model.dependencies.first { it.groupId == "lang.taxi" }
+      taxiDependency.version.should.equal("0.5.0")
+   }
+
+
+   private fun executeBuild() {
+      val project = TaxiProjectLoader().withConfigFileAt(folder.root.toPath().resolve("taxi.conf")).load()
+      val build = BuildCommand(PluginRegistry(
+         internalPlugins = listOf(KotlinPlugin(BuildProperties(Properties()))),
+         requiredPlugins = project.pluginArtifacts()
+      ))
+      val environment = CliTaxiEnvironment.forRoot(folder.root.toPath(), project)
+      build.execute(environment)
+   }
+
+   private fun loadMavenModel(): Model {
+      val pom = File(folder.root.absolutePath, "dist/pom.xml")
+      val mvnReader = MavenXpp3Reader()
+      val reader = FileReader(pom)
+      var model = Model()
+      model = mvnReader.read(reader)
+      model.pomFile = pom
+      return model
+   }
+
 
 }

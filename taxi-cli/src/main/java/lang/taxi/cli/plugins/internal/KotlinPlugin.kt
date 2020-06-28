@@ -73,6 +73,8 @@ class KotlinPlugin(val buildInfo: BuildProperties) : InternalPlugin, ModelGenera
          if (model.properties == null) {
             model.properties = Properties()
          }
+         model.properties.set("maven.compiler.source", config.jvmTarget)
+         model.properties.set("maven.compiler.target", config.jvmTarget)
          model.properties.set("kotlin.compiler.jvmTarget", config.jvmTarget)
          model.properties.set("kotlin.compiler.languageVersion", config.kotlinLanguageVersion)
 
