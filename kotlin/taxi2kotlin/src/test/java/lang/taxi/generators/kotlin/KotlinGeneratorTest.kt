@@ -158,7 +158,7 @@ enum class Gender {
       val taxi = """
 enum Direction { Buy, Sell }
 // Note - when we fix enum generation, this should stop compiling
-type BankDirection inherits Direction
+enum BankDirection inherits Direction
 """
       val output = compileAndGenerate(taxi).trimNewLines()
       val expected = """
