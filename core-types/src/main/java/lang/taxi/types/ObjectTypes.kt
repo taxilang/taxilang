@@ -6,7 +6,11 @@ import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
 import kotlin.reflect.KProperty1
 
-data class FieldExtension(val name: String, override val annotations: List<Annotation>, val refinedType: Type?) : Annotatable
+data class FieldExtension(
+   val name: String,
+   override val annotations: List<Annotation>,
+   val refinedType: Type?,
+   val defaultValue: Any?) : Annotatable
 data class ObjectTypeExtension(val annotations: List<Annotation> = emptyList(),
                                val fieldExtensions: List<FieldExtension> = emptyList(),
                                val typeDoc: String? = null,
@@ -159,16 +163,6 @@ data class ObjectType(
          return this.definition?.modifiers ?: emptyList()
       }
 
-//   private fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
-//      val allExcludedTypes: Set<Type> = typesToExclude + setOf(this)
-//      return this.inheritsFrom
-//         .flatMap { inheritedType ->
-//            if (!typesToExclude.contains(inheritedType))
-//               setOf(inheritedType) + inheritedType.getInheritanceGraph(allExcludedTypes)
-//            else emptySet<Type>()
-//         }.toSet()
-//   }
-
    val inheritedFields: List<Field>
       get() {
          return allInheritedTypes
@@ -190,8 +184,11 @@ data class ObjectType(
          return this.definition?.fields?.map { field ->
             val fieldExtensions = fieldExtensions(field.name)
             val collatedAnnotations = field.annotations + fieldExtensions.annotations()
-            val refinedType = fieldExtensions.asSequence().mapNotNull { it.refinedType }.firstOrNull() ?: field.type
-            field.copy(annotations = collatedAnnotations, type = refinedType)
+            val (refinedType, defaultValue) = fieldExtensions
+               .asSequence()
+               .mapNotNull { refinement -> refinement.refinedType?.let {Pair(refinement.refinedType, refinement.defaultValue)} }
+               .firstOrNull() ?: Pair(field.type, null)
+            field.copy(annotations = collatedAnnotations, type = refinedType, defaultValue = defaultValue)
          } ?: emptyList()
       }
 
@@ -245,7 +242,8 @@ data class Field(
    override val constraints: List<Constraint> = emptyList(),
    val accessor: Accessor? = null,
    val readCondition: FieldSetCondition? = null,
-   override val typeDoc: String? = null
+   override val typeDoc: String? = null,
+   val defaultValue: Any? = null
 ) : Annotatable, ConstraintTarget, Documented, NameTypePair {
 
    override val description: String = "field $name"

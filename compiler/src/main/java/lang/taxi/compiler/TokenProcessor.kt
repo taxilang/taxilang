@@ -275,14 +275,31 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             assertTypesCompatible(type.field(fieldName).type, refinedType, fieldName, typeName, typeRule)
          }
 
+         val enumConstantValue = member
+            ?.typeExtensionFieldDeclaration()
+            ?.typeExtensionFieldTypeRefinement()
+            ?.constantDeclaration()
+            ?.qualifiedName()?.let { enumDefaultValue ->
+               assertEnumDefaultValueCompatibility(refinedType!! as EnumType, enumDefaultValue.text, fieldName, typeRule)
+            }
 
-         FieldExtension(fieldName, fieldAnnotations, refinedType)
+         val constantValue = enumConstantValue ?:
+            member
+            ?.typeExtensionFieldDeclaration()
+            ?.typeExtensionFieldTypeRefinement()
+            ?.constantDeclaration()
+            ?.literal()?.let {  literal ->
+                  val literalValue = literal.value()
+                  assertLiteralDefaultValue(refinedType!!, literalValue, fieldName, typeRule)
+                  literalValue
+               }
+
+         FieldExtension(fieldName, fieldAnnotations, refinedType, constantValue)
       }
       val errorMessage = type.addExtension(ObjectTypeExtension(annotations, fieldExtensions, typeDoc, typeRule.toCompilationUnit()))
       return errorMessage
          .mapLeft { it.toCompilationError(typeRule.start) }
          .errorOrNull()
-
    }
 
    private fun assertTypesCompatible(originalType: Type, refinedType: Type, fieldName: String, typeName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext): Type {
@@ -293,6 +310,23 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          throw CompilationException(typeRule.start, "Cannot refine field $fieldName on $typeName to ${refinedType.qualifiedName} as it maps to ${refinedUnderlyingType.qualifiedName} which is incompatible with the existing type of ${originalType.qualifiedName}", typeRule.source().sourceName)
       }
       return refinedType
+   }
+
+   private fun assertLiteralDefaultValue(refinedType: Type, defaultValue: Any, fieldName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext) {
+      val valid = when {
+         refinedType.basePrimitive == PrimitiveType.STRING && defaultValue is String -> true
+         refinedType.basePrimitive == PrimitiveType.DECIMAL && defaultValue is Number -> true
+         refinedType.basePrimitive == PrimitiveType.INTEGER && defaultValue is Number -> true
+         refinedType.basePrimitive == PrimitiveType.BOOLEAN && defaultValue is Boolean -> true
+         else -> false
+      }
+      if (!valid) {
+         throw CompilationException(typeRule.start, "Cannot set default value for field $fieldName as $defaultValue as it is not compatible with ${refinedType.basePrimitive?.qualifiedName}", typeRule.source().sourceName)
+      }
+   }
+   private fun assertEnumDefaultValueCompatibility(enumType: EnumType, defaultValue: String, fieldName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext): EnumValue {
+      return enumType.values.firstOrNull { enumValue -> enumValue.qualifiedName == defaultValue }
+         ?: throw CompilationException(typeRule.start, "Cannot set default value for field $fieldName as $defaultValue as enum ${enumType.toQualifiedName().fullyQualifiedName} does not have corresponding value", typeRule.source().sourceName)
    }
 
    private fun compileTypeAlias(namespace: Namespace, tokenName: String, tokenRule: TaxiParser.TypeAliasDeclarationContext): Either<CompilationError, TypeAlias> {

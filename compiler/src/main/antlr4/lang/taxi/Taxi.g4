@@ -477,9 +477,10 @@ typeExtensionFieldDeclaration
     ;
 
 typeExtensionFieldTypeRefinement
-    : ':' typeType
+    : ':' typeType constantDeclaration?
     ;
 
+constantDeclaration : 'with' 'default' (literal | qualifiedName);
 // Typedoc is a special documentation block that wraps types.
 // It's treated as plain text, but we'll eventually support doc tools
 // that speak markdown.

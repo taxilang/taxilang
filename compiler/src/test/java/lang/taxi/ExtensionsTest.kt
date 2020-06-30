@@ -3,7 +3,10 @@ package lang.taxi
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
 import junit.framework.Assert.fail
+import lang.taxi.types.EnumType
+import lang.taxi.types.EnumValue
 import org.junit.Test
+import kotlin.math.exp
 
 class ExtensionsTest {
 
@@ -223,6 +226,89 @@ enum extension Colors {
 [[ Documented ]]
 RED
 }"""
+   }
+
+   @Test
+   fun `types can support constants through extensions`() {
+      val source = """
+         enum Foo {
+            One,
+            Two
+         }
+         type alias FirstName as String
+         type Age inherits Int
+         type Person {
+            name : String
+            age: Age
+            surname: String
+            foo: Foo
+         }
+         type extension Person {
+            name: FirstName with default 'jimmy'
+            surname : FirstName with default 'doe'
+            age: Age with default 42
+            foo: Foo with default Foo.One
+         }
+        """
+      val doc = Compiler(source).compile()
+      val person = doc.objectType("Person")
+      val nameField = person.field("name")
+      expect(nameField.type.qualifiedName).to.equal("FirstName")
+      expect(nameField.defaultValue).to.equal("jimmy")
+      val ageField = person.field("age")
+      expect(ageField.type.qualifiedName).to.equal("Age")
+      expect(ageField.defaultValue).to.equal(42)
+      val surnameField = person.field("surname")
+      expect(surnameField.type.qualifiedName).to.equal("FirstName")
+      expect(surnameField.defaultValue).to.equal("doe")
+      val fooField = person.field("foo")
+      expect(fooField.type.qualifiedName).to.equal("Foo")
+      val expectedEnumValue = (fooField.type as EnumType).values.first { it.qualifiedName == "Foo.One" }
+      expect(fooField.defaultValue).to.equal(expectedEnumValue)
+   }
+
+   @Test(expected = CompilationException::class)
+   fun `An Int default value can't be assigned to a String based field`() {
+      val source = """
+         type alias FirstName as String
+         type Person {
+            name : String
+         }
+         type extension Person {
+            name: FirstName with default 42
+         }
+        """
+      val doc = Compiler(source).compile()
+   }
+
+   @Test(expected = CompilationException::class)
+   fun `A String default value can't be assigned to a Int based field`() {
+      val source = """
+         type alias Age as Int
+         type Person {
+            age : Int
+         }
+         type extension Person {
+            age: Age with default 'jimmy'
+         }
+        """
+      val doc = Compiler(source).compile()
+   }
+   @Test(expected = CompilationException::class)
+   fun `A non-existing enum default value can't be assigned to a enum based field`() {
+      val source = """
+         enum CountryCode {
+            UK,
+            DE
+         }
+         type Person {
+            birthCountry : CountryCode
+         }
+         type extension Person {
+            birthCountry: CountryCode with default CountryCode.TR
+         }
+        """
+      val doc = Compiler(source).compile()
    }
 }
 
