@@ -81,10 +81,7 @@ data class ObjectType(
       get() {
          return if (isDefined) wrapper.allInheritedTypes else emptySet()
       }
-   override val baseEnum: EnumType?
-      get() {
-         return if (isDefined) wrapper.baseEnum else null
-      }
+
    override val inheritsFromPrimitive: Boolean
       get() {
          return if (isDefined) wrapper.inheritsFromPrimitive else false

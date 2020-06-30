@@ -104,7 +104,10 @@ type Foo
     ISO currency codes are the three-letter alphabetic codes that
     are used throughout the world
 ]]
-enum CurrencyCode { }
+enum CurrencyCode {
+   USD,
+   GBP
+}
       """.trimIndent()
       val taxi = Compiler(source).compile()
       taxi.enumType("CurrencyCode").typeDoc.should.equal("ISO currency codes are the three-letter alphabetic codes that\n" +
