@@ -496,8 +496,8 @@ Identifier
 
 
 StringLiteral
-    :   '"' StringCharacters? '"'
-    |   '\'' StringCharacters? '\''
+    :   '"' (DoubleQuoteStringCharacter+)? '"'
+    |   '\'' (SingleQuoteStringCharacter+)? '\''
     ;
 
 
@@ -506,13 +506,14 @@ BooleanLiteral
     ;
 
 fragment
-StringCharacters
-    :   StringCharacter+
+DoubleQuoteStringCharacter
+    :   ~["\\]
+    |   EscapeSequence
     ;
 
 fragment
-StringCharacter
-    :   ~["\\]
+SingleQuoteStringCharacter
+    :   ~["'\\]
     |   EscapeSequence
     ;
 

@@ -3,7 +3,7 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>lang.taxi</groupId>
-      <version>0.5.0</version>
+      <version>0.5.0.1-SNAPSHOT</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -29,14 +29,14 @@
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>taxi-plugin-api</artifactId>
-         <version>0.5.0</version>
+         <version>0.5.0.1-SNAPSHOT</version>
          <!-- Important to mark these as provided, so as not to cause classloader conflicts -->
          <scope>provided</scope>
       </dependency>
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>taxi-generator-api</artifactId>
-         <version>0.5.0</version>
+         <version>0.5.0.1-SNAPSHOT</version>
          <!-- Important to mark these as provided, so as not to cause classloader conflicts -->
          <scope>provided</scope>
       </dependency>
