@@ -100,17 +100,15 @@ enum extension Foo {
    }
 
    @Test
-   fun cannotDeclareEmptyEnum() {
+   fun canDeclareEmptyEnum() {
       val src = """
 enum Foo {
 
 }
       """.trimIndent()
 
-      expectedException.expect(CompilationException::class.java)
-      expectedException.expectMessage(startsWith("Compilation Error: UnknownSource(3,0) mismatched input '}'"))
+      Compiler(src).compile().enumType("Foo").values.isEmpty()
 
-      Compiler(src).compile()
    }
 
    @Test
