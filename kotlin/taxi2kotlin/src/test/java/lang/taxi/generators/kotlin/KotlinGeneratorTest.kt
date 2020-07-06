@@ -1,5 +1,8 @@
 package lang.taxi.generators.kotlin
 
+import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeSpec
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
 import lang.taxi.Compiler
@@ -8,8 +11,27 @@ import lang.taxi.packages.TaxiPackageProject
 import org.junit.Test
 import java.nio.file.Path
 
+
 class KotlinGeneratorTest {
 
+   @Test
+   fun canGenerateNestedObject() {
+      val baz = TypeSpec.objectBuilder("Baz")
+         .addProperty(PropertySpec.builder("buzz", String::class)
+            .initializer("%S", "buzzzzz")
+            .build())
+         .build()
+
+      val top = TypeSpec.objectBuilder("TypeName")
+         .addType(baz)
+         .build()
+
+      val b = top.toString()
+      val file = FileSpec.builder("", "QuickTest")
+         .addType(top)
+         .build()
+//      file.
+   }
    @Test
    fun generatesSimpleDataClassFromType() {
       val taxi = """
