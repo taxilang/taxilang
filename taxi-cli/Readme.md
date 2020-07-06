@@ -2,8 +2,9 @@
 This project uses a built in Docker image to compile taxonomies.
 Before running the image make sure that file sharing has been configured correctly in docker settings:
 Running the container without providing a user would result some IO access errors.<br/>
-You can add -u to your run script to avoid that.<br/>
-ex: docker run -u username dockerImage
+To use the username of the local user, use -u with your run script.<br/>
+ex: docker run -v "$PWD":/taxi -u user1 taxilang/taxi command<br/>
+If you don't specify any commands, the default behaviour of the docker image to build.
 
 #### For Windows users:
 Go to Settings -> Resources -> File Sharing
