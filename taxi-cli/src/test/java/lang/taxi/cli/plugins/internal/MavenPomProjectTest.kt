@@ -50,12 +50,16 @@ class MavenPomProjectTest {
       internalRepo.snapshots.isEnabled.should.be.`true`
       internalRepo.url.should.equal("https://newcorp.nexus.com")
 
+      model.distributionManagement.repository.id.should.equal("some-internal-repo")
+      model.distributionManagement.repository.url.should.equal("https://our-internal-repo")
+
       assert(this.folder.root.exists())
       assert(folder.root.list().contains("taxi.conf"))
       assert(folder.root.list().contains("src"))
       assert(folder.root.list().contains("dist"))
       assert(File(folder.root.absolutePath, "dist").list().contains("pom.xml"))
    }
+
 
 
    @Test

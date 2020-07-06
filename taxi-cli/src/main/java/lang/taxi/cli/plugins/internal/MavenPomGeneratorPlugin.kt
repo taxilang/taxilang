@@ -51,9 +51,10 @@ class MavenPomGeneratorPlugin(private val configurers: List<MavenModelConfigurer
 
       config.distributionManagement?.let { distributionManagement ->
          model.distributionManagement = DistributionManagement()
-         model.distributionManagement.snapshotRepository = DeploymentRepository()
-         model.distributionManagement.snapshotRepository.id = distributionManagement.id
-         model.distributionManagement.snapshotRepository.url = distributionManagement.url
+         model.distributionManagement.repository = DeploymentRepository().apply {
+            id = distributionManagement.id
+            url = distributionManagement.url
+         }
       }
       val mavenDependencies = config.dependencies.map { dependency ->
          val mavenDependency = Dependency().apply {
