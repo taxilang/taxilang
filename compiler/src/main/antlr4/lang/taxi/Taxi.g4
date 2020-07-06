@@ -156,7 +156,7 @@ classOrInterfaceType
 
 enumDeclaration
     :    typeDoc? annotation* 'enum' classOrInterfaceType
-         (('inherits' enumInheritedType) | ('{' enumConstants '}'))
+         (('inherits' enumInheritedType) | ('{' enumConstants? '}'))
     ;
 
 enumInheritedType
