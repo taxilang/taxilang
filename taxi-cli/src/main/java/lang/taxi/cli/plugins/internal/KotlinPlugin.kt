@@ -24,12 +24,12 @@ import java.nio.file.Paths
 import java.util.*
 
 @Component
-class KotlinPlugin(val buildInfo: BuildProperties) : InternalPlugin, ModelGenerator, PluginWithConfig<KotlinPluginConfig> {
+class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGenerator, PluginWithConfig<KotlinPluginConfig> {
    private lateinit var config: KotlinPluginConfig
 
    val taxiVersion: String
       get() {
-         return config.taxiVersion ?: buildInfo.version ?: "develop"
+         return config.taxiVersion ?: buildInfo?.version ?: "develop"
       }
 
    override fun setConfig(config: KotlinPluginConfig) {

@@ -79,3 +79,12 @@ Note - the concrete type doesn't need to reference the type alias, but it *must*
 for the annotation processor to get initiatied.
 
 
+## Developer notes
+Debugging KAPT can be tricky.
+Here's how to do it (from IntelliJ)
+
+ * `mvn install` this project
+ * In the project that is using the kapt plugin, set the dependency version to the snapshot just installed
+ * In IntelliJ, naviagte to Maven -> The project depending on this plugin -> plugins -> kotlin -> kotlin:kapt -> right click -> debug
+ 
+ Note - on change, you have to mvn install again. 
