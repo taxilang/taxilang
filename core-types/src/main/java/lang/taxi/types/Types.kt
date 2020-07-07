@@ -7,12 +7,12 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 
-class LazyLoadingWrapper(private val type:Type) {
+class LazyLoadingWrapper(private val type: Type) {
    companion object {
       val log: Logger = LoggerFactory.getLogger(LazyLoadingWrapper::class.java)
    }
 
-   private val types by lazy {type.allInheritedTypes + type}
+   private val types by lazy { type.allInheritedTypes + type }
 
    val allInheritedTypes: Set<Type>
       by lazy { type.getInheritanceGraph() }
@@ -21,18 +21,25 @@ class LazyLoadingWrapper(private val type:Type) {
       by lazy { basePrimitive != null }
 
    val baseEnum: EnumType? by lazy {
-      val types = types.filterIsInstance<EnumType>()
-      when {
-         types.isEmpty() -> null
-         types.size == 1 -> types.first()
-         else -> {
-            error("Inheriting from multiple enums isn't supported, and technically shouldn't be possible")
-         }
+      if (type !is EnumType) {
+         null
       }
+
+      val baseEnums = types.filterIsInstance<EnumType>().filter { it.inheritsFrom.isEmpty() }
+
+      when (baseEnums.size) {
+         0 -> error("Couldn't find base type for ${type.qualifiedName}")
+         1 -> baseEnums.first()
+         else -> error("Inheriting from multiple enums isn't supported, and technically shouldn't be possible: ${type.qualifiedName}\"")
+      }
+
    }
+
+
    val basePrimitive: PrimitiveType?
       by lazy {
          val primitives = types.filter { it is PrimitiveType || it is EnumType }
+            .filter { it.inheritsFrom.isEmpty() }
          when {
             primitives.isEmpty() -> null
             primitives.size == 1 -> {
@@ -81,7 +88,7 @@ class LazyLoadingWrapper(private val type:Type) {
 
             // changing extensions changes hash
             type.extensions
-               .sortedBy { it.compilationUnit.source.content.hashCode()}
+               .sortedBy { it.compilationUnit.source.content.hashCode() }
                .forEach {
                   hasher.putUnencodedChars(it.compilationUnit.source.content)
                   //println("Extension:(hc:${it.compilationUnit.source.content.hashCode()}) ${it.compilationUnit.source.normalizedSourceName} #${it.compilationUnit.source.hashCode()}: ${it.compilationUnit.source.content}")
@@ -111,15 +118,13 @@ interface Type : Named, Compiled {
 
    val allInheritedTypes: Set<Type>
 
-   val format:String?
+   val format: String?
 
    val inheritsFromPrimitive: Boolean
 
-   val baseEnum: EnumType?
-
    val basePrimitive: PrimitiveType?
 
-   val formattedInstanceOfType:Type?
+   val formattedInstanceOfType: Type?
 
    val definitionHash: String?
 
@@ -175,7 +180,7 @@ interface UserType<TDef : TypeDefinition, TExt : TypeDefinition> : Type {
 
    val extensions: List<TExt>
 
-   fun addExtension(extension: TExt): Either<ErrorMessage,TExt>
+   fun addExtension(extension: TExt): Either<ErrorMessage, TExt>
 
    val isDefined: Boolean
       get() {

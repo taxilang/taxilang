@@ -2,6 +2,7 @@ package lang.taxi.cli.config
 
 import com.google.common.io.Resources
 import com.winterbe.expekt.should
+import lang.taxi.cli.commands.SetVersionCommand
 import lang.taxi.cli.commands.VersionBumpCommand
 import lang.taxi.cli.utils.VersionUpdater
 import lang.taxi.generators.TaxiEnvironment
@@ -74,7 +75,26 @@ class VersionUpdaterTest {
    }
 
    @Test(expected = IllegalArgumentException::class)
-   fun illegalArgument() {
+   fun versionBumpIllegalArgument() {
+      val versionBumpCommand = VersionBumpCommand(VersionUpdater()).apply {
+         increment = "undefined"
+      }
+
+      versionBumpCommand.execute(taxiEnvironment)
+   }
+
+   @Test
+   fun canSetVersion() {
+      val newVersion = "1.2.3"
+      val setVersionCommand = SetVersionCommand(VersionUpdater()).apply { version = newVersion }
+      setVersionCommand.execute(taxiEnvironment)
+
+      val reloaded = TaxiProjectLoader().withConfigFileAt(taxiEnvironment.projectRoot.resolve("taxi.conf")).load()
+      reloaded.version.should.equal(newVersion)
+   }
+
+   @Test(expected = IllegalArgumentException::class)
+   fun setVersionIllegalArgument() {
       val versionBumpCommand = VersionBumpCommand(VersionUpdater()).apply {
          increment = "undefined"
       }

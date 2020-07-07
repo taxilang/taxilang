@@ -31,6 +31,7 @@ data class EnumDefinition(val values: List<EnumValue>,
    override fun hashCode(): Int = equality.hash()
 }
 
+
 data class EnumExtension(val values: List<EnumValueExtension>,
                          override val annotations: List<Annotation> = emptyList(),
                          override val compilationUnit: CompilationUnit,
@@ -54,7 +55,7 @@ data class EnumType(override val qualifiedName: String,
       get() {
          return if (isDefined) wrapper.allInheritedTypes else emptySet()
       }
-   override val baseEnum: EnumType?
+    val baseEnum: EnumType?
       get() {
          return if (isDefined) wrapper.baseEnum else null
       }
@@ -76,6 +77,11 @@ data class EnumType(override val qualifiedName: String,
 
    override val inheritsFrom: Set<Type>
       get() = definition?.inheritsFrom ?: emptySet()
+
+   val inheritsFromNames: List<String>
+      get() {
+         return inheritsFrom.map { it.qualifiedName }
+      }
 
    override val typeDoc: String?
       get() {
@@ -103,13 +109,17 @@ data class EnumType(override val qualifiedName: String,
 
    val values: List<EnumValue>
       get() {
-         return this.definition?.values?.map { value ->
-            val valueExtensions: List<EnumValueExtension> = valueExtensions(value.name)
-            val collatedAnnotations = value.annotations + valueExtensions.annotations()
-            val docSources = (listOf(value) + valueExtensions) as List<Documented>
-            val synonyms = value.synonyms + valueExtensions.flatMap { it.synonyms }
-            value.copy(annotations = collatedAnnotations, typeDoc = docSources.typeDoc(), synonyms = synonyms)
-         } ?: emptyList()
+         return if (this.baseEnum != this) {
+            this.baseEnum?.values ?: emptyList()
+         } else {
+            this.definition?.values?.map { value ->
+               val valueExtensions: List<EnumValueExtension> = valueExtensions(value.name)
+               val collatedAnnotations = value.annotations + valueExtensions.annotations()
+               val docSources = (listOf(value) + valueExtensions) as List<Documented>
+               val synonyms = value.synonyms + valueExtensions.flatMap { it.synonyms }
+               value.copy(annotations = collatedAnnotations, typeDoc = docSources.typeDoc(), synonyms = synonyms)
+            } ?: emptyList()
+         }
       }
 
    fun has(valueOrName: Any?): Boolean {
@@ -124,9 +134,9 @@ data class EnumType(override val qualifiedName: String,
       return this.values.any { it.value == value }
    }
 
-   fun ofValue(value: Any?)  = this.values.first { it.value == value}
-   fun ofName(name: String?)  = this.values.first { it.name == name}
-   fun of(valueOrName: Any?) = this.values.first { it.value == valueOrName || it.name == valueOrName }
+   fun ofValue(value: Any?)  = this.values.firstOrNull { it.value == value} ?: error("Enum ${this.qualifiedName} does not contain a member with a value of $value")
+   fun ofName(name: String?)  = this.values.firstOrNull { it.name == name} ?: error("Enum ${this.qualifiedName} does not contains a member named $name")
+   fun of(valueOrName: Any?) = this.values.firstOrNull { it.value == valueOrName || it.name == valueOrName } ?: error("Enum ${this.qualifiedName} does not contain either a name nor a value of $valueOrName")
 
    private fun valueExtensions(valueName: String): List<EnumValueExtension> {
       return this.extensions.flatMap { it.values.filter { value -> value.name == valueName } }

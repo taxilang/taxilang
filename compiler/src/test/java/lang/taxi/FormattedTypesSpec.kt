@@ -37,6 +37,18 @@ object FormattedTypesSpec : Spek({
 
       }
 
+      it("should parse formatted types with single quotes within double quotes") {
+         val doc = """
+            type TransactionEventDateTime inherits Instant
+            type Order {
+                orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
+            }
+         """.trimMargin()
+            .compiled()
+
+         doc.objectType("Order").field("orderDateTime").type.format.should.equal("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
+      }
+
       it("should parse multiple formatted types with single quotes") {
          val doc = """
             type TransactionEventDateTime inherits Instant

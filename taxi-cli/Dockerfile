@@ -6,4 +6,6 @@ WORKDIR /taxi/
 
 COPY target/taxi-cli.jar /
 
-CMD java -jar /taxi-cli.jar $CLI_CMD
+ENTRYPOINT ["java", "-jar", "/taxi-cli.jar"]
+
+CMD ["build"]

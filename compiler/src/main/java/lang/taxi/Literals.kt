@@ -10,9 +10,9 @@ fun TaxiParser.LiteralContext.valueOrNull(): Any? {
 
 fun TaxiParser.LiteralContext.value(): Any {
    return when {
+      this.BooleanLiteral() != null -> this.BooleanLiteral().text.toBoolean()
       this.StringLiteral() != null -> stringLiteralValue(this.StringLiteral())
       this.IntegerLiteral() != null -> this.IntegerLiteral().text.toInt()
-      this.BooleanLiteral() != null -> this.BooleanLiteral().text.toBoolean()
       this.isNullValue() -> error("Null is not permitted here")
       else -> TODO()
 //      this.IntegerLiteral() != null -> this.IntegerLiteral()

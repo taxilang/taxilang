@@ -28,11 +28,17 @@ import kotlin.Int
 import lang.taxi.annotations.DataType
 import lang.taxi.generators.kotlin.Marker
 
-@DataType("Person")
+@DataType(TypeNames.Person)
 open class Person(
   @Marker
   val id: Int
-)""".trimNewLines()
+)
+
+import kotlin.String
+
+object TypeNames {
+  const val Person: String = "Person"
+}""".trimNewLines()
 
         expect(output).to.equal(expected)
     }
@@ -52,11 +58,17 @@ import kotlin.Int
 import lang.taxi.annotations.DataType
 import lang.taxi.generators.kotlin.Marker
 
-@DataType("Person")
+@DataType(TypeNames.Person)
 @Marker
 open class Person(
   val id: Int
-)""".trimNewLines()
+)
+
+import kotlin.String
+
+object TypeNames {
+  const val Person: String = "Person"
+}""".trimNewLines()
 
         expect(output).to.equal(expected)
 

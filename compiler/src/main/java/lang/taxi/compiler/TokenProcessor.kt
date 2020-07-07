@@ -5,11 +5,14 @@ import com.google.common.hash.HashFunction
 import com.google.common.hash.Hasher
 import com.google.common.hash.Hashing
 import lang.taxi.*
+import lang.taxi.policies.*
+import lang.taxi.services.Operation
+import lang.taxi.services.OperationContract
+import lang.taxi.services.Parameter
+import lang.taxi.services.Service
+import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintValidator
 import lang.taxi.services.operations.constraints.OperationConstraintConverter
-import lang.taxi.policies.*
-import lang.taxi.services.*
-import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.utils.errorOrNull
@@ -278,14 +281,31 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             assertTypesCompatible(type.field(fieldName).type, refinedType, fieldName, typeName, typeRule)
          }
 
+         val enumConstantValue = member
+            ?.typeExtensionFieldDeclaration()
+            ?.typeExtensionFieldTypeRefinement()
+            ?.constantDeclaration()
+            ?.qualifiedName()?.let { enumDefaultValue ->
+               assertEnumDefaultValueCompatibility(refinedType!! as EnumType, enumDefaultValue.text, fieldName, typeRule)
+            }
 
-         FieldExtension(fieldName, fieldAnnotations, refinedType)
+         val constantValue = enumConstantValue ?:
+            member
+            ?.typeExtensionFieldDeclaration()
+            ?.typeExtensionFieldTypeRefinement()
+            ?.constantDeclaration()
+            ?.literal()?.let {  literal ->
+                  val literalValue = literal.value()
+                  assertLiteralDefaultValue(refinedType!!, literalValue, fieldName, typeRule)
+                  literalValue
+               }
+
+         FieldExtension(fieldName, fieldAnnotations, refinedType, constantValue)
       }
       val errorMessage = type.addExtension(ObjectTypeExtension(annotations, fieldExtensions, typeDoc, typeRule.toCompilationUnit()))
       return errorMessage
          .mapLeft { it.toCompilationError(typeRule.start) }
          .errorOrNull()
-
    }
 
    private fun assertTypesCompatible(originalType: Type, refinedType: Type, fieldName: String, typeName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext): Type {
@@ -296,6 +316,23 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          throw CompilationException(typeRule.start, "Cannot refine field $fieldName on $typeName to ${refinedType.qualifiedName} as it maps to ${refinedUnderlyingType.qualifiedName} which is incompatible with the existing type of ${originalType.qualifiedName}", typeRule.source().sourceName)
       }
       return refinedType
+   }
+
+   private fun assertLiteralDefaultValue(refinedType: Type, defaultValue: Any, fieldName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext) {
+      val valid = when {
+         refinedType.basePrimitive == PrimitiveType.STRING && defaultValue is String -> true
+         refinedType.basePrimitive == PrimitiveType.DECIMAL && defaultValue is Number -> true
+         refinedType.basePrimitive == PrimitiveType.INTEGER && defaultValue is Number -> true
+         refinedType.basePrimitive == PrimitiveType.BOOLEAN && defaultValue is Boolean -> true
+         else -> false
+      }
+      if (!valid) {
+         throw CompilationException(typeRule.start, "Cannot set default value for field $fieldName as $defaultValue as it is not compatible with ${refinedType.basePrimitive?.qualifiedName}", typeRule.source().sourceName)
+      }
+   }
+   private fun assertEnumDefaultValueCompatibility(enumType: EnumType, defaultValue: String, fieldName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext): EnumValue {
+      return enumType.values.firstOrNull { enumValue -> enumValue.qualifiedName == defaultValue }
+         ?: throw CompilationException(typeRule.start, "Cannot set default value for field $fieldName as $defaultValue as enum ${enumType.toQualifiedName().fullyQualifiedName} does not have corresponding value", typeRule.source().sourceName)
    }
 
    private fun compileTypeAlias(namespace: Namespace, tokenName: String, tokenRule: TaxiParser.TypeAliasDeclarationContext): Either<CompilationError, TypeAlias> {
@@ -334,11 +371,13 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
    private fun <T : Any> List<Either<CompilationError, T>>.reportAndRemoveErrors(): List<T> {
-      return this.mapNotNull { item ->
-         item.getOrHandle { compilationError ->
-            this@TokenProcessor.errors.add(compilationError)
-            null
-         }
+      return this.mapNotNull { it.reportIfCompilationError() }
+   }
+
+   private fun <T : Any> Either<CompilationError, T>.reportIfCompilationError(): T? {
+      return this.getOrHandle { compilationError ->
+         this@TokenProcessor.errors.add(compilationError)
+         null
       }
    }
 
@@ -368,7 +407,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
       val annotations = collateAnnotations(ctx.annotation())
       val modifiers = parseModifiers(ctx.typeModifier())
-      val inherits = parseInheritance(namespace, ctx.listOfInheritedTypes())
+      val inherits = parseTypeInheritance(namespace, ctx.listOfInheritedTypes())
       val typeDoc = parseTypeDoc(ctx.typeDoc()?.source()?.content)
       val format: String? = null
       this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(
@@ -474,12 +513,43 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return text.removeSurrounding("`")
    }
 
-   private fun parseInheritance(namespace: Namespace, listOfInheritedTypes: TaxiParser.ListOfInheritedTypesContext?): Set<Type> {
+   private fun parseTypeInheritance(namespace: Namespace, listOfInheritedTypes: TaxiParser.ListOfInheritedTypesContext?): Set<Type> {
       if (listOfInheritedTypes == null) return emptySet()
-      return listOfInheritedTypes.typeType().map { typeTypeContext ->
-         parseType(namespace, typeTypeContext)
-      }.reportAndRemoveErrors().toSet()
+      return listOfInheritedTypes.typeType().mapNotNull { typeTypeContext ->
+
+          parseInheritedType(namespace, typeTypeContext) {
+            when (it) {
+               is EnumType -> Either.left(CompilationError(typeTypeContext.start, "A Type cannot inherit from an Enum"))
+               else -> Either.right(it)
+            }
+         }
+
+      }.toSet()
    }
+
+   private fun parseEnumInheritance(namespace: Namespace, enumInheritedTypeContext: TaxiParser.EnumInheritedTypeContext?): Type? {
+      if (enumInheritedTypeContext == null) return null
+
+      val typeTypeContext = enumInheritedTypeContext.typeType()
+      return parseInheritedType(namespace, typeTypeContext) {
+         when (it) {
+            !is EnumType -> Either.left(CompilationError(typeTypeContext.start, "An Enum can only inherit from an Enum"))
+            else -> Either.right(it)
+         }
+      }
+
+   }
+
+   private inline fun  parseInheritedType(namespace: Namespace, typeTypeContext: TaxiParser.TypeTypeContext, filter: (Type) -> Either<CompilationError, Type>): Type? {
+      val inheritedTypeOrError = parseType(namespace, typeTypeContext)
+
+      val inheritedEnumTypeOrError = if (inheritedTypeOrError.isRight()) {
+         filter(inheritedTypeOrError.getOrElse { null }!!)
+      } else inheritedTypeOrError
+
+      return inheritedEnumTypeOrError.reportIfCompilationError()
+   }
+
 
    private fun parseModifiers(typeModifier: MutableList<TaxiParser.TypeModifierContext>): List<Modifier> {
       return typeModifier.map { Modifier.fromToken(it.text) }
@@ -656,11 +726,13 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          .map { enumValues ->
             val annotations = collateAnnotations(ctx.annotation())
             val basePrimitive = deriveEnumBaseType(ctx, enumValues)
+            val inherits = parseEnumInheritance(namespace, ctx.enumInheritedType())
+
             val enumType = EnumType(typeName, EnumDefinition(
                enumValues,
                annotations,
                ctx.toCompilationUnit(),
-               inheritsFrom = emptySet(),
+               inheritsFrom = if(inherits != null ) setOf(inherits) else emptySet(),
                typeDoc = parseTypeDoc(ctx.typeDoc()),
                basePrimitive = basePrimitive
             ))

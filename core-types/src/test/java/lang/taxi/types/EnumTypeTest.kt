@@ -2,9 +2,15 @@ package lang.taxi.types
 
 import com.winterbe.expekt.should
 import lang.taxi.sources.SourceCode
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExpectedException
 
 class EnumTypeTest {
+
+   @Rule
+   @JvmField
+   val expectedException = ExpectedException.none()
 
    @Test
    fun lookupByNameOrValueWithName() {
@@ -43,12 +49,15 @@ class EnumTypeTest {
       enumType.of("US Dollars").value.should.equal("US Dollars")
    }
 
-   @Test(expected = NoSuchElementException::class)
+   @Test
    fun lookupByNameOrValueDoesntExist() {
       val enumType = enumType(listOf(
          EnumValue("USD", "US Dollars", "Currency.USD", emptyList(), emptyList()),
          EnumValue("EUR", "Euro", "Currency.EUR", emptyList(), emptyList())
       ))
+
+      expectedException.expect(IllegalStateException::class.java)
+      expectedException.expectMessage("Enum Currency does not contain either a name nor a value of GBP")
 
       enumType.has("GBP").should.be.`false`
       enumType.of("GBP")
@@ -66,12 +75,15 @@ class EnumTypeTest {
       enumType.ofName("USD").value.should.equal("US Dollars")
    }
 
-   @Test(expected = NoSuchElementException::class)
+   @Test
    fun lookupByNameWithValue() {
       val enumType = enumType(listOf(
          EnumValue("USD", "US Dollars", "Currency.USD", emptyList(), emptyList()),
          EnumValue("EUR", "Euro", "Currency.EUR", emptyList(), emptyList())
       ))
+
+      expectedException.expect(IllegalStateException::class.java)
+      expectedException.expectMessage("Enum Currency does not contains a member named US Dollars")
 
       enumType.hasName("US Dollars").should.be.`false`
       enumType.ofName("US Dollars")
@@ -89,12 +101,15 @@ class EnumTypeTest {
       enumType.ofValue("Euro").value.should.equal("Euro")
    }
 
-   @Test(expected = NoSuchElementException::class)
+   @Test
    fun lookupByValueWithName() {
       val enumType = enumType(listOf(
          EnumValue("USD", "US Dollars", "Currency.USD", emptyList(), emptyList()),
          EnumValue("EUR", "Euro", "Currency.EUR", emptyList(), emptyList())
       ))
+
+      expectedException.expect(IllegalStateException::class.java)
+      expectedException.expectMessage("Enum Currency does not contain a member with a value of EUR")
 
       enumType.hasValue("EUR").should.be.`false`
       enumType.ofValue("EUR")

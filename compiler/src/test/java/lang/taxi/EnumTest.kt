@@ -2,9 +2,16 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.types.PrimitiveType
+import org.hamcrest.CoreMatchers.startsWith
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExpectedException
 
 class EnumTest {
+
+   @Rule
+   @JvmField
+   val expectedException = ExpectedException.none()
 
    @Test
    fun enumsWithContentOfIntHaveContentParsedCorrectly() {
@@ -41,7 +48,6 @@ enum Foo {
       Compiler(src).compile().enumType("Foo").value("One").value.should.equal("One")
       Compiler(src).compile().enumType("Foo").value("Two").value.should.equal("Two")
    }
-
 
 
    @Test
@@ -94,10 +100,41 @@ enum extension Foo {
    }
 
    @Test
+   fun canDeclareEmptyEnum() {
+      val src = """
+enum Foo {
+
+}
+      """.trimIndent()
+
+      Compiler(src).compile().enumType("Foo").values.isEmpty()
+
+   }
+
+   @Test
    fun canDeclareSynonymBetweenTwoEnums() {
       val src = """
+enum Foo {
+  FOO_A,
+  FOO_B
+}
+
+enum Bar {
+  BAR_A synonym of Foo.FOO_A,
+  BAR_B synonym of Foo.FOO_B,
+  BAR_C
+}
 
       """.trimIndent()
+
+      var doc = Compiler(src).compile()
+      doc.enumType("Bar").value("BAR_A").synonyms.should.equal(listOf("Foo.FOO_A"))
+      doc.enumType("Bar").value("BAR_B").synonyms.should.equal(listOf("Foo.FOO_B"))
+      doc.enumType("Bar").value("BAR_C").synonyms.should.be.empty
+      doc.enumType("Foo").value("FOO_A").synonyms.should.equal(listOf("Bar.BAR_A"))
+      doc.enumType("Foo").value("FOO_B").synonyms.should.equal(listOf("Bar.BAR_B"))
+
    }
+
 
 }

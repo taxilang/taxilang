@@ -24,11 +24,15 @@ import java.nio.file.Paths
 import java.util.*
 
 @Component
-class KotlinPlugin(val buildInfo: BuildProperties) : InternalPlugin, ModelGenerator, PluginWithConfig<KotlinPluginConfig> {
+class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGenerator, PluginWithConfig<KotlinPluginConfig> {
    private lateinit var config: KotlinPluginConfig
 
+   val taxiVersion: String
+      get() {
+         return config.taxiVersion ?: buildInfo?.version ?: "develop"
+      }
+
    override fun setConfig(config: KotlinPluginConfig) {
-      config.taxiVersion = buildInfo?.version
       this.config = config
    }
 
@@ -58,7 +62,7 @@ class KotlinPlugin(val buildInfo: BuildProperties) : InternalPlugin, ModelGenera
          model.dependencies.add(org.apache.maven.model.Dependency().apply {
             groupId = "lang.taxi"
             artifactId = "taxi-annotation-processor"
-            version = config.taxiVersion
+            version = taxiVersion
          })
          model.dependencies.add(org.apache.maven.model.Dependency().apply {
             groupId = "com.google.guava"
@@ -69,6 +73,8 @@ class KotlinPlugin(val buildInfo: BuildProperties) : InternalPlugin, ModelGenera
          if (model.properties == null) {
             model.properties = Properties()
          }
+         model.properties.set("maven.compiler.source", config.jvmTarget)
+         model.properties.set("maven.compiler.target", config.jvmTarget)
          model.properties.set("kotlin.compiler.jvmTarget", config.jvmTarget)
          model.properties.set("kotlin.compiler.languageVersion", config.kotlinLanguageVersion)
 
@@ -83,18 +89,18 @@ class KotlinPlugin(val buildInfo: BuildProperties) : InternalPlugin, ModelGenera
 
             val pluginConfig = Xpp3DomBuilder.build(
                StringReader(
-               "<configuration>" +
-               "   <sourceDirs>" +
-               "      <sourceDir>src/main/java</sourceDir>" +
-               "   </sourceDirs>" +
-               "   <annotationProcessorPaths>" +
-               "      <annotationProcessorPath>" +
-               "         <groupId>lang.taxi</groupId>" +
-               "         <artifactId>taxi-annotation-processor</artifactId>" +
-               "         <version>${config.taxiVersion}</version>" +
-               "      </annotationProcessorPath>" +
-               "   </annotationProcessorPaths>" +
-               "</configuration>"))
+                  "<configuration>" +
+                     "   <sourceDirs>" +
+                     "      <sourceDir>src/main/java</sourceDir>" +
+                     "   </sourceDirs>" +
+                     "   <annotationProcessorPaths>" +
+                     "      <annotationProcessorPath>" +
+                     "         <groupId>lang.taxi</groupId>" +
+                     "         <artifactId>taxi-annotation-processor</artifactId>" +
+                     "         <version>${taxiVersion}</version>" +
+                     "      </annotationProcessorPath>" +
+                     "   </annotationProcessorPaths>" +
+                     "</configuration>"))
 
             executions.add(PluginExecution().apply {
                id = "kapt"
@@ -127,7 +133,7 @@ data class KotlinPluginConfig(
    val jvmTarget: String = "1.8",
    val maven: MavenGeneratorPluginConfig?,
    val guavaVersion: String = "28.2-jre",
-   var taxiVersion: String? = null
+   val taxiVersion: String? = null
 )
 
 data class RelativeWriteableSource(val relativePath: Path, val source: WritableSource) : WritableSource by source {
