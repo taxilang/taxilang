@@ -50,13 +50,19 @@ import kotlin.Int
 import kotlin.String
 import lang.taxi.annotations.DataType
 
-@DataType("Person")
+@DataType(TypeNames.Person)
 open class Person(
   val firstName: String,
   val lastName: String,
   val age: Int,
   val living: Boolean
 )
+
+import kotlin.String
+
+object TypeNames {
+  const val Person: String = "Person"
+}
 """.trimNewLines()
       expect(output).to.equal(expected)
    }
@@ -79,7 +85,7 @@ package vyne
 
 import lang.taxi.annotations.DataType
 
-@DataType("vyne.Person")
+@DataType(TypeNames.vyne.Person)
 open class Person(
   val firstName: FirstName,
   val lastName: LastName,
@@ -92,7 +98,7 @@ package vyne
 import kotlin.String
 import lang.taxi.annotations.DataType
 
-@DataType("vyne.FirstName")
+@DataType(TypeNames.vyne.FirstName)
 typealias FirstName = String
 
 package vyne
@@ -100,7 +106,7 @@ package vyne
 import kotlin.String
 import lang.taxi.annotations.DataType
 
-@DataType("vyne.LastName")
+@DataType(TypeNames.vyne.LastName)
 typealias LastName = String
 
 package vyne
@@ -108,7 +114,7 @@ package vyne
 import kotlin.Int
 import lang.taxi.annotations.DataType
 
-@DataType("vyne.Age")
+@DataType(TypeNames.vyne.Age)
 typealias Age = Int
 
 package vyne
@@ -116,8 +122,24 @@ package vyne
 import kotlin.Boolean
 import lang.taxi.annotations.DataType
 
-@DataType("vyne.IsAlive")
+@DataType(TypeNames.vyne.IsAlive)
 typealias IsAlive = Boolean
+
+import kotlin.String
+
+object TypeNames {
+  object vyne {
+    const val Person: String = "vyne.Person"
+
+    const val FirstName: String = "vyne.FirstName"
+
+    const val LastName: String = "vyne.LastName"
+
+    const val Age: String = "vyne.Age"
+
+    const val IsAlive: String = "vyne.IsAlive"
+  }
+}
 """.trimNewLines()
       expect(output).to.equal(expected)
    }
@@ -140,11 +162,19 @@ import kotlin.String
 import kotlin.collections.List
 import lang.taxi.annotations.DataType
 
-@DataType("vyne.Person")
+@DataType(TypeNames.vyne.Person)
 open class Person(
   val firstName: String,
   val friends: List<Person>
-)""".trimNewLines()
+)
+
+import kotlin.String
+
+object TypeNames {
+  object vyne {
+    const val Person: String = "vyne.Person"
+  }
+}""".trimNewLines()
       expect(output).to.equal(expected)
    }
 
@@ -162,16 +192,28 @@ enum Gender {
       val expected = """
 import lang.taxi.annotations.DataType
 
-@DataType("Person")
+@DataType(TypeNames.Person)
 open class Person(
   val gender: Gender
 )
 
+import lang.taxi.annotations.DataType
+
+@DataType(TypeNames.Gender)
 enum class Gender {
   MALE,
 
   FEMALE
-}""".trimNewLines()
+}
+
+import kotlin.String
+
+object TypeNames {
+  const val Person: String = "Person"
+
+  const val Gender: String = "Gender"
+}
+""".trimNewLines()
       expect(output).to.equal(expected)
    }
 
@@ -184,13 +226,25 @@ enum BankDirection inherits Direction
 """
       val output = compileAndGenerate(taxi).trimNewLines()
       val expected = """
+import lang.taxi.annotations.DataType
+
+@DataType(TypeNames.Direction)
 enum class Direction {
   Buy,
 
   Sell
 }
 
-typealias BankDirection = Direction""".trimNewLines()
+typealias BankDirection = Direction
+
+import kotlin.String
+
+object TypeNames {
+  const val Direction: String = "Direction"
+
+  const val BankDirection: String = "BankDirection"
+}
+""".trimNewLines()
 
       output.should.equal(expected)
    }
@@ -204,16 +258,31 @@ typealias BankDirection = Direction""".trimNewLines()
       """.trimIndent()
       val output = compileAndGenerate(taxi).trimNewLines()
       val expected = """
-         import kotlin.String
+import kotlin.String
+import lang.taxi.annotations.DataType
 
-         typealias Name = String
+@DataType(TypeNames.Name)
+typealias Name = String
 
-         typealias FirstName = Name
+import lang.taxi.annotations.DataType
 
-         import lang.taxi.annotations.DataType
+@DataType(TypeNames.FirstName)
+typealias FirstName = Name
 
-         @DataType("GivenName")
-         typealias GivenName = FirstName
+import lang.taxi.annotations.DataType
+
+@DataType(TypeNames.GivenName)
+typealias GivenName = FirstName
+
+import kotlin.String
+
+object TypeNames {
+  const val Name: String = "Name"
+
+  const val FirstName: String = "FirstName"
+
+  const val GivenName: String = "GivenName"
+}
       """.trimIndent().trimNewLines()
 
       output.should.equal(expected)
@@ -226,10 +295,16 @@ typealias BankDirection = Direction""".trimNewLines()
       """.trimIndent()
       val output = compileAndGenerate(taxi).trimNewLines()
       val expected = """
-         import lang.taxi.annotations.DataType
+import lang.taxi.annotations.DataType
 
-         @DataType("Person")
-         interface Person
+@DataType(TypeNames.Person)
+interface Person
+
+import kotlin.String
+
+object TypeNames {
+  const val Person: String = "Person"
+}
       """.trimIndent().trimNewLines()
 
       output.should.equal(expected)
@@ -248,12 +323,12 @@ type Money inherits Instrument {
       val expected = """
 import lang.taxi.annotations.DataType
 
-@DataType("Instrument")
+@DataType(TypeNames.Instrument)
 interface Instrument
 
 import lang.taxi.annotations.DataType
 
-@DataType("Money")
+@DataType(TypeNames.Money)
 open class Money(
   val currency: CurrencySymbol,
   val amount: MoneyAmount
@@ -262,14 +337,26 @@ open class Money(
 import kotlin.String
 import lang.taxi.annotations.DataType
 
-@DataType("CurrencySymbol")
+@DataType(TypeNames.CurrencySymbol)
 typealias CurrencySymbol = String
 
 import java.math.BigDecimal
 import lang.taxi.annotations.DataType
 
-@DataType("MoneyAmount")
+@DataType(TypeNames.MoneyAmount)
 typealias MoneyAmount = BigDecimal
+
+import kotlin.String
+
+object TypeNames {
+  const val Instrument: String = "Instrument"
+
+  const val Money: String = "Money"
+
+  const val CurrencySymbol: String = "CurrencySymbol"
+
+  const val MoneyAmount: String = "MoneyAmount"
+}
       """.trimIndent().trimNewLines()
       output.should.equal(expected)
    }
@@ -286,7 +373,7 @@ typealias MoneyAmount = BigDecimal
       val expected = """
 import lang.taxi.annotations.DataType
 
-@DataType("Money")
+@DataType(TypeNames.Money)
 open class Money(
   val currency: CurrencySymbol,
   val amount: MoneyAmount
@@ -294,7 +381,7 @@ open class Money(
 
 import lang.taxi.annotations.DataType
 
-@DataType("Notional")
+@DataType(TypeNames.Notional)
 open class Notional(
   currency: CurrencySymbol,
   amount: MoneyAmount
@@ -303,14 +390,26 @@ open class Notional(
 import kotlin.String
 import lang.taxi.annotations.DataType
 
-@DataType("CurrencySymbol")
+@DataType(TypeNames.CurrencySymbol)
 typealias CurrencySymbol = String
 
 import java.math.BigDecimal
 import lang.taxi.annotations.DataType
 
-@DataType("MoneyAmount")
+@DataType(TypeNames.MoneyAmount)
 typealias MoneyAmount = BigDecimal
+
+import kotlin.String
+
+object TypeNames {
+  const val Money: String = "Money"
+
+  const val Notional: String = "Notional"
+
+  const val CurrencySymbol: String = "CurrencySymbol"
+
+  const val MoneyAmount: String = "MoneyAmount"
+}
       """.trimIndent().trimNewLines()
 
       output.should.equal(expected)

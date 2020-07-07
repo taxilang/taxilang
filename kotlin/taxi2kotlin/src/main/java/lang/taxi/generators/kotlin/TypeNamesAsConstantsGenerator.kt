@@ -10,6 +10,9 @@ private class StaticNameWrapper(val name: String) {
    private val members = mutableListOf<QualifiedName>()
 
    fun resolve(namespace: String): StaticNameWrapper {
+      if (namespace.isEmpty()) {
+         return this
+      }
       val (nextNamespace, remaining) = namespace.split(".").takeHead()
       val child = children.getOrPut(nextNamespace) {
          StaticNameWrapper(nextNamespace)
@@ -61,7 +64,13 @@ class TypeNamesAsConstantsGenerator(val topLevelPackage: String = "") {
 
    fun asConstant(qualifiedName: QualifiedName): MemberName {
       topLevelWrapper.resolve(qualifiedName.namespace).addMember(qualifiedName)
-      return MemberName(ClassName(topLevelPackage, "TypeNames", qualifiedName.namespace), qualifiedName.typeName)
+      val className = if (qualifiedName.namespace.isNotEmpty()) {
+         ClassName(topLevelPackage, "TypeNames", qualifiedName.namespace)
+      } else {
+         ClassName(topLevelPackage, "TypeNames")
+      }
+
+      return MemberName(className, qualifiedName.typeName)
    }
 
    fun generate(): WritableSource {
