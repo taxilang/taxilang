@@ -55,7 +55,7 @@ type TradeRecord {
          it.reference.should.equal("ccy1")
          true
       }
-      val dealtAmountCaseFieldAssignmentExpression = case1.assignments[0]
+      val dealtAmountCaseFieldAssignmentExpression = case1.assignments[0] as FieldAssignmentExpression
       dealtAmountCaseFieldAssignmentExpression.fieldName.should.equal("dealtAmount")
       val dealtAmountDestructuredAssignment = dealtAmountCaseFieldAssignmentExpression.assignment as DestructuredAssignment
       dealtAmountDestructuredAssignment.assignments.should.have.size(2)
@@ -125,5 +125,35 @@ type TradeRecord {
 }
       """.trimIndent()
       val doc = Compiler(src).compile()
+   }
+
+   @Test
+   fun canDeclareSingleFieldConditionalAssignments() {
+      val src = """
+      type Direction inherits String
+      type BankDirection inherits Direction
+      type ClientDirection inherits Direction
+      type Order {
+         bankDirection: BankDirection
+         clientDirection: ClientDirection by when (BankDirection) {
+            "Buy" -> "Sell"
+            "Sell" -> "Buy"
+         }
+      }
+      """
+      val doc = Compiler(src).compile()
+      val order = doc.objectType("Order")
+      order.fields.should.have.size(2)
+      val clientDirection = order.field("clientDirection")
+      val accessor = clientDirection.accessor as ConditionalAccessor
+      val condition = accessor.condition as WhenFieldSetCondition
+      condition.cases.should.have.size(2)
+      // Buy -> Sell
+      (condition.cases[0].matchExpression as LiteralCaseMatchExpression).value.should.equal("Buy")
+      ((condition.cases[0].assignments[0] as InlineAssignmentExpression).assignment as LiteralAssignment).value.should.equal("Sell")
+
+      // Sell -> Buy
+      (condition.cases[1].matchExpression as LiteralCaseMatchExpression).value.should.equal("Sell")
+      ((condition.cases[1].assignments[0] as InlineAssignmentExpression).assignment as LiteralAssignment).value.should.equal("Buy")
    }
 }
