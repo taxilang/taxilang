@@ -12,6 +12,7 @@ data class FieldExtension(
    override val annotations: List<Annotation>,
    val refinedType: Type?,
    val defaultValue: Any?) : Annotatable
+
 data class ObjectTypeExtension(val annotations: List<Annotation> = emptyList(),
                                val fieldExtensions: List<FieldExtension> = emptyList(),
                                val typeDoc: String? = null,
@@ -184,7 +185,7 @@ data class ObjectType(
             val collatedAnnotations = field.annotations + fieldExtensions.annotations()
             val (refinedType, defaultValue) = fieldExtensions
                .asSequence()
-               .mapNotNull { refinement -> refinement.refinedType?.let {Pair(refinement.refinedType, refinement.defaultValue)} }
+               .mapNotNull { refinement -> refinement.refinedType?.let { Pair(refinement.refinedType, refinement.defaultValue) } }
                .firstOrNull() ?: Pair(field.type, null)
             field.copy(annotations = collatedAnnotations, type = refinedType, defaultValue = defaultValue)
          } ?: emptyList()
@@ -238,6 +239,8 @@ data class Field(
    val modifiers: List<FieldModifier> = emptyList(),
    override val annotations: List<Annotation> = emptyList(),
    override val constraints: List<Constraint> = emptyList(),
+   // TODO : Can we fold readCondition into accessor?
+   // exploring with ConditionalAccessor
    val accessor: Accessor? = null,
    val readCondition: FieldSetCondition? = null,
    override val typeDoc: String? = null,
@@ -269,5 +272,10 @@ data class JsonPathAccessor(override val expression: String) : ExpressionAccesso
 data class ColumnAccessor(val index: Any) : ExpressionAccessor {
    override val expression: String = index.toString()
 }
+
+// This is for scenarios where a scalar field has been assigned a when block.
+// Ideally, we'd use the same approach for both destructured when blocks (ie., when blocks that
+// assign multiple fields), and scalar when blocks (a when block that assigns a single field).
+data class ConditionalAccessor(val condition: FieldSetCondition) : Accessor
 
 data class DestructuredAccessor(val fields: Map<String, Accessor>) : Accessor

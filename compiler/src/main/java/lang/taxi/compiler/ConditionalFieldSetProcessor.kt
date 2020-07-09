@@ -19,7 +19,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
       }
    }
 
-   private fun compileCondition(conditionDeclaration: TaxiParser.ConditionalTypeConditionDeclarationContext, namespace: Namespace): Either<CompilationError, WhenFieldSetCondition> {
+   fun compileCondition(conditionDeclaration: TaxiParser.ConditionalTypeConditionDeclarationContext, namespace: Namespace): Either<CompilationError, FieldSetCondition> {
       return when {
          conditionDeclaration.conditionalTypeWhenDeclaration() != null -> compileWhenCondition(conditionDeclaration.conditionalTypeWhenDeclaration(), namespace)
          else -> error("Unhandled condition type")
@@ -39,21 +39,50 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
 
    private fun compileWhenCase(whenCase: TaxiParser.ConditionalTypeWhenCaseDeclarationContext): WhenCaseBlock {
       val matchExpression = compileMatchExpression(whenCase.caseDeclarationMatchExpression())
-      val assignments = whenCase.caseFieldAssigningDeclaration().map {
-         compileFieldAssignment(it)
+      val assignments = when {
+         whenCase.caseFieldAssignmentBlock() != null -> {
+            whenCase.caseFieldAssignmentBlock().caseFieldAssigningDeclaration().map {
+               compileFieldAssignment(it)
+            }
+         }
+         whenCase.caseScalarAssigningDeclaration() != null -> {
+            listOf(compileScalarFieldAssignment(whenCase.caseScalarAssigningDeclaration()))
+         }
+         else -> error("Unhandled when case branch")
       }
       return WhenCaseBlock(matchExpression, assignments)
    }
 
-   private fun compileFieldAssignment(caseFieldAssignment: TaxiParser.CaseFieldAssigningDeclarationContext): CaseFieldAssignmentExpression {
+   private fun compileScalarFieldAssignment(scalarAssigningDeclaration: TaxiParser.CaseScalarAssigningDeclarationContext): InlineAssignmentExpression {
+      val assignment: ValueAssignment = when {
+         scalarAssigningDeclaration.literal() != null -> compileLiteralValueAssignment(scalarAssigningDeclaration.literal())
+         scalarAssigningDeclaration.caseFieldReferenceAssignment() != null -> compileReferenceValueAssignment(scalarAssigningDeclaration.caseFieldReferenceAssignment())
+         scalarAssigningDeclaration.scalarAccessorExpression() != null -> {
+            TODO("Processing of xpath(..) or jsonPath(..) in a when block is not yet implemented, but it should be.")
+         }
+         else -> error("Unhandled scalar value assignment")
+      }
+      return InlineAssignmentExpression(assignment)
+   }
+
+   private fun compileFieldAssignment(caseFieldAssignment: TaxiParser.CaseFieldAssigningDeclarationContext): FieldAssignmentExpression {
       val assignment: ValueAssignment = when {
          caseFieldAssignment.caseFieldDestructuredAssignment() != null -> compileDestructuredValueAssignment(caseFieldAssignment.caseFieldDestructuredAssignment())
-         caseFieldAssignment.caseFieldReferenceAssignment() != null -> compileReferenceValueAssignment(caseFieldAssignment.caseFieldReferenceAssignment())
-         caseFieldAssignment.literal() != null -> compileLiteralValueAssignment(caseFieldAssignment.literal())
+         caseFieldAssignment.caseScalarAssigningDeclaration() != null -> compileCaseScalarAssignment(caseFieldAssignment.caseScalarAssigningDeclaration())
          caseFieldAssignment.scalarAccessor() != null -> compileScalarAccessorValueAssignment(caseFieldAssignment.scalarAccessor())
-         else -> error("Unhandled value assignment")
+         else -> error("Unhandled object field value assignment")
       }
-      return CaseFieldAssignmentExpression(caseFieldAssignment.Identifier().text, assignment)
+      return FieldAssignmentExpression(caseFieldAssignment.Identifier().text, assignment)
+   }
+
+   private fun compileCaseScalarAssignment(caseScalarAssigningDeclaration: TaxiParser.CaseScalarAssigningDeclarationContext): ValueAssignment {
+      return when {
+         caseScalarAssigningDeclaration.caseFieldReferenceAssignment() != null -> compileReferenceValueAssignment(caseScalarAssigningDeclaration.caseFieldReferenceAssignment())
+         caseScalarAssigningDeclaration.literal() != null -> compileLiteralValueAssignment(caseScalarAssigningDeclaration.literal())
+         else -> error("Unhandled case scalar assignment")
+      }
+
+
    }
 
    private fun compileScalarAccessorValueAssignment(scalarAccessor: TaxiParser.ScalarAccessorContext): ScalarAccessorValueAssignment {

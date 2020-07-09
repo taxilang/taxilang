@@ -1,6 +1,7 @@
 package lang.taxi.compiler
 
 import arrow.core.*
+import arrow.core.extensions.either.applicativeError.handleError
 import com.google.common.hash.HashFunction
 import com.google.common.hash.Hasher
 import com.google.common.hash.Hashing
@@ -497,6 +498,13 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             ColumnAccessor(
                expression.columnDefinition().columnIndex().StringLiteral()?.text ?:
                expression.columnDefinition().columnIndex().IntegerLiteral().text.toInt())
+         }
+         expression.conditionalTypeConditionDeclaration() != null -> {
+            val namespace = expression.conditionalTypeConditionDeclaration().findNamespace()
+            conditionalFieldSetProcessor.compileCondition(expression.conditionalTypeConditionDeclaration(), namespace)
+               .map { condition ->  ConditionalAccessor(condition) }
+               // TODO : Make the current method return Either<>
+               .getOrHandle { throw CompilationException(it) }
          }
          else -> error("Unhandled type of accessor expression")
       }
