@@ -101,7 +101,10 @@ caseFieldAssignmentBlock:
 
 caseDeclarationMatchExpression: // when( ... ) {
    Identifier  | //  someField -> ...
-   literal; //  'foo' -> ...
+   literal | //  'foo' -> ...
+   caseElseMatchExpression;
+
+caseElseMatchExpression: 'else';
 
 caseFieldAssigningDeclaration :  // dealtAmount ...  (could be either a destructirng block, or an assignment)
    Identifier (
