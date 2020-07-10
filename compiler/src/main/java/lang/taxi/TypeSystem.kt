@@ -137,6 +137,7 @@ class TypeSystem(importedTypes: List<Type>) : TypeProvider {
 
       // If the type was explicitly imported, use that
       val matchedExplicitImport = explicitImports.filter { it.typeName == name }
+         .distinct()
       if (matchedExplicitImport.size == 1) {
          return matchedExplicitImport.first().toString()
       }

@@ -65,10 +65,12 @@ data class InlineAssignmentExpression(override val assignment: ValueAssignment) 
 interface WhenCaseMatchExpression
 class ReferenceCaseMatchExpression(val reference: String) : WhenCaseMatchExpression
 class LiteralCaseMatchExpression(val value: Any) : WhenCaseMatchExpression
+object ElseMatchExpression : WhenCaseMatchExpression
 
 interface ValueAssignment
 data class ScalarAccessorValueAssignment(val accessor: Accessor) : ValueAssignment
 data class DestructuredAssignment(val assignments: List<FieldAssignmentExpression>) : ValueAssignment
 data class ReferenceAssignment(val reference: String) : ValueAssignment
 data class LiteralAssignment(val value: Any) : ValueAssignment
-
+data class EnumValueAssignment(val enum:EnumType, val enumValue: EnumValue) : ValueAssignment
+object NullAssignment : ValueAssignment

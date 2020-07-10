@@ -156,4 +156,41 @@ type TradeRecord {
       (condition.cases[1].matchExpression as LiteralCaseMatchExpression).value.should.equal("Sell")
       ((condition.cases[1].assignments[0] as InlineAssignmentExpression).assignment as LiteralAssignment).value.should.equal("Buy")
    }
+
+   @Test
+   fun canDeclareSingleFieldConditionalAssignmentsUsingEnumsInAssignment() {
+      val src = """
+      type Direction inherits String
+      enum PayReceive {
+         Pay,
+         Receive
+      }
+      type BankDirection inherits Direction
+      type ClientDirection inherits Direction
+      type Order {
+         bankDirection: BankDirection
+         payReceive: PayReceive by when (bankDirection) {
+            "Buy" -> PayReceive.Pay
+            "Sell" -> PayReceive.Receive
+            else -> null
+         }
+      }
+      """
+      val doc = Compiler(src).compile()
+      val order = doc.objectType("Order")
+      order.fields.should.have.size(2)
+      val payReceive = order.field("payReceive")
+      val accessor = payReceive.accessor as ConditionalAccessor
+      val condition = accessor.condition as WhenFieldSetCondition
+      condition.cases.should.have.size(3)
+      // Buy -> Sell
+      (condition.cases[0].matchExpression as LiteralCaseMatchExpression).value.should.equal("Buy")
+      val assignment = ((condition.cases[0].assignments[0] as InlineAssignmentExpression).assignment as EnumValueAssignment)
+      assignment.enum.qualifiedName.should.equal("PayReceive")
+      assignment.enumValue.name.should.equal("Pay")
+
+      condition.cases[2].matchExpression.should.be.instanceof(ElseMatchExpression::class.java)
+      (condition.cases[2].assignments[0] as InlineAssignmentExpression).assignment.should.be.instanceof(NullAssignment::class.java)
+   }
+
 }

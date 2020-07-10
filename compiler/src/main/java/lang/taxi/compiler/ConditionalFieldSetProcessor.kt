@@ -1,12 +1,11 @@
 package lang.taxi.compiler
 
 import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.getOrHandle
 import arrow.core.right
-import lang.taxi.CompilationError
-import lang.taxi.Namespace
-import lang.taxi.TaxiParser
+import lang.taxi.*
 import lang.taxi.types.*
-import lang.taxi.value
 
 class ConditionalFieldSetProcessor internal constructor(private val compiler: TokenProcessor) {
    fun compileConditionalFieldStructure(fieldBlock: TaxiParser.ConditionalTypeStructureDeclarationContext, namespace: Namespace): Either<CompilationError, ConditionalFieldSet> {
@@ -90,14 +89,39 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
       return ScalarAccessorValueAssignment(accessor)
    }
 
-   private fun compileLiteralValueAssignment(literal: TaxiParser.LiteralContext): LiteralAssignment {
-
-      return LiteralAssignment(literal.value())
+   private fun compileLiteralValueAssignment(literal: TaxiParser.LiteralContext): ValueAssignment {
+      return if (literal.valueOrNull() == null) {
+         NullAssignment
+      } else {
+         LiteralAssignment(literal.value())
+      }
 
    }
 
    private fun compileReferenceValueAssignment(caseFieldReferenceAssignment: TaxiParser.CaseFieldReferenceAssignmentContext): ValueAssignment {
-      return ReferenceAssignment(caseFieldReferenceAssignment.text)
+      return if (caseFieldReferenceAssignment.Identifier().size > 1) {
+         // This is a Foo.Bar -- lets check to see if we can resolve this as an enum
+         compileReferenceAssignmentAsEnumReference(caseFieldReferenceAssignment)
+      } else {
+         ReferenceAssignment(caseFieldReferenceAssignment.text)
+      }
+   }
+
+   private fun compileReferenceAssignmentAsEnumReference(caseFieldReferenceAssignment: TaxiParser.CaseFieldReferenceAssignmentContext): ValueAssignment {
+      val enumName = caseFieldReferenceAssignment.Identifier().dropLast(1).joinToString(".")
+      val typeName = compiler.lookupTypeByName(enumName, caseFieldReferenceAssignment)
+      val enumReference = compiler.typeResolver(caseFieldReferenceAssignment.findNamespace()).resolve(typeName, caseFieldReferenceAssignment).flatMap { type ->
+         require(type is EnumType) { "Expected $typeName to be an enum" }
+         val enumType = type as EnumType// for readability
+         val enumReference = caseFieldReferenceAssignment.Identifier().last()
+         if (enumType.has(enumReference.text)) {
+            Either.right(EnumValueAssignment(enumType, type.of(enumReference.text)))
+         } else {
+            Either.left(CompilationError(caseFieldReferenceAssignment.start, "Cannot resolve EnumValue of ${caseFieldReferenceAssignment.Identifier().text()}"))
+         }
+         // TODO : MOdify the return type to handle eithers
+      }.getOrHandle { error -> throw CompilationException(error) }
+      return enumReference
    }
 
    private fun compileDestructuredValueAssignment(caseFieldDestructuredAssignment: TaxiParser.CaseFieldDestructuredAssignmentContext): ValueAssignment {
@@ -108,6 +132,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
       return when {
          caseDeclarationMatchExpression.Identifier() != null -> ReferenceCaseMatchExpression(caseDeclarationMatchExpression.Identifier().text)
          caseDeclarationMatchExpression.literal() != null -> LiteralCaseMatchExpression(caseDeclarationMatchExpression.literal().value())
+         caseDeclarationMatchExpression.caseElseMatchExpression() != null -> ElseMatchExpression
          else -> error("Unhandled case match expression")
       }
    }
