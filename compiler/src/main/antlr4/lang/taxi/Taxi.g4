@@ -93,20 +93,30 @@ mappedExpressionSelector: // xpath('/foo/bar') : SomeType
 fieldReferenceSelector:  Identifier;
 
 conditionalTypeWhenCaseDeclaration:
-   caseDeclarationMatchExpression '->' '{' caseFieldAssigningDeclaration*'}';
+   caseDeclarationMatchExpression '->' ( caseFieldAssignmentBlock |  caseScalarAssigningDeclaration);
+
+caseFieldAssignmentBlock:
+'{' caseFieldAssigningDeclaration*'}' ;
+
 
 caseDeclarationMatchExpression: // when( ... ) {
    Identifier  | //  someField -> ...
-   literal; //  'foo' -> ...
+   literal | //  'foo' -> ...
+   caseElseMatchExpression;
+
+caseElseMatchExpression: 'else';
 
 caseFieldAssigningDeclaration :  // dealtAmount ...  (could be either a destructirng block, or an assignment)
    Identifier (
       caseFieldDestructuredAssignment | // dealtAmount ( ...
-      ( '=' ( caseFieldReferenceAssignment | literal)) | // dealtAmount = ccy1Amount | dealtAmount = 'foo'
+      ( '=' caseScalarAssigningDeclaration ) | // dealtAmount = ccy1Amount | dealtAmount = 'foo'
       // TODO : How do we model Enum assignments here?
       // .. some enum assignment ..
       scalarAccessor
    );
+
+caseScalarAssigningDeclaration:
+   caseFieldReferenceAssignment | literal | scalarAccessorExpression;
 
 caseFieldDestructuredAssignment :  // dealtAmount ( ... )
      '(' caseFieldAssigningDeclaration* ')';
@@ -135,6 +145,7 @@ scalarAccessorExpression
     : xpathAccessorDeclaration
     | jsonPathAccessorDeclaration
     | columnDefinition
+    | conditionalTypeConditionDeclaration
     ;
 
 xpathAccessorDeclaration : 'xpath' '(' accessorExpression ')';
