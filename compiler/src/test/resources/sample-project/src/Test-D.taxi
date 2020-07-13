@@ -1,0 +1,10 @@
+import companyX.ProductIdentifier
+
+type OrderLabel inherits String
+model Order {
+  orderLabel: OrderLabel
+  productIdentifier: ProductIdentifier by when(orderLabel) {
+      "p1" -> ProductIdentifier.PRODUCT1
+      else -> ProductIdentifier.PRODUCT2
+  }
+}

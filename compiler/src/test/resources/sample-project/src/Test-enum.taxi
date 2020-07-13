@@ -1,0 +1,6 @@
+namespace companyX
+
+enum ProductIdentifier {
+   PRODUCT1(1),
+   PRODUCT2(2)
+}

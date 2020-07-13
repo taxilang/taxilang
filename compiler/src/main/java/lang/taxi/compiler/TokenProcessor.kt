@@ -1,12 +1,36 @@
 package lang.taxi.compiler
 
-import arrow.core.*
-import arrow.core.extensions.either.applicativeError.handleError
-import com.google.common.hash.HashFunction
-import com.google.common.hash.Hasher
+import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.getOrElse
+import arrow.core.getOrHandle
+import arrow.core.orNull
+import arrow.core.right
 import com.google.common.hash.Hashing
-import lang.taxi.*
-import lang.taxi.policies.*
+import lang.taxi.AmbiguousNameException
+import lang.taxi.CompilationError
+import lang.taxi.CompilationException
+import lang.taxi.ErrorMessages
+import lang.taxi.Namespace
+import lang.taxi.NamespaceQualifiedTypeResolver
+import lang.taxi.Operator
+import lang.taxi.TaxiDocument
+import lang.taxi.TaxiParser
+import lang.taxi.Tokens
+import lang.taxi.TypeSystem
+import lang.taxi.findNamespace
+import lang.taxi.parameters
+import lang.taxi.policies.CaseCondition
+import lang.taxi.policies.Condition
+import lang.taxi.policies.ElseCondition
+import lang.taxi.policies.Instruction
+import lang.taxi.policies.Instructions
+import lang.taxi.policies.OperationScope
+import lang.taxi.policies.Policy
+import lang.taxi.policies.PolicyScope
+import lang.taxi.policies.PolicyStatement
+import lang.taxi.policies.RuleSet
+import lang.taxi.policies.Subjects
 import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract
 import lang.taxi.services.Parameter
@@ -14,15 +38,51 @@ import lang.taxi.services.Service
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintValidator
 import lang.taxi.services.operations.constraints.OperationConstraintConverter
-import lang.taxi.types.*
+import lang.taxi.source
+import lang.taxi.stringLiteralValue
+import lang.taxi.toCompilationError
+import lang.taxi.toCompilationUnit
+import lang.taxi.types.Accessor
 import lang.taxi.types.Annotation
+import lang.taxi.types.ArrayType
+import lang.taxi.types.ColumnAccessor
+import lang.taxi.types.ColumnMapping
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.ConditionalAccessor
+import lang.taxi.types.DataSource
+import lang.taxi.types.DestructuredAccessor
+import lang.taxi.types.EnumDefinition
+import lang.taxi.types.EnumExtension
+import lang.taxi.types.EnumType
+import lang.taxi.types.EnumValue
+import lang.taxi.types.EnumValueExtension
+import lang.taxi.types.EnumValueQualifiedName
+import lang.taxi.types.Enums
+import lang.taxi.types.Field
+import lang.taxi.types.FieldExtension
+import lang.taxi.types.FieldModifier
+import lang.taxi.types.FileDataSource
+import lang.taxi.types.JsonPathAccessor
+import lang.taxi.types.Modifier
+import lang.taxi.types.ObjectType
+import lang.taxi.types.ObjectTypeDefinition
+import lang.taxi.types.ObjectTypeExtension
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.QualifiedNameParser
+import lang.taxi.types.Type
+import lang.taxi.types.TypeAlias
+import lang.taxi.types.TypeAliasDefinition
+import lang.taxi.types.TypeAliasExtension
+import lang.taxi.types.VoidType
+import lang.taxi.types.XpathAccessor
 import lang.taxi.utils.errorOrNull
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.log
+import lang.taxi.value
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.nio.charset.Charset
-import kotlin.reflect.typeOf
 
 internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocument> = emptyList(), collectImports: Boolean = true) {
 
@@ -219,7 +279,15 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
    private fun compileTokens() {
-      tokens.unparsedTypes.forEach { (tokenName, _) ->
+      val enumUnparsedTypes = tokens
+         .unparsedTypes
+         .filter { it.value.second is TaxiParser.EnumDeclarationContext}
+
+      val nonEnumParsedTypes = tokens
+         .unparsedTypes
+         .filter { it.value.second !is TaxiParser.EnumDeclarationContext}
+
+      enumUnparsedTypes.plus(nonEnumParsedTypes).forEach { (tokenName, _) ->
          compileToken(tokenName)
       }
    }
@@ -290,16 +358,15 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                assertEnumDefaultValueCompatibility(refinedType!! as EnumType, enumDefaultValue.text, fieldName, typeRule)
             }
 
-         val constantValue = enumConstantValue ?:
-            member
+         val constantValue = enumConstantValue ?: member
             ?.typeExtensionFieldDeclaration()
             ?.typeExtensionFieldTypeRefinement()
             ?.constantDeclaration()
-            ?.literal()?.let {  literal ->
-                  val literalValue = literal.value()
-                  assertLiteralDefaultValue(refinedType!!, literalValue, fieldName, typeRule)
-                  literalValue
-               }
+            ?.literal()?.let { literal ->
+               val literalValue = literal.value()
+               assertLiteralDefaultValue(refinedType!!, literalValue, fieldName, typeRule)
+               literalValue
+            }
 
          FieldExtension(fieldName, fieldAnnotations, refinedType, constantValue)
       }
@@ -331,6 +398,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          throw CompilationException(typeRule.start, "Cannot set default value for field $fieldName as $defaultValue as it is not compatible with ${refinedType.basePrimitive?.qualifiedName}", typeRule.source().sourceName)
       }
    }
+
    private fun assertEnumDefaultValueCompatibility(enumType: EnumType, defaultValue: String, fieldName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext): EnumValue {
       return enumType.values.firstOrNull { enumValue -> enumValue.qualifiedName == defaultValue }
          ?: throw CompilationException(typeRule.start, "Cannot set default value for field $fieldName as $defaultValue as enum ${enumType.toQualifiedName().fullyQualifiedName} does not have corresponding value", typeRule.source().sourceName)
@@ -496,13 +564,13 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          expression.xpathAccessorDeclaration() != null -> XpathAccessor(expression.xpathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
          expression.columnDefinition() != null -> {
             ColumnAccessor(
-               expression.columnDefinition().columnIndex().StringLiteral()?.text ?:
-               expression.columnDefinition().columnIndex().IntegerLiteral().text.toInt())
+               expression.columnDefinition().columnIndex().StringLiteral()?.text
+                  ?: expression.columnDefinition().columnIndex().IntegerLiteral().text.toInt())
          }
          expression.conditionalTypeConditionDeclaration() != null -> {
             val namespace = expression.conditionalTypeConditionDeclaration().findNamespace()
             conditionalFieldSetProcessor.compileCondition(expression.conditionalTypeConditionDeclaration(), namespace)
-               .map { condition ->  ConditionalAccessor(condition) }
+               .map { condition -> ConditionalAccessor(condition) }
                // TODO : Make the current method return Either<>
                .getOrHandle { throw CompilationException(it) }
          }
@@ -525,7 +593,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       if (listOfInheritedTypes == null) return emptySet()
       return listOfInheritedTypes.typeType().mapNotNull { typeTypeContext ->
 
-          parseInheritedType(namespace, typeTypeContext) {
+         parseInheritedType(namespace, typeTypeContext) {
             when (it) {
                is EnumType -> Either.left(CompilationError(typeTypeContext.start, "A Type cannot inherit from an Enum"))
                else -> Either.right(it)
@@ -548,7 +616,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    }
 
-   private inline fun  parseInheritedType(namespace: Namespace, typeTypeContext: TaxiParser.TypeTypeContext, filter: (Type) -> Either<CompilationError, Type>): Type? {
+   private inline fun parseInheritedType(namespace: Namespace, typeTypeContext: TaxiParser.TypeTypeContext, filter: (Type) -> Either<CompilationError, Type>): Type? {
       val inheritedTypeOrError = parseType(namespace, typeTypeContext)
 
       val inheritedEnumTypeOrError = if (inheritedTypeOrError.isRight()) {
@@ -740,7 +808,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                enumValues,
                annotations,
                ctx.toCompilationUnit(),
-               inheritsFrom = if(inherits != null ) setOf(inherits) else emptySet(),
+               inheritsFrom = if (inherits != null) setOf(inherits) else emptySet(),
                typeDoc = parseTypeDoc(ctx.typeDoc()),
                basePrimitive = basePrimitive
             ))
@@ -866,7 +934,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                dataSourceToken.sourceMapping().map { sourceMappingContext ->
                   val intType = sourceMappingContext.columnDefinition().columnIndex().IntegerLiteral()?.text
 
-                  if(intType != null) {
+                  if (intType != null) {
                      ColumnMapping(sourceMappingContext.Identifier().text, intType.toInt())
                   } else {
                      ColumnMapping(sourceMappingContext.Identifier().text, parseColumnName(sourceMappingContext.columnDefinition().columnIndex().StringLiteral().text))
