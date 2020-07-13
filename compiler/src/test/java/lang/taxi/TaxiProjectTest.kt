@@ -12,7 +12,7 @@ class TaxiProjectTest {
       val root = Resources.getResource("sample-project").toURI()
       val taxiProject = TaxiSourcesLoader.loadPackage(Paths.get(root))
       val doc = Compiler(taxiProject).compile()
-      doc.types.should.have.size(3)
+      doc.types.should.have.size(8)
 
    }
 }
