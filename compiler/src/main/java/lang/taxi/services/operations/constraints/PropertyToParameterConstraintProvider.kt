@@ -91,7 +91,7 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       val fields = constrainedType.fieldsWithType(property.type)
       return when {
          fields.isEmpty() -> CompilationError(constraint, "Type ${constrainedType.qualifiedName} does not have a field with type ${property.type}")
-         fields.size > 1 -> CompilationError(constraint, "Type ${constrainedType.qualifiedName} has multiple fields with type ${property.type}.  This is ambiguous, and the constraint is invalid.")
+         // fields.size > 1 -> CompilationError(constraint, "Type ${constrainedType.qualifiedName} has multiple fields with type ${property.type}.  This is ambiguous, and the constraint is invalid.")
          else -> null
       }
    }

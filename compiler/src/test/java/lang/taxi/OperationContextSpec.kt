@@ -168,6 +168,22 @@ object OperationContextSpec : Spek({
          }
          """.compiled()
          }
+
+         it("should compile against inheritance hierarchy") {
+            val taxiDocument = """
+               type Foo inherits String
+               type Baz inherits Foo
+
+               model MyModel {
+                  fooField: Foo
+                  bazField: Baz
+               }
+
+               service MyModelService {
+                  operation find(id: Foo): MyModel (Foo = id)
+               }
+            """.trimIndent().compiled()
+         }
       }
 
 

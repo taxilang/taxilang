@@ -209,7 +209,7 @@ data class ObjectType(
       return this.fields.filter { applicableQualifiedNames(it.type).contains(typeName) }
    }
 
-   fun applicableQualifiedNames(type: Type): List<QualifiedName> {
+   private fun applicableQualifiedNames(type: Type): List<QualifiedName> {
       return type.inheritsFrom.map { it.toQualifiedName() }.plus(type.toQualifiedName())
    }
 
