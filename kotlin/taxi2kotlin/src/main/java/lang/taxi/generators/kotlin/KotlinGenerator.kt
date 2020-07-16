@@ -52,7 +52,7 @@ class KotlinGenerator : ModelGenerator {
       val hasValues = type.values.any { it.value != it.name }
       if (hasValues) {
          val valueType = type.values.first { it.value != it.name }
-            .value::class.java
+            .value::class
          builder.primaryConstructor(FunSpec.constructorBuilder()
             .addParameter("value", valueType)
             .build())

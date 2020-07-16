@@ -25,7 +25,7 @@ class EnumGeneratorTest {
       """.trimIndent()
       val output = compileAndGenerate(src).trimNewLines()
 
-      val expected = """import java.lang.String
+      val expected = """import kotlin.String
 import lang.taxi.annotations.DataType
 
 @DataType(TypeNames.Country)
@@ -37,12 +37,12 @@ enum class Country(
   AUSTRALIA("AUS")
 }
 
-import java.lang.Integer
+import kotlin.Int
 import lang.taxi.annotations.DataType
 
 @DataType(TypeNames.CountryCode)
 enum class CountryCode(
-  value: Integer
+  value: Int
 ) {
   NEW_ZEALAND(64),
 
