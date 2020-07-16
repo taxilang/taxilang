@@ -3,7 +3,7 @@
     <parent>
         <artifactId>kotlin</artifactId>
         <groupId>lang.taxi</groupId>
-        <version>0.6.2-SNAPSHOT</version>
+        <version>0.6.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -14,7 +14,7 @@
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>taxi-generator-api</artifactId>
-            <version>0.6.2-SNAPSHOT</version>
+            <version>0.6.2</version>
         </dependency>
         <dependency>
             <groupId>com.squareup</groupId>
@@ -24,7 +24,7 @@
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>taxi-jvm-common</artifactId>
-            <version>0.6.2-SNAPSHOT</version>
+            <version>0.6.2</version>
         </dependency>
     </dependencies>
 </project>
