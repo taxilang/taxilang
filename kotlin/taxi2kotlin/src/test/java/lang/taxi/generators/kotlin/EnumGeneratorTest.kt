@@ -30,11 +30,11 @@ import lang.taxi.annotations.DataType
 
 @DataType(TypeNames.Country)
 enum class Country(
-  value: String
+  val value: String
 ) {
   NEW_ZEALAND("NZ"),
 
-  AUSTRALIA("AUS")
+  AUSTRALIA("AUS");
 }
 
 import kotlin.Int
@@ -42,11 +42,11 @@ import lang.taxi.annotations.DataType
 
 @DataType(TypeNames.CountryCode)
 enum class CountryCode(
-  value: Int
+  val value: Int
 ) {
   NEW_ZEALAND(64),
 
-  AUSTRALIA(61)
+  AUSTRALIA(61);
 }
 
 import lang.taxi.annotations.DataType
