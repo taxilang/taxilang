@@ -49,6 +49,7 @@ class KotlinGenerator : ModelGenerator {
          .addAnnotation(AnnotationSpec.builder(DataType::class)
             .addMember("%M", typeNamesAsConstantsGenerator.asConstant(type.toQualifiedName()))
             .build())
+
       val hasValues = type.values.any { it.value != it.name }
       if (hasValues) {
          val valueType = type.values.first { it.value != it.name }
@@ -56,6 +57,9 @@ class KotlinGenerator : ModelGenerator {
          builder.primaryConstructor(FunSpec.constructorBuilder()
             .addParameter("value", valueType)
             .build())
+            .addProperty(PropertySpec.builder("value", valueType)
+               .initializer("value")
+               .build())
       }
 
       type.values.forEach { enumValue ->
