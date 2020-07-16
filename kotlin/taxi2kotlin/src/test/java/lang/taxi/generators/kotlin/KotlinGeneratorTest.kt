@@ -235,6 +235,9 @@ enum class Direction {
   Sell
 }
 
+import lang.taxi.annotations.DataType
+
+@DataType(TypeNames.BankDirection)
 typealias BankDirection = Direction
 
 import kotlin.String

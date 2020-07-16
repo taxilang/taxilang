@@ -42,7 +42,7 @@ class KotlinGenerator : ModelGenerator {
    private fun generateType(type: EnumType, typeNamesAsConstantsGenerator: TypeNamesAsConstantsGenerator): WritableSource? {
       // Handle inherited enums as type aliases
       if (type.baseEnum != type) {
-         return generateInheritedEnum(type)
+         return generateInheritedEnum(type, typeNamesAsConstantsGenerator)
       }
 
       val builder = TypeSpec.enumBuilder(type.className())
@@ -176,11 +176,14 @@ class KotlinGenerator : ModelGenerator {
       return FileSpecWritableSource(typeAliasQualifiedName, fileSpec)
    }
 
-   private fun generateInheritedEnum(type: EnumType): WritableSource {
+   private fun generateInheritedEnum(type: EnumType,typeNames: TypeNamesAsConstantsGenerator): WritableSource {
       val typeAliasQualifiedName = type.toQualifiedName()
       val baseEnumQualifiedName = type.baseEnum!!
       val typeAliasSpec = TypeAliasSpec
          .builder(typeAliasQualifiedName.typeName, getJavaType(baseEnumQualifiedName))
+         .addAnnotation(AnnotationSpec.builder(DataType::class)
+            .addMember("%M", typeNames.asConstant(typeAliasQualifiedName))
+            .build())
          .build()
 
       val fileSpec = FileSpec.builder(typeAliasQualifiedName.namespace, typeAliasQualifiedName.typeName)
