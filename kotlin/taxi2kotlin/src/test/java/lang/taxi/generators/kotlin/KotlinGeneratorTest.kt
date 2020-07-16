@@ -415,13 +415,14 @@ object TypeNames {
       output.should.equal(expected)
    }
 
-   private fun compileAndGenerate(taxi: String): String {
-      val taxiDoc = Compiler.forStrings(taxi).compile()
-      val output = KotlinGenerator().generate(taxiDoc, emptyList(),MockEnvironment)
-      return output.joinToString("\n") { it.content }
-   }
+
 }
 
+fun compileAndGenerate(taxi: String): String {
+   val taxiDoc = Compiler.forStrings(taxi).compile()
+   val output = KotlinGenerator().generate(taxiDoc, emptyList(),MockEnvironment)
+   return output.joinToString("\n") { it.content }
+}
 fun String.trimNewLines(): String {
    return this.removePrefix("\n").removeSuffix("\n").trim()
 }

@@ -40,15 +40,38 @@ class KotlinGenerator : ModelGenerator {
    }
 
    private fun generateType(type: EnumType, typeNamesAsConstantsGenerator: TypeNamesAsConstantsGenerator): WritableSource? {
+      // Handle inherited enums as type aliases
+      if (type.baseEnum != type) {
+         return generateInheritedEnum(type)
+      }
+
       val builder = TypeSpec.enumBuilder(type.className())
          .addAnnotation(AnnotationSpec.builder(DataType::class)
             .addMember("%M", typeNamesAsConstantsGenerator.asConstant(type.toQualifiedName()))
             .build())
-      type.values.forEach { builder.addEnumConstant(it.name) }
+      val hasValues = type.values.any { it.value != it.name }
+      if (hasValues) {
+         val valueType = type.values.first { it.value != it.name }
+            .value::class.java
+         builder.primaryConstructor(FunSpec.constructorBuilder()
+            .addParameter("value", valueType)
+            .build())
+      }
 
-      // Handle inherited enums as type aliases
-      if (type.baseEnum != type) {
-         return generateInheritedEnum(type)
+      type.values.forEach { enumValue ->
+         if (hasValues) {
+            val typeSpec = TypeSpec.anonymousClassBuilder()
+
+            when (enumValue.value) {
+               is String -> typeSpec.addSuperclassConstructorParameter("%S", enumValue.value)
+               is Number -> typeSpec.addSuperclassConstructorParameter("%L", enumValue.value)
+               else -> TODO("Code generation for enum value of type ${enumValue.value::class.java} not yet supported")
+            }
+            builder.addEnumConstant(enumValue.name, typeSpec.build())
+         } else {
+            builder.addEnumConstant(enumValue.name)
+         }
+
       }
 
       return FileSpecWritableSource.from(type.toQualifiedName(), builder.build())
@@ -136,7 +159,7 @@ class KotlinGenerator : ModelGenerator {
       return FileSpecWritableSource.from(name, spec)
    }
 
-   private fun generateScalarAsPrimitiveTypeAlias(type: ObjectType, typeNames:TypeNamesAsConstantsGenerator): FileSpecWritableSource {
+   private fun generateScalarAsPrimitiveTypeAlias(type: ObjectType, typeNames: TypeNamesAsConstantsGenerator): FileSpecWritableSource {
       val inheritsFrom = type.inheritsFrom.first()
 
       val typeAliasQualifiedName = type.toQualifiedName()
@@ -166,7 +189,7 @@ class KotlinGenerator : ModelGenerator {
       return FileSpecWritableSource(typeAliasQualifiedName, fileSpec)
    }
 
-   private fun generateType(typeAlias: TypeAlias, typeNames:TypeNamesAsConstantsGenerator): WritableSource {
+   private fun generateType(typeAlias: TypeAlias, typeNames: TypeNamesAsConstantsGenerator): WritableSource {
       val typeAliasQualifiedName = typeAlias.toQualifiedName()
       val typeAliasSpec = TypeAliasSpec
          .builder(typeAliasQualifiedName.typeName, getJavaType(typeAlias.aliasType!!))
