@@ -2,7 +2,9 @@ package lang.taxi.lsp
 
 import com.winterbe.expekt.should
 import org.eclipse.lsp4j.*
+import org.eclipse.lsp4j.services.LanguageClient
 import org.junit.Test
+import org.mockito.Mockito.mock
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.nio.file.Path
@@ -87,6 +89,40 @@ object CompletionSpec : Spek({
             it("should not include imports for primitives") {
                 val completion = completions.first { it.label == "String" }
                 completion.additionalTextEdits.should.be.`null`
+            }
+        }
+
+        describe("for by when") {
+            val (service, workspaceRoot) = documentServiceFor("test-scenarios/case-workspace")
+            service.connect(mock(LanguageClient::class.java))
+            val originalSource = workspaceRoot.resolve("trade-case.taxi").toFile().readText()
+            // let's edit:
+            val updatedSource = """$originalSource
+    |
+    |type Trade {
+    |country: Country
+    |countryCode: CountryCode by when(country) {
+    |   "United States" -> CountryCode.US
+    |   "United Kingdom" -> CountryCode.UK
+    |   else -> CountryCode.
+""".trimMargin()
+            service.didChange(DidChangeTextDocumentParams(
+                    workspaceRoot.versionedDocument("trade-case.taxi"),
+                    listOf(TextDocumentContentChangeEvent(
+                            updatedSource
+                    ))
+            ))
+
+            val cursorPositionLine = updatedSource.lines().indexOfFirst { it.contains("else -> CountryCode.") }
+            val cursorPositionChar = updatedSource.lines()[cursorPositionLine].indexOf(".")
+            val completions = service.completion(CompletionParams(
+                    workspaceRoot.document("trade-case.taxi"),
+                    Position(cursorPositionLine, cursorPositionChar)
+            )).get().left
+
+            it("should include all enum values") {
+                val insetTexts = completions.map { it.insertText }
+                insetTexts.should.have.elements("US", "UK", "DE")
             }
         }
     }

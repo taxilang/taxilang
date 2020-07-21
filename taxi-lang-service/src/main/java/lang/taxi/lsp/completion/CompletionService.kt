@@ -23,6 +23,7 @@ class CompletionService(private val typeProvider: TypeProvider) {
             // This next one feels wrong, but it's what I'm seeing debugging.
             // suspect our matching of token to cursor position might be off
             TaxiParser.RULE_typeType -> typeProvider.getTypes(listOf(importDecorator))
+            TaxiParser.RULE_caseScalarAssigningDeclaration -> typeProvider.getEnumValues(listOf(importDecorator), context.start.text)
             else -> emptyList()
         }
         return completions(completionItems)
