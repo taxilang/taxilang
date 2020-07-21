@@ -1,10 +1,7 @@
 package lang.taxi.lsp.completion
 
 import lang.taxi.lsp.CompilationResult
-import lang.taxi.types.Documented
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.Type
+import lang.taxi.types.*
 import org.eclipse.lsp4j.CompletionItem
 import org.eclipse.lsp4j.CompletionItemKind
 import java.util.concurrent.atomic.AtomicReference
@@ -45,6 +42,32 @@ class TypeProvider(private val lastSuccessfulCompilationResult: AtomicReference<
             decorators.fold(completionItem) { itemToDecorate, decorator -> decorator.decorate(name, type, itemToDecorate) }
         }
         return completionItems + primitives
+    }
+
+    fun getEnumValues(decorators: List<CompletionDecorator>, enumType: String?): List<CompletionItem> {
+        if (enumType == null) {
+            return listOf()
+        }
+
+        val enumTypeQualifiedName = lastCompilationResult.get()?.compiler?.declaredTypeNames()?.firstOrNull { it ->
+            it.typeName == enumType || it.fullyQualifiedName == enumType
+        }
+
+        val enumType = enumTypeQualifiedName?.let {
+            lastSuccessfulCompilationResult.get()?.document?.enumType(it.fullyQualifiedName)
+        }
+
+        val completionItems = enumType?.let {
+            (it as EnumType).values.map { enumValue ->
+                CompletionItem(enumValue.name).apply {
+                    kind = CompletionItemKind.Class
+                    insertText = enumValue.name
+                    detail = listOfNotNull(enumValue.name, enumValue.typeDoc).joinToString("\n")
+                }
+            }
+        }
+
+        return completionItems ?: listOf()
     }
 }
 
