@@ -30,12 +30,13 @@ class SpringMvcHttpServiceExtension(val addressProvider: HttpServiceAddressProvi
     }
 }
 
-class SpringMvcHttpOperationExtension(val springMvcContract: SpringMvcContract = SpringMvcContract()) : OperationMapperExtension {
+class SpringMvcHttpOperationExtension(val contextPath: String = "", val springMvcContract: SpringMvcContract = SpringMvcContract()) : OperationMapperExtension {
     override fun update(operation: Operation, type: Class<*>, method: Method, typeMapper: TypeMapper, mappedTypes: MutableSet<Type>): Operation {
         // Note: i'm using Feign here for parsing, as it seems like a good normalizer - a wide range of support of different frameworks
         // which should all be reesolvable back to Feign's library.  If this turns out not to be true, revisit this decision
         val metadata = springMvcContract.parseAndValidateMetadata(type, method)
-        var url = metadata.template().url()
+
+       var url = contextPath + metadata.template().url()
         metadata.indexToName().forEach { index, names ->
             // replace the placeholder in the url (which uses param names) with types.
             // TODO : This is a naieve first impl.  Need to make use of param names here sensibly, and inline with
