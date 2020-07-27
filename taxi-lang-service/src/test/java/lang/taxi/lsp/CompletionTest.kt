@@ -125,6 +125,37 @@ object CompletionSpec : Spek({
                 insetTexts.should.have.elements("US", "UK", "DE")
             }
         }
+
+
+        describe("Synonym Completion") {
+            val (service, workspaceRoot) = documentServiceFor("test-scenarios/case-workspace")
+            service.connect(mock(LanguageClient::class.java))
+            val originalSource = workspaceRoot.resolve("trade-case.taxi").toFile().readText()
+            // let's edit:
+            val updatedSource = """$originalSource
+     
+   enum EntryType {
+   Germany synonym of CountryCode.
+""".trimMargin()
+            service.didChange(DidChangeTextDocumentParams(
+                    workspaceRoot.versionedDocument("trade-case.taxi"),
+                    listOf(TextDocumentContentChangeEvent(
+                            updatedSource
+                    ))
+            ))
+
+            val cursorPositionLine = updatedSource.lines().indexOfFirst { it.contains("synonym of CountryCode.") }
+            val cursorPositionChar = updatedSource.lines()[cursorPositionLine].indexOf(".")
+            val completions = service.completion(CompletionParams(
+                    workspaceRoot.document("trade-case.taxi"),
+                    Position(cursorPositionLine, cursorPositionChar)
+            )).get().left
+
+            it("should include all enum values") {
+                val insetTexts = completions.map { it.insertText }
+                insetTexts.should.have.elements("DE", "UK", "US")
+            }
+        }
     }
 })
 
