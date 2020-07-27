@@ -13,6 +13,31 @@ import org.junit.Test
 import java.math.BigDecimal
 
 class DataStructureTests {
+   @Test
+   fun `When a java class based schema generated`() {
+      val taxiDef = TaxiGenerator().forClasses(JavaTypeTest::class.java).generateAsStrings()
+      val expected = """
+namespace companyX.common {
+
+   type Product {
+      productIdentifier : ProductIdentifier
+      productName : ProductName
+      assetId : assetId
+      hash : hash
+   }
+
+   type alias ProductIdentifier as Int
+
+   type alias ProductName as String
+
+   type alias assetId as Int
+
+   type alias hash as Int
+
+
+}"""
+      TestHelpers.expectToCompileTheSame(taxiDef, expected)
+   }
 
     @Test
     fun when_structMixesNamespaces_then_validSchemaIsGenerated() {
