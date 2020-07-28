@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture
 
 class GotoDefinitionService(private val typeProvider: TypeProvider) {
     fun definition(compilationResult: CompilationResult, params: DefinitionParams): CompletableFuture<Either<MutableList<out Location>, MutableList<out LocationLink>>> {
-        val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.uriPath())
+        val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.uri)
         val compilationUnit = when (context) {
             is TaxiParser.TypeTypeContext -> compilationResult.compiler.getDeclarationSource(context)
             is TaxiParser.ListOfInheritedTypesContext -> {

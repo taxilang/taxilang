@@ -201,29 +201,32 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     fun initialize(params: InitializeParams) {
         this.rootUri = params.rootUri
         this.initializeParams = params
+        if(this.rootUri != null) {
+            val initSources = File(URI.create(params.rootUri))
+                    .walk()
+                    .filter { it.extension == "taxi" }
+                    .map {
+                        val source = it.readText()
 
-        val initSources = File(URI.create(params.rootUri))
-                .walk()
-                .filter { it.extension == "taxi" }
-                .map {
-                    val source = it.readText()
-
-                    it.toURI() to (source to CharStreams.fromString(source, it.toPath().toString()))
-                }
-                .toMap()
+                        it.toURI() to (source to CharStreams.fromString(source, it.toPath().toString()))
+                    }
+                    .toMap()
 
 
-        initSources.forEach { (key, sourceAndCharStream) ->
-            val (source, charStream) = sourceAndCharStream
-            this.charStreams[key] = charStream
-            this.sources[key] = source
+            initSources.forEach { (key, sourceAndCharStream) ->
+                val (source, charStream) = sourceAndCharStream
+                this.charStreams[key] = charStream
+                this.sources[key] = source
+            }
+            initialized = true
+
+            if (ready) {
+                client.logMessage(MessageParams(MessageType.Log, "Found ${charStreams.size} to compile on startup"))
+                compileAndReport()
+            }
         }
-        initialized = true
 
-        if (ready) {
-            client.logMessage(MessageParams(MessageType.Log, "Found ${charStreams.size} to compile on startup"))
-            compileAndReport()
-        }
+
 
     }
 }

@@ -68,6 +68,6 @@ object TopLevelCompletions {
 
 
     val topLevelCompletionItems: List<CompletionItem> = listOf(
-            type, enum, typeAlias
+            type, enum, typeAlias, service
     )
 }

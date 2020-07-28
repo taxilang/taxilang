@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture
 
 class HoverService {
     fun hover(compilationResult: CompilationResult, lastSuccessfulCompilationResult: CompilationResult?, params: HoverParams): CompletableFuture<Hover> {
-        val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.uriPath())
+        val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.uri)
         val qualifiedName = when (context) {
             is TaxiParser.TypeTypeContext -> compilationResult.compiler.lookupTypeByName(context)
             else -> null

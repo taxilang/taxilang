@@ -15,7 +15,7 @@
         <dependency>
             <groupId>lang.taxi</groupId>
             <artifactId>taxi-lang-service</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 

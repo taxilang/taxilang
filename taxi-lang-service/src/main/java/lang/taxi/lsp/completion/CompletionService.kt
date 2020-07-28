@@ -12,10 +12,10 @@ import java.util.concurrent.CompletableFuture
 
 class CompletionService(private val typeProvider: TypeProvider) {
     fun computeCompletions(compilationResult: CompilationResult, params: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
-        val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.uriPath())
+        val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.uri)
                 ?: return completions(TopLevelCompletions.topLevelCompletionItems)
 
-        val importDecorator = ImportCompletionDecorator(compilationResult.compiler, params.textDocument.uriPath())
+        val importDecorator = ImportCompletionDecorator(compilationResult.compiler, params.textDocument.uri)
         val completionItems = when (context.ruleIndex) {
             TaxiParser.RULE_fieldDeclaration -> typeProvider.getTypes(listOf(importDecorator))
             TaxiParser.RULE_typeMemberDeclaration -> typeProvider.getTypes(listOf(importDecorator))
