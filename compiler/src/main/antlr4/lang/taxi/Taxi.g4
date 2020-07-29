@@ -63,12 +63,24 @@ listOfInheritedTypes
     : typeType (',' typeType)*
     ;
 typeBody
-    :   '{' (typeMemberDeclaration | conditionalTypeStructureDeclaration)* '}'
+    :   '{' (typeMemberDeclaration | conditionalTypeStructureDeclaration | calculatedMemberDeclaration)* '}'
     ;
 
 typeMemberDeclaration
      :   typeDoc? annotation* fieldDeclaration
      ;
+
+calculatedMemberDeclaration
+   : typeMemberDeclaration  'as' calculationExpression
+   ;
+
+calculationExpression
+   : multiplicationExpression
+   ;
+
+multiplicationExpression
+   : '(' typeType '*' typeType ')'
+   ;
 
 conditionalTypeStructureDeclaration :
    '(' typeMemberDeclaration* ')' 'by' conditionalTypeConditionDeclaration

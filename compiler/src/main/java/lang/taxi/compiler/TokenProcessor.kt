@@ -18,6 +18,7 @@ import lang.taxi.TaxiDocument
 import lang.taxi.TaxiParser
 import lang.taxi.Tokens
 import lang.taxi.TypeSystem
+import lang.taxi.compiler.CalculatedFieldSetProcessor.Companion.validate
 import lang.taxi.findNamespace
 import lang.taxi.parameters
 import lang.taxi.policies.CaseCondition
@@ -62,6 +63,7 @@ import lang.taxi.types.Field
 import lang.taxi.types.FieldExtension
 import lang.taxi.types.FieldModifier
 import lang.taxi.types.FileDataSource
+import lang.taxi.types.Formula
 import lang.taxi.types.JsonPathAccessor
 import lang.taxi.types.Modifier
 import lang.taxi.types.ObjectType
@@ -99,6 +101,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    private val errors = mutableListOf<CompilationError>()
 
    private val conditionalFieldSetProcessor = ConditionalFieldSetProcessor(this)
+   private val calculatedFieldSetProcessor = CalculatedFieldSetProcessor(this)
 
    init {
       val importedTypes = if (collectImports) {
@@ -143,7 +146,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val inlineTypeAliases = tokens.unparsedTypes.filter { (_, tokenPair) ->
          val (_, ctx) = tokenPair
          ctx is TaxiParser.TypeDeclarationContext
-      }.flatMap { (name, tokenPair) ->
+      }.flatMap { (_, tokenPair) ->
          val (namespace, ctx) = tokenPair
          val typeCtx = ctx as TaxiParser.TypeDeclarationContext
          val typeAliasNames = typeCtx.typeBody()?.typeMemberDeclaration()
@@ -204,6 +207,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       // Some validations can't be performed at the time, because
       // they rely on a fully parsed document structure
       validateConstraints()
+      validateFormulas()
    }
 
    private fun applySynonymsToEnums() {
@@ -261,6 +265,18 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    private fun validateConstraints() {
       errors.addAll(constraintValidator.validateAll(typeSystem, services))
+   }
+
+   private fun validateFormulas() {
+      errors.addAll(typeSystem.typeList().filterIsInstance<ObjectType>()
+         .flatMap { type ->
+            type
+               .allFields
+               .filter { it.formula  != null }
+               .flatMap { field -> validate(field, typeSystem, type)
+            }
+         }
+      )
    }
 
 
@@ -465,11 +481,16 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          val conditionalFieldStructures = typeBody.conditionalTypeStructureDeclaration()?.map { conditionalFieldBlock ->
             conditionalFieldSetProcessor.compileConditionalFieldStructure(conditionalFieldBlock, namespace)
          }?.reportAndRemoveErrors() ?: emptyList()
+
+         val calculatedFieldStructures = typeBody.calculatedMemberDeclaration()?.mapNotNull { calculatedMemberDeclarationContext ->
+            calculatedFieldSetProcessor.compileCalculatedField(calculatedMemberDeclarationContext, namespace)
+         }?.reportAndRemoveErrorList() ?: emptyList()
+
          val fieldsWithConditions = conditionalFieldStructures.flatMap { it.fields }
          val fields = (typeBody.typeMemberDeclaration()?.map { member ->
             val compiledField = compileField(member, namespace)
             compiledField
-         } ?: emptyList()).reportAndRemoveErrorList() + fieldsWithConditions
+         } ?: emptyList()).reportAndRemoveErrorList() + fieldsWithConditions + calculatedFieldStructures
 
          fields
       } ?: emptyList()
@@ -502,21 +523,38 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val typeDoc = parseTypeDoc(member.typeDoc())
       return parseType(namespace, member.fieldDeclaration().typeType())
          .mapLeft { listOf(it) }
-         .flatMap { type ->
-            mapConstraints(member.fieldDeclaration().typeType(), type, namespace).map { constraints ->
-               Field(
-                  name = unescape(member.fieldDeclaration().Identifier().text),
-                  type = type,
-                  nullable = member.fieldDeclaration().typeType().optionalType() != null,
-                  modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
-                  annotations = fieldAnnotations,
-                  constraints = constraints,
-                  accessor = accessor,
-                  typeDoc = typeDoc
-               )
-            }
+         .flatMap{ type -> toField(member, namespace, type, accessor, typeDoc, fieldAnnotations) }
+   }
 
-         }
+   internal fun compileCalculatedField(member: TaxiParser.TypeMemberDeclarationContext,
+                                       formula: Formula,
+                                       namespace: Namespace): Either<List<CompilationError>, Field> {
+      val fieldAnnotations = collateAnnotations(member.annotation())
+      val accessor = compileAccessor(member.fieldDeclaration().accessor())
+      val typeDoc = parseTypeDoc(member.typeDoc())
+      return parseType(namespace, formula, member.fieldDeclaration().typeType())
+         .mapLeft { listOf(it) }
+         .flatMap { type -> toField(member, namespace, type, accessor, typeDoc, fieldAnnotations) }
+   }
+
+   private fun toField(member: TaxiParser.TypeMemberDeclarationContext,
+                       namespace: Namespace,
+                       type: Type,
+                       accessor: Accessor?,
+                       typeDoc: String?,
+                       fieldAnnotations: List<Annotation>): Either<List<CompilationError>, Field> {
+      return mapConstraints(member.fieldDeclaration().typeType(), type, namespace).map { constraints ->
+         Field(
+            name = unescape(member.fieldDeclaration().Identifier().text),
+            type = type,
+            nullable = member.fieldDeclaration().typeType().optionalType() != null,
+            modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
+            annotations = fieldAnnotations,
+            constraints = constraints,
+            accessor = accessor,
+            typeDoc = typeDoc
+         )
+      }
    }
 
    private fun parseTypeDoc(content: String?): String? {
@@ -579,7 +617,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
    private fun mapFieldModifiers(fieldModifier: TaxiParser.FieldModifierContext?): List<FieldModifier> {
-      if (fieldModifier == null) return emptyList();
+      if (fieldModifier == null) return emptyList()
       val modifier = FieldModifier.values().firstOrNull { it.token == fieldModifier.text }
          ?: error("Unknown field modifier: ${fieldModifier.text}")
       return listOf(modifier)
@@ -662,21 +700,8 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
-   internal fun paredType(namespace: Namespace, typeType: TaxiParser.TypeTypeContext): Type? {
-      return parseType(namespace, typeType)
-         .collectError()
-         .orNull()
-   }
-
    internal fun parseType(namespace: Namespace, typeType: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
-      val typeOrError = when {
-         typeType.aliasedType() != null -> compileInlineTypeAlias(namespace, typeType)
-         typeType.classOrInterfaceType() != null -> resolveUserType(namespace, typeType.classOrInterfaceType())
-         typeType.primitiveType() != null -> PrimitiveType.fromDeclaration(typeType.getChild(0).text).right()
-         else -> throw IllegalArgumentException()
-      }
-
-
+      val typeOrError = typeOrError(namespace, typeType)
       return typeOrError.flatMap { type ->
          parseTypeFormat(typeType).flatMap { format ->
             if (typeType.listType() != null) {
@@ -693,7 +718,29 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                }
             }
          }
+      }
+   }
 
+   private fun parseType(namespace: Namespace,
+                          formula: Formula,
+                          typeType: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
+      val typeOrError = typeOrError(namespace, typeType)
+      return typeOrError.flatMap { type ->
+         if (typeType.listType() != null) {
+            Either.left(CompilationError(typeType.start,
+               "It is invalid to declare calculated type on an array"))
+         } else {
+            generateCalculatedFieldType(type, formula)
+         }
+      }
+   }
+
+   private fun typeOrError(namespace: Namespace, typeType: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
+      return when {
+         typeType.aliasedType() != null -> compileInlineTypeAlias(namespace, typeType)
+         typeType.classOrInterfaceType() != null -> resolveUserType(namespace, typeType.classOrInterfaceType())
+         typeType.primitiveType() != null -> PrimitiveType.fromDeclaration(typeType.getChild(0).text).right()
+         else -> throw IllegalArgumentException()
       }
    }
 
@@ -721,6 +768,31 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
 
 
+   }
+
+   private fun generateCalculatedFieldType(type: Type, formula: Formula): Either<CompilationError, Type> {
+      val operands = formula.operandFields
+      val calculatedTypeName = QualifiedName.from(type.qualifiedName).let { originalTypeName ->
+         val hash = Hashing.sha256().hashString(operands.sortedBy { it.fullyQualifiedName }.joinToString("_"), Charset.defaultCharset()).toString().takeLast(6)
+         originalTypeName.copy(typeName = "Calculated${originalTypeName.typeName}_$hash")
+      }
+
+      return if (typeSystem.contains(calculatedTypeName.fullyQualifiedName)) {
+         Either.right(typeSystem.getType(calculatedTypeName.fullyQualifiedName))
+      } else {
+         val formattedType = ObjectType(
+            calculatedTypeName.fullyQualifiedName,
+            ObjectTypeDefinition(
+               emptySet(),
+               inheritsFrom = setOf(type),
+               calculatedInstanceOfType = type,
+               calculation = formula,
+               compilationUnit = CompilationUnit.generatedFor(type)
+            )
+         )
+         typeSystem.register(formattedType)
+         Either.right(formattedType)
+      }
    }
 
    private fun parseTypeFormat(typeType: TaxiParser.TypeTypeContext): Either<CompilationError, String?> {
@@ -785,11 +857,11 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
    private fun resolveUserType(namespace: Namespace, classType: TaxiParser.ClassOrInterfaceTypeContext): Either<CompilationError, Type> {
-      return resolveUserType(namespace, classType.Identifier().text(), classType);
+      return resolveUserType(namespace, classType.Identifier().text(), classType)
    }
 
    private fun resolveUserType(namespace: Namespace, requestedTypeName: String, context: ParserRuleContext): Either<CompilationError, Type> {
-      return resolveUserType(namespace, requestedTypeName, importsInSource(context), context);
+      return resolveUserType(namespace, requestedTypeName, importsInSource(context), context)
    }
 
    private fun importsInSource(context: ParserRuleContext): List<QualifiedName> {
@@ -801,7 +873,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return compileEnumValues(namespace, typeName, ctx.enumConstants())
          .map { enumValues ->
             val annotations = collateAnnotations(ctx.annotation())
-            val basePrimitive = deriveEnumBaseType(ctx, enumValues)
+            val basePrimitive = deriveEnumBaseType(enumValues)
             val inherits = parseEnumInheritance(namespace, ctx.enumInheritedType())
 
             val enumType = EnumType(typeName, EnumDefinition(
@@ -819,7 +891,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    }
 
-   private fun deriveEnumBaseType(ctx: TaxiParser.EnumDeclarationContext, enumValues: List<EnumValue>): PrimitiveType {
+   private fun deriveEnumBaseType(enumValues: List<EnumValue>): PrimitiveType {
       val distinctValueTypes = enumValues.map { it.value::class }.distinct()
       return if (distinctValueTypes.size != 1) {
          PrimitiveType.STRING
@@ -878,7 +950,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          ?: emptyList()
       return declaredSynonyms.map { synonym ->
          val (enumName, enumValueName) = Enums.splitEnumValueQualifiedName(synonym.Identifier().text())
-         // TODO : I'm concerned this might cause stackoverflow / loops.
+         // TODO : I'm concerned this might cause stack overflow / loops.
          // Will wait and see
          resolveUserType(namespace, enumName.parameterizedName, importsInSource(enumConstant), enumConstant)
             .flatMap { enumType ->
