@@ -29,6 +29,8 @@ data class ObjectTypeDefinition(
    val inheritsFrom: Set<Type> = emptySet(),
    val format: String? = null,
    val formattedInstanceOfType: Type? = null,
+   val calculatedInstanceOfType: Type? = null,
+   val calculation: Formula? = null,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
@@ -131,6 +133,9 @@ data class ObjectType(
 
       return Either.right(extension)
    }
+
+   override val calculation: Formula?
+      get() = definition?.calculation
 
    private fun verifyMaxOneTypeRefinementPerField(fieldExtensions: List<FieldExtension>): ErrorMessage? {
       fieldExtensions.filter { it.refinedType != null }
@@ -244,7 +249,8 @@ data class Field(
    val accessor: Accessor? = null,
    val readCondition: FieldSetCondition? = null,
    override val typeDoc: String? = null,
-   val defaultValue: Any? = null
+   val defaultValue: Any? = null,
+   val formula: Formula? = null
 ) : Annotatable, ConstraintTarget, Documented, NameTypePair {
 
    override val description: String = "field $name"
