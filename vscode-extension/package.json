@@ -89,6 +89,7 @@
       "semantic-release-vsce",
       "@semantic-release/gitlab"
     ],
+    "generateNotes": "@semantic-release/release-notes-generator",
     "prepare": {
       "path": "semantic-release-vsce",
       "packageVsix": "taxi-language-server.vsix"
