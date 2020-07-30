@@ -6,7 +6,6 @@ import org.reflections8.scanners.SubTypesScanner
 import org.reflections8.util.ClasspathHelper
 import org.reflections8.util.ConfigurationBuilder
 import org.slf4j.LoggerFactory
-import kotlin.math.log
 import kotlin.reflect.*
 
 interface TypeAliasRegistrar {

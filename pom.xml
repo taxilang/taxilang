@@ -38,6 +38,7 @@
       <module>core-types</module>
       <module>package-importer</module>
       <module>package-repository-api</module>
+      <module>sample-compiled-taxonomy</module>
    </modules>
 
    <properties>

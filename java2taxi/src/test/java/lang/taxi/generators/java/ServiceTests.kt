@@ -1,8 +1,10 @@
 package lang.taxi.generators.java
 
 import com.winterbe.expekt.expect
+import com.winterbe.expekt.should
 import lang.taxi.TypeAliasRegistry
 import lang.taxi.annotations.*
+import lang.taxi.demo.FirstName
 import lang.taxi.testing.TestHelpers
 import org.junit.Ignore
 import org.junit.Test
@@ -144,6 +146,44 @@ namespace foo {
 
 """.trimIndent()
       TestHelpers.expectToCompileTheSame(taxiDef, expected)
+   }
+
+   @Test
+   fun given_typeUsesTypeFromAnotherLibrary_then_itIsImported() {
+      @Service("TestService")
+      @Namespace("taxi.example")
+      class TestService {
+         @Operation
+         fun findEmail(input: PersonName): FirstName {
+            TODO("Not a real service")
+         }
+      }
+      TypeAliasRegistry.register(lang.taxi.demo.TypeAliases::class)
+      TypeAliasRegistry.register(TypeAliases::class)
+
+      // Note - we're not using compilesSameAs(..) for tests involving imports, as they likely don't compile without the imported definition
+      val taxiDef = TaxiGenerator().forClasses(TestService::class.java).generateAsStrings()
+      taxiDef.joinToString("\n").should.contain("import lang.taxi.demo.FirstName")
+   }
+
+   @Test
+   fun generatesValidTaxiFromJavaService() {
+      TypeAliasRegistry.register(lang.taxi.demo.TypeAliases::class)
+      TypeAliasRegistry.register(TypeAliases::class)
+
+      val taxiDef = TaxiGenerator().forClasses(JavaServiceTest::class.java).generateAsStrings()
+      val expected = """import lang.taxi.FirstName
+
+namespace lang.taxi.generators.java {
+
+
+
+   service JavaService {
+      operation findByEmail(  FirstName ) : foo.Person
+   }
+}""".removeSpaces()
+      // Note - we're not using compilesSameAs(..) for tests involving imports, as they likely don't compile without the imported definition
+      taxiDef.should.satisfy { it.any { generated -> generated.removeSpaces() == expected } }
    }
 
    @Test

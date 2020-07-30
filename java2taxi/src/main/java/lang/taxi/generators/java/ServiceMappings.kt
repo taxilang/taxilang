@@ -11,6 +11,7 @@ import lang.taxi.services.Parameter
 import lang.taxi.services.Service
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.CompilationUnit
+import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Method
@@ -19,90 +20,90 @@ import kotlin.reflect.KType
 import kotlin.reflect.jvm.kotlinFunction
 
 interface ServiceMapper {
-    fun getTaxiServices(javaClass: Class<*>, typeMapper: TypeMapper, mappedTypes: MutableSet<Type>): Set<Service>
+   fun getTaxiServices(javaClass: Class<*>, typeMapper: TypeMapper, mappedTypes: MutableSet<Type>): Set<Service>
 }
 
 interface ServiceMapperExtension : MapperExtension {
-    fun update(service: Service, type: Class<*>, typeMapper: TypeMapper, mappedTypes: MutableSet<Type>): Service
+   fun update(service: Service, type: Class<*>, typeMapper: TypeMapper, mappedTypes: MutableSet<Type>): Service
 }
 
 interface OperationMapperExtension : MapperExtension {
-    fun update(operation: lang.taxi.services.Operation, type: Class<*>, method: Method, typeMapper: TypeMapper, mappedTypes: MutableSet<Type>): lang.taxi.services.Operation
+   fun update(operation: lang.taxi.services.Operation, type: Class<*>, method: Method, typeMapper: TypeMapper, mappedTypes: MutableSet<Type>): lang.taxi.services.Operation
 }
 
 class DefaultServiceMapper(private val constraintAnnotationMapper: ConstraintAnnotationMapper = ConstraintAnnotationMapper(),
                            private val serviceExtensions: List<ServiceMapperExtension> = emptyList(),
                            private val operationExtensions: List<OperationMapperExtension> = emptyList()) : ServiceMapper {
-    override fun getTaxiServices(type: Class<*>, typeMapper: TypeMapper, mappedTypes: MutableSet<Type>): Set<Service> {
-        val namespace = TypeNames.deriveNamespace(type)
-        val serviceName = deriveServiceName(type, namespace)
-        val operations = type.methods.filter {
-            it.isAnnotationPresent(Operation::class.java)
-        }.map { method ->
-            val func = method.kotlinFunction
-                    ?: TODO("I refactored this to use Kotlin functions, must've broken some scenarios where there are no kotlin functions - maybe java?")
-            val operationAnnotation = method.getAnnotation(Operation::class.java)
-            val name = operationAnnotation.value.orDefault(method.name)
+   override fun getTaxiServices(type: Class<*>, typeMapper: TypeMapper, mappedTypes: MutableSet<Type>): Set<Service> {
+      val namespace = TypeNames.deriveNamespace(type)
+      val serviceName = deriveServiceName(type, namespace)
+      val operations = type.methods.filter {
+         it.isAnnotationPresent(Operation::class.java)
+      }.map { method ->
+         val func = method.kotlinFunction
+            ?: TODO("I refactored this to use Kotlin functions, must've broken some scenarios where there are no kotlin functions - maybe java?")
+         val operationAnnotation = method.getAnnotation(Operation::class.java)
+         val name = operationAnnotation.value.orDefault(method.name)
 
-            val params = method.parameters.map { param ->
-                val paramType = typeMapper.getTaxiType(param, mappedTypes, namespace, method)
-                val paramAnnotation = param.getAnnotation(lang.taxi.annotations.Parameter::class.java)
-                Parameter(annotations = emptyList(), // todo,
-                        type = paramType,
-                        name = paramAnnotation?.name,
-                        constraints = parseConstraints(paramAnnotation))
-            }
-            val returnType = typeMapper.getTaxiType(KTypeWrapper(func.returnType), mappedTypes, namespace, method)
-            val operation = lang.taxi.services.Operation(name,
-                    parameters = params,
-                    annotations = emptyList(), // TODO
-                    returnType = returnType,
-                    contract = OperationContract(
-                            returnType = returnType,
-                            returnTypeConstraints = parseConstraints(method.getAnnotation(ResponseContract::class.java))
-                    ),
-                    scope = operationAnnotation.scope,
-                    compilationUnits = listOf(CompilationUnit.unspecified()))
-            operationExtensions.fold(operation, { operation, extension -> extension.update(operation, type, method, typeMapper, mappedTypes) })
-        }
+         val params = method.parameters.map { param ->
+            val paramType = typeMapper.getTaxiType(param, mappedTypes, namespace, method)
+            val paramAnnotation = param.getAnnotation(lang.taxi.annotations.Parameter::class.java)
+            Parameter(annotations = emptyList(), // todo,
+               type = paramType,
+               name = paramAnnotation?.name,
+               constraints = parseConstraints(paramAnnotation))
+         }
+         val returnType = typeMapper.getTaxiType(KTypeWrapper(func.returnType), mappedTypes, namespace, method)
+         val operation = lang.taxi.services.Operation(name,
+            parameters = params,
+            annotations = emptyList(), // TODO
+            returnType = returnType,
+            contract = OperationContract(
+               returnType = returnType,
+               returnTypeConstraints = parseConstraints(method.getAnnotation(ResponseContract::class.java))
+            ),
+            scope = operationAnnotation.scope,
+            compilationUnits = listOf(CompilationUnit.unspecified()))
+         operationExtensions.fold(operation, { operation, extension -> extension.update(operation, type, method, typeMapper, mappedTypes) })
+      }
 
-        val service = serviceExtensions.fold(Service(serviceName, operations, annotations = emptyList(), compilationUnits = listOf(CompilationUnit.unspecified())), { service, extension -> extension.update(service, type, typeMapper, mappedTypes) })
-        return setOf(service)
-    }
+      val service = serviceExtensions.fold(Service(serviceName, operations, annotations = emptyList(), compilationUnits = listOf(CompilationUnit.unspecified())), { service, extension -> extension.update(service, type, typeMapper, mappedTypes) })
+      return setOf(service)
+   }
 
-    private fun parseConstraints(contract: ResponseContract?): List<Constraint> {
-        if (contract == null) {
-            return emptyList()
-        }
-        return constraintAnnotationMapper.convert(contract)
-    }
+   private fun parseConstraints(contract: ResponseContract?): List<Constraint> {
+      if (contract == null) {
+         return emptyList()
+      }
+      return constraintAnnotationMapper.convert(contract)
+   }
 
-    private fun parseConstraints(paramAnnotation: lang.taxi.annotations.Parameter?): List<Constraint> {
-        if (paramAnnotation == null) {
-            return emptyList()
-        }
-        return constraintAnnotationMapper.convert(paramAnnotation.constraints.toList())
-    }
+   private fun parseConstraints(paramAnnotation: lang.taxi.annotations.Parameter?): List<Constraint> {
+      if (paramAnnotation == null) {
+         return emptyList()
+      }
+      return constraintAnnotationMapper.convert(paramAnnotation.constraints.toList())
+   }
 
 
-    fun String.orDefault(default: String): String {
-        return if (this.isEmpty()) default else this
-    }
+   fun String.orDefault(default: String): String {
+      return if (this.isEmpty()) default else this
+   }
 
-    fun deriveServiceName(element: Class<*>, defaultNamespace: String): String {
-        if (element.isAnnotationPresent(lang.taxi.annotations.Service::class.java)) {
-            val annotation = element.getAnnotation(lang.taxi.annotations.Service::class.java)
-            if (annotation.declaresName()) {
-                return annotation.qualifiedName(defaultNamespace)
-            }
-        }
+   fun deriveServiceName(element: Class<*>, defaultNamespace: String): String {
+      if (element.isAnnotationPresent(lang.taxi.annotations.Service::class.java)) {
+         val annotation = element.getAnnotation(lang.taxi.annotations.Service::class.java)
+         if (annotation.declaresName()) {
+            return annotation.qualifiedName(defaultNamespace)
+         }
+      }
 
-        // If it's an inner class, trim the qualifier
-        // This may cause problems with duplicates, but let's encourage
-        // peeps to solve that via the DataType annotation.
-        val typeName = element.simpleName.split("$").last()
-        return "$defaultNamespace.$typeName"
-    }
+      // If it's an inner class, trim the qualifier
+      // This may cause problems with duplicates, but let's encourage
+      // peeps to solve that via the DataType annotation.
+      val typeName = element.simpleName.split("$").last()
+      return "$defaultNamespace.$typeName"
+   }
 }
 
 
@@ -113,21 +114,21 @@ However, some cases this isn't possible (eeg., return types from functions),
 so we need to use this special class
  */
 class KTypeWrapper(val ktype: KType) : AnnotatedElement, AnnotatedElementWrapper {
-    val arguments = ktype.arguments
-    private val klass = ktype.classifier!! as KClass<*>
-    override val delegate: AnnotatedElement = klass.java
+   val arguments = ktype.arguments
+   private val klass = ktype.classifier!! as KClass<*>
+   override val delegate: AnnotatedElement = klass.java
 
-    override fun getAnnotations(): Array<Annotation> {
-        return delegate.annotations
-    }
+   override fun getAnnotations(): Array<Annotation> {
+      return delegate.annotations
+   }
 
-    override fun <T : Annotation> getAnnotation(p0: Class<T>): T? {
-        return delegate.getAnnotation(p0)
-    }
+   override fun <T : Annotation> getAnnotation(p0: Class<T>): T? {
+      return delegate.getAnnotation(p0)
+   }
 
-    override fun getDeclaredAnnotations(): Array<Annotation> {
-        return delegate.declaredAnnotations
-    }
+   override fun getDeclaredAnnotations(): Array<Annotation> {
+      return delegate.declaredAnnotations
+   }
 
 
 }
