@@ -40,8 +40,12 @@ enum Foo {
    Two
 }
       """.trimIndent()
-            Compiler(src).compile().enumType("Foo").value("One").value.should.equal("One")
-            Compiler(src).compile().enumType("Foo").value("Two").value.should.equal("Two")
+            val doc = Compiler(src).compile()
+            doc.enumType("Foo").value("One").value.should.equal("One")
+            doc.enumType("Foo").value("Two").value.should.equal("Two")
+            doc.enumType("Foo").basePrimitive.should.equal(PrimitiveType.STRING)
+            doc.enumType("Foo").valueType.should.equal(PrimitiveType.STRING)
+
          }
 
          it("should the infer the type as Int if all the values are ints") {
@@ -52,6 +56,7 @@ enum Foo {
 }
       """.trimIndent()
             Compiler(src).compile().enumType("Foo").basePrimitive.should.equal(PrimitiveType.INTEGER)
+            Compiler(src).compile().enumType("Foo").valueType.should.equal(PrimitiveType.INTEGER)
          }
 
          it("should infer the type as String if all the values are strings") {
@@ -70,7 +75,35 @@ enum Foo {
    TWO(2)
 }"""
             Compiler(src).compile().enumType("Foo").basePrimitive.should.equal(PrimitiveType.STRING)
+            Compiler(src).compile().enumType("Foo").valueType!!.should.equal(PrimitiveType.STRING)
          }
+      }
+
+      it("should allow the content type to be explicitly declared") {
+         val src = """
+            type CountryCode inherits Int
+            enum Country(CountryCode) {
+               Australia(63),
+               UnitedKingdom(44),
+               NewZealand(64)
+            }
+         """.trimIndent()
+
+         Compiler(src).compile().enumType("Country").basePrimitive.should.equal(PrimitiveType.INTEGER)
+         Compiler(src).compile().enumType("Country").valueType!!.qualifiedName.should.equal("CountryCode")
+      }
+      it("should report compiler error if the value type is not defined") {
+         val src = """
+            enum Country(CountryCode) {
+               Australia(63),
+               UnitedKingdom(44),
+               NewZealand(64)
+            }
+         """.trimIndent()
+
+         val errors  = Compiler(src).validate()
+         errors.should.have.size(1)
+         errors.first().detailMessage.should.equal("CountryCode is not defined as a type")
       }
       describe("extensions") {
          it("should apply docs added on an extension to the definition") {

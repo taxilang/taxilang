@@ -25,6 +25,7 @@ data class EnumDefinition(val values: List<EnumValue>,
                           override val compilationUnit: CompilationUnit,
                           val inheritsFrom: Set<Type> = emptySet(),
                           val basePrimitive: PrimitiveType,
+                          val valueType:Type = basePrimitive,
                           override val typeDoc: String? = null) : Annotatable, TypeDefinition, Documented {
    private val equality = Equality(this, EnumDefinition::values.toSet(), EnumDefinition::annotations.toSet(), EnumDefinition::typeDoc, EnumDefinition::basePrimitive, EnumDefinition::inheritsFrom.toSet())
    override fun equals(other: Any?) = equality.isEqualTo(other)
@@ -73,6 +74,9 @@ data class EnumType(override val qualifiedName: String,
    override val formattedInstanceOfType: Type? = null
    override val calculation: Formula?
       get() = null
+
+   val valueType:Type?
+      get() = definition?.valueType
 
    override val basePrimitive: PrimitiveType?
       get() = definition?.basePrimitive

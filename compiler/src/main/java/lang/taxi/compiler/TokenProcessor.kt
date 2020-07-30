@@ -81,6 +81,7 @@ import lang.taxi.types.XpathAccessor
 import lang.taxi.utils.errorOrNull
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.log
+import lang.taxi.utils.wrapErrorsInList
 import lang.taxi.value
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
@@ -871,22 +872,28 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    private fun compileEnum(namespace: Namespace, typeName: String, ctx: TaxiParser.EnumDeclarationContext): Either<List<CompilationError>, EnumType> {
       return compileEnumValues(namespace, typeName, ctx.enumConstants())
-         .map { enumValues ->
+         .flatMap { enumValues ->
             val annotations = collateAnnotations(ctx.annotation())
             val basePrimitive = deriveEnumBaseType(enumValues)
             val inherits = parseEnumInheritance(namespace, ctx.enumInheritedType())
+            val contentType = ctx.enumValueTypeDeclaration()?.typeType()?.let { valueType -> typeOrError(namespace,valueType).wrapErrorsInList() } ?: Either.right(basePrimitive)
 
-            val enumType = EnumType(typeName, EnumDefinition(
-               enumValues,
-               annotations,
-               ctx.toCompilationUnit(),
-               inheritsFrom = if (inherits != null) setOf(inherits) else emptySet(),
-               typeDoc = parseTypeDoc(ctx.typeDoc()),
-               basePrimitive = basePrimitive
-            ))
-            typeSystem.register(enumType)
-            enumType
+
+            contentType.map { valueType ->
+               val enumType = EnumType(typeName, EnumDefinition(
+                  enumValues,
+                  annotations,
+                  ctx.toCompilationUnit(),
+                  inheritsFrom = if (inherits != null) setOf(inherits) else emptySet(),
+                  typeDoc = parseTypeDoc(ctx.typeDoc()),
+                  basePrimitive = basePrimitive,
+                  valueType = valueType
+               ))
+               typeSystem.register(enumType)
+               enumType
+            }
          }
+
 
 
    }
