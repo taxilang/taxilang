@@ -58,6 +58,7 @@ enum class PrimitiveType(
       private val typesByQualifiedName = values().associateBy { it.qualifiedName }
       private val typesByLookup = typesByName + typesByQualifiedName
 
+      val NUMBER_TYPES = listOf(INTEGER, DECIMAL, DOUBLE)
       fun fromDeclaration(value: String): PrimitiveType {
          return typesByLookup[value] ?: throw IllegalArgumentException("$value is not a valid primative")
       }
@@ -99,4 +100,35 @@ enum class PrimitiveType(
          return type.allInheritedTypes.flatMap { getAllUnderlyingPrimitiveIfExists(it, recursiveTypesToIgnore) }.toSet()
       }
    }
+}
+
+object PrimitiveTypeOperations {
+   private val allSupportedOperations: Map<PrimitiveType, Map<FormulaOperator, List<PrimitiveType>>>
+
+   init {
+      val numericOperations = PrimitiveType.NUMBER_TYPES.map { numberType ->
+         numberType to mapOf(
+            FormulaOperator.Add to PrimitiveType.NUMBER_TYPES,
+            FormulaOperator.Subtract to PrimitiveType.NUMBER_TYPES,
+            FormulaOperator.Multiply to PrimitiveType.NUMBER_TYPES,
+            FormulaOperator.Divide to PrimitiveType.NUMBER_TYPES
+         )
+      }.toMap()
+
+      val dateTimeOperations = mapOf(PrimitiveType.LOCAL_DATE to mapOf(
+         FormulaOperator.Add to listOf(PrimitiveType.TIME)
+      ))
+
+      val stringOperations = mapOf(PrimitiveType.STRING to mapOf(
+         FormulaOperator.Add to listOf(PrimitiveType.STRING)
+      ))
+      allSupportedOperations = numericOperations + dateTimeOperations + stringOperations
+   }
+
+   fun isValidOperation(firstOperand:PrimitiveType, operator:FormulaOperator, secondOperand:PrimitiveType):Boolean {
+      val supportedOperations = allSupportedOperations[firstOperand] ?: emptyMap()
+      val supportedTargetTypes = supportedOperations[operator] ?: emptyList()
+      return supportedTargetTypes.contains(secondOperand)
+   }
+
 }

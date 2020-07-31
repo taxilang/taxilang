@@ -5,53 +5,44 @@ import lang.taxi.CompilationError
 import lang.taxi.Namespace
 import lang.taxi.TaxiParser
 import lang.taxi.TypeSystem
-import lang.taxi.types.Field
-import lang.taxi.types.Formula
-import lang.taxi.types.FormulaOperator
-import lang.taxi.types.MultiplicationFormula
-import lang.taxi.types.ObjectType
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
+import lang.taxi.types.*
 
 class CalculatedFieldSetProcessor internal constructor(private val compiler: TokenProcessor) {
    fun compileCalculatedField(calculatedExpressionContext: TaxiParser.CalculatedMemberDeclarationContext,
                               namespace: Namespace): Either<List<CompilationError>, Field> {
       val typeMemberDeclaration = calculatedExpressionContext.typeMemberDeclaration()
-      val calculationExpression = calculatedExpressionContext.calculationExpression()
-      val operands = calculationExpression.multiplicationExpression().typeType().map {
+      val calculationExpression = calculatedExpressionContext.operatorExpression()
+      val operands = calculationExpression.typeType().map {
          QualifiedName.from(compiler.lookupTypeByName(it))
       }
-      val formula = MultiplicationFormula(operands)
-     return compiler.compileCalculatedField(typeMemberDeclaration, formula, namespace).map { f ->
+      val operator = FormulaOperator.forSymbol(calculationExpression.arithmaticOperator().text)
+      val formula = OperatorFormula(operands, operator)
+      return compiler.compileCalculatedField(typeMemberDeclaration, formula, namespace).map { f ->
          f.copy(formula = formula)
       }
    }
+
    companion object {
       fun validate(field: Field, typeSystem: TypeSystem, objectType: ObjectType): List<CompilationError> {
-         val calculation = field.type.calculation!!
-         return when (calculation.operator) {
-            FormulaOperator.Multiply -> validateMultiply(calculation, typeSystem, objectType, field)
-            else -> listOf()
+         val formula = field.type.calculation!!
+         if (formula.operandFields.size != 2) {
+            return listOf(CompilationError(objectType, "A formula must have exactly two fields"))
          }
-      }
 
-      private fun validateMultiply(formula: Formula, typeSystem: TypeSystem, objectType: ObjectType, field: Field): List<CompilationError> {
-        return formula.operandFields.mapNotNull { operandFullyQualifiedName ->
-           val operandType = typeSystem.getType(operandFullyQualifiedName.fullyQualifiedName)
-           when (operandType.basePrimitive) {
-              PrimitiveType.ANY,
-              PrimitiveType.ARRAY,
-              PrimitiveType.BOOLEAN,
-              PrimitiveType.INSTANT,
-              PrimitiveType.LOCAL_DATE,
-              PrimitiveType.DATE_TIME,
-              PrimitiveType.STRING,
-              PrimitiveType.TIME,
-              PrimitiveType.VOID ->
-                 CompilationError(objectType, "Operator $operandFullyQualifiedName has invalid Type in calculated field definition ${field.name}")
-              else -> null
-           }
-        }
+         fun noPrimitiveTypeFoundError(name: QualifiedName): CompilationError {
+            return CompilationError(objectType, "Type ${name.fullyQualifiedName} does not contain a base primitive type")
+         }
+
+         val firstOperand = typeSystem.getType(formula.operandFields[0].fullyQualifiedName).basePrimitive
+            ?: return listOf(noPrimitiveTypeFoundError(formula.operandFields[0]))
+         val secondOperand = typeSystem.getType(formula.operandFields[1].fullyQualifiedName).basePrimitive
+            ?: return listOf(noPrimitiveTypeFoundError(formula.operandFields[1]))
+
+         return if (!PrimitiveTypeOperations.isValidOperation(firstOperand, formula.operator, secondOperand)) {
+            listOf(CompilationError(objectType, "Cannot perform operation ${formula.operator} on types ${firstOperand.basePrimitive!!.qualifiedName} and  ${secondOperand.basePrimitive!!.qualifiedName}"))
+         } else {
+            emptyList()
+         }
       }
    }
 }

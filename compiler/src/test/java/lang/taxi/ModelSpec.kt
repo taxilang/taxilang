@@ -45,6 +45,72 @@ model Person {
             multiplication.operator.should.equal(FormulaOperator.Multiply)
          }
 
+         it("should allow concatenation of a date + time fields to an instant") {
+            val src = """
+               type TransactionDate inherits Date
+               type TransactionTime inherits Time
+               type TransactionDateTime inherits Instant
+               model Transaction {
+                  timestamp : TransactionDateTime as (TransactionDate + TransactionTime)
+               }
+            """.trimIndent()
+            val transaction = Compiler(src).compile().model("Transaction")
+            val formula = transaction.field("timestamp").formula!!
+            formula.operator.should.equal(FormulaOperator.Add)
+            formula.operandFields[0].fullyQualifiedName.should.equal("TransactionDate")
+            formula.operandFields[1].fullyQualifiedName.should.equal("TransactionTime")
+         }
+
+         it("should not allow concatenation of time + date fields") {
+            assertFailsWith(CompilationException::class) {
+               val src = """
+                 type TransactionDate inherits Date
+               type TransactionTime inherits Time
+               type TransactionDateTime inherits Instant
+               model Transaction {
+                  timestamp : TransactionDateTime as (TransactionTime + TransactionDate)
+               }
+               """.trimIndent()
+               Compiler(src).compile().model("Trade")
+            }
+         }
+
+         it("should not allow invalid operations on Date Time fields") {
+            listOf(FormulaOperator.Divide, FormulaOperator.Multiply, FormulaOperator.Subtract).forEach { operator ->
+               assertFailsWith(CompilationException::class) {
+                  val src = """
+                 type TransactionDate inherits Date
+               type TransactionTime inherits Time
+               type TransactionDateTime inherits Instant
+               model Transaction {
+                  timestamp : TransactionDateTime as (TransactionTime ${operator.symbol} TransactionDate)
+               }
+               """.trimIndent()
+                  Compiler(src).compile().model("Trade")
+               }
+            }
+         }
+
+         it("should allow concatenation of strings") {
+            val src = """
+               type FirstName inherits String
+               type LastName inherits String
+               type FullName inherits String
+
+               model Person {
+                  fullName : FullName as (FirstName + LastName)
+               }
+
+            """.trimIndent()
+            val transaction = Compiler(src).compile().model("Person")
+            val formula = transaction.field("fullName").formula!!
+            formula.operator.should.equal(FormulaOperator.Add)
+            formula.operandFields[0].fullyQualifiedName.should.equal("FirstName")
+            formula.operandFields[1].fullyQualifiedName.should.equal("LastName")
+         }
+
+
+
          it("should not allow definition of calculated fields when one of the operand is String") {
             assertFailsWith(CompilationException::class) {
                val src = """
