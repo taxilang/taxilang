@@ -59,7 +59,7 @@ private class StaticNameWrapper(val name: String) {
  * @DataType(TypeNames.com.foo.bar.Baz)
  * ```
  */
-class TypeNamesAsConstantsGenerator(val topLevelPackage: String = "") {
+class TypeNamesAsConstantsGenerator(private val topLevelPackage: String = "taxi.generated") {
    private val topLevelWrapper = StaticNameWrapper("TypeNames")
 
    fun asConstant(qualifiedName: QualifiedName): MemberName {

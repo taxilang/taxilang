@@ -11,12 +11,12 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 
-class KotlinGenerator : ModelGenerator {
+class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.generated") : ModelGenerator {
    // TODO : This really shouldn't be a field.
    private lateinit var processorHelper: ProcessorHelper
 
    companion object {
-      val kotlinPrimtivies = listOf(String::class, Int::class, Boolean::class)
+      val kotlinPrimitives = listOf(String::class, Int::class, Boolean::class)
          .map { it.javaObjectType.name to it }
          .toMap()
 
@@ -25,7 +25,7 @@ class KotlinGenerator : ModelGenerator {
    override fun generate(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiEnvironment): List<WritableSource> {
       // TODO : Shouldn't be assinging a field here - should be passing it through
       this.processorHelper = ProcessorHelper(processors)
-      val typeNameConstantsGenerator = TypeNamesAsConstantsGenerator()
+      val typeNameConstantsGenerator = TypeNamesAsConstantsGenerator(typeNamesTopLevelPackageName)
       return taxi.types.mapNotNull { generateType(it, typeNameConstantsGenerator) } +
          typeNameConstantsGenerator.generate()
    }
@@ -47,7 +47,8 @@ class KotlinGenerator : ModelGenerator {
 
       val builder = TypeSpec.enumBuilder(type.className())
          .addAnnotation(AnnotationSpec.builder(DataType::class)
-            .addMember("%M", typeNamesAsConstantsGenerator.asConstant(type.toQualifiedName()))
+            .addMember("value = %M", typeNamesAsConstantsGenerator.asConstant(type.toQualifiedName()))
+            .addMember("imported = %L", true)
             .build())
 
       val hasValues = type.values.any { it.value != it.name }
@@ -94,7 +95,8 @@ class KotlinGenerator : ModelGenerator {
       val specBuilder = TypeSpec.classBuilder(type.className())
          .addModifiers(KModifier.OPEN)
          .addAnnotation(AnnotationSpec.builder(DataType::class)
-            .addMember("%M", typeNamesAsConstantsGenerator.asConstant(type.toQualifiedName()))
+            .addMember("value = %M", typeNamesAsConstantsGenerator.asConstant(type.toQualifiedName()))
+            .addMember("imported = %L", true)
             .build())
          .primaryConstructor(
             FunSpec.constructorBuilder().apply {
@@ -157,7 +159,8 @@ class KotlinGenerator : ModelGenerator {
       val spec = TypeSpec
          .interfaceBuilder(name.asClassName())
          .addAnnotation(AnnotationSpec.builder(DataType::class)
-            .addMember("%M", typeNames.asConstant(type.toQualifiedName()))
+            .addMember("value = %M", typeNames.asConstant(type.toQualifiedName()))
+            .addMember("imported = %L", true)
             .build())
          .build()
       return FileSpecWritableSource.from(name, spec)
@@ -170,7 +173,8 @@ class KotlinGenerator : ModelGenerator {
       val typeAliasSpec = TypeAliasSpec
          .builder(typeAliasQualifiedName.typeName, getJavaType(inheritsFrom))
          .addAnnotation(AnnotationSpec.builder(DataType::class)
-            .addMember("%M", typeNames.asConstant(type.toQualifiedName()))
+            .addMember("value = %M", typeNames.asConstant(type.toQualifiedName()))
+            .addMember("imported = %L", true)
             .build())
          .build()
 
@@ -186,7 +190,8 @@ class KotlinGenerator : ModelGenerator {
       val typeAliasSpec = TypeAliasSpec
          .builder(typeAliasQualifiedName.typeName, getJavaType(baseEnumQualifiedName))
          .addAnnotation(AnnotationSpec.builder(DataType::class)
-            .addMember("%M", typeNames.asConstant(typeAliasQualifiedName))
+            .addMember("value = %M", typeNames.asConstant(typeAliasQualifiedName))
+            .addMember("imported = %L", true)
             .build())
          .build()
 
@@ -201,7 +206,8 @@ class KotlinGenerator : ModelGenerator {
       val typeAliasSpec = TypeAliasSpec
          .builder(typeAliasQualifiedName.typeName, getJavaType(typeAlias.aliasType!!))
          .addAnnotation(AnnotationSpec.builder(DataType::class)
-            .addMember("%M", typeNames.asConstant(typeAlias.toQualifiedName()))
+            .addMember("value = %M", typeNames.asConstant(typeAlias.toQualifiedName()))
+            .addMember("imported = %L", true)
             .build())
          .build()
 
@@ -228,8 +234,8 @@ class KotlinGenerator : ModelGenerator {
    }
 
    private fun preferKotlinType(typeName: TypeName): TypeName {
-      return if (kotlinPrimtivies.containsKey(typeName.toString())) {
-         kotlinPrimtivies[typeName.toString()]!!.asTypeName()
+      return if (kotlinPrimitives.containsKey(typeName.toString())) {
+         kotlinPrimitives[typeName.toString()]!!.asTypeName()
       } else {
          typeName
       }

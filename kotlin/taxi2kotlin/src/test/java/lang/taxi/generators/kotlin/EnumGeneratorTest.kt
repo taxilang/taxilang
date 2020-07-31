@@ -27,8 +27,12 @@ class EnumGeneratorTest {
 
       val expected = """import kotlin.String
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.Country
 
-@DataType(TypeNames.Country)
+@DataType(
+  value = Country,
+  imported = true
+)
 enum class Country(
   val value: String
 ) {
@@ -39,8 +43,12 @@ enum class Country(
 
 import kotlin.Int
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.CountryCode
 
-@DataType(TypeNames.CountryCode)
+@DataType(
+  value = CountryCode,
+  imported = true
+)
 enum class CountryCode(
   val value: Int
 ) {
@@ -50,13 +58,19 @@ enum class CountryCode(
 }
 
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.City
 
-@DataType(TypeNames.City)
+@DataType(
+  value = City,
+  imported = true
+)
 enum class City {
   AUCKLAND,
 
   SYDNEY
 }
+
+package taxi.generated
 
 import kotlin.String
 

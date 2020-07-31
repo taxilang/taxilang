@@ -49,14 +49,20 @@ import kotlin.Boolean
 import kotlin.Int
 import kotlin.String
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.Person
 
-@DataType(TypeNames.Person)
+@DataType(
+  value = Person,
+  imported = true
+)
 open class Person(
   val firstName: String,
   val lastName: String,
   val age: Int,
   val living: Boolean
 )
+
+package taxi.generated
 
 import kotlin.String
 
@@ -84,8 +90,12 @@ namespace vyne {
 package vyne
 
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.vyne.Person
 
-@DataType(TypeNames.vyne.Person)
+@DataType(
+  value = Person,
+  imported = true
+)
 open class Person(
   val firstName: FirstName,
   val lastName: LastName,
@@ -97,33 +107,51 @@ package vyne
 
 import kotlin.String
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.vyne.FirstName
 
-@DataType(TypeNames.vyne.FirstName)
+@DataType(
+  value = FirstName,
+  imported = true
+)
 typealias FirstName = String
 
 package vyne
 
 import kotlin.String
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.vyne.LastName
 
-@DataType(TypeNames.vyne.LastName)
+@DataType(
+  value = LastName,
+  imported = true
+)
 typealias LastName = String
 
 package vyne
 
 import kotlin.Int
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.vyne.Age
 
-@DataType(TypeNames.vyne.Age)
+@DataType(
+  value = Age,
+  imported = true
+)
 typealias Age = Int
 
 package vyne
 
 import kotlin.Boolean
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.vyne.IsAlive
 
-@DataType(TypeNames.vyne.IsAlive)
+@DataType(
+  value = IsAlive,
+  imported = true
+)
 typealias IsAlive = Boolean
+
+package taxi.generated
 
 import kotlin.String
 
@@ -161,12 +189,18 @@ package vyne
 import kotlin.String
 import kotlin.collections.List
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.vyne.Person
 
-@DataType(TypeNames.vyne.Person)
+@DataType(
+  value = Person,
+  imported = true
+)
 open class Person(
   val firstName: String,
   val friends: List<Person>
 )
+
+package taxi.generated
 
 import kotlin.String
 
@@ -191,20 +225,30 @@ enum Gender {
       val output = compileAndGenerate(taxi).trimNewLines()
       val expected = """
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.Person
 
-@DataType(TypeNames.Person)
+@DataType(
+  value = Person,
+  imported = true
+)
 open class Person(
   val gender: Gender
 )
 
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.Gender
 
-@DataType(TypeNames.Gender)
+@DataType(
+  value = Gender,
+  imported = true
+)
 enum class Gender {
   MALE,
 
   FEMALE
 }
+
+package taxi.generated
 
 import kotlin.String
 
@@ -227,8 +271,12 @@ enum BankDirection inherits Direction
       val output = compileAndGenerate(taxi).trimNewLines()
       val expected = """
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.Direction
 
-@DataType(TypeNames.Direction)
+@DataType(
+  value = Direction,
+  imported = true
+)
 enum class Direction {
   Buy,
 
@@ -236,9 +284,15 @@ enum class Direction {
 }
 
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.BankDirection
 
-@DataType(TypeNames.BankDirection)
+@DataType(
+  value = BankDirection,
+  imported = true
+)
 typealias BankDirection = Direction
+
+package taxi.generated
 
 import kotlin.String
 
@@ -260,22 +314,35 @@ object TypeNames {
          type alias GivenName as FirstName
       """.trimIndent()
       val output = compileAndGenerate(taxi).trimNewLines()
-      val expected = """
-import kotlin.String
+      val expected = """import kotlin.String
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.Name
 
-@DataType(TypeNames.Name)
+@DataType(
+  value = Name,
+  imported = true
+)
 typealias Name = String
 
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.FirstName
 
-@DataType(TypeNames.FirstName)
+@DataType(
+  value = FirstName,
+  imported = true
+)
 typealias FirstName = Name
 
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.GivenName
 
-@DataType(TypeNames.GivenName)
+@DataType(
+  value = GivenName,
+  imported = true
+)
 typealias GivenName = FirstName
+
+package taxi.generated
 
 import kotlin.String
 
@@ -285,8 +352,7 @@ object TypeNames {
   const val FirstName: String = "FirstName"
 
   const val GivenName: String = "GivenName"
-}
-      """.trimIndent().trimNewLines()
+}""".trimIndent().trimNewLines()
 
       output.should.equal(expected)
    }
@@ -299,9 +365,15 @@ object TypeNames {
       val output = compileAndGenerate(taxi).trimNewLines()
       val expected = """
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.Person
 
-@DataType(TypeNames.Person)
+@DataType(
+  value = Person,
+  imported = true
+)
 interface Person
+
+package taxi.generated
 
 import kotlin.String
 
@@ -325,13 +397,21 @@ type Money inherits Instrument {
       val output = compileAndGenerate(taxi).trimNewLines()
       val expected = """
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.Instrument
 
-@DataType(TypeNames.Instrument)
+@DataType(
+  value = Instrument,
+  imported = true
+)
 interface Instrument
 
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.Money
 
-@DataType(TypeNames.Money)
+@DataType(
+  value = Money,
+  imported = true
+)
 open class Money(
   val currency: CurrencySymbol,
   val amount: MoneyAmount
@@ -339,15 +419,25 @@ open class Money(
 
 import kotlin.String
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.CurrencySymbol
 
-@DataType(TypeNames.CurrencySymbol)
+@DataType(
+  value = CurrencySymbol,
+  imported = true
+)
 typealias CurrencySymbol = String
 
 import java.math.BigDecimal
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.MoneyAmount
 
-@DataType(TypeNames.MoneyAmount)
+@DataType(
+  value = MoneyAmount,
+  imported = true
+)
 typealias MoneyAmount = BigDecimal
+
+package taxi.generated
 
 import kotlin.String
 
@@ -375,16 +465,24 @@ object TypeNames {
       val output = compileAndGenerate(taxi).trimNewLines()
       val expected = """
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.Money
 
-@DataType(TypeNames.Money)
+@DataType(
+  value = Money,
+  imported = true
+)
 open class Money(
   val currency: CurrencySymbol,
   val amount: MoneyAmount
 )
 
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.Notional
 
-@DataType(TypeNames.Notional)
+@DataType(
+  value = Notional,
+  imported = true
+)
 open class Notional(
   currency: CurrencySymbol,
   amount: MoneyAmount
@@ -392,15 +490,25 @@ open class Notional(
 
 import kotlin.String
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.CurrencySymbol
 
-@DataType(TypeNames.CurrencySymbol)
+@DataType(
+  value = CurrencySymbol,
+  imported = true
+)
 typealias CurrencySymbol = String
 
 import java.math.BigDecimal
 import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.MoneyAmount
 
-@DataType(TypeNames.MoneyAmount)
+@DataType(
+  value = MoneyAmount,
+  imported = true
+)
 typealias MoneyAmount = BigDecimal
+
+package taxi.generated
 
 import kotlin.String
 
