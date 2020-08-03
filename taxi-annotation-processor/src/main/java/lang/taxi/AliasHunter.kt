@@ -8,25 +8,25 @@ import kotlin.reflect.jvm.internal.impl.types.AbbreviatedType
 
 object AliasHunter {
 
-    fun findTypeAlias(kotlinType: KProperty<Any?>): KotlinTypeAlias? {
-        val ktype = kotlinType.returnType
-        // Note - we have to access the class this way, as the Impl class is hidden from us
-        return findTypeAlias(ktype)
-    }
+   fun findTypeAlias(kotlinType: KProperty<Any?>): KotlinTypeAlias? {
+      val ktype = kotlinType.returnType
+      // Note - we have to access the class this way, as the Impl class is hidden from us
+      return findTypeAlias(ktype)
+   }
 
-    fun findTypeAlias(parameter:KParameter?):KotlinTypeAlias? {
-        return findTypeAlias(parameter?.type)
-    }
+   fun findTypeAlias(parameter: KParameter?): KotlinTypeAlias? {
+      return findTypeAlias(parameter?.type)
+   }
 
-    fun findTypeAlias(ktype: KType?): KotlinTypeAlias? {
-        if (ktype == null) return null
-        val kTypeClass = ktype::class.java
-        val ktypeTypeField = kTypeClass.getDeclaredField("type")
-        ktypeTypeField.isAccessible = true
-        val abbreviatedType = ktypeTypeField.get(ktype) as? AbbreviatedType
-        val abbreviatedTypeName = abbreviatedType?.abbreviation?.toString()
-        return if (abbreviatedTypeName != null) TypeAliasRegistry.getAlias(abbreviatedTypeName) else null
-    }
+   fun findTypeAlias(ktype: KType?): KotlinTypeAlias? {
+      if (ktype == null) return null
+      val kTypeClass = ktype::class.java
+      val ktypeTypeField = kTypeClass.getDeclaredField("type")
+      ktypeTypeField.isAccessible = true
+      val abbreviatedType = ktypeTypeField.get(ktype) as? AbbreviatedType
+      val abbreviatedTypeName = abbreviatedType?.abbreviation?.toString()
+      return if (abbreviatedTypeName != null) TypeAliasRegistry.getAlias(abbreviatedTypeName) else null
+   }
 
 
 }

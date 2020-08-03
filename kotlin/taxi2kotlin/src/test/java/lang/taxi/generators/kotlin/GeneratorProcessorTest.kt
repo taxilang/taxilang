@@ -23,16 +23,21 @@ type Person {
         """.trimIndent()
 
         val output = compileAndGenerate(taxi).trimNewLines()
-        val expected = """
-import kotlin.Int
+        val expected = """import kotlin.Int
 import lang.taxi.annotations.DataType
 import lang.taxi.generators.kotlin.Marker
+import taxi.generated.TypeNames.Person
 
-@DataType(TypeNames.Person)
+@DataType(
+  value = Person,
+  imported = true
+)
 open class Person(
   @Marker
   val id: Int
 )
+
+package taxi.generated
 
 import kotlin.String
 
@@ -53,16 +58,21 @@ type Person {
         """.trimIndent()
 
         val output = compileAndGenerate(taxi).trimNewLines()
-        val expected = """
-import kotlin.Int
+        val expected = """import kotlin.Int
 import lang.taxi.annotations.DataType
 import lang.taxi.generators.kotlin.Marker
+import taxi.generated.TypeNames.Person
 
-@DataType(TypeNames.Person)
+@DataType(
+  value = Person,
+  imported = true
+)
 @Marker
 open class Person(
   val id: Int
 )
+
+package taxi.generated
 
 import kotlin.String
 

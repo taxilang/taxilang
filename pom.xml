@@ -5,7 +5,7 @@
    <groupId>lang.taxi</groupId>
    <artifactId>parent</artifactId>
    <packaging>pom</packaging>
-   <version>0.6.5</version>
+   <version>0.6.6</version>
    <description>taxi is a language for defining API contracts. A Dsl that sits atop RAML for resource definition. Taxi
       (short for Taxonomy)
    </description>
@@ -38,6 +38,7 @@
       <module>core-types</module>
       <module>package-importer</module>
       <module>package-repository-api</module>
+      <module>sample-compiled-taxonomy</module>
    </modules>
 
    <properties>

@@ -53,6 +53,7 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
       val elementType = TypeNames.typeFromElement(element)
 
       val declaresTypeAlias = declaresTypeAlias(element)
+
       if (isTaxiPrimitiveWithoutAnnotation(element) && !declaresTypeAlias) {
          if (containingMember == null) return PrimitiveTypes.getTaxiPrimitive(elementType.typeName)
          if (isTaxiPrimitiveWithoutAnnotation(containingMember)) {
@@ -63,7 +64,12 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
       }
 
       if (declaresTypeAlias) {
+
          val typeAliasName = getDeclaredTypeAliasName(element, defaultNamespace)!!
+         if (declaredAsImport(element)) {
+            return getOrCreateImport(typeAliasName, existingTypes)
+         }
+
 
          // Don't examine the return type for collections, as the type we care about is lost in generics - just create the type alias
          if (element.isCollection()) {
@@ -116,6 +122,28 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
       }
 
       return mapNewObjectType(element, defaultNamespace, existingTypes)
+   }
+
+   private fun getOrCreateImport(typeAliasName: String, existingTypes: MutableSet<Type>): Type {
+
+      val existingType = existingTypes.findByName(typeAliasName)
+      return if (existingType != null) {
+         existingType
+      } else {
+         val importedType = UnresolvedImportedType(typeAliasName)
+         existingTypes.add(importedType)
+         importedType
+      }
+   }
+
+   private fun declaredAsImport(element: AnnotatedElement): Boolean {
+      val typeAlias = kotlinTypeAlias(element)
+      if (typeAlias != null) {
+         val annotation = typeAlias.getAnnotation("lang.taxi.annotations.DataType") ?: return false
+         return annotation.arg("imported") as Boolean? ?: false
+      }
+      val dataType = element.getAnnotation(DataType::class.java) ?: return false
+      return dataType.imported
    }
 
    private fun mapEnumType(element: AnnotatedElement, defaultNamespace: String): EnumType {
@@ -401,9 +429,9 @@ fun KotlinTypeAlias.deriveNamespace(): String {
    // In future, we should collapse the two functions, but right now, that's not happening
    val dataType = this.getAnnotation(DataType::class.qualifiedName!!)
    val namespaceAnnotation = this.getAnnotation(lang.taxi.annotations.Namespace::class.qualifiedName!!)
-   val dataTypeValue = dataType?.arg("value")
+   val dataTypeValue = dataType?.arg("value") as String?
    return when {
-      namespaceAnnotation != null -> namespaceAnnotation.arg("value")!!
+      namespaceAnnotation != null -> namespaceAnnotation.arg("value")!! as String
       dataTypeValue != null && Namespaces.hasNamespace(dataTypeValue) -> Namespaces.pluckNamespace(dataTypeValue)!!
       else -> this.packageName
    }

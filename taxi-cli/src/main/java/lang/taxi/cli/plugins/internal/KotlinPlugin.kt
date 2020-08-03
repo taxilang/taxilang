@@ -36,11 +36,16 @@ class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGener
       this.config = config
    }
 
-   val generator: KotlinGenerator = KotlinGenerator()
 
    override fun generate(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiEnvironment): List<WritableSource> {
       val outputPathRoot = if (config.maven == null) Paths.get(config.outputPath) else environment.outputPath.resolve("src/main/java")
+      val defaultPackageName =
+         config.generatedTypeNamesPackageName ?:
+         environment.project.identifier.name.organisation
+         .replace("/",".")
+         .replace("@","")
 
+      val generator: KotlinGenerator = KotlinGenerator(typeNamesTopLevelPackageName = defaultPackageName)
       val sources = generator.generate(taxi, processors, environment)
          .map { RelativeWriteableSource(outputPathRoot, it) }
 
@@ -133,7 +138,9 @@ data class KotlinPluginConfig(
    val jvmTarget: String = "1.8",
    val maven: MavenGeneratorPluginConfig?,
    val guavaVersion: String = "28.2-jre",
-   val taxiVersion: String? = null
+   val taxiVersion: String? = null,
+   // Will default to the organisation name from the project if not defined
+   val generatedTypeNamesPackageName: String? = null
 )
 
 data class RelativeWriteableSource(val relativePath: Path, val source: WritableSource) : WritableSource by source {

@@ -14,7 +14,9 @@ class TypeNamesAsConstantsGeneratorTest {
       generator.asConstant(QualifiedName.from("com.foo.Baz"))
       generator.asConstant(QualifiedName.from("io.foo.Baz"))
 
-      val expected = """import kotlin.String
+      val expected = """package taxi.generated
+
+import kotlin.String
 
 object TypeNames {
   object com {

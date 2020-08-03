@@ -138,7 +138,8 @@ data class EnumType(override val qualifiedName: String,
 
    fun ofValue(value: Any?)  = this.values.firstOrNull { it.value == value} ?: error("Enum ${this.qualifiedName} does not contain a member with a value of $value")
    fun ofName(name: String?)  = this.values.firstOrNull { it.name == name} ?: error("Enum ${this.qualifiedName} does not contains a member named $name")
-   fun of(valueOrName: Any?) = this.values.firstOrNull { it.value == valueOrName || it.name == valueOrName } ?: error("Enum ${this.qualifiedName} does not contain either a name nor a value of $valueOrName")
+   fun of(valueOrName: Any?) = this.values.firstOrNull { it.value == valueOrName || it.name == valueOrName } ?:
+      error("Enum ${this.qualifiedName} does not contain either a name nor a value of $valueOrName")
 
    private fun valueExtensions(valueName: String): List<EnumValueExtension> {
       return this.extensions.flatMap { it.values.filter { value -> value.name == valueName } }

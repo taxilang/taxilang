@@ -5,6 +5,7 @@ import lang.taxi.annotations.DataType
 import me.eugeniomarletti.kotlin.metadata.KotlinFileMetadata
 import me.eugeniomarletti.kotlin.metadata.KotlinMetadataUtils
 import me.eugeniomarletti.kotlin.metadata.kotlinMetadata
+import me.eugeniomarletti.kotlin.metadata.shadow.metadata.ProtoBuf
 import me.eugeniomarletti.kotlin.metadata.shadow.serialization.deserialization.getName
 import me.eugeniomarletti.kotlin.processing.KotlinAbstractProcessor
 import java.io.File
@@ -18,13 +19,13 @@ import javax.tools.Diagnostic
 fun String.quoted(): String = "\"$this\""
 data class ParsedAnnotation(
    val name: String,
-   val args: Map<String, String> = emptyMap()
+   val args: Map<String, Any> = emptyMap()
 ) {
    fun annotationArgsJavaSource(packageName: String, simpleName: String): String {
       val argsMapName = this.argsMapName(packageName, simpleName)
       val source = """
-            Map<String,String> $argsMapName = new HashMap<String,String>();
-            ${args.map { (key, value) -> "$argsMapName.put(${key.quoted()} , ${value.quoted()});" }.joinToString("\n")}
+            Map<String,Object> $argsMapName = new HashMap<String,Object>();
+            ${args.map { (key, value) -> "$argsMapName.put(${key.quoted()} , ${if (value is String) value.quoted() else value});" }.joinToString("\n")}
         """.trimIndent()
       return source
    }
@@ -43,7 +44,7 @@ data class ParsedAnnotation(
         """.trimIndent()
    }
 
-   fun arg(name: String): String? = this.args[name]
+   fun arg(name: String): Any? = this.args[name]
 }
 
 data class KotlinTypeAlias(
@@ -83,6 +84,14 @@ data class KotlinTypeAlias(
 class TypeAliasEmitter : KotlinMetadataUtils, KotlinAbstractProcessor() {
    init {
       println("TypeAliaseEmitter initiated")
+   }
+
+   companion object {
+      /**
+       * When the Kotlin compiler is parsing the AST, it represents
+       * booleans as Longs, with 1 for true.
+       */
+      private const val BOOLEAN_TRUE_AS_LONG = 1L
    }
 
    override fun process(annotations: Set<TypeElement>, roundEnvironment: RoundEnvironment): Boolean {
@@ -171,7 +180,11 @@ class TypeAliasEmitter : KotlinMetadataUtils, KotlinAbstractProcessor() {
             val annotationName = nameResolver.getName(annotation.id).asString().replace("/", ".")
             val arguments = annotation.argumentOrBuilderList.map { argument ->
                val argumentName = nameResolver.getString(argument.nameId)
-               val argumentValue = nameResolver.getString(argument.value.stringValue)
+               val argumentValue: Any = when (argument.value.type) {
+                  ProtoBuf.Annotation.Argument.Value.Type.BOOLEAN -> argument.value.intValue == BOOLEAN_TRUE_AS_LONG
+                  else -> nameResolver.getString(argument.value.stringValue)
+               }
+               nameResolver.getString(argument.value.stringValue)
                argumentName to argumentValue
             }.toMap()
             ParsedAnnotation(annotationName, arguments)
