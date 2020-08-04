@@ -159,8 +159,8 @@
                <preReleaseGoals>compile</preReleaseGoals>
                <commitMessages>
                   <releaseStartMessage>Update versions for release @{version}</releaseStartMessage>
-                  <releaseFinishMessage>Update for next development version @{version}</releaseFinishMessage>
-                  <releaseVersionUpdateMessage>Update for next development version @{version}</releaseVersionUpdateMessage>
+                  <releaseFinishMessage>[skip ci] Update for next development version @{version}</releaseFinishMessage>
+                  <releaseVersionUpdateMessage>[skip ci] Update for next development version @{version}</releaseVersionUpdateMessage>
                </commitMessages>
                <!-- Configure branches -->
                <gitFlowConfig>
