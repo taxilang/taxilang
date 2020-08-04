@@ -34,6 +34,8 @@ stages:
 validate:
   image: maven:3.3.9-jdk-8
   stage: build
+  except:
+     - tags
   script:
     - 'mvn $MAVEN_CLI_OPTS install'
   artifacts:
