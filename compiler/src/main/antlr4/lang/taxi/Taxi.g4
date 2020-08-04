@@ -71,15 +71,12 @@ typeMemberDeclaration
      ;
 
 calculatedMemberDeclaration
-   : typeMemberDeclaration  'as' calculationExpression
+   : typeMemberDeclaration  'as' operatorExpression
    ;
 
-calculationExpression
-   : multiplicationExpression
-   ;
 
-multiplicationExpression
-   : '(' typeType '*' typeType ')'
+operatorExpression
+   : '(' typeType arithmaticOperator typeType ')'
    ;
 
 conditionalTypeStructureDeclaration :
@@ -330,6 +327,13 @@ comparisonOperator
    | '>='
    | '<='
    | '<'
+   ;
+
+arithmaticOperator
+   : '+'
+   | '-'
+   | '*'
+   | '/'
    ;
 
 policyDeclaration
