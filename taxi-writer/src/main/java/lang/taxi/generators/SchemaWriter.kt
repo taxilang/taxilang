@@ -10,12 +10,30 @@ import lang.taxi.types.*
 
 open class SchemaWriter {
    private val formatter = SourceFormatter()
-   fun generateSchemas(docs: List<TaxiDocument>): List<String> {
-      return docs.flatMap { generateSchema(it) }
+   enum class ImportLocation {
+      /**
+       * Imports are written at the top of each individual generated taxi string.
+       * As a result, each taxi string is self-describing.
+       * However, these strings cannot be concatenated together into a single
+       * taxi string, as the location of the imports makes them invalid
+       */
+      WriteImportsInline,
+
+      /**
+       * Imports are returned as a seperate taxi string - the first item in the returned list.
+       * As a result, the strings can be concatenated together into a single taxi string
+       * with multiple namespaces.
+       */
+      CollectImports
    }
 
-   private fun generateSchema(doc: TaxiDocument): List<String> {
-      return doc.toNamespacedDocs().mapNotNull { namespacedDoc ->
+   fun generateSchemas(docs: List<TaxiDocument>, importLocation: ImportLocation = ImportLocation.CollectImports): List<String> {
+      return docs.flatMap { generateSchema(it,importLocation) }
+   }
+
+   private fun generateSchema(doc: TaxiDocument, importLocation: ImportLocation): List<String> {
+      data class SourceAndImports(val source:String, val imports:List<String>)
+      val sources = doc.toNamespacedDocs().mapNotNull { namespacedDoc ->
          val (importedTypes, types) = getImportsAndTypes(namespacedDoc)
          if (types.isEmpty() && namespacedDoc.services.isEmpty()) {
             return@mapNotNull null
@@ -26,21 +44,45 @@ open class SchemaWriter {
 
          val requiredImportsInServices = findImportedTypesOnServices(namespacedDoc.services)
          val requiredImports = (importedTypes + requiredImportsInServices).distinct()
-         val imports = requiredImports.joinToString("\n") { "import ${it.qualifiedName}" }.trim()
+         val imports = requiredImports.map { "import ${it.qualifiedName}" }
 
 
          val servicesTaxiString = namespacedDoc.services.joinToString("\n") { generateServiceDeclaration(it, namespacedDoc.namespace) }.trim()
          //return:
-         val rawTaxi = """$imports
-
-namespace ${namespacedDoc.namespace} {
+         val rawTaxi = """namespace ${namespacedDoc.namespace} {
 
 ${typesTaxiString.prependIndent()}
 
 ${servicesTaxiString.prependIndent()}
 }
 """.trim()
-         formatter.format(rawTaxi)
+
+         val taxiWithImports = if (importLocation == ImportLocation.WriteImportsInline) {
+            """${imports.joinToString("\n")}
+               |
+               |$rawTaxi
+            """.trimMargin().trim()
+         } else {
+            rawTaxi
+         }
+         SourceAndImports(formatter.format(taxiWithImports), imports)
+      }
+
+
+      return if (importLocation == ImportLocation.CollectImports) {
+         val importStatements = sources.flatMap { it.imports }
+         // The .joinToString() below generates an emptyString ("") if importStatements is empty,
+         // which results in an empty string being prepended to the output set.
+         // Avoid this by checking if the importStatemnts was empty
+         if (importStatements.isNotEmpty()) {
+            val imports = importStatements.joinToString("\n")
+            listOf(imports) + sources.map { it.source }
+         } else {
+            sources.map { it.source }
+         }
+
+      } else {
+         sources.map { it.source }
       }
    }
 

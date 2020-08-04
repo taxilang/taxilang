@@ -171,19 +171,28 @@ namespace foo {
       TypeAliasRegistry.register(lang.taxi.demo.TypeAliases::class)
       TypeAliasRegistry.register(TypeAliases::class)
 
+      // Note - we're not using compilesSameAs(..) for tests involving imports, as they likely don't compile without the imported definition
       val taxiDef = TaxiGenerator().forClasses(JavaServiceTest::class.java).generateAsStrings()
-      val expected = """import lang.taxi.FirstName
+      // Imports should be collated to the top
+      taxiDef[0].should.equal("import lang.taxi.FirstName")
+      taxiDef[1].removeSpaces().should.equal("""namespace foo {
 
-namespace lang.taxi.generators.java {
+   type Person {
+      name : PersonName
+   }
+
+   type alias PersonName as String
+
+
+}""".removeSpaces())
+      taxiDef[2].removeSpaces().should.equal("""namespace lang.taxi.generators.java {
 
 
 
    service JavaService {
       operation findByEmail(  FirstName ) : foo.Person
    }
-}""".removeSpaces()
-      // Note - we're not using compilesSameAs(..) for tests involving imports, as they likely don't compile without the imported definition
-      taxiDef.should.satisfy { it.any { generated -> generated.removeSpaces() == expected } }
+}""".removeSpaces())
    }
 
    @Test
