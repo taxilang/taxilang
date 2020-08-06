@@ -213,6 +213,47 @@ object TypeNames {
    }
 
    @Test
+   fun nullableTypesAreGeneratedCorrectly() {
+      val taxi = """
+      type MiddleName inherits String
+      type Person {
+         middleName : MiddleName?
+      }
+      """.trimMargin()
+      val output = compileAndGenerate(taxi).trimNewLines()
+      val expected = """import kotlin.String
+import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.MiddleName
+
+@DataType(
+  value = MiddleName,
+  imported = true
+)
+typealias MiddleName = String
+
+import lang.taxi.annotations.DataType
+import taxi.generated.TypeNames.Person
+
+@DataType(
+  value = Person,
+  imported = true
+)
+open class Person(
+  val middleName: MiddleName?
+)
+
+package taxi.generated
+
+import kotlin.String
+
+object TypeNames {
+  const val MiddleName: String = "MiddleName"
+
+  const val Person: String = "Person"
+}"""
+      output.should.equal(expected)
+   }
+   @Test
    fun enumTypes() {
       val taxi = """
 type Person {
