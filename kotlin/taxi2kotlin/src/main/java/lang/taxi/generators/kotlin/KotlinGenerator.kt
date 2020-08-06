@@ -105,7 +105,14 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
                   // to create "val xxxx:Foo", which is BOTH a constructor param
                   // and a property.  We add the constructor param here, and collect
                   // the property for later
-                  val javaType = getJavaType(field.type)
+                  val javaType = getJavaType(field.type).let { typeName ->
+                     if (field.nullable) {
+                        typeName.copy(nullable = true)
+                     } else {
+                        typeName
+                     }
+                  }
+
                   this.addParameter(field.name, javaType)
                   if (type.fields.contains(field)) {
                      properties.add(processorHelper
