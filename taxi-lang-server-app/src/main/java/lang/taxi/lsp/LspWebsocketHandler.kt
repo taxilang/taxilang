@@ -30,9 +30,7 @@ class LspWebsocketHandler() : TextWebSocketHandler() {
         jsonHandler = MessageJsonHandler(supportedMethods)
 
         remoteEndpoint = RemoteEndpoint(MessageConsumer { message ->
-            println("OUT")
             val message = jsonHandler.serialize(message)
-            println(message)
             session?.let { it.sendMessage(TextMessage(message)) }
         }, ServiceEndpoints.toEndpoint(languageServer))
 
@@ -48,8 +46,6 @@ class LspWebsocketHandler() : TextWebSocketHandler() {
     }
 
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
-        println("IN")
-        println(message.payload)
         remoteEndpoint.consume(jsonHandler.parseMessage(message.payload));
     }
 
