@@ -4,14 +4,20 @@ package lang.taxi.types
  * A set of fields with additional conditional mapping logic
  * applied
  */
-data class ConditionalFieldSet(val fields: List<Field>, val condition: FieldSetCondition)
+data class ConditionalFieldSet(val fields: List<Field>, val expression: FieldSetExpression)
 
-interface FieldSetCondition
+interface FieldSetExpression
+
+data class CalculatedFieldSetExpression(
+   val operand1: FieldReferenceSelector,
+   val operand2: FieldReferenceSelector,
+   val operator: FormulaOperator
+) : FieldSetExpression
 
 data class WhenFieldSetCondition(
    val selectorExpression: WhenSelectorExpression,
    val cases: List<WhenCaseBlock>
-) : FieldSetCondition
+) : FieldSetExpression
 
 interface WhenSelectorExpression
 
