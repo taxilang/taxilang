@@ -213,8 +213,8 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    fun contextAt(line: Int, char: Int, sourceName: String = UNKNOWN_SOURCE): ParserRuleContext? {
       val tokenTable = tokens.tokenStore.tokenTable(sourceName)
       val row = tokenTable.row(line) as SortedMap
-      if (row.isEmpty()) {
-         return null
+      if (row.isEmpty() || row[0]!!.isEmpty) {
+            return null
       }
       val tokenStartIndices = row.keys as SortedSet
       val nearestStartIndex = tokenStartIndices.takeWhile { startIndex -> startIndex <= char }.lastOrNull()

@@ -15,16 +15,25 @@ object SourceNames {
          // This isn't a filename or path - it's probably one of the 'unknown path' markers
          return sourceName
       }
-      return tryParseAsUri(sourceName)
+      return tryParseAsInMemory(sourceName)
+         ?: tryParseAsUri(sourceName)
          ?: tryParseAsFile(sourceName)
          ?: tryParseAsPath(sourceName)
          ?: sourceName
    }
 
+   private fun tryParseAsInMemory(sourceName: String): String? {
+      return try {
+         return if(sourceName.startsWith("inmemory:")) sourceName else null
+      } catch(e:Exception) {
+         return null
+      }
+
+   }
+
    private fun tryParseAsFile(sourceName: String): String? {
       return try {
-         val s = File(sourceName).toPath().toAbsolutePath().toUri().toString()
-         s
+         File(sourceName).toPath().toAbsolutePath().toUri().toString()
       } catch(e:Exception) {
          return null
       }
