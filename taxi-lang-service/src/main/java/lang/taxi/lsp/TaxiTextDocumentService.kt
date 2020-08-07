@@ -92,6 +92,13 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     }
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
+        val content = params.textDocument.text
+        val sourceName = params.textDocument.uri
+
+        // This seems to normalize nicely on windows.  Will need to check on ubuntu
+        val sourceNameUri = URI.create(SourceNames.normalize(sourceName))
+        this.sources[sourceNameUri] = content
+        this.charStreams[sourceNameUri] = CharStreams.fromString(content, sourceName)
     }
 
     override fun didSave(params: DidSaveTextDocumentParams) {

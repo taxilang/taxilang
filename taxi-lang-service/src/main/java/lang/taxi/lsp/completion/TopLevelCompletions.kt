@@ -58,14 +58,11 @@ object TopLevelCompletions {
         """.trimMargin()
         kind = CompletionItemKind.Enum
         insertTextFormat = InsertTextFormat.Snippet
-        documentation = Either.forRight(markdown("""Defines a type alias.
-            |
-            |Use type aliases where two types are semantically the same, and 
-            |can be used interchangeably.
+        documentation = Either.forRight(markdown("""Defines a service.
+            TODO
         """.trimMargin()))
-        label = "type alias"
+        label = "service"
     }
-
 
     val topLevelCompletionItems: List<CompletionItem> = listOf(
             type, enum, typeAlias, service
