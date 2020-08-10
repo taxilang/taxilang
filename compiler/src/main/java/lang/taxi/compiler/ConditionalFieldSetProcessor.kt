@@ -6,22 +6,47 @@ import arrow.core.getOrHandle
 import arrow.core.right
 import lang.taxi.*
 import lang.taxi.types.*
+import org.antlr.v4.runtime.RuleContext
 
 class ConditionalFieldSetProcessor internal constructor(private val compiler: TokenProcessor) {
    fun compileConditionalFieldStructure(fieldBlock: TaxiParser.ConditionalTypeStructureDeclarationContext, namespace: Namespace): Either<CompilationError, ConditionalFieldSet> {
       return compileCondition(fieldBlock.conditionalTypeConditionDeclaration(), namespace).map { condition ->
          val fields = fieldBlock.typeMemberDeclaration().mapNotNull { fieldDeclaration ->
-            compiler.compiledField(fieldDeclaration, namespace)?.copy(readCondition = condition)
+            compiler.compiledField(fieldDeclaration, namespace)?.copy(readExpression = condition)
          }
 
          ConditionalFieldSet(fields, condition)
       }
    }
 
-   fun compileCondition(conditionDeclaration: TaxiParser.ConditionalTypeConditionDeclarationContext, namespace: Namespace): Either<CompilationError, FieldSetCondition> {
+   fun compileCondition(conditionDeclaration: TaxiParser.ConditionalTypeConditionDeclarationContext, namespace: Namespace): Either<CompilationError, FieldSetExpression> {
       return when {
          conditionDeclaration.conditionalTypeWhenDeclaration() != null -> compileWhenCondition(conditionDeclaration.conditionalTypeWhenDeclaration(), namespace)
+         conditionDeclaration.fieldExpression() != null -> compileFieldExpression(conditionDeclaration.fieldExpression(), namespace)
          else -> error("Unhandled condition type")
+      }
+   }
+
+   private fun compileFieldExpression(fieldExpression: TaxiParser.FieldExpressionContext, namespace: Namespace): Either<CompilationError, FieldSetExpression> {
+      val operand1 = fieldExpression.propertyToParameterConstraintLhs(0).qualifiedName().text
+      val operand2 = fieldExpression.propertyToParameterConstraintLhs(1).qualifiedName().text
+      val operand1FieldReferenceSelector =  FieldReferenceSelector(operand1)
+      val operand2FieldReferenceSelector = FieldReferenceSelector(operand2)
+      val operator = FormulaOperator.forSymbol(fieldExpression.arithmaticOperator().text)
+      val typeDeclarationContext = getTypeDeclarationContext(fieldExpression)
+              ?: return Either.left(CompilationError(fieldExpression.start, "Cannot resolve enclosing type for ${fieldExpression.text}"))
+      val operandNameTypeMap = typeDeclarationContext.typeBody().typeMemberDeclaration().map { it.fieldDeclaration().Identifier().text to it.fieldDeclaration().typeType()}.toMap()
+      operandNameTypeMap[operand1] ?: return Either.left(CompilationError(fieldExpression.start, "Cannot find attribute of $operand1"))
+      operandNameTypeMap[operand2] ?: return Either.left(CompilationError(fieldExpression.start, "Cannot find attribute of $operand2"))
+
+      return CalculatedFieldSetExpression(operand1FieldReferenceSelector, operand2FieldReferenceSelector, operator).right()
+   }
+
+   private fun getTypeDeclarationContext(parserRuleContext: RuleContext?): TaxiParser.TypeDeclarationContext? {
+      return when {
+         parserRuleContext is TaxiParser.TypeDeclarationContext -> parserRuleContext
+         parserRuleContext?.parent != null -> getTypeDeclarationContext(parserRuleContext.parent)
+         else -> null
       }
    }
 

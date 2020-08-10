@@ -79,13 +79,17 @@ operatorExpression
    : '(' typeType arithmaticOperator typeType ')'
    ;
 
+fieldExpression
+   : '(' propertyToParameterConstraintLhs arithmaticOperator propertyToParameterConstraintLhs ')'
+   ;
+
 conditionalTypeStructureDeclaration :
    '(' typeMemberDeclaration* ')' 'by' conditionalTypeConditionDeclaration
    ;
 
 conditionalTypeConditionDeclaration:
-// other types of condition declarations can go here.
-   conditionalTypeWhenDeclaration;
+   (fieldExpression |
+   conditionalTypeWhenDeclaration);
 
 conditionalTypeWhenDeclaration:
    'when' '(' conditionalTypeWhenSelector ')' '{'

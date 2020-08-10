@@ -4,7 +4,6 @@ import arrow.core.Either
 import lang.taxi.Equality
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
-import java.lang.IllegalArgumentException
 import kotlin.reflect.KProperty1
 
 data class FieldExtension(
@@ -247,7 +246,7 @@ data class Field(
    // TODO : Can we fold readCondition into accessor?
    // exploring with ConditionalAccessor
    val accessor: Accessor? = null,
-   val readCondition: FieldSetCondition? = null,
+   val readExpression: FieldSetExpression? = null,
    override val typeDoc: String? = null,
    val defaultValue: Any? = null,
    val formula: Formula? = null
@@ -282,6 +281,8 @@ data class ColumnAccessor(val index: Any) : ExpressionAccessor {
 // This is for scenarios where a scalar field has been assigned a when block.
 // Ideally, we'd use the same approach for both destructured when blocks (ie., when blocks that
 // assign multiple fields), and scalar when blocks (a when block that assigns a single field).
-data class ConditionalAccessor(val condition: FieldSetCondition) : Accessor
+data class ConditionalAccessor(val expression: FieldSetExpression) : Accessor
 
 data class DestructuredAccessor(val fields: Map<String, Accessor>) : Accessor
+
+data class CalculatedFieldAccessor(val foo: String): Accessor
