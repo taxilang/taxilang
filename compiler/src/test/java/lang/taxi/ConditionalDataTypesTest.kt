@@ -41,7 +41,7 @@ type TradeRecord {
       val doc = Compiler(src).compile()
       val type = doc.type("TradeRecord") as ObjectType
 
-      val dealtAmountCondition = type.field("dealtAmount").readCondition!!
+      val dealtAmountCondition = type.field("dealtAmount").readExpression!!
       require(dealtAmountCondition is WhenFieldSetCondition)
       val selector = dealtAmountCondition.selectorExpression as AccessorExpressionSelector
       val accessor = selector.accessor as XpathAccessor
@@ -146,7 +146,7 @@ type TradeRecord {
       order.fields.should.have.size(2)
       val clientDirection = order.field("clientDirection")
       val accessor = clientDirection.accessor as ConditionalAccessor
-      val condition = accessor.condition as WhenFieldSetCondition
+      val condition = accessor.expression as WhenFieldSetCondition
       condition.cases.should.have.size(2)
       // Buy -> Sell
       (condition.cases[0].matchExpression as LiteralCaseMatchExpression).value.should.equal("Buy")
@@ -181,7 +181,7 @@ type TradeRecord {
       order.fields.should.have.size(2)
       val payReceive = order.field("payReceive")
       val accessor = payReceive.accessor as ConditionalAccessor
-      val condition = accessor.condition as WhenFieldSetCondition
+      val condition = accessor.expression as WhenFieldSetCondition
       condition.cases.should.have.size(3)
       // Buy -> Sell
       (condition.cases[0].matchExpression as LiteralCaseMatchExpression).value.should.equal("Buy")

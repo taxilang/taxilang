@@ -1,6 +1,8 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.types.CalculatedFieldSetExpression
+import lang.taxi.types.ConditionalAccessor
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.QualifiedName
 import org.spekframework.spek2.Spek
@@ -173,6 +175,45 @@ model Person {
                   }
                """.trimIndent()
                Compiler(src).compile().model("Trade")
+            }
+         }
+
+         it("should allow formulas on fields") {
+            val src = """
+               type FirstName inherits String
+               type LastName inherits String
+               type FullName inherits String
+
+               model Person {
+                  firstName: FirstName
+                  lastName: LastName
+                  fullName : FullName by (this.firstName + this.lastName)
+               }
+
+            """.trimIndent()
+            val transaction = Compiler(src).compile().model("Person")
+            val accessor = transaction.field("fullName").accessor as ConditionalAccessor
+            val calculatedFieldSetExpression = accessor.expression as CalculatedFieldSetExpression
+            calculatedFieldSetExpression.operator.should.equal(FormulaOperator.Add)
+            calculatedFieldSetExpression.operand1.fieldName.should.equal("firstName")
+            calculatedFieldSetExpression.operand2.fieldName.should.equal("lastName")
+         }
+
+         it("compilation should fail for invalid formulas") {
+            assertFailsWith(CompilationException::class) {
+               val src = """
+               type FirstName inherits String
+               type LastName inherits String
+               type FullName inherits String
+
+               model Person {
+                  firstName: FirstName
+                  lastName: LastName
+                  fullName : FullName by (this.firstName + this.invalidField)
+               }
+
+            """.trimIndent()
+               val transaction = Compiler(src).compile().model("Person")
             }
          }
       }
