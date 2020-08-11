@@ -1,3 +1,9 @@
+## [1.1.3](https://gitlab.com/taxi-lang/language-server/compare/v1.1.10...v1.1.11) (2020-08-11)
+
+### Features
+
+* **Calculated Fields** improved support for calculated fields - For a given type definition, a field can be defined in terms of other two fields through application of arithmetic expressions.
+
 ## [1.1.3](https://gitlab.com/taxi-lang/language-server/compare/v1.1.2...v1.1.3) (2020-04-30)
 
 
