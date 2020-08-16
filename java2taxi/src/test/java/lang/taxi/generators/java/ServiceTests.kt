@@ -175,7 +175,7 @@ namespace foo {
       val taxiDef = TaxiGenerator().forClasses(JavaServiceTest::class.java).generateAsStrings()
       // Imports should be collated to the top
       taxiDef[0].should.equal("import lang.taxi.FirstName")
-      taxiDef[1].removeSpaces().should.equal("""namespace foo {
+      taxiDef[1].trimNewLines().should.equal("""namespace foo {
 
    type Person {
       name : PersonName
@@ -184,15 +184,15 @@ namespace foo {
    type alias PersonName as String
 
 
-}""".removeSpaces())
-      taxiDef[2].removeSpaces().should.equal("""namespace lang.taxi.generators.java {
+}""".trimNewLines())
+      taxiDef[2].trimNewLines().should.equal("""namespace lang.taxi.generators.java {
 
 
 
    service JavaService {
       operation findByEmail(  FirstName ) : foo.Person
    }
-}""".removeSpaces())
+}""".trimNewLines())
    }
 
    @Test
@@ -248,3 +248,11 @@ namespace taxi.example {
 
 @DataType("taxi.PersonList")
 typealias PersonList = List<ServiceTests.Person>
+
+fun String.trimNewLines(): String {
+   return this
+      .lines()
+      .map { it.trim() }
+      .filter { it.isNotEmpty() }
+      .joinToString("")
+}
