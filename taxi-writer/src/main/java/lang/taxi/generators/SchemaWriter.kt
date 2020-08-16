@@ -10,6 +10,7 @@ import lang.taxi.types.*
 
 open class SchemaWriter {
    private val formatter = SourceFormatter()
+
    enum class ImportLocation {
       /**
        * Imports are written at the top of each individual generated taxi string.
@@ -28,11 +29,12 @@ open class SchemaWriter {
    }
 
    fun generateSchemas(docs: List<TaxiDocument>, importLocation: ImportLocation = ImportLocation.CollectImports): List<String> {
-      return docs.flatMap { generateSchema(it,importLocation) }
+      return docs.flatMap { generateSchema(it, importLocation) }
    }
 
    private fun generateSchema(doc: TaxiDocument, importLocation: ImportLocation): List<String> {
-      data class SourceAndImports(val source:String, val imports:List<String>)
+      data class SourceAndImports(val source: String, val imports: List<String>)
+
       val sources = doc.toNamespacedDocs().mapNotNull { namespacedDoc ->
          val (importedTypes, types) = getImportsAndTypes(namespacedDoc)
          if (types.isEmpty() && namespacedDoc.services.isEmpty()) {
@@ -222,7 +224,8 @@ $fieldDelcarations
 
       val constraints = constraintString(field.constraints)
 
-      return "${field.name.reservedWordEscaped()} : $fieldTypeString $constraints".trim()
+      val annotations = generateAnnotations(field)
+      return "$annotations ${field.name.reservedWordEscaped()} : $fieldTypeString $constraints".trim()
    }
 
    private fun typeAsTaxi(type: Type, currentNamespace: String): String {
