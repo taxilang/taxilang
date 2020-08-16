@@ -51,13 +51,20 @@ open class SchemaWriter {
 
          val servicesTaxiString = namespacedDoc.services.joinToString("\n") { generateServiceDeclaration(it, namespacedDoc.namespace) }.trim()
          //return:
-         val rawTaxi = """namespace ${namespacedDoc.namespace} {
+         // Wrap in namespace declaration, if it exists
+         val rawTaxi = """${typesTaxiString.prependIndent()}
 
-${typesTaxiString.prependIndent()}
-
-${servicesTaxiString.prependIndent()}
+${servicesTaxiString.prependIndent()}"""
+            .let { taxiBlock ->
+               if (namespacedDoc.namespace.isNotEmpty()) {
+                  """namespace ${namespacedDoc.namespace} {
+$taxiBlock
 }
 """.trim()
+               } else {
+                  taxiBlock
+               }
+            }
 
          val taxiWithImports = if (importLocation == ImportLocation.WriteImportsInline) {
             """${imports.joinToString("\n")}
