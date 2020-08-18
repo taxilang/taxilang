@@ -16,6 +16,7 @@ import org.eclipse.lsp4j.services.LanguageClientAware
 import org.eclipse.lsp4j.services.TextDocumentService
 import java.io.File
 import java.net.URI
+import java.nio.file.Files
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 
@@ -38,7 +39,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     private val charStreams: MutableMap<URI, CharStream> = mutableMapOf()
     private lateinit var initializeParams: InitializeParams
     private val lastSuccessfulCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
-    private val lastCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
+    val lastCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
     private val tokenCache: CompilerTokenCache = CompilerTokenCache()
 
     // TODO : We can probably use the unparsedTypes from the tokens for this, rather than the
@@ -204,10 +205,9 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
 
         val initSources = File(URI.create(params.rootUri))
                 .walk()
-                .filter { it.extension == "taxi" }
+                .filter { it.extension == "taxi" && !it.isDirectory}
                 .map {
                     val source = it.readText()
-
                     it.toURI() to (source to CharStreams.fromString(source, it.toPath().toString()))
                 }
                 .toMap()
