@@ -118,6 +118,9 @@ data class ObjectType(
    override val formattedInstanceOfType: Type?
       get() = this.definition?.formattedInstanceOfType
 
+   val calculatedInstanceOfType: Type?
+      get() = this.definition?.calculatedInstanceOfType
+
    override val referencedTypes: List<Type>
       get() {
          val fieldTypes = this.allFields.map { it.type }
@@ -270,18 +273,33 @@ interface ExpressionAccessor : Accessor {
    val expression: String
 }
 
-data class XpathAccessor(override val expression: String) : ExpressionAccessor
-data class JsonPathAccessor(override val expression: String) : ExpressionAccessor
+data class XpathAccessor(override val expression: String) : ExpressionAccessor, TaxiStatementGenerator {
+   override fun asTaxi(): String = """by xpath("$expression")"""
+}
+data class JsonPathAccessor(override val expression: String) : ExpressionAccessor, TaxiStatementGenerator {
+   override fun asTaxi(): String = """by jsonPath("$expression")"""
+}
 
 // TODO : This is duplicating concepts in ColumnMapping, one should die.
-data class ColumnAccessor(val index: Any) : ExpressionAccessor {
+data class ColumnAccessor(val index: Any) : ExpressionAccessor, TaxiStatementGenerator {
    override val expression: String = index.toString()
+   override fun asTaxi(): String {
+      val columnExpression = when(index) {
+         is String -> index.quoted()
+         else -> index.toString()
+      }
+      return """by column("$columnExpression")"""
+   }
 }
 
 // This is for scenarios where a scalar field has been assigned a when block.
 // Ideally, we'd use the same approach for both destructured when blocks (ie., when blocks that
 // assign multiple fields), and scalar when blocks (a when block that assigns a single field).
-data class ConditionalAccessor(val expression: FieldSetExpression) : Accessor
+data class ConditionalAccessor(val expression: FieldSetExpression) : Accessor, TaxiStatementGenerator {
+   override fun asTaxi(): String {
+      return "by ( ${expression.asTaxi() } )"
+   }
+}
 
 data class DestructuredAccessor(val fields: Map<String, Accessor>) : Accessor
 

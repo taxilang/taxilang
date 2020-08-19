@@ -41,7 +41,12 @@ open class SchemaWriter {
             return@mapNotNull null
          }
 
-         val typeDeclarations = types.map { generateTypeDeclaration(it, namespacedDoc.namespace) }
+         val typeDeclarations = types
+            // Exclude formatted types -- these are declared inline at the field reference
+            .filterNot { it is ObjectType && it.formattedInstanceOfType != null }
+            // Exclude calculated types - these are declared inline at the field reference
+            .filterNot { it is ObjectType && it.calculatedInstanceOfType != null }
+            .map { generateTypeDeclaration(it, namespacedDoc.namespace) }
          val typesTaxiString = typeDeclarations.joinToString("\n\n").trim()
 
          val requiredImportsInServices = findImportedTypesOnServices(namespacedDoc.services)
@@ -208,13 +213,18 @@ $enumValueDeclarations
 
    private fun generateObjectTypeDeclaration(type: ObjectType, currentNamespace: String): String {
 
-      val fieldDelcarations = type.fields.map { generateFieldDeclaration(it, currentNamespace) }.joinToString("\n").prependIndent()
-      val modifiers = type.modifiers.map { it.token }.joinToString(" ")
+      val body = if (type.fields.isNotEmpty()) {
+         val fieldDelcarations = type.fields.map { generateFieldDeclaration(it, currentNamespace) }.joinToString("\n").prependIndent()
+         """{
+            |$fieldDelcarations
+            |}
+         """.trimMargin()
+      } else ""
+
+      val modifiers = type.modifiers.joinToString(" ") { it.token }
       val inheritanceString = getInheritenceString(type)
 
-      return """$modifiers type ${type.toQualifiedName().typeName.reservedWordEscaped()}$inheritanceString {
-$fieldDelcarations
-}"""
+      return """$modifiers type ${type.toQualifiedName().typeName.reservedWordEscaped()}$inheritanceString $body"""
    }
 
    private fun getInheritenceString(type: ObjectType): String {
@@ -230,14 +240,25 @@ $fieldDelcarations
       val fieldTypeString = typeAsTaxi(fieldType, currentNamespace)
 
       val constraints = constraintString(field.constraints)
-
+      val accessor = field.accessor?.let { accessorAsString(field.accessor!!) } ?: ""
       val annotations = generateAnnotations(field)
-      return "$annotations ${field.name.reservedWordEscaped()} : $fieldTypeString $constraints".trim()
+
+      return "$annotations ${field.name.reservedWordEscaped()} : $fieldTypeString $constraints $accessor".trim()
+   }
+
+   private fun accessorAsString(accessor: Accessor): String {
+      return when (accessor) {
+         is TaxiStatementGenerator -> accessor.asTaxi()
+         else -> "/* accessor of type ${accessor::class.simpleName} does not support taxi generation */"
+      }
    }
 
    private fun typeAsTaxi(type: Type, currentNamespace: String): String {
-      return when (type) {
-         is ArrayType -> typeAsTaxi(type.type, currentNamespace) + "[]"
+      return when {
+         type is ArrayType -> typeAsTaxi(type.type, currentNamespace) + "[]"
+         type is UnresolvedImportedType -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace)
+         type.formattedInstanceOfType != null -> typeAsTaxi(type.formattedInstanceOfType!!, currentNamespace) + """( @format = "${type.format!!}" )"""
+         type is ObjectType && type.calculatedInstanceOfType != null -> typeAsTaxi(type.calculatedInstanceOfType!!, currentNamespace) + " " + type.calculation!!.asTaxi()
          else -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace)
       }
    }

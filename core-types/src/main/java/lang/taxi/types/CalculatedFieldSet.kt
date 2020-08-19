@@ -1,8 +1,12 @@
 package lang.taxi.types
 
-interface Formula {
+interface Formula : TaxiStatementGenerator {
    val operandFields: List<QualifiedName>
    val operator: FormulaOperator
+
+   override fun asTaxi(): String {
+      return "as (${operandFields.joinToString(" ${operator.symbol} ") { it.fullyQualifiedName }} )"
+   }
 }
 
 data class OperatorFormula(
