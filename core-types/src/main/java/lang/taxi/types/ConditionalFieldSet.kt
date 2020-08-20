@@ -111,6 +111,9 @@ class ReferenceCaseMatchExpression(val reference: String) : WhenCaseMatchExpress
    override fun asTaxi(): String = reference // I don't think this is right...
 }
 
+class EnumLiteralCaseMatchExpression(val enumValue: EnumValue) : WhenCaseMatchExpression {
+   override fun asTaxi(): String = enumValue.qualifiedName
+}
 class LiteralCaseMatchExpression(val value: Any) : WhenCaseMatchExpression {
    override fun asTaxi(): String {
       return when (value) {

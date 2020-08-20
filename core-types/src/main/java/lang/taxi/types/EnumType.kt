@@ -19,7 +19,14 @@ object Enums {
 typealias EnumValueQualifiedName = String
 
 data class EnumValueExtension(val name: String, override val annotations: List<Annotation>, val synonyms: List<EnumValueQualifiedName>, override val typeDoc: String? = null, override val compilationUnit: CompilationUnit) : Annotatable, Documented, TypeDefinition
-data class EnumValue(val name: String, val value: Any = name, val qualifiedName: EnumValueQualifiedName, override val annotations: List<Annotation>, val synonyms: List<EnumValueQualifiedName>, override val typeDoc: String? = null) : Annotatable, Documented
+data class EnumValue(val name: String, val value: Any = name, val qualifiedName: EnumValueQualifiedName, override val annotations: List<Annotation>, val synonyms: List<EnumValueQualifiedName>, override val typeDoc: String? = null) : Annotatable, Documented {
+   companion object {
+      fun qualifiedNameFrom(name: String):Pair<QualifiedName,String> {
+         val parts = name.split(".")
+         return QualifiedName.from(parts.dropLast(1).joinToString(".")) to parts.last()
+      }
+   }
+}
 data class EnumDefinition(val values: List<EnumValue>,
                           override val annotations: List<Annotation> = emptyList(),
                           override val compilationUnit: CompilationUnit,

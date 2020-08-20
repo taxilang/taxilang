@@ -1,6 +1,7 @@
 package lang.taxi.compiler
 
 import arrow.core.Either
+import arrow.core.extensions.either.applicativeError.handleError
 import arrow.core.flatMap
 import arrow.core.getOrHandle
 import arrow.core.right
@@ -172,6 +173,24 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
          caseDeclarationMatchExpression.Identifier() != null -> ReferenceCaseMatchExpression(caseDeclarationMatchExpression.Identifier().text)
          caseDeclarationMatchExpression.literal() != null -> LiteralCaseMatchExpression(caseDeclarationMatchExpression.literal().value())
          caseDeclarationMatchExpression.caseElseMatchExpression() != null -> ElseMatchExpression
+         caseDeclarationMatchExpression.enumSynonymSingleDeclaration() != null -> {
+            val enumValueQualifiedName =  caseDeclarationMatchExpression.enumSynonymSingleDeclaration().qualifiedName().Identifier().text()
+            val (enumTypeName, enumValue) = EnumValue.qualifiedNameFrom(enumValueQualifiedName)
+            val enumRef = compiler.typeResolver(caseDeclarationMatchExpression.findNamespace()).resolve(enumTypeName.fullyQualifiedName, caseDeclarationMatchExpression).flatMap { type ->
+               if (type !is EnumType) {
+                  Either.left(CompilationError(caseDeclarationMatchExpression.start, "Type ${type.qualifiedName} is not an enum"))
+               } else {
+                  if (type.has(enumValue)) {
+                     Either.right(type.of(enumValue))
+                  } else {
+                     Either.left(CompilationError(caseDeclarationMatchExpression.start, "'$enumValue' is not defined on enum ${type.qualifiedName}"))
+                  }
+               }
+               // TODO : Fix this to return eithers
+            }.getOrHandle { error -> throw CompilationException(error) }
+            EnumLiteralCaseMatchExpression(enumRef)
+         }
+
          else -> error("Unhandled case match expression")
       }
    }
