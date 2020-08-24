@@ -23,8 +23,22 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
       return when {
          conditionDeclaration.conditionalTypeWhenDeclaration() != null -> compileWhenCondition(conditionDeclaration.conditionalTypeWhenDeclaration(), namespace)
          conditionDeclaration.fieldExpression() != null -> compileFieldExpression(conditionDeclaration.fieldExpression(), namespace)
+         conditionDeclaration.unaryFieldExpression() != null -> compileStringFieldFunctionExpression(conditionDeclaration.unaryFieldExpression(), namespace)
          else -> error("Unhandled condition type")
       }
+   }
+
+   private fun compileStringFieldFunctionExpression(unaryFieldExpressionContext: TaxiParser.UnaryFieldExpressionContext, namespace: Namespace): Either<CompilationError, FieldSetExpression> {
+      val operand = unaryFieldExpressionContext.propertyToParameterConstraintLhs().qualifiedName().text
+      val operandFieldReferenceSelector =  FieldReferenceSelector(operand)
+      val literal = unaryFieldExpressionContext.IntegerLiteral().text
+      val operator = UnaryFormulaOperator.forSymbolOrNull(unaryFieldExpressionContext.UnaryOperator().text)
+         ?: return Either.left(CompilationError(unaryFieldExpressionContext.start, "invalid operator ${unaryFieldExpressionContext.UnaryOperator().text}"))
+      val typeDeclarationContext = getTypeDeclarationContext(unaryFieldExpressionContext)
+         ?: return Either.left(CompilationError(unaryFieldExpressionContext.start, "Cannot resolve enclosing type for ${unaryFieldExpressionContext.text}"))
+      val operandNameTypeMap = typeDeclarationContext.typeBody().typeMemberDeclaration().map { it.fieldDeclaration().Identifier().text to it.fieldDeclaration().typeType()}.toMap()
+      operandNameTypeMap[operand] ?: return Either.left(CompilationError(unaryFieldExpressionContext.start, "Cannot find attribute of $operand"))
+      return UnaryCalculatedFieldSetExpression(operandFieldReferenceSelector, literal, operator).right()
    }
 
    private fun compileFieldExpression(fieldExpression: TaxiParser.FieldExpressionContext, namespace: Namespace): Either<CompilationError, FieldSetExpression> {
@@ -34,7 +48,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
       val operand2FieldReferenceSelector = FieldReferenceSelector(operand2)
       val operator = FormulaOperator.forSymbol(fieldExpression.arithmaticOperator().text)
       val typeDeclarationContext = getTypeDeclarationContext(fieldExpression)
-              ?: return Either.left(CompilationError(fieldExpression.start, "Cannot resolve enclosing type for ${fieldExpression.text}"))
+         ?: return Either.left(CompilationError(fieldExpression.start, "Cannot resolve enclosing type for ${fieldExpression.text}"))
       val operandNameTypeMap = typeDeclarationContext.typeBody().typeMemberDeclaration().map { it.fieldDeclaration().Identifier().text to it.fieldDeclaration().typeType()}.toMap()
       operandNameTypeMap[operand1] ?: return Either.left(CompilationError(fieldExpression.start, "Cannot find attribute of $operand1"))
       operandNameTypeMap[operand2] ?: return Either.left(CompilationError(fieldExpression.start, "Cannot find attribute of $operand2"))

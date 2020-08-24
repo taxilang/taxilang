@@ -5,6 +5,8 @@ import lang.taxi.types.CalculatedFieldSetExpression
 import lang.taxi.types.ConditionalAccessor
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.QualifiedName
+import lang.taxi.types.UnaryCalculatedFieldSetExpression
+import lang.taxi.types.UnaryFormulaOperator
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import kotlin.test.assertFailsWith
@@ -215,6 +217,25 @@ model Person {
             """.trimIndent()
                val transaction = Compiler(src).compile().model("Person")
             }
+         }
+
+         it("should allow unary formulas on fields") {
+            val src = """
+               type FirstName inherits String
+               type FullName inherits String
+
+               model Person {
+                  firstName: FirstName
+                  leftName : FullName by left(this.firstName, 5)
+               }
+
+            """.trimIndent()
+            val transaction = Compiler(src).compile().model("Person")
+            val accessor = transaction.field("leftName").accessor as ConditionalAccessor
+            val unaryCalculatedFieldSetExpression = accessor.expression as UnaryCalculatedFieldSetExpression
+            unaryCalculatedFieldSetExpression.operator.should.equal(UnaryFormulaOperator.Left)
+            unaryCalculatedFieldSetExpression.operand.fieldName.should.equal("firstName")
+            unaryCalculatedFieldSetExpression.literal.should.equal("5")
          }
       }
    }

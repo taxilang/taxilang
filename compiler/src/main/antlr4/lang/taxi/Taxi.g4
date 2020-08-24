@@ -83,12 +83,18 @@ fieldExpression
    : '(' propertyToParameterConstraintLhs arithmaticOperator propertyToParameterConstraintLhs ')'
    ;
 
-conditionalTypeStructureDeclaration :
+unaryFieldExpression
+   : UnaryOperator '(' propertyToParameterConstraintLhs ',' IntegerLiteral ')'
+   ;
+
+conditionalTypeStructureDeclaration
+    :
    '(' typeMemberDeclaration* ')' 'by' conditionalTypeConditionDeclaration
    ;
 
 conditionalTypeConditionDeclaration:
    (fieldExpression |
+    unaryFieldExpression |
    conditionalTypeWhenDeclaration);
 
 conditionalTypeWhenDeclaration:
@@ -338,6 +344,10 @@ arithmaticOperator
    | '-'
    | '*'
    | '/'
+   ;
+
+UnaryOperator
+   : 'left'
    ;
 
 policyDeclaration
