@@ -16,6 +16,16 @@ data class CalculatedFieldSetExpression(
    override fun asTaxi(): String = "${operand1.asTaxi()} ${operator.symbol} ${operand2.asTaxi()}"
 }
 
+data class UnaryCalculatedFieldSetExpression(
+   val operand: FieldReferenceSelector,
+   val literal: Any,
+   val operator: UnaryFormulaOperator
+) : FieldSetExpression {
+   override fun asTaxi(): String {
+     return "${operand.asTaxi()} ${operator.symbol}  $literal"
+   }
+}
+
 data class WhenFieldSetCondition(
    val selectorExpression: WhenSelectorExpression,
    val cases: List<WhenCaseBlock>

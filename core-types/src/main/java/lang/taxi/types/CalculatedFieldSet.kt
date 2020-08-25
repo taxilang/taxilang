@@ -34,3 +34,15 @@ enum class FormulaOperator(val symbol:String) {
    }
 }
 
+enum class UnaryFormulaOperator(val symbol: String) {
+   Left("left");
+   companion object {
+      private val bySymbol = UnaryFormulaOperator.values().associateBy { it.symbol }
+      fun forSymbol(symbol:String):UnaryFormulaOperator {
+         return bySymbol[symbol] ?: error("No operator defined for symbol $symbol")
+      }
+
+      fun forSymbolOrNull(symbol: String) = bySymbol[symbol]
+   }
+}
+
