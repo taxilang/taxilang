@@ -335,92 +335,8 @@
 			]
 		},
 		"enum-declaration": {
-			"name": "meta.enum.declaration.taxi",
-			"begin": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(?:(\\bexport)\\s+)?(?:(\\bdeclare)\\s+)?(?:\\b(const)\\s+)?\\b(enum)\\s+([_$[:alpha:]][_$[:alnum:]]*)",
-			"beginCaptures": {
-				"1": {
-					"name": "keyword.control.export.taxi"
-				},
-				"2": {
-					"name": "storage.modifier.taxi"
-				},
-				"3": {
-					"name": "storage.modifier.taxi"
-				},
-				"4": {
-					"name": "storage.type.enum.taxi"
-				},
-				"5": {
-					"name": "entity.name.type.enum.taxi"
-				}
-			},
-			"end": "(?<=\\})",
-			"patterns": [
-				{
-					"include": "#comment"
-				},
-				{
-					"begin": "\\{",
-					"beginCaptures": {
-						"0": {
-							"name": "punctuation.definition.block.taxi"
-						}
-					},
-					"end": "\\}",
-					"endCaptures": {
-						"0": {
-							"name": "punctuation.definition.block.taxi"
-						}
-					},
-					"patterns": [
-						{
-							"include": "#comment"
-						},
-						{
-							"begin": "([_$[:alpha:]][_$[:alnum:]]*)",
-							"beginCaptures": {
-								"0": {
-									"name": "variable.other.enummember.taxi"
-								}
-							},
-							"end": "(?=,|\\}|$)",
-							"patterns": [
-								{
-									"include": "#comment"
-								},
-								{
-									"include": "#variable-initializer"
-								}
-							]
-						},
-						{
-							"begin": "(?=((\\'([^\\'\\\\]|\\\\.)*\\')|(\\\"([^\\\"\\\\]|\\\\.)*\\\")|(\\`([^\\`\\\\]|\\\\.)*\\`)|(\\[([^\\[\\]]|\\[[^\\[\\]]*\\])+\\])))",
-							"end": "(?=,|\\}|$)",
-							"patterns": [
-								{
-									"include": "#string"
-								},
-								{
-									"include": "#array-literal"
-								},
-								{
-									"include": "#comment"
-								},
-								{
-									"include": "#variable-initializer"
-								}
-							]
-						},
-						{
-							"include": "#punctuation-comma"
-						}
-					]
-				}
-			]
-		},
-		"namespace-declaration": {
 			"name": "meta.namespace.declaration.taxi",
-			"begin": "(?:(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(?:(\\bexport)\\s+)?(?:(\\bdeclare)\\s+)?\\b(namespace|module|type)\\s+(?=[_$[:alpha:]\"'`]))",
+			"begin": "(?:(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(?:(\\bexport)\\s+)?(?:(\\bdeclare)\\s+)?\\b(namespace|module|type|enum)\\s+(?=[_$[:alpha:]\"'`]))",
 			"beginCaptures": {
 				"1": {
 					"name": "keyword.control.export.taxi"
@@ -432,7 +348,41 @@
 					"name": "storage.type.namespace.taxi"
 				}
 			},
-			"end": "(?<=\\})|(?=;|(?:^\\s*(?:declare|enum|export|function|import|interface|let|module|namespace|return|type|var)\\b))",
+			"end": "(?<=\\})|(?=;|(?:^\\s*(?:declare|enum|export|function|import|interface|let|module|namespace|return|type|var|enum)\\b))",
+			"patterns": [
+				{
+					"include": "#comment"
+				},
+				{
+					"include": "#string"
+				},
+				{
+					"name": "entity.name.type.module.taxi",
+					"match": "([_$[:alpha:]][_$[:alnum:]]*)"
+				},
+				{
+					"include": "#punctuation-accessor"
+				},
+				{
+					"include": "#decl-block"
+				}
+			]
+		},
+		"namespace-declaration": {
+			"name": "meta.namespace.declaration.taxi",
+			"begin": "(?:(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(?:(\\bexport)\\s+)?(?:(\\bdeclare)\\s+)?\\b(namespace|module|type|enum)\\s+(?=[_$[:alpha:]\"'`]))",
+			"beginCaptures": {
+				"1": {
+					"name": "keyword.control.export.taxi"
+				},
+				"2": {
+					"name": "storage.modifier.taxi"
+				},
+				"3": {
+					"name": "storage.type.namespace.taxi"
+				}
+			},
+			"end": "(?<=\\})|(?=;|(?:^\\s*(?:declare|enum|export|function|import|interface|let|module|namespace|return|type|var|enum)\\b))",
 			"patterns": [
 				{
 					"include": "#comment"
@@ -670,7 +620,7 @@
 					"name": "storage.type.inherits.taxi"
 				}
 			},
-			"end": "(?<=\\})|(?=;|(?:^\\s*(?:declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation|inherits|policy|against|read|write|case|else)\\b))",
+			"end": "(?<=\\})|(?=;|(?:^\\s*(?:declare|enum|export|function|import|interface|let|module|namespace|return|type|var|service|operation|inherits|policy|against|read|write|case|else|enum)\\b))",
 			"patterns": [
 				{
 					"include": "#comment"
@@ -680,6 +630,10 @@
 				},
 				{
 					"name": "entity.name.type.module.taxi",
+					"match": "([_$[:alpha:]][_$[:alnum:]]*)"
+				},
+				{
+					"name": "entity.name.type.enum.taxi",
 					"match": "([_$[:alpha:]][_$[:alnum:]]*)"
 				},
 				{
