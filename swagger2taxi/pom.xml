@@ -3,7 +3,7 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>lang.taxi</groupId>
-      <version>0.8.6</version>
+      <version>0.8.7-SNAPSHOT</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -20,7 +20,7 @@
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>lang-to-taxi-api</artifactId>
-         <version>0.8.6</version>
+         <version>0.8.7-SNAPSHOT</version>
       </dependency>
       <dependency>
          <groupId>io.swagger</groupId>
@@ -30,37 +30,37 @@
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>test-utils</artifactId>
-         <version>0.8.6</version>
+         <version>0.8.7-SNAPSHOT</version>
          <scope>test</scope>
       </dependency>
 
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>taxi-annotations</artifactId>
-         <version>0.8.6</version>
+         <version>0.8.7-SNAPSHOT</version>
       </dependency>
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>compiler</artifactId>
-         <version>0.8.6</version>
+         <version>0.8.7-SNAPSHOT</version>
       </dependency>
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>taxi-stdlib-annotations</artifactId>
-         <version>0.8.6</version>
+         <version>0.8.7-SNAPSHOT</version>
       </dependency>
 
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>taxi-annotation-processor</artifactId>
-         <version>0.8.6</version>
+         <version>0.8.7-SNAPSHOT</version>
          <!--<scope>test</scope>-->
       </dependency>
 
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>taxi-writer</artifactId>
-         <version>0.8.6</version>
+         <version>0.8.7-SNAPSHOT</version>
       </dependency>
 
    </dependencies>
