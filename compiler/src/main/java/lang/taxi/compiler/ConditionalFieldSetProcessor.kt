@@ -23,12 +23,34 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
       return when {
          conditionDeclaration.conditionalTypeWhenDeclaration() != null -> compileWhenCondition(conditionDeclaration.conditionalTypeWhenDeclaration(), namespace)
          conditionDeclaration.fieldExpression() != null -> compileFieldExpression(conditionDeclaration.fieldExpression(), namespace)
-         conditionDeclaration.unaryFieldExpression() != null -> compileStringFieldFunctionExpression(conditionDeclaration.unaryFieldExpression(), namespace)
+         conditionDeclaration.unaryFieldExpression() != null -> compileUnaryFunctionExpression(conditionDeclaration.unaryFieldExpression(), namespace)
+         conditionDeclaration.ternaryFieldExpression() != null -> compileTerenaryFunctionExpression(conditionDeclaration.ternaryFieldExpression(), namespace)
          else -> error("Unhandled condition type")
       }
    }
 
-   private fun compileStringFieldFunctionExpression(unaryFieldExpressionContext: TaxiParser.UnaryFieldExpressionContext, namespace: Namespace): Either<CompilationError, FieldSetExpression> {
+   private fun compileTerenaryFunctionExpression(ternaryFieldExpression: TaxiParser.TernaryFieldExpressionContext, namespace: Namespace): Either<CompilationError, FieldSetExpression> {
+      val operand1 = ternaryFieldExpression.propertyToParameterConstraintLhs(0).qualifiedName().text
+      val operand2 = ternaryFieldExpression.propertyToParameterConstraintLhs(1).qualifiedName().text
+      val operand3 = ternaryFieldExpression.propertyToParameterConstraintLhs(2).qualifiedName().text
+      val operand1FieldReferenceSelector =  FieldReferenceSelector(operand1)
+      val operand2FieldReferenceSelector = FieldReferenceSelector(operand2)
+      val operand3FieldReferenceSelector = FieldReferenceSelector(operand3)
+      val literal = stringLiteralValue(ternaryFieldExpression.StringLiteral())
+      val operator = TerenaryFormulaOperator.forSymbolOrNull(ternaryFieldExpression.TeranaryOperator().text)
+         ?: return Either.left(CompilationError(ternaryFieldExpression.start, "invalid operator ${ternaryFieldExpression.TeranaryOperator().text}"))
+      val typeDeclarationContext = getTypeDeclarationContext(ternaryFieldExpression)
+         ?: return Either.left(CompilationError(ternaryFieldExpression.start, "Cannot resolve enclosing type for ${ternaryFieldExpression.text}"))
+      val operandNameTypeMap = typeDeclarationContext.typeBody().typeMemberDeclaration().map { it.fieldDeclaration().Identifier().text to it.fieldDeclaration().typeType()}.toMap()
+      operandNameTypeMap[operand1] ?: return Either.left(CompilationError(ternaryFieldExpression.start, "Cannot find attribute of $operand1"))
+      operandNameTypeMap[operand2] ?: return Either.left(CompilationError(ternaryFieldExpression.start, "Cannot find attribute of $operand2"))
+      operandNameTypeMap[operand3] ?: return Either.left(CompilationError(ternaryFieldExpression.start, "Cannot find attribute of $operand3"))
+
+      return TerenaryFieldSetExpression(operand1FieldReferenceSelector, operand2FieldReferenceSelector, operand3FieldReferenceSelector, operator, literal).right()
+   }
+
+
+   private fun compileUnaryFunctionExpression(unaryFieldExpressionContext: TaxiParser.UnaryFieldExpressionContext, namespace: Namespace): Either<CompilationError, FieldSetExpression> {
       val operand = unaryFieldExpressionContext.propertyToParameterConstraintLhs().qualifiedName().text
       val operandFieldReferenceSelector =  FieldReferenceSelector(operand)
       val literal = unaryFieldExpressionContext.IntegerLiteral().text
@@ -38,6 +60,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
          ?: return Either.left(CompilationError(unaryFieldExpressionContext.start, "Cannot resolve enclosing type for ${unaryFieldExpressionContext.text}"))
       val operandNameTypeMap = typeDeclarationContext.typeBody().typeMemberDeclaration().map { it.fieldDeclaration().Identifier().text to it.fieldDeclaration().typeType()}.toMap()
       operandNameTypeMap[operand] ?: return Either.left(CompilationError(unaryFieldExpressionContext.start, "Cannot find attribute of $operand"))
+
       return UnaryCalculatedFieldSetExpression(operandFieldReferenceSelector, literal, operator).right()
    }
 
@@ -172,6 +195,24 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
          caseDeclarationMatchExpression.Identifier() != null -> ReferenceCaseMatchExpression(caseDeclarationMatchExpression.Identifier().text)
          caseDeclarationMatchExpression.literal() != null -> LiteralCaseMatchExpression(caseDeclarationMatchExpression.literal().value())
          caseDeclarationMatchExpression.caseElseMatchExpression() != null -> ElseMatchExpression
+         caseDeclarationMatchExpression.enumSynonymSingleDeclaration() != null -> {
+            val enumValueQualifiedName =  caseDeclarationMatchExpression.enumSynonymSingleDeclaration().qualifiedName().Identifier().text()
+            val (enumTypeName, enumValue) = EnumValue.qualifiedNameFrom(enumValueQualifiedName)
+            val enumRef = compiler.typeResolver(caseDeclarationMatchExpression.findNamespace()).resolve(enumTypeName.fullyQualifiedName, caseDeclarationMatchExpression).flatMap { type ->
+               if (type !is EnumType) {
+                  Either.left(CompilationError(caseDeclarationMatchExpression.start, "Type ${type.qualifiedName} is not an enum"))
+               } else {
+                  if (type.has(enumValue)) {
+                     Either.right(type.of(enumValue))
+                  } else {
+                     Either.left(CompilationError(caseDeclarationMatchExpression.start, "'$enumValue' is not defined on enum ${type.qualifiedName}"))
+                  }
+               }
+               // TODO : Fix this to return eithers
+            }.getOrHandle { error -> throw CompilationException(error) }
+            EnumLiteralCaseMatchExpression(enumRef)
+         }
+
          else -> error("Unhandled case match expression")
       }
    }

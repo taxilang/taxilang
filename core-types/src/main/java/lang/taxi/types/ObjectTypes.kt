@@ -281,14 +281,15 @@ data class JsonPathAccessor(override val expression: String) : ExpressionAccesso
 }
 
 // TODO : This is duplicating concepts in ColumnMapping, one should die.
-data class ColumnAccessor(val index: Any) : ExpressionAccessor, TaxiStatementGenerator {
+data class ColumnAccessor(val index: Any?, val defaultValue: Any?) : ExpressionAccessor, TaxiStatementGenerator {
    override val expression: String = index.toString()
    override fun asTaxi(): String {
-      val columnExpression = when(index) {
-         is String -> index.quoted()
-         else -> index.toString()
+      return when {
+         index is String -> """by column("${index.quoted()}")"""
+         index is Int -> """by column("${index.toString()}")"""
+         defaultValue is String -> """by default("${defaultValue.quoted()}")"""
+         else -> """by default("$defaultValue")"""
       }
-      return """by column("$columnExpression")"""
    }
 }
 
@@ -303,4 +304,18 @@ data class ConditionalAccessor(val expression: FieldSetExpression) : Accessor, T
 
 data class DestructuredAccessor(val fields: Map<String, Accessor>) : Accessor
 
-data class CalculatedFieldAccessor(val foo: String): Accessor
+data class ReadFunctionFieldAccessor(val readFunction: ReadFunction, val arguments: List<ReadFunctionArgument>): Accessor
+
+data class ReadFunctionArgument(val columnAccessor: ColumnAccessor?, val value: Any?)
+
+enum class ReadFunction(val symbol: String){
+   CONCAT("concat");
+   companion object {
+      private val bySymbol = ReadFunction.values().associateBy { it.symbol }
+      fun forSymbol(symbol:String):ReadFunction {
+         return bySymbol[symbol] ?: error("No operator defined for symbol $symbol")
+      }
+
+      fun forSymbolOrNull(symbol: String) = bySymbol[symbol]
+   }
+}
