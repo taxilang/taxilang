@@ -237,17 +237,20 @@ RED
          }
          type alias FirstName as String
          type Age inherits Int
+         type Height inherits Decimal
          type Person {
             name : String
             age: Age
             surname: String
             foo: Foo
+            height: Height
          }
          type extension Person {
             name: FirstName with default 'jimmy'
             surname : FirstName with default 'doe'
             age: Age with default 42
             foo: Foo with default Foo.One
+            height: Height with default 18200000
          }
         """
       val doc = Compiler(source).compile()
@@ -265,6 +268,8 @@ RED
       expect(fooField.type.qualifiedName).to.equal("Foo")
       val expectedEnumValue = (fooField.type as EnumType).values.first { it.qualifiedName == "Foo.One" }
       expect(fooField.defaultValue).to.equal(expectedEnumValue)
+      val heightField = person.field("height")
+      expect(heightField.defaultValue).to.equal(18200000)
    }
 
    @Test(expected = CompilationException::class)

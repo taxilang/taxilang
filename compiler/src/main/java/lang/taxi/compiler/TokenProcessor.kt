@@ -72,6 +72,9 @@ import lang.taxi.types.ObjectTypeExtension
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.QualifiedNameParser
+import lang.taxi.types.ReadFunction
+import lang.taxi.types.ReadFunctionArgument
+import lang.taxi.types.ReadFunctionFieldAccessor
 import lang.taxi.types.Type
 import lang.taxi.types.TypeAlias
 import lang.taxi.types.TypeAliasDefinition
@@ -601,9 +604,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          expression.jsonPathAccessorDeclaration() != null -> JsonPathAccessor(expression.jsonPathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
          expression.xpathAccessorDeclaration() != null -> XpathAccessor(expression.xpathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
          expression.columnDefinition() != null -> {
-            ColumnAccessor(
+            ColumnAccessor(index =
                expression.columnDefinition().columnIndex().StringLiteral()?.text
-                  ?: expression.columnDefinition().columnIndex().IntegerLiteral().text.toInt())
+                  ?: expression.columnDefinition().columnIndex().IntegerLiteral().text.toInt(), defaultValue = null)
          }
          expression.conditionalTypeConditionDeclaration() != null -> {
             val namespace = expression.conditionalTypeConditionDeclaration().findNamespace()
@@ -612,6 +615,26 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                // TODO : Make the current method return Either<>
                .getOrHandle { throw CompilationException(it) }
          }
+         expression.defaultDefinition() != null -> {
+            ColumnAccessor(index = null, defaultValue = expression.defaultDefinition().literal().value())
+         }
+
+         expression.readFunctionDefinition() != null -> {
+            val readFunction = ReadFunction.forSymbolOrNull(expression.readFunctionDefinition().readFunction().text) ?: throw CompilationException(CompilationError(expression.start, "invalid read function", expression.source().normalizedSourceName))
+            val parameters =  expression.readFunctionDefinition().formalParameters().formalParameterList().parameter().map { parameterContext ->
+               when {
+                  parameterContext.StringLiteral() != null -> ReadFunctionArgument(value = stringLiteralValue(parameterContext.StringLiteral()), columnAccessor = null)
+                  parameterContext.columnDefinition() != null -> ReadFunctionArgument(value = null,
+                     columnAccessor = ColumnAccessor(index =
+                     parameterContext.columnDefinition().columnIndex().StringLiteral()?.text
+                        ?: parameterContext.columnDefinition().columnIndex().IntegerLiteral().text.toInt(), defaultValue = null)
+                  )
+                  else -> throw CompilationException(CompilationError(expression.start, "invalid parameter", expression.source().normalizedSourceName))
+               }
+            }
+            ReadFunctionFieldAccessor(readFunction = readFunction, arguments = parameters)
+         }
+
          else -> error("Unhandled type of accessor expression")
       }
    }

@@ -5,6 +5,8 @@ import lang.taxi.types.CalculatedFieldSetExpression
 import lang.taxi.types.ConditionalAccessor
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.QualifiedName
+import lang.taxi.types.TerenaryFieldSetExpression
+import lang.taxi.types.TerenaryFormulaOperator
 import lang.taxi.types.UnaryCalculatedFieldSetExpression
 import lang.taxi.types.UnaryFormulaOperator
 import org.spekframework.spek2.Spek
@@ -236,6 +238,30 @@ model Person {
             unaryCalculatedFieldSetExpression.operator.should.equal(UnaryFormulaOperator.Left)
             unaryCalculatedFieldSetExpression.operand.fieldName.should.equal("firstName")
             unaryCalculatedFieldSetExpression.literal.should.equal("5")
+         }
+
+         it("should allow teranary formulas on fields") {
+            val src = """
+               type TradeId inherits String
+               type OrderId inherits String
+               type MarketId inherits String
+
+               model Record {
+                  tradeId: TradeId
+                  orderId: OrderId
+                  marketId: MarketId
+                  id: String by concat3(this.tradeId, this.orderId, this.marketId, "-")
+               }
+
+            """.trimIndent()
+            val transaction = Compiler(src).compile().model("Record")
+            val accessor = transaction.field("id").accessor as ConditionalAccessor
+            val tereanryCalculatedFieldSetExpression = accessor.expression as TerenaryFieldSetExpression
+            tereanryCalculatedFieldSetExpression.operator.should.equal(TerenaryFormulaOperator.Concat3)
+            tereanryCalculatedFieldSetExpression.operand1.fieldName.should.equal("tradeId")
+            tereanryCalculatedFieldSetExpression.operand2.fieldName.should.equal("orderId")
+            tereanryCalculatedFieldSetExpression.operand3.fieldName.should.equal("marketId")
+            tereanryCalculatedFieldSetExpression.literal.should.equal("-")
          }
       }
    }

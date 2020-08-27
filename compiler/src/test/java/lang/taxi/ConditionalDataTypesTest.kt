@@ -193,4 +193,74 @@ type TradeRecord {
       (condition.cases[2].assignments[0] as InlineAssignmentExpression).assignment.should.be.instanceof(NullAssignment::class.java)
    }
 
+   @Test
+   fun canUseEnumsOnLhsOfWhen() {
+      val src = """
+         enum FixedOrFloatLeg {
+             Fixed,
+             Float
+         }
+         enum Leg1FixedOrFloat inherits FixedOrFloatLeg
+         enum Leg2FixedOrFloat inherits FixedOrFloatLeg
+         type Leg1Index inherits String
+         type Leg2Index inherits String
+
+         type Trade {
+            s0_TypeStr : Leg1FixedOrFloat by jsonPath("/S0_TypeStr")
+            s0_Index : Leg1Index by jsonPath("/S0_Index")
+            s1_Index : Leg2Index by jsonPath("/S1_Index")
+            underlyingIndex : String by when (s0_TypeStr) {
+               FixedOrFloatLeg.Float -> s0_Index
+               else -> s1_Index
+            }
+         }
+      """.trimIndent()
+      val doc = Compiler(src).compile()
+      val accessor = doc.objectType("Trade").field("underlyingIndex").accessor as ConditionalAccessor
+      val fieldSet = accessor.expression as WhenFieldSetCondition
+      val enumExpression = fieldSet.cases[0].matchExpression as EnumLiteralCaseMatchExpression
+      enumExpression.enumValue.qualifiedName.should.equal("FixedOrFloatLeg.Float")
+   }
+
+   @Test
+   fun `using an enum with an invalid value in a when block should error`() {
+      val src = """
+          enum FixedOrFloatLeg {
+             Fixed,
+             Float
+         }
+         type Trade {
+            s0_TypeStr : FixedOrFloatLeg
+            s0_Index : Leg1Index as String
+            s1_Index : Leg2Index as String
+            underlyingIndex : String by when (s0_TypeStr) {
+               FixedOrFloatLeg.Fooball -> s0_Index
+               else -> s1_Index
+            }
+         }
+      """.trimIndent()
+      val errors = Compiler(src).validate()
+      errors.should.satisfy { it.any { error ->
+         error.detailMessage == "'Fooball' is not defined on enum FixedOrFloatLeg"
+      } }
+   }
+
+   @Test
+   fun `using an enum in a when block against a type that isn't defined should error`() {
+      val src = """
+         type Trade {
+            s0_TypeStr : Leg1FixedOrFloat as String
+            s0_Index : Leg1Index as String
+            s1_Index : Leg2Index as String
+            underlyingIndex : String by when (s0_TypeStr) {
+               FixedOrFloatLeg.Float -> s0_Index
+               else -> s1_Index
+            }
+         }
+      """.trimIndent()
+      val errors = Compiler(src).validate()
+      errors.should.satisfy { it.any { error ->
+         error.detailMessage == "FixedOrFloatLeg is not defined as a type"
+      } }
+   }
 }

@@ -26,6 +26,16 @@ data class UnaryCalculatedFieldSetExpression(
    }
 }
 
+data class TerenaryFieldSetExpression(
+   val operand1: FieldReferenceSelector,
+   val operand2: FieldReferenceSelector,
+   val operand3: FieldReferenceSelector,
+   val operator: TerenaryFormulaOperator,
+   val literal: Any
+) : FieldSetExpression {
+   override fun asTaxi(): String = "${operator.symbol} ${operand1.asTaxi()} ${operand2.asTaxi()} ${operand3.asTaxi()} $literal"
+}
+
 data class WhenFieldSetCondition(
    val selectorExpression: WhenSelectorExpression,
    val cases: List<WhenCaseBlock>
@@ -111,6 +121,9 @@ class ReferenceCaseMatchExpression(val reference: String) : WhenCaseMatchExpress
    override fun asTaxi(): String = reference // I don't think this is right...
 }
 
+class EnumLiteralCaseMatchExpression(val enumValue: EnumValue) : WhenCaseMatchExpression {
+   override fun asTaxi(): String = enumValue.qualifiedName
+}
 class LiteralCaseMatchExpression(val value: Any) : WhenCaseMatchExpression {
    override fun asTaxi(): String {
       return when (value) {

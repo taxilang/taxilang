@@ -965,6 +965,9 @@ type alias LastName as String
 type Person {
    firstName : FirstName by column(0)
    lastName : LastName by column(1)
+   title: String by default("Mr.")
+   age: Int by default(18)
+   primaryKey: String by concat(column(0), "-", column(1), "-", column(2))
 }
 
 fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {}
@@ -972,7 +975,25 @@ fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson pro
       val taxi = Compiler(src).compile()
       val person = taxi.objectType("Person")
       val firstName = person.field("firstName")
+      val title = person.field("title")
+      val age = person.field("age")
+      val primaryKey = person.field("primaryKey")
       firstName.accessor.should.be.instanceof(ColumnAccessor::class.java)
+      title.accessor.should.be.instanceof(ColumnAccessor::class.java)
+      age.accessor.should.be.instanceof(ColumnAccessor::class.java)
+      primaryKey.accessor.should.be.instanceof(ReadFunctionFieldAccessor::class.java)
+      val readFunctionAccessor = primaryKey.accessor as ReadFunctionFieldAccessor
+      readFunctionAccessor.arguments.size.should.equal(5)
+      readFunctionAccessor.arguments[0].columnAccessor.should.be.not.`null`
+      readFunctionAccessor.arguments[0].value.should.be.`null`
+      readFunctionAccessor.arguments[1].columnAccessor.should.be.`null`
+      readFunctionAccessor.arguments[1].value.should.equal("-")
+      readFunctionAccessor.arguments[2].columnAccessor.should.be.not.`null`
+      readFunctionAccessor.arguments[2].value.should.be.`null`
+      readFunctionAccessor.arguments[3].columnAccessor.should.be.`null`
+      readFunctionAccessor.arguments[3].value.should.equal("-")
+      readFunctionAccessor.arguments[4].columnAccessor.should.be.not.`null`
+      readFunctionAccessor.arguments[4].value.should.be.`null`
    }
 
    @Test
