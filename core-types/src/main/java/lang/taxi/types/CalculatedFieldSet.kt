@@ -46,3 +46,16 @@ enum class UnaryFormulaOperator(val symbol: String) {
    }
 }
 
+enum class TerenaryFormulaOperator(val symbol: String) {
+   Concat3("concat3");
+   companion object {
+      private val bySymbol = TerenaryFormulaOperator.values().associateBy { it.symbol }
+      fun forSymbol(symbol:String):TerenaryFormulaOperator {
+         return bySymbol[symbol] ?: error("No operator defined for symbol $symbol")
+      }
+
+      fun forSymbolOrNull(symbol: String) = bySymbol[symbol]
+   }
+}
+
+

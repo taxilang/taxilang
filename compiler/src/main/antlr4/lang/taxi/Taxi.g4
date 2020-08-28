@@ -87,6 +87,10 @@ unaryFieldExpression
    : UnaryOperator '(' propertyToParameterConstraintLhs ',' IntegerLiteral ')'
    ;
 
+ternaryFieldExpression
+   : TeranaryOperator '(' propertyToParameterConstraintLhs ',' propertyToParameterConstraintLhs ','  propertyToParameterConstraintLhs ',' StringLiteral ')'
+   ;
+
 conditionalTypeStructureDeclaration
     :
    '(' typeMemberDeclaration* ')' 'by' conditionalTypeConditionDeclaration
@@ -95,6 +99,7 @@ conditionalTypeStructureDeclaration
 conditionalTypeConditionDeclaration:
    (fieldExpression |
     unaryFieldExpression |
+    ternaryFieldExpression |
    conditionalTypeWhenDeclaration);
 
 conditionalTypeWhenDeclaration:
@@ -121,6 +126,7 @@ caseFieldAssignmentBlock:
 caseDeclarationMatchExpression: // when( ... ) {
    Identifier  | //  someField -> ...
    literal | //  'foo' -> ...
+   enumSynonymSingleDeclaration | // some.Enum.EnumValue -> ...
    caseElseMatchExpression;
 
 caseElseMatchExpression: 'else';
@@ -165,6 +171,8 @@ scalarAccessorExpression
     | jsonPathAccessorDeclaration
     | columnDefinition
     | conditionalTypeConditionDeclaration
+    | defaultDefinition
+    | readFunctionDefinition
     ;
 
 xpathAccessorDeclaration : 'xpath' '(' accessorExpression ')';
@@ -350,6 +358,10 @@ UnaryOperator
    : 'left'
    ;
 
+TeranaryOperator
+   : 'concat3'
+   ;
+
 policyDeclaration
     :  annotation* 'policy' policyIdentifier 'against' typeType '{' policyRuleSet* '}';
 
@@ -443,9 +455,28 @@ fileResourceDeclaration : annotation* 'fileResource' '(' elementValuePairs ')' I
 
 // Make this more generic when needed, currently
 // only need to support files stored in columns
-sourceMapping : Identifier 'by' columnDefinition;
+sourceMapping :
+         Identifier 'by' columnDefinition
+         ;
 
 columnDefinition : 'column' '(' columnIndex ')' ;
+
+defaultDefinition: 'default' '(' literal ')';
+
+readFunctionDefinition: readFunction formalParameters;
+
+readFunction:
+         'concat'
+         ;
+
+formalParameters
+    :   '(' formalParameterList? ')'
+    ;
+
+formalParameterList
+    : parameter  (',' parameter)*
+    ;
+parameter: StringLiteral | columnDefinition;
 
 columnIndex : IntegerLiteral | StringLiteral;
 

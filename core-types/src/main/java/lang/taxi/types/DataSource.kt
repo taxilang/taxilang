@@ -16,5 +16,6 @@ data class FileDataSource(
 
 data class ColumnMapping(
    val propertyName: String,
-   val index: Any
+   val index: Any?,
+   val defaultValue: Any? = null
 )

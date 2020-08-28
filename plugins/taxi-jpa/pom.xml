@@ -3,7 +3,7 @@
    <parent>
       <artifactId>plugins</artifactId>
       <groupId>lang.taxi</groupId>
-      <version>0.8.6</version>
+      <version>0.8.7</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -20,7 +20,7 @@
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>kotlin-core</artifactId>
-         <version>0.8.6</version>
+         <version>0.8.7</version>
          <scope>provided</scope>
       </dependency>
       <dependency>
