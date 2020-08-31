@@ -26,7 +26,7 @@ data class ObjectTypeDefinition(
    val annotations: Set<Annotation> = emptySet(),
    val modifiers: List<Modifier> = emptyList(),
    val inheritsFrom: Set<Type> = emptySet(),
-   val format: String? = null,
+   val format: List<String>? = null,
    val formattedInstanceOfType: Type? = null,
    val calculatedInstanceOfType: Type? = null,
    val calculation: Formula? = null,
@@ -101,7 +101,7 @@ data class ObjectType(
          return if (isDefined) wrapper.definitionHash else null
       }
 
-   override val format: String?
+   override val format: List<String>?
       get() {
          return if (this.definition?.format != null) {
             this.definition?.format

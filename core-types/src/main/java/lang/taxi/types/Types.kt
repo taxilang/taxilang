@@ -118,7 +118,7 @@ interface Type : Named, Compiled {
 
    val allInheritedTypes: Set<Type>
 
-   val format: String?
+   val format: List<String>?
 
    val inheritsFromPrimitive: Boolean
 

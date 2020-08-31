@@ -36,7 +36,7 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
     override val qualifiedName: String = PrimitiveType.ARRAY.qualifiedName
     override val parameters: List<Type> = listOf(type)
 
-   override val format: String? = null
+   override val format: List<String>? = null
    override val formattedInstanceOfType: Type? = null
    override val calculation: Formula?
       get() = null

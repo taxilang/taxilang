@@ -22,7 +22,7 @@ class UnresolvedImportedType(override val qualifiedName: String) : Type {
       get() = TODO("Not yet implemented")
    override val allInheritedTypes: kotlin.collections.Set<lang.taxi.types.Type>
       get() = TODO("Not yet implemented")
-   override val format: kotlin.String?
+   override val format: List<kotlin.String>?
       get() = TODO("Not yet implemented")
    override val inheritsFromPrimitive: kotlin.Boolean
       get() = TODO("Not yet implemented")
