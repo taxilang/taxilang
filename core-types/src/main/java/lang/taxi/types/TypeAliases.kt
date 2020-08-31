@@ -44,7 +44,7 @@ data class TypeAlias(
 
    // Don't support a type alias overriding the format of it's aliased type,
    // as then they're no longer synonyms
-   override val format: String?
+   override val format: List<String>?
       get() = definition?.aliasType?.format
 
    override val formattedInstanceOfType: Type?

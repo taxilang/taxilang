@@ -327,7 +327,7 @@ parameterConstraintExpression
     |  propertyFormatExpression
     ;
 
-// First impl.  This will get richer
+// First impl.  This will get richer (',' StringLiteral)*
 propertyFormatExpression :
    '@format' '=' StringLiteral;
 
