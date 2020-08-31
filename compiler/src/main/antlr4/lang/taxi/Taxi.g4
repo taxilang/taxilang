@@ -71,9 +71,23 @@ typeMemberDeclaration
      ;
 
 calculatedMemberDeclaration
-   : typeMemberDeclaration  'as' operatorExpression
+   : typeMemberDeclaration  'as'
+   (operatorExpression
+   |
+   calculatedExpression)
    ;
 
+calculatedExpression:
+           calculatedFormula '(' calculatedExpressionBody? ')'
+           ;
+
+calculatedFormula:
+          'coalesce'
+          ;
+
+calculatedExpressionBody:
+         typeType (',' typeType)*
+         ;
 
 operatorExpression
    : '(' typeType arithmaticOperator typeType ')'
