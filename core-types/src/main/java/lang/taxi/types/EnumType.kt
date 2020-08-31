@@ -76,7 +76,7 @@ data class EnumType(override val qualifiedName: String,
       }
 
    // Not sure it makes sense to support formats on enums.  Let's revisit if there's a usecase.
-   override val format: String? = null
+   override val format: List<String>? = null
    override val formattedInstanceOfType: Type? = null
    override val calculation: Formula?
       get() = null

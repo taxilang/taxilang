@@ -257,10 +257,14 @@ $enumValueDeclarations
       return when {
          type is ArrayType -> typeAsTaxi(type.type, currentNamespace) + "[]"
          type is UnresolvedImportedType -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace)
-         type.formattedInstanceOfType != null -> typeAsTaxi(type.formattedInstanceOfType!!, currentNamespace) + """( @format = "${type.format!!}" )"""
+         type.formattedInstanceOfType != null -> typeAsTaxi(type.formattedInstanceOfType!!, currentNamespace) + """( ${writeFormat(type.format!!)} )"""
          type is ObjectType && type.calculatedInstanceOfType != null -> typeAsTaxi(type.calculatedInstanceOfType!!, currentNamespace) + " " + type.calculation!!.asTaxi()
          else -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace)
       }
+   }
+
+   private fun writeFormat(formats: List<String>): String {
+      return formats.map { """@format = "$it"""" }.joinToString(", ")
    }
 }
 

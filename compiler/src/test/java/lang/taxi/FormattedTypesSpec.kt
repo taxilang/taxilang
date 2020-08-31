@@ -9,7 +9,7 @@ object FormattedTypesSpec : Spek({
    describe("formatted types") {
       it("should expose default formats for date types") {
          val doc  = Compiler("").compile()
-         doc.type(PrimitiveType.INSTANT.toQualifiedName()).format!!.should.equal("yyyy-MM-dd'T'HH:mm:ss[.SSS]X")
+         doc.type(PrimitiveType.INSTANT.toQualifiedName()).format?.first().should.equal("yyyy-MM-dd'T'HH:mm:ss[.SSS]X")
       }
 
       it("should inherit default formats") {
@@ -33,7 +33,7 @@ object FormattedTypesSpec : Spek({
       it("should parse formatted types") {
          val src = """
             type TradeDate inherits Instant( @format = 'mm/dd/yyThh:nn:ss.mmmmZ' )
-         """.compiled().type("TradeDate").format.should.equal("mm/dd/yyThh:nn:ss.mmmmZ")
+         """.compiled().type("TradeDate").format?.first().should.equal("mm/dd/yyThh:nn:ss.mmmmZ")
 
       }
 
@@ -41,12 +41,13 @@ object FormattedTypesSpec : Spek({
          val doc = """
             type TransactionEventDateTime inherits Instant
             type Order {
-                orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
+                orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", @format = "yyyy-MM-dd'T'HH:mm:ss.SSS")
             }
          """.trimMargin()
             .compiled()
 
-         doc.objectType("Order").field("orderDateTime").type.format.should.equal("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
+         doc.objectType("Order").field("orderDateTime").type.format?.first().should.equal("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
+         doc.objectType("Order").field("orderDateTime").type.format?.get(1).should.equal("yyyy-MM-dd'T'HH:mm:ss.SSS")
       }
 
       it("should parse multiple formatted types with single quotes") {
@@ -60,8 +61,8 @@ object FormattedTypesSpec : Spek({
          """.trimMargin()
             .compiled()
 
-         doc.objectType("Order").field("orderDateTime").type.format.should.equal("yyyy-MM-dd HH:mm:ss.SSSSSSS")
-         doc.objectType("Order").field("orderDate").type.format.should.equal("yyyyMMdd")
+         doc.objectType("Order").field("orderDateTime").type.format?.first().should.equal("yyyy-MM-dd HH:mm:ss.SSSSSSS")
+         doc.objectType("Order").field("orderDate").type.format?.first().should.equal("yyyyMMdd")
       }
 
       it("should parse multiple formatted types with different quotes") {
@@ -77,10 +78,10 @@ object FormattedTypesSpec : Spek({
          """.trimMargin()
             .compiled()
 
-         doc.objectType("Order").field("orderDateTimeQuote").type.format.should.equal("yyyy-MM-dd HH:mm:ss.SSSSSSS")
-         doc.objectType("Order").field("orderDateTimeDoubleQuote").type.format.should.equal("yyyy/MM/dd HH:mm:ss")
-         doc.objectType("Order").field("orderDateQuote").type.format.should.equal("yyyyMMdd")
-         doc.objectType("Order").field("orderDateDoubleQuote").type.format.should.equal("yyyy/MM/dd")
+         doc.objectType("Order").field("orderDateTimeQuote").type.format?.first().should.equal("yyyy-MM-dd HH:mm:ss.SSSSSSS")
+         doc.objectType("Order").field("orderDateTimeDoubleQuote").type.format?.first().should.equal("yyyy/MM/dd HH:mm:ss")
+         doc.objectType("Order").field("orderDateQuote").type.format?.first().should.equal("yyyyMMdd")
+         doc.objectType("Order").field("orderDateDoubleQuote").type.format?.first().should.equal("yyyy/MM/dd")
       }
 
       it("should allow modifying formats inline") {
@@ -91,7 +92,7 @@ object FormattedTypesSpec : Spek({
                tradeDate : TradeDate( @format = 'dd/yy/mm' )
             }
          """.compiled()
-            .objectType("Trade").field("tradeDate").type.format.should.equal("dd/yy/mm")
+            .objectType("Trade").field("tradeDate").type.format?.first().should.equal("dd/yy/mm")
       }
 
       it("should allow a subtype to inherit the format of its base type") {
@@ -102,7 +103,7 @@ object FormattedTypesSpec : Spek({
                tradeDate : SettlementDate
             }
          """.compiled()
-            .objectType("Trade").field("tradeDate").type.format.should.equal("dd/yy/mm")
+            .objectType("Trade").field("tradeDate").type.format?.first().should.equal("dd/yy/mm")
 
       }
 
@@ -114,7 +115,7 @@ object FormattedTypesSpec : Spek({
                tradeDate : SettlementDate
             }
          """.compiled()
-            .objectType("Trade").field("tradeDate").type.format.should.equal("mm/yy/dd")
+            .objectType("Trade").field("tradeDate").type.format?.first().should.equal("mm/yy/dd")
 
 
       }

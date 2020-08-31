@@ -502,7 +502,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val modifiers = parseModifiers(ctx.typeModifier())
       val inherits = parseTypeInheritance(namespace, ctx.listOfInheritedTypes())
       val typeDoc = parseTypeDoc(ctx.typeDoc()?.source()?.content)
-      val format: String? = null
+      val format: List<String>? = null
       this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(
          fields = fields.toSet(),
          annotations = annotations.toSet(),
@@ -767,9 +767,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
-   private fun generateFormattedSubtype(type: Type, format: String, typeType: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
+   private fun generateFormattedSubtype(type: Type, format: List<String>, typeType: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
       val formattedTypeName = QualifiedName.from(type.qualifiedName).let { originalTypeName ->
-         val hash = Hashing.sha256().hashString(format, Charset.defaultCharset()).toString().takeLast(6)
+         val hash = Hashing.sha256().hashString(format.joinToString(), Charset.defaultCharset()).toString().takeLast(6)
          originalTypeName.copy(typeName = "Formatted${originalTypeName.typeName}_$hash")
       }
 
@@ -818,15 +818,13 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
-   private fun parseTypeFormat(typeType: TaxiParser.TypeTypeContext): Either<CompilationError, String?> {
+   private fun parseTypeFormat(typeType: TaxiParser.TypeTypeContext): Either<CompilationError, List<String>?> {
       val formatExpressions = typeType.parameterConstraint()?.parameterConstraintExpressionList()?.parameterConstraintExpression()
          ?.mapNotNull { it.propertyFormatExpression() } ?: emptyList()
       return when {
          formatExpressions.isEmpty() -> Either.right(null)
-         formatExpressions.size == 1 -> Either.right(stringLiteralValue(formatExpressions.first().StringLiteral()))
-         else -> Either.left(CompilationError(typeType.start, "Mutliple formats are not supported"))
+         else ->  Either.right(formatExpressions.map { stringLiteralValue(it.StringLiteral()) })
       }
-
    }
 
    /**
