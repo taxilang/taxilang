@@ -20,11 +20,56 @@ data class MultiplicationFormula(
    override val operator: FormulaOperator = FormulaOperator.Multiply): Formula {
 }
 
-enum class FormulaOperator(val symbol:String) {
-   Add("+"),
-   Subtract("-"),
-   Multiply("*"),
-   Divide("/");
+enum class FormulaOperator(val symbol:String, val cardinality: Int) {
+   Add("+", 2) {
+      override fun validArgumentSize(argumentSize: Int): Boolean {
+         return argumentSize == cardinality
+      }
+
+      override fun validateArguments(arguments: List<PrimitiveType>, fieldPrimitiveType: PrimitiveType): Boolean {
+         return PrimitiveTypeOperations.isValidOperation(arguments.first(), Add, arguments[1])
+      }
+   },
+   Subtract("-", 2) {
+      override fun validArgumentSize(argumentSize: Int): Boolean {
+         return argumentSize == cardinality
+      }
+
+      override fun validateArguments(arguments: List<PrimitiveType>, fieldPrimitiveType: PrimitiveType): Boolean {
+         return PrimitiveTypeOperations.isValidOperation(arguments.first(), Subtract, arguments[1])
+      }
+   },
+   Multiply("*", 2) {
+      override fun validArgumentSize(argumentSize: Int): Boolean {
+         return argumentSize == cardinality
+      }
+
+      override fun validateArguments(arguments: List<PrimitiveType>, fieldPrimitiveType: PrimitiveType): Boolean {
+         return PrimitiveTypeOperations.isValidOperation(arguments.first(), Multiply, arguments[1])
+      }
+   },
+   Divide("/", 2) {
+      override fun validArgumentSize(argumentSize: Int): Boolean {
+         return argumentSize == cardinality
+      }
+
+      override fun validateArguments(arguments: List<PrimitiveType>, fieldPrimitiveType: PrimitiveType): Boolean {
+         return PrimitiveTypeOperations.isValidOperation(arguments.first(), Divide, arguments[1])
+      }
+   },
+   Coalesce("coalesce", Int.MAX_VALUE) {
+      override fun validArgumentSize(argumentSize: Int): Boolean {
+         return argumentSize >= 1
+      }
+
+      override fun validateArguments(arguments: List<PrimitiveType>, fieldPrimitiveType: PrimitiveType): Boolean {
+         val types = arguments.map { it.qualifiedName }.distinct()
+         return types.size == 1 && types.first() == fieldPrimitiveType.qualifiedName
+      }
+   };
+
+   abstract fun validArgumentSize(argumentSize: Int): Boolean;
+   abstract fun validateArguments(arguments: List<PrimitiveType>, fieldPrimitiveType: PrimitiveType): Boolean;
 
    companion object {
       private val bySymbol = FormulaOperator.values().associateBy { it.symbol }
