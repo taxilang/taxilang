@@ -5,8 +5,9 @@ import com.winterbe.expekt.should
 import org.antlr.v4.runtime.CharStreams
 import org.junit.Test
 import java.util.*
+import kotlin.test.todo
 
-class TypeDefinitionHashTest  {
+class TypeDefinitionHashTest {
 
    @Test
    fun `hash stays the same if nothing changes`() {
@@ -367,6 +368,15 @@ class TypeDefinitionHashTest  {
       generateHash("enum CurrencyCode { EUR }").should.equal("a367df")
       generateHash("enum CurrencyCode { \t\rEUR\t\r }").should.equal("ac08ab")
       generateHash("enum CurrencyCode { \nEUR\n }").should.equal("261227")
+   }
+
+   @Test
+   fun `hash changes when format changes`() {
+      generateHash("""type Person { birthDate : Date( @format = 'dd-mmm-yyyy' ) }""").should.equal("2a4ce9")
+      generateHash("""type Person { birthDate : Date( @format = 'dd/mmm/yyyy' ) }""").should.equal("542af9")
+      val birthDate = "type BirthDate inherits Date \n"
+      generateHash("""$birthDate type Person { birthDate : BirthDate( @format = 'dd/mmm/yyyy' ) }""").should.equal("6bab06")
+      generateHash("""$birthDate type Person { birthDate : BirthDate( @format = 'dd-mmm-yyyy' ) }""").should.equal("730624")
    }
 
    private fun generateHash(input: String): String {
