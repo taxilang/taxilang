@@ -1,5 +1,8 @@
 package lang.taxi.types
 
+import lang.taxi.utils.quoted
+import lang.taxi.utils.quotedIfString
+
 /**
  * A set of fields with additional conditional mapping logic
  * applied
@@ -13,7 +16,7 @@ data class CalculatedFieldSetExpression(
    val operand2: FieldReferenceSelector,
    val operator: FormulaOperator
 ) : FieldSetExpression {
-   override fun asTaxi(): String = "${operand1.asTaxi()} ${operator.symbol} ${operand2.asTaxi()}"
+   override fun asTaxi(): String = "(${operand1.asTaxi()} ${operator.symbol} ${operand2.asTaxi()})"
 }
 
 data class UnaryCalculatedFieldSetExpression(
@@ -22,7 +25,7 @@ data class UnaryCalculatedFieldSetExpression(
    val operator: UnaryFormulaOperator
 ) : FieldSetExpression {
    override fun asTaxi(): String {
-     return "${operand.asTaxi()} ${operator.symbol}  $literal"
+     return "${operator.symbol}(${operand.asTaxi()}, ${literal})"
    }
 }
 
@@ -33,8 +36,9 @@ data class TerenaryFieldSetExpression(
    val operator: TerenaryFormulaOperator,
    val literal: Any
 ) : FieldSetExpression {
-   override fun asTaxi(): String = "${operator.symbol} ${operand1.asTaxi()} ${operand2.asTaxi()} ${operand3.asTaxi()} $literal"
+   override fun asTaxi(): String = "${operator.symbol}(${operand1.asTaxi()}, ${operand2.asTaxi()}, ${operand3.asTaxi()}, ${literal.quotedIfString()})"
 }
+
 
 data class WhenFieldSetCondition(
    val selectorExpression: WhenSelectorExpression,
@@ -131,10 +135,6 @@ class LiteralCaseMatchExpression(val value: Any) : WhenCaseMatchExpression {
          else -> value.toString()
       }
    }
-}
-
-internal fun String.quoted(): String {
-   return "\"$this\""
 }
 
 object ElseMatchExpression : WhenCaseMatchExpression {

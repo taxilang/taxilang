@@ -4,6 +4,8 @@ import arrow.core.Either
 import lang.taxi.Equality
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
+import lang.taxi.utils.quoted
+import lang.taxi.utils.quotedIfNotAlready
 import kotlin.reflect.KProperty1
 
 data class FieldExtension(
@@ -285,10 +287,10 @@ data class ColumnAccessor(val index: Any?, val defaultValue: Any?) : ExpressionA
    override val expression: String = index.toString()
    override fun asTaxi(): String {
       return when {
-         index is String -> """by column("${index.quoted()}")"""
-         index is Int -> """by column("${index.toString()}")"""
-         defaultValue is String -> """by default("${defaultValue.quoted()}")"""
-         else -> """by default("$defaultValue")"""
+         index is String -> """by column(${index.quotedIfNotAlready()})"""
+         index is Int -> """by column(${index.toString()})"""
+         defaultValue is String -> """by default(${defaultValue.quoted()})"""
+         else -> """by default($defaultValue)"""
       }
    }
 }
@@ -298,15 +300,31 @@ data class ColumnAccessor(val index: Any?, val defaultValue: Any?) : ExpressionA
 // assign multiple fields), and scalar when blocks (a when block that assigns a single field).
 data class ConditionalAccessor(val expression: FieldSetExpression) : Accessor, TaxiStatementGenerator {
    override fun asTaxi(): String {
-      return "by ( ${expression.asTaxi() } )"
+      return "by ${expression.asTaxi() }"
    }
 }
 
 data class DestructuredAccessor(val fields: Map<String, Accessor>) : Accessor
 
-data class ReadFunctionFieldAccessor(val readFunction: ReadFunction, val arguments: List<ReadFunctionArgument>): Accessor
+data class ReadFunctionFieldAccessor(val readFunction: ReadFunction, val arguments: List<ReadFunctionArgument>): Accessor, TaxiStatementGenerator {
+   override fun asTaxi(): String {
+      val taxi =  "by ${readFunction.symbol}( ${arguments.joinToString(",") { it.asTaxi() }} )"
+      return taxi
+   }
 
-data class ReadFunctionArgument(val columnAccessor: ColumnAccessor?, val value: Any?)
+}
+
+data class ReadFunctionArgument(val columnAccessor: ColumnAccessor?, val value: Any?) : TaxiStatementGenerator {
+   override fun asTaxi(): String {
+      return when {
+         columnAccessor != null -> columnAccessor.asTaxi().removePrefix("by").trim()
+         value is String -> value.quoted()
+         value is Number -> value.toString()
+         else -> value.toString()
+      }
+   }
+
+}
 
 enum class ReadFunction(val symbol: String){
    CONCAT("concat");
