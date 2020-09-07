@@ -968,6 +968,8 @@ type Person {
    title: String by default("Mr.")
    age: Int by default(18)
    primaryKey: String by concat(column(0), "-", column(1), "-", column(2))
+   leftField: String by leftAndUpperCase(column(0), "7")
+   midField: String by midAndUpperCase(column(1), "5", "3")
 }
 
 fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {}

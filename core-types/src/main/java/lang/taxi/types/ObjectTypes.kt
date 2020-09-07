@@ -309,7 +309,9 @@ data class ReadFunctionFieldAccessor(val readFunction: ReadFunction, val argumen
 data class ReadFunctionArgument(val columnAccessor: ColumnAccessor?, val value: Any?)
 
 enum class ReadFunction(val symbol: String){
-   CONCAT("concat");
+   CONCAT("concat"),
+   LEFTUPPERCASE("leftAndUpperCase"),
+   MIDUPPERCASE("midAndUpperCase");
    companion object {
       private val bySymbol = ReadFunction.values().associateBy { it.symbol }
       fun forSymbol(symbol:String):ReadFunction {

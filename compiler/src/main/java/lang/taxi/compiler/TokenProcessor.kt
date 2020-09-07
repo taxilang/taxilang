@@ -623,7 +623,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             val readFunction = ReadFunction.forSymbolOrNull(expression.readFunctionDefinition().readFunction().text) ?: throw CompilationException(CompilationError(expression.start, "invalid read function", expression.source().normalizedSourceName))
             val parameters =  expression.readFunctionDefinition().formalParameters().formalParameterList().parameter().map { parameterContext ->
                when {
-                  parameterContext.StringLiteral() != null -> ReadFunctionArgument(value = stringLiteralValue(parameterContext.StringLiteral()), columnAccessor = null)
+                  parameterContext.literal() != null -> ReadFunctionArgument(value = parameterContext.literal().value(), columnAccessor = null)
                   parameterContext.columnDefinition() != null -> ReadFunctionArgument(value = null,
                      columnAccessor = ColumnAccessor(index =
                      parameterContext.columnDefinition().columnIndex().StringLiteral()?.text

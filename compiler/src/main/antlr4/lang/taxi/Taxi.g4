@@ -480,7 +480,9 @@ defaultDefinition: 'default' '(' literal ')';
 readFunctionDefinition: readFunction formalParameters;
 
 readFunction:
-         'concat'
+         'concat' |
+         'leftAndUpperCase' |
+         'midAndUpperCase'
          ;
 
 formalParameters
@@ -490,7 +492,7 @@ formalParameters
 formalParameterList
     : parameter  (',' parameter)*
     ;
-parameter: StringLiteral | columnDefinition;
+parameter: literal | columnDefinition;
 
 columnIndex : IntegerLiteral | StringLiteral;
 
