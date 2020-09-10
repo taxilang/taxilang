@@ -1,14 +1,11 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.functions.FunctionAccessor
 import lang.taxi.types.CalculatedFieldSetExpression
 import lang.taxi.types.ConditionalAccessor
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.QualifiedName
-import lang.taxi.types.TerenaryFieldSetExpression
-import lang.taxi.types.TerenaryFormulaOperator
-import lang.taxi.types.UnaryCalculatedFieldSetExpression
-import lang.taxi.types.UnaryFormulaOperator
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import kotlin.test.assertFailsWith
@@ -219,49 +216,6 @@ model Person {
             """.trimIndent()
                val transaction = Compiler(src).compile().model("Person")
             }
-         }
-
-         it("should allow unary formulas on fields") {
-            val src = """
-               type FirstName inherits String
-               type FullName inherits String
-
-               model Person {
-                  firstName: FirstName
-                  leftName : FullName by left(this.firstName, 5)
-               }
-
-            """.trimIndent()
-            val transaction = Compiler(src).compile().model("Person")
-            val accessor = transaction.field("leftName").accessor as ConditionalAccessor
-            val unaryCalculatedFieldSetExpression = accessor.expression as UnaryCalculatedFieldSetExpression
-            unaryCalculatedFieldSetExpression.operator.should.equal(UnaryFormulaOperator.Left)
-            unaryCalculatedFieldSetExpression.operand.fieldName.should.equal("firstName")
-            unaryCalculatedFieldSetExpression.literal.should.equal("5")
-         }
-
-         it("should allow teranary formulas on fields") {
-            val src = """
-               type TradeId inherits String
-               type OrderId inherits String
-               type MarketId inherits String
-
-               model Record {
-                  tradeId: TradeId
-                  orderId: OrderId
-                  marketId: MarketId
-                  id: String by concat3(this.tradeId, this.orderId, this.marketId, "-")
-               }
-
-            """.trimIndent()
-            val transaction = Compiler(src).compile().model("Record")
-            val accessor = transaction.field("id").accessor as ConditionalAccessor
-            val tereanryCalculatedFieldSetExpression = accessor.expression as TerenaryFieldSetExpression
-            tereanryCalculatedFieldSetExpression.operator.should.equal(TerenaryFormulaOperator.Concat3)
-            tereanryCalculatedFieldSetExpression.operand1.fieldName.should.equal("tradeId")
-            tereanryCalculatedFieldSetExpression.operand2.fieldName.should.equal("orderId")
-            tereanryCalculatedFieldSetExpression.operand3.fieldName.should.equal("marketId")
-            tereanryCalculatedFieldSetExpression.literal.should.equal("-")
          }
 
          it("should allow coalesce on strings") {

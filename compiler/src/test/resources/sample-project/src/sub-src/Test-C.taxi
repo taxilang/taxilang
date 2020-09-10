@@ -3,7 +3,7 @@ import companyX.ProductIdentifier
 type ProductType inherits String
 model Product {
   productTpe: ProductType
-  productIdentifier: ProductIdentifier by when(productTpe) {
+  productIdentifier: ProductIdentifier by when(this.productTpe) {
       "p1" -> ProductIdentifier.PRODUCT1
       else -> ProductIdentifier.PRODUCT2
   }

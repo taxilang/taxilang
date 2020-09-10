@@ -85,30 +85,5 @@ enum class FormulaOperator(val symbol: String, val cardinality: Int) {
    }
 }
 
-enum class UnaryFormulaOperator(val symbol: String) {
-   Left("left");
-
-   companion object {
-      private val bySymbol = UnaryFormulaOperator.values().associateBy { it.symbol }
-      fun forSymbol(symbol: String): UnaryFormulaOperator {
-         return bySymbol[symbol] ?: error("No operator defined for symbol $symbol")
-      }
-
-      fun forSymbolOrNull(symbol: String) = bySymbol[symbol]
-   }
-}
-
-enum class TerenaryFormulaOperator(val symbol: String) {
-   Concat3("concat3");
-
-   companion object {
-      private val bySymbol = TerenaryFormulaOperator.values().associateBy { it.symbol }
-      fun forSymbol(symbol: String): TerenaryFormulaOperator {
-         return bySymbol[symbol] ?: error("No operator defined for symbol $symbol")
-      }
-
-      fun forSymbolOrNull(symbol: String) = bySymbol[symbol]
-   }
-}
 
 

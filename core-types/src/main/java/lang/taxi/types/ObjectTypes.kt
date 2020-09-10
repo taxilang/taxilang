@@ -275,6 +275,15 @@ interface ExpressionAccessor : Accessor {
    val expression: String
 }
 
+data class LiteralAccessor(val value: Any) : Accessor, TaxiStatementGenerator {
+   override fun asTaxi(): String {
+      return when(value) {
+         is String -> value.quoted()
+         else -> value.toString()
+      }
+   }
+
+}
 data class XpathAccessor(override val expression: String) : ExpressionAccessor, TaxiStatementGenerator {
    override fun asTaxi(): String = """by xpath("$expression")"""
 }
@@ -306,28 +315,16 @@ data class ConditionalAccessor(val expression: FieldSetExpression) : Accessor, T
 
 data class DestructuredAccessor(val fields: Map<String, Accessor>) : Accessor
 
-data class ReadFunctionFieldAccessor(val readFunction: ReadFunction, val arguments: List<ReadFunctionArgument>): Accessor, TaxiStatementGenerator {
-   override fun asTaxi(): String {
-      val taxi =  "by ${readFunction.symbol}( ${arguments.joinToString(",") { it.asTaxi() }} )"
-      return taxi
-   }
+@Deprecated("Use lang.taxi.functions.Function instead")
+data class ReadFunctionFieldAccessor(val readFunction: ReadFunction, val arguments: List<ReadFunctionArgument>): Accessor
+@Deprecated("Use lang.taxi.functions.Function instead")
+data class ReadFunctionArgument(val columnAccessor: ColumnAccessor?, val value: Any?)
 
-}
-
-data class ReadFunctionArgument(val columnAccessor: ColumnAccessor?, val value: Any?) : TaxiStatementGenerator {
-   override fun asTaxi(): String {
-      return when {
-         columnAccessor != null -> columnAccessor.asTaxi().removePrefix("by").trim()
-         value is String -> value.quoted()
-         value is Number -> value.toString()
-         else -> value.toString()
-      }
-   }
-
-}
-
+@Deprecated("Use lang.taxi.functions.Function instead")
 enum class ReadFunction(val symbol: String){
    CONCAT("concat");
+//   LEFTUPPERCASE("leftAndUpperCase"),
+//   MIDUPPERCASE("midAndUpperCase");
    companion object {
       private val bySymbol = ReadFunction.values().associateBy { it.symbol }
       fun forSymbol(symbol:String):ReadFunction {

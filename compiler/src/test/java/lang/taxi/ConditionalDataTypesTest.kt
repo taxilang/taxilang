@@ -135,7 +135,7 @@ type TradeRecord {
       type ClientDirection inherits Direction
       type Order {
          bankDirection: BankDirection
-         clientDirection: ClientDirection by when (BankDirection) {
+         clientDirection: ClientDirection by when (this.bankDirection) {
             "Buy" -> "Sell"
             "Sell" -> "Buy"
          }
@@ -169,7 +169,7 @@ type TradeRecord {
       type ClientDirection inherits Direction
       type Order {
          bankDirection: BankDirection
-         payReceive: PayReceive by when (bankDirection) {
+         payReceive: PayReceive by when (this.bankDirection) {
             "Buy" -> PayReceive.Pay
             "Sell" -> PayReceive.Receive
             else -> null
@@ -209,7 +209,7 @@ type TradeRecord {
             s0_TypeStr : Leg1FixedOrFloat by jsonPath("/S0_TypeStr")
             s0_Index : Leg1Index by jsonPath("/S0_Index")
             s1_Index : Leg2Index by jsonPath("/S1_Index")
-            underlyingIndex : String by when (s0_TypeStr) {
+            underlyingIndex : String by when (this.s0_TypeStr) {
                FixedOrFloatLeg.Float -> s0_Index
                else -> s1_Index
             }
@@ -233,7 +233,7 @@ type TradeRecord {
             s0_TypeStr : FixedOrFloatLeg
             s0_Index : Leg1Index as String
             s1_Index : Leg2Index as String
-            underlyingIndex : String by when (s0_TypeStr) {
+            underlyingIndex : String by when (this.s0_TypeStr) {
                FixedOrFloatLeg.Fooball -> s0_Index
                else -> s1_Index
             }
@@ -252,7 +252,7 @@ type TradeRecord {
             s0_TypeStr : Leg1FixedOrFloat as String
             s0_Index : Leg1Index as String
             s1_Index : Leg2Index as String
-            underlyingIndex : String by when (s0_TypeStr) {
+            underlyingIndex : String by when (this.s0_TypeStr) {
                FixedOrFloatLeg.Float -> s0_Index
                else -> s1_Index
             }

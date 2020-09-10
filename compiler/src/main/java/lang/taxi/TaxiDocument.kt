@@ -4,6 +4,7 @@ import com.google.common.collect.Multimaps
 import lang.taxi.policies.Policy
 import lang.taxi.services.Service
 import lang.taxi.types.*
+import lang.taxi.functions.Function
 import lang.taxi.utils.log
 
 
@@ -15,7 +16,7 @@ class NamespacedTaxiDocument(val namespace: String,
                              types: Set<Type>,
                              services: Set<Service>,
                              policies: Set<Policy>,
-                             sources: Set<DataSource>) : TaxiDocument(types, services, policies, sources)
+                             functions: Set<Function>) : TaxiDocument(types, services, policies, functions)
 
 // Note:  Changed types & services from List<> to Set<>
 // as ordering shouldn't matter, only content.
@@ -23,13 +24,21 @@ class NamespacedTaxiDocument(val namespace: String,
 open class TaxiDocument(val types: Set<Type>,
                         val services: Set<Service>,
                         val policies: Set<Policy> = emptySet(),
-                        val dataSources: Set<DataSource> = emptySet()
+                        val functions: Set<Function> = emptySet()
 ) {
    private val equality = Equality(this, TaxiDocument::types, TaxiDocument::services)
    private val typeMap = types.associateBy { it.qualifiedName }
    private val servicesMap = services.associateBy { it.qualifiedName }
    private val policiesMap = policies.associateBy { it.qualifiedName }
-   private val dataSourcesMap = dataSources.associateBy { it.qualifiedName }
+   private val functionsMap = functions.associateBy { it.qualifiedName }
+
+   fun importableToken(qualifiedName: String):ImportableToken {
+      return when {
+         containsType(qualifiedName) -> type(qualifiedName)
+         containsFunction(qualifiedName) -> function(qualifiedName)
+         else -> error("Importable token $qualifiedName is not defined")
+      }
+   }
    fun type(qualifiedName: String): Type {
       return type(QualifiedName.from(qualifiedName))
    }
@@ -56,16 +65,19 @@ open class TaxiDocument(val types: Set<Type>,
       }
 
 
-      return typeMap[qualifiedName.toString()] ?:
-         throw error("No type named $qualifiedName defined")
+      return typeMap[qualifiedName.toString()] ?: throw error("No type named $qualifiedName defined")
 
    }
 
    // This is a placeholder for when we start to seperate models and types
    fun model(name: String) = objectType(name)
 
+   fun containsImportable(tokenName: String): Boolean {
+      return typeMap.containsKey(tokenName) || functionsMap.containsKey(tokenName)
+   }
    fun containsType(typeName: String) = typeMap.containsKey(typeName)
    fun containsService(serviceName: String) = servicesMap.containsKey(serviceName)
+   fun containsFunction(functionName:String) = functionsMap.containsKey(functionName)
 
    override fun hashCode() = equality.hash()
    override fun equals(other: Any?) = equality.isEqualTo(other)
@@ -74,7 +86,7 @@ open class TaxiDocument(val types: Set<Type>,
       val typesByNamespace = Multimaps.index(types) { it!!.toQualifiedName().namespace }
       val servicesByNamespace = Multimaps.index(services) { it!!.toQualifiedName().namespace }
       val policiesByNamespace = Multimaps.index(policies) { it!!.toQualifiedName().namespace }
-      val sourcesByNamespace = Multimaps.index(dataSources) { it!!.toQualifiedName().namespace }
+      val functionsByNamespace = Multimaps.index(functions) { it!!.toQualifiedName().namespace }
       val namespaces = typesByNamespace.keySet() + servicesByNamespace.keySet()
 
       return namespaces.map { namespace ->
@@ -82,7 +94,7 @@ open class TaxiDocument(val types: Set<Type>,
             types = typesByNamespace.get(namespace)?.toSet() ?: emptySet(),
             services = servicesByNamespace.get(namespace)?.toSet() ?: emptySet(),
             policies = policiesByNamespace.get(namespace)?.toSet() ?: emptySet(),
-            sources = sourcesByNamespace.get(namespace)?.toSet() ?: emptySet()
+            functions = functionsByNamespace.get(namespace)?.toSet() ?: emptySet()
          )
       }
    }
@@ -100,11 +112,15 @@ open class TaxiDocument(val types: Set<Type>,
    }
 
    fun service(qualifiedName: String): Service {
-      return servicesMap[qualifiedName]!!
+      return servicesMap[qualifiedName] ?: error("Service $qualifiedName is not defined")
+   }
+
+   fun function(qualifiedName: String): Function {
+      return functionsMap[qualifiedName] ?: error("Function $qualifiedName is not defined")
    }
 
    fun policy(qualifiedName: String): Policy {
-      return policiesMap[qualifiedName]!!
+      return policiesMap[qualifiedName] ?: error("Policy $qualifiedName is not defined")
    }
 
    fun containsPolicy(qualifiedName: String): Boolean {
@@ -134,7 +150,7 @@ open class TaxiDocument(val types: Set<Type>,
       return TaxiDocument(this.types + other.types.filterNot { duplicateNames.contains(it.qualifiedName) },
          this.services + other.services,
          this.policies + other.policies,
-         this.dataSources + other.dataSources
+         this.functions + other.functions
       )
    }
 
@@ -152,9 +168,4 @@ open class TaxiDocument(val types: Set<Type>,
       return duplicateTypes.filter { it != other.type(it.qualifiedName) }
 
    }
-
-   fun dataSource(name: String): DataSource {
-      return dataSourcesMap[name] ?: error("Datasource $name is not defined")
-   }
-
 }

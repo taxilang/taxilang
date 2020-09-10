@@ -39,7 +39,7 @@ toplevelObject
     |   typeAliasExtensionDeclaration
     |   serviceDeclaration
     |   policyDeclaration
-    |   fileResourceDeclaration
+    |   functionDeclaration
 //    |   annotationTypeDeclaration
     ;
 
@@ -77,10 +77,13 @@ calculatedMemberDeclaration
    calculatedExpression)
    ;
 
+
+// THIS IS TO BE DEPRECRATED.  Use function infrastructrue, rather than adding new formulas
 calculatedExpression:
            calculatedFormula '(' calculatedExpressionBody? ')'
            ;
 
+// THIS IS TO BE DEPRECRATED.  Use function infrastructrue, rather than adding new formulas
 calculatedFormula:
           'coalesce'
           ;
@@ -97,14 +100,6 @@ fieldExpression
    : '(' propertyToParameterConstraintLhs arithmaticOperator propertyToParameterConstraintLhs ')'
    ;
 
-unaryFieldExpression
-   : UnaryOperator '(' propertyToParameterConstraintLhs ',' IntegerLiteral ')'
-   ;
-
-ternaryFieldExpression
-   : TeranaryOperator '(' propertyToParameterConstraintLhs ',' propertyToParameterConstraintLhs ','  propertyToParameterConstraintLhs ',' StringLiteral ')'
-   ;
-
 conditionalTypeStructureDeclaration
     :
    '(' typeMemberDeclaration* ')' 'by' conditionalTypeConditionDeclaration
@@ -112,8 +107,6 @@ conditionalTypeStructureDeclaration
 
 conditionalTypeConditionDeclaration:
    (fieldExpression |
-    unaryFieldExpression |
-    ternaryFieldExpression |
    conditionalTypeWhenDeclaration);
 
 conditionalTypeWhenDeclaration:
@@ -128,7 +121,10 @@ conditionalTypeWhenSelector:
 mappedExpressionSelector: // xpath('/foo/bar') : SomeType
    scalarAccessorExpression ':' typeType;
 
-fieldReferenceSelector:  Identifier;
+// field references must be prefixed by this. -- ie., this.firstName
+// this is to disambiguoate lookups by type -- ie., Name
+fieldReferenceSelector: propertyFieldNameQualifier Identifier;
+typeReferenceSelector: typeType;
 
 conditionalTypeWhenCaseDeclaration:
    caseDeclarationMatchExpression '->' ( caseFieldAssignmentBlock |  caseScalarAssigningDeclaration);
@@ -186,7 +182,7 @@ scalarAccessorExpression
     | columnDefinition
     | conditionalTypeConditionDeclaration
     | defaultDefinition
-    | readFunctionDefinition
+    | readFunction
     ;
 
 xpathAccessorDeclaration : 'xpath' '(' accessorExpression ')';
@@ -303,9 +299,10 @@ operationParameterList
 operationParameter
 // Note that only one operationParameterConstraint can exist per parameter, but it can contain
 // multiple expressions
-     :   annotation* (parameterName)? typeType
+     :   annotation* (parameterName)? typeType varargMarker?
      ;
 
+varargMarker: '...';
 // Parameter names are optional.
 // But, they must be used to be referenced in return contracts
 parameterName
@@ -368,14 +365,6 @@ arithmaticOperator
    | '/'
    ;
 
-UnaryOperator
-   : 'left'
-   ;
-
-TeranaryOperator
-   : 'concat3'
-   ;
-
 policyDeclaration
     :  annotation* 'policy' policyIdentifier 'against' typeType '{' policyRuleSet* '}';
 
@@ -410,6 +399,7 @@ policyExpression
     | thisIdentifier
     | literalArray
     | literal;
+
 
 callerIdentifer : 'caller' '.' typeType;
 thisIdentifier : 'this' '.' typeType;
@@ -456,41 +446,30 @@ filterAttributeNameList
 //    : literal | literalArray;
 //
 
-// TODO : Revisit this syntax
-// I've decided not to make the parameters of the fileResource(...) part
-// the language, as this mirrors how we've done annotations.
-// Might revisit this later.
-// Also, originally this was more abstract, rather than being linked directly
-// to files.  However, not sure what tne other usecases are, so will revisit then.
-// Also: I feel like we need to roll this into the service / operation concepts somehow.
-// Having an entirely seperate concept for reading data from files vs getting data from
-// services seems wrong.
-fileResourceDeclaration : annotation* 'fileResource' '(' elementValuePairs ')' Identifier 'provides' 'rowsOf' typeType '{' sourceMapping* '}';
-
-// Make this more generic when needed, currently
-// only need to support files stored in columns
-sourceMapping :
-         Identifier 'by' columnDefinition
-         ;
-
 columnDefinition : 'column' '(' columnIndex ')' ;
 
 defaultDefinition: 'default' '(' literal ')';
 
-readFunctionDefinition: readFunction formalParameters;
+// "declare function" borrowed from typescript.
+// Note that taxi supports declaring a function, but won't provide
+// an implementation of it.  That'll be down to individual libraries
+// Note - intentional decision to enforce these functions to return something,
+// rather than permitting void return types.
+// This is because in a mapping declaration, functions really only have purpose if
+// they return things.
+functionDeclaration: 'declare' 'function' functionName '(' operationParameterList? ')' ':' typeType;
 
-readFunction:
-         'concat'
-         ;
-
-formalParameters
-    :   '(' formalParameterList? ')'
-    ;
-
+// Deprecated, use functionDeclaration
+readFunction: functionName '(' formalParameterList? ')';
+//         'concat' |
+//         'leftAndUpperCase' |
+//         'midAndUpperCase'
+//         ;
+functionName: qualifiedName;
 formalParameterList
     : parameter  (',' parameter)*
     ;
-parameter: StringLiteral | columnDefinition;
+parameter: literal | columnDefinition | readFunction | fieldReferenceSelector | typeReferenceSelector;
 
 columnIndex : IntegerLiteral | StringLiteral;
 
