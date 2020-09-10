@@ -202,8 +202,9 @@ classOrInterfaceType
     ;
 
 
+// A "lenient" enum will match on case insensitive values
 enumDeclaration
-    :    typeDoc? annotation* 'enum' classOrInterfaceType
+    :    typeDoc? annotation* lenientKeyword? 'enum' classOrInterfaceType
          (('inherits' enumInheritedType) | ('{' enumConstants? '}'))
     ;
 
@@ -216,7 +217,7 @@ enumConstants
     ;
 
 enumConstant
-    :   typeDoc? annotation* Identifier enumValue? enumSynonymDeclaration?
+    :   typeDoc? annotation*  defaultKeyword? Identifier enumValue? enumSynonymDeclaration?
     ;
 
 enumValue
@@ -557,6 +558,9 @@ constantDeclaration : 'with' 'default' (literal | qualifiedName);
 typeDoc
  : '[[' ( ~']]' | '"' | '\'')* ']]';
 
+
+lenientKeyword: 'lenient';
+defaultKeyword: 'default';
 
 Identifier
     :   Letter LetterOrDigit*
