@@ -1,11 +1,10 @@
 package lang.taxi.compiler
 
 import lang.taxi.CompilationError
-import lang.taxi.CompilationException
 import lang.taxi.TaxiDocument
 import lang.taxi.Tokens
+import lang.taxi.types.ImportableToken
 import lang.taxi.types.PrimitiveType
-import lang.taxi.types.SourceNames
 import lang.taxi.types.Type
 import lang.taxi.types.UserType
 import org.antlr.v4.runtime.Token
@@ -15,15 +14,15 @@ internal class ImportedTypeCollator(
    private val tokens: Tokens,
    private val importSources: List<TaxiDocument>
 ) {
-   fun collect(): Pair<List<CompilationError>, List<Type>> {
-      val collected = mutableMapOf<String, Type>()
+   fun collect(): Pair<List<CompilationError>, List<ImportableToken>> {
+      val collected = mutableMapOf<String, ImportableToken>()
       val importQueue = LinkedList<Pair<String, Token>>()
       val errors = mutableListOf<CompilationError>()
 
       tokens.imports
          // Ignore any imports that are defined in the set of tokens we're importing.
          // THis happens when we're importing multiple files at once
-         .filter { (qualifiedName, _) -> !tokens.unparsedTypes.containsKey(qualifiedName) }
+         .filter { (qualifiedName, _) -> !tokens.hasUnparsedImportableToken(qualifiedName) }
          .forEach { (qualifiedName, ctx) ->
             importQueue.add(qualifiedName to ctx.start)
          }
@@ -33,7 +32,7 @@ internal class ImportedTypeCollator(
          if (collected.containsKey(name)) continue
          if (PrimitiveType.isPrimitiveType(name)) continue
 
-         val type = getType(name, token)
+         val type = getImportableToken(name, token)
          if (type == null) {
             errors.add(CompilationError(token, "Cannot import $name as it is not defined", token.tokenSource.sourceName))
          } else {
@@ -53,8 +52,8 @@ internal class ImportedTypeCollator(
    }
 
 
-   private fun getType(name: String, referencingToken: Token): Type? {
-      val type = this.importSources.firstOrNull { it.containsType(name) }?.type(name)
-      return type
+   private fun getImportableToken(name: String, referencingToken: Token): ImportableToken? {
+      val importableToken = this.importSources.firstOrNull { it.containsImportable(name) }?.importableToken(name)
+      return importableToken
    }
 }

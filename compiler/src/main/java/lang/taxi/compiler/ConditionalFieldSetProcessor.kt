@@ -23,46 +23,46 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
       return when {
          conditionDeclaration.conditionalTypeWhenDeclaration() != null -> compileWhenCondition(conditionDeclaration.conditionalTypeWhenDeclaration(), namespace)
          conditionDeclaration.fieldExpression() != null -> compileFieldExpression(conditionDeclaration.fieldExpression(), namespace)
-         conditionDeclaration.unaryFieldExpression() != null -> compileUnaryFunctionExpression(conditionDeclaration.unaryFieldExpression(), namespace)
-         conditionDeclaration.ternaryFieldExpression() != null -> compileTerenaryFunctionExpression(conditionDeclaration.ternaryFieldExpression(), namespace)
+//         conditionDeclaration.unaryFieldExpression() != null -> compileUnaryFunctionExpression(conditionDeclaration.unaryFieldExpression(), namespace)
+//         conditionDeclaration.ternaryFieldExpression() != null -> compileTerenaryFunctionExpression(conditionDeclaration.ternaryFieldExpression(), namespace)
          else -> error("Unhandled condition type")
       }
    }
 
-   private fun compileTerenaryFunctionExpression(ternaryFieldExpression: TaxiParser.TernaryFieldExpressionContext, namespace: Namespace): Either<CompilationError, FieldSetExpression> {
-      val operand1 = ternaryFieldExpression.propertyToParameterConstraintLhs(0).qualifiedName().text
-      val operand2 = ternaryFieldExpression.propertyToParameterConstraintLhs(1).qualifiedName().text
-      val operand3 = ternaryFieldExpression.propertyToParameterConstraintLhs(2).qualifiedName().text
-      val operand1FieldReferenceSelector =  FieldReferenceSelector(operand1)
-      val operand2FieldReferenceSelector = FieldReferenceSelector(operand2)
-      val operand3FieldReferenceSelector = FieldReferenceSelector(operand3)
-      val literal = stringLiteralValue(ternaryFieldExpression.StringLiteral())
-      val operator = TerenaryFormulaOperator.forSymbolOrNull(ternaryFieldExpression.TeranaryOperator().text)
-         ?: return Either.left(CompilationError(ternaryFieldExpression.start, "invalid operator ${ternaryFieldExpression.TeranaryOperator().text}"))
-      val typeDeclarationContext = getTypeDeclarationContext(ternaryFieldExpression)
-         ?: return Either.left(CompilationError(ternaryFieldExpression.start, "Cannot resolve enclosing type for ${ternaryFieldExpression.text}"))
-      val operandNameTypeMap = typeDeclarationContext.typeBody().typeMemberDeclaration().map { it.fieldDeclaration().Identifier().text to it.fieldDeclaration().typeType()}.toMap()
-      operandNameTypeMap[operand1] ?: return Either.left(CompilationError(ternaryFieldExpression.start, "Cannot find attribute of $operand1"))
-      operandNameTypeMap[operand2] ?: return Either.left(CompilationError(ternaryFieldExpression.start, "Cannot find attribute of $operand2"))
-      operandNameTypeMap[operand3] ?: return Either.left(CompilationError(ternaryFieldExpression.start, "Cannot find attribute of $operand3"))
-
-      return TerenaryFieldSetExpression(operand1FieldReferenceSelector, operand2FieldReferenceSelector, operand3FieldReferenceSelector, operator, literal).right()
-   }
-
-
-   private fun compileUnaryFunctionExpression(unaryFieldExpressionContext: TaxiParser.UnaryFieldExpressionContext, namespace: Namespace): Either<CompilationError, FieldSetExpression> {
-      val operand = unaryFieldExpressionContext.propertyToParameterConstraintLhs().qualifiedName().text
-      val operandFieldReferenceSelector =  FieldReferenceSelector(operand)
-      val literal = unaryFieldExpressionContext.IntegerLiteral().text
-      val operator = UnaryFormulaOperator.forSymbolOrNull(unaryFieldExpressionContext.UnaryOperator().text)
-         ?: return Either.left(CompilationError(unaryFieldExpressionContext.start, "invalid operator ${unaryFieldExpressionContext.UnaryOperator().text}"))
-      val typeDeclarationContext = getTypeDeclarationContext(unaryFieldExpressionContext)
-         ?: return Either.left(CompilationError(unaryFieldExpressionContext.start, "Cannot resolve enclosing type for ${unaryFieldExpressionContext.text}"))
-      val operandNameTypeMap = typeDeclarationContext.typeBody().typeMemberDeclaration().map { it.fieldDeclaration().Identifier().text to it.fieldDeclaration().typeType()}.toMap()
-      operandNameTypeMap[operand] ?: return Either.left(CompilationError(unaryFieldExpressionContext.start, "Cannot find attribute of $operand"))
-
-      return UnaryCalculatedFieldSetExpression(operandFieldReferenceSelector, literal, operator).right()
-   }
+//   private fun compileTerenaryFunctionExpression(ternaryFieldExpression: TaxiParser.TernaryFieldExpressionContext, namespace: Namespace): Either<CompilationError, FieldSetExpression> {
+//      val operand1 = ternaryFieldExpression.propertyToParameterConstraintLhs(0).qualifiedName().text
+//      val operand2 = ternaryFieldExpression.propertyToParameterConstraintLhs(1).qualifiedName().text
+//      val operand3 = ternaryFieldExpression.propertyToParameterConstraintLhs(2).qualifiedName().text
+//      val operand1FieldReferenceSelector =  FieldReferenceSelector(operand1)
+//      val operand2FieldReferenceSelector = FieldReferenceSelector(operand2)
+//      val operand3FieldReferenceSelector = FieldReferenceSelector(operand3)
+//      val literal = stringLiteralValue(ternaryFieldExpression.StringLiteral())
+//      val operator = TerenaryFormulaOperator.forSymbolOrNull(ternaryFieldExpression.TeranaryOperator().text)
+//         ?: return Either.left(CompilationError(ternaryFieldExpression.start, "invalid operator ${ternaryFieldExpression.TeranaryOperator().text}"))
+//      val typeDeclarationContext = getTypeDeclarationContext(ternaryFieldExpression)
+//         ?: return Either.left(CompilationError(ternaryFieldExpression.start, "Cannot resolve enclosing type for ${ternaryFieldExpression.text}"))
+//      val operandNameTypeMap = typeDeclarationContext.typeBody().typeMemberDeclaration().map { it.fieldDeclaration().Identifier().text to it.fieldDeclaration().typeType()}.toMap()
+//      operandNameTypeMap[operand1] ?: return Either.left(CompilationError(ternaryFieldExpression.start, "Cannot find attribute of $operand1"))
+//      operandNameTypeMap[operand2] ?: return Either.left(CompilationError(ternaryFieldExpression.start, "Cannot find attribute of $operand2"))
+//      operandNameTypeMap[operand3] ?: return Either.left(CompilationError(ternaryFieldExpression.start, "Cannot find attribute of $operand3"))
+//
+//      return TerenaryFieldSetExpression(operand1FieldReferenceSelector, operand2FieldReferenceSelector, operand3FieldReferenceSelector, operator, literal).right()
+//   }
+//
+//
+//   private fun compileUnaryFunctionExpression(unaryFieldExpressionContext: TaxiParser.UnaryFieldExpressionContext, namespace: Namespace): Either<CompilationError, FieldSetExpression> {
+//      val operand = unaryFieldExpressionContext.propertyToParameterConstraintLhs().qualifiedName().text
+//      val operandFieldReferenceSelector =  FieldReferenceSelector(operand)
+//      val literal = unaryFieldExpressionContext.IntegerLiteral().text
+//      val operator = UnaryFormulaOperator.forSymbolOrNull(unaryFieldExpressionContext.UnaryOperator().text)
+//         ?: return Either.left(CompilationError(unaryFieldExpressionContext.start, "invalid operator ${unaryFieldExpressionContext.UnaryOperator().text}"))
+//      val typeDeclarationContext = getTypeDeclarationContext(unaryFieldExpressionContext)
+//         ?: return Either.left(CompilationError(unaryFieldExpressionContext.start, "Cannot resolve enclosing type for ${unaryFieldExpressionContext.text}"))
+//      val operandNameTypeMap = typeDeclarationContext.typeBody().typeMemberDeclaration().map { it.fieldDeclaration().Identifier().text to it.fieldDeclaration().typeType()}.toMap()
+//      operandNameTypeMap[operand] ?: return Either.left(CompilationError(unaryFieldExpressionContext.start, "Cannot find attribute of $operand"))
+//
+//      return UnaryCalculatedFieldSetExpression(operandFieldReferenceSelector, literal, operator).right()
+//   }
 
    private fun compileFieldExpression(fieldExpression: TaxiParser.FieldExpressionContext, namespace: Namespace): Either<CompilationError, FieldSetExpression> {
       val operand1 = fieldExpression.propertyToParameterConstraintLhs(0).qualifiedName().text
@@ -227,7 +227,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
    }
 
    private fun compileFieldReferenceSelector(fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext): Either<CompilationError, WhenSelectorExpression> {
-      return FieldReferenceSelector(fieldReferenceSelector.text).right()
+      return FieldReferenceSelector(fieldReferenceSelector.Identifier().text).right()
    }
 
    private fun compileTypedAccessor(expressionSelector: TaxiParser.MappedExpressionSelectorContext, namespace: Namespace): Either<CompilationError, AccessorExpressionSelector> {

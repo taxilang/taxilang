@@ -891,75 +891,11 @@ type LegacyTradeNotification {
    }
 
    @Test
-   fun canDeclareColumnsWithNames() {
-      val src = """
-type Person {
-   firstName : FirstName as String
-   lastName : LastName as String
-   }
-
-fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {
-   firstName by column("firstName")
-   lastName by column(2)
-}
-      """.trimIndent()
-      val taxi = Compiler(src).compile()
-      val dataSource = taxi.dataSource("DirectoryOfPerson") as FileDataSource
-      dataSource.returnType.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Person>")
-      dataSource.mappings.should.have.size(2)
-
-      dataSource.mappings[0].propertyName.should.equal("firstName")
-      expect(dataSource.mappings[0].index is String)
-      dataSource.mappings[0].index.should.equal("firstName")
-      dataSource.mappings[1].propertyName.should.equal("lastName")
-      expect(dataSource.mappings[0].index is Int)
-      dataSource.mappings[1].index.should.equal(2)
-   }
-
-   @Test(expected=CompilationException::class)
-   fun cannotDeclareColumnsWithoutIndex() {
-      val src = """
-type Person {
-   firstName : FirstName as String
-   lastName : LastName as String
-   }
-
-fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {
-   firstName by column()
-   lastName by column()
-}
-      """.trimIndent()
-      val taxi = Compiler(src).compile()
-      taxi.dataSource("DirectoryOfPerson") as FileDataSource
-   }
-
-   @Test
-   fun canDeclareASource() {
-      val src = """
- type Person {
-   firstName : FirstName as String
-   lastName : LastName as String
-   }
-
-fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {
-   firstName by column(1)
-   lastName by column(2)
-}
-      """.trimIndent()
-      val taxi = Compiler(src).compile()
-      val dataSource = taxi.dataSource("DirectoryOfPerson") as FileDataSource
-      dataSource.returnType.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Person>")
-      dataSource.mappings.should.have.size(2)
-
-      dataSource.mappings[0].propertyName.should.equal("firstName")
-      dataSource.mappings[0].index.should.equal(1)
-      dataSource.mappings[1].propertyName.should.equal("lastName")
-      dataSource.mappings[1].index.should.equal(2)
-   }
-
-   @Test
    fun canDeclareTypeWithColumnMappingsAndThenUseAsASource() {
       val src = """
+declare function concat(String...):String
+declare function leftAndUpperCase(String,String):String
+declare function midAndUpperCase(String,String):String
 type alias FirstName as String
 type alias LastName as String
 type Person {
@@ -967,55 +903,18 @@ type Person {
    lastName : LastName by column(1)
    title: String by default("Mr.")
    age: Int by default(18)
-   primaryKey: String by concat(column(0), "-", column(1), "-", column(2))
 }
 
-fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {}
       """.trimIndent()
       val taxi = Compiler(src).compile()
       val person = taxi.objectType("Person")
       val firstName = person.field("firstName")
       val title = person.field("title")
       val age = person.field("age")
-      val primaryKey = person.field("primaryKey")
       firstName.accessor.should.be.instanceof(ColumnAccessor::class.java)
       title.accessor.should.be.instanceof(ColumnAccessor::class.java)
       age.accessor.should.be.instanceof(ColumnAccessor::class.java)
-      primaryKey.accessor.should.be.instanceof(ReadFunctionFieldAccessor::class.java)
-      val readFunctionAccessor = primaryKey.accessor as ReadFunctionFieldAccessor
-      readFunctionAccessor.arguments.size.should.equal(5)
-      readFunctionAccessor.arguments[0].columnAccessor.should.be.not.`null`
-      readFunctionAccessor.arguments[0].value.should.be.`null`
-      readFunctionAccessor.arguments[1].columnAccessor.should.be.`null`
-      readFunctionAccessor.arguments[1].value.should.equal("-")
-      readFunctionAccessor.arguments[2].columnAccessor.should.be.not.`null`
-      readFunctionAccessor.arguments[2].value.should.be.`null`
-      readFunctionAccessor.arguments[3].columnAccessor.should.be.`null`
-      readFunctionAccessor.arguments[3].value.should.equal("-")
-      readFunctionAccessor.arguments[4].columnAccessor.should.be.not.`null`
-      readFunctionAccessor.arguments[4].value.should.be.`null`
    }
-
-   @Test
-   fun dataSourcesCanHaveAnnotations() {
-      val src = """
-
-type Person {
-   firstName : FirstName as String
-   lastName : LastName as String
-   }
-
-@Foo
-fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {
-   firstName by column(0)
-   lastName by column(1)
-}
-      """.trimIndent()
-      val taxi = Compiler(src).compile()
-      val dataSource = taxi.dataSource("DirectoryOfPerson") as FileDataSource
-      dataSource.annotations.should.have.size(1)
-   }
-
 
    @Test
    fun when_unresolvedTypeExistsInFileWithNamespace_then_namespaceIsNotPrefixedInError() {

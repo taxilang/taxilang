@@ -104,23 +104,7 @@ type Person {
       generated.shouldCompile()
    }
 
-   @Test
-   fun `outputs concatenated columns`() {
-      val src = """
-         type Thing {
-            primaryKey: String by concat(column(0), "-", column("NAME"), "-", column(2))
-         }
-      """.trimIndent()
-      val schema = Compiler(src).compile()
-      val generated = SchemaWriter().generateSchemas(listOf(schema))[0]
-      val expected = """
-         type Thing {
-           primaryKey : String  by concat( column(0),"-",column("NAME"),"-",column(2) )
-         }
-      """
-      generated.trimNewLines().should.equal(expected.trimNewLines())
-      generated.shouldCompile()
-   }
+
 
    @Test
    fun `outputs multiple formats`() {
@@ -177,63 +161,6 @@ type Foo {
       generated.shouldCompile()
    }
 
-   @Test
-   fun `outputs concat3 statements`() {
-      val generated = """
-               type TradeId inherits String
-               type OrderId inherits String
-               type MarketId inherits String
-
-               model Record {
-                  tradeId: TradeId
-                  orderId: OrderId
-                  marketId: MarketId
-                  id: String by concat3(this.tradeId, this.orderId, this.marketId, "-")
-               }
-
-            """.compileAndRegenerateSource()
-      val expected = """
-         type TradeId inherits lang.taxi.String
-
-         type OrderId inherits lang.taxi.String
-
-         type MarketId inherits lang.taxi.String
-
-         type Record {
-            tradeId : TradeId
-            orderId : OrderId
-            marketId : MarketId
-            id : String  by concat3(this.tradeId, this.orderId, this.marketId, "-")
-         }
-      """.trimIndent()
-      generated.trimNewLines().should.equal(expected.trimNewLines())
-      generated.shouldCompile()
-   }
-
-   @Test
-   fun `outputs left statements`() {
-      val generated = """
-               type FirstName inherits String
-               type FullName inherits String
-
-               model Person {
-                  firstName: FirstName
-                  leftName : FullName by left(this.firstName, 5)
-               }
-
-            """.compileAndRegenerateSource()
-      val expected = """type FirstName inherits lang.taxi.String
-
-type FullName inherits lang.taxi.String
-
-type Person {
-   firstName : FirstName
-   leftName : FullName  by left(this.firstName, 5)
-}
-"""
-      generated.trimNewLines().should.equal(expected.trimNewLines())
-      generated.shouldCompile()
-   }
 }
 
 private fun String.shouldCompile() {
