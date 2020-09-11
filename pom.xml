@@ -287,6 +287,12 @@
       </snapshotRepository>
    </distributionManagement>
 
+   <repositories>
+      <repository>
+         <id>vyne-releases</id>
+         <url>http://repo.vyne.co/release</url>
+      </repository>
+   </repositories>
 
    <profiles>
       <profile>
