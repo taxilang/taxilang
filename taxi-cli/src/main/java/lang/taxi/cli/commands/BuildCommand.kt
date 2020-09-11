@@ -1,5 +1,6 @@
 package lang.taxi.cli.commands
 
+import io.vyne.models.functions.stdlib.StdLib
 import lang.taxi.Compiler
 import lang.taxi.TaxiDocument
 import lang.taxi.cli.plugins.PluginRegistry
@@ -10,6 +11,7 @@ import lang.taxi.generators.TaxiEnvironment
 import lang.taxi.generators.WritableSource
 import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.plugins.Plugin
+import org.antlr.v4.runtime.CharStreams
 import org.apache.commons.io.FileUtils
 import org.springframework.stereotype.Component
 import java.nio.charset.Charset
@@ -53,8 +55,11 @@ class BuildCommand(private val pluginManager: PluginRegistry) : ShellCommand {
 
    private fun loadSources(path: Path): TaxiDocument? {
       val taxiProject = TaxiSourcesLoader.loadPackage(path)
+      val projectSources = taxiProject.sources.map { CharStreams.fromString(it.content, it.sourceName) }
+      val stdLibSources = CharStreams.fromString(StdLib.taxi.content, "vyne.stdLib")
 
-      return Compiler(taxiProject).compile()
+      val allSources = projectSources+stdLibSources
+      return Compiler(allSources).compile()
    }
 
 
