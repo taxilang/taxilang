@@ -50,6 +50,7 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
             classPath = [ 
                 path.join(__dirname, '..', '..','..','taxi-lang','core-types', 'target', 'classes') ,
                 path.join(__dirname, '..', '..','..','taxi-lang','compiler', 'target', 'classes') ,
+                path.join(__dirname, '..', '..','..','vyne','vyne-core-types', 'target', 'classes') ,
                 path.join(__dirname, '..', '..', 'taxi-lang-service', 'target', 'classes') ,
                 path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', 'classes') ,
                 path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', 'dependency', '*')  

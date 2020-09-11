@@ -15,6 +15,13 @@
     </properties>
 
     <dependencies>
+        <!-- In order to access the vyne stdlib functions.  We should split
+        this out -->
+        <dependency>
+            <groupId>io.vyne</groupId>
+            <artifactId>vyne-core-types</artifactId>
+            <version>${vyne.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.spekframework.spek2</groupId>
             <artifactId>spek-dsl-jvm</artifactId>

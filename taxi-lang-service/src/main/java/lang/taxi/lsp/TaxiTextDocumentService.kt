@@ -1,5 +1,6 @@
 package lang.taxi.lsp
 
+import io.vyne.models.functions.stdlib.StdLib
 import lang.taxi.*
 import lang.taxi.lsp.completion.CompletionService
 import lang.taxi.lsp.completion.TypeProvider
@@ -37,6 +38,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     private var displayedErrorMessages: List<PublishDiagnosticsParams> = emptyList()
     private val sources: MutableMap<URI, String> = mutableMapOf()
     private val charStreams: MutableMap<URI, CharStream> = mutableMapOf()
+    private val stdLib = CharStreams.fromString(StdLib.taxi.content, StdLib.taxi.name)
     private lateinit var initializeParams: InitializeParams
     private val lastSuccessfulCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
     val lastCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
@@ -126,7 +128,8 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     // on every keypress.
     // We need to find a way to only recompile the document that has changed
     private fun compileAndReport() {
-        val charStreams = this.charStreams.values.toList()
+        val charStreams = this.charStreams.values.toList() + stdLib
+
         val compiler = Compiler(charStreams, tokenCache = tokenCache)
 
         try {
