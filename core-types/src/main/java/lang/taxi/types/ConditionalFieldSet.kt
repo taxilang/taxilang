@@ -19,27 +19,6 @@ data class CalculatedFieldSetExpression(
    override fun asTaxi(): String = "(${operand1.asTaxi()} ${operator.symbol} ${operand2.asTaxi()})"
 }
 
-data class UnaryCalculatedFieldSetExpression(
-   val operand: FieldReferenceSelector,
-   val literal: Any,
-   val operator: UnaryFormulaOperator
-) : FieldSetExpression {
-   override fun asTaxi(): String {
-     return "${operator.symbol}(${operand.asTaxi()}, ${literal})"
-   }
-}
-
-data class TerenaryFieldSetExpression(
-   val operand1: FieldReferenceSelector,
-   val operand2: FieldReferenceSelector,
-   val operand3: FieldReferenceSelector,
-   val operator: TerenaryFormulaOperator,
-   val literal: Any
-) : FieldSetExpression {
-   override fun asTaxi(): String = "${operator.symbol}(${operand1.asTaxi()}, ${operand2.asTaxi()}, ${operand3.asTaxi()}, ${literal.quotedIfString()})"
-}
-
-
 data class WhenFieldSetCondition(
    val selectorExpression: WhenSelectorExpression,
    val cases: List<WhenCaseBlock>
@@ -63,7 +42,8 @@ data class AccessorExpressionSelector(
    }
 }
 
-data class FieldReferenceSelector(val fieldName: String) : WhenSelectorExpression {
+data class TypeReferenceSelector(val type: Type) : Accessor
+data class FieldReferenceSelector(val fieldName: String) : WhenSelectorExpression, Accessor {
    override fun asTaxi(): String = "this.$fieldName"
 }
 
@@ -128,6 +108,7 @@ class ReferenceCaseMatchExpression(val reference: String) : WhenCaseMatchExpress
 class EnumLiteralCaseMatchExpression(val enumValue: EnumValue) : WhenCaseMatchExpression {
    override fun asTaxi(): String = enumValue.qualifiedName
 }
+
 class LiteralCaseMatchExpression(val value: Any) : WhenCaseMatchExpression {
    override fun asTaxi(): String {
       return when (value) {

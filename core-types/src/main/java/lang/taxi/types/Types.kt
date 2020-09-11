@@ -113,7 +113,9 @@ class LazyLoadingWrapper(private val type: Type) {
 
 }
 
-interface Type : Named, Compiled {
+interface ImportableToken : Named, Compiled
+
+interface Type : Named, Compiled, ImportableToken {
    val inheritsFrom: Set<Type>
 
    val allInheritedTypes: Set<Type>
@@ -155,8 +157,11 @@ interface Type : Named, Compiled {
    }
 }
 
-interface TypeDefinition {
+interface TokenDefinition {
    val compilationUnit: CompilationUnit
+}
+interface TypeDefinition : TokenDefinition {
+
 }
 
 interface Documented {
@@ -177,17 +182,13 @@ interface Documented {
  * ArrayType is excluded (as arrays are primitive, and the inner
  * type will be a UserType)
  */
-interface UserType<TDef : TypeDefinition, TExt : TypeDefinition> : Type {
-   var definition: TDef?
+interface UserType<TDef : TypeDefinition, TExt : TypeDefinition> : Type, DefinableToken<TDef> {
 
    val extensions: List<TExt>
 
    fun addExtension(extension: TExt): Either<ErrorMessage, TExt>
 
-   val isDefined: Boolean
-      get() {
-         return this.definition != null
-      }
+
 
    override val compilationUnits: List<CompilationUnit>
       get() = (this.extensions.map { it.compilationUnit } + this.definition?.compilationUnit).filterNotNull()
@@ -197,7 +198,15 @@ interface UserType<TDef : TypeDefinition, TExt : TypeDefinition> : Type {
     * Used when importing this type, to ensure the full catalogue of types is imported
     */
    val referencedTypes: List<Type>
+}
 
+interface DefinableToken<TDef : TokenDefinition> : ImportableToken {
+   var definition: TDef?
+
+   val isDefined: Boolean
+      get() {
+         return this.definition != null
+      }
 }
 
 

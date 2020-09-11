@@ -16,7 +16,7 @@ data class Tokens(
    val unparsedExtensions: List<Pair<Namespace, ParserRuleContext>>,
    val unparsedServices: Map<String, Pair<Namespace, ServiceDeclarationContext>>,
    val unparsedPolicies: Map<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>,
-   val unparsedDataSources: Map<String, Pair<Namespace, TaxiParser.FileResourceDeclarationContext>>,
+   val unparsedFunctions: Map<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>,
    val tokenStore: TokenStore
 ) {
 
@@ -47,7 +47,7 @@ data class Tokens(
          this.unparsedExtensions + others.unparsedExtensions,
          this.unparsedServices + others.unparsedServices,
          this.unparsedPolicies + others.unparsedPolicies,
-         this.unparsedDataSources + others.unparsedDataSources,
+         this.unparsedFunctions + others.unparsedFunctions,
          this.tokenStore + others.tokenStore
       )
    }
@@ -103,6 +103,10 @@ data class Tokens(
       }
    }
 
+   fun hasUnparsedImportableToken(qualifiedName: String): Boolean {
+      return this.unparsedTypes.containsKey(qualifiedName) || this.unparsedFunctions.containsKey(qualifiedName)
+   }
+
 }
 
 
@@ -115,14 +119,14 @@ class TokenCollator : TaxiBaseListener() {
    private val unparsedExtensions = mutableListOf<Pair<Namespace, ParserRuleContext>>()
    private val unparsedServices = mutableMapOf<String, Pair<Namespace, ServiceDeclarationContext>>()
    private val unparsedPolicies = mutableMapOf<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>()
-   private val unparsedSources = mutableMapOf<String, Pair<Namespace, TaxiParser.FileResourceDeclarationContext>>()
+   private val unparsedFunctions  = mutableMapOf<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>()
 
    //    private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
 //    private val unparsedExtensions = mutableListOf<ParserRuleContext>()
 //    private val unparsedServices = mutableMapOf<String, ServiceDeclarationContext>()
    private val tokenStore = TokenStore()
    fun tokens(): Tokens {
-      return Tokens(imports, unparsedTypes, unparsedExtensions, unparsedServices, unparsedPolicies, unparsedSources, tokenStore)
+      return Tokens(imports, unparsedTypes, unparsedExtensions, unparsedServices, unparsedPolicies, unparsedFunctions, tokenStore)
    }
 
    override fun exitEveryRule(ctx: ParserRuleContext) {
@@ -192,6 +196,13 @@ class TokenCollator : TaxiBaseListener() {
       super.exitServiceDeclaration(ctx)
    }
 
+   override fun exitFunctionDeclaration(ctx: TaxiParser.FunctionDeclarationContext) {
+      if (collateExceptions(ctx)) {
+         val qualifiedName = qualify(ctx.functionName().qualifiedName().Identifier().text())
+         unparsedFunctions[qualifiedName] = namespace to ctx
+      }
+   }
+
    override fun exitTypeDeclaration(ctx: TaxiParser.TypeDeclarationContext) {
       if (collateExceptions(ctx)) {
          val typeName = qualify(ctx.Identifier().text)
@@ -224,14 +235,6 @@ class TokenCollator : TaxiBaseListener() {
       collateExceptions(ctx)
       unparsedExtensions.add(namespace to ctx)
       super.exitEnumExtensionDeclaration(ctx)
-   }
-
-   override fun exitFileResourceDeclaration(ctx: TaxiParser.FileResourceDeclarationContext) {
-      if (collateExceptions(ctx)) {
-         val sourceName = qualify(ctx.Identifier().text)
-         unparsedSources[sourceName] = namespace to ctx
-      }
-      super.exitFileResourceDeclaration(ctx)
    }
 
    /**

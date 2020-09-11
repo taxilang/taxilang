@@ -19,19 +19,21 @@ object Enums {
 typealias EnumValueQualifiedName = String
 
 data class EnumValueExtension(val name: String, override val annotations: List<Annotation>, val synonyms: List<EnumValueQualifiedName>, override val typeDoc: String? = null, override val compilationUnit: CompilationUnit) : Annotatable, Documented, TypeDefinition
-data class EnumValue(val name: String, val value: Any = name, val qualifiedName: EnumValueQualifiedName, override val annotations: List<Annotation>, val synonyms: List<EnumValueQualifiedName>, override val typeDoc: String? = null) : Annotatable, Documented {
+data class EnumValue(val name: String, val value: Any = name, val qualifiedName: EnumValueQualifiedName, override val annotations: List<Annotation>, val synonyms: List<EnumValueQualifiedName>, override val typeDoc: String? = null, val isDefault: Boolean = false) : Annotatable, Documented {
    companion object {
-      fun qualifiedNameFrom(name: String):Pair<QualifiedName,String> {
+      fun qualifiedNameFrom(name: String): Pair<QualifiedName, String> {
          val parts = name.split(".")
          return QualifiedName.from(parts.dropLast(1).joinToString(".")) to parts.last()
       }
    }
 }
+
 data class EnumDefinition(val values: List<EnumValue>,
                           override val annotations: List<Annotation> = emptyList(),
                           override val compilationUnit: CompilationUnit,
                           val inheritsFrom: Set<Type> = emptySet(),
                           val basePrimitive: PrimitiveType,
+                          val isLenient: Boolean = false,
                           override val typeDoc: String? = null) : Annotatable, TypeDefinition, Documented {
    private val equality = Equality(this, EnumDefinition::values.toSet(), EnumDefinition::annotations.toSet(), EnumDefinition::typeDoc, EnumDefinition::basePrimitive, EnumDefinition::inheritsFrom.toSet())
    override fun equals(other: Any?) = equality.isEqualTo(other)
@@ -57,12 +59,17 @@ data class EnumType(override val qualifiedName: String,
       }
    }
 
+   val isLenient: Boolean
+      get() {
+         return this.definition?.isLenient ?: false
+      }
+
    private val wrapper = LazyLoadingWrapper(this)
    override val allInheritedTypes: Set<Type>
       get() {
          return if (isDefined) wrapper.allInheritedTypes else emptySet()
       }
-    val baseEnum: EnumType?
+   val baseEnum: EnumType?
       get() {
          return if (isDefined) wrapper.baseEnum else null
       }
@@ -116,6 +123,16 @@ data class EnumType(override val qualifiedName: String,
       }
    }
 
+   val defaultValue: EnumValue?
+      get() {
+         return values.firstOrNull { it.isDefault }
+      }
+
+   val hasDefault: Boolean
+      get() {
+         return defaultValue != null
+      }
+
    val values: List<EnumValue>
       get() {
          return if (this.baseEnum != this) {
@@ -132,21 +149,39 @@ data class EnumType(override val qualifiedName: String,
       }
 
    fun has(valueOrName: Any?): Boolean {
-      return (valueOrName is String && this.hasName(valueOrName)) || this.hasValue(valueOrName)
+      return (valueOrName is String && this.hasName(valueOrName)) || this.hasValue(valueOrName) || this.hasDefault
    }
 
    fun hasName(name: String?): Boolean {
-      return this.values.any { it.name == name }
+      return this.values.any { lenientEqual(it.name, name) } || this.hasDefault
    }
 
    fun hasValue(value: Any?): Boolean {
-      return this.values.any { it.value == value }
+      return this.values.any { lenientEqual(it.value, value) } || this.hasDefault
    }
 
-   fun ofValue(value: Any?)  = this.values.firstOrNull { it.value == value} ?: error("Enum ${this.qualifiedName} does not contain a member with a value of $value")
-   fun ofName(name: String?)  = this.values.firstOrNull { it.name == name} ?: error("Enum ${this.qualifiedName} does not contains a member named $name")
-   fun of(valueOrName: Any?) = this.values.firstOrNull { it.value == valueOrName || it.name == valueOrName } ?:
-      error("Enum ${this.qualifiedName} does not contain either a name nor a value of $valueOrName")
+   private fun lenientEqual(first: Any, second: Any?): Boolean {
+      return if (!this.isLenient) {
+         first == second
+      } else {
+         when {
+            (first is String && second is String) -> first.toLowerCase() == second.toLowerCase()
+            else -> first == second
+         }
+      }
+   }
+
+   fun ofValue(value: Any?) = this.values.firstOrNull { lenientEqual(it.value, value) }
+      ?: defaultValue
+      ?: error("Enum ${this.qualifiedName} does not contain a member with a value of $value")
+
+   fun ofName(name: String?) = this.values.firstOrNull { lenientEqual(it.name, name) }
+      ?: defaultValue
+      ?: error("Enum ${this.qualifiedName} does not contains a member named $name")
+
+   fun of(valueOrName: Any?) = this.values.firstOrNull { lenientEqual(it.value, valueOrName) || lenientEqual(it.name, valueOrName) }
+      ?: defaultValue
+      ?: error("Enum ${this.qualifiedName} does not contain either a name nor a value of $valueOrName")
 
    private fun valueExtensions(valueName: String): List<EnumValueExtension> {
       return this.extensions.flatMap { it.values.filter { value -> value.name == valueName } }
@@ -159,7 +194,21 @@ data class EnumType(override val qualifiedName: String,
          return collatedAnnotations.toList()
       }
 
+   @Deprecated("Use ofName(), as this method name is confusing")
    fun value(valueName: String): EnumValue {
-      return this.values.first { it.name == valueName }
+      return ofName(valueName)
+   }
+
+   /**
+    * Returns true if the provided value would resolve
+    * only through a default value
+    */
+   fun resolvesToDefault(valueOrName: Any): Boolean {
+      return if (!this.hasDefault) {
+         false
+      } else {
+         this.values.none { lenientEqual(it.name, valueOrName) }
+            && this.values.none { lenientEqual(it.value, valueOrName) }
+      }
    }
 }

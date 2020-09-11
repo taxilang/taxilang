@@ -6,7 +6,7 @@ import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 
-data class Parameter(override val annotations: List<Annotation>, override val type: Type, override val name: String?, override val constraints: List<Constraint>) : Annotatable, ConstraintTarget, NameTypePair {
+data class Parameter(override val annotations: List<Annotation>, override val type: Type, override val name: String?, override val constraints: List<Constraint>, val isVarArg:Boolean = false) : Annotatable, ConstraintTarget, NameTypePair {
    override val description: String = "param $name"
 }
 
