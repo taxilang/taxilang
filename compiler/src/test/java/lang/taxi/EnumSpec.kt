@@ -216,6 +216,112 @@ enum English {
             """.trimIndent()
             Compiler(src).compile().enumType("French").value("Un").synonyms.should.have.size(1)
          }
+
+         describe("enum default values") {
+            it("will match default if no other option matches") {
+               val src = """
+               enum Country {
+                  NZ("New Zealand"),
+                  AUS("Australia"),
+                  default UNKNOWN("Unknown")
+               }
+            """.trimIndent()
+               val enum = Compiler(src).compile().enumType("Country")
+               enum.ofValue("New Zealand").name.should.equal("NZ")
+               enum.ofValue("Australia").name.should.equal("AUS")
+               // No match, so use default
+               enum.ofValue("United Kingdom").name.should.equal("UNKNOWN")
+
+               // Not lenient, so shouldn't match
+               enum.of("nz").name.should.equal("UNKNOWN")
+               enum.of("UK").name.should.equal("UNKNOWN")
+               enum.hasName("UK").should.be.`true` //should match default
+               enum.hasValue("UK").should.be.`true` //should match default
+            }
+            it("is invalid to declare more than one default") {
+               val src = """
+               enum Country {
+                  NZ("New Zealand"),
+                  default AUS("Australia"),
+                  default UNKNOWN("Unknown")
+               }
+            """.trimIndent()
+               val errors = Compiler(src).validate()
+               errors.size.should.equal(1)
+               errors.first().detailMessage.should.equal("Cannot declare multiple default values - found AUS, UNKNOWN")
+            }
+            it("resolves to default if no other enum matches, and defaults are enabled") {
+               val src = """
+               enum Country {
+                  NZ("New Zealand"),
+                  default AUS("Australia"),
+                  UNKNOWN("Unknown")
+               }
+            """.trimIndent()
+               val enumType = Compiler(src).compile().enumType("Country")
+               enumType.resolvesToDefault("uk").should.be.`true`
+               enumType.resolvesToDefault("nz").should.be.`true`
+               enumType.resolvesToDefault("NZ").should.be.`false`
+            }
+            it("does not resolve to default when no default is enabled, if no other enum matches") {
+               val src = """
+               enum Country {
+                  NZ("New Zealand"),
+                  AUS("Australia"),
+                  UNKNOWN("Unknown")
+               }
+            """.trimIndent()
+               val enumType = Compiler(src).compile().enumType("Country")
+               enumType.resolvesToDefault("uk").should.be.`false`
+               enumType.resolvesToDefault("nz").should.be.`false`
+               enumType.resolvesToDefault("NZ").should.be.`false`
+            }
+         }
+         it("is case insensitive when resolving defaults if enum is lenient") {
+            val src = """
+               lenient enum Country {
+                  NZ("New Zealand"),
+                  AUS("Australia"),
+                  default UNKNOWN("Unknown")
+               }
+            """.trimIndent()
+            val enumType = Compiler(src).compile().enumType("Country")
+            enumType.resolvesToDefault("nz").should.be.`false`
+            enumType.resolvesToDefault("NZ").should.be.`false`
+            enumType.of("nz").name.should.equal("NZ")
+            enumType.of("uk").name.should.equal("UNKNOWN")
+         }
+         describe("case insensitive enums") {
+            it("is case sensitive by default") {
+               val src = """
+               enum Country {
+                  NZ("New Zealand"),
+                  AUS("Australia")
+               }
+            """.trimIndent()
+               val enum = Compiler(src).compile().enumType("Country")
+               enum.isLenient.should.be.`false`
+               enum.hasName("nz").should.be.`false`
+               enum.hasName("NZ").should.be.`true`
+               enum.hasValue("new zealand").should.be.`false`
+               enum.hasValue("New Zealand").should.be.`true`
+            }
+
+            it("supports lenient enums which match on case insensitive values") {
+               val src = """
+               lenient enum Country {
+                  NZ("New Zealand"),
+                  AUS("Australia")
+               }
+            """.trimIndent()
+               val enum = Compiler(src).compile().enumType("Country")
+               enum.isLenient.should.be.`true`
+               enum.of("nz").name.should.equal("NZ")
+               enum.ofValue("new zealand").name.should.equal("NZ")
+               enum.ofName("nz").name.should.equal("NZ")
+            }
+         }
+
          it("should support defining synonyms in extensions") {
 
          }

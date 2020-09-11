@@ -921,14 +921,15 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             val annotations = collateAnnotations(ctx.annotation())
             val basePrimitive = deriveEnumBaseType(enumValues)
             val inherits = parseEnumInheritance(namespace, ctx.enumInheritedType())
-
+            val isLenient = ctx.lenientKeyword() != null
             val enumType = EnumType(typeName, EnumDefinition(
                enumValues,
                annotations,
                ctx.toCompilationUnit(),
                inheritsFrom = if (inherits != null) setOf(inherits) else emptySet(),
                typeDoc = parseTypeDoc(ctx.typeDoc()),
-               basePrimitive = basePrimitive
+               basePrimitive = basePrimitive,
+               isLenient = isLenient
             ))
             typeSystem.register(enumType)
             enumType
@@ -975,12 +976,24 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             val name = enumConstant.Identifier().text
             val qualifiedName = "$enumQualifiedName.$name"
             val value = enumConstant.enumValue()?.literal()?.value() ?: name
+            val isDefault = enumConstant.defaultKeyword() != null
             parseSynonyms(namespace, enumConstant).map { synonyms ->
                synonymRegistry.registerSynonyms(qualifiedName, synonyms, enumConstant)
-               EnumValue(name, value, qualifiedName, annotations, synonyms, parseTypeDoc(enumConstant.typeDoc()))
+               EnumValue(name, value, qualifiedName, annotations, synonyms, parseTypeDoc(enumConstant.typeDoc()), isDefault)
             }
          }.invertEitherList()
             .mapLeft { listOfLists: List<List<CompilationError>> -> listOfLists.flatten() }
+            .flatMap { enumValues -> validateOnlySingleDefaultEnumValuePresent(enumValues, enumConstants)  }
+      }
+
+   }
+
+   private fun validateOnlySingleDefaultEnumValuePresent(enumValues: List<EnumValue>, token: TaxiParser.EnumConstantsContext): Either<List<CompilationError>,List<EnumValue>> {
+     val defaults = enumValues.filter { it.isDefault }
+      if (defaults.size > 1) {
+         return Either.left(listOf(CompilationError(token.start, "Cannot declare multiple default values - found ${defaults.joinToString { it.name }}")))
+      } else {
+         return Either.right(enumValues)
       }
    }
 
