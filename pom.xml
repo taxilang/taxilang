@@ -215,7 +215,10 @@
     </distributionManagement>
 
     <repositories>
-        <!-- for taxi snapshots -->
+        <repository>
+            <id>vyne-releases</id>
+            <url>http://repo.vyne.co/release</url>
+        </repository>
         <repository>
             <id>vyne-snapshots</id>
             <url>http://repo.vyne.co/snapshot</url>
