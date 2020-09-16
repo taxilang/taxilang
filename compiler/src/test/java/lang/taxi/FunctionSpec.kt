@@ -2,6 +2,8 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.functions.FunctionAccessor
+import lang.taxi.functions.stdlib.Left
+import lang.taxi.functions.stdlib.Strings
 import lang.taxi.types.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -145,6 +147,40 @@ namespace pkgB {
             .accessor as FunctionAccessor
          accessor.inputs[0].should.equal(FieldReferenceSelector("firstName"))
       }
+
+
+      it("should resolve locally declared functions even if they have a similarly named counterpart in the stdlib") {
+         val accessor = """
+            // left is also declared in the stdlib, but we expect this version to get resolved
+            declare function left(String,Int):String
+
+               model Person {
+                  firstName: String
+                  leftName : String by left(this.firstName, 5)
+               }""".compiled()
+            .objectType("Person")
+            .field("leftName")
+            .accessor as FunctionAccessor
+         accessor.function.qualifiedName.should.equal("left")
+         accessor.function.qualifiedName.should.not.equal(Left.name.fullyQualifiedName)
+      }
+
+      describe("backwards compatability of stdlib") {
+         // a bunch of functions used to be present in the top-level library.
+         // Make sure they still are.
+         it("should resolve stdlib functions without imports if no other declaration is present") {
+            val accessor = """
+               model Person {
+                  firstName: String
+                  leftName : String by left(this.firstName, 5)
+               }""".compiled()
+               .objectType("Person")
+               .field("leftName")
+               .accessor as FunctionAccessor
+            accessor.function.qualifiedName.should.equal(Left.name.fullyQualifiedName)
+         }
+      }
+
 
       // Ignored until coalesce becomes a function
       xit("should allow fields to reference other types") {
