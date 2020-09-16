@@ -10,17 +10,9 @@
    <artifactId>taxi-cli</artifactId>
 
    <properties>
-      <vyne.version>0.8.0</vyne.version>
       <pf4j.version>2.4.0</pf4j.version>
    </properties>
    <dependencies>
-      <!-- This is a really bad idea, and we need to split this out. -->
-
-      <dependency>
-         <groupId>io.vyne</groupId>
-         <artifactId>vyne-core-types</artifactId>
-         <version>${vyne.version}</version>
-      </dependency>
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>compiler</artifactId>

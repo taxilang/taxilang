@@ -5,6 +5,7 @@ import arrow.core.getOrHandle
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import lang.taxi.compiler.TokenProcessor
+import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.packages.TaxiPackageSources
 import lang.taxi.sources.SourceCode
@@ -233,8 +234,10 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
     * as possible
     */
    private fun collectTokens(): Pair<Tokens, List<CompilationError>> {
+      val builtInSources = CharStreams.fromString(StdLib.taxi,"Native StdLib")
 
-      val collectionResult = inputs.map { input ->
+      val allInputs = inputs + builtInSources
+      val collectionResult = allInputs.map { input ->
          // We cache the result.
          // This is primarily because the input is a stream, and once parsed the first
          // time, we have to seek back to the start to reparse.

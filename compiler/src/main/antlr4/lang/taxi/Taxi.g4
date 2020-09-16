@@ -123,7 +123,11 @@ mappedExpressionSelector: // xpath('/foo/bar') : SomeType
 
 // field references must be prefixed by this. -- ie., this.firstName
 // this is to disambiguoate lookups by type -- ie., Name
-fieldReferenceSelector: propertyFieldNameQualifier Identifier;
+//
+// Note: Have had to relax the requirement for propertyFieldNameQualifier
+// to be mandatory, as this created bacwards comapatbility issues
+// in when() clauses
+fieldReferenceSelector: propertyFieldNameQualifier? Identifier;
 typeReferenceSelector: typeType;
 
 conditionalTypeWhenCaseDeclaration:

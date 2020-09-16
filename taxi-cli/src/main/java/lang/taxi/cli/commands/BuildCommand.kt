@@ -1,6 +1,5 @@
 package lang.taxi.cli.commands
 
-import io.vyne.models.functions.stdlib.StdLib
 import lang.taxi.Compiler
 import lang.taxi.TaxiDocument
 import lang.taxi.cli.plugins.PluginRegistry
@@ -56,10 +55,7 @@ class BuildCommand(private val pluginManager: PluginRegistry) : ShellCommand {
    private fun loadSources(path: Path): TaxiDocument? {
       val taxiProject = TaxiSourcesLoader.loadPackage(path)
       val projectSources = taxiProject.sources.map { CharStreams.fromString(it.content, it.sourceName) }
-      val stdLibSources = CharStreams.fromString(StdLib.taxi.content, "vyne.stdLib")
-
-      val allSources = projectSources+stdLibSources
-      return Compiler(allSources).compile()
+      return Compiler(projectSources).compile()
    }
 
 
