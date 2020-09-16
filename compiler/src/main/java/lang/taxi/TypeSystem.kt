@@ -2,6 +2,8 @@ package lang.taxi
 
 import arrow.core.Either
 import lang.taxi.functions.Function
+import lang.taxi.functions.stdlib.StdLib
+import lang.taxi.stdlib.StdLibSchema
 import lang.taxi.types.*
 import lang.taxi.utils.toEither
 import org.antlr.v4.runtime.ParserRuleContext
@@ -23,7 +25,7 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       return tokenList(includeImportedTypes).filterIsInstance<Type>()
    }
 
-   fun getOrCreate(typeName: String, location: Token): Type {
+   fun getOrCreate(typeName: String, location: Token): ImportableToken {
       val type = getOrCreate(typeName)
       if (type is ObjectType && !type.isDefined) {
          referencesToUnresolvedTypes.put(typeName, location)
@@ -31,7 +33,7 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       return type
    }
 
-   fun getOrCreate(typeName: String): Type {
+   fun getOrCreate(typeName: String): ImportableToken {
       if (PrimitiveType.isPrimitiveType(typeName)) {
          return PrimitiveType.fromDeclaration(typeName)
       }
@@ -66,9 +68,8 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       if (!contains(qualifiedName)) return false
       compiledTokens[qualifiedName]?.let { importableToken ->
          return when (importableToken) {
-            is Function -> true
-            is UserType<*, *> -> {
-               val registeredType = importableToken as UserType<TypeDefinition, TypeDefinition>
+            is DefinableToken<*> -> {
+               val registeredType = importableToken as DefinableToken<*>
                registeredType.definition != null
             }
             else -> error("unhandled token type ${importableToken::class.simpleName}")
@@ -142,7 +143,7 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       }
 
       return this.compiledTokens[qualifiedName] as ImportableToken?
-         ?: throw IllegalArgumentException("$qualifiedName is not defined as a type")
+         ?: throw IllegalArgumentException("$qualifiedName is not defined")
    }
 
    fun containsUnresolvedTypes(): Boolean {
@@ -203,6 +204,11 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       } else if (matchedImplicitImports.size > 1) {
          val possibleReferences = matchedImplicitImports.joinToString { it.toString() }
          throw AmbiguousNameException("Name reference $name is ambiguous, and could refer to any of the available types $possibleReferences")
+      }
+
+      // Check to see if it's present in the stdlib
+      if (StdLibSchema.taxiDocument.containsImportable(StdLib.stdLibName(name).fullyQualifiedName)) {
+         return StdLib.stdLibName(name).fullyQualifiedName
       }
 
       if (namespace.isEmpty()) {

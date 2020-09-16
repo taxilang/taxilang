@@ -127,6 +127,39 @@ type TradeRecord {
       val doc = Compiler(src).compile()
    }
 
+
+   @Test
+   fun `can use legacy when syntax - without the this prefix`() {
+      val src = """
+      type Direction inherits String
+      type BankDirection inherits Direction
+      type ClientDirection inherits Direction
+      type Order {
+         bankDirection: BankDirection
+         // Note: This is the point of the test
+         // that there's no this. before the bankDirection field
+         clientDirection: ClientDirection by when (bankDirection) {
+            "Buy" -> "Sell"
+            "Sell" -> "Buy"
+         }
+      }
+      """
+      val doc = Compiler(src).compile()
+      val order = doc.objectType("Order")
+      order.fields.should.have.size(2)
+      val clientDirection = order.field("clientDirection")
+      val accessor = clientDirection.accessor as ConditionalAccessor
+      val condition = accessor.expression as WhenFieldSetCondition
+      condition.cases.should.have.size(2)
+      // Buy -> Sell
+      (condition.cases[0].matchExpression as LiteralCaseMatchExpression).value.should.equal("Buy")
+      ((condition.cases[0].assignments[0] as InlineAssignmentExpression).assignment as LiteralAssignment).value.should.equal("Sell")
+
+      // Sell -> Buy
+      (condition.cases[1].matchExpression as LiteralCaseMatchExpression).value.should.equal("Sell")
+      ((condition.cases[1].assignments[0] as InlineAssignmentExpression).assignment as LiteralAssignment).value.should.equal("Buy")
+   }
+
    @Test
    fun canDeclareSingleFieldConditionalAssignments() {
       val src = """
@@ -260,7 +293,7 @@ type TradeRecord {
       """.trimIndent()
       val errors = Compiler(src).validate()
       errors.should.satisfy { it.any { error ->
-         error.detailMessage == "FixedOrFloatLeg is not defined as a type"
+         error.detailMessage == "FixedOrFloatLeg is not defined"
       } }
    }
 }

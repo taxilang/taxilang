@@ -1,6 +1,7 @@
 package lang.taxi.compiler
 
 import arrow.core.Either
+import arrow.core.extensions.either.monad.flatMap
 import arrow.core.flatMap
 import arrow.core.getOrElse
 import arrow.core.getOrHandle
@@ -58,6 +59,8 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    private val conditionalFieldSetProcessor = ConditionalFieldSetProcessor(this)
    private val calculatedFieldSetProcessor = CalculatedFieldSetProcessor(this)
+
+   private val tokensCurrentlyCompiling = mutableSetOf<String>()
 
    init {
       val importedTypes = if (collectImports) {
@@ -241,6 +244,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       if (createEmptyTypesPerformed) {
          return
       }
+      tokens.unparsedFunctions.forEach { tokenName, (_, token) ->
+         typeSystem.register(Function.undefined(tokenName))
+      }
       tokens.unparsedTypes.forEach { tokenName, (_, token) ->
          when (token) {
             is TaxiParser.EnumDeclarationContext -> typeSystem.register(EnumType.undefined(tokenName))
@@ -272,15 +278,27 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          // this to already exist
          return
       }
-      when (tokenRule) {
-         is TaxiParser.TypeDeclarationContext -> compileType(namespace, tokenName, tokenRule)
-         is TaxiParser.EnumDeclarationContext -> compileEnum(namespace, tokenName, tokenRule).collectErrors()
-         is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(namespace, tokenName, tokenRule).collectError()
-         // TODO : This is a bit broad - assuming that all typeType's that hit this
-         // line will be a TypeAlias inline.  It could be a normal field declaration.
-         is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(namespace, tokenRule).collectError()
-         else -> TODO("Not handled: $tokenRule")
+
+      if (tokensCurrentlyCompiling.contains(tokenName)) {
+         return
       }
+
+      tokensCurrentlyCompiling.add(tokenName)
+      try {
+         when (tokenRule) {
+            is TaxiParser.TypeDeclarationContext -> compileType(namespace, tokenName, tokenRule)
+            is TaxiParser.EnumDeclarationContext -> compileEnum(namespace, tokenName, tokenRule).collectErrors()
+            is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(namespace, tokenName, tokenRule).collectError()
+            // TODO : This is a bit broad - assuming that all typeType's that hit this
+            // line will be a TypeAlias inline.  It could be a normal field declaration.
+            is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(namespace, tokenRule).collectError()
+            else -> TODO("Not handled: $tokenRule")
+         }
+      } catch (exception:Exception) {
+         tokensCurrentlyCompiling.remove(tokenName)
+         throw  exception
+      }
+
    }
 
    private fun compileTypeExtensions() {
@@ -865,6 +883,20 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return attemptToLookupTypeByName(namespace, requestedTypeName, context).flatMap { qualifiedTypeName ->
          if (typeSystem.contains(qualifiedTypeName)) {
             return@flatMap typeSystem.getTokenOrError(qualifiedTypeName, context)
+               .flatMap { importableToken ->
+                  if (importableToken is DefinableToken<*> && !importableToken.isDefined) {
+                     unparsedCheckAndCompile(qualifiedTypeName) ?: Either.right(importableToken)
+                  } else {
+                     Either.right(importableToken)
+                  }
+               }
+//               .flatMap { importableToken ->
+//               if (importableToken is DefinableToken<*> && !importableToken.isDefined) {
+//                  f = unparsedCheckAndCompile(qualifiedTypeName)
+//               } else {
+//                  Either.right(importableToken)
+//               }
+
          }
 
          // Check to see if the token is unparsed, and
@@ -983,13 +1015,13 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             }
          }.invertEitherList()
             .mapLeft { listOfLists: List<List<CompilationError>> -> listOfLists.flatten() }
-            .flatMap { enumValues -> validateOnlySingleDefaultEnumValuePresent(enumValues, enumConstants)  }
+            .flatMap { enumValues -> validateOnlySingleDefaultEnumValuePresent(enumValues, enumConstants) }
       }
 
    }
 
-   private fun validateOnlySingleDefaultEnumValuePresent(enumValues: List<EnumValue>, token: TaxiParser.EnumConstantsContext): Either<List<CompilationError>,List<EnumValue>> {
-     val defaults = enumValues.filter { it.isDefault }
+   private fun validateOnlySingleDefaultEnumValuePresent(enumValues: List<EnumValue>, token: TaxiParser.EnumConstantsContext): Either<List<CompilationError>, List<EnumValue>> {
+      val defaults = enumValues.filter { it.isDefault }
       if (defaults.size > 1) {
          return Either.left(listOf(CompilationError(token.start, "Cannot declare multiple default values - found ${defaults.joinToString { it.name }}")))
       } else {
