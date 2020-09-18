@@ -124,7 +124,7 @@ object ElseMatchExpression : WhenCaseMatchExpression {
 
 interface ValueAssignment : TaxiStatementGenerator
 data class ScalarAccessorValueAssignment(val accessor: Accessor) : ValueAssignment {
-   override fun asTaxi(): String = ""
+   override fun asTaxi(): String = "/* ScalarAccessorValueAssignment does not yet generate taxi */"
 }
 
 data class DestructuredAssignment(val assignments: List<FieldAssignmentExpression>) : ValueAssignment {

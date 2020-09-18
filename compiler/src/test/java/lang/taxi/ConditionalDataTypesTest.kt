@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.functions.FunctionAccessor
 import lang.taxi.types.*
 import org.junit.Test
 
@@ -276,6 +277,25 @@ type TradeRecord {
       errors.should.satisfy { it.any { error ->
          error.detailMessage == "'Fooball' is not defined on enum FixedOrFloatLeg"
       } }
+   }
+
+   @Test
+   fun `can use functions on rhs of a when block`() {
+      val field = Compiler("""
+         model Foo {
+            assetClass : String by column("assetClass")
+            identifierValue : String? by when (this.assetClass) {
+               "FXD" -> left(column("SYMBOL"),6)
+               else -> column("ISIN")
+            }
+         }
+      """).compile().objectType("Foo").field("identifierValue")
+      val whenCondition = (field.accessor as ConditionalAccessor).expression as WhenFieldSetCondition
+      val assignmentExpression = whenCondition.cases[0].assignments[0] as InlineAssignmentExpression
+      val assingment = assignmentExpression.assignment as ScalarAccessorValueAssignment
+      val accessor = assingment.accessor as FunctionAccessor
+      accessor.function.qualifiedName.should.equal("taxi.stdlib.left")
+      // function parsing is tested elsewhere
    }
 
    @Test
