@@ -474,7 +474,15 @@ functionName: qualifiedName;
 formalParameterList
     : parameter  (',' parameter)*
     ;
-parameter: literal | columnDefinition | readFunction | fieldReferenceSelector | typeReferenceSelector;
+//    scalarAccessorExpression
+      //    : xpathAccessorDeclaration
+      //    | jsonPathAccessorDeclaration
+      //    | columnDefinition
+      //    | conditionalTypeConditionDeclaration
+      //    | defaultDefinition
+      //    | readFunction
+      //    ;
+parameter: literal |  scalarAccessorExpression | fieldReferenceSelector | typeReferenceSelector;
 
 columnIndex : IntegerLiteral | StringLiteral;
 

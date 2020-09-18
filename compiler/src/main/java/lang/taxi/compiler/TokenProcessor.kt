@@ -608,8 +608,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             val parameters = functionContext.formalParameterList().parameter().map { parameterContext ->
                when {
                   parameterContext.literal() != null -> LiteralAccessor(parameterContext.literal().value())
-                  parameterContext.readFunction() != null -> buildReadFunctionAccessor(parameterContext.readFunction())
-                  parameterContext.columnDefinition() != null -> buildColumnAccessor(parameterContext.columnDefinition())
+                  parameterContext.scalarAccessorExpression() != null -> compileScalarAccessor(parameterContext.scalarAccessorExpression())
+//                  parameterContext.readFunction() != null -> buildReadFunctionAccessor(parameterContext.readFunction())
+//                  parameterContext.columnDefinition() != null -> buildColumnAccessor(parameterContext.columnDefinition())
                   parameterContext.fieldReferenceSelector() != null -> FieldReferenceSelector(parameterContext.fieldReferenceSelector().Identifier().text)
                   parameterContext.typeReferenceSelector() != null -> {
                      typeOrError(namespace, parameterContext.typeReferenceSelector().typeType()).map { type ->
@@ -639,11 +640,12 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val parameters = expression.formalParameterList().parameter().map { parameterContext ->
          when {
             parameterContext.literal() != null -> ReadFunctionArgument(value = parameterContext.literal().value(), columnAccessor = null)
-            parameterContext.columnDefinition() != null -> ReadFunctionArgument(value = null,
-               columnAccessor = ColumnAccessor(index =
-               parameterContext.columnDefinition().columnIndex().StringLiteral()?.text
-                  ?: parameterContext.columnDefinition().columnIndex().IntegerLiteral().text.toInt(), defaultValue = null)
-            )
+//            parameterContext.scalarAccessorExpression() !=
+//            parameterContext.columnDefinition() != null -> ReadFunctionArgument(value = null,
+//               columnAccessor = ColumnAccessor(index =
+//               parameterContext.columnDefinition().columnIndex().StringLiteral()?.text
+//                  ?: parameterContext.columnDefinition().columnIndex().IntegerLiteral().text.toInt(), defaultValue = null)
+//            )
             else -> throw CompilationException(CompilationError(expression.start, "invalid parameter", expression.source().normalizedSourceName))
          }
       }
