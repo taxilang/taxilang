@@ -98,6 +98,9 @@ class LazyLoadingWrapper(private val type: Type) {
    }
 
    private fun detectHashCollision(compilationUnits: List<CompilationUnit>) {
+      if (!TaxiCoreDebugOptions.checkForTypeHashClashes) {
+         return
+      }
       val sourcesWithHashCollision = compilationUnits
          .groupBy { it.source.hashCode() }
          .filter { it.value.size > 1 }
