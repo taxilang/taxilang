@@ -25,6 +25,8 @@ class CompletionService(private val typeProvider: TypeProvider) {
             TaxiParser.RULE_typeType -> typeProvider.getTypes(listOf(importDecorator))
             TaxiParser.RULE_caseScalarAssigningDeclaration -> typeProvider.getEnumValues(listOf(importDecorator), context.start.text)
             TaxiParser.RULE_enumSynonymSingleDeclaration -> typeProvider.getEnumValues(listOf(importDecorator), context.start.text)
+            TaxiParser.RULE_enumSynonymDeclaration -> typeProvider.getEnumTypes(listOf(importDecorator))
+            TaxiParser.RULE_enumConstants -> listOf(CompletionItem("synonym of"))
             else -> emptyList()
         }
         return completions(completionItems)

@@ -125,7 +125,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     // We're compiling the entire workspace every time we get a request, which is
     // on every keypress.
     // We need to find a way to only recompile the document that has changed
-    private fun compileAndReport() {
+    internal fun compileAndReport() {
         val charStreams = this.charStreams.values.toList()
 
         val compiler = Compiler(charStreams, tokenCache = tokenCache)

@@ -3,7 +3,6 @@ package lang.taxi.lsp
 import com.winterbe.expekt.should
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.services.LanguageClient
-import org.junit.Test
 import org.mockito.Mockito.mock
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -23,6 +22,43 @@ object CompletionSpec : Spek({
             completions.shouldContainLabels("type", "enum", "type alias")
         }
 
+//        describe("enum completion") {
+//            val (service, workspaceRoot) = documentServiceFor("test-scenarios/enum-completion-workspace")
+//            service.compileAndReport()
+//            val originalSource = workspaceRoot.resolve("direction.taxi").toFile().readText()
+//
+//            it("should offer 'synonym of' prompt") {
+//                // start editing:
+//                val updatedSource = """$originalSource
+//                    |
+//                    |enum ClientDirection {
+//                    |   ClientBuys
+//                """.trimMargin()
+//                service.applyEdit("direction.taxi", updatedSource, workspaceRoot)
+//                val (line,char) = updatedSource.positionOf("ClientBuys ")
+//                val completions = service.completion(CompletionParams(
+//                        workspaceRoot.document("direction.taxi"),
+//                        Position(line,char)
+//                )).get().left
+//                completions.shouldContainLabels("synonym of")
+//            }
+//            it("should offer enum types") {
+//                val updatedSource = """$originalSource
+//                    |
+//                    |enum ClientDirection {
+//                    |   ClientBuys synonym of
+//                """.trimMargin()
+//                service.applyEdit("direction.taxi", updatedSource, workspaceRoot)
+//                val (line,char) = updatedSource.positionOf("synonym of ")
+//                val completions = service.completion(CompletionParams(
+//                        workspaceRoot.document("direction.taxi"),
+//                        Position(line,char)
+//                )).get().left
+//
+//                completions.should.have.size(1) // Only expect enums here
+//                completions.shouldContainLabels("BankDirection")
+//            }
+//        }
         describe("for types") {
             val (service, workspaceRoot) = documentServiceFor("test-scenarios/simple-workspace")
 
@@ -158,6 +194,24 @@ object CompletionSpec : Spek({
         }
     }
 })
+
+private typealias LineIndex = Int
+private typealias CharIndex = Int
+private fun String.positionOf(match: String): Pair<LineIndex,CharIndex> {
+    val cursorPositionLine = this.lines().indexOfFirst { it.contains(match) }
+    val cursorPositionChar = this.lines()[cursorPositionLine].indexOf(match)
+    return cursorPositionLine to cursorPositionChar
+
+}
+
+private fun TaxiTextDocumentService.applyEdit(fileName: String, updatedSource: String, workspaceRoot: Path) {
+    this.didChange(DidChangeTextDocumentParams(
+            workspaceRoot.versionedDocument(fileName),
+            listOf(TextDocumentContentChangeEvent(
+                    updatedSource
+            ))
+    ))
+}
 
 private fun List<CompletionItem>.shouldContainLabels(expectedLabels: List<String>) {
     expectedLabels.forEach { expectedLabel ->

@@ -26,6 +26,27 @@ object TopLevelCompletions {
         """.trimMargin()))
         label = "type"
     }
+    private val model = CompletionItem().apply {
+        insertText = """model $1 {
+            |   $0
+            |}""".trimMargin()
+        kind = CompletionItemKind.Class
+        insertTextFormat = InsertTextFormat.Snippet
+        documentation = Either.forRight(markdown("""Defines a new model in the taxonomy.
+            |You should favour models over types when defining something a system produces (ie.,
+            |a contract of a system).
+            |
+            |examples: 
+            |
+            |```
+            |model Person {
+            |   firstName : FirstName as String // Adding an inline type-alias
+            |   lastName : LastName // Using a type already declared elsewhere
+            |}
+            |```
+        """.trimMargin()))
+        label = "type"
+    }
     private val enum = CompletionItem().apply {
         insertText = """enum $1 {
             |   $0
@@ -68,6 +89,6 @@ object TopLevelCompletions {
 
 
     val topLevelCompletionItems: List<CompletionItem> = listOf(
-            type, enum, typeAlias
+            type, enum, typeAlias, service, model
     )
 }
