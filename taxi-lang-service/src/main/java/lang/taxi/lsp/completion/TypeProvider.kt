@@ -22,8 +22,8 @@ class TypeProvider(private val lastSuccessfulCompilationResult: AtomicReference<
         val compiledDoc = lastSuccessfulCompilationResult.get()?.document
         val typeNames = lastCompilationResult.get()?.compiler?.declaredTypeNames() ?: emptyList()
         val completionItems = typeNames.mapNotNull { name ->
-            if (compiledDoc?.containsType(name.typeName) == true) { // == true because of nulls
-                name to compiledDoc.type(name.typeName)
+            if (compiledDoc?.containsType(name.fullyQualifiedName) == true) { // == true because of nulls
+                name to compiledDoc.type(name.fullyQualifiedName)
             } else {
                 null
             }

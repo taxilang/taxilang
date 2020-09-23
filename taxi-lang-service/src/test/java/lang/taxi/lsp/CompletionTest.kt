@@ -22,43 +22,6 @@ object CompletionSpec : Spek({
             completions.shouldContainLabels("type", "enum", "type alias")
         }
 
-//        describe("enum completion") {
-//            val (service, workspaceRoot) = documentServiceFor("test-scenarios/enum-completion-workspace")
-//            service.compileAndReport()
-//            val originalSource = workspaceRoot.resolve("direction.taxi").toFile().readText()
-//
-//            it("should offer 'synonym of' prompt") {
-//                // start editing:
-//                val updatedSource = """$originalSource
-//                    |
-//                    |enum ClientDirection {
-//                    |   ClientBuys
-//                """.trimMargin()
-//                service.applyEdit("direction.taxi", updatedSource, workspaceRoot)
-//                val (line,char) = updatedSource.positionOf("ClientBuys ")
-//                val completions = service.completion(CompletionParams(
-//                        workspaceRoot.document("direction.taxi"),
-//                        Position(line,char)
-//                )).get().left
-//                completions.shouldContainLabels("synonym of")
-//            }
-//            it("should offer enum types") {
-//                val updatedSource = """$originalSource
-//                    |
-//                    |enum ClientDirection {
-//                    |   ClientBuys synonym of
-//                """.trimMargin()
-//                service.applyEdit("direction.taxi", updatedSource, workspaceRoot)
-//                val (line,char) = updatedSource.positionOf("synonym of ")
-//                val completions = service.completion(CompletionParams(
-//                        workspaceRoot.document("direction.taxi"),
-//                        Position(line,char)
-//                )).get().left
-//
-//                completions.should.have.size(1) // Only expect enums here
-//                completions.shouldContainLabels("BankDirection")
-//            }
-//        }
         describe("for types") {
             val (service, workspaceRoot) = documentServiceFor("test-scenarios/simple-workspace")
 
@@ -164,6 +127,44 @@ object CompletionSpec : Spek({
 
 
         describe("Synonym Completion") {
+
+            describe("enum completion") {
+                val (service, workspaceRoot) = documentServiceFor("test-scenarios/enum-completion-workspace")
+                service.compileAndReport()
+                val originalSource = workspaceRoot.resolve("direction.taxi").toFile().readText()
+
+                it("should offer 'synonym of' prompt") {
+                    // start editing:
+                    val updatedSource = """$originalSource
+                    |
+                    |enum ClientDirection {
+                    |   ClientBuys
+                """.trimMargin()
+                    service.applyEdit("direction.taxi", updatedSource, workspaceRoot)
+                    val (line, char) = updatedSource.positionOf("ClientBuys ")
+                    val completions = service.completion(CompletionParams(
+                            workspaceRoot.document("direction.taxi"),
+                            Position(line, char)
+                    )).get().left
+                    completions.shouldContainLabels("synonym of")
+                }
+                it("should offer enum types") {
+                    val updatedSource = """$originalSource
+                    |
+                    |enum ClientDirection {
+                    |   ClientBuys synonym of
+                """.trimMargin()
+                    service.applyEdit("direction.taxi", updatedSource, workspaceRoot)
+                    val (line, char) = updatedSource.positionOf("synonym of ")
+                    val completions = service.completion(CompletionParams(
+                            workspaceRoot.document("direction.taxi"),
+                            Position(line, char)
+                    )).get().left
+
+                    completions.should.have.size(1) // Only expect enums here
+                    completions.shouldContainLabels("BankDirection")
+                }
+            }
             val (service, workspaceRoot) = documentServiceFor("test-scenarios/case-workspace")
             service.connect(mock(LanguageClient::class.java))
             val originalSource = workspaceRoot.resolve("trade-case.taxi").toFile().readText()
@@ -197,7 +198,8 @@ object CompletionSpec : Spek({
 
 private typealias LineIndex = Int
 private typealias CharIndex = Int
-private fun String.positionOf(match: String): Pair<LineIndex,CharIndex> {
+
+private fun String.positionOf(match: String): Pair<LineIndex, CharIndex> {
     val cursorPositionLine = this.lines().indexOfFirst { it.contains(match) }
     val cursorPositionChar = this.lines()[cursorPositionLine].indexOf(match)
     return cursorPositionLine to cursorPositionChar
