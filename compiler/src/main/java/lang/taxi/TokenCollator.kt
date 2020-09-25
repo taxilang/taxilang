@@ -1,5 +1,6 @@
 package lang.taxi
 
+import com.google.common.collect.ArrayListMultimap
 import lang.taxi.TaxiParser.ServiceDeclarationContext
 import lang.taxi.compiler.TokenProcessor
 import lang.taxi.types.QualifiedName
@@ -79,9 +80,12 @@ data class Tokens(
       return errors
    }
 
-   fun importedTypeNamesInSource(sourceName: String): List<QualifiedName> {
+   fun importTokensInSource(sourceName: String):List<Pair<QualifiedName,TaxiParser.ImportDeclarationContext>> {
       return importsBySourceName.getOrDefault(SourceNames.normalize(sourceName), emptyList())
-         .map { QualifiedName.from(it.first) }
+         .map { (name,token) -> QualifiedName.from(name) to token }
+   }
+   fun importedTypeNamesInSource(sourceName: String): List<QualifiedName> {
+      return importTokensInSource(sourceName).map { it.first }
    }
 
    fun typeNamesForSource(sourceName: String): List<QualifiedName> {
@@ -140,10 +144,9 @@ class TokenCollator : TaxiBaseListener() {
       if (collateExceptions(ctx)) {
          imports.add(ctx.qualifiedName().Identifier().text() to ctx)
       }
-
-
       super.exitImportDeclaration(ctx)
    }
+
 
    override fun exitFieldDeclaration(ctx: TaxiParser.FieldDeclarationContext) {
       collateExceptions(ctx)

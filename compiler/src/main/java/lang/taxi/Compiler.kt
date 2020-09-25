@@ -128,6 +128,12 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    private val syntaxErrors: List<CompilationError> by lazy {
       parseResult.second
    }
+   private val tokenProcessrWithImports : TokenProcessor by lazy {
+      TokenProcessor(tokens, importSources)
+   }
+   private val tokenprocessorWithoutImports : TokenProcessor by lazy {
+      TokenProcessor(tokens, collectImports = false)
+   }
 
    fun validate(): List<CompilationError> {
       val compilationErrors = parseResult.second
@@ -148,18 +154,16 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
     * and the file may not be valid source.
     */
    fun declaredTypeNames(): List<QualifiedName> {
-      val tokenProcessor = TokenProcessor(tokens, collectImports = false)
-      return tokenProcessor.findDeclaredTypeNames()
+      return tokenprocessorWithoutImports.findDeclaredTypeNames()
    }
 
    fun lookupTypeByName(typeType: TaxiParser.TypeTypeContext): QualifiedName {
-      return QualifiedName.from(TokenProcessor(tokens, importSources).lookupTypeByName(typeType))
+      return QualifiedName.from(tokenProcessrWithImports.lookupTypeByName(typeType))
    }
 
    fun getDeclarationSource(text: String, context: ParserRuleContext): CompilationUnit? {
-      val processor = TokenProcessor(tokens, importSources)
-      val qualifiedName = processor.lookupTypeByName(text, context)
-      return getCompilationUnit(processor, qualifiedName)
+      val qualifiedName = tokenProcessrWithImports.lookupTypeByName(text, context)
+      return getCompilationUnit(tokenProcessrWithImports, qualifiedName)
    }
 
    private fun getCompilationUnit(processor: TokenProcessor, qualifiedName: String): CompilationUnit? {
@@ -179,9 +183,8 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    }
 
    fun getDeclarationSource(typeName: TaxiParser.TypeTypeContext): CompilationUnit? {
-      val processor = TokenProcessor(tokens, importSources)
-      val qualifiedName = processor.lookupTypeByName(typeName)
-      return getCompilationUnit(processor, qualifiedName)
+      val qualifiedName = tokenProcessrWithImports.lookupTypeByName(typeName)
+      return getCompilationUnit(tokenProcessrWithImports, qualifiedName)
    }
 
    /**
@@ -199,7 +202,7 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       if (syntaxErrors.isNotEmpty()) {
          throw CompilationException(syntaxErrors)
       }
-      val builder = TokenProcessor(tokens = tokens, importSources = importSources, collectImports = true)
+      val builder = tokenProcessrWithImports
       // Similarly to above, we could do somethign with these errors now.
       val (errors, document) = builder.buildTaxiDocument()
       if (errors.isNotEmpty()) {
@@ -209,7 +212,7 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    }
 
    /**
-    * Note that indexes are 1-Based, not 0-Based
+    * Note that indexes are 0-Based
     */
    fun contextAt(line: Int, char: Int, sourceName: String = UNKNOWN_SOURCE): ParserRuleContext? {
       val tokenTable = tokens.tokenStore.tokenTable(sourceName)
@@ -255,8 +258,21 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       return tokens.typeNamesForSource(sourceName)
    }
 
+   fun importTokensInSource(sourceName:String): List<Pair<QualifiedName, TaxiParser.ImportDeclarationContext>> {
+      return tokens.importTokensInSource(sourceName)
+   }
    fun importedTypesInSource(sourceName: String): List<QualifiedName> {
       return tokens.importedTypeNamesInSource(sourceName)
+   }
+   fun usedTypedNamesInSource(sourceName:String):Set<QualifiedName> {
+      return tokenProcessrWithImports.tokens.tokenStore.getTypeReferencesForSourceName(sourceName).mapNotNull {
+         try {
+            tokenProcessrWithImports.lookupTypeByName(it)
+         } catch (error:CompilationException) {
+            null
+         }
+      }.map { QualifiedName.from(it) }
+         .toSet()
    }
 }
 
