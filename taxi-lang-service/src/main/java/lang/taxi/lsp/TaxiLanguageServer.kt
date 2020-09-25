@@ -48,6 +48,7 @@ class TaxiLanguageServer(
         capabilities.definitionProvider  = true
         capabilities.hoverProvider = true
         capabilities.documentFormattingProvider = true
+        capabilities.setCodeActionProvider(true)
         capabilities.workspace = WorkspaceServerCapabilities(WorkspaceFoldersOptions().apply {
             supported = true
             setChangeNotifications(true)

@@ -1,11 +1,13 @@
 package lang.taxi.lsp
 
 import lang.taxi.*
+import lang.taxi.lsp.actions.CodeActionService
 import lang.taxi.lsp.completion.CompletionService
 import lang.taxi.lsp.completion.TypeProvider
 import lang.taxi.lsp.formatter.FormatterService
 import lang.taxi.lsp.gotoDefinition.GotoDefinitionService
 import lang.taxi.lsp.hover.HoverService
+import lang.taxi.lsp.linter.LintingService
 import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
@@ -16,7 +18,6 @@ import org.eclipse.lsp4j.services.LanguageClientAware
 import org.eclipse.lsp4j.services.TextDocumentService
 import java.io.File
 import java.net.URI
-import java.nio.file.Files
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 
@@ -34,7 +35,7 @@ data class CompilationResult(val compiler: Compiler, val document: TaxiDocument?
 
 class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
 
-    private var displayedErrorMessages: List<PublishDiagnosticsParams> = emptyList()
+    private var displayedMessages: List<PublishDiagnosticsParams> = emptyList()
     private val sources: MutableMap<URI, String> = mutableMapOf()
     private val charStreams: MutableMap<URI, CharStream> = mutableMapOf()
     private lateinit var initializeParams: InitializeParams
@@ -49,6 +50,9 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     private val formattingService = FormatterService()
     private val gotoDefinitionService = GotoDefinitionService(typeProvider)
     private val hoverService = HoverService()
+    private val codeActionService = CodeActionService()
+    private val lintingService = LintingService()
+
     private lateinit var client: LanguageClient
     private var rootUri: String? = null
 
@@ -63,6 +67,10 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     var compilerMessages: List<CompilationError> = emptyList()
         private set
 
+
+    override fun codeAction(params: CodeActionParams): CompletableFuture<MutableList<Either<Command, CodeAction>>> {
+        return codeActionService.getActions(params)
+    }
 
     override fun completion(position: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
         if (lastCompilationResult.get() == null) {
@@ -93,6 +101,19 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     }
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
+        publishLinterMessages(params.textDocument.uri)
+    }
+
+    private fun publishLinterMessages(documentUri: String) {
+        val uri = URI.create(SourceNames.normalize(documentUri))
+        val messages = lintingService.computeInsightFor(uri, lastCompilationResult.get())
+        client.publishDiagnostics(PublishDiagnosticsParams(documentUri,messages))
+//                .subscribe { diagnostics ->
+//                    client.publishDiagnostics(PublishDiagnosticsParams(
+//                            documentUri,
+//                            diagnostics
+//                    ))
+//                }
     }
 
     override fun didSave(params: DidSaveTextDocumentParams) {
@@ -117,7 +138,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         this.sources[sourceNameUri] = content
         this.charStreams[sourceNameUri] = CharStreams.fromString(content, sourceName)
         compileAndReport()
-
+        publishLinterMessages(params.textDocument.uri)
 
     }
 
@@ -125,7 +146,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     // We're compiling the entire workspace every time we get a request, which is
     // on every keypress.
     // We need to find a way to only recompile the document that has changed
-    internal fun compileAndReport() {
+    internal fun compileAndReport(): CompilationResult {
         val charStreams = this.charStreams.values.toList()
 
         val compiler = Compiler(charStreams, tokenCache = tokenCache)
@@ -143,6 +164,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
             lastCompilationResult.set(compilationResult)
         }
         reportMessages()
+        return lastCompilationResult.get()
     }
 
     private fun reportMessages() {
@@ -164,7 +186,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
             )
         }
         clearErrors()
-        this.displayedErrorMessages = diagnostics.groupBy { it.first }.map { (sourceUri, diagnostics) ->
+        this.displayedMessages = diagnostics.groupBy { it.first }.map { (sourceUri, diagnostics) ->
             // This seems to normalize nicely on windows.  Will need to check on ubuntu
             val fileUri = SourceNames.normalize(sourceUri)
             PublishDiagnosticsParams(
@@ -176,7 +198,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     }
 
     private fun publishErrorMessages() {
-        this.displayedErrorMessages.forEach {
+        this.displayedMessages.forEach {
             client.publishDiagnostics(it)
         }
     }
@@ -185,10 +207,10 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         if (connected) {
             // Non-performant - we're destroying the entire set of warnings for each compilation pass
             // (which in practice, is each keypress)
-            this.displayedErrorMessages.forEach { oldErrorMessage ->
+            this.displayedMessages.forEach { oldErrorMessage ->
                 client.publishDiagnostics(PublishDiagnosticsParams(oldErrorMessage.uri, emptyList()))
             }
-            this.displayedErrorMessages = emptyList()
+            this.displayedMessages = emptyList()
         }
     }
 
@@ -206,7 +228,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
 
         val initSources = File(URI.create(params.rootUri))
                 .walk()
-                .filter { it.extension == "taxi" && !it.isDirectory}
+                .filter { it.extension == "taxi" && !it.isDirectory }
                 .map {
                     val source = it.readText()
                     it.toURI() to (source to CharStreams.fromString(source, it.toPath().toString()))
