@@ -109,8 +109,9 @@ class TypeDefinitionHashTest {
          }
       """.trimIndent()
       val schemaV1Compiler = Compiler(src, "schema")
+      val schemaV2Compiler = Compiler(src, "schema")
       val taxiDocV1 = schemaV1Compiler.compile()
-      val taxiDocV2 = Compiler(extensionSrc, "extension-schema", listOf(schemaV1Compiler.compile())).compile()
+      val taxiDocV2 = Compiler(extensionSrc, "extension-schema", listOf(schemaV2Compiler.compile())).compile()
       val typeV1 = taxiDocV1.type("Order")
       val typeV2 = taxiDocV2.type("Order")
 
@@ -136,8 +137,9 @@ class TypeDefinitionHashTest {
          }
       """.trimIndent()
       val schemaV1Compiler = Compiler(src, "schema")
+      val schemaV2Compiler = Compiler(src, "schema")
       val taxiDocV1 = Compiler(extensionSrcV1, "extension-schema", listOf(schemaV1Compiler.compile())).compile()
-      val taxiDocV2 = Compiler(extensionSrcV2, "extension-schema", listOf(schemaV1Compiler.compile())).compile()
+      val taxiDocV2 = Compiler(extensionSrcV2, "extension-schema", listOf(schemaV2Compiler.compile())).compile()
       val typeV1 = taxiDocV1.type("Order")
       val typeV2 = taxiDocV2.type("Order")
 

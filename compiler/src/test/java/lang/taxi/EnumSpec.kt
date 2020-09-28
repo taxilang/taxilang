@@ -291,6 +291,16 @@ enum English {
             enumType.of("nz").name.should.equal("NZ")
             enumType.of("uk").name.should.equal("UNKNOWN")
          }
+         it("is case insensitive with special characters") {
+            val src = """
+               lenient enum DayCountConvention {
+                  ACT_360("ACT/360")
+               }
+            """.trimIndent()
+            val enumType = Compiler(src).compile().enumType("DayCountConvention")
+            enumType.of("Act/360").name.should.equal("ACT_360")
+            enumType.of("ACT/360").name.should.equal("ACT_360")
+         }
          describe("case insensitive enums") {
             it("is case sensitive by default") {
                val src = """
