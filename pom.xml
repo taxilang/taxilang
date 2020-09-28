@@ -205,7 +205,7 @@
         <repository>
             <id>bintray-taxi-lang-releases</id>
             <name>taxi-lang-releases</name>
-            <url>https://api.bintray.com/maven/taxi-lang/releases/${project.artifactId}/;publish=1</url>
+            <url>https://api.bintray.com/maven/taxi-lang/taxi-lang-server/${project.artifactId}/;publish=1</url>
         </repository>
         <snapshotRepository>
             <id>repo.vyne.co</id>
