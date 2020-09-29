@@ -299,6 +299,20 @@ type TradeRecord {
    }
 
    @Test
+   fun `can use functions inside when clauses`() {
+     val field = Compiler( """
+      type Order {
+         bankDirection: BankDirection as String
+         clientDirection: ClientDirection as String by when (upperCase(this.bankDirection) : String) {
+            "BUY" -> "Sell"
+            "SELL" -> "Buy"
+            else -> null
+         }
+      }
+      """).compile().objectType("Order").field("clientDirection")
+   }
+
+   @Test
    fun `using an enum in a when block against a type that isn't defined should error`() {
       val src = """
          type Trade {
