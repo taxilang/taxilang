@@ -38,10 +38,10 @@ data class Tokens(
 
    fun plus(others: Tokens): Tokens {
       // Duplicate checking is disabled, as it doesn't consider imports, which causes false compilation errors
-//      val errorsFromDuplicates = collectDuplicateTypes(others) + collectDuplicateServices(others)
-//      if (errorsFromDuplicates.isNotEmpty()) {
-//         throw CompilationException(errorsFromDuplicates)
-//      }
+        val errorsFromDuplicates = collectDuplicateTypes(others) + collectDuplicateServices(others)
+        if (errorsFromDuplicates.isNotEmpty()) {
+          throw CompilationException(errorsFromDuplicates)
+        }
       return Tokens(
          this.imports + others.imports,
          this.unparsedTypes + others.unparsedTypes,
@@ -56,18 +56,8 @@ data class Tokens(
    private fun collectDuplicateTypes(others: Tokens): List<CompilationError> {
       val duplicateTypeNames = this.unparsedTypes.keys.filter { others.unparsedTypes.containsKey(it) }
       val errors = if (duplicateTypeNames.isNotEmpty()) {
-         val existingDefinition = TokenProcessor(this).buildTaxiDocument().second
-         val newDefinition = TokenProcessor(others).buildTaxiDocument().second
-         val compilationErrors = duplicateTypeNames.filter {
-            // We only care about scenarios where sources compile to different objects
-            // If two sources declare the same type, but they're equivalent declarations, then that's ok
-            val isAttemptedRedefinition = existingDefinition.type(it) != newDefinition.type(it)
-            if (isAttemptedRedefinition) {
-               ""
-            }
-            isAttemptedRedefinition
-         }.map {
-            CompilationError(others.unparsedTypes[it]!!.second.start, "Attempt to redefine type $it. Types may be extended (using an extension), but not redefined")
+         val compilationErrors = duplicateTypeNames.map {
+            CompilationError((others.unparsedTypes[it] ?: error("")).second.start, "Attempt to redefine type $it. Types may be extended (using an extension), but not redefined")
          }
          compilationErrors
       } else emptyList()

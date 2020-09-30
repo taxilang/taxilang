@@ -1,0 +1,6 @@
+namespace duplicate
+
+type Price inherits Decimal
+type InstrumentId inherits String
+type Qty inherits Decimal
+type Isin inherits String

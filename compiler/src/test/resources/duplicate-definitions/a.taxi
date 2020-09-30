@@ -1,0 +1,9 @@
+namespace duplicate
+
+model Order {
+  price: Price
+  instrumentId: InstrumentId
+  qty: Qty
+  isin: Isin
+}
+
