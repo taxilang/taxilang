@@ -1,0 +1,8 @@
+model Trade {
+    direction : BankDirection
+    tradeId : TradeId as String
+}
+enum BankDirection {
+    Buy,
+    Sell
+}
