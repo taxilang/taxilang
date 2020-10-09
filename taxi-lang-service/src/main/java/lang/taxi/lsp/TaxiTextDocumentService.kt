@@ -67,6 +67,8 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     var compilerMessages: List<CompilationError> = emptyList()
         private set
 
+    var compilerErrorDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
+    var linterDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
 
     override fun codeAction(params: CodeActionParams): CompletableFuture<MutableList<Either<Command, CodeAction>>> {
         return codeActionService.getActions(params)
@@ -101,19 +103,14 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     }
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
-        publishLinterMessages(params.textDocument.uri)
+        computeLinterMessages(params.textDocument.uri)
+        publishDiagnosticMessages()
     }
 
-    private fun publishLinterMessages(documentUri: String) {
-        val uri = URI.create(SourceNames.normalize(documentUri))
-        val messages = lintingService.computeInsightFor(uri, lastCompilationResult.get())
-        client.publishDiagnostics(PublishDiagnosticsParams(documentUri,messages))
-//                .subscribe { diagnostics ->
-//                    client.publishDiagnostics(PublishDiagnosticsParams(
-//                            documentUri,
-//                            diagnostics
-//                    ))
-//                }
+    private fun computeLinterMessages(documentUri: String) {
+        val normalizedUri = SourceNames.normalize(documentUri)
+        val uri = URI.create(normalizedUri)
+        this.linterDiagnostics = mapOf(normalizedUri to lintingService.computeInsightFor(uri, lastCompilationResult.get()))
     }
 
     override fun didSave(params: DidSaveTextDocumentParams) {
@@ -138,8 +135,8 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         this.sources[sourceNameUri] = content
         this.charStreams[sourceNameUri] = CharStreams.fromString(content, sourceName)
         compileAndReport()
-        publishLinterMessages(params.textDocument.uri)
-
+        computeLinterMessages(params.textDocument.uri)
+        publishDiagnosticMessages()
     }
 
     // This is a very non-performant first pass.
@@ -157,20 +154,17 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
             lastSuccessfulCompilationResult.set(compilationResult)
             lastCompilationResult.set(compilationResult)
             compilerMessages = emptyList()
-            clearErrors()
         } catch (e: CompilationException) {
             compilerMessages = e.errors
             val compilationResult = CompilationResult(compiler, null)
             lastCompilationResult.set(compilationResult)
         }
-        reportMessages()
+        recomputeCompilerMessages()
+
         return lastCompilationResult.get()
     }
 
-    private fun reportMessages() {
-        if (!connected) {
-            return
-        }
+    private fun recomputeCompilerMessages() {
         val diagnostics = this.compilerMessages.map { error ->
             // Note - for VSCode, we can use the same position for start and end, and it
             // highlights the entire word
@@ -185,20 +179,20 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
                     "Compiler"
             )
         }
-        clearErrors()
-        this.displayedMessages = diagnostics.groupBy { it.first }.map { (sourceUri, diagnostics) ->
-            // This seems to normalize nicely on windows.  Will need to check on ubuntu
-            val fileUri = SourceNames.normalize(sourceUri)
-            PublishDiagnosticsParams(
-                    fileUri,
-                    diagnostics.map { it.second }
-            )
-        }
-        publishErrorMessages()
+        this.compilerErrorDiagnostics = diagnostics.groupBy({ it.first }, { it.second })
     }
 
-    private fun publishErrorMessages() {
-        this.displayedMessages.forEach {
+    private fun publishDiagnosticMessages() {
+        val publishedDiagnostics = (compilerErrorDiagnostics.keys + linterDiagnostics.keys).map { uri ->
+            uri to (compilerErrorDiagnostics.getOrDefault(uri, emptyList()) + linterDiagnostics.getOrDefault(uri, emptyList()))
+        }.map { (uri,diagnostics) ->
+            PublishDiagnosticsParams(uri,diagnostics)
+        }
+
+        this.displayedMessages = publishedDiagnostics
+
+        clearErrors()
+        publishedDiagnostics.forEach {
             client.publishDiagnostics(it)
         }
     }
