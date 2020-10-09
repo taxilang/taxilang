@@ -1,31 +1,38 @@
 package lang.taxi.types
 
+import com.google.common.cache.CacheBuilder
 import java.io.File
 import java.lang.Exception
 import java.net.URI
 import java.nio.file.Paths
 
 object SourceNames {
+   private val sourceNameCache = CacheBuilder.newBuilder()
+      .build<String, String>()
+
    /**
     * Attempts to normalize and return the path portion of a Source file name.
     * If a URI parsing exception occurs, will simply return as-is
     */
    fun normalize(sourceName: String): String {
-      if(!sourceName.contains("/") && !sourceName.contains("""\""")) {
-         // This isn't a filename or path - it's probably one of the 'unknown path' markers
-         return sourceName
+      return sourceNameCache.get(sourceName) {
+         if (!sourceName.contains("/") && !sourceName.contains("""\""")) {
+            // This isn't a filename or path - it's probably one of the 'unknown path' markers
+            sourceName
+         } else {
+            tryParseAsUri(sourceName)
+               ?: tryParseAsFile(sourceName)
+               ?: tryParseAsPath(sourceName)
+               ?: sourceName
+         }
       }
-      return tryParseAsUri(sourceName)
-         ?: tryParseAsFile(sourceName)
-         ?: tryParseAsPath(sourceName)
-         ?: sourceName
    }
 
    private fun tryParseAsFile(sourceName: String): String? {
       return try {
          val s = File(sourceName).toPath().toAbsolutePath().toUri().toString()
          s
-      } catch(e:Exception) {
+      } catch (e: Exception) {
          return null
       }
 
