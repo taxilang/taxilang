@@ -1,12 +1,6 @@
 package lang.taxi.compiler
 
-import arrow.core.Either
-import arrow.core.extensions.either.monad.flatMap
-import arrow.core.flatMap
-import arrow.core.getOrElse
-import arrow.core.getOrHandle
-import arrow.core.orNull
-import arrow.core.right
+import arrow.core.*
 import com.google.common.hash.Hashing
 import lang.taxi.*
 import lang.taxi.Namespace
@@ -294,7 +288,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(namespace, tokenRule).collectError()
             else -> TODO("Not handled: $tokenRule")
          }
-      } catch (exception:Exception) {
+      } catch (exception: Exception) {
          tokensCurrentlyCompiling.remove(tokenName)
          throw  exception
       }
@@ -421,6 +415,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
+
    private fun <T : Any> List<Either<List<CompilationError>, T>>.reportAndRemoveErrorList(): List<T> {
       return this.mapNotNull { item ->
          item.getOrHandle { errors ->
@@ -434,7 +429,14 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return this.mapNotNull { it.reportIfCompilationError() }
    }
 
-   private fun <T : Any> Either<CompilationError, T>.reportIfCompilationError(): T? {
+   private fun <T : Any> Either<List<CompilationError>, T?>.reportAndRemoveErrors(): T? {
+      return this.getOrHandle { errors ->
+         this@TokenProcessor.errors.addAll(errors)
+         null
+      }
+   }
+
+   private fun <T : Any> Either<CompilationError, T?>.reportIfCompilationError(): T? {
       return this.getOrHandle { compilationError ->
          this@TokenProcessor.errors.add(compilationError)
          null
@@ -452,7 +454,10 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
 
    private fun compileType(namespace: Namespace, typeName: String, ctx: TaxiParser.TypeDeclarationContext) {
-      val fields = ctx.typeBody()?.let { typeBody ->
+      val discriminatorFieldAsAbstractType = compileTypeDiscriminatorField(ctx.abstactTypeDiscriminatorDeclaration(), namespace)
+         .reportAndRemoveErrors()
+
+      val typeBodyFields = ctx.typeBody()?.let { typeBody ->
          val conditionalFieldStructures = typeBody.conditionalTypeStructureDeclaration()?.map { conditionalFieldBlock ->
             conditionalFieldSetProcessor.compileConditionalFieldStructure(conditionalFieldBlock, namespace)
          }?.reportAndRemoveErrors() ?: emptyList()
@@ -469,10 +474,25 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
          fields
       } ?: emptyList()
+      val fields = typeBodyFields + listOfNotNull(discriminatorFieldAsAbstractType).map { it.field }
+
 
       val annotations = collateAnnotations(ctx.annotation())
       val modifiers = parseModifiers(ctx.typeModifier())
-      val inherits = parseTypeInheritance(namespace, ctx.listOfInheritedTypes())
+      val (inherits, discriminatorSubType) = parseTypeInheritance(namespace, ctx.listOfInheritedTypes())
+      val typeDiscriminatorField: TypeDiscriminatorField? = when {
+         discriminatorFieldAsAbstractType == null && discriminatorSubType == null -> Either.right(null)
+         discriminatorFieldAsAbstractType != null -> {
+            if (!modifiers.contains(Modifier.ABSTRACT)) {
+               Either.left(CompilationError(ctx.start, "Cannot specify a discriminator here, as the model is not abstract.  Either make the model abstract, or remove the discriminator"))
+            } else if (discriminatorSubType != null) {
+               Either.left(CompilationError(ctx.start, "Cannot specify a discriminator both for the type itself, and it's super type"))
+            } else {
+               Either.right(discriminatorFieldAsAbstractType)
+            }
+         }
+         else -> Either.right(discriminatorSubType)
+      }.reportIfCompilationError()
       val typeDoc = parseTypeDoc(ctx.typeDoc()?.source()?.content)
       val format: List<String>? = null
       this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(
@@ -482,8 +502,18 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          inheritsFrom = inherits,
          format = format,
          typeDoc = typeDoc,
+         discriminatorField = typeDiscriminatorField,
          compilationUnit = ctx.toCompilationUnit()
       )))
+   }
+
+   private fun compileTypeDiscriminatorField(abstactTypeDiscriminatorDeclaration: TaxiParser.AbstactTypeDiscriminatorDeclarationContext?, namespace: String): Either<List<CompilationError>, TypeDiscriminatorField?> {
+      if (abstactTypeDiscriminatorDeclaration == null) {
+         return Either.right(null)
+      }
+      return compileField(abstactTypeDiscriminatorDeclaration.typeMemberDeclaration(), namespace)
+         .map { field -> BaseTypeDiscriminatorField(field) }
+
    }
 
    internal fun compiledField(member: TaxiParser.TypeMemberDeclarationContext, namespace: Namespace): Field? {
@@ -664,9 +694,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return text.removeSurrounding("`")
    }
 
-   private fun parseTypeInheritance(namespace: Namespace, listOfInheritedTypes: TaxiParser.ListOfInheritedTypesContext?): Set<Type> {
-      if (listOfInheritedTypes == null) return emptySet()
-      return listOfInheritedTypes.typeType().mapNotNull { typeTypeContext ->
+   private fun parseTypeInheritance(namespace: Namespace, listOfInheritedTypes: TaxiParser.ListOfInheritedTypesContext?): Pair<Set<Type>, SubTypeDiscriminatorField?> {
+      if (listOfInheritedTypes == null) return emptySet<Type>() to null
+      val inheritedTypes = listOfInheritedTypes.typeType().mapNotNull { typeTypeContext ->
 
          parseInheritedType(namespace, typeTypeContext) {
             when (it) {
@@ -675,7 +705,48 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             }
          }
 
-      }.toSet()
+      }
+      val discriminatorField = if (inheritedTypes.isNotEmpty() && inheritedTypes.first() is ObjectType) {
+         // Check for a discriminator on the first declared type
+         val firstInheritedType = inheritedTypes.first() as ObjectType
+         val typeType = listOfInheritedTypes.typeType(0)
+         val subTypeDiscriminatorField = mapConstraints(typeType, firstInheritedType, namespace).flatMap { constraints ->
+            when {
+               constraints.isEmpty() -> Either.right(null)
+               constraints.size > 1 -> Either.left(listOf(CompilationError(
+                  typeType.start, "Multiple type constraints are not supported here"
+               )))
+               else -> {
+                  val constraint = constraints.first()
+                  when (firstInheritedType.discriminatorField) {
+                     null -> {
+                        Either.left(listOf(CompilationError(typeType.start, "Cannot specify a discriminator value here, as super type ${firstInheritedType.qualifiedName} does not expose a discriminator")))
+                     }
+                     !is BaseTypeDiscriminatorField -> {
+                        Either.left(listOf(CompilationError(typeType.start, "Expected the super type ${firstInheritedType.qualifiedName} to have a base type discriminator, but found the wrong kind.  This is likely a bug in the compiler, rather than the taxi source.")))
+                     }
+                     else -> {
+                        val discriminatorField = firstInheritedType.discriminatorField!!.field
+                        Either.right(SubTypeDiscriminatorField(discriminatorField, constraint))
+                     }
+                  }
+
+               }
+            }
+         }.reportAndRemoveErrors()
+
+         if (firstInheritedType.discriminatorField != null && subTypeDiscriminatorField == null) {
+            errors.add(
+               CompilationError(
+                  listOfInheritedTypes.start, "Base type ${firstInheritedType.qualifiedName} is abstract and specifies a discriminator on field '${firstInheritedType.discriminatorField!!.field.name}'.  A discriminator value must be provided here"
+               )
+            )
+         }
+         subTypeDiscriminatorField
+      } else {
+         null
+      }
+      return inheritedTypes.toSet() to discriminatorField
    }
 
    private fun parseEnumInheritance(namespace: Namespace, enumInheritedTypeContext: TaxiParser.EnumInheritedTypeContext?): Type? {
@@ -1038,11 +1109,11 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
     * That's handled later when synonyms are resolved.
     */
    private fun parseSynonyms(namespace: Namespace, enumConstant: TaxiParser.EnumConstantContext): Either<List<CompilationError>, List<EnumValueQualifiedName>> {
-      val declaredSynonyms = enumConstant.enumSynonymDeclaration()?.enumSynonymSingleDeclaration()?.let { listOf(it.qualifiedName()) }
-         ?: enumConstant.enumSynonymDeclaration()?.enumSynonymDeclarationList()?.qualifiedName()
+      val declaredSynonyms = enumConstant.enumSynonymDeclaration()?.enumSynonymSingleDeclaration()?.let { listOf(it.enumValueReference()) }
+         ?: enumConstant.enumSynonymDeclaration()?.enumSynonymDeclarationList()?.enumValueReference()
          ?: emptyList()
       return declaredSynonyms.map { synonym ->
-         val (enumName, enumValueName) = Enums.splitEnumValueQualifiedName(synonym.Identifier().text())
+         val (enumName, enumValueName) = Enums.splitEnumValueQualifiedName(synonym.qualifiedName().Identifier().text())
          // TODO : I'm concerned this might cause stack overflow / loops.
          // Will wait and see
          resolveUserType(namespace, enumName.parameterizedName, importsInSource(enumConstant), enumConstant)

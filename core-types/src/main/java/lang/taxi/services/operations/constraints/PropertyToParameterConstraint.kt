@@ -3,10 +3,7 @@ package lang.taxi.services.operations.constraints
 import lang.taxi.Equality
 import lang.taxi.Operator
 import lang.taxi.services.Service
-import lang.taxi.types.AttributePath
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.toSet
+import lang.taxi.types.*
 
 
 /**
@@ -54,6 +51,7 @@ data class PropertyTypeIdentifier(val type: QualifiedName) : PropertyIdentifier(
 sealed class ValueExpression(val taxi: String)
 
 // TODO : This won't work with numbers - but neither does the parsing.  Need to fix that.
+data class EnumValueExpression(val enumValue:EnumValue) : ValueExpression(enumValue.qualifiedName)
 data class ConstantValueExpression(val value: Any) : ValueExpression("'$value'")
 data class RelativeValueExpression(val path: AttributePath) : ValueExpression(path.path) {
    constructor(attributeName: String) : this(AttributePath.from(attributeName))

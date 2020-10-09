@@ -2,6 +2,7 @@ package lang.taxi.services.operations.constraints
 
 import arrow.core.Either
 import arrow.core.flatMap
+import arrow.core.getOrHandle
 import lang.taxi.*
 import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract
@@ -57,6 +58,7 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
             val rhsValidationError = when (attributeConstraint.expectedValue) {
                is ConstantValueExpression -> null // Not sure that to validate here?
                is RelativeValueExpression -> validate(constraint.expectedValue as RelativeValueExpression, target, constraint, constraintDeclarationSite)
+               is EnumValueExpression -> null // Don't think we need any further validation at this point
             }
 
             val errors = listOfNotNull(lhsValidationError, rhsValidationError)
@@ -124,15 +126,15 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       val operator = Operator.parse(ast.operator)
 
       return parseLhs(ast.lhs, typeResolver, context).flatMap { propertyIdentifier ->
-         parseRhs(ast.rhs).map { valueExpression ->
+         parseRhs(ast.rhs, typeResolver, context).map { valueExpression ->
             PropertyToParameterConstraint(propertyIdentifier, operator, valueExpression, context.toCompilationUnits())
          }
       }
    }
 
    override fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<CompilationError, Constraint> {
-      val ast = parseToAst(constraint.propertyToParameterConstraintExpression())
-      return build(ast,type,typeResolver,constraint)
+      val ast = parseToAst(constraint.propertyToParameterConstraintExpression(), typeResolver)
+      return build(ast, type, typeResolver, constraint)
    }
 
    /**
@@ -143,7 +145,7 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
     * we can't pass them into the constraint provider code.
     * Therefore, we parse a simple AST, which makes reuse possible
     */
-   private fun parseToAst(constraint: TaxiParser.PropertyToParameterConstraintExpressionContext): PropertyToParameterConstraintAst {
+   private fun parseToAst(constraint: TaxiParser.PropertyToParameterConstraintExpressionContext, typeResolver: NamespaceQualifiedTypeResolver): PropertyToParameterConstraintAst {
       val astLhs = constraint.propertyToParameterConstraintLhs().let { lhs ->
          val typeOrFieldQualifiedName = lhs.qualifiedName().asDotJoinedPath()
          val propertyFieldNameQualifier = lhs.propertyFieldNameQualifier()?.text
@@ -152,12 +154,14 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
 
       val astRhs = constraint.propertyToParameterConstraintRhs().let { rhs ->
          val literal = rhs.literal()?.value()
-         val attributePath = rhs.qualifiedName()?.asDotJoinedPath()?.let { AttributePath.from(it) }
-         PropertyToParameterConstraintAst.AstRhs(literal,attributePath)
+         val attributePath = rhs.qualifiedName()?.asDotJoinedPath()?.let { dotJoinedPath ->
+            AttributePath.from(dotJoinedPath)
+         }
+         PropertyToParameterConstraintAst.AstRhs(literal, attributePath)
       }
 
       val operator = constraint.comparisonOperator().text
-      return PropertyToParameterConstraintAst(astLhs,operator,astRhs)
+      return PropertyToParameterConstraintAst(astLhs, operator, astRhs)
    }
 
    private fun parseLhs(lhs: PropertyToParameterConstraintAst.AstLhs, typeResolver: NamespaceQualifiedTypeResolver, context: ParserRuleContext): Either<CompilationError, PropertyIdentifier> {
@@ -169,10 +173,29 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       }
    }
 
-   private fun parseRhs(rhs: PropertyToParameterConstraintAst.AstRhs): Either<CompilationError, ValueExpression> {
+   private fun parseRhs(rhs: PropertyToParameterConstraintAst.AstRhs, typeResolver: NamespaceQualifiedTypeResolver, context: ParserRuleContext): Either<CompilationError, ValueExpression> {
       return when {
          rhs.literal != null -> Either.right(ConstantValueExpression(rhs.literal))
-         rhs.attributePath != null -> Either.right(RelativeValueExpression(rhs.attributePath))
+         rhs.attributePath != null -> {
+            // We've been fed a dot path (foo.baz.bar)
+            // Check to see if it's actually an enum reference
+            val (potentialEnumName, potentialEnumValue) = EnumValue.qualifiedNameFrom(rhs.attributePath.path)
+            when (val resolvedType = typeResolver.resolve(potentialEnumName.fullyQualifiedName, context)) {
+               is Either.Left -> {
+                  // The expression didn't resolve as a type, so treat it as an expression path.
+                  // Note - in future, we should be validating that this path is actually valid in the given context
+                  Either.right(RelativeValueExpression(rhs.attributePath))
+               }
+               is Either.Right -> {
+                  val enumType = resolvedType.b
+                  when {
+                     enumType is EnumType && enumType.has(potentialEnumValue) -> Either.right(EnumValueExpression(enumType.of(potentialEnumValue)))
+                     enumType is EnumType && !enumType.has(potentialEnumName) -> Either.left(CompilationError(context.start, "Enum ${enumType.qualifiedName} has no member called $potentialEnumName"))
+                     else -> Either.left(CompilationError(context.start,"Type ${potentialEnumName.fullyQualifiedName} is not an enum, so cannot be used as a reference here"))
+                  }
+               }
+            }
+         }
          else -> error("Unhandled scenario parsing rhs of constraint")
       }
    }

@@ -50,17 +50,31 @@ typeModifier
 // these types based on known values.
     : 'parameter'
     | 'closed'
+    | 'abstract'
     ;
 
 typeDeclaration
     :  typeDoc? annotation* typeModifier* ('type'|'model') Identifier
-
+         ( '(' abstactTypeDiscriminatorDeclaration ')')?
         ('inherits' listOfInheritedTypes)?
         typeBody?
     ;
 
+// Specifying attributes relating to abstract model inheritence.
+// Here, we're declaring the disriminator for subtypes to specify a value of:
+// abstract model Foo( thing : FooDiscriminator )
+abstactTypeDiscriminatorDeclaration: typeMemberDeclaration;
+
+// Specifying attributes relating to abstract model inheritence.
+// Here, we're specifying the value of the descriminator in a subtype:
+// model SubFoo  inherits Foo( thing = 123 )
+abstractTypeDiscriminatorValueAssignment: Identifier '=' (literal | enumValueReference);
+
+// An inherited type may declare a discriminator value.
+// However, it must be the first inherited type, and there can be only one.
+// eg: model Person inherits Animal( animalType = AnimalType.MAMMAL )
 listOfInheritedTypes
-    : typeType (',' typeType)*
+    : typeType ('(' abstractTypeDiscriminatorValueAssignment ')')? (',' typeType)*
     ;
 typeBody
     :   '{' (typeMemberDeclaration | conditionalTypeStructureDeclaration | calculatedMemberDeclaration)* '}'
@@ -231,8 +245,12 @@ enumValue
 enumSynonymDeclaration
    : 'synonym' 'of' ( enumSynonymSingleDeclaration | enumSynonymDeclarationList)
    ;
-enumSynonymSingleDeclaration : qualifiedName ;
-enumSynonymDeclarationList : '[' qualifiedName (',' qualifiedName)* ']'
+
+// A reference to a value wihtin an enum - ie., foo.bar.Countries.NZ
+enumValueReference : qualifiedName;
+
+enumSynonymSingleDeclaration : enumValueReference ;
+enumSynonymDeclarationList : '[' enumValueReference (',' enumValueReference)* ']'
    ;
  enumExtensionDeclaration
     : typeDoc? annotation* 'enum extension' Identifier  ('{' enumConstantExtensions? '}')?

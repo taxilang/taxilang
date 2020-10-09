@@ -23,6 +23,22 @@ data class ObjectTypeExtension(val annotations: List<Annotation> = emptyList(),
    }
 }
 
+/**
+ * A TypeDiscriminatorField is used for modelling
+ * abstract classes and their subtypes.
+ * The discriminator is defined in the abstract class (as an BaseTypeDiscriminatorField) -
+ * (eg: abstract model Animal( animalType : AnimalType )  { .... }
+ * and then all subtypes must defined a value which indicates the type at runtime (this is a
+ * SubTypeDiscriminatorField)
+ * eg:
+ * model Person inherits Animal( animalType = AnimalType.Person )
+ */
+sealed class TypeDiscriminatorField() {
+   abstract val field:Field
+}
+data class SubTypeDiscriminatorField(override val field:Field, val expression:Constraint) : TypeDiscriminatorField()
+data class BaseTypeDiscriminatorField(override val field:Field) : TypeDiscriminatorField()
+
 data class ObjectTypeDefinition(
    val fields: Set<Field> = emptySet(),
    val annotations: Set<Annotation> = emptySet(),
@@ -32,9 +48,11 @@ data class ObjectTypeDefinition(
    val formattedInstanceOfType: Type? = null,
    val calculatedInstanceOfType: Type? = null,
    val calculation: Formula? = null,
+   val discriminatorField: TypeDiscriminatorField? = null,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
+
    private val equality = Equality(this, ObjectTypeDefinition::fields.toSet(), ObjectTypeDefinition::annotations.toSet(), ObjectTypeDefinition::modifiers.toSet())
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
@@ -63,7 +81,9 @@ enum class Modifier(val token: String) {
     * Closed types can not be decomponsed into their individual parts,
     * they only make sense as a single, cohesive unit.
     */
-   CLOSED("closed");
+   CLOSED("closed"),
+
+   ABSTRACT("abstract");
 
    companion object {
       fun fromToken(token: String): Modifier {
@@ -170,6 +190,11 @@ data class ObjectType(
       get() {
          return this.definition?.modifiers ?: emptyList()
       }
+
+   val discriminatorField : TypeDiscriminatorField?
+   get() {
+      return this.definition?.discriminatorField ?: null
+   }
 
    val inheritedFields: List<Field>
       get() {
