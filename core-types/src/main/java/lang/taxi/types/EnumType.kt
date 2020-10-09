@@ -1,6 +1,7 @@
 package lang.taxi.types
 
 import arrow.core.Either
+import com.google.common.cache.CacheBuilder
 import lang.taxi.Equality
 
 object Enums {
@@ -133,18 +134,31 @@ data class EnumType(override val qualifiedName: String,
          return defaultValue != null
       }
 
+   private val enumValueCache = CacheBuilder
+      .newBuilder()
+      .build<String,List<EnumValue>>()
    val values: List<EnumValue>
       get() {
-         return if (this.baseEnum != this) {
-            this.baseEnum?.values ?: emptyList()
-         } else {
-            this.definition?.values?.map { value ->
-               val valueExtensions: List<EnumValueExtension> = valueExtensions(value.name)
-               val collatedAnnotations = value.annotations + valueExtensions.annotations()
-               val docSources = (listOf(value) + valueExtensions) as List<Documented>
-               val synonyms = value.synonyms + valueExtensions.flatMap { it.synonyms }
-               value.copy(annotations = collatedAnnotations, typeDoc = docSources.typeDoc(), synonyms = synonyms)
-            } ?: emptyList()
+         return when {
+            this.baseEnum != this -> this.baseEnum?.values ?: emptyList()
+            this.definition == null -> emptyList()
+            else -> {
+               // through profiling perfomance whne using the compiler in the LSP tooling,
+               // we've found that calls to Enum.values() happens a lot, and is expensive.
+               // Therefore, we're caching this.
+               // Note the cache must invaliate when things that affect the list of values change.
+               // THat's either the definition, or adding an extension.
+               val cacheKey = "${this.definition!!.hashCode()}-${this.extensions.hashCode()}"
+               this.enumValueCache.get(cacheKey) {
+                  this.definition!!.values.map {  value ->
+                     val valueExtensions: List<EnumValueExtension> = valueExtensions(value.name)
+                     val collatedAnnotations = value.annotations + valueExtensions.annotations()
+                     val docSources = (listOf(value) + valueExtensions) as List<Documented>
+                     val synonyms = value.synonyms + valueExtensions.flatMap { it.synonyms }
+                     value.copy(annotations = collatedAnnotations, typeDoc = docSources.typeDoc(), synonyms = synonyms)
+                  }
+               }
+            }
          }
       }
 
