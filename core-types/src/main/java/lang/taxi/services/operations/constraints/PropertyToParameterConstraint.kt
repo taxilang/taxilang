@@ -2,7 +2,6 @@ package lang.taxi.services.operations.constraints
 
 import lang.taxi.Equality
 import lang.taxi.Operator
-import lang.taxi.services.Service
 import lang.taxi.types.*
 
 
@@ -27,7 +26,7 @@ open class PropertyToParameterConstraint(
    override val compilationUnits: List<CompilationUnit>
 ) : Constraint {
    override fun asTaxi(): String {
-      return "${propertyIdentifier.taxi} ${operator.symbol} ${expectedValue.taxi}"
+      return "${propertyIdentifier.taxi} ${operator.symbol} ${expectedValue.asTaxi()}"
    }
 
    private val equality = Equality(this, PropertyToParameterConstraint::propertyIdentifier, PropertyToParameterConstraint::operator, PropertyToParameterConstraint::expectedValue)
@@ -48,11 +47,13 @@ data class PropertyFieldNameIdentifier(val name: AttributePath) : PropertyIdenti
 // TODO : Syntax here is still up for discussion.  See OperationContextSpec
 data class PropertyTypeIdentifier(val type: QualifiedName) : PropertyIdentifier("type ${type.parameterizedName}", "this:${type.parameterizedName}")
 
-sealed class ValueExpression(val taxi: String)
+sealed class BaseValueExpression(val taxi: String) : ValueExpression {
+   override fun asTaxi(): String = taxi
+}
 
 // TODO : This won't work with numbers - but neither does the parsing.  Need to fix that.
-data class EnumValueExpression(val enumValue:EnumValue) : ValueExpression(enumValue.qualifiedName)
-data class ConstantValueExpression(val value: Any) : ValueExpression("'$value'")
-data class RelativeValueExpression(val path: AttributePath) : ValueExpression(path.path) {
+data class EnumValueExpression(val enumValue:EnumValue) : BaseValueExpression(enumValue.qualifiedName)
+data class ConstantValueExpression(val value: Any) : BaseValueExpression("'$value'")
+data class RelativeValueExpression(val path: AttributePath) : BaseValueExpression(path.path) {
    constructor(attributeName: String) : this(AttributePath.from(attributeName))
 }

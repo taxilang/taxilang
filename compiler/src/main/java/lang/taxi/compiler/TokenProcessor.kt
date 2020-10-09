@@ -28,6 +28,7 @@ import lang.taxi.toCompilationError
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionDefinition
+import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.utils.errorOrNull
@@ -717,7 +718,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                   typeType.start, "Multiple type constraints are not supported here"
                )))
                else -> {
-                  val constraint = constraints.first()
+                  val constraint = constraints.first() as PropertyToParameterConstraint
                   when (firstInheritedType.discriminatorField) {
                      null -> {
                         Either.left(listOf(CompilationError(typeType.start, "Cannot specify a discriminator value here, as super type ${firstInheritedType.qualifiedName} does not expose a discriminator")))
@@ -727,7 +728,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                      }
                      else -> {
                         val discriminatorField = firstInheritedType.discriminatorField!!.field
-                        Either.right(SubTypeDiscriminatorField(discriminatorField, constraint))
+                        Either.right(SubTypeDiscriminatorField(discriminatorField, constraint.expectedValue))
                      }
                   }
 

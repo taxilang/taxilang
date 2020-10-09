@@ -74,7 +74,7 @@ object AbstractModelsSpec : Spek({
             }""".compiled()
             val discriminatorField = schema.objectType("Person")
                .discriminatorField as SubTypeDiscriminatorField
-            val expected = (discriminatorField.expression as PropertyToParameterConstraint).expectedValue as ConstantValueExpression
+            val expected = discriminatorField.expression as ConstantValueExpression
             expected.value.should.equal("MAMMAL")
          }
          it("is possible to use a number as a discriminator") {
@@ -88,14 +88,14 @@ object AbstractModelsSpec : Spek({
             }""".compiled()
             val discriminatorField = schema.objectType("Person")
                .discriminatorField as SubTypeDiscriminatorField
-            val expected = (discriminatorField.expression as PropertyToParameterConstraint).expectedValue as ConstantValueExpression
+            val expected = discriminatorField.expression as ConstantValueExpression
             expected.value.should.equal(123)
          }
          it("is possible to use an enum as a discriminator") {
             // Not redefining the schema here - this test uses the shared schema above.
             val discriminatorField = schema.objectType("Person")
                .discriminatorField as SubTypeDiscriminatorField
-            val expected = (discriminatorField.expression as PropertyToParameterConstraint).expectedValue as EnumValueExpression
+            val expected = discriminatorField.expression as  EnumValueExpression
             expected.enumValue.qualifiedName.should.equal("AnimalType.MAMMAL")
          }
       }

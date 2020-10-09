@@ -2,7 +2,6 @@ package lang.taxi.services.operations.constraints
 
 import arrow.core.Either
 import arrow.core.flatMap
-import arrow.core.getOrHandle
 import lang.taxi.*
 import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract
@@ -59,6 +58,7 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
                is ConstantValueExpression -> null // Not sure that to validate here?
                is RelativeValueExpression -> validate(constraint.expectedValue as RelativeValueExpression, target, constraint, constraintDeclarationSite)
                is EnumValueExpression -> null // Don't think we need any further validation at this point
+               else -> error("Unhandled ValueExpression type: ${attributeConstraint.expectedValue::class.simpleName}")
             }
 
             val errors = listOfNotNull(lhsValidationError, rhsValidationError)

@@ -36,7 +36,7 @@ data class ObjectTypeExtension(val annotations: List<Annotation> = emptyList(),
 sealed class TypeDiscriminatorField() {
    abstract val field:Field
 }
-data class SubTypeDiscriminatorField(override val field:Field, val expression:Constraint) : TypeDiscriminatorField()
+data class SubTypeDiscriminatorField(override val field:Field, val expression:ValueExpression) : TypeDiscriminatorField()
 data class BaseTypeDiscriminatorField(override val field:Field) : TypeDiscriminatorField()
 
 data class ObjectTypeDefinition(

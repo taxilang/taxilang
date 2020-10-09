@@ -99,17 +99,22 @@ data class InlineAssignmentExpression(override val assignment: ValueAssignment) 
    override fun asTaxi(): String = assignment.asTaxi()
 }
 
+/**
+ * An expression that will resolve to a value - either directly (ie., through a literal)
+ * or by referencing a variable etc.
+ */
+interface ValueExpression : TaxiStatementGenerator
 
 interface WhenCaseMatchExpression : TaxiStatementGenerator
-class ReferenceCaseMatchExpression(val reference: String) : WhenCaseMatchExpression {
+class ReferenceCaseMatchExpression(val reference: String) : WhenCaseMatchExpression, ValueExpression {
    override fun asTaxi(): String = reference // I don't think this is right...
 }
 
-class EnumLiteralCaseMatchExpression(val enumValue: EnumValue) : WhenCaseMatchExpression {
+class EnumLiteralCaseMatchExpression(val enumValue: EnumValue) : WhenCaseMatchExpression, ValueExpression {
    override fun asTaxi(): String = enumValue.qualifiedName
 }
 
-class LiteralCaseMatchExpression(val value: Any) : WhenCaseMatchExpression {
+class LiteralCaseMatchExpression(val value: Any) : WhenCaseMatchExpression, ValueExpression {
    override fun asTaxi(): String {
       return when (value) {
          is String -> value.quoted()
@@ -118,6 +123,7 @@ class LiteralCaseMatchExpression(val value: Any) : WhenCaseMatchExpression {
    }
 }
 
+// Else is not a ValueExpression, but it is matchable in a when...case
 object ElseMatchExpression : WhenCaseMatchExpression {
    override fun asTaxi(): String = "else"
 }
