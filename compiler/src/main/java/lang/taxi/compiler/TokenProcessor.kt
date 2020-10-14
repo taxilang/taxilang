@@ -1,12 +1,7 @@
 package lang.taxi.compiler
 
-import arrow.core.Either
-import arrow.core.extensions.either.monad.flatMap
+import arrow.core.*
 import arrow.core.flatMap
-import arrow.core.getOrElse
-import arrow.core.getOrHandle
-import arrow.core.orNull
-import arrow.core.right
 import com.google.common.hash.Hashing
 import lang.taxi.*
 import lang.taxi.Namespace
@@ -294,7 +289,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(namespace, tokenRule).collectError()
             else -> TODO("Not handled: $tokenRule")
          }
-      } catch (exception:Exception) {
+      } catch (exception: Exception) {
          tokensCurrentlyCompiling.remove(tokenName)
          throw  exception
       }
@@ -341,30 +336,42 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             assertTypesCompatible(type.field(fieldName).type, refinedType, fieldName, typeName, typeRule)
          }
 
-         val enumConstantValue = member
-            ?.typeExtensionFieldDeclaration()
+         val defaultValue = member?.typeExtensionFieldDeclaration()
             ?.typeExtensionFieldTypeRefinement()
             ?.constantDeclaration()
-            ?.qualifiedName()?.let { enumDefaultValue ->
-               assertEnumDefaultValueCompatibility(refinedType!! as EnumType, enumDefaultValue.text, fieldName, typeRule)
-            }
+            ?.defaultDefinition()
+            ?.let { defaultDefinitionContext ->
+               parseDefaultValue(defaultDefinitionContext, refinedType!!)
+            }?.collectError()?.getOrElse { null }
 
-         val constantValue = enumConstantValue ?: member
-            ?.typeExtensionFieldDeclaration()
-            ?.typeExtensionFieldTypeRefinement()
-            ?.constantDeclaration()
-            ?.literal()?.let { literal ->
-               val literalValue = literal.value()
-               assertLiteralDefaultValue(refinedType!!, literalValue, fieldName, typeRule)
-               literalValue
-            }
-
-         FieldExtension(fieldName, fieldAnnotations, refinedType, constantValue)
+         FieldExtension(fieldName, fieldAnnotations, refinedType, defaultValue)
       }
       val errorMessage = type.addExtension(ObjectTypeExtension(annotations, fieldExtensions, typeDoc, typeRule.toCompilationUnit()))
       return errorMessage
          .mapLeft { it.toCompilationError(typeRule.start) }
          .errorOrNull()
+   }
+
+   private fun parseDefaultValue(defaultDefinitionContext: TaxiParser.DefaultDefinitionContext, targetType: Type): Either<CompilationError, Any?> {
+      return when {
+         defaultDefinitionContext.literal() != null -> {
+            assertLiteralDefaultValue(targetType, defaultDefinitionContext.literal().value(), defaultDefinitionContext)
+         }
+         defaultDefinitionContext.qualifiedName() != null -> {
+            if (targetType !is EnumType) {
+               CompilationError(defaultDefinitionContext.qualifiedName().start, "Cannot use an enum as a reference here, as ${targetType.qualifiedName} is not an enum").left()
+            } else {
+               val (enumTypeName, enumValue) = EnumValue.qualifiedNameFrom(defaultDefinitionContext.qualifiedName().text)
+               val enumValueQualifiedName = "$enumTypeName.$enumValue"
+               if (targetType.qualifiedName != enumTypeName.fullyQualifiedName) {
+                  CompilationError(defaultDefinitionContext.qualifiedName().start, "Cannot assign a default of $enumValueQualifiedName to an enum with a type of ${targetType.qualifiedName} because the types are different").left()
+               } else {
+                  assertEnumDefaultValueCompatibility(targetType, enumValueQualifiedName, defaultDefinitionContext.qualifiedName())
+               }
+            }
+         }
+         else -> error("Unexpected branch of parseDefaultValue didn't match any conditions")
+      }
    }
 
    private fun assertTypesCompatible(originalType: Type, refinedType: Type, fieldName: String, typeName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext): Type {
@@ -377,22 +384,24 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return refinedType
    }
 
-   private fun assertLiteralDefaultValue(refinedType: Type, defaultValue: Any, fieldName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext) {
+   private fun assertLiteralDefaultValue(targetType: Type, defaultValue: Any, typeRule: ParserRuleContext): Either<CompilationError, Any> {
       val valid = when {
-         refinedType.basePrimitive == PrimitiveType.STRING && defaultValue is String -> true
-         refinedType.basePrimitive == PrimitiveType.DECIMAL && defaultValue is Number -> true
-         refinedType.basePrimitive == PrimitiveType.INTEGER && defaultValue is Number -> true
-         refinedType.basePrimitive == PrimitiveType.BOOLEAN && defaultValue is Boolean -> true
+         targetType.basePrimitive == PrimitiveType.STRING && defaultValue is String -> true
+         targetType.basePrimitive == PrimitiveType.DECIMAL && defaultValue is Number -> true
+         targetType.basePrimitive == PrimitiveType.INTEGER && defaultValue is Number -> true
+         targetType.basePrimitive == PrimitiveType.BOOLEAN && defaultValue is Boolean -> true
          else -> false
       }
-      if (!valid) {
-         throw CompilationException(typeRule.start, "Cannot set default value for field $fieldName as $defaultValue as it is not compatible with ${refinedType.basePrimitive?.qualifiedName}", typeRule.source().sourceName)
+      return if (!valid) {
+         CompilationError(typeRule.start, "Default value $defaultValue is not compatible with ${targetType.basePrimitive?.qualifiedName}", typeRule.source().sourceName).left()
+      } else {
+         defaultValue.right()
       }
    }
 
-   private fun assertEnumDefaultValueCompatibility(enumType: EnumType, defaultValue: String, fieldName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext): EnumValue {
-      return enumType.values.firstOrNull { enumValue -> enumValue.qualifiedName == defaultValue }
-         ?: throw CompilationException(typeRule.start, "Cannot set default value for field $fieldName as $defaultValue as enum ${enumType.toQualifiedName().fullyQualifiedName} does not have corresponding value", typeRule.source().sourceName)
+   private fun assertEnumDefaultValueCompatibility(enumType: EnumType, defaultValue: String, typeRule: ParserRuleContext): Either<CompilationError, EnumValue> {
+      return enumType.values.firstOrNull { enumValue -> enumValue.qualifiedName == defaultValue }?.right()
+         ?: CompilationError(typeRule.start, "${enumType.toQualifiedName().fullyQualifiedName} has no value of $defaultValue", typeRule.source().sourceName).left()
    }
 
    private fun compileTypeAlias(namespace: Namespace, tokenName: String, tokenRule: TaxiParser.TypeAliasDeclarationContext): Either<CompilationError, TypeAlias> {
@@ -494,30 +503,29 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    private fun compileField(member: TaxiParser.TypeMemberDeclarationContext, namespace: Namespace): Either<List<CompilationError>, Field> {
       val fieldAnnotations = collateAnnotations(member.annotation())
-      val accessor = compileAccessor(member.fieldDeclaration().accessor())
+
       val typeDoc = parseTypeDoc(member.typeDoc())
       return parseType(namespace, member.fieldDeclaration().typeType())
          .mapLeft { listOf(it) }
-         .flatMap { type -> toField(member, namespace, type, accessor, typeDoc, fieldAnnotations) }
+         .flatMap { type -> toField(member, namespace, type, typeDoc, fieldAnnotations) }
    }
 
    internal fun compileCalculatedField(member: TaxiParser.TypeMemberDeclarationContext,
                                        formula: Formula,
                                        namespace: Namespace): Either<List<CompilationError>, Field> {
       val fieldAnnotations = collateAnnotations(member.annotation())
-      val accessor = compileAccessor(member.fieldDeclaration().accessor())
       val typeDoc = parseTypeDoc(member.typeDoc())
       return parseType(namespace, formula, member.fieldDeclaration().typeType())
          .mapLeft { listOf(it) }
-         .flatMap { type -> toField(member, namespace, type, accessor, typeDoc, fieldAnnotations) }
+         .flatMap { type -> toField(member, namespace, type, typeDoc, fieldAnnotations) }
    }
 
    private fun toField(member: TaxiParser.TypeMemberDeclarationContext,
                        namespace: Namespace,
                        type: Type,
-                       accessor: Accessor?,
                        typeDoc: String?,
                        fieldAnnotations: List<Annotation>): Either<List<CompilationError>, Field> {
+      val accessor = compileAccessor(member.fieldDeclaration().accessor(), type)
       return mapConstraints(member.fieldDeclaration().typeType(), type, namespace).map { constraints ->
          Field(
             name = unescape(member.fieldDeclaration().Identifier().text),
@@ -544,34 +552,53 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return content.trim('"')
    }
 
-   private fun compileAccessor(accessor: TaxiParser.AccessorContext?): Accessor? {
+   private fun compileAccessor(accessor: TaxiParser.AccessorContext?, targetType: Type): Accessor? {
       return when {
          accessor == null -> null
-         accessor.scalarAccessor() != null -> compileScalarAccessor(accessor.scalarAccessor())
-         accessor.objectAccessor() != null -> compileDestructuredAccessor(accessor.objectAccessor())
+         accessor.scalarAccessor() != null -> compileScalarAccessor(accessor.scalarAccessor(), targetType)
+         accessor.objectAccessor() != null -> compileDestructuredAccessor(accessor.objectAccessor(), targetType)
          else -> null
       }
    }
 
-   private fun compileDestructuredAccessor(block: TaxiParser.ObjectAccessorContext): DestructuredAccessor {
-      val fields = block.destructuredFieldDeclaration().map { fieldDeclaration ->
+   private fun compileDestructuredAccessor(block: TaxiParser.ObjectAccessorContext, targetType: Type): DestructuredAccessor? {
+      if (targetType !is ObjectType) {
+         this.errors.add(CompilationError(block.start, "Destructuring is not permitted here because ${targetType.qualifiedName} is not an object type"))
+         return null
+      }
+
+      val accessorErrors = mutableListOf<CompilationError>()
+      val fields = block.destructuredFieldDeclaration().mapNotNull { fieldDeclaration ->
          val fieldName = fieldDeclaration.Identifier().text
-         val accessor = compileAccessor(fieldDeclaration.accessor())
+         if (!targetType.hasField(fieldName)) {
+            accessorErrors.add(CompilationError(fieldDeclaration.start, "${targetType.qualifiedName} has no field called $fieldName"))
+            return@mapNotNull null
+         }
+         val fieldType = targetType.field(fieldName).type
+         val accessor = compileAccessor(fieldDeclaration.accessor(), fieldType)
             ?: throw CompilationException(fieldDeclaration.start, "Expected an accessor to be defined", block.source().sourceName)
          fieldName to accessor
       }.toMap()
       // TODO : Validate that the object is fully defined..
       // No invalid fields declared
       // No non-null fields omitted
-      return DestructuredAccessor(fields)
+      return if (accessorErrors.isNotEmpty()) {
+         this.errors.addAll(accessorErrors)
+         null
+      } else {
+         DestructuredAccessor(fields)
+      }
    }
 
-   internal fun compileScalarAccessor(accessor: TaxiParser.ScalarAccessorContext): Accessor {
-      return compileScalarAccessor(accessor.scalarAccessorExpression())
+   internal fun compileScalarAccessor(accessor: TaxiParser.ScalarAccessorContext, targetType: Type?): Accessor {
+      return compileScalarAccessor(accessor.scalarAccessorExpression(), targetType)
 
    }
 
-   internal fun compileScalarAccessor(expression: TaxiParser.ScalarAccessorExpressionContext): Accessor {
+   internal fun compileScalarAccessor(expression: TaxiParser.ScalarAccessorExpressionContext, targetType: Type?): Accessor {
+      if (targetType == null) {
+         log().warn("Type not provided, not performing type checks")
+      }
       return when {
          expression.jsonPathAccessorDeclaration() != null -> JsonPathAccessor(expression.jsonPathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
          expression.xpathAccessorDeclaration() != null -> XpathAccessor(expression.xpathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
@@ -588,7 +615,11 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                .getOrHandle { throw CompilationException(it) }
          }
          expression.defaultDefinition() != null -> {
-            ColumnAccessor(index = null, defaultValue = expression.defaultDefinition().literal().value())
+            val defaultValue = parseDefaultValue(expression.defaultDefinition(), targetType!!)
+               .collectError().getOrElse { null }
+            ColumnAccessor(
+               index = null,
+               defaultValue = defaultValue)
          }
 
          expression.readFunction() != null -> {
@@ -605,10 +636,10 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
          resolveFunction(qualifiedName, functionContext).map { function ->
             require(function.isDefined) { "Function should have already been compiled before evaluation in a read function expression" }
-            val parameters = functionContext.formalParameterList().parameter().map { parameterContext ->
+            val parameters = functionContext.formalParameterList().parameter().mapIndexed { parameterIndex, parameterContext ->
                when {
                   parameterContext.literal() != null -> LiteralAccessor(parameterContext.literal().value())
-                  parameterContext.scalarAccessorExpression() != null -> compileScalarAccessor(parameterContext.scalarAccessorExpression())
+                  parameterContext.scalarAccessorExpression() != null -> compileScalarAccessor(parameterContext.scalarAccessorExpression(), function.getParameterType(parameterIndex))
 //                  parameterContext.readFunction() != null -> buildReadFunctionAccessor(parameterContext.readFunction())
 //                  parameterContext.columnDefinition() != null -> buildColumnAccessor(parameterContext.columnDefinition())
                   parameterContext.fieldReferenceSelector() != null -> FieldReferenceSelector(parameterContext.fieldReferenceSelector().Identifier().text)

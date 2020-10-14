@@ -453,7 +453,8 @@ filterAttributeNameList
 
 columnDefinition : 'column' '(' columnIndex ')' ;
 
-defaultDefinition: 'default' '(' literal ')';
+// qualifiedName here is to reference enums
+defaultDefinition: 'default' '(' (literal | qualifiedName) ')';
 
 // "declare function" borrowed from typescript.
 // Note that taxi supports declaring a function, but won't provide
@@ -562,7 +563,7 @@ typeExtensionFieldTypeRefinement
     : ':' typeType constantDeclaration?
     ;
 
-constantDeclaration : 'with' 'default' (literal | qualifiedName);
+constantDeclaration : 'by'  defaultDefinition;
 // Typedoc is a special documentation block that wraps types.
 // It's treated as plain text, but we'll eventually support doc tools
 // that speak markdown.

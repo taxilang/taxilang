@@ -6,10 +6,21 @@ import arrow.core.getOrHandle
 import arrow.core.right
 import lang.taxi.*
 import lang.taxi.types.*
+import lang.taxi.utils.invertEitherList
 import org.antlr.v4.runtime.RuleContext
 
 class ConditionalFieldSetProcessor internal constructor(private val compiler: TokenProcessor) {
    fun compileConditionalFieldStructure(fieldBlock: TaxiParser.ConditionalTypeStructureDeclarationContext, namespace: Namespace): Either<CompilationError, ConditionalFieldSet> {
+//      val fields = fieldBlock.typeMemberDeclaration().mapNotNull { fieldDeclaration ->
+//         compiler.compiledField(fieldDeclaration, namespace)?.let { field ->
+//            compileCondition(fieldBlock.conditionalTypeConditionDeclaration(), namespace).map { condition ->
+//               field.copy(readExpression = condition)
+//            }
+//         }
+//      }.invertEitherList()
+//         .map { fields ->  }
+
+
       return compileCondition(fieldBlock.conditionalTypeConditionDeclaration(), namespace).map { condition ->
          val fields = fieldBlock.typeMemberDeclaration().mapNotNull { fieldDeclaration ->
             compiler.compiledField(fieldDeclaration, namespace)?.copy(readExpression = condition)
@@ -82,7 +93,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
          scalarAssigningDeclaration.literal() != null -> compileLiteralValueAssignment(scalarAssigningDeclaration.literal())
          scalarAssigningDeclaration.caseFieldReferenceAssignment() != null -> compileReferenceValueAssignment(scalarAssigningDeclaration.caseFieldReferenceAssignment())
          scalarAssigningDeclaration.scalarAccessorExpression() != null -> {
-            val accessor = compiler.compileScalarAccessor(scalarAssigningDeclaration.scalarAccessorExpression())
+            val accessor = compiler.compileScalarAccessor(scalarAssigningDeclaration.scalarAccessorExpression(), targetType = null) // TODO : Where do we fine the type info for the field we're compiling?
             ScalarAccessorValueAssignment(accessor)
          }
          else -> error("Unhandled scalar value assignment")
@@ -111,7 +122,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
    }
 
    private fun compileScalarAccessorValueAssignment(scalarAccessor: TaxiParser.ScalarAccessorContext): ScalarAccessorValueAssignment {
-      val accessor = compiler.compileScalarAccessor(scalarAccessor)
+      val accessor = compiler.compileScalarAccessor(scalarAccessor, targetType = null) // TODO : Where do we find the type info for this?
       return ScalarAccessorValueAssignment(accessor)
    }
 
@@ -195,8 +206,8 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
    }
 
    private fun compileTypedAccessor(expressionSelector: TaxiParser.MappedExpressionSelectorContext, namespace: Namespace): Either<CompilationError, AccessorExpressionSelector> {
-      val accessor = compiler.compileScalarAccessor(expressionSelector.scalarAccessorExpression())
       return compiler.parseType(namespace, expressionSelector.typeType()).map { type ->
+         val accessor = compiler.compileScalarAccessor(expressionSelector.scalarAccessorExpression(),type)
          AccessorExpressionSelector(accessor, type)
       }
    }

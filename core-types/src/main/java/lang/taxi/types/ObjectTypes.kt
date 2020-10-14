@@ -194,8 +194,8 @@ data class ObjectType(
             val collatedAnnotations = field.annotations + fieldExtensions.annotations()
             val (refinedType, defaultValue) = fieldExtensions
                .asSequence()
-               .mapNotNull { refinement -> refinement.refinedType?.let { Pair(refinement.refinedType, refinement.defaultValue) } }
-               .firstOrNull() ?: Pair(field.type, null)
+               .mapNotNull { refinement -> refinement.refinedType?.let { refinement.refinedType to refinement.defaultValue } }
+               .firstOrNull() ?: field.type to null
             field.copy(annotations = collatedAnnotations, type = refinedType, defaultValue = defaultValue)
          } ?: emptyList()
       }
@@ -253,11 +253,19 @@ data class Field(
    val accessor: Accessor? = null,
    val readExpression: FieldSetExpression? = null,
    override val typeDoc: String? = null,
+   // TODO : This feels wrong - what's the relationship between this and the
+   //  defaults served by accessors?
+   // These default values are set by field extensions.
+   // Need to standardise.
    val defaultValue: Any? = null,
    val formula: Formula? = null
 ) : Annotatable, ConstraintTarget, Documented, NameTypePair {
 
    override val description: String = "field $name"
+   // This needs to be stanrdardised with the defaultValue above, which comes from
+   // extensions
+   val accessorDefault = if (accessor is AccessorWithDefault) accessor.defaultValue else null
+
 
    // For equality - don't compare on the type (as this can cause stackOverflow when the type is an Object type)
    private val typeName = type.qualifiedName
@@ -271,28 +279,34 @@ data class Field(
 
 
 interface Accessor
+interface AccessorWithDefault {
+   val defaultValue: Any?
+}
+
 interface ExpressionAccessor : Accessor {
    val expression: String
 }
 
 data class LiteralAccessor(val value: Any) : Accessor, TaxiStatementGenerator {
    override fun asTaxi(): String {
-      return when(value) {
+      return when (value) {
          is String -> value.quoted()
          else -> value.toString()
       }
    }
 
 }
+
 data class XpathAccessor(override val expression: String) : ExpressionAccessor, TaxiStatementGenerator {
    override fun asTaxi(): String = """by xpath("$expression")"""
 }
+
 data class JsonPathAccessor(override val expression: String) : ExpressionAccessor, TaxiStatementGenerator {
    override fun asTaxi(): String = """by jsonPath("$expression")"""
 }
 
 // TODO : This is duplicating concepts in ColumnMapping, one should die.
-data class ColumnAccessor(val index: Any?, val defaultValue: Any?) : ExpressionAccessor, TaxiStatementGenerator {
+data class ColumnAccessor(val index: Any?, override val defaultValue: Any?) : ExpressionAccessor, TaxiStatementGenerator, AccessorWithDefault {
    override val expression: String = index.toString()
    override fun asTaxi(): String {
       return when {
@@ -309,25 +323,27 @@ data class ColumnAccessor(val index: Any?, val defaultValue: Any?) : ExpressionA
 // assign multiple fields), and scalar when blocks (a when block that assigns a single field).
 data class ConditionalAccessor(val expression: FieldSetExpression) : Accessor, TaxiStatementGenerator {
    override fun asTaxi(): String {
-      return "by ${expression.asTaxi() }"
+      return "by ${expression.asTaxi()}"
    }
 }
 
 data class DestructuredAccessor(val fields: Map<String, Accessor>) : Accessor
 
 @Deprecated("Use lang.taxi.functions.Function instead")
-data class ReadFunctionFieldAccessor(val readFunction: ReadFunction, val arguments: List<ReadFunctionArgument>): Accessor
+data class ReadFunctionFieldAccessor(val readFunction: ReadFunction, val arguments: List<ReadFunctionArgument>) : Accessor
+
 @Deprecated("Use lang.taxi.functions.Function instead")
 data class ReadFunctionArgument(val columnAccessor: ColumnAccessor?, val value: Any?)
 
 @Deprecated("Use lang.taxi.functions.Function instead")
-enum class ReadFunction(val symbol: String){
+enum class ReadFunction(val symbol: String) {
    CONCAT("concat");
-//   LEFTUPPERCASE("leftAndUpperCase"),
+
+   //   LEFTUPPERCASE("leftAndUpperCase"),
 //   MIDUPPERCASE("midAndUpperCase");
    companion object {
       private val bySymbol = ReadFunction.values().associateBy { it.symbol }
-      fun forSymbol(symbol:String):ReadFunction {
+      fun forSymbol(symbol: String): ReadFunction {
          return bySymbol[symbol] ?: error("No operator defined for symbol $symbol")
       }
 

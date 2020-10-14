@@ -271,11 +271,11 @@ RED
             height: Height
          }
          type extension Person {
-            name: FirstName with default 'jimmy'
-            surname : FirstName with default 'doe'
-            age: Age with default 42
-            foo: Foo with default Foo.One
-            height: Height with default 18200000
+            name: FirstName by default ('jimmy')
+            surname : FirstName by default ('doe')
+            age: Age by default (42)
+            foo: Foo by default (Foo.One)
+            height: Height by default (18200000)
          }
         """
       val doc = Compiler(source).compile()
@@ -305,7 +305,7 @@ RED
             name : String
          }
          type extension Person {
-            name: FirstName with default 42
+            name: FirstName by default (42)
          }
         """
       val doc = Compiler(source).compile()
@@ -319,7 +319,7 @@ RED
             age : Int
          }
          type extension Person {
-            age: Age with default 'jimmy'
+            age: Age by default ('jimmy')
          }
         """
       val doc = Compiler(source).compile()
@@ -335,7 +335,7 @@ RED
             birthCountry : CountryCode
          }
          type extension Person {
-            birthCountry: CountryCode with default CountryCode.TR
+            birthCountry: CountryCode by default (CountryCode.TR)
          }
         """
       val doc = Compiler(source).compile()
