@@ -130,7 +130,7 @@ object CompletionSpec : Spek({
 
             describe("enum completion") {
                 val (service, workspaceRoot) = documentServiceFor("test-scenarios/enum-completion-workspace")
-                service.compileAndReport()
+                service.compile()
                 val originalSource = workspaceRoot.resolve("direction.taxi").toFile().readText()
 
                 it("should offer 'synonym of' prompt") {

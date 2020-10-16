@@ -76,21 +76,21 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
 
     override fun completion(position: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
         if (lastCompilationResult.get() == null) {
-            compileAndReport()
+            compile()
         }
         return completionService.computeCompletions(lastCompilationResult.get(), position)
     }
 
     override fun definition(params: DefinitionParams): CompletableFuture<Either<MutableList<out Location>, MutableList<out LocationLink>>> {
         if (lastCompilationResult.get() == null) {
-            compileAndReport()
+            compile()
         }
         return gotoDefinitionService.definition(lastCompilationResult.get(), params)
     }
 
     override fun hover(params: HoverParams): CompletableFuture<Hover> {
         if (lastCompilationResult.get() == null) {
-            compileAndReport()
+            compile()
         }
         return hoverService.hover(lastCompilationResult.get(), lastSuccessfulCompilationResult.get(), params)
     }
@@ -134,7 +134,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         val sourceNameUri = URI.create(SourceNames.normalize(sourceName))
         this.sources[sourceNameUri] = content
         this.charStreams[sourceNameUri] = CharStreams.fromString(content, sourceName)
-        compileAndReport()
+        compile()
         computeLinterMessages(params.textDocument.uri)
         publishDiagnosticMessages()
     }
@@ -143,7 +143,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     // We're compiling the entire workspace every time we get a request, which is
     // on every keypress.
     // We need to find a way to only recompile the document that has changed
-    internal fun compileAndReport(): CompilationResult {
+    internal fun compile(): CompilationResult {
         val charStreams = this.charStreams.values.toList()
 
         val compiler = Compiler(charStreams, tokenCache = tokenCache)
@@ -180,19 +180,27 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
             )
         }
         this.compilerErrorDiagnostics = diagnostics.groupBy({ it.first }, { it.second })
+                .mapKeys { (fileUri, _) -> SourceNames.normalize(fileUri) }
     }
 
     private fun publishDiagnosticMessages() {
-        val publishedDiagnostics = (compilerErrorDiagnostics.keys + linterDiagnostics.keys).map { uri ->
-            uri to (compilerErrorDiagnostics.getOrDefault(uri, emptyList()) + linterDiagnostics.getOrDefault(uri, emptyList()))
-        }.map { (uri,diagnostics) ->
-            PublishDiagnosticsParams(uri,diagnostics)
+        val diagnosticMessages = (compilerErrorDiagnostics.keys + linterDiagnostics.keys).map { uri ->
+            val normalisedUrl = SourceNames.normalize(uri)
+            normalisedUrl to (compilerErrorDiagnostics.getOrDefault(normalisedUrl, emptyList()) + linterDiagnostics.getOrDefault(normalisedUrl, emptyList()))
+        }.map { (uri, diagnostics) ->
+            // When sending diagnostic messages, use the canonical path of the file, rather than
+            // the normalized URI.  This means we get an OS specific file.
+            // VSCode on windows seems to not like the URI
+
+            val filePath = File(URI.create(uri)).canonicalPath
+            PublishDiagnosticsParams(uri, diagnostics)
         }
 
-        this.displayedMessages = publishedDiagnostics
-
         clearErrors()
-        publishedDiagnostics.forEach {
+        this.displayedMessages = diagnosticMessages
+
+
+        diagnosticMessages.forEach {
             client.publishDiagnostics(it)
         }
     }
@@ -212,7 +220,9 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         this.client = client
         connected = true
         if (ready) {
-            compileAndReport()
+            compile()
+            publishDiagnosticMessages()
+
         }
     }
 
@@ -239,7 +249,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
 
         if (ready) {
             client.logMessage(MessageParams(MessageType.Log, "Found ${charStreams.size} to compile on startup"))
-            compileAndReport()
+            compile()
         }
 
     }

@@ -18,16 +18,21 @@ class TypeProvider(private val lastSuccessfulCompilationResult: AtomicReference<
                 }
             }.toMap()
 
-    fun getTypes(decorators: List<CompletionDecorator> = emptyList(), filter: (Type) -> Boolean): List<CompletionItem> {
+    fun getTypes(decorators: List<CompletionDecorator> = emptyList(), filter: (QualifiedName, Type?) -> Boolean): List<CompletionItem> {
         val compiledDoc = lastSuccessfulCompilationResult.get()?.document
-        val typeNames = lastCompilationResult.get()?.compiler?.declaredTypeNames() ?: emptyList()
-        val completionItems = typeNames.mapNotNull { name ->
+        val lastSuccessfulCompilationTypeNames = lastSuccessfulCompilationResult.get()?.compiler?.declaredTypeNames()
+                ?: emptyList()
+        val lastCompilationResultTypeNames = lastCompilationResult.get()?.compiler?.declaredTypeNames() ?: emptyList()
+        val typeNames = (lastCompilationResultTypeNames + lastSuccessfulCompilationTypeNames).distinct()
+
+        val completionItems = typeNames.map { name ->
             if (compiledDoc?.containsType(name.fullyQualifiedName) == true) { // == true because of nulls
                 name to compiledDoc.type(name.fullyQualifiedName)
             } else {
-                null
+                name to null
             }
-        }.filter { (name, type) -> filter(type) }
+        }
+                .filter { (name, type) -> filter(name, type) }
                 .map { (name, type) ->
                     val doc = if (type is Documented) {
                         type.typeDoc
@@ -40,7 +45,7 @@ class TypeProvider(private val lastSuccessfulCompilationResult: AtomicReference<
 
                     decorators.fold(completionItem) { itemToDecorate, decorator -> decorator.decorate(name, type, itemToDecorate) }
                 }
-        val primitiveCompletions = primitives.filter { (type, _) -> filter(type) }
+        val primitiveCompletions = primitives.filter { (type, _) -> filter(type.toQualifiedName(), type) }
                 .map { (_, completionItem) -> completionItem }
         return completionItems + primitiveCompletions
     }
@@ -49,7 +54,7 @@ class TypeProvider(private val lastSuccessfulCompilationResult: AtomicReference<
      * Returns all types, including Taxi primitives
      */
     fun getTypes(decorators: List<CompletionDecorator> = emptyList()): List<CompletionItem> {
-        return getTypes(decorators) { true }
+        return getTypes(decorators) { _, _ -> true }
     }
 
     fun getEnumValues(decorators: List<CompletionDecorator>, enumType: String?): List<CompletionItem> {
@@ -79,7 +84,7 @@ class TypeProvider(private val lastSuccessfulCompilationResult: AtomicReference<
     }
 
     fun getEnumTypes(decorators: List<CompletionDecorator>): List<CompletionItem> {
-        return getTypes(decorators) { it is EnumType }
+        return getTypes(decorators) { _, type -> type is EnumType }
     }
 }
 
