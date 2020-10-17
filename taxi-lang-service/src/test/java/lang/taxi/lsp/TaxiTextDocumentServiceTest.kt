@@ -35,7 +35,7 @@ class TaxiTextDocumentServiceTest {
         val (service, workspaceRoot) = documentServiceFor("test-scenarios/folder-containing-dottaxi-folder")
         service.compilerMessages.should.have.size(0)
         service.connect(mock<LanguageClient>())
-        val compilationResult = service.lastCompilationResult.get()
+        val compilationResult = service.lastCompilationResult
         compilationResult.document!!.types.should.have.size(3)
     }
 }

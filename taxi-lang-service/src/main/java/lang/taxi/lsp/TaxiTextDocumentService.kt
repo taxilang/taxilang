@@ -3,14 +3,11 @@ package lang.taxi.lsp
 import lang.taxi.*
 import lang.taxi.lsp.actions.CodeActionService
 import lang.taxi.lsp.completion.CompletionService
-import lang.taxi.lsp.completion.TypeProvider
 import lang.taxi.lsp.formatter.FormatterService
 import lang.taxi.lsp.gotoDefinition.GotoDefinitionService
 import lang.taxi.lsp.hover.HoverService
 import lang.taxi.lsp.linter.LintingService
 import lang.taxi.types.SourceNames
-import org.antlr.v4.runtime.CharStream
-import org.antlr.v4.runtime.CharStreams
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.LanguageClient
@@ -19,7 +16,6 @@ import org.eclipse.lsp4j.services.TextDocumentService
 import java.io.File
 import java.net.URI
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.atomic.AtomicReference
 
 
 /**
@@ -28,27 +24,27 @@ import java.util.concurrent.atomic.AtomicReference
  * and the compiler, for accessing tokens and compiler context - useful
  * for completion
  */
-data class CompilationResult(val compiler: Compiler, val document: TaxiDocument?) {
+data class CompilationResult(val compiler: Compiler, val document: TaxiDocument?, val errors: List<CompilationError> = emptyList()) {
     val successful = document != null
 }
 
 
-class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
+class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) : TextDocumentService, LanguageClientAware {
 
+    val lastCompilationResult: CompilationResult
+        get() {
+            return this.compilerService.getOrComputeLastCompilationResult()
+        }
     private var displayedMessages: List<PublishDiagnosticsParams> = emptyList()
-    private val sources: MutableMap<URI, String> = mutableMapOf()
-    private val charStreams: MutableMap<URI, CharStream> = mutableMapOf()
     private lateinit var initializeParams: InitializeParams
-    private val lastSuccessfulCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
-    val lastCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
     private val tokenCache: CompilerTokenCache = CompilerTokenCache()
 
     // TODO : We can probably use the unparsedTypes from the tokens for this, rather than the
     // types themselves, as it'll give better results sooner
-    private val typeProvider = TypeProvider(lastSuccessfulCompilationResult, lastCompilationResult)
-    private val completionService = CompletionService(typeProvider)
+
+    private val completionService = CompletionService(compilerService.typeProvider)
     private val formattingService = FormatterService()
-    private val gotoDefinitionService = GotoDefinitionService(typeProvider)
+    private val gotoDefinitionService = GotoDefinitionService(compilerService.typeProvider)
     private val hoverService = HoverService()
     private val codeActionService = CodeActionService()
     private val lintingService = LintingService()
@@ -75,30 +71,21 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     }
 
     override fun completion(position: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
-        if (lastCompilationResult.get() == null) {
-            compileAndReport()
-        }
-        return completionService.computeCompletions(lastCompilationResult.get(), position)
+        val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
+        return completionService.computeCompletions(lastCompilationResult, position)
     }
-
     override fun definition(params: DefinitionParams): CompletableFuture<Either<MutableList<out Location>, MutableList<out LocationLink>>> {
-        if (lastCompilationResult.get() == null) {
-            compileAndReport()
-        }
-        return gotoDefinitionService.definition(lastCompilationResult.get(), params)
+        val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
+        return gotoDefinitionService.definition(lastCompilationResult, params)
     }
 
     override fun hover(params: HoverParams): CompletableFuture<Hover> {
-        if (lastCompilationResult.get() == null) {
-            compileAndReport()
-        }
-        return hoverService.hover(lastCompilationResult.get(), lastSuccessfulCompilationResult.get(), params)
+        val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
+        return hoverService.hover(lastCompilationResult, compilerService.lastSuccessfulCompilationResult.get(), params)
     }
 
     override fun formatting(params: DocumentFormattingParams): CompletableFuture<MutableList<out TextEdit>> {
-        val uri = URI.create(SourceNames.normalize(params.textDocument.uri))
-        val content = this.sources[uri]
-                ?: error("Could not find source with url ${params.textDocument.uri}")
+        val content = compilerService.source(params.textDocument.uri)
         return formattingService.getChanges(content, params.options)
     }
 
@@ -110,7 +97,7 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     private fun computeLinterMessages(documentUri: String) {
         val normalizedUri = SourceNames.normalize(documentUri)
         val uri = URI.create(normalizedUri)
-        this.linterDiagnostics = mapOf(normalizedUri to lintingService.computeInsightFor(uri, lastCompilationResult.get()))
+        this.linterDiagnostics = mapOf(normalizedUri to lintingService.computeInsightFor(uri, compilerService.getOrComputeLastCompilationResult()))
     }
 
     override fun didSave(params: DidSaveTextDocumentParams) {
@@ -130,11 +117,9 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         val content = change.text
         val sourceName = params.textDocument.uri
 
-        // This seems to normalize nicely on windows.  Will need to check on ubuntu
-        val sourceNameUri = URI.create(SourceNames.normalize(sourceName))
-        this.sources[sourceNameUri] = content
-        this.charStreams[sourceNameUri] = CharStreams.fromString(content, sourceName)
-        compileAndReport()
+        compilerService.updateSource(params.textDocument, content)
+
+        compile()
         computeLinterMessages(params.textDocument.uri)
         publishDiagnosticMessages()
     }
@@ -143,29 +128,16 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     // We're compiling the entire workspace every time we get a request, which is
     // on every keypress.
     // We need to find a way to only recompile the document that has changed
-    internal fun compileAndReport(): CompilationResult {
-        val charStreams = this.charStreams.values.toList()
+    internal fun compile(): CompilationResult {
+        val compilationResult = this.compilerService.compile()
+        this.compilerMessages = compilationResult.errors
+        this.compilerErrorDiagnostics = convertCompilerMessagesToDiagnotics(this.compilerMessages)
 
-        val compiler = Compiler(charStreams, tokenCache = tokenCache)
-
-        try {
-            val compiled = compiler.compile()
-            val compilationResult = CompilationResult(compiler, compiled)
-            lastSuccessfulCompilationResult.set(compilationResult)
-            lastCompilationResult.set(compilationResult)
-            compilerMessages = emptyList()
-        } catch (e: CompilationException) {
-            compilerMessages = e.errors
-            val compilationResult = CompilationResult(compiler, null)
-            lastCompilationResult.set(compilationResult)
-        }
-        recomputeCompilerMessages()
-
-        return lastCompilationResult.get()
+        return compilationResult
     }
 
-    private fun recomputeCompilerMessages() {
-        val diagnostics = this.compilerMessages.map { error ->
+    private fun convertCompilerMessagesToDiagnotics(compilerMessages: List<CompilationError>): Map<String, List<Diagnostic>> {
+        val diagnostics = compilerMessages.map { error ->
             // Note - for VSCode, we can use the same position for start and end, and it
             // highlights the entire word
             val position = Position(
@@ -179,20 +151,28 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
                     "Compiler"
             )
         }
-        this.compilerErrorDiagnostics = diagnostics.groupBy({ it.first }, { it.second })
+        return diagnostics.groupBy({ it.first }, { it.second })
+                .mapKeys { (fileUri, _) -> SourceNames.normalize(fileUri) }
     }
 
     private fun publishDiagnosticMessages() {
-        val publishedDiagnostics = (compilerErrorDiagnostics.keys + linterDiagnostics.keys).map { uri ->
-            uri to (compilerErrorDiagnostics.getOrDefault(uri, emptyList()) + linterDiagnostics.getOrDefault(uri, emptyList()))
-        }.map { (uri,diagnostics) ->
-            PublishDiagnosticsParams(uri,diagnostics)
+        val diagnosticMessages = (compilerErrorDiagnostics.keys + linterDiagnostics.keys).map { uri ->
+            val normalisedUrl = SourceNames.normalize(uri)
+            normalisedUrl to (compilerErrorDiagnostics.getOrDefault(normalisedUrl, emptyList()) + linterDiagnostics.getOrDefault(normalisedUrl, emptyList()))
+        }.map { (uri, diagnostics) ->
+            // When sending diagnostic messages, use the canonical path of the file, rather than
+            // the normalized URI.  This means we get an OS specific file.
+            // VSCode on windows seems to not like the URI
+
+            val filePath = File(URI.create(uri)).canonicalPath
+            PublishDiagnosticsParams(uri, diagnostics)
         }
 
-        this.displayedMessages = publishedDiagnostics
-
         clearErrors()
-        publishedDiagnostics.forEach {
+        this.displayedMessages = diagnosticMessages
+
+
+        diagnosticMessages.forEach {
             client.publishDiagnostics(it)
         }
     }
@@ -212,7 +192,9 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         this.client = client
         connected = true
         if (ready) {
-            compileAndReport()
+            compile()
+            publishDiagnosticMessages()
+
         }
     }
 
@@ -220,26 +202,21 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         this.rootUri = params.rootUri
         this.initializeParams = params
 
-        val initSources = File(URI.create(params.rootUri))
+        File(URI.create(params.rootUri))
                 .walk()
                 .filter { it.extension == "taxi" && !it.isDirectory }
-                .map {
+                .forEach {
                     val source = it.readText()
-                    it.toURI() to (source to CharStreams.fromString(source, it.toPath().toString()))
+                    // Note - use the uri from the path, not the file, to ensure consistency.
+                    // on windows, file uri's are file:///C:/ ... and path uris are file:///c:/...
+                    compilerService.updateSource(SourceNames.normalize(SourceNames.normalize(it.toPath().toString())), source)
                 }
-                .toMap()
 
-
-        initSources.forEach { (key, sourceAndCharStream) ->
-            val (source, charStream) = sourceAndCharStream
-            this.charStreams[key] = charStream
-            this.sources[key] = source
-        }
         initialized = true
 
         if (ready) {
-            client.logMessage(MessageParams(MessageType.Log, "Found ${charStreams.size} to compile on startup"))
-            compileAndReport()
+            client.logMessage(MessageParams(MessageType.Log, "Found ${compilerService.sourceCount} to compile on startup"))
+            compile()
         }
 
     }

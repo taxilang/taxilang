@@ -4,7 +4,9 @@ import lang.taxi.Compiler
 import lang.taxi.TaxiParser
 import lang.taxi.lsp.CompilationResult
 import lang.taxi.types.QualifiedName
+import lang.taxi.types.SourceNames
 import lang.taxi.types.Type
+import org.antlr.v4.runtime.ParserRuleContext
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import java.net.URI
@@ -24,12 +26,30 @@ class CompletionService(private val typeProvider: TypeProvider) {
             // suspect our matching of token to cursor position might be off
             TaxiParser.RULE_typeType -> typeProvider.getTypes(listOf(importDecorator))
             TaxiParser.RULE_caseScalarAssigningDeclaration -> typeProvider.getEnumValues(listOf(importDecorator), context.start.text)
-            TaxiParser.RULE_enumSynonymSingleDeclaration -> typeProvider.getEnumValues(listOf(importDecorator), context.start.text)
-            TaxiParser.RULE_enumSynonymDeclaration -> typeProvider.getEnumTypes(listOf(importDecorator))
+            TaxiParser.RULE_enumSynonymSingleDeclaration -> provideEnumCompletions(context.start.text, listOf(importDecorator))
+            TaxiParser.RULE_enumSynonymDeclaration -> provideEnumCompletions(context.start.text, listOf(importDecorator))
             TaxiParser.RULE_enumConstants -> listOf(CompletionItem("synonym of"))
             else -> emptyList()
         }
         return completions(completionItems)
+    }
+
+    /**
+     * If the user hasn't typed a full enum name yet, returns a list of enum names.
+     * Otherwise, returns values within the enum
+     */
+    private fun provideEnumCompletions(text: String?, decorators: List<CompletionDecorator>): List<CompletionItem> {
+        if (text == null || text.isEmpty()) {
+            return emptyList()
+        }
+
+        val enumTypeName = typeProvider.getTypeName(text)
+        return if (enumTypeName == null) {
+            // Haven't picked an enum yet, so lets offer the available enums
+            typeProvider.getEnumTypes(decorators)
+        } else {
+            typeProvider.getEnumValues(decorators, enumTypeName)
+        }
     }
 }
 
@@ -67,4 +87,8 @@ fun markdown(content: String): MarkupContent {
 
 fun TextDocumentIdentifier.uriPath(): String {
     return URI.create(this.uri).path
+}
+
+fun TextDocumentIdentifier.normalizedUriPath(): String {
+    return SourceNames.normalize(this.uri)
 }
