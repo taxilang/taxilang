@@ -8,8 +8,9 @@ import kotlin.system.exitProcess
 
 
 class TaxiLanguageServer(
-        private val textDocumentService: TaxiTextDocumentService = TaxiTextDocumentService(),
-        private val workspaceService: TaxiWorkspaceService = TaxiWorkspaceService(),
+        private val compilerService: TaxiCompilerService = TaxiCompilerService(),
+        private val textDocumentService: TaxiTextDocumentService = TaxiTextDocumentService(compilerService),
+        private val workspaceService: TaxiWorkspaceService = TaxiWorkspaceService(compilerService),
         private val lifecycleHandler: LanguageServerLifecycleHandler = NoOpLifecycleHandler
 ) : LanguageServer, LanguageClientAware {
 
@@ -46,6 +47,7 @@ class TaxiLanguageServer(
         val capabilities = initializeResult.capabilities
         capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
         capabilities.definitionProvider  = true
+        capabilities.workspaceSymbolProvider = true
         capabilities.hoverProvider = true
         capabilities.documentFormattingProvider = true
         capabilities.setCodeActionProvider(true)

@@ -8,7 +8,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 fun documentServiceFor(rootResourcePath: String): Pair<TaxiTextDocumentService, Path> {
-    val service = TaxiTextDocumentService()
+    val service = TaxiTextDocumentService(TaxiCompilerService())
 
     // The initial state has a compiler error,
     // that financial-terms.taxi contains "namesapce" instead of "namespace"

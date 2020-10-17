@@ -19,6 +19,10 @@ class GotoDefinitionService(private val typeProvider: TypeProvider) {
                 val inheritedType = context.typeType().first()
                 compiler.getDeclarationSource(inheritedType)
             }
+            is TaxiParser.EnumInheritedTypeContext -> {
+                val inheritedType = context.typeType()
+                compiler.getDeclarationSource(inheritedType)
+            }
             is TaxiParser.EnumSynonymSingleDeclarationContext -> {
                 // Drop off the value within the enum for now, we'll navigate to the enum class, but not
                 // the value within it.
