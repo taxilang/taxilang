@@ -128,10 +128,10 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    private val syntaxErrors: List<CompilationError> by lazy {
       parseResult.second
    }
-   private val tokenProcessrWithImports : TokenProcessor by lazy {
+   private val tokenProcessrWithImports: TokenProcessor by lazy {
       TokenProcessor(tokens, importSources)
    }
-   private val tokenprocessorWithoutImports : TokenProcessor by lazy {
+   private val tokenprocessorWithoutImports: TokenProcessor by lazy {
       TokenProcessor(tokens, collectImports = false)
    }
 
@@ -164,6 +164,10 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    fun getDeclarationSource(text: String, context: ParserRuleContext): CompilationUnit? {
       val qualifiedName = tokenProcessrWithImports.lookupTypeByName(text, context)
       return getCompilationUnit(tokenProcessrWithImports, qualifiedName)
+   }
+
+   fun getDeclarationSource(name: QualifiedName): CompilationUnit? {
+      return getCompilationUnit(tokenProcessrWithImports, name.fullyQualifiedName)
    }
 
    private fun getCompilationUnit(processor: TokenProcessor, qualifiedName: String): CompilationUnit? {
@@ -237,7 +241,7 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
     * as possible
     */
    private fun collectTokens(): Pair<Tokens, List<CompilationError>> {
-      val builtInSources = CharStreams.fromString(StdLib.taxi,"Native StdLib")
+      val builtInSources = CharStreams.fromString(StdLib.taxi, "Native StdLib")
 
       val allInputs = inputs + builtInSources
       val collectionResult = allInputs.map { input ->
@@ -258,17 +262,19 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       return tokens.typeNamesForSource(sourceName)
    }
 
-   fun importTokensInSource(sourceName:String): List<Pair<QualifiedName, TaxiParser.ImportDeclarationContext>> {
+   fun importTokensInSource(sourceName: String): List<Pair<QualifiedName, TaxiParser.ImportDeclarationContext>> {
       return tokens.importTokensInSource(sourceName)
    }
+
    fun importedTypesInSource(sourceName: String): List<QualifiedName> {
       return tokens.importedTypeNamesInSource(sourceName)
    }
-   fun usedTypedNamesInSource(sourceName:String):Set<QualifiedName> {
+
+   fun usedTypedNamesInSource(sourceName: String): Set<QualifiedName> {
       return tokenProcessrWithImports.tokens.tokenStore.getTypeReferencesForSourceName(sourceName).mapNotNull {
          try {
             tokenProcessrWithImports.lookupTypeByName(it)
-         } catch (error:CompilationException) {
+         } catch (error: CompilationException) {
             null
          }
       }.map { QualifiedName.from(it) }
