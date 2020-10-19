@@ -262,6 +262,7 @@ data class Field(
 ) : Annotatable, ConstraintTarget, Documented, NameTypePair {
 
    override val description: String = "field $name"
+
    // This needs to be stanrdardised with the defaultValue above, which comes from
    // extensions
    val accessorDefault = if (accessor is AccessorWithDefault) accessor.defaultValue else null
@@ -278,7 +279,11 @@ data class Field(
 }
 
 
-interface Accessor
+interface Accessor {
+   val returnType: Type
+      get() = PrimitiveType.ANY
+}
+
 interface AccessorWithDefault {
    val defaultValue: Any?
 }
@@ -288,6 +293,19 @@ interface ExpressionAccessor : Accessor {
 }
 
 data class LiteralAccessor(val value: Any) : Accessor, TaxiStatementGenerator {
+   override val returnType: Type
+      get() {
+         return when (value) {
+            is String -> PrimitiveType.STRING
+            is Int -> PrimitiveType.INTEGER
+            is Double -> PrimitiveType.DECIMAL
+            is Boolean -> PrimitiveType.BOOLEAN
+            else -> {
+               PrimitiveType.ANY
+            }
+         }
+
+      }
    override fun asTaxi(): String {
       return when (value) {
          is String -> value.quoted()

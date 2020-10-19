@@ -637,19 +637,30 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          resolveFunction(qualifiedName, functionContext).map { function ->
             require(function.isDefined) { "Function should have already been compiled before evaluation in a read function expression" }
             val parameters = functionContext.formalParameterList().parameter().mapIndexed { parameterIndex, parameterContext ->
-               when {
-                  parameterContext.literal() != null -> LiteralAccessor(parameterContext.literal().value())
-                  parameterContext.scalarAccessorExpression() != null -> compileScalarAccessor(parameterContext.scalarAccessorExpression(), function.getParameterType(parameterIndex))
-//                  parameterContext.readFunction() != null -> buildReadFunctionAccessor(parameterContext.readFunction())
+               val parameterType = function.getParameterType(parameterIndex)
+               val parameterAccessor = when {
+                  parameterContext.literal() != null -> LiteralAccessor(parameterContext.literal().value()).right()
+                  parameterContext.scalarAccessorExpression() != null -> {
+                     compileScalarAccessor(parameterContext.scalarAccessorExpression(), parameterType).right()
+                  }
+//                  parameterContext.readFunction() !s= null -> buildReadFunctionAccessor(parameterContext.readFunction())
 //                  parameterContext.columnDefinition() != null -> buildColumnAccessor(parameterContext.columnDefinition())
-                  parameterContext.fieldReferenceSelector() != null -> FieldReferenceSelector(parameterContext.fieldReferenceSelector().Identifier().text)
+                  parameterContext.fieldReferenceSelector() != null -> FieldReferenceSelector(parameterContext.fieldReferenceSelector().Identifier().text).right()
                   parameterContext.typeReferenceSelector() != null -> {
                      typeOrError(namespace, parameterContext.typeReferenceSelector().typeType()).map { type ->
                         TypeReferenceSelector(type)
-                     }.getOrHandle { throw CompilationException(it) }
+                     }
                   }
                   else -> TODO("readFunction parameter accessor not defined for code ${functionContext.source().content}")
+               }.flatMap { parameterAccessor ->
+                  if (parameterAccessor.returnType != PrimitiveType.ANY && parameterAccessor.returnType.basePrimitive != parameterType.basePrimitive) {
+                     CompilationError(parameterContext.start, "")
+                  } else {
+                     parameterAccessor.right()
+                  }
                }
+
+               parameterAccessor
             }
             FunctionAccessor(function, parameters)
          }

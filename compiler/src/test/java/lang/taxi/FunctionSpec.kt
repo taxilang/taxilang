@@ -181,6 +181,17 @@ namespace pkgB {
          }
       }
 
+      it("should report an error if there is a type mismatch on input parameters") {
+         val errors = """
+            declare function uppercase(String):String
+            model Person {
+               age : Int
+               name : String by uppercase(this.age)
+            }
+         """.validated()
+         errors.should.have.size(1)
+      }
+
 
       // Ignored until coalesce becomes a function
       xit("should allow fields to reference other types") {
