@@ -1,7 +1,6 @@
 package lang.taxi.types
 
 import lang.taxi.utils.quoted
-import lang.taxi.utils.quotedIfString
 
 /**
  * A set of fields with additional conditional mapping logic
@@ -43,7 +42,7 @@ data class AccessorExpressionSelector(
 }
 
 data class TypeReferenceSelector(val type: Type) : Accessor
-data class FieldReferenceSelector(val fieldName: String) : WhenSelectorExpression, Accessor {
+data class FieldReferenceSelector(val fieldName: String, override val returnType: Type) : WhenSelectorExpression, Accessor {
    override fun asTaxi(): String = "this.$fieldName"
 }
 

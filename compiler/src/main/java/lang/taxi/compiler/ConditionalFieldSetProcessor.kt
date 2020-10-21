@@ -6,11 +6,13 @@ import arrow.core.getOrHandle
 import arrow.core.right
 import lang.taxi.*
 import lang.taxi.types.*
+import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
+import lang.taxi.utils.wrapErrorsInList
 import org.antlr.v4.runtime.RuleContext
 
-class ConditionalFieldSetProcessor internal constructor(private val compiler: TokenProcessor) {
-   fun compileConditionalFieldStructure(fieldBlock: TaxiParser.ConditionalTypeStructureDeclarationContext, namespace: Namespace): Either<CompilationError, ConditionalFieldSet> {
+class ConditionalFieldSetProcessor internal constructor(private val compiler: FieldCompiler) {
+   fun compileConditionalFieldStructure(fieldBlock: TaxiParser.ConditionalTypeStructureDeclarationContext, namespace: Namespace): Either<List<CompilationError>, ConditionalFieldSet> {
 //      val fields = fieldBlock.typeMemberDeclaration().mapNotNull { fieldDeclaration ->
 //         compiler.compiledField(fieldDeclaration, namespace)?.let { field ->
 //            compileCondition(fieldBlock.conditionalTypeConditionDeclaration(), namespace).map { condition ->
@@ -21,19 +23,24 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
 //         .map { fields ->  }
 
 
-      return compileCondition(fieldBlock.conditionalTypeConditionDeclaration(), namespace).map { condition ->
-         val fields = fieldBlock.typeMemberDeclaration().mapNotNull { fieldDeclaration ->
-            compiler.compiledField(fieldDeclaration, namespace)?.copy(readExpression = condition)
+      return compileCondition(fieldBlock.conditionalTypeConditionDeclaration(), namespace).flatMap { condition ->
+         fieldBlock.typeMemberDeclaration().mapNotNull { fieldDeclaration ->
+            val fieldName = fieldDeclaration.fieldDeclaration().Identifier().text
+            compiler.provideField(fieldName, fieldDeclaration)
+               .map { field -> field.copy(readExpression = condition) }
+
+         }.invertEitherList().flattenErrors().map { fields ->
+            ConditionalFieldSet(fields, condition)
          }
 
-         ConditionalFieldSet(fields, condition)
+
       }
    }
 
-   fun compileCondition(conditionDeclaration: TaxiParser.ConditionalTypeConditionDeclarationContext, namespace: Namespace): Either<CompilationError, FieldSetExpression> {
+   fun compileCondition(conditionDeclaration: TaxiParser.ConditionalTypeConditionDeclarationContext, namespace: Namespace): Either<List<CompilationError>, FieldSetExpression> {
       return when {
-         conditionDeclaration.conditionalTypeWhenDeclaration() != null -> compileWhenCondition(conditionDeclaration.conditionalTypeWhenDeclaration(), namespace)
-         conditionDeclaration.fieldExpression() != null -> compileFieldExpression(conditionDeclaration.fieldExpression(), namespace)
+         conditionDeclaration.conditionalTypeWhenDeclaration() != null -> compileWhenCondition(conditionDeclaration.conditionalTypeWhenDeclaration(), namespace).wrapErrorsInList()
+         conditionDeclaration.fieldExpression() != null -> compileFieldExpression(conditionDeclaration.fieldExpression(), namespace).wrapErrorsInList()
          else -> error("Unhandled condition type")
       }
    }
@@ -41,8 +48,9 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
    private fun compileFieldExpression(fieldExpression: TaxiParser.FieldExpressionContext, namespace: Namespace): Either<CompilationError, FieldSetExpression> {
       val operand1 = fieldExpression.propertyToParameterConstraintLhs(0).qualifiedName().text
       val operand2 = fieldExpression.propertyToParameterConstraintLhs(1).qualifiedName().text
-      val operand1FieldReferenceSelector =  FieldReferenceSelector(operand1)
-      val operand2FieldReferenceSelector = FieldReferenceSelector(operand2)
+      val operand1FieldReferenceSelector =  FieldReferenceSelector(operand1, PrimitiveType.ANY)
+      val operand2FieldReferenceSelector = FieldReferenceSelector(operand2, PrimitiveType.ANY)
+      TODO("Gots to sor this out")
       val operator = FormulaOperator.forSymbol(fieldExpression.arithmaticOperator().text)
       val typeDeclarationContext = getTypeDeclarationContext(fieldExpression)
          ?: return Either.left(CompilationError(fieldExpression.start, "Cannot resolve enclosing type for ${fieldExpression.text}"))
@@ -202,7 +210,8 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
    }
 
    private fun compileFieldReferenceSelector(fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext): Either<CompilationError, WhenSelectorExpression> {
-      return FieldReferenceSelector(fieldReferenceSelector.Identifier().text).right()
+      TODO("Need to supply the type into the selector")
+      return FieldReferenceSelector(fieldReferenceSelector.Identifier().text, PrimitiveType.ANY).right()
    }
 
    private fun compileTypedAccessor(expressionSelector: TaxiParser.MappedExpressionSelectorContext, namespace: Namespace): Either<CompilationError, AccessorExpressionSelector> {

@@ -3,7 +3,6 @@ package lang.taxi
 import com.winterbe.expekt.should
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.stdlib.Left
-import lang.taxi.functions.stdlib.Strings
 import lang.taxi.types.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -133,7 +132,7 @@ namespace pkgB {
       }
 
       it("should allow fields to reference other fields as inputs") {
-         val accessor = """type FirstName inherits String
+         val schema = """type FirstName inherits String
             type FullName inherits String
 
             declare function left(String,Int):String
@@ -142,10 +141,12 @@ namespace pkgB {
                   firstName: FirstName
                   leftName : FullName by left(this.firstName, 5)
                }""".compiled()
+
+            val accessor = schema
             .objectType("Person")
             .field("leftName")
             .accessor as FunctionAccessor
-         accessor.inputs[0].should.equal(FieldReferenceSelector("firstName"))
+         accessor.inputs[0].should.equal(FieldReferenceSelector("firstName", schema.type("FirstName")))
       }
 
 
@@ -190,8 +191,20 @@ namespace pkgB {
             }
          """.validated()
          errors.should.have.size(1)
+         errors.first().detailMessage.should.equal("Type mismatch.  Found a type of lang.taxi.Int where a lang.taxi.String is expected")
       }
 
+      it("should report an error if there is a type mismatch on assigning a return value to a field") {
+         val errors = """
+            declare function uppercase(String):String
+            model Person {
+               age : Int by uppercase(this.name)
+               name : String
+            }
+         """.validated()
+         errors.should.have.size(1)
+         errors.first().detailMessage.should.equal("Type mismatch.  Found a type of lang.taxi.String where a lang.taxi.Int is expected")
+      }
 
       // Ignored until coalesce becomes a function
       xit("should allow fields to reference other types") {
