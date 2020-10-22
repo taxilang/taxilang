@@ -10,11 +10,18 @@ class ConditionalDataTypesTest {
    @Test
    fun simpleConditionalTypeGrammar() {
       val src = """
+         type Money {
+             quantity : MoneyAmount as Decimal
+             currency : CurrencySymbol as String
+         }
+
+         type DealtAmount inherits Money
+         type SettlementAmount inherits Money
 type TradeRecord {
     // define simple properties by xpath expressions
     ccy1 : Currency as String
-    (   dealtAmount : String
-        settlementAmount : String
+    (   dealtAmount : DealtAmount
+        settlementAmount : SettlementAmount
     ) by when( xpath("/foo/bar") : String) {
         ccy1 -> {
             dealtAmount(

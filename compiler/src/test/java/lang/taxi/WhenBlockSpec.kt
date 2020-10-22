@@ -17,7 +17,7 @@ object WhenBlockSpec : Spek({
             }
          }""".validated()
          errors.should.have.size(1)
-         TODO("assert error condition")
+         errors.first().detailMessage.should.equal("Type mismatch.  Found a type of lang.taxi.Int where a AssetClass is expected")
       }
 
 
@@ -32,7 +32,7 @@ object WhenBlockSpec : Spek({
             }
          }""".validated()
          errors.should.have.size(1)
-         TODO("assert error condition")
+         errors.first().detailMessage.should.equal("Type mismatch.  Found a type of lang.taxi.Int where a Identifier is expected")
       }
    }
 })

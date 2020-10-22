@@ -63,6 +63,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 //   private val calculatedFieldSetProcessor = CalculatedFieldSetProcessor(this)
 
    private val tokensCurrentlyCompiling = mutableSetOf<String>()
+   private val defaultValueParser = DefaultValueParser()
 
    init {
       val importedTypes = if (collectImports) {
@@ -340,25 +341,33 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          val fieldAnnotations = collateAnnotations(member.annotation())
          val refinedType = member.typeExtensionFieldDeclaration()?.typeExtensionFieldTypeRefinement()?.typeType()?.let {
             val refinedType = typeSystem.getType(lookupTypeByName(namespace, it.text, importsInSource(it)))
-            TODO("Need to move compilation of type extensions")
-//            assertTypesCompatible(type.field(fieldName).type, refinedType, fieldName, typeName, typeRule)
+            assertTypesCompatible(type.field(fieldName).type, refinedType, fieldName, typeName, typeRule)
          }
 
-         TODO("Need to move compilation of type extensions")
-//         val defaultValue = member?.typeExtensionFieldDeclaration()
-//            ?.typeExtensionFieldTypeRefinement()
-//            ?.constantDeclaration()
-//            ?.defaultDefinition()
-//            ?.let { defaultDefinitionContext ->
-//               parseDefaultValue(defaultDefinitionContext, refinedType!!)
-//            }?.collectError()?.getOrElse { null }
-//
-//         FieldExtension(fieldName, fieldAnnotations, refinedType, defaultValue)
+         val defaultValue = member?.typeExtensionFieldDeclaration()
+            ?.typeExtensionFieldTypeRefinement()
+            ?.constantDeclaration()
+            ?.defaultDefinition()
+            ?.let { defaultDefinitionContext ->
+               defaultValueParser.parseDefaultValue(defaultDefinitionContext, refinedType!!)
+            }?.collectError(errors)?.getOrElse { null }
+
+         FieldExtension(fieldName, fieldAnnotations, refinedType, defaultValue)
       }
       val errorMessage = type.addExtension(ObjectTypeExtension(annotations, fieldExtensions, typeDoc, typeRule.toCompilationUnit()))
       return errorMessage
          .mapLeft { it.toCompilationError(typeRule.start) }
          .errorOrNull()
+   }
+
+   private fun assertTypesCompatible(originalType: Type, refinedType: Type, fieldName: String, typeName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext): Type {
+      val refinedUnderlyingType = TypeAlias.underlyingType(refinedType)
+      val originalUnderlyingType = TypeAlias.underlyingType(originalType)
+
+      if (originalUnderlyingType != refinedUnderlyingType) {
+         throw CompilationException(typeRule.start, "Cannot refine field $fieldName on $typeName to ${refinedType.qualifiedName} as it maps to ${refinedUnderlyingType.qualifiedName} which is incompatible with the existing type of ${originalType.qualifiedName}", typeRule.source().sourceName)
+      }
+      return refinedType
    }
 
    private fun compileTypeAlias(namespace: Namespace, tokenName: String, tokenRule: TaxiParser.TypeAliasDeclarationContext): Either<CompilationError, TypeAlias> {
@@ -406,32 +415,10 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
 
    private fun compileType(namespace: Namespace, typeName: String, ctx: TaxiParser.TypeDeclarationContext) {
-      val compiledFields = ctx.typeBody()?.let { typeBody ->
+      val fields = ctx.typeBody()?.let { typeBody ->
          FieldCompiler(this, typeBody, typeName, this.errors)
             .compileAllFields()
-
-
-         // THIS IS WHERE I'M UP TO ... MIGRATING THIS STUFF
-         // INTO THE FieldCompiler
-//         val conditionalFieldStructures = typeBody.conditionalTypeStructureDeclaration()?.map { conditionalFieldBlock ->
-//            conditionalFieldSetProcessor.compileConditionalFieldStructure(conditionalFieldBlock, namespace)
-//         }?.reportAndRemoveErrors() ?: emptyList()
-//
-//         val calculatedFieldStructures = typeBody.calculatedMemberDeclaration()?.mapNotNull { calculatedMemberDeclarationContext ->
-//            calculatedFieldSetProcessor.compileCalculatedField(calculatedMemberDeclarationContext, namespace)
-//         }?.reportAndRemoveErrorList() ?: emptyList()
-//
-//         val fieldsWithConditions = conditionalFieldStructures.flatMap { it.fields }
-//
-//         val fields = (typeBody.typeMemberDeclaration()?.map { member ->
-//            val compiledField = compileField(member, namespace)
-//            compiledField
-//         } ?: emptyList()).reportAndRemoveErrorList() + fieldsWithConditions + calculatedFieldStructures
-//
-//         fields
       } ?: emptyList()
-
-      val fields = compiledFields.reportAndRemoveErrorList(errors)
 
       val annotations = collateAnnotations(ctx.annotation())
       val modifiers = parseModifiers(ctx.typeModifier())

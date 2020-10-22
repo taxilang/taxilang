@@ -5,6 +5,8 @@ import lang.taxi.*
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
+import lang.taxi.utils.flattenErrors
+import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.log
 import org.antlr.v4.runtime.ParserRuleContext
 
@@ -16,9 +18,29 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
 ) {
    private val conditionalFieldSetProcessor = ConditionalFieldSetProcessor(this)
    private val calculatedFieldSetProcessor = CalculatedFieldSetProcessor(this)
+   private val defaultValueParser = DefaultValueParser()
 
    private val fieldsBeingCompiled = mutableSetOf<String>()
    private val compiledFields = mutableMapOf<String, Either<List<CompilationError>, Field>>()
+
+   private val fieldNamesToDefinitions: Map<String, TaxiParser.TypeMemberDeclarationContext> by lazy {
+      fun getFieldNameAndDeclarationContext(memberDeclaration: TaxiParser.TypeMemberDeclarationContext): Pair<String, TaxiParser.TypeMemberDeclarationContext> {
+         return TokenProcessor.unescape(memberDeclaration.fieldDeclaration().Identifier().text) to memberDeclaration
+      }
+
+      val fields = typeBody.typeMemberDeclaration()
+         .map { getFieldNameAndDeclarationContext(it) }
+         .toMap()
+
+      val fieldsInFieldBlocks = typeBody.conditionalTypeStructureDeclaration().flatMap { fieldBlock ->
+         fieldBlock.typeMemberDeclaration().map { memberDeclarationContext ->
+            getFieldNameAndDeclarationContext(memberDeclarationContext)
+         }
+      }.toMap()
+
+      fields + fieldsInFieldBlocks
+   }
+
    fun provideField(fieldName: String, requestingToken: ParserRuleContext): Either<List<CompilationError>, Field> {
       if (fieldsBeingCompiled.contains(fieldName)) {
          return listOf(CompilationError(requestingToken.start, "Cyclic dependency detected - field $fieldName is currently being compiled")).left()
@@ -31,30 +53,27 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
       return field
    }
 
-   fun compileAllFields(): List<Either<List<CompilationError>, Field>> {
+   fun compileAllFields(): List<Field> {
       val namespace = typeBody.findNamespace()
-      val conditionalFieldStructures = typeBody.conditionalTypeStructureDeclaration()?.map { conditionalFieldBlock ->
+      val conditionalFieldStructures = typeBody.conditionalTypeStructureDeclaration()?.mapNotNull { conditionalFieldBlock ->
          conditionalFieldSetProcessor.compileConditionalFieldStructure(conditionalFieldBlock, namespace)
-//            .map { it.fields }
+            .collectErrors(errors).getOrElse { null }
       } ?: emptyList()
 
-      val fieldsWithConditions = conditionalFieldStructures.map {
-         it.map { it.fields }
-      }
+      val fieldsWithConditions = conditionalFieldStructures.flatMap { it.fields }
       val calculatedFieldStructures = typeBody.calculatedMemberDeclaration()?.mapNotNull { calculatedMemberDeclarationContext ->
          calculatedFieldSetProcessor.compileCalculatedField(calculatedMemberDeclarationContext, namespace)
-      } ?: emptyList()
+      }?.invertEitherList()?.flattenErrors()?.collectErrors(errors)?.getOrElse { emptyList() } ?: emptyList()
 
       val memberDeclarations = typeBody.typeMemberDeclaration() ?: emptyList()
       val fields = memberDeclarations.map { member ->
          provideField(TokenProcessor.unescape(member.fieldDeclaration().Identifier().text), member)
-      }
-      return fields
+      }.mapNotNull { either -> either.collectErrors(errors).getOrElse { null } }
+      return fields + calculatedFieldStructures + fieldsWithConditions
    }
 
    private fun compileField(fieldName: String, requestingToken: ParserRuleContext): Either<List<CompilationError>, Field> {
-      val memberDeclaration = typeBody.typeMemberDeclaration()
-         .firstOrNull { TokenProcessor.unescape(it.fieldDeclaration().Identifier().text) == fieldName }
+      val memberDeclaration = fieldNamesToDefinitions[fieldName]
          ?: return listOf(CompilationError(requestingToken.start, "Field $fieldName does not exist on type $typeName")).left()
 
       return compileField(memberDeclaration)
@@ -186,7 +205,7 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
                .getOrHandle { throw CompilationException(it) }
          }
          expression.defaultDefinition() != null -> {
-            val defaultValue = parseDefaultValue(expression.defaultDefinition(), targetType!!)
+            val defaultValue = defaultValueParser.parseDefaultValue(expression.defaultDefinition(), targetType!!)
                .collectError(errors).getOrElse { null }
             ColumnAccessor(
                index = null,
@@ -278,59 +297,6 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
       return ReadFunctionFieldAccessor(readFunction = readFunction, arguments = parameters)
 
    }
-
-   private fun parseDefaultValue(defaultDefinitionContext: TaxiParser.DefaultDefinitionContext, targetType: Type): Either<CompilationError, Any?> {
-      return when {
-         defaultDefinitionContext.literal() != null -> {
-            assertLiteralDefaultValue(targetType, defaultDefinitionContext.literal().value(), defaultDefinitionContext)
-         }
-         defaultDefinitionContext.qualifiedName() != null -> {
-            if (targetType !is EnumType) {
-               CompilationError(defaultDefinitionContext.qualifiedName().start, "Cannot use an enum as a reference here, as ${targetType.qualifiedName} is not an enum").left()
-            } else {
-               val (enumTypeName, enumValue) = EnumValue.qualifiedNameFrom(defaultDefinitionContext.qualifiedName().text)
-               val enumValueQualifiedName = "$enumTypeName.$enumValue"
-               if (targetType.qualifiedName != enumTypeName.fullyQualifiedName) {
-                  CompilationError(defaultDefinitionContext.qualifiedName().start, "Cannot assign a default of $enumValueQualifiedName to an enum with a type of ${targetType.qualifiedName} because the types are different").left()
-               } else {
-                  assertEnumDefaultValueCompatibility(targetType, enumValueQualifiedName, defaultDefinitionContext.qualifiedName())
-               }
-            }
-         }
-         else -> error("Unexpected branch of parseDefaultValue didn't match any conditions")
-      }
-   }
-
-   private fun assertTypesCompatible(originalType: Type, refinedType: Type, fieldName: String, typeName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext): Type {
-      val refinedUnderlyingType = TypeAlias.underlyingType(refinedType)
-      val originalUnderlyingType = TypeAlias.underlyingType(originalType)
-
-      if (originalUnderlyingType != refinedUnderlyingType) {
-         throw CompilationException(typeRule.start, "Cannot refine field $fieldName on $typeName to ${refinedType.qualifiedName} as it maps to ${refinedUnderlyingType.qualifiedName} which is incompatible with the existing type of ${originalType.qualifiedName}", typeRule.source().sourceName)
-      }
-      return refinedType
-   }
-
-   private fun assertLiteralDefaultValue(targetType: Type, defaultValue: Any, typeRule: ParserRuleContext): Either<CompilationError, Any> {
-      val valid = when {
-         targetType.basePrimitive == PrimitiveType.STRING && defaultValue is String -> true
-         targetType.basePrimitive == PrimitiveType.DECIMAL && defaultValue is Number -> true
-         targetType.basePrimitive == PrimitiveType.INTEGER && defaultValue is Number -> true
-         targetType.basePrimitive == PrimitiveType.BOOLEAN && defaultValue is Boolean -> true
-         else -> false
-      }
-      return if (!valid) {
-         CompilationError(typeRule.start, "Default value $defaultValue is not compatible with ${targetType.basePrimitive?.qualifiedName}", typeRule.source().sourceName).left()
-      } else {
-         defaultValue.right()
-      }
-   }
-
-   private fun assertEnumDefaultValueCompatibility(enumType: EnumType, defaultValue: String, typeRule: ParserRuleContext): Either<CompilationError, EnumValue> {
-      return enumType.values.firstOrNull { enumValue -> enumValue.qualifiedName == defaultValue }?.right()
-         ?: CompilationError(typeRule.start, "${enumType.toQualifiedName().fullyQualifiedName} has no value of $defaultValue", typeRule.source().sourceName).left()
-   }
-
 
    fun typeResolver(namespace: Namespace) = tokenProcessor.typeResolver(namespace)
    fun lookupTypeByName(text: String, contextRule: ParserRuleContext) = tokenProcessor.lookupTypeByName(text, contextRule)
