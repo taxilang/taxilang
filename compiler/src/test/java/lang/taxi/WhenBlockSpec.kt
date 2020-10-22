@@ -1,0 +1,38 @@
+package lang.taxi
+
+import com.winterbe.expekt.should
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
+
+object WhenBlockSpec : Spek({
+   describe("when block type checking") {
+      it("should detect type mismatch of value in when case selector") {
+         val errors = """type Identifier inherits String
+         type AssetClass inherits String
+         model Foo {
+            assetClass : AssetClass by column("assetClass")
+            identifierValue : Identifier by when (this.assetClass) {
+               11 -> left(column("SYMBOL"),6) // <-- This is an error, as 11 isn't compatible with asset class, which is a string
+               else -> column("ISIN")
+            }
+         }""".validated()
+         errors.should.have.size(1)
+         TODO("assert error condition")
+      }
+
+
+      it("should detect type mismatch of value in when case selector") {
+         val errors = """type Identifier inherits String
+         type AssetClass inherits String
+         model Foo {
+            assetClass : AssetClass by column("assetClass")
+            identifierValue : Identifier by when (this.assetClass) {
+               "FXD" -> 12 // <-- This is an error, as 12 isn't compatible with Identifier, which is a string
+               else -> column("ISIN")
+            }
+         }""".validated()
+         errors.should.have.size(1)
+         TODO("assert error condition")
+      }
+   }
+})

@@ -160,17 +160,27 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
       if (targetType == null) {
          log().warn("Type not provided, not performing type checks")
       }
+      val targetTypeOrAny = targetType ?: PrimitiveType.ANY
       return when {
-         expression.jsonPathAccessorDeclaration() != null -> JsonPathAccessor(expression.jsonPathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
-         expression.xpathAccessorDeclaration() != null -> XpathAccessor(expression.xpathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
+         expression.jsonPathAccessorDeclaration() != null -> JsonPathAccessor(
+            expression = expression.jsonPathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""),
+            returnType = targetTypeOrAny
+         )
+         expression.xpathAccessorDeclaration() != null -> XpathAccessor(expression.xpathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""),
+            returnType = targetTypeOrAny
+         )
          expression.columnDefinition() != null -> {
-            ColumnAccessor(index =
-            expression.columnDefinition().columnIndex().StringLiteral()?.text
-               ?: expression.columnDefinition().columnIndex().IntegerLiteral().text.toInt(), defaultValue = null)
+            ColumnAccessor(
+               index =
+               expression.columnDefinition().columnIndex().StringLiteral()?.text
+                  ?: expression.columnDefinition().columnIndex().IntegerLiteral().text.toInt(),
+               defaultValue = null,
+               returnType = targetTypeOrAny
+            )
          }
          expression.conditionalTypeConditionDeclaration() != null -> {
             val namespace = expression.conditionalTypeConditionDeclaration().findNamespace()
-            conditionalFieldSetProcessor.compileCondition(expression.conditionalTypeConditionDeclaration(), namespace)
+            conditionalFieldSetProcessor.compileCondition(expression.conditionalTypeConditionDeclaration(), namespace, targetTypeOrAny)
                .map { condition -> ConditionalAccessor(condition) }
                // TODO : Make the current method return Either<>
                .getOrHandle { throw CompilationException(it) }
@@ -180,7 +190,9 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
                .collectError(errors).getOrElse { null }
             ColumnAccessor(
                index = null,
-               defaultValue = defaultValue)
+               defaultValue = defaultValue,
+               returnType = targetTypeOrAny
+            )
          }
 
          expression.readFunction() != null -> {
@@ -211,11 +223,11 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
                   parameterContext.typeReferenceSelector() != null -> compileTypeReferenceAccessor(namespace, parameterContext).right()
                   else -> TODO("readFunction parameter accessor not defined for code ${functionContext.source().content}")
                }.flatMap { parameterAccessor ->
-                     TypeChecking.ifAssignable(parameterAccessor.returnType, parameterType.basePrimitive
-                        ?: PrimitiveType.ANY, parameterContext) {
-                        parameterAccessor
-                     }
+                  TypeChecking.ifAssignable(parameterAccessor.returnType, parameterType.basePrimitive
+                     ?: PrimitiveType.ANY, parameterContext) {
+                     parameterAccessor
                   }
+               }
 
                parameterAccessor
             }.reportAndRemoveErrors(errors)
@@ -239,11 +251,11 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
       return FieldReferenceSelector(fieldName, fieldType)
    }
 
-   private fun buildColumnAccessor(columnDefinition: TaxiParser.ColumnDefinitionContext): Accessor {
+   private fun buildColumnAccessor(columnDefinition: TaxiParser.ColumnDefinitionContext, targetType: Type): Accessor {
       val columnIndex = columnDefinition.columnIndex()
       return when {
-         columnIndex.IntegerLiteral() != null -> ColumnAccessor(columnIndex.IntegerLiteral().text.toInt(), defaultValue = null)
-         columnIndex.StringLiteral() != null -> ColumnAccessor(columnIndex.StringLiteral().text, defaultValue = null)
+         columnIndex.IntegerLiteral() != null -> ColumnAccessor(columnIndex.IntegerLiteral().text.toInt(), defaultValue = null, returnType = targetType)
+         columnIndex.StringLiteral() != null -> ColumnAccessor(columnIndex.StringLiteral().text, defaultValue = null, returnType = targetType)
          else -> error("Unhandled buildColumnAccessor() scenario")
       }
    }

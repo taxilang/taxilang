@@ -315,16 +315,16 @@ data class LiteralAccessor(val value: Any) : Accessor, TaxiStatementGenerator {
 
 }
 
-data class XpathAccessor(override val expression: String) : ExpressionAccessor, TaxiStatementGenerator {
+data class XpathAccessor(override val expression: String, override val returnType: Type) : ExpressionAccessor, TaxiStatementGenerator {
    override fun asTaxi(): String = """by xpath("$expression")"""
 }
 
-data class JsonPathAccessor(override val expression: String) : ExpressionAccessor, TaxiStatementGenerator {
+data class JsonPathAccessor(override val expression: String, override  val returnType: Type) : ExpressionAccessor, TaxiStatementGenerator {
    override fun asTaxi(): String = """by jsonPath("$expression")"""
 }
 
 // TODO : This is duplicating concepts in ColumnMapping, one should die.
-data class ColumnAccessor(val index: Any?, override val defaultValue: Any?) : ExpressionAccessor, TaxiStatementGenerator, AccessorWithDefault {
+data class ColumnAccessor(val index: Any?, override val defaultValue: Any?, override val returnType: Type) : ExpressionAccessor, TaxiStatementGenerator, AccessorWithDefault {
    override val expression: String = index.toString()
    override fun asTaxi(): String {
       return when {

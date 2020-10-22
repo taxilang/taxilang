@@ -10,7 +10,7 @@ class FunctionDefinition(val parameters: List<Parameter>,
 class Function(override val qualifiedName: String, override var definition: FunctionDefinition?) : Named, Compiled, ImportableToken, DefinableToken<FunctionDefinition> {
    fun getParameterType(parameterIndex: Int): Type {
       return when {
-          parameterIndex <= this.parameters.size -> {
+          parameterIndex < this.parameters.size -> {
              this.parameters[parameterIndex].type
           }
           this.parameters.last().isVarArg -> {

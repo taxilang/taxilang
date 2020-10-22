@@ -63,7 +63,7 @@ type TradeRecord {
       dealtAmountDestructuredAssignment.assignments[0].should.satisfy {
          it.fieldName.should.equal("quantity")
          val assignment = it.assignment as ScalarAccessorValueAssignment
-         assignment.accessor.should.equal(XpathAccessor("/foo/bar/quantity1"))
+         (assignment.accessor as XpathAccessor).expression.should.equal("/foo/bar/quantity1")
          true
       }
       dealtAmountDestructuredAssignment.assignments[1].should.satisfy {
@@ -282,9 +282,11 @@ type TradeRecord {
    @Test
    fun `can use functions on rhs of a when block`() {
       val field = Compiler("""
+         type Identifier inherits String
+         type AssetClass inherits String
          model Foo {
-            assetClass : String by column("assetClass")
-            identifierValue : String? by when (this.assetClass) {
+            assetClass : AssetClass by column("assetClass")
+            identifierValue : Identifier by when (this.assetClass) {
                "FXD" -> left(column("SYMBOL"),6)
                else -> column("ISIN")
             }
