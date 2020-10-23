@@ -1,7 +1,7 @@
 package lang.taxi.types
 
 import arrow.core.Either
-import lang.taxi.*
+import lang.taxi.Equality
 
 data class TypeAliasExtension(val annotations: List<Annotation>, override val compilationUnit: CompilationUnit, override val typeDoc: String? = null) : TypeDefinition, Documented {
    private val equalty = Equality(this, TypeAliasExtension::annotations)

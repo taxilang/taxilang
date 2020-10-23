@@ -158,6 +158,11 @@ interface Type : Named, Compiled, ImportableToken {
             else emptySet<Type>()
          }.toSet()
    }
+
+
+   fun isAssignableTo(other:Type, considerTypeParameters: Boolean = true):Boolean {
+      return TypChe
+   }
 }
 
 interface TokenDefinition {

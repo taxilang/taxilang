@@ -6,6 +6,21 @@ import org.spekframework.spek2.style.specification.describe
 
 object WhenBlockSpec : Spek({
    describe("when block type checking") {
+      it("is valid to use a column selector in a when block if the types match") {
+         val errors = """
+         type Notional inherits Decimal
+         type AssetClass inherits String
+         model Foo {
+            assetClass : AssetClass by column("assetClass")
+            value : Notional by when (this.assetClass) {
+               "FXD" -> column("VALUE1")
+               else -> column("VALUE2")
+            }
+         }
+         """.validated()
+         errors.should.be.empty
+      }
+
       it("should detect type mismatch of value in when case selector") {
          val errors = """type Identifier inherits String
          type AssetClass inherits String
