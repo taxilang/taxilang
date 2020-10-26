@@ -1,13 +1,27 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import {commands, OutputChannel, workspace} from 'vscode';
+import { commands, OutputChannel, workspace } from 'vscode';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as WebSocket from 'ws';
 import * as findJavaHome from 'find-java-home';
 
-import {LanguageClient, LanguageClientOptions, ServerOptions, TransportKind} from 'vscode-languageclient';
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient';
 
+class CompilerConfig {
+    typeChecker: FeatureToggle = FeatureToggle.DISABLED;
+
+    asArgs(): string[] {
+        return [
+            `typeChecker=${this.typeChecker}`
+        ];
+    }
+}
+enum FeatureToggle {
+    ENABLED = "ENABLED",
+    DISABLED = "DISABLED",
+    SOFT_ENABLED = "SOFT_ENABLED"
+}
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -18,21 +32,27 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('Taxi language extension starting');
 
 
+    const compilerConfig = new CompilerConfig();
+
+    const taxiConfig = workspace.getConfiguration('taxi');
+    const typeCheckerEnabled = (taxiConfig.get('typeChecker') as string).toUpperCase() as FeatureToggle;
+    compilerConfig.typeChecker = typeCheckerEnabled;
+    
     const definedJavaHome = workspace.getConfiguration('taxi').get('javaHome', '');
     if (definedJavaHome !== '') {
-        startPlugin(definedJavaHome, context);
+        startPlugin(definedJavaHome, context, compilerConfig);
     } else {
-        findJavaHome({allowJre: true}, (err, home) => {
+        findJavaHome({ allowJre: true }, (err, home) => {
             if (err) {
                 return console.log(err);
             }
-            startPlugin(home, context);
+            startPlugin(home, context, compilerConfig);
         });
     }
 
 }
 
-function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
+function startPlugin(javaHome: string, context: vscode.ExtensionContext, config:CompilerConfig) {
     const useDebugJar = workspace.getConfiguration('taxi').get('useDevJar', false);
     const enableDebug = workspace.getConfiguration('taxi').get('enableDebugSession', false);
     if (javaHome) {
@@ -44,16 +64,16 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
 
         //  /home/marty/dev/taxi-lang-server/taxi-lang-server-standalone/target/dependency/*.jar
         //   java -classpath "./classes:./dependency/*" lang.taxi.lsp.Launcher
-        let classPath:string;
+        let classPath: string;
         if (useDebugJar) {
             const classPathSeperator = (process.platform === "win32") ? ';' : ':';
-            classPath = [ 
-                path.join(__dirname, '..', '..','..','taxi-lang','core-types', 'target', 'classes') ,
-                path.join(__dirname, '..', '..','..','taxi-lang','compiler', 'target', 'classes') ,
-                path.join(__dirname, '..', '..','..','vyne','vyne-core-types', 'target', 'classes') ,
-                path.join(__dirname, '..', '..', 'taxi-lang-service', 'target', 'classes') ,
-                path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', 'classes') ,
-                path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', 'dependency', '*')  
+            classPath = [
+                path.join(__dirname, '..', '..', '..', 'taxi-lang', 'core-types', 'target', 'classes'),
+                path.join(__dirname, '..', '..', '..', 'taxi-lang', 'compiler', 'target', 'classes'),
+                path.join(__dirname, '..', '..', '..', 'vyne', 'vyne-core-types', 'target', 'classes'),
+                path.join(__dirname, '..', '..', 'taxi-lang-service', 'target', 'classes'),
+                path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', 'classes'),
+                path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', 'dependency', '*')
             ].join(classPathSeperator);
         } else {
             const jarName = 'taxi-lang-server-standalone.jar';
@@ -73,14 +93,14 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext) {
 
         let serverOptions: ServerOptions = {
             command: excecutable,
-            args: [...args, main],
+            args: [...args, main].concat(config.asArgs()),
             options: {}
         };
 
         // Options to control the language client
         let clientOptions: LanguageClientOptions = {
             // Register the server for plain text documents
-            documentSelector: [{scheme: 'file', language: 'taxi'}],
+            documentSelector: [{ scheme: 'file', language: 'taxi' }],
             synchronize: {
                 // Notify the server about file changes to .taxi files contained in the workspace
                 fileEvents: workspace.createFileSystemWatcher('**/*.taxi')

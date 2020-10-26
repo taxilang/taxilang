@@ -42,6 +42,18 @@
       "type": "object",
       "title": "Taxi",
       "properties": {
+        "taxi.typeChecker": {
+          "type": "string",
+          "default": "disabled",
+          "enum" : [
+            "enabled","disabled","soft_enabled"
+          ],
+          "enumDescriptions": [
+            "Enables the type checker.  Type violations are reported as errors",
+            "Disables the type checker.  Type vioaltions are not reported",
+            "Enables the type checker.  Type violations are reported as warnings"
+          ]
+        },
         "taxi.javaHome": {
           "type": "string",
           "default": "",

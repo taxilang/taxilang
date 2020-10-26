@@ -1,6 +1,9 @@
 package lang.taxi.lsp
 
-import lang.taxi.*
+import lang.taxi.CompilationError
+import lang.taxi.Compiler
+import lang.taxi.CompilerTokenCache
+import lang.taxi.TaxiDocument
 import lang.taxi.lsp.actions.CodeActionService
 import lang.taxi.lsp.completion.CompletionService
 import lang.taxi.lsp.formatter.FormatterService
@@ -8,7 +11,31 @@ import lang.taxi.lsp.gotoDefinition.GotoDefinitionService
 import lang.taxi.lsp.hover.HoverService
 import lang.taxi.lsp.linter.LintingService
 import lang.taxi.types.SourceNames
-import org.eclipse.lsp4j.*
+import org.eclipse.lsp4j.CodeAction
+import org.eclipse.lsp4j.CodeActionParams
+import org.eclipse.lsp4j.Command
+import org.eclipse.lsp4j.CompletionItem
+import org.eclipse.lsp4j.CompletionList
+import org.eclipse.lsp4j.CompletionParams
+import org.eclipse.lsp4j.DefinitionParams
+import org.eclipse.lsp4j.Diagnostic
+import org.eclipse.lsp4j.DiagnosticSeverity
+import org.eclipse.lsp4j.DidChangeTextDocumentParams
+import org.eclipse.lsp4j.DidCloseTextDocumentParams
+import org.eclipse.lsp4j.DidOpenTextDocumentParams
+import org.eclipse.lsp4j.DidSaveTextDocumentParams
+import org.eclipse.lsp4j.DocumentFormattingParams
+import org.eclipse.lsp4j.Hover
+import org.eclipse.lsp4j.HoverParams
+import org.eclipse.lsp4j.InitializeParams
+import org.eclipse.lsp4j.Location
+import org.eclipse.lsp4j.LocationLink
+import org.eclipse.lsp4j.MessageParams
+import org.eclipse.lsp4j.MessageType
+import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.PublishDiagnosticsParams
+import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.TextEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.LanguageClient
 import org.eclipse.lsp4j.services.LanguageClientAware
@@ -144,10 +171,15 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
                     error.line - 1,
                     error.char
             )
+            val severity:DiagnosticSeverity = when(error.severity) {
+                CompilationError.Severity.INFO -> DiagnosticSeverity.Information
+                CompilationError.Severity.WARNING -> DiagnosticSeverity.Warning
+                CompilationError.Severity.ERROR -> DiagnosticSeverity.Error
+            }
             (error.sourceName ?: "Unknown source") to Diagnostic(
                     Range(position, position),
-                    error.detailMessage ?: "Unknown error",
-                    DiagnosticSeverity.Error,
+                    error.detailMessage,
+                    severity,
                     "Compiler"
             )
         }
