@@ -8,6 +8,7 @@ import lang.taxi.services.OperationContract
 import lang.taxi.services.Parameter
 import lang.taxi.types.*
 import lang.taxi.utils.leftOr
+import lang.taxi.utils.log
 import org.antlr.v4.runtime.ParserRuleContext
 
 /**
@@ -91,7 +92,10 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       val fields = constrainedType.fieldsWithType(property.type)
       return when {
          fields.isEmpty() -> CompilationError(constraint, "Type ${constrainedType.qualifiedName} does not have a field with type ${property.type}")
-         fields.size > 1 -> CompilationError(constraint, "Type ${constrainedType.qualifiedName} has multiple fields with type ${property.type}.  This is ambiguous, and the constraint is invalid.")
+         fields.size > 1 -> {
+            log().warn(fields.joinToString { it.name })
+            CompilationError(constraint, "Type ${constrainedType.qualifiedName} has multiple fields with type ${property.type}.  This is ambiguous, and the constraint is invalid.")
+         }
          else -> null
       }
    }
