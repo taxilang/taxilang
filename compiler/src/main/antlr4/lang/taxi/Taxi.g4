@@ -110,7 +110,7 @@ conditionalTypeConditionDeclaration:
    conditionalTypeWhenDeclaration);
 
 conditionalTypeWhenDeclaration:
-   'when' '(' conditionalTypeWhenSelector ')' '{'
+   'when' ('(' conditionalTypeWhenSelector ')')? '{'
    conditionalTypeWhenCaseDeclaration*
    '}';
 
@@ -141,6 +141,7 @@ caseDeclarationMatchExpression: // when( ... ) {
    Identifier  | //  someField -> ...
    literal | //  'foo' -> ...
    enumSynonymSingleDeclaration | // some.Enum.EnumValue -> ...
+   condition |
    caseElseMatchExpression;
 
 caseElseMatchExpression: 'else';
@@ -355,6 +356,41 @@ propertyToParameterConstraintRhs : (literal | qualifiedName);
 
 propertyFieldNameQualifier : 'this' '.';
 
+condition : logical_expr ;
+logical_expr
+ : logical_expr '&&' logical_expr # LogicalExpressionAnd
+ | logical_expr '||' logical_expr  # LogicalExpressionOr
+ | comparison_expr               # ComparisonExpression
+ | logical_entity                # LogicalEntity
+ ;
+
+comparison_expr : comparison_operand comp_operator comparison_operand
+                    # ComparisonExpressionWithOperator
+                ;
+
+comparison_operand : arithmetic_expr
+                   ;
+
+comp_operator : GT
+              | GE
+              | LT
+              | LE
+              | EQ
+              | NQ
+              ;
+
+arithmetic_expr
+ :  numeric_entity                        # ArithmeticExpressionNumericEntity
+ ;
+
+logical_entity : (TRUE | FALSE) # LogicalConst
+               | propertyToParameterConstraintLhs     # LogicalVariable
+               ;
+
+numeric_entity : literal              # LiteralConst
+               | propertyToParameterConstraintLhs           # NumericVariable
+               ;
+
 comparisonOperator
    : '='
    | '>'
@@ -369,6 +405,8 @@ arithmaticOperator
    | '*'
    | '/'
    ;
+
+
 
 policyDeclaration
     :  annotation* 'policy' policyIdentifier 'against' typeType '{' policyRuleSet* '}';
@@ -719,3 +757,25 @@ COMMENT
 LINE_COMMENT
     :   '//' ~[\r\n]* -> channel(HIDDEN)
     ;
+
+GT : '>' ;
+GE : '>=' ;
+LT : '<' ;
+LE : '<=' ;
+EQ : '=' ;
+NQ : '!=';
+
+AND : 'and' ;
+OR  : 'or' ;
+
+TRUE  : 'true' ;
+FALSE : 'false' ;
+
+MULT  : '*' ;
+DIV   : '/' ;
+PLUS  : '+' ;
+MINUS : '-' ;
+
+LPAREN : '(' ;
+RPAREN : ')' ;
+

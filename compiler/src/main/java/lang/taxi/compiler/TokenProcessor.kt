@@ -1,7 +1,6 @@
 package lang.taxi.compiler
 
 import arrow.core.Either
-import arrow.core.extensions.either.monad.flatMap
 import arrow.core.flatMap
 import arrow.core.getOrElse
 import arrow.core.getOrHandle
@@ -167,6 +166,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       // they rely on a fully parsed document structure
       validateConstraints()
       validateFormulas()
+      validaCaseWhenLogicalExpressions()
    }
 
    private fun applySynonymsToEnums() {
@@ -239,6 +239,103 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       )
    }
 
+   private fun validaCaseWhenLogicalExpressions() {
+      typeSystem.typeList().filterIsInstance<ObjectType>()
+         .forEach { type ->
+            type
+               .allFields
+               .filter {
+                  it.accessor is ConditionalAccessor &&
+                     (it.accessor as ConditionalAccessor).expression is WhenFieldSetCondition
+               }
+               .forEach {
+                  val whenFieldSetCondition = ((it.accessor as ConditionalAccessor).expression as WhenFieldSetCondition)
+                  val logicalExpressions = whenFieldSetCondition
+                     .cases.map { aCase -> aCase.matchExpression }
+                     .filterIsInstance<LogicalExpression>()
+                  when {
+                     logicalExpressions.isNotEmpty() && whenFieldSetCondition.selectorExpression !is EmptyReferenceSelector -> {
+                        errors.add(CompilationError(type, "when case for ${it.name} in ${type.qualifiedName} cannot have reference selector use when { .. } syntax"))
+                     }
+                     whenFieldSetCondition.selectorExpression is EmptyReferenceSelector &&
+                        whenFieldSetCondition.cases.map { it.matchExpression }.filter { it !is ElseMatchExpression }.any { it !is LogicalExpression  } -> {
+                        errors.add(CompilationError(type, "when case for ${it.name} in ${type.qualifiedName} can only logical expression when cases"))
+                     }
+                     else -> validateLogicalExpression(type, typeSystem, it, logicalExpressions)
+                  }
+               }
+         }
+   }
+
+   private fun validateLogicalExpression(type: ObjectType,
+                                         typeSystem: TypeSystem,
+                                         field: Field,
+                                         logicalExpressions: List<LogicalExpression>) {
+      logicalExpressions.forEach {
+         when (it) {
+            is ComparisonExpression -> validateComparisonExpression(it, type)
+            is AndExpression -> validateLogicalExpression(type, typeSystem, field, listOf(it.left, it.right))
+            is OrExpression -> validateLogicalExpression(type, typeSystem, field, listOf(it.left, it.right))
+         }
+      }
+   }
+
+   private fun validateComparisonExpression(comparisonExpression: ComparisonExpression, type: ObjectType) {
+      val right = comparisonExpression.right
+      val left = comparisonExpression.left
+      when {
+         right is FieldReferenceEntity && left is FieldReferenceEntity -> {
+            validateFieldReferenceEntity(right, type)
+            validateFieldReferenceEntity(left, type)
+         }
+         right is ConstantEntity && left is FieldReferenceEntity -> {
+            val leftField =  validateFieldReferenceEntity(left, type)
+            validateConstantEntityAgainstField(leftField, right, type, comparisonExpression.operator)
+         }
+
+         right is FieldReferenceEntity && left is ConstantEntity -> {
+            val rightField = validateFieldReferenceEntity(right, type)
+            validateConstantEntityAgainstField(rightField, left, type, comparisonExpression.operator)
+         }
+      }
+   }
+
+   private fun validateFieldReferenceEntity(fieldReferenceEntity: FieldReferenceEntity, type: ObjectType): Field? {
+      val referencedField = type.allFields.firstOrNull { field -> field.name == fieldReferenceEntity.fieldName }
+      if (referencedField == null) {
+         errors.add(CompilationError(type, "${fieldReferenceEntity.fieldName} is not a field of ${type.qualifiedName}"))
+      } else {
+         if (referencedField.type.basePrimitive == null) {
+            errors.add(CompilationError(type, "${fieldReferenceEntity.fieldName} is not a field of ${type.qualifiedName}"))
+         }
+      }
+      return referencedField
+   }
+
+   private fun validateConstantEntityAgainstField(
+      field: Field?,
+      constantEntity: ConstantEntity,
+      type: ObjectType,
+      operator: ComparisonOperator) {
+      if (field?.type?.basePrimitive != PrimitiveType.DECIMAL &&
+         field?.type?.basePrimitive != PrimitiveType.INTEGER &&
+         field?.type?.basePrimitive != PrimitiveType.STRING) {
+         errors.add(CompilationError(type, "${field?.name} should be a String, Int or Decimal based field of ${type.qualifiedName}"))
+      }
+      if (constantEntity.value is String && field?.type?.basePrimitive != PrimitiveType.STRING) {
+         errors.add(CompilationError(type, "${field?.name} is not a String based field of ${type.qualifiedName}"))
+      }
+
+      if (constantEntity.value is Number && (field?.type?.basePrimitive != PrimitiveType.DECIMAL && field?.type?.basePrimitive != PrimitiveType.INTEGER)) {
+         errors.add(CompilationError(type, "${field?.name} is not a numeric based field of ${type.qualifiedName}"))
+      }
+
+      if (!operator.applicablePrimitives.contains(field?.type?.basePrimitive)) {
+         errors.add(CompilationError(type, "${operator.symbol} is not applicable to ${field?.name} field of ${type.qualifiedName}"))
+
+      }
+   }
+
 
    private fun createEmptyTypes() {
       if (createEmptyTypesPerformed) {
@@ -294,7 +391,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(namespace, tokenRule).collectError()
             else -> TODO("Not handled: $tokenRule")
          }
-      } catch (exception:Exception) {
+      } catch (exception: Exception) {
          tokensCurrentlyCompiling.remove(tokenName)
          throw  exception
       }
