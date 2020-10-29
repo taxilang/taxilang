@@ -9,12 +9,12 @@ class RemoveUnusedImport : CodeActionProvider {
     }
 
     override fun canProvideFor(params: CodeActionParams): Boolean {
-        return params.context.diagnostics.any { it.code != null && it.code.isLeft && it.code.left == ACTION_CODE }
+        return params.context.diagnostics.any { it != null && it.code != null && it.code.isLeft && it.code.left == ACTION_CODE }
     }
 
     override fun provide(params: CodeActionParams): Either<Command, CodeAction>? {
         val diagnostic = params.context.diagnostics.firstOrNull {
-            it.code.left == ACTION_CODE
+            it.code?.left == ACTION_CODE
         } ?: return null
         return Either.forRight(CodeAction("Remove unused import").apply {
             diagnostics = listOf(diagnostic)
