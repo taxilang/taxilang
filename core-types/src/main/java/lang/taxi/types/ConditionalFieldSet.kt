@@ -24,7 +24,13 @@ data class WhenFieldSetCondition(
    val cases: List<WhenCaseBlock>
 ) : FieldSetExpression {
    override fun asTaxi(): String {
-      return """when (${selectorExpression.asTaxi()}) {
+      val whenAsTaxi = if (selectorExpression.asTaxi().isEmpty()) {
+         "when"
+
+      } else {
+         "when (${selectorExpression.asTaxi()})"
+      }
+      return """$whenAsTaxi {
    ${cases.joinToString("\n") { it.asTaxi() }}
 }
       """.trimMargin()
@@ -45,6 +51,12 @@ data class AccessorExpressionSelector(
 data class TypeReferenceSelector(val type: Type) : Accessor
 data class FieldReferenceSelector(val fieldName: String) : WhenSelectorExpression, Accessor {
    override fun asTaxi(): String = "this.$fieldName"
+}
+
+class EmptyReferenceSelector: WhenSelectorExpression {
+   override fun asTaxi(): String {
+      return ""
+   }
 }
 
 data class WhenCaseBlock(

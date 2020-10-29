@@ -9,7 +9,7 @@ type Person {
    // Single line comment
    title : String?
 
-   gender : Gender
+   gender : Gender?
 
    /**
     * Comment on a field

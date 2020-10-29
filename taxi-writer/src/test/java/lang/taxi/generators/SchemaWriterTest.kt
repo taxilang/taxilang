@@ -3,6 +3,7 @@ package lang.taxi.generators
 import com.winterbe.expekt.should
 import lang.taxi.Compiler
 import org.junit.Test
+import kotlin.test.assertEquals
 import kotlin.test.fail
 
 // Note - this is also more heavily tested via the Kotlin to Taxi projects.
@@ -105,7 +106,6 @@ type Person {
    }
 
 
-
    @Test
    fun `outputs multiple formats`() {
       val src = """type TransactionEventDateTime inherits Instant
@@ -161,7 +161,49 @@ type Foo {
       generated.shouldCompile()
    }
 
+   @Test
+   fun `outputs complex when statements statements`() {
+      val generated = """
+               model ComplexWhen {
+            trader: String
+            status: String
+            initialQuantity: Decimal
+            leavesQuantity: Decimal
+            quantityStatus: String by when {
+                this.initialQuantity = this.leavesQuantity -> "ZeroFill"
+                this.trader = "Marty" || this.status = "Pending" -> "ZeroFill"
+                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity -> "PartialFill"
+                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.trader = "Marty" || this.status = "Pending"  -> "FullyFilled"
+                this.leavesQuantity = null && this.initialQuantity != null -> trader
+                else -> "CompleteFill"
+            }
+         }
+            """.trimIndent()
+         .compileAndRegenerateSource()
+
+      val expected = """
+        type ComplexWhen {
+            trader : String
+            status : String
+            initialQuantity : Decimal
+            leavesQuantity : Decimal
+            quantityStatus : String  by when {
+                this.initialQuantity = this.leavesQuantity -> "ZeroFill"
+                this.trader = "Marty" || this.status = "Pending" -> "ZeroFill"
+                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity -> "PartialFill"
+                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.trader = "Marty" || this.status = "Pending" -> "FullyFilled"
+                this.leavesQuantity = null && this.initialQuantity != null -> trader
+                else -> "CompleteFill"
+            }
+         }
+      """.trimIndent()
+      generated.trimNewLines().should.equal(expected.trimNewLines())
+      generated.shouldCompile()
+   }
 }
+
+
+
 
 private fun String.shouldCompile() {
    val errors = Compiler(this).validate()

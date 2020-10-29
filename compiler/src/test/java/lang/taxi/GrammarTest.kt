@@ -162,8 +162,8 @@ namespace bar {
       expect(enumType.value("Male").annotations).to.have.size(1)
    }
 
-   @Test
-   fun given_typeIsRedeclaredWithSemanticallyEquivalentDefinition_then_itIsValid() {
+   @Test(expected = CompilationException::class)
+   fun given_typeIsRedeclaredWithSemanticallyEquivalentDefinition_then_itIsInValid() {
       val source1 = """
 namespace foo {
     type Person {
@@ -185,7 +185,6 @@ namespace foo {
    }
 
    @Test
-   @Ignore("Detection of redecalred types is disabled, as was buggy and didn't respect imports")
    fun given_typeIsRedeclaredWithDifferentDefinition_then_exceptionIsThrown() {
       val source1 = """
 namespace foo {

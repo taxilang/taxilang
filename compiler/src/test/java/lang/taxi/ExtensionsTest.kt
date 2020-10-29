@@ -5,10 +5,35 @@ import com.winterbe.expekt.should
 import junit.framework.Assert.fail
 import lang.taxi.types.EnumType
 import lang.taxi.types.EnumValue
+import org.antlr.v4.runtime.CharStreams
 import org.junit.Test
 import kotlin.math.exp
 
 class ExtensionsTest {
+
+   //Compiler(listOf(CharStreams.fromString(source1, "source1"), CharStreams.fromString(source2, "source2"))).compile()
+   @Test
+   fun `extend type in a different source file`() {
+      val source1 = """
+         type Person {
+            name : String
+         }
+         @TypeAnnotation
+         type extension Person {
+            @MyAnnotation(param2 = "bar")
+            name
+         }"""
+      val source2 = """
+         type extension Person {
+            @AnotherAnnotation(param2 = "bar")
+            name
+         }
+      """.trimIndent()
+      val doc = Compiler(listOf(CharStreams.fromString(source1, "source1"), CharStreams.fromString(source2, "source2"))).compile()
+      val person = doc.objectType("Person")
+      expect(person.field("name").annotations).size.to.equal(2)
+      expect(person.annotations).size.to.equal(1)
+   }
 
    @Test
    fun typesCanAddAnnotationsThroughExtensions() {
