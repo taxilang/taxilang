@@ -193,6 +193,40 @@ object CompletionSpec : Spek({
                 insetTexts.should.have.elements("DE", "UK", "US")
             }
         }
+
+        describe("for type definitions with by column expression") {
+            val (service, workspaceRoot) = documentServiceFor("test-scenarios/simple-workspace")
+            service.connect(mock(LanguageClient::class.java))
+
+            val originalSource = workspaceRoot.resolve("trade.taxi").toFile().readText()
+
+            // let's edit:
+            val updatedSource = """$originalSource
+    |
+    |type Client {
+    |   name : String by column(
+""".trimMargin()
+            service.didChange(DidChangeTextDocumentParams(
+                    workspaceRoot.versionedDocument("trade.taxi"),
+                    listOf(TextDocumentContentChangeEvent(
+                            updatedSource
+                    ))
+            ))
+
+            val cursorPositionLine = updatedSource.lines().indexOfFirst { it.contains("column(") }
+            val cursorPositionChar = updatedSource.lines()[cursorPositionLine].indexOf("(")
+            val completions = service.completion(CompletionParams(
+                    workspaceRoot.document("trade.taxi"),
+                    Position(cursorPositionLine, cursorPositionChar)
+            )).get().left
+
+            it("should contain types from within the same file") {
+                val expectedLabels = listOf(
+                        "Trade", "Client" // Types in the current file
+                )
+                completions.shouldContainLabels(expectedLabels)
+            }
+        }
     }
 })
 
