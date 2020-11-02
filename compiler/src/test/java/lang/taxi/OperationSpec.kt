@@ -62,5 +62,26 @@ object OperationSpec : Spek({
             .parameters[0]
          param.constraints.should.have.size(1)
       }
+
+      it("should parse constraints that are not part of return type") {
+         val param = """
+         namespace demo {
+            type CreatedAt inherits Date
+            type RewardsAccountBalance {
+               balance : RewardsBalance as Decimal
+               currencyUnit : CurrencyUnit as String
+            }
+         }
+         namespace test {
+            service RewardsBalanceService {
+               operation findByCaskInsertedAtBetween( @PathVariable(name = "start") start : demo.CreatedAt, @PathVariable(name = "end") end : demo.CreatedAt ) : demo.RewardsAccountBalance[]( demo.CreatedAt >= start, demo.CreatedAt < end )
+            }
+         }
+         """.trimIndent()
+            .compiled().service("test.RewardsBalanceService")
+            .operation("findByCaskInsertedAtBetween")
+            .parameters[0]
+     //    param.constraints.should.have.size(1)
+      }
    }
 })
