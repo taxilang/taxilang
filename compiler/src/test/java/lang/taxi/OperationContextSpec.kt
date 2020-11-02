@@ -60,7 +60,7 @@ object OperationContextSpec : Spek({
 
          }
 
-         it("should fail if provided type is not an attribute of the return type") {
+         it("should not fail if provided type is not an attribute of the return type") {
             val errors = """
          $taxi
          service TradeService {
@@ -69,8 +69,7 @@ object OperationContextSpec : Spek({
             )
          }
          """.validated()
-            errors.should.have.size(1)
-            errors.first().detailMessage.should.equal("Type Trade does not have a field with type EmployeeCode")
+            errors.should.be.empty
          }
 
          it("should fail if referenced param is not an input") {
