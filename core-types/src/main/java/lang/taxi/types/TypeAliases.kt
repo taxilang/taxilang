@@ -74,10 +74,12 @@ data class TypeAlias(
       }
 
       fun underlyingType(type: Type): Type {
-         return when (type) {
+         val unaliasedType =  when (type) {
             is TypeAlias -> underlyingType(type.aliasType!!)
             else -> type
          }
+         return unaliasedType.formattedInstanceOfType?.let { underlyingType(it) }
+            ?: unaliasedType
       }
    }
 

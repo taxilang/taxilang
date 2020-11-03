@@ -92,7 +92,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
                   }.invertEitherList().flattenErrors()
                }
                whenCase.caseScalarAssigningDeclaration() != null -> {
-                  compileScalarFieldAssignment(whenCase.caseScalarAssigningDeclaration(), whenClauseSelectorType)
+                  compileScalarFieldAssignment(whenCase.caseScalarAssigningDeclaration(), assignmentTargetType)
                      .flatMap { assignmentExpression ->
                         TypeChecking.ifAssignable(assignmentExpression.assignment.type, assignmentTargetType, whenCase.caseScalarAssigningDeclaration()) {
                            listOf(assignmentExpression)

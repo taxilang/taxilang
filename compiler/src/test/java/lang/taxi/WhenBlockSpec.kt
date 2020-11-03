@@ -32,9 +32,41 @@ object WhenBlockSpec : Spek({
             }
          }""".validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("Type mismatch.  Found a type of lang.taxi.Int where a AssetClass is expected")
+         errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.Int is not assignable to type AssetClass")
       }
 
+      it("should detect a type mismatch of fields") {
+         val errors = """
+         type Identifier inherits Int
+         type AssetClass inherits String
+         type Name inherits String
+         model Foo {
+            assetClass : AssetClass by column("assetClass")
+            identifierValue : Identifier by when (this.assetClass) {
+               "foo" -> assetClass // <-- This is an error, as this.assetClass is a String, which isn't assignable to Identifier, which is a number
+               else -> column("ISIN")
+            }
+         }""".validated()
+         errors.should.have.size(1)
+         errors.first().detailMessage.should.equal("Type mismatch.  Type of AssetClass is not assignable to type Identifier")
+      }
+
+      it("should now allow assignment of fields where the types are different but share a common primitive base type") {
+         val errors = """
+         type Identifier inherits String
+         type AssetClass inherits String
+         type Name inherits String
+         model Foo {
+            name : Name
+            assetClass : AssetClass by column("assetClass")
+            identifierValue : Identifier by when (this.assetClass) {
+               "foo" -> name // <- name is a string, and Identifier are a string, but they aren't compatible.
+               else -> column("ISIN")
+            }
+         }""".validated()
+         errors.should.have.size(1)
+         errors.first().detailMessage.should.equal("Type mismatch.  Type of Name is not assignable to type Identifier")
+      }
 
       it("should detect type mismatch of value in when case selector") {
          val errors = """type Identifier inherits String
@@ -47,7 +79,7 @@ object WhenBlockSpec : Spek({
             }
          }""".validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("Type mismatch.  Found a type of lang.taxi.Int where a Identifier is expected")
+         errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.Int is not assignable to type Identifier")
       }
    }
 })

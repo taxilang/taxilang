@@ -1,10 +1,10 @@
 package lang.taxi
 
 import com.google.common.collect.Multimaps
+import lang.taxi.functions.Function
 import lang.taxi.policies.Policy
 import lang.taxi.services.Service
 import lang.taxi.types.*
-import lang.taxi.functions.Function
 import lang.taxi.utils.log
 
 
@@ -44,10 +44,6 @@ open class TaxiDocument(val types: Set<Type>,
    }
 
    fun type(qualifiedName: QualifiedName): Type {
-      if (PrimitiveType.isPrimitiveType(qualifiedName.toString())) {
-         return PrimitiveType.fromDeclaration(qualifiedName.toString())
-      }
-
       if (Arrays.isArray(qualifiedName)) {
          return when {
             qualifiedName.parameters.isEmpty() -> {
@@ -64,6 +60,9 @@ open class TaxiDocument(val types: Set<Type>,
          }
       }
 
+      if (PrimitiveType.isPrimitiveType(qualifiedName.toString())) {
+         return PrimitiveType.fromDeclaration(qualifiedName.toString())
+      }
 
       return typeMap[qualifiedName.toString()] ?: throw error("No type named $qualifiedName defined")
 

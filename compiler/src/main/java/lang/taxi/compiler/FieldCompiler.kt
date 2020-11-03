@@ -30,15 +30,25 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
 
       val fields = typeBody.typeMemberDeclaration()
          .map { getFieldNameAndDeclarationContext(it) }
-         .toMap()
+         .toList()
 
       val fieldsInFieldBlocks = typeBody.conditionalTypeStructureDeclaration().flatMap { fieldBlock ->
          fieldBlock.typeMemberDeclaration().map { memberDeclarationContext ->
             getFieldNameAndDeclarationContext(memberDeclarationContext)
          }
-      }.toMap()
+      }.toList()
 
-      fields + fieldsInFieldBlocks
+      // Check for duplicate field declarations
+      val allFields = fields + fieldsInFieldBlocks
+      val duplicateDefinitionErrors = allFields.groupBy({ it.first }) { it.second }
+         .filter { (_, declarationSites) -> declarationSites.size > 1 }
+         .flatMap {(fieldName,declarationSites) ->
+            declarationSites.map {fieldDeclarationSite ->
+               CompilationError(fieldDeclarationSite.start, "Field $fieldName is declared multiple times")
+            }
+         }
+      this.errors.addAll(duplicateDefinitionErrors)
+      allFields.toMap()
    }
 
    fun provideField(fieldName: String, requestingToken: ParserRuleContext): Either<List<CompilationError>, Field> {

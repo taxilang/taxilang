@@ -8,43 +8,12 @@ interface TypeProvider {
 interface GenericType : Type {
     val parameters: List<Type>
 
-   companion object {
-      fun resolvesSameAs(typeA:Type, typeB: Type, considerTypeParameters: Boolean): Boolean {
-
-      }
-   }
-
     fun resolveTypes(typeSystem: TypeProvider): GenericType
 
     override fun toQualifiedName(): QualifiedName {
         val qualifiedName = QualifiedName.from(this.qualifiedName)
         return qualifiedName.copy(parameters = this.parameters.map { it.toQualifiedName() })
     }
-
-   override fun resolvesSameAs(other: Type, considerTypeParameters: Boolean): Boolean {
-      if (!super.resolvesSameAs(other, considerTypeParameters)) {
-         return false
-      }
-      if (other !is GenericType) {
-         return false
-      }
-
-      if (considerTypeParameters && (this.parameters.size != other.parameters.size)) {
-         return false
-      }
-
-      val parametersMatch = if (considerTypeParameters) {
-         this.parameters.all { parameterType ->
-            val index = this.parameters.indexOf(parameterType)
-            val otherParameterType = other.parameters[index]
-            parameterType.resolvesSameAs(otherParameterType)
-         }
-      } else {
-         true
-      }
-
-      return parametersMatch
-   }
 
 }
 

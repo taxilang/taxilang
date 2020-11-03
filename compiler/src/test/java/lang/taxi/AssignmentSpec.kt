@@ -1,7 +1,9 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.compiler.isAssignableTo
 import lang.taxi.compiler.resolveAliases
+import lang.taxi.types.PrimitiveType
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -45,6 +47,11 @@ object AssignmentSpec : Spek({
          schema.type("NameList").isAssignableTo(schema.type("GivenName[]")).should.be.`true`
       }
 
+      it("if types are declared as primitives they are assignable") {
+         PrimitiveType.STRING.isAssignableTo(schema.type("FirstName")).should.be.`true`
+         PrimitiveType.INTEGER.isAssignableTo(schema.type("FirstName")).should.be.`false`
+      }
+
 
       it("should resolve formatted types to their unformatted underlying type") {
          val schema = """
@@ -59,6 +66,27 @@ object AssignmentSpec : Spek({
          schema.type("EventDate").resolveAliases().qualifiedName.should.equal("EventDate")
          schema.objectType("Source").field("eventDate").type.resolveAliases().qualifiedName.should.equal("EventDate")
          schema.objectType("ThingWithInlineInstant").field("eventDate").type.resolveAliases().qualifiedName.should.equal("lang.taxi.Instant")
+      }
+
+      it("is valid to assing specialised types") {
+         """
+            type Name inherits String
+            type FirstName inherits Name
+            type PreferredName inherits Name
+            type Nickname inherits Name
+            model Person {
+               firstName : FirstName
+               nickName : NickName
+               preferredName : PreferredName by when {
+                  firstName != null -> firstName
+                  nickName != null -> nickName
+               }
+            }
+         """.validated()
+         TODO()
+      }
+      it("is valid to assign inherited enums in both directions") {
+
       }
    }
 })
