@@ -140,7 +140,7 @@ caseFieldAssignmentBlock:
 caseDeclarationMatchExpression: // when( ... ) {
    Identifier  | //  someField -> ...
    literal | //  'foo' -> ...
-   enumSynonymSingleDeclaration | // some.Enum.EnumValue -> ...
+   enumValueSynonymSingleDeclaration | // some.Enum.EnumValue -> ...
    condition |
    caseElseMatchExpression;
 
@@ -210,7 +210,7 @@ classOrInterfaceType
 // A "lenient" enum will match on case insensitive values
 enumDeclaration
     :    typeDoc? annotation* lenientKeyword? 'enum' classOrInterfaceType
-         (('inherits' enumInheritedType) | ('{' enumConstants? '}'))
+         (('inherits' enumInheritedType) | ( enumTypeSynonymDeclaration? '{' enumConstants? '}'))
     ;
 
 enumInheritedType
@@ -222,19 +222,32 @@ enumConstants
     ;
 
 enumConstant
-    :   typeDoc? annotation*  defaultKeyword? Identifier enumValue? enumSynonymDeclaration?
+    :   typeDoc? annotation*  defaultKeyword? Identifier enumValue? enumValueSynonymDeclaration?
     ;
 
 enumValue
    : '(' literal ')'
    ;
 
-enumSynonymDeclaration
-   : 'synonym' 'of' ( enumSynonymSingleDeclaration | enumSynonymDeclarationList)
+synonymOfKeywords: 'synonym' 'of';
+// EnumValue synonym declarations permit synonyms to between values of
+// enums - whereas enumType synonym declarations permit synonyms between
+// enum types.  Both have a slightly different syntax, as for values we need to
+// have the type, followed by the value.
+enumValueSynonymDeclaration
+   : synonymOfKeywords ( enumValueSynonymSingleDeclaration | enumValueSynonymDeclarationList)
    ;
-enumSynonymSingleDeclaration : qualifiedName ;
-enumSynonymDeclarationList : '[' qualifiedName (',' qualifiedName)* ']'
+
+enumValueSynonymSingleDeclaration : qualifiedName ;
+enumValueSynonymDeclarationList : '[' qualifiedName (',' qualifiedName)* ']'
    ;
+
+enumTypeSynonymDeclaration
+   : synonymOfKeywords enumTypeSynonymDeclarationList
+   ;
+
+enumTypeSynonymDeclarationList : typeType (',' typeType)* ;
+
  enumExtensionDeclaration
     : typeDoc? annotation* 'enum extension' Identifier  ('{' enumConstantExtensions? '}')?
     ;
@@ -244,7 +257,7 @@ enumConstantExtensions
     ;
 
 enumConstantExtension
-   : typeDoc? annotation* Identifier enumSynonymDeclaration?
+   : typeDoc? annotation* Identifier enumValueSynonymDeclaration?
    ;
 
 // type aliases

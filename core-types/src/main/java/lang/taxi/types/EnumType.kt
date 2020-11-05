@@ -21,10 +21,24 @@ typealias EnumValueQualifiedName = String
 
 data class EnumValueExtension(val name: String, override val annotations: List<Annotation>, val synonyms: List<EnumValueQualifiedName>, override val typeDoc: String? = null, override val compilationUnit: CompilationUnit) : Annotatable, Documented, TypeDefinition
 data class EnumValue(val name: String, val value: Any = name, val qualifiedName: EnumValueQualifiedName, override val annotations: List<Annotation>, val synonyms: List<EnumValueQualifiedName>, override val typeDoc: String? = null, val isDefault: Boolean = false) : Annotatable, Documented {
+   fun getSynonymsForType(typeSynonym: EnumType):List<Pair<QualifiedName,String>> {
+      return this.synonyms.mapNotNull {
+         val (typeName, enumValueName) = EnumValue.qualifiedNameFrom(it)
+         if (typeName.fullyQualifiedName == typeSynonym.qualifiedName) {
+            typeName to enumValueName
+         } else {
+            null
+         }
+      }
+   }
+
    companion object {
+      private val qualifiedNameCache = CacheBuilder.newBuilder().build<String, Pair<QualifiedName, String>>()
       fun qualifiedNameFrom(name: String): Pair<QualifiedName, String> {
-         val parts = name.split(".")
-         return QualifiedName.from(parts.dropLast(1).joinToString(".")) to parts.last()
+         return qualifiedNameCache.get(name) {
+            val parts = name.split(".")
+            QualifiedName.from(parts.dropLast(1).joinToString(".")) to parts.last()
+         }
       }
    }
 }
@@ -35,6 +49,7 @@ data class EnumDefinition(val values: List<EnumValue>,
                           val inheritsFrom: Set<Type> = emptySet(),
                           val basePrimitive: PrimitiveType,
                           val isLenient: Boolean = false,
+                          val typeSynonyms: Set<EnumType> = emptySet(),
                           override val typeDoc: String? = null) : Annotatable, TypeDefinition, Documented {
    private val equality = Equality(this, EnumDefinition::values.toSet(), EnumDefinition::annotations.toSet(), EnumDefinition::typeDoc, EnumDefinition::basePrimitive, EnumDefinition::inheritsFrom.toSet())
    override fun equals(other: Any?) = equality.isEqualTo(other)
@@ -63,6 +78,11 @@ data class EnumType(override val qualifiedName: String,
    val isLenient: Boolean
       get() {
          return this.definition?.isLenient ?: false
+      }
+
+   val typeSynonyms: Set<EnumType>
+      get() {
+         return this.definition?.typeSynonyms ?: emptySet()
       }
 
    private val wrapper = LazyLoadingWrapper(this)
@@ -136,7 +156,7 @@ data class EnumType(override val qualifiedName: String,
 
    private val enumValueCache = CacheBuilder
       .newBuilder()
-      .build<String,List<EnumValue>>()
+      .build<String, List<EnumValue>>()
    val values: List<EnumValue>
       get() {
          return when {
@@ -150,7 +170,7 @@ data class EnumType(override val qualifiedName: String,
                // THat's either the definition, or adding an extension.
                val cacheKey = "${this.definition!!.hashCode()}-${this.extensions.hashCode()}"
                this.enumValueCache.get(cacheKey) {
-                  this.definition!!.values.map {  value ->
+                  this.definition!!.values.map { value ->
                      val valueExtensions: List<EnumValueExtension> = valueExtensions(value.name)
                      val collatedAnnotations = value.annotations + valueExtensions.annotations()
                      val docSources = (listOf(value) + valueExtensions) as List<Documented>

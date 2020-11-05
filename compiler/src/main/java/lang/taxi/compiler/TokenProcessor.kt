@@ -1,11 +1,6 @@
 package lang.taxi.compiler
 
-import arrow.core.Either
-import arrow.core.flatMap
-import arrow.core.getOrElse
-import arrow.core.getOrHandle
-import arrow.core.orNull
-import arrow.core.right
+import arrow.core.*
 import com.google.common.hash.Hashing
 import lang.taxi.*
 import lang.taxi.Namespace
@@ -167,6 +162,35 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       validateConstraints()
       validateFormulas()
       validaCaseWhenLogicalExpressions()
+      validateEnumTypeSynonymsAreFullyDefined()
+   }
+
+   private fun validateEnumTypeSynonymsAreFullyDefined() {
+      val compilationErrors = typeSystem
+         .typeList()
+         .filterIsInstance<EnumType>()
+         .filter { it.typeSynonyms.isNotEmpty() }
+         .map { enumType ->
+           enumType.typeSynonyms.flatMap { typeSynonym ->
+               val enumsOnEnumTypeWithoutSynonymValue =  enumType.values.mapNotNull { enumValue ->
+                  if (enumValue.getSynonymsForType(typeSynonym).isEmpty()) {
+                     CompilationError(enumType.definition!!.compilationUnit.location, "Enum ${enumType.qualifiedName} has declared a type synonym with ${typeSynonym.qualifiedName} but ${enumValue.name} does not declare a synonym value")
+                  } else {
+                     null
+                  }
+               }
+              val enumsOnTypeSynonymWithoutSynonymValue = typeSynonym.values.mapNotNull { enumValueOnTypeSynonym ->
+                 if (enumValueOnTypeSynonym.getSynonymsForType(enumType).isEmpty()) {
+                    CompilationError(enumType.definition!!.compilationUnit.location, "Enum ${enumType.qualifiedName} has declared a type synonym with ${typeSynonym.qualifiedName} but does not declare a synonym value for value ${enumValueOnTypeSynonym.qualifiedName}")
+                 } else {
+                    null
+                 }
+              }
+
+              enumsOnEnumTypeWithoutSynonymValue + enumsOnTypeSynonymWithoutSynonymValue
+            }
+         }.flatten()
+      errors.addAll(compilationErrors)
    }
 
    private fun applySynonymsToEnums() {
@@ -1053,6 +1077,13 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             val basePrimitive = deriveEnumBaseType(enumValues)
             val inherits = parseEnumInheritance(namespace, ctx.enumInheritedType())
             val isLenient = ctx.lenientKeyword() != null
+            val typeSynonymDeclarations = ctx.enumTypeSynonymDeclaration()?.enumTypeSynonymDeclarationList()?.typeType() ?: emptyList()
+            val typeSynonyms = typeSynonymDeclarations.map { typeType ->
+                  typeOrError(namespace, typeType)
+                  .flatMap { synonymType -> validateSynonymTypeIsAnEnum(synonymType, typeType) }
+               }
+               .reportAndRemoveErrors()
+               .toSet()
             val enumType = EnumType(typeName, EnumDefinition(
                enumValues,
                annotations,
@@ -1060,13 +1091,21 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                inheritsFrom = if (inherits != null) setOf(inherits) else emptySet(),
                typeDoc = parseTypeDoc(ctx.typeDoc()),
                basePrimitive = basePrimitive,
-               isLenient = isLenient
+               isLenient = isLenient,
+               typeSynonyms = typeSynonyms
             ))
             typeSystem.register(enumType)
             enumType
          }
 
 
+   }
+
+   private fun validateSynonymTypeIsAnEnum(synonymType: Type, token:ParserRuleContext): Either<CompilationError,EnumType> {
+      return when(synonymType) {
+         is EnumType -> synonymType.right()
+         else -> CompilationError(token.start, "${synonymType.qualifiedName} cannot be a synonym type, as it is not an enum type").left()
+      }
    }
 
    private fun deriveEnumBaseType(enumValues: List<EnumValue>): PrimitiveType {
@@ -1135,8 +1174,8 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
     * That's handled later when synonyms are resolved.
     */
    private fun parseSynonyms(namespace: Namespace, enumConstant: TaxiParser.EnumConstantContext): Either<List<CompilationError>, List<EnumValueQualifiedName>> {
-      val declaredSynonyms = enumConstant.enumSynonymDeclaration()?.enumSynonymSingleDeclaration()?.let { listOf(it.qualifiedName()) }
-         ?: enumConstant.enumSynonymDeclaration()?.enumSynonymDeclarationList()?.qualifiedName()
+      val declaredSynonyms = enumConstant.enumValueSynonymDeclaration()?.enumValueSynonymSingleDeclaration()?.let { listOf(it.qualifiedName()) }
+         ?: enumConstant.enumValueSynonymDeclaration()?.enumValueSynonymDeclarationList()?.qualifiedName()
          ?: emptyList()
       return declaredSynonyms.map { synonym ->
          val (enumName, enumValueName) = Enums.splitEnumValueQualifiedName(synonym.Identifier().text())

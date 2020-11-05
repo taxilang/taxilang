@@ -336,5 +336,82 @@ enum English {
 
          }
       }
+      describe("type level synonyms") {
+         it("is possible to declare an enum type as a synonym") {
+            """
+               enum CountryNames {
+                  NewZealand,
+                  Australia
+               }
+               enum CountryAbbreviations synonym of CountryNames {
+                  Nz synonym of CountryNames.NewZealand,
+                  Australia synonym of CountryNames.Australia
+               }
+            """.compiled()
+               .enumType("CountryAbbreviations")
+               .typeSynonyms.map { it.qualifiedName }
+               .should.contain.elements("CountryNames")
+         }
+         it("is invalid to declare a synonym of a type that is not an enum") {
+            """
+               type CountryName inherits String
+               enum CountryAbbreviations synonym of CountryName {
+                  Nz,
+                  Australia
+               }
+            """.validated()
+               .let { errors ->
+                  errors.should.have.size(1)
+                  errors.first().detailMessage.should.equal("CountryName cannot be a synonym type, as it is not an enum type")
+               }
+         }
+         it("is invalid to declare a synonym of a type that is not an enum") {
+            """
+               type CountryId inherits Decimal
+               enum CountryAbbreviations synonym of CountryId {
+                  Nz,
+                  Australia
+               }
+            """.validated()
+               .let { errors ->
+                  errors.should.have.size(1)
+                  errors.first().detailMessage.should.equal("CountryId cannot be a synonym type, as it is not an enum type")
+               }
+         }
+         it("is invalid to declare a type synonym without also declaring a synonym for all values at the declaring site") {
+            """
+               enum CountryNames {
+                  NewZealand,
+                  Australia
+               }
+               enum CountryAbbreviations synonym of CountryNames {
+                  Nz synonym of CountryNames.NewZealand,
+                  Australia
+               }
+            """.validated()
+               .let { errors ->
+                  errors.should.have.size(2)
+                  errors.filter { it.detailMessage == "Enum CountryAbbreviations has declared a type synonym with CountryNames but Australia does not declare a synonym value" }
+                     .should.not.be.empty
+               }
+         }
+         it("is invalid to declare a type synonym without also declaring a synonym for all values on the target type") {
+            """
+               enum CountryNames {
+                  NewZealand,
+                  Australia,
+                  England
+               }
+               enum CountryAbbreviations synonym of CountryNames {
+                  Nz synonym of CountryNames.NewZealand,
+                  Australia synonym of CountryNames.Australia
+               }
+            """.validated()
+               .let { errors ->
+                  errors.should.have.size(1)
+                  errors.first().detailMessage.should.equal("Enum CountryAbbreviations has declared a type synonym with CountryNames but does not declare a synonym value for value CountryNames.England")
+               }
+         }
+      }
    }
 })
