@@ -162,7 +162,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
          caseDeclarationMatchExpression.caseElseMatchExpression() != null -> ElseMatchExpression
          caseDeclarationMatchExpression.enumSynonymSingleDeclaration() != null -> {
             val enumValueQualifiedName =  caseDeclarationMatchExpression.enumSynonymSingleDeclaration().qualifiedName().Identifier().text()
-            val (enumTypeName, enumValue) = EnumValue.qualifiedNameFrom(enumValueQualifiedName)
+            val (enumTypeName, enumValue) = EnumValue.splitEnumValueName(enumValueQualifiedName)
             val enumRef = compiler.typeResolver(caseDeclarationMatchExpression.findNamespace()).resolve(enumTypeName.fullyQualifiedName, caseDeclarationMatchExpression).flatMap { type ->
                if (type !is EnumType) {
                   Either.left(CompilationError(caseDeclarationMatchExpression.start, "Type ${type.qualifiedName} is not an enum"))

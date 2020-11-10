@@ -5,7 +5,7 @@ import lang.taxi.TypeSystem
 import lang.taxi.types.EnumValueQualifiedName
 import lang.taxi.types.Enums.splitEnumValueQualifiedName
 import lang.taxi.types.QualifiedName
-import java.util.LinkedList
+import java.util.*
 
 /**
  * Registers enum synonyms

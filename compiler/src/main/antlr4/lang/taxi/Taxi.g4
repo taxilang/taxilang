@@ -1,3 +1,4 @@
+
 grammar Taxi;
 
 // starting point for parsing a taxi file
@@ -40,7 +41,7 @@ toplevelObject
     |   serviceDeclaration
     |   policyDeclaration
     |   functionDeclaration
-//    |   annotationTypeDeclaration
+    |   annotationTypeDeclaration
     ;
 
 typeModifier
@@ -69,6 +70,11 @@ typeBody
 typeMemberDeclaration
      :   typeDoc? annotation* fieldDeclaration
      ;
+
+annotationTypeDeclaration
+   : typeDoc? annotation* 'annotation' Identifier annotationTypeBody?;
+
+annotationTypeBody: '{' typeMemberDeclaration* '}';
 
 calculatedMemberDeclaration
    : typeMemberDeclaration  'as'
@@ -274,6 +280,7 @@ elementValuePair
 
 elementValue
     :   literal
+    |    qualifiedName // Support enum references within annotations
     |   annotation
     ;
 
