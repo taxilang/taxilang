@@ -218,8 +218,8 @@ type Test {
 """
       val doc = Compiler(source).compile()
       val type = doc.objectType("Test")
-      expect(type.annotation("StringAnnotation").parameters["value"]).to.equal("foo")
-      expect(type.annotation("SomeAnnotation").parameters["value"]).to.equal("bar")
+      expect(type.annotation("StringAnnotation").parameter("value")).to.equal("foo")
+      expect(type.annotation("SomeAnnotation").parameter("value")).to.equal("bar")
    }
 
    @Test
@@ -227,14 +227,14 @@ type Test {
    fun annotationCanHaveBooleanArgument() {
       val doc = Compiler("@Bool(value = false) type Test {}").compile()
       val type = doc.objectType("Test")
-      expect(type.annotation("Bool").parameters["value"]).to.equal(false)
+      expect(type.annotation("Bool").parameter("value")).to.equal(false)
    }
 
    @Test
    fun annotationCanHaveNumericArgument() {
       val doc = Compiler("@Numeric(value = 96000) type Test {}").compile()
       val type = doc.objectType("Test")
-      expect(type.annotation("Numeric").parameters["value"]).to.equal(96000)
+      expect(type.annotation("Numeric").parameter("value")).to.equal(96000)
    }
 
    @Test

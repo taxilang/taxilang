@@ -1,7 +1,13 @@
 package lang.taxi.compiler
 
-import arrow.core.*
+import arrow.core.Either
+import arrow.core.extensions.either.applicativeError.handleError
 import arrow.core.flatMap
+import arrow.core.getOrElse
+import arrow.core.getOrHandle
+import arrow.core.left
+import arrow.core.orNull
+import arrow.core.right
 import com.google.common.hash.Hashing
 import lang.taxi.*
 import lang.taxi.Namespace
@@ -32,10 +38,13 @@ import lang.taxi.functions.FunctionDefinition
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.utils.errorOrNull
+import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.log
+import lang.taxi.utils.wrapErrorsInList
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
+import java.awt.EventQueue
 import java.nio.charset.Charset
 
 internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocument> = emptyList(), collectImports: Boolean = true) {
@@ -55,6 +64,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    private val services = mutableListOf<Service>()
    private val policies = mutableListOf<Policy>()
    private val functions = mutableListOf<Function>()
+   private val annotations = mutableListOf<Annotation>()
    private val constraintValidator = ConstraintValidator()
 
    private val errors = mutableListOf<CompilationError>()
@@ -169,6 +179,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       // they rely on a fully parsed document structure
       validateConstraints()
       validateFormulas()
+      validaCaseWhenLogicalExpressions()
    }
 
    private fun applySynonymsToEnums() {
@@ -241,6 +252,103 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       )
    }
 
+   private fun validaCaseWhenLogicalExpressions() {
+      typeSystem.typeList().filterIsInstance<ObjectType>()
+         .forEach { type ->
+            type
+               .allFields
+               .filter {
+                  it.accessor is ConditionalAccessor &&
+                     (it.accessor as ConditionalAccessor).expression is WhenFieldSetCondition
+               }
+               .forEach {
+                  val whenFieldSetCondition = ((it.accessor as ConditionalAccessor).expression as WhenFieldSetCondition)
+                  val logicalExpressions = whenFieldSetCondition
+                     .cases.map { aCase -> aCase.matchExpression }
+                     .filterIsInstance<LogicalExpression>()
+                  when {
+                     logicalExpressions.isNotEmpty() && whenFieldSetCondition.selectorExpression !is EmptyReferenceSelector -> {
+                        errors.add(CompilationError(type, "when case for ${it.name} in ${type.qualifiedName} cannot have reference selector use when { .. } syntax"))
+                     }
+                     whenFieldSetCondition.selectorExpression is EmptyReferenceSelector &&
+                        whenFieldSetCondition.cases.map { it.matchExpression }.filter { it !is ElseMatchExpression }.any { it !is LogicalExpression } -> {
+                        errors.add(CompilationError(type, "when case for ${it.name} in ${type.qualifiedName} can only logical expression when cases"))
+                     }
+                     else -> validateLogicalExpression(type, typeSystem, it, logicalExpressions)
+                  }
+               }
+         }
+   }
+
+   private fun validateLogicalExpression(type: ObjectType,
+                                         typeSystem: TypeSystem,
+                                         field: Field,
+                                         logicalExpressions: List<LogicalExpression>) {
+      logicalExpressions.forEach {
+         when (it) {
+            is ComparisonExpression -> validateComparisonExpression(it, type)
+            is AndExpression -> validateLogicalExpression(type, typeSystem, field, listOf(it.left, it.right))
+            is OrExpression -> validateLogicalExpression(type, typeSystem, field, listOf(it.left, it.right))
+         }
+      }
+   }
+
+   private fun validateComparisonExpression(comparisonExpression: ComparisonExpression, type: ObjectType) {
+      val right = comparisonExpression.right
+      val left = comparisonExpression.left
+      when {
+         right is FieldReferenceEntity && left is FieldReferenceEntity -> {
+            validateFieldReferenceEntity(right, type)
+            validateFieldReferenceEntity(left, type)
+         }
+         right is ConstantEntity && left is FieldReferenceEntity -> {
+            val leftField = validateFieldReferenceEntity(left, type)
+            validateConstantEntityAgainstField(leftField, right, type, comparisonExpression.operator)
+         }
+
+         right is FieldReferenceEntity && left is ConstantEntity -> {
+            val rightField = validateFieldReferenceEntity(right, type)
+            validateConstantEntityAgainstField(rightField, left, type, comparisonExpression.operator)
+         }
+      }
+   }
+
+   private fun validateFieldReferenceEntity(fieldReferenceEntity: FieldReferenceEntity, type: ObjectType): Field? {
+      val referencedField = type.allFields.firstOrNull { field -> field.name == fieldReferenceEntity.fieldName }
+      if (referencedField == null) {
+         errors.add(CompilationError(type, "${fieldReferenceEntity.fieldName} is not a field of ${type.qualifiedName}"))
+      } else {
+         if (referencedField.type.basePrimitive == null) {
+            errors.add(CompilationError(type, "${fieldReferenceEntity.fieldName} is not a field of ${type.qualifiedName}"))
+         }
+      }
+      return referencedField
+   }
+
+   private fun validateConstantEntityAgainstField(
+      field: Field?,
+      constantEntity: ConstantEntity,
+      type: ObjectType,
+      operator: ComparisonOperator) {
+      if (field?.type?.basePrimitive != PrimitiveType.DECIMAL &&
+         field?.type?.basePrimitive != PrimitiveType.INTEGER &&
+         field?.type?.basePrimitive != PrimitiveType.STRING) {
+         errors.add(CompilationError(type, "${field?.name} should be a String, Int or Decimal based field of ${type.qualifiedName}"))
+      }
+      if (constantEntity.value is String && field?.type?.basePrimitive != PrimitiveType.STRING) {
+         errors.add(CompilationError(type, "${field?.name} is not a String based field of ${type.qualifiedName}"))
+      }
+
+      if (constantEntity.value is Number && (field?.type?.basePrimitive != PrimitiveType.DECIMAL && field?.type?.basePrimitive != PrimitiveType.INTEGER)) {
+         errors.add(CompilationError(type, "${field?.name} is not a numeric based field of ${type.qualifiedName}"))
+      }
+
+      if (!operator.applicablePrimitives.contains(field?.type?.basePrimitive)) {
+         errors.add(CompilationError(type, "${operator.symbol} is not applicable to ${field?.name} field of ${type.qualifiedName}"))
+
+      }
+   }
+
 
    private fun createEmptyTypes() {
       if (createEmptyTypesPerformed) {
@@ -251,6 +359,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
       tokens.unparsedTypes.forEach { tokenName, (_, token) ->
          when (token) {
+            is TaxiParser.AnnotationTypeDeclarationContext -> typeSystem.register(AnnotationType.undefined(tokenName))
             is TaxiParser.EnumDeclarationContext -> typeSystem.register(EnumType.undefined(tokenName))
             is TaxiParser.TypeDeclarationContext -> typeSystem.register(ObjectType.undefined(tokenName))
             is TaxiParser.TypeAliasDeclarationContext -> typeSystem.register(TypeAlias.undefined(tokenName))
@@ -268,9 +377,11 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          .unparsedTypes
          .filter { it.value.second !is TaxiParser.EnumDeclarationContext }
 
-      enumUnparsedTypes.plus(nonEnumParsedTypes).forEach { (tokenName, _) ->
-         compileToken(tokenName)
-      }
+      enumUnparsedTypes
+         .plus(nonEnumParsedTypes)
+         .forEach { (tokenName, _) ->
+            compileToken(tokenName)
+         }
    }
 
    private fun compileToken(tokenName: String) {
@@ -289,6 +400,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       try {
          when (tokenRule) {
             is TaxiParser.TypeDeclarationContext -> compileType(namespace, tokenName, tokenRule)
+            is TaxiParser.AnnotationTypeDeclarationContext -> compileAnnotationType(tokenName, namespace, tokenRule)
             is TaxiParser.EnumDeclarationContext -> compileEnum(namespace, tokenName, tokenRule).collectErrors(errors)
             is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(namespace, tokenName, tokenRule).collectError(errors)
             // TODO : This is a bit broad - assuming that all typeType's that hit this
@@ -296,11 +408,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(namespace, tokenRule).collectError(errors)
             else -> TODO("Not handled: $tokenRule")
          }
-      } catch (exception: Exception) {
+      } finally {
          tokensCurrentlyCompiling.remove(tokenName)
-         throw  exception
       }
-
    }
 
    private fun compileTypeExtensions() {
@@ -404,6 +514,36 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return this.joinToString(".")
    }
 
+   private fun compileAnnotationType(name: String, namespace: Namespace, token: TaxiParser.AnnotationTypeDeclarationContext): AnnotationType {
+      val members = token.annotationTypeBody()?.typeMemberDeclaration() ?: emptyList()
+      val fields = members.map { annotationMember ->
+         compileAnnotationMember(annotationMember).flatMap { field ->
+            if (!field.type.inheritsFromPrimitive) {
+               listOf(CompilationError(annotationMember.start, "It is invalid to declare an annotation property of type ${field.type.qualifiedName}. Only Strings, Numbers, Booleans or Enums are supported for annotation properties")).left()
+            } else {
+               field.right()
+            }
+         }
+      }.reportAndRemoveErrorList(errors)
+      val annotations = collateAnnotations(token.annotation())
+      val typeDoc = parseTypeDoc(token.typeDoc())
+      val definition = AnnotationTypeDefinition(
+         fields,
+         annotations,
+         typeDoc,
+         token.toCompilationUnit()
+      )
+      val annotationType = AnnotationType(
+         name,
+         definition
+      )
+      typeSystem.register(annotationType)
+      return annotationType
+   }
+
+   private fun compileAnnotationMember(annotationMember: TaxiParser.TypeMemberDeclarationContext): Either<List<CompilationError>, Field> {
+      return compileField(annotationMember, annotationMember.findNamespace())
+   }
 
    private fun compileType(namespace: Namespace, typeName: String, ctx: TaxiParser.TypeDeclarationContext) {
       val compiledFields = ctx.typeBody()?.let { typeBody ->
@@ -506,25 +646,77 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    internal fun collateAnnotations(annotations: List<TaxiParser.AnnotationContext>): List<Annotation> {
       return annotations.map { annotation ->
-         val params: Map<String, Any> = mapAnnotationParams(annotation)
-         val name = annotation.qualifiedName().text
-         Annotation(name, params)
+         val annotationName = annotation.qualifiedName().text
+         mapAnnotationParams(annotation).flatMap { annotationParameters ->
+            val annotationType = resolveUserType(annotation.findNamespace(), annotationName, annotation)
+               .wrapErrorsInList()
+            val annotation = when (annotationType) {
+               is Either.Left -> Annotation(annotationName, annotationParameters).right()
+               is Either.Right -> annotationType.flatMap { type ->
+                  if (type is AnnotationType) {
+                     buildTypedAnnotation(type, annotation, annotationParameters)
+                  } else {
+                     listOf(CompilationError(annotation.start, "${type.qualifiedName} is not an annotation type")).left()
+                  }
+               }
+            }
+            annotation
+
+         }
+      }.reportAndRemoveErrorList(errors)
+   }
+
+   private fun buildTypedAnnotation(type: AnnotationType, annotation: TaxiParser.AnnotationContext, annotationParameters: Map<String, Any>): Either<List<CompilationError>, Annotation> {
+      val fieldErrors = type.fields.mapNotNull { field ->
+         if (!annotationParameters.containsKey(field.name)) {
+            CompilationError(annotation.start, "Annotation ${type.qualifiedName} requires member '${field.name}' which was not supplied")
+         } else {
+            // TODO: validate types match.
+            // Waiting until the existing branch on type safety is merged, and then will revisit
+            null
+         }
+      }
+
+      // Were there any parameters passed that we didn't expect?
+      val unexpectedParamErrors = annotationParameters.filter { (parameterName, _) -> type.fields.none { field -> field.name == parameterName } }
+         .map { (parameterName, _) ->
+            CompilationError(annotation.start, "Unexpected property - '${parameterName}' is not a member of ${type.qualifiedName}")
+         }
+      val allErrors = unexpectedParamErrors + fieldErrors
+      return if (allErrors.isEmpty()) {
+         Annotation(type, annotationParameters).right()
+      } else {
+         allErrors.left()
       }
    }
 
-   private fun mapAnnotationParams(annotation: TaxiParser.AnnotationContext): Map<String, Any> {
+   private fun mapAnnotationParams(annotation: TaxiParser.AnnotationContext): Either<List<CompilationError>, Map<String, Any>> {
       return when {
-         annotation.elementValue() != null -> mapOf("value" to annotation.elementValue().literal().value())
+         annotation.elementValue() != null -> {
+            parseElementValue(annotation.elementValue()).map { mapOf("value" to it) }
+         }
          annotation.elementValuePairs() != null -> mapElementValuePairs(annotation.elementValuePairs())
-         else -> // No params specified
-            emptyMap()
+         else -> emptyMap<String, Any>().right()// No params specified
+
       }
    }
 
-   private fun mapElementValuePairs(pairs: TaxiParser.ElementValuePairsContext): Map<String, Any> {
-      return pairs.elementValuePair()?.map {
-         it.Identifier().text to it.elementValue().literal()?.value()!!
-      }?.toMap() ?: emptyMap()
+   private fun mapElementValuePairs(tokenRule: TaxiParser.ElementValuePairsContext): Either<List<CompilationError>, Map<String, Any>> {
+      val pairs = tokenRule.elementValuePair() ?: return emptyMap<String, Any>().right()
+      return pairs.map { keyValuePair ->
+         parseElementValue(keyValuePair.elementValue()).map { parsedValue ->
+            keyValuePair.Identifier().text to parsedValue
+         }
+      }.invertEitherList().flattenErrors()
+         .map { parsedAnnotationPropertyPairs: List<Pair<String, Any>> -> parsedAnnotationPropertyPairs.toMap() }
+   }
+
+   private fun parseElementValue(elementValue: TaxiParser.ElementValueContext): Either<List<CompilationError>, Any> {
+      return when {
+         elementValue.literal() != null -> elementValue.literal().value().right()
+         elementValue.qualifiedName() != null -> resolveEnumMember(elementValue.qualifiedName()).wrapErrorsInList()
+         else -> error("Unhandled element value: ${elementValue.text}")
+      }
    }
 
    private fun parseTypeOrVoid(namespace: Namespace, returnType: TaxiParser.OperationReturnTypeContext?): Either<CompilationError, Type> {
@@ -809,7 +1001,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             val qualifiedName = "$enumQualifiedName.$name"
             val value = enumConstant.enumValue()?.literal()?.value() ?: name
             val isDefault = enumConstant.defaultKeyword() != null
-            parseSynonyms(namespace, enumConstant).map { synonyms ->
+            parseSynonyms(enumConstant).map { synonyms ->
                synonymRegistry.registerSynonyms(qualifiedName, synonyms, enumConstant)
                EnumValue(name, value, qualifiedName, annotations, synonyms, parseTypeDoc(enumConstant.typeDoc()), isDefault)
             }
@@ -835,28 +1027,59 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
     * enum exists, but NOT that the value on the enum exists.
     * That's handled later when synonyms are resolved.
     */
-   private fun parseSynonyms(namespace: Namespace, enumConstant: TaxiParser.EnumConstantContext): Either<List<CompilationError>, List<EnumValueQualifiedName>> {
+   private fun parseSynonyms(enumConstant: TaxiParser.EnumConstantContext): Either<List<CompilationError>, List<EnumValueQualifiedName>> {
       val declaredSynonyms = enumConstant.enumSynonymDeclaration()?.enumSynonymSingleDeclaration()?.let { listOf(it.qualifiedName()) }
          ?: enumConstant.enumSynonymDeclaration()?.enumSynonymDeclarationList()?.qualifiedName()
          ?: emptyList()
       return declaredSynonyms.map { synonym ->
-         val (enumName, enumValueName) = Enums.splitEnumValueQualifiedName(synonym.Identifier().text())
-         // TODO : I'm concerned this might cause stack overflow / loops.
-         // Will wait and see
-         resolveUserType(namespace, enumName.parameterizedName, importsInSource(enumConstant), enumConstant)
-            .flatMap { enumType ->
-               if (enumType is EnumType) {
-                  // Note - at this point we can be sure that the Enum exists, but it's values
-                  // haven't yet been parsed, so we can assert anything that the enum value we're linking to
-                  // exists
-                  // We'll do that later
-                  Either.right(Enums.enumValue(enumType.toQualifiedName(), enumValueName))
-               } else {
-                  Either.left(CompilationError(enumConstant.start, "${enumType.qualifiedName} is not an Enum", enumConstant.source().normalizedSourceName))
-               }
-            }
+         resolveEnumValueName(synonym)
 
       }.invertEitherList()
+   }
+
+   /**
+    * Returns an enum member - requires that the enum has already been compiled.
+    * This asserts that both the enum exists, and that it contains the requested member.
+    * Use resolveEnumValueName if you need to handle circular references, where the enum may not
+    * have already been compiled.
+    */
+   private fun resolveEnumMember(enumQualifiedNameReference: TaxiParser.QualifiedNameContext): Either<CompilationError, EnumMember> {
+      return resolveEnumReference(enumQualifiedNameReference) { enumType, enumValueName ->
+         when {
+            !enumType.isDefined -> {
+               // This happens if there's an enum with a circular reference.
+               // That's supported, but we defer
+               Either.left(CompilationError(enumQualifiedNameReference.start, "An internal error occurred processing ${enumType.qualifiedName}, attempting to resolve an EnumMember on a non-compiled enum - use resolveEnumValueName, or compile the enum first."))
+            }
+            !enumType.has(enumValueName) -> CompilationError(enumQualifiedNameReference.start, "${enumType.qualifiedName} does not have a member $enumValueName").left()
+            else -> Either.right(enumType.member(enumValueName))
+         }
+      }
+   }
+
+   /**
+    * Returns an EnumValueQualifiedName.
+    * At this point, it is guaranteed that the enum exists, but NOT that the value is present.
+    * This is to support use cases where there are circular references (ie., synonyms where two enums point at each other).
+    * If you don't need to support that usecase, use resolveEnumMember, which guarantees both the enum and the value.
+    */
+   private fun resolveEnumValueName(enumQualifiedNameReference: TaxiParser.QualifiedNameContext):Either<CompilationError,EnumValueQualifiedName> {
+      return resolveEnumReference(enumQualifiedNameReference) { enumType, enumValueName ->
+        Either.right(EnumValue.enumValueQualifiedName(enumType,enumValueName))
+      }
+   }
+
+   private fun <T> resolveEnumReference(enumQualifiedNameReference: TaxiParser.QualifiedNameContext, enumSelector: (EnumType,String) -> Either<CompilationError,T>): Either<CompilationError, T> {
+      val (enumName, enumValueName) = Enums.splitEnumValueQualifiedName(enumQualifiedNameReference.Identifier().text())
+
+      return resolveUserType(enumQualifiedNameReference.findNamespace(), enumName.parameterizedName, enumQualifiedNameReference)
+         .flatMap { enumType ->
+            if (enumType is EnumType) {
+               enumSelector(enumType, enumValueName)
+            } else {
+               Either.left(CompilationError(enumQualifiedNameReference.start, "${enumType.qualifiedName} is not an Enum"))
+            }
+         }
    }
 
 

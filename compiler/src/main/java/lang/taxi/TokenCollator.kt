@@ -1,8 +1,6 @@
 package lang.taxi
 
-import com.google.common.collect.ArrayListMultimap
 import lang.taxi.TaxiParser.ServiceDeclarationContext
-import lang.taxi.compiler.TokenProcessor
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.ParserRuleContext
@@ -231,6 +229,14 @@ class TokenCollator : TaxiBaseListener() {
       collateExceptions(ctx)
       unparsedExtensions.add(namespace to ctx)
       super.exitEnumExtensionDeclaration(ctx)
+   }
+
+   override fun exitAnnotationTypeDeclaration(ctx: TaxiParser.AnnotationTypeDeclarationContext) {
+      if (collateExceptions(ctx)) {
+         val typeName = qualify(ctx.Identifier().text)
+         unparsedTypes[typeName] = namespace to ctx
+      }
+      super.exitAnnotationTypeDeclaration(ctx)
    }
 
    /**

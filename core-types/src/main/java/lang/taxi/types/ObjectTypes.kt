@@ -213,7 +213,7 @@ data class ObjectType(
 
    fun hasField(name: String): Boolean = allFields.any { it.name == name }
    fun field(name: String): Field = allFields.first { it.name == name }
-   fun annotation(name: String): Annotation = annotations.first { it.name == name }
+   fun annotation(name: String): Annotation = annotations.first { it.qualifiedName == name }
    fun fieldsWithType(typeName: QualifiedName): List<Field> {
       return this.fields.filter { applicableQualifiedNames(it.type).contains(typeName) }
    }
@@ -240,7 +240,22 @@ interface NameTypePair {
 
 }
 
-data class Annotation(val name: String, val parameters: Map<String, Any?> = emptyMap())
+data class Annotation(val name: String,
+                      val parameters: Map<String, Any?> = emptyMap(),
+                      val type: AnnotationType? = null
+) {
+   constructor(type: AnnotationType, parameters: Map<String, Any?>) : this(type.qualifiedName, parameters, type)
+
+   // For compatability.  Should probably migrate to using qualifiedName in
+   // the constructor to be consistent.
+   val qualifiedName: String = name
+
+   fun parameter(name: String): Any? {
+      return parameters[name]
+   }
+}
+
+
 data class Field(
    override val name: String,
    override val type: Type,

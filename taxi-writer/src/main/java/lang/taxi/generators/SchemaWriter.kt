@@ -135,10 +135,10 @@ $operations
    private fun generateAnnotations(annotatedElement: Annotatable): String {
       return annotatedElement.annotations.map { annotation ->
          if (annotation.parameters.isEmpty()) {
-            "@${annotation.name}"
+            "@${annotation.qualifiedName}"
          } else {
             val annotationParams = annotation.parameters.map { "${it.key} = ${it.value!!.inQuotesIfNeeded()}" }.joinToString(" , ")
-            "@${annotation.name}($annotationParams)"
+            "@${annotation.qualifiedName}($annotationParams)"
          }
       }.joinToString("\n")
    }

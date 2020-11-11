@@ -23,7 +23,7 @@ open class BaseAnnotationInjector(private val annotationName: String, private va
     protected fun getAnnotations(target: Annotatable): Sequence<AnnotationSpec> {
         return target.annotations
                 .asSequence()
-                .filter { it.name == annotationName }
+                .filter { it.qualifiedName == annotationName }
                 .map(annotationFactory)
     }
 }
