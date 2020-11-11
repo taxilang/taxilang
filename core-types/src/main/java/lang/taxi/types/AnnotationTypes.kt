@@ -56,6 +56,5 @@ data class AnnotationType(
       }
    override val calculation: Formula? = null
    override val referencedTypes: List<Type> = emptyList()
-
-
+   override val offset: Int? = null
 }
