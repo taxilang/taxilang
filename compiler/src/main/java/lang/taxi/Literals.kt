@@ -26,3 +26,12 @@ fun stringLiteralValue(stringLiteral: TerminalNode): String {
 fun TaxiParser.LiteralArrayContext.value(): List<Any> {
    return this.literal().map { it.value() }
 }
+
+fun TaxiParser.InstantOffsetExpressionContext?.intValue(): Int? {
+   return when {
+      this == null  -> null
+      this.IntegerLiteral() != null -> this.IntegerLiteral().text.toInt()
+      this.NegativeIntegerLiteral() != null -> this.NegativeIntegerLiteral().text.toInt()
+      else -> null
+   }
+}

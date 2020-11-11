@@ -32,6 +32,7 @@ data class ObjectTypeDefinition(
    val formattedInstanceOfType: Type? = null,
    val calculatedInstanceOfType: Type? = null,
    val calculation: Formula? = null,
+   val offset: Int? = null,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
@@ -213,7 +214,7 @@ data class ObjectType(
 
    fun hasField(name: String): Boolean = allFields.any { it.name == name }
    fun field(name: String): Field = allFields.first { it.name == name }
-   fun annotation(name: String): Annotation = annotations.first { it.name == name }
+   fun annotation(name: String): Annotation = annotations.first { it.qualifiedName == name }
    fun fieldsWithType(typeName: QualifiedName): List<Field> {
       return this.fields.filter { applicableQualifiedNames(it.type).contains(typeName) }
    }
@@ -221,6 +222,20 @@ data class ObjectType(
    fun applicableQualifiedNames(type: Type): List<QualifiedName> {
       return type.inheritsFrom.map { it.toQualifiedName() }.plus(type.toQualifiedName())
    }
+
+   override val offset: Int?
+      get() {
+         return if (this.definition?.offset != null) {
+            this.definition?.offset
+         } else {
+            val inheritedOffsets = this.inheritsFrom.filter { it.offset != null }
+            when {
+               inheritedOffsets.isEmpty() -> null
+               inheritedOffsets.size == 1 -> inheritedOffsets.first().offset
+               else -> error("Multiple formats found in inheritence - this is an error")
+            }
+         }
+      }
 
 }
 
@@ -240,7 +255,22 @@ interface NameTypePair {
 
 }
 
-data class Annotation(val name: String, val parameters: Map<String, Any?> = emptyMap())
+data class Annotation(val name: String,
+                      val parameters: Map<String, Any?> = emptyMap(),
+                      val type: AnnotationType? = null
+) {
+   constructor(type: AnnotationType, parameters: Map<String, Any?>) : this(type.qualifiedName, parameters, type)
+
+   // For compatability.  Should probably migrate to using qualifiedName in
+   // the constructor to be consistent.
+   val qualifiedName: String = name
+
+   fun parameter(name: String): Any? {
+      return parameters[name]
+   }
+}
+
+
 data class Field(
    override val name: String,
    override val type: Type,
@@ -277,16 +307,18 @@ interface ExpressionAccessor : Accessor {
 
 data class LiteralAccessor(val value: Any) : Accessor, TaxiStatementGenerator {
    override fun asTaxi(): String {
-      return when(value) {
+      return when (value) {
          is String -> value.quoted()
          else -> value.toString()
       }
    }
 
 }
+
 data class XpathAccessor(override val expression: String) : ExpressionAccessor, TaxiStatementGenerator {
    override fun asTaxi(): String = """by xpath("$expression")"""
 }
+
 data class JsonPathAccessor(override val expression: String) : ExpressionAccessor, TaxiStatementGenerator {
    override fun asTaxi(): String = """by jsonPath("$expression")"""
 }
@@ -309,25 +341,27 @@ data class ColumnAccessor(val index: Any?, val defaultValue: Any?) : ExpressionA
 // assign multiple fields), and scalar when blocks (a when block that assigns a single field).
 data class ConditionalAccessor(val expression: FieldSetExpression) : Accessor, TaxiStatementGenerator {
    override fun asTaxi(): String {
-      return "by ${expression.asTaxi() }"
+      return "by ${expression.asTaxi()}"
    }
 }
 
 data class DestructuredAccessor(val fields: Map<String, Accessor>) : Accessor
 
 @Deprecated("Use lang.taxi.functions.Function instead")
-data class ReadFunctionFieldAccessor(val readFunction: ReadFunction, val arguments: List<ReadFunctionArgument>): Accessor
+data class ReadFunctionFieldAccessor(val readFunction: ReadFunction, val arguments: List<ReadFunctionArgument>) : Accessor
+
 @Deprecated("Use lang.taxi.functions.Function instead")
 data class ReadFunctionArgument(val columnAccessor: ColumnAccessor?, val value: Any?)
 
 @Deprecated("Use lang.taxi.functions.Function instead")
-enum class ReadFunction(val symbol: String){
+enum class ReadFunction(val symbol: String) {
    CONCAT("concat");
-//   LEFTUPPERCASE("leftAndUpperCase"),
+
+   //   LEFTUPPERCASE("leftAndUpperCase"),
 //   MIDUPPERCASE("midAndUpperCase");
    companion object {
       private val bySymbol = ReadFunction.values().associateBy { it.symbol }
-      fun forSymbol(symbol:String):ReadFunction {
+      fun forSymbol(symbol: String): ReadFunction {
          return bySymbol[symbol] ?: error("No operator defined for symbol $symbol")
       }
 

@@ -135,10 +135,10 @@ $operations
    private fun generateAnnotations(annotatedElement: Annotatable): String {
       return annotatedElement.annotations.map { annotation ->
          if (annotation.parameters.isEmpty()) {
-            "@${annotation.name}"
+            "@${annotation.qualifiedName}"
          } else {
             val annotationParams = annotation.parameters.map { "${it.key} = ${it.value!!.inQuotesIfNeeded()}" }.joinToString(" , ")
-            "@${annotation.name}($annotationParams)"
+            "@${annotation.qualifiedName}($annotationParams)"
          }
       }.joinToString("\n")
    }
@@ -257,14 +257,19 @@ $enumValueDeclarations
       return when {
          type is ArrayType -> typeAsTaxi(type.type, currentNamespace) + "[]"
          type is UnresolvedImportedType -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace)
-         type.formattedInstanceOfType != null -> typeAsTaxi(type.formattedInstanceOfType!!, currentNamespace) + """( ${writeFormat(type.format!!)} )"""
+         type.formattedInstanceOfType != null -> typeAsTaxi(type.formattedInstanceOfType!!, currentNamespace) + """( ${writeFormat(type.format, type.offset)} )"""
          type is ObjectType && type.calculatedInstanceOfType != null -> typeAsTaxi(type.calculatedInstanceOfType!!, currentNamespace) + " " + type.calculation!!.asTaxi()
          else -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace)
       }
    }
 
-   private fun writeFormat(formats: List<String>): String {
-      return formats.map { """@format = "$it"""" }.joinToString(", ")
+   private fun writeFormat(formats: List<String>?, offset: Int?): String {
+      return when {
+         formats != null && offset != null -> """@format = [${formats.joinToString(", ") {""""$it""""}}] @offset = $offset"""
+         formats != null -> formats.joinToString(", ") { """@format = "$it"""" }
+         offset != null -> """@offset = $offset"""
+         else -> ""
+      }
    }
 }
 

@@ -1,3 +1,4 @@
+
 grammar Taxi;
 
 // starting point for parsing a taxi file
@@ -40,7 +41,7 @@ toplevelObject
     |   serviceDeclaration
     |   policyDeclaration
     |   functionDeclaration
-//    |   annotationTypeDeclaration
+    |   annotationTypeDeclaration
     ;
 
 typeModifier
@@ -69,6 +70,11 @@ typeBody
 typeMemberDeclaration
      :   typeDoc? annotation* fieldDeclaration
      ;
+
+annotationTypeDeclaration
+   : typeDoc? annotation* 'annotation' Identifier annotationTypeBody?;
+
+annotationTypeBody: '{' typeMemberDeclaration* '}';
 
 calculatedMemberDeclaration
    : typeMemberDeclaration  'as'
@@ -274,6 +280,7 @@ elementValuePair
 
 elementValue
     :   literal
+    |    qualifiedName // Support enum references within annotations
     |   annotation
     ;
 
@@ -317,6 +324,7 @@ parameterName
 
 parameterConstraint
     :   '(' parameterConstraintExpressionList ')'
+    |   '(' temporalFormatList ')'
     ;
 
 
@@ -333,6 +341,13 @@ parameterConstraintExpression
 // First impl.  This will get richer (',' StringLiteral)*
 propertyFormatExpression :
    '@format' '=' StringLiteral;
+
+temporalFormatList :
+   ('@format' '=' '[' StringLiteral (',' StringLiteral)* ']')? ','? (instantOffsetExpression)?
+   ;
+
+instantOffsetExpression :
+   '@offset' '=' (IntegerLiteral | NegativeIntegerLiteral);
 
 // The return value will have a relationship to a property
 // received in an input (incl. nested properties)
@@ -667,6 +682,9 @@ LetterOrDigit
     |   // covers UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
         [\uD800-\uDBFF] [\uDC00-\uDFFF]
     ;
+NegativeIntegerLiteral
+   : '-' IntegerLiteral
+   ;
 
 IntegerLiteral
     :   DecimalNumeral /* IntegerTypeSuffix? */
