@@ -516,15 +516,25 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    private fun compileAnnotationType(name: String, namespace: Namespace, token: TaxiParser.AnnotationTypeDeclarationContext): AnnotationType {
       val members = token.annotationTypeBody()?.typeMemberDeclaration() ?: emptyList()
-      val fields = members.map { annotationMember ->
-         compileAnnotationMember(annotationMember).flatMap { field ->
+      val typeWithFields = AnnotationTypeBodyContent(token.annotationTypeBody())
+      val fieldCompiler = FieldCompiler(
+         this,
+         typeWithFields,
+         name,
+         this.errors
+      )
+      val fields = fieldCompiler
+         .compileAllFields()
+         .reportAndRemoveErrorList(errors)
+         .map { field ->
             if (!field.type.inheritsFromPrimitive) {
-               listOf(CompilationError(annotationMember.start, "It is invalid to declare an annotation property of type ${field.type.qualifiedName}. Only Strings, Numbers, Booleans or Enums are supported for annotation properties")).left()
+               // Validate that annotation fields use primitive types.
+               CompilationError(token.start, "Field ${field.name} declares an invalid type (${field.type.qualifiedName}). Only Strings, Numbers, Booleans or Enums are supported for annotation properties").left()
             } else {
                field.right()
             }
-         }
-      }.reportAndRemoveErrorList(errors)
+         }.reportAndRemoveErrors(errors)
+
       val annotations = collateAnnotations(token.annotation())
       val typeDoc = parseTypeDoc(token.typeDoc())
       val definition = AnnotationTypeDefinition(
@@ -541,13 +551,10 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return annotationType
    }
 
-   private fun compileAnnotationMember(annotationMember: TaxiParser.TypeMemberDeclarationContext): Either<List<CompilationError>, Field> {
-      return compileField(annotationMember, annotationMember.findNamespace())
-   }
-
    private fun compileType(namespace: Namespace, typeName: String, ctx: TaxiParser.TypeDeclarationContext) {
       val compiledFields = ctx.typeBody()?.let { typeBody ->
-         FieldCompiler(this, typeBody, typeName, this.errors)
+         val typeBodyContext = TypeBodyContext(typeBody)
+         FieldCompiler(this, typeBodyContext, typeName, this.errors)
             .compileAllFields()
 
 

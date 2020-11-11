@@ -1,15 +1,81 @@
 package lang.taxi.compiler
 
-import arrow.core.*
-import lang.taxi.*
+import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.getOrElse
+import arrow.core.getOrHandle
+import arrow.core.left
+import arrow.core.right
+import arrow.core.rightIfNotNull
+import lang.taxi.CompilationError
+import lang.taxi.CompilationException
+import lang.taxi.Namespace
+import lang.taxi.TaxiParser
+import lang.taxi.findNamespace
 import lang.taxi.functions.FunctionAccessor
-import lang.taxi.types.*
+import lang.taxi.source
+import lang.taxi.text
+import lang.taxi.types.Accessor
 import lang.taxi.types.Annotation
+import lang.taxi.types.ColumnAccessor
+import lang.taxi.types.ConditionalAccessor
+import lang.taxi.types.DestructuredAccessor
+import lang.taxi.types.EnumType
+import lang.taxi.types.EnumValue
+import lang.taxi.types.Field
+import lang.taxi.types.FieldModifier
+import lang.taxi.types.FieldReferenceSelector
+import lang.taxi.types.Formula
+import lang.taxi.types.JsonPathAccessor
+import lang.taxi.types.LiteralAccessor
+import lang.taxi.types.ObjectType
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.ReadFunction
+import lang.taxi.types.ReadFunctionArgument
+import lang.taxi.types.ReadFunctionFieldAccessor
+import lang.taxi.types.Type
+import lang.taxi.types.TypeAlias
+import lang.taxi.types.TypeReferenceSelector
+import lang.taxi.types.XpathAccessor
 import lang.taxi.utils.log
+import lang.taxi.value
 import org.antlr.v4.runtime.ParserRuleContext
 
+interface TypeWithFieldsContext {
+   fun findNamespace():String
+   fun memberDeclaration(fieldName: String, compilingTypeName:String, requestingToken: ParserRuleContext): Either<List<CompilationError>, TaxiParser.TypeMemberDeclarationContext> {
+      val memberDeclaration = this.memberDeclarations
+         .firstOrNull { TokenProcessor.unescape(it.fieldDeclaration().Identifier().text) == fieldName }
+
+      return  memberDeclaration.rightIfNotNull {
+         listOf(CompilationError(requestingToken.start, "Field $fieldName does not exist on type $compilingTypeName"))
+      }
+   }
+
+   val conditionalTypeDeclarations: List<TaxiParser.ConditionalTypeStructureDeclarationContext>
+   val calculatedMemberDeclarations: List<TaxiParser.CalculatedMemberDeclarationContext>
+   val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
+}
+class AnnotationTypeBodyContent(private val typeBody: TaxiParser.AnnotationTypeBodyContext) : TypeWithFieldsContext {
+   override fun findNamespace(): String = typeBody.findNamespace()
+   override val conditionalTypeDeclarations: List<TaxiParser.ConditionalTypeStructureDeclarationContext> = emptyList()
+   override val calculatedMemberDeclarations: List<TaxiParser.CalculatedMemberDeclarationContext> = emptyList()
+   override val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
+      get() = typeBody.typeMemberDeclaration() ?: emptyList()
+}
+
+class TypeBodyContext(private val typeBody: TaxiParser.TypeBodyContext) : TypeWithFieldsContext {
+   override fun findNamespace(): String = typeBody.findNamespace()
+   override val conditionalTypeDeclarations: List<TaxiParser.ConditionalTypeStructureDeclarationContext>
+      get() = typeBody.conditionalTypeStructureDeclaration() ?: emptyList()
+   override val calculatedMemberDeclarations: List<TaxiParser.CalculatedMemberDeclarationContext>
+      get() = typeBody.calculatedMemberDeclaration() ?: emptyList()
+   override val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
+      get() = typeBody.typeMemberDeclaration() ?: emptyList()
+
+}
 internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
-                             private val typeBody: TaxiParser.TypeBodyContext,
+                             private val typeBody: TypeWithFieldsContext,
                              private val typeName: String,
                              private val errors: MutableList<CompilationError>
 
@@ -33,7 +99,7 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
 
    fun compileAllFields(): List<Either<List<CompilationError>, Field>> {
       val namespace = typeBody.findNamespace()
-      val conditionalFieldStructures = typeBody.conditionalTypeStructureDeclaration()?.map { conditionalFieldBlock ->
+      val conditionalFieldStructures = typeBody.conditionalTypeDeclarations.map { conditionalFieldBlock ->
          conditionalFieldSetProcessor.compileConditionalFieldStructure(conditionalFieldBlock, namespace)
 //            .map { it.fields }
       } ?: emptyList()
@@ -41,23 +107,19 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
       val fieldsWithConditions = conditionalFieldStructures.map {
          it.map { it.fields }
       }
-      val calculatedFieldStructures = typeBody.calculatedMemberDeclaration()?.mapNotNull { calculatedMemberDeclarationContext ->
+      val calculatedFieldStructures = typeBody.calculatedMemberDeclarations.mapNotNull { calculatedMemberDeclarationContext ->
          calculatedFieldSetProcessor.compileCalculatedField(calculatedMemberDeclarationContext, namespace)
       } ?: emptyList()
 
-      val memberDeclarations = typeBody.typeMemberDeclaration() ?: emptyList()
-      val fields = memberDeclarations.map { member ->
+      val fields = typeBody.memberDeclarations.map { member ->
          provideField(TokenProcessor.unescape(member.fieldDeclaration().Identifier().text), member)
       }
       return fields
    }
 
    private fun compileField(fieldName: String, requestingToken: ParserRuleContext): Either<List<CompilationError>, Field> {
-      val memberDeclaration = typeBody.typeMemberDeclaration()
-         .firstOrNull { TokenProcessor.unescape(it.fieldDeclaration().Identifier().text) == fieldName }
-         ?: return listOf(CompilationError(requestingToken.start, "Field $fieldName does not exist on type $typeName")).left()
-
-      return compileField(memberDeclaration)
+      return typeBody.memberDeclaration(fieldName, typeName, requestingToken)
+         .flatMap { declaration -> compileField(declaration) }
    }
 
 //   internal fun compiledField(member: TaxiParser.TypeMemberDeclarationContext): Field? {
@@ -276,7 +338,7 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
             if (targetType !is EnumType) {
                CompilationError(defaultDefinitionContext.qualifiedName().start, "Cannot use an enum as a reference here, as ${targetType.qualifiedName} is not an enum").left()
             } else {
-               val (enumTypeName, enumValue) = EnumValue.qualifiedNameFrom(defaultDefinitionContext.qualifiedName().text)
+               val (enumTypeName, enumValue) = EnumValue.splitEnumValueName(defaultDefinitionContext.qualifiedName().text)
                val enumValueQualifiedName = "$enumTypeName.$enumValue"
                if (targetType.qualifiedName != enumTypeName.fullyQualifiedName) {
                   CompilationError(defaultDefinitionContext.qualifiedName().start, "Cannot assign a default of $enumValueQualifiedName to an enum with a type of ${targetType.qualifiedName} because the types are different").left()
