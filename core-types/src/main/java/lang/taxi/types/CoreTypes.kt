@@ -40,6 +40,7 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
    override val formattedInstanceOfType: Type? = null
    override val calculation: Formula?
       get() = null
+   override val offset: Int? = null
 }
 interface Annotatable {
     val annotations: List<Annotation>
