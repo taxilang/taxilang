@@ -609,13 +609,12 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val modifiers = parseModifiers(ctx.typeModifier())
       val inherits = parseTypeInheritance(namespace, ctx.listOfInheritedTypes())
       val typeDoc = parseTypeDoc(ctx.typeDoc()?.source()?.content)
-      val format: List<String>? = null
       this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(
          fields = fields.toSet(),
          annotations = annotations.toSet(),
          modifiers = modifiers,
          inheritsFrom = inherits,
-         format = format,
+         format = null,
          typeDoc = typeDoc,
          compilationUnit = ctx.toCompilationUnit()
       )))
@@ -927,16 +926,16 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    internal fun parseType(namespace: Namespace, typeType: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
       val typeOrError = typeOrError(namespace, typeType)
       return typeOrError.flatMap { type ->
-         parseTypeFormat(typeType).flatMap { format ->
+         parseTypeFormat(typeType).flatMap { (formats, zoneOffset) ->
             if (typeType.listType() != null) {
-               if (format != null) {
-                  Either.left(CompilationError(typeType.start, "It is invalid to declare a format on an array"))
+               if (formats.isNotEmpty() || zoneOffset != null) {
+                  Either.left(CompilationError(typeType.start, "It is invalid to declare a format / offset on an array"))
                } else {
                   Either.right(ArrayType(type, typeType.toCompilationUnit()))
                }
             } else {
-               if (format != null) {
-                  generateFormattedSubtype(type, format, typeType)
+               if (formats.isNotEmpty() || zoneOffset != null) {
+                  generateFormattedSubtype(type, FormatsAndZoneoffset(formats, zoneOffset), typeType)
                } else {
                   Either.right(type)
                }
@@ -968,9 +967,28 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
-   private fun generateFormattedSubtype(type: Type, format: List<String>, typeType: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
+   private fun generateFormattedSubtype(type: Type, formatOffsetPair: FormatsAndZoneoffset, typeType: TaxiParser.TypeTypeContext):
+      Either<CompilationError, Type> {
+      val (format, offset) = formatOffsetPair;
+      if (offset != null && type.basePrimitive != PrimitiveType.INSTANT) {
+         val error = { CompilationError(typeType.start, "@offset is only applicable to Instant based types", typeType.source().sourceName) }
+         return Either.left(error())
+      }
+
+      //// https://en.wikipedia.org/wiki/List_of_UTC_time_offsets - time offsets range [UTC-12, UTC+14]
+      if (offset != null && (offset < -720 || offset > 840)) {
+         val error = { CompilationError(typeType.start, "@offset value can't be larger than 840 (UTC+14) or smaller than -720 (UTC-12)",
+            typeType.source().sourceName) }
+         return Either.left(error())
+      }
+
       val formattedTypeName = QualifiedName.from(type.qualifiedName).let { originalTypeName ->
-         val hash = Hashing.sha256().hashString(format.joinToString(), Charset.defaultCharset()).toString().takeLast(6)
+         val hash = if (offset == null ) {
+            // just to avoid too many hash changes in existing taxonomies.
+            Hashing.sha256().hashString(format.joinToString { it }, Charset.defaultCharset()).toString().takeLast(6)
+         } else {
+            Hashing.sha256().hashString(format.joinToString { it }.plus(offset.toString()), Charset.defaultCharset()).toString().takeLast(6)
+         }
          originalTypeName.copy(typeName = "Formatted${originalTypeName.typeName}_$hash")
       }
 
@@ -982,7 +1000,8 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             ObjectTypeDefinition(
                emptySet(),
                inheritsFrom = setOf(type),
-               format = format,
+               format = if (format.isNotEmpty()) format else null,
+               offset = offset,
                formattedInstanceOfType = type,
                compilationUnit = CompilationUnit.generatedFor(type)
             )
@@ -1019,13 +1038,25 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
-   private fun parseTypeFormat(typeType: TaxiParser.TypeTypeContext): Either<CompilationError, List<String>?> {
-      val formatExpressions = typeType.parameterConstraint()?.parameterConstraintExpressionList()?.parameterConstraintExpression()
-         ?.mapNotNull { it.propertyFormatExpression() } ?: emptyList()
-      return when {
-         formatExpressions.isEmpty() -> Either.right(null)
-         else -> Either.right(formatExpressions.map { stringLiteralValue(it.StringLiteral()) })
-      }
+   private fun parseTypeFormat(typeType: TaxiParser.TypeTypeContext): Either<CompilationError, FormatsAndZoneoffset> {
+      val formatExpressions = typeType
+         .parameterConstraint()
+         ?.parameterConstraintExpressionList()
+         ?.parameterConstraintExpression()
+         ?.filter { it.propertyFormatExpression() != null}
+         ?.map { it.propertyFormatExpression().StringLiteral() }
+         ?.map { stringLiteralValue(it) }
+         ?: typeType
+            .parameterConstraint()
+            ?.temporalFormatList()
+            ?.StringLiteral()
+            ?.filterNotNull()
+            ?.map { stringLiteralValue(it) }
+         ?: emptyList()
+
+      val offsetValue = typeType
+         .parameterConstraint()?.temporalFormatList()?.instantOffsetExpression()?.intValue()
+      return Either.right(FormatsAndZoneoffset(formatExpressions, offsetValue))
    }
 
    /**
@@ -1481,4 +1512,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
 }
+
+data class FormatsAndZoneoffset(val formats: List<String>, val utcZoneoffsetInMinutes: Int?)
+
 

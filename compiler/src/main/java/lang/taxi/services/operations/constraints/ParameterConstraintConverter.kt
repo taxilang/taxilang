@@ -67,7 +67,7 @@ class ConstraintValidator(providers: List<ConstraintProvider> = ConstraintProvid
 }
 
 class OperationConstraintConverter(
-   private val expressionList: TaxiParser.ParameterConstraintExpressionListContext,
+   private val expressionList: TaxiParser.ParameterConstraintExpressionListContext?,
    private val paramType: Type,
    private val namespaceQualifiedTypeResolver: NamespaceQualifiedTypeResolver
 ) {
@@ -75,13 +75,13 @@ class OperationConstraintConverter(
 
    fun constraints(): Either<List<CompilationError>, List<Constraint>> {
       return expressionList
-         .parameterConstraintExpression()
+         ?.parameterConstraintExpression()
          // Formats are expressed as constraints, but we handle them elsewhere,
          // so filter them out.  A good indication that this isn't the correct way
          // to handle this.
-         .filter { it.propertyFormatExpression() == null }
-         .map { buildConstraint(it, paramType, namespaceQualifiedTypeResolver) }
-         .invertEitherList()
+         ?.filter { it.propertyFormatExpression() == null }
+         ?.map { buildConstraint(it, paramType, namespaceQualifiedTypeResolver) }
+         ?.invertEitherList() ?: Either.right(listOf())
    }
 
    private fun buildConstraint(constraint: TaxiParser.ParameterConstraintExpressionContext, paramType: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<CompilationError, Constraint> {

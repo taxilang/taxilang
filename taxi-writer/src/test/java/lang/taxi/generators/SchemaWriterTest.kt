@@ -126,6 +126,22 @@ type Person {
    }
 
    @Test
+   fun `outputs multiple formats with offset`() {
+      val src = """type TransactionEventDateTime inherits Instant
+            type Order {
+                orderDateTime : TransactionEventDateTime( @format = ["yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "yyyy-MM-dd'T'HH:mm:ss.SSS"] @offset = 60)
+            }"""
+      val schema = Compiler(src).compile()
+      val generated = SchemaWriter().generateSchemas(listOf(schema))[0]
+      val expected = """type TransactionEventDateTime inherits lang.taxi.Instant
+         type Order {
+            orderDateTime : TransactionEventDateTime( @format = ["yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "yyyy-MM-dd'T'HH:mm:ss.SSS"] @offset = 60 )
+         }"""
+      generated.trimNewLines().should.equal(expected.trimNewLines())
+      generated.shouldCompile()
+   }
+
+   @Test
    fun `outputs coalesce statements`() {
       val generated = """
                type Qty inherits Decimal

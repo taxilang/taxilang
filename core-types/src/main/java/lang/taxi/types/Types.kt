@@ -135,6 +135,8 @@ interface Type : Named, Compiled, ImportableToken {
 
    val calculation: Formula?
 
+   val offset: Int?
+
    fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
       val allExcludedTypes: Set<Type> = typesToExclude + setOf(this)
       val aliasType = if (this is TypeAlias) {

@@ -32,6 +32,7 @@ data class ObjectTypeDefinition(
    val formattedInstanceOfType: Type? = null,
    val calculatedInstanceOfType: Type? = null,
    val calculation: Formula? = null,
+   val offset: Int? = null,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
@@ -221,6 +222,20 @@ data class ObjectType(
    fun applicableQualifiedNames(type: Type): List<QualifiedName> {
       return type.inheritsFrom.map { it.toQualifiedName() }.plus(type.toQualifiedName())
    }
+
+   override val offset: Int?
+      get() {
+         return if (this.definition?.offset != null) {
+            this.definition?.offset
+         } else {
+            val inheritedOffsets = this.inheritsFrom.filter { it.offset != null }
+            when {
+               inheritedOffsets.isEmpty() -> null
+               inheritedOffsets.size == 1 -> inheritedOffsets.first().offset
+               else -> error("Multiple formats found in inheritence - this is an error")
+            }
+         }
+      }
 
 }
 

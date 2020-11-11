@@ -1,5 +1,6 @@
 package lang.taxi
 
+import com.nhaarman.mockitokotlin2.eq
 import com.winterbe.expekt.should
 import lang.taxi.types.PrimitiveType
 import org.spekframework.spek2.Spek
@@ -8,7 +9,7 @@ import org.spekframework.spek2.style.specification.describe
 object FormattedTypesSpec : Spek({
    describe("formatted types") {
       it("should expose default formats for date types") {
-         val doc  = Compiler("").compile()
+         val doc = Compiler("").compile()
          doc.type(PrimitiveType.INSTANT.toQualifiedName()).format?.first().should.equal("yyyy-MM-dd'T'HH:mm:ss[.SSS]X")
       }
 
@@ -119,6 +120,74 @@ object FormattedTypesSpec : Spek({
 
 
       }
+
+      it("should allow positive offset specification for Instant based types") {
+         val tradeDateType = """
+            type TradeDate inherits Instant( @format = ['mm/dd/yyThh:nn:ss.mmmmZ'], @offset = 60 )
+         """.compiled().type("TradeDate")
+
+         tradeDateType.format?.first().should.equal("mm/dd/yyThh:nn:ss.mmmmZ")
+         tradeDateType.offset.should.equal(60)
+      }
+
+      it("should allow negative offset specification for Instant based types") {
+         val tradeDateType = """
+            type TradeDate inherits Instant( @format = ['mm/dd/yyThh:nn:ss.mmmmZ'], @offset = -300 )
+         """.compiled().type("TradeDate")
+
+         tradeDateType.format?.first().should.equal("mm/dd/yyThh:nn:ss.mmmmZ")
+         tradeDateType.offset.should.equal(-300)
+      }
+
+      it("should not allowed offset definition for date based types") {
+         val errors = """
+            type TransactionEventDate inherits Date
+            type Order {
+                orderDateQuote : TransactionEventDate( @format = ['yyyyMMdd'], @offset = -300 )
+            }
+         """.trimMargin()
+            .validated()
+         errors.should.have.size(1)
+         errors.first().detailMessage.should.equal("@offset is only applicable to Instant based types")
+      }
+
+      it("should not allowed offset definition for time based types") {
+         val errors = """
+            type TransactionEventTime inherits Time
+            type Order {
+                orderTimeQuote : TransactionEventTime( @format = ['HH:mm:ss'], @offset = -300 )
+            }
+         """.trimMargin()
+            .validated()
+         errors.should.have.size(1)
+         errors.first().detailMessage.should.equal("@offset is only applicable to Instant based types")
+      }
+
+      it("should allow multiple formats with or without offset values for Instant based fields") {
+         val orderEventDateTimeType = """
+            type OrderEventDateTime inherits Instant( @format = ["yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", "yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss.S'Z'"], @offset = 240)
+         """.trimIndent()
+            .compiled().type("OrderEventDateTime")
+         orderEventDateTimeType.offset.should.equal(240)
+      }
+
+      it("should not allow invalid offset specification for Instant based types") {
+         //// https://en.wikipedia.org/wiki/List_of_UTC_time_offsets - time offsets range [UTC-12, UTC+14]
+         val errors = """
+            type TradeDate inherits Instant( @format = ['mm/dd/yyThh:nn:ss.mmmmZ'] @offset = 900 )
+         """.validated()
+         errors.should.have.size(1)
+         errors.first().detailMessage.should.equal("""@offset value can't be larger than 840 (UTC+14) or smaller than -720 (UTC-12)""")
+      }
+
+      it("should  allow  offset only specification for Instant based types") {
+         //// https://en.wikipedia.org/wiki/List_of_UTC_time_offsets - time offsets range [UTC-12, UTC+14]
+         val tradeDateType = """
+            type TradeDate inherits Instant( @offset = 30 )
+         """.compiled().type("TradeDate")
+         tradeDateType.offset.should.equal(30)
+      }
+
 
       describe("future formatted types - with format spec") {
          val formatDefinition = """
