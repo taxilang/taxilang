@@ -11,7 +11,11 @@ object TypeChecking {
       // This is a first pass, pretty sure this is naieve.
       // Need to take the Vyne implmentation at Type.kt
       return when {
+         // Basically, if either type are of Any, we disable type checking.
+         // May want to refine this later, but there are challenges
+         // around accessors with unknown/inferred types, such as column() / xpath() ,etc
          receiverType.basePrimitive == PrimitiveType.ANY -> null
+         valueType.basePrimitive == PrimitiveType.ANY -> null
          receiverType.basePrimitive == valueType.basePrimitive -> null
          else -> CompilationError(token.start, "Type mismatch.  Found a type of ${valueType.qualifiedName} where a ${receiverType.qualifiedName} is expected")
       }

@@ -56,22 +56,24 @@ interface TypeWithFieldsContext {
    val calculatedMemberDeclarations: List<TaxiParser.CalculatedMemberDeclarationContext>
    val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
 }
-class AnnotationTypeBodyContent(private val typeBody: TaxiParser.AnnotationTypeBodyContext) : TypeWithFieldsContext {
-   override fun findNamespace(): String = typeBody.findNamespace()
+class AnnotationTypeBodyContent(private val typeBody: TaxiParser.AnnotationTypeBodyContext?) : TypeWithFieldsContext {
+   // Cheating - I don't think this method is ever called when the typeBody is null.
+   override fun findNamespace(): String = typeBody!!.findNamespace()
    override val conditionalTypeDeclarations: List<TaxiParser.ConditionalTypeStructureDeclarationContext> = emptyList()
    override val calculatedMemberDeclarations: List<TaxiParser.CalculatedMemberDeclarationContext> = emptyList()
    override val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
-      get() = typeBody.typeMemberDeclaration() ?: emptyList()
+      get() = typeBody?.typeMemberDeclaration() ?: emptyList()
 }
 
-class TypeBodyContext(private val typeBody: TaxiParser.TypeBodyContext) : TypeWithFieldsContext {
-   override fun findNamespace(): String = typeBody.findNamespace()
+class TypeBodyContext(private val typeBody: TaxiParser.TypeBodyContext?) : TypeWithFieldsContext {
+   // Cheating - I don't think this method is ever called when the typeBody is null.
+   override fun findNamespace(): String = typeBody!!.findNamespace()
    override val conditionalTypeDeclarations: List<TaxiParser.ConditionalTypeStructureDeclarationContext>
-      get() = typeBody.conditionalTypeStructureDeclaration() ?: emptyList()
+      get() = typeBody?.conditionalTypeStructureDeclaration() ?: emptyList()
    override val calculatedMemberDeclarations: List<TaxiParser.CalculatedMemberDeclarationContext>
-      get() = typeBody.calculatedMemberDeclaration() ?: emptyList()
+      get() = typeBody?.calculatedMemberDeclaration() ?: emptyList()
    override val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
-      get() = typeBody.typeMemberDeclaration() ?: emptyList()
+      get() = typeBody?.typeMemberDeclaration() ?: emptyList()
 
 }
 internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
@@ -99,13 +101,24 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
 
    fun compileAllFields(): List<Either<List<CompilationError>, Field>> {
       val namespace = typeBody.findNamespace()
-      val conditionalFieldStructures = typeBody.conditionalTypeDeclarations.map { conditionalFieldBlock ->
-         conditionalFieldSetProcessor.compileConditionalFieldStructure(conditionalFieldBlock, namespace)
-//            .map { it.fields }
-      } ?: emptyList()
+      val conditionalFieldStructures = typeBody.conditionalTypeDeclarations.mapNotNull { conditionalFieldBlock ->
+         // This is a block that declares multiple fields.
+         // eg:
+         //     (   dealtAmount : DealtAmount
+         //        settlementAmount : SettlementAmount
+         //        quoteBasis: QuoteBasis
+         //    )
+         // We need to work out to apply type checking here.
+         // For now, we'll disable type chekcing, as the usage of this language feature is low.
+         conditionalFieldSetProcessor.compileConditionalFieldStructure(conditionalFieldBlock, namespace, PrimitiveType.ANY)
+            .getOrHandle {
+               errors.addAll(it)
+               null
+            }
+      }
 
-      val fieldsWithConditions = conditionalFieldStructures.map {
-         it.map { it.fields }
+      val fieldsWithConditions = conditionalFieldStructures.flatMap {
+         it.fields
       }
       val calculatedFieldStructures = typeBody.calculatedMemberDeclarations.mapNotNull { calculatedMemberDeclarationContext ->
          calculatedFieldSetProcessor.compileCalculatedField(calculatedMemberDeclarationContext, namespace)
@@ -213,14 +226,14 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
       }
    }
 
-   internal fun compileScalarAccessor(accessor: TaxiParser.ScalarAccessorContext, targetType: Type?): Accessor {
+   internal fun compileScalarAccessor(accessor: TaxiParser.ScalarAccessorContext, targetType: Type): Accessor {
       return compileScalarAccessor(accessor.scalarAccessorExpression(), targetType)
 
    }
 
-   internal fun compileScalarAccessor(expression: TaxiParser.ScalarAccessorExpressionContext, targetType: Type?): Accessor {
-      if (targetType == null) {
-         log().warn("Type not provided, not performing type checks")
+   internal fun compileScalarAccessor(expression: TaxiParser.ScalarAccessorExpressionContext, targetType: Type = PrimitiveType.ANY): Accessor {
+      if (targetType == PrimitiveType.ANY) {
+         log().warn("Type was provided as Any, not performing type checks")
       }
       return when {
          expression.jsonPathAccessorDeclaration() != null -> JsonPathAccessor(expression.jsonPathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""))
@@ -232,7 +245,7 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
          }
          expression.conditionalTypeConditionDeclaration() != null -> {
             val namespace = expression.conditionalTypeConditionDeclaration().findNamespace()
-            conditionalFieldSetProcessor.compileCondition(expression.conditionalTypeConditionDeclaration(), namespace)
+            conditionalFieldSetProcessor.compileCondition(expression.conditionalTypeConditionDeclaration(), namespace, targetType)
                .map { condition -> ConditionalAccessor(condition) }
                // TODO : Make the current method return Either<>
                .getOrHandle { throw CompilationException(it) }
