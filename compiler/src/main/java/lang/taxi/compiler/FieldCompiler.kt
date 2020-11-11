@@ -1,17 +1,83 @@
 package lang.taxi.compiler
 
-import arrow.core.*
-import lang.taxi.*
+import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.getOrElse
+import arrow.core.getOrHandle
+import arrow.core.left
+import arrow.core.right
+import arrow.core.rightIfNotNull
+import lang.taxi.CompilationError
+import lang.taxi.CompilationException
+import lang.taxi.Namespace
+import lang.taxi.TaxiParser
+import lang.taxi.findNamespace
 import lang.taxi.functions.FunctionAccessor
-import lang.taxi.types.*
+import lang.taxi.source
+import lang.taxi.text
+import lang.taxi.types.Accessor
 import lang.taxi.types.Annotation
-import lang.taxi.utils.flattenErrors
-import lang.taxi.utils.invertEitherList
+import lang.taxi.types.ColumnAccessor
+import lang.taxi.types.ConditionalAccessor
+import lang.taxi.types.DestructuredAccessor
+import lang.taxi.types.EnumType
+import lang.taxi.types.EnumValue
+import lang.taxi.types.Field
+import lang.taxi.types.FieldModifier
+import lang.taxi.types.FieldReferenceSelector
+import lang.taxi.types.Formula
+import lang.taxi.types.JsonPathAccessor
+import lang.taxi.types.LiteralAccessor
+import lang.taxi.types.ObjectType
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.ReadFunction
+import lang.taxi.types.ReadFunctionArgument
+import lang.taxi.types.ReadFunctionFieldAccessor
+import lang.taxi.types.Type
+import lang.taxi.types.TypeAlias
+import lang.taxi.types.TypeReferenceSelector
+import lang.taxi.types.XpathAccessor
 import lang.taxi.utils.log
+import lang.taxi.value
 import org.antlr.v4.runtime.ParserRuleContext
 
+interface TypeWithFieldsContext {
+   fun findNamespace():String
+   fun memberDeclaration(fieldName: String, compilingTypeName:String, requestingToken: ParserRuleContext): Either<List<CompilationError>, TaxiParser.TypeMemberDeclarationContext> {
+      val memberDeclaration = this.memberDeclarations
+         .firstOrNull { TokenProcessor.unescape(it.fieldDeclaration().Identifier().text) == fieldName }
+
+      return  memberDeclaration.rightIfNotNull {
+         listOf(CompilationError(requestingToken.start, "Field $fieldName does not exist on type $compilingTypeName"))
+      }
+   }
+
+   val conditionalTypeDeclarations: List<TaxiParser.ConditionalTypeStructureDeclarationContext>
+   val calculatedMemberDeclarations: List<TaxiParser.CalculatedMemberDeclarationContext>
+   val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
+}
+class AnnotationTypeBodyContent(private val typeBody: TaxiParser.AnnotationTypeBodyContext?) : TypeWithFieldsContext {
+   // Cheating - I don't think this method is ever called when the typeBody is null.
+   override fun findNamespace(): String = typeBody!!.findNamespace()
+   override val conditionalTypeDeclarations: List<TaxiParser.ConditionalTypeStructureDeclarationContext> = emptyList()
+   override val calculatedMemberDeclarations: List<TaxiParser.CalculatedMemberDeclarationContext> = emptyList()
+   override val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
+      get() = typeBody?.typeMemberDeclaration() ?: emptyList()
+}
+
+class TypeBodyContext(private val typeBody: TaxiParser.TypeBodyContext?) : TypeWithFieldsContext {
+   // Cheating - I don't think this method is ever called when the typeBody is null.
+   override fun findNamespace(): String = typeBody!!.findNamespace()
+   override val conditionalTypeDeclarations: List<TaxiParser.ConditionalTypeStructureDeclarationContext>
+      get() = typeBody?.conditionalTypeStructureDeclaration() ?: emptyList()
+   override val calculatedMemberDeclarations: List<TaxiParser.CalculatedMemberDeclarationContext>
+      get() = typeBody?.calculatedMemberDeclaration() ?: emptyList()
+   override val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
+      get() = typeBody?.typeMemberDeclaration() ?: emptyList()
+
+}
 internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
-                             private val typeBody: TaxiParser.TypeBodyContext,
+                             private val typeBody: TypeWithFieldsContext,
                              private val typeName: String,
                              private val errors: MutableList<CompilationError>
 
@@ -180,14 +246,14 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
       }
    }
 
-   internal fun compileScalarAccessor(accessor: TaxiParser.ScalarAccessorContext, targetType: Type?): Accessor {
+   internal fun compileScalarAccessor(accessor: TaxiParser.ScalarAccessorContext, targetType: Type): Accessor {
       return compileScalarAccessor(accessor.scalarAccessorExpression(), targetType)
 
    }
 
-   internal fun compileScalarAccessor(expression: TaxiParser.ScalarAccessorExpressionContext, targetType: Type?): Accessor {
-      if (targetType == null) {
-         log().warn("Type not provided, not performing type checks")
+   internal fun compileScalarAccessor(expression: TaxiParser.ScalarAccessorExpressionContext, targetType: Type = PrimitiveType.ANY): Accessor {
+      if (targetType == PrimitiveType.ANY) {
+         log().warn("Type was provided as Any, not performing type checks")
       }
       val targetTypeOrAny = targetType ?: PrimitiveType.ANY
       return when {

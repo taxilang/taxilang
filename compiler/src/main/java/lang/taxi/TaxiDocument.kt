@@ -4,7 +4,20 @@ import com.google.common.collect.Multimaps
 import lang.taxi.functions.Function
 import lang.taxi.policies.Policy
 import lang.taxi.services.Service
-import lang.taxi.types.*
+import lang.taxi.types.Annotation
+import lang.taxi.types.AnnotationType
+import lang.taxi.types.ArrayType
+import lang.taxi.types.Arrays
+import lang.taxi.types.AttributePath
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.EnumType
+import lang.taxi.types.ImportableToken
+import lang.taxi.types.Named
+import lang.taxi.types.ObjectType
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.Type
+import lang.taxi.types.TypeAlias
 import lang.taxi.utils.log
 
 
@@ -24,14 +37,14 @@ class NamespacedTaxiDocument(val namespace: String,
 open class TaxiDocument(val types: Set<Type>,
                         val services: Set<Service>,
                         val policies: Set<Policy> = emptySet(),
-                        val functions: Set<Function> = emptySet()
+                        val functions: Set<Function> = emptySet(),
+                        val annotations: Set<Annotation> = emptySet()
 ) {
    private val equality = Equality(this, TaxiDocument::types, TaxiDocument::services)
    private val typeMap = types.associateBy { it.qualifiedName }
    private val servicesMap = services.associateBy { it.qualifiedName }
    private val policiesMap = policies.associateBy { it.qualifiedName }
    private val functionsMap = functions.associateBy { it.qualifiedName }
-
    fun importableToken(qualifiedName: String):ImportableToken {
       return when {
          containsType(qualifiedName) -> type(qualifiedName)
@@ -117,6 +130,11 @@ open class TaxiDocument(val types: Set<Type>,
    fun function(qualifiedName: String): Function {
       return functionsMap[qualifiedName] ?: error("Function $qualifiedName is not defined")
    }
+
+   fun annotation(qualifiedName: String): AnnotationType {
+      return type(qualifiedName) as AnnotationType
+   }
+
 
    fun policy(qualifiedName: String): Policy {
       return policiesMap[qualifiedName] ?: error("Policy $qualifiedName is not defined")

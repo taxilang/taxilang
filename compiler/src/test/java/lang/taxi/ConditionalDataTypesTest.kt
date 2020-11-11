@@ -339,4 +339,215 @@ type TradeRecord {
          error.detailMessage == "FixedOrFloatLeg is not defined"
       } }
    }
+
+   @Test
+   fun `Complex when condition expressions are allowed`() {
+      val src = """
+         model ComplexWhen {
+            trader: String
+            status: String
+            initialQuantity: Decimal
+            leavesQuantity: Decimal
+            quantityStatus: String by when {
+                this.initialQuantity = this.leavesQuantity -> "ZeroFill"
+                this.trader = "Marty" || this.status = "Pending" -> "ZeroFill"
+                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity -> "PartialFill"
+                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.trader = "Marty" || this.status = "Pending"  -> "FullyFilled"
+                this.leavesQuantity = null && this.initialQuantity != null -> trader
+                else -> "CompleteFill"
+            }
+         }
+      """.trimIndent()
+      val field = Compiler(src).compile().objectType("ComplexWhen").field("quantityStatus")
+      val whenCondition = (field.accessor as ConditionalAccessor).expression as WhenFieldSetCondition
+      whenCondition.cases.size.should.equal(6)
+      val case1 = whenCondition.cases[0].matchExpression as ComparisonExpression
+      case1.left.should.equal(FieldReferenceEntity("initialQuantity"))
+      case1.right.should.equal(FieldReferenceEntity("leavesQuantity"))
+      case1.operator.should.equal(ComparisonOperator.EQ)
+
+      val case2 = whenCondition.cases[1].matchExpression as OrExpression
+      case2.left.should.equal(ComparisonExpression(ComparisonOperator.EQ, FieldReferenceEntity("trader"), ConstantEntity("Marty")))
+      case2.right.should.equal(ComparisonExpression(ComparisonOperator.EQ, FieldReferenceEntity("status"), ConstantEntity("Pending")))
+
+      val case3 = whenCondition.cases[2].matchExpression as AndExpression
+      case3.left.should.equal(ComparisonExpression(ComparisonOperator.GT, FieldReferenceEntity("leavesQuantity"), ConstantEntity(0)))
+      case3.right.should.equal(ComparisonExpression(ComparisonOperator.LT, FieldReferenceEntity("leavesQuantity"), FieldReferenceEntity("initialQuantity")))
+
+      val case4 = whenCondition.cases[3].matchExpression as OrExpression
+      case4.left.should.equal(OrExpression(
+         AndExpression(
+            ComparisonExpression(ComparisonOperator.GT, FieldReferenceEntity("leavesQuantity"), ConstantEntity(0)),
+            ComparisonExpression(ComparisonOperator.LT, FieldReferenceEntity("leavesQuantity"), FieldReferenceEntity("initialQuantity"))
+         ),
+         ComparisonExpression(ComparisonOperator.EQ, FieldReferenceEntity("trader"), ConstantEntity("Marty"))
+      ))
+      case4.right.should.equal(
+         ComparisonExpression(ComparisonOperator.EQ, FieldReferenceEntity("status"), ConstantEntity("Pending"))
+      )
+
+      val case5 = whenCondition.cases[4].matchExpression as AndExpression
+      case5.left.should.equal(ComparisonExpression(ComparisonOperator.EQ, FieldReferenceEntity("leavesQuantity"), ConstantEntity(null)))
+      case5.right.should.equal(ComparisonExpression(ComparisonOperator.NQ, FieldReferenceEntity("initialQuantity"), ConstantEntity(null)))
+
+   }
+
+   @Test
+   fun `When Complex when condition expressions references an invalid field compilation error is provided`() {
+      val src = """
+         model ComplexWhen {
+            trader: String
+            status: String
+            initialQuantity: Decimal
+            leavesQuantity: Decimal
+            quantityStatus: String by when {
+                this.initialQuantity = this.leavesQuantity -> "ZeroFill"
+                this.trader = "Marty" || this.status = "Pending" -> "ZeroFill"
+                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity -> "PartialFill"
+                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.user = "Marty" || this.status = "Pending"  -> "FullyFilled"
+                else -> "CompleteFill"
+            }
+         }
+      """.trimIndent()
+      val errors = Compiler(src).validate()
+      errors.should.satisfy { it.any { error ->
+         error.detailMessage == "user is not a field of ComplexWhen"
+      } }
+   }
+
+   @Test
+   fun `When Complex when condition expressions has a numeric comparison for string field compilation error thrown`() {
+      val src = """
+         model ComplexWhen {
+            trader: String
+            quantityStatus: String by when {
+                this.trader = 0 -> "ZeroFill"
+                else -> "CompleteFill"
+            }
+         }
+      """.trimIndent()
+      val errors = Compiler(src).validate()
+      errors.should.satisfy { it.any { error ->
+         error.detailMessage == "trader is not a numeric based field of ComplexWhen"
+      } }
+   }
+
+   @Test
+   fun `When Complex when condition expressions has a string comparison for a numeric field compilation error thrown`() {
+      val src = """
+         model ComplexWhen {
+            qty: Decimal
+            quantityStatus: String by when {
+                this.qty = '0' -> "ZeroFill"
+                else -> "CompleteFill"
+            }
+         }
+      """.trimIndent()
+      val errors = Compiler(src).validate()
+      errors.should.satisfy { it.any { error ->
+         error.detailMessage == "qty is not a String based field of ComplexWhen"
+      } }
+   }
+
+   @Test
+   fun `When Complex when condition expressions has a greater than comparison for a string field compilation error thrown`() {
+      val src = """
+         model ComplexWhen {
+            status: String
+            quantityStatus: String by when {
+                this.status > '0' -> "ZeroFill"
+                else -> "CompleteFill"
+            }
+         }
+      """.trimIndent()
+      val errors = Compiler(src).validate()
+      errors.should.satisfy { it.any { error ->
+         error.detailMessage == "> is not applicable to status field of ComplexWhen"
+      } }
+   }
+
+   @Test
+   fun `When Complex when condition expressions has a less than comparison for a string field compilation error thrown`() {
+      val src = """
+         model ComplexWhen {
+            status: String
+            quantityStatus: String by when {
+                this.status < '0' -> "ZeroFill"
+                else -> "CompleteFill"
+            }
+         }
+      """.trimIndent()
+      val errors = Compiler(src).validate()
+      errors.should.satisfy { it.any { error ->
+         error.detailMessage == "< is not applicable to status field of ComplexWhen"
+      } }
+   }
+
+   @Test
+   fun `When Complex when condition expressions has a greater than equals comparison for a string field compilation error thrown`() {
+      val src = """
+         model ComplexWhen {
+            status: String
+            quantityStatus: String by when {
+                this.status >= '0' -> "ZeroFill"
+                else -> "CompleteFill"
+            }
+         }
+      """.trimIndent()
+      val errors = Compiler(src).validate()
+      errors.should.satisfy { it.any { error ->
+         error.detailMessage == ">= is not applicable to status field of ComplexWhen"
+      } }
+   }
+
+   @Test
+   fun `When Complex when condition expressions has a less than equals comparison for a string field compilation error thrown`() {
+      val src = """
+         model ComplexWhen {
+            status: String
+            quantityStatus: String by when {
+                this.status <= '0' -> "ZeroFill"
+                else -> "CompleteFill"
+            }
+         }
+      """.trimIndent()
+      val errors = Compiler(src).validate()
+      errors.should.satisfy { it.any { error ->
+         error.detailMessage == "<= is not applicable to status field of ComplexWhen"
+      } }
+   }
+
+   @Test
+   fun `When Complex when condition expressions has a selector  compilation error thrown`() {
+      val src = """
+         model ComplexWhen {
+            status: String
+            quantityStatus: String by when(this.status) {
+                this.status != 'trading' -> "ZeroFill"
+                else -> "CompleteFill"
+            }
+         }
+      """.trimIndent()
+      val errors = Compiler(src).validate()
+      errors.should.satisfy { it.any { error ->
+         error.detailMessage == "when case for quantityStatus in ComplexWhen cannot have reference selector use when { .. } syntax"
+      } }
+   }
+
+   @Test
+   fun `for when statements with no reference selectors only logical when cases are allowed`() {
+      val src = """
+         model ComplexWhen {
+            status: String
+            quantityStatus: String by when {
+                "trading" -> "ZeroFill"
+                else -> "CompleteFill"
+            }
+         }
+      """.trimIndent()
+      val errors = Compiler(src).validate()
+      errors.should.satisfy { it.any { error ->
+         error.detailMessage == "when case for quantityStatus in ComplexWhen can only logical expression when cases"
+      } }
+   }
 }
