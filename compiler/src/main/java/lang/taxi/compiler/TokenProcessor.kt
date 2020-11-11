@@ -525,7 +525,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    private fun compileAnnotationType(name: String, namespace: Namespace, token: TaxiParser.AnnotationTypeDeclarationContext): AnnotationType {
       val members = token.annotationTypeBody()?.typeMemberDeclaration() ?: emptyList()
-      val typeWithFields = AnnotationTypeBodyContent(token.annotationTypeBody())
+      val typeWithFields = AnnotationTypeBodyContent(token.annotationTypeBody(), namespace)
       val fieldCompiler = FieldCompiler(
          this,
          typeWithFields,
@@ -534,7 +534,6 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       )
       val fields = fieldCompiler
          .compileAllFields()
-         .reportAndRemoveErrorList(errors)
          .map { field ->
             if (!field.type.inheritsFromPrimitive) {
                // Validate that annotation fields use primitive types.
@@ -562,7 +561,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    private fun compileType(namespace: Namespace, typeName: String, ctx: TaxiParser.TypeDeclarationContext) {
       val fields = ctx.typeBody()?.let { typeBody ->
-         val typeBodyContext = TypeBodyContext(typeBody)
+         val typeBodyContext = TypeBodyContext(typeBody, namespace)
          FieldCompiler(this, typeBodyContext, typeName, this.errors)
             .compileAllFields()
       } ?: emptyList()

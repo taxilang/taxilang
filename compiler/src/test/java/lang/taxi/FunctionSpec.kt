@@ -3,7 +3,11 @@ package lang.taxi
 import com.winterbe.expekt.should
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.stdlib.Left
-import lang.taxi.types.*
+import lang.taxi.types.ColumnAccessor
+import lang.taxi.types.FieldReferenceSelector
+import lang.taxi.types.LiteralAccessor
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.TypeReferenceSelector
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import kotlin.test.assertFailsWith
@@ -191,7 +195,7 @@ namespace pkgB {
             }
          """.validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("Type mismatch.  Found a type of lang.taxi.Int where a lang.taxi.String is expected")
+         errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.Int is not assignable to type lang.taxi.String")
       }
 
       it("should report an error if there is a type mismatch on assigning a return value to a field") {
@@ -203,7 +207,7 @@ namespace pkgB {
             }
          """.validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("Type mismatch.  Found a type of lang.taxi.String where a lang.taxi.Int is expected")
+         errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.String is not assignable to type lang.taxi.Int")
       }
 
       // Ignored until coalesce becomes a function

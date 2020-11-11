@@ -20,8 +20,6 @@ import lang.taxi.types.Annotation
 import lang.taxi.types.ColumnAccessor
 import lang.taxi.types.ConditionalAccessor
 import lang.taxi.types.DestructuredAccessor
-import lang.taxi.types.EnumType
-import lang.taxi.types.EnumValue
 import lang.taxi.types.Field
 import lang.taxi.types.FieldModifier
 import lang.taxi.types.FieldReferenceSelector
@@ -34,13 +32,18 @@ import lang.taxi.types.ReadFunction
 import lang.taxi.types.ReadFunctionArgument
 import lang.taxi.types.ReadFunctionFieldAccessor
 import lang.taxi.types.Type
-import lang.taxi.types.TypeAlias
 import lang.taxi.types.TypeReferenceSelector
 import lang.taxi.types.XpathAccessor
+import lang.taxi.utils.flattenErrors
+import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.log
 import lang.taxi.value
 import org.antlr.v4.runtime.ParserRuleContext
 
+/**
+ * Wrapper interface for "Things we need to compile fields from".
+ * We compile either for a type body, or an annotation body.
+ */
 interface TypeWithFieldsContext {
    fun findNamespace():String
    fun memberDeclaration(fieldName: String, compilingTypeName:String, requestingToken: ParserRuleContext): Either<List<CompilationError>, TaxiParser.TypeMemberDeclarationContext> {
@@ -56,18 +59,18 @@ interface TypeWithFieldsContext {
    val calculatedMemberDeclarations: List<TaxiParser.CalculatedMemberDeclarationContext>
    val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
 }
-class AnnotationTypeBodyContent(private val typeBody: TaxiParser.AnnotationTypeBodyContext?) : TypeWithFieldsContext {
+class AnnotationTypeBodyContent(private val typeBody: TaxiParser.AnnotationTypeBodyContext?, val namespace:String) : TypeWithFieldsContext {
    // Cheating - I don't think this method is ever called when the typeBody is null.
-   override fun findNamespace(): String = typeBody!!.findNamespace()
+   override fun findNamespace(): String = namespace
    override val conditionalTypeDeclarations: List<TaxiParser.ConditionalTypeStructureDeclarationContext> = emptyList()
    override val calculatedMemberDeclarations: List<TaxiParser.CalculatedMemberDeclarationContext> = emptyList()
    override val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
       get() = typeBody?.typeMemberDeclaration() ?: emptyList()
 }
 
-class TypeBodyContext(private val typeBody: TaxiParser.TypeBodyContext?) : TypeWithFieldsContext {
+class TypeBodyContext(private val typeBody: TaxiParser.TypeBodyContext?, val namespace:String) : TypeWithFieldsContext {
    // Cheating - I don't think this method is ever called when the typeBody is null.
-   override fun findNamespace(): String = typeBody!!.findNamespace()
+   override fun findNamespace(): String = namespace
    override val conditionalTypeDeclarations: List<TaxiParser.ConditionalTypeStructureDeclarationContext>
       get() = typeBody?.conditionalTypeStructureDeclaration() ?: emptyList()
    override val calculatedMemberDeclarations: List<TaxiParser.CalculatedMemberDeclarationContext>
@@ -94,11 +97,11 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
          return TokenProcessor.unescape(memberDeclaration.fieldDeclaration().Identifier().text) to memberDeclaration
       }
 
-      val fields = typeBody.typeMemberDeclaration()
+      val fields = typeBody.memberDeclarations
          .map { getFieldNameAndDeclarationContext(it) }
          .toList()
 
-      val fieldsInFieldBlocks = typeBody.conditionalTypeStructureDeclaration().flatMap { fieldBlock ->
+      val fieldsInFieldBlocks = typeBody.conditionalTypeDeclarations.flatMap { fieldBlock ->
          fieldBlock.typeMemberDeclaration().map { memberDeclarationContext ->
             getFieldNameAndDeclarationContext(memberDeclarationContext)
          }
@@ -131,18 +134,17 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
 
    fun compileAllFields(): List<Field> {
       val namespace = typeBody.findNamespace()
-      val conditionalFieldStructures = typeBody.conditionalTypeStructureDeclaration()?.mapNotNull { conditionalFieldBlock ->
+      val conditionalFieldStructures = typeBody.conditionalTypeDeclarations.mapNotNull { conditionalFieldBlock ->
          conditionalFieldSetProcessor.compileConditionalFieldStructure(conditionalFieldBlock, namespace)
             .collectErrors(errors).getOrElse { null }
-      } ?: emptyList()
+      }
 
       val fieldsWithConditions = conditionalFieldStructures.flatMap { it.fields }
-      val calculatedFieldStructures = typeBody.calculatedMemberDeclaration()?.mapNotNull { calculatedMemberDeclarationContext ->
+      val calculatedFieldStructures = typeBody.calculatedMemberDeclarations.map { calculatedMemberDeclarationContext ->
          calculatedFieldSetProcessor.compileCalculatedField(calculatedMemberDeclarationContext, namespace)
-      }?.invertEitherList()?.flattenErrors()?.collectErrors(errors)?.getOrElse { emptyList() } ?: emptyList()
+      }.invertEitherList().flattenErrors().collectErrors(errors).getOrElse { emptyList() }
 
-      val memberDeclarations = typeBody.typeMemberDeclaration() ?: emptyList()
-      val fields = memberDeclarations.map { member ->
+      val fields = typeBody.memberDeclarations.map { member ->
          provideField(TokenProcessor.unescape(member.fieldDeclaration().Identifier().text), member)
       }.mapNotNull { either -> either.collectErrors(errors).getOrElse { null } }
       return fields + calculatedFieldStructures + fieldsWithConditions
@@ -255,14 +257,13 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
       if (targetType == PrimitiveType.ANY) {
          log().warn("Type was provided as Any, not performing type checks")
       }
-      val targetTypeOrAny = targetType ?: PrimitiveType.ANY
       return when {
          expression.jsonPathAccessorDeclaration() != null -> JsonPathAccessor(
             expression = expression.jsonPathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""),
-            returnType = targetTypeOrAny
+            returnType = targetType
          )
          expression.xpathAccessorDeclaration() != null -> XpathAccessor(expression.xpathAccessorDeclaration().accessorExpression().text.removeSurrounding("\""),
-            returnType = targetTypeOrAny
+            returnType = targetType
          )
          expression.columnDefinition() != null -> {
             ColumnAccessor(
@@ -270,29 +271,29 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
                expression.columnDefinition().columnIndex().StringLiteral()?.text
                   ?: expression.columnDefinition().columnIndex().IntegerLiteral().text.toInt(),
                defaultValue = null,
-               returnType = targetTypeOrAny
+               returnType = targetType
             )
          }
          expression.conditionalTypeConditionDeclaration() != null -> {
             val namespace = expression.conditionalTypeConditionDeclaration().findNamespace()
-            conditionalFieldSetProcessor.compileCondition(expression.conditionalTypeConditionDeclaration(), namespace, targetTypeOrAny)
+            conditionalFieldSetProcessor.compileCondition(expression.conditionalTypeConditionDeclaration(), namespace, targetType)
                .map { condition -> ConditionalAccessor(condition) }
                // TODO : Make the current method return Either<>
                .getOrHandle { throw CompilationException(it) }
          }
          expression.defaultDefinition() != null -> {
-            val defaultValue = defaultValueParser.parseDefaultValue(expression.defaultDefinition(), targetType!!)
+            val defaultValue = defaultValueParser.parseDefaultValue(expression.defaultDefinition(), targetType)
                .collectError(errors).getOrElse { null }
             ColumnAccessor(
                index = null,
                defaultValue = defaultValue,
-               returnType = targetTypeOrAny
+               returnType = targetType
             )
          }
 
          expression.readFunction() != null -> {
             val functionContext = expression.readFunction()
-            buildReadFunctionAccessor(functionContext, targetType!!)
+            buildReadFunctionAccessor(functionContext, targetType)
          }
          else -> error("Unhandled type of accessor expression at ${expression.source().content}")
       }

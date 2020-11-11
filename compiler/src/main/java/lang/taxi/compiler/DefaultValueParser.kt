@@ -23,7 +23,7 @@ class DefaultValueParser {
             if (targetType !is EnumType) {
                CompilationError(defaultDefinitionContext.qualifiedName().start, "Cannot use an enum as a reference here, as ${targetType.qualifiedName} is not an enum").left()
             } else {
-               val (enumTypeName, enumValue) = EnumValue.qualifiedNameFrom(defaultDefinitionContext.qualifiedName().text)
+               val (enumTypeName, enumValue) = EnumValue.splitEnumValueName(defaultDefinitionContext.qualifiedName().text)
                val enumValueQualifiedName = "$enumTypeName.$enumValue"
                if (targetType.qualifiedName != enumTypeName.fullyQualifiedName) {
                   CompilationError(defaultDefinitionContext.qualifiedName().start, "Cannot assign a default of $enumValueQualifiedName to an enum with a type of ${targetType.qualifiedName} because the types are different").left()

@@ -32,10 +32,10 @@ type FooType {
    @Test
    fun `declaring the same field twice in a type should cause an error`() {
       val errors = """type Person {
-         |firstName : String
-         |lastName : String
-         |firstName : String
-         |}
+         firstName : String
+         lastName : String
+         firstName : String
+         }
       """.validated()
       errors.should.have.size(2)
       // 2 errors - an error is captured for both the fields

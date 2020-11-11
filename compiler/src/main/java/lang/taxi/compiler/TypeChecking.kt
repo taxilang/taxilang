@@ -49,7 +49,8 @@ object TypeChecking {
 
       // We allow naked primitives to be assigned to compatible
       // subtypes.  This allows assignments like xpath() and jsonPath() to work
-      if (valueTypeWithoutAliases is PrimitiveType && assignmentTargetTypeWithoutAliases.basePrimitive == valueTypeWithoutAliases) {
+      if (valueTypeWithoutAliases is PrimitiveType &&
+         assignmentTargetTypeWithoutAliases.basePrimitive == valueTypeWithoutAliases) {
          return true
       }
 

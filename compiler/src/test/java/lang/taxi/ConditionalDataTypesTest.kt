@@ -2,7 +2,30 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.functions.FunctionAccessor
-import lang.taxi.types.*
+import lang.taxi.types.AccessorExpressionSelector
+import lang.taxi.types.AndExpression
+import lang.taxi.types.ComparisonExpression
+import lang.taxi.types.ComparisonOperator
+import lang.taxi.types.ConditionalAccessor
+import lang.taxi.types.ConstantEntity
+import lang.taxi.types.DestructuredAssignment
+import lang.taxi.types.ElseMatchExpression
+import lang.taxi.types.EnumLiteralCaseMatchExpression
+import lang.taxi.types.EnumValueAssignment
+import lang.taxi.types.FieldAssignmentExpression
+import lang.taxi.types.FieldReferenceEntity
+import lang.taxi.types.InlineAssignmentExpression
+import lang.taxi.types.LiteralAssignment
+import lang.taxi.types.LiteralCaseMatchExpression
+import lang.taxi.types.NullAssignment
+import lang.taxi.types.ObjectType
+import lang.taxi.types.OrExpression
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.ReferenceAssignment
+import lang.taxi.types.ReferenceCaseMatchExpression
+import lang.taxi.types.ScalarAccessorValueAssignment
+import lang.taxi.types.WhenFieldSetCondition
+import lang.taxi.types.XpathAccessor
 import org.junit.Test
 
 class ConditionalDataTypesTest {
@@ -251,7 +274,7 @@ type TradeRecord {
             s0_Index : Leg1Index by jsonPath("/S0_Index")
             s1_Index : Leg2Index by jsonPath("/S1_Index")
             underlyingIndex : String by when (this.s0_TypeStr) {
-               FixedOrFloatLeg.Float -> s0_Index
+               Leg1FixedOrFloat.Float -> s0_Index
                else -> s1_Index
             }
          }

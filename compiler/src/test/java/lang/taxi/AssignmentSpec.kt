@@ -11,7 +11,7 @@ object AssignmentSpec : Spek({
    describe("Type assignment rules") {
       val schema = """
       type alias EyeColour as String
-      type alias Name as String
+      type Name inherits String
       type alias Identifier as Name
 
       type FirstName inherits Name
@@ -66,27 +66,6 @@ object AssignmentSpec : Spek({
          schema.type("EventDate").resolveAliases().qualifiedName.should.equal("EventDate")
          schema.objectType("Source").field("eventDate").type.resolveAliases().qualifiedName.should.equal("EventDate")
          schema.objectType("ThingWithInlineInstant").field("eventDate").type.resolveAliases().qualifiedName.should.equal("lang.taxi.Instant")
-      }
-
-      it("is valid to assing specialised types") {
-         """
-            type Name inherits String
-            type FirstName inherits Name
-            type PreferredName inherits Name
-            type Nickname inherits Name
-            model Person {
-               firstName : FirstName
-               nickName : NickName
-               preferredName : PreferredName by when {
-                  firstName != null -> firstName
-                  nickName != null -> nickName
-               }
-            }
-         """.validated()
-         TODO()
-      }
-      it("is valid to assign inherited enums in both directions") {
-
       }
    }
 })
