@@ -158,8 +158,9 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
          scalarAssigningDeclaration.literal() != null -> compileLiteralValueAssignment(scalarAssigningDeclaration.literal())
          scalarAssigningDeclaration.caseFieldReferenceAssignment() != null -> compileReferenceValueAssignment(scalarAssigningDeclaration.caseFieldReferenceAssignment())
          scalarAssigningDeclaration.scalarAccessorExpression() != null -> {
-            val accessor = compiler.compileScalarAccessor(scalarAssigningDeclaration.scalarAccessorExpression(), targetType = whenClauseSelectorType)
-            ScalarAccessorValueAssignment(accessor).right()
+            compiler
+               .compileScalarAccessor(scalarAssigningDeclaration.scalarAccessorExpression(), targetType = whenClauseSelectorType)
+               .map { accessor -> ScalarAccessorValueAssignment(accessor) }
          }
          else -> error("Unhandled scalar value assignment")
       }.map { assignment ->
@@ -186,7 +187,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
          }
          caseFieldAssignment.caseScalarAssigningDeclaration() != null -> compileCaseScalarAssignment(caseFieldAssignment.caseScalarAssigningDeclaration())
          caseFieldAssignment.scalarAccessor() != null -> {
-            compileScalarAccessorValueAssignment(caseFieldAssignment.scalarAccessor(), type).right()
+            compileScalarAccessorValueAssignment(caseFieldAssignment.scalarAccessor(), type)
          }
          else -> error("Unhandled object field value assignment")
       }
@@ -205,9 +206,10 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
 
    }
 
-   private fun compileScalarAccessorValueAssignment(scalarAccessor: TaxiParser.ScalarAccessorContext, targetType: Type): ScalarAccessorValueAssignment {
-      val accessor = compiler.compileScalarAccessor(scalarAccessor, targetType) // TODO : Where do we find the type info for this?
-      return ScalarAccessorValueAssignment(accessor)
+   private fun compileScalarAccessorValueAssignment(scalarAccessor: TaxiParser.ScalarAccessorContext, targetType: Type): Either<List<CompilationError>, ScalarAccessorValueAssignment> {
+      return compiler.compileScalarAccessor(scalarAccessor, targetType).map { accessor ->
+         ScalarAccessorValueAssignment(accessor)
+      }
    }
 
    private fun compileLiteralValueAssignment(literal: TaxiParser.LiteralContext): Either<List<CompilationError>, ValueAssignment> {
@@ -232,18 +234,21 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
 
    private fun compileReferenceAssignmentAsEnumReference(caseFieldReferenceAssignment: TaxiParser.CaseFieldReferenceAssignmentContext): Either<List<CompilationError>, ValueAssignment> {
       val enumName = caseFieldReferenceAssignment.Identifier().dropLast(1).joinToString(".")
-      val typeName = compiler.lookupTypeByName(enumName, caseFieldReferenceAssignment)
-      val enumReference = compiler.typeResolver(caseFieldReferenceAssignment.findNamespace()).resolve(typeName, caseFieldReferenceAssignment).flatMap { type ->
-         require(type is EnumType) { "Expected $typeName to be an enum" }
-         val enumType = type as EnumType// for readability
-         val enumReference = caseFieldReferenceAssignment.Identifier().last()
-         if (enumType.has(enumReference.text)) {
-            Either.right(EnumValueAssignment(enumType, type.of(enumReference.text)))
-         } else {
-            Either.left(CompilationError(caseFieldReferenceAssignment.start, "Cannot resolve EnumValue of ${caseFieldReferenceAssignment.Identifier().text()}"))
-         }
-         // TODO : MOdify the return type to handle eithers
-      }.wrapErrorsInList()
+      val enumReference = compiler.lookupTypeByName(enumName, caseFieldReferenceAssignment).flatMap { typeName ->
+         compiler.typeResolver(caseFieldReferenceAssignment.findNamespace())
+            .resolve(typeName, caseFieldReferenceAssignment)
+            .wrapErrorsInList()
+            .flatMap { type ->
+               require(type is EnumType) { "Expected $typeName to be an enum" }
+               val enumType = type as EnumType// for readability
+               val enumReference = caseFieldReferenceAssignment.Identifier().last()
+               if (enumType.has(enumReference.text)) {
+                  EnumValueAssignment(enumType, type.of(enumReference.text)).right()
+               } else {
+                  listOf(CompilationError(caseFieldReferenceAssignment.start, "Cannot resolve EnumValue of ${caseFieldReferenceAssignment.Identifier().text()}")).left()
+               }
+            }
+      }
       return enumReference
    }
 
@@ -254,7 +259,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
             val field = destructuredFieldType.field(fieldName)
             compileFieldAssignment(caseFieldAssigningContext, field.type)
          } else {
-           listOf(CompilationError(caseFieldAssigningContext.start,"Type ${destructuredFieldType.qualifiedName} does not declare a field $fieldName")).left()
+            listOf(CompilationError(caseFieldAssigningContext.start, "Type ${destructuredFieldType.qualifiedName} does not declare a field $fieldName")).left()
          }
 
       }
@@ -298,6 +303,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
          else -> error("Unhandled case match expression")
       }
    }
+
    private fun processLogicalExpressionContext(logicalExpressionCtx: TaxiParser.Logical_exprContext): Either<CompilationError, LogicalExpression> {
       return when (logicalExpressionCtx) {
          is TaxiParser.ComparisonExpressionContext -> processComparisonExpressionContext(logicalExpressionCtx.comparison_expr())
@@ -396,9 +402,10 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
          return ComparisonExpression(ComparisonOperator.forSymbol(comparisonExpressionContextWithOperator.comp_operator().text), mapped[0], mapped[1]).right()
       }
    }
+
    private fun compileSelectorExpression(selectorBlock: TaxiParser.ConditionalTypeWhenSelectorContext?, namespace: Namespace, targetType: Type): Either<List<CompilationError>, WhenSelectorExpression> {
       return when {
-         selectorBlock == null ->  EmptyReferenceSelector().right()
+         selectorBlock == null -> EmptyReferenceSelector().right()
          selectorBlock.mappedExpressionSelector() != null -> compileTypedAccessor(selectorBlock.mappedExpressionSelector(), namespace, targetType)
          selectorBlock.fieldReferenceSelector() != null -> compileFieldReferenceSelector(selectorBlock.fieldReferenceSelector(), targetType)
          else -> error("Unhandled where block selector condition")
@@ -422,10 +429,13 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
    }
 
    private fun compileTypedAccessor(expressionSelector: TaxiParser.MappedExpressionSelectorContext, namespace: Namespace, targetType: Type): Either<List<CompilationError>, AccessorExpressionSelector> {
-      return compiler.parseType(namespace, expressionSelector.typeType()).map { type ->
-         val accessor = compiler.compileScalarAccessor(expressionSelector.scalarAccessorExpression(), type)
-         AccessorExpressionSelector(accessor, type)
-      }.wrapErrorsInList()
+      return compiler.parseType(namespace, expressionSelector.typeType())
+         .wrapErrorsInList()
+         .flatMap { type ->
+            compiler.compileScalarAccessor(expressionSelector.scalarAccessorExpression(), type).map { accessor ->
+               AccessorExpressionSelector(accessor, type)
+            }
+         }
    }
 }
 

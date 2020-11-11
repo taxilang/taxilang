@@ -103,12 +103,10 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return lookupTypeByName(namespace, contextRule)
    }
 
-   fun lookupTypeByName(text: String, contextRule: ParserRuleContext): String {
+   fun lookupTypeByName(text: String, contextRule: ParserRuleContext): Either<List<CompilationError>,String> {
       createEmptyTypes()
       val namespace = contextRule.findNamespace()
-      return attemptToLookupTypeByName(namespace, text, contextRule).getOrHandle {
-         throw CompilationException(it)
-      }
+      return attemptToLookupTypeByName(namespace, text, contextRule).wrapErrorsInList()
    }
 
    fun findDeclaredTypeNames(): List<QualifiedName> {
@@ -423,9 +421,8 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             else -> TODO("Not handled: $typeRule")
          }
       }
-      if (errors.isNotEmpty()) {
-         throw CompilationException(errors)
-      }
+      this.errors.addAll(errors)
+
    }
 
    private fun compileTypeAliasExtension(namespace: Namespace, typeRule: TaxiParser.TypeAliasExtensionDeclarationContext): CompilationError? {

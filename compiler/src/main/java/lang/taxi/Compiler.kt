@@ -163,6 +163,7 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
 
    fun getDeclarationSource(text: String, context: ParserRuleContext): CompilationUnit? {
       val qualifiedName = tokenProcessrWithImports.lookupTypeByName(text, context)
+         .getOrHandle { errors -> throw CompilationException(errors) }
       return getCompilationUnit(tokenProcessrWithImports, qualifiedName)
    }
 
