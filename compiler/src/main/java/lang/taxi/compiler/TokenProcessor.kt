@@ -35,6 +35,10 @@ import lang.taxi.toCompilationError
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionDefinition
+import lang.taxi.services.FilterCapability
+import lang.taxi.services.QueryOperation
+import lang.taxi.services.QueryOperationCapability
+import lang.taxi.services.SimpleQueryCapability
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.utils.errorOrNull
@@ -1291,13 +1295,13 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
     * This is to support use cases where there are circular references (ie., synonyms where two enums point at each other).
     * If you don't need to support that usecase, use resolveEnumMember, which guarantees both the enum and the value.
     */
-   private fun resolveEnumValueName(enumQualifiedNameReference: TaxiParser.QualifiedNameContext):Either<CompilationError,EnumValueQualifiedName> {
+   private fun resolveEnumValueName(enumQualifiedNameReference: TaxiParser.QualifiedNameContext): Either<CompilationError, EnumValueQualifiedName> {
       return resolveEnumReference(enumQualifiedNameReference) { enumType, enumValueName ->
-        Either.right(EnumValue.enumValueQualifiedName(enumType,enumValueName))
+         Either.right(EnumValue.enumValueQualifiedName(enumType, enumValueName))
       }
    }
 
-   private fun <T> resolveEnumReference(enumQualifiedNameReference: TaxiParser.QualifiedNameContext, enumSelector: (EnumType,String) -> Either<CompilationError,T>): Either<CompilationError, T> {
+   private fun <T> resolveEnumReference(enumQualifiedNameReference: TaxiParser.QualifiedNameContext, enumSelector: (EnumType, String) -> Either<CompilationError, T>): Either<CompilationError, T> {
       val (enumName, enumValueName) = Enums.splitEnumValueQualifiedName(enumQualifiedNameReference.Identifier().text())
 
       return resolveUserType(enumQualifiedNameReference.findNamespace(), enumName.parameterizedName, enumQualifiedNameReference)
@@ -1361,39 +1365,98 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val services = this.tokens.unparsedServices.map { (qualifiedName, serviceTokenPair) ->
          val (namespace, serviceToken) = serviceTokenPair
          val serviceDoc = parseTypeDoc(serviceToken.typeDoc())
-         val methods = serviceToken.serviceBody().serviceOperationDeclaration().map { operationDeclaration ->
-            val signature = operationDeclaration.operationSignature()
-            parseTypeOrVoid(namespace, signature.operationReturnType()).map { returnType ->
-               val scope = operationDeclaration.operationScope()?.Identifier()?.text
-               val operationParameters = signature.parameters().map { operationParameterContext ->
-                  parseParameter(namespace, operationParameterContext)
-               }.reportAndRemoveErrorList()
-
-               parseOperationContract(operationDeclaration, returnType, namespace).map { contract ->
-                  Operation(name = signature.Identifier().text,
-                     scope = scope,
-                     annotations = collateAnnotations(operationDeclaration.annotation()),
-                     parameters = operationParameters,
-                     compilationUnits = listOf(operationDeclaration.toCompilationUnit()),
-                     returnType = returnType,
-                     contract = contract,
-                     typeDoc = parseTypeDoc(operationDeclaration.typeDoc())
-                  )
-               }
-
+         val members = serviceToken.serviceBody().serviceBodyMember().map { serviceBodyMember ->
+            when {
+               serviceBodyMember.serviceOperationDeclaration() != null -> compileOperation(serviceBodyMember.serviceOperationDeclaration())
+               serviceBodyMember.queryOperationDeclaration() != null -> compileQueryOperation(serviceBodyMember.queryOperationDeclaration())
+               else -> error("Unhandled type of service member. ")
             }
-         }.reportAndRemoveErrors()
-            .reportAndRemoveErrorList() // The double chaining seems to work, not a mistake, but not neccessarily readable.
+         }
+            .reportAndRemoveErrorList()
 
          Service(
             qualifiedName,
-            methods,
+            members,
             collateAnnotations(serviceToken.annotation()),
             listOf(serviceToken.toCompilationUnit()),
             serviceDoc
          )
       }
       this.services.addAll(services)
+   }
+
+   private fun compileQueryOperation(queryOperation: TaxiParser.QueryOperationDeclarationContext): Either<List<CompilationError>, QueryOperation> {
+      return parseType(queryOperation.findNamespace(), queryOperation.typeType())
+         .wrapErrorsInList()
+         .map { returnType ->
+            val name = queryOperation.Identifier().text
+            val grammar = queryOperation.queryGrammarName().Identifier().text
+            val capabilities = parseCapabilities(queryOperation)
+            QueryOperation(
+               name = name,
+               annotations = collateAnnotations(queryOperation.annotation()),
+               grammar = grammar,
+               returnType = returnType,
+               compilationUnits = listOf(queryOperation.toCompilationUnit()),
+               typeDoc = parseTypeDoc(queryOperation.typeDoc()),
+               capabilities = capabilities
+            )
+         }
+   }
+
+   private fun parseCapabilities(queryOperation: TaxiParser.QueryOperationDeclarationContext): List<QueryOperationCapability> {
+      return queryOperation.queryOperationCapabilities().queryOperationCapability().map { capabilityContext ->
+
+         when {
+            capabilityContext.queryFilterCapability() != null -> {
+               val filterOperations = capabilityContext.queryFilterCapability().filterCapability().map { filterCapability ->
+                  when {
+                     filterCapability.EQ() != null -> FilterCapability.FilterOperation.EQUAL
+                     filterCapability.GE() != null -> FilterCapability.FilterOperation.GREATER_THAN_EQUALS
+                     filterCapability.GT() != null -> FilterCapability.FilterOperation.GREATER_THAN
+                     filterCapability.IN() != null -> FilterCapability.FilterOperation.IN
+                     filterCapability.LE() != null -> FilterCapability.FilterOperation.LESS_THAN_EQUALS
+                     filterCapability.LT() != null -> FilterCapability.FilterOperation.LESS_THAN
+                     filterCapability.LIKE() != null -> FilterCapability.FilterOperation.LIKE
+                     else -> error("Unhandled token at ${filterCapability.toCompilationUnit().location}")
+                  }
+               }
+               FilterCapability(filterOperations)
+            }
+            capabilityContext.AVG() != null -> SimpleQueryCapability.AVG
+            capabilityContext.COUNT() != null -> SimpleQueryCapability.COUNT
+            capabilityContext.MAX() != null -> SimpleQueryCapability.MAX
+            capabilityContext.MIN() != null -> SimpleQueryCapability.MIN
+            capabilityContext.SUM() != null -> SimpleQueryCapability.SUM
+            else -> error("Unhandled token at ${capabilityContext.toCompilationUnit().location}")
+         }
+      }
+   }
+
+   private fun compileOperation(operationDeclaration: TaxiParser.ServiceOperationDeclarationContext): Either<List<CompilationError>, Operation> {
+      val signature = operationDeclaration.operationSignature()
+      val namespace = operationDeclaration.findNamespace()
+      return parseTypeOrVoid(namespace, signature.operationReturnType())
+         .wrapErrorsInList()
+         .flatMap { returnType ->
+            val scope = operationDeclaration.operationScope()?.Identifier()?.text
+            val operationParameters = signature.parameters().map { operationParameterContext ->
+               parseParameter(namespace, operationParameterContext)
+            }.reportAndRemoveErrorList()
+
+            parseOperationContract(operationDeclaration, returnType, namespace).map { contract ->
+               Operation(name = signature.Identifier().text,
+                  scope = scope,
+                  annotations = collateAnnotations(operationDeclaration.annotation()),
+                  parameters = operationParameters,
+                  compilationUnits = listOf(operationDeclaration.toCompilationUnit()),
+                  returnType = returnType,
+                  contract = contract,
+                  typeDoc = parseTypeDoc(operationDeclaration.typeDoc())
+               )
+            }
+
+         }
    }
 
    private fun parseParameter(namespace: Namespace, operationParameterContext: TaxiParser.OperationParameterContext): Either<List<CompilationError>, Parameter> {

@@ -1,6 +1,8 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.services.FilterCapability
+import lang.taxi.services.SimpleQueryCapability
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -84,4 +86,30 @@ object OperationSpec : Spek({
      //    param.constraints.should.have.size(1)
       }
    }
+   describe("Grammar for query operations") {
+      it("should compile query grammar") {
+         val queryOperation = """
+            model Person {}
+            service PersonService {
+               query personQuery(vyneQl):Person[] with capabilities {
+                  filter(=,in,like),
+                  sum,
+                  count
+               }
+            }
+         """.compiled()
+            .service("PersonService")
+            .queryOperation("personQuery")
+
+         queryOperation.grammar.should.equal("vyneQl")
+         queryOperation.returnType.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Person>")
+         val capabilities = queryOperation.capabilities
+         capabilities.should.have.size(3)
+         capabilities.should.contain.elements(SimpleQueryCapability.SUM, SimpleQueryCapability.COUNT)
+         val filter = capabilities.filterIsInstance<FilterCapability>().first()
+         filter.supportedOperations.should.have.size(3)
+         filter.supportedOperations.should.contain.elements(FilterCapability.FilterOperation.IN,FilterCapability.FilterOperation.EQUAL,FilterCapability.FilterOperation.LIKE)
+      }
+   }
+
 })
