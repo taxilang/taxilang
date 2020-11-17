@@ -1,6 +1,7 @@
 package lang.taxi.services
 
 import lang.taxi.Equality
+import lang.taxi.Operator
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.types.Annotatable
@@ -25,6 +26,7 @@ interface ServiceMember : Annotatable, Compiled, Documented {
 data class QueryOperation(
    override val name: String,
    override val annotations: List<Annotation>,
+   val parameters: List<Parameter>,
    val grammar: String,
    val returnType: Type,
    override val compilationUnits: List<CompilationUnit>,
@@ -40,38 +42,35 @@ interface QueryOperationCapability : TaxiStatementGenerator {
    companion object {
       val ALL: List<QueryOperationCapability> = SimpleQueryCapability.values().toList() +
          listOf(
-            FilterCapability(FilterCapability.FilterOperation.values().toList())
+            FilterCapability(Operator.values().toList())
          )
    }
 }
 
-data class FilterCapability(val supportedOperations: List<FilterOperation>) : QueryOperationCapability {
-   enum class FilterOperation(val symbol:String) {
-      EQUAL("="),
-      IN("in"),
-      LIKE("like"),
-      GREATER_THAN(">"),
-      GREATER_THAN_EQUALS(">="),
-      LESS_THAN("<"),
-      LESS_THAN_EQUALS("<=")
-   }
+data class FilterCapability(val supportedOperations: List<Operator>) : QueryOperationCapability {
 
    override fun asTaxi(): String {
       return "filter(${this.supportedOperations.joinToString(",") {it.symbol}})"
    }
 }
 
-enum class SimpleQueryCapability : QueryOperationCapability {
-   SUM,
-   COUNT,
-   AVG,
-   MIN,
-   MAX;
+enum class SimpleQueryCapability(val symbol:String) : QueryOperationCapability {
+   SUM("sum"),
+   COUNT("count"),
+   AVG("avg"),
+   MIN("min"),
+   MAX("max");
 
    override fun asTaxi(): String {
-      return this.name.toLowerCase()
+      return this.symbol
    }
 
+   companion object {
+      private val symbols = SimpleQueryCapability.values().associateBy { it.symbol }
+      fun parse(value: String): SimpleQueryCapability {
+         return symbols[value] ?: error("No capability matches symbol $value")
+      }
+   }
 }
 
 data class Operation(override val name: String,

@@ -294,18 +294,18 @@ serviceBody
 serviceBodyMember : serviceOperationDeclaration | queryOperationDeclaration;
 // Querying
 queryOperationDeclaration
-   :  typeDoc? annotation* 'query' Identifier '(' queryGrammarName ')' ':' typeType
+   :  typeDoc? annotation* queryGrammarName 'query' Identifier '(' operationParameterList ')' ':' typeType
       'with' 'capabilities' '{' queryOperationCapabilities '}';
 
 queryGrammarName : Identifier;
 queryOperationCapabilities: (queryOperationCapability (',' queryOperationCapability)*);
 
 queryOperationCapability:
-   queryFilterCapability | SUM | COUNT | AVG | MIN | MAX;
+   queryFilterCapability | Identifier;
 
 queryFilterCapability: 'filter'( '(' filterCapability (',' filterCapability)* ')');
 
-filterCapability: EQ | IN | LIKE | GT | GE | LT | LE;
+filterCapability: EQ | NQ | IN | LIKE | GT | GE | LT | LE;
 
 serviceOperationDeclaration
      : typeDoc? annotation* operationScope? 'operation' operationSignature
@@ -647,12 +647,6 @@ LIKE: 'like';
 AND : 'and' ;
 OR  : 'or' ;
 
-SUM: 'sum';
-COUNT: 'count';
-AVG: 'avg';
-MIN: 'min';
-MAX: 'max';
-
 Identifier
     :   Letter LetterOrDigit*
     | '`' ~('`')+ '`'
@@ -810,6 +804,9 @@ LT : '<' ;
 LE : '<=' ;
 EQ : '=' ;
 NQ : '!=';
+
+TRUE  : 'true' ;
+FALSE : 'false' ;
 
 MULT  : '*' ;
 DIV   : '/' ;

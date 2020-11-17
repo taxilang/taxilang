@@ -1386,51 +1386,50 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
    private fun compileQueryOperation(queryOperation: TaxiParser.QueryOperationDeclarationContext): Either<List<CompilationError>, QueryOperation> {
-      return parseType(queryOperation.findNamespace(), queryOperation.typeType())
+      val namespace = queryOperation.findNamespace()
+      return parseType(namespace, queryOperation.typeType())
          .wrapErrorsInList()
-         .map { returnType ->
-            val name = queryOperation.Identifier().text
-            val grammar = queryOperation.queryGrammarName().Identifier().text
-            val capabilities = parseCapabilities(queryOperation)
-            QueryOperation(
-               name = name,
-               annotations = collateAnnotations(queryOperation.annotation()),
-               grammar = grammar,
-               returnType = returnType,
-               compilationUnits = listOf(queryOperation.toCompilationUnit()),
-               typeDoc = parseTypeDoc(queryOperation.typeDoc()),
-               capabilities = capabilities
-            )
+         .flatMap { returnType ->
+            parseCapabilities(queryOperation).map { capabilities ->
+               val name = queryOperation.Identifier().text
+               val grammar = queryOperation.queryGrammarName().Identifier().text
+               val operationParameters = queryOperation.operationParameterList().operationParameter().map { operationParameterContext ->
+                  parseParameter(namespace, operationParameterContext)
+               }.reportAndRemoveErrorList()
+               QueryOperation(
+                  name = name,
+                  annotations = collateAnnotations(queryOperation.annotation()),
+                  grammar = grammar,
+                  returnType = returnType,
+                  compilationUnits = listOf(queryOperation.toCompilationUnit()),
+                  typeDoc = parseTypeDoc(queryOperation.typeDoc()),
+                  capabilities = capabilities,
+                  parameters = operationParameters
+               )
+            }
+
          }
    }
 
-   private fun parseCapabilities(queryOperation: TaxiParser.QueryOperationDeclarationContext): List<QueryOperationCapability> {
+   private fun parseCapabilities(queryOperation: TaxiParser.QueryOperationDeclarationContext): Either<List<CompilationError>,List<QueryOperationCapability>> {
       return queryOperation.queryOperationCapabilities().queryOperationCapability().map { capabilityContext ->
-
          when {
             capabilityContext.queryFilterCapability() != null -> {
                val filterOperations = capabilityContext.queryFilterCapability().filterCapability().map { filterCapability ->
-                  when {
-                     filterCapability.EQ() != null -> FilterCapability.FilterOperation.EQUAL
-                     filterCapability.GE() != null -> FilterCapability.FilterOperation.GREATER_THAN_EQUALS
-                     filterCapability.GT() != null -> FilterCapability.FilterOperation.GREATER_THAN
-                     filterCapability.IN() != null -> FilterCapability.FilterOperation.IN
-                     filterCapability.LE() != null -> FilterCapability.FilterOperation.LESS_THAN_EQUALS
-                     filterCapability.LT() != null -> FilterCapability.FilterOperation.LESS_THAN
-                     filterCapability.LIKE() != null -> FilterCapability.FilterOperation.LIKE
-                     else -> error("Unhandled token at ${filterCapability.toCompilationUnit().location}")
-                  }
+                  Operator.parse(filterCapability.text)
                }
-               FilterCapability(filterOperations)
+               FilterCapability(filterOperations).right()
             }
-            capabilityContext.AVG() != null -> SimpleQueryCapability.AVG
-            capabilityContext.COUNT() != null -> SimpleQueryCapability.COUNT
-            capabilityContext.MAX() != null -> SimpleQueryCapability.MAX
-            capabilityContext.MIN() != null -> SimpleQueryCapability.MIN
-            capabilityContext.SUM() != null -> SimpleQueryCapability.SUM
-            else -> error("Unhandled token at ${capabilityContext.toCompilationUnit().location}")
+            else -> {
+               try {
+                  SimpleQueryCapability.parse(capabilityContext.text).right()
+               } catch (e:Exception) {
+                  // Have hard-coded filter into the error message here, as it's not handled by the enum.  Probably gonna bite us at some point...
+                  CompilationError(queryOperation.start, "Unable to parse '${capabilityContext.text}' to a query capability.  Expected one of filter, ${SimpleQueryCapability.values().joinToString { it.symbol }}").left()
+               }
+            }
          }
-      }
+      }.invertEitherList()
    }
 
    private fun compileOperation(operationDeclaration: TaxiParser.ServiceOperationDeclarationContext): Either<List<CompilationError>, Operation> {
