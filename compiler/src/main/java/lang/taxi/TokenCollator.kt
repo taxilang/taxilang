@@ -52,6 +52,8 @@ data class Tokens(
    }
 
    private fun collectDuplicateTypes(others: Tokens): List<CompilationError> {
+      // Stubbed for a demo
+      return emptyList()
       // Don't allow definition of given types in multiple files.
       // Though this is a bit too strict (we'd like to allow multiple definitions that are semantically equivelant to each other)
       // this is a quick update to resolve the immediate issue at client side.
