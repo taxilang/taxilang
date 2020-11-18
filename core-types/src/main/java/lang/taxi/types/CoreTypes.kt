@@ -1,13 +1,24 @@
 package lang.taxi.types
 
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import lang.taxi.Equality
 
 interface TypeProvider {
    fun getType(qualifiedName: String): Type
 }
 
+data class InvalidNumberOfParametersError(val message: String) {
+   companion object {
+      fun forTypeAndCount(type: QualifiedName, expectedCount: Int) = InvalidNumberOfParametersError("Type $type expects $expectedCount arguments")
+   }
+}
+
 interface GenericType : Type {
    val parameters: List<Type>
+
+   fun withParameters(parameters: List<Type>): Either<InvalidNumberOfParametersError, GenericType>
 
    fun resolveTypes(typeSystem: TypeProvider): GenericType
 
@@ -20,8 +31,21 @@ interface GenericType : Type {
 
 data class ArrayType(val type: Type, val source: CompilationUnit, override val inheritsFrom: Set<Type> = emptySet()) : GenericType {
    companion object {
+      const val NAME = "lang.taxi.Array"
+      val qualifiedName = QualifiedName.from(NAME)
+      fun isTypedCollection(qualifiedName: QualifiedName): Boolean {
+         return qualifiedName.fullyQualifiedName == NAME
+            && qualifiedName.parameters.size == 1
+      }
+
+      fun untyped(source: CompilationUnit = CompilationUnit.unspecified()) = of(PrimitiveType.ANY, source)
       fun of(type: Type, source: CompilationUnit = CompilationUnit.unspecified(), inheritsFrom: Set<Type> = emptySet()): ArrayType {
          return ArrayType(type, source, inheritsFrom)
+      }
+
+      fun isArrayTypeName(requestedTypeName: String): Boolean {
+         // Resolve either lang.taxi.Array, or implicitly just Array
+         return requestedTypeName == qualifiedName.fullyQualifiedName || requestedTypeName == qualifiedName.typeName
       }
    }
 
@@ -40,8 +64,15 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
    override fun hashCode(): Int = equality.hash()
 
    override val compilationUnits: List<CompilationUnit> = listOf(source)
-   override val qualifiedName: String = PrimitiveType.ARRAY.qualifiedName
+   override val qualifiedName: String = NAME
    override val parameters: List<Type> = listOf(type)
+   override fun withParameters(parameters: List<Type>): Either<InvalidNumberOfParametersError, GenericType> {
+      return if (parameters.size != 1) {
+         InvalidNumberOfParametersError.forTypeAndCount(this.toQualifiedName(), 1).left()
+      } else {
+         this.copy(type = parameters.first()).right()
+      }
+   }
 
    override val format: List<String>? = null
    override val formattedInstanceOfType: Type? = null

@@ -4,7 +4,16 @@ import arrow.core.Either
 import lang.taxi.functions.Function
 import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.stdlib.StdLibSchema
-import lang.taxi.types.*
+import lang.taxi.types.DefinableToken
+import lang.taxi.types.ImportableToken
+import lang.taxi.types.ObjectType
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.TokenDefinition
+import lang.taxi.types.Type
+import lang.taxi.types.TypeDefinition
+import lang.taxi.types.TypeProvider
+import lang.taxi.types.UserType
 import lang.taxi.utils.toEither
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
@@ -57,7 +66,7 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
    }
 
    fun contains(qualifiedName: String): Boolean {
-      return isImported(qualifiedName) || compiledTokens.containsKey(qualifiedName)
+      return isImported(qualifiedName) || compiledTokens.containsKey(qualifiedName) || PrimitiveType.isPrimitiveType(qualifiedName)
    }
 
    private fun isImported(qualifiedName: String): Boolean {
@@ -174,6 +183,9 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       if (name.contains(".")) {
          // This is already qualified
          return name
+      }
+      if (PrimitiveType.isPrimitiveType(name)) {
+         return PrimitiveType.fromDeclaration(name).qualifiedName
       }
 
       // If the type was explicitly imported, use that

@@ -5,12 +5,54 @@ import arrow.core.flatMap
 import arrow.core.getOrHandle
 import arrow.core.left
 import arrow.core.right
-import lang.taxi.*
-import lang.taxi.types.*
+import lang.taxi.CompilationError
+import lang.taxi.CompilationException
+import lang.taxi.Namespace
+import lang.taxi.TaxiParser
+import lang.taxi.findNamespace
+import lang.taxi.text
+import lang.taxi.types.AccessorExpressionSelector
+import lang.taxi.types.AndExpression
+import lang.taxi.types.CalculatedFieldSetExpression
+import lang.taxi.types.ComparisonExpression
+import lang.taxi.types.ComparisonOperator
+import lang.taxi.types.ConditionalFieldSet
+import lang.taxi.types.ConstantEntity
+import lang.taxi.types.DestructuredAssignment
+import lang.taxi.types.ElseMatchExpression
+import lang.taxi.types.EmptyReferenceSelector
+import lang.taxi.types.EnumLiteralCaseMatchExpression
+import lang.taxi.types.EnumType
+import lang.taxi.types.EnumValue
+import lang.taxi.types.EnumValueAssignment
+import lang.taxi.types.FieldAssignmentExpression
+import lang.taxi.types.FieldReferenceEntity
+import lang.taxi.types.FieldReferenceSelector
+import lang.taxi.types.FieldSetExpression
+import lang.taxi.types.FormulaOperator
+import lang.taxi.types.InlineAssignmentExpression
+import lang.taxi.types.LiteralAssignment
+import lang.taxi.types.LiteralCaseMatchExpression
+import lang.taxi.types.LogicalConstant
+import lang.taxi.types.LogicalExpression
+import lang.taxi.types.LogicalVariable
+import lang.taxi.types.NullAssignment
+import lang.taxi.types.OrExpression
+import lang.taxi.types.ReferenceAssignment
+import lang.taxi.types.ReferenceCaseMatchExpression
+import lang.taxi.types.ScalarAccessorValueAssignment
+import lang.taxi.types.ValueAssignment
+import lang.taxi.types.WhenCaseBlock
+import lang.taxi.types.WhenCaseMatchExpression
+import lang.taxi.types.WhenFieldSetCondition
+import lang.taxi.types.WhenSelectorExpression
+import lang.taxi.utils.wrapErrorsInList
+import lang.taxi.value
+import lang.taxi.valueOrNull
 import org.antlr.v4.runtime.RuleContext
 
 class ConditionalFieldSetProcessor internal constructor(private val compiler: TokenProcessor) {
-   fun compileConditionalFieldStructure(fieldBlock: TaxiParser.ConditionalTypeStructureDeclarationContext, namespace: Namespace): Either<CompilationError, ConditionalFieldSet> {
+   fun compileConditionalFieldStructure(fieldBlock: TaxiParser.ConditionalTypeStructureDeclarationContext, namespace: Namespace): Either<List<CompilationError>, ConditionalFieldSet> {
       return compileCondition(fieldBlock.conditionalTypeConditionDeclaration(), namespace).map { condition ->
          val fields = fieldBlock.typeMemberDeclaration().mapNotNull { fieldDeclaration ->
             compiler.compiledField(fieldDeclaration, namespace)?.copy(readExpression = condition)
@@ -20,10 +62,10 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
       }
    }
 
-   fun compileCondition(conditionDeclaration: TaxiParser.ConditionalTypeConditionDeclarationContext, namespace: Namespace): Either<CompilationError, FieldSetExpression> {
+   fun compileCondition(conditionDeclaration: TaxiParser.ConditionalTypeConditionDeclarationContext, namespace: Namespace): Either<List<CompilationError>, FieldSetExpression> {
       return when {
          conditionDeclaration.conditionalTypeWhenDeclaration() != null -> compileWhenCondition(conditionDeclaration.conditionalTypeWhenDeclaration(), namespace)
-         conditionDeclaration.fieldExpression() != null -> compileFieldExpression(conditionDeclaration.fieldExpression(), namespace)
+         conditionDeclaration.fieldExpression() != null -> compileFieldExpression(conditionDeclaration.fieldExpression(), namespace).wrapErrorsInList()
          else -> error("Unhandled condition type")
       }
    }
@@ -51,7 +93,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
       }
    }
 
-   private fun compileWhenCondition(whenBlock: TaxiParser.ConditionalTypeWhenDeclarationContext, namespace: Namespace): Either<CompilationError, WhenFieldSetCondition> {
+   private fun compileWhenCondition(whenBlock: TaxiParser.ConditionalTypeWhenDeclarationContext, namespace: Namespace): Either<List<CompilationError>, WhenFieldSetCondition> {
       return compileSelectorExpression(whenBlock.conditionalTypeWhenSelector(), namespace).map { selectorExpression ->
          val cases = compileWhenCases(whenBlock.conditionalTypeWhenCaseDeclaration())
          WhenFieldSetCondition(selectorExpression, cases)
@@ -144,7 +186,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
          if (enumType.has(enumReference.text)) {
             Either.right(EnumValueAssignment(enumType, type.of(enumReference.text)))
          } else {
-            Either.left(CompilationError(caseFieldReferenceAssignment.start, "Cannot resolve EnumValue of ${caseFieldReferenceAssignment.Identifier().text()}"))
+            Either.left(CompilationError(caseFieldReferenceAssignment.start, "Cannot resolve EnumValue of ${caseFieldReferenceAssignment.Identifier().text()}").asList())
          }
          // TODO : MOdify the return type to handle eithers
       }.getOrHandle { error -> throw CompilationException(error) }
@@ -165,12 +207,12 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
             val (enumTypeName, enumValue) = EnumValue.splitEnumValueName(enumValueQualifiedName)
             val enumRef = compiler.typeResolver(caseDeclarationMatchExpression.findNamespace()).resolve(enumTypeName.fullyQualifiedName, caseDeclarationMatchExpression).flatMap { type ->
                if (type !is EnumType) {
-                  Either.left(CompilationError(caseDeclarationMatchExpression.start, "Type ${type.qualifiedName} is not an enum"))
+                  Either.left(CompilationError(caseDeclarationMatchExpression.start, "Type ${type.qualifiedName} is not an enum").asList())
                } else {
                   if (type.has(enumValue)) {
                      Either.right(type.of(enumValue))
                   } else {
-                     Either.left(CompilationError(caseDeclarationMatchExpression.start, "'$enumValue' is not defined on enum ${type.qualifiedName}"))
+                     Either.left(CompilationError(caseDeclarationMatchExpression.start, "'$enumValue' is not defined on enum ${type.qualifiedName}").asList())
                   }
                }
                // TODO : Fix this to return eithers
@@ -285,10 +327,10 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
       }
    }
 
-   private fun compileSelectorExpression(selectorBlock: TaxiParser.ConditionalTypeWhenSelectorContext?, namespace: Namespace): Either<CompilationError, WhenSelectorExpression> {
+   private fun compileSelectorExpression(selectorBlock: TaxiParser.ConditionalTypeWhenSelectorContext?, namespace: Namespace): Either<List<CompilationError>, WhenSelectorExpression> {
       return when {
          selectorBlock?.mappedExpressionSelector() != null -> compileTypedAccessor(selectorBlock.mappedExpressionSelector(), namespace)
-         selectorBlock?.fieldReferenceSelector() != null -> compileFieldReferenceSelector(selectorBlock.fieldReferenceSelector())
+         selectorBlock?.fieldReferenceSelector() != null -> compileFieldReferenceSelector(selectorBlock.fieldReferenceSelector()).wrapErrorsInList()
          else -> EmptyReferenceSelector().right()
       }
 
@@ -298,7 +340,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: To
       return FieldReferenceSelector(fieldReferenceSelector.Identifier().text).right()
    }
 
-   private fun compileTypedAccessor(expressionSelector: TaxiParser.MappedExpressionSelectorContext, namespace: Namespace): Either<CompilationError, AccessorExpressionSelector> {
+   private fun compileTypedAccessor(expressionSelector: TaxiParser.MappedExpressionSelectorContext, namespace: Namespace): Either<List<CompilationError>, AccessorExpressionSelector> {
       val accessor = compiler.compileScalarAccessor(expressionSelector.scalarAccessorExpression())
       return compiler.parseType(namespace, expressionSelector.typeType()).map { type ->
          AccessorExpressionSelector(accessor, type)

@@ -29,6 +29,18 @@ object OperationSpec : Spek({
             .returnType.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Trade>")
       }
 
+      it("is valid to return an array using the full syntax") {
+         """
+            model Trade {}
+            service Foo {
+               operation listAllTrades():lang.taxi.Array<Trade>
+            }
+         """.trimIndent()
+            .compiled().service("Foo")
+            .operation("listAllTrades")
+            .returnType.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Trade>")
+      }
+
       it("should parse constraints on inputs") {
          val param = """
             type Money {
@@ -187,6 +199,7 @@ count
          errors.should.have.size(1)
          errors.first().detailMessage.should.equal("mismatched input 'guessing' expecting {'in', 'like', '>', '>=', '<', '<=', '=', '!='}")
       }
+
 
    }
 

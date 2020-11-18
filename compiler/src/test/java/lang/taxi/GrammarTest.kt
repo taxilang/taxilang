@@ -162,6 +162,22 @@ namespace bar {
       expect(enumType.value("Male").annotations).to.have.size(1)
    }
 
+   @Test
+   fun arraysAreParsedInBothShorthandAndLonghand() {
+      val foo = """
+         type Name inherits String
+         model Foo {
+            nickNames: Name[]
+            petNames : Array<Name>
+            hatedNames: lang.taxi.Array<Name>
+         }
+      """.compiled()
+         .model("Foo")
+      foo.field("nickNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
+      foo.field("petNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
+      foo.field("hatedNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
+   }
+
    @Test(expected = CompilationException::class)
    fun given_typeIsRedeclaredWithSemanticallyEquivalentDefinition_then_itIsInValid() {
       val source1 = """

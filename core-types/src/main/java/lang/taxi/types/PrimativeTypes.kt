@@ -37,7 +37,7 @@ enum class PrimitiveType(
    TIME("Time", "Time only, excluding the date part", format = listOf("HH:mm:ss" )),
    DATE_TIME("DateTime", "A date and time, without a timezone.  Generally, favour using Instant which represents a point-in-time, as it has a timezone attached", format = listOf("yyyy-MM-dd'T'HH:mm:ss.SSS" )),
    INSTANT("Instant", "A point in time, with date, time and timezone.  Follows ISO standard convention of yyyy-MM-dd'T'HH:mm:ss.SSSZ", format = listOf("yyyy-MM-dd'T'HH:mm:ss[.SSS]X" )),
-   ARRAY("Array", "A collection of things"),
+//   ARRAY("Array", "A collection of things"),
    ANY("Any", "Can be anything.  Try to avoid using 'Any' as it's not descriptive - favour using a strongly typed approach instead"),
    DOUBLE("Double", "Represents a double-precision 64-bit IEEE 754 floating point number."),
    VOID("Void", "Nothing.  Represents the return value of operations that don't return anything.");
@@ -69,9 +69,9 @@ enum class PrimitiveType(
 //            return fromDeclaration(typeToken.primitiveType()!!.text)
 //        }
 
+      @Deprecated(replaceWith = ReplaceWith("ArrayType.isTypedCollection"), message = "Deprecated")
       fun isTypedCollection(qualifiedName: QualifiedName):Boolean {
-         return qualifiedName.fullyQualifiedName == PrimitiveType.ARRAY.qualifiedName
-            && qualifiedName.parameters.size == 1
+         return ArrayType.isTypedCollection(qualifiedName)
       }
       fun isPrimitiveType(qualifiedName: String): Boolean {
          return typesByLookup.containsKey(qualifiedName)
