@@ -69,6 +69,10 @@ enum class PrimitiveType(
 //            return fromDeclaration(typeToken.primitiveType()!!.text)
 //        }
 
+      fun isTypedCollection(qualifiedName: QualifiedName):Boolean {
+         return qualifiedName.fullyQualifiedName == PrimitiveType.ARRAY.qualifiedName
+            && qualifiedName.parameters.size == 1
+      }
       fun isPrimitiveType(qualifiedName: String): Boolean {
          return typesByLookup.containsKey(qualifiedName)
       }

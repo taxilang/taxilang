@@ -289,10 +289,25 @@ serviceDeclaration
     ;
 
 serviceBody
-    :   '{' serviceOperationDeclaration* '}'
+    :   '{' serviceBodyMember* '}'
     ;
+serviceBodyMember : serviceOperationDeclaration | queryOperationDeclaration;
+// Querying
+queryOperationDeclaration
+   :  typeDoc? annotation* queryGrammarName 'query' Identifier '(' operationParameterList ')' ':' typeType
+      'with' 'capabilities' '{' queryOperationCapabilities '}';
 
- serviceOperationDeclaration
+queryGrammarName : Identifier;
+queryOperationCapabilities: (queryOperationCapability (',' queryOperationCapability)*);
+
+queryOperationCapability:
+   queryFilterCapability | Identifier;
+
+queryFilterCapability: 'filter'( '(' filterCapability (',' filterCapability)* ')');
+
+filterCapability: EQ | NQ | IN | LIKE | GT | GE | LT | LE;
+
+serviceOperationDeclaration
      : typeDoc? annotation* operationScope? 'operation' operationSignature
      ;
 
@@ -465,9 +480,9 @@ thisIdentifier : 'this' '.' typeType;
 // TODO: Should consider revisiting this, so that operators are followed by valid tokens.
 // eg: 'in' must be followed by an array.  We could enforce this at the language, to simplify in Vyne
 policyOperator
-    : '='
-    | '!='
-    | 'in'
+    : EQ
+    | NQ
+    | IN
     ;
 
 literalArray
@@ -627,6 +642,11 @@ typeDoc
 lenientKeyword: 'lenient';
 defaultKeyword: 'default';
 
+IN: 'in';
+LIKE: 'like';
+AND : 'and' ;
+OR  : 'or' ;
+
 Identifier
     :   Letter LetterOrDigit*
     | '`' ~('`')+ '`'
@@ -642,6 +662,7 @@ StringLiteral
 BooleanLiteral
     :   'true' | 'false'
     ;
+
 
 fragment
 DoubleQuoteStringCharacter
@@ -776,15 +797,13 @@ LINE_COMMENT
     :   '//' ~[\r\n]* -> channel(HIDDEN)
     ;
 
+
 GT : '>' ;
 GE : '>=' ;
 LT : '<' ;
 LE : '<=' ;
 EQ : '=' ;
 NQ : '!=';
-
-AND : 'and' ;
-OR  : 'or' ;
 
 TRUE  : 'true' ;
 FALSE : 'false' ;
@@ -796,4 +815,3 @@ MINUS : '-' ;
 
 LPAREN : '(' ;
 RPAREN : ')' ;
-

@@ -2,11 +2,9 @@ package lang.taxi.services.operations.constraints
 
 import lang.taxi.Equality
 import lang.taxi.Operator
-import lang.taxi.services.Service
 import lang.taxi.types.AttributePath
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.QualifiedName
-import lang.taxi.types.toSet
 
 
 /**
@@ -49,7 +47,7 @@ data class PropertyFieldNameIdentifier(val name: AttributePath) : PropertyIdenti
 }
 
 // TODO : Syntax here is still up for discussion.  See OperationContextSpec
-data class PropertyTypeIdentifier(val type: QualifiedName) : PropertyIdentifier("type ${type.parameterizedName}", "this:${type.parameterizedName}")
+data class PropertyTypeIdentifier(val type: QualifiedName) : PropertyIdentifier("type ${type.parameterizedName}", type.parameterizedName)
 
 sealed class ValueExpression(val taxi: String)
 
