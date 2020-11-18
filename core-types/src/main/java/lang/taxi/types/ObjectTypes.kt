@@ -6,6 +6,7 @@ import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.utils.quoted
 import lang.taxi.utils.quotedIfNotAlready
+import lang.taxi.utils.quotedIfString
 import kotlin.reflect.KProperty1
 
 data class FieldExtension(
@@ -258,7 +259,7 @@ interface NameTypePair {
 data class Annotation(val name: String,
                       val parameters: Map<String, Any?> = emptyMap(),
                       val type: AnnotationType? = null
-) {
+) : TaxiStatementGenerator {
    constructor(type: AnnotationType, parameters: Map<String, Any?>) : this(type.qualifiedName, parameters, type)
 
    // For compatability.  Should probably migrate to using qualifiedName in
@@ -267,6 +268,21 @@ data class Annotation(val name: String,
 
    fun parameter(name: String): Any? {
       return parameters[name]
+   }
+
+   override fun asTaxi(): String {
+      val parameterTaxi = parameters.map { (name, value) ->
+         if (value != null) {
+            "$name = ${value.quotedIfString()}"
+         } else {
+            name
+         }
+      }.joinToString(", ")
+      return if (parameterTaxi.isNotEmpty()) {
+         """@$name($parameterTaxi)"""
+      } else {
+         """@$name"""
+      }
    }
 }
 

@@ -119,6 +119,31 @@ object OperationSpec : Spek({
          filter.supportedOperations.should.contain.elements(Operator.EQUAL, Operator.IN, Operator.LIKE)
       }
 
+      it("should generate taxi back from a compiled query operation") {
+         val queryOperationTaxi = """
+            model Person {}
+            type VyneQlQuery inherits String
+            service PersonService {
+               vyneQl query personQuery(@RequestBody body:VyneQlQuery):Person[] with capabilities {
+                  filter(=,in,like),
+                  sum,
+                  count
+               }
+            }
+         """.compiled()
+            .service("PersonService")
+            .queryOperation("personQuery")
+            .asTaxi()
+         val expected = """vyneQl query personQuery(@RequestBody body: VyneQlQuery):lang.taxi.Array<Person> with capabilities {
+filter(=,in,like),
+sum,
+count
+}"""
+         queryOperationTaxi
+            .withoutWhitespace()
+            .should.equal(expected.withoutWhitespace())
+      }
+
       it("should give a compilation error for an unknown return type") {
          val errors = """
             type VyneQlQuery inherits String
@@ -162,6 +187,15 @@ object OperationSpec : Spek({
          errors.should.have.size(1)
          errors.first().detailMessage.should.equal("mismatched input 'guessing' expecting {'in', 'like', '>', '>=', '<', '<=', '=', '!='}")
       }
+
    }
 
 })
+
+fun String.withoutWhitespace(): String {
+   return this
+      .lines()
+      .map { it.trim().replace(" ","") }
+      .filter { it.isNotEmpty() }
+      .joinToString("")
+}
