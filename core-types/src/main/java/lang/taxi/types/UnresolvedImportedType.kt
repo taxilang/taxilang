@@ -1,8 +1,5 @@
 package lang.taxi.types
 
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.Type
-
 /**
  * Represents an import which has not been resolved, and no definition
  * has yet been discovered.
@@ -35,6 +32,8 @@ class UnresolvedImportedType(override val qualifiedName: String) : Type {
    override val calculation: lang.taxi.types.Formula?
       get() = TODO("Not yet implemented")
    override val offset: Int?
+      get() = TODO("Not yet implemented")
+   override val typeDoc: String?
       get() = TODO("Not yet implemented")
 
 }

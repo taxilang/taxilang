@@ -3,9 +3,9 @@ package lang.taxi.compiler
 import lang.taxi.CompilationError
 import lang.taxi.TaxiDocument
 import lang.taxi.Tokens
+import lang.taxi.types.ArrayType
 import lang.taxi.types.ImportableToken
 import lang.taxi.types.PrimitiveType
-import lang.taxi.types.Type
 import lang.taxi.types.UserType
 import org.antlr.v4.runtime.Token
 import java.util.*
@@ -53,6 +53,14 @@ internal class ImportedTypeCollator(
 
 
    private fun getImportableToken(name: String, referencingToken: Token): ImportableToken? {
+      // Allow imports of primitive and built-in types to not cause errors
+      if (PrimitiveType.isPrimitiveType(name)) {
+         return PrimitiveType.fromDeclaration(name)
+      }
+      if (ArrayType.isArrayTypeName(name)) {
+         return ArrayType.untyped()
+      }
+
       val importableToken = this.importSources.firstOrNull { it.containsImportable(name) }?.importableToken(name)
       return importableToken
    }

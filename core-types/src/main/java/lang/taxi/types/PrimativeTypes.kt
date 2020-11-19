@@ -11,6 +11,7 @@ enum class VoidType : Type {
    override val inheritsFromPrimitive: Boolean by lazy { wrapper.inheritsFromPrimitive }
    override val basePrimitive: PrimitiveType? by lazy { wrapper.basePrimitive }
    override val definitionHash: String? by lazy { wrapper.definitionHash }
+   override val typeDoc: String = "Nothing"
 
    override val qualifiedName: String = "lang.taxi.Void"
    override val compilationUnits: List<CompilationUnit> = listOf(CompilationUnit.ofSource(SourceCode("Built in", "// Built-in type")))
@@ -24,7 +25,7 @@ enum class VoidType : Type {
 
 enum class PrimitiveType(
    val declaration: String,
-   val typeDoc: String,
+   override val typeDoc: String,
    override val format: List<String>? = null,
    override val formattedInstanceOfType: Type? = null,
    override val calculation: Formula? = null,

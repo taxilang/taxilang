@@ -63,6 +63,8 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
 
+   override val typeDoc: String = "A collection of things"
+
    override val compilationUnits: List<CompilationUnit> = listOf(source)
    override val qualifiedName: String = NAME
    override val parameters: List<Type> = listOf(type)
