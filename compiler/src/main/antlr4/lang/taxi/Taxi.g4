@@ -194,6 +194,7 @@ scalarAccessorExpression
     | conditionalTypeConditionDeclaration
     | defaultDefinition
     | readFunction
+    | readExpression
     ;
 
 xpathAccessorDeclaration : 'xpath' '(' accessorExpression ')';
@@ -538,6 +539,7 @@ readFunction: functionName '(' formalParameterList? ')';
 //         'leftAndUpperCase' |
 //         'midAndUpperCase'
 //         ;
+readExpression: readFunction arithmaticOperator literal;
 functionName: qualifiedName;
 formalParameterList
     : parameter  (',' parameter)*
