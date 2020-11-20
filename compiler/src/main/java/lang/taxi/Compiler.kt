@@ -310,14 +310,14 @@ fun TaxiParser.LiteralContext.isNullValue(): Boolean {
 
 interface NamespaceQualifiedTypeResolver {
    val namespace: String
-   fun resolve(context: TaxiParser.TypeTypeContext): Either<CompilationError, Type>
+   fun resolve(context: TaxiParser.TypeTypeContext): Either<List<CompilationError>, Type>
 
    /**
     * Resolves a type name that has been requested in a source file.
     * Considers the namespace it's declared in, and declared imports to qualify
     * short-hand references to fully-qualified imports
     */
-   fun resolve(requestedTypeName: String, context: ParserRuleContext): Either<CompilationError, Type>
+   fun resolve(requestedTypeName: String, context: ParserRuleContext): Either<List<CompilationError>, Type>
 }
 
 
@@ -325,8 +325,8 @@ interface NamespaceQualifiedTypeResolver {
 // wrapping Either<> call sites to handle the error.
 // Just throw the exception.
 // In future, we'll be better, promise.
-fun Either<CompilationError, Type>.orThrowCompilationException(): Type {
-   return this.getOrHandle { e -> throw CompilationException(listOf(e)) }
+fun Either<List<CompilationError>, Type>.orThrowCompilationException(): Type {
+   return this.getOrHandle { e -> throw CompilationException(e) }
 }
 
 fun RuleContext.importsInFile(): List<QualifiedName> {

@@ -15,8 +15,13 @@ import lang.taxi.types.TaxiStatementGenerator
 import lang.taxi.types.Type
 import lang.taxi.types.toSet
 
-data class Parameter(override val annotations: List<Annotation>, override val type: Type, override val name: String?, override val constraints: List<Constraint>, val isVarArg: Boolean = false) : Annotatable, ConstraintTarget, NameTypePair {
+data class Parameter(override val annotations: List<Annotation>, override val type: Type, override val name: String?, override val constraints: List<Constraint>, val isVarArg: Boolean = false) : Annotatable, ConstraintTarget, NameTypePair, TaxiStatementGenerator {
    override val description: String = "param $name"
+   override fun asTaxi(): String {
+      val annotationTaxi = annotations.joinToString(" ") { it.asTaxi() }
+      val namePrefix = if (name.isNullOrBlank()) "" else "$name:"
+      return "$annotationTaxi $namePrefix ${type.qualifiedName}".trim()
+   }
 }
 
 interface ServiceMember : Annotatable, Compiled, Documented {
@@ -31,8 +36,18 @@ data class QueryOperation(
    val returnType: Type,
    override val compilationUnits: List<CompilationUnit>,
    val capabilities: List<QueryOperationCapability>,
-   override val typeDoc: String? = null) : ServiceMember, Annotatable, Compiled, Documented {
+   override val typeDoc: String? = null) : ServiceMember, Annotatable, Compiled, Documented, TaxiStatementGenerator {
    private val equality = Equality(this, QueryOperation::name, QueryOperation::annotations, QueryOperation::returnType)
+   override fun asTaxi(): String {
+      val parameterTaxi = parameters.joinToString(",") {it.asTaxi() }
+      val annotations = this.annotations.joinToString { it.asTaxi() }
+      return """$annotations
+         |$grammar query $name($parameterTaxi):${returnType.toQualifiedName().parameterizedName} with capabilities {
+         |${this.capabilities.joinToString(", \n") { it.asTaxi() }}
+         |}
+      """.trimMargin()
+         .trim()
+   }
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()

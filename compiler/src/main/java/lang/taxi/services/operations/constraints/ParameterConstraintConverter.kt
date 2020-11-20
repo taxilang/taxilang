@@ -10,12 +10,13 @@ import lang.taxi.services.Service
 import lang.taxi.types.Compiled
 import lang.taxi.types.ObjectType
 import lang.taxi.types.Type
+import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 
 
 interface ConstraintProvider {
    fun applies(constraint: TaxiParser.ParameterConstraintExpressionContext): Boolean
-   fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<CompilationError, Constraint>
+   fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<List<CompilationError>, Constraint>
 }
 
 interface ValidatingConstraintProvider : ConstraintProvider {
@@ -81,10 +82,10 @@ class OperationConstraintConverter(
          // to handle this.
          ?.filter { it.propertyFormatExpression() == null }
          ?.map { buildConstraint(it, paramType, namespaceQualifiedTypeResolver) }
-         ?.invertEitherList() ?: Either.right(listOf())
+         ?.invertEitherList()?.flattenErrors() ?: Either.right(listOf())
    }
 
-   private fun buildConstraint(constraint: TaxiParser.ParameterConstraintExpressionContext, paramType: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<CompilationError, Constraint> {
+   private fun buildConstraint(constraint: TaxiParser.ParameterConstraintExpressionContext, paramType: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<List<CompilationError>, Constraint> {
       return constraintProviders
          .first { it.applies(constraint) }
          .build(constraint, paramType, typeResolver)

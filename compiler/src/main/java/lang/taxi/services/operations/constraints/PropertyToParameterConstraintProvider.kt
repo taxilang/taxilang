@@ -123,7 +123,7 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       return constraint.propertyToParameterConstraintExpression() != null
    }
 
-   fun build(ast: PropertyToParameterConstraintAst, type: Type, typeResolver: NamespaceQualifiedTypeResolver, context: ParserRuleContext): Either<CompilationError, Constraint> {
+   fun build(ast: PropertyToParameterConstraintAst, type: Type, typeResolver: NamespaceQualifiedTypeResolver, context: ParserRuleContext): Either<List<CompilationError>, Constraint> {
       // Could be either a type name or a field name
       val operator = Operator.parse(ast.operator)
 
@@ -134,7 +134,7 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       }
    }
 
-   override fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<CompilationError, Constraint> {
+   override fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<List<CompilationError>, Constraint> {
       val ast = parseToAst(constraint.propertyToParameterConstraintExpression())
       return build(ast,type,typeResolver,constraint)
    }
@@ -164,7 +164,7 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       return PropertyToParameterConstraintAst(astLhs,operator,astRhs)
    }
 
-   private fun parseLhs(lhs: PropertyToParameterConstraintAst.AstLhs, typeResolver: NamespaceQualifiedTypeResolver, context: ParserRuleContext): Either<CompilationError, PropertyIdentifier> {
+   private fun parseLhs(lhs: PropertyToParameterConstraintAst.AstLhs, typeResolver: NamespaceQualifiedTypeResolver, context: ParserRuleContext): Either<List<CompilationError>, PropertyIdentifier> {
       return when {
          lhs.lhsPropertyFieldNameQualifier != null -> {
             Either.right(PropertyFieldNameIdentifier(AttributePath.from(lhs.typeOrFieldQualifiedName.removePrefix("this."))))
@@ -173,7 +173,7 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       }
    }
 
-   private fun parseRhs(rhs: PropertyToParameterConstraintAst.AstRhs): Either<CompilationError, ValueExpression> {
+   private fun parseRhs(rhs: PropertyToParameterConstraintAst.AstRhs): Either<List<CompilationError>, ValueExpression> {
       return when {
          rhs.literal != null -> Either.right(ConstantValueExpression(rhs.literal))
          rhs.attributePath != null -> Either.right(RelativeValueExpression(rhs.attributePath))

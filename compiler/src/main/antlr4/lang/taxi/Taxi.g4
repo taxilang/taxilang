@@ -1,4 +1,3 @@
-
 grammar Taxi;
 
 // starting point for parsing a taxi file
@@ -177,8 +176,7 @@ fieldDeclaration
   ;
 
 typeType
-    :   classOrInterfaceType listType? optionalType? parameterConstraint? aliasedType?
-    |   primitiveType listType? optionalType? parameterConstraint?
+    :   classOrInterfaceType typeArguments? listType? optionalType? parameterConstraint? aliasedType?
     ;
 
 accessor : scalarAccessor | objectAccessor;
@@ -213,6 +211,7 @@ classOrInterfaceType
     :   Identifier /* typeArguments? */ ('.' Identifier /* typeArguments? */ )*
     ;
 
+typeArguments: '<' typeType (',' typeType)* '>';
 
 // A "lenient" enum will match on case insensitive values
 enumDeclaration
@@ -583,27 +582,28 @@ optionalType
    : '?'
    ;
 
-primitiveType
-    : primitiveTypeName
-    | 'lang.taxi.' primitiveTypeName
-    ;
+//primitiveType
+//    : primitiveTypeName
+//    | 'lang.taxi.' primitiveTypeName
+//    ;
+//
+//primitiveTypeName
+//    :   'Boolean'
+//    |   'String'
+//    |   'Int'
+//    |   'Double'
+//    |   'Decimal'
+////    The "full-date" notation of RFC3339, namely yyyy-mm-dd. Does not support time or time zone-offset notation.
+//    |   'Date'
+////    The "partial-time" notation of RFC3339, namely hh:mm:ss[.ff...]. Does not support date or time zone-offset notation.
+//    |   'Time'
+//// Combined date-only and time-only with a separator of "T", namely yyyy-mm-ddThh:mm:ss[.ff...]. Does not support a time zone offset.
+//    |   'DateTime'
+//// A timestamp, indicating an absolute point in time.  Includes timestamp.  Should be rfc3339 format.  (eg: 2016-02-28T16:41:41.090Z)
+//    |   'Instant'
+//    |  'Any'
+//    ;
 
-primitiveTypeName
-    :   'Boolean'
-    |   'String'
-    |   'Int'
-    |   'Double'
-    |   'Decimal'
-//    The "full-date" notation of RFC3339, namely yyyy-mm-dd. Does not support time or time zone-offset notation.
-    |   'Date'
-//    The "partial-time" notation of RFC3339, namely hh:mm:ss[.ff...]. Does not support date or time zone-offset notation.
-    |   'Time'
-// Combined date-only and time-only with a separator of "T", namely yyyy-mm-ddThh:mm:ss[.ff...]. Does not support a time zone offset.
-    |   'DateTime'
-// A timestamp, indicating an absolute point in time.  Includes timestamp.  Should be rfc3339 format.  (eg: 2016-02-28T16:41:41.090Z)
-    |   'Instant'
-    |  'Any'
-    ;
 // https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md#date
 literal
     :   IntegerLiteral

@@ -46,7 +46,7 @@ object QualifiedNameParser {
    private fun convertArrayShorthand(name: String): String {
       if (name.endsWith("[]")) {
          val arrayType = name.removeSuffix("[]")
-         return PrimitiveType.ARRAY.qualifiedName + "<$arrayType>"
+         return ArrayType.NAME + "<$arrayType>"
       } else {
          return name
       }
