@@ -8,7 +8,12 @@ import lang.taxi.generators.java.DefaultServiceMapper
 import lang.taxi.generators.java.TaxiGenerator
 import lang.taxi.testing.TestHelpers
 import org.junit.Test
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal
 
 class HttpExtensionTest {
@@ -61,9 +66,9 @@ namespace vyne.demo {
     @ServiceDiscoveryClient(serviceName = "mockService")
     service CreditCostService {
         @HttpOperation(method = "GET" , url = "/costs/interestRates/{vyne.demo.ClientId}")
-        operation getInterestRate(  ClientId ) : Decimal
+        operation getInterestRate(  clientId: ClientId ) : Decimal
         @HttpOperation(method = "POST" , url = "/costs/{vyne.demo.ClientId}/doCalculate")
-        operation calculateCreditCosts(  ClientId, @RequestBody CreditCostRequest ) : CreditCostResponse
+        operation calculateCreditCosts(  clientId: ClientId, @RequestBody request: CreditCostRequest ) : CreditCostResponse
     }
 }
         """.trimIndent()
