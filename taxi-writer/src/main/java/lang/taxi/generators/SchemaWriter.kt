@@ -3,9 +3,20 @@ package lang.taxi.generators
 import lang.taxi.TaxiDocument
 import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract
+import lang.taxi.services.QueryOperation
 import lang.taxi.services.Service
 import lang.taxi.services.operations.constraints.Constraint
-import lang.taxi.types.*
+import lang.taxi.types.Accessor
+import lang.taxi.types.Annotatable
+import lang.taxi.types.ArrayType
+import lang.taxi.types.EnumType
+import lang.taxi.types.Field
+import lang.taxi.types.ObjectType
+import lang.taxi.types.TaxiStatementGenerator
+import lang.taxi.types.Type
+import lang.taxi.types.TypeAlias
+import lang.taxi.types.UnresolvedImportedType
+import lang.taxi.types.VoidType
 
 
 open class SchemaWriter {
@@ -117,9 +128,13 @@ $taxiBlock
    }
 
    private fun generateServiceDeclaration(service: Service, namespace: String): String {
-      val operations = service.operations
-         .map { generateOperationDeclaration(it, namespace) }
-         .joinToString("\n").prependIndent()
+      val operations = service.members.joinToString("\n") {
+         when (it) {
+            is QueryOperation -> it.asTaxi()
+            is Operation -> generateOperationDeclaration(it, namespace)
+            else -> error("Unhandled service member type ${it::class.simpleName}")
+         }
+      }.prependIndent()
 //        service PersonService {
 //            @Get("/foo/bar")
 //            operation getPerson(@AnotherAnnotation PersonId):Person
@@ -257,14 +272,19 @@ $enumValueDeclarations
       return when {
          type is ArrayType -> typeAsTaxi(type.type, currentNamespace) + "[]"
          type is UnresolvedImportedType -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace)
-         type.formattedInstanceOfType != null -> typeAsTaxi(type.formattedInstanceOfType!!, currentNamespace) + """( ${writeFormat(type.format!!)} )"""
+         type.formattedInstanceOfType != null -> typeAsTaxi(type.formattedInstanceOfType!!, currentNamespace) + """( ${writeFormat(type.format, type.offset)} )"""
          type is ObjectType && type.calculatedInstanceOfType != null -> typeAsTaxi(type.calculatedInstanceOfType!!, currentNamespace) + " " + type.calculation!!.asTaxi()
          else -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace)
       }
    }
 
-   private fun writeFormat(formats: List<String>): String {
-      return formats.map { """@format = "$it"""" }.joinToString(", ")
+   private fun writeFormat(formats: List<String>?, offset: Int?): String {
+      return when {
+         formats != null && offset != null -> """@format = [${formats.joinToString(", ") { """"$it"""" }}] @offset = $offset"""
+         formats != null -> formats.joinToString(", ") { """@format = "$it"""" }
+         offset != null -> """@offset = $offset"""
+         else -> ""
+      }
    }
 }
 

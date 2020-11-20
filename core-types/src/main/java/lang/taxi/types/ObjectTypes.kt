@@ -6,6 +6,7 @@ import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.utils.quoted
 import lang.taxi.utils.quotedIfNotAlready
+import lang.taxi.utils.quotedIfString
 import kotlin.reflect.KProperty1
 
 data class FieldExtension(
@@ -32,6 +33,7 @@ data class ObjectTypeDefinition(
    val formattedInstanceOfType: Type? = null,
    val calculatedInstanceOfType: Type? = null,
    val calculation: Formula? = null,
+   val offset: Int? = null,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
@@ -222,6 +224,20 @@ data class ObjectType(
       return type.inheritsFrom.map { it.toQualifiedName() }.plus(type.toQualifiedName())
    }
 
+   override val offset: Int?
+      get() {
+         return if (this.definition?.offset != null) {
+            this.definition?.offset
+         } else {
+            val inheritedOffsets = this.inheritsFrom.filter { it.offset != null }
+            when {
+               inheritedOffsets.isEmpty() -> null
+               inheritedOffsets.size == 1 -> inheritedOffsets.first().offset
+               else -> error("Multiple formats found in inheritence - this is an error")
+            }
+         }
+      }
+
 }
 
 
@@ -243,7 +259,7 @@ interface NameTypePair {
 data class Annotation(val name: String,
                       val parameters: Map<String, Any?> = emptyMap(),
                       val type: AnnotationType? = null
-) {
+) : TaxiStatementGenerator {
    constructor(type: AnnotationType, parameters: Map<String, Any?>) : this(type.qualifiedName, parameters, type)
 
    // For compatability.  Should probably migrate to using qualifiedName in
@@ -252,6 +268,21 @@ data class Annotation(val name: String,
 
    fun parameter(name: String): Any? {
       return parameters[name]
+   }
+
+   override fun asTaxi(): String {
+      val parameterTaxi = parameters.map { (name, value) ->
+         if (value != null) {
+            "$name = ${value.quotedIfString()}"
+         } else {
+            name
+         }
+      }.joinToString(", ")
+      return if (parameterTaxi.isNotEmpty()) {
+         """@$name($parameterTaxi)"""
+      } else {
+         """@$name"""
+      }
    }
 }
 

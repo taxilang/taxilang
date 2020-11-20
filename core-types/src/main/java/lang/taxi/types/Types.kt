@@ -118,7 +118,7 @@ class LazyLoadingWrapper(private val type: Type) {
 
 interface ImportableToken : Named, Compiled
 
-interface Type : Named, Compiled, ImportableToken {
+interface Type : Named, Compiled, ImportableToken, Documented {
    val inheritsFrom: Set<Type>
 
    val allInheritedTypes: Set<Type>
@@ -134,6 +134,8 @@ interface Type : Named, Compiled, ImportableToken {
    val definitionHash: String?
 
    val calculation: Formula?
+
+   val offset: Int?
 
    fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
       val allExcludedTypes: Set<Type> = typesToExclude + setOf(this)

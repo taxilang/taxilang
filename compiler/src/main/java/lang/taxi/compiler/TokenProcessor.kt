@@ -35,6 +35,11 @@ import lang.taxi.toCompilationError
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionDefinition
+import lang.taxi.functions.FunctionExpressionAccessor
+import lang.taxi.services.FilterCapability
+import lang.taxi.services.QueryOperation
+import lang.taxi.services.QueryOperationCapability
+import lang.taxi.services.SimpleQueryCapability
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.utils.errorOrNull
@@ -46,6 +51,7 @@ import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.awt.EventQueue
 import java.nio.charset.Charset
+import javax.print.DocFlavor
 
 internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocument> = emptyList(), collectImports: Boolean = true) {
 
@@ -103,7 +109,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return lookupTypeByName(namespace, contextRule)
    }
 
-   fun lookupTypeByName(text: String, contextRule: ParserRuleContext): Either<List<CompilationError>,String> {
+   fun lookupTypeByName(text: String, contextRule: ParserRuleContext): Either<List<CompilationError>, String> {
       createEmptyTypes()
       val namespace = contextRule.findNamespace()
       return attemptToLookupTypeByName(namespace, text, contextRule).wrapErrorsInList()
@@ -139,8 +145,8 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
 
    private fun lookupTypeByName(namespace: Namespace, type: TaxiParser.TypeTypeContext): String {
-      return if (type.primitiveType() != null) {
-         PrimitiveType.fromDeclaration(type.primitiveType()!!.text).qualifiedName
+      return if (PrimitiveType.isPrimitiveType(type.text)) {
+         PrimitiveType.fromDeclaration(type.text).qualifiedName
       } else {
          lookupTypeByName(namespace, type.classOrInterfaceType().text, importsInSource(type))
       }
@@ -401,10 +407,10 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             is TaxiParser.TypeDeclarationContext -> compileType(namespace, tokenName, tokenRule)
             is TaxiParser.AnnotationTypeDeclarationContext -> compileAnnotationType(tokenName, namespace, tokenRule)
             is TaxiParser.EnumDeclarationContext -> compileEnum(namespace, tokenName, tokenRule).collectErrors(errors)
-            is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(namespace, tokenName, tokenRule).collectError(errors)
+            is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(namespace, tokenName, tokenRule).collectErrors(errors)
             // TODO : This is a bit broad - assuming that all typeType's that hit this
             // line will be a TypeAlias inline.  It could be a normal field declaration.
-            is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(namespace, tokenRule).collectError(errors)
+            is TaxiParser.TypeTypeContext -> compileInlineTypeAlias(namespace, tokenRule).collectErrors(errors)
             else -> TODO("Not handled: $tokenRule")
          }
       } finally {
@@ -451,7 +457,17 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             assertTypesCompatible(type.field(fieldName).type, refinedType, fieldName, typeName, typeRule)
          }
 
-         val defaultValue = member?.typeExtensionFieldDeclaration()
+         val enumConstantValue = member
+            ?.typeExtensionFieldDeclaration()
+            ?.typeExtensionFieldTypeRefinement()
+            ?.constantDeclaration()
+            ?.defaultDefinition()
+            ?.qualifiedName()?.let { enumDefaultValue ->
+               assertEnumDefaultValueCompatibility(refinedType!! as EnumType, enumDefaultValue.text, fieldName, typeRule)
+            }
+
+         val constantValue = enumConstantValue ?: member
+            ?.typeExtensionFieldDeclaration()
             ?.typeExtensionFieldTypeRefinement()
             ?.constantDeclaration()
             ?.defaultDefinition()
@@ -459,7 +475,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                defaultValueParser.parseDefaultValue(defaultDefinitionContext, refinedType!!)
             }?.collectError(errors)?.getOrElse { null }
 
-         FieldExtension(fieldName, fieldAnnotations, refinedType, defaultValue)
+         FieldExtension(fieldName, fieldAnnotations, refinedType, constantValue)
       }
       val errorMessage = type.addExtension(ObjectTypeExtension(annotations, fieldExtensions, typeDoc, typeRule.toCompilationUnit()))
       return errorMessage
@@ -477,7 +493,25 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return refinedType
    }
 
-   private fun compileTypeAlias(namespace: Namespace, tokenName: String, tokenRule: TaxiParser.TypeAliasDeclarationContext): Either<CompilationError, TypeAlias> {
+   private fun assertLiteralDefaultValue(refinedType: Type, defaultValue: Any, fieldName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext) {
+      val valid = when {
+         refinedType.basePrimitive == PrimitiveType.STRING && defaultValue is String -> true
+         refinedType.basePrimitive == PrimitiveType.DECIMAL && defaultValue is Number -> true
+         refinedType.basePrimitive == PrimitiveType.INTEGER && defaultValue is Number -> true
+         refinedType.basePrimitive == PrimitiveType.BOOLEAN && defaultValue is Boolean -> true
+         else -> false
+      }
+      if (!valid) {
+         throw CompilationException(typeRule.start, "Cannot set default value for field $fieldName as $defaultValue as it is not compatible with ${refinedType.basePrimitive?.qualifiedName}", typeRule.source().sourceName)
+      }
+   }
+
+   private fun assertEnumDefaultValueCompatibility(enumType: EnumType, defaultValue: String, fieldName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext): EnumValue {
+      return enumType.values.firstOrNull { enumValue -> enumValue.qualifiedName == defaultValue }
+         ?: throw CompilationException(typeRule.start, "Cannot set default value for field $fieldName as $defaultValue as enum ${enumType.toQualifiedName().fullyQualifiedName} does not have corresponding value", typeRule.source().sourceName)
+   }
+
+   private fun compileTypeAlias(namespace: Namespace, tokenName: String, tokenRule: TaxiParser.TypeAliasDeclarationContext): Either<List<CompilationError>, TypeAlias> {
       return parseType(namespace, tokenRule.aliasedType().typeType()).map { aliasedType ->
          val annotations = collateAnnotations(tokenRule.annotation())
          val definition = TypeAliasDefinition(aliasedType, annotations, tokenRule.toCompilationUnit(), typeDoc = parseTypeDoc(tokenRule.typeDoc()))
@@ -567,13 +601,12 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val modifiers = parseModifiers(ctx.typeModifier())
       val inherits = parseTypeInheritance(namespace, ctx.listOfInheritedTypes())
       val typeDoc = parseTypeDoc(ctx.typeDoc()?.source()?.content)
-      val format: List<String>? = null
       this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(
          fields = fields.toSet(),
          annotations = annotations.toSet(),
          modifiers = modifiers,
          inheritsFrom = inherits,
-         format = format,
+         format = null,
          typeDoc = typeDoc,
          compilationUnit = ctx.toCompilationUnit()
       )))
@@ -598,7 +631,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
          parseInheritedType(namespace, typeTypeContext) {
             when (it) {
-               is EnumType -> Either.left(CompilationError(typeTypeContext.start, "A Type cannot inherit from an Enum"))
+               is EnumType -> CompilationError(typeTypeContext.start, "A Type cannot inherit from an Enum").asList().left()
                else -> Either.right(it)
             }
          }
@@ -612,21 +645,25 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val typeTypeContext = enumInheritedTypeContext.typeType()
       return parseInheritedType(namespace, typeTypeContext) {
          when (it) {
-            !is EnumType -> Either.left(CompilationError(typeTypeContext.start, "An Enum can only inherit from an Enum"))
+            !is EnumType -> CompilationError(typeTypeContext.start, "An Enum can only inherit from an Enum").asList().left()
             else -> Either.right(it)
          }
       }
 
    }
 
-   private inline fun parseInheritedType(namespace: Namespace, typeTypeContext: TaxiParser.TypeTypeContext, filter: (Type) -> Either<CompilationError, Type>): Type? {
+   private inline fun parseInheritedType(namespace: Namespace, typeTypeContext: TaxiParser.TypeTypeContext, filter: (Type) -> Either<List<CompilationError>, Type>): Type? {
       val inheritedTypeOrError = parseType(namespace, typeTypeContext)
 
       val inheritedEnumTypeOrError = if (inheritedTypeOrError.isRight()) {
          filter(inheritedTypeOrError.getOrElse { null }!!)
       } else inheritedTypeOrError
 
-      return inheritedEnumTypeOrError.reportIfCompilationError(errors)
+      return inheritedEnumTypeOrError
+         .getOrHandle {
+            this.errors.addAll(it)
+            null
+         }
    }
 
 
@@ -704,12 +741,12 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    private fun parseElementValue(elementValue: TaxiParser.ElementValueContext): Either<List<CompilationError>, Any> {
       return when {
          elementValue.literal() != null -> elementValue.literal().value().right()
-         elementValue.qualifiedName() != null -> resolveEnumMember(elementValue.qualifiedName()).wrapErrorsInList()
+         elementValue.qualifiedName() != null -> resolveEnumMember(elementValue.qualifiedName())
          else -> error("Unhandled element value: ${elementValue.text}")
       }
    }
 
-   private fun parseTypeOrVoid(namespace: Namespace, returnType: TaxiParser.OperationReturnTypeContext?): Either<CompilationError, Type> {
+   private fun parseTypeOrVoid(namespace: Namespace, returnType: TaxiParser.OperationReturnTypeContext?): Either<List<CompilationError>, Type> {
       return if (returnType == null) {
          VoidType.VOID.right()
       } else {
@@ -717,19 +754,18 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
-   internal fun parseType(namespace: Namespace, typeType: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
-      val typeOrError = typeOrError(namespace, typeType)
-      return typeOrError.flatMap { type ->
-         parseTypeFormat(typeType).flatMap { format ->
+   internal fun parseType(namespace: Namespace, typeType: TaxiParser.TypeTypeContext): Either<List<CompilationError>, Type> {
+      return typeOrError(namespace, typeType).flatMap { type ->
+         parseTypeFormat(typeType).flatMap { (formats, zoneOffset) ->
             if (typeType.listType() != null) {
-               if (format != null) {
-                  Either.left(CompilationError(typeType.start, "It is invalid to declare a format on an array"))
+               if (formats.isNotEmpty() || zoneOffset != null) {
+                  CompilationError(typeType.start, "It is invalid to declare a format / offset on an array").asList().left()
                } else {
                   Either.right(ArrayType(type, typeType.toCompilationUnit()))
                }
             } else {
-               if (format != null) {
-                  generateFormattedSubtype(type, format, typeType)
+               if (formats.isNotEmpty() || zoneOffset != null) {
+                  generateFormattedSubtype(type, FormatsAndZoneoffset(formats, zoneOffset), typeType)
                } else {
                   Either.right(type)
                }
@@ -740,30 +776,48 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    internal fun parseType(namespace: Namespace,
                           formula: Formula,
-                          typeType: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
+                          typeType: TaxiParser.TypeTypeContext): Either<List<CompilationError>, Type> {
       val typeOrError = typeOrError(namespace, typeType)
       return typeOrError.flatMap { type ->
          if (typeType.listType() != null) {
-            Either.left(CompilationError(typeType.start,
-               "It is invalid to declare calculated type on an array"))
+            CompilationError(typeType.start, "It is invalid to declare calculated type on an array").asList().left()
          } else {
-            generateCalculatedFieldType(type, formula)
+            generateCalculatedFieldType(type, formula).wrapErrorsInList()
          }
       }
    }
 
-   internal fun typeOrError(namespace: Namespace, typeType: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
+   internal fun typeOrError(namespace: Namespace, typeType: TaxiParser.TypeTypeContext): Either<List<CompilationError>, Type> {
       return when {
          typeType.aliasedType() != null -> compileInlineTypeAlias(namespace, typeType)
-         typeType.classOrInterfaceType() != null -> resolveUserType(namespace, typeType.classOrInterfaceType())
-         typeType.primitiveType() != null -> PrimitiveType.fromDeclaration(typeType.getChild(0).text).right()
+         typeType.classOrInterfaceType() != null -> resolveUserType(namespace, typeType.classOrInterfaceType(), typeType.typeArguments())
+//         typeType.primitiveType() != null -> PrimitiveType.fromDeclaration(typeType.getChild(0).text).right()
          else -> throw IllegalArgumentException()
       }
    }
 
-   private fun generateFormattedSubtype(type: Type, format: List<String>, typeType: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
+   private fun generateFormattedSubtype(type: Type,
+                                        formatOffsetPair: FormatsAndZoneoffset,
+                                        typeType: TaxiParser.TypeTypeContext): Either<List<CompilationError>, Type> {
+      val (format, offset) = formatOffsetPair;
+      if (offset != null && type.basePrimitive != PrimitiveType.INSTANT) {
+         return CompilationError(typeType.start, "@offset is only applicable to Instant based types").asList().left()
+      }
+
+      //// https://en.wikipedia.org/wiki/List_of_UTC_time_offsets - time offsets range [UTC-12, UTC+14]
+      if (offset != null && (offset < -720 || offset > 840)) {
+         return CompilationError(typeType.start,
+            "@offset value can't be larger than 840 (UTC+14) or smaller than -720 (UTC-12)")
+            .asList().left()
+      }
+
       val formattedTypeName = QualifiedName.from(type.qualifiedName).let { originalTypeName ->
-         val hash = Hashing.sha256().hashString(format.joinToString(), Charset.defaultCharset()).toString().takeLast(6)
+         val hash = if (offset == null) {
+            // just to avoid too many hash changes in existing taxonomies.
+            Hashing.sha256().hashString(format.joinToString { it }, Charset.defaultCharset()).toString().takeLast(6)
+         } else {
+            Hashing.sha256().hashString(format.joinToString { it }.plus(offset.toString()), Charset.defaultCharset()).toString().takeLast(6)
+         }
          originalTypeName.copy(typeName = "Formatted${originalTypeName.typeName}_$hash")
       }
 
@@ -775,7 +829,8 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             ObjectTypeDefinition(
                emptySet(),
                inheritsFrom = setOf(type),
-               format = format,
+               format = if (format.isNotEmpty()) format else null,
+               offset = offset,
                formattedInstanceOfType = type,
                compilationUnit = CompilationUnit.generatedFor(type)
             )
@@ -812,20 +867,32 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
-   private fun parseTypeFormat(typeType: TaxiParser.TypeTypeContext): Either<CompilationError, List<String>?> {
-      val formatExpressions = typeType.parameterConstraint()?.parameterConstraintExpressionList()?.parameterConstraintExpression()
-         ?.mapNotNull { it.propertyFormatExpression() } ?: emptyList()
-      return when {
-         formatExpressions.isEmpty() -> Either.right(null)
-         else -> Either.right(formatExpressions.map { stringLiteralValue(it.StringLiteral()) })
-      }
+   private fun parseTypeFormat(typeType: TaxiParser.TypeTypeContext): Either<List<CompilationError>, FormatsAndZoneoffset> {
+      val formatExpressions = typeType
+         .parameterConstraint()
+         ?.parameterConstraintExpressionList()
+         ?.parameterConstraintExpression()
+         ?.filter { it.propertyFormatExpression() != null }
+         ?.map { it.propertyFormatExpression().StringLiteral() }
+         ?.map { stringLiteralValue(it) }
+         ?: typeType
+            .parameterConstraint()
+            ?.temporalFormatList()
+            ?.StringLiteral()
+            ?.filterNotNull()
+            ?.map { stringLiteralValue(it) }
+         ?: emptyList()
+
+      val offsetValue = typeType
+         .parameterConstraint()?.temporalFormatList()?.instantOffsetExpression()?.intValue()
+      return Either.right(FormatsAndZoneoffset(formatExpressions, offsetValue))
    }
 
    /**
     * Handles type aliases that are declared inline (firstName : PersonFirstName as String)
     * rather than those declared explicitly (type alias PersonFirstName as String)
     */
-   private fun compileInlineTypeAlias(namespace: Namespace, aliasTypeDefinition: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
+   private fun compileInlineTypeAlias(namespace: Namespace, aliasTypeDefinition: TaxiParser.TypeTypeContext): Either<List<CompilationError>, Type> {
       return parseType(namespace, aliasTypeDefinition.aliasedType().typeType()).map { aliasedType ->
          val declaredTypeName = aliasTypeDefinition.classOrInterfaceType().Identifier().text()
          val typeAliasName = if (declaredTypeName.contains(".")) {
@@ -841,11 +908,11 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
-   private fun resolveUserType(namespace: Namespace, requestedTypeName: String, imports: List<QualifiedName>, context: ParserRuleContext): Either<CompilationError, Type> {
+   private fun resolveUserType(namespace: Namespace, requestedTypeName: String, imports: List<QualifiedName>, context: ParserRuleContext): Either<List<CompilationError>, Type> {
       return resolveUserToken(namespace, requestedTypeName, imports, context) { qualifiedTypeName ->
          if (tokens.unparsedTypes.contains(qualifiedTypeName)) {
             compileToken(qualifiedTypeName)
-            typeSystem.getTypeOrError(qualifiedTypeName, context)
+            typeSystem.getTypeOrError(qualifiedTypeName, context).wrapErrorsInList()
          } else {
             null
          }
@@ -860,60 +927,77 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       // Method which takes the resolved qualified name, and checks to see if there is an unparsed token.
       // If so, the method should compile the token and return the compilation result in the either.
       // If not, then the method should return false.
-      unparsedCheckAndCompile: (String) -> Either<CompilationError, ImportableToken>?
-   ): Either<CompilationError, ImportableToken> {
-      return attemptToLookupTypeByName(namespace, requestedTypeName, context).flatMap { qualifiedTypeName ->
-         if (typeSystem.contains(qualifiedTypeName)) {
-            return@flatMap typeSystem.getTokenOrError(qualifiedTypeName, context)
-               .flatMap { importableToken ->
-                  if (importableToken is DefinableToken<*> && !importableToken.isDefined) {
-                     unparsedCheckAndCompile(qualifiedTypeName) ?: Either.right(importableToken)
-                  } else {
-                     Either.right(importableToken)
+      unparsedCheckAndCompile: (String) -> Either<List<CompilationError>, ImportableToken>?
+   ): Either<List<CompilationError>, ImportableToken> {
+      return attemptToLookupTypeByName(namespace, requestedTypeName, context)
+         .wrapErrorsInList()
+         .flatMap { qualifiedTypeName ->
+            if (typeSystem.contains(qualifiedTypeName)) {
+               return@flatMap typeSystem.getTokenOrError(qualifiedTypeName, context)
+                  .wrapErrorsInList()
+                  .flatMap { importableToken ->
+                     if (importableToken is DefinableToken<*> && !importableToken.isDefined) {
+                        unparsedCheckAndCompile(qualifiedTypeName) ?: Either.right(importableToken)
+                     } else {
+                        Either.right(importableToken)
+                     }
                   }
+            }
+
+            // Check to see if the token is unparsed, and
+            // ccmpile if so
+            val compilationResult = unparsedCheckAndCompile(qualifiedTypeName)
+            if (compilationResult != null) {
+               return@flatMap compilationResult!!
+            }
+
+            // Note: Use requestedTypeName, as qualifying it to the local namespace didn't help
+            val error = { CompilationError(context.start, ErrorMessages.unresolvedType(requestedTypeName), context.source().sourceName).asList() }
+
+            if (ArrayType.isArrayTypeName(requestedTypeName)) {
+               return@flatMap ArrayType.untyped().right()
+            }
+
+            val requestedNameIsQualified = requestedTypeName.contains(".")
+            if (!requestedNameIsQualified) {
+               val importedTypeName = imports.firstOrNull { it.typeName == requestedTypeName }
+               if (importedTypeName != null) {
+                  typeSystem.getTokenOrError(importedTypeName.parameterizedName, context).wrapErrorsInList()
+               } else {
+                  Either.left(error())
                }
-//               .flatMap { importableToken ->
-//               if (importableToken is DefinableToken<*> && !importableToken.isDefined) {
-//                  f = unparsedCheckAndCompile(qualifiedTypeName)
-//               } else {
-//                  Either.right(importableToken)
-//               }
-
-         }
-
-         // Check to see if the token is unparsed, and
-         // ccmpile if so
-         val compilationResult = unparsedCheckAndCompile(qualifiedTypeName)
-         if (compilationResult != null) {
-            return@flatMap compilationResult!!
-         }
-
-         // Note: Use requestedTypeName, as qualifying it to the local namespace didn't help
-         val error = { CompilationError(context.start, ErrorMessages.unresolvedType(requestedTypeName), context.source().sourceName) }
-
-         val requestedNameIsQualified = requestedTypeName.contains(".")
-         if (!requestedNameIsQualified) {
-            val importedTypeName = imports.firstOrNull { it.typeName == requestedTypeName }
-            if (importedTypeName != null) {
-               typeSystem.getTokenOrError(importedTypeName.parameterizedName, context)
             } else {
                Either.left(error())
             }
-         } else {
-            Either.left(error())
          }
-      }
    }
 
-   private fun resolveUserType(namespace: Namespace, classType: TaxiParser.ClassOrInterfaceTypeContext): Either<CompilationError, Type> {
-      return resolveUserType(namespace, classType.Identifier().text(), classType)
+   private fun resolveUserType(namespace: Namespace, classType: TaxiParser.ClassOrInterfaceTypeContext, typeArgumentCtx: TaxiParser.TypeArgumentsContext? = null): Either<List<CompilationError>, Type> {
+      val typeArgumentTokens = typeArgumentCtx?.typeType() ?: emptyList()
+      return typeArgumentTokens.map { typeArgument -> parseType(namespace, typeArgument) }
+         .invertEitherList().flattenErrors()
+         .flatMap { typeArguments ->
+            resolveUserType(namespace, classType.Identifier().text(), classType)
+               .flatMap { type ->
+                  if (typeArgumentCtx == null) {
+                     type.right()
+                  } else {
+                     if (type !is GenericType) {
+                        CompilationError(typeArgumentCtx.start, "Type ${type.qualifiedName} does not permit type arguments").asList().left()
+                     } else {
+                        type.withParameters(typeArguments)
+                           .mapLeft { listOf(CompilationError(typeArgumentCtx.start, it.message)) }
+                     }
+                  }
+               }
+         }
    }
 
-   private fun resolveUserType(namespace: Namespace, requestedTypeName: String, context: ParserRuleContext): Either<CompilationError, Type> {
+   private fun resolveUserType(namespace: Namespace, requestedTypeName: String, context: ParserRuleContext): Either<List<CompilationError>, Type> {
       return resolveUserType(namespace, requestedTypeName, importsInSource(context), context)
    }
 
-   internal fun resolveFunction(requestedFunctionName: String, context: ParserRuleContext): Either<CompilationError, Function> {
+   internal fun resolveFunction(requestedFunctionName: String, context: ParserRuleContext): Either<List<CompilationError>, Function> {
       val namespace = context.findNamespace()
       return resolveUserToken(namespace, requestedFunctionName, importsInSource(context), context) { qualifiedName ->
          if (tokens.unparsedFunctions.contains(qualifiedName)) {
@@ -1024,7 +1108,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return declaredSynonyms.map { synonym ->
          resolveEnumValueName(synonym)
 
-      }.invertEitherList()
+      }.invertEitherList().flattenErrors()
    }
 
    /**
@@ -1033,15 +1117,15 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
     * Use resolveEnumValueName if you need to handle circular references, where the enum may not
     * have already been compiled.
     */
-   private fun resolveEnumMember(enumQualifiedNameReference: TaxiParser.QualifiedNameContext): Either<CompilationError, EnumMember> {
+   private fun resolveEnumMember(enumQualifiedNameReference: TaxiParser.QualifiedNameContext): Either<List<CompilationError>, EnumMember> {
       return resolveEnumReference(enumQualifiedNameReference) { enumType, enumValueName ->
          when {
             !enumType.isDefined -> {
                // This happens if there's an enum with a circular reference.
                // That's supported, but we defer
-               Either.left(CompilationError(enumQualifiedNameReference.start, "An internal error occurred processing ${enumType.qualifiedName}, attempting to resolve an EnumMember on a non-compiled enum - use resolveEnumValueName, or compile the enum first."))
+               CompilationError(enumQualifiedNameReference.start, "An internal error occurred processing ${enumType.qualifiedName}, attempting to resolve an EnumMember on a non-compiled enum - use resolveEnumValueName, or compile the enum first.").asList().left()
             }
-            !enumType.has(enumValueName) -> CompilationError(enumQualifiedNameReference.start, "${enumType.qualifiedName} does not have a member $enumValueName").left()
+            !enumType.has(enumValueName) -> CompilationError(enumQualifiedNameReference.start, "${enumType.qualifiedName} does not have a member $enumValueName").asList().left()
             else -> Either.right(enumType.member(enumValueName))
          }
       }
@@ -1053,13 +1137,13 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
     * This is to support use cases where there are circular references (ie., synonyms where two enums point at each other).
     * If you don't need to support that usecase, use resolveEnumMember, which guarantees both the enum and the value.
     */
-   private fun resolveEnumValueName(enumQualifiedNameReference: TaxiParser.QualifiedNameContext):Either<CompilationError,EnumValueQualifiedName> {
+   private fun resolveEnumValueName(enumQualifiedNameReference: TaxiParser.QualifiedNameContext): Either<List<CompilationError>, EnumValueQualifiedName> {
       return resolveEnumReference(enumQualifiedNameReference) { enumType, enumValueName ->
-        Either.right(EnumValue.enumValueQualifiedName(enumType,enumValueName))
+         Either.right(EnumValue.enumValueQualifiedName(enumType, enumValueName))
       }
    }
 
-   private fun <T> resolveEnumReference(enumQualifiedNameReference: TaxiParser.QualifiedNameContext, enumSelector: (EnumType,String) -> Either<CompilationError,T>): Either<CompilationError, T> {
+   private fun <T> resolveEnumReference(enumQualifiedNameReference: TaxiParser.QualifiedNameContext, enumSelector: (EnumType, String) -> Either<List<CompilationError>, T>): Either<List<CompilationError>, T> {
       val (enumName, enumValueName) = Enums.splitEnumValueQualifiedName(enumQualifiedNameReference.Identifier().text())
 
       return resolveUserType(enumQualifiedNameReference.findNamespace(), enumName.parameterizedName, enumQualifiedNameReference)
@@ -1067,7 +1151,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             if (enumType is EnumType) {
                enumSelector(enumType, enumValueName)
             } else {
-               Either.left(CompilationError(enumQualifiedNameReference.start, "${enumType.qualifiedName} is not an Enum"))
+               CompilationError(enumQualifiedNameReference.start, "${enumType.qualifiedName} is not an Enum").asList().left()
             }
          }
    }
@@ -1092,10 +1176,12 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    private fun compileFunctions() {
       val compiledFunctions = this.tokens.unparsedFunctions.map { (qualifiedName, namespaceAndParserContext) ->
          compileFunction(namespaceAndParserContext, qualifiedName)
-      }.reportAndRemoveErrors(errors)
+      }.invertEitherList()
+         .flattenErrors()
+         .collectErrors(errors)
    }
 
-   private fun compileFunction(namespaceAndParserContext: Pair<Namespace, TaxiParser.FunctionDeclarationContext>, qualifiedName: String): Either<CompilationError, Function> {
+   private fun compileFunction(namespaceAndParserContext: Pair<Namespace, TaxiParser.FunctionDeclarationContext>, qualifiedName: String): Either<List<CompilationError>, Function> {
       if (typeSystem.isDefined(qualifiedName)) {
          // The function may have already been compiled
          // if it's been used inline.
@@ -1123,33 +1209,18 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       val services = this.tokens.unparsedServices.map { (qualifiedName, serviceTokenPair) ->
          val (namespace, serviceToken) = serviceTokenPair
          val serviceDoc = parseTypeDoc(serviceToken.typeDoc())
-         val methods = serviceToken.serviceBody().serviceOperationDeclaration().map { operationDeclaration ->
-            val signature = operationDeclaration.operationSignature()
-            parseTypeOrVoid(namespace, signature.operationReturnType()).map { returnType ->
-               val scope = operationDeclaration.operationScope()?.Identifier()?.text
-               val operationParameters = signature.parameters().map { operationParameterContext ->
-                  parseParameter(namespace, operationParameterContext)
-               }.reportAndRemoveErrorList(errors)
-
-               parseOperationContract(operationDeclaration, returnType, namespace).map { contract ->
-                  Operation(name = signature.Identifier().text,
-                     scope = scope,
-                     annotations = collateAnnotations(operationDeclaration.annotation()),
-                     parameters = operationParameters,
-                     compilationUnits = listOf(operationDeclaration.toCompilationUnit()),
-                     returnType = returnType,
-                     contract = contract,
-                     typeDoc = parseTypeDoc(operationDeclaration.typeDoc())
-                  )
-               }
-
+         val members = serviceToken.serviceBody().serviceBodyMember().map { serviceBodyMember ->
+            when {
+               serviceBodyMember.serviceOperationDeclaration() != null -> compileOperation(serviceBodyMember.serviceOperationDeclaration())
+               serviceBodyMember.queryOperationDeclaration() != null -> compileQueryOperation(serviceBodyMember.queryOperationDeclaration())
+               else -> error("Unhandled type of service member. ")
             }
-         }.reportAndRemoveErrors(errors)
-            .reportAndRemoveErrorList(errors) // The double chaining seems to work, not a mistake, but not neccessarily readable.
+         }
+            .reportAndRemoveErrorList(errors)
 
          Service(
             qualifiedName,
-            methods,
+            members,
             collateAnnotations(serviceToken.annotation()),
             listOf(serviceToken.toCompilationUnit()),
             serviceDoc
@@ -1158,9 +1229,78 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       this.services.addAll(services)
    }
 
+   private fun compileQueryOperation(queryOperation: TaxiParser.QueryOperationDeclarationContext): Either<List<CompilationError>, QueryOperation> {
+      val namespace = queryOperation.findNamespace()
+      return parseType(namespace, queryOperation.typeType())
+         .flatMap { returnType ->
+            parseCapabilities(queryOperation).map { capabilities ->
+               val name = queryOperation.Identifier().text
+               val grammar = queryOperation.queryGrammarName().Identifier().text
+               val operationParameters = queryOperation.operationParameterList().operationParameter().map { operationParameterContext ->
+                  parseParameter(namespace, operationParameterContext)
+               }.reportAndRemoveErrorList(errors)
+               QueryOperation(
+                  name = name,
+                  annotations = collateAnnotations(queryOperation.annotation()),
+                  grammar = grammar,
+                  returnType = returnType,
+                  compilationUnits = listOf(queryOperation.toCompilationUnit()),
+                  typeDoc = parseTypeDoc(queryOperation.typeDoc()),
+                  capabilities = capabilities,
+                  parameters = operationParameters
+               )
+            }
+
+         }
+   }
+
+   private fun parseCapabilities(queryOperation: TaxiParser.QueryOperationDeclarationContext): Either<List<CompilationError>, List<QueryOperationCapability>> {
+      return queryOperation.queryOperationCapabilities().queryOperationCapability().map { capabilityContext ->
+         when {
+            capabilityContext.queryFilterCapability() != null -> {
+               val filterOperations = capabilityContext.queryFilterCapability().filterCapability().map { filterCapability ->
+                  Operator.parse(filterCapability.text)
+               }
+               FilterCapability(filterOperations).right()
+            }
+            else -> {
+               try {
+                  SimpleQueryCapability.parse(capabilityContext.text).right()
+               } catch (e: Exception) {
+                  // Have hard-coded filter into the error message here, as it's not handled by the enum.  Probably gonna bite us at some point...
+                  CompilationError(queryOperation.start, "Unable to parse '${capabilityContext.text}' to a query capability.  Expected one of filter, ${SimpleQueryCapability.values().joinToString { it.symbol }}").left()
+               }
+            }
+         }
+      }.invertEitherList()
+   }
+
+   private fun compileOperation(operationDeclaration: TaxiParser.ServiceOperationDeclarationContext): Either<List<CompilationError>, Operation> {
+      val signature = operationDeclaration.operationSignature()
+      val namespace = operationDeclaration.findNamespace()
+      return parseTypeOrVoid(namespace, signature.operationReturnType())
+         .flatMap { returnType ->
+            val scope = operationDeclaration.operationScope()?.Identifier()?.text
+            val operationParameters = signature.parameters().map { operationParameterContext ->
+               parseParameter(namespace, operationParameterContext)
+            }.reportAndRemoveErrorList(errors)
+
+            parseOperationContract(operationDeclaration, returnType, namespace).map { contract ->
+               Operation(name = signature.Identifier().text,
+                  scope = scope,
+                  annotations = collateAnnotations(operationDeclaration.annotation()),
+                  parameters = operationParameters,
+                  compilationUnits = listOf(operationDeclaration.toCompilationUnit()),
+                  returnType = returnType,
+                  contract = contract,
+                  typeDoc = parseTypeDoc(operationDeclaration.typeDoc())
+               )
+            }
+         }
+   }
+
    private fun parseParameter(namespace: Namespace, operationParameterContext: TaxiParser.OperationParameterContext): Either<List<CompilationError>, Parameter> {
       return parseType(namespace, operationParameterContext.typeType())
-         .mapLeft { listOf(it) }
          .flatMap { paramType ->
             mapConstraints(operationParameterContext.typeType(), paramType, namespace).map { constraints ->
                val isVarargs = operationParameterContext.varargMarker() != null
@@ -1199,7 +1339,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
    private fun compilePolicies() {
-      val compiledPolicies = this.tokens.unparsedPolicies.map { (name, namespaceTokenPair) ->
+      this.tokens.unparsedPolicies.map { (name, namespaceTokenPair) ->
          val (namespace, token) = namespaceTokenPair
 
          parseType(namespace, token.typeType()).map { targetType ->
@@ -1213,19 +1353,20 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
                compilationUnits = listOf(token.toCompilationUnit())
             )
          }
-      }.reportAndRemoveErrors(errors)
-      this.policies.addAll(compiledPolicies)
+      }.invertEitherList().flattenErrors()
+         .mapLeft { this.errors.addAll(it) }
+         .map { this.policies.addAll(it) }
    }
 
    fun typeResolver(namespace: Namespace): NamespaceQualifiedTypeResolver {
       return object : NamespaceQualifiedTypeResolver {
          override val namespace: String = namespace
 
-         override fun resolve(context: TaxiParser.TypeTypeContext): Either<CompilationError, Type> {
+         override fun resolve(context: TaxiParser.TypeTypeContext): Either<List<CompilationError>, Type> {
             return parseType(namespace, context)
          }
 
-         override fun resolve(requestedTypeName: String, context: ParserRuleContext): Either<CompilationError, Type> {
+         override fun resolve(requestedTypeName: String, context: ParserRuleContext): Either<List<CompilationError>, Type> {
             return resolveUserType(namespace, requestedTypeName, context)
          }
       }
@@ -1315,3 +1456,6 @@ private fun <T : Any> Either<CompilationError, T>.reportIfCompilationError(error
 // This is primarily to stop us processing errors multiple times as they make their way
 // up the stack
 data class ReportedError(val error: CompilationError)
+data class FormatsAndZoneoffset(val formats: List<String>, val utcZoneoffsetInMinutes: Int?)
+
+fun CompilationError.asList(): List<CompilationError> = listOf(this)

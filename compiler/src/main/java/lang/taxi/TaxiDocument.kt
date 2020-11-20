@@ -61,7 +61,7 @@ open class TaxiDocument(val types: Set<Type>,
          return when {
             qualifiedName.parameters.isEmpty() -> {
                log().warn("Requested raw array.  This is strongly discouraged.  Tsk Tsk Tsk.")
-               PrimitiveType.ARRAY
+               ArrayType.untyped()
             }
 
             qualifiedName.parameters.size == 1 -> {

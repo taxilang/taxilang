@@ -237,7 +237,6 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
       val enumReference = compiler.lookupTypeByName(enumName, caseFieldReferenceAssignment).flatMap { typeName ->
          compiler.typeResolver(caseFieldReferenceAssignment.findNamespace())
             .resolve(typeName, caseFieldReferenceAssignment)
-            .wrapErrorsInList()
             .flatMap { type ->
                require(type is EnumType) { "Expected $typeName to be an enum" }
                val enumType = type as EnumType// for readability
@@ -284,7 +283,6 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
             val (enumTypeName, enumValue) = EnumValue.splitEnumValueName(enumValueQualifiedName)
             compiler.typeResolver(caseDeclarationMatchExpression.findNamespace())
                .resolve(enumTypeName.fullyQualifiedName, caseDeclarationMatchExpression)
-               .wrapErrorsInList()
                .flatMap { type ->
                   if (type !is EnumType) {
                      listOf(CompilationError(caseDeclarationMatchExpression.start, "Type ${type.qualifiedName} is not an enum")).left()
@@ -430,7 +428,6 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
 
    private fun compileTypedAccessor(expressionSelector: TaxiParser.MappedExpressionSelectorContext, namespace: Namespace, targetType: Type): Either<List<CompilationError>, AccessorExpressionSelector> {
       return compiler.parseType(namespace, expressionSelector.typeType())
-         .wrapErrorsInList()
          .flatMap { type ->
             compiler.compileScalarAccessor(expressionSelector.scalarAccessorExpression(), type).map { accessor ->
                AccessorExpressionSelector(accessor, type)

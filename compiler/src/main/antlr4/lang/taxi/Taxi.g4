@@ -1,4 +1,3 @@
-
 grammar Taxi;
 
 // starting point for parsing a taxi file
@@ -177,8 +176,7 @@ fieldDeclaration
   ;
 
 typeType
-    :   classOrInterfaceType listType? optionalType? parameterConstraint? aliasedType?
-    |   primitiveType listType? optionalType? parameterConstraint?
+    :   classOrInterfaceType typeArguments? listType? optionalType? parameterConstraint? aliasedType?
     ;
 
 accessor : scalarAccessor | objectAccessor;
@@ -194,6 +192,7 @@ scalarAccessorExpression
     | conditionalTypeConditionDeclaration
     | defaultDefinition
     | readFunction
+    | readExpression
     ;
 
 xpathAccessorDeclaration : 'xpath' '(' accessorExpression ')';
@@ -212,6 +211,7 @@ classOrInterfaceType
     :   Identifier /* typeArguments? */ ('.' Identifier /* typeArguments? */ )*
     ;
 
+typeArguments: '<' typeType (',' typeType)* '>';
 
 // A "lenient" enum will match on case insensitive values
 enumDeclaration
@@ -289,10 +289,25 @@ serviceDeclaration
     ;
 
 serviceBody
-    :   '{' serviceOperationDeclaration* '}'
+    :   '{' serviceBodyMember* '}'
     ;
+serviceBodyMember : serviceOperationDeclaration | queryOperationDeclaration;
+// Querying
+queryOperationDeclaration
+   :  typeDoc? annotation* queryGrammarName 'query' Identifier '(' operationParameterList ')' ':' typeType
+      'with' 'capabilities' '{' queryOperationCapabilities '}';
 
- serviceOperationDeclaration
+queryGrammarName : Identifier;
+queryOperationCapabilities: (queryOperationCapability (',' queryOperationCapability)*);
+
+queryOperationCapability:
+   queryFilterCapability | Identifier;
+
+queryFilterCapability: 'filter'( '(' filterCapability (',' filterCapability)* ')');
+
+filterCapability: EQ | NQ | IN | LIKE | GT | GE | LT | LE;
+
+serviceOperationDeclaration
      : typeDoc? annotation* operationScope? 'operation' operationSignature
      ;
 
@@ -324,6 +339,7 @@ parameterName
 
 parameterConstraint
     :   '(' parameterConstraintExpressionList ')'
+    |   '(' temporalFormatList ')'
     ;
 
 
@@ -340,6 +356,13 @@ parameterConstraintExpression
 // First impl.  This will get richer (',' StringLiteral)*
 propertyFormatExpression :
    '@format' '=' StringLiteral;
+
+temporalFormatList :
+   ('@format' '=' '[' StringLiteral (',' StringLiteral)* ']')? ','? (instantOffsetExpression)?
+   ;
+
+instantOffsetExpression :
+   '@offset' '=' (IntegerLiteral | NegativeIntegerLiteral);
 
 // The return value will have a relationship to a property
 // received in an input (incl. nested properties)
@@ -457,9 +480,9 @@ thisIdentifier : 'this' '.' typeType;
 // TODO: Should consider revisiting this, so that operators are followed by valid tokens.
 // eg: 'in' must be followed by an array.  We could enforce this at the language, to simplify in Vyne
 policyOperator
-    : '='
-    | '!='
-    | 'in'
+    : EQ
+    | NQ
+    | IN
     ;
 
 literalArray
@@ -516,6 +539,7 @@ readFunction: functionName '(' formalParameterList? ')';
 //         'leftAndUpperCase' |
 //         'midAndUpperCase'
 //         ;
+readExpression: readFunction arithmaticOperator literal;
 functionName: qualifiedName;
 formalParameterList
     : parameter  (',' parameter)*
@@ -559,27 +583,28 @@ optionalType
    : '?'
    ;
 
-primitiveType
-    : primitiveTypeName
-    | 'lang.taxi.' primitiveTypeName
-    ;
+//primitiveType
+//    : primitiveTypeName
+//    | 'lang.taxi.' primitiveTypeName
+//    ;
+//
+//primitiveTypeName
+//    :   'Boolean'
+//    |   'String'
+//    |   'Int'
+//    |   'Double'
+//    |   'Decimal'
+////    The "full-date" notation of RFC3339, namely yyyy-mm-dd. Does not support time or time zone-offset notation.
+//    |   'Date'
+////    The "partial-time" notation of RFC3339, namely hh:mm:ss[.ff...]. Does not support date or time zone-offset notation.
+//    |   'Time'
+//// Combined date-only and time-only with a separator of "T", namely yyyy-mm-ddThh:mm:ss[.ff...]. Does not support a time zone offset.
+//    |   'DateTime'
+//// A timestamp, indicating an absolute point in time.  Includes timestamp.  Should be rfc3339 format.  (eg: 2016-02-28T16:41:41.090Z)
+//    |   'Instant'
+//    |  'Any'
+//    ;
 
-primitiveTypeName
-    :   'Boolean'
-    |   'String'
-    |   'Int'
-    |   'Double'
-    |   'Decimal'
-//    The "full-date" notation of RFC3339, namely yyyy-mm-dd. Does not support time or time zone-offset notation.
-    |   'Date'
-//    The "partial-time" notation of RFC3339, namely hh:mm:ss[.ff...]. Does not support date or time zone-offset notation.
-    |   'Time'
-// Combined date-only and time-only with a separator of "T", namely yyyy-mm-ddThh:mm:ss[.ff...]. Does not support a time zone offset.
-    |   'DateTime'
-// A timestamp, indicating an absolute point in time.  Includes timestamp.  Should be rfc3339 format.  (eg: 2016-02-28T16:41:41.090Z)
-    |   'Instant'
-    |  'Any'
-    ;
 // https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md#date
 literal
     :   IntegerLiteral
@@ -620,6 +645,11 @@ typeDoc
 lenientKeyword: 'lenient';
 defaultKeyword: 'default';
 
+IN: 'in';
+LIKE: 'like';
+AND : 'and' ;
+OR  : 'or' ;
+
 Identifier
     :   Letter LetterOrDigit*
     | '`' ~('`')+ '`'
@@ -635,6 +665,7 @@ StringLiteral
 BooleanLiteral
     :   'true' | 'false'
     ;
+
 
 fragment
 DoubleQuoteStringCharacter
@@ -675,6 +706,9 @@ LetterOrDigit
     |   // covers UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
         [\uD800-\uDBFF] [\uDC00-\uDFFF]
     ;
+NegativeIntegerLiteral
+   : '-' IntegerLiteral
+   ;
 
 IntegerLiteral
     :   DecimalNumeral /* IntegerTypeSuffix? */
@@ -766,15 +800,13 @@ LINE_COMMENT
     :   '//' ~[\r\n]* -> channel(HIDDEN)
     ;
 
+
 GT : '>' ;
 GE : '>=' ;
 LT : '<' ;
 LE : '<=' ;
 EQ : '=' ;
 NQ : '!=';
-
-AND : 'and' ;
-OR  : 'or' ;
 
 TRUE  : 'true' ;
 FALSE : 'false' ;
@@ -786,4 +818,3 @@ MINUS : '-' ;
 
 LPAREN : '(' ;
 RPAREN : ')' ;
-

@@ -1,8 +1,5 @@
 package lang.taxi.types
 
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.Type
-
 /**
  * Represents an import which has not been resolved, and no definition
  * has yet been discovered.
@@ -22,7 +19,7 @@ class UnresolvedImportedType(override val qualifiedName: String) : Type {
       get() = TODO("Not yet implemented")
    override val allInheritedTypes: kotlin.collections.Set<lang.taxi.types.Type>
       get() = TODO("Not yet implemented")
-   override val format: List<kotlin.String>?
+   override val format: List<String>?
       get() = TODO("Not yet implemented")
    override val inheritsFromPrimitive: kotlin.Boolean
       get() = TODO("Not yet implemented")
@@ -33,6 +30,10 @@ class UnresolvedImportedType(override val qualifiedName: String) : Type {
    override val definitionHash: kotlin.String?
       get() = TODO("Not yet implemented")
    override val calculation: lang.taxi.types.Formula?
+      get() = TODO("Not yet implemented")
+   override val offset: Int?
+      get() = TODO("Not yet implemented")
+   override val typeDoc: String?
       get() = TODO("Not yet implemented")
 
 }

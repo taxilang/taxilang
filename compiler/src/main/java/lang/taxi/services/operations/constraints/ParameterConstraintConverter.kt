@@ -10,12 +10,13 @@ import lang.taxi.services.Service
 import lang.taxi.types.Compiled
 import lang.taxi.types.ObjectType
 import lang.taxi.types.Type
+import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 
 
 interface ConstraintProvider {
    fun applies(constraint: TaxiParser.ParameterConstraintExpressionContext): Boolean
-   fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<CompilationError, Constraint>
+   fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<List<CompilationError>, Constraint>
 }
 
 interface ValidatingConstraintProvider : ConstraintProvider {
@@ -67,7 +68,7 @@ class ConstraintValidator(providers: List<ConstraintProvider> = ConstraintProvid
 }
 
 class OperationConstraintConverter(
-   private val expressionList: TaxiParser.ParameterConstraintExpressionListContext,
+   private val expressionList: TaxiParser.ParameterConstraintExpressionListContext?,
    private val paramType: Type,
    private val namespaceQualifiedTypeResolver: NamespaceQualifiedTypeResolver
 ) {
@@ -75,16 +76,16 @@ class OperationConstraintConverter(
 
    fun constraints(): Either<List<CompilationError>, List<Constraint>> {
       return expressionList
-         .parameterConstraintExpression()
+         ?.parameterConstraintExpression()
          // Formats are expressed as constraints, but we handle them elsewhere,
          // so filter them out.  A good indication that this isn't the correct way
          // to handle this.
-         .filter { it.propertyFormatExpression() == null }
-         .map { buildConstraint(it, paramType, namespaceQualifiedTypeResolver) }
-         .invertEitherList()
+         ?.filter { it.propertyFormatExpression() == null }
+         ?.map { buildConstraint(it, paramType, namespaceQualifiedTypeResolver) }
+         ?.invertEitherList()?.flattenErrors() ?: Either.right(listOf())
    }
 
-   private fun buildConstraint(constraint: TaxiParser.ParameterConstraintExpressionContext, paramType: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<CompilationError, Constraint> {
+   private fun buildConstraint(constraint: TaxiParser.ParameterConstraintExpressionContext, paramType: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<List<CompilationError>, Constraint> {
       return constraintProviders
          .first { it.applies(constraint) }
          .build(constraint, paramType, typeResolver)

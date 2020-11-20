@@ -2,11 +2,10 @@ package lang.taxi.services.operations.constraints
 
 import lang.taxi.Equality
 import lang.taxi.Operator
-import lang.taxi.services.Service
 import lang.taxi.types.AttributePath
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.QualifiedName
-import lang.taxi.types.toSet
+import lang.taxi.utils.prependIfAbsent
 
 
 /**
@@ -44,12 +43,12 @@ sealed class PropertyIdentifier(val description: String, val taxi: String) {
 }
 
 // Identifies a property by it's name
-data class PropertyFieldNameIdentifier(val name: AttributePath) : PropertyIdentifier("field ${name.path}", "this.${name.path}") {
+data class PropertyFieldNameIdentifier(val name: AttributePath) : PropertyIdentifier("field ${name.path}", name.path.prependIfAbsent("this.")) {
    constructor(fieldName: String) : this(AttributePath.from(fieldName))
 }
 
 // TODO : Syntax here is still up for discussion.  See OperationContextSpec
-data class PropertyTypeIdentifier(val type: QualifiedName) : PropertyIdentifier("type ${type.parameterizedName}", "this:${type.parameterizedName}")
+data class PropertyTypeIdentifier(val type: QualifiedName) : PropertyIdentifier("type ${type.parameterizedName}", type.parameterizedName)
 
 sealed class ValueExpression(val taxi: String)
 
