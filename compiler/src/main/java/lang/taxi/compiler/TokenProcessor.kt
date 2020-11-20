@@ -35,6 +35,7 @@ import lang.taxi.toCompilationError
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionDefinition
+import lang.taxi.functions.FunctionExpressionAccessor
 import lang.taxi.services.FilterCapability
 import lang.taxi.services.QueryOperation
 import lang.taxi.services.QueryOperationCapability
@@ -50,6 +51,7 @@ import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.awt.EventQueue
 import java.nio.charset.Charset
+import javax.print.DocFlavor
 
 internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocument> = emptyList(), collectImports: Boolean = true) {
 
@@ -731,8 +733,49 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
             val functionContext = expression.readFunction()
             buildReadFunctionAccessor(functionContext)
          }
+
+         expression.readExpression() != null -> buildReadFunctionExpressionAccessor(expression.readExpression())
          else -> error("Unhandled type of accessor expression at ${expression.source().content}")
       }
+   }
+
+   private fun buildReadFunctionExpressionAccessor(readExpressionContext: TaxiParser.ReadExpressionContext): FunctionExpressionAccessor {
+      val readFunctionAccessor = buildReadFunctionAccessor(readExpressionContext.readFunction())
+      val allowedFunctionReturnTypes = setOf(PrimitiveType.INTEGER, PrimitiveType.STRING)
+      val allowedOperationTypes = mapOf(
+         PrimitiveType.INTEGER to setOf(FormulaOperator.Add, FormulaOperator.Subtract, FormulaOperator.Multiply),
+         PrimitiveType.STRING to setOf(FormulaOperator.Add)
+      )
+      val allowedOperandTypes = mapOf<PrimitiveType, ((value: Any) -> Boolean)>(
+         PrimitiveType.INTEGER to {  value ->  value is Int },
+         PrimitiveType.STRING to { value -> value is String })
+
+      val functionBaseReturnType = readFunctionAccessor.function.returnType?.basePrimitive
+      if (!allowedFunctionReturnTypes.contains(functionBaseReturnType)) {
+         throw CompilationException(CompilationError(
+            readExpressionContext.start,
+            "function needs to return one of these types => ${allowedFunctionReturnTypes.map { it.qualifiedName }.joinToString()}",
+            readExpressionContext.source().sourceName))
+      }
+      val arithmeticOperator = FormulaOperator.forSymbol(readExpressionContext.arithmaticOperator().text)
+      if (!allowedOperationTypes[functionBaseReturnType]!!.contains(arithmeticOperator)) {
+         throw CompilationException(CompilationError(
+            readExpressionContext.start,
+            "only the following operations are allowed => ${allowedOperationTypes[functionBaseReturnType]!!.map { it.symbol }.joinToString()}",
+            readExpressionContext.source().sourceName))
+      }
+      val operand = readExpressionContext.literal().value()
+      if (!allowedOperandTypes[functionBaseReturnType]!!(operand)) {
+         CompilationException(CompilationError(
+            readExpressionContext.start,
+            "$operand is not an allowed value for ${functionBaseReturnType?.qualifiedName}",
+            readExpressionContext.source().sourceName))
+      }
+
+      return FunctionExpressionAccessor(
+         readFunctionAccessor,
+         FormulaOperator.forSymbol(readExpressionContext.arithmaticOperator().text),
+         readExpressionContext.literal().value())
    }
 
    private fun buildReadFunctionAccessor(functionContext: TaxiParser.ReadFunctionContext): FunctionAccessor {

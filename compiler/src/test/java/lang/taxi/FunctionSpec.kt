@@ -2,9 +2,14 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.functions.FunctionAccessor
+import lang.taxi.functions.FunctionExpressionAccessor
 import lang.taxi.functions.stdlib.Left
-import lang.taxi.functions.stdlib.Strings
-import lang.taxi.types.*
+import lang.taxi.types.ColumnAccessor
+import lang.taxi.types.FieldReferenceSelector
+import lang.taxi.types.FormulaOperator
+import lang.taxi.types.LiteralAccessor
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.TypeReferenceSelector
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import kotlin.test.assertFailsWith
@@ -220,6 +225,98 @@ namespace pkgB {
             """.trimIndent()
             val transaction = Compiler(src).compile().model("Foo")
          }
+      }
+   }
+
+   describe("Function expressions are allowed for limited cases") {
+      it("is valid to concatenate a string literal with a function returning string") {
+         val accessor = """
+namespace pkgA {
+   declare function upperCase(String):String
+}
+namespace pkgB {
+            type Record {
+               primaryKey: String by pkgA.upperCase("a") + 'foo'
+            }
+}
+         """.compiled()
+            .objectType("pkgB.Record")
+            .field("primaryKey")
+            .accessor as FunctionExpressionAccessor
+         accessor.functionAccessor.function.qualifiedName.should.equal("pkgA.upperCase")
+         accessor.operator.should.equal(FormulaOperator.Add)
+         accessor.operand.should.equal("foo")
+      }
+
+      it("is valid to add an int constant with a function returning int") {
+         val accessor = """
+namespace pkgA {
+   declare function length(String):Int
+}
+namespace pkgB {
+            type Record {
+               primaryKey: String by pkgA.length("a") + 5
+            }
+}
+         """.compiled()
+            .objectType("pkgB.Record")
+            .field("primaryKey")
+            .accessor as FunctionExpressionAccessor
+         accessor.functionAccessor.function.qualifiedName.should.equal("pkgA.length")
+         accessor.operator.should.equal(FormulaOperator.Add)
+         accessor.operand.should.equal(5)
+      }
+
+      it("is valid to subtract a int constant from a function returning int") {
+         val accessor = """
+namespace pkgA {
+   declare function length(String):Int
+}
+namespace pkgB {
+            type Record {
+               primaryKey: String by pkgA.length("a") - 5
+            }
+}
+         """.compiled()
+            .objectType("pkgB.Record")
+            .field("primaryKey")
+            .accessor as FunctionExpressionAccessor
+         accessor.functionAccessor.function.qualifiedName.should.equal("pkgA.length")
+         accessor.operator.should.equal(FormulaOperator.Subtract)
+         accessor.operand.should.equal(5)
+      }
+
+      it("is not valid to use subtract with a function returning string") {
+         val errors = """
+namespace pkgA {
+   declare function upper(String):String
+}
+namespace pkgB {
+            type Record {
+               primaryKey: String by pkgA.upper("a") - 5
+            }
+}
+         """.validated()
+         errors.size.should.equal(1)
+      }
+
+      it("is  valid to multiply an int constant with a function returning int") {
+         val accessor = """
+namespace pkgA {
+   declare function length(String):Int
+}
+namespace pkgB {
+            type Record {
+               primaryKey: String by pkgA.length("a") * 5
+            }
+}
+         """.compiled()
+            .objectType("pkgB.Record")
+            .field("primaryKey")
+            .accessor as FunctionExpressionAccessor
+         accessor.functionAccessor.function.qualifiedName.should.equal("pkgA.length")
+         accessor.operator.should.equal(FormulaOperator.Multiply)
+         accessor.operand.should.equal(5)
       }
    }
 })
