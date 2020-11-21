@@ -208,7 +208,7 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       return tokens.imports.map { (name, _) -> QualifiedName.from(name) }
    }
 
-   fun compile(): TaxiDocument {
+   fun compileWithMessages():Pair<List<CompilationError>, TaxiDocument> {
       // Note - leaving this approach for backwards compatiability
       // We could try to continue compiling, with the tokens we do have
       if (syntaxErrors.isNotEmpty()) {
@@ -217,6 +217,11 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       val builder = tokenProcessrWithImports
       // Similarly to above, we could do somethign with these errors now.
       val (errors, document) = builder.buildTaxiDocument()
+      return errors to document
+   }
+   fun compile(): TaxiDocument {
+      val (messages, document) = compileWithMessages()
+      val errors = messages.filter { it.severity == CompilationError.Severity.ERROR }
       if (errors.isNotEmpty()) {
          throw CompilationException(errors)
       }
