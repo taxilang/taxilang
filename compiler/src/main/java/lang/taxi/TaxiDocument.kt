@@ -57,10 +57,6 @@ open class TaxiDocument(val types: Set<Type>,
    }
 
    fun type(qualifiedName: QualifiedName): Type {
-      if (PrimitiveType.isPrimitiveType(qualifiedName.toString())) {
-         return PrimitiveType.fromDeclaration(qualifiedName.toString())
-      }
-
       if (Arrays.isArray(qualifiedName)) {
          return when {
             qualifiedName.parameters.isEmpty() -> {
@@ -77,6 +73,9 @@ open class TaxiDocument(val types: Set<Type>,
          }
       }
 
+      if (PrimitiveType.isPrimitiveType(qualifiedName.toString())) {
+         return PrimitiveType.fromDeclaration(qualifiedName.toString())
+      }
 
       return typeMap[qualifiedName.toString()] ?: throw error("No type named $qualifiedName defined")
 

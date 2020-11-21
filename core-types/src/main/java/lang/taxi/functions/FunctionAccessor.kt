@@ -1,11 +1,15 @@
 package lang.taxi.functions
 
 import lang.taxi.types.Accessor
+import lang.taxi.types.PrimitiveType
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.TaxiStatementGenerator
+import lang.taxi.types.Type
 
 
 class FunctionAccessor(val function: Function, val inputs:List<Accessor>) : Accessor, TaxiStatementGenerator {
+   override val returnType: Type
+      get() = function.returnType ?: PrimitiveType.ANY
    override fun asTaxi(): String {
       val parametersAsTaxi = inputs.joinToString(",") { inputAccessor ->
          when (inputAccessor) {

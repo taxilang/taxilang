@@ -43,6 +43,9 @@ enum class PrimitiveType(
    DOUBLE("Double", "Represents a double-precision 64-bit IEEE 754 floating point number."),
    VOID("Void", "Nothing.  Represents the return value of operations that don't return anything.");
 
+//    Used in things like jsonPath(), or xPath() where a type isn't declared
+//   UNTYPED("Untyped", "A special internal type for functions that don't declare a return type.  Untyped things can be assigned to anything, and all bets are off until runtime. Don't use this - it's not for you.");
+
    private val wrapper = LazyLoadingWrapper(this)
    override val allInheritedTypes: Set<Type> by lazy { wrapper.allInheritedTypes }
    override val inheritsFromPrimitive: Boolean by lazy { wrapper.inheritsFromPrimitive }
@@ -132,7 +135,7 @@ object PrimitiveTypeOperations {
       allSupportedOperations = numericOperations + dateTimeOperations + stringOperations
    }
 
-   fun isValidOperation(firstOperand:PrimitiveType, operator:FormulaOperator, secondOperand:PrimitiveType):Boolean {
+   fun isValidOperation(firstOperand: PrimitiveType, operator: FormulaOperator, secondOperand: PrimitiveType): Boolean {
       val supportedOperations = allSupportedOperations[firstOperand] ?: emptyMap()
       val supportedTargetTypes = supportedOperations[operator] ?: emptyList()
       return supportedTargetTypes.contains(secondOperand)

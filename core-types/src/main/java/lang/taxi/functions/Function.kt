@@ -8,6 +8,20 @@ class FunctionDefinition(val parameters: List<Parameter>,
                          override val compilationUnit: CompilationUnit) : TokenDefinition
 
 class Function(override val qualifiedName: String, override var definition: FunctionDefinition?) : Named, Compiled, ImportableToken, DefinableToken<FunctionDefinition> {
+   fun getParameterType(parameterIndex: Int): Type {
+      return when {
+          parameterIndex < this.parameters.size -> {
+             this.parameters[parameterIndex].type
+          }
+          this.parameters.last().isVarArg -> {
+             return this.parameters.last().type
+          }
+          else -> {
+             error("Parameter index $parameterIndex is out of bounds - function $qualifiedName only takes ${this.parameters.size} parameters")
+          }
+      }
+   }
+
    override val compilationUnits: List<CompilationUnit> = listOfNotNull(definition?.compilationUnit)
 
    companion object {

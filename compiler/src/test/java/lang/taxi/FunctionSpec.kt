@@ -130,15 +130,15 @@ namespace pkgB {
          (accessor.inputs[0] as FunctionAccessor).let { input ->
             input.function.qualifiedName.should.equal("left")
             input.function.parameters.should.have.size(2)
-            input.inputs[0].should.equal(ColumnAccessor(0, defaultValue = null))
+            input.inputs[0].should.equal(ColumnAccessor(0, defaultValue = null, returnType = PrimitiveType.STRING))
             input.inputs[1].should.equal(LiteralAccessor(3))
          }
          accessor.inputs[1].should.equal(LiteralAccessor("-"))
-         accessor.inputs[2].should.equal(ColumnAccessor(1, defaultValue = null))
+         accessor.inputs[2].should.equal(ColumnAccessor(1, defaultValue = null,  returnType = PrimitiveType.STRING))
       }
 
       it("should allow fields to reference other fields as inputs") {
-         val accessor = """type FirstName inherits String
+         val schema = """type FirstName inherits String
             type FullName inherits String
 
             declare function left(String,Int):String
@@ -147,10 +147,12 @@ namespace pkgB {
                   firstName: FirstName
                   leftName : FullName by left(this.firstName, 5)
                }""".compiled()
+
+            val accessor = schema
             .objectType("Person")
             .field("leftName")
             .accessor as FunctionAccessor
-         accessor.inputs[0].should.equal(FieldReferenceSelector("firstName"))
+         accessor.inputs[0].should.equal(FieldReferenceSelector("firstName", schema.type("FirstName")))
       }
 
 
@@ -186,6 +188,29 @@ namespace pkgB {
          }
       }
 
+      it("should report an error if there is a type mismatch on input parameters") {
+         val errors = """
+            declare function uppercase(String):String
+            model Person {
+               age : Int
+               name : String by uppercase(this.age)
+            }
+         """.validated()
+         errors.should.have.size(1)
+         errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.Int is not assignable to type lang.taxi.String")
+      }
+
+      it("should report an error if there is a type mismatch on assigning a return value to a field") {
+         val errors = """
+            declare function uppercase(String):String
+            model Person {
+               age : Int by uppercase(this.name)
+               name : String
+            }
+         """.validated()
+         errors.should.have.size(1)
+         errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.String is not assignable to type lang.taxi.Int")
+      }
 
       // Ignored until coalesce becomes a function
       xit("should allow fields to reference other types") {
@@ -255,7 +280,7 @@ namespace pkgA {
 }
 namespace pkgB {
             type Record {
-               primaryKey: String by pkgA.length("a") + 5
+               primaryKey: Int by pkgA.length("a") + 5
             }
 }
          """.compiled()
@@ -274,7 +299,7 @@ namespace pkgA {
 }
 namespace pkgB {
             type Record {
-               primaryKey: String by pkgA.length("a") - 5
+               primaryKey: Int by pkgA.length("a") - 5
             }
 }
          """.compiled()
@@ -307,7 +332,7 @@ namespace pkgA {
 }
 namespace pkgB {
             type Record {
-               primaryKey: String by pkgA.length("a") * 5
+               primaryKey: Int by pkgA.length("a") * 5
             }
 }
          """.compiled()

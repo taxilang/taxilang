@@ -65,7 +65,7 @@ object AnnotationSpec : Spek({
             }
          """.validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("It is invalid to declare an annotation property of type Person. Only Strings, Numbers, Booleans or Enums are supported for annotation properties")
+         errors.first().detailMessage.should.equal("Field person declares an invalid type (Person). Only Strings, Numbers, Booleans or Enums are supported for annotation properties")
       }
       it("is an error to define annotations with types that cannot be resolved") {
          val errors = """
