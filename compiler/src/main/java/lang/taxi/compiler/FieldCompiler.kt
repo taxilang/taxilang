@@ -90,6 +90,7 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
                              private val errors: MutableList<CompilationError>
 
 ) {
+   internal val typeChecker = tokenProcessor.typeChecker
    private val conditionalFieldSetProcessor = ConditionalFieldSetProcessor(this)
    private val calculatedFieldSetProcessor = CalculatedFieldSetProcessor(this)
    private val defaultValueParser = DefaultValueParser()
@@ -364,7 +365,7 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
 
             tokenProcessor.resolveFunction(qualifiedName, functionContext).map { function ->
                require(function.isDefined) { "Function should have already been compiled before evaluation in a read function expression" }
-               TypeChecking.assertIsAssignable(function.returnType!!, targetType, functionContext)?.let { compilationError ->
+               typeChecker.assertIsAssignable(function.returnType!!, targetType, functionContext)?.let { compilationError ->
                   errors.add(compilationError)
                }
                val parameters = functionContext.formalParameterList().parameter().mapIndexed { parameterIndex, parameterContext ->
@@ -378,7 +379,7 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
                      parameterContext.typeReferenceSelector() != null -> compileTypeReferenceAccessor(namespace, parameterContext)
                      else -> TODO("readFunction parameter accessor not defined for code ${functionContext.source().content}")
                   }.flatMap { parameterAccessor ->
-                     TypeChecking.ifAssignable(parameterAccessor.returnType, parameterType.basePrimitive
+                     typeChecker.ifAssignable(parameterAccessor.returnType, parameterType.basePrimitive
                         ?: PrimitiveType.ANY, parameterContext) {
                         parameterAccessor
                      }.wrapErrorsInList()

@@ -2,22 +2,23 @@ package lang.taxi.compiler
 
 import arrow.core.Either
 import lang.taxi.CompilationError
+import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.GenericType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.Type
 import lang.taxi.types.TypeAlias
 import org.antlr.v4.runtime.ParserRuleContext
 
-fun Type.isAssignableTo(assignmentTargetType: Type, considerTypeParameters: Boolean = true): Boolean {
-   return TypeChecking.isAssignableTo(this, assignmentTargetType, considerTypeParameters)
+fun Type.isAssignableTo(assignmentTargetType: Type, considerTypeParameters: Boolean = true, typeChecker: TypeChecker = TypeChecker.DEFAULT): Boolean {
+   return typeChecker.isAssignableTo(this, assignmentTargetType, considerTypeParameters)
 }
 
 fun Type.resolveAliases(): Type {
    return TypeAlias.underlyingType(this)
 }
 
-fun Type.resolvesSameAs(other: Type, considerTypeParameters: Boolean = true):Boolean {
-   return TypeChecking.resolvesSameAs(this,other,considerTypeParameters)
+fun Type.resolvesSameAs(other: Type, considerTypeParameters: Boolean = true, typeChecker: TypeChecker = TypeChecker.DEFAULT):Boolean {
+   return typeChecker.resolvesSameAs(this,other,considerTypeParameters)
 }
 
 fun Type.typeParameters():List<Type> {
@@ -37,7 +38,10 @@ fun Type.inheritsFrom(other:Type, considerTypeParameters: Boolean = true):Boolea
       unaliasedInheritedType.resolvesSameAs(unaliasedOther, considerTypeParameters)
    }
 }
-object TypeChecking {
+class TypeChecker(val enabled:FeatureToggle = FeatureToggle.DISABLED) {
+   companion object {
+      val DEFAULT = TypeChecker()
+   }
 
    fun isAssignableTo(valueType: Type, assignmentTargetType: Type, considerTypeParameters: Boolean = true): Boolean {
       val valueTypeWithoutAliases = valueType.resolveAliases()
@@ -117,7 +121,14 @@ object TypeChecking {
          receiverType.basePrimitive == PrimitiveType.ANY -> null
          valueType.isAssignableTo(receiverType) -> null
 //         receiverType.basePrimitive == valueType.basePrimitive -> null
-         else -> CompilationError(token.start, "Type mismatch.  Type of ${valueType.qualifiedName} is not assignable to type ${receiverType.qualifiedName}")
+         else -> {
+            val errorMessage = "Type mismatch.  Type of ${valueType.qualifiedName} is not assignable to type ${receiverType.qualifiedName}"
+            when (enabled) {
+               FeatureToggle.DISABLED -> null
+               FeatureToggle.ENABLED -> CompilationError(token.start, errorMessage)
+               FeatureToggle.SOFT_ENABLED ->  CompilationError(token.start, errorMessage, severity = CompilationError.Severity.WARNING)
+            }
+         }
       }
    }
 

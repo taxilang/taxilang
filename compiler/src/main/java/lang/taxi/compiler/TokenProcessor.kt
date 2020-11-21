@@ -53,7 +53,7 @@ import java.awt.EventQueue
 import java.nio.charset.Charset
 import javax.print.DocFlavor
 
-internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocument> = emptyList(), collectImports: Boolean = true) {
+internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocument> = emptyList(), collectImports: Boolean = true, val typeChecker: TypeChecker) {
 
    companion object {
       fun unescape(text: String): String {
@@ -62,7 +62,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
 
    }
 
-   constructor(tokens: Tokens, collectImports: Boolean) : this(tokens, emptyList(), collectImports)
+   constructor(tokens: Tokens, collectImports: Boolean, typeChecker: TypeChecker) : this(tokens, emptyList(), collectImports, typeChecker)
 
    private var createEmptyTypesPerformed: Boolean = false
    private val typeSystem: TypeSystem

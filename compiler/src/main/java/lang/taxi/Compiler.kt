@@ -5,11 +5,13 @@ import arrow.core.getOrHandle
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import lang.taxi.compiler.TokenProcessor
+import lang.taxi.compiler.TypeChecker
 import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.packages.TaxiPackageSources
 import lang.taxi.sources.SourceCode
 import lang.taxi.sources.SourceLocation
+import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.*
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
@@ -105,17 +107,22 @@ class CompilerTokenCache {
 }
 
 data class TokenStreamParseResult(val tokens: Tokens, val errors: List<CompilationError>)
-class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocument> = emptyList(), private val tokenCache: CompilerTokenCache = CompilerTokenCache()) {
-   constructor(input: CharStream, importSources: List<TaxiDocument> = emptyList()) : this(listOf(input), importSources)
-   constructor(source: String, sourceName: String = UNKNOWN_SOURCE, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromString(source, sourceName), importSources)
-   constructor(file: File, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromPath(file.toPath()), importSources)
-   constructor(project: TaxiPackageSources) : this(project.sources.map { CharStreams.fromString(it.content, it.sourceName) })
+data class CompilerConfig(
+   val typeCheckerEnabled:FeatureToggle = FeatureToggle.DISABLED
+)
+class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocument> = emptyList(), private val tokenCache: CompilerTokenCache = CompilerTokenCache(), val config:CompilerConfig = CompilerConfig()) {
+   constructor(input: CharStream, importSources: List<TaxiDocument> = emptyList(), config:CompilerConfig = CompilerConfig()) : this(listOf(input), importSources, config = config)
+   constructor(source: String, sourceName: String = UNKNOWN_SOURCE, importSources: List<TaxiDocument> = emptyList(), config:CompilerConfig = CompilerConfig()) : this(CharStreams.fromString(source, sourceName), importSources, config = config)
+   constructor(file: File, importSources: List<TaxiDocument> = emptyList(), config:CompilerConfig = CompilerConfig()) : this(CharStreams.fromPath(file.toPath()), importSources, config = config)
+   constructor(project: TaxiPackageSources, config:CompilerConfig = CompilerConfig()) : this(project.sources.map { CharStreams.fromString(it.content, it.sourceName) }, config = config)
 
    companion object {
       const val UNKNOWN_SOURCE = "UnknownSource"
       fun forStrings(sources: List<String>) = Compiler(sources.mapIndexed { index, source -> CharStreams.fromString(source, "StringSource-$index") })
       fun forStrings(vararg source: String) = forStrings(source.toList())
    }
+
+   private val typeChecker:TypeChecker = TypeChecker(config.typeCheckerEnabled)
 
    private val parseResult: Pair<Tokens, List<CompilationError>> by lazy {
       collectTokens()
@@ -129,10 +136,10 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       parseResult.second
    }
    private val tokenProcessrWithImports: TokenProcessor by lazy {
-      TokenProcessor(tokens, importSources)
+      TokenProcessor(tokens, importSources, typeChecker = typeChecker)
    }
    private val tokenprocessorWithoutImports: TokenProcessor by lazy {
-      TokenProcessor(tokens, collectImports = false)
+      TokenProcessor(tokens, collectImports = false, typeChecker = typeChecker)
    }
 
    fun validate(): List<CompilationError> {

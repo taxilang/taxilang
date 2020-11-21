@@ -56,6 +56,7 @@ import lang.taxi.valueOrNull
 import org.antlr.v4.runtime.RuleContext
 
 class ConditionalFieldSetProcessor internal constructor(private val compiler: FieldCompiler) {
+   private val typeChecker = compiler.typeChecker
    fun compileConditionalFieldStructure(fieldBlock: TaxiParser.ConditionalTypeStructureDeclarationContext, namespace: Namespace): Either<List<CompilationError>, ConditionalFieldSet> {
 
       // TODO  Not sure what to pass for the type here.
@@ -126,7 +127,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
    private fun compileWhenCase(whenCase: TaxiParser.ConditionalTypeWhenCaseDeclarationContext, whenClauseSelectorType: Type, assignmentTargetType: Type): Either<List<CompilationError>, WhenCaseBlock> {
       return compileMatchExpression(whenCase.caseDeclarationMatchExpression())
          .flatMap { matchExpression ->
-            TypeChecking.ifAssignable(matchExpression.type, whenClauseSelectorType, whenCase) { matchExpression }.wrapErrorsInList()
+            typeChecker.ifAssignable(matchExpression.type, whenClauseSelectorType, whenCase) { matchExpression }.wrapErrorsInList()
          }
          .flatMap { matchExpression ->
             val assignments: Either<List<CompilationError>, List<AssignmentExpression>> = when {
@@ -138,7 +139,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
                whenCase.caseScalarAssigningDeclaration() != null -> {
                   compileScalarFieldAssignment(whenCase.caseScalarAssigningDeclaration(), assignmentTargetType)
                      .flatMap { assignmentExpression ->
-                        TypeChecking.ifAssignable(assignmentExpression.assignment.type, assignmentTargetType, whenCase.caseScalarAssigningDeclaration()) {
+                        typeChecker.ifAssignable(assignmentExpression.assignment.type, assignmentTargetType, whenCase.caseScalarAssigningDeclaration()) {
                            listOf(assignmentExpression)
                         }.wrapErrorsInList()
                      }
