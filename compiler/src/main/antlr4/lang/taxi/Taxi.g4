@@ -362,7 +362,7 @@ temporalFormatList :
    ;
 
 instantOffsetExpression :
-   '@offset' '=' (IntegerLiteral | NegativeIntegerLiteral);
+   '@offset' '=' IntegerLiteral;
 
 // The return value will have a relationship to a property
 // received in an input (incl. nested properties)
@@ -608,6 +608,7 @@ optionalType
 // https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md#date
 literal
     :   IntegerLiteral
+    |   DecimalLiteral
     |   BooleanLiteral
     |   StringLiteral
     |   'null'
@@ -706,13 +707,15 @@ LetterOrDigit
     |   // covers UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
         [\uD800-\uDBFF] [\uDC00-\uDFFF]
     ;
-NegativeIntegerLiteral
-   : '-' IntegerLiteral
-   ;
 
 IntegerLiteral
-    :   DecimalNumeral /* IntegerTypeSuffix? */
+    :   MINUS? DecimalNumeral /* IntegerTypeSuffix? */
     ;
+
+// Note: Make sure this is defined after IntegerLiteral,
+// so that numbers without '.' are parsed as Integers, not
+// Decimals.
+DecimalLiteral : NUMBER;
 
 fragment
 DecimalNumeral
