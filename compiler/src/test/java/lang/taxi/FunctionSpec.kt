@@ -2,9 +2,14 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.functions.FunctionAccessor
+import lang.taxi.functions.FunctionExpressionAccessor
 import lang.taxi.functions.stdlib.Left
-import lang.taxi.functions.stdlib.Strings
-import lang.taxi.types.*
+import lang.taxi.types.ColumnAccessor
+import lang.taxi.types.FieldReferenceSelector
+import lang.taxi.types.FormulaOperator
+import lang.taxi.types.LiteralAccessor
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.TypeReferenceSelector
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import kotlin.test.assertFailsWith
@@ -125,15 +130,15 @@ namespace pkgB {
          (accessor.inputs[0] as FunctionAccessor).let { input ->
             input.function.qualifiedName.should.equal("left")
             input.function.parameters.should.have.size(2)
-            input.inputs[0].should.equal(ColumnAccessor(0, defaultValue = null))
+            input.inputs[0].should.equal(ColumnAccessor(0, defaultValue = null, returnType = PrimitiveType.STRING))
             input.inputs[1].should.equal(LiteralAccessor(3))
          }
          accessor.inputs[1].should.equal(LiteralAccessor("-"))
-         accessor.inputs[2].should.equal(ColumnAccessor(1, defaultValue = null))
+         accessor.inputs[2].should.equal(ColumnAccessor(1, defaultValue = null,  returnType = PrimitiveType.STRING))
       }
 
       it("should allow fields to reference other fields as inputs") {
-         val accessor = """type FirstName inherits String
+         val schema = """type FirstName inherits String
             type FullName inherits String
 
             declare function left(String,Int):String
@@ -142,10 +147,12 @@ namespace pkgB {
                   firstName: FirstName
                   leftName : FullName by left(this.firstName, 5)
                }""".compiled()
+
+            val accessor = schema
             .objectType("Person")
             .field("leftName")
             .accessor as FunctionAccessor
-         accessor.inputs[0].should.equal(FieldReferenceSelector("firstName"))
+         accessor.inputs[0].should.equal(FieldReferenceSelector("firstName", schema.type("FirstName")))
       }
 
 
@@ -181,6 +188,29 @@ namespace pkgB {
          }
       }
 
+      it("should report an error if there is a type mismatch on input parameters") {
+         val errors = """
+            declare function uppercase(String):String
+            model Person {
+               age : Int
+               name : String by uppercase(this.age)
+            }
+         """.validated()
+         errors.should.have.size(1)
+         errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.Int is not assignable to type lang.taxi.String")
+      }
+
+      it("should report an error if there is a type mismatch on assigning a return value to a field") {
+         val errors = """
+            declare function uppercase(String):String
+            model Person {
+               age : Int by uppercase(this.name)
+               name : String
+            }
+         """.validated()
+         errors.should.have.size(1)
+         errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.String is not assignable to type lang.taxi.Int")
+      }
 
       // Ignored until coalesce becomes a function
       xit("should allow fields to reference other types") {
@@ -220,6 +250,98 @@ namespace pkgB {
             """.trimIndent()
             val transaction = Compiler(src).compile().model("Foo")
          }
+      }
+   }
+
+   describe("Function expressions are allowed for limited cases") {
+      it("is valid to concatenate a string literal with a function returning string") {
+         val accessor = """
+namespace pkgA {
+   declare function upperCase(String):String
+}
+namespace pkgB {
+            type Record {
+               primaryKey: String by pkgA.upperCase("a") + 'foo'
+            }
+}
+         """.compiled()
+            .objectType("pkgB.Record")
+            .field("primaryKey")
+            .accessor as FunctionExpressionAccessor
+         accessor.functionAccessor.function.qualifiedName.should.equal("pkgA.upperCase")
+         accessor.operator.should.equal(FormulaOperator.Add)
+         accessor.operand.should.equal("foo")
+      }
+
+      it("is valid to add an int constant with a function returning int") {
+         val accessor = """
+namespace pkgA {
+   declare function length(String):Int
+}
+namespace pkgB {
+            type Record {
+               primaryKey: Int by pkgA.length("a") + 5
+            }
+}
+         """.compiled()
+            .objectType("pkgB.Record")
+            .field("primaryKey")
+            .accessor as FunctionExpressionAccessor
+         accessor.functionAccessor.function.qualifiedName.should.equal("pkgA.length")
+         accessor.operator.should.equal(FormulaOperator.Add)
+         accessor.operand.should.equal(5)
+      }
+
+      it("is valid to subtract a int constant from a function returning int") {
+         val accessor = """
+namespace pkgA {
+   declare function length(String):Int
+}
+namespace pkgB {
+            type Record {
+               primaryKey: Int by pkgA.length("a") - 5
+            }
+}
+         """.compiled()
+            .objectType("pkgB.Record")
+            .field("primaryKey")
+            .accessor as FunctionExpressionAccessor
+         accessor.functionAccessor.function.qualifiedName.should.equal("pkgA.length")
+         accessor.operator.should.equal(FormulaOperator.Subtract)
+         accessor.operand.should.equal(5)
+      }
+
+      it("is not valid to use subtract with a function returning string") {
+         val errors = """
+namespace pkgA {
+   declare function upper(String):String
+}
+namespace pkgB {
+            type Record {
+               primaryKey: String by pkgA.upper("a") - 5
+            }
+}
+         """.validated()
+         errors.size.should.equal(1)
+      }
+
+      it("is  valid to multiply an int constant with a function returning int") {
+         val accessor = """
+namespace pkgA {
+   declare function length(String):Int
+}
+namespace pkgB {
+            type Record {
+               primaryKey: Int by pkgA.length("a") * 5
+            }
+}
+         """.compiled()
+            .objectType("pkgB.Record")
+            .field("primaryKey")
+            .accessor as FunctionExpressionAccessor
+         accessor.functionAccessor.function.qualifiedName.should.equal("pkgA.length")
+         accessor.operator.should.equal(FormulaOperator.Multiply)
+         accessor.operand.should.equal(5)
       }
    }
 })

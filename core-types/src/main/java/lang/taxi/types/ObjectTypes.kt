@@ -6,6 +6,7 @@ import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.utils.quoted
 import lang.taxi.utils.quotedIfNotAlready
+import lang.taxi.utils.quotedIfString
 import kotlin.reflect.KProperty1
 
 data class FieldExtension(
@@ -195,8 +196,8 @@ data class ObjectType(
             val collatedAnnotations = field.annotations + fieldExtensions.annotations()
             val (refinedType, defaultValue) = fieldExtensions
                .asSequence()
-               .mapNotNull { refinement -> refinement.refinedType?.let { Pair(refinement.refinedType, refinement.defaultValue) } }
-               .firstOrNull() ?: Pair(field.type, null)
+               .mapNotNull { refinement -> refinement.refinedType?.let { refinement.refinedType to refinement.defaultValue } }
+               .firstOrNull() ?: field.type to null
             field.copy(annotations = collatedAnnotations, type = refinedType, defaultValue = defaultValue)
          } ?: emptyList()
       }
@@ -258,7 +259,7 @@ interface NameTypePair {
 data class Annotation(val name: String,
                       val parameters: Map<String, Any?> = emptyMap(),
                       val type: AnnotationType? = null
-) {
+) : TaxiStatementGenerator {
    constructor(type: AnnotationType, parameters: Map<String, Any?>) : this(type.qualifiedName, parameters, type)
 
    // For compatability.  Should probably migrate to using qualifiedName in
@@ -267,6 +268,21 @@ data class Annotation(val name: String,
 
    fun parameter(name: String): Any? {
       return parameters[name]
+   }
+
+   override fun asTaxi(): String {
+      val parameterTaxi = parameters.map { (name, value) ->
+         if (value != null) {
+            "$name = ${value.quotedIfString()}"
+         } else {
+            name
+         }
+      }.joinToString(", ")
+      return if (parameterTaxi.isNotEmpty()) {
+         """@$name($parameterTaxi)"""
+      } else {
+         """@$name"""
+      }
    }
 }
 
@@ -283,11 +299,20 @@ data class Field(
    val accessor: Accessor? = null,
    val readExpression: FieldSetExpression? = null,
    override val typeDoc: String? = null,
+   // TODO : This feels wrong - what's the relationship between this and the
+   //  defaults served by accessors?
+   // These default values are set by field extensions.
+   // Need to standardise.
    val defaultValue: Any? = null,
    val formula: Formula? = null
 ) : Annotatable, ConstraintTarget, Documented, NameTypePair {
 
    override val description: String = "field $name"
+
+   // This needs to be stanrdardised with the defaultValue above, which comes from
+   // extensions
+   val accessorDefault = if (accessor is AccessorWithDefault) accessor.defaultValue else null
+
 
    // For equality - don't compare on the type (as this can cause stackOverflow when the type is an Object type)
    private val typeName = type.qualifiedName
@@ -300,12 +325,33 @@ data class Field(
 }
 
 
-interface Accessor
+interface Accessor {
+   val returnType: Type
+      get() = PrimitiveType.ANY
+}
+
+interface AccessorWithDefault {
+   val defaultValue: Any?
+}
+
 interface ExpressionAccessor : Accessor {
    val expression: String
 }
 
 data class LiteralAccessor(val value: Any) : Accessor, TaxiStatementGenerator {
+   override val returnType: Type
+      get() {
+         return when (value) {
+            is String -> PrimitiveType.STRING
+            is Int -> PrimitiveType.INTEGER
+            is Double -> PrimitiveType.DECIMAL
+            is Boolean -> PrimitiveType.BOOLEAN
+            else -> {
+               PrimitiveType.ANY
+            }
+         }
+
+      }
    override fun asTaxi(): String {
       return when (value) {
          is String -> value.quoted()
@@ -315,16 +361,16 @@ data class LiteralAccessor(val value: Any) : Accessor, TaxiStatementGenerator {
 
 }
 
-data class XpathAccessor(override val expression: String) : ExpressionAccessor, TaxiStatementGenerator {
+data class XpathAccessor(override val expression: String, override val returnType: Type) : ExpressionAccessor, TaxiStatementGenerator {
    override fun asTaxi(): String = """by xpath("$expression")"""
 }
 
-data class JsonPathAccessor(override val expression: String) : ExpressionAccessor, TaxiStatementGenerator {
+data class JsonPathAccessor(override val expression: String, override  val returnType: Type) : ExpressionAccessor, TaxiStatementGenerator {
    override fun asTaxi(): String = """by jsonPath("$expression")"""
 }
 
 // TODO : This is duplicating concepts in ColumnMapping, one should die.
-data class ColumnAccessor(val index: Any?, val defaultValue: Any?) : ExpressionAccessor, TaxiStatementGenerator {
+data class ColumnAccessor(val index: Any?, override val defaultValue: Any?, override val returnType: Type) : ExpressionAccessor, TaxiStatementGenerator, AccessorWithDefault {
    override val expression: String = index.toString()
    override fun asTaxi(): String {
       return when {

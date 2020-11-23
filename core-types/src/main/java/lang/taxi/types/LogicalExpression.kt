@@ -3,7 +3,8 @@ package lang.taxi.types
 import lang.taxi.utils.quoted
 import java.util.*
 
-abstract class LogicalExpression protected constructor(val type: String): WhenCaseMatchExpression
+// TODO : Using PrimtiiveType.ANY to disable type checking on expressions, because we haven't implemented it yet.
+abstract class LogicalExpression protected constructor(val keyword: String, override val type:Type = PrimitiveType.ANY): WhenCaseMatchExpression
 interface ComparisonOperand: WhenCaseMatchExpression
 data class OrExpression(val left: LogicalExpression, val right: LogicalExpression): LogicalExpression("or") {
    override fun asTaxi(): String {
@@ -39,7 +40,9 @@ data class LogicalVariable(val variableName: String): LogicalExpression("var") {
    }
 }
 
-abstract class ComparisonOperandEntity protected constructor(val type: String): ComparisonOperand
+// TODO : Using Primtitive.Any as the type here to disable type checking, because we haven't
+// implemented it yet
+abstract class ComparisonOperandEntity protected constructor(val keyword: String, override val type: Type = PrimitiveType.ANY): ComparisonOperand
 
 data class ConstantEntity(val value: Any?): ComparisonOperandEntity("constAny") {
    override fun asTaxi(): String {

@@ -118,7 +118,7 @@ class LazyLoadingWrapper(private val type: Type) {
 
 interface ImportableToken : Named, Compiled
 
-interface Type : Named, Compiled, ImportableToken {
+interface Type : Named, Compiled, ImportableToken, Documented {
    val inheritsFrom: Set<Type>
 
    val allInheritedTypes: Set<Type>

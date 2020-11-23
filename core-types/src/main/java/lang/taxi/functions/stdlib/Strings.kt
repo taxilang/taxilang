@@ -16,7 +16,9 @@ object Strings {
       Concat,
       Uppercase,
       Lowercase,
-      Trim
+      Trim,
+      Length,
+      Find
 //      Coalesce
    )
 }
@@ -56,5 +58,20 @@ object Uppercase : FunctionApi {
 object Lowercase : FunctionApi {
    override val taxi: String = "declare function lowerCase(String):String"
    override val name: QualifiedName = stdLibName("lowerCase")
+}
+
+object Length: FunctionApi {
+   override val taxi: String
+      get() = "declare function length(String):Int"
+   override val name: QualifiedName
+      get() = stdLibName("length")
+}
+
+object Find: FunctionApi {
+   override val taxi: String
+      get() = "declare function find(String, String):Int"
+   override val name: QualifiedName
+      get() = stdLibName("find")
+
 }
 

@@ -7,7 +7,7 @@ import lang.taxi.TaxiParser
 import lang.taxi.TypeSystem
 import lang.taxi.types.*
 
-class CalculatedFieldSetProcessor internal constructor(private val compiler: TokenProcessor) {
+class CalculatedFieldSetProcessor internal constructor(private val compiler: FieldCompiler) {
    fun compileCalculatedField(calculatedExpressionContext: TaxiParser.CalculatedMemberDeclarationContext,
                               namespace: Namespace): Either<List<CompilationError>, Field> {
       val typeMemberDeclaration = calculatedExpressionContext.typeMemberDeclaration()
