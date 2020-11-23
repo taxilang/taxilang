@@ -17,7 +17,8 @@ object Strings {
       Uppercase,
       Lowercase,
       Trim,
-      Length
+      Length,
+      Find
 //      Coalesce
    )
 }
@@ -64,6 +65,13 @@ object Length: FunctionApi {
       get() = "declare function length(String):Int"
    override val name: QualifiedName
       get() = stdLibName("length")
+}
+
+object Find: FunctionApi {
+   override val taxi: String
+      get() = "declare function find(String, String):Int"
+   override val name: QualifiedName
+      get() = stdLibName("find")
 
 }
 
