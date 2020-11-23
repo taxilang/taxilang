@@ -1,21 +1,18 @@
 package lang.taxi.lsp
 
-import arrow.core.right
-import lang.taxi.CompilationError
 import lang.taxi.CompilationException
 import lang.taxi.Compiler
+import lang.taxi.CompilerConfig
 import lang.taxi.CompilerTokenCache
 import lang.taxi.lsp.completion.TypeProvider
 import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.eclipse.lsp4j.TextDocumentIdentifier
-import org.eclipse.lsp4j.VersionedTextDocumentIdentifier
-import org.eclipse.lsp4j.jsonrpc.messages.Either
 import java.net.URI
 import java.util.concurrent.atomic.AtomicReference
 
-class TaxiCompilerService {
+class TaxiCompilerService(val config:CompilerConfig = CompilerConfig()) {
     private val sources: MutableMap<URI, String> = mutableMapOf()
     private val charStreams: MutableMap<URI, CharStream> = mutableMapOf()
 
@@ -57,11 +54,11 @@ class TaxiCompilerService {
     fun compile():CompilationResult {
         val charStreams = this.charStreams.values.toList()
 
-        val compiler = Compiler(charStreams, tokenCache = tokenCache)
+        val compiler = Compiler(charStreams, tokenCache = tokenCache, config = config)
 
         val compilationResult = try {
-            val compiled = compiler.compile()
-            CompilationResult(compiler, compiled)
+            val (messages,compiled) = compiler.compileWithMessages()
+            CompilationResult(compiler, compiled, messages)
         } catch (e: CompilationException) {
             CompilationResult(compiler, null, e.errors)
         }

@@ -6,7 +6,6 @@ import lang.taxi.lsp.CompilationResult
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.SourceNames
 import lang.taxi.types.Type
-import org.antlr.v4.runtime.ParserRuleContext
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import java.net.URI
@@ -19,6 +18,7 @@ class CompletionService(private val typeProvider: TypeProvider) {
 
         val importDecorator = ImportCompletionDecorator(compilationResult.compiler, params.textDocument.uriPath())
         val completionItems = when (context.ruleIndex) {
+            TaxiParser.RULE_columnIndex -> buildColumnIndexSuggestions()
             TaxiParser.RULE_fieldDeclaration -> typeProvider.getTypes(listOf(importDecorator))
             TaxiParser.RULE_typeMemberDeclaration -> typeProvider.getTypes(listOf(importDecorator))
             TaxiParser.RULE_listOfInheritedTypes -> typeProvider.getTypes(listOf(importDecorator))
@@ -32,6 +32,46 @@ class CompletionService(private val typeProvider: TypeProvider) {
             else -> emptyList()
         }
         return completions(completionItems)
+    }
+
+    private fun buildColumnIndexSuggestions(): List<CompletionItem> {
+        return listOf(
+                CompletionItem("Column index").apply {
+                    insertText = "1"
+                    insertTextFormat = InsertTextFormat.Snippet
+                    documentation = Either.forRight(MarkupContent(
+                            "markdown",
+                            """Sets the column number to read this attribute from.  Columns are numbered starting at 1.
+                                    |
+                                    |eg:
+                                    |
+                                    |```
+                                    |model Person {
+                                    |   firstName : FirstName by column(1)
+                                    |}
+                                    |```
+                                """.trimMargin()
+                    ))
+                },
+                CompletionItem("Column name").apply {
+                    insertText = "\"$0\""
+                    insertTextFormat = InsertTextFormat.Snippet
+                    documentation = Either.forRight(MarkupContent(
+                            "markdown",
+                            """Sets the column name to read this attribute from.  Column names are generally read from the first row.
+                                    |
+                                    |eg:
+                                    |
+                                    |```
+                                    |model Person {
+                                    |   firstName : FirstName by column("First Name")
+                                    |}
+                                    |```
+                                """.trimMargin()
+                    ))
+                }
+
+        )
     }
 
     /**
