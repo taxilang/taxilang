@@ -174,8 +174,8 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
 
       val typeDoc = tokenProcessor.parseTypeDoc(member.typeDoc())
       val namespace = member.findNamespace()
-      return tokenProcessor.parseType(namespace, member.fieldDeclaration().typeType())
-         .flatMap { type -> toField(member, namespace, type, typeDoc, fieldAnnotations) }
+      val fieldType = tokenProcessor.parseType(namespace, member.fieldDeclaration().typeType());
+      return fieldType.flatMap { type -> toField(member, namespace, type, typeDoc, fieldAnnotations) }
    }
 
    private fun toField(member: TaxiParser.TypeMemberDeclarationContext,
@@ -359,7 +359,7 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
 
    private fun buildReadFunctionAccessor(functionContext: TaxiParser.ReadFunctionContext, targetType: Type): Either<List<CompilationError>, FunctionAccessor> {
       val namespace = functionContext.findNamespace()
-      return tokenProcessor.attemptToLookupTypeByName(namespace, functionContext.functionName().qualifiedName().Identifier().text(), functionContext)
+      return tokenProcessor.attemptToLookupTypeByName(namespace, functionContext.functionName().qualifiedName().Identifier().text(), functionContext, symbolKind = SymbolKind.FUNCTION)
          .wrapErrorsInList()
          .flatMap { qualifiedName ->
 
