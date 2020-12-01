@@ -1,12 +1,10 @@
 package lang.taxi.compiler
 
 import arrow.core.Either
-import arrow.core.extensions.either.applicativeError.handleError
 import arrow.core.flatMap
 import arrow.core.getOrElse
 import arrow.core.getOrHandle
 import arrow.core.left
-import arrow.core.orNull
 import arrow.core.right
 import com.google.common.hash.Hashing
 import lang.taxi.*
@@ -33,9 +31,7 @@ import lang.taxi.services.operations.constraints.ConstraintValidator
 import lang.taxi.services.operations.constraints.OperationConstraintConverter
 import lang.taxi.toCompilationError
 import lang.taxi.functions.Function
-import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionDefinition
-import lang.taxi.functions.FunctionExpressionAccessor
 import lang.taxi.services.FilterCapability
 import lang.taxi.services.QueryOperation
 import lang.taxi.services.QueryOperationCapability
@@ -49,9 +45,7 @@ import lang.taxi.utils.log
 import lang.taxi.utils.wrapErrorsInList
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
-import java.awt.EventQueue
 import java.nio.charset.Charset
-import javax.print.DocFlavor
 
 internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocument> = emptyList(), collectImports: Boolean = true, val typeChecker: TypeChecker) {
 
@@ -153,9 +147,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
 
-   internal fun attemptToLookupTypeByName(namespace: Namespace, name: String, context: ParserRuleContext): Either<CompilationError, String> {
+   internal fun attemptToLookupTypeByName(namespace: Namespace, name: String, context: ParserRuleContext, symbolKind: SymbolKind = SymbolKind.TYPE_OR_MODEL): Either<CompilationError, String> {
       return try {
-         Either.right(lookupTypeByName(namespace, name, importsInSource(context)))
+         Either.right(lookupTypeByName(namespace, name, importsInSource(context), symbolKind))
       } catch (e: AmbiguousNameException) {
          Either.left(CompilationError(context.start, e.message!!, context.source().normalizedSourceName))
       }
@@ -165,8 +159,8 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    // accessing prior to compiling (ie., in the language server).
    // During normal compilation, don't need to pass anything
    @Deprecated("call attemptToQualify, so errors are caught property")
-   private fun lookupTypeByName(namespace: Namespace, name: String, importsInSource: List<QualifiedName>): String {
-      return typeSystem.qualify(namespace, name, importsInSource)
+   private fun lookupTypeByName(namespace: Namespace, name: String, importsInSource: List<QualifiedName>, symbolKind: SymbolKind = SymbolKind.TYPE_OR_MODEL): String {
+      return typeSystem.qualify(namespace, name, importsInSource, symbolKind)
 
    }
 
@@ -675,19 +669,33 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       return annotations.map { annotation ->
          val annotationName = annotation.qualifiedName().text
          mapAnnotationParams(annotation).flatMap { annotationParameters ->
-            val annotationType = resolveUserType(annotation.findNamespace(), annotationName, annotation)
+            val annotationType = resolveUserType(annotation.findNamespace(), annotationName, annotation, symbolKind = SymbolKind.ANNOTATION)
                .wrapErrorsInList()
-            val annotation = when (annotationType) {
-               is Either.Left -> Annotation(annotationName, annotationParameters).right()
+            val constructedAnonymousAnnotation = Annotation(annotationName, annotationParameters)
+            val resolvedAnnotation = when (annotationType) {
+               is Either.Left -> constructedAnonymousAnnotation.right()
                is Either.Right -> annotationType.flatMap { type ->
                   if (type is AnnotationType) {
                      buildTypedAnnotation(type, annotation, annotationParameters)
                   } else {
-                     listOf(CompilationError(annotation.start, "${type.qualifiedName} is not an annotation type")).left()
+                     // We used to throw an error here.
+                     // However, if a model field has an annotation against a type that exists in it's own right, it ends
+                     // up being resolved, even though that's not the intent.
+                     // eg:
+                     // namespace foo {
+                     //    type Id inherits String
+                     //    model Thing {
+                     //       @Id
+                     //       id : Id
+                     //    }
+                     // The above was valid for a long time, as annotations weren't compiled,
+                     // and we shouldn't break that behaviour
+                     constructedAnonymousAnnotation.right()
+//                     listOf(CompilationError(annotation.start, "${type.qualifiedName} is not an annotation type")).left()
                   }
                }
             }
-            annotation
+            resolvedAnnotation
 
          }
       }.reportAndRemoveErrorList(errors)
@@ -908,9 +916,9 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       }
    }
 
-   private fun resolveUserType(namespace: Namespace, requestedTypeName: String, imports: List<QualifiedName>, context: ParserRuleContext): Either<List<CompilationError>, Type> {
-      return resolveUserToken(namespace, requestedTypeName, imports, context) { qualifiedTypeName ->
-         if (tokens.unparsedTypes.contains(qualifiedTypeName)) {
+   private fun resolveUserType(namespace: Namespace, requestedTypeName: String, imports: List<QualifiedName>, context: ParserRuleContext, symbolKind: SymbolKind = SymbolKind.TYPE_OR_MODEL): Either<List<CompilationError>, Type> {
+      return resolveUserToken(namespace, requestedTypeName, imports, context, symbolKind) { qualifiedTypeName ->
+         if (tokens.containsUnparsedType(qualifiedTypeName, symbolKind)) {
             compileToken(qualifiedTypeName)
             typeSystem.getTypeOrError(qualifiedTypeName, context).wrapErrorsInList()
          } else {
@@ -924,16 +932,17 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
       requestedTypeName: String,
       imports: List<QualifiedName>,
       context: ParserRuleContext,
+      symbolKind: SymbolKind = SymbolKind.TYPE_OR_MODEL,
       // Method which takes the resolved qualified name, and checks to see if there is an unparsed token.
       // If so, the method should compile the token and return the compilation result in the either.
       // If not, then the method should return false.
       unparsedCheckAndCompile: (String) -> Either<List<CompilationError>, ImportableToken>?
    ): Either<List<CompilationError>, ImportableToken> {
-      return attemptToLookupTypeByName(namespace, requestedTypeName, context)
+      return attemptToLookupTypeByName(namespace, requestedTypeName, context, symbolKind)
          .wrapErrorsInList()
          .flatMap { qualifiedTypeName ->
-            if (typeSystem.contains(qualifiedTypeName)) {
-               return@flatMap typeSystem.getTokenOrError(qualifiedTypeName, context)
+            if (typeSystem.contains(qualifiedTypeName, symbolKind)) {
+               return@flatMap typeSystem.getTokenOrError(qualifiedTypeName, context, symbolKind)
                   .wrapErrorsInList()
                   .flatMap { importableToken ->
                      if (importableToken is DefinableToken<*> && !importableToken.isDefined) {
@@ -972,12 +981,12 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          }
    }
 
-   private fun resolveUserType(namespace: Namespace, classType: TaxiParser.ClassOrInterfaceTypeContext, typeArgumentCtx: TaxiParser.TypeArgumentsContext? = null): Either<List<CompilationError>, Type> {
+   private fun resolveUserType(namespace: Namespace, classType: TaxiParser.ClassOrInterfaceTypeContext, typeArgumentCtx: TaxiParser.TypeArgumentsContext? = null, symbolKind: SymbolKind = SymbolKind.TYPE_OR_MODEL): Either<List<CompilationError>, Type> {
       val typeArgumentTokens = typeArgumentCtx?.typeType() ?: emptyList()
       return typeArgumentTokens.map { typeArgument -> parseType(namespace, typeArgument) }
          .invertEitherList().flattenErrors()
          .flatMap { typeArguments ->
-            resolveUserType(namespace, classType.Identifier().text(), classType)
+            resolveUserType(namespace, classType.Identifier().text(), classType, symbolKind)
                .flatMap { type ->
                   if (typeArgumentCtx == null) {
                      type.right()
@@ -993,13 +1002,13 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
          }
    }
 
-   private fun resolveUserType(namespace: Namespace, requestedTypeName: String, context: ParserRuleContext): Either<List<CompilationError>, Type> {
-      return resolveUserType(namespace, requestedTypeName, importsInSource(context), context)
+   private fun resolveUserType(namespace: Namespace, requestedTypeName: String, context: ParserRuleContext, symbolKind: SymbolKind = SymbolKind.TYPE_OR_MODEL): Either<List<CompilationError>, Type> {
+      return resolveUserType(namespace, requestedTypeName, importsInSource(context), context, symbolKind)
    }
 
    internal fun resolveFunction(requestedFunctionName: String, context: ParserRuleContext): Either<List<CompilationError>, Function> {
       val namespace = context.findNamespace()
-      return resolveUserToken(namespace, requestedFunctionName, importsInSource(context), context) { qualifiedName ->
+      return resolveUserToken(namespace, requestedFunctionName, importsInSource(context), context, SymbolKind.FUNCTION) { qualifiedName ->
          if (tokens.unparsedFunctions.contains(qualifiedName)) {
             compileFunction(tokens.unparsedFunctions[qualifiedName]!!, qualifiedName)
          } else {
@@ -1459,3 +1468,42 @@ data class ReportedError(val error: CompilationError)
 data class FormatsAndZoneoffset(val formats: List<String>, val utcZoneoffsetInMinutes: Int?)
 
 fun CompilationError.asList(): List<CompilationError> = listOf(this)
+
+enum class SymbolKind {
+   TYPE_OR_MODEL,
+   ANNOTATION,
+   FUNCTION;
+
+   fun matches(token: ParserRuleContext): Boolean {
+      return when (this) {
+//         MATCH_ANYTHING -> true
+         ANNOTATION -> {
+            token is TaxiParser.AnnotationTypeDeclarationContext
+         }
+         TYPE_OR_MODEL -> {
+            when (token) {
+               is TaxiParser.AnnotationTypeDeclarationContext -> false
+               is TaxiParser.TypeDeclarationContext -> true
+               is TaxiParser.EnumDeclarationContext -> true
+               is TaxiParser.TypeAliasDeclarationContext -> true
+               is TaxiParser.TypeTypeContext -> true
+               else -> {
+                  TODO()
+               }
+            }
+         }
+         else -> {
+            TODO("Matching on token type against symbol kind ${this.name} is not implemented.  Note - got passed a token of ${token::class.simpleName}")
+         }
+      }
+   }
+
+   fun matches(token: ImportableToken): Boolean {
+      return when (this) {
+//         MATCH_ANYTHING -> true
+         TYPE_OR_MODEL -> token is PrimitiveType || (token is UserType<*, *> && token !is AnnotationType)
+         FUNCTION -> token is Function
+         ANNOTATION -> token is AnnotationType
+      }
+   }
+}

@@ -1,11 +1,22 @@
 package lang.taxi.functions
 
+import lang.taxi.Equality
 import lang.taxi.services.Parameter
-import lang.taxi.types.*
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Compiled
+import lang.taxi.types.DefinableToken
+import lang.taxi.types.ImportableToken
+import lang.taxi.types.Named
+import lang.taxi.types.TokenDefinition
+import lang.taxi.types.Type
 
 class FunctionDefinition(val parameters: List<Parameter>,
                          val returnType: Type,
-                         override val compilationUnit: CompilationUnit) : TokenDefinition
+                         override val compilationUnit: CompilationUnit) : TokenDefinition {
+   private val equality = Equality(this, FunctionDefinition::parameters, FunctionDefinition::returnType)
+   override fun equals(other: Any?) = equality.isEqualTo(other)
+   override fun hashCode(): Int = equality.hash()
+}
 
 class Function(override val qualifiedName: String, override var definition: FunctionDefinition?) : Named, Compiled, ImportableToken, DefinableToken<FunctionDefinition> {
    fun getParameterType(parameterIndex: Int): Type {
