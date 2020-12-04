@@ -59,6 +59,7 @@ class DefaultServiceMapper(private val constraintAnnotationMapper: ConstraintAnn
             parameters = params,
             annotations = emptyList(), // TODO
             returnType = returnType,
+            typeDoc = method.findTypeDoc(),
             contract = OperationContract(
                returnType = returnType,
                returnTypeConstraints = parseConstraints(method.getAnnotation(ResponseContract::class.java))
@@ -68,7 +69,13 @@ class DefaultServiceMapper(private val constraintAnnotationMapper: ConstraintAnn
          operationExtensions.fold(operation, { operation, extension -> extension.update(operation, type, method, typeMapper, mappedTypes) })
       }
 
-      val service = serviceExtensions.fold(Service(serviceName, operations, annotations = emptyList(), compilationUnits = listOf(CompilationUnit.unspecified())), { service, extension -> extension.update(service, type, typeMapper, mappedTypes) })
+      val service = serviceExtensions.fold(Service(
+         serviceName,
+         operations,
+         annotations = emptyList(),
+         typeDoc = type.findTypeDoc(),
+         compilationUnits = listOf(CompilationUnit.unspecified())
+      ), { service, extension -> extension.update(service, type, typeMapper, mappedTypes) })
       return setOf(service)
    }
 

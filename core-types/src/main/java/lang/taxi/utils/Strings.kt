@@ -7,3 +7,10 @@ fun String.prependIfAbsent(prefix:String):String {
       prefix + this
    }
 }
+
+
+fun String.trimEmptyLines():String {
+   return this.lineSequence()
+      .filter { it.trim().isNotEmpty() }
+      .joinToString("\n") { it.trim() }
+}
