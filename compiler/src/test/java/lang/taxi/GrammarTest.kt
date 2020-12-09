@@ -30,6 +30,20 @@ type FooType {
    }
 
    @Test
+   fun `declaring the same field twice in a type should cause an error`() {
+      val errors = """type Person {
+         firstName : String
+         lastName : String
+         firstName : String
+         }
+      """.validated()
+      errors.should.have.size(2)
+      // 2 errors - an error is captured for both the fields
+      errors[0].detailMessage.should.equal("Field firstName is declared multiple times")
+      errors[1].detailMessage.should.equal("Field firstName is declared multiple times")
+   }
+
+   @Test
    fun callingFindNamespaceWithoutANamespaceReturnsDefaultNamespace() {
       val src = """type FooType {
    thing : SomeThing as String
@@ -160,6 +174,40 @@ namespace bar {
       expect(enumType.annotations).to.have.size(1)
       expect(enumType.values).to.have.size(2)
       expect(enumType.value("Male").annotations).to.have.size(1)
+   }
+
+   @Test
+   fun arraysAreParsedInBothShorthandAndLonghand() {
+      val foo = """
+         type Name inherits String
+         model Foo {
+            nickNames: Name[]
+            petNames : Array<Name>
+            hatedNames: lang.taxi.Array<Name>
+         }
+      """.compiled()
+         .model("Foo")
+      foo.field("nickNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
+      foo.field("petNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
+      foo.field("hatedNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
+   }
+
+   @Test
+   fun arraysAReParsedWhenImported() {
+      val foo = """
+         import lang.taxi.Array
+
+         type Name inherits String
+         model Foo {
+            nickNames: Name[]
+            petNames : Array<Name>
+            hatedNames: lang.taxi.Array<Name>
+         }
+      """.compiled()
+         .model("Foo")
+      foo.field("nickNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
+      foo.field("petNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
+      foo.field("hatedNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
    }
 
    @Test(expected = CompilationException::class)

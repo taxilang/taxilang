@@ -2,7 +2,30 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.functions.FunctionAccessor
-import lang.taxi.types.*
+import lang.taxi.types.AccessorExpressionSelector
+import lang.taxi.types.AndExpression
+import lang.taxi.types.ComparisonExpression
+import lang.taxi.types.ComparisonOperator
+import lang.taxi.types.ConditionalAccessor
+import lang.taxi.types.ConstantEntity
+import lang.taxi.types.DestructuredAssignment
+import lang.taxi.types.ElseMatchExpression
+import lang.taxi.types.EnumLiteralCaseMatchExpression
+import lang.taxi.types.EnumValueAssignment
+import lang.taxi.types.FieldAssignmentExpression
+import lang.taxi.types.FieldReferenceEntity
+import lang.taxi.types.InlineAssignmentExpression
+import lang.taxi.types.LiteralAssignment
+import lang.taxi.types.LiteralCaseMatchExpression
+import lang.taxi.types.NullAssignment
+import lang.taxi.types.ObjectType
+import lang.taxi.types.OrExpression
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.ReferenceAssignment
+import lang.taxi.types.ReferenceCaseMatchExpression
+import lang.taxi.types.ScalarAccessorValueAssignment
+import lang.taxi.types.WhenFieldSetCondition
+import lang.taxi.types.XpathAccessor
 import org.junit.Test
 
 class ConditionalDataTypesTest {
@@ -10,11 +33,18 @@ class ConditionalDataTypesTest {
    @Test
    fun simpleConditionalTypeGrammar() {
       val src = """
+         type Money {
+             quantity : MoneyAmount as Decimal
+             currency : CurrencySymbol as String
+         }
+
+         type DealtAmount inherits Money
+         type SettlementAmount inherits Money
 type TradeRecord {
     // define simple properties by xpath expressions
     ccy1 : Currency as String
-    (   dealtAmount : String
-        settlementAmount : String
+    (   dealtAmount : DealtAmount
+        settlementAmount : SettlementAmount
     ) by when( xpath("/foo/bar") : String) {
         ccy1 -> {
             dealtAmount(
@@ -63,7 +93,7 @@ type TradeRecord {
       dealtAmountDestructuredAssignment.assignments[0].should.satisfy {
          it.fieldName.should.equal("quantity")
          val assignment = it.assignment as ScalarAccessorValueAssignment
-         assignment.accessor.should.equal(XpathAccessor("/foo/bar/quantity1"))
+         (assignment.accessor as XpathAccessor).expression.should.equal("/foo/bar/quantity1")
          true
       }
       dealtAmountDestructuredAssignment.assignments[1].should.satisfy {
@@ -244,7 +274,7 @@ type TradeRecord {
             s0_Index : Leg1Index by jsonPath("/S0_Index")
             s1_Index : Leg2Index by jsonPath("/S1_Index")
             underlyingIndex : String by when (this.s0_TypeStr) {
-               FixedOrFloatLeg.Float -> s0_Index
+               Leg1FixedOrFloat.Float -> s0_Index
                else -> s1_Index
             }
          }
@@ -282,9 +312,11 @@ type TradeRecord {
    @Test
    fun `can use functions on rhs of a when block`() {
       val field = Compiler("""
+         type Identifier inherits String
+         type AssetClass inherits String
          model Foo {
-            assetClass : String by column("assetClass")
-            identifierValue : String? by when (this.assetClass) {
+            assetClass : AssetClass by column("assetClass")
+            identifierValue : Identifier by when (this.assetClass) {
                "FXD" -> left(column("SYMBOL"),6)
                else -> column("ISIN")
             }

@@ -65,7 +65,7 @@ object AnnotationSpec : Spek({
             }
          """.validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("It is invalid to declare an annotation property of type Person. Only Strings, Numbers, Booleans or Enums are supported for annotation properties")
+         errors.first().detailMessage.should.equal("Field person declares an invalid type (Person). Only Strings, Numbers, Booleans or Enums are supported for annotation properties")
       }
       it("is an error to define annotations with types that cannot be resolved") {
          val errors = """
@@ -104,6 +104,74 @@ object AnnotationSpec : Spek({
          val enumMember = annotation.parameters["quality"] as EnumMember
          enumMember.enum.qualifiedName.should.equal("Quality")
          enumMember.value.name.should.equal("MEDIUM")
+      }
+
+      it("should not attempt to resolve a model or type with the same name as an annotation class") {
+         val schema = """
+            type Id inherits String
+            model Foo {
+               @Id // This should not attempt to resolve against the Id type defined above
+               recordId : Id
+            }
+         """.compiled()
+         val field = schema.model("Foo").field("recordId")
+         field.annotations[0].type.should.be.`null`
+         field.annotations[0].qualifiedName.should.equal("Id")
+         field.type.qualifiedName.should.equal("Id")
+      }
+
+      describe("when a type exists in the same namespace with the same name as an imported annotation type, an annotation is correctly resovled against the annotation type") {
+         val schemaA = """
+            namespace annotations
+
+            annotation Id
+         """.trimIndent()
+         val schemaB = """
+            import annotations.Id
+
+            namespace acme
+            type Id inherits String
+
+            model Foo {
+               @Id
+               recordId : Id
+            }
+
+         """.trimIndent()
+
+         it("should resolve types correctly when the annotations are compiled before the field") {
+            val doc = Compiler.forStrings(listOf(schemaA,schemaB))
+               .compile()
+            val field = doc.model("acme.Foo")
+               .field("recordId")
+            field.type.qualifiedName.should.equal("acme.Id")
+            field.annotations[0].qualifiedName.should.equal("annotations.Id")
+         }
+         it("should resolve types correctly when the field is compiled before the annotation") {
+            val doc = Compiler.forStrings(listOf(schemaB,schemaA))
+               .compile()
+            val field = doc.model("acme.Foo")
+               .field("recordId")
+            field.type.qualifiedName.should.equal("acme.Id")
+            field.annotations[0].qualifiedName.should.equal("annotations.Id")
+         }
+
+
+      }
+      it("unresolved annotations do not inherit namespace") {
+         val annotations = """
+            namespace acme {
+               model Foo {
+                  @Id
+                  recordId : String
+               }
+            }
+         """.compiled()
+            .model("acme.Foo")
+            .field("recordId")
+            .annotations
+         annotations[0].qualifiedName.should.equal("Id")
+
       }
 
       describe("compilation errors in using annotations") {

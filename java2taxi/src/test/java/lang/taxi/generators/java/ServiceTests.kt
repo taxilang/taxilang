@@ -3,7 +3,14 @@ package lang.taxi.generators.java
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
 import lang.taxi.TypeAliasRegistry
-import lang.taxi.annotations.*
+import lang.taxi.annotations.Constraint
+import lang.taxi.annotations.DataType
+import lang.taxi.annotations.Namespace
+import lang.taxi.annotations.Operation
+import lang.taxi.annotations.Parameter
+import lang.taxi.annotations.ResponseConstraint
+import lang.taxi.annotations.ResponseContract
+import lang.taxi.annotations.Service
 import lang.taxi.demo.FirstName
 import lang.taxi.testing.TestHelpers
 import org.junit.Ignore
@@ -56,8 +63,8 @@ type Money {
     value : MoneyAmount as Decimal
 }
 service PersonService {
-    operation findPerson(PersonId) : Person
-    operation convertRates( Money( this.currency = "GBP" ),
+    operation findPerson( personId: PersonId) : Person
+    operation convertRates( source: Money( this.currency = "GBP" ),
         targetCurrency : String ) : Money( from source, this.currency = targetCurrency )
 }
 
@@ -86,7 +93,7 @@ namespace taxi.example
 type alias EmailAddress as String
 type alias PersonId as String
 service TestService {
-    operation findEmail(PersonId):EmailAddress
+    operation findEmail(input:PersonId):EmailAddress
 }"""
       TestHelpers.expectToCompileTheSame(taxiDef, expected)
    }
@@ -190,7 +197,7 @@ namespace foo {
 
 
    service JavaService {
-      operation findByEmail(  FirstName ) : foo.Person
+      operation findByEmail(  arg0 : FirstName ) : foo.Person
    }
 }""".trimNewLines())
    }
@@ -215,7 +222,7 @@ namespace foo {
 }
 namespace taxi.example {
     service TestService {
-        operation findEmail(  foo.PersonName ) : foo.PersonName
+        operation findEmail( input: foo.PersonName ) : foo.PersonName
     }
 }
         """.trimIndent()
@@ -238,7 +245,7 @@ namespace taxi.example {
       val expected = """
 namespace taxi.example {
     service TestService {
-        read operation findEmail( String ) : String
+        read operation findEmail( input:String ) : String
     }
 }
         """.trimIndent()

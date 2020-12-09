@@ -5,6 +5,7 @@ import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.services.operations.constraints.PropertyTypeIdentifier
 import lang.taxi.services.operations.constraints.RelativeValueExpression
+import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.AttributePath
 import lang.taxi.types.QualifiedName
 import org.spekframework.spek2.Spek
@@ -173,11 +174,17 @@ object OperationContextSpec : Spek({
    }
 })
 
-fun String.validated(): List<CompilationError> {
-   return Compiler(this).validate()
+fun String.validated(config:CompilerConfig = TestCompilerOptions.config): List<CompilationError> {
+   return Compiler(this, config =  config).validate()
 }
 
-fun String.compiled(): TaxiDocument {
-   return Compiler(this).compile()
+fun String.compiled(config:CompilerConfig = TestCompilerOptions.config): TaxiDocument {
+   return Compiler(this, config = config).compile()
 }
 
+object TestCompilerOptions {
+   val config = CompilerConfig(
+      // Note, in our tests, we run with the type checker enabled.
+      typeCheckerEnabled = FeatureToggle.ENABLED
+   )
+}

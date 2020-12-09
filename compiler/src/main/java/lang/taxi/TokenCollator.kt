@@ -1,6 +1,7 @@
 package lang.taxi
 
 import lang.taxi.TaxiParser.ServiceDeclarationContext
+import lang.taxi.compiler.SymbolKind
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.ParserRuleContext
@@ -102,6 +103,15 @@ data class Tokens(
 
    fun hasUnparsedImportableToken(qualifiedName: String): Boolean {
       return this.unparsedTypes.containsKey(qualifiedName) || this.unparsedFunctions.containsKey(qualifiedName)
+   }
+
+   fun containsUnparsedType(qualifiedTypeName: String, symbolKind: SymbolKind): Boolean {
+      return if (this.unparsedTypes.containsKey(qualifiedTypeName)) {
+         val (_,unparsedToken) = this.unparsedTypes.getValue(qualifiedTypeName)
+         symbolKind.matches(unparsedToken)
+      } else {
+         false
+      }
    }
 
 }

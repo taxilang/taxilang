@@ -4,6 +4,7 @@ enum class Operator(val symbol: String) {
    EQUAL("="),
    NOT_EQUAL("!="),
    IN("in"),
+   LIKE("like"),
    GREATER_THAN(">"),
    LESS_THAN("<"),
    GREATER_THAN_OR_EQUAL_TO(">="),
