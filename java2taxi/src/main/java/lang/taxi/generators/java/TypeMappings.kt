@@ -2,12 +2,32 @@ package lang.taxi.generators.java
 
 import lang.taxi.TypeAliasRegistry
 import lang.taxi.TypeNames
-import lang.taxi.annotations.*
+import lang.taxi.annotations.Constraint
+import lang.taxi.annotations.DataType
+import lang.taxi.annotations.Namespaces
+import lang.taxi.annotations.Operation
+import lang.taxi.annotations.ParameterType
+import lang.taxi.annotations.Service
+import lang.taxi.annotations.declaresName
+import lang.taxi.annotations.qualifiedName
 import lang.taxi.jvm.common.PrimitiveTypes
 import lang.taxi.kapt.KotlinTypeAlias
 import lang.taxi.sources.SourceCode
-import lang.taxi.types.*
 import lang.taxi.types.Annotation
+import lang.taxi.types.ArrayType
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.EnumDefinition
+import lang.taxi.types.EnumType
+import lang.taxi.types.EnumValue
+import lang.taxi.types.Enums
+import lang.taxi.types.Modifier
+import lang.taxi.types.ObjectType
+import lang.taxi.types.ObjectTypeDefinition
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.Type
+import lang.taxi.types.TypeAlias
+import lang.taxi.types.UnresolvedImportedType
 import lang.taxi.utils.log
 import org.jetbrains.annotations.NotNull
 import org.springframework.core.ResolvableType
@@ -272,7 +292,6 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
       val fields = mutableSetOf<lang.taxi.types.Field>()
       val modifiers = getTypeLevelModifiers(element)
 
-
       val inheritance = getInheritedTypes(TypeNames.typeFromElement(element), existingTypes, defaultNamespace) // TODO
       val definition = ObjectTypeDefinition(
          fields = fields,
@@ -280,7 +299,7 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
          modifiers = modifiers,
          inheritsFrom = inheritance,
          format = null,
-         typeDoc = null,
+         typeDoc = element.findTypeDoc(),
          compilationUnit = exportedCompilationUnit(element)
       )
       val objectType = ObjectType(name, definition)
@@ -352,6 +371,7 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
 
             val mappedConstraints = constraintAnnotationMapper.convert(constraints)
             lang.taxi.types.Field(name = property.name,
+               typeDoc = annotatedElement.findTypeDoc(),
                type = getTaxiType(annotatedElement, existingTypes, defaultNamespace),
                nullable = property.returnType.isMarkedNullable,
                annotations = mapAnnotations(property),
@@ -406,6 +426,16 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
       val isNotNull = field.isAnnotationPresent(NotNull::class.java) ||
          return field.isAnnotationPresent(javax.validation.constraints.NotNull::class.java)
       return !isNotNull
+   }
+}
+
+fun AnnotatedElement.findTypeDoc(): String? {
+   return when {
+      this.isAnnotationPresent(DataType::class.java) -> this.getAnnotation(DataType::class.java).documentation
+      this.isAnnotationPresent(lang.taxi.annotations.Parameter::class.java) -> this.getAnnotation(lang.taxi.annotations.Parameter::class.java).documentation
+      this.isAnnotationPresent(Operation::class.java) -> this.getAnnotation(Operation::class.java).documentation
+      this.isAnnotationPresent(Service::class.java) -> this.getAnnotation(Service::class.java).documentation
+      else -> null
    }
 }
 

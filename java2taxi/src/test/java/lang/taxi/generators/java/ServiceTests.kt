@@ -21,23 +21,23 @@ import java.math.BigDecimal
 class ServiceTests {
    @DataType("taxi.example.Money")
    data class Money(
-      @field:DataType("taxi.example.Currency") val currency: String,
+      @field:DataType("taxi.example.Currency", documentation = "Describes the currency") val currency: String,
       @field:DataType("taxi.example.MoneyAmount") val value: BigDecimal)
 
-   @DataType
+   @DataType(documentation = "Models a person.")
    @Namespace("taxi.example")
-   data class Person(@field:DataType("taxi.example.PersonId") val personId: String)
+   data class Person(@field:DataType("taxi.example.PersonId", documentation = "Defines the id of the person") val personId: String)
 
 
    @RestController
    @Service("taxi.example.PersonService")
    class MyService {
       @Operation
-      fun findPerson(@DataType("taxi.example.PersonId") personId: String): Person {
+      fun findPerson(@DataType("taxi.example.PersonId", documentation = "The personId of the person you want to find") personId: String): Person {
          TODO("not real")
       }
 
-      @Operation
+      @Operation(documentation = "Returns a converted rate, where the currency has been updated based on the target")
       @ResponseContract(basedOn = "source",
          constraints = [ResponseConstraint("currency = targetCurrency")]
       )
@@ -47,7 +47,6 @@ class ServiceTests {
 
    }
 
-   // TODO : This test sometimes fails, which is annoying.
    @Test
    fun generatesServiceTemplate() {
       val taxiDef = TaxiGenerator().forClasses(MyService::class.java, Person::class.java).generateAsStrings()
@@ -55,7 +54,9 @@ class ServiceTests {
       val expected = """
 namespace taxi.example
 
+[[ Models a person. ]]
 type Person {
+   [[ Defines the id of the person ]]
     personId : PersonId as String
 }
 type Money {
@@ -64,6 +65,8 @@ type Money {
 }
 service PersonService {
     operation findPerson( personId: PersonId) : Person
+
+    [[ Returns a converted rate, where the currency has been updated based on the target ]]
     operation convertRates( source: Money( this.currency = "GBP" ),
         targetCurrency : String ) : Money( from source, this.currency = targetCurrency )
 }

@@ -17,6 +17,7 @@ import lang.taxi.types.Type
 import lang.taxi.types.TypeAlias
 import lang.taxi.types.UnresolvedImportedType
 import lang.taxi.types.VoidType
+import lang.taxi.utils.trimEmptyLines
 
 
 open class SchemaWriter {
@@ -140,8 +141,7 @@ $taxiBlock
 //            operation getPerson(@AnotherAnnotation PersonId):Person
 //        }
 
-      return """
-${generateAnnotations(service)}
+      return """${service.typeDoc.asTypeDocBlock()}${generateAnnotations(service)}
 service ${service.toQualifiedName().qualifiedRelativeTo(namespace)} {
 $operations
 }""".trim()
@@ -165,7 +165,7 @@ $operations
 
          val paramName = if (!param.name.isNullOrEmpty()) param.name + " : " else ""
          val paramDeclaration = typeAsTaxi(param.type, namespace)
-         paramAnnotations + paramName + paramDeclaration + constraintString
+          paramAnnotations + paramName + paramDeclaration + constraintString
       }.joinToString(", ")
       val returnDeclaration = if (operation.returnType != VoidType.VOID) {
          val returnType = typeAsTaxi(operation.returnType, namespace)
@@ -176,11 +176,14 @@ $operations
       }
 
       val operationName = operation.name
-
+      val typeDoc = operation.typeDoc.asTypeDocBlock()
       val annotations = generateAnnotations(operation)
       val scope = if (operation.scope != null) operation.scope + " " else ""
-      return """$annotations
-${scope}operation $operationName( $params )$returnDeclaration""".trimIndent().trim()
+      return """$typeDoc
+$annotations
+${scope}operation $operationName( $params )$returnDeclaration""".trimIndent()
+         .trim()
+         .trimEmptyLines()
    }
 
    private fun generateReturnContract(contract: OperationContract): String {
@@ -238,8 +241,12 @@ $enumValueDeclarations
 
       val modifiers = type.modifiers.joinToString(" ") { it.token }
       val inheritanceString = getInheritenceString(type)
+      val typeDoc = type.typeDoc.asTypeDocBlock()
 
-      return """$modifiers type ${type.toQualifiedName().typeName.reservedWordEscaped()}$inheritanceString $body"""
+      return """$typeDoc
+         |$modifiers type ${type.toQualifiedName().typeName.reservedWordEscaped()}$inheritanceString $body"""
+         .trimMargin()
+         .trimEmptyLines()
    }
 
    private fun getInheritenceString(type: ObjectType): String {
@@ -257,8 +264,9 @@ $enumValueDeclarations
       val constraints = constraintString(field.constraints)
       val accessor = field.accessor?.let { accessorAsString(field.accessor!!) } ?: ""
       val annotations = generateAnnotations(field)
+      val typeDoc = field.typeDoc.asTypeDocBlock()
 
-      return "$annotations ${field.name.reservedWordEscaped()} : $fieldTypeString $constraints $accessor".trim()
+      return "$typeDoc $annotations ${field.name.reservedWordEscaped()} : $fieldTypeString $constraints $accessor".trim()
    }
 
    private fun accessorAsString(accessor: Accessor): String {
@@ -285,6 +293,14 @@ $enumValueDeclarations
          offset != null -> """@offset = $offset"""
          else -> ""
       }
+   }
+}
+
+private fun String?.asTypeDocBlock():String {
+   return if (this.isNullOrEmpty()) {
+      ""
+   } else {
+      "[[ $this ]]\n"
    }
 }
 
