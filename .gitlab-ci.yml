@@ -101,4 +101,7 @@ publish-release:
 
    only:
       - master
+   artifacts:
+      paths:
+         - "taxi-cli/target/*.zip"
 
