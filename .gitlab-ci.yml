@@ -88,8 +88,9 @@ publish-snapshot:
       - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P snapshot-release,deploy-only ' # Skip UI and tests. Already there from previous stages and artifacts
    only:
       - develop
-
-
+   artifacts:
+      paths:
+         - "taxi-cli/target/*.zip"
 
 publish-release:
    #image: maven:3.6.3-jdk-8
