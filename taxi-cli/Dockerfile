@@ -4,8 +4,8 @@ VOLUME /taxi/
 
 WORKDIR /taxi/
 
-COPY target/taxi-cli.jar /
+COPY target/appassembler/ /taxi-cli/
 
-ENTRYPOINT ["java", "-jar", "/taxi-cli.jar"]
+ENTRYPOINT ["/taxi-cli/bin/taxi-cli"]
 
 CMD ["build"]
