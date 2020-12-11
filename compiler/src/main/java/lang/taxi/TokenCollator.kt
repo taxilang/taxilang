@@ -37,10 +37,10 @@ data class Tokens(
 
    fun plus(others: Tokens): Tokens {
       // Duplicate checking is disabled, as it doesn't consider imports, which causes false compilation errors
-        val errorsFromDuplicates = collectDuplicateTypes(others) + collectDuplicateServices(others)
-        if (errorsFromDuplicates.isNotEmpty()) {
-          throw CompilationException(errorsFromDuplicates)
-        }
+      val errorsFromDuplicates = collectDuplicateTypes(others) + collectDuplicateServices(others)
+      if (errorsFromDuplicates.isNotEmpty()) {
+         throw CompilationException(errorsFromDuplicates)
+      }
       return Tokens(
          this.imports + others.imports,
          this.unparsedTypes + others.unparsedTypes,
@@ -52,6 +52,18 @@ data class Tokens(
       )
    }
 
+   /**
+    * This method is currently stubbed out.
+    * There's a problem with the existing implementation that it incorrectly rejects
+    * types that are semantically equivalent.  We need to permit this, in order to let
+    * two microservices declare the same definition of a type, without requiring them to
+    * adopt a shared library.
+    * However, the original implementation of this worked, but then broke when we introduced imports.
+    * Then we provided an implementation that was too strict, and just rejected all redefinition of types,
+    * even if they have the same underlying definition.
+    *
+    * For now, this is disabled, but we need to resolve this.
+    */
    private fun collectDuplicateTypes(others: Tokens): List<CompilationError> {
       // Stubbed for a demo
       return emptyList()
@@ -61,7 +73,8 @@ data class Tokens(
       val duplicateTypeNames = this.unparsedTypes.keys.filter { others.unparsedTypes.containsKey(it) }
       val errors = if (duplicateTypeNames.isNotEmpty()) {
          val compilationErrors = duplicateTypeNames.map {
-            CompilationError((others.unparsedTypes[it] ?: error("")).second.start, "Attempt to redefine type $it. Types may be extended (using an extension), but not redefined")
+            CompilationError((others.unparsedTypes[it]
+               ?: error("")).second.start, "Attempt to redefine type $it. Types may be extended (using an extension), but not redefined")
          }
          compilationErrors
       } else emptyList()
@@ -74,10 +87,11 @@ data class Tokens(
       return errors
    }
 
-   fun importTokensInSource(sourceName: String):List<Pair<QualifiedName,TaxiParser.ImportDeclarationContext>> {
+   fun importTokensInSource(sourceName: String): List<Pair<QualifiedName, TaxiParser.ImportDeclarationContext>> {
       return importsBySourceName.getOrDefault(SourceNames.normalize(sourceName), emptyList())
-         .map { (name,token) -> QualifiedName.from(name) to token }
+         .map { (name, token) -> QualifiedName.from(name) to token }
    }
+
    fun importedTypeNamesInSource(sourceName: String): List<QualifiedName> {
       return importTokensInSource(sourceName).map { it.first }
    }
@@ -107,7 +121,7 @@ data class Tokens(
 
    fun containsUnparsedType(qualifiedTypeName: String, symbolKind: SymbolKind): Boolean {
       return if (this.unparsedTypes.containsKey(qualifiedTypeName)) {
-         val (_,unparsedToken) = this.unparsedTypes.getValue(qualifiedTypeName)
+         val (_, unparsedToken) = this.unparsedTypes.getValue(qualifiedTypeName)
          symbolKind.matches(unparsedToken)
       } else {
          false
@@ -126,7 +140,7 @@ class TokenCollator : TaxiBaseListener() {
    private val unparsedExtensions = mutableListOf<Pair<Namespace, ParserRuleContext>>()
    private val unparsedServices = mutableMapOf<String, Pair<Namespace, ServiceDeclarationContext>>()
    private val unparsedPolicies = mutableMapOf<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>()
-   private val unparsedFunctions  = mutableMapOf<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>()
+   private val unparsedFunctions = mutableMapOf<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>()
 
    //    private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
 //    private val unparsedExtensions = mutableListOf<ParserRuleContext>()
