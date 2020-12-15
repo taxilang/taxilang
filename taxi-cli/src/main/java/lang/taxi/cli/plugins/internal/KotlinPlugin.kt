@@ -5,6 +5,7 @@ import lang.taxi.cli.plugins.InternalPlugin
 import lang.taxi.generators.ModelGenerator
 import lang.taxi.generators.Processor
 import lang.taxi.generators.TaxiEnvironment
+import lang.taxi.generators.TaxiProjectEnvironment
 import lang.taxi.generators.WritableSource
 import lang.taxi.generators.kotlin.KotlinGenerator
 import lang.taxi.plugins.Artifact
@@ -37,7 +38,7 @@ class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGener
    }
 
 
-   override fun generate(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiEnvironment): List<WritableSource> {
+   override fun generate(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiProjectEnvironment): List<WritableSource> {
       val outputPathRoot = if (config.maven == null) Paths.get(config.outputPath) else environment.outputPath.resolve("src/main/java")
       val defaultPackageName =
          config.generatedTypeNamesPackageName ?:
@@ -57,7 +58,7 @@ class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGener
       return sources + mavenGenerated
    }
 
-   private fun applyMavenConfiguration(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiEnvironment): List<WritableSource> {
+   private fun applyMavenConfiguration(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiProjectEnvironment): List<WritableSource> {
       val mavenKotinConfigurer: MavenModelConfigurer = { model: Model ->
          model.dependencies.add(org.apache.maven.model.Dependency().apply {
             groupId = "org.jetbrains.kotlin"

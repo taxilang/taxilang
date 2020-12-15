@@ -1,20 +1,22 @@
 package lang.taxi.cli.commands
 
 import com.beust.jcommander.Parameter
+import com.beust.jcommander.Parameters
 import com.github.zafarkhaja.semver.Version
 import lang.taxi.cli.utils.VersionUpdater
 import lang.taxi.cli.utils.log
-import lang.taxi.generators.TaxiEnvironment
+import lang.taxi.generators.TaxiProjectEnvironment
 import org.springframework.stereotype.Component
 
 @Component
-class SetVersionCommand(private val versionUpdater: VersionUpdater) : ShellCommand {
-   @Parameter(required = true, description = "New version.")
+@Parameters(commandDescription = "Sets the version of the taxi project to a specific value")
+class SetVersionCommand(private val versionUpdater: VersionUpdater) : ProjectShellCommand {
+   @Parameter(required = true, description = "The new version of the project")
    lateinit var version: String
 
    override val name: String = "set-version"
 
-   override fun execute(environment: TaxiEnvironment) {
+   override fun execute(environment: TaxiProjectEnvironment) {
       val semVer: Version = Version.valueOf(environment.project.version)
       val newVersion: Version
 

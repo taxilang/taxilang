@@ -9,12 +9,15 @@ import org.apache.commons.io.FileUtils
 import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
-import org.springframework.web.client.RestTemplate
 import java.io.File
 import java.net.URI
 
 interface ExternalPluginProvider {
     fun resolvePlugins(pluginIdentifiers: List<Artifact>): Map<Artifact, File>
+}
+
+class NoOpPluginProvider : ExternalPluginProvider {
+   override fun resolvePlugins(pluginIdentifiers: List<Artifact>): Map<Artifact, File> = emptyMap()
 }
 
 // Will move this elsehwere when the server is a thing
