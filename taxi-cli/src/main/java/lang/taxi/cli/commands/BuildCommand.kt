@@ -1,12 +1,13 @@
 package lang.taxi.cli.commands
 
+import com.beust.jcommander.Parameters
 import lang.taxi.Compiler
 import lang.taxi.TaxiDocument
 import lang.taxi.cli.plugins.PluginRegistry
 import lang.taxi.cli.utils.log
 import lang.taxi.generators.ModelGenerator
 import lang.taxi.generators.Processor
-import lang.taxi.generators.TaxiEnvironment
+import lang.taxi.generators.TaxiProjectEnvironment
 import lang.taxi.generators.WritableSource
 import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.plugins.Plugin
@@ -18,10 +19,11 @@ import java.nio.file.Path
 
 
 @Component
-class BuildCommand(private val pluginManager: PluginRegistry) : ShellCommand {
+@Parameters(commandDescription = "Builds the current taxi project")
+class BuildCommand(private val pluginManager: PluginRegistry) : ProjectShellCommand {
    override val name = "build"
 
-   override fun execute(environment: TaxiEnvironment) {
+   override fun execute(environment: TaxiProjectEnvironment) {
       val doc = loadSources(environment.projectRoot) ?: return;
       val processorsFromPlugins = collectProcessorsFromPlugins()
 
