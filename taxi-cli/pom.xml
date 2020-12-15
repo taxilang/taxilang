@@ -246,7 +246,7 @@
                      <programs>
                         <program>
                            <mainClass>lang.taxi.cli.TaxiCli</mainClass>
-                           <id>taxi-cli</id>
+                           <id>taxi</id>
                         </program>
                      </programs>
                      <repositoryLayout>flat</repositoryLayout>
@@ -263,6 +263,7 @@
                   <descriptor>src/main/assembly/assembly.xml</descriptor>
                </descriptors>
                <appendAssemblyId>false</appendAssemblyId>
+               <finalName>taxi</finalName>
             </configuration>
             <executions>
                <execution>
