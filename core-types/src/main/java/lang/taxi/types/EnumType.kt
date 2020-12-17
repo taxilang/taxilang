@@ -25,11 +25,30 @@ object Enums {
  */
 typealias EnumValueQualifiedName = String
 
-data class EnumValueExtension(val name: String, override val annotations: List<Annotation>, val synonyms: List<EnumValueQualifiedName>, override val typeDoc: String? = null, override val compilationUnit: CompilationUnit) : Annotatable, Documented, TypeDefinition
-data class EnumValue(val name: String, val value: Any = name, val qualifiedName: EnumValueQualifiedName, override val annotations: List<Annotation>, val synonyms: List<EnumValueQualifiedName>, override val typeDoc: String? = null, val isDefault: Boolean = false) : Annotatable, Documented {
+data class EnumValueExtension(val name: String,
+                              override val annotations: List<Annotation>,
+                              val synonyms: List<EnumValueQualifiedName>,
+                              override val typeDoc: String? = null,
+                              override val compilationUnit: CompilationUnit) : Annotatable, Documented, TypeDefinition {
+   private val equality = Equality(this, EnumValueExtension::name, EnumValueExtension::annotations, EnumValueExtension::synonyms, EnumValueExtension::typeDoc)
+   override fun equals(other: Any?) = equality.isEqualTo(other)
+   override fun hashCode(): Int = equality.hash()
+}
+data class EnumValue(
+   val name: String,
+   val value: Any = name,
+   val qualifiedName: EnumValueQualifiedName,
+   override val annotations: List<Annotation> = emptyList(),
+   val synonyms: List<EnumValueQualifiedName> = emptyList(),
+   override val typeDoc: String? = null,
+   val isDefault: Boolean = false
+) : Annotatable, Documented {
    companion object {
       fun enumValueQualifiedName(enum:EnumType, valueName:String): EnumValueQualifiedName {
-         return "${enum.qualifiedName}.$valueName"
+         return enumValueQualifiedName(enum.toQualifiedName(),valueName)
+      }
+      fun enumValueQualifiedName(enumName:QualifiedName, valueName: String):EnumValueQualifiedName {
+         return "${enumName.fullyQualifiedName}.$valueName"
       }
       fun splitEnumValueName(name: EnumValueQualifiedName): Pair<QualifiedName, String> {
          val parts = name.split(".")

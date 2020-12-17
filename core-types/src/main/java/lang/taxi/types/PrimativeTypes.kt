@@ -53,7 +53,7 @@ enum class PrimitiveType(
    override val definitionHash: String? by lazy { wrapper.definitionHash }
 
    override val qualifiedName: String
-      get() = "lang.taxi.$declaration"
+      get() = "$NAMESPACE.$declaration"
 
    override val inheritsFrom: Set<Type> = emptySet()
 
@@ -63,6 +63,8 @@ enum class PrimitiveType(
       private val typesByName = values().associateBy { it.declaration }
       private val typesByQualifiedName = values().associateBy { it.qualifiedName }
       private val typesByLookup = typesByName + typesByQualifiedName
+
+      const val NAMESPACE = "lang.taxi"
 
       val NUMBER_TYPES = listOf(INTEGER, DECIMAL, DOUBLE)
       fun fromDeclaration(value: String): PrimitiveType {

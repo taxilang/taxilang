@@ -30,6 +30,7 @@ data class ObjectTypeDefinition(
    val modifiers: List<Modifier> = emptyList(),
    val inheritsFrom: Set<Type> = emptySet(),
    val format: List<String>? = null,
+   val pattern: String? = null,
    val formattedInstanceOfType: Type? = null,
    val calculatedInstanceOfType: Type? = null,
    val calculation: Formula? = null,
@@ -352,6 +353,7 @@ data class LiteralAccessor(val value: Any) : Accessor, TaxiStatementGenerator {
          }
 
       }
+
    override fun asTaxi(): String {
       return when (value) {
          is String -> value.quoted()
@@ -365,7 +367,7 @@ data class XpathAccessor(override val expression: String, override val returnTyp
    override fun asTaxi(): String = """by xpath("$expression")"""
 }
 
-data class JsonPathAccessor(override val expression: String, override  val returnType: Type) : ExpressionAccessor, TaxiStatementGenerator {
+data class JsonPathAccessor(override val expression: String, override val returnType: Type) : ExpressionAccessor, TaxiStatementGenerator {
    override fun asTaxi(): String = """by jsonPath("$expression")"""
 }
 

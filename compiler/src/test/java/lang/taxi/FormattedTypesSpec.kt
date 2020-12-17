@@ -1,6 +1,5 @@
 package lang.taxi
 
-import com.nhaarman.mockitokotlin2.eq
 import com.winterbe.expekt.should
 import lang.taxi.types.PrimitiveType
 import org.spekframework.spek2.Spek
@@ -186,6 +185,17 @@ object FormattedTypesSpec : Spek({
             type TradeDate inherits Instant( @offset = 30 )
          """.compiled().type("TradeDate")
          tradeDateType.offset.should.equal(30)
+      }
+
+      describe("Formatted string types") {
+         // This is a first-pass mvp of the feature, adding as-needed to support xml parsing
+         it("should allow pattern on string types") {
+            // This test
+            val currencyCode = """
+            type CurrencyCode inherits String( @format = "[A-Z]{3,3}" )
+         """.compiled().type("CurrencyCode")
+            currencyCode.format.should.have.elements("[A-Z]{3,3}")
+         }
       }
 
 

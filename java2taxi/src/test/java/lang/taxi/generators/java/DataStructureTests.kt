@@ -106,7 +106,7 @@ namespace taxi.example.invoices
 type Invoice {
     clientId : taxi.example.clients.ClientId
     invoiceValue : InvoiceValue as Decimal
-    previousInvoice : Invoice
+    previousInvoice : Invoice?
 }
 ---
 namespace taxi.example.clients
