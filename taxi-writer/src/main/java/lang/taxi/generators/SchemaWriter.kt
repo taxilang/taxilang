@@ -17,6 +17,7 @@ import lang.taxi.types.Type
 import lang.taxi.types.TypeAlias
 import lang.taxi.types.UnresolvedImportedType
 import lang.taxi.types.VoidType
+import lang.taxi.utils.quotedIfString
 import lang.taxi.utils.trimEmptyLines
 
 
@@ -55,6 +56,10 @@ open class SchemaWriter {
 
          val typeDeclarations = types
             // Exclude formatted types -- these are declared inline at the field reference
+            // Note : This is breaking top-level fomratted types, eg:
+            // type CurrenySymbol inherits String( @format = "[A-Z]{3,3}" )
+            // For now, I've worked around it in the xml code gen (the only place that supports this currently)
+            // by not setting the formattedInstanceOfType.  It produces the correct output, but it's a bit hacky
             .filterNot { it is ObjectType && it.formattedInstanceOfType != null }
             // Exclude calculated types - these are declared inline at the field reference
             .filterNot { it is ObjectType && it.calculatedInstanceOfType != null }
@@ -165,7 +170,7 @@ $operations
 
          val paramName = if (!param.name.isNullOrEmpty()) param.name + " : " else ""
          val paramDeclaration = typeAsTaxi(param.type, namespace)
-          paramAnnotations + paramName + paramDeclaration + constraintString
+         paramAnnotations + paramName + paramDeclaration + constraintString
       }.joinToString(", ")
       val returnDeclaration = if (operation.returnType != VoidType.VOID) {
          val returnType = typeAsTaxi(operation.returnType, namespace)
@@ -207,19 +212,32 @@ ${scope}operation $operationName( $params )$returnDeclaration""".trimIndent()
          is TypeAlias -> generateTypeAliasDeclaration(type, currentNamespace)
          is EnumType -> generateEnumDeclaration(type, currentNamespace)
          is ArrayType -> "" // We don't generate top-level array types
+         is TaxiStatementGenerator -> type.asTaxi()
          else -> TODO("No schema writer defined for type $type")
       }
    }
 
    private fun generateEnumDeclaration(type: EnumType, currentNamespace: String): String {
+      val enumDocs = type.typeDoc.asTypeDocBlock()
       val enumValueDeclarations = type.values.map { enumValue ->
-         "${generateAnnotations(enumValue)} ${enumValue.name}".trim()
+         val enumValueTypedoc = enumValue.typeDoc.asTypeDocBlock()
+         val enumValueDeclaration = if (enumValue.name != enumValue.value) {
+            "(${enumValue.value.inQuotesIfNeeded()})"
+         } else ""
+         val synonymDeclaration = when {
+            enumValue.synonyms.isEmpty() -> ""
+            enumValue.synonyms.size == 1 -> " synonym of ${enumValue.synonyms.first()}"
+            else -> " synonym of [${enumValue.synonyms.joinToString(",")}]"
+         }
+
+         """$enumValueTypedoc
+${generateAnnotations(enumValue)} ${enumValue.name}$enumValueDeclaration${synonymDeclaration}""".trim().trimEmptyLines()
       }.joinToString(",\n").prependIndent()
-      return """
+      return """$enumDocs
 ${generateAnnotations(type)} enum ${type.toQualifiedName().typeName} {
 $enumValueDeclarations
 }
-        """
+        """.trimEmptyLines()
    }
 
    private fun generateTypeAliasDeclaration(type: TypeAlias, currentNamespace: String): String {
@@ -241,10 +259,19 @@ $enumValueDeclarations
 
       val modifiers = type.modifiers.joinToString(" ") { it.token }
       val inheritanceString = getInheritenceString(type)
+
+      // When writing formats, we only care about the ones declared on this type, not inherited elsewhere
+      val inheritedFormats = type.inheritsFrom.flatMap { it.format ?: emptyList() }
+      val declaredFormats = (type.format ?: emptyList()).filter { !inheritedFormats.contains(it) }
+      val typeFormat = when {
+         declaredFormats.isEmpty() -> ""
+         declaredFormats.size == 1 -> "(@format = ${declaredFormats.first().quotedIfString()})"
+         else -> "(@format = [${declaredFormats.joinToString(",") { it.quotedIfString() }}])"
+      }
       val typeDoc = type.typeDoc.asTypeDocBlock()
 
       return """$typeDoc
-         |$modifiers type ${type.toQualifiedName().typeName.reservedWordEscaped()}$inheritanceString $body"""
+         |$modifiers type ${type.toQualifiedName().typeName.reservedWordEscaped()}$inheritanceString$typeFormat $body"""
          .trimMargin()
          .trimEmptyLines()
    }
@@ -259,8 +286,8 @@ $enumValueDeclarations
 
    private fun generateFieldDeclaration(field: Field, currentNamespace: String): String {
       val fieldType = field.type
-      val fieldTypeString = typeAsTaxi(fieldType, currentNamespace)
-
+      val nullableString = if (field.nullable) "?" else ""
+      val fieldTypeString = typeAsTaxi(fieldType, currentNamespace) + nullableString
       val constraints = constraintString(field.constraints)
       val accessor = field.accessor?.let { accessorAsString(field.accessor!!) } ?: ""
       val annotations = generateAnnotations(field)
@@ -296,7 +323,7 @@ $enumValueDeclarations
    }
 }
 
-private fun String?.asTypeDocBlock():String {
+private fun String?.asTypeDocBlock(): String {
    return if (this.isNullOrEmpty()) {
       ""
    } else {

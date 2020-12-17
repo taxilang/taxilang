@@ -3,7 +3,6 @@ package lang.taxi.generators
 import com.winterbe.expekt.should
 import lang.taxi.Compiler
 import org.junit.Test
-import kotlin.test.assertEquals
 import kotlin.test.fail
 
 // Note - this is also more heavily tested via the Kotlin to Taxi projects.
@@ -134,9 +133,9 @@ type Person {
       val schema = Compiler(src).compile()
       val generated = SchemaWriter().generateSchemas(listOf(schema))[0]
       val expected = """type TransactionEventDateTime inherits lang.taxi.Instant
-         type Order {
-            orderDateTime : TransactionEventDateTime( @format = ["yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "yyyy-MM-dd'T'HH:mm:ss.SSS"] @offset = 60 )
-         }"""
+      type Order {
+         orderDateTime : TransactionEventDateTime( @format = ["yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "yyyy-MM-dd'T'HH:mm:ss.SSS"] @offset = 60 )
+      }""".trimIndent()
       generated.trimNewLines().should.equal(expected.trimNewLines())
       generated.shouldCompile()
    }

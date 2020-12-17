@@ -1,18 +1,28 @@
 package lang.taxi.types
 
 import arrow.core.Either
+import lang.taxi.Equality
 
 data class AnnotationTypeDefinition(
    val fields: List<Field> = emptyList(),
    override val annotations: List<Annotation> = emptyList(),
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
-) : Annotatable, TypeDefinition, Documented
+) : Annotatable, TypeDefinition, Documented {
+   private val equality = Equality(
+      this,
+      AnnotationTypeDefinition::fields,
+      AnnotationTypeDefinition::annotations,
+      AnnotationTypeDefinition::typeDoc
+   )
+   override fun equals(other: Any?) = equality.isEqualTo(other)
+   override fun hashCode(): Int = equality.hash()
+}
 
 data class AnnotationType(
    override val qualifiedName: String,
    override var definition: AnnotationTypeDefinition?
-) : UserType<AnnotationTypeDefinition, Nothing>, Annotatable, Documented {
+) : UserType<AnnotationTypeDefinition, Nothing>, Annotatable, Documented, TaxiStatementGenerator {
    companion object {
       fun undefined(name: String): AnnotationType {
          return AnnotationType(name, definition = null)
@@ -57,4 +67,10 @@ data class AnnotationType(
    override val calculation: Formula? = null
    override val referencedTypes: List<Type> = emptyList()
    override val offset: Int? = null
+   override fun asTaxi(): String {
+      // TODO : Provide args etc
+      return """annotation ${this.toQualifiedName().typeName} {
+         }
+         """
+   }
 }

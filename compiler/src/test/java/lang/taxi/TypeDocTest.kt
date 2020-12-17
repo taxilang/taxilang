@@ -25,6 +25,71 @@ It should be allowed to [contain square brackets]""".trimIndent()
    }
 
    @Test
+   fun `can use reserved words in comments`() {
+      val type = """
+[[ type foo type alias function ]]
+type Foo
+      """.compiled()
+         .type("Foo")
+         .typeDoc.should.equal("type alias foo")
+   }
+
+   @Test
+   fun `can use special characters in comments`() {
+      listOf(
+         "[[ ] ]",
+         "[[ ]",
+         "[] [] [ [ ] ]",
+         """\""",
+         "Something about plural's",
+         "Something about semicolon's; and plural's",
+         "The simple return formula is: [ [P sub t - P sub (t-1)] / [P sub (t-1)] ] - 1 where: to d=n [ [ [ [P sub t - P sub (t-1)] / [P sub (t-1)] ] + 1] sup (1 / n) ] - 1 where:"
+      ).forEach { commentText ->
+         val  src = """[[ $commentText ]]
+            |type Foo
+            |
+            |[[ another comment ]]
+            |type Bar
+         """.trimMargin()
+         val compiled = src.compiled()
+            .type("Foo")
+         compiled.typeDoc.should.equal(commentText)
+      }
+   }
+
+   @Test
+   fun `test single-line comments with forward-slashes within`() {
+      // Using 2 forward slashes in a url can get treated like a comment start token, ignoring the rest
+      // of the line.
+      """[[ See http://google.com ]]
+         |type Url inherits String
+      """.trimMargin()
+         .compiled()
+         .type("Url")
+         .typeDoc.should.equal("See http://google.com")
+   }
+
+   @Test
+   fun `test grammar with quotes`() {
+      val taxi = """[[
+It's a number (generally in the range of 100 - 2000) that
+P-U-I-D, or "pooh-ed")
+]]
+enum PUID {
+   FxSpot(919)
+}
+
+[[
+It's a number (generally in the range of 100 - 2000) that
+P-U-I-D, or "pooh-ed")
+]]
+type Puid
+""".compiled()
+      taxi.types.size
+
+   }
+
+   @Test
    fun canDeclareCommentOnTypeAlias() {
       val source = """
 [[ This is a comment ]]
@@ -150,5 +215,28 @@ enum Color {
       val taxi = Compiler(source).compile()
       val firstName = taxi.objectType("Person").field("firstName")
       firstName.typeDoc.should.equal("The persons given name")
+   }
+
+   @Test
+   fun `taxidoc regression test investigation`() {
+      """   [[ Defines the value of the commodity return calculation formula as simple or compound. The simple return formula is: [ [P sub t - P sub (t-1)] / [P sub (t-1)] ] - 1 where: P sub t is the price or index level at time period t and P sub t-1 is the price or index level in time period t-1. The compound return formula is the geometric average return for the period: PI from d=1 to d=n [ [ [ [P sub t - P sub (t-1)] / [P sub (t-1)] ] + 1] sup (1 / n) ] - 1 where: PI is the product operator, p sub t is the price or index level at time period t, p sub t -1 is the price or index level at time period t-1 ]]
+   enum CommodityReturnCalculationFormulaEnum {
+      [[ The value is when the cash settlement amount is the simple formula: Notional Amount * ((Index Level sub d / Index Level sub d-1) - 1). That is, when the cash settlement amount is the Notional Amount for the calculation period multiplied by the ratio of the index level on the reset date/valuation date divided by the index level on the immediately preceding reset date/valuation date minus one. ]]
+      SimpleFormula,
+      [[ The value is when the cash settlement amount is the compound formula: ]]
+      CompoundFormula
+   }
+
+   [[ The compounding calculation method ]]
+   enum CompoundingMethodEnum {
+      [[ Flat compounding. Compounding excludes the spread. Note that the first compounding period has it's interest calculated including any spread then subsequent periods compound this at a rate excluding the spread. ]]
+      Flat,
+      [[ No compounding is to be applied. ]]
+      None,
+      [[ Straight compounding. Compounding includes the spread. ]]
+      Straight,
+      [[ Spread Exclusive compounding. ]]
+      SpreadExclusive
+   }""".validated().should.be.empty
    }
 }

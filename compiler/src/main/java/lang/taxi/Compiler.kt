@@ -119,6 +119,7 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    companion object {
       const val UNKNOWN_SOURCE = "UnknownSource"
       fun forStrings(sources: List<String>) = Compiler(sources.mapIndexed { index, source -> CharStreams.fromString(source, "StringSource-$index") })
+      fun forFiles(sources: List<File>) = Compiler(sources.mapIndexed { index, source -> CharStreams.fromPath(source.toPath()) })
       fun forStrings(vararg source: String) = forStrings(source.toList())
    }
 

@@ -478,7 +478,7 @@ internal class TokenProcessor(val tokens: Tokens, importSources: List<TaxiDocume
    }
 
    private fun assertTypesCompatible(originalType: Type, refinedType: Type, fieldName: String, typeName: String, typeRule: TaxiParser.TypeExtensionDeclarationContext): Type {
-      if (!refinedType.resolvesSameAs(originalType)) {
+      if (!refinedType.isAssignableTo(originalType)) {
          throw CompilationException(typeRule.start, "Cannot refine field '$fieldName' on $typeName to ${refinedType.qualifiedName} as it is incompatible with the existing type of ${originalType.qualifiedName}", typeRule.source().sourceName)
       }
       return refinedType
