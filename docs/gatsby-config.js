@@ -1,5 +1,3 @@
-const themeOptions = require('gatsby-theme-apollo-docs/theme-options');
-
 module.exports = {
   pathPrefix: '/docs',
   plugins: [
@@ -15,7 +13,7 @@ module.exports = {
         algoliaIndexName: 'apollodata',
         baseUrl: 'https://docs.taxilang.org',
         twitterHandle: 'apollographql',
-        spectrumHandle: 'apollo',
+        spectrumHandle: 'vyne-dec',
         youtubeUrl: 'https://www.youtube.com/channel/UC0pEW_GOrMJ23l8QcrGdKSw',
         logoLink: 'https://docs.taxilang.org/',
         baseDir: 'docs',
