@@ -41,8 +41,8 @@ module.exports = {
             'devtools/ci-cd-pipelines',
           ],
           Resources: [
-            '[Principled GraphQL](https://principledgraphql.com)',
-            'resources/graphql-glossary',
+            '[Vyne](https://vyne.co)',
+            '[Princpled Data](https://vyne.co)',
             'resources/faq',
           ],
         },
