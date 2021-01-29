@@ -10,7 +10,7 @@ import org.spekframework.spek2.style.specification.describe
 object FpmlBusinessEventsSpek : Spek({
    describe("parsing fpml") {
       it("should parse a business events file") {
-         val (generated,errors) = compileXsdResource("samples/fpml/confirmation-5-10_xml/confirmation/fpml-business-events-5-10.xsd")
+         val (generated, errors) = compileXsdResource("samples/fpml/confirmation-5-10_xml/confirmation/fpml-business-events-5-10.xsd")
 
          errors.should.be.empty
          val expected = Resources.getResource("samples/fpml/confirmation-5-10_xml/confirmation/expected-taxi/fpml.taxi")
@@ -20,7 +20,6 @@ object FpmlBusinessEventsSpek : Spek({
          val expectedDoc = Compiler.forStrings(xsdTaxiSources(expected)).compile()
          TestHelpers.expectToCompileTheSame(generated.taxi, xsdTaxiSources(expected))
       }
-
    }
 }) {
 }
