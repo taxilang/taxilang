@@ -20,7 +20,17 @@ object FpmlBusinessEventsSpek : Spek({
          val expectedDoc = Compiler.forStrings(xsdTaxiSources(expected)).compile()
          TestHelpers.expectToCompileTheSame(generated.taxi, xsdTaxiSources(expected))
       }
+      it("should parse the swaps file") {
+         val (generated,errors) = compileXsdResource("samples/fpml/confirmation-5-10_xml/confirmation/fpml-ird-5-10.xsd")
 
+         errors.should.be.empty
+         val expected = Resources.getResource("samples/fpml/confirmation-5-10_xml/confirmation/expected-taxi/fpml.taxi")
+            .readText()
+
+         val generatedDoc = Compiler.forStrings(generated.taxi).compile()
+         val expectedDoc = Compiler.forStrings(xsdTaxiSources(expected)).compile()
+         TestHelpers.expectToCompileTheSame(generated.taxi, xsdTaxiSources(expected))
+      }
    }
 }) {
 }
