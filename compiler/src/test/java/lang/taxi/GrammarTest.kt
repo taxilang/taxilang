@@ -1042,6 +1042,8 @@ namespace foo {
       val schemaB = Compiler(sourceB, importSources = listOf(schemaA)).compile()
       expect(schemaB.containsService("foo.CustomerService")).to.be.`true`
    }
+
+
 }
 
 

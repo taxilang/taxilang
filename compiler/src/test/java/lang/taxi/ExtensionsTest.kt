@@ -4,10 +4,8 @@ import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
 import junit.framework.Assert.fail
 import lang.taxi.types.EnumType
-import lang.taxi.types.EnumValue
 import org.antlr.v4.runtime.CharStreams
 import org.junit.Test
-import kotlin.math.exp
 
 class ExtensionsTest {
 
@@ -64,7 +62,7 @@ type Person {
    name : String
    age : Int
 }
-type alias FirstName as String
+type FirstName inherits String
 
 type extension Person {
     name : FirstName

@@ -156,6 +156,40 @@ enum Australian {
             val docB = Compiler(srcB, importSources = listOf(docA)).compile()
             docB.enumType("language.English").value("One").synonyms.should.contain.elements("Australian.One")
          }
+         it("should allow a synonym to use a fully qualified name") {
+            val taxi = """
+               namespace calendars {
+                  enum Days {
+                     Monday,
+                     Tuesday,
+                     Wednesday
+                  }
+                  enum AbbreviatedDays {
+                     Mon synonym of calendars.Days.Monday,
+                     Tue synonym of calendars.Days.Tuesday,
+                     Wed synonym of calendars.Days.Wednesday
+                  }
+               }
+            """.compiled()
+            taxi.enumType("calendars.AbbreviatedDays").ofValue("Mon").synonyms.should.have.size(1)
+         }
+         it("should allow a synonym to use a fully qualified name before the target is declared") {
+            val taxi = """
+               namespace calendars {
+                  enum AbbreviatedDays {
+                     Mon synonym of calendars.Days.Monday,
+                     Tue synonym of calendars.Days.Tuesday,
+                     Wed synonym of calendars.Days.Wednesday
+                  }
+                  enum Days {
+                     Monday,
+                     Tuesday,
+                     Wednesday
+                  }
+               }
+            """.compiled()
+            taxi.enumType("calendars.AbbreviatedDays").ofValue("Mon").synonyms.should.have.size(1)
+         }
          it("should throw an error if the referenced type cannot be found") {
             val src = """
 import language.English
@@ -332,9 +366,7 @@ enum English {
             }
          }
 
-         it("should support defining synonyms in extensions") {
 
-         }
       }
    }
 })

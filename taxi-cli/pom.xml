@@ -3,7 +3,7 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>lang.taxi</groupId>
-      <version>0.10.4</version>
+      <version>0.10.5</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -14,14 +14,19 @@
    </properties>
    <dependencies>
       <dependency>
+         <groupId>org.beryx</groupId>
+         <artifactId>text-io</artifactId>
+         <version>3.4.1</version>
+      </dependency>
+      <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>compiler</artifactId>
-         <version>0.10.4</version>
+         <version>0.10.5</version>
       </dependency>
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>taxi-generator-api</artifactId>
-         <version>0.10.4</version>
+         <version>0.10.5</version>
       </dependency>
       <dependency>
          <groupId>com.fasterxml.jackson.core</groupId>
@@ -51,7 +56,7 @@
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>taxi-plugin-api</artifactId>
-         <version>0.10.4</version>
+         <version>0.10.5</version>
       </dependency>
       <dependency>
          <groupId>org.pf4j</groupId>
@@ -106,7 +111,7 @@
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>taxi2kotlin</artifactId>
-         <version>0.10.4</version>
+         <version>0.10.5</version>
       </dependency>
    </dependencies>
 
@@ -241,7 +246,7 @@
                      <programs>
                         <program>
                            <mainClass>lang.taxi.cli.TaxiCli</mainClass>
-                           <id>taxi-cli</id>
+                           <id>taxi</id>
                         </program>
                      </programs>
                      <repositoryLayout>flat</repositoryLayout>
@@ -258,6 +263,7 @@
                   <descriptor>src/main/assembly/assembly.xml</descriptor>
                </descriptors>
                <appendAssemblyId>false</appendAssemblyId>
+               <finalName>taxi</finalName>
             </configuration>
             <executions>
                <execution>

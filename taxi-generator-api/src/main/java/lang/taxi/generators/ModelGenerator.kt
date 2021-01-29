@@ -1,13 +1,12 @@
 package lang.taxi.generators
 
 import lang.taxi.TaxiDocument
-import lang.taxi.packages.TaxiPackageProject
 import java.nio.file.Path
 
 interface ModelGenerator {
 //    val processors: List<Processor>
 
-   fun generate(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiEnvironment): List<WritableSource>
+   fun generate(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiProjectEnvironment): List<WritableSource>
 }
 
 interface WritableSource {

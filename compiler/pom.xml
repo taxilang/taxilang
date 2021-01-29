@@ -4,25 +4,22 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>lang.taxi</groupId>
-      <version>0.10.4</version>
+      <version>0.10.5</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
    <artifactId>compiler</artifactId>
-   <version>0.10.4</version>
+   <version>0.10.5</version>
 
    <properties>
       <antlr.version>4.7</antlr.version>
-      <spek.version>2.0.10</spek.version>
-      <junit.jupiter.version>5.6.2</junit.jupiter.version>
-      <junit.vintage.version>5.6.2</junit.vintage.version>
    </properties>
 
    <dependencies>
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>core-types</artifactId>
-         <version>0.10.4</version>
+         <version>0.10.5</version>
       </dependency>
       <dependency>
          <groupId>io.arrow-kt</groupId>
@@ -70,19 +67,16 @@
       <dependency>
          <groupId>org.spekframework.spek2</groupId>
          <artifactId>spek-dsl-jvm</artifactId>
-         <version>${spek.version}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.spekframework.spek2</groupId>
          <artifactId>spek-runner-junit5</artifactId>
-         <version>${spek.version}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.junit.vintage</groupId>
          <artifactId>junit-vintage-engine</artifactId>
-         <version>${junit.vintage.version}</version>
          <scope>test</scope>
       </dependency>
    </dependencies>

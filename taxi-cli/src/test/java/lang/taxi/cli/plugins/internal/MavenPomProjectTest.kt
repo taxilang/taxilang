@@ -7,6 +7,7 @@ import lang.taxi.cli.config.CliTaxiEnvironment
 import lang.taxi.cli.config.TaxiProjectLoader
 import lang.taxi.cli.pluginArtifacts
 import lang.taxi.cli.plugins.PluginRegistry
+import lang.taxi.generators.TaxiProjectEnvironment
 import org.apache.commons.io.FileUtils
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
@@ -17,8 +18,6 @@ import org.junit.rules.TemporaryFolder
 import org.springframework.boot.info.BuildProperties
 import java.io.File
 import java.io.FileReader
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.*
 
 class MavenPomProjectTest {
@@ -79,7 +78,7 @@ class MavenPomProjectTest {
          internalPlugins = listOf(KotlinPlugin(BuildProperties(Properties()))),
          requiredPlugins = project.pluginArtifacts()
       ))
-      val environment = CliTaxiEnvironment.forRoot(folder.root.toPath(), project)
+      val environment = CliTaxiEnvironment.forRoot(folder.root.toPath(), project) as TaxiProjectEnvironment
       build.execute(environment)
    }
 

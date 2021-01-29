@@ -1,10 +1,12 @@
 package lang.taxi.cli
 
 import com.beust.jcommander.JCommander
+import lang.taxi.cli.commands.ProjectShellCommand
+import lang.taxi.cli.commands.ProjectlessShellCommand
 import lang.taxi.cli.commands.ShellCommand
-import lang.taxi.cli.config.CliTaxiEnvironment
 import lang.taxi.cli.utils.log
 import lang.taxi.generators.TaxiEnvironment
+import lang.taxi.generators.TaxiProjectEnvironment
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.info.BuildProperties
 import org.springframework.boot.info.GitProperties
@@ -44,10 +46,24 @@ class ShellRunner(
          return
       }
 
-      val shellCommand = parsedCommand.objects[0] as ShellCommand
-      log().debug("Running {}", shellCommand.name)
-
-      shellCommand.execute(env)
+      val shellCommand = parsedCommand.objects[0] as ShellCommand<*>
+      when {
+         shellCommand is ProjectShellCommand && env !is TaxiProjectEnvironment -> {
+            log().error("The ${shellCommand.name} command requires a project to run against.  Try running 'taxi init' to get started")
+            return
+         }
+         shellCommand is ProjectShellCommand && env is TaxiProjectEnvironment -> {
+            shellCommand.execute(env as TaxiProjectEnvironment)
+         }
+         shellCommand is ProjectlessShellCommand -> {
+            log().debug("Running ${shellCommand.name} outside of a project")
+            shellCommand.execute(env)
+         }
+         else -> {
+            log().error("An internal error occurred - hit an unexpected when branch.  command is of type ${shellCommand::class.simpleName} and env is of type ${env::class.simpleName}")
+            return
+         }
+      }
    }
 
    private fun printUsage() {

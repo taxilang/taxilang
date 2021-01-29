@@ -36,4 +36,9 @@ open class CliOptions {
         return getProjectHome().resolve(taxiFile).toFile()
     }
 
+   val taxiFileExists:Boolean
+      get() {
+         return getTaxiFile().exists()
+      }
+
 }

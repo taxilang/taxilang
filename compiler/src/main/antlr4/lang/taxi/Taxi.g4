@@ -639,8 +639,8 @@ constantDeclaration : 'by'  defaultDefinition;
 // It's treated as plain text, but we'll eventually support doc tools
 // that speak markdown.
 // Comment markers are [[ .... ]], as this is less likely to generate clashes.
-typeDoc
- : '[[' ( ~']]' | '"' | '\'')* ']]';
+typeDoc : DOCUMENTATION;
+// : '[[' ('//' |  ~']]' | '"' | '\'')* ']]';
 
 
 lenientKeyword: 'lenient';
@@ -658,8 +658,8 @@ Identifier
 
 
 StringLiteral
-    :   '"' (DoubleQuoteStringCharacter+)? '"'
-    |   '\'' (SingleQuoteStringCharacter+)? '\''
+    :   '"' DoubleQuoteStringCharacter* '"'
+    |   '\'' SingleQuoteStringCharacter* '\''
     ;
 
 
@@ -670,13 +670,13 @@ BooleanLiteral
 
 fragment
 DoubleQuoteStringCharacter
-    :   ~["\\]
+    :   ~["\\\r\n]
     |   EscapeSequence
     ;
 
 fragment
 SingleQuoteStringCharacter
-    :   ~["'\\]
+    :   ~['\\\r\n]
     |   EscapeSequence
     ;
 
@@ -794,6 +794,9 @@ fragment EXP
 
 WS  :  [ \t\r\n\u000C]+ -> skip
     ;
+
+DOCUMENTATION
+   : '[[' .*? ']]';
 
 COMMENT
     :   '/*' .*? '*/' -> channel(HIDDEN)

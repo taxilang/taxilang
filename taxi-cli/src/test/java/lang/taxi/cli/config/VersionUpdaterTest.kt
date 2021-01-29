@@ -5,7 +5,7 @@ import com.winterbe.expekt.should
 import lang.taxi.cli.commands.SetVersionCommand
 import lang.taxi.cli.commands.VersionBumpCommand
 import lang.taxi.cli.utils.VersionUpdater
-import lang.taxi.generators.TaxiEnvironment
+import lang.taxi.generators.TaxiProjectEnvironment
 import lang.taxi.packages.TaxiPackageProject
 import org.apache.commons.io.FileUtils
 import org.junit.Before
@@ -21,7 +21,7 @@ class VersionUpdaterTest {
    @JvmField
    val folder = TemporaryFolder()
 
-   private val taxiEnvironment = object : TaxiEnvironment {
+   private val taxiEnvironment = object : TaxiProjectEnvironment {
       override val projectRoot: Path
          get() = folder.root.toPath()
       override val outputPath: Path
