@@ -11,7 +11,6 @@ import lang.taxi.generators.TaxiProjectEnvironment
 import lang.taxi.generators.WritableSource
 import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.plugins.Plugin
-import org.antlr.v4.runtime.CharStreams
 import org.apache.commons.io.FileUtils
 import org.springframework.stereotype.Component
 import java.nio.charset.Charset
@@ -24,7 +23,7 @@ class BuildCommand(private val pluginManager: PluginRegistry) : ProjectShellComm
    override val name = "build"
 
    override fun execute(environment: TaxiProjectEnvironment) {
-      val doc = loadSources(environment.projectRoot) ?: return;
+      val doc = loadSources(environment) ?: return;
       val processorsFromPlugins = collectProcessorsFromPlugins()
 
       val sourcesToOutput = pluginManager.declaredPlugins
@@ -54,10 +53,12 @@ class BuildCommand(private val pluginManager: PluginRegistry) : ProjectShellComm
       }
    }
 
-   private fun loadSources(path: Path): TaxiDocument? {
-      val taxiProject = TaxiSourcesLoader.loadPackage(path)
-      val projectSources = taxiProject.sources.map { CharStreams.fromString(it.content, it.sourceName) }
-      return Compiler(projectSources).compile()
+   private fun loadSources(projectEnvironment: TaxiProjectEnvironment): TaxiDocument {
+      val taxiProject = TaxiSourcesLoader.loadPackageAndDependencies(
+         projectEnvironment.projectRoot,
+         projectEnvironment.project
+      )
+      return Compiler(taxiProject).compile()
    }
 
 

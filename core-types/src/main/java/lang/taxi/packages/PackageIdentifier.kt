@@ -7,7 +7,7 @@ data class PackageIdentifier(val name: ProjectName, val version: Version) {
 
    val id = "${name.id}/$version"
 
-   val fileSafeIdentifier = "${name.organisation}.${name.name}.$version"
+   val fileSafeIdentifier = "${name.name}-$version"
 
    companion object {
       fun fromId(id: String): PackageIdentifier {
