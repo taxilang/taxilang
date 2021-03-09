@@ -4,6 +4,7 @@ import lang.taxi.CompilationError
 import lang.taxi.Compiler
 import lang.taxi.CompilerTokenCache
 import lang.taxi.TaxiDocument
+import lang.taxi.UnknownTokenReferenceException
 import lang.taxi.lsp.actions.CodeActionService
 import lang.taxi.lsp.completion.CompletionService
 import lang.taxi.lsp.formatter.FormatterService
@@ -30,6 +31,7 @@ import org.eclipse.lsp4j.HoverParams
 import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.LocationLink
+import org.eclipse.lsp4j.MarkupContent
 import org.eclipse.lsp4j.MessageParams
 import org.eclipse.lsp4j.MessageType
 import org.eclipse.lsp4j.Position
@@ -40,8 +42,12 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.LanguageClient
 import org.eclipse.lsp4j.services.LanguageClientAware
 import org.eclipse.lsp4j.services.TextDocumentService
+import reactor.core.publisher.Sinks
 import java.io.File
 import java.net.URI
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.time.Duration
 import java.util.concurrent.CompletableFuture
 
 
@@ -51,12 +57,22 @@ import java.util.concurrent.CompletableFuture
  * and the compiler, for accessing tokens and compiler context - useful
  * for completion
  */
-data class CompilationResult(val compiler: Compiler, val document: TaxiDocument?, val errors: List<CompilationError> = emptyList()) {
+data class CompilationResult(
+    val compiler: Compiler,
+    val document: TaxiDocument?,
+    val countOfSources: Int,
+    val duration: Duration,
+    val errors: List<CompilationError> = emptyList()
+
+
+) {
     val successful = document != null
 }
 
+private data class CompilationTrigger(val changedPath: Path)
 
-class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) : TextDocumentService, LanguageClientAware {
+class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) : TextDocumentService,
+    LanguageClientAware {
 
     val lastCompilationResult: CompilationResult
         get() {
@@ -82,6 +98,21 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
     private var initialized: Boolean = false
     private var connected: Boolean = false
 
+    private val compileTriggerSink = Sinks.many().unicast().onBackpressureBuffer<CompilationTrigger>()
+
+    init {
+        compileTriggerSink.asFlux()
+            .bufferTimeout(50, Duration.ofMillis(500))
+            .subscribe { triggers ->
+                compile()
+                triggers.distinct()
+                    .forEach { compilationTrigger ->
+                        computeLinterMessages(SourceNames.normalize(compilationTrigger.changedPath))
+                    }
+                publishDiagnosticMessages()
+            }
+    }
+
     private val ready: Boolean
         get() {
             return initialized && connected
@@ -98,20 +129,41 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
     }
 
     override fun completion(position: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
+        if (position.textDocument.uri.endsWith(".conf")) {
+            return CompletableFuture.completedFuture(Either.forLeft(mutableListOf()))
+        }
         val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
         return completionService.computeCompletions(lastCompilationResult, position)
     }
+
     override fun definition(params: DefinitionParams): CompletableFuture<Either<MutableList<out Location>, MutableList<out LocationLink>>> {
+        if (params.textDocument.uri.endsWith(".conf")) {
+            return CompletableFuture.completedFuture(Either.forLeft(mutableListOf()))
+        }
         val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
         return gotoDefinitionService.definition(lastCompilationResult, params)
     }
 
     override fun hover(params: HoverParams): CompletableFuture<Hover> {
+        if (params.textDocument.uri.endsWith(".conf")) {
+            return CompletableFuture.completedFuture(Hover(MarkupContent("markdown", "")))
+        }
         val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
-        return hoverService.hover(lastCompilationResult, compilerService.lastSuccessfulCompilationResult.get(), params)
+        return try {
+            hoverService.hover(lastCompilationResult, compilerService.lastSuccessfulCompilationResult.get(), params)
+        } catch (unknownTokenException: UnknownTokenReferenceException) {
+            // Try to reload just the once, and then re-attempt the hover call.
+            // If it fails after that, then just let the exception get thrown to prevent
+            // looping forever
+            forceReload("Received a reference to an unknown file - ${unknownTokenException.providedSourcePath}")
+            hoverService.hover(lastCompilationResult, compilerService.lastSuccessfulCompilationResult.get(), params)
+        }
     }
 
     override fun formatting(params: DocumentFormattingParams): CompletableFuture<MutableList<out TextEdit>> {
+        if (params.textDocument.uri.endsWith(".conf")) {
+            return CompletableFuture.completedFuture(mutableListOf())
+        }
         val content = compilerService.source(params.textDocument.uri)
         return formattingService.getChanges(content, params.options)
     }
@@ -124,10 +176,31 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
     private fun computeLinterMessages(documentUri: String) {
         val normalizedUri = SourceNames.normalize(documentUri)
         val uri = URI.create(normalizedUri)
-        this.linterDiagnostics = mapOf(normalizedUri to lintingService.computeInsightFor(uri, compilerService.getOrComputeLastCompilationResult()))
+        this.linterDiagnostics = mapOf(
+            normalizedUri to
+                    lintingService.computeInsightFor(uri, compilerService.getOrComputeLastCompilationResult())
+        )
     }
 
     override fun didSave(params: DidSaveTextDocumentParams) {
+        // We only retrigger full reload on save of a the taxi.conf
+        // as it's an expensive operation.
+        val sourceName = params.textDocument.uri
+        if (sourceName.endsWith("taxi.conf")) {
+            forceReload("taxi.conf has changed - reloading")
+        }
+    }
+
+    private fun forceReload(reason: String) {
+        client.logMessage(
+            MessageParams(
+                MessageType.Info,
+                reason
+            )
+        )
+        compilerService.reloadSourcesAndCompile()
+        compile()
+        publishDiagnosticMessages()
     }
 
     override fun didClose(params: DidCloseTextDocumentParams) {
@@ -144,11 +217,16 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
         val content = change.text
         val sourceName = params.textDocument.uri
 
-        compilerService.updateSource(params.textDocument, content)
 
-        compile()
-        computeLinterMessages(params.textDocument.uri)
-        publishDiagnosticMessages()
+        if (sourceName.endsWith("taxi.conf")) {
+            // SKip it, we'll wait for a save.
+        } else {
+            val compilationTrigger = CompilationTrigger(
+                Paths.get(URI.create(params.textDocument.uri))
+            )
+            compilerService.updateSource(params.textDocument, content)
+            this.compileTriggerSink.tryEmitNext(compilationTrigger)
+        }
     }
 
     // This is a very non-performant first pass.
@@ -157,6 +235,7 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
     // We need to find a way to only recompile the document that has changed
     internal fun compile(): CompilationResult {
         val compilationResult = this.compilerService.compile()
+        logCompilationResult(compilationResult)
         this.compilerMessages = compilationResult.errors
         this.compilerErrorDiagnostics = convertCompilerMessagesToDiagnotics(this.compilerMessages)
 
@@ -168,29 +247,32 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
             // Note - for VSCode, we can use the same position for start and end, and it
             // highlights the entire word
             val position = Position(
-                    error.line - 1,
-                    error.char
+                error.line - 1,
+                error.char
             )
-            val severity:DiagnosticSeverity = when(error.severity) {
+            val severity: DiagnosticSeverity = when (error.severity) {
                 CompilationError.Severity.INFO -> DiagnosticSeverity.Information
                 CompilationError.Severity.WARNING -> DiagnosticSeverity.Warning
                 CompilationError.Severity.ERROR -> DiagnosticSeverity.Error
             }
             (error.sourceName ?: "Unknown source") to Diagnostic(
-                    Range(position, position),
-                    error.detailMessage,
-                    severity,
-                    "Compiler"
+                Range(position, position),
+                error.detailMessage,
+                severity,
+                "Compiler"
             )
         }
         return diagnostics.groupBy({ it.first }, { it.second })
-                .mapKeys { (fileUri, _) -> SourceNames.normalize(fileUri) }
+            .mapKeys { (fileUri, _) -> SourceNames.normalize(fileUri) }
     }
 
     private fun publishDiagnosticMessages() {
         val diagnosticMessages = (compilerErrorDiagnostics.keys + linterDiagnostics.keys).map { uri ->
             val normalisedUrl = SourceNames.normalize(uri)
-            normalisedUrl to (compilerErrorDiagnostics.getOrDefault(normalisedUrl, emptyList()) + linterDiagnostics.getOrDefault(normalisedUrl, emptyList()))
+            normalisedUrl to (compilerErrorDiagnostics.getOrDefault(
+                normalisedUrl,
+                emptyList()
+            ) + linterDiagnostics.getOrDefault(normalisedUrl, emptyList()))
         }.map { (uri, diagnostics) ->
             // When sending diagnostic messages, use the canonical path of the file, rather than
             // the normalized URI.  This means we get an OS specific file.
@@ -224,9 +306,7 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
         this.client = client
         connected = true
         if (ready) {
-            compile()
-            publishDiagnosticMessages()
-
+            initializeCompilerService()
         }
     }
 
@@ -234,22 +314,26 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
         this.rootUri = params.rootUri
         this.initializeParams = params
 
-        File(URI.create(params.rootUri))
-                .walk()
-                .filter { it.extension == "taxi" && !it.isDirectory }
-                .forEach {
-                    val source = it.readText()
-                    // Note - use the uri from the path, not the file, to ensure consistency.
-                    // on windows, file uri's are file:///C:/ ... and path uris are file:///c:/...
-                    compilerService.updateSource(SourceNames.normalize(SourceNames.normalize(it.toPath().toString())), source)
-                }
-
         initialized = true
 
         if (ready) {
-            client.logMessage(MessageParams(MessageType.Log, "Found ${compilerService.sourceCount} to compile on startup"))
-            compile()
+            initializeCompilerService()
         }
+    }
 
+    internal fun initializeCompilerService() {
+        this.compilerService.initialize(rootUri!!, client)
+        this.compilerService.reloadSourcesWithoutCompiling()
+        compile()
+        publishDiagnosticMessages()
+    }
+
+    private fun logCompilationResult(result: CompilationResult) {
+        client.logMessage(
+            MessageParams(
+                MessageType.Log,
+                "Compiled ${result.countOfSources} sources in ${result.duration.toMillis()}ms"
+            )
+        )
     }
 }
