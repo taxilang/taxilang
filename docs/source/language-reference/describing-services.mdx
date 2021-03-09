@@ -1,0 +1,90 @@
+---
+title: Describing services
+description: Using our taxonomy to describe rich semantic services
+---
+
+import { Link } from "gatsby"
+import { Hint } from "../components/hint"
+
+## Services
+
+A service is simply a group of operations.
+
+```text
+service PeopleService {
+   operation listAllPeople():Person[]
+}
+```
+
+## Operation
+
+An operation defines a function on the API.
+
+```text
+@HttpOperation(method = 'GET', url = 'https://myservice/people')
+operation listAllPeople():Person[]
+```
+
+Operations often have annotations that provide hints to tooling as to how to invoke them.
+
+Taxi ships with some standard annotations, as part of it's [std-lib](https://gitlab.com/taxi-lang/taxi-lang/tree/master/taxi-stdlib-annotations/src/main/java/lang/taxi/annotations).  Although it's up to individual tooling to determine how to interpret these, the suggested usage is as follows:
+
+| Annotation | Usage |
+| :--- | :--- |
+| `@HttpOperation(method,url)` | Indicates that the operation should be invoked over HTTP, using the provided `method` and `url` |
+| `@HttpRequestBody` | Indicates that a parameter will be found on the request body |
+| `@ServiceDiscoveryClient(serviceName)` | Indicates that the service's absolute url should be discovered from Service Discovery, using the provided name for lookup |
+
+### Operation parameters
+
+Names of operation parameters are optional.  This is to encourage developers to leverage a richer type system where possible:
+
+```text
+// These two declarations are both valid, and desribe the same operation
+operation convertUnits(source:Weight, targetUnit:Unit):Weight
+operation convertUnits(Weight,Unit):Weight
+```
+
+### Operation Contracts & Constraints
+
+Contracts and constraints are useful for telling tooling about what functionality an operation can provide, and what conditions must be met before invoking.  
+
+Both contracts and constraints use the same syntax.
+
+```text
+type Money {
+   currency : String
+   amount : Decimal
+}
+operation convertCurrency(input: Money, 
+      targetCurrency: String) : Money(from input, currency = targetCurrency)
+```
+
+### `from input` 
+
+A contract may indicate that a return type is derived from one of the inputs, by using the `from {input}` syntax:
+
+```text
+operation convertUnits(input: Weight, target: Unit):Weight( from input )
+```
+
+### Attribute constraints
+
+Attribute constraints describe either a pre-condition \(if on an input\) or a post-condition \(if on a return type\) for an operation
+
+```text
+operation convertFromPounds(input : Money(currency = 'GBP'), target: Currency) 
+    : Money( from input, currency = target)
+```
+
+As shown above, attribute constraints may either be:
+
+* A constant value \(ie., `"GBP"`\)
+* A reference to an attribute of another parameter.
+  * Nested syntax is supported \(ie., `foo.bar.baz`\)
+
+These constraints are applicable on types too - see <Link to="../taxi-language#type-constraints">type constraints</Link> for an example.
+
+<Hint>
+This is an area of taxi that we expect to see significant development in, to improve the richness of the possible expressions 
+</Hint>
