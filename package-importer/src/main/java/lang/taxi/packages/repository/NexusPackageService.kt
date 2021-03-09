@@ -1,6 +1,7 @@
 package lang.taxi.packages.repository
 
 import lang.taxi.packages.Credentials
+import lang.taxi.packages.MessageLogger
 import lang.taxi.packages.PackageIdentifier
 import lang.taxi.packages.Repository
 import lang.taxi.packages.TaxiPackageProject
@@ -72,19 +73,19 @@ class NexusPackageService(
       return "${identifier.fileSafeIdentifier}.zip"
    }
 
-   override fun attemptDownload(identifier: PackageIdentifier): InputStream? {
+   override fun attemptDownload(identifier: PackageIdentifier, userFacingLogger:MessageLogger): InputStream? {
       val name = identifier.name
       val url = "${nexusUrl}/repository/$repositoryName/${name.organisation}/${name.name}/${identifier.version}/${
          filename(identifier)
       }"
-      log().info("Attempting to download ${identifier.id} from $url")
+      userFacingLogger.info("Attempting to download ${identifier.id} from $url")
       val request = RequestBuilder.get(url)
          .build()
       val response = httpClient.execute(request)
       return if (response.statusLine.statusCode in 200..299) {
          response.entity.content
       } else {
-         log().info("Couldn't download from $url - got ${response.statusLine}")
+         userFacingLogger.info("Couldn't download from $url - got ${response.statusLine}")
          null
       }
    }

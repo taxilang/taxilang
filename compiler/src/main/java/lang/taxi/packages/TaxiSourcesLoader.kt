@@ -23,13 +23,13 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
          return loadPackageAndDependencies(packageRootPath, taxiPackage, importer)
       }
 
-      fun loadPackageAndDependencies(packageRootPath: Path): TaxiPackageSources {
+      fun loadPackageAndDependencies(packageRootPath: Path, userFacingLogger: MessageLogger = LogWritingMessageLogger): TaxiPackageSources {
          val taxiConfFile = packageRootPath.resolve("taxi.conf")
          val taxiPackage = TaxiPackageLoader(taxiConfFile).load()
          return loadPackageAndDependencies(
             packageRootPath,
             taxiPackage,
-            PackageImporter(ImporterConfig.forProject(taxiPackage))
+            PackageImporter(ImporterConfig.forProject(taxiPackage, userFacingLogger))
          )
       }
 

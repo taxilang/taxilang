@@ -7,7 +7,7 @@ import java.nio.file.Path
 
 class PackageImporter(
    private val importerConfig: ImporterConfig,
-   private val downloaderFactory: PackageDownloaderFactory = PackageDownloaderFactory(importerConfig)
+   private val downloaderFactory: PackageDownloaderFactory = PackageDownloaderFactory(importerConfig, userFacingLogger = importerConfig.userFacingLogger)
 ) {
 
    fun fetchDependencies(projectConfig: TaxiPackageProject): Set<PackageSource> {

@@ -36,7 +36,7 @@ class SimpleFilePackageService(private val repositoryRoot: Path) : PackageServic
       return BasicHttpResponse(BasicStatusLine(ProtocolVersion("http", 1, 1), 200, "OK"))
    }
 
-   override fun attemptDownload(identifier: PackageIdentifier): InputStream? {
+   override fun attemptDownload(identifier: PackageIdentifier, userFacingLogger: MessageLogger): InputStream? {
       val file = repositoryRoot.resolve(identifier.fileSafeIdentifier + ".zip").toFile()
       return if (file.exists()) {
          file.inputStream()

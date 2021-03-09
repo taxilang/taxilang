@@ -1,6 +1,8 @@
 package lang.taxi.packages.repository
 
 import lang.taxi.packages.Credentials
+import lang.taxi.packages.LogWritingMessageLogger
+import lang.taxi.packages.MessageLogger
 import lang.taxi.packages.PackageIdentifier
 import lang.taxi.packages.Repository
 import lang.taxi.packages.TaxiPackageProject
@@ -15,7 +17,7 @@ import java.io.InputStream
  */
 interface PackageService {
    fun upload(zip: File, project: TaxiPackageProject): HttpResponse
-   fun attemptDownload(identifier: PackageIdentifier): InputStream?
+   fun attemptDownload(identifier: PackageIdentifier, userFacingLogger:MessageLogger = LogWritingMessageLogger): InputStream?
 
    val repositoryType: String
 }

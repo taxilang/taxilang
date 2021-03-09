@@ -42,20 +42,21 @@ module.exports = {
                ],
                "The Taxi CLI": [
                   "command-line-tools/README",
-                  "command-line-tools/taxi.conf-file",
+                  "command-line-tools/taxi-conf-file",
                   "command-line-tools/build-command",
                   "command-line-tools/version-bump-command"
                ],
-               "Development Tools": [
-                  "devtools/distributing-taxi-projects-and-plugins/README",
-                  "devtools/distributing-taxi-projects-and-plugins/taxi-hub"
+               "Publishing and sharing taxonomies": [
+                  "devtools/distributing-taxi-projects",
+                  "devtools/distributing-taxi-plugins",
+                  "devtools/taxi-hub",
                ],
                Plugins: [
                   "plugins/README",
                   "plugins/kotlin-plugin",
                   "plugins/writing-your-own-plugins"
                ],
-               "Taxi VS Code": ["taxi-vs-code/editor-plugins"],
+               "Visual Studio Code": ["taxi-vs-code/editor-plugins"],
                Testing: [
                   "testing/running-taxi-in-a-ci-cd-pipeline",
                   "testing/testing-taxi"

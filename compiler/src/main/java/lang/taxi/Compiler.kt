@@ -46,13 +46,13 @@ data class CompilationError(val line: Int,
    constructor(position: SourceLocation, detailMessage: String, sourceName: String? = null, severity: Severity = Severity.ERROR) : this(position.line, position.char, detailMessage, sourceName, severity)
    constructor(offendingToken: Token, detailMessage: String, sourceName: String = offendingToken.tokenSource.sourceName, severity: Severity = Severity.ERROR) : this(offendingToken.line, offendingToken.charPositionInLine, detailMessage, sourceName, severity)
 
-   enum class Severity {
-      INFO,
-      WARNING,
-      ERROR
+   enum class Severity(val label:String) {
+      INFO("Info"),
+      WARNING("Warning"),
+      ERROR("Error")
    }
 
-   override fun toString(): String = "Compilation Error: ${sourceName.orEmpty()}($line,$char) $detailMessage"
+   override fun toString(): String = "[${severity.label}]: ${sourceName.orEmpty()}($line,$char) $detailMessage"
 }
 
 open class CompilationException(val errors: List<CompilationError>) : RuntimeException(errors.joinToString("\n") { it.toString() }) {
@@ -213,7 +213,7 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       // Note - leaving this approach for backwards compatiability
       // We could try to continue compiling, with the tokens we do have
       if (syntaxErrors.isNotEmpty()) {
-         throw CompilationException(syntaxErrors)
+         return syntaxErrors to TaxiDocument.empty()
       }
       val builder = tokenProcessrWithImports
       // Similarly to above, we could do somethign with these errors now.

@@ -29,7 +29,7 @@ class TaxiSourcesLoaderTest {
       val (packageService, packageServiceFactory) = fileServiceFactory(mockRepoRoot.root.toPath())
       this.packageService = packageService
       this.packageServiceFactory = packageServiceFactory
-      this.downloaderFactory = PackageDownloaderFactory(importerConfig(),packageServiceFactory)
+      this.downloaderFactory = PackageDownloaderFactory(importerConfig(),packageServiceFactory, LogWritingMessageLogger)
    }
 
    @Test

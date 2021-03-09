@@ -44,7 +44,7 @@ class PackageImporterTest {
 
       val importerConfig = importerConfig()
       val (packageService, packageServiceFactory) = fileServiceFactory()
-      val downloaderFactory = PackageDownloaderFactory(importerConfig, packageServiceFactory)
+      val downloaderFactory = PackageDownloaderFactory(importerConfig, packageServiceFactory, LogWritingMessageLogger)
 
       // first, publish the package we're going to depend on:
       val resource = Resources.getResource("testRepo/taxi/lang.taxi.Dummy/0.2.0").toURI()
