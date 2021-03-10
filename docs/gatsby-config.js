@@ -41,15 +41,15 @@ module.exports = {
                   "language-reference/describing-services"
                ],
                "The Taxi CLI": [
-                  "command-line-tools/README",
-                  "command-line-tools/taxi-conf-file",
-                  "command-line-tools/build-command",
-                  "command-line-tools/version-bump-command"
+                  "taxi-cli/intro",
+                  "taxi-cli/taxi-conf-file",
+                  "taxi-cli/build-command",
+                  "taxi-cli/version-bump-command"
                ],
                "Publishing and sharing taxonomies": [
-                  "devtools/distributing-taxi-projects",
-                  "devtools/distributing-taxi-plugins",
-                  "devtools/taxi-hub",
+                  "distributing-taxi/distributing-taxi-projects",
+                  "distributing-taxi/distributing-taxi-plugins",
+                  "distributing-taxi/taxi-hub",
                ],
                Plugins: [
                   "plugins/README",
