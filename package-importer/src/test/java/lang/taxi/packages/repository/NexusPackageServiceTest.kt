@@ -16,6 +16,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.testcontainers.containers.BindMode
+import org.testcontainers.containers.GenericContainer
+import org.testcontainers.utility.DockerImageName
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -37,14 +41,48 @@ class NexusPackageServiceTest {
    @JvmField
    val folder = TemporaryFolder()
 
+   lateinit var adminPassword: String
+//
+//   companion object {
+//      @JvmField
+//      @ClassRule
+//      val nexusDataDirectory = TemporaryFolder()
+//
+//      @ClassRule
+//      @JvmField
+//      val nexusContainer: NexusContainer =
+//         NexusContainer()
+//            .withLogConsumer(Slf4jLogConsumer(LoggerFactory.getLogger(NexusContainer::class.java)))
+//            .withNexusDataDirectory(nexusDataDirectory)
+//            .withExposedPorts(9999)
+//            .waitingFor(
+//               Wait.forHttp("/service/rest/v1/status")
+//                  .withStartupTimeout(
+//                     // Docs say can take up to 3 minutes
+//                     Duration.ofMinutes(5)
+//                  )
+//            )
+//   }
+
+//
+//   @Before
+//   fun discoverAdminUser() {
+//      adminPassword = nexusDataDirectory.root.toPath().resolve("admin.password")
+//         .toFile().readText()
+//
+//   }
+
    @Before
    fun assumeNexusIsRunning() {
       val client = HttpClientBuilder.create().build()
       try {
          val response = client.execute(HttpGet("http://localhost:8081/service/rest/v1/status"))
          assumeTrue("Not running nexus tests, as nexus does not appear to be up", response.statusLine.statusCode == 200)
-      } catch (e:Exception) {
-         log().error("Error caught whilst trying to perform nexus liveliness checks, will not run Nexus tests", e.message)
+      } catch (e: Exception) {
+         log().error(
+            "Error caught whilst trying to perform nexus liveliness checks, will not run Nexus tests",
+            e.message
+         )
          assumeTrue(false)
       }
 
@@ -84,5 +122,22 @@ class NexusPackageServiceTest {
       Files.exists(downloadPath.resolve("taxi/Demo/0.2.0/taxi.conf")).should.be.`true`
       Files.exists(downloadPath.resolve("taxi/Demo/0.2.0/financial-terms.taxi")).should.be.`true`
       Files.exists(downloadPath.resolve("taxi/Demo/0.2.0/Sample.taxi")).should.be.`true`
+   }
+}
+
+class NexusContainer : GenericContainer<NexusContainer>(DockerImageName.parse("sonatype/nexus3")) {
+   fun withNexusDataDirectory(temporaryFolder: TemporaryFolder): NexusContainer {
+      temporaryFolder.create()
+
+      log().info("Using nexus temp directory at ${temporaryFolder.root.canonicalPath}")
+      val tempRoot = temporaryFolder.root
+      val user200 = tempRoot.toPath().fileSystem.userPrincipalLookupService.lookupPrincipalByName("200");
+      Files.setOwner(tempRoot.toPath(), user200)
+      return withNexusDataDirectory(tempRoot)
+   }
+
+   fun withNexusDataDirectory(file: File): NexusContainer {
+      addFileSystemBind(file.canonicalPath, "/nexus-data", BindMode.READ_WRITE)
+      return this
    }
 }
