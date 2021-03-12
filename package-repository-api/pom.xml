@@ -12,6 +12,11 @@
 
    <dependencies>
       <dependency>
+         <groupId>lang.taxi</groupId>
+         <artifactId>core-types</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      <dependency>
          <groupId>com.github.zafarkhaja</groupId>
          <artifactId>java-semver</artifactId>
          <version>0.9.0</version>

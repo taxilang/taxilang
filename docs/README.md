@@ -19,7 +19,7 @@ However, Taxi is intended to be a standalone tool, not coupled to Vyne.
 
 ### Getting Started
 
-To get started you need to download and install Taxi. Download the [taxi.zip](https://gitlab.com/taxi-lang/taxi-lang/-/jobs/artifacts/master/raw/taxi-cli/target/taxi-cli.zip?job=publish-release) file and extract it.
+To get started you need to download and install the Taxi Cli. Download the [taxi.zip](https://gitlab.com/taxi-lang/taxi-lang/-/jobs/artifacts/master/raw/taxi-cli/target/taxi-cli.zip?job=publish-release) file and extract it.
 
 Once the file is downloaded and extracted, you need to add it to your path. It will look something like this:
 
@@ -29,7 +29,9 @@ Once the file is downloaded and extracted, you need to add it to your path. It w
 
 Once the route to the bin file has been added, open a command line/terminal window and run the command below:
 
-`taxi`
+```shell
+taxi
+```
 
 This will install taxi onto your machine and make it available to use.
 

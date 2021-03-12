@@ -1,0 +1,120 @@
+---
+title: Configuring Taxi projects
+description: An overview of the `taxi.conf` file
+---
+
+import { Link } from "gatsby"
+import { Hint, Discourage } from '../components/hint'
+
+A `taxi.conf` file describes a project's layout, and the plugins to be invoked after compilation.  It follows the [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md#hocon-human-optimized-config-object-notation) format, which is like supercharged JSON.
+
+```text
+name: taxi/maven-sample
+version: 0.3.0
+sourceRoot: src/
+plugins: {
+   taxi/kotlin: {
+      maven: {
+         groupId: "lang.taxi"
+         artifactId: "parent"
+         repositories: [
+            {
+               id: "internal-repo"
+               url: "https://newcorp.nexus.com"
+               snapshots: true
+            }
+         ]
+      }
+   }
+}
+
+```
+
+The source for the config can be seen [here](https://gitlab.com/taxi-lang/taxi-lang/-/blob/develop/core-types/src/main/java/lang/taxi/packages/TaxiPackageProject.kt),
+which provides the complete documentation of how projects can be configured.
+
+| Name | Definition  |
+| :--- | :--- |
+| name | The name of the taxi project.  By convention, follows a format of `organisation/project-name` |
+| version | The version of the taxi project |
+| sourceRoot | The root location of taxi files to be compiled |
+| output | The folder where any generated artifacts will be written |
+| plugins | A list of <Link to="../../plugins/README">plugins</Link> to be enabled on the project |
+| pluginSettings | Defines where plugins are fetched and loaded from |
+| dependencies | A list of other taxi project dependencies that this project depends on |
+| repositories | A list of taxi repositories to fetch content from |
+| publishToRepository | Defines where this project should be published to, should other projects wish to depend on it |
+| credentials | A list of credentials for authenticating with remote repositories
+
+### Dependencies
+
+Projects may declare dependenices on other taxi projects.  This provides a powerful mechanism for creating modular, re-usable taxonomies across organisations.
+
+The format for declaring dependencies is:
+
+```text
+dependencies: {
+    org/ProjectName : 0.2.0
+}
+```
+
+An example configuration for declaring dependencies is
+shown [here](https://gitlab.com/taxi-lang/taxi-lang/-/blob/develop/package-importer/src/test/resources/testRepo/taxi/lang.taxi.Dummy/0.2.0/taxi.conf).
+
+For details on sharing, publishing and depending on taxonomies, see <Link to="../devtools/distributing-taxi-projects.mdx">Distributing taxi projects</Link>
+
+<Discourage>
+Transitive dependencies (ie., depending on projects that depend on other projects) are not yet supported, but are on the roadmap.  If this feature is important to you, get in touch on our slack channel.
+</Discourage>
+
+### Repositories
+Repositories define where to try to download dependencies from (and where to publish to).  Currently, only [Sonatype Nexus](https://www.sonatype.com/nexus/repository-oss) is supported,
+and an experimental Taxi repository - <Link to="../devtools/taxi-hub">Taxihub</Link> - is also under development.
+
+The Taxi CLI tries to download each dependency from the list of repositories until successful.
+
+The format for declaring a repository in your `taxi.conf` file is as follows:
+
+```
+repositories: [
+   {
+      // The name of the repository.  Optional, but used to reference credentials
+      name: "my-corporate-nexus",
+      url: "http://localhost:8081",
+      // Optional.  Defines the type of repository being used.  Currently only 'nexus' is supported,
+      // so this can be omitted.
+      type : "nexus",
+
+      // Settings specific to the repository provider.
+      // Below settings shown are applicable to a nexus repository
+      settings: {
+         // The name of the respository as defined within nexus
+         repositoryName : taxi
+      }
+   }
+]
+```
+
+For more information on publishing and sharing taxonomies, see <Link to="../devtools/distributing-taxi-projects">here</Link>
+
+### Credentials
+Credentials define how to authenticate with a repository.
+
+The `repositoryName` attribute must match the `name` attribute of a defined repository.
+```
+credentials: [
+   { repositoryName: "nexus", username: "jimmy", password: "pass123" }
+]
+```
+
+Note - credentials don't need to be defined in your projects main `taxi.conf` - in fact, we reccommend you don't.
+Instead, define a configuration file at  `~/.taxi.conf` (your home directory) which contains the credentials.  See below for
+more detail on merging configuration files.
+
+## Merging multiple configuration files
+By default, Taxi tooling will merge configuration files from the following locations:
+
+ * The root of the project - `./taxi.conf`
+ * The home directory - `~/.taxi/taxi.conf`
+
+This allows for storing of sensitive information - such as credentials - outside of main projects, and source control.

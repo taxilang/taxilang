@@ -2,13 +2,25 @@ package lang.taxi.types
 
 import com.google.common.cache.CacheBuilder
 import java.io.File
-import java.lang.Exception
 import java.net.URI
+import java.nio.file.Path
 import java.nio.file.Paths
 
 object SourceNames {
    private val sourceNameCache = CacheBuilder.newBuilder()
       .build<String, String>()
+
+   // TODO : This is not tested yet, but want to encapsulate the logic to
+   // a single location
+   fun normalize(uri: URI): String {
+      return normalize(uri.toASCIIString())
+   }
+
+   // TODO : This is not tested yet, but want to encapsulate the logic to
+   // a single location
+   fun normalize(path: Path): String {
+      return normalize(path.toString())
+   }
 
    /**
     * Attempts to normalize and return the path portion of a Source file name.

@@ -1,6 +1,7 @@
 package lang.taxi.cli.commands
 
 import com.beust.jcommander.Parameters
+import lang.taxi.CompilationError
 import lang.taxi.Compiler
 import lang.taxi.TaxiDocument
 import lang.taxi.cli.plugins.PluginRegistry
@@ -11,11 +12,11 @@ import lang.taxi.generators.TaxiProjectEnvironment
 import lang.taxi.generators.WritableSource
 import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.plugins.Plugin
-import org.antlr.v4.runtime.CharStreams
 import org.apache.commons.io.FileUtils
 import org.springframework.stereotype.Component
 import java.nio.charset.Charset
 import java.nio.file.Path
+import kotlin.system.exitProcess
 
 
 @Component
@@ -24,7 +25,14 @@ class BuildCommand(private val pluginManager: PluginRegistry) : ProjectShellComm
    override val name = "build"
 
    override fun execute(environment: TaxiProjectEnvironment) {
-      val doc = loadSources(environment.projectRoot) ?: return;
+      val (messages, doc) = loadSources(environment)
+      messages.forEach { message ->
+         when (message.severity) {
+            CompilationError.Severity.INFO -> log().info(message.toString())
+            CompilationError.Severity.WARNING -> log().warn(message.toString())
+            CompilationError.Severity.ERROR -> log().error(message.toString())
+         }
+      }
       val processorsFromPlugins = collectProcessorsFromPlugins()
 
       val sourcesToOutput = pluginManager.declaredPlugins
@@ -37,8 +45,20 @@ class BuildCommand(private val pluginManager: PluginRegistry) : ProjectShellComm
             generated
          }
 
-      writeSources(sourcesToOutput, environment.outputPath)
-      log().info("Wrote ${sourcesToOutput.size} files to ${environment.outputPath}")
+      if (messages.any { it.severity == CompilationError.Severity.ERROR }) {
+         log().error("Failed to compile the taxi project")
+         exitProcess(1)
+      } else if (messages.any { it.severity == CompilationError.Severity.WARNING }) {
+         log().warn("Compilation succeeded with warnings")
+      } else {
+         log().info("Compilation succeeded")
+      }
+      if (sourcesToOutput.isEmpty()) {
+         log().info("No sources were generated. Consider adding a source generator in the taxi.conf ")
+      } else {
+         writeSources(sourcesToOutput, environment.outputPath)
+         log().info("Wrote ${sourcesToOutput.size} files to ${environment.outputPath}")
+      }
    }
 
    private fun collectProcessorsFromPlugins(): List<Processor> {
@@ -54,10 +74,12 @@ class BuildCommand(private val pluginManager: PluginRegistry) : ProjectShellComm
       }
    }
 
-   private fun loadSources(path: Path): TaxiDocument? {
-      val taxiProject = TaxiSourcesLoader.loadPackage(path)
-      val projectSources = taxiProject.sources.map { CharStreams.fromString(it.content, it.sourceName) }
-      return Compiler(projectSources).compile()
+   private fun loadSources(projectEnvironment: TaxiProjectEnvironment): Pair<List<CompilationError>, TaxiDocument> {
+      val taxiProject = TaxiSourcesLoader.loadPackageAndDependencies(
+         projectEnvironment.projectRoot,
+         projectEnvironment.project
+      )
+      return Compiler(taxiProject).compileWithMessages()
    }
 
 
