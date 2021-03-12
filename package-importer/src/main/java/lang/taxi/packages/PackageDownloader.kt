@@ -5,7 +5,6 @@ import lang.taxi.packages.repository.PackageServiceFactory
 import net.lingala.zip4j.ZipFile
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
-import org.apache.http.HttpEntity
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -80,11 +79,6 @@ class PackageDownloader(
       FileUtils.forceMkdir(path)
       ZipFile(file).extractAll(path.canonicalPath)
       userFacingLogger.info("Extracted ${identifier.id} to ${path.canonicalPath}")
-   }
-
-   private fun saveAndUnzip(entity: HttpEntity, localCache: Path, identifier: PackageIdentifier) {
-      return saveAndUnzip(entity.content, localCache, identifier)
-
    }
 
 }

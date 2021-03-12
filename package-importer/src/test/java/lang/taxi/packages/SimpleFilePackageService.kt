@@ -7,10 +7,9 @@ import lang.taxi.packages.repository.PackageService
 import lang.taxi.packages.repository.PackageServiceFactory
 import lang.taxi.packages.utils.log
 import org.apache.commons.io.IOUtils
-import org.apache.http.HttpResponse
-import org.apache.http.ProtocolVersion
-import org.apache.http.message.BasicHttpResponse
-import org.apache.http.message.BasicStatusLine
+import org.http4k.core.MemoryResponse
+import org.http4k.core.Response
+import org.http4k.core.Status
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Path
@@ -26,14 +25,14 @@ class SimpleFilePackageService(private val repositoryRoot: Path) : PackageServic
       }
    }
 
-   override fun upload(zip: File, project: TaxiPackageProject): HttpResponse {
+   override fun upload(zip: File, project: TaxiPackageProject): Response {
       val destination = repositoryRoot.resolve(project.identifier.fileSafeIdentifier + ".zip").toFile()
       destination.createNewFile()
       IOUtils.copy(zip.inputStream(), destination.outputStream())
 
       log().info("Copied zip to ${destination.canonicalPath}")
 
-      return BasicHttpResponse(BasicStatusLine(ProtocolVersion("http", 1, 1), 200, "OK"))
+      return MemoryResponse(Status.OK)
    }
 
    override fun attemptDownload(identifier: PackageIdentifier, userFacingLogger: MessageLogger): InputStream? {

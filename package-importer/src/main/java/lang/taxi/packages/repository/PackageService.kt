@@ -6,7 +6,7 @@ import lang.taxi.packages.MessageLogger
 import lang.taxi.packages.PackageIdentifier
 import lang.taxi.packages.Repository
 import lang.taxi.packages.TaxiPackageProject
-import org.apache.http.HttpResponse
+import org.http4k.core.Response
 import java.io.File
 import java.io.InputStream
 
@@ -16,7 +16,7 @@ import java.io.InputStream
  * Responsible for donwload/upload of packages
  */
 interface PackageService {
-   fun upload(zip: File, project: TaxiPackageProject): HttpResponse
+   fun upload(zip: File, project: TaxiPackageProject): Response
    fun attemptDownload(identifier: PackageIdentifier, userFacingLogger:MessageLogger = LogWritingMessageLogger): InputStream?
 
    val repositoryType: String

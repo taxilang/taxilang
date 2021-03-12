@@ -51,18 +51,31 @@
          <artifactId>commons-lang3</artifactId>
          <version>3.9</version>
       </dependency>
-      <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
+<!--      &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient &ndash;&gt;-->
+<!--      <dependency>-->
+<!--         <groupId>org.apache.httpcomponents</groupId>-->
+<!--         <artifactId>httpclient</artifactId>-->
+<!--         <version>${httpclient.version}</version>-->
+<!--      </dependency>-->
+<!--      &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.httpcomponents/httpmime &ndash;&gt;-->
+<!--      <dependency>-->
+<!--         <groupId>org.apache.httpcomponents</groupId>-->
+<!--         <artifactId>httpmime</artifactId>-->
+<!--         <version>${httpclient.version}</version>-->
+<!--      </dependency>-->
+      <!-- https://mvnrepository.com/artifact/org.http4k/http4k-core -->
       <dependency>
-         <groupId>org.apache.httpcomponents</groupId>
-         <artifactId>httpclient</artifactId>
-         <version>${httpclient.version}</version>
+         <groupId>org.http4k</groupId>
+         <artifactId>http4k-core</artifactId>
+         <version>${http4k.version}</version>
       </dependency>
-      <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpmime -->
+      <!-- https://mvnrepository.com/artifact/org.http4k/http4k-client-apache -->
       <dependency>
-         <groupId>org.apache.httpcomponents</groupId>
-         <artifactId>httpmime</artifactId>
-         <version>${httpclient.version}</version>
+         <groupId>org.http4k</groupId>
+         <artifactId>http4k-client-apache</artifactId>
+         <version>${http4k.version}</version>
       </dependency>
+
 
 
       <dependency>
@@ -83,6 +96,7 @@
    </dependencies>
    <properties>
       <httpclient.version>4.5.12</httpclient.version>
+      <http4k.version>4.4.0.1</http4k.version>
    </properties>
    <build>
       <plugins>

@@ -8,9 +8,7 @@ import net.lingala.zip4j.model.ZipParameters
 import net.lingala.zip4j.model.enums.CompressionLevel
 import net.lingala.zip4j.model.enums.CompressionMethod
 import org.apache.commons.io.FileUtils
-import org.apache.commons.io.IOUtils
 import java.io.File
-import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -35,11 +33,11 @@ class PackagePublisher(
       val service = serviceFactory.get(publishToRepository, credentials)
       try {
          val response = service.upload(zip, project)
-         val statusCode = response.statusLine.statusCode
+         val statusCode = response.status.code
          if (statusCode in 200..299) {
             log().info("Artifact uploaded successfully")
          } else {
-            log().error("Failed to upload artifact: ${response.statusLine}, ${IOUtils.toString(response.entity.content, Charset.defaultCharset())}")
+            log().error("Failed to upload artifact: ${response.status} - ${response.bodyString()}")
          }
       } catch (error: Exception) {
          log().error("Failed to upload", error)

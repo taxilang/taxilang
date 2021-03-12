@@ -8,20 +8,29 @@ import lang.taxi.packages.PackageIdentifier
 import lang.taxi.packages.PackagePublisher
 import lang.taxi.packages.ProjectName
 import lang.taxi.packages.Repository
+import lang.taxi.packages.utils.basicAuth
 import lang.taxi.packages.utils.log
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.commons.io.IOUtils
+import org.http4k.client.ApacheClient
+import org.http4k.core.Method
+import org.http4k.core.Request
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.slf4j.LoggerFactory
 import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.output.Slf4jLogConsumer
+import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
 import java.io.File
+import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.time.Duration
 
 /**
  * This test explores publishing to nexus.
@@ -41,43 +50,45 @@ class NexusPackageServiceTest {
    @JvmField
    val folder = TemporaryFolder()
 
-   lateinit var adminPassword: String
-//
-//   companion object {
-//      @JvmField
-//      @ClassRule
-//      val nexusDataDirectory = TemporaryFolder()
-//
-//      @ClassRule
-//      @JvmField
-//      val nexusContainer: NexusContainer =
-//         NexusContainer()
-//            .withLogConsumer(Slf4jLogConsumer(LoggerFactory.getLogger(NexusContainer::class.java)))
-//            .withNexusDataDirectory(nexusDataDirectory)
-//            .withExposedPorts(9999)
-//            .waitingFor(
-//               Wait.forHttp("/service/rest/v1/status")
-//                  .withStartupTimeout(
-//                     // Docs say can take up to 3 minutes
-//                     Duration.ofMinutes(5)
-//                  )
-//            )
-//   }
+   private lateinit var adminPassword: String
 
-//
-//   @Before
-//   fun discoverAdminUser() {
-//      adminPassword = nexusDataDirectory.root.toPath().resolve("admin.password")
-//         .toFile().readText()
-//
-//   }
+   companion object {
+      @JvmField
+      @ClassRule
+      val nexusDataDirectory = TemporaryFolder()
+
+      @ClassRule
+      @JvmField
+      val nexusContainer: NexusContainer =
+         NexusContainer()
+            .withLogConsumer(Slf4jLogConsumer(LoggerFactory.getLogger(NexusContainer::class.java)))
+//            .withNexusDataDirectory(nexusDataDirectory)
+            .withExposedPorts(8081)
+            .waitingFor(
+               Wait.forHttp("/service/rest/v1/status")
+                  .withStartupTimeout(
+                     // Docs say can take up to 3 minutes
+                     Duration.ofMinutes(5)
+                  )
+            )
+   }
+
 
    @Before
+   fun discoverAdminUser() {
+      nexusContainer.copyFileFromContainer("/nexus-data/admin.password") { stream ->
+         adminPassword = IOUtils.toString(stream, Charset.defaultCharset())
+         log().info("Fetched nexus admin password from container")
+      }
+
+   }
+
+   //   @Before
    fun assumeNexusIsRunning() {
-      val client = HttpClientBuilder.create().build()
+      val client = ApacheClient()
       try {
-         val response = client.execute(HttpGet("http://localhost:8081/service/rest/v1/status"))
-         assumeTrue("Not running nexus tests, as nexus does not appear to be up", response.statusLine.statusCode == 200)
+         val response = client(Request(Method.GET, "http://localhost:8081/service/rest/v1/status"))
+         assumeTrue("Not running nexus tests, as nexus does not appear to be up", response.status.code == 200)
       } catch (e: Exception) {
          log().error(
             "Error caught whilst trying to perform nexus liveliness checks, will not run Nexus tests",
@@ -88,28 +99,54 @@ class NexusPackageServiceTest {
 
    }
 
-   private val nexus = NexusPackageService(
-      nexusUrl = "http://localhost:8081",
-      repositoryName = "taxi",
-      credentials = Credentials("nexus", "admin", "password")
-   )
 
    // Requires that nexus is running
    @Test
 //   @Ignore
    fun canPublishPackage() {
+      val nexus = configureNexusWithEmptyRepository("canPublishPackage")
       val resource = Resources.getResource("testRepo/taxi/lang.taxi.Dummy/0.2.0").toURI()
       PackagePublisher(SingleServiceFactory(nexus)).publish(Paths.get(resource))
    }
 
+   private fun configureNexusWithEmptyRepository(repositoryName: String): NexusPackageService {
+      val localPort = nexusContainer.getMappedPort(8081)
+
+      val client = ApacheClient()
+      val request = Request(Method.POST, "http://localhost:$localPort/service/rest/v1/repositories/raw/hosted")
+         .header("Content-Type", "application/json")
+         .basicAuth("admin", adminPassword)
+         .body(
+            """{
+  "name": "$repositoryName",
+  "online": true,
+  "storage": {
+    "blobStoreName": "default",
+    "strictContentTypeValidation": true,
+    "writePolicy": "allow_once"
+  }
+}"""
+         )
+      val response = client(request)
+      response.status.code.should.equal(201)
+      log().info("Successfully created nexus repository $repositoryName")
+      return NexusPackageService(
+         nexusUrl = "http://localhost:$localPort",
+         repositoryName = repositoryName,
+         credentials = Credentials("nexus", "admin", adminPassword)
+      )
+
+   }
+
    @Test
-   fun canDownloadPackage() {
+   fun canPublishAndDownloadPackage() {
+      val nexus = configureNexusWithEmptyRepository("canPublishAndDownloadPackage")
       val resource = Resources.getResource("testRepo/taxi/lang.taxi.Dummy/0.2.0").toURI()
       PackagePublisher(SingleServiceFactory(nexus)).publish(Paths.get(resource))
       val nexusRepository = Repository(
-         "http://localhost:8081", "Local nexus", type = "nexus",
+         nexus.nexusUrl, "Local nexus", type = "nexus",
          settings = mapOf(
-            NexusPackageService.Companion.Settings.REPOSITORY_NAME to "taxi"
+            NexusPackageService.Companion.Settings.REPOSITORY_NAME to nexus.repositoryName
          )
       )
       val downloader = PackageDownloader(

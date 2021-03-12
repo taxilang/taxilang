@@ -5,28 +5,25 @@ import lang.taxi.packages.MessageLogger
 import lang.taxi.packages.PackageIdentifier
 import lang.taxi.packages.Repository
 import lang.taxi.packages.TaxiPackageProject
-import lang.taxi.packages.utils.log
-import org.apache.http.HttpEntity
-import org.apache.http.HttpHeaders
-import org.apache.http.HttpResponse
-import org.apache.http.client.HttpClient
-import org.apache.http.client.methods.HttpPut
-import org.apache.http.client.methods.RequestBuilder
-import org.apache.http.entity.FileEntity
-import org.apache.http.impl.client.HttpClientBuilder
+import lang.taxi.packages.utils.basicAuth
+import org.http4k.client.ApacheClient
+import org.http4k.core.HttpHandler
+import org.http4k.core.Method
+import org.http4k.core.Request
+import org.http4k.core.Response
 import java.io.File
 import java.io.InputStream
 
 class NexusPackageService(
-   private val nexusUrl: String,
-   private val repositoryName: String,
+   val nexusUrl: String,
+   val repositoryName: String,
    private val credentials: Credentials? = null,
-   private val httpClient: HttpClient = HttpClientBuilder.create().build()
+   private val httpClient: HttpHandler = ApacheClient()
 ) : PackageService {
    constructor(
       repository: Repository,
       credentials: Credentials?,
-      httpClient: HttpClient = HttpClientBuilder.create().build()
+      httpClient: HttpHandler = ApacheClient()
    ) : this(
       repository.url,
       repository.settings[Settings.REPOSITORY_NAME]?.toString()
@@ -44,8 +41,8 @@ class NexusPackageService(
 
    }
 
-   override fun upload(zip: File, project: TaxiPackageProject): HttpResponse {
-      val entity: HttpEntity = FileEntity(zip)
+   override fun upload(zip: File, project: TaxiPackageProject): Response {
+//      val entity: HttpEntity = FileEntity(zip)
       val projectName = project.identifier.name
       val version = project.version
       val url =
@@ -54,38 +51,30 @@ class NexusPackageService(
                project.identifier
             )
          }"
+      val request = Request(Method.PUT, url)
+         .body(zip.inputStream())
+         .basicAuth(credentials)
 
-
-      val request = HttpPut(url)
-      request.entity = entity
-      if (credentials != null) {
-         request.addHeader(HttpHeaders.AUTHORIZATION, credentials.asBasicAuthHeader())
-         log().info("Will attempt to publish to $url using basic auth credentials supplied")
-      } else {
-         log().info("Will attempt to publish to $url without any credentials")
-      }
-
-
-      return httpClient.execute(request)
+      return httpClient(request)
    }
 
    private fun filename(identifier: PackageIdentifier): String {
       return "${identifier.fileSafeIdentifier}.zip"
    }
 
-   override fun attemptDownload(identifier: PackageIdentifier, userFacingLogger:MessageLogger): InputStream? {
+   override fun attemptDownload(identifier: PackageIdentifier, userFacingLogger: MessageLogger): InputStream? {
       val name = identifier.name
       val url = "${nexusUrl}/repository/$repositoryName/${name.organisation}/${name.name}/${identifier.version}/${
          filename(identifier)
       }"
       userFacingLogger.info("Attempting to download ${identifier.id} from $url")
-      val request = RequestBuilder.get(url)
-         .build()
-      val response = httpClient.execute(request)
-      return if (response.statusLine.statusCode in 200..299) {
-         response.entity.content
+
+      val request = Request(Method.GET, url)
+      val response = httpClient(request)
+      return if (response.status.code in 200..299) {
+         response.body.stream
       } else {
-         userFacingLogger.info("Couldn't download from $url - got ${response.statusLine}")
+         userFacingLogger.info("Couldn't download from $url - got ${response.status}")
          null
       }
    }
