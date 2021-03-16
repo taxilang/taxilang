@@ -5,7 +5,7 @@
    <groupId>lang.taxi</groupId>
    <artifactId>parent</artifactId>
    <packaging>pom</packaging>
-   <version>0.10.5</version>
+   <version>0.11.0</version>
    <description>taxi is a language for defining API contracts. A Dsl that sits atop RAML for resource definition. Taxi
       (short for Taxonomy)
    </description>
@@ -51,6 +51,7 @@
       <spek.version>2.0.9</spek.version>
       <junit.jupiter.version>5.6.2</junit.jupiter.version>
       <junit.vintage.version>5.6.2</junit.vintage.version>
+      <zip4j.version>2.7.0</zip4j.version>
    </properties>
 
    <dependencies>
@@ -152,6 +153,11 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>net.lingala.zip4j</groupId>
+            <artifactId>zip4j</artifactId>
+            <version>${zip4j.version}</version>
          </dependency>
       </dependencies>
    </dependencyManagement>

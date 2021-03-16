@@ -80,3 +80,5 @@ local.properties
 
 ### NPM ###
 node_modules
+
+.taxi/

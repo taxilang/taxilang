@@ -25,33 +25,44 @@ fun TaxiParser.QualifiedNameContext.toAttributePath(): AttributePath {
    return AttributePath(this.Identifier().map { it.text })
 }
 
-class NamespacedTaxiDocument(val namespace: String,
-                             types: Set<Type>,
-                             services: Set<Service>,
-                             policies: Set<Policy>,
-                             functions: Set<Function>) : TaxiDocument(types, services, policies, functions)
+class NamespacedTaxiDocument(
+   val namespace: String,
+   types: Set<Type>,
+   services: Set<Service>,
+   policies: Set<Policy>,
+   functions: Set<Function>
+) : TaxiDocument(types, services, policies, functions)
 
 // Note:  Changed types & services from List<> to Set<>
 // as ordering shouldn't matter, only content.
 // However, I suspect there was a reason these were Lists, so leaving this note here to remind me
-open class TaxiDocument(val types: Set<Type>,
-                        val services: Set<Service>,
-                        val policies: Set<Policy> = emptySet(),
-                        val functions: Set<Function> = emptySet(),
-                        val annotations: Set<Annotation> = emptySet()
+open class TaxiDocument(
+   val types: Set<Type>,
+   val services: Set<Service>,
+   val policies: Set<Policy> = emptySet(),
+   val functions: Set<Function> = emptySet(),
+   val annotations: Set<Annotation> = emptySet()
 ) {
    private val equality = Equality(this, TaxiDocument::types, TaxiDocument::services)
    private val typeMap = types.associateBy { it.qualifiedName }
    private val servicesMap = services.associateBy { it.qualifiedName }
    private val policiesMap = policies.associateBy { it.qualifiedName }
    private val functionsMap = functions.associateBy { it.qualifiedName }
-   fun importableToken(qualifiedName: String):ImportableToken {
+
+   companion object {
+      fun empty(): TaxiDocument {
+         return TaxiDocument(emptySet(), emptySet())
+      }
+   }
+
+   fun importableToken(qualifiedName: String): ImportableToken {
       return when {
          containsType(qualifiedName) -> type(qualifiedName)
          containsFunction(qualifiedName) -> function(qualifiedName)
          else -> error("Importable token $qualifiedName is not defined")
       }
    }
+
    fun type(qualifiedName: String): Type {
       return type(QualifiedName.from(qualifiedName))
    }
@@ -87,9 +98,10 @@ open class TaxiDocument(val types: Set<Type>,
    fun containsImportable(tokenName: String): Boolean {
       return typeMap.containsKey(tokenName) || functionsMap.containsKey(tokenName)
    }
+
    fun containsType(typeName: String) = typeMap.containsKey(typeName)
    fun containsService(serviceName: String) = servicesMap.containsKey(serviceName)
-   fun containsFunction(functionName:String) = functionsMap.containsKey(functionName)
+   fun containsFunction(functionName: String) = functionsMap.containsKey(functionName)
 
    override fun hashCode() = equality.hash()
    override fun equals(other: Any?) = equality.isEqualTo(other)
@@ -102,7 +114,8 @@ open class TaxiDocument(val types: Set<Type>,
       val namespaces = typesByNamespace.keySet() + servicesByNamespace.keySet()
 
       return namespaces.map { namespace ->
-         NamespacedTaxiDocument(namespace,
+         NamespacedTaxiDocument(
+            namespace,
             types = typesByNamespace.get(namespace)?.toSet() ?: emptySet(),
             services = servicesByNamespace.get(namespace)?.toSet() ?: emptySet(),
             policies = policiesByNamespace.get(namespace)?.toSet() ?: emptySet(),
@@ -164,7 +177,8 @@ open class TaxiDocument(val types: Set<Type>,
       // equal type definitions.
       val duplicateNames = this.types.filter { other.containsType(it.qualifiedName) }.map { it.qualifiedName }
 
-      return TaxiDocument(this.types + other.types.filterNot { duplicateNames.contains(it.qualifiedName) },
+      return TaxiDocument(
+         this.types + other.types.filterNot { duplicateNames.contains(it.qualifiedName) },
          this.services + other.services,
          this.policies + other.policies,
          this.functions + other.functions

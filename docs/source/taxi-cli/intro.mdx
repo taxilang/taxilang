@@ -1,0 +1,167 @@
+---
+title: The Taxi CLI
+description: An overview of the `taxi` command line tool, and it's config
+---
+
+import { Hint } from "../components/hint"
+import { Link } from "gatsby"
+
+[ ![Download](https://api.bintray.com/packages/taxi-lang/releases/taxi-cli/images/download.svg) ](https://gitlab.com/taxi-lang/taxi-lang/-/jobs/artifacts/master/raw/taxi-cli/target/taxi-cli.zip?job=publish-release)
+
+The `taxi` command line tool provides access to the compiler - which validates the syntax of taxi projects  - and allows plugins of generators to create models and services in different languages and frameworks.
+
+## Getting started
+
+To get started you need to download and install Taxi. Download
+the [taxi.zip](https://gitlab.com/taxi-lang/taxi-lang/-/jobs/artifacts/master/raw/taxi-cli/target/taxi-cli.zip?job=publish-release)
+file and extract it.
+
+The zip contains the files needed to run taxi, along with some scripts to make launching easier.
+
+Once the file is downloaded and extracted, you need to add it to your path. It will look something like this:
+
+```bash
+/install-location/taxi/bin
+```
+
+Once the install location has been added to your path, test everything is up and running by invoking:
+
+```bash
+taxi
+```
+
+## Project overview
+
+A typical taxi project will be laid out as follows:
+
+```text
+project/
+├── src/
+│   ├── someTypes.taxi
+│   └── moreTypes.taxi
+└── taxi.conf
+```
+
+## taxi.conf
+
+A `taxi.conf` file describes a project's layout, and the plugins to be invoked after compilation.  It follows the [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md#hocon-human-optimized-config-object-notation) format, which is like supercharged JSON.
+
+Read more details about the Taxi.Conf file <Link to="/taxi-conf-file" rel="">here</Link>
+
+
+## Plugins
+
+Taxi's compiler and language generators are extensible and pluggable.
+
+You can leverage our existing plugins to generate code, or author your own.  Read more about plugins <Link to="/plugins/README">here</Link>
+
+## Command reference
+
+### init
+
+Creates a new taxi project, with a `taxi.conf` file, and the recommended layout.
+
+```bash
+$  taxi init
+```
+
+```bash
+mkdir hello-world
+cd hello-world
+taxi init
+```
+
+You'll be prompted with basic project details to name and create your new taxi project
+
+* Project group: `demo` ⏎
+* Project name: `hello-world` ⏎
+* Project version: ⏎  (Defaults are fine)
+* Source directory:  ⏎ (Defaults are fine)
+
+A new `taxi.conf` has now been created, as follows:
+
+```text
+name: demo/hello-world
+version: 0.1.0
+sourceRoot: src/
+```
+
+### build
+
+Compile the taxi project, and invoke any language generators
+
+```bash
+taxi build
+```
+
+This command invokes the taxi compiler to validate your taxi code, and invokes any language generators configured.  (See <Link to="/plugins/README">Plugins</Link>).
+If no plugins are configured, no code will be emitted, but the project is still compiled, ensuring no syntactic errors exist.
+
+### version-bump
+
+```bash
+taxi version-bump major|minor|patch
+```
+
+This command increments the version defined in the `taxi.conf` file.
+
+<Hint>
+   Running this command will change the layout of your taxi.conf file, to follow HOCON layout.
+
+   While there are no material differences between the files before and after, cosmetic changes can occur.  We're aware of this issue, and will address it in a future release.
+</Hint>
+
+[Semantic Versioning](https://semver.org/) principals are followed when incrementing the version.
+
+### set-version
+
+```bash
+taxi set-version $newVersion
+```
+
+This command updates the version defined in the `taxi.conf` with to `$newVersion`
+
+eg:
+
+```bash
+$  taxi-hello-world taxi set-version 0.2.3
+Taxi version 0.10.4
+Version updated from 0.1.0 to 0.2.3
+```
+
+<Hint>
+   Running this command will change the layout of your taxi.conf file, to follow HOCON layout.
+
+   While there are no material differences between the files before and after, cosmetic changes can occur.
+   We're aware of this issue, and will address it in a future release.
+</Hint>
+
+
+### publish
+
+```bash
+taxi publish
+```
+
+Publishes the current project to the repository defined in the `publishToRepository` of the `taxi.conf` file.
+
+This involves creating a zip file from the current project, and uploading it to the configured repository.
+
+When a project is published, only the following artifacts are added:
+
+ * The `taxi.conf` file at the root of the project
+ * All `*.taxi` files present in the configured `sourceRoot`
+
+No other content is added.
+
+eg:
+
+```bash
+$ taxi publish
+Taxi Dev version @680c65b
+Adding file /sample-project/taxi.conf
+Adding file /sample-project/src/Test-enum.taxi
+Publishing package taxi/sample/0.3.0 from /tmp/sample-0.3.0.zip to http://localhost:8081/
+Will attempt to publish to http://localhost:8081/repository/taxi/taxi/sample/0.3.0/sample-0.3.0.zip using basic auth credentials supplied
+Artifact uploaded successfully
+```
