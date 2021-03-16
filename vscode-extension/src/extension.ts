@@ -81,7 +81,8 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext, config:
         }
 
         // let classPath = (useDebugJar) ? path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', jarName) : path.join(__dirname, jarName);
-        const debugSettings = (enableDebug) ? ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005,quiet=y'] : [];
+        const waitForDebuggerToAttach = false;
+        const debugSettings = (enableDebug) ? [`-agentlib:jdwp=transport=dt_socket,server=y,suspend=${waitForDebuggerToAttach ? 'y' : 'n'},address=5005,quiet=y`] : [];
         const args: string[] = debugSettings.concat(['-cp', classPath]);
         console.log(JSON.stringify(args));
 
@@ -103,7 +104,7 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext, config:
             documentSelector: [{ scheme: 'file', language: 'taxi' }],
             synchronize: {
                 // Notify the server about file changes to .taxi files contained in the workspace
-                fileEvents: workspace.createFileSystemWatcher('**/*.taxi')
+                fileEvents: workspace.createFileSystemWatcher('**/*.{taxi,conf}')
             },
             // Hijacks all LSP logs and redirect them to a specific port through WebSocket connection
             // outputChannel: websocketOutputChannel

@@ -7,8 +7,10 @@ import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.MessageParams
 import org.eclipse.lsp4j.MessageType
+import org.eclipse.lsp4j.SaveOptions
 import org.eclipse.lsp4j.ServerCapabilities
 import org.eclipse.lsp4j.TextDocumentSyncKind
+import org.eclipse.lsp4j.TextDocumentSyncOptions
 import org.eclipse.lsp4j.WorkspaceFoldersOptions
 import org.eclipse.lsp4j.WorkspaceServerCapabilities
 import org.eclipse.lsp4j.services.LanguageClient
@@ -59,7 +61,10 @@ class TaxiLanguageServer(
 
         // Set the capabilities of the LS to inform the client.
         val capabilities = initializeResult.capabilities
-        capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
+        capabilities.setTextDocumentSync(TextDocumentSyncOptions().apply {
+            change = TextDocumentSyncKind.Full
+            save = SaveOptions(false)
+        })
         capabilities.definitionProvider  = true
         capabilities.workspaceSymbolProvider = true
         capabilities.hoverProvider = true
