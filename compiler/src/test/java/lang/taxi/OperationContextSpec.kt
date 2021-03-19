@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.linter.LinterRuleConfiguration
 import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.services.operations.constraints.PropertyTypeIdentifier
@@ -144,18 +145,22 @@ object OperationContextSpec : Spek({
          }
          """.compiled().service("TradeService").operation("getTradesAfter")
             val constraints = operation.contract!!.returnTypeConstraints
-            constraints.should.contain(PropertyToParameterConstraint(
-               PropertyTypeIdentifier(QualifiedName.from("TradeDate")),
-               Operator.GREATER_THAN_OR_EQUAL_TO,
-               RelativeValueExpression(AttributePath.from("startDate")),
-               emptyList()
-            ))
-            constraints.should.contain(PropertyToParameterConstraint(
-               PropertyTypeIdentifier(QualifiedName.from("TradeDate")),
-               Operator.LESS_THAN,
-               RelativeValueExpression(AttributePath.from("endDate")),
-               emptyList()
-            ))
+            constraints.should.contain(
+               PropertyToParameterConstraint(
+                  PropertyTypeIdentifier(QualifiedName.from("TradeDate")),
+                  Operator.GREATER_THAN_OR_EQUAL_TO,
+                  RelativeValueExpression(AttributePath.from("startDate")),
+                  emptyList()
+               )
+            )
+            constraints.should.contain(
+               PropertyToParameterConstraint(
+                  PropertyTypeIdentifier(QualifiedName.from("TradeDate")),
+                  Operator.LESS_THAN,
+                  RelativeValueExpression(AttributePath.from("endDate")),
+                  emptyList()
+               )
+            )
          }
 
          it("should compile constraints for base types") {
@@ -174,12 +179,19 @@ object OperationContextSpec : Spek({
    }
 })
 
-fun String.validated(config:CompilerConfig = TestCompilerOptions.config): List<CompilationError> {
-   return Compiler(this, config =  config).validate()
+fun String.validated(
+   config: CompilerConfig = TestCompilerOptions.config,
+   linterRules: List<LinterRuleConfiguration> = emptyList()
+): List<CompilationMessage> {
+
+   return Compiler(this, config = config.copy(linterRuleConfiguration = linterRules)).validate()
 }
 
-fun String.compiled(config:CompilerConfig = TestCompilerOptions.config): TaxiDocument {
-   return Compiler(this, config = config).compile()
+fun String.compiled(
+   config: CompilerConfig = TestCompilerOptions.config,
+   linterRules: List<LinterRuleConfiguration> = emptyList()
+): TaxiDocument {
+   return Compiler(this, config = config.copy(linterRuleConfiguration = linterRules)).compile()
 }
 
 object TestCompilerOptions {

@@ -43,6 +43,7 @@ module.exports = {
                "The Taxi CLI": [
                   "taxi-cli/intro",
                   "taxi-cli/taxi-conf-file",
+                  "taxi-cli/linter",
                ],
                "Publishing and sharing taxonomies": [
                   "distributing-taxi/distributing-taxi-projects",

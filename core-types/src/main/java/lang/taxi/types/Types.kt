@@ -108,15 +108,24 @@ class LazyLoadingWrapper(private val type: Type) {
          .map { it.source.normalizedSourceName }
 
       if (sourcesWithHashCollision.isNotEmpty()) {
-         log.warn(("There's a hash clash in the underlying sources $sourcesWithHashCollision " +
-            "This will generate indeterminate behaviour that can re-trigger recompilation of sources, lost nights, and torn hair. " +
-            "You shouldn't ignore this!"))
+         log.warn(
+            ("There's a hash clash in the underlying sources $sourcesWithHashCollision " +
+               "This will generate indeterminate behaviour that can re-trigger recompilation of sources, lost nights, and torn hair. " +
+               "You shouldn't ignore this!")
+         )
       }
    }
 
 }
 
 interface ImportableToken : Named, Compiled
+
+/**
+ * Models and Types will diverge eventually.
+ * For now, they're analogous from the compiler's perspective.  But
+ * adding an alias to improve documentation of code
+ */
+typealias Model = Type
 
 interface Type : Named, Compiled, ImportableToken, Documented {
    val inheritsFrom: Set<Type>
@@ -165,6 +174,7 @@ interface Type : Named, Compiled, ImportableToken, Documented {
 interface TokenDefinition {
    val compilationUnit: CompilationUnit
 }
+
 interface TypeDefinition : TokenDefinition {
 
 }
@@ -192,7 +202,6 @@ interface UserType<TDef : TypeDefinition, TExt : TypeDefinition> : Type, Definab
    val extensions: List<TExt>
 
    fun addExtension(extension: TExt): Either<ErrorMessage, TExt>
-
 
 
    override val compilationUnits: List<CompilationUnit>
