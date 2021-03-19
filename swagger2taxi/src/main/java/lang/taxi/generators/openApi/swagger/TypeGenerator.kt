@@ -1,13 +1,39 @@
 package lang.taxi.generators.openApi.swagger
 
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.Type
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.Utils
-import lang.taxi.types.*
-import v2.io.swagger.models.*
+import lang.taxi.types.ArrayType
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Field
+import lang.taxi.types.ObjectType
+import lang.taxi.types.ObjectTypeDefinition
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.Type
+import v2.io.swagger.models.ArrayModel
+import v2.io.swagger.models.ComposedModel
+import v2.io.swagger.models.Model
+import v2.io.swagger.models.ModelImpl
+import v2.io.swagger.models.RefModel
+import v2.io.swagger.models.Swagger
 import v2.io.swagger.models.parameters.AbstractSerializableParameter
-import v2.io.swagger.models.properties.*
+import v2.io.swagger.models.properties.AbstractProperty
+import v2.io.swagger.models.properties.ArrayProperty
+import v2.io.swagger.models.properties.BaseIntegerProperty
+import v2.io.swagger.models.properties.BinaryProperty
+import v2.io.swagger.models.properties.BooleanProperty
+import v2.io.swagger.models.properties.DateProperty
+import v2.io.swagger.models.properties.DateTimeProperty
+import v2.io.swagger.models.properties.DecimalProperty
+import v2.io.swagger.models.properties.DoubleProperty
+import v2.io.swagger.models.properties.EmailProperty
+import v2.io.swagger.models.properties.FloatProperty
+import v2.io.swagger.models.properties.IntegerProperty
+import v2.io.swagger.models.properties.LongProperty
+import v2.io.swagger.models.properties.MapProperty
+import v2.io.swagger.models.properties.Property
+import v2.io.swagger.models.properties.RefProperty
+import v2.io.swagger.models.properties.StringProperty
+import v2.io.swagger.models.properties.UUIDProperty
 
 class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, private val logger: Logger) {
 
@@ -116,7 +142,7 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
     }
 
     private fun generateField(name: String, property: Property): Field {
-        return Field(name, getOrGenerateType(property), nullable = !property.required)
+        return Field(name, getOrGenerateType(property), nullable = !property.required, compilationUnit = CompilationUnit.unspecified())
     }
 
 

@@ -2,6 +2,7 @@ package lang.taxi.generators
 
 import com.winterbe.expekt.should
 import lang.taxi.Compiler
+import lang.taxi.messages.Severity
 import org.junit.Test
 import kotlin.test.fail
 
@@ -222,6 +223,7 @@ type Foo {
 
 private fun String.shouldCompile() {
    val errors = Compiler(this).validate()
+      .filter { it.severity == Severity.ERROR }
    if (errors.isNotEmpty()) {
       fail("Expected source to compile, but found ${errors.size} compilation errors: \n ${errors.joinToString("\n") { it.detailMessage }}")
    }

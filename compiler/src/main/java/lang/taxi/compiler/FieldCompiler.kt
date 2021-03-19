@@ -16,6 +16,7 @@ import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionExpressionAccessor
 import lang.taxi.source
 import lang.taxi.text
+import lang.taxi.toCompilationUnit
 import lang.taxi.types.Accessor
 import lang.taxi.types.Annotation
 import lang.taxi.types.ColumnAccessor
@@ -197,7 +198,8 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
             annotations = fieldAnnotations,
             constraints = constraints,
             accessor = accessor,
-            typeDoc = typeDoc
+            typeDoc = typeDoc,
+            compilationUnit = member.fieldDeclaration().toCompilationUnit()
          )
       }
    }

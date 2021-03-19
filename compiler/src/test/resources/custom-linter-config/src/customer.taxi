@@ -1,0 +1,5 @@
+type Name inherits String
+model Person {
+   firstName : Name
+   lastName : Name
+}

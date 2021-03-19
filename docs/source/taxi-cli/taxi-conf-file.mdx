@@ -3,8 +3,8 @@ title: Configuring Taxi projects
 description: An overview of the `taxi.conf` file
 ---
 
-import { Link } from "gatsby"
-import { Hint, Discourage } from '../components/hint'
+import {Link} from "gatsby"
+import {Hint, Discourage} from '../components/hint'
 
 A `taxi.conf` file describes a project's layout, and the plugins to be invoked after compilation.  It follows the [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md#hocon-human-optimized-config-object-notation) format, which is like supercharged JSON.
 
@@ -64,7 +64,8 @@ shown [here](https://gitlab.com/taxi-lang/taxi-lang/-/blob/develop/package-impor
 For details on sharing, publishing and depending on taxonomies, see <Link to="../devtools/distributing-taxi-projects.mdx">Distributing taxi projects</Link>
 
 <Discourage>
-Transitive dependencies (ie., depending on projects that depend on other projects) are not yet supported, but are on the roadmap.  If this feature is important to you, get in touch on our slack channel.
+   Transitive dependencies (ie., depending on projects that depend on other projects) are not yet supported, but are on
+   the roadmap. If this feature is important to you, get in touch on our slack channel.
 </Discourage>
 
 ### Repositories
@@ -110,6 +111,29 @@ credentials: [
 Note - credentials don't need to be defined in your projects main `taxi.conf` - in fact, we reccommend you don't.
 Instead, define a configuration file at  `~/.taxi.conf` (your home directory) which contains the credentials.  See below for
 more detail on merging configuration files.
+
+### Linter config
+
+Per-project linting rules can be specified in the `taxi.conf`, to disable or alter the severity of individual linter rules.
+
+The format of the section is as follows:
+
+```json
+linter: {
+    // The name of the linter rule.
+   no-duplicate-types-on-models: {
+      // Severity - optional - can be INFO | WARN | ERROR.
+      // Defaults to WARN
+      // Note that setting to ERROR will cause builds to fail if the rule is violated
+      severity: INFO
+
+      // enabled - optional - defaults to true
+      enabled: true
+   }
+   no-primitive-types-on-models: {enabled: false}
+}
+```
+Note that the entire linter section is optional.  If omitted, all rules are enabled, with the severity defined by each rule.  (By convention, this is `WARN`).
 
 ## Merging multiple configuration files
 By default, Taxi tooling will merge configuration files from the following locations:

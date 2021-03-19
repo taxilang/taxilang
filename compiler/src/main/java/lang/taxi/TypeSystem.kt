@@ -94,7 +94,11 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       return false
    }
 
-   fun <TDef : TokenDefinition> register(type: DefinableToken<TDef>) {
+   /**
+    * Registers the token with the typesystem.
+    * The token is returned for convenient chaining
+    */
+   fun <TDef : TokenDefinition, TToken:DefinableToken<TDef>> register(type: TToken):TToken {
       if (compiledTokens.containsKey(type.qualifiedName)) {
          val registeredType = compiledTokens[type.qualifiedName]!! as DefinableToken<TDef>
          if (registeredType.definition != null && type.definition != null && registeredType.definition != type.definition) {
@@ -112,6 +116,7 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       } else {
          compiledTokens[type.qualifiedName] = type
       }
+      return type
    }
 
    fun getTokens(includeImportedTypes: Boolean = false, predicate: (ImportableToken) -> Boolean): List<ImportableToken> {

@@ -305,8 +305,9 @@ data class Field(
    // These default values are set by field extensions.
    // Need to standardise.
    val defaultValue: Any? = null,
-   val formula: Formula? = null
-) : Annotatable, ConstraintTarget, Documented, NameTypePair {
+   val formula: Formula? = null,
+   override val compilationUnit: CompilationUnit
+) : Annotatable, ConstraintTarget, Documented, NameTypePair, TokenDefinition {
 
    override val description: String = "field $name"
 

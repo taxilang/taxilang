@@ -1,6 +1,5 @@
 package lang.taxi.xsd
 
-import com.google.common.base.CaseFormat
 import com.sun.xml.xsom.XSComplexType
 import com.sun.xml.xsom.XSComponent
 import com.sun.xml.xsom.XSDeclaration
@@ -77,7 +76,10 @@ class TaxiGenerator(
       )
    }
 
-   private fun parseComplexType(complexType: XSComplexType, parsedName: QualifiedName): Pair<Type, TypeDefinitionBuilder?> {
+   private fun parseComplexType(
+      complexType: XSComplexType,
+      parsedName: QualifiedName
+   ): Pair<Type, TypeDefinitionBuilder?> {
       val typeName = parsedName
       val emptyType = ObjectType(typeName.fullyQualifiedName, null)
       val definitionBuilder: TypeDefinitionBuilder = {
@@ -129,7 +131,12 @@ class TaxiGenerator(
       return emptyType to definitionBuilder
    }
 
-   private fun buildObjectDefinitionForTypeInheritingEnumClass(typeName: QualifiedName, allFields: List<Field>, baseType: Set<Type>, docs: String?): TypeDefinition {
+   private fun buildObjectDefinitionForTypeInheritingEnumClass(
+      typeName: QualifiedName,
+      allFields: List<Field>,
+      baseType: Set<Type>,
+      docs: String?
+   ): TypeDefinition {
       require(baseType.size == 1) { "Cannot handle a type inheriting an enum when there are multiple base types" }
       val baseEnum = baseType.first() as EnumType
       val enumFieldName = baseEnum.toQualifiedName().typeName.decapitalize()
@@ -138,7 +145,9 @@ class TaxiGenerator(
          enumFieldName,
          baseEnum,
          nullable = false,
-         annotations = listOf(XsdAnnotations.xmlBody())
+         annotations = listOf(XsdAnnotations.xmlBody()),
+         compilationUnit = CompilationUnit.unspecified()
+
       )
       val compositeFields = allFields + enumBodyField
       return ObjectTypeDefinition(
@@ -179,7 +188,8 @@ class TaxiGenerator(
                it.name,
                it.type,
                nullable = nullable,
-               typeDoc = it.docs
+               typeDoc = it.docs,
+               compilationUnit = CompilationUnit.unspecified()
             )
          }
       return fields
@@ -194,7 +204,8 @@ class TaxiGenerator(
             nullable = !attribute.isRequired,
             annotations = listOf(XsdAnnotations.xmlAttribute()),
             typeDoc = typeDoc,
-            defaultValue = attribute.defaultValue?.value ?: attribute.fixedValue?.value
+            defaultValue = attribute.defaultValue?.value ?: attribute.fixedValue?.value,
+            compilationUnit = CompilationUnit.unspecified()
          )
       }
          ?: emptyList()
@@ -272,7 +283,10 @@ class TaxiGenerator(
 
    }
 
-   private fun parseSimpleType(simpleType: XSSimpleType, parsedName: QualifiedName): Pair<Type, TypeDefinitionBuilder?> {
+   private fun parseSimpleType(
+      simpleType: XSSimpleType,
+      parsedName: QualifiedName
+   ): Pair<Type, TypeDefinitionBuilder?> {
       val qualifiedName = parsedName
       if (XsdPrimitives.isPrimitive(qualifiedName)) {
          return XsdPrimitives.getType(qualifiedName) to null
@@ -405,7 +419,9 @@ class TaxiGenerator(
    }
 }
 
-data class ParsedElement(val name: String, val type: Type, val minOccurs: Int, val maxOccurs: Int, val docs: String?) : ParsedContent
+data class ParsedElement(val name: String, val type: Type, val minOccurs: Int, val maxOccurs: Int, val docs: String?) :
+   ParsedContent
+
 data class ParsedList(val list: List<ParsedContent>, val compositor: XSModelGroup.Compositor) : ParsedContent
 interface ParsedContent
 object ParsedWildcard : ParsedContent

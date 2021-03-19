@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.linter.LinterRules
 import lang.taxi.types.EnumMember
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -63,7 +64,7 @@ object AnnotationSpec : Spek({
             annotation Owner {
                person: Person
             }
-         """.validated()
+         """.validated(linterRules = LinterRules.allDisabled())
          errors.should.have.size(1)
          errors.first().detailMessage.should.equal("Field person declares an invalid type (Person). Only Strings, Numbers, Booleans or Enums are supported for annotation properties")
       }
