@@ -15,7 +15,7 @@ object NoPrimitiveTypesOnModelsRule : ModelLinterRule {
          .map {
             val typeName = it.type.toQualifiedName().typeName
             CompilationMessage(
-               it.compilationUnit.location,
+               it.compilationUnit,
                "${it.name} should not inherit from a primitive type ($typeName).  Introduce a semantic type instead, which extends from $typeName.",
                severity = Severity.WARNING
             ) }
