@@ -6,6 +6,10 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.net.URI
 
+/**
+ *
+ */
+@Deprecated("Favour using compiler based linter rules, so that feedback is consistent")
 class LintingService {
     private val linters:List<LintingRule> = listOf(UnusedImport())
 

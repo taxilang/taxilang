@@ -1,6 +1,7 @@
 package lang.taxi.lsp
 
 import lang.taxi.packages.MessageLogger
+import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.sources.SourceCode
 import java.nio.file.Files
@@ -28,6 +29,16 @@ class WorkspaceSourceService(
             packageSources.sources.asSequence()
         } else {
             loadAllTaxiFilesUnderRoot()
+        }
+    }
+
+    fun loadProject(): TaxiPackageProject? {
+        val taxiConfFile = root.resolve("taxi.conf")
+        return if (Files.exists(taxiConfFile)) {
+            val packageSources = TaxiSourcesLoader.loadPackage(root)
+            packageSources.project
+        } else {
+            null
         }
     }
 

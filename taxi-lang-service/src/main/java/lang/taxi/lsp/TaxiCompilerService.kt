@@ -5,7 +5,9 @@ import lang.taxi.CompilationException
 import lang.taxi.Compiler
 import lang.taxi.CompilerConfig
 import lang.taxi.CompilerTokenCache
+import lang.taxi.linter.toLinterRules
 import lang.taxi.lsp.completion.TypeProvider
+import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
@@ -15,7 +17,8 @@ import java.io.File
 import java.net.URI
 import java.util.concurrent.atomic.AtomicReference
 
-class TaxiCompilerService(val config: CompilerConfig = CompilerConfig()) {
+class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig()) {
+    private var taxiProjectConfig: TaxiPackageProject? = null
     private lateinit var workspaceSourceService: WorkspaceSourceService
     private val sources: MutableMap<URI, String> = mutableMapOf()
     private val charStreams: MutableMap<URI, CharStream> = mutableMapOf()
@@ -46,6 +49,7 @@ class TaxiCompilerService(val config: CompilerConfig = CompilerConfig()) {
     fun reloadSourcesWithoutCompiling() {
         this.sources.clear()
         this.charStreams.clear()
+        this.taxiProjectConfig = this.workspaceSourceService.loadProject()
         this.workspaceSourceService.loadSources()
             .forEach { sourceCode ->
                 // Prefer operating on the path - less chances to screw up
@@ -79,8 +83,12 @@ class TaxiCompilerService(val config: CompilerConfig = CompilerConfig()) {
 
     fun compile(): CompilationResult {
         val charStreams = this.charStreams.values.toList()
-
-        val compiler = Compiler(charStreams, tokenCache = tokenCache, config = config)
+        val configWithTaxiProjectSettings = taxiProjectConfig?.let { taxiConf ->
+            compilerConfig.copy(
+                linterRuleConfiguration = taxiConf.linter.toLinterRules()
+            )
+        } ?: this.compilerConfig
+        val compiler = Compiler(charStreams, tokenCache = tokenCache, config = configWithTaxiProjectSettings)
         val stopwatch = Stopwatch.createStarted()
         val compilationResult = try {
 
