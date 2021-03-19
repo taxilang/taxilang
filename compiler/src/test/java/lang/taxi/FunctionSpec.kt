@@ -4,6 +4,7 @@ import com.winterbe.expekt.should
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionExpressionAccessor
 import lang.taxi.functions.stdlib.Left
+import lang.taxi.linter.LinterRules
 import lang.taxi.types.ColumnAccessor
 import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.FormulaOperator
@@ -195,7 +196,7 @@ namespace pkgB {
                age : Int
                name : String by uppercase(this.age)
             }
-         """.validated()
+         """.validated(linterRules = LinterRules.allDisabled())
          errors.should.have.size(1)
          errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.Int is not assignable to type lang.taxi.String")
       }
@@ -207,7 +208,7 @@ namespace pkgB {
                age : Int by uppercase(this.name)
                name : String
             }
-         """.validated()
+         """.validated(linterRules = LinterRules.allDisabled())
          errors.should.have.size(1)
          errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.String is not assignable to type lang.taxi.Int")
       }

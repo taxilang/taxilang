@@ -10,6 +10,7 @@ import lang.taxi.generators.ModelGenerator
 import lang.taxi.generators.Processor
 import lang.taxi.generators.TaxiProjectEnvironment
 import lang.taxi.generators.WritableSource
+import lang.taxi.messages.Severity
 import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.plugins.Plugin
 import org.apache.commons.io.FileUtils
@@ -28,9 +29,9 @@ class BuildCommand(private val pluginManager: PluginRegistry) : ProjectShellComm
       val (messages, doc) = loadSources(environment)
       messages.forEach { message ->
          when (message.severity) {
-            CompilationError.Severity.INFO -> log().info(message.toString())
-            CompilationError.Severity.WARNING -> log().warn(message.toString())
-            CompilationError.Severity.ERROR -> log().error(message.toString())
+            Severity.INFO -> log().info(message.toString())
+            Severity.WARNING -> log().warn(message.toString())
+            Severity.ERROR -> log().error(message.toString())
          }
       }
       val processorsFromPlugins = collectProcessorsFromPlugins()
@@ -45,10 +46,10 @@ class BuildCommand(private val pluginManager: PluginRegistry) : ProjectShellComm
             generated
          }
 
-      if (messages.any { it.severity == CompilationError.Severity.ERROR }) {
+      if (messages.any { it.severity == Severity.ERROR }) {
          log().error("Failed to compile the taxi project")
          exitProcess(1)
-      } else if (messages.any { it.severity == CompilationError.Severity.WARNING }) {
+      } else if (messages.any { it.severity == Severity.WARNING }) {
          log().warn("Compilation succeeded with warnings")
       } else {
          log().info("Compilation succeeded")

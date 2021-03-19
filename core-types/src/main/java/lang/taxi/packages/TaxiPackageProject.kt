@@ -1,6 +1,7 @@
 package lang.taxi.packages
 
 import com.typesafe.config.Config
+import lang.taxi.linter.TaxiConfLinterRuleConfig
 import lang.taxi.sources.SourceCode
 import org.apache.commons.lang3.SystemUtils
 import java.nio.file.Path
@@ -16,7 +17,9 @@ data class TaxiPackageProject(
    val pluginSettings: PluginSettings = PluginSettings(),
    val publishToRepository: Repository? = null,
    val credentials: List<Credentials> = emptyList(),
-   val taxiHome: Path = SystemUtils.getUserHome().toPath().resolve(".taxi/")
+   val taxiHome: Path = SystemUtils.getUserHome().toPath().resolve(".taxi/"),
+   val linter: Map<String, TaxiConfLinterRuleConfig> = emptyMap()
+
 ) {
    val identifier: PackageIdentifier = PackageIdentifier(ProjectName.fromId(name), version)
    val dependencyPackages: List<PackageIdentifier> = dependencies.map { (projectId, version) ->

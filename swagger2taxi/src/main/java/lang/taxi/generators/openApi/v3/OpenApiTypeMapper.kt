@@ -1,12 +1,27 @@
 package lang.taxi.generators.openApi.v3
 
 import io.swagger.oas.models.OpenAPI
-import io.swagger.oas.models.media.*
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.Type
+import io.swagger.oas.models.media.ArraySchema
+import io.swagger.oas.models.media.BooleanSchema
+import io.swagger.oas.models.media.ComposedSchema
+import io.swagger.oas.models.media.DateSchema
+import io.swagger.oas.models.media.DateTimeSchema
+import io.swagger.oas.models.media.EmailSchema
+import io.swagger.oas.models.media.IntegerSchema
+import io.swagger.oas.models.media.NumberSchema
+import io.swagger.oas.models.media.ObjectSchema
+import io.swagger.oas.models.media.Schema
+import io.swagger.oas.models.media.StringSchema
+import io.swagger.oas.models.media.UUIDSchema
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.Utils
-import lang.taxi.types.*
+import lang.taxi.types.ArrayType
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Field
+import lang.taxi.types.ObjectType
+import lang.taxi.types.ObjectTypeDefinition
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.Type
 
 class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private val logger: Logger) {
 
@@ -45,7 +60,7 @@ class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private 
    }
 
    private fun generateField(name: String, schema: Schema<*>, required: Boolean): Field {
-      return Field(name, getOrGenerateType(schema, defaultToAny = true), nullable = required)
+      return Field(name, getOrGenerateType(schema, defaultToAny = true), nullable = required, compilationUnit = CompilationUnit.unspecified())
    }
 
    private fun getOrGenerateType(schema: Schema<*>, anonymousTypeNamePartial: String? = null, defaultToAny: Boolean = false): Type {

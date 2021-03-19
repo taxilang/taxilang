@@ -2,6 +2,7 @@ package lang.taxi.compiler
 
 import arrow.core.Either
 import lang.taxi.CompilationError
+import lang.taxi.messages.Severity
 import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.GenericType
 import lang.taxi.types.PrimitiveType
@@ -126,7 +127,7 @@ class TypeChecker(val enabled:FeatureToggle = FeatureToggle.DISABLED) {
             when (enabled) {
                FeatureToggle.DISABLED -> null
                FeatureToggle.ENABLED -> CompilationError(token.start, errorMessage)
-               FeatureToggle.SOFT_ENABLED ->  CompilationError(token.start, errorMessage, severity = CompilationError.Severity.WARNING)
+               FeatureToggle.SOFT_ENABLED ->  CompilationError(token.start, errorMessage, severity = Severity.WARNING)
             }
          }
       }

@@ -1,0 +1,57 @@
+---
+title: Linting Taxi projects
+description: Use linting tools to enforce consistent practices across your teams projects
+---
+
+import { Link } from "gatsby"
+
+The taxi compiler has a built-in linter, which can be used to enforce best practices across your team.
+
+The rules can be configured, modifying their severity, or disabling entirely.  See <Link to="/taxi-cli/taxi-conf-file/#linter-config">Linter config</Link> in the taxi.conf documentation for more details.
+
+## Rules
+
+### `no-duplicate-types-on-models`
+
+| Id | Default level  |
+| :--- | :--- |
+| `no-duplicate-types-on-models` |`WARN` |
+
+This rule enforces that models do not allow the same type to be used for multiple fields.
+
+Reusing a type multiple times on a model leads to ambiguity when querying.
+
+For example:
+
+```taxi
+type Name inherits String
+model Person {
+   // Not permitted, as it leads to semantic ambiguity
+   firstName : Name
+   lastName : Name
+}
+```
+
+### `no-primitive-types-on-models`
+
+
+| Id | Default level  |
+| :--- | :--- |
+| `no-primitive-types-on-models` |`WARN` |
+
+This rule encourages the usage of semantic types, rather than base primitives.
+
+For example:
+
+```
+// Don't do this:
+model Person {
+   name : String
+}
+
+// Do to this:
+type FirstName inherits String
+model Person {
+   name : FirstName
+}
+```
