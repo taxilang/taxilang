@@ -81,7 +81,7 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext, config:
         }
 
         // let classPath = (useDebugJar) ? path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', jarName) : path.join(__dirname, jarName);
-        const waitForDebuggerToAttach = false;
+        const waitForDebuggerToAttach = true;
         const debugSettings = (enableDebug) ? [`-agentlib:jdwp=transport=dt_socket,server=y,suspend=${waitForDebuggerToAttach ? 'y' : 'n'},address=5005,quiet=y`] : [];
         const args: string[] = debugSettings.concat(['-cp', classPath]);
         console.log(JSON.stringify(args));

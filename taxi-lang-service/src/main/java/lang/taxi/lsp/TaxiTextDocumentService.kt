@@ -11,6 +11,7 @@ import lang.taxi.lsp.formatter.FormatterService
 import lang.taxi.lsp.gotoDefinition.GotoDefinitionService
 import lang.taxi.lsp.hover.HoverService
 import lang.taxi.lsp.linter.LintingService
+import lang.taxi.messages.Severity
 import lang.taxi.types.SourceNames
 import org.eclipse.lsp4j.CodeAction
 import org.eclipse.lsp4j.CodeActionParams
@@ -44,12 +45,17 @@ import org.eclipse.lsp4j.services.LanguageClientAware
 import org.eclipse.lsp4j.services.TextDocumentService
 import reactor.core.publisher.Sinks
 import java.io.File
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.net.URI
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 
+object UnknownSource {
+    val UNKNOWN_SOURCE = "Unknown source"
+}
 
 /**
  * Stores the compiled snapshot for a file
@@ -104,12 +110,24 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
         compileTriggerSink.asFlux()
             .bufferTimeout(50, Duration.ofMillis(500))
             .subscribe { triggers ->
-                compile()
-                triggers.distinct()
-                    .forEach { compilationTrigger ->
-                        computeLinterMessages(SourceNames.normalize(compilationTrigger.changedPath))
-                    }
-                publishDiagnosticMessages()
+                try {
+                    compile()
+                    triggers.distinct()
+                        .forEach { compilationTrigger ->
+                            computeLinterMessages(SourceNames.normalize(compilationTrigger.changedPath))
+                        }
+                    publishDiagnosticMessages()
+                } catch (e: Exception) {
+                    val writer = StringWriter()
+                    val printWriter = PrintWriter(writer)
+                    e.printStackTrace(printWriter)
+                    client.logMessage(
+                        MessageParams(
+                            MessageType.Error,
+                            "An exception was thrown when compiling.  This is a bug in the compiler, and should be reported. \n${e.message} \n$writer"
+                        )
+                    )
+                }
             }
     }
 
@@ -251,11 +269,11 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
                 error.char
             )
             val severity: DiagnosticSeverity = when (error.severity) {
-                CompilationError.Severity.INFO -> DiagnosticSeverity.Information
-                CompilationError.Severity.WARNING -> DiagnosticSeverity.Warning
-                CompilationError.Severity.ERROR -> DiagnosticSeverity.Error
+                Severity.INFO -> DiagnosticSeverity.Information
+                Severity.WARNING -> DiagnosticSeverity.Warning
+                Severity.ERROR -> DiagnosticSeverity.Error
             }
-            (error.sourceName ?: "Unknown source") to Diagnostic(
+            (error.sourceName ?: UnknownSource.UNKNOWN_SOURCE) to Diagnostic(
                 Range(position, position),
                 error.detailMessage,
                 severity,
@@ -278,8 +296,10 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
             // the normalized URI.  This means we get an OS specific file.
             // VSCode on windows seems to not like the URI
 
-            val filePath = File(URI.create(uri)).canonicalPath
-            PublishDiagnosticsParams(uri, diagnostics)
+            val filePath = try { File(URI.create(uri)).canonicalPath } catch (e:Exception) {
+                UnknownSource.UNKNOWN_SOURCE
+            }
+            PublishDiagnosticsParams(filePath, diagnostics)
         }
 
         clearErrors()
