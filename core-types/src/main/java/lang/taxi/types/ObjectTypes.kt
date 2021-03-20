@@ -2,6 +2,7 @@ package lang.taxi.types
 
 import arrow.core.Either
 import lang.taxi.Equality
+import lang.taxi.services.FieldName
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.utils.quoted
@@ -35,6 +36,7 @@ data class ObjectTypeDefinition(
    val calculatedInstanceOfType: Type? = null,
    val calculation: Formula? = null,
    val offset: Int? = null,
+   val isAnonymous: Boolean = false,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
@@ -119,6 +121,9 @@ data class ObjectType(
             }
          }
       }
+
+   override val anonymous: Boolean
+      get() = this.definition?.isAnonymous ?: false
 
    override val formattedInstanceOfType: Type?
       get() = this.definition?.formattedInstanceOfType
@@ -391,6 +396,15 @@ data class ColumnAccessor(val index: Any?, override val defaultValue: Any?, over
 data class ConditionalAccessor(val expression: FieldSetExpression) : Accessor, TaxiStatementGenerator {
    override fun asTaxi(): String {
       return "by ${expression.asTaxi()}"
+   }
+}
+
+data class FieldSourceAccessor(
+   val sourceAttributeName: FieldName,
+   val attributeType: QualifiedName,
+   val sourceType: QualifiedName) : Accessor, TaxiStatementGenerator {
+   override fun asTaxi(): String {
+      return "by (this.$sourceAttributeName)"
    }
 }
 

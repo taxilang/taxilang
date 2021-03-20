@@ -146,6 +146,9 @@ interface Type : Named, Compiled, ImportableToken, Documented {
 
    val offset: Int?
 
+   val anonymous: Boolean
+      get() = false
+
    fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
       val allExcludedTypes: Set<Type> = typesToExclude + setOf(this)
       val aliasType = if (this is TypeAlias) {
@@ -227,3 +230,5 @@ interface DefinableToken<TDef : TokenDefinition> : ImportableToken {
 fun List<Documented>.typeDoc(): String? {
    return this.mapNotNull { it.typeDoc }.joinToString("\n")
 }
+
+

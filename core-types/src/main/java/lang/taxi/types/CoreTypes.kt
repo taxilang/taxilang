@@ -49,6 +49,9 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
       }
    }
 
+   override val anonymous: Boolean
+      get() = type.anonymous
+
    override fun resolveTypes(typeSystem: TypeProvider): GenericType {
       return this.copy(type = typeSystem.getType(type.qualifiedName))
    }
