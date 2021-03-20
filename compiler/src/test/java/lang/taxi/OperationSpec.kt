@@ -200,6 +200,16 @@ count
          errors.first().detailMessage.should.equal("mismatched input 'guessing' expecting {'in', 'like', '>', '>=', '<', '<=', '=', '!='}")
       }
 
+      it("should accept function names with findAll keyword") {
+         val errors = """
+            model Person {}
+            service PersonService {
+               operation `findAll`(): Person[]
+            }
+         """.validated()
+         errors.should.have.size(0)
+      }
+
 
    }
 

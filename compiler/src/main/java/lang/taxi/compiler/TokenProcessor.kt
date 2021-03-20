@@ -32,6 +32,7 @@ import lang.taxi.services.operations.constraints.OperationConstraintConverter
 import lang.taxi.toCompilationError
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionDefinition
+import lang.taxi.query.TaxiQlQuery
 import lang.taxi.linter.Linter
 import lang.taxi.services.FilterCapability
 import lang.taxi.services.QueryOperation
@@ -47,6 +48,8 @@ import lang.taxi.utils.wrapErrorsInList
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.nio.charset.Charset
+import java.security.SecureRandom
+import java.util.Base64
 
 internal class TokenProcessor(
    val tokens: Tokens,
@@ -87,6 +90,7 @@ internal class TokenProcessor(
 
    private val tokensCurrentlyCompiling = mutableSetOf<String>()
    private val defaultValueParser = DefaultValueParser()
+   private val queries = mutableListOf<TaxiQlQuery>()
 
    init {
       val importedTypes = if (collectImports) {
@@ -106,6 +110,11 @@ internal class TokenProcessor(
       // TODO: Unsure if including the imported types here is a good iddea or not.
       val types = typeSystem.typeList(includeImportedTypes = true).toSet()
       return errors to TaxiDocument(types, services.toSet(), policies.toSet(), functions.toSet())
+   }
+
+   fun buildQueries(): Pair<List<CompilationError>, List<TaxiQlQuery>> {
+      compile()
+      return errors to queries
    }
 
    // Primarily for language server tooling, rather than
@@ -136,9 +145,9 @@ internal class TokenProcessor(
             ?.filter { it.exception == null }
             ?.mapNotNull { memberDeclaration ->
                val fieldDeclaration = memberDeclaration.fieldDeclaration()
-               if (fieldDeclaration.typeType() != null && fieldDeclaration.typeType().aliasedType() != null) {
+               if (fieldDeclaration.simpleFieldDeclaration().typeType() != null && fieldDeclaration.simpleFieldDeclaration().typeType().aliasedType() != null) {
                   // This is an inline type alias
-                  lookupTypeByName(namespace, memberDeclaration.fieldDeclaration().typeType())
+                  lookupTypeByName(namespace, memberDeclaration.fieldDeclaration().simpleFieldDeclaration().typeType())
                } else {
                   null
                }
@@ -187,6 +196,12 @@ internal class TokenProcessor(
 
    }
 
+   internal fun getType(namespace: Namespace, name: String, context: ParserRuleContext): Either<List<CompilationError>, Type> {
+      return attemptToLookupTypeByName(namespace, name, context).map { qfn ->
+         typeSystem.getType(qfn)
+      }.wrapErrorsInList()
+   }
+
    private fun compile() {
       createEmptyTypes()
       compileTokens()
@@ -202,7 +217,41 @@ internal class TokenProcessor(
       validateConstraints()
       validateFormulas()
       validaCaseWhenLogicalExpressions()
+
+      // Queries
+      compileQueries()
    }
+
+   private fun compileQueries() {
+      this.tokens.anonymousQueries.forEach { (qualifiedName, anonymousQueryContex) ->
+         QueryCompiler(this)
+            .parseQueryBody(qualifiedName, mapOf(), anonymousQueryContex.queryBody())
+            .mapLeft { compilationErrors -> errors.addAll(compilationErrors) }
+            .map { taxiQlQuery ->
+               queries.add(taxiQlQuery)
+            }
+      }
+
+      this.tokens.namedQueries.forEach { (qualifiedName, namedQueryContext) ->
+         val queryName = namedQueryContext.queryName().Identifier().text
+         val parametersOrErrors = namedQueryContext.queryName().queryParameters()?.queryParamList()?.queryParam()?.map { queryParam ->
+            val parameterName = queryParam.Identifier().text
+            val queryParameter: Either<List<CompilationError>, Pair<String, QualifiedName>> =
+               typeOrError(namedQueryContext.findNamespace(), queryParam.typeType()).map { parameterType ->
+               parameterName to parameterType.toQualifiedName()
+            }
+            queryParameter
+         }?.invertEitherList() ?: Either.right(emptyList())
+         parametersOrErrors
+            .mapLeft { compilationErrors -> errors.addAll(compilationErrors.flatten()) }
+            .map { parameters ->
+               QueryCompiler(this)
+                  .parseQueryBody(queryName, parameters.toMap(), namedQueryContext.queryBody())
+                  .mapLeft { compilationErrors -> errors.addAll(compilationErrors) }
+                  .map { taxiQlQuery -> queries.add(taxiQlQuery) }
+            }
+         }
+      }
 
    private fun applySynonymsToEnums() {
       // Now we have a full picture of all the enums, we can
@@ -745,6 +794,43 @@ internal class TokenProcessor(
       ).right()
    }
 
+   private fun compileAnonymousType(
+      namespace: Namespace,
+      typeName: String,
+      ctx: TaxiParser.TypeBodyContext,
+      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext()) {
+      val fields = ctx.let { typeBody ->
+         val typeBodyContext = TypeBodyContext(typeBody, namespace)
+         FieldCompiler(this, typeBodyContext, typeName, this.errors, anonymousTypeResolutionContext)
+            .compileAllFields()
+      }
+
+      val fieldsFromConcreteProjectedToType = anonymousTypeResolutionContext?.concreteProjectionTypeContext?.let {
+         this.parseType(namespace, it).map { type ->
+            (type as ObjectType?)?.let { objectType ->
+               objectType.fields
+            }
+         }
+      }
+
+      val anonymousTypeFields = if (fieldsFromConcreteProjectedToType is Either.Right) {
+         fieldsFromConcreteProjectedToType.b?.let { fields.plus(it) } ?: fields
+      } else {
+         fields
+      }
+
+      this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(
+         fields = anonymousTypeFields.toSet(),
+         annotations = annotations.toSet(),
+         modifiers = listOf(),
+         inheritsFrom = emptySet(),
+         format = null,
+         compilationUnit = ctx.toCompilationUnit(),
+         isAnonymous = true
+      )))
+
+   }
+
 
    private fun parseTypeDoc(content: String?): String? {
       if (content == null) {
@@ -817,7 +903,7 @@ internal class TokenProcessor(
    }
 
    internal fun collateAnnotations(annotations: List<TaxiParser.AnnotationContext>): List<Annotation> {
-      return annotations.map { annotation ->
+      val result = annotations.map { annotation ->
          val annotationName = annotation.qualifiedName().text
          mapAnnotationParams(annotation).flatMap { annotationParameters ->
             val annotationType = resolveUserType(
@@ -854,7 +940,9 @@ internal class TokenProcessor(
             resolvedAnnotation
 
          }
-      }.reportAndRemoveErrorList(errors)
+      }
+
+      return result.reportAndRemoveErrorList(errors)
    }
 
    private fun buildTypedAnnotation(
@@ -954,6 +1042,22 @@ internal class TokenProcessor(
             }
          }
       }
+   }
+
+   fun parseAnonymousType(
+      namespace: String,
+      anonymousTypeCtx: TaxiParser.TypeBodyContext,
+      anonymousTypeName: String = AnonymousTypeNameGenerator.generate(),
+      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext()): Either<List<CompilationError>, Type> {
+      compileAnonymousType(namespace, anonymousTypeName, anonymousTypeCtx, anonymousTypeResolutionContext)
+      return attemptToLookupTypeByName(namespace, anonymousTypeName, anonymousTypeCtx, SymbolKind.TYPE_OR_MODEL)
+         .wrapErrorsInList()
+         .flatMap { qualifiedName ->
+            typeSystem
+               .getTypeOrError(qualifiedName, anonymousTypeCtx)
+               .wrapErrorsInList()
+         }
+
    }
 
    internal fun parseType(
@@ -1743,6 +1847,7 @@ internal class TokenProcessor(
       return condition to instruction
    }
 
+
 }
 
 fun <T> Either<List<CompilationError>, T>.collectErrors(errorCollection: MutableList<CompilationError>): Either<List<ReportedError>, T> {
@@ -1825,5 +1930,17 @@ enum class SymbolKind {
          FUNCTION -> token is Function
          ANNOTATION -> token is AnnotationType
       }
+   }
+}
+
+object AnonymousTypeNameGenerator {
+   private val random: SecureRandom = SecureRandom()
+   private val encoder: Base64.Encoder = Base64.getUrlEncoder().withoutPadding()
+
+   // This is both shorter than a UUID (e.g. Xl3S2itovd5CDS7cKSNvml4_ODA)  and also more secure having 160 bits of entropy.
+   fun generate(): String {
+      val buffer = ByteArray(20)
+      random.nextBytes(buffer)
+      return "AnonymousProjectedType${encoder.encodeToString(buffer)}"
    }
 }
