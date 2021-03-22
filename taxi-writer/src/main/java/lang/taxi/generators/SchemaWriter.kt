@@ -17,7 +17,7 @@ import lang.taxi.types.Type
 import lang.taxi.types.TypeAlias
 import lang.taxi.types.UnresolvedImportedType
 import lang.taxi.types.VoidType
-import lang.taxi.utils.quotedIfString
+import lang.taxi.utils.quotedIfNecessary
 import lang.taxi.utils.trimEmptyLines
 
 
@@ -265,13 +265,14 @@ $enumValueDeclarations
       val declaredFormats = (type.format ?: emptyList()).filter { !inheritedFormats.contains(it) }
       val typeFormat = when {
          declaredFormats.isEmpty() -> ""
-         declaredFormats.size == 1 -> "(@format = ${declaredFormats.first().quotedIfString()})"
-         else -> "(@format = [${declaredFormats.joinToString(",") { it.quotedIfString() }}])"
+         declaredFormats.size == 1 -> "(@format = ${declaredFormats.first().quotedIfNecessary()})"
+         else -> "(@format = [${declaredFormats.joinToString(",") { it.quotedIfNecessary() }}])"
       }
       val typeDoc = type.typeDoc.asTypeDocBlock()
 
+      val typeKind = if (type.fields.isEmpty()) "type" else "model"
       return """$typeDoc
-         |$modifiers type ${type.toQualifiedName().typeName.reservedWordEscaped()}$inheritanceString$typeFormat $body"""
+         |$modifiers $typeKind ${type.toQualifiedName().typeName.reservedWordEscaped()}$inheritanceString$typeFormat $body"""
          .trimMargin()
          .trimEmptyLines()
    }

@@ -7,7 +7,7 @@ import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.utils.quoted
 import lang.taxi.utils.quotedIfNotAlready
-import lang.taxi.utils.quotedIfString
+import lang.taxi.utils.quotedIfNecessary
 import kotlin.reflect.KProperty1
 
 data class FieldExtension(
@@ -279,7 +279,7 @@ data class Annotation(val name: String,
    override fun asTaxi(): String {
       val parameterTaxi = parameters.map { (name, value) ->
          if (value != null) {
-            "$name = ${value.quotedIfString()}"
+            "$name = ${value.quotedIfNecessary()}"
          } else {
             name
          }

@@ -26,7 +26,6 @@ import lang.taxi.types.ObjectTypeDefinition
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
-import lang.taxi.types.TypeAlias
 import lang.taxi.types.UnresolvedImportedType
 import lang.taxi.utils.log
 import org.jetbrains.annotations.NotNull
@@ -108,12 +107,12 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
 
          // Don't examine the return type for collections, as the type we care about is lost in generics - just create the type alias
          if (element.isCollection()) {
-            return getOrCreateTypeAlias(element, typeAliasName, existingTypes)
+            return getOrCreateScalarType(element, typeAliasName, existingTypes)
          }
 
          val aliasedTaxiType = getTypeDeclaredOnClass(element, existingTypes)
          if (typeAliasName != aliasedTaxiType.qualifiedName) {
-            return getOrCreateTypeAlias(element, typeAliasName, existingTypes)
+            return getOrCreateScalarType(element, typeAliasName, existingTypes)
          } else {
             log().warn(
                "Element $element declares a redundant type alias of $typeAliasName, which is already " +
@@ -132,7 +131,7 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
 
       if (containingMember != null && declaresTypeAlias(containingMember)) {
          val typeAliasName = getDeclaredTypeAliasName(containingMember, defaultNamespace)!!
-         return getOrCreateTypeAlias(containingMember, typeAliasName, existingTypes)
+         return getOrCreateScalarType(containingMember, typeAliasName, existingTypes)
       }
 
 //        if (isImplicitAliasForPrimitiveType(targetTypeName,element)) {
@@ -257,18 +256,18 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
       ))
    }
 
-   private fun getOrCreateTypeAlias(
+   private fun getOrCreateScalarType(
       element: AnnotatedElement,
       typeAliasName: String,
       existingTypes: MutableSet<Type>
-   ): TypeAlias {
+   ): Type {
       val existingAlias = existingTypes.findByName(typeAliasName)
       if (existingAlias != null) {
-         return existingAlias as TypeAlias
+         return existingAlias
       }
       val compilationUnit = CompilationUnit.ofSource(SourceCode("Exported from annotation", "Annotation"))
 
-      val aliasedTaxiType = if (element.isCollection()) {
+      val type = if (element.isCollection()) {
          val collectionType = findCollectionType(
             element,
             existingTypes,
@@ -277,11 +276,13 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
          )
          ArrayType(collectionType, compilationUnit)
       } else {
-         getTypeDeclaredOnClass(element, existingTypes)
+         ObjectType(typeAliasName,ObjectTypeDefinition(
+            compilationUnit = compilationUnit,
+            inheritsFrom = setOf(getTypeDeclaredOnClass(element, existingTypes))
+         ))
       }
-      val typeAlias = TypeAlias(typeAliasName, aliasedTaxiType, compilationUnit)
-      existingTypes.add(typeAlias)
-      return typeAlias
+      existingTypes.add(type)
+      return type
    }
 
    fun getTypeDeclaredOnClass(element: AnnotatedElement, existingTypes: MutableSet<Type>): Type {
