@@ -20,20 +20,22 @@ object TaxiQlSpec : Spek({
          type LastName inherits String
          type OutputId inherits String
 
-         type Customer {
-            email : CustomerEmailAddress as String
+         type CustomerEmailAddress inherits String
+         model Customer {
+            email : CustomerEmailAddress
          }
-         type Trade
+         model Trade
 
-         type OutputOrder {
+         model OutputOrder {
             outputId: OutputId
          }
-         type Order {
-            tradeTimestamp : TradeDate as Instant
+         type TradeDate inherits Instant
+         model Order {
+            tradeTimestamp : TradeDate
             traderId: TraderId
          }
 
-         type Trade {
+         model Trade {
             traderId: TraderId
          }
       """.trimIndent()

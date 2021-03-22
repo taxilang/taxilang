@@ -10,7 +10,7 @@ import org.spekframework.spek2.style.specification.describe
 object AssignmentSpec : Spek({
    describe("Type assignment rules") {
       val schema = """
-      type alias EyeColour as String
+      type EyeColour inherits String
       type Name inherits String
       type alias Identifier as Name
 
@@ -19,7 +19,7 @@ object AssignmentSpec : Spek({
 
       type alias NameList as FirstName[]
 
-      type Person {
+      model Person {
          name : FirstName
       }
       type alias Human as Person

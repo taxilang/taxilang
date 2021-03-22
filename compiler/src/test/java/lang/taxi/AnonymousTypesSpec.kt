@@ -10,11 +10,11 @@ class AnonymousTypesSpec : Spek({
       it("simple anonymous types") {
          val src = """
             model Person {
-               firstName : FirstName as String
-               lastName : LastName as String
+               firstName : FirstName inherits String
+               lastName : LastName inherits String
                education: {
-                   highSchoolName: SchoolName as String
-                   undergraduate: UniversityName as String
+                   highSchoolName: SchoolName inherits String
+                   undergraduate: UniversityName inherits String
                }
             }
            """.trimIndent()

@@ -16,12 +16,12 @@ object OperationContextSpec : Spek({
    describe("declaring context to operations") {
       val taxi = """
          type TransactionEventDateTime inherits Instant
-         type Trade {
-            tradeId : TradeId as String
-            tradeDate : TradeDate as Instant
+         model Trade {
+            tradeId : TradeId inherits String
+            tradeDate : TradeDate inherits Instant
             orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd HH:mm:ss.SSSSSSS")
          }
-         type alias EmployeeCode as String
+         type EmployeeCode inherits String
       """.trimIndent()
 
       describe("compiling declaration of context") {

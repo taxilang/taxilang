@@ -9,11 +9,13 @@ import org.spekframework.spek2.style.specification.describe
 object OperationSpec : Spek({
    describe("Grammar for operations") {
       val taxi = """
+         type TradeId inherits String
+         type TradeDate inherits Instant
          type Trade {
-            tradeId : TradeId as String
-            tradeDate : TradeDate as Instant
+            tradeId : TradeId
+            tradeDate : TradeDate
          }
-         type alias EmployeeCode as String
+         type EmployeeCode inherits String
       """.trimIndent()
 
       it("should compile operations with array return types") {
@@ -43,8 +45,8 @@ object OperationSpec : Spek({
 
       it("should parse constraints on inputs") {
          val param = """
-            type Money {
-               currency : CurrencySymbol as String
+            model Money {
+               currency : CurrencySymbol inherits String
             }
             service ClientService {
               operation convertMoney(Money(this.currency = 'GBP'),target : CurrencySymbol):Money( this.currency = target )
@@ -61,8 +63,8 @@ object OperationSpec : Spek({
          val param = """
          namespace demo {
             type RewardsAccountBalance {
-               balance : RewardsBalance as Decimal
-               currencyUnit : CurrencyUnit as String
+               balance : RewardsBalance inherits Decimal
+               currencyUnit : CurrencyUnit inherits String
             }
          }
          namespace test {
@@ -82,8 +84,8 @@ object OperationSpec : Spek({
          namespace demo {
             type CreatedAt inherits Date
             type RewardsAccountBalance {
-               balance : RewardsBalance as Decimal
-               currencyUnit : CurrencyUnit as String
+               balance : RewardsBalance inherits Decimal
+               currencyUnit : CurrencyUnit inherits String
             }
          }
          namespace test {
