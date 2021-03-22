@@ -6,6 +6,7 @@ import lang.taxi.types.AttributePath
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.QualifiedName
 import lang.taxi.utils.prependIfAbsent
+import lang.taxi.utils.quotedIfNecessary
 
 
 /**
@@ -53,7 +54,7 @@ data class PropertyTypeIdentifier(val type: QualifiedName) : PropertyIdentifier(
 sealed class ValueExpression(val taxi: String)
 
 // TODO : This won't work with numbers - but neither does the parsing.  Need to fix that.
-data class ConstantValueExpression(val value: Any) : ValueExpression("'$value'")
+data class ConstantValueExpression(val value: Any) : ValueExpression(value.quotedIfNecessary())
 data class RelativeValueExpression(val path: AttributePath) : ValueExpression(path.path) {
    constructor(attributeName: String) : this(AttributePath.from(attributeName))
 }

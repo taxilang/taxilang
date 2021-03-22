@@ -11,13 +11,13 @@ class SchemaWriterTest {
    @Test
    fun generatesAnnotationsOnFields() {
       val src = Compiler("""
-         type Person {
+         model Person {
             @Id
             firstName : String
          }
       """.trimIndent()).compile()
       val generated = SchemaWriter().generateSchemas(listOf(src))[0]
-      val expected = """type Person {
+      val expected = """model Person {
       @Id firstName : String
    }"""
       generated.trimNewLines().should.equal(expected.trimNewLines())
@@ -52,7 +52,7 @@ type Person
          type WeightInGrams inherits Decimal
          type WeightInOunces inherits Decimal
          type OuncesToGramsMultiplier inherits Decimal
-         type Person {
+         model Person {
             birthDate : DateOfBirth( @format = "dd-mm-yyyy" )
             timeOfBirth : TimeOfBirth( @format = "hh:mm:ss" )
             startupTime : BirthTimestamp by (this.birthDate + this.timeOfBirth)
@@ -68,7 +68,7 @@ type WeightInGrams inherits lang.taxi.Decimal
 type WeightInOunces inherits lang.taxi.Decimal
 type OuncesToGramsMultiplier inherits lang.taxi.Decimal
 
-type Person {
+model Person {
    birthDate : DateOfBirth( @format = "dd-mm-yyyy" )
    timeOfBirth : TimeOfBirth( @format = "hh:mm:ss" )
    startupTime : BirthTimestamp  by (this.birthDate + this.timeOfBirth)
@@ -85,7 +85,7 @@ type Person {
       val src = Compiler("""
          type StringField inherits String
          type NumberField inherits Int
-         type Thing {
+         model Thing {
             stringThing : StringField by default("foo")
             numberThing : NumberField by default(2)
          }
@@ -96,7 +96,7 @@ type Person {
 
          type NumberField inherits lang.taxi.Int
 
-         type Thing {
+         model Thing {
             stringThing : StringField  by default("foo")
             numberThing : NumberField  by default(2)
          }
@@ -109,7 +109,7 @@ type Person {
    @Test
    fun `outputs multiple formats`() {
       val src = """type TransactionEventDateTime inherits Instant
-            type Order {
+            model Order {
                 orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", @format = "yyyy-MM-dd'T'HH:mm:ss.SSS")
             }"""
       val schema = Compiler(src).compile()
@@ -117,7 +117,7 @@ type Person {
       val expected = """
          type TransactionEventDateTime inherits lang.taxi.Instant
 
-         type Order {
+         model Order {
             orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", @format = "yyyy-MM-dd'T'HH:mm:ss.SSS" )
          }
       """.trimIndent()
@@ -128,13 +128,13 @@ type Person {
    @Test
    fun `outputs multiple formats with offset`() {
       val src = """type TransactionEventDateTime inherits Instant
-            type Order {
+            model Order {
                 orderDateTime : TransactionEventDateTime( @format = ["yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "yyyy-MM-dd'T'HH:mm:ss.SSS"] @offset = 60)
             }"""
       val schema = Compiler(src).compile()
       val generated = SchemaWriter().generateSchemas(listOf(schema))[0]
       val expected = """type TransactionEventDateTime inherits lang.taxi.Instant
-      type Order {
+      model Order {
          orderDateTime : TransactionEventDateTime( @format = ["yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "yyyy-MM-dd'T'HH:mm:ss.SSS"] @offset = 60 )
       }""".trimIndent()
       generated.trimNewLines().should.equal(expected.trimNewLines())
@@ -168,7 +168,7 @@ type SomeQty inherits lang.taxi.Decimal
 
 type SomeAnotherQty inherits SomeQty
 
-type Foo {
+model Foo {
    field1 : SomeAnotherQty as coalesce(Qty, QtyHit, QtyFill)
 }
 
@@ -198,7 +198,7 @@ type Foo {
          .compileAndRegenerateSource()
 
       val expected = """
-        type ComplexWhen {
+        model ComplexWhen {
             trader : String
             status : String
             initialQuantity : Decimal

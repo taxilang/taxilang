@@ -19,20 +19,20 @@ class DataStructureTests {
       val expected = """
 namespace companyX.common {
 
-   type Product {
+   model Product {
       productIdentifier : ProductIdentifier
       productName : ProductName
       assetId : assetId
       hash : hash
    }
 
-   type alias ProductIdentifier as Int
+   type ProductIdentifier inherits Int
 
-   type alias ProductName as String
+   type ProductName inherits String
 
-   type alias assetId as Int
+   type assetId inherits Int
 
-   type alias hash as Int
+   type hash inherits Int
 
 
 }"""
@@ -50,15 +50,16 @@ namespace companyX.common {
         val taxiDef = TaxiGenerator().forClasses(Client::class.java).generateAsStrings()
         val expected = """
 namespace demo {
-    type Client {
-        clientId : ClientId as String
+   type ClientId inherits String
+    model Client {
+        clientId : ClientId
         clientName : String
         sicCode : isic.uk.SIC2008
     }
 }
 
 namespace isic.uk {
-    type alias SIC2008 as String
+    type SIC2008 inherits String
 }"""
         TestHelpers.expectToCompileTheSame(taxiDef, expected)
     }
@@ -103,15 +104,17 @@ namespace isic.uk {
         expect(taxiDef).to.have.size(2)
         val expected = """
 namespace taxi.example.invoices
-type Invoice {
+type InvoiceValue inherits Decimal
+model Invoice {
     clientId : taxi.example.clients.ClientId
-    invoiceValue : InvoiceValue as Decimal
+    invoiceValue : InvoiceValue
     previousInvoice : Invoice?
 }
 ---
 namespace taxi.example.clients
-type Client {
-    clientId : ClientId as String
+type ClientId inherits String
+model Client {
+    clientId : ClientId
 }
 """.split("---")
         TestHelpers.expectToCompileTheSame(taxiDef, expected)
