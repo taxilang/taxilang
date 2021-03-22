@@ -1,0 +1,169 @@
+---
+title: Querying with TaxiQL
+description: The TaxiQL language is used to execute queries against taxi-aware sources
+---
+
+import { Hint, Discourage } from '../components/hint'
+import { Link } from 'gatsby';
+
+## Overview
+TaxiQL allows writing queries using your Taxi taxonomy -  allowing queries to be expressed independent of the services and models that are providing data.
+
+When paired with a TaxiQL server such as [Vyne](https://vyne.co), this allows dynamic discovery of data, decoupled from the upstream services.
+
+## Basic syntax
+The basic syntax of a TaxiQL query looks like this:
+
+```taxi
+// Find all the people
+find { Person[] }
+
+// Find a person named Jim
+find { Person( FirstName = 'Jim' ) }
+
+// Find all the people named Jim
+find { Person[]( FirstName = 'Jim' ) }
+```
+
+### Finding one thing, versus finding finding many
+<Discourage>
+Heads up! Historically, TaxiQL used to support two verbs - `findAll` and `findOne`.  These have been replaced with just `find`.  While the old
+verbs are supported for backwards compatability, they will be removed in a future release.
+</Discourage>
+
+The type being queried for determines if a single result is discovered, or mulitple.  To search for multiple entries, search for an array, using the `[]` symbol.
+
+
+| Query                  | Meaning                 | What's called
+|------------------------|-------------------------|--------------------------------------------|
+| `find { Person[] }`    | Find all the people     | Fetch from all services returning `Person[]` or a subtype of `Person[]` |
+| `find { Person }`    | Find a single person     | Fetch from a single service returning `Person` or a subtype of `Person` |
+
+
+## Criteria
+Criteria are specified in parenthesis, after the type the criteria are applied to.
+
+For example:
+
+```taxi
+// Find a person named Jim
+find { Person( FirstName = 'Jim' ) }
+```
+
+This finds a `Person` model, with a `FirstName` value of Jim.
+
+<Hint>
+   **Important** Throuhgout taxi, we favour using Types, rather than field names, to describe attributes of data - it's the same here for querying.
+
+   Referencing criteria using a type means that the criteria can be applied against a model regardless of the name of the field where the information is stored.
+   This is especially powerful when querying multiple different models, each with a different structure.
+</Hint>
+
+### Combining multiple criteria
+Multiple criteria are listed within the parenthises, and are always applied as an AND operation.
+```taxi
+// Find all people born in the year 2010.
+find { Person( DateOfBirth > '2010-01-01', DateOfBirth <= '2010-12-31' ) }
+```
+
+The following operators are supported in a query - although support is determined by the actual services running.
+
+| Symbol | Meaning      |
+|--------|--------------|
+| `=`    | Equal to     |
+| `!=`   | Not equal to |
+| `>`    | Greater than |
+| `>=`    | Greater than or equal to |
+| `<`    | Less than    |
+| `<`    | Less than or equal to   |
+
+## Joins and Discovery
+
+## Linking data and `@Id`
+<Hint>This is a Vyne specific concept</Hint>
+When querying across multiple models, data is implicity discovered
+
+## Joins
+It is possible to request data joined across multple models.
+
+Using a join affects the number of rows that are returned in the output.
+
+<Hint>
+   It's not always neccessary to specify a join.  If you simply want to discover linked data, include the desired information in your output type.
+   See <Link to='#projections'>Projections</Link>
+</Hint>
+
+### by
+
+`by` is used to relate data explicity using a field.
+By default, data is linked using `@Id` annotated attributes.
+
+For cases where you need a different link, use `by`.
+
+```
+type PersonId inherits String
+model Person {
+   @Id id : PersonId
+   name : PersonName
+}
+model Movie {
+   id : MovieId
+   title : MovieTitle
+  // We should make ambiguous types on models prohibited, unless they are inline refined as follows.
+   directedBy : DirectorId inherits PersonId
+   producedBy : ProducerId inherits PersonId
+}
+
+operation listMovies():Movie[]
+operation getPerson( PersonId ) : Person
+operation listMoviesByActor( ActorId ) : Movie[]
+
+find {
+  Movie[]
+} as {
+  id : MovieId
+  // The below would be illegal without the (by) clause, as PersonName is ambiguous.
+  directorName : PersonName( by DirectorId )
+  producerName : PersonName( by ProducerId )
+}
+```
+
+We can also use `by` to scope data blocks.
+
+```
+find {
+  Actor[] // Define a start point
+} as {
+  name : ActorName
+  movies : [
+    {
+       title : MovieTitle
+       year : YearReleased
+     }
+  ]( by ActorId )
+}[]
+```
+
+## Union
+
+## Projections
+
+
+## How queries get executed
+
+When submitted to a TaxiQL query server, this query will find a service returning
+
+TODO :
+ * Constraints
+ * Joins
+ * Projections
+ * Annotations - @FirstNotEmpty
+ * Deprecated : findAll / findMany vs find
+ * Views
+ * Query grammars
+
+```taxi
+query
+
+
+TODO

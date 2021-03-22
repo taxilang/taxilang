@@ -38,7 +38,8 @@ module.exports = {
                   "language-reference/projects-and-names",
                   "language-reference/types-and-models",
                   "language-reference/advanced-types",
-                  "language-reference/describing-services"
+                  "language-reference/describing-services",
+                  "language-reference/querying-with-taxiql",
                ],
                "The Taxi CLI": [
                   "taxi-cli/intro",
