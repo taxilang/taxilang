@@ -1,11 +1,22 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.types.ComparisonExpression
+import lang.taxi.types.ComparisonOperator
+import lang.taxi.types.ConditionalAccessor
+import lang.taxi.types.ElseMatchExpression
+import lang.taxi.types.EmptyReferenceSelector
+import lang.taxi.types.InlineAssignmentExpression
+import lang.taxi.types.LiteralAssignment
 import lang.taxi.types.ViewBodyFieldDefinition
+import lang.taxi.types.ViewFindFieldReferenceAssignment
+import lang.taxi.types.ViewFindFieldReferenceEntity
+import lang.taxi.types.WhenCaseBlock
+import lang.taxi.types.WhenFieldSetCondition
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class ViewSpec: Spek( {
+class ViewSpec : Spek({
    describe("view syntax") {
       it("simple view definition") {
          val src = """
@@ -28,7 +39,7 @@ class ViewSpec: Spek( {
          personView?.typeDoc.should.equal("Sample View")
       }
 
-      it ("view with a namespace") {
+      it("view with a namespace") {
          val src = """
             namespace notional
             {
@@ -171,9 +182,11 @@ class ViewSpec: Spek( {
            """.trimIndent()
          val taxiDocument = Compiler(src).compile()
          val orderFillType = taxiDocument.model("OrderFill")
-         val orderSentType =  taxiDocument.model("OrderSent")
+         val orderSentType = taxiDocument.model("OrderSent")
          val orderEventDateTime = taxiDocument.type("OrderEventDateTime")
          val orderStatusType = taxiDocument.type("OrderStatus")
+         val requestedQuantityType = taxiDocument.type("RequestedQuantity")
+         val decimalFieldOrderFilled = taxiDocument.type("DecimalFieldOrderFilled")
          orderFillType.should.not.be.`null`
          orderSentType.should.not.be.`null`
          val orderView = taxiDocument.view("OrderView")
@@ -191,7 +204,7 @@ class ViewSpec: Spek( {
                ViewBodyFieldDefinition(sourceType = orderSentType, fieldType = orderSentType.field("subSecurityType").type, fieldName = "subSecurityType"),
                ViewBodyFieldDefinition(sourceType = orderSentType, fieldType = orderSentType.field("requestedQuantity").type, fieldName = "requestedQuantity"),
                ViewBodyFieldDefinition(sourceType = orderSentType, fieldType = orderSentType.field("entryType").type, fieldName = "orderEntry")
-         ))
+            ))
          joinOrderSentOrderFill.bodyType.qualifiedName.should.equal("OrderSent")
          joinOrderSentOrderFill.joinType!!.qualifiedName.should.equal("OrderFill")
          joinOrderSentOrderFill.viewBodyTypeDefinition!!.fields.should.equal(
@@ -201,8 +214,23 @@ class ViewSpec: Spek( {
                ViewBodyFieldDefinition(sourceType = orderFillType, fieldType = orderFillType.field("orderType").type, fieldName = "orderType"),
                ViewBodyFieldDefinition(sourceType = orderFillType, fieldType = orderFillType.field("subSecurityType").type, fieldName = "subSecurityType"),
                ViewBodyFieldDefinition(sourceType = orderSentType, fieldType = orderSentType.field("requestedQuantity").type, fieldName = "requestedQuantity"),
-               ViewBodyFieldDefinition(sourceType = orderStatusType, fieldType = orderStatusType, fieldName = "orderEntry")
-            ))
+               ViewBodyFieldDefinition(sourceType = orderStatusType, fieldType = orderStatusType, fieldName = "orderEntry",
+                  accessor = ConditionalAccessor(WhenFieldSetCondition(selectorExpression = EmptyReferenceSelector,
+                     cases = listOf(
+                        WhenCaseBlock(
+                           matchExpression = ComparisonExpression(operator = ComparisonOperator.EQ,
+                              left = ViewFindFieldReferenceEntity(sourceType = orderSentType, fieldType = requestedQuantityType),
+                              right = ViewFindFieldReferenceEntity(sourceType = orderFillType, fieldType = decimalFieldOrderFilled)),
+                           assignments = listOf(InlineAssignmentExpression(assignment = ViewFindFieldReferenceAssignment(fieldType = orderFillType, type = orderStatusType)))
+                        ),
+                        WhenCaseBlock(
+                           matchExpression = ElseMatchExpression,
+                           assignments = listOf(InlineAssignmentExpression(assignment = LiteralAssignment("PartiallyFilled"))))))
+                  ))))
+
+
+         val fieldWithWhenCases = joinOrderSentOrderFill.viewBodyTypeDefinition!!.fields.first { it.fieldName == "orderEntry" }
+         fieldWithWhenCases.accessor.should.not.be.`null`
       }
 
       it("A join view with two types with single join fields can be compiled") {

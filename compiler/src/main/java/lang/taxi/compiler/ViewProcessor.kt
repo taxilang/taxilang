@@ -1,6 +1,7 @@
 package lang.taxi.compiler
 
 import arrow.core.Either
+import arrow.core.extensions.either.applicativeError.raiseError
 import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
@@ -8,17 +9,31 @@ import lang.taxi.CompilationError
 import lang.taxi.Namespace
 import lang.taxi.TaxiParser
 import lang.taxi.toCompilationUnit
+import lang.taxi.types.AssignmentExpression
 import lang.taxi.types.ConditionalAccessor
+import lang.taxi.types.ElseMatchExpression
+import lang.taxi.types.EmptyReferenceSelector
+import lang.taxi.types.FieldAssignmentExpression
+import lang.taxi.types.FieldReferenceSelector
+import lang.taxi.types.InlineAssignmentExpression
 import lang.taxi.types.ObjectType
 import lang.taxi.types.Type
+import lang.taxi.types.ValueAssignment
 import lang.taxi.types.View
 import lang.taxi.types.ViewBodyDefinition
 import lang.taxi.types.ViewBodyFieldDefinition
 import lang.taxi.types.ViewBodyTypeDefinition
 import lang.taxi.types.ViewDefinition
+import lang.taxi.types.WhenCaseBlock
+import lang.taxi.types.WhenCaseMatchExpression
+import lang.taxi.types.WhenFieldSetCondition
+import lang.taxi.types.WhenSelectorExpression
+import lang.taxi.utils.flattenErrors
+import lang.taxi.utils.invertEitherList
+import lang.taxi.utils.wrapErrorsInList
 
 class ViewProcessor(private val tokenProcessor: TokenProcessor) {
-    fun compileView(
+   fun compileView(
       viewName: String,
       namespace: Namespace,
       viewCtx: TaxiParser.ViewDeclarationContext): Either<List<CompilationError>, View> {
@@ -153,11 +168,76 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
          ?: return listOf(CompilationError(accessorCtx.start, "only 'when' based definitions are allowed")).left()
       val fieldExpression = conditonalTypeCtx.fieldExpression()
       if (fieldExpression != null) {
-         return listOf(CompilationError(accessorCtx.start, "when(this.xxx) not allowed, please use when { case1 -> value1...}")).left()
+         return listOf(CompilationError(accessorCtx.start, "only 'when' based definitions are allowed")).left()
       }
-      val whenExpression = conditonalTypeCtx.conditionalTypeWhenDeclaration()
 
-      return Either.right(null)
+      if (conditonalTypeCtx.conditionalTypeWhenDeclaration().conditionalTypeWhenSelector() != null) {
+         return listOf(CompilationError(accessorCtx.start, "when(this..) is not allowed use when {")).left()
+      }
+
+      val caseDeclarations = conditonalTypeCtx.conditionalTypeWhenDeclaration().conditionalTypeWhenCaseDeclaration()
+
+      return processCaseDeclarations(caseDeclarations).flatMap { whenCaseBlocks ->
+         val whenFieldSetCondition = WhenFieldSetCondition(EmptyReferenceSelector, whenCaseBlocks)
+         ConditionalAccessor(whenFieldSetCondition).right()
+      }.mapLeft { it }
+   }
+
+   private fun processCaseDeclarations(caseDeclarations: List<TaxiParser.ConditionalTypeWhenCaseDeclarationContext>): Either<List<CompilationError>, List<WhenCaseBlock>> {
+      val logicalExpressionCompiler = LogicalExpressionCompiler(this.tokenProcessor)
+      val caseBlocks = mutableListOf<WhenCaseBlock>()
+      caseDeclarations.forEach { caseDeclaration ->
+         val lhs = caseDeclaration.caseDeclarationMatchExpression()
+         if (lhs.condition() == null && lhs.caseElseMatchExpression() == null) {
+            return listOf(CompilationError(caseDeclaration.start, "invalid case")).left()
+         }
+
+         val whenCaseMatchExpressionOrError: Either<CompilationError, WhenCaseMatchExpression> = when {
+            lhs.condition() != null -> logicalExpressionCompiler.processLogicalExpressionContext(lhs.condition().logical_expr(), true)
+            lhs.caseElseMatchExpression() != null -> ElseMatchExpression.right()
+            else -> return listOf(CompilationError(caseDeclaration.start, "invalid case")).left()
+         }
+         val whenCaseBlockOrError: Either<List<CompilationError>, WhenCaseBlock> = when (whenCaseMatchExpressionOrError) {
+            is Either.Right -> {
+               compileToValueAssignment(caseDeclaration, logicalExpressionCompiler).flatMap { valueAssignment ->
+                  WhenCaseBlock(whenCaseMatchExpressionOrError.b, listOf(InlineAssignmentExpression(valueAssignment))).right()
+               }.mapLeft { it }
+            }
+
+            is Either.Left -> listOf(whenCaseMatchExpressionOrError.a).left()
+         }
+
+
+         when (whenCaseBlockOrError) {
+            is Either.Left -> return whenCaseBlockOrError.a.left()
+            is Either.Right -> caseBlocks.add(whenCaseBlockOrError.b)
+         }
+      }
+
+      return caseBlocks.right()
+
+   }
+
+   private fun compileToValueAssignment(caseDeclaration: TaxiParser.ConditionalTypeWhenCaseDeclarationContext,
+                                        logicalExpressionCompiler: LogicalExpressionCompiler): Either<List<CompilationError>, ValueAssignment> {
+      return when {
+         caseDeclaration.caseScalarAssigningDeclaration() != null ->
+            when {
+               caseDeclaration.caseScalarAssigningDeclaration().caseFieldReferenceAssignment() != null -> {
+                  val identifiers = caseDeclaration.caseScalarAssigningDeclaration().caseFieldReferenceAssignment().Identifier()
+                  logicalExpressionCompiler.toViewFindFieldReferenceAssignment(identifiers, caseDeclaration.caseScalarAssigningDeclaration().caseFieldReferenceAssignment())
+
+               }
+               caseDeclaration.caseScalarAssigningDeclaration().literal() != null -> {
+                  logicalExpressionCompiler.compileLiteralValueAssignment(caseDeclaration.caseScalarAssigningDeclaration().literal())
+
+               }
+               else -> listOf(CompilationError(caseDeclaration.start, "invalid case")).left()
+
+            }
+
+         else -> listOf(CompilationError(caseDeclaration.start, "invalid right hand side definition for the case")).left()
+      }
    }
 
    private fun validateViewBodyFieldType(sourceType: Type, fieldType: Type, bodyCtx: TaxiParser.FindBodyContext): Either<List<CompilationError>, Type> {

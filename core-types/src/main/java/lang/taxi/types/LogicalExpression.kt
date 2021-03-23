@@ -60,6 +60,12 @@ data class FieldReferenceEntity(val fieldName: String): ComparisonOperandEntity(
    }
 }
 
+data class ViewFindFieldReferenceEntity(val sourceType: Type, val fieldType: Type): ComparisonOperandEntity("") {
+   override fun asTaxi(): String {
+      return  "${sourceType.qualifiedName}.${fieldType.qualifiedName}"
+   }
+}
+
 enum class ComparisonOperator(val symbol: String, val applicablePrimitives: EnumSet<PrimitiveType>) {
    GT(">", EnumSet.of(PrimitiveType.INTEGER, PrimitiveType.DECIMAL, PrimitiveType.DOUBLE)),
    GE (">=", EnumSet.of(PrimitiveType.INTEGER, PrimitiveType.DECIMAL, PrimitiveType.DOUBLE)),
