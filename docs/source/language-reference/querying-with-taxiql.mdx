@@ -77,10 +77,41 @@ The following operators are supported in a query - although support is determine
 | `<`    | Less than    |
 | `<`    | Less than or equal to   |
 
+## Projecting
+When querying the result model can be specified using the `as` operator:
+
+```
+model Author {
+   personId : PersonId inherits String
+   firstName : FirstName
+   lastName : LastName
+}
+model Book {
+   title : BookTitle inherits String
+   author : PersonId
+}
+
+// Create a type defining the desired output model
+model BookAndAuthor {
+   name : BookTitle
+   authorName :  FirstName + ' ' + LastName
+}
+
+// Find books, and project to BookAndAuthor - a named type.
+find { Book[] } as BookAndAuthor
+
+
+// Find books, and project to an anonymous type.
+find { Book[] } as {
+   title : BookTitle
+   authorName : FirstName + ' ' + LastName
+}
+```
+
 ## Joins and Discovery
 
 ## Linking data and `@Id`
-<Hint>This is a Vyne specific concept</Hint>
+<Hint>This behaviour is down to server engines.  This is the Vyne behaviour</Hint>
 When querying across multiple models, data is implicity discovered
 
 ## Joins
