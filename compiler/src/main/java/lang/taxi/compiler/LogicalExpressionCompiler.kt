@@ -44,7 +44,7 @@ class LogicalExpressionCompiler(private val tokenProcessor: TokenProcessor) {
          .flatMap { sourceType ->
             this.tokenProcessor.getType(ctx.findNamespace(), identifiers[1].text, ctx)
                .flatMap { fieldType ->
-                  ViewFindFieldReferenceAssignment(sourceType, fieldType).right()
+                  ViewFindFieldReferenceAssignment(fieldType, sourceType).right()
                }.mapLeft { it}
          }.mapLeft { it }
    }

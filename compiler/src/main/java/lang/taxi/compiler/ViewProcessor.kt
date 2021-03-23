@@ -16,6 +16,7 @@ import lang.taxi.types.EmptyReferenceSelector
 import lang.taxi.types.FieldAssignmentExpression
 import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.InlineAssignmentExpression
+import lang.taxi.types.JoinInfo
 import lang.taxi.types.ObjectType
 import lang.taxi.types.Type
 import lang.taxi.types.ValueAssignment
@@ -292,7 +293,8 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
          bodyHasAnIdField[0].type.basePrimitive != null &&
          joinHasAnIdField[0].type.basePrimitive != null &&
          bodyHasAnIdField[0].type.basePrimitive!!.isAssignableTo(joinHasAnIdField[0].type.basePrimitive!!)) {
-         return viewBodyDefinition.right()
+
+         return viewBodyDefinition.copy(joinInfo = JoinInfo(bodyHasAnIdField[0], joinHasAnIdField[0])).right()
       }
 
       val bodyFieldsQualifiedNames = bodyType.fields.map { it.type.qualifiedName }

@@ -223,7 +223,7 @@ class ViewSpec : Spek({
                            matchExpression = ComparisonExpression(operator = ComparisonOperator.EQ,
                               left = ViewFindFieldReferenceEntity(sourceType = orderSentType, fieldType = requestedQuantityType),
                               right = ViewFindFieldReferenceEntity(sourceType = orderFillType, fieldType = decimalFieldOrderFilled)),
-                           assignments = listOf(InlineAssignmentExpression(assignment = ViewFindFieldReferenceAssignment(fieldType = orderFillType, type = orderStatusType)))
+                           assignments = listOf(InlineAssignmentExpression(assignment = ViewFindFieldReferenceAssignment(fieldType = orderStatusType, type = orderFillType)))
                         ),
                         WhenCaseBlock(
                            matchExpression = ElseMatchExpression,
