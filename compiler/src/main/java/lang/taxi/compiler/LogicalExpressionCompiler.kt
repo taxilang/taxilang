@@ -11,7 +11,6 @@ import lang.taxi.types.AndExpression
 import lang.taxi.types.ComparisonExpression
 import lang.taxi.types.ComparisonOperator
 import lang.taxi.types.ConstantEntity
-import lang.taxi.types.FieldReferenceEntity
 import lang.taxi.types.LiteralAssignment
 import lang.taxi.types.LogicalConstant
 import lang.taxi.types.LogicalExpression
@@ -90,7 +89,17 @@ class LogicalExpressionCompiler(private val tokenProcessor: TokenProcessor) {
                            }.mapLeft { it }
                      }.mapLeft { it }
                } else {
-                  FieldReferenceEntity(numericEntity.propertyToParameterConstraintLhs().qualifiedName().text).right()
+                  val identifiers = numericEntity.propertyToParameterConstraintLhs().qualifiedName().Identifier()
+                  if (identifiers.size != 2) {
+                     return CompilationError(comparisonExpressionContext.start, "Should be SourceType.FieldType").left()
+                  }
+                  this.tokenProcessor.getType(comparisonExpressionContext.findNamespace(), identifiers.first().text, comparisonExpressionContext)
+                     .flatMap { sourceType ->
+                        this.tokenProcessor.getType(comparisonExpressionContext.findNamespace(), identifiers[1].text, comparisonExpressionContext)
+                           .flatMap { fieldType ->
+                              ViewFindFieldReferenceEntity(sourceType, fieldType).right()
+                           }.mapLeft { it }
+                     }.mapLeft { it }
                }
             }
             else -> Either.left(CompilationError(comparisonExpressionContext.start,

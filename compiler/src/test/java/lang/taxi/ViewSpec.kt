@@ -1,9 +1,11 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.types.AndExpression
 import lang.taxi.types.ComparisonExpression
 import lang.taxi.types.ComparisonOperator
 import lang.taxi.types.ConditionalAccessor
+import lang.taxi.types.ConstantEntity
 import lang.taxi.types.ElseMatchExpression
 import lang.taxi.types.EmptyReferenceSelector
 import lang.taxi.types.InlineAssignmentExpression
@@ -121,7 +123,7 @@ class ViewSpec : Spek({
          compilationErrors.last().detailMessage.should.equal("OrderSent and OrderFill can't be joined")
       }
 
-      it("multiple Find Statements in a View must be compatible with each other") {
+      it("A view with two find statements") {
          val src = """
          type SentOrderId inherits String
          type FillOrderId inherits String
@@ -231,6 +233,105 @@ class ViewSpec : Spek({
 
          val fieldWithWhenCases = joinOrderSentOrderFill.viewBodyTypeDefinition!!.fields.first { it.fieldName == "orderEntry" }
          fieldWithWhenCases.accessor.should.not.be.`null`
+      }
+
+      it("A view with one find statement") {
+         val src = """
+         type SentOrderId inherits String
+         type FillOrderId inherits String
+         type OrderEventDateTime inherits Instant
+         type OrderType inherits String
+         type SecurityDescription inherits String
+         type RequestedQuantity inherits String
+         type OrderStatus inherits String
+         type DecimalFieldOrderFilled inherits Decimal
+         type OrderSize inherits String
+
+         model OrderSent {
+            @Id
+            sentOrderId : SentOrderId
+            @Between
+		      orderDateTime: OrderEventDateTime( @format = "MM/dd/yy HH:mm:ss") by column("Time Submitted")
+            orderType: OrderType by default("Market")
+            subSecurityType: SecurityDescription? by column("Instrument Desc")
+            requestedQuantity: RequestedQuantity? by column("Size")
+            entryType: OrderStatus by default("New")
+         }
+
+         model OrderEvent { }
+
+
+
+          [[
+           Sample View
+          ]]
+         view OrderView inherits OrderEvent with query {
+            find { OrderSent[] } as {
+              orderId: OrderSent.SentOrderId
+              orderDateTime: OrderSent.OrderEventDateTime
+              orderType: OrderSent.OrderType
+              subSecurityType: OrderSent.SecurityDescription
+              requestedQuantity: OrderSent.RequestedQuantity
+              orderEntry: OrderSent.OrderStatus
+              orderSize: OrderSize by when {
+                 OrderSent.RequestedQuantity = 0 -> "Zero Size"
+                 OrderSent.RequestedQuantity > 0 && OrderSent.RequestedQuantity < 100 -> "Small Size"
+                 else -> "PartiallyFilled"
+              }
+            }
+         }
+           """.trimIndent()
+         val taxiDocument = Compiler(src).compile()
+         val orderSentType = taxiDocument.model("OrderSent")
+         val orderSizeType = taxiDocument.type("OrderSize")
+         val requestedQtyType = taxiDocument.type(("RequestedQuantity"))
+         orderSentType.should.not.be.`null`
+         val orderView = taxiDocument.view("OrderView")
+         orderView.should.not.be.`null`
+         orderView?.typeDoc.should.equal("Sample View")
+         orderView?.viewBodyDefinitions?.size.should.equal(1)
+         val findOrderSent = orderView!!.viewBodyDefinitions!!.first()
+         findOrderSent.bodyType.qualifiedName.should.equal("OrderSent")
+         findOrderSent.viewBodyTypeDefinition!!.fields.should.equal(
+            listOf(
+               ViewBodyFieldDefinition(sourceType = orderSentType, fieldType = orderSentType.field("sentOrderId").type, fieldName = "orderId"),
+               ViewBodyFieldDefinition(sourceType = orderSentType, fieldType = orderSentType.field("orderDateTime").type, fieldName = "orderDateTime"),
+               ViewBodyFieldDefinition(sourceType = orderSentType, fieldType = orderSentType.field("orderType").type, fieldName = "orderType"),
+               ViewBodyFieldDefinition(sourceType = orderSentType, fieldType = orderSentType.field("subSecurityType").type, fieldName = "subSecurityType"),
+               ViewBodyFieldDefinition(sourceType = orderSentType, fieldType = orderSentType.field("requestedQuantity").type, fieldName = "requestedQuantity"),
+               ViewBodyFieldDefinition(sourceType = orderSentType, fieldType = orderSentType.field("entryType").type, fieldName = "orderEntry"),
+               ViewBodyFieldDefinition(
+                  sourceType = orderSizeType,
+                  fieldType = orderSizeType,
+                  fieldName = "orderSize",
+                  accessor = ConditionalAccessor(
+                     expression = WhenFieldSetCondition(
+                        selectorExpression = EmptyReferenceSelector,
+                        cases = listOf(
+                           WhenCaseBlock(
+                              matchExpression = ComparisonExpression(
+                                 operator = ComparisonOperator.EQ,
+                                 left = ViewFindFieldReferenceEntity(
+                                    sourceType = orderSentType,
+                                    fieldType = requestedQtyType),
+                                 right = ConstantEntity(0)),
+                              assignments = listOf(InlineAssignmentExpression(LiteralAssignment("Zero Size")))),
+                           WhenCaseBlock(
+                              matchExpression = AndExpression(
+                                 left = ComparisonExpression(
+                                    operator = ComparisonOperator.GT,
+                                    left = ViewFindFieldReferenceEntity(sourceType = orderSentType, fieldType = requestedQtyType),
+                                    right = ConstantEntity(0)),
+                                 right = ComparisonExpression(
+                                    operator = ComparisonOperator.LT,
+                                    left = ViewFindFieldReferenceEntity(sourceType = orderSentType, fieldType = requestedQtyType),
+                                    right = ConstantEntity(100))),
+                              assignments = listOf(InlineAssignmentExpression(LiteralAssignment("Small Size")))),
+                           WhenCaseBlock(
+                              matchExpression = ElseMatchExpression,
+                              assignments = listOf(InlineAssignmentExpression(assignment = LiteralAssignment("PartiallyFilled"))))
+                        ))))
+            ))
       }
 
       it("A join view with two types with single join fields can be compiled") {
