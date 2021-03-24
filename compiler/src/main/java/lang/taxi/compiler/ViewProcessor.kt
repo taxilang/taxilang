@@ -87,17 +87,7 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
             if (fields.isEmpty()) {
                compilationErrors.add(CompilationError(bodyCtx.start, "Invalid View Definition - empty as {} block"))
             }
-
-            val primitiveFields = fields.mapNotNull { viewBodyFieldDefinition ->
-               when(val res = validateViewBodyFieldDefinition(viewBodyFieldDefinition, bodyDefinition, bodyCtx)) {
-                  is Either.Left -> {
-                     compilationErrors.add(res.a)
-                     null
-                  }
-                  is Either.Right -> res.b
-               }
-            }
-            viewFieldTypes.add(primitiveFields)
+            viewFieldTypes.add(fromViewBodyFieldDefinitionToPrimitiveFields(fields, bodyDefinition, bodyCtx,compilationErrors))
          }
       }
 
@@ -112,6 +102,22 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
          bodyDefinitions.map { it.first }.right()
       } else {
          compilationErrors.left()
+      }
+   }
+
+   private fun fromViewBodyFieldDefinitionToPrimitiveFields(
+      fields: List<ViewBodyFieldDefinition>,
+     bodyDefinition: ViewBodyDefinition,
+      bodyCtx: TaxiParser.FindBodyContext,
+      compilationErrors: MutableList<CompilationError>): List<PrimitiveType> {
+      return fields.mapNotNull { viewBodyFieldDefinition ->
+         when(val res = validateViewBodyFieldDefinition(viewBodyFieldDefinition, bodyDefinition, bodyCtx)) {
+            is Either.Left -> {
+               compilationErrors.add(res.a)
+               null
+            }
+            is Either.Right -> res.b
+         }
       }
 
    }
@@ -137,34 +143,56 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
       return listTypeTypeOrError(joinTypes.first()).flatMap { bodyTypeType ->
          tokenProcessor.typeOrError(namespace, bodyTypeType).flatMap { bodyType ->
             if (joinTypes.size > 1) {
-               val joinTypeTypeCtx = joinTypes[1]
-               listTypeTypeOrError(joinTypeTypeCtx).flatMap { joinType ->
-                  tokenProcessor.typeOrError(namespace, joinTypeTypeCtx).flatMap { joinType ->
-                     validateJoinBasedViewBodyDefinition(bodyCtx, ViewBodyDefinition(bodyType, joinType))
-                        .flatMap { validViewDefinition ->
-                           if (bodyCtx.typeBody() != null) {
-                              parseViewBodyDefinition(namespace, bodyCtx).flatMap { viewBodyTypeDefinition ->
-                                 validViewDefinition.copy(viewBodyTypeDefinition = viewBodyTypeDefinition).right()
-                              }.mapLeft { it }
-                           } else {
-                              validViewDefinition.right()
-                           }
-                        }
-                        .mapLeft { it }
-                  }.mapLeft { it }
-               }.mapLeft { it }
+               viewBodyDefinitionForJoinFind(joinTypes, namespace, bodyCtx, bodyType)
             } else {
-               if (bodyCtx.typeBody() != null) {
-                  parseViewBodyDefinition(namespace, bodyCtx).flatMap { viewBodyTypeDefinition ->
-                     ViewBodyDefinition(bodyType).copy(viewBodyTypeDefinition = viewBodyTypeDefinition).right()
-                  }.mapLeft { it }
-               } else {
-                  ViewBodyDefinition(bodyType).right()
-               }
+               viewBodyDefinitionForSimpleFind(namespace, bodyCtx, bodyType)
             }
          }
       }.mapLeft { it }
    }
+
+   /*
+    * Case for a find without a join, e.g. find { Foo[] } as {...}
+    */
+   private fun viewBodyDefinitionForSimpleFind(
+      namespace: Namespace,
+      bodyCtx: TaxiParser.FindBodyContext,
+      bodyType: Type): Either<List<CompilationError>, ViewBodyDefinition> {
+      return if (bodyCtx.typeBody() != null) {
+         parseViewBodyDefinition(namespace, bodyCtx).flatMap { viewBodyTypeDefinition ->
+            ViewBodyDefinition(bodyType).copy(viewBodyTypeDefinition = viewBodyTypeDefinition).right()
+         }.mapLeft { it }
+      } else {
+         ViewBodyDefinition(bodyType).right()
+      }
+   }
+
+   /*
+    * Case for a find with a join, e.g. find { Foo[] (joinTo Bar[]) } as { .. }
+    */
+   private fun viewBodyDefinitionForJoinFind(
+      joinTypes: List<TaxiParser.TypeTypeContext>,
+      namespace: Namespace,
+      bodyCtx: TaxiParser.FindBodyContext,
+      bodyType: Type): Either<List<CompilationError>, ViewBodyDefinition> {
+      val joinTypeTypeCtx = joinTypes[1]
+      return listTypeTypeOrError(joinTypeTypeCtx).flatMap { joinType ->
+         tokenProcessor.typeOrError(namespace, joinTypeTypeCtx).flatMap { joinType ->
+            validateJoinBasedViewBodyDefinition(bodyCtx, ViewBodyDefinition(bodyType, joinType))
+               .flatMap { validViewDefinition ->
+                  if (bodyCtx.typeBody() != null) {
+                     parseViewBodyDefinition(namespace, bodyCtx).flatMap { viewBodyTypeDefinition ->
+                        validViewDefinition.copy(viewBodyTypeDefinition = viewBodyTypeDefinition).right()
+                     }.mapLeft { it }
+                  } else {
+                     validViewDefinition.right()
+                  }
+               }
+               .mapLeft { it }
+         }.mapLeft { it }
+      }.mapLeft { it }
+   }
+
 
    private fun parseViewBodyDefinition(namespace: Namespace, bodyCtx: TaxiParser.FindBodyContext): Either<List<CompilationError>, ViewBodyTypeDefinition> {
       val typeBody = bodyCtx.typeBody()
@@ -325,6 +353,15 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
       }
    }
 
+   /*
+    * Checks whether a join expression in a find statement is valid.
+    * given
+    * find { Foo[] (joinTo Bar[]) }
+    * Requires that Foo and Bar has a common field that we can join on, This common field is determined as:
+    *  - a field with @Id annotation on both Foo and Bar
+    *  - a single common field between Foo and Bar
+    * This method validates above rules.
+    */
    private fun validateJoinBasedViewBodyDefinition(bodyCtx: TaxiParser.FindBodyContext, viewBodyDefinition: ViewBodyDefinition):
       Either<List<CompilationError>, ViewBodyDefinition> {
       val bodyType = viewBodyDefinition.bodyType
@@ -338,18 +375,20 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
          return listOf(CompilationError(bodyCtx.start, "${joinType.qualifiedName} is not an Object Type")).left()
       }
 
+      // Check whether both types has @Id annotated fields.
       val bodyHasAnIdField = bodyType.fields.filter { it.annotations.firstOrNull { annotation -> annotation.qualifiedName == View.JoinAnnotationName } != null }
       val joinHasAnIdField = joinType.fields.filter { it.annotations.firstOrNull { annotation -> annotation.qualifiedName == View.JoinAnnotationName } != null }
 
+      // Check whether Both have only one @Id annotated field and these fields are compatible.
       if (bodyHasAnIdField.size == 1 &&
          joinHasAnIdField.size == 1 &&
          bodyHasAnIdField[0].type.basePrimitive != null &&
          joinHasAnIdField[0].type.basePrimitive != null &&
          bodyHasAnIdField[0].type.basePrimitive!!.isAssignableTo(joinHasAnIdField[0].type.basePrimitive!!)) {
-
          return viewBodyDefinition.copy(joinInfo = JoinInfo(bodyHasAnIdField[0], joinHasAnIdField[0])).right()
       }
 
+      // No @Id annotation based match, so look for another common field that we can join on.
       val bodyFieldsQualifiedNames = bodyType.fields.map { it.type.qualifiedName }
       val joinFieldsQualifiedNames = joinType.fields.map { it.type.qualifiedName }
 
