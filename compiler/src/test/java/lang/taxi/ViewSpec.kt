@@ -31,7 +31,9 @@ class ViewSpec : Spek({
            Sample View
           ]]
          view PersonView with query {
-            find { Person[] }
+            find { Person[] } as {
+               personName: Person.FirstName
+            }
          }
            """.trimIndent()
          val taxiDocument = Compiler(src).compile()
@@ -45,20 +47,25 @@ class ViewSpec : Spek({
          val src = """
             namespace notional
             {
+              type LastName inherits String
                model Person {
                   firstName : FirstName as String
-                  lastName : LastName as String
+                  lastName : LastName
                }
            }
            """.trimIndent()
 
          val viewSrc = """
+            import notional.Person;
+            import notional.LastName;
             namespace notional.views {
                 [[
                  Sample View
                 ]]
                view PersonView with query {
-                  find { notional.Person[] }
+                  find { Person[] } as  {
+                      surname: Person.LastName
+                  }
                }
             }
          """.trimIndent()
@@ -84,8 +91,8 @@ class ViewSpec : Spek({
            Sample View
           ]]
          view OrderView with query {
-            find { OrderSent[] },
-            find { OrderSent[] (joinTo OrderFill[]) }
+            find { OrderSent[] } as { id: OrderSent.OrderId },
+            find { OrderSent[] (joinTo OrderFill[]) } as { id: OrderSent.OrderId }
          }
            """.trimIndent()
          val taxiDocument = Compiler(src).compile()
@@ -120,7 +127,86 @@ class ViewSpec : Spek({
          }
            """.trimIndent()
          val (compilationErrors, _) = Compiler(src).compileWithMessages()
-         compilationErrors.last().detailMessage.should.equal("OrderSent and OrderFill can't be joined")
+         compilationErrors.last().detailMessage.should.equal("OrderSent and OrderFill can't be joined. Ensure that both types in join expression has a single property with Id annotation.")
+      }
+
+      it("invalid view definition due to conflicting as block in two find statements") {
+         val src = """
+         type OrderId inherits String
+         type OrderQty inherits Decimal
+         model OrderSent {
+            sentOrderId : OrderId
+         }
+
+         model OrderFill {
+           fillOrderId: OrderId
+         }
+
+          [[
+           Sample View
+          ]]
+         view OrderView with query {
+            find { OrderSent[] } as { qty: OrderQty },
+            find { OrderSent[] (joinTo OrderFill[]) } as { id: OrderSent.OrderId}
+         }
+           """.trimIndent()
+         val (compilationErrors, _) = Compiler(src).compileWithMessages()
+         compilationErrors.last().detailMessage.should.equal("Invalid View Definition - individual find expressions should have compatible 'as' blocks.")
+      }
+
+      it("invalid view definition due to field definition in as block") {
+         val src = """
+         type OrderId inherits String
+         type OrderQty inherits Decimal
+
+         model ModelFoo {
+            sentOrderId : OrderId
+         }
+         model OrderSent {
+            sentOrderId : OrderId
+         }
+
+         model OrderFill {
+           fillOrderId: OrderId
+         }
+
+          [[
+           Sample View
+          ]]
+         view OrderView with query {
+            find { OrderSent[] } as { id: ModelFoo.OrderId },
+            find { OrderSent[] (joinTo OrderFill[]) } as { id: OrderSent.OrderId}
+         }
+           """.trimIndent()
+         val (compilationErrors, _) = Compiler(src).compileWithMessages()
+         compilationErrors.first().detailMessage.should.equal("Invalid View Definition - ModelFoo is not valid to use!")
+      }
+
+      it("A join view with with types with a single joinable field") {
+         val src = """
+         type OrderId inherits String
+         type OrderQty inherits Decimal
+         model OrderSent {
+            sentOrderId : OrderId
+         }
+
+         model OrderFill {
+           fillOrderId: OrderId
+         }
+
+          [[
+           Sample View
+          ]]
+         view OrderView with query {
+            find { OrderSent[] (joinTo OrderFill[]) } as {
+              id: OrderSent.OrderId
+            }
+         }
+           """.trimIndent()
+         val (compilationErrors, taxiDoc) = Compiler(src).compileWithMessages()
+         compilationErrors.should.be.empty
+         taxiDoc.views.first().viewBodyDefinitions!!.first().joinInfo!!.mainField.name.should.equal("sentOrderId")
+         taxiDoc.views.first().viewBodyDefinitions!!.first().joinInfo!!.joinField.name.should.equal("fillOrderId")
       }
 
       it("A view with two find statements") {
@@ -337,6 +423,7 @@ class ViewSpec : Spek({
       it("A join view with two types with single join fields can be compiled") {
          val src = """
          type OrderId inherits String
+         type DummyType inherits Decimal
          model OrderSent {
             @Id
             sentOrderId : OrderId
@@ -352,7 +439,7 @@ class ViewSpec : Spek({
            Sample View
           ]]
          view OrderView with query {
-            find { OrderSent[] (joinTo OrderFill[]) }
+            find { OrderSent[] (joinTo OrderFill[]) } as { id: DummyType }
          }
            """.trimIndent()
          val (compilationErrors, _) = Compiler(src).compileWithMessages()

@@ -5,19 +5,19 @@ import arrow.core.extensions.either.applicativeError.raiseError
 import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
+import com.sun.javafx.scene.input.ExtendedInputMethodRequests
 import lang.taxi.CompilationError
 import lang.taxi.Namespace
 import lang.taxi.TaxiParser
 import lang.taxi.toCompilationUnit
-import lang.taxi.types.AssignmentExpression
 import lang.taxi.types.ConditionalAccessor
 import lang.taxi.types.ElseMatchExpression
 import lang.taxi.types.EmptyReferenceSelector
-import lang.taxi.types.FieldAssignmentExpression
-import lang.taxi.types.FieldReferenceSelector
+import lang.taxi.types.EnumType
 import lang.taxi.types.InlineAssignmentExpression
 import lang.taxi.types.JoinInfo
 import lang.taxi.types.ObjectType
+import lang.taxi.types.PrimitiveType
 import lang.taxi.types.Type
 import lang.taxi.types.ValueAssignment
 import lang.taxi.types.View
@@ -43,7 +43,10 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
       val modifiers = tokenProcessor.parseModifiers(viewCtx.typeModifier())
       val inherits = tokenProcessor.parseTypeInheritance(namespace, viewCtx.listOfInheritedTypes())
       val viewBodies = compileViewBody(namespace, viewCtx.findBody())
-      return viewBodies.map { viewBodies ->
+      val validatedViewBodies = viewBodies.flatMap {
+         validateViewBodyDefinitions(it, viewCtx)
+      }
+      return validatedViewBodies.map { viewBodies ->
          val viewDefinition = ViewDefinition(
             inheritsFrom = inherits,
             annotations = annotations.toSet(),
@@ -72,12 +75,67 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
       }
    }
 
-   private fun validateMultipleBodyDefinitions(bodyDefinitions: List<ViewBodyDefinition>) {
-      if (bodyDefinitions.size == 1) {
+   private fun validateViewBodyDefinitions(
+      bodyDefinitions: List<ViewBodyDefinition>,
+      viewCtx: TaxiParser.ViewDeclarationContext): Either<List<CompilationError>, List<ViewBodyDefinition>> {
+      if (bodyDefinitions.size == 1 && bodyDefinitions.first().joinType == null) {
          bodyDefinitions.right()
       }
 
+      val compilationErrors = mutableListOf<CompilationError>()
+      val viewFieldTypes = mutableListOf<List<PrimitiveType>>()
+      bodyDefinitions.forEach { bodyDefinition ->
+         val viewBodyTypeDefinition = bodyDefinition.viewBodyTypeDefinition
+         if (viewBodyTypeDefinition == null) {
+            compilationErrors.add(CompilationError(viewCtx.start, "Invalid View Definition - find with an empty body (as {} block is missing"))
+         } else {
+            val fields = viewBodyTypeDefinition.fields
+            if (fields.isEmpty()) {
+               compilationErrors.add(CompilationError(viewCtx.start, "Invalid View Definition - empty as {} block"))
+            }
+
+            val primitiveFields = fields.mapNotNull { viewBodyFieldDefinition ->
+               when(val res = validateViewBodyFieldDefinition(viewBodyFieldDefinition, bodyDefinition, viewCtx)) {
+                  is Either.Left -> {
+                     compilationErrors.add(res.a)
+                     null
+                  }
+                  is Either.Right -> res.b
+               }
+            }
+            viewFieldTypes.add(primitiveFields)
+         }
+      }
+
+      if (viewFieldTypes.size > 1) {
+         val firstViewDefinitionPrimitiveFields = viewFieldTypes.removeAt(0)
+         if (viewFieldTypes.any { firstViewDefinitionPrimitiveFields != it }) {
+            compilationErrors.add(CompilationError(viewCtx.start, "Invalid View Definition - individual find expressions should have compatible 'as' blocks."))
+         }
+      }
+
+      return if (compilationErrors.isEmpty()) {
+         bodyDefinitions.right()
+      } else {
+         compilationErrors.left()
+      }
+
    }
+
+   private fun validateViewBodyFieldDefinition(
+      viewBodyFieldDefinition: ViewBodyFieldDefinition,
+      bodyDefinition: ViewBodyDefinition,
+      viewCtx: TaxiParser.ViewDeclarationContext): Either<CompilationError, PrimitiveType> {
+      return if ((viewBodyFieldDefinition.sourceType != viewBodyFieldDefinition.fieldType) &&
+         (viewBodyFieldDefinition.sourceType != bodyDefinition.bodyType) &&
+         (viewBodyFieldDefinition.sourceType != bodyDefinition.joinType)) {
+         CompilationError(viewCtx.start, "Invalid View Definition - ${viewBodyFieldDefinition.sourceType.toQualifiedName().typeName} is not valid to use!")
+            .left()
+      } else {
+         getPrimitiveTypeForField(viewBodyFieldDefinition.fieldType, viewBodyFieldDefinition.fieldName, viewCtx)
+      }
+   }
+
 
    private fun resolveViewBody(namespace: Namespace, bodyCtx: TaxiParser.FindBodyContext):
       Either<List<CompilationError>, ViewBodyDefinition> {
@@ -301,14 +359,44 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
       val bodyFieldsQualifiedNames = bodyType.fields.map { it.type.qualifiedName }
       val joinFieldsQualifiedNames = joinType.fields.map { it.type.qualifiedName }
 
+      var commonFieldQualifiedName: String? = null
       val joinFieldCounts = bodyFieldsQualifiedNames
-         .count { bodyFieldTypeQualifiedName -> joinFieldsQualifiedNames.contains(bodyFieldTypeQualifiedName) }
+         .count { bodyFieldTypeQualifiedName ->
+            val match = joinFieldsQualifiedNames.contains(bodyFieldTypeQualifiedName)
+            if (match) {
+               commonFieldQualifiedName = bodyFieldTypeQualifiedName
+            }
+            match
+
+         }
 
       return when (joinFieldCounts) {
-         1 -> viewBodyDefinition.right()
-         else -> listOf(CompilationError(bodyCtx.start, "${bodyType.qualifiedName} and ${joinType.qualifiedName} can't be joined")).left()
+         1 -> {
+            val bodyField = bodyType.fields.first { it.type.qualifiedName == commonFieldQualifiedName }
+            val joinField = joinType.fields.first { it.type.qualifiedName == commonFieldQualifiedName }
+            viewBodyDefinition.copy(joinInfo = JoinInfo(bodyField, joinField)).right()
+         }
+         else -> listOf(CompilationError(bodyCtx.start, "${bodyType.qualifiedName} and ${joinType.qualifiedName} can't be joined. Ensure that both types in join expression has a single property with Id annotation.")).left()
       }
 
+   }
+
+   //  ensure that field type can be mapped to a database column
+   // as currently we restrict view to sql Views. Remove this when it is relaxed.
+   private fun getPrimitiveTypeForField(fieldType: Type, fieldName: String, viewCtx: TaxiParser.ViewDeclarationContext):
+      Either<CompilationError, PrimitiveType> {
+      return when {
+         PrimitiveType.isAssignableToPrimitiveType(fieldType) -> {
+            PrimitiveType.getUnderlyingPrimitive(fieldType).right()
+         }
+         fieldType is EnumType -> {
+            PrimitiveType.STRING.right()
+         }
+         fieldType.inheritsFrom.size == 1 -> {
+            getPrimitiveTypeForField(fieldType.inheritsFrom.first(), fieldName, viewCtx)
+         }
+         else -> CompilationError(viewCtx.start, "type ${fieldType.qualifiedName} for field $fieldName is not allowed in view definitions").left()
+      }
    }
 
 }
