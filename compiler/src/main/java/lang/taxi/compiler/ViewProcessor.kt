@@ -242,11 +242,12 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
    }
 
    private fun validateViewBodyFieldType(sourceType: Type, fieldType: Type, bodyCtx: TaxiParser.FindBodyContext): Either<List<CompilationError>, Type> {
-      if (sourceType !is ObjectType) {
-         return listOf(CompilationError(bodyCtx.start, "${sourceType.qualifiedName} should be an object type")).left()
-      }
       if (sourceType == fieldType) {
          return fieldType.right()
+      }
+
+      if (sourceType !is ObjectType) {
+         return listOf(CompilationError(bodyCtx.start, "${sourceType.qualifiedName} should be an object type")).left()
       }
 
       val matches = sourceType.fields.filter { field ->
