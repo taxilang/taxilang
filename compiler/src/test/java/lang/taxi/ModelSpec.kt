@@ -298,6 +298,22 @@ model Person {
                type FirstName inherits Name
                type LastName inherits Name
             """.trimIndent()
+
+            it("does not return fields that are primitive when looking for assignable") {
+               val taxi = """
+                  $baseSchema
+                  model Person {
+                     title : String
+                     firstName : FirstName
+                     lastName : LastName
+                  }
+               """.compiled()
+               val person = taxi.model("Person")
+               person.fieldReferencesAssignableTo(taxi.type("FirstName")).let { fields ->
+                  fields.should.have.size(1)
+               }
+            }
+
             it("can find top-level fields with type") {
                val taxi = """
                $baseSchema

@@ -246,10 +246,16 @@ data class ObjectType(
    fun fieldReferencesAssignableTo(
       type: Type,
       considerTypeParameters: Boolean = true,
-      typeChecker: TypeChecker = TypeChecker.DEFAULT
+      typeChecker: TypeChecker = TypeChecker.DEFAULT,
+      includePrimitives: Boolean = false
    ): List<FieldReference> {
       return this.fieldReferencesAssignableTo(
-         type, considerTypeParameters, typeChecker, baseObject = this, parentFields = emptyList()
+         type,
+         considerTypeParameters,
+         typeChecker,
+         baseObject = this,
+         parentFields = emptyList(),
+         includePrimitives = includePrimitives
       )
    }
 
@@ -258,9 +264,20 @@ data class ObjectType(
       considerTypeParameters: Boolean = true,
       typeChecker: TypeChecker = TypeChecker.DEFAULT,
       baseObject: ObjectType,
-      parentFields: List<Field>
+      parentFields: List<Field>,
+      includePrimitives: Boolean = false
    ): List<FieldReference> {
       return this.fields
+         .filter { field ->
+            // Generally, when asking "is this field assignable to that type?",
+            // we don't want to consider fields that have primitive types, as they're
+            // not really good candidates.
+            if (field.type is PrimitiveType) {
+               includePrimitives
+            } else {
+               true
+            }
+         }
          .flatMap { field ->
             when {
                // Top-level fields
@@ -276,7 +293,8 @@ data class ObjectType(
                      considerTypeParameters,
                      typeChecker,
                      baseObject,
-                     parentFields = parentFields + field
+                     parentFields = parentFields + field,
+                     includePrimitives = includePrimitives
                   )
                }
                else -> emptyList()
