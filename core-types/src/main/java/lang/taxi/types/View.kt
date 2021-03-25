@@ -1,5 +1,7 @@
 package lang.taxi.types
 
+import com.google.common.hash.Hasher
+import com.google.common.hash.Hashing
 import lang.taxi.Equality
 
 data class ViewDefinition(
@@ -53,6 +55,31 @@ class View(
      get() {
         return definition?.viewBodyDefinitions
      }
+
+   val definitionHash: String by lazy {
+      val hasher = Hashing.sha256().newHasher()
+      computeTypeHash(hasher)
+      hasher.hash().toString().substring(0, 6)
+   }
+
+   private fun computeTypeHash(hasher: Hasher) {
+      this.compilationUnits
+         .sortedBy { it.source.content.hashCode() }
+         .forEach {
+            hasher.putUnencodedChars(it.source.content)
+         }
+
+      this.viewBodyDefinitions?.forEach { viewBodyDefinition ->
+         viewBodyDefinition.bodyType.definitionHash?.let { it ->
+            hasher.putUnencodedChars(it)
+         }
+
+         viewBodyDefinition.joinType?.let {joinType ->
+            joinType.definitionHash?.let { hasher.putUnencodedChars(it) }
+         }
+      }
+   }
+
 
    companion object {
       const val JoinAnnotationName = "Id"
