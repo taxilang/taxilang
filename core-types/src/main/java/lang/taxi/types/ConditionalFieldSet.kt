@@ -61,7 +61,7 @@ data class FieldReferenceSelector(val fieldName: String, override val returnType
    override fun asTaxi(): String = "this.$fieldName"
 }
 
-class EmptyReferenceSelector: WhenSelectorExpression {
+object EmptyReferenceSelector: WhenSelectorExpression {
    override fun asTaxi(): String {
       return ""
    }
@@ -201,4 +201,14 @@ object NullAssignment : ValueAssignment {
 
    // TODO : Can we infer the type better?
    override val type: Type = PrimitiveType.ANY
+}
+
+data class ViewFindFieldReferenceAssignment(val fieldType: Type, override val type: Type) : ValueAssignment {
+   companion object {
+      fun fromField(field: Field): ReferenceAssignment {
+         return ReferenceAssignment(field.name, field.type)
+      }
+   }
+
+   override fun asTaxi(): String = "${type.qualifiedName}.${fieldType.qualifiedName}"
 }
