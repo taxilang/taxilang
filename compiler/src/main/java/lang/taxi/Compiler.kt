@@ -88,6 +88,8 @@ data class CompilationError(
    override fun toString(): String = "[${severity.label}]: ${sourceName.orEmpty()}($line,$char) $detailMessage"
 }
 
+fun List<CompilationError>.errors(): List<CompilationError> = this.filter { it.severity == Severity.ERROR }
+
 open class CompilationException(val errors: List<CompilationError>) :
    RuntimeException(errors.joinToString("\n") { it.toString() }) {
    constructor(error: CompilationError) : this(listOf(error))

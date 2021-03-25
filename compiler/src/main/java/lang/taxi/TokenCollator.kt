@@ -19,6 +19,7 @@ data class Tokens(
    val unparsedFunctions: Map<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>,
    val namedQueries: List<Pair<Namespace, TaxiParser.NamedQueryContext>>,
    val anonymousQueries: List<Pair<Namespace, TaxiParser.AnonymousQueryContext>>,
+   val unparsedViews: Map<String, Pair<Namespace, TaxiParser.ViewDeclarationContext>>,
    val tokenStore: TokenStore
 ) {
 
@@ -52,6 +53,7 @@ data class Tokens(
          this.unparsedFunctions + others.unparsedFunctions,
          this.namedQueries + others.namedQueries,
          this.anonymousQueries + others.anonymousQueries,
+         this.unparsedViews + others.unparsedViews,
          this.tokenStore + others.tokenStore
 
       )
@@ -149,6 +151,7 @@ class TokenCollator : TaxiBaseListener() {
    private val unparsedFunctions = mutableMapOf<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>()
    private val namedQueries = mutableListOf<Pair<Namespace, TaxiParser.NamedQueryContext>>()
    private val anonymousQueries = mutableListOf<Pair<Namespace, TaxiParser.AnonymousQueryContext>>()
+   private val unparsedViews = mutableMapOf<String, Pair<Namespace, TaxiParser.ViewDeclarationContext>>()
 
    //    private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
 //    private val unparsedExtensions = mutableListOf<ParserRuleContext>()
@@ -164,6 +167,7 @@ class TokenCollator : TaxiBaseListener() {
          unparsedFunctions,
          namedQueries,
          anonymousQueries,
+         unparsedViews,
          tokenStore)
    }
 
@@ -288,6 +292,15 @@ class TokenCollator : TaxiBaseListener() {
 
    override fun exitAnonymousQuery(ctx: TaxiParser.AnonymousQueryContext) {
       anonymousQueries.add(namespace to ctx)
+   }
+
+   override fun exitViewDeclaration(ctx: TaxiParser.ViewDeclarationContext) {
+      val viewName = ctx.Identifier().text
+      if (collateExceptions(ctx)) {
+         val name = qualify(viewName)
+         unparsedViews.put(name, namespace to ctx)
+      }
+      super.exitViewDeclaration(ctx)
    }
 
    /**

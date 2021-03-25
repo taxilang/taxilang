@@ -18,6 +18,7 @@ import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
 import lang.taxi.types.TypeAlias
+import lang.taxi.types.View
 import lang.taxi.utils.log
 
 
@@ -41,13 +42,15 @@ open class TaxiDocument(
    val services: Set<Service>,
    val policies: Set<Policy> = emptySet(),
    val functions: Set<Function> = emptySet(),
-   val annotations: Set<Annotation> = emptySet()
+   val annotations: Set<Annotation> = emptySet(),
+   val views: Set<View> = emptySet()
 ) {
    private val equality = Equality(this, TaxiDocument::types, TaxiDocument::services)
    private val typeMap = types.associateBy { it.qualifiedName }
    private val servicesMap = services.associateBy { it.qualifiedName }
    private val policiesMap = policies.associateBy { it.qualifiedName }
    private val functionsMap = functions.associateBy { it.qualifiedName }
+   private val viewMap = views.associateBy { it.qualifiedName }
 
    companion object {
       fun empty(): TaxiDocument {
@@ -94,6 +97,8 @@ open class TaxiDocument(
 
    // This is a placeholder for when we start to seperate models and types
    fun model(name: String) = objectType(name)
+
+   fun view(name: String) = viewMap[name]
 
    fun containsImportable(tokenName: String): Boolean {
       return typeMap.containsKey(tokenName) || functionsMap.containsKey(tokenName)

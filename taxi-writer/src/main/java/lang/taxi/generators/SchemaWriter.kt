@@ -287,8 +287,7 @@ $enumValueDeclarations
 
    private fun generateFieldDeclaration(field: Field, currentNamespace: String): String {
       val fieldType = field.type
-      val nullableString = if (field.nullable) "?" else ""
-      val fieldTypeString = typeAsTaxi(fieldType, currentNamespace) + nullableString
+      val fieldTypeString = typeAsTaxi(fieldType, currentNamespace, field.nullable)
       val constraints = constraintString(field.constraints)
       val accessor = field.accessor?.let { accessorAsString(field.accessor!!) } ?: ""
       val annotations = generateAnnotations(field)
@@ -304,13 +303,14 @@ $enumValueDeclarations
       }
    }
 
-   private fun typeAsTaxi(type: Type, currentNamespace: String): String {
+   private fun typeAsTaxi(type: Type, currentNamespace: String, nullability: Boolean? = null): String {
+      val nullableString = nullability?.let { nullability -> if (nullability) "?" else "" } ?: ""
       return when {
-         type is ArrayType -> typeAsTaxi(type.type, currentNamespace) + "[]"
-         type is UnresolvedImportedType -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace)
-         type.formattedInstanceOfType != null -> typeAsTaxi(type.formattedInstanceOfType!!, currentNamespace) + """( ${writeFormat(type.format, type.offset)} )"""
-         type is ObjectType && type.calculatedInstanceOfType != null -> typeAsTaxi(type.calculatedInstanceOfType!!, currentNamespace) + " " + type.calculation!!.asTaxi()
-         else -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace)
+         type is ArrayType -> typeAsTaxi(type.type, currentNamespace) + "[]" + nullableString
+         type is UnresolvedImportedType -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace) + nullableString
+         type.formattedInstanceOfType != null -> typeAsTaxi(type.formattedInstanceOfType!!, currentNamespace) + nullableString + """( ${writeFormat(type.format, type.offset)} )"""
+         type is ObjectType && type.calculatedInstanceOfType != null -> typeAsTaxi(type.calculatedInstanceOfType!!, currentNamespace) + nullableString + " " + type.calculation!!.asTaxi()
+         else -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace) + nullableString
       }
    }
 

@@ -40,6 +40,7 @@ import lang.taxi.services.QueryOperationCapability
 import lang.taxi.services.SimpleQueryCapability
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
+import lang.taxi.types.View.Companion.JoinAnnotationName
 import lang.taxi.utils.errorOrNull
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
@@ -51,12 +52,12 @@ import java.nio.charset.Charset
 import java.security.SecureRandom
 import java.util.Base64
 
-internal class TokenProcessor(
+class TokenProcessor(
    val tokens: Tokens,
    importSources: List<TaxiDocument> = emptyList(),
    collectImports: Boolean = true,
    val typeChecker: TypeChecker,
-   private val linter:Linter
+   private val linter: Linter
 ) {
 
    companion object {
@@ -66,7 +67,7 @@ internal class TokenProcessor(
 
    }
 
-   constructor(tokens: Tokens, collectImports: Boolean, typeChecker: TypeChecker, linter:Linter = Linter.empty()) : this(
+   constructor(tokens: Tokens, collectImports: Boolean, typeChecker: TypeChecker, linter: Linter = Linter.empty()) : this(
       tokens,
       emptyList(),
       collectImports,
@@ -81,6 +82,7 @@ internal class TokenProcessor(
    private val policies = mutableListOf<Policy>()
    private val functions = mutableListOf<Function>()
    private val annotations = mutableListOf<Annotation>()
+   private val views = mutableListOf<View>()
    private val constraintValidator = ConstraintValidator()
 
    private val errors = mutableListOf<CompilationError>()
@@ -109,7 +111,7 @@ internal class TokenProcessor(
       compile()
       // TODO: Unsure if including the imported types here is a good iddea or not.
       val types = typeSystem.typeList(includeImportedTypes = true).toSet()
-      return errors to TaxiDocument(types, services.toSet(), policies.toSet(), functions.toSet())
+      return errors to TaxiDocument(types, services.toSet(), policies.toSet(), functions.toSet(), annotations.toSet(), views.toSet())
    }
 
    fun buildQueries(): Pair<List<CompilationError>, List<TaxiQlQuery>> {
@@ -220,6 +222,18 @@ internal class TokenProcessor(
 
       // Queries
       compileQueries()
+      //
+      compileViews()
+   }
+
+   private fun compileViews() {
+      val viewProcessor = ViewProcessor(this)
+      this.tokens.unparsedViews.map { entry ->
+         viewProcessor.compileView(entry.key, entry.value.first, entry.value.second)
+      }.invertEitherList()
+         .flattenErrors()
+         .collectErrors(errors)
+         .map { this.views.addAll(it) }
    }
 
    private fun compileQueries() {
@@ -238,8 +252,8 @@ internal class TokenProcessor(
             val parameterName = queryParam.Identifier().text
             val queryParameter: Either<List<CompilationError>, Pair<String, QualifiedName>> =
                typeOrError(namedQueryContext.findNamespace(), queryParam.typeType()).map { parameterType ->
-               parameterName to parameterType.toQualifiedName()
-            }
+                  parameterName to parameterType.toQualifiedName()
+               }
             queryParameter
          }?.invertEitherList() ?: Either.right(emptyList())
          parametersOrErrors
@@ -250,8 +264,8 @@ internal class TokenProcessor(
                   .mapLeft { compilationErrors -> errors.addAll(compilationErrors) }
                   .map { taxiQlQuery -> queries.add(taxiQlQuery) }
             }
-         }
       }
+   }
 
    private fun applySynonymsToEnums() {
       // Now we have a full picture of all the enums, we can
@@ -782,14 +796,14 @@ internal class TokenProcessor(
       return this.typeSystem.register(
          ObjectType(
             typeName, ObjectTypeDefinition(
-               fields = fields.toSet(),
-               annotations = annotations.toSet(),
-               modifiers = modifiers,
-               inheritsFrom = inherits,
-               format = null,
-               typeDoc = typeDoc,
-               compilationUnit = ctx.toCompilationUnit()
-            )
+            fields = fields.toSet(),
+            annotations = annotations.toSet(),
+            modifiers = modifiers,
+            inheritsFrom = inherits,
+            format = null,
+            typeDoc = typeDoc,
+            compilationUnit = ctx.toCompilationUnit()
+         )
          )
       ).right()
    }
@@ -844,7 +858,7 @@ internal class TokenProcessor(
       return content.trim('"')
    }
 
-   private fun parseTypeInheritance(
+   fun parseTypeInheritance(
       namespace: Namespace,
       listOfInheritedTypes: TaxiParser.ListOfInheritedTypesContext?
    ): Set<Type> {
@@ -898,7 +912,7 @@ internal class TokenProcessor(
    }
 
 
-   private fun parseModifiers(typeModifier: MutableList<TaxiParser.TypeModifierContext>): List<Modifier> {
+   fun parseModifiers(typeModifier: MutableList<TaxiParser.TypeModifierContext>): List<Modifier> {
       return typeModifier.map { Modifier.fromToken(it.text) }
    }
 
@@ -1322,7 +1336,7 @@ internal class TokenProcessor(
          }
    }
 
-   private fun resolveUserType(
+    fun resolveUserType(
       namespace: Namespace,
       requestedTypeName: String,
       context: ParserRuleContext,
@@ -1369,14 +1383,14 @@ internal class TokenProcessor(
             val isLenient = ctx.lenientKeyword() != null
             val enumType = EnumType(
                typeName, EnumDefinition(
-                  enumValues,
-                  annotations,
-                  ctx.toCompilationUnit(),
-                  inheritsFrom = if (inherits != null) setOf(inherits) else emptySet(),
-                  typeDoc = parseTypeDoc(ctx.typeDoc()),
-                  basePrimitive = basePrimitive,
-                  isLenient = isLenient
-               )
+               enumValues,
+               annotations,
+               ctx.toCompilationUnit(),
+               inheritsFrom = if (inherits != null) setOf(inherits) else emptySet(),
+               typeDoc = parseTypeDoc(ctx.typeDoc()),
+               basePrimitive = basePrimitive,
+               isLenient = isLenient
+            )
             )
             typeSystem.register(enumType)
             enumType
