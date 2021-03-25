@@ -1,7 +1,6 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
-import lang.taxi.compiler.typeParameters
 import lang.taxi.types.ObjectType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.QueryMode

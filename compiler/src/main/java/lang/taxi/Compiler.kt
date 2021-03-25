@@ -5,7 +5,6 @@ import arrow.core.getOrHandle
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import lang.taxi.compiler.TokenProcessor
-import lang.taxi.compiler.TypeChecker
 import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.linter.Linter
 import lang.taxi.linter.LinterRuleConfiguration
