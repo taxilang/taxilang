@@ -1,6 +1,7 @@
 package lang.taxi.compiler
 
 import arrow.core.Either
+import arrow.core.extensions.either.monad.flatMap
 import arrow.core.flatMap
 import arrow.core.getOrElse
 import arrow.core.getOrHandle
@@ -22,15 +23,18 @@ import lang.taxi.types.Annotation
 import lang.taxi.types.ColumnAccessor
 import lang.taxi.types.ConditionalAccessor
 import lang.taxi.types.DestructuredAccessor
+import lang.taxi.types.DiscoveryType
 import lang.taxi.types.Field
 import lang.taxi.types.FieldModifier
 import lang.taxi.types.FieldReferenceSelector
+import lang.taxi.types.FieldSourceAccessor
 import lang.taxi.types.Formula
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.JsonPathAccessor
 import lang.taxi.types.LiteralAccessor
 import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
+import lang.taxi.types.QualifiedName
 import lang.taxi.types.ReadFunction
 import lang.taxi.types.ReadFunctionArgument
 import lang.taxi.types.ReadFunctionFieldAccessor
@@ -85,10 +89,11 @@ class TypeBodyContext(private val typeBody: TaxiParser.TypeBodyContext?, val nam
 
 }
 
-internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
+internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
                              private val typeBody: TypeWithFieldsContext,
                              private val typeName: String,
-                             private val errors: MutableList<CompilationError>
+                             private val errors: MutableList<CompilationError>,
+                             private val anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext()
 
 ) {
    internal val typeChecker = tokenProcessor.typeChecker
@@ -175,32 +180,89 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
 
       val typeDoc = tokenProcessor.parseTypeDoc(member.typeDoc())
       val namespace = member.findNamespace()
-      val fieldType = tokenProcessor.parseType(namespace, member.fieldDeclaration().typeType());
-      return fieldType.flatMap { type -> toField(member, namespace, type, typeDoc, fieldAnnotations) }
+      val simpleType = member.fieldDeclaration().simpleFieldDeclaration()?.typeType()
+      val anonymousTypeDefinition = member.fieldDeclaration().anonymousTypeDefinition()
+      return when {
+         simpleType != null -> {
+            val fieldType = tokenProcessor.parseType(namespace, simpleType);
+            fieldType.flatMap { type -> toField(member, namespace, type, typeDoc, fieldAnnotations) }
+         }
+
+         anonymousTypeDefinition != null -> {
+            val anonymousTypeBody = member.fieldDeclaration().anonymousTypeDefinition().typeBody()
+            val anonymousTypeName = "$typeName$${member.fieldDeclaration().Identifier().text.capitalize()}"
+            val fieldType = tokenProcessor.parseAnonymousType(namespace, anonymousTypeBody, anonymousTypeName)
+            fieldType.flatMap { type -> toField(member, namespace, type, typeDoc, fieldAnnotations) }
+         }
+
+         else -> {
+            // case for the following anonymous type definition as part of a query.
+            // It implies that Foo has a 'tradeId' field.
+            // findAll { Foo[] } as
+            // {
+            //   tradeId
+            // }[]
+            val fieldName = member.fieldDeclaration().Identifier().text
+            val discoveryTypes = anonymousTypeResolutionContext.typesToDiscover
+            if (discoveryTypes.isEmpty()) {
+               Either.left(listOf(CompilationError(member.start, "The type for $fieldName can not be resolved without a query context")))
+            } else {
+               val typeOrError = this.tokenProcessor.getType(namespace, discoveryTypes.first().type.firstTypeParameterOrSelf, member)
+               typeOrError.flatMap { type ->
+                  when {
+                     type !is ObjectType -> Either.left(listOf(CompilationError(member.start, "$typeName should be an object type containing field $fieldName")))
+                     !type.hasField(fieldName) -> Either.left(listOf(CompilationError(member.start, "$typeName should be an object type containing field $fieldName")))
+                     else -> type.field(fieldName).right()
+                  }
+               }
+            }
+         }
+      }
+
    }
+
 
    private fun toField(member: TaxiParser.TypeMemberDeclarationContext,
                        namespace: Namespace,
                        type: Type,
                        typeDoc: String?,
                        fieldAnnotations: List<Annotation>): Either<List<CompilationError>, Field> {
-      val accessor = compileAccessor(member.fieldDeclaration().accessor(), type)
-         .getOrHandle {
-            errors.addAll(it)
-            null
-         }
-      return tokenProcessor.mapConstraints(member.fieldDeclaration().typeType(), type, namespace).map { constraints ->
+      return if (member.fieldDeclaration().anonymousTypeDefinition() != null) {
+         val accessor = compileAccessor(member.fieldDeclaration().anonymousTypeDefinition().accessor(), type)
+            .getOrHandle {
+               errors.addAll(it)
+               null
+            }
          Field(
             name = TokenProcessor.unescape(member.fieldDeclaration().Identifier().text),
             type = type,
-            nullable = member.fieldDeclaration().typeType().optionalType() != null,
+            nullable = false,
             modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
             annotations = fieldAnnotations,
-            constraints = constraints,
+            constraints = emptyList(),
             accessor = accessor,
             typeDoc = typeDoc,
             compilationUnit = member.fieldDeclaration().toCompilationUnit()
-         )
+         ).right()
+      } else {
+         val accessor = compileAccessor(member.fieldDeclaration().simpleFieldDeclaration().accessor(), type)
+            .getOrHandle {
+               errors.addAll(it)
+               null
+            }
+         val simpleType = member.fieldDeclaration().simpleFieldDeclaration().typeType()
+         tokenProcessor.mapConstraints(simpleType, type, namespace).map { constraints ->
+            Field(
+               name = TokenProcessor.unescape(member.fieldDeclaration().Identifier().text),
+               type = type,
+               nullable = simpleType.optionalType() != null,
+               modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
+               annotations = fieldAnnotations,
+               constraints = constraints,
+               accessor = accessor,
+               typeDoc = typeDoc,
+            compilationUnit = member.fieldDeclaration().toCompilationUnit())
+         }
       }
    }
 
@@ -216,7 +278,7 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
                                        namespace: Namespace): Either<List<CompilationError>, Field> {
       val fieldAnnotations = tokenProcessor.collateAnnotations(member.annotation())
       val typeDoc = tokenProcessor.parseTypeDoc(member.typeDoc())
-      return tokenProcessor.parseType(namespace, formula, member.fieldDeclaration().typeType())
+      return tokenProcessor.parseType(namespace, formula, member.fieldDeclaration().simpleFieldDeclaration().typeType())
          .flatMap { type -> toField(member, namespace, type, typeDoc, fieldAnnotations) }
    }
 
@@ -312,7 +374,51 @@ internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
             buildReadFunctionAccessor(functionContext, targetType)
          }
          expression.readExpression() != null -> buildReadFunctionExpressionAccessor(expression.readExpression(), targetType)
+         expression.byFieldSourceExpression() != null -> buildReadFieldAccessor(expression.byFieldSourceExpression(), targetType)
          else -> error("Unhandled type of accessor expression at ${expression.source().content}")
+      }
+   }
+
+   private fun buildReadFieldAccessor(byFieldSourceExpression: TaxiParser.ByFieldSourceExpressionContext, targetType: Type): Either<List<CompilationError>, Accessor> {
+      //as {
+      //      traderEmail: UserEmail by (this.traderId)
+      //}
+      val referencedFieldName =  byFieldSourceExpression.fieldReferenceSelector().Identifier().text
+      return if (this.anonymousTypeResolutionContext.concreteProjectionTypeContext != null) {
+         val concreteProjectionType = this.tokenProcessor.typeOrError(byFieldSourceExpression.findNamespace(), this.anonymousTypeResolutionContext.concreteProjectionTypeContext)
+         createFieldSource(concreteProjectionType, byFieldSourceExpression, referencedFieldName, QualifiedName.from(typeName))
+      } else {
+         createFieldSource(this.tokenProcessor.getType(
+            byFieldSourceExpression.findNamespace(),
+            this.anonymousTypeResolutionContext.typesToDiscover.first().type.firstTypeParameterOrSelf,
+            byFieldSourceExpression),
+            byFieldSourceExpression,
+            referencedFieldName)
+      }
+   }
+
+   private fun createFieldSource(
+      sourceType:  Either<List<CompilationError>, Type>,
+      byFieldSourceExpression: TaxiParser.ByFieldSourceExpressionContext,
+      referencedFieldName: String,
+      sourceTypeName: QualifiedName? = null): Either<List<CompilationError>, Accessor> {
+      return when (sourceType) {
+         is Either.Left -> return sourceType.a.left()
+         is Either.Right -> {
+            if (sourceType.b !is ObjectType) {
+               listOf(CompilationError(byFieldSourceExpression.start, "${sourceType.b.qualifiedName} must be an ObjectType", byFieldSourceExpression.source().sourceName)).left()
+            }
+
+            val objectType = sourceType.b as ObjectType
+            if (!objectType.hasField(referencedFieldName)) {
+               listOf(CompilationError(byFieldSourceExpression.start, "${sourceType.b.qualifiedName} should have a field called $referencedFieldName", byFieldSourceExpression.source().sourceName)).left()
+            }
+
+            FieldSourceAccessor(
+               sourceAttributeName = referencedFieldName,
+               attributeType = objectType.field(referencedFieldName).type.toQualifiedName(),
+               sourceType = sourceTypeName ?: objectType.toQualifiedName()).right()
+         }
       }
    }
 

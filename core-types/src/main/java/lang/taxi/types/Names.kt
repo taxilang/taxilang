@@ -37,6 +37,15 @@ data class QualifiedName(val namespace: String, val typeName: String, val parame
          else -> "$namespace.$typeName"
       }
    }
+
+   val firstTypeParameterOrSelf: String
+      get() {
+         return if (parameters.isEmpty()) {
+            toString()
+         } else {
+            parameters.first().toString()
+         }
+      }
 }
 
 

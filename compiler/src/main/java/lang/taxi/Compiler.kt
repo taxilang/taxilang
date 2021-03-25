@@ -12,6 +12,7 @@ import lang.taxi.linter.LinterRuleConfiguration
 import lang.taxi.linter.toLinterRules
 import lang.taxi.messages.Severity
 import lang.taxi.packages.TaxiPackageSources
+import lang.taxi.query.TaxiQlQuery
 import lang.taxi.sources.SourceCode
 import lang.taxi.sources.SourceLocation
 import lang.taxi.toggles.FeatureToggle
@@ -87,6 +88,8 @@ data class CompilationError(
 
    override fun toString(): String = "[${severity.label}]: ${sourceName.orEmpty()}($line,$char) $detailMessage"
 }
+
+fun List<CompilationError>.errors(): List<CompilationError> = this.filter { it.severity == Severity.ERROR }
 
 open class CompilationException(val errors: List<CompilationError>) :
    RuntimeException(errors.joinToString("\n") { it.toString() }) {
@@ -291,6 +294,25 @@ class Compiler(
    fun declaredImports(): List<QualifiedName> {
       return tokens.imports.map { (name, _) -> QualifiedName.from(name) }
    }
+
+   fun queries(): List<TaxiQlQuery> {
+      val (messages, queries) = queriesWithErrorMessages()
+      val errors = messages.filter { it.severity == Severity.ERROR }
+      if (errors.isNotEmpty()) {
+         throw CompilationException(errors)
+      }
+      return queries
+   }
+
+   fun queriesWithErrorMessages(): Pair<List<CompilationError>, List<TaxiQlQuery>> {
+      if (syntaxErrors.isNotEmpty()) {
+        return syntaxErrors to listOf()
+      }
+      val builder = tokenProcessrWithImports
+      val (errors, queries) = builder.buildQueries()
+     return  errors to queries
+   }
+
 
    fun compileWithMessages(): Pair<List<CompilationError>, TaxiDocument> {
       // Note - leaving this approach for backwards compatiability

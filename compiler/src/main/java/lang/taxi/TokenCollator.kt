@@ -17,6 +17,9 @@ data class Tokens(
    val unparsedServices: Map<String, Pair<Namespace, ServiceDeclarationContext>>,
    val unparsedPolicies: Map<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>,
    val unparsedFunctions: Map<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>,
+   val namedQueries: List<Pair<Namespace, TaxiParser.NamedQueryContext>>,
+   val anonymousQueries: List<Pair<Namespace, TaxiParser.AnonymousQueryContext>>,
+   val unparsedViews: Map<String, Pair<Namespace, TaxiParser.ViewDeclarationContext>>,
    val tokenStore: TokenStore
 ) {
 
@@ -29,7 +32,7 @@ data class Tokens(
          val (_, context) = namespaceContextPair
          context.source().normalizedSourceName to QualifiedName.from(name)
       }.groupBy { it.first }
-         .mapValues { (key, value) -> value.map { it.second } }
+         .mapValues { (_, value) -> value.map { it.second } }
    }
    private val importsBySourceName: Map<String, List<Pair<String, TaxiParser.ImportDeclarationContext>>> by lazy {
       imports.groupBy { it.second.source().normalizedSourceName }
@@ -48,7 +51,11 @@ data class Tokens(
          this.unparsedServices + others.unparsedServices,
          this.unparsedPolicies + others.unparsedPolicies,
          this.unparsedFunctions + others.unparsedFunctions,
+         this.namedQueries + others.namedQueries,
+         this.anonymousQueries + others.anonymousQueries,
+         this.unparsedViews + others.unparsedViews,
          this.tokenStore + others.tokenStore
+
       )
    }
 
@@ -66,6 +73,7 @@ data class Tokens(
     */
    private fun collectDuplicateTypes(others: Tokens): List<CompilationError> {
       // Stubbed for a demo
+      // TODO("Revisit duplicate type definition handling")
       return emptyList()
       // Don't allow definition of given types in multiple files.
       // Though this is a bit too strict (we'd like to allow multiple definitions that are semantically equivelant to each other)
@@ -141,13 +149,26 @@ class TokenCollator : TaxiBaseListener() {
    private val unparsedServices = mutableMapOf<String, Pair<Namespace, ServiceDeclarationContext>>()
    private val unparsedPolicies = mutableMapOf<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>()
    private val unparsedFunctions = mutableMapOf<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>()
+   private val namedQueries = mutableListOf<Pair<Namespace, TaxiParser.NamedQueryContext>>()
+   private val anonymousQueries = mutableListOf<Pair<Namespace, TaxiParser.AnonymousQueryContext>>()
+   private val unparsedViews = mutableMapOf<String, Pair<Namespace, TaxiParser.ViewDeclarationContext>>()
 
    //    private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
 //    private val unparsedExtensions = mutableListOf<ParserRuleContext>()
 //    private val unparsedServices = mutableMapOf<String, ServiceDeclarationContext>()
    private val tokenStore = TokenStore()
    fun tokens(): Tokens {
-      return Tokens(imports, unparsedTypes, unparsedExtensions, unparsedServices, unparsedPolicies, unparsedFunctions, tokenStore)
+      return Tokens(
+         imports,
+         unparsedTypes,
+         unparsedExtensions,
+         unparsedServices,
+         unparsedPolicies,
+         unparsedFunctions,
+         namedQueries,
+         anonymousQueries,
+         unparsedViews,
+         tokenStore)
    }
 
    override fun exitEveryRule(ctx: ParserRuleContext) {
@@ -169,7 +190,7 @@ class TokenCollator : TaxiBaseListener() {
       collateExceptions(ctx)
       // Check to see if an inline type alias is declared
       // If so, mark it for processing later
-      val typeType = ctx.typeType()
+      val typeType = ctx.simpleFieldDeclaration()?.typeType()
       if (typeType?.aliasedType() != null) {
          val classOrInterfaceType = typeType.classOrInterfaceType()
          unparsedTypes.put(qualify(classOrInterfaceType.Identifier().text()), namespace to typeType)
@@ -263,6 +284,23 @@ class TokenCollator : TaxiBaseListener() {
          unparsedTypes[typeName] = namespace to ctx
       }
       super.exitAnnotationTypeDeclaration(ctx)
+   }
+
+   override fun exitNamedQuery(ctx: TaxiParser.NamedQueryContext) {
+      namedQueries.add(namespace to ctx)
+   }
+
+   override fun exitAnonymousQuery(ctx: TaxiParser.AnonymousQueryContext) {
+      anonymousQueries.add(namespace to ctx)
+   }
+
+   override fun exitViewDeclaration(ctx: TaxiParser.ViewDeclarationContext) {
+      val viewName = ctx.Identifier().text
+      if (collateExceptions(ctx)) {
+         val name = qualify(viewName)
+         unparsedViews.put(name, namespace to ctx)
+      }
+      super.exitViewDeclaration(ctx)
    }
 
    /**

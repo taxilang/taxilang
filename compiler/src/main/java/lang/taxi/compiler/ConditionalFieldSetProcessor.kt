@@ -10,13 +10,9 @@ import lang.taxi.TaxiParser
 import lang.taxi.findNamespace
 import lang.taxi.text
 import lang.taxi.types.AccessorExpressionSelector
-import lang.taxi.types.AndExpression
 import lang.taxi.types.AssignmentExpression
 import lang.taxi.types.CalculatedFieldSetExpression
-import lang.taxi.types.ComparisonExpression
-import lang.taxi.types.ComparisonOperator
 import lang.taxi.types.ConditionalFieldSet
-import lang.taxi.types.ConstantEntity
 import lang.taxi.types.DestructuredAssignment
 import lang.taxi.types.ElseMatchExpression
 import lang.taxi.types.EmptyReferenceSelector
@@ -25,19 +21,15 @@ import lang.taxi.types.EnumType
 import lang.taxi.types.EnumValue
 import lang.taxi.types.EnumValueAssignment
 import lang.taxi.types.FieldAssignmentExpression
-import lang.taxi.types.FieldReferenceEntity
 import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.FieldSetExpression
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.InlineAssignmentExpression
 import lang.taxi.types.LiteralAssignment
 import lang.taxi.types.LiteralCaseMatchExpression
-import lang.taxi.types.LogicalConstant
 import lang.taxi.types.LogicalExpression
-import lang.taxi.types.LogicalVariable
 import lang.taxi.types.NullAssignment
 import lang.taxi.types.ObjectType
-import lang.taxi.types.OrExpression
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.ReferenceAssignment
 import lang.taxi.types.ReferenceCaseMatchExpression
@@ -304,107 +296,13 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
    }
 
    private fun processLogicalExpressionContext(logicalExpressionCtx: TaxiParser.Logical_exprContext): Either<CompilationError, LogicalExpression> {
-      return when (logicalExpressionCtx) {
-         is TaxiParser.ComparisonExpressionContext -> processComparisonExpressionContext(logicalExpressionCtx.comparison_expr())
-         is TaxiParser.LogicalExpressionAndContext -> processLogicalAndContext(logicalExpressionCtx)
-         is TaxiParser.LogicalExpressionOrContext -> processLogicalOrContext(logicalExpressionCtx)
-         is TaxiParser.LogicalEntityContext -> processLogicalEntityContext(logicalExpressionCtx)
-         else -> CompilationError(logicalExpressionCtx.start, "invalid logical expression").left()
-      }
-   }
-
-   private fun processLogicalEntityContext(logicalExpressionCtx: TaxiParser.LogicalEntityContext): Either<CompilationError, LogicalExpression> {
-      return when (val logicalEntity = logicalExpressionCtx.logical_entity()) {
-         is TaxiParser.LogicalVariableContext -> LogicalVariable(logicalEntity.text).right()
-         is TaxiParser.LogicalConstContext -> LogicalConstant(logicalEntity.TRUE() != null).right()
-         else -> CompilationError(logicalExpressionCtx.start, "invalid logical expression").left()
-      }
-   }
-
-   private fun processLogicalOrContext(logicalExpressionCtx: TaxiParser.LogicalExpressionOrContext): Either<CompilationError, LogicalExpression> {
-      val logicalExpr = logicalExpressionCtx.logical_expr()
-      val retVal = logicalExpr.map { processLogicalExpressionContext(it) }
-      if (retVal.size != 2) {
-         return Either.left(CompilationError(logicalExpressionCtx.start, "invalid and expression"))
-      }
-
-      val mapped = retVal.map {
-         when (it) {
-            is Either.Right -> {
-               it.b
-            }
-            is Either.Left -> {
-               return Either.left(CompilationError(logicalExpressionCtx.start, "invalid numeric entity"))
-            }
-         }
-      }
-      return OrExpression(mapped[0], mapped[1]).right()
-   }
-
-   private fun processLogicalAndContext(logicalExpressionAndCtx: TaxiParser.LogicalExpressionAndContext): Either<CompilationError, LogicalExpression> {
-      val logicalExpr = logicalExpressionAndCtx.logical_expr()
-      val retVal = logicalExpr.map { processLogicalExpressionContext(it) }
-      if (retVal.size != 2) {
-         return Either.left(CompilationError(logicalExpressionAndCtx.start, "invalid and expression"))
-      }
-
-      val mapped = retVal.map {
-         when (it) {
-            is Either.Right -> {
-               it.b
-            }
-            is Either.Left -> {
-               return Either.left(CompilationError(logicalExpressionAndCtx.start, "invalid numeric entity"))
-            }
-         }
-      }
-      return AndExpression(mapped[0], mapped[1]).right()
-   }
-
-   private fun processComparisonExpressionContext(comparisonExpressionContext: TaxiParser.Comparison_exprContext): Either<CompilationError, LogicalExpression> {
-      val comparisonExpressionContextWithOperator = comparisonExpressionContext as TaxiParser.ComparisonExpressionWithOperatorContext
-      val retVal = comparisonExpressionContextWithOperator.comparison_operand().map { comparisonOperandcontext ->
-         val arithmeticExpression = comparisonOperandcontext.arithmetic_expr() as TaxiParser.ArithmeticExpressionNumericEntityContext
-         when (val numericEntity = arithmeticExpression.numeric_entity()) {
-            is TaxiParser.LiteralConstContext -> {
-               val str = numericEntity.literal().valueOrNull()
-               try {
-                  ConstantEntity(str).right()
-               } catch (e: Exception) {
-                  Either.left(CompilationError(comparisonExpressionContext.start,
-                     "$str must be a valid decimal"))
-
-               }
-
-            }
-            is TaxiParser.NumericVariableContext -> FieldReferenceEntity(numericEntity.propertyToParameterConstraintLhs().qualifiedName().text).right()
-            else -> Either.left(CompilationError(comparisonExpressionContext.start,
-               "invalid numeric entity"))
-         }
-      }
-
-      if (retVal.size != 2) {
-         return Either.left(CompilationError(comparisonExpressionContext.start,
-            "invalid numeric entity"))
-      } else {
-         val mapped = retVal.map {
-            when (it) {
-               is Either.Right -> {
-                  it.b
-               }
-               is Either.Left -> {
-                  return Either.left(CompilationError(comparisonExpressionContext.start,
-                     "invalid numeric entity"))
-               }
-            }
-         }
-         return ComparisonExpression(ComparisonOperator.forSymbol(comparisonExpressionContextWithOperator.comp_operator().text), mapped[0], mapped[1]).right()
-      }
+      val logicalExpressionCompiler = LogicalExpressionCompiler(this.compiler.tokenProcessor)
+      return logicalExpressionCompiler.processLogicalExpressionContext(logicalExpressionCtx)
    }
 
    private fun compileSelectorExpression(selectorBlock: TaxiParser.ConditionalTypeWhenSelectorContext?, namespace: Namespace, targetType: Type): Either<List<CompilationError>, WhenSelectorExpression> {
       return when {
-         selectorBlock == null -> EmptyReferenceSelector().right()
+         selectorBlock == null -> EmptyReferenceSelector.right()
          selectorBlock.mappedExpressionSelector() != null -> compileTypedAccessor(selectorBlock.mappedExpressionSelector(), namespace, targetType)
          selectorBlock.fieldReferenceSelector() != null -> compileFieldReferenceSelector(selectorBlock.fieldReferenceSelector(), targetType)
          else -> error("Unhandled where block selector condition")

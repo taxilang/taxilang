@@ -54,14 +54,17 @@ class ServiceTests {
       val expected = """
 namespace taxi.example
 
+type PersonId inherits String
+type Currency inherits String
+type MoneyAmount inherits Decimal
 [[ Models a person. ]]
-type Person {
+model Person {
    [[ Defines the id of the person ]]
-    personId : PersonId as String
+    personId : PersonId
 }
-type Money {
-    currency : Currency as String
-    value : MoneyAmount as Decimal
+model Money {
+    currency : Currency
+    value : MoneyAmount
 }
 service PersonService {
     operation findPerson( personId: PersonId) : Person
@@ -93,8 +96,8 @@ service PersonService {
 
       val expected = """
 namespace taxi.example
-type alias EmailAddress as String
-type alias PersonId as String
+type EmailAddress inherits String
+type PersonId inherits String
 service TestService {
     operation findEmail(input:PersonId):EmailAddress
 }"""
@@ -143,11 +146,11 @@ namespace foo {
       val expected = """
     namespace taxi.example {
 
-   type Person {
+   model Person {
       personId : PersonId
    }
 
-   type alias PersonId as String
+   type PersonId inherits String
 
    service TestService {
       operation listPeople(  ) : Person[]
@@ -186,12 +189,11 @@ namespace foo {
       // Imports should be collated to the top
       taxiDef[0].should.equal("import lang.taxi.FirstName")
       taxiDef[1].trimNewLines().should.equal("""namespace foo {
-
-   type Person {
+   model Person {
       name : PersonName
    }
 
-   type alias PersonName as String
+   type PersonName inherits lang.taxi.String
 
 
 }""".trimNewLines())
@@ -221,7 +223,7 @@ namespace foo {
       val taxiDef = TaxiGenerator().forClasses(TestService::class.java).generateAsStrings()
       val expected = """
 namespace foo {
-    type alias PersonName as String
+    type PersonName inherits String
 }
 namespace taxi.example {
     service TestService {

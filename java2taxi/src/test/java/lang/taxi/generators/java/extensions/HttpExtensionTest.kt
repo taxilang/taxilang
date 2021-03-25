@@ -53,13 +53,13 @@ class HttpExtensionTest {
         val expected = """
 namespace vyne.demo {
 
-    type alias ClientId as String
+    type ClientId inherits String
 
-     type CreditCostRequest {
+     model CreditCostRequest {
         deets : String
     }
 
-     type CreditCostResponse {
+     model CreditCostResponse {
         stuff : String
     }
 

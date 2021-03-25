@@ -41,6 +41,8 @@ toplevelObject
     |   policyDeclaration
     |   functionDeclaration
     |   annotationTypeDeclaration
+    |   query
+    |   viewDeclaration
     ;
 
 typeModifier
@@ -172,8 +174,10 @@ fieldModifier
    : 'closed'
    ;
 fieldDeclaration
-  :   fieldModifier? Identifier ':' typeType accessor?
+  :   fieldModifier? Identifier (':' (simpleFieldDeclaration | anonymousTypeDefinition))?
   ;
+
+simpleFieldDeclaration: typeType accessor?;
 
 typeType
     :   classOrInterfaceType typeArguments? listType? optionalType? parameterConstraint? aliasedType?
@@ -193,8 +197,15 @@ scalarAccessorExpression
     | defaultDefinition
     | readFunction
     | readExpression
+    | byFieldSourceExpression
     ;
 
+// Required for Query based Anonymous type definitions like:
+// {
+//               traderEmail: UserEmail (by this.traderId)
+// }
+//
+byFieldSourceExpression:  '(' fieldReferenceSelector ')';
 xpathAccessorDeclaration : 'xpath' '(' accessorExpression ')';
 jsonPathAccessorDeclaration : 'jsonPath' '(' accessorExpression ')';
 
@@ -308,11 +319,11 @@ queryFilterCapability: 'filter'( '(' filterCapability (',' filterCapability)* ')
 filterCapability: EQ | NQ | IN | LIKE | GT | GE | LT | LE;
 
 serviceOperationDeclaration
-     : typeDoc? annotation* operationScope? 'operation' operationSignature
+     : typeDoc? annotation* operationScope? 'operation'  operationSignature
      ;
 
 operationSignature
-     :   annotation* Identifier '(' operationParameterList? ')' operationReturnType?
+     :   annotation* Identifier  '(' operationParameterList? ')' operationReturnType?
      ;
 
 operationScope : Identifier;
@@ -646,10 +657,92 @@ typeDoc : DOCUMENTATION;
 lenientKeyword: 'lenient';
 defaultKeyword: 'default';
 
+/*
+ * Taxi QL
+ */
+
+queryDocument: importDeclaration* query EOF;
+
+query: namedQuery | anonymousQuery;
+
+namedQuery: queryName '{' queryBody '}';
+anonymousQuery: queryBody;
+
+queryName: 'query' Identifier queryParameters?;
+
+queryParameters: '(' queryParamList ')';
+
+queryParamList: queryParam (',' queryParam)*;
+
+queryParam: Identifier ':' typeType;
+
+// findAllDirective: 'findAll';
+// findOneDirective: 'findAll';
+
+queryDirective: FindAll | FindOne;
+findDirective: Find;
+
+givenBlock : 'given' '{' factList '}';
+
+factList : fact (',' fact)*;
+
+// TODO :  We could/should make variableName optional
+fact : variableName typeType '=' literal;
+
+variableName: Identifier ':';
+queryBody:
+   givenBlock?
+	queryDirective '{' queryTypeList '}' queryProjection?
+	;
+
+queryTypeList: typeType (',' typeType)*;
+
+queryProjection: 'as' typeType? anonymousTypeDefinition?;
+//as {
+//    orderId // if orderId is defined on the Order type, then the type is inferrable
+//    productId: ProductId // Discovered, using something in the query context, it's up to Vyne to decide how.
+//    traderEmail : EmailAddress(by this.traderUtCode)
+//    salesPerson {
+//        firstName : FirstName
+//        lastName : LastName
+//    }(by this.salesUtCode)
+//}
+anonymousTypeDefinition: typeBody listType? accessor?;
+anonymousFieldDeclaration: Identifier ':' typeType;
+anonymousFieldDeclarationWithSelfReference: Identifier ':' typeType '(' 'by' propertyFieldNameQualifier Identifier ')';
+anonymousComplexFieldDeclaration: Identifier ':' '{' (Identifier ':' typeType)*  '}'  '(' 'by' propertyFieldNameQualifier Identifier ')';
+
+anonymousField:
+   Identifier  // e.g. orderId
+   |
+   anonymousFieldDeclaration // productId: ProductId
+   |
+   anonymousFieldDeclarationWithSelfReference // traderEmail : EmailAddress(by this.traderUtCode)
+   |
+   anonymousComplexFieldDeclaration //    salesPerson {
+                                    //        firstName : FirstName
+                                    //        lastName : LastName
+                                    //    } (by this.salesUtCode)
+   ;
+
+viewDeclaration
+    :  typeDoc? annotation* typeModifier* 'view' Identifier
+            ('inherits' listOfInheritedTypes)?
+            'with' 'query' '{' findBody (',' findBody)* '}'
+    ;
+
+findBody: findDirective '{' findBodyQuery '}' ('as' typeBody)?;
+findBodyQuery: joinTo;
+joinTo: typeType ('(' 'joinTo'  typeType ')')?;
+
 IN: 'in';
 LIKE: 'like';
 AND : 'and' ;
 OR  : 'or' ;
+
+FindAll: 'findAll';
+FindOne: 'findOne';
+Find: 'find';
 
 Identifier
     :   Letter LetterOrDigit*
@@ -749,6 +842,9 @@ fragment
 Underscores
     :   '_'+
     ;
+
+
+
 
 NAME
    : [_A-Za-z] [_0-9A-Za-z]*

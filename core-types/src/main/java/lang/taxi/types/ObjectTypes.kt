@@ -2,11 +2,12 @@ package lang.taxi.types
 
 import arrow.core.Either
 import lang.taxi.Equality
+import lang.taxi.services.FieldName
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.utils.quoted
 import lang.taxi.utils.quotedIfNotAlready
-import lang.taxi.utils.quotedIfString
+import lang.taxi.utils.quotedIfNecessary
 import kotlin.reflect.KProperty1
 
 data class FieldExtension(
@@ -35,6 +36,7 @@ data class ObjectTypeDefinition(
    val calculatedInstanceOfType: Type? = null,
    val calculation: Formula? = null,
    val offset: Int? = null,
+   val isAnonymous: Boolean = false,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
@@ -119,6 +121,9 @@ data class ObjectType(
             }
          }
       }
+
+   override val anonymous: Boolean
+      get() = this.definition?.isAnonymous ?: false
 
    override val formattedInstanceOfType: Type?
       get() = this.definition?.formattedInstanceOfType
@@ -274,7 +279,7 @@ data class Annotation(val name: String,
    override fun asTaxi(): String {
       val parameterTaxi = parameters.map { (name, value) ->
          if (value != null) {
-            "$name = ${value.quotedIfString()}"
+            "$name = ${value.quotedIfNecessary()}"
          } else {
             name
          }
@@ -391,6 +396,15 @@ data class ColumnAccessor(val index: Any?, override val defaultValue: Any?, over
 data class ConditionalAccessor(val expression: FieldSetExpression) : Accessor, TaxiStatementGenerator {
    override fun asTaxi(): String {
       return "by ${expression.asTaxi()}"
+   }
+}
+
+data class FieldSourceAccessor(
+   val sourceAttributeName: FieldName,
+   val attributeType: QualifiedName,
+   val sourceType: QualifiedName) : Accessor, TaxiStatementGenerator {
+   override fun asTaxi(): String {
+      return "by (this.$sourceAttributeName)"
    }
 }
 
