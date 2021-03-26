@@ -43,13 +43,8 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.LanguageClient
 import org.eclipse.lsp4j.services.LanguageClientAware
 import org.eclipse.lsp4j.services.TextDocumentService
-import reactor.core.publisher.Sinks
 import java.io.File
-import java.io.PrintWriter
-import java.io.StringWriter
 import java.net.URI
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 
@@ -74,8 +69,6 @@ data class CompilationResult(
 ) {
     val successful = document != null
 }
-
-private data class CompilationTrigger(val changedPath: Path)
 
 class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) : TextDocumentService,
     LanguageClientAware {
@@ -104,30 +97,14 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
     private var initialized: Boolean = false
     private var connected: Boolean = false
 
-    private val compileTriggerSink = Sinks.many().unicast().onBackpressureBuffer<CompilationTrigger>()
-
     init {
-        compileTriggerSink.asFlux()
-            .bufferTimeout(50, Duration.ofMillis(500))
-            .subscribe { triggers ->
-                try {
-                    compile()
-                    triggers.distinct()
-                        .forEach { compilationTrigger ->
-                            computeLinterMessages(SourceNames.normalize(compilationTrigger.changedPath))
-                        }
-                    publishDiagnosticMessages()
-                } catch (e: Exception) {
-                    val writer = StringWriter()
-                    val printWriter = PrintWriter(writer)
-                    e.printStackTrace(printWriter)
-                    client.logMessage(
-                        MessageParams(
-                            MessageType.Error,
-                            "An exception was thrown when compiling.  This is a bug in the compiler, and should be reported. \n${e.message} \n$writer"
-                        )
-                    )
-                }
+
+        compilerService.compilationResults
+            .subscribe { compilationResult ->
+                logCompilationResult(compilationResult)
+                this.compilerMessages = compilationResult.errors
+                this.compilerErrorDiagnostics = convertCompilerMessagesToDiagnotics(this.compilerMessages)
+                publishDiagnosticMessages()
             }
     }
 
@@ -139,8 +116,8 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
     var compilerMessages: List<CompilationError> = emptyList()
         private set
 
-    var compilerErrorDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
-    var linterDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
+    private var compilerErrorDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
+    private var linterDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
 
     override fun codeAction(params: CodeActionParams): CompletableFuture<MutableList<Either<Command, CodeAction>>> {
         return codeActionService.getActions(params)
@@ -216,9 +193,9 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
                 reason
             )
         )
-        compilerService.reloadSourcesAndCompile()
-        compile()
-        publishDiagnosticMessages()
+        compilerService.reloadSourcesAndTriggerCompilation()
+//        compile()
+//        publishDiagnosticMessages()
     }
 
     override fun didClose(params: DidCloseTextDocumentParams) {
@@ -239,11 +216,8 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
         if (sourceName.endsWith("taxi.conf")) {
             // SKip it, we'll wait for a save.
         } else {
-            val compilationTrigger = CompilationTrigger(
-                Paths.get(URI.create(params.textDocument.uri))
-            )
             compilerService.updateSource(params.textDocument, content)
-            this.compileTriggerSink.tryEmitNext(compilationTrigger)
+            this.compilerService.triggerAsyncCompilation()
         }
     }
 
@@ -251,6 +225,7 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
     // We're compiling the entire workspace every time we get a request, which is
     // on every keypress.
     // We need to find a way to only recompile the document that has changed
+    @Deprecated("Use CompilerService.triggerAsyncCompilation")
     internal fun compile(): CompilationResult {
         val compilationResult = this.compilerService.compile()
         logCompilationResult(compilationResult)
@@ -296,7 +271,9 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
             // the normalized URI.  This means we get an OS specific file.
             // VSCode on windows seems to not like the URI
 
-            val filePath = try { File(URI.create(uri)).canonicalPath } catch (e:Exception) {
+            val filePath = try {
+                File(URI.create(uri)).canonicalPath
+            } catch (e: Exception) {
                 UnknownSource.UNKNOWN_SOURCE
             }
             PublishDiagnosticsParams(filePath, diagnostics)
