@@ -3,12 +3,12 @@ title: The Taxi CLI
 description: An overview of the `taxi` command line tool, and it's config
 ---
 
-import { Hint } from "../components/hint"
-import { Link } from "gatsby"
+import { Hint } from "../components/hint";
+import { Link } from "gatsby";
 
 [ ![Download](https://api.bintray.com/packages/taxi-lang/releases/taxi-cli/images/download.svg) ](https://gitlab.com/taxi-lang/taxi-lang/-/jobs/artifacts/master/raw/taxi-cli/target/taxi-cli.zip?job=publish-release)
 
-The `taxi` command line tool provides access to the compiler - which validates the syntax of taxi projects  - and allows plugins of generators to create models and services in different languages and frameworks.
+The `taxi` command line tool provides access to the compiler - which validates the syntax of taxi projects - and allows plugins of generators to create models and services in different languages and frameworks.
 
 ## Getting started
 
@@ -44,16 +44,15 @@ project/
 
 ## taxi.conf
 
-A `taxi.conf` file describes a project's layout, and the plugins to be invoked after compilation.  It follows the [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md#hocon-human-optimized-config-object-notation) format, which is like supercharged JSON.
+A `taxi.conf` file describes a project's layout, and the plugins to be invoked after compilation. It follows the [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md#hocon-human-optimized-config-object-notation) format, which is like supercharged JSON.
 
 Read more details about the Taxi.Conf file <Link to="/taxi-conf-file" rel="">here</Link>
-
 
 ## Plugins
 
 Taxi's compiler and language generators are extensible and pluggable.
 
-You can leverage our existing plugins to generate code, or author your own.  Read more about plugins <Link to="/plugins/README">here</Link>
+You can leverage our existing plugins to generate code, or author your own. Read more about plugins <Link to="/plugins/README">here</Link>
 
 ## Command reference
 
@@ -73,10 +72,10 @@ taxi init
 
 You'll be prompted with basic project details to name and create your new taxi project
 
-* Project group: `demo` ⏎
-* Project name: `hello-world` ⏎
-* Project version: ⏎  (Defaults are fine)
-* Source directory:  ⏎ (Defaults are fine)
+-  Project group: `demo` ⏎
+-  Project name: `hello-world` ⏎
+-  Project version: ⏎ (Defaults are fine)
+-  Source directory: ⏎ (Defaults are fine)
 
 A new `taxi.conf` has now been created, as follows:
 
@@ -94,7 +93,7 @@ Compile the taxi project, and invoke any language generators
 taxi build
 ```
 
-This command invokes the taxi compiler to validate your taxi code, and invokes any language generators configured.  (See <Link to="/plugins/README">Plugins</Link>).
+This command invokes the taxi compiler to validate your taxi code, and invokes any language generators configured. (See <Link to="/plugins/README">Plugins</Link>).
 If no plugins are configured, no code will be emitted, but the project is still compiled, ensuring no syntactic errors exist.
 
 ### version-bump
@@ -106,9 +105,13 @@ taxi version-bump major|minor|patch
 This command increments the version defined in the `taxi.conf` file.
 
 <Hint>
-   Running this command will change the layout of your taxi.conf file, to follow HOCON layout.
-
-   While there are no material differences between the files before and after, cosmetic changes can occur.  We're aware of this issue, and will address it in a future release.
+   Running this command will change the layout of your taxi.conf file, to follow
+   HOCON layout.
+   <br />
+   <br />
+   While there are no material differences between the files before and after, cosmetic
+   changes can occur. We're aware of this issue, and will address it in a future
+   release.
 </Hint>
 
 [Semantic Versioning](https://semver.org/) principals are followed when incrementing the version.
@@ -130,12 +133,14 @@ Version updated from 0.1.0 to 0.2.3
 ```
 
 <Hint>
-   Running this command will change the layout of your taxi.conf file, to follow HOCON layout.
-
-   While there are no material differences between the files before and after, cosmetic changes can occur.
-   We're aware of this issue, and will address it in a future release.
+   Running this command will change the layout of your taxi.conf file, to follow
+   HOCON layout.
+   <br />
+   <br />
+   While there are no material differences between the files before and after, cosmetic
+   changes can occur. We're aware of this issue, and will address it in a future
+   release.
 </Hint>
-
 
 ### publish
 
@@ -149,8 +154,8 @@ This involves creating a zip file from the current project, and uploading it to 
 
 When a project is published, only the following artifacts are added:
 
- * The `taxi.conf` file at the root of the project
- * All `*.taxi` files present in the configured `sourceRoot`
+-  The `taxi.conf` file at the root of the project
+-  All `*.taxi` files present in the configured `sourceRoot`
 
 No other content is added.
 

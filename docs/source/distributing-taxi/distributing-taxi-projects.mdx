@@ -3,8 +3,8 @@ title: Distributing Taxi projects
 description: Share or distribute your Taxi projects amongst other teams or the community
 ---
 
-import { Link } from "gatsby"
-import { Hint, Discourage } from '../components/hint'
+import { Link } from "gatsby";
+import { Hint } from "../components/hint";
 
 Once built, Taxi project and plugins can be packaged and published to a repository to allow other projects to depend on them.
 
@@ -53,11 +53,13 @@ repositories: [
 For more details on how to define dependencies, and configure repositories to download them from, see <Link to="/taxi-cli/taxi-conf-file">here</Link>
 
 <Hint>
-If you're editing your `taxi.conf` file in VSCode using our plugin, saving changes to your `taxi.conf` will trigger the download of any dependencies.
-
-However, be aware that where most other changes in VS Code take place as you type, downloading of dependencies requires you to save the file first.
+   If you're editing your `taxi.conf` file in VSCode using our plugin, saving
+   changes to your `taxi.conf` will trigger the download of any dependencies.
+   <br />
+   <br />
+   However, be aware that where most other changes in VS Code take place as you type,
+   downloading of dependencies requires you to save the file first.
 </Hint>
-
 
 ## Publishing taxonomies
 
@@ -97,6 +99,7 @@ Artifact uploaded successfully
 ```
 
 ## Sharing taxonomies with Nexus
+
 Currently, [Sonatype Nexus](https://www.sonatype.com/nexus/repository-oss) is the best way to publish and share taxi repositories.
 
 This guide does not cover the basics of installing and getting Nexus running, and assumes you've already got a nexus running somewhere.
@@ -110,14 +113,16 @@ $ docker run -d -p 8081:8081 --name nexus -v /some/dir/nexus-data:/nexus-data so
 This will give you a local running nexus at `https://localhost:8081`.
 
 ### Creating a taxi repository
+
 In nexus, taxi repositories are defined as Raw repositories.
 
- * Log in to Nexus with admin credentials, and create a new repository.  From the list of repository types, select "raw (hosted)"
- * Give the repository a name.  This is the name that will be used in your repository config section in your taxi.conf file.
- * Configure the rest of the repository settings, including redeployment policies and blob store
- * Click "Create Repository"
+-  Log in to Nexus with admin credentials, and create a new repository. From the list of repository types, select "raw (hosted)"
+-  Give the repository a name. This is the name that will be used in your repository config section in your taxi.conf file.
+-  Configure the rest of the repository settings, including redeployment policies and blob store
+-  Click "Create Repository"
 
 #### Updating your taxi.conf file to publish
+
 In the taxi.conf file of the project you wish to publish to your new repository, add the following:
 
 ```hocon
@@ -144,11 +149,9 @@ credentials: [
 
 ## Best practices for sharing taxonomies
 
-
-
-
 ## Other links
-Publishing and sharing taxonomies is maturing within taxi.  We currently only support a single repository (nexus), but can add support
+
+Publishing and sharing taxonomies is maturing within taxi. We currently only support a single repository (nexus), but can add support
 as required for other repositories.
 
 PR's are welcomed in this regard too.
@@ -157,9 +160,8 @@ To see the areas of the code related to sharing projects, explore the links belo
 
 See:
 
-| Code area | Purpose |
-| :--- | :--- |
-| [Package Importer](https://gitlab.com/taxi-lang/taxi-lang/-/tree/develop/package-importer) | Responsible for downloading dependencies |
+| Code area                                                                                              | Purpose                                                                  |
+| :----------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------- |
+| [Package Importer](https://gitlab.com/taxi-lang/taxi-lang/-/tree/develop/package-importer)             | Responsible for downloading dependencies                                 |
 | [Package Repository API](https://gitlab.com/taxi-lang/taxi-lang/-/tree/develop/package-repository-api) | The public configuration API for managing dependencies on other packages |
-| [Publish Plugin Command](https://gitlab.com/taxi-lang/taxi-lang/-/tree/develop/package-repository-api) | Packages and uploads a custom plugin to an external repository |
-
+| [Publish Plugin Command](https://gitlab.com/taxi-lang/taxi-lang/-/tree/develop/package-repository-api) | Packages and uploads a custom plugin to an external repository           |

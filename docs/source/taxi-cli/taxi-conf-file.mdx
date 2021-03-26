@@ -3,10 +3,10 @@ title: Configuring Taxi projects
 description: An overview of the `taxi.conf` file
 ---
 
-import {Link} from "gatsby"
-import {Hint, Discourage} from '../components/hint'
+import { Link } from "gatsby";
+import { Discourage } from "../components/hint";
 
-A `taxi.conf` file describes a project's layout, and the plugins to be invoked after compilation.  It follows the [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md#hocon-human-optimized-config-object-notation) format, which is like supercharged JSON.
+A `taxi.conf` file describes a project's layout, and the plugins to be invoked after compilation. It follows the [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md#hocon-human-optimized-config-object-notation) format, which is like supercharged JSON.
 
 ```text
 name: taxi/maven-sample
@@ -33,22 +33,22 @@ plugins: {
 The source for the config can be seen [here](https://gitlab.com/taxi-lang/taxi-lang/-/blob/develop/core-types/src/main/java/lang/taxi/packages/TaxiPackageProject.kt),
 which provides the complete documentation of how projects can be configured.
 
-| Name | Definition  |
-| :--- | :--- |
-| name | The name of the taxi project.  By convention, follows a format of `organisation/project-name` |
-| version | The version of the taxi project |
-| sourceRoot | The root location of taxi files to be compiled |
-| output | The folder where any generated artifacts will be written |
-| plugins | A list of <Link to="../../plugins/README">plugins</Link> to be enabled on the project |
-| pluginSettings | Defines where plugins are fetched and loaded from |
-| dependencies | A list of other taxi project dependencies that this project depends on |
-| repositories | A list of taxi repositories to fetch content from |
+| Name                | Definition                                                                                    |
+| :------------------ | :-------------------------------------------------------------------------------------------- |
+| name                | The name of the taxi project. By convention, follows a format of `organisation/project-name`  |
+| version             | The version of the taxi project                                                               |
+| sourceRoot          | The root location of taxi files to be compiled                                                |
+| output              | The folder where any generated artifacts will be written                                      |
+| plugins             | A list of <Link to="../../plugins/README">plugins</Link> to be enabled on the project         |
+| pluginSettings      | Defines where plugins are fetched and loaded from                                             |
+| dependencies        | A list of other taxi project dependencies that this project depends on                        |
+| repositories        | A list of taxi repositories to fetch content from                                             |
 | publishToRepository | Defines where this project should be published to, should other projects wish to depend on it |
-| credentials | A list of credentials for authenticating with remote repositories
+| credentials         | A list of credentials for authenticating with remote repositories                             |
 
 ### Dependencies
 
-Projects may declare dependenices on other taxi projects.  This provides a powerful mechanism for creating modular, re-usable taxonomies across organisations.
+Projects may declare dependenices on other taxi projects. This provides a powerful mechanism for creating modular, re-usable taxonomies across organisations.
 
 The format for declaring dependencies is:
 
@@ -64,12 +64,14 @@ shown [here](https://gitlab.com/taxi-lang/taxi-lang/-/blob/develop/package-impor
 For details on sharing, publishing and depending on taxonomies, see <Link to="../devtools/distributing-taxi-projects.mdx">Distributing taxi projects</Link>
 
 <Discourage>
-   Transitive dependencies (ie., depending on projects that depend on other projects) are not yet supported, but are on
-   the roadmap. If this feature is important to you, get in touch on our slack channel.
+   Transitive dependencies (ie., depending on projects that depend on other
+   projects) are not yet supported, but are on the roadmap. If this feature is
+   important to you, get in touch on our slack channel.
 </Discourage>
 
 ### Repositories
-Repositories define where to try to download dependencies from (and where to publish to).  Currently, only [Sonatype Nexus](https://www.sonatype.com/nexus/repository-oss) is supported,
+
+Repositories define where to try to download dependencies from (and where to publish to). Currently, only [Sonatype Nexus](https://www.sonatype.com/nexus/repository-oss) is supported,
 and an experimental Taxi repository - <Link to="../devtools/taxi-hub">Taxihub</Link> - is also under development.
 
 The Taxi CLI tries to download each dependency from the list of repositories until successful.
@@ -99,9 +101,11 @@ repositories: [
 For more information on publishing and sharing taxonomies, see <Link to="../devtools/distributing-taxi-projects">here</Link>
 
 ### Credentials
+
 Credentials define how to authenticate with a repository.
 
 The `repositoryName` attribute must match the `name` attribute of a defined repository.
+
 ```
 credentials: [
    { repositoryName: "nexus", username: "jimmy", password: "pass123" }
@@ -109,7 +113,7 @@ credentials: [
 ```
 
 Note - credentials don't need to be defined in your projects main `taxi.conf` - in fact, we reccommend you don't.
-Instead, define a configuration file at  `~/.taxi.conf` (your home directory) which contains the credentials.  See below for
+Instead, define a configuration file at `~/.taxi.conf` (your home directory) which contains the credentials. See below for
 more detail on merging configuration files.
 
 ### Linter config
@@ -133,16 +137,19 @@ linter: {
    no-primitive-types-on-models: {enabled: false}
 }
 ```
-Note that the entire linter section is optional.  If omitted, all rules are enabled, with the severity defined by each rule.  (By convention, this is `WARN`).
+
+Note that the entire linter section is optional. If omitted, all rules are enabled, with the severity defined by each rule. (By convention, this is `WARN`).
 
 <Discourage>
-   When making changes in VSCode, remember that you must save the `taxi.conf` file before changes are applied.
+   When making changes in VSCode, remember that you must save the `taxi.conf`
+   file before changes are applied.
 </Discourage>
 
 ## Merging multiple configuration files
+
 By default, Taxi tooling will merge configuration files from the following locations:
 
- * The root of the project - `./taxi.conf`
- * The home directory - `~/.taxi/taxi.conf`
+-  The root of the project - `./taxi.conf`
+-  The home directory - `~/.taxi/taxi.conf`
 
 This allows for storing of sensitive information - such as credentials - outside of main projects, and source control.

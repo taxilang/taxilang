@@ -3,13 +3,14 @@ title: Projects, docs and names
 description: An overview of projects, files, and naming things in Taxi
 ---
 
-import { Hint } from "../components/hint"
-
+import { Hint, Prefer, Warn } from "../components/hint";
 
 ## Taxi projects and files
+
 A Taxi project contains a `taxi.conf` file, and a collection of files saved with a `.taxi.` extension.
 
 A typical project might look like this:
+
 ```text
 .
 ├── src/
@@ -37,15 +38,17 @@ Any [markdown](https://daringfireball.net/projects/markdown/syntax) is valid
 ]]
 type TaxiDocExample
 ```
+
 Most things within Taxi can be documented with Taxi doc, including:
 
-* Types and models
-* Fields in types
-* Enums and their values
-* Services and operations
+-  Types and models
+-  Fields in types
+-  Enums and their values
+-  Services and operations
 
 ## Comments
-Comments can appear anywhere in a taxi file.  There are two flavours of comments, multiline (`/* ... */`) and single line (`//`):
+
+Comments can appear anywhere in a taxi file. There are two flavours of comments, multiline (`/* ... */`) and single line (`//`):
 
 ```taxi
 
@@ -58,9 +61,10 @@ Anything inside this block is a comment
 // Of course, you can have lots of single line comments too.
 
 ```
-## Namespaces
-Like in most languages, things in Taxi (types, services, operations, etc) need to have a unique name.
 
+## Namespaces
+
+Like in most languages, things in Taxi (types, services, operations, etc) need to have a unique name.
 
 To help prevent name clashes, Taxi uses namespaces - simply a way of disambiguating between two things with the same name.
 
@@ -74,6 +78,7 @@ type Name inherits String // The fully qualified name is customers.Name
 Namespaces can be declared in two ways.
 
 #### Single namespace files
+
 If everything in a single file belongs to the same namespace, simply add `namespace xxx` at the top of the file.
 Everything that is declared in the file becomes part of the namespace.
 
@@ -82,7 +87,9 @@ namespace customers
 
 type Name inherits String // The fully qualified name is customers.Name
 ```
+
 #### Multi-namespace files
+
 If you have multiple namespaces within the same file, you can define namespaces using curly brace syntax:
 
 ```taxi
@@ -96,33 +103,34 @@ namepace pets {
 }
 ```
 
-<Hint type="Convention">
-    Namespaces typically start with lower-case letters.
-    
-    <Prefer>namespace people</Prefer>
-    <Discourage>namespace People</Discourage>
+<Hint>
+   Namespaces typically start with lower-case letters.
+   <br />
+   <Prefer>namespace people</Prefer>
+   <br />
+   <Warn>namespace People</Warn>
 </Hint>
-<Hint type="Convention">
-    Where there's a choice between singular and plural, prefer naming namespaces after plurals
-    
-    <Prefer>namespace people</Prefer>
-    <Discourage>namespace person</Discourage>
+<Hint>
+   Where there's a choice between singular and plural, prefer naming namespaces
+   after plurals
+   <br />
+   <Prefer>namespace people</Prefer>
+   <br />
+   <Warn>namespace person</Warn>
 </Hint>
 
 ## Imports
+
 Imports are a way of including a type declared in another file.
 When a type or model is imported, it can be referenced using it's name, rather than requiring the fully qualified name.
 
 Imports come before a namespace declaration.
 
-
 ```taxi
 import people.Name
 
-namespace customers 
+namespace customers
 
 // The same as type customers.CustomerFirstName inherits people.Name
 type CustomerFirstName inherits Name
 ```
-
-

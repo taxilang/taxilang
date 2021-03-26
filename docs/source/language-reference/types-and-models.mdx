@@ -3,17 +3,19 @@ title: Types and models
 description: Types and Models are the foundation of describing data within Taxi
 ---
 
-import { Hint } from '../components/hint'
+import { Hint } from "../components/hint";
 
-Types and Models form the core building blocks of data and API's.  These describe the contracts of data that float about 
+Types and Models form the core building blocks of data and API's. These describe the contracts of data that float about
 in our ecosystems - published by services, exposed via processes, and sent from 3rd party suppliers.
 
 In Taxi, as part of building out an robust composable type system, we differentiate between xxxx
 
 ## Types
-Types declare a simple, resuable concept.  
+
+Types declare a simple, resuable concept.
 
 **Basic syntax:**
+
 ```
 // types can have comments (ignored by the parser), or docs, as shown below:
 [[ Any type of Name, used for refer to things ]]
@@ -24,10 +26,12 @@ type FirstName inherits Name
 ```
 
 ### Using inheritence to describe specificitiy
+
 It's strongly recommended to [inherit](#inheritence) a type from another type - either one of Taxi's [built-in primitives](#built-in-types), or one of your own, to narrow the specificity of the type.
 This is discussed more in [inheritence](#inheritence).
 
 ### Fields on types
+
 It is possible, (but discouraged) for types to contain fields:
 
 ```
@@ -38,24 +42,25 @@ type Name {
 }
 ```
 
-Generally, it is discouraged for Types to have fields.  It limits the reusability of types, as all users of the type must satisfy the same contract.  In general, we recommend using Types that don't have fields, and Models that do.
+Generally, it is discouraged for Types to have fields. It limits the reusability of types, as all users of the type must satisfy the same contract. In general, we recommend using Types that don't have fields, and Models that do.
 
 We encourage widely shared types, and narrowly shared models.
 
 ### Semantic typing
-Semantic typing simply means defining types that describe the actual information being shared.  It differs from most type systems, which focus purely on the representation of the data.
 
-| Term           | Meaning                                            | Example                  |
-|----------------|----------------------------------------------------|--------------------------|
-| Representation | How data is transmitted or encoded within a system | `String`,`Number`,`Date` |
-| Information | The actual facts sitting inside the data | `CustomerName`,`Age`,`DateOfBirth`    |
+Semantic typing simply means defining types that describe the actual information being shared. It differs from most type systems, which focus purely on the representation of the data.
+
+| Term           | Meaning                                            | Example                            |
+| -------------- | -------------------------------------------------- | ---------------------------------- |
+| Representation | How data is transmitted or encoded within a system | `String`,`Number`,`Date`           |
+| Information    | The actual facts sitting inside the data           | `CustomerName`,`Age`,`DateOfBirth` |
 
 The **information** is the most useful part of any data, and so Taxi is intended to build type systems that describe this.
-Taxi encourages using lots of small, descriptive and narrowly focussed types as the building blocks of a shared enterprise taxonomy. 
+Taxi encourages using lots of small, descriptive and narrowly focussed types as the building blocks of a shared enterprise taxonomy.
 
 This is one of the key features of Taxi, and allows tooling to make intelligent choices about the information our systems are exposing.
 
-For example, consider two pieces of information - a customers name, and their email address.  Both are represented as Strings when being sent between systems - but both are very differnet pieces of information.
+For example, consider two pieces of information - a customers name, and their email address. Both are represented as Strings when being sent between systems - but both are very differnet pieces of information.
 Semantic typing aims to describe the information within a field, not just it's representation.
 
 ```
@@ -78,7 +83,7 @@ operation getCustomerName(EmailAddress):Name
 
 ```
 
-Through the use of inheritence, we can further refine these concepts, to add richer semantic descriptions about the information.  This allows
+Through the use of inheritence, we can further refine these concepts, to add richer semantic descriptions about the information. This allows
 operations to add extra levels of specificity to their contracts, and for models to be descriptive about the data they are producing:
 
 ```
@@ -94,16 +99,14 @@ operation getCustomerName(EmailAddress):Name
 operation getCustomerName(WorkEmailAddress):Name
 ```
 
-
-
 ## Models
 
-Models describe the contract of data either produced or consumed by a system.  Models contain fields, described as types.
+Models describe the contract of data either produced or consumed by a system. Models contain fields, described as types.
 
 ```
 type PersonId inherits Int
 type FirstName inherits String
-model Person {            
+model Person {
    id : PersonId // refernece to another custom type
    firstName : FirstName
    lastName : String // You don't have to use microtypes if they don't add value
@@ -111,19 +114,26 @@ model Person {
    spouse : Person? // '?' indicates nullable types
 }
 ```
+
 Models can use inheritence, but this is less common and generally less useful than with Types.
 
 <Hint>
-    Models should be produced and owned by a single system, rather than shared widely across mutliple systems in an enterprise.
-    
-    When models start getting shared too widely, it becomes difficult for them to change and evolve.
-
-    Instead, favour single-system models, composed of terms from a widely shared Taxonomy of types.
+   Models should be produced and owned by a single system, rather than shared
+   widely across mutliple systems in an enterprise.
+   <br />
+   <br />
+   When models start getting shared too widely, it becomes difficult for them to
+   change and evolve.
+   <br />
+   <br />
+   Instead, favour single-system models, composed of terms from a widely shared
+   Taxonomy of types.
 </Hint>
 
 ### Parameter models
-Parameter models are special models that indicate to tooling that it's safe to construct these at runtime.  
-Declaring something as a Parameter type has no other impact within Taxi on the type's definition, but is used in other tooling.  \(Eg., Vyne\).
+
+Parameter models are special models that indicate to tooling that it's safe to construct these at runtime.
+Declaring something as a Parameter type has no other impact within Taxi on the type's definition, but is used in other tooling. \(Eg., Vyne\).
 
 ```taxi
 service PeopleService {
@@ -145,16 +155,18 @@ parameter model CreatePersonRequest {
 ## Types vs Models - Which to use?
 
 ### Types
-Use Types to describe a single specific piece of information.  Try to form agreement on the definition of Types across an organisation.
-Generally, Types should match the shared business terms used across an organsiation to describe the business.  Because types are small (only describing a single attribute),
+
+Use Types to describe a single specific piece of information. Try to form agreement on the definition of Types across an organisation.
+Generally, Types should match the shared business terms used across an organsiation to describe the business. Because types are small (only describing a single attribute),
 and specific, it's generally easier to form consensus around the definition of a Type.
 
 Types are owned globally across an organisation, so there should be a curation process surrounding their definition.
 
-Types generally don't have fields.  As soon as a types have fields, users must agree on both the meaning of the information, and the representation.  The latter tends to provide much greater friction,
+Types generally don't have fields. As soon as a types have fields, users must agree on both the meaning of the information, and the representation. The latter tends to provide much greater friction,
 and leads to less reusable types.
 
 ### Models
+
 Use Models to describe the contract and structure of data either produced or consumed by a single system.
 
 Models should be owned by the owners of a system, who are free to evolve and grow their models autonomously.
@@ -164,27 +176,28 @@ Models have fields and structure, described using Types.
 
 Taxi is a strongly typed language, that is, a discrete attribute will ultimately inherit from a number of limited primitive types. If you recall, the our example taxonomy had “animal” at the top, these primitive types will replace “animal” in taxonomies you design.
 
-Taxi currently supports the following primitive types.  \(See the [Language Spec](https://gitlab.com/taxi-lang/taxi-lang/blob/master/compiler/src/main/antlr4/lang/taxi/Taxi.g4#L207)\)
+Taxi currently supports the following primitive types. \(See the [Language Spec](https://gitlab.com/taxi-lang/taxi-lang/blob/master/compiler/src/main/antlr4/lang/taxi/Taxi.g4#L207)\)
 
-| Taxi Type | Comments | Default format |
-| :--- | :--- | :--- |
-| Boolean | `true` or `false` | - |
-| String | A list of characters | - |
-| Int | A numeric type without decimal places | - |
-| Double | A numeric type with decimal places, using floating-point precision | - | 
-| Decimal | A numeric type with decimal places | - | 
-| Date | Represents a day, without time, or a time zone.  | `yyyy-MM-dd` |
-| Time | A time, in the form of `hh:mm:ss`.  Does not support dates, or time-zones. | `HH:mm:ss` |
-| DateTime | Describes both a date and a time, but without a timezone. | `yyyy-MM-dd'T'HH:mm:ss.SSS` |
-| Instant | A timestamp indicating an absolute point in time.  Includes time-zone. | `yyyy-MM-dd'T'HH:mm:ss[.SSS]X` |
-| Any | Can be anything.  Try to avoid using `Any` as it's not descriptive, favour a more specific type if possible |
+| Taxi Type | Comments                                                                                                   | Default format                 |
+| :-------- | :--------------------------------------------------------------------------------------------------------- | :----------------------------- |
+| Boolean   | `true` or `false`                                                                                          | -                              |
+| String    | A list of characters                                                                                       | -                              |
+| Int       | A numeric type without decimal places                                                                      | -                              |
+| Double    | A numeric type with decimal places, using floating-point precision                                         | -                              |
+| Decimal   | A numeric type with decimal places                                                                         | -                              |
+| Date      | Represents a day, without time, or a time zone.                                                            | `yyyy-MM-dd`                   |
+| Time      | A time, in the form of `hh:mm:ss`. Does not support dates, or time-zones.                                  | `HH:mm:ss`                     |
+| DateTime  | Describes both a date and a time, but without a timezone.                                                  | `yyyy-MM-dd'T'HH:mm:ss.SSS`    |
+| Instant   | A timestamp indicating an absolute point in time. Includes time-zone.                                      | `yyyy-MM-dd'T'HH:mm:ss[.SSS]X` |
+| Any       | Can be anything. Try to avoid using `Any` as it's not descriptive, favour a more specific type if possible |
 
 ### Array types
+
 An Array (specifically, `lang.taxi.Array`) is a special type within Taxi, and can be represented in one of two ways - either as `Array<Type>` or `Type`[].
 
 ```
 model Person {
-    friends : Person[] 
+    friends : Person[]
 }
 
 // or:
@@ -194,7 +207,7 @@ model Person {
 }
 ```
 
-These two approaches are exactly the same.  In the compiler, `Person[]` gets translated to `Array<Person>`.
+These two approaches are exactly the same. In the compiler, `Person[]` gets translated to `Array<Person>`.
 
 It is possible to alias Arrays to another type:
 
@@ -206,17 +219,20 @@ model Person {
     friends : Friends
 }
 ```
+
 However, be aware that this has a questionable effect on readability.
 
 See also: [Type aliases](#type-aliases)
 
 ### Date / Time types
+
 Taxi has four built-in date-time types (`Date`,`Time`,`DateTime` and `Instant`), which can specify additional format rules.
 
-Currently, Taxi does not enforce or use these symbols, it simply makes them available to parsers and tooling to consume.  As such,
-it's possible that other parsers may define their own set of formats for use.  This is possible, but discouraged.
+Currently, Taxi does not enforce or use these symbols, it simply makes them available to parsers and tooling to consume. As such,
+it's possible that other parsers may define their own set of formats for use. This is possible, but discouraged.
 
 #### Date/Time formats
+
 Formats can be specified using a `(@format='xxxx')` syntax after the type declaration:
 
 ```taxi
@@ -224,37 +240,36 @@ type DateOfBirth inherits Date(@format = 'dd/MMM/yy')
 type Timestamp inherits Instant(@format = 'yyyy-MM-dd HH:mm:ss.SSSZ')
 ```
 
-
-| Symbol               | Meaning                                         | Presentation              | Examples                        |
-|----------------------|-------------------------------------------------|---------------------------|----------------------------------|
-| y                    | Year of era                                     | year                      | 2018; 18                         |
-| M                    | Month of year                                   | number/text               | 07; 7; July; Jul                |
-| d                    | Day of month                                    | number                    | 10                               |
-| E                    | Day of week                                     | text                      | Tuesday; Tue; T                 |
-| a                    | Am/PM of day                                    | text                      | PM                               |
-| H                    | Hour in day (0-23)                              | number                    | 0                                |
-| h                    | clock hour of am/pm (1-12)                      | number                    | 12                               |
-| m                    | Minute of hour                                  | number                    | 30                               |
-| s                    | Second of minute                                | number                    | 55                               |
-| S                    | Millisecond (fraction of second)                | number                    | 978                              |
-
+| Symbol  | Meaning                             | Presentation  | Examples            |
+| ------- | ----------------------------------- | ------------- | ------------------- |
+| y       | Year of era                         | year          | 2018; 18            |
+| M       | Month of year                       | number/text   | 07; 7; July; Jul    |
+| d       | Day of month                        | number        | 10                  |
+| E       | Day of week                         | text          | Tuesday; Tue; T     |
+| a       | Am/PM of day                        | text          | PM                  |
+| H       | Hour in day (0-23)                  | number        | 0                   |
+| h       | clock hour of am/pm (1-12)          | number        | 12                  |
+| m       | Minute of hour                      | number        | 30                  |
+| s       | Second of minute                    | number        | 55                  |
+| S       | Millisecond (fraction of second)    | number        | 978                 |
 
 #### Sample patterns
-| Date and Time Pattern              | Result                                                      |
-|-------------------------------------|--------------------------------------------------------------|
-| `dd/MM/yy`                          | 04/09/19                                                     |
-| `dd MMM yyyy`                       | 04 Sep 2019                                                  |
-| `yyyy-MM-dd`                        | 2019-09-04                                                   |
-| `dd-MM-yyyy h:mm a`                 | 04-09-2019 1:45 AM                                           |
-| `dd-MM-yyyy hh:mm a, zzzz`          | 04-09-2019 01:45 AM, Singapore Time                          |
-| `dd-MM-yyyy HH:mm:ss`               | 04-09-2019 01:45:48                                          |
-| `yyyy-MM-dd HH:mm:ss.SSS`           | 2019-09-04 01:45:48.616                                      |
-| `yyyy-MM-dd HH:mm:ss.SSSZ`          | 2019-09-04 01:45:48.616+0800                                 |
-| `EEEE, dd MMMM yyyy HH:mm:ss.SSSZ`  | Wednesday, 04 September 2019 01:45:48.616+0800               |
-| `yyMMddHHmmssSSS`                   | 190904014548616                                              |
 
+| Date and Time Pattern               | Result                                          |
+| ----------------------------------- | ----------------------------------------------- |
+| `dd/MM/yy`                          | 04/09/19                                        |
+| `dd MMM yyyy`                       | 04 Sep 2019                                     |
+| `yyyy-MM-dd`                        | 2019-09-04                                      |
+| `dd-MM-yyyy h:mm a`                 | 04-09-2019 1:45 AM                              |
+| `dd-MM-yyyy hh:mm a, zzzz`          | 04-09-2019 01:45 AM, Singapore Time             |
+| `dd-MM-yyyy HH:mm:ss`               | 04-09-2019 01:45:48                             |
+| `yyyy-MM-dd HH:mm:ss.SSS`           | 2019-09-04 01:45:48.616                         |
+| `yyyy-MM-dd HH:mm:ss.SSSZ`          | 2019-09-04 01:45:48.616+0800                    |
+| `EEEE, dd MMMM yyyy HH:mm:ss.SSSZ`  | Wednesday, 04 September 2019 01:45:48.616+0800  |
+| `yyMMddHHmmssSSS`                   | 190904014548616                                 |
 
 #### Date/Time offsets
+
 A model can also specify restrictions around the offset from UTC that a date must be represented/interpreted in:
 
 ```
@@ -276,8 +291,8 @@ model Transaction {
 
 Note - taxi itself doesn't enforce or mutate these times, that's left to parsers and tooling.
 
-
 ## Nullability
+
 By default, all fields defined in a Model are mandatory.
 
 To make a field optional, relax this by adding the `?` operator:
@@ -289,11 +304,11 @@ model Person {
 }
 ```
 
-Note that Taxi does not enforce nullabillity constraints - that's left to the systems which interpret the data.  
+Note that Taxi does not enforce nullabillity constraints - that's left to the systems which interpret the data.
 
-## Inheritence 
+## Inheritence
 
-Taxi provides inheritence across both Types and Models.  It's recommended that inheritence is used heavily in Types to increase
+Taxi provides inheritence across both Types and Models. It's recommended that inheritence is used heavily in Types to increase
 the specificity of a concept, and sparingly in Models.
 
 ```
@@ -306,22 +321,23 @@ type LastName inherits PersonName
 
 type CompanyName inherits Name
 ```
+
 As with most languages, inheritence is one-way -- ie., in the above example, all Names are Strings, but not all Strings are names.
 
 Likewise, all FirstNames are Names, but not all Names are FirstNames.
 
-This is incredibly useful in building out a taxonomy that allows publishers and consumers to be more or less sepcific about the 
+This is incredibly useful in building out a taxonomy that allows publishers and consumers to be more or less sepcific about the
 types of data they are providing.
 
 ## Annotations
 
 Annotations can be defined against any of the following:
 
-* Types
-* Fields
-* Enums
-* Services
-* Operations
+-  Types
+-  Fields
+-  Enums
+-  Services
+-  Operations
 
 Annotations may have parameters, or be left 'naked':
 
@@ -331,28 +347,29 @@ Annotations may have parameters, or be left 'naked':
 type Foo {}
 ```
 
-Annotation parameters may be values of type  `string`,`int` or `boolean`
+Annotation parameters may be values of type `string`,`int` or `boolean`
 
 <Hint>
-Annotations do not have any direct impact on the types.  However, they can be used to power tooling - such as generators, or to provide hints to consumers
+   Annotations do not have any direct impact on the types. However, they can be
+   used to power tooling - such as generators, or to provide hints to consumers
 </Hint>
 
-Compiler support for annotations in Taxi has been improving recently.  Originally, there was no checking of validity of annotations, other than
+Compiler support for annotations in Taxi has been improving recently. Originally, there was no checking of validity of annotations, other than
 simply syntax checking.
 
 In the current version, there's partial support for type checking around annotations, beyond basic syntax checking.
 If an annotation has been defined as a type, then it's contract is enforced by the compiler (ie., attributes must match).
 
-However, it's also possible to declare annotations that don't have an associated Annotation Type.  This has been left for backward compatibility.
+However, it's also possible to declare annotations that don't have an associated Annotation Type. This has been left for backward compatibility.
 If you are building out custom annotations, you're encouraged to define a corresponding Annotation type to go with it.
 
 In a future release, all annotations will be required to have a corresponding annotation type.
 
-
 See also: Annotation types
 
 ## Annotation types
-Annotation Types allow declaring new annotations.  Annotations can have models, which have types associated with them.
+
+Annotation Types allow declaring new annotations. Annotations can have models, which have types associated with them.
 
 Eg:
 
@@ -374,7 +391,7 @@ Here's how it might be used:
 model MeterReading {}
 ```
 
-When an annotation has an associated type, then it's contract is checked by the compiler. 
+When an annotation has an associated type, then it's contract is checked by the compiler.
 
 For example, given the above sample, the following would be invalid:
 
@@ -391,6 +408,7 @@ model MeterReading {}
 ```
 
 ## Type aliases
+
 Type aliases provide a way of declaring two concepts within the taxonomy are exactly the same.
 This is useful for mapping concepts between two independent taxonomies.
 
@@ -401,17 +419,20 @@ type FirstName inherits String
 
 type alias GivenName as FirstName
 ```
-This states that *anywhere* `FirstName` is used, `GivenName` may also be used.  
 
-Unlike [Inheritence](#inheritence), aliases are bi-directional.  That is all `FirstName`s are `GivenName`s, and all `GivenName`s are `FirstName`s.
+This states that _anywhere_ `FirstName` is used, `GivenName` may also be used.
+
+Unlike [Inheritence](#inheritence), aliases are bi-directional. That is all `FirstName`s are `GivenName`s, and all `GivenName`s are `FirstName`s.
 
 ### Inheritence vs Type Aliases - Which to use?
+
 Type aliases were an early language feature in Taxi, and have since been replaced by inheritence, which has stricter rules and is more expressive.
 
 Generally speaking, we encouarge the use of Inheritence where a relationship is one-way.
 Type aliases are really only useful when mapping between two different taxonomies, which both expose the same concept with different terminology.
 
 ## Enums
+
 Enum types are defined as follows:
 
 ```taxi
@@ -424,7 +445,7 @@ enum BookClassification {
 
 ### Enum synonyms
 
-Synonyms may be declared between values in multiple sets of enums.  This is useful when two different systems publish the same concept in slightly different formats.
+Synonyms may be declared between values in multiple sets of enums. This is useful when two different systems publish the same concept in slightly different formats.
 
 ```taxi
 namespace acme {
@@ -436,7 +457,7 @@ namespace acme {
 }
 
 namespace foo {
-   
+
    enum Country {
       NZ synonym of acme.Country.NEW_ZEALAND,
       AUS synonym of acme.Country.AUSTRALIA,
@@ -458,47 +479,54 @@ enum Country {
       UNITED_KINGDOM("UK")
 }
 ```
+
 Parsers will match inputs against either the name or the value of the enum.
 
 ie:
 
-```json 
+```json
 {
-    "countryOfBirth" : "NZ", // Matches Country.NEW_ZEALAND
-    "countryOfResidence" : "UNITED_KINGDOM" // Matches Country.UNITED_KINGDOM
+   "countryOfBirth": "NZ", // Matches Country.NEW_ZEALAND
+   "countryOfResidence": "UNITED_KINGDOM" // Matches Country.UNITED_KINGDOM
 }
 ```
 
 ### Lenient enums
+
 Lenient enums instruct parsers to be case insensitive when matching values.
 
 Enums already support matching on either the Name of the enum or the value.
 Adding "lenient" to the start of the enum declaration means that these matches will be case insensitive.
 
 eg - Without Lenient:
+
 ```
 enum Country {
    NZ("New Zealand"),
    AUS("Australia")
 }
 ```
+
 An ingested value of either "NZ" or "New Zealand" would match the NZ enum.
 However, an ingested value of "nz" would be rejected
 
 Adding lenient makes checking against enums case insensitive
+
 ```
 lenient enum Country {
    NZ("New Zealand"),
    AUS("Australia")
 }
 ```
+
 An ingested value of "nz", "Nz", "new zealand", "New zealand" etc would match against NZ.
 A value of "UK" (not defined in the list) would be rejected.
 
 #### Best practice reccomendation
-If you must use lenient enums, restrict them to external data you're ingesting.  Try not to make your internal Taxonomy lenient - as you want internal data to be as strict as possible.
 
-You can use synonyms against a lenient external data to match against your stricter internal taxonomy.  eg:
+If you must use lenient enums, restrict them to external data you're ingesting. Try not to make your internal Taxonomy lenient - as you want internal data to be as strict as possible.
+
+You can use synonyms against a lenient external data to match against your stricter internal taxonomy. eg:
 
 ```
 namespace my.vendor {
@@ -509,7 +537,8 @@ namespace my.vendor {
 ```
 
 ### Default values on Enums
-Enum values can be marked as `default` to instruct parsers to apply these values if nothing matches.  You can specify at most one default in the list of enum values.
+
+Enum values can be marked as `default` to instruct parsers to apply these values if nothing matches. You can specify at most one default in the list of enum values.
 
 ```
 enum Country {
@@ -522,6 +551,7 @@ enum Country {
 In this example, an ingested value of "NZ" would match NZ, and a value of "UK" would match UNKNOWN. No value would be rejected.
 
 ### Mixing Default and Lenient
+
 You can mix lenient and default
 
 ```
@@ -531,9 +561,9 @@ lenient enum Country {
    default UNKNOWN("Unknown")
 }
 ```
+
 In this scenario, because there's both a lenient keyword (making the enum case insensitive), and a default:
 
- * A value of `Nz` would match `Country.NZ`
- * A value of `new zealand` would match `Country.NZ`
- * A value of `Uk` would match `Country.UNKNOWN`
-
+-  A value of `Nz` would match `Country.NZ`
+-  A value of `new zealand` would match `Country.NZ`
+-  A value of `Uk` would match `Country.UNKNOWN`

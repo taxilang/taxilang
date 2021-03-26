@@ -12,11 +12,11 @@ export default function CustomSEO({ image, baseUrl, twitterHandle, ...props }) {
       titleFont: "Source%20Sans%20Pro",
       taglineFont: "Source%20Sans%20Pro",
       textColor: "ffffff",
-      titleFontSize: 70,
+      titleExtraConfig: "_bold",
+      textAreaWidth: 1120,
+      titleFontSize: 80,
       taglineFontSize: 52,
-      textLeftOffset: 50,
-      titleBottomOffset: 450,
-      taglineTopOffset: 250
+      textLeftOffset: 80,
    });
    return (
       <SEO
