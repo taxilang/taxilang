@@ -1,5 +1,7 @@
 package lang.taxi.lsp
 
+import lang.taxi.CompilerConfig
+import lang.taxi.toggles.FeatureToggle
 import org.eclipse.lsp4j.launch.LSPLauncher
 import java.io.InputStream
 import java.io.OutputStream
@@ -23,7 +25,14 @@ object Launcher {
         globalLogger.level = Level.OFF
 
         // start the language server
-        startServer(System.`in`, System.out)
+        val configArgs = args.map {
+            val keyValue = it.split("=")
+            keyValue[0] to FeatureToggle.valueOf(keyValue[1])
+        }.toMap()
+        val config = CompilerConfig(
+                typeCheckerEnabled = configArgs["typeChecker"] ?: FeatureToggle.DISABLED
+        )
+        startServer(System.`in`, System.out, config)
     }
 
     /**
@@ -33,9 +42,9 @@ object Launcher {
      * @throws ExecutionException Unable to start the server
      * @throws InterruptedException Unable to start the server
      */
-    private fun startServer(input: InputStream, outputStream: OutputStream) {
+    private fun startServer(input: InputStream, outputStream: OutputStream, compilerConfig: CompilerConfig) {
         // Initialize the HelloLanguageServer
-        val taxiLanguageServer = TaxiLanguageServer(lifecycleHandler = ProcessLifecycleHandler)
+        val taxiLanguageServer = TaxiLanguageServer(compilerConfig = compilerConfig, lifecycleHandler = ProcessLifecycleHandler)
         // Create JSON RPC launcher for HelloLanguageServer instance.
         val launcher = LSPLauncher.createServerLauncher(taxiLanguageServer, input, outputStream)
 

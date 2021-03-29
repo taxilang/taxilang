@@ -26,7 +26,7 @@
           "taxi"
         ],
         "extensions": [
-          ".taxi"
+          ".taxi",".conf"
         ],
         "configuration": "./language-configuration.json"
       }
@@ -42,6 +42,18 @@
       "type": "object",
       "title": "Taxi",
       "properties": {
+        "taxi.typeChecker": {
+          "type": "string",
+          "default": "disabled",
+          "enum" : [
+            "enabled","disabled","soft_enabled"
+          ],
+          "enumDescriptions": [
+            "Enables the type checker.  Type violations are reported as errors",
+            "Disables the type checker.  Type vioaltions are not reported",
+            "Enables the type checker.  Type violations are reported as warnings"
+          ]
+        },
         "taxi.javaHome": {
           "type": "string",
           "default": "",
@@ -89,6 +101,7 @@
       "semantic-release-vsce",
       "@semantic-release/gitlab"
     ],
+    "generateNotes": "@semantic-release/release-notes-generator",
     "prepare": {
       "path": "semantic-release-vsce",
       "packageVsix": "taxi-language-server.vsix"

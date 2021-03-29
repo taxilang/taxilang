@@ -16,7 +16,8 @@
     </modules>
 
     <properties>
-        <taxi.version>0.8.1-SNAPSHOT</taxi.version>
+        <java.version>1.8</java.version>
+        <taxi.version>0.13.0</taxi.version>
         <lsp4j.version>0.9.0</lsp4j.version>
         <kotlin.version>1.3.50</kotlin.version>
         <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
@@ -203,7 +204,7 @@
         <repository>
             <id>bintray-taxi-lang-releases</id>
             <name>taxi-lang-releases</name>
-            <url>https://api.bintray.com/maven/taxi-lang/releases/${project.artifactId}/;publish=1</url>
+            <url>https://api.bintray.com/maven/taxi-lang/taxi-lang-server/${project.artifactId}/;publish=1</url>
         </repository>
         <snapshotRepository>
             <id>repo.vyne.co</id>
@@ -212,7 +213,10 @@
     </distributionManagement>
 
     <repositories>
-        <!-- for taxi snapshots -->
+        <repository>
+            <id>vyne-releases</id>
+            <url>http://repo.vyne.co/release</url>
+        </repository>
         <repository>
             <id>vyne-snapshots</id>
             <url>http://repo.vyne.co/snapshot</url>

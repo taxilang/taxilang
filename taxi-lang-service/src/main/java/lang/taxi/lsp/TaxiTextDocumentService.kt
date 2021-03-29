@@ -1,24 +1,61 @@
 package lang.taxi.lsp
 
-import lang.taxi.*
+import lang.taxi.CompilationError
+import lang.taxi.Compiler
+import lang.taxi.CompilerTokenCache
+import lang.taxi.TaxiDocument
+import lang.taxi.UnknownTokenReferenceException
+import lang.taxi.lsp.actions.CodeActionService
 import lang.taxi.lsp.completion.CompletionService
-import lang.taxi.lsp.completion.TypeProvider
 import lang.taxi.lsp.formatter.FormatterService
 import lang.taxi.lsp.gotoDefinition.GotoDefinitionService
 import lang.taxi.lsp.hover.HoverService
+import lang.taxi.lsp.linter.LintingService
+import lang.taxi.messages.Severity
 import lang.taxi.types.SourceNames
-import org.antlr.v4.runtime.CharStream
-import org.antlr.v4.runtime.CharStreams
-import org.eclipse.lsp4j.*
+import org.eclipse.lsp4j.CodeAction
+import org.eclipse.lsp4j.CodeActionParams
+import org.eclipse.lsp4j.Command
+import org.eclipse.lsp4j.CompletionItem
+import org.eclipse.lsp4j.CompletionList
+import org.eclipse.lsp4j.CompletionParams
+import org.eclipse.lsp4j.DefinitionParams
+import org.eclipse.lsp4j.Diagnostic
+import org.eclipse.lsp4j.DiagnosticSeverity
+import org.eclipse.lsp4j.DidChangeTextDocumentParams
+import org.eclipse.lsp4j.DidCloseTextDocumentParams
+import org.eclipse.lsp4j.DidOpenTextDocumentParams
+import org.eclipse.lsp4j.DidSaveTextDocumentParams
+import org.eclipse.lsp4j.DocumentFormattingParams
+import org.eclipse.lsp4j.Hover
+import org.eclipse.lsp4j.HoverParams
+import org.eclipse.lsp4j.InitializeParams
+import org.eclipse.lsp4j.Location
+import org.eclipse.lsp4j.LocationLink
+import org.eclipse.lsp4j.MarkupContent
+import org.eclipse.lsp4j.MessageParams
+import org.eclipse.lsp4j.MessageType
+import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.PublishDiagnosticsParams
+import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.TextEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.LanguageClient
 import org.eclipse.lsp4j.services.LanguageClientAware
 import org.eclipse.lsp4j.services.TextDocumentService
+import reactor.core.publisher.Sinks
 import java.io.File
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.net.URI
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.time.Duration
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.atomic.AtomicReference
 
+object UnknownSource {
+    val UNKNOWN_SOURCE = "Unknown source"
+}
 
 /**
  * Stores the compiled snapshot for a file
@@ -26,33 +63,73 @@ import java.util.concurrent.atomic.AtomicReference
  * and the compiler, for accessing tokens and compiler context - useful
  * for completion
  */
-data class CompilationResult(val compiler: Compiler, val document: TaxiDocument?) {
+data class CompilationResult(
+    val compiler: Compiler,
+    val document: TaxiDocument?,
+    val countOfSources: Int,
+    val duration: Duration,
+    val errors: List<CompilationError> = emptyList()
+
+
+) {
     val successful = document != null
 }
 
+private data class CompilationTrigger(val changedPath: Path)
 
-class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
+class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) : TextDocumentService,
+    LanguageClientAware {
 
-    private var displayedErrorMessages: List<PublishDiagnosticsParams> = emptyList()
-    private val sources: MutableMap<URI, String> = mutableMapOf()
-    private val charStreams: MutableMap<URI, CharStream> = mutableMapOf()
+    val lastCompilationResult: CompilationResult
+        get() {
+            return this.compilerService.getOrComputeLastCompilationResult()
+        }
+    private var displayedMessages: List<PublishDiagnosticsParams> = emptyList()
     private lateinit var initializeParams: InitializeParams
-    private val lastSuccessfulCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
-    private val lastCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
     private val tokenCache: CompilerTokenCache = CompilerTokenCache()
 
     // TODO : We can probably use the unparsedTypes from the tokens for this, rather than the
     // types themselves, as it'll give better results sooner
-    private val typeProvider = TypeProvider(lastSuccessfulCompilationResult, lastCompilationResult)
-    private val completionService = CompletionService(typeProvider)
+
+    private val completionService = CompletionService(compilerService.typeProvider)
     private val formattingService = FormatterService()
-    private val gotoDefinitionService = GotoDefinitionService(typeProvider)
+    private val gotoDefinitionService = GotoDefinitionService(compilerService.typeProvider)
     private val hoverService = HoverService()
+    private val codeActionService = CodeActionService()
+    private val lintingService = LintingService()
+
     private lateinit var client: LanguageClient
     private var rootUri: String? = null
 
     private var initialized: Boolean = false
     private var connected: Boolean = false
+
+    private val compileTriggerSink = Sinks.many().unicast().onBackpressureBuffer<CompilationTrigger>()
+
+    init {
+        compileTriggerSink.asFlux()
+            .bufferTimeout(50, Duration.ofMillis(500))
+            .subscribe { triggers ->
+                try {
+                    compile()
+                    triggers.distinct()
+                        .forEach { compilationTrigger ->
+                            computeLinterMessages(SourceNames.normalize(compilationTrigger.changedPath))
+                        }
+                    publishDiagnosticMessages()
+                } catch (e: Exception) {
+                    val writer = StringWriter()
+                    val printWriter = PrintWriter(writer)
+                    e.printStackTrace(printWriter)
+                    client.logMessage(
+                        MessageParams(
+                            MessageType.Error,
+                            "An exception was thrown when compiling.  This is a bug in the compiler, and should be reported. \n${e.message} \n$writer"
+                        )
+                    )
+                }
+            }
+    }
 
     private val ready: Boolean
         get() {
@@ -62,46 +139,86 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
     var compilerMessages: List<CompilationError> = emptyList()
         private set
 
+    var compilerErrorDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
+    var linterDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
+
+    override fun codeAction(params: CodeActionParams): CompletableFuture<MutableList<Either<Command, CodeAction>>> {
+        return codeActionService.getActions(params)
+    }
 
     override fun completion(position: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
-        if (lastCompilationResult.get() == null) {
-            compileAndReport()
+        if (position.textDocument.uri.endsWith(".conf")) {
+            return CompletableFuture.completedFuture(Either.forLeft(mutableListOf()))
         }
-        return completionService.computeCompletions(lastCompilationResult.get(), position)
+        val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
+        return completionService.computeCompletions(lastCompilationResult, position)
     }
 
     override fun definition(params: DefinitionParams): CompletableFuture<Either<MutableList<out Location>, MutableList<out LocationLink>>> {
-        if (lastCompilationResult.get() == null) {
-            compileAndReport()
+        if (params.textDocument.uri.endsWith(".conf")) {
+            return CompletableFuture.completedFuture(Either.forLeft(mutableListOf()))
         }
-        return gotoDefinitionService.definition(lastCompilationResult.get(), params)
+        val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
+        return gotoDefinitionService.definition(lastCompilationResult, params)
     }
 
     override fun hover(params: HoverParams): CompletableFuture<Hover> {
-        if (lastCompilationResult.get() == null) {
-            compileAndReport()
+        if (params.textDocument.uri.endsWith(".conf")) {
+            return CompletableFuture.completedFuture(Hover(MarkupContent("markdown", "")))
         }
-        return hoverService.hover(lastCompilationResult.get(), lastSuccessfulCompilationResult.get(), params)
+        val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
+        return try {
+            hoverService.hover(lastCompilationResult, compilerService.lastSuccessfulCompilationResult.get(), params)
+        } catch (unknownTokenException: UnknownTokenReferenceException) {
+            // Try to reload just the once, and then re-attempt the hover call.
+            // If it fails after that, then just let the exception get thrown to prevent
+            // looping forever
+            forceReload("Received a reference to an unknown file - ${unknownTokenException.providedSourcePath}")
+            hoverService.hover(lastCompilationResult, compilerService.lastSuccessfulCompilationResult.get(), params)
+        }
     }
 
     override fun formatting(params: DocumentFormattingParams): CompletableFuture<MutableList<out TextEdit>> {
-        val uri = URI.create(SourceNames.normalize(params.textDocument.uri))
-        val content = this.sources[uri]
-                ?: error("Could not find source with url ${params.textDocument.uri}")
+        if (params.textDocument.uri.endsWith(".conf")) {
+            return CompletableFuture.completedFuture(mutableListOf())
+        }
+        val content = compilerService.source(params.textDocument.uri)
         return formattingService.getChanges(content, params.options)
     }
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
-        val content = params.textDocument.text
-        val sourceName = params.textDocument.uri
+        computeLinterMessages(params.textDocument.uri)
+        publishDiagnosticMessages()
+    }
 
-        // This seems to normalize nicely on windows.  Will need to check on ubuntu
-        val sourceNameUri = URI.create(SourceNames.normalize(sourceName))
-        this.sources[sourceNameUri] = content
-        this.charStreams[sourceNameUri] = CharStreams.fromString(content, sourceName)
+    private fun computeLinterMessages(documentUri: String) {
+        val normalizedUri = SourceNames.normalize(documentUri)
+        val uri = URI.create(normalizedUri)
+        this.linterDiagnostics = mapOf(
+            normalizedUri to
+                    lintingService.computeInsightFor(uri, compilerService.getOrComputeLastCompilationResult())
+        )
     }
 
     override fun didSave(params: DidSaveTextDocumentParams) {
+        // We only retrigger full reload on save of a the taxi.conf
+        // as it's an expensive operation.
+        val sourceName = params.textDocument.uri
+        if (sourceName.endsWith("taxi.conf")) {
+            forceReload("taxi.conf has changed - reloading")
+        }
+    }
+
+    private fun forceReload(reason: String) {
+        client.logMessage(
+            MessageParams(
+                MessageType.Info,
+                reason
+            )
+        )
+        compilerService.reloadSourcesAndCompile()
+        compile()
+        publishDiagnosticMessages()
     }
 
     override fun didClose(params: DidCloseTextDocumentParams) {
@@ -118,70 +235,78 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         val content = change.text
         val sourceName = params.textDocument.uri
 
-        // This seems to normalize nicely on windows.  Will need to check on ubuntu
-        val sourceNameUri = URI.create(SourceNames.normalize(sourceName))
-        this.sources[sourceNameUri] = content
-        this.charStreams[sourceNameUri] = CharStreams.fromString(content, sourceName)
-        compileAndReport()
 
-
+        if (sourceName.endsWith("taxi.conf")) {
+            // SKip it, we'll wait for a save.
+        } else {
+            val compilationTrigger = CompilationTrigger(
+                Paths.get(URI.create(params.textDocument.uri))
+            )
+            compilerService.updateSource(params.textDocument, content)
+            this.compileTriggerSink.tryEmitNext(compilationTrigger)
+        }
     }
 
     // This is a very non-performant first pass.
     // We're compiling the entire workspace every time we get a request, which is
     // on every keypress.
     // We need to find a way to only recompile the document that has changed
-    private fun compileAndReport() {
-        val charStreams = this.charStreams.values.toList()
-        val compiler = Compiler(charStreams, tokenCache = tokenCache)
+    internal fun compile(): CompilationResult {
+        val compilationResult = this.compilerService.compile()
+        logCompilationResult(compilationResult)
+        this.compilerMessages = compilationResult.errors
+        this.compilerErrorDiagnostics = convertCompilerMessagesToDiagnotics(this.compilerMessages)
 
-        try {
-            val compiled = compiler.compile()
-            val compilationResult = CompilationResult(compiler, compiled)
-            lastSuccessfulCompilationResult.set(compilationResult)
-            lastCompilationResult.set(compilationResult)
-            compilerMessages = emptyList()
-            clearErrors()
-        } catch (e: CompilationException) {
-            compilerMessages = e.errors
-            val compilationResult = CompilationResult(compiler, null)
-            lastCompilationResult.set(compilationResult)
-        }
-        reportMessages()
+        return compilationResult
     }
 
-    private fun reportMessages() {
-        if (!connected) {
-            return
-        }
-        val diagnostics = this.compilerMessages.map { error ->
+    private fun convertCompilerMessagesToDiagnotics(compilerMessages: List<CompilationError>): Map<String, List<Diagnostic>> {
+        val diagnostics = compilerMessages.map { error ->
             // Note - for VSCode, we can use the same position for start and end, and it
             // highlights the entire word
             val position = Position(
-                    error.line - 1,
-                    error.char
+                error.line - 1,
+                error.char
             )
-            (error.sourceName ?: "Unknown source") to Diagnostic(
-                    Range(position, position),
-                    error.detailMessage ?: "Unknown error",
-                    DiagnosticSeverity.Error,
-                    "Compiler"
-            )
-        }
-        clearErrors()
-        this.displayedErrorMessages = diagnostics.groupBy { it.first }.map { (sourceUri, diagnostics) ->
-            // This seems to normalize nicely on windows.  Will need to check on ubuntu
-            val fileUri = SourceNames.normalize(sourceUri)
-            PublishDiagnosticsParams(
-                    fileUri,
-                    diagnostics.map { it.second }
+            val severity: DiagnosticSeverity = when (error.severity) {
+                Severity.INFO -> DiagnosticSeverity.Information
+                Severity.WARNING -> DiagnosticSeverity.Warning
+                Severity.ERROR -> DiagnosticSeverity.Error
+            }
+            (error.sourceName ?: UnknownSource.UNKNOWN_SOURCE) to Diagnostic(
+                Range(position, position),
+                error.detailMessage,
+                severity,
+                "Compiler"
             )
         }
-        publishErrorMessages()
+        return diagnostics.groupBy({ it.first }, { it.second })
+            .mapKeys { (fileUri, _) -> SourceNames.normalize(fileUri) }
     }
 
-    private fun publishErrorMessages() {
-        this.displayedErrorMessages.forEach {
+    private fun publishDiagnosticMessages() {
+        val diagnosticMessages = (compilerErrorDiagnostics.keys + linterDiagnostics.keys).map { uri ->
+            val normalisedUrl = SourceNames.normalize(uri)
+            normalisedUrl to (compilerErrorDiagnostics.getOrDefault(
+                normalisedUrl,
+                emptyList()
+            ) + linterDiagnostics.getOrDefault(normalisedUrl, emptyList()))
+        }.map { (uri, diagnostics) ->
+            // When sending diagnostic messages, use the canonical path of the file, rather than
+            // the normalized URI.  This means we get an OS specific file.
+            // VSCode on windows seems to not like the URI
+
+            val filePath = try { File(URI.create(uri)).canonicalPath } catch (e:Exception) {
+                UnknownSource.UNKNOWN_SOURCE
+            }
+            PublishDiagnosticsParams(filePath, diagnostics)
+        }
+
+        clearErrors()
+        this.displayedMessages = diagnosticMessages
+
+
+        diagnosticMessages.forEach {
             client.publishDiagnostics(it)
         }
     }
@@ -190,10 +315,10 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         if (connected) {
             // Non-performant - we're destroying the entire set of warnings for each compilation pass
             // (which in practice, is each keypress)
-            this.displayedErrorMessages.forEach { oldErrorMessage ->
+            this.displayedMessages.forEach { oldErrorMessage ->
                 client.publishDiagnostics(PublishDiagnosticsParams(oldErrorMessage.uri, emptyList()))
             }
-            this.displayedErrorMessages = emptyList()
+            this.displayedMessages = emptyList()
         }
     }
 
@@ -201,39 +326,34 @@ class TaxiTextDocumentService() : TextDocumentService, LanguageClientAware {
         this.client = client
         connected = true
         if (ready) {
-            compileAndReport()
+            initializeCompilerService()
         }
     }
 
     fun initialize(params: InitializeParams) {
         this.rootUri = params.rootUri
         this.initializeParams = params
-        if(this.rootUri != null) {
-            val initSources = File(URI.create(params.rootUri))
-                    .walk()
-                    .filter { it.extension == "taxi" }
-                    .map {
-                        val source = it.readText()
 
-                        it.toURI() to (source to CharStreams.fromString(source, it.toPath().toString()))
-                    }
-                    .toMap()
+        initialized = true
 
-
-            initSources.forEach { (key, sourceAndCharStream) ->
-                val (source, charStream) = sourceAndCharStream
-                this.charStreams[key] = charStream
-                this.sources[key] = source
-            }
-            initialized = true
-
-            if (ready) {
-                client.logMessage(MessageParams(MessageType.Log, "Found ${charStreams.size} to compile on startup"))
-                compileAndReport()
-            }
+        if (ready) {
+            initializeCompilerService()
         }
+    }
 
+    internal fun initializeCompilerService() {
+        this.compilerService.initialize(rootUri!!, client)
+        this.compilerService.reloadSourcesWithoutCompiling()
+        compile()
+        publishDiagnosticMessages()
+    }
 
-
+    private fun logCompilationResult(result: CompilationResult) {
+        client.logMessage(
+            MessageParams(
+                MessageType.Log,
+                "Compiled ${result.countOfSources} sources in ${result.duration.toMillis()}ms"
+            )
+        )
     }
 }

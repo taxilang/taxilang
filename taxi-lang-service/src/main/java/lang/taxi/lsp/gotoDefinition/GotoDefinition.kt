@@ -11,19 +11,23 @@ import java.util.concurrent.CompletableFuture
 
 class GotoDefinitionService(private val typeProvider: TypeProvider) {
     fun definition(compilationResult: CompilationResult, params: DefinitionParams): CompletableFuture<Either<MutableList<out Location>, MutableList<out LocationLink>>> {
-        val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.uri)
-        val compilationUnit = when (context) {
-            is TaxiParser.TypeTypeContext -> compilationResult.compiler.getDeclarationSource(context)
+        val compiler = compilationResult.compiler
+        val compilationUnit = when (val context = compiler.contextAt(params.position.line, params.position.character, params.textDocument.uriPath())) {
+            is TaxiParser.TypeTypeContext -> compiler.getDeclarationSource(context)
             is TaxiParser.ListOfInheritedTypesContext -> {
                 // TODO  : For now, let's just use the first type. Not sure we support a list of types here.
                 val inheritedType = context.typeType().first()
-                compilationResult.compiler.getDeclarationSource(inheritedType)
+                compiler.getDeclarationSource(inheritedType)
+            }
+            is TaxiParser.EnumInheritedTypeContext -> {
+                val inheritedType = context.typeType()
+                compiler.getDeclarationSource(inheritedType)
             }
             is TaxiParser.EnumSynonymSingleDeclarationContext -> {
                 // Drop off the value within the enum for now, we'll navigate to the enum class, but not
                 // the value within it.
                 val enumName = context.text.split(".").dropLast(1).joinToString(".")
-                compilationResult.compiler.getDeclarationSource(enumName, context)
+                compiler.getDeclarationSource(enumName, context)
             }
             else -> null
         }

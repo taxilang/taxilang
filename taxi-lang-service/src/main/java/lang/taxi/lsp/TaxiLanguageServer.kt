@@ -1,15 +1,32 @@
 package lang.taxi.lsp
 
+import lang.taxi.CompilerConfig
 import lang.taxi.utils.log
-import org.eclipse.lsp4j.*
-import org.eclipse.lsp4j.services.*
+import org.eclipse.lsp4j.CompletionOptions
+import org.eclipse.lsp4j.InitializeParams
+import org.eclipse.lsp4j.InitializeResult
+import org.eclipse.lsp4j.MessageParams
+import org.eclipse.lsp4j.MessageType
+import org.eclipse.lsp4j.SaveOptions
+import org.eclipse.lsp4j.ServerCapabilities
+import org.eclipse.lsp4j.TextDocumentSyncKind
+import org.eclipse.lsp4j.TextDocumentSyncOptions
+import org.eclipse.lsp4j.WorkspaceFoldersOptions
+import org.eclipse.lsp4j.WorkspaceServerCapabilities
+import org.eclipse.lsp4j.services.LanguageClient
+import org.eclipse.lsp4j.services.LanguageClientAware
+import org.eclipse.lsp4j.services.LanguageServer
+import org.eclipse.lsp4j.services.TextDocumentService
+import org.eclipse.lsp4j.services.WorkspaceService
 import java.util.concurrent.CompletableFuture
 import kotlin.system.exitProcess
 
 
 class TaxiLanguageServer(
-        private val textDocumentService: TaxiTextDocumentService = TaxiTextDocumentService(),
-        private val workspaceService: TaxiWorkspaceService = TaxiWorkspaceService(),
+        private val compilerConfig:CompilerConfig = CompilerConfig(),
+        private val compilerService: TaxiCompilerService = TaxiCompilerService(compilerConfig),
+        private val textDocumentService: TaxiTextDocumentService = TaxiTextDocumentService(compilerService),
+        private val workspaceService: TaxiWorkspaceService = TaxiWorkspaceService(compilerService),
         private val lifecycleHandler: LanguageServerLifecycleHandler = NoOpLifecycleHandler
 ) : LanguageServer, LanguageClientAware {
 
@@ -44,10 +61,15 @@ class TaxiLanguageServer(
 
         // Set the capabilities of the LS to inform the client.
         val capabilities = initializeResult.capabilities
-        capabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
+        capabilities.setTextDocumentSync(TextDocumentSyncOptions().apply {
+            change = TextDocumentSyncKind.Full
+            save = SaveOptions(false)
+        })
         capabilities.definitionProvider  = true
+        capabilities.workspaceSymbolProvider = true
         capabilities.hoverProvider = true
         capabilities.documentFormattingProvider = true
+        capabilities.setCodeActionProvider(true)
         capabilities.workspace = WorkspaceServerCapabilities(WorkspaceFoldersOptions().apply {
             supported = true
             setChangeNotifications(true)

@@ -7,7 +7,7 @@ The visual studio code plugin is available from Gitlab, or on the VSCode Marketp
 To install the plugin from the releases pages, use the instructions [here](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#packaging-extensions).
 
 ```bash
-code --install-extension taxi-language-server-0.0.1.vsix
+code --install-extension taxi-language-server-1.1.11.vsix
 ```
 
 The plugin ships with a Taxi Language Server.  It requires java, 
