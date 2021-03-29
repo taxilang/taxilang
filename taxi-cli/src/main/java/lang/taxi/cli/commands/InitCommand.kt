@@ -12,7 +12,6 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.beryx.textio.TextIO
 import org.springframework.stereotype.Component
-import java.io.File
 import java.nio.file.Files
 
 @Component
@@ -95,9 +94,9 @@ class InitCommand(private val prompt: TextIO) : ProjectlessShellCommand {
       )
 
       val vscodeDir = Files.createDirectory(environment.outputPath.resolve(".vscode"))
-      FileUtils.copyDirectory(
-         File(Resources.getResource("taxi-cli-files/.vscode").toURI()),
-         vscodeDir.toFile()
+      IOUtils.copy(
+         Resources.getResource("taxi-cli-files/.vscode/extensions.json").openStream(),
+         vscodeDir.resolve("extensions.json").toFile().outputStream()
       )
 
       log().info("Finished")
