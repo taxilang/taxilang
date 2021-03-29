@@ -4,11 +4,34 @@ import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
 import junit.framework.Assert.fail
 import lang.taxi.types.EnumType
-import lang.taxi.types.EnumValue
+import org.antlr.v4.runtime.CharStreams
 import org.junit.Test
-import kotlin.math.exp
 
 class ExtensionsTest {
+
+   //Compiler(listOf(CharStreams.fromString(source1, "source1"), CharStreams.fromString(source2, "source2"))).compile()
+   @Test
+   fun `extend type in a different source file`() {
+      val source1 = """
+         type Person {
+            name : String
+         }
+         @TypeAnnotation
+         type extension Person {
+            @MyAnnotation(param2 = "bar")
+            name
+         }"""
+      val source2 = """
+         type extension Person {
+            @AnotherAnnotation(param2 = "bar")
+            name
+         }
+      """.trimIndent()
+      val doc = Compiler(listOf(CharStreams.fromString(source1, "source1"), CharStreams.fromString(source2, "source2"))).compile()
+      val person = doc.objectType("Person")
+      expect(person.field("name").annotations).size.to.equal(2)
+      expect(person.annotations).size.to.equal(1)
+   }
 
    @Test
    fun typesCanAddAnnotationsThroughExtensions() {
@@ -39,7 +62,7 @@ type Person {
    name : String
    age : Int
 }
-type alias FirstName as String
+type FirstName inherits String
 
 type extension Person {
     name : FirstName
@@ -237,17 +260,20 @@ RED
          }
          type alias FirstName as String
          type Age inherits Int
+         type Height inherits Decimal
          type Person {
             name : String
             age: Age
             surname: String
             foo: Foo
+            height: Height
          }
          type extension Person {
-            name: FirstName with default 'jimmy'
-            surname : FirstName with default 'doe'
-            age: Age with default 42
-            foo: Foo with default Foo.One
+            name: FirstName by default ('jimmy')
+            surname : FirstName by default ('doe')
+            age: Age by default (42)
+            foo: Foo by default (Foo.One)
+            height: Height by default (18200000)
          }
         """
       val doc = Compiler(source).compile()
@@ -265,6 +291,8 @@ RED
       expect(fooField.type.qualifiedName).to.equal("Foo")
       val expectedEnumValue = (fooField.type as EnumType).values.first { it.qualifiedName == "Foo.One" }
       expect(fooField.defaultValue).to.equal(expectedEnumValue)
+      val heightField = person.field("height")
+      expect(heightField.defaultValue).to.equal(18200000)
    }
 
    @Test(expected = CompilationException::class)
@@ -275,7 +303,7 @@ RED
             name : String
          }
          type extension Person {
-            name: FirstName with default 42
+            name: FirstName by default (42)
          }
         """
       val doc = Compiler(source).compile()
@@ -289,7 +317,7 @@ RED
             age : Int
          }
          type extension Person {
-            age: Age with default 'jimmy'
+            age: Age by default ('jimmy')
          }
         """
       val doc = Compiler(source).compile()
@@ -305,7 +333,7 @@ RED
             birthCountry : CountryCode
          }
          type extension Person {
-            birthCountry: CountryCode with default CountryCode.TR
+            birthCountry: CountryCode by default (CountryCode.TR)
          }
         """
       val doc = Compiler(source).compile()

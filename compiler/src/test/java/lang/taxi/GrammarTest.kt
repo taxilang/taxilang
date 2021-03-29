@@ -30,6 +30,20 @@ type FooType {
    }
 
    @Test
+   fun `declaring the same field twice in a type should cause an error`() {
+      val errors = """type Person {
+         firstName : String
+         lastName : String
+         firstName : String
+         }
+      """.validated()
+      errors.should.have.size(2)
+      // 2 errors - an error is captured for both the fields
+      errors[0].detailMessage.should.equal("Field firstName is declared multiple times")
+      errors[1].detailMessage.should.equal("Field firstName is declared multiple times")
+   }
+
+   @Test
    fun callingFindNamespaceWithoutANamespaceReturnsDefaultNamespace() {
       val src = """type FooType {
    thing : SomeThing as String
@@ -163,7 +177,42 @@ namespace bar {
    }
 
    @Test
-   fun given_typeIsRedeclaredWithSemanticallyEquivalentDefinition_then_itIsValid() {
+   fun arraysAreParsedInBothShorthandAndLonghand() {
+      val foo = """
+         type Name inherits String
+         model Foo {
+            nickNames: Name[]
+            petNames : Array<Name>
+            hatedNames: lang.taxi.Array<Name>
+         }
+      """.compiled()
+         .model("Foo")
+      foo.field("nickNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
+      foo.field("petNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
+      foo.field("hatedNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
+   }
+
+   @Test
+   fun arraysAReParsedWhenImported() {
+      val foo = """
+         import lang.taxi.Array
+
+         type Name inherits String
+         model Foo {
+            nickNames: Name[]
+            petNames : Array<Name>
+            hatedNames: lang.taxi.Array<Name>
+         }
+      """.compiled()
+         .model("Foo")
+      foo.field("nickNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
+      foo.field("petNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
+      foo.field("hatedNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
+   }
+
+   @Ignore("Need to make this work consistently. See TokenCollator:collectDuplicateTypes for detail")
+   @Test(expected = CompilationException::class)
+   fun given_typeIsRedeclaredWithSemanticallyEquivalentDefinition_then_itIsInValid() {
       val source1 = """
 namespace foo {
     type Person {
@@ -185,7 +234,7 @@ namespace foo {
    }
 
    @Test
-   @Ignore("Detection of redecalred types is disabled, as was buggy and didn't respect imports")
+   @Ignore("Need to make this work consistently. See TokenCollator:collectDuplicateTypes for detail")
    fun given_typeIsRedeclaredWithDifferentDefinition_then_exceptionIsThrown() {
       val source1 = """
 namespace foo {
@@ -219,8 +268,8 @@ type Test {
 """
       val doc = Compiler(source).compile()
       val type = doc.objectType("Test")
-      expect(type.annotation("StringAnnotation").parameters["value"]).to.equal("foo")
-      expect(type.annotation("SomeAnnotation").parameters["value"]).to.equal("bar")
+      expect(type.annotation("StringAnnotation").parameter("value")).to.equal("foo")
+      expect(type.annotation("SomeAnnotation").parameter("value")).to.equal("bar")
    }
 
    @Test
@@ -228,14 +277,14 @@ type Test {
    fun annotationCanHaveBooleanArgument() {
       val doc = Compiler("@Bool(value = false) type Test {}").compile()
       val type = doc.objectType("Test")
-      expect(type.annotation("Bool").parameters["value"]).to.equal(false)
+      expect(type.annotation("Bool").parameter("value")).to.equal(false)
    }
 
    @Test
    fun annotationCanHaveNumericArgument() {
       val doc = Compiler("@Numeric(value = 96000) type Test {}").compile()
       val type = doc.objectType("Test")
-      expect(type.annotation("Numeric").parameters["value"]).to.equal(96000)
+      expect(type.annotation("Numeric").parameter("value")).to.equal(96000)
    }
 
    @Test
@@ -891,110 +940,30 @@ type LegacyTradeNotification {
    }
 
    @Test
-   fun canDeclareColumnsWithNames() {
-      val src = """
-type Person {
-   firstName : FirstName as String
-   lastName : LastName as String
-   }
-
-fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {
-   firstName by column("firstName")
-   lastName by column(2)
-}
-      """.trimIndent()
-      val taxi = Compiler(src).compile()
-      val dataSource = taxi.dataSource("DirectoryOfPerson") as FileDataSource
-      dataSource.returnType.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Person>")
-      dataSource.mappings.should.have.size(2)
-
-      dataSource.mappings[0].propertyName.should.equal("firstName")
-      expect(dataSource.mappings[0].index is String)
-      dataSource.mappings[0].index.should.equal("firstName")
-      dataSource.mappings[1].propertyName.should.equal("lastName")
-      expect(dataSource.mappings[0].index is Int)
-      dataSource.mappings[1].index.should.equal(2)
-   }
-
-   @Test(expected=CompilationException::class)
-   fun cannotDeclareColumnsWithoutIndex() {
-      val src = """
-type Person {
-   firstName : FirstName as String
-   lastName : LastName as String
-   }
-
-fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {
-   firstName by column()
-   lastName by column()
-}
-      """.trimIndent()
-      val taxi = Compiler(src).compile()
-      taxi.dataSource("DirectoryOfPerson") as FileDataSource
-   }
-
-   @Test
-   fun canDeclareASource() {
-      val src = """
- type Person {
-   firstName : FirstName as String
-   lastName : LastName as String
-   }
-
-fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {
-   firstName by column(1)
-   lastName by column(2)
-}
-      """.trimIndent()
-      val taxi = Compiler(src).compile()
-      val dataSource = taxi.dataSource("DirectoryOfPerson") as FileDataSource
-      dataSource.returnType.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Person>")
-      dataSource.mappings.should.have.size(2)
-
-      dataSource.mappings[0].propertyName.should.equal("firstName")
-      dataSource.mappings[0].index.should.equal(1)
-      dataSource.mappings[1].propertyName.should.equal("lastName")
-      dataSource.mappings[1].index.should.equal(2)
-   }
-
-   @Test
    fun canDeclareTypeWithColumnMappingsAndThenUseAsASource() {
       val src = """
+declare function concat(String...):String
+declare function leftAndUpperCase(String,String):String
+declare function midAndUpperCase(String,String):String
 type alias FirstName as String
 type alias LastName as String
 type Person {
    firstName : FirstName by column(0)
    lastName : LastName by column(1)
+   title: String by default("Mr.")
+   age: Int by default(18)
 }
 
-fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {}
       """.trimIndent()
       val taxi = Compiler(src).compile()
       val person = taxi.objectType("Person")
       val firstName = person.field("firstName")
+      val title = person.field("title")
+      val age = person.field("age")
       firstName.accessor.should.be.instanceof(ColumnAccessor::class.java)
+      title.accessor.should.be.instanceof(ColumnAccessor::class.java)
+      age.accessor.should.be.instanceof(ColumnAccessor::class.java)
    }
-
-   @Test
-   fun dataSourcesCanHaveAnnotations() {
-      val src = """
-
-type Person {
-   firstName : FirstName as String
-   lastName : LastName as String
-   }
-
-@Foo
-fileResource(path = "/some/file/location", format = "csv") DirectoryOfPerson provides rowsOf Person {
-   firstName by column(0)
-   lastName by column(1)
-}
-      """.trimIndent()
-      val taxi = Compiler(src).compile()
-      val dataSource = taxi.dataSource("DirectoryOfPerson") as FileDataSource
-      dataSource.annotations.should.have.size(1)
-   }
-
 
    @Test
    fun when_unresolvedTypeExistsInFileWithNamespace_then_namespaceIsNotPrefixedInError() {
@@ -1073,6 +1042,8 @@ namespace foo {
       val schemaB = Compiler(sourceB, importSources = listOf(schemaA)).compile()
       expect(schemaB.containsService("foo.CustomerService")).to.be.`true`
    }
+
+
 }
 
 

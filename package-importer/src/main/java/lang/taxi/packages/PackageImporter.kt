@@ -1,23 +1,27 @@
 package lang.taxi.packages
 
 import lang.taxi.packages.utils.log
+import lang.taxi.sources.SourceCode
 import java.nio.file.Files
 import java.nio.file.Path
 
-class PackageImporter(private val importerConfig: ImporterConfig, private val downloaderFactory: PackageDownloaderFactory = PackageDownloaderFactory(importerConfig)) {
+class PackageImporter(
+   private val importerConfig: ImporterConfig,
+   private val downloaderFactory: PackageDownloaderFactory = PackageDownloaderFactory(importerConfig, userFacingLogger = importerConfig.userFacingLogger)
+) {
 
    fun fetchDependencies(projectConfig: TaxiPackageProject): Set<PackageSource> {
-      return projectConfig.dependencyPackages.flatMap { fetchDependency(it,projectConfig) }.toSet()
+      return projectConfig.dependencyPackages.flatMap { fetchDependency(it, projectConfig) }.toSet()
    }
 
    private fun fetchDependency(identifier: PackageIdentifier, projectConfig: TaxiPackageProject): Set<PackageSource> {
       val fromLocal = fetchFromLocalRepo(identifier)
-      if (fromLocal != null) {
-         return fromLocal
+      return if (fromLocal != null) {
+         fromLocal
       } else {
          val downloaded = downloaderFactory.create(projectConfig).download(identifier)
          if (downloaded) {
-            return fetchFromLocalRepo(identifier) ?: error("Content was not found despite successfully downloading")
+            fetchFromLocalRepo(identifier) ?: error("Content was not found despite successfully downloading")
          } else {
             error("Could not download ${identifier.id} from any repositories")
          }
@@ -31,7 +35,7 @@ class PackageImporter(private val importerConfig: ImporterConfig, private val do
             .walk()
             .filter { it.extension == "taxi" }
             .map { sourceFile ->
-               PackageSource(identifier, sourceFile.nameWithoutExtension, sourceFile.readText())
+               PackageSource(identifier, sourceFile.nameWithoutExtension, sourceFile.toPath(), sourceFile.readText())
             }
             .toSet()
       } else {
@@ -47,4 +51,6 @@ fun PackageIdentifier.localFolder(localCache: Path): Path {
       .resolve(this.version.toString())
 }
 
-class PackageSource(val project: PackageIdentifier, val fileName: String, val contents: String)
+class PackageSource(val project: PackageIdentifier, val fileName: String, val path:Path, val contents: String) {
+   val source: SourceCode = SourceCode(path.toFile().canonicalPath, contents, path)
+}

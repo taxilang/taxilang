@@ -2,9 +2,12 @@ package lang.taxi.types
 
 import arrow.core.Either
 import lang.taxi.Equality
+import lang.taxi.services.FieldName
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
-import java.lang.IllegalArgumentException
+import lang.taxi.utils.quoted
+import lang.taxi.utils.quotedIfNotAlready
+import lang.taxi.utils.quotedIfNecessary
 import kotlin.reflect.KProperty1
 
 data class FieldExtension(
@@ -27,10 +30,13 @@ data class ObjectTypeDefinition(
    val annotations: Set<Annotation> = emptySet(),
    val modifiers: List<Modifier> = emptyList(),
    val inheritsFrom: Set<Type> = emptySet(),
-   val format: String? = null,
+   val format: List<String>? = null,
+   val pattern: String? = null,
    val formattedInstanceOfType: Type? = null,
    val calculatedInstanceOfType: Type? = null,
    val calculation: Formula? = null,
+   val offset: Int? = null,
+   val isAnonymous: Boolean = false,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
@@ -102,7 +108,7 @@ data class ObjectType(
          return if (isDefined) wrapper.definitionHash else null
       }
 
-   override val format: String?
+   override val format: List<String>?
       get() {
          return if (this.definition?.format != null) {
             this.definition?.format
@@ -116,8 +122,14 @@ data class ObjectType(
          }
       }
 
+   override val anonymous: Boolean
+      get() = this.definition?.isAnonymous ?: false
+
    override val formattedInstanceOfType: Type?
       get() = this.definition?.formattedInstanceOfType
+
+   val calculatedInstanceOfType: Type?
+      get() = this.definition?.calculatedInstanceOfType
 
    override val referencedTypes: List<Type>
       get() {
@@ -190,8 +202,8 @@ data class ObjectType(
             val collatedAnnotations = field.annotations + fieldExtensions.annotations()
             val (refinedType, defaultValue) = fieldExtensions
                .asSequence()
-               .mapNotNull { refinement -> refinement.refinedType?.let { Pair(refinement.refinedType, refinement.defaultValue) } }
-               .firstOrNull() ?: Pair(field.type, null)
+               .mapNotNull { refinement -> refinement.refinedType?.let { refinement.refinedType to refinement.defaultValue } }
+               .firstOrNull() ?: field.type to null
             field.copy(annotations = collatedAnnotations, type = refinedType, defaultValue = defaultValue)
          } ?: emptyList()
       }
@@ -209,7 +221,7 @@ data class ObjectType(
 
    fun hasField(name: String): Boolean = allFields.any { it.name == name }
    fun field(name: String): Field = allFields.first { it.name == name }
-   fun annotation(name: String): Annotation = annotations.first { it.name == name }
+   fun annotation(name: String): Annotation = annotations.first { it.qualifiedName == name }
    fun fieldsWithType(typeName: QualifiedName): List<Field> {
       return this.fields.filter { applicableQualifiedNames(it.type).contains(typeName) }
    }
@@ -217,6 +229,20 @@ data class ObjectType(
    fun applicableQualifiedNames(type: Type): List<QualifiedName> {
       return type.inheritsFrom.map { it.toQualifiedName() }.plus(type.toQualifiedName())
    }
+
+   override val offset: Int?
+      get() {
+         return if (this.definition?.offset != null) {
+            this.definition?.offset
+         } else {
+            val inheritedOffsets = this.inheritsFrom.filter { it.offset != null }
+            when {
+               inheritedOffsets.isEmpty() -> null
+               inheritedOffsets.size == 1 -> inheritedOffsets.first().offset
+               else -> error("Multiple formats found in inheritence - this is an error")
+            }
+         }
+      }
 
 }
 
@@ -236,7 +262,37 @@ interface NameTypePair {
 
 }
 
-data class Annotation(val name: String, val parameters: Map<String, Any?> = emptyMap())
+data class Annotation(val name: String,
+                      val parameters: Map<String, Any?> = emptyMap(),
+                      val type: AnnotationType? = null
+) : TaxiStatementGenerator {
+   constructor(type: AnnotationType, parameters: Map<String, Any?>) : this(type.qualifiedName, parameters, type)
+
+   // For compatability.  Should probably migrate to using qualifiedName in
+   // the constructor to be consistent.
+   val qualifiedName: String = name
+
+   fun parameter(name: String): Any? {
+      return parameters[name]
+   }
+
+   override fun asTaxi(): String {
+      val parameterTaxi = parameters.map { (name, value) ->
+         if (value != null) {
+            "$name = ${value.quotedIfNecessary()}"
+         } else {
+            name
+         }
+      }.joinToString(", ")
+      return if (parameterTaxi.isNotEmpty()) {
+         """@$name($parameterTaxi)"""
+      } else {
+         """@$name"""
+      }
+   }
+}
+
+
 data class Field(
    override val name: String,
    override val type: Type,
@@ -247,13 +303,23 @@ data class Field(
    // TODO : Can we fold readCondition into accessor?
    // exploring with ConditionalAccessor
    val accessor: Accessor? = null,
-   val readCondition: FieldSetCondition? = null,
+   val readExpression: FieldSetExpression? = null,
    override val typeDoc: String? = null,
+   // TODO : This feels wrong - what's the relationship between this and the
+   //  defaults served by accessors?
+   // These default values are set by field extensions.
+   // Need to standardise.
    val defaultValue: Any? = null,
-   val formula: Formula? = null
-) : Annotatable, ConstraintTarget, Documented, NameTypePair {
+   val formula: Formula? = null,
+   override val compilationUnit: CompilationUnit
+) : Annotatable, ConstraintTarget, Documented, NameTypePair, TokenDefinition {
 
    override val description: String = "field $name"
+
+   // This needs to be stanrdardised with the defaultValue above, which comes from
+   // extensions
+   val accessorDefault = if (accessor is AccessorWithDefault) accessor.defaultValue else null
+
 
    // For equality - don't compare on the type (as this can cause stackOverflow when the type is an Object type)
    private val typeName = type.qualifiedName
@@ -266,22 +332,102 @@ data class Field(
 }
 
 
-interface Accessor
+interface Accessor {
+   val returnType: Type
+      get() = PrimitiveType.ANY
+}
+
+interface AccessorWithDefault {
+   val defaultValue: Any?
+}
+
 interface ExpressionAccessor : Accessor {
    val expression: String
 }
 
-data class XpathAccessor(override val expression: String) : ExpressionAccessor
-data class JsonPathAccessor(override val expression: String) : ExpressionAccessor
+data class LiteralAccessor(val value: Any) : Accessor, TaxiStatementGenerator {
+   override val returnType: Type
+      get() {
+         return when (value) {
+            is String -> PrimitiveType.STRING
+            is Int -> PrimitiveType.INTEGER
+            is Double -> PrimitiveType.DECIMAL
+            is Boolean -> PrimitiveType.BOOLEAN
+            else -> {
+               PrimitiveType.ANY
+            }
+         }
+
+      }
+
+   override fun asTaxi(): String {
+      return when (value) {
+         is String -> value.quoted()
+         else -> value.toString()
+      }
+   }
+
+}
+
+data class XpathAccessor(override val expression: String, override val returnType: Type) : ExpressionAccessor, TaxiStatementGenerator {
+   override fun asTaxi(): String = """by xpath("$expression")"""
+}
+
+data class JsonPathAccessor(override val expression: String, override val returnType: Type) : ExpressionAccessor, TaxiStatementGenerator {
+   override fun asTaxi(): String = """by jsonPath("$expression")"""
+}
 
 // TODO : This is duplicating concepts in ColumnMapping, one should die.
-data class ColumnAccessor(val index: Any) : ExpressionAccessor {
+data class ColumnAccessor(val index: Any?, override val defaultValue: Any?, override val returnType: Type) : ExpressionAccessor, TaxiStatementGenerator, AccessorWithDefault {
    override val expression: String = index.toString()
+   override fun asTaxi(): String {
+      return when {
+         index is String -> """by column(${index.quotedIfNotAlready()})"""
+         index is Int -> """by column(${index.toString()})"""
+         defaultValue is String -> """by default(${defaultValue.quoted()})"""
+         else -> """by default($defaultValue)"""
+      }
+   }
 }
 
 // This is for scenarios where a scalar field has been assigned a when block.
 // Ideally, we'd use the same approach for both destructured when blocks (ie., when blocks that
 // assign multiple fields), and scalar when blocks (a when block that assigns a single field).
-data class ConditionalAccessor(val condition: FieldSetCondition) : Accessor
+data class ConditionalAccessor(val expression: FieldSetExpression) : Accessor, TaxiStatementGenerator {
+   override fun asTaxi(): String {
+      return "by ${expression.asTaxi()}"
+   }
+}
+
+data class FieldSourceAccessor(
+   val sourceAttributeName: FieldName,
+   val attributeType: QualifiedName,
+   val sourceType: QualifiedName) : Accessor, TaxiStatementGenerator {
+   override fun asTaxi(): String {
+      return "by (this.$sourceAttributeName)"
+   }
+}
 
 data class DestructuredAccessor(val fields: Map<String, Accessor>) : Accessor
+
+@Deprecated("Use lang.taxi.functions.Function instead")
+data class ReadFunctionFieldAccessor(val readFunction: ReadFunction, val arguments: List<ReadFunctionArgument>) : Accessor
+
+@Deprecated("Use lang.taxi.functions.Function instead")
+data class ReadFunctionArgument(val columnAccessor: ColumnAccessor?, val value: Any?)
+
+@Deprecated("Use lang.taxi.functions.Function instead")
+enum class ReadFunction(val symbol: String) {
+   CONCAT("concat");
+
+   //   LEFTUPPERCASE("leftAndUpperCase"),
+//   MIDUPPERCASE("midAndUpperCase");
+   companion object {
+      private val bySymbol = ReadFunction.values().associateBy { it.symbol }
+      fun forSymbol(symbol: String): ReadFunction {
+         return bySymbol[symbol] ?: error("No operator defined for symbol $symbol")
+      }
+
+      fun forSymbolOrNull(symbol: String) = bySymbol[symbol]
+   }
+}

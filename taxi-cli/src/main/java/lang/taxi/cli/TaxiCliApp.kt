@@ -7,8 +7,11 @@ import com.beust.jcommander.Parameter
 import lang.taxi.cli.commands.ShellCommand
 import lang.taxi.cli.config.CliTaxiEnvironment
 import lang.taxi.cli.config.TaxiProjectLoader
+import lang.taxi.cli.utils.log
 import lang.taxi.generators.TaxiEnvironment
 import lang.taxi.packages.TaxiPackageProject
+import org.beryx.textio.TextIO
+import org.beryx.textio.TextIoFactory
 import org.slf4j.LoggerFactory
 import org.springframework.boot.Banner
 import org.springframework.boot.SpringApplication
@@ -25,6 +28,9 @@ class TaxiCli {
       @JvmStatic
       fun main(args: Array<String>) {
          bootOptions = parseBootOptions(args)
+         if (!bootOptions.taxiFileExists) {
+            log().debug("Running outside of a taxi project")
+         }
          enableDebugLoggingIfAppropriate(bootOptions)
          val app = SpringApplication(TaxiCli::class.java)
          app.setBannerMode(Banner.Mode.OFF)
@@ -59,12 +65,17 @@ class TaxiCli {
    }
 
    @Bean
+   fun textIo():TextIO {
+       return TextIoFactory.getTextIO()
+   }
+
+   @Bean
    fun cliOptions(): CliOptions {
       return CliOptions()
    }
 
    @Bean
-   internal fun jCommander(shellCommands: List<ShellCommand>): JCommander {
+   internal fun jCommander(shellCommands: List<ShellCommand<*>>): JCommander {
       val jCommander = JCommander(bootOptions)
       jCommander.programName = "taxi"
       shellCommands.forEach { command -> jCommander.addCommand(command.name, command) }
@@ -72,16 +83,20 @@ class TaxiCli {
    }
 
    @Bean
-   fun env(): TaxiPackageProject {
+   fun env(): TaxiPackageProject? {
       // Ensure that Spring loading the logback.xml hasn't overridden debug logging
       enableDebugLoggingIfAppropriate(bootOptions)
-      return TaxiProjectLoader()
-         .withConfigFileAt(bootOptions.getTaxiFile().toPath())
-         .load()
+      return if (bootOptions.taxiFileExists) {
+         TaxiProjectLoader()
+            .withConfigFileAt(bootOptions.getTaxiFile().toPath())
+            .load()
+      } else {
+         null
+      }
    }
 
    @Bean
-   fun environment(project: TaxiPackageProject): TaxiEnvironment {
+   fun environment(project: TaxiPackageProject?): TaxiEnvironment {
       return CliTaxiEnvironment.forRoot(Paths.get(TaxiCli.bootOptions.projectHome), project)
    }
 

@@ -1,0 +1,244 @@
+---
+title: Advanced type mapping
+description: Techniques for mapping messy, real-world data
+---
+
+These features describe techniques used when mapping data to semantic values when things don't neatly line up, or when enriching another representation of a model.
+
+These are often useful when mapping data provided by a system outside of your control, but can be used anywhere.
+Additionally, these techniques can be applied to incrementally expose exisitng data to the semantics of your type system.
+
+## Field accessors
+Field accessors describe a way of reading data into a field from somehwere within a document.
+
+By default, taxi assumes that the content that is being described read matches the structure of the content.  However, for some content (such as CSV), or for external content, this isn't always possible.
+
+### Describing CSV data - `column()`
+CSV data can be described in taxi using `by column()` syntax, passing either the header name or the column index.
+
+eg:
+
+```
+model Person {
+    firstName : FirstName by column('firstName')
+    lastName : LastName by column('lastName')
+}
+```
+
+The value passed can either be:
+
+ * the name of the column 
+ * the index of the column.  Indexes are assumed to be 1-based.  (That is, the first column is index 1, not index 0).
+
+### Describing Json data - `jsonPath()`
+By default, json data can be parsed by Taxi without any special markup.
+However, if you wish to expose a value from elsewhere in a doucment, you can use a jsonPath expression:
+
+```
+model Person {
+    firstName : FirstName by jsonPath('$.person.names.FirstName')
+}
+```
+
+Parsers will read the `firstName` attribute from the specified jsonPath.
+
+### Describing Xml data - `xpath()`
+By default, xml data can be described by Taxi and parsed by parsers without any special markup.
+However, if you wish to expose a value from elsewhere in a doucment, you can use an xpath expression:
+
+```
+model Person {
+    firstName : FirstName by xpath('//person/names[@type = 'firstName]/name')
+}
+```
+
+Parsers will read the `firstName` attribute from the specified xpath.
+
+
+## Conditional fields on types
+Conditional fields let you expose semantic data based on values from other fields within the model.
+This is useful when parsing semi-structured data into a semantic model.
+
+```
+model Person {
+    homePhone : HomePhoneNumber by column("homePhone")
+    workPhone : WorkPhoneNumber by column("workPhone")
+    preferredPhone : String by column("preferredPhone")
+    preferredPhoneNumber : PreferredPhoneNumber? by when (column("preferredPhone")) {
+        "Home" -> this.homePhone
+        "Work" -> this.workPhone
+        else -> null
+    }
+}
+```
+
+### `when` blocks
+When blocks are very flexible, and analogous to a series of `if...then...else` statements .  They support matching either on a specific value:
+
+```
+// switching on a specific value
+model Person {
+    preferredPhone : String by column("preferredPhone")
+    preferredPhoneNumber : PreferredPhoneNumber? by when (this.preferredPhone) {
+        "Home" -> this.homePhone
+        "Work" -> this.workPhone
+        else -> null
+    }
+}
+```
+
+or matching on the first `true` result:
+
+```
+model Person {
+    preferredPhoneNumber : PreferredPhoneNumber? by when {
+        this.preferredPhone = 'Home' -> column("homePhone")
+        this.preferredPhone = 'Work' -> column("workPhone")
+        else -> null
+    }
+}
+
+```
+
+The conditions in a when block may make reference to other fields, and peform the following comparisons:
+
+| Symbol | Meaning      |
+|--------|--------------|
+| `=`    | Equal to     |
+| `!=`   | Not equal to |
+| `>`    | Greater than |
+| `<`    | Less than    |
+| `&&`     | And          |
+| \|\| | Or           |
+
+
+Here's a more complex example:
+
+```taxi
+enum OrderStatus {
+    Unfilled,
+    Rejected,
+    PartialFill,
+    FilledCompletely
+}
+model PurchaseOrder {
+    sellerName: String?
+    status: String?
+    initialQuantity: Decimal?
+    remainingQuantity: Decimal?
+    quantityStatus: OrderStatus by when {
+        this.initialQuantity = this.leavesQuantity -> OrderStatus.Unfilled
+        this.trader = "Marty" || this.status = "Foo" -> OrderStatus.Rejected
+        this.remainingQuantity > 0 && this.remainingQuantity < this.initialQuantity -> OrderStatus.PartialFill
+        else -> OrderStatus.Unfilled
+    }
+}
+```
+
+## Calculated fields
+Fields may be defined as the output of a calcualted expression from other fields.
+Calculations are defined after the type, in the form of `... as (A operator B)`
+
+eg:
+
+```
+model Purchase {
+    price : PerItemPrice 
+    quantity : Quantity
+    total : TotalCost as (PerItemPrice * Quantity)
+    // alternatively:
+    anotherTotal : TotalCost as (this.price * this.quantity)
+}
+```
+
+The following operations are supported:
+
+| Symbol | Meaning      |
+|--------|--------------|
+| +      | Add     |
+| -      | Subtract |
+| *      | Multiply |
+| /      | Divide    |
+
+
+### Special calculation operations
+
+Calcuation operations aren't limited to just numeric types.  The following special operation types are supported:
+
+| Operation       | Result type | Effect        | Example                                                      |
+|-----------------|-------------|---------------|--------------------------------------------------------------|
+| String + String | String      | Concatenation | `fullName : FullName as (this.firstName + this.lastName)`    |
+| Date + Time     | Instant     | Combines      | `timestamp : Instant as (this.recordDate + this.recordTime)` |
+|                 |             |               |                                                              |
+
+Note: Taxi does not perform the evaluations.  This is left to parsers to handle. 
+
+As such, other parsers may provide additional operations.  The above outlines the capabilities supported by Vyne.
+
+
+## Referencing other fields
+When referencing other fields, either in functions, or when clasues, you can reference the field in one of two ways:
+
+| Method        | Syntax         | Example              |
+|---------------|----------------|----------------------|
+| By field name | this.fieldName | when(this.firstName) |
+| By type       | FieldType      | when(FirstName)      |
+
+
+## Type Extensions
+
+Type extensions allow mixing in additional data to a type after it's been defined.  
+
+It's possible to extend a type by adding either annotations, or type refinements.  Structural changes to types are not permitted \(and the compiler will prevent them\).
+
+Type extensions can be defined either in the same file, or \(more typically\), in a different file from the original defining type.
+
+```text
+// As defined in one file.
+type Person {
+    personId : Int
+    firstName : String
+    lastName : String
+}
+
+type alias FirstName as String
+// Extending the type to provide additional context:
+type extension Person {
+
+    // Adding an annotation.  No additional type is defined, so the 
+    // underlying type remains the same -- an Int
+    @Id
+    personId 
+    
+    // Refining the type.  Note that FirstName represents the same
+    // type as the original String, so this is permitted.
+    // If the types were incompatible, the compiler would alert an error
+    firstName : FirstName
+}
+```
+
+There are a few scenarios where this may be useful:
+
+### Adding documentation
+If consuming a third party API via a format like Swagger, it's useful to mix in consumer
+specific documentation.
+
+Type extensions allow this, by adding taxidoc to the types
+
+### Refining types with semantic types
+
+Not all languages and spec tools are created equal - and some don't have great support for 
+semantic types.  Extensions allow for the narrowing \(but not redefinition\) of the type, 
+through specifiying more narrow types.
+
+The compiler will prevent type extensions from introducing incompatible type changes.
+
+The compiler also restricts type refinements to a single refinement per type
+
+### Mixing-in metadata
+
+A consumer of an API may wish to leverage tooling that uses annotations - eg., 
+persisting an entity into a database.  
+
+Type extensions allow providing tooling specific metadata that's only useful to the 
+consumer - not the producer.

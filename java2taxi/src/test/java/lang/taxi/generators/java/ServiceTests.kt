@@ -3,7 +3,14 @@ package lang.taxi.generators.java
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
 import lang.taxi.TypeAliasRegistry
-import lang.taxi.annotations.*
+import lang.taxi.annotations.Constraint
+import lang.taxi.annotations.DataType
+import lang.taxi.annotations.Namespace
+import lang.taxi.annotations.Operation
+import lang.taxi.annotations.Parameter
+import lang.taxi.annotations.ResponseConstraint
+import lang.taxi.annotations.ResponseContract
+import lang.taxi.annotations.Service
 import lang.taxi.demo.FirstName
 import lang.taxi.testing.TestHelpers
 import org.junit.Ignore
@@ -14,23 +21,23 @@ import java.math.BigDecimal
 class ServiceTests {
    @DataType("taxi.example.Money")
    data class Money(
-      @field:DataType("taxi.example.Currency") val currency: String,
+      @field:DataType("taxi.example.Currency", documentation = "Describes the currency") val currency: String,
       @field:DataType("taxi.example.MoneyAmount") val value: BigDecimal)
 
-   @DataType
+   @DataType(documentation = "Models a person.")
    @Namespace("taxi.example")
-   data class Person(@field:DataType("taxi.example.PersonId") val personId: String)
+   data class Person(@field:DataType("taxi.example.PersonId", documentation = "Defines the id of the person") val personId: String)
 
 
    @RestController
    @Service("taxi.example.PersonService")
    class MyService {
       @Operation
-      fun findPerson(@DataType("taxi.example.PersonId") personId: String): Person {
+      fun findPerson(@DataType("taxi.example.PersonId", documentation = "The personId of the person you want to find") personId: String): Person {
          TODO("not real")
       }
 
-      @Operation
+      @Operation(documentation = "Returns a converted rate, where the currency has been updated based on the target")
       @ResponseContract(basedOn = "source",
          constraints = [ResponseConstraint("currency = targetCurrency")]
       )
@@ -40,7 +47,6 @@ class ServiceTests {
 
    }
 
-   // TODO : This test sometimes fails, which is annoying.
    @Test
    fun generatesServiceTemplate() {
       val taxiDef = TaxiGenerator().forClasses(MyService::class.java, Person::class.java).generateAsStrings()
@@ -48,16 +54,23 @@ class ServiceTests {
       val expected = """
 namespace taxi.example
 
-type Person {
-    personId : PersonId as String
+type PersonId inherits String
+type Currency inherits String
+type MoneyAmount inherits Decimal
+[[ Models a person. ]]
+model Person {
+   [[ Defines the id of the person ]]
+    personId : PersonId
 }
-type Money {
-    currency : Currency as String
-    value : MoneyAmount as Decimal
+model Money {
+    currency : Currency
+    value : MoneyAmount
 }
 service PersonService {
-    operation findPerson(PersonId) : Person
-    operation convertRates( Money( this.currency = "GBP" ),
+    operation findPerson( personId: PersonId) : Person
+
+    [[ Returns a converted rate, where the currency has been updated based on the target ]]
+    operation convertRates( source: Money( this.currency = "GBP" ),
         targetCurrency : String ) : Money( from source, this.currency = targetCurrency )
 }
 
@@ -83,10 +96,10 @@ service PersonService {
 
       val expected = """
 namespace taxi.example
-type alias EmailAddress as String
-type alias PersonId as String
+type EmailAddress inherits String
+type PersonId inherits String
 service TestService {
-    operation findEmail(PersonId):EmailAddress
+    operation findEmail(input:PersonId):EmailAddress
 }"""
       TestHelpers.expectToCompileTheSame(taxiDef, expected)
    }
@@ -133,11 +146,11 @@ namespace foo {
       val expected = """
     namespace taxi.example {
 
-   type Person {
+   model Person {
       personId : PersonId
    }
 
-   type alias PersonId as String
+   type PersonId inherits String
 
    service TestService {
       operation listPeople(  ) : Person[]
@@ -175,24 +188,23 @@ namespace foo {
       val taxiDef = TaxiGenerator().forClasses(JavaServiceTest::class.java).generateAsStrings()
       // Imports should be collated to the top
       taxiDef[0].should.equal("import lang.taxi.FirstName")
-      taxiDef[1].removeSpaces().should.equal("""namespace foo {
-
-   type Person {
+      taxiDef[1].trimNewLines().should.equal("""namespace foo {
+   model Person {
       name : PersonName
    }
 
-   type alias PersonName as String
+   type PersonName inherits lang.taxi.String
 
 
-}""".removeSpaces())
-      taxiDef[2].removeSpaces().should.equal("""namespace lang.taxi.generators.java {
+}""".trimNewLines())
+      taxiDef[2].trimNewLines().should.equal("""namespace lang.taxi.generators.java {
 
 
 
    service JavaService {
-      operation findByEmail(  FirstName ) : foo.Person
+      operation findByEmail(  arg0 : FirstName ) : foo.Person
    }
-}""".removeSpaces())
+}""".trimNewLines())
    }
 
    @Test
@@ -211,11 +223,11 @@ namespace foo {
       val taxiDef = TaxiGenerator().forClasses(TestService::class.java).generateAsStrings()
       val expected = """
 namespace foo {
-    type alias PersonName as String
+    type PersonName inherits String
 }
 namespace taxi.example {
     service TestService {
-        operation findEmail(  foo.PersonName ) : foo.PersonName
+        operation findEmail( input: foo.PersonName ) : foo.PersonName
     }
 }
         """.trimIndent()
@@ -238,7 +250,7 @@ namespace taxi.example {
       val expected = """
 namespace taxi.example {
     service TestService {
-        read operation findEmail( String ) : String
+        read operation findEmail( input:String ) : String
     }
 }
         """.trimIndent()
@@ -248,3 +260,11 @@ namespace taxi.example {
 
 @DataType("taxi.PersonList")
 typealias PersonList = List<ServiceTests.Person>
+
+fun String.trimNewLines(): String {
+   return this
+      .lines()
+      .map { it.trim() }
+      .filter { it.isNotEmpty() }
+      .joinToString("")
+}

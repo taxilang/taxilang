@@ -98,6 +98,9 @@ class LazyLoadingWrapper(private val type: Type) {
    }
 
    private fun detectHashCollision(compilationUnits: List<CompilationUnit>) {
+      if (!TaxiCoreDebugOptions.checkForTypeHashClashes) {
+         return
+      }
       val sourcesWithHashCollision = compilationUnits
          .groupBy { it.source.hashCode() }
          .filter { it.value.size > 1 }
@@ -105,20 +108,31 @@ class LazyLoadingWrapper(private val type: Type) {
          .map { it.source.normalizedSourceName }
 
       if (sourcesWithHashCollision.isNotEmpty()) {
-         log.warn(("There's a hash clash in the underlying sources $sourcesWithHashCollision " +
-            "This will generate indeterminate behaviour that can re-trigger recompilation of sources, lost nights, and torn hair. " +
-            "You shouldn't ignore this!"))
+         log.warn(
+            ("There's a hash clash in the underlying sources $sourcesWithHashCollision " +
+               "This will generate indeterminate behaviour that can re-trigger recompilation of sources, lost nights, and torn hair. " +
+               "You shouldn't ignore this!")
+         )
       }
    }
 
 }
 
-interface Type : Named, Compiled {
+interface ImportableToken : Named, Compiled
+
+/**
+ * Models and Types will diverge eventually.
+ * For now, they're analogous from the compiler's perspective.  But
+ * adding an alias to improve documentation of code
+ */
+typealias Model = Type
+
+interface Type : Named, Compiled, ImportableToken, Documented {
    val inheritsFrom: Set<Type>
 
    val allInheritedTypes: Set<Type>
 
-   val format: String?
+   val format: List<String>?
 
    val inheritsFromPrimitive: Boolean
 
@@ -129,6 +143,11 @@ interface Type : Named, Compiled {
    val definitionHash: String?
 
    val calculation: Formula?
+
+   val offset: Int?
+
+   val anonymous: Boolean
+      get() = false
 
    fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
       val allExcludedTypes: Set<Type> = typesToExclude + setOf(this)
@@ -155,8 +174,12 @@ interface Type : Named, Compiled {
    }
 }
 
-interface TypeDefinition {
+interface TokenDefinition {
    val compilationUnit: CompilationUnit
+}
+
+interface TypeDefinition : TokenDefinition {
+
 }
 
 interface Documented {
@@ -177,17 +200,12 @@ interface Documented {
  * ArrayType is excluded (as arrays are primitive, and the inner
  * type will be a UserType)
  */
-interface UserType<TDef : TypeDefinition, TExt : TypeDefinition> : Type {
-   var definition: TDef?
+interface UserType<TDef : TypeDefinition, TExt : TypeDefinition> : Type, DefinableToken<TDef> {
 
    val extensions: List<TExt>
 
    fun addExtension(extension: TExt): Either<ErrorMessage, TExt>
 
-   val isDefined: Boolean
-      get() {
-         return this.definition != null
-      }
 
    override val compilationUnits: List<CompilationUnit>
       get() = (this.extensions.map { it.compilationUnit } + this.definition?.compilationUnit).filterNotNull()
@@ -197,10 +215,20 @@ interface UserType<TDef : TypeDefinition, TExt : TypeDefinition> : Type {
     * Used when importing this type, to ensure the full catalogue of types is imported
     */
    val referencedTypes: List<Type>
+}
 
+interface DefinableToken<TDef : TokenDefinition> : ImportableToken {
+   var definition: TDef?
+
+   val isDefined: Boolean
+      get() {
+         return this.definition != null
+      }
 }
 
 
 fun List<Documented>.typeDoc(): String? {
    return this.mapNotNull { it.typeDoc }.joinToString("\n")
 }
+
+

@@ -2,12 +2,31 @@ package lang.taxi.generators.java
 
 import lang.taxi.TypeAliasRegistry
 import lang.taxi.TypeNames
-import lang.taxi.annotations.*
+import lang.taxi.annotations.Constraint
+import lang.taxi.annotations.DataType
+import lang.taxi.annotations.Namespaces
+import lang.taxi.annotations.Operation
+import lang.taxi.annotations.ParameterType
+import lang.taxi.annotations.Service
+import lang.taxi.annotations.declaresName
+import lang.taxi.annotations.qualifiedName
 import lang.taxi.jvm.common.PrimitiveTypes
 import lang.taxi.kapt.KotlinTypeAlias
 import lang.taxi.sources.SourceCode
-import lang.taxi.types.*
 import lang.taxi.types.Annotation
+import lang.taxi.types.ArrayType
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.EnumDefinition
+import lang.taxi.types.EnumType
+import lang.taxi.types.EnumValue
+import lang.taxi.types.Enums
+import lang.taxi.types.Modifier
+import lang.taxi.types.ObjectType
+import lang.taxi.types.ObjectTypeDefinition
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.Type
+import lang.taxi.types.UnresolvedImportedType
 import lang.taxi.utils.log
 import org.jetbrains.annotations.NotNull
 import org.springframework.core.ResolvableType
@@ -31,16 +50,26 @@ import kotlin.reflect.jvm.kotlinProperty
 interface MapperExtension
 
 interface TypeMapper {
-   fun getTaxiType(sourceType: Class<*>, existingTypes: MutableSet<Type>, containingMember: AnnotatedElement? = null): Type {
+   fun getTaxiType(
+      sourceType: Class<*>,
+      existingTypes: MutableSet<Type>,
+      containingMember: AnnotatedElement? = null
+   ): Type {
       val namespace = TypeNames.deriveNamespace(sourceType)
       return getTaxiType(sourceType, existingTypes, namespace)
    }
 
-   fun getTaxiType(source: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String, containingMember: AnnotatedElement? = null): Type
+   fun getTaxiType(
+      source: AnnotatedElement,
+      existingTypes: MutableSet<Type>,
+      defaultNamespace: String,
+      containingMember: AnnotatedElement? = null
+   ): Type
 
 }
 
-class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnotationMapper = ConstraintAnnotationMapper()) : TypeMapper {
+class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnotationMapper = ConstraintAnnotationMapper()) :
+   TypeMapper {
 
    fun MutableSet<Type>.findByName(qualifiedTypeName: String): Type? {
       return this.firstOrNull { it.qualifiedName == qualifiedTypeName }
@@ -49,7 +78,12 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
    // A containingMember is typically a function, which has declared a returnType.
    // Since the annotations can't go directly on the return type, they go on the function itself,
    // meaning we need to evaluate the function when considering the type.
-   override fun getTaxiType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String, containingMember: AnnotatedElement?): Type {
+   override fun getTaxiType(
+      element: AnnotatedElement,
+      existingTypes: MutableSet<Type>,
+      defaultNamespace: String,
+      containingMember: AnnotatedElement?
+   ): Type {
       val elementType = TypeNames.typeFromElement(element)
 
       val declaresTypeAlias = declaresTypeAlias(element)
@@ -73,16 +107,18 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
 
          // Don't examine the return type for collections, as the type we care about is lost in generics - just create the type alias
          if (element.isCollection()) {
-            return getOrCreateTypeAlias(element, typeAliasName, existingTypes)
+            return getOrCreateScalarType(element, typeAliasName, existingTypes)
          }
 
          val aliasedTaxiType = getTypeDeclaredOnClass(element, existingTypes)
          if (typeAliasName != aliasedTaxiType.qualifiedName) {
-            return getOrCreateTypeAlias(element, typeAliasName, existingTypes)
+            return getOrCreateScalarType(element, typeAliasName, existingTypes)
          } else {
-            log().warn("Element $element declares a redundant type alias of $typeAliasName, which is already " +
-               "declared on the type itself.  Consider removing this name (replacing it with an " +
-               "empty @DataType annotation, otherwise future refactoring bugs are likely to occur")
+            log().warn(
+               "Element $element declares a redundant type alias of $typeAliasName, which is already " +
+                  "declared on the type itself.  Consider removing this name (replacing it with an " +
+                  "empty @DataType annotation, otherwise future refactoring bugs are likely to occur"
+            )
          }
       }
 
@@ -95,7 +131,7 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
 
       if (containingMember != null && declaresTypeAlias(containingMember)) {
          val typeAliasName = getDeclaredTypeAliasName(containingMember, defaultNamespace)!!
-         return getOrCreateTypeAlias(containingMember, typeAliasName, existingTypes)
+         return getOrCreateScalarType(containingMember, typeAliasName, existingTypes)
       }
 
 //        if (isImplicitAliasForPrimitiveType(targetTypeName,element)) {
@@ -176,7 +212,12 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
 
    private fun isEnum(element: AnnotatedElement) = TypeNames.typeFromElement(element).isEnum
 
-   private fun findCollectionType(element: AnnotatedElement, existingTypes: MutableSet<Type>, defaultNamespace: String, containingMember: AnnotatedElement?): Type {
+   private fun findCollectionType(
+      element: AnnotatedElement,
+      existingTypes: MutableSet<Type>,
+      defaultNamespace: String,
+      containingMember: AnnotatedElement?
+   ): Type {
       if (element is KTypeWrapper) {
          val argments = element.arguments
          require(argments.size == 1) { "expected type ${element.ktype} to have exactly 1 argument, but found ${argments.size}" }
@@ -208,25 +249,40 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
    private fun isTaxiPrimitiveWithoutAnnotation(element: AnnotatedElement?): Boolean {
       if (element == null)
          return false
-      return (!TypeNames.declaresDataType(element) && PrimitiveTypes.isClassTaxiPrimitive(TypeNames.typeFromElement(element)))
+      return (!TypeNames.declaresDataType(element) && PrimitiveTypes.isClassTaxiPrimitive(
+         TypeNames.typeFromElement(
+            element
+         )
+      ))
    }
 
-   private fun getOrCreateTypeAlias(element: AnnotatedElement, typeAliasName: String, existingTypes: MutableSet<Type>): TypeAlias {
+   private fun getOrCreateScalarType(
+      element: AnnotatedElement,
+      typeAliasName: String,
+      existingTypes: MutableSet<Type>
+   ): Type {
       val existingAlias = existingTypes.findByName(typeAliasName)
       if (existingAlias != null) {
-         return existingAlias as TypeAlias
+         return existingAlias
       }
       val compilationUnit = CompilationUnit.ofSource(SourceCode("Exported from annotation", "Annotation"))
 
-      val aliasedTaxiType = if (element.isCollection()) {
-         val collectionType = findCollectionType(element, existingTypes, TypeNames.deriveNamespace(TypeNames.typeFromElement(element)), null)
+      val type = if (element.isCollection()) {
+         val collectionType = findCollectionType(
+            element,
+            existingTypes,
+            TypeNames.deriveNamespace(TypeNames.typeFromElement(element)),
+            null
+         )
          ArrayType(collectionType, compilationUnit)
       } else {
-         getTypeDeclaredOnClass(element, existingTypes)
+         ObjectType(typeAliasName,ObjectTypeDefinition(
+            compilationUnit = compilationUnit,
+            inheritsFrom = setOf(getTypeDeclaredOnClass(element, existingTypes))
+         ))
       }
-      val typeAlias = TypeAlias(typeAliasName, aliasedTaxiType, compilationUnit)
-      existingTypes.add(typeAlias)
-      return typeAlias
+      existingTypes.add(type)
+      return type
    }
 
    fun getTypeDeclaredOnClass(element: AnnotatedElement, existingTypes: MutableSet<Type>): Type {
@@ -267,11 +323,14 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
       return kotlinTypeAlias.deriveNamespace() + "." + kotlinTypeAlias.simpleName
    }
 
-   private fun mapNewObjectType(element: AnnotatedElement, defaultNamespace: String, existingTypes: MutableSet<Type>): ObjectType {
+   private fun mapNewObjectType(
+      element: AnnotatedElement,
+      defaultNamespace: String,
+      existingTypes: MutableSet<Type>
+   ): ObjectType {
       val name = getTargetTypeName(element, defaultNamespace)
       val fields = mutableSetOf<lang.taxi.types.Field>()
       val modifiers = getTypeLevelModifiers(element)
-
 
       val inheritance = getInheritedTypes(TypeNames.typeFromElement(element), existingTypes, defaultNamespace) // TODO
       val definition = ObjectTypeDefinition(
@@ -280,7 +339,7 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
          modifiers = modifiers,
          inheritsFrom = inheritance,
          format = null,
-         typeDoc = null,
+         typeDoc = element.findTypeDoc(),
          compilationUnit = exportedCompilationUnit(element)
       )
       val objectType = ObjectType(name, definition)
@@ -304,7 +363,11 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
       return modifiers
    }
 
-   private fun getInheritedTypes(clazz: Class<*>, existingTypes: MutableSet<Type>, defaultNamespace: String): Set<ObjectType> {
+   private fun getInheritedTypes(
+      clazz: Class<*>,
+      existingTypes: MutableSet<Type>,
+      defaultNamespace: String
+   ): Set<ObjectType> {
       val superType = clazz.superclass
       val inheritedTypes = (clazz.interfaces.toList() + listOf(clazz.superclass)).filterNotNull()
 
@@ -317,7 +380,11 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
    private fun exportedCompilationUnit(element: AnnotatedElement) =
       CompilationUnit.ofSource(SourceCode("Exported from type $element", "Exported"))
 
-   private fun getTargetTypeName(element: AnnotatedElement, defaultNamespace: String, containingMember: AnnotatedElement? = null): String {
+   private fun getTargetTypeName(
+      element: AnnotatedElement,
+      defaultNamespace: String,
+      containingMember: AnnotatedElement? = null
+   ): String {
       val rawType = TypeNames.typeFromElement(element)
 
       if (containingMember != null && TypeNames.declaresDataType(containingMember)) {
@@ -330,7 +397,11 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
    }
 
 
-   private fun mapTaxiFields(javaClass: Class<*>, defaultNamespace: String, existingTypes: MutableSet<Type>): List<lang.taxi.types.Field> {
+   private fun mapTaxiFields(
+      javaClass: Class<*>,
+      defaultNamespace: String,
+      existingTypes: MutableSet<Type>
+   ): List<lang.taxi.types.Field> {
       val kClass = javaClass.kotlin
       val mappedProperties = kClass.memberProperties
          .filter { !propertyIsInheritedFromMappedSupertype(kClass, it) }
@@ -351,11 +422,15 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
                annotatedElement.getAnnotationsByType(Constraint::class.java).distinct().toList()
 
             val mappedConstraints = constraintAnnotationMapper.convert(constraints)
-            lang.taxi.types.Field(name = property.name,
+            lang.taxi.types.Field(
+               name = property.name,
+               typeDoc = annotatedElement.findTypeDoc(),
                type = getTaxiType(annotatedElement, existingTypes, defaultNamespace),
                nullable = property.returnType.isMarkedNullable,
                annotations = mapAnnotations(property),
-               constraints = mappedConstraints)
+               constraints = mappedConstraints,
+               compilationUnit = CompilationUnit.unspecified()
+            )
          }
       return mappedProperties
 //
@@ -375,7 +450,10 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
    // Indicates if the field is actually present as an inherited / overridden
    // member from an superType.  (ie., a field declared in an interface, that's overridden on a class)
    // In Taxi, we want those types to be declared on the supertype (since they're all innherited).
-   private fun propertyIsInheritedFromMappedSupertype(kClass: KClass<out Any>, property: KProperty1<out Any, Any?>): Boolean {
+   private fun propertyIsInheritedFromMappedSupertype(
+      kClass: KClass<out Any>,
+      property: KProperty1<out Any, Any?>
+   ): Boolean {
       val isDeclaredOnSupertype = kClass.allSupertypes.filter { superType ->
          val classifier = superType.classifier
          when (classifier) {
@@ -406,6 +484,16 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
       val isNotNull = field.isAnnotationPresent(NotNull::class.java) ||
          return field.isAnnotationPresent(javax.validation.constraints.NotNull::class.java)
       return !isNotNull
+   }
+}
+
+fun AnnotatedElement.findTypeDoc(): String? {
+   return when {
+      this.isAnnotationPresent(DataType::class.java) -> this.getAnnotation(DataType::class.java).documentation
+      this.isAnnotationPresent(lang.taxi.annotations.Parameter::class.java) -> this.getAnnotation(lang.taxi.annotations.Parameter::class.java).documentation
+      this.isAnnotationPresent(Operation::class.java) -> this.getAnnotation(Operation::class.java).documentation
+      this.isAnnotationPresent(Service::class.java) -> this.getAnnotation(Service::class.java).documentation
+      else -> null
    }
 }
 

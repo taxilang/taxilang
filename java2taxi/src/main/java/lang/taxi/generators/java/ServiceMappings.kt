@@ -11,12 +11,12 @@ import lang.taxi.services.Parameter
 import lang.taxi.services.Service
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.CompilationUnit
-import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.kotlinFunction
 
 interface ServiceMapper {
@@ -45,12 +45,13 @@ class DefaultServiceMapper(private val constraintAnnotationMapper: ConstraintAnn
          val operationAnnotation = method.getAnnotation(Operation::class.java)
          val name = operationAnnotation.value.orDefault(method.name)
 
-         val params = method.parameters.map { param ->
+         val params = method.parameters.mapIndexed { index, param ->
+            val kotlinParameter = func.valueParameters[index]
             val paramType = typeMapper.getTaxiType(param, mappedTypes, namespace, method)
             val paramAnnotation = param.getAnnotation(lang.taxi.annotations.Parameter::class.java)
             Parameter(annotations = emptyList(), // todo,
                type = paramType,
-               name = paramAnnotation?.name,
+               name = paramAnnotation?.name?.orDefaultNullable(kotlinParameter.name) ?: kotlinParameter.name,
                constraints = parseConstraints(paramAnnotation))
          }
          val returnType = typeMapper.getTaxiType(KTypeWrapper(func.returnType), mappedTypes, namespace, method)
@@ -58,6 +59,7 @@ class DefaultServiceMapper(private val constraintAnnotationMapper: ConstraintAnn
             parameters = params,
             annotations = emptyList(), // TODO
             returnType = returnType,
+            typeDoc = method.findTypeDoc(),
             contract = OperationContract(
                returnType = returnType,
                returnTypeConstraints = parseConstraints(method.getAnnotation(ResponseContract::class.java))
@@ -67,7 +69,13 @@ class DefaultServiceMapper(private val constraintAnnotationMapper: ConstraintAnn
          operationExtensions.fold(operation, { operation, extension -> extension.update(operation, type, method, typeMapper, mappedTypes) })
       }
 
-      val service = serviceExtensions.fold(Service(serviceName, operations, annotations = emptyList(), compilationUnits = listOf(CompilationUnit.unspecified())), { service, extension -> extension.update(service, type, typeMapper, mappedTypes) })
+      val service = serviceExtensions.fold(Service(
+         serviceName,
+         operations,
+         annotations = emptyList(),
+         typeDoc = type.findTypeDoc(),
+         compilationUnits = listOf(CompilationUnit.unspecified())
+      ), { service, extension -> extension.update(service, type, typeMapper, mappedTypes) })
       return setOf(service)
    }
 
@@ -86,6 +94,9 @@ class DefaultServiceMapper(private val constraintAnnotationMapper: ConstraintAnn
    }
 
 
+   fun String.orDefaultNullable(default: String?): String? {
+      return if (this.isEmpty()) default else this
+   }
    fun String.orDefault(default: String): String {
       return if (this.isEmpty()) default else this
    }

@@ -1,10 +1,12 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.linter.LinterRuleConfiguration
 import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.services.operations.constraints.PropertyTypeIdentifier
 import lang.taxi.services.operations.constraints.RelativeValueExpression
+import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.AttributePath
 import lang.taxi.types.QualifiedName
 import org.spekframework.spek2.Spek
@@ -60,7 +62,7 @@ object OperationContextSpec : Spek({
 
          }
 
-         it("should fail if provided type is not an attribute of the return type") {
+         it("should not fail if provided type is not an attribute of the return type") {
             val errors = """
          $taxi
          service TradeService {
@@ -69,8 +71,7 @@ object OperationContextSpec : Spek({
             )
          }
          """.validated()
-            errors.should.have.size(1)
-            errors.first().detailMessage.should.equal("Type Trade does not have a field with type EmployeeCode")
+            errors.should.be.empty
          }
 
          it("should fail if referenced param is not an input") {
@@ -144,18 +145,22 @@ object OperationContextSpec : Spek({
          }
          """.compiled().service("TradeService").operation("getTradesAfter")
             val constraints = operation.contract!!.returnTypeConstraints
-            constraints.should.contain(PropertyToParameterConstraint(
-               PropertyTypeIdentifier(QualifiedName.from("TradeDate")),
-               Operator.GREATER_THAN_OR_EQUAL_TO,
-               RelativeValueExpression(AttributePath.from("startDate")),
-               emptyList()
-            ))
-            constraints.should.contain(PropertyToParameterConstraint(
-               PropertyTypeIdentifier(QualifiedName.from("TradeDate")),
-               Operator.LESS_THAN,
-               RelativeValueExpression(AttributePath.from("endDate")),
-               emptyList()
-            ))
+            constraints.should.contain(
+               PropertyToParameterConstraint(
+                  PropertyTypeIdentifier(QualifiedName.from("TradeDate")),
+                  Operator.GREATER_THAN_OR_EQUAL_TO,
+                  RelativeValueExpression(AttributePath.from("startDate")),
+                  emptyList()
+               )
+            )
+            constraints.should.contain(
+               PropertyToParameterConstraint(
+                  PropertyTypeIdentifier(QualifiedName.from("TradeDate")),
+                  Operator.LESS_THAN,
+                  RelativeValueExpression(AttributePath.from("endDate")),
+                  emptyList()
+               )
+            )
          }
 
          it("should compile constraints for base types") {
@@ -174,11 +179,24 @@ object OperationContextSpec : Spek({
    }
 })
 
-fun String.validated(): List<CompilationError> {
-   return Compiler(this).validate()
+fun String.validated(
+   config: CompilerConfig = TestCompilerOptions.config,
+   linterRules: List<LinterRuleConfiguration> = emptyList()
+): List<CompilationMessage> {
+
+   return Compiler(this, config = config.copy(linterRuleConfiguration = linterRules)).validate()
 }
 
-fun String.compiled(): TaxiDocument {
-   return Compiler(this).compile()
+fun String.compiled(
+   config: CompilerConfig = TestCompilerOptions.config,
+   linterRules: List<LinterRuleConfiguration> = emptyList()
+): TaxiDocument {
+   return Compiler(this, config = config.copy(linterRuleConfiguration = linterRules)).compile()
 }
 
+object TestCompilerOptions {
+   val config = CompilerConfig(
+      // Note, in our tests, we run with the type checker enabled.
+      typeCheckerEnabled = FeatureToggle.ENABLED
+   )
+}

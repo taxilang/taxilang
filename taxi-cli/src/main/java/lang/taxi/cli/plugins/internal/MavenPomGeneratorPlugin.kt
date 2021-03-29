@@ -2,16 +2,21 @@ package lang.taxi.cli.plugins.internal
 
 import lang.taxi.TaxiDocument
 import lang.taxi.cli.plugins.InternalPlugin
-import lang.taxi.generators.*
+import lang.taxi.generators.ModelGenerator
+import lang.taxi.generators.Processor
+import lang.taxi.generators.SimpleWriteableSource
+import lang.taxi.generators.TaxiProjectEnvironment
+import lang.taxi.generators.WritableSource
 import lang.taxi.plugins.Artifact
 import lang.taxi.plugins.PluginWithConfig
 import org.apache.commons.io.output.StringBuilderWriter
-import org.apache.maven.model.*
 import org.apache.maven.model.Dependency
-import org.apache.maven.model.Repository as MavenRepository
+import org.apache.maven.model.DeploymentRepository
 import org.apache.maven.model.DistributionManagement
+import org.apache.maven.model.Model
+import org.apache.maven.model.RepositoryPolicy
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer
-import org.codehaus.plexus.util.xml.Xpp3Dom
+import org.apache.maven.model.Repository as MavenRepository
 
 
 class MavenPomGeneratorPlugin(private val configurers: List<MavenModelConfigurer> = emptyList()) : InternalPlugin, ModelGenerator, PluginWithConfig<MavenGeneratorPluginConfig> {
@@ -40,7 +45,7 @@ class MavenPomGeneratorPlugin(private val configurers: List<MavenModelConfigurer
       this.config = config
    }
 
-   override fun generate(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiEnvironment): List<WritableSource> {
+   override fun generate(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiProjectEnvironment): List<WritableSource> {
       val model = Model()
       val writer = StringBuilderWriter()
 

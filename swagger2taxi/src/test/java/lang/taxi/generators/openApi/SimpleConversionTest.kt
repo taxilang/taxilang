@@ -34,7 +34,7 @@ namespace vyne.openApi {
    type Pet {
       id : Int
       name : String
-      tag : String
+      tag : String?
    }
 
    type Error {
@@ -69,7 +69,7 @@ namespace vyne.openApi  {
 
     type NewPet {
         name : String
-        tag : String
+        tag : String?
     }
 
      type Pet inherits NewPet {
@@ -108,14 +108,14 @@ namespace vyne.openApi  {
 namespace vyne.openApi {
 
    type Pet {
-      id : Int
-      name : String
+      id : Int?
+      name : String?
       tag : String
    }
 
    type Error {
-      code : Int
-      message : String
+      code : Int?
+      message : String?
    }
 
    service PetsService {

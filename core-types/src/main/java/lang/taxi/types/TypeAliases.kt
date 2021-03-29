@@ -1,7 +1,7 @@
 package lang.taxi.types
 
 import arrow.core.Either
-import lang.taxi.*
+import lang.taxi.Equality
 
 data class TypeAliasExtension(val annotations: List<Annotation>, override val compilationUnit: CompilationUnit, override val typeDoc: String? = null) : TypeDefinition, Documented {
    private val equalty = Equality(this, TypeAliasExtension::annotations)
@@ -44,8 +44,11 @@ data class TypeAlias(
 
    // Don't support a type alias overriding the format of it's aliased type,
    // as then they're no longer synonyms
-   override val format: String?
+   override val format: List<String>?
       get() = definition?.aliasType?.format
+
+   override val offset: Int?
+      get() = definition?.aliasType?.offset
 
    override val formattedInstanceOfType: Type?
       get() = definition?.aliasType?.formattedInstanceOfType
@@ -74,10 +77,12 @@ data class TypeAlias(
       }
 
       fun underlyingType(type: Type): Type {
-         return when (type) {
+         val unaliasedType =  when (type) {
             is TypeAlias -> underlyingType(type.aliasType!!)
             else -> type
          }
+         return unaliasedType.formattedInstanceOfType?.let { underlyingType(it) }
+            ?: unaliasedType
       }
    }
 

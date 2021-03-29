@@ -11,34 +11,40 @@ enum class VoidType : Type {
    override val inheritsFromPrimitive: Boolean by lazy { wrapper.inheritsFromPrimitive }
    override val basePrimitive: PrimitiveType? by lazy { wrapper.basePrimitive }
    override val definitionHash: String? by lazy { wrapper.definitionHash }
+   override val typeDoc: String = "Nothing"
 
    override val qualifiedName: String = "lang.taxi.Void"
    override val compilationUnits: List<CompilationUnit> = listOf(CompilationUnit.ofSource(SourceCode("Built in", "// Built-in type")))
    override val inheritsFrom: Set<Type> = emptySet()
-   override val format: String? = null
+   override val format: List<String>? = null
    override val formattedInstanceOfType: Type? = null
    override val calculation: Formula?
       get() = null
+   override val offset: Int? = null
 }
 
 enum class PrimitiveType(
    val declaration: String,
-   val typeDoc: String,
-   override val format: String? = null,
+   override val typeDoc: String,
+   override val format: List<String>? = null,
    override val formattedInstanceOfType: Type? = null,
-   override val calculation: Formula? = null) : Type {
+   override val calculation: Formula? = null,
+   override val offset: Int? = null) : Type {
    BOOLEAN("Boolean", "Represents a value which is either `true` or `false`."),
    STRING("String", "A collection of characters."),
    INTEGER("Int", "A signed integer - ie. a whole number (positive or negative), with no decimal places"),
    DECIMAL("Decimal", "A signed decimal number - ie., a whole number with decimal places."),
-   LOCAL_DATE("Date", "A date, without a time or timezone.", format = "yyyy-MM-dd"),
-   TIME("Time", "Time only, excluding the date part", format = "HH:mm:ss"),
-   DATE_TIME("DateTime", "A date and time, without a timezone.  Generally, favour using Instant which represents a point-in-time, as it has a timezone attached", format = "yyyy-MM-dd'T'HH:mm:ss.SSS"),
-   INSTANT("Instant", "A point in time, with date, time and timezone.  Follows ISO standard convention of yyyy-MM-dd'T'HH:mm:ss.SSSZ", format = "yyyy-MM-dd'T'HH:mm:ss[.SSS]X"),
-   ARRAY("Array", "A collection of things"),
+   LOCAL_DATE("Date", "A date, without a time or timezone.", format = listOf("yyyy-MM-dd" )),
+   TIME("Time", "Time only, excluding the date part", format = listOf("HH:mm:ss" )),
+   DATE_TIME("DateTime", "A date and time, without a timezone.  Generally, favour using Instant which represents a point-in-time, as it has a timezone attached", format = listOf("yyyy-MM-dd'T'HH:mm:ss.SSS" )),
+   INSTANT("Instant", "A point in time, with date, time and timezone.  Follows ISO standard convention of yyyy-MM-dd'T'HH:mm:ss.SSSZ", format = listOf("yyyy-MM-dd'T'HH:mm:ss[.SSS]X" )),
+//   ARRAY("Array", "A collection of things"),
    ANY("Any", "Can be anything.  Try to avoid using 'Any' as it's not descriptive - favour using a strongly typed approach instead"),
    DOUBLE("Double", "Represents a double-precision 64-bit IEEE 754 floating point number."),
    VOID("Void", "Nothing.  Represents the return value of operations that don't return anything.");
+
+//    Used in things like jsonPath(), or xPath() where a type isn't declared
+//   UNTYPED("Untyped", "A special internal type for functions that don't declare a return type.  Untyped things can be assigned to anything, and all bets are off until runtime. Don't use this - it's not for you.");
 
    private val wrapper = LazyLoadingWrapper(this)
    override val allInheritedTypes: Set<Type> by lazy { wrapper.allInheritedTypes }
@@ -47,7 +53,7 @@ enum class PrimitiveType(
    override val definitionHash: String? by lazy { wrapper.definitionHash }
 
    override val qualifiedName: String
-      get() = "lang.taxi.$declaration"
+      get() = "$NAMESPACE.$declaration"
 
    override val inheritsFrom: Set<Type> = emptySet()
 
@@ -58,6 +64,8 @@ enum class PrimitiveType(
       private val typesByQualifiedName = values().associateBy { it.qualifiedName }
       private val typesByLookup = typesByName + typesByQualifiedName
 
+      const val NAMESPACE = "lang.taxi"
+
       val NUMBER_TYPES = listOf(INTEGER, DECIMAL, DOUBLE)
       fun fromDeclaration(value: String): PrimitiveType {
          return typesByLookup[value] ?: throw IllegalArgumentException("$value is not a valid primative")
@@ -67,6 +75,10 @@ enum class PrimitiveType(
 //            return fromDeclaration(typeToken.primitiveType()!!.text)
 //        }
 
+      @Deprecated(replaceWith = ReplaceWith("ArrayType.isTypedCollection"), message = "Deprecated")
+      fun isTypedCollection(qualifiedName: QualifiedName):Boolean {
+         return ArrayType.isTypedCollection(qualifiedName)
+      }
       fun isPrimitiveType(qualifiedName: String): Boolean {
          return typesByLookup.containsKey(qualifiedName)
       }
@@ -125,7 +137,7 @@ object PrimitiveTypeOperations {
       allSupportedOperations = numericOperations + dateTimeOperations + stringOperations
    }
 
-   fun isValidOperation(firstOperand:PrimitiveType, operator:FormulaOperator, secondOperand:PrimitiveType):Boolean {
+   fun isValidOperation(firstOperand: PrimitiveType, operator: FormulaOperator, secondOperand: PrimitiveType): Boolean {
       val supportedOperations = allSupportedOperations[firstOperand] ?: emptyMap()
       val supportedTargetTypes = supportedOperations[operator] ?: emptyList()
       return supportedTargetTypes.contains(secondOperand)

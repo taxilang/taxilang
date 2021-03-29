@@ -3,36 +3,13 @@ package lang.taxi.services.operations.constraints
 import arrow.core.Either
 import arrow.core.flatMap
 import lang.taxi.*
+import lang.taxi.query.asDotJoinedPath
 import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract
 import lang.taxi.services.Parameter
 import lang.taxi.types.*
 import lang.taxi.utils.leftOr
-import org.antlr.v4.runtime.ParserRuleContext
-
-/**
- * We use an AST for parsing constraints as we need to support these in both
- * Taxi and VyneQL.  However, the Antlr generation tree makes using the same code
- * in both contexts very difficult, as it regenerates the classes in a different namespace.
- * This means even though the classes are generated from the exact same source,
- * we can't pass them into the constraint provider code.
- * Therefore, we parse a simple AST, which makes reuse possible
- */
-data class PropertyToParameterConstraintAst(
-   val lhs: AstLhs,
-   val operator: String,
-   val rhs: AstRhs
-) {
-   data class AstRhs(
-      val literal: Any?,
-      val attributePath: AttributePath?
-   )
-
-   data class AstLhs(
-      val lhsPropertyFieldNameQualifier: String?,
-      val typeOrFieldQualifiedName: String
-   )
-}
+import lang.taxi.utils.log
 
 class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
    override fun applies(constraint: Constraint): Boolean {
@@ -90,8 +67,11 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
    private fun validate(property: PropertyTypeIdentifier, constrainedType: ObjectType, constraint: Constraint): CompilationError? {
       val fields = constrainedType.fieldsWithType(property.type)
       return when {
-         fields.isEmpty() -> CompilationError(constraint, "Type ${constrainedType.qualifiedName} does not have a field with type ${property.type}")
-         fields.size > 1 -> CompilationError(constraint, "Type ${constrainedType.qualifiedName} has multiple fields with type ${property.type}.  This is ambiguous, and the constraint is invalid.")
+       //  fields.isEmpty() -> CompilationError(constraint, "Type ${constrainedType.qualifiedName} does not have a field with type ${property.type}")
+         fields.size > 1 -> {
+            log().warn(fields.joinToString { it.name })
+            CompilationError(constraint, "Type ${constrainedType.qualifiedName} has multiple fields with type ${property.type}.  This is ambiguous, and the constraint is invalid.")
+         }
          else -> null
       }
    }
@@ -119,66 +99,42 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       return constraint.propertyToParameterConstraintExpression() != null
    }
 
-   fun build(ast: PropertyToParameterConstraintAst, type: Type, typeResolver: NamespaceQualifiedTypeResolver, context: ParserRuleContext): Either<CompilationError, Constraint> {
+   fun build(type: Type, typeResolver: NamespaceQualifiedTypeResolver, context: TaxiParser.ParameterConstraintExpressionContext): Either<List<CompilationError>, Constraint> {
       // Could be either a type name or a field name
-      val operator = Operator.parse(ast.operator)
+      val propertyToParameterConstraintExpression = context.propertyToParameterConstraintExpression()
+      val operator = Operator.parse(propertyToParameterConstraintExpression.comparisonOperator().text)
 
-      return parseLhs(ast.lhs, typeResolver, context).flatMap { propertyIdentifier ->
-         parseRhs(ast.rhs).map { valueExpression ->
+      return parseLhs(typeResolver, propertyToParameterConstraintExpression).flatMap { propertyIdentifier ->
+         parseRhs(propertyToParameterConstraintExpression).map { valueExpression ->
             PropertyToParameterConstraint(propertyIdentifier, operator, valueExpression, context.toCompilationUnits())
          }
       }
    }
 
-   override fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<CompilationError, Constraint> {
-      val ast = parseToAst(constraint.propertyToParameterConstraintExpression())
-      return build(ast,type,typeResolver,constraint)
+   override fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<List<CompilationError>, Constraint> {
+      return build(type,typeResolver,constraint)
    }
 
-   /**
-    * We use an AST for parsing constraints as we need to support these in both
-    * Taxi and VyneQL.  However, the Antlr generation tree makes using the same code
-    * in both contexts very difficult, as it regenerates the classes in a different namespace.
-    * This means even though the classes are generated from the exact same source,
-    * we can't pass them into the constraint provider code.
-    * Therefore, we parse a simple AST, which makes reuse possible
-    */
-   private fun parseToAst(constraint: TaxiParser.PropertyToParameterConstraintExpressionContext): PropertyToParameterConstraintAst {
-      val astLhs = constraint.propertyToParameterConstraintLhs().let { lhs ->
-         val typeOrFieldQualifiedName = lhs.qualifiedName().asDotJoinedPath()
-         val propertyFieldNameQualifier = lhs.propertyFieldNameQualifier()?.text
-         PropertyToParameterConstraintAst.AstLhs(propertyFieldNameQualifier, typeOrFieldQualifiedName)
-      }
 
-      val astRhs = constraint.propertyToParameterConstraintRhs().let { rhs ->
-         val literal = rhs.literal()?.value()
-         val attributePath = rhs.qualifiedName()?.asDotJoinedPath()?.let { AttributePath.from(it) }
-         PropertyToParameterConstraintAst.AstRhs(literal,attributePath)
-      }
-
-      val operator = constraint.comparisonOperator().text
-      return PropertyToParameterConstraintAst(astLhs,operator,astRhs)
-   }
-
-   private fun parseLhs(lhs: PropertyToParameterConstraintAst.AstLhs, typeResolver: NamespaceQualifiedTypeResolver, context: ParserRuleContext): Either<CompilationError, PropertyIdentifier> {
+   private fun parseLhs(typeResolver: NamespaceQualifiedTypeResolver, context: TaxiParser.PropertyToParameterConstraintExpressionContext): Either<List<CompilationError>, PropertyIdentifier> {
+      val typeOrFieldQualifiedName = context.propertyToParameterConstraintLhs().qualifiedName().asDotJoinedPath()
+      val propertyFieldNameQualifier = context.propertyToParameterConstraintLhs().propertyFieldNameQualifier()?.text
       return when {
-         lhs.lhsPropertyFieldNameQualifier != null -> {
-            Either.right(PropertyFieldNameIdentifier(AttributePath.from(lhs.typeOrFieldQualifiedName.removePrefix("this."))))
+         propertyFieldNameQualifier != null -> {
+            Either.right(PropertyFieldNameIdentifier(AttributePath.from(typeOrFieldQualifiedName.removePrefix("this."))))
          }
-         else -> typeResolver.resolve(lhs.typeOrFieldQualifiedName, context).map { propertyType -> PropertyTypeIdentifier(propertyType.toQualifiedName()) }
+         else -> typeResolver.resolve(typeOrFieldQualifiedName, context).map { propertyType -> PropertyTypeIdentifier(propertyType.toQualifiedName()) }
       }
    }
 
-   private fun parseRhs(rhs: PropertyToParameterConstraintAst.AstRhs): Either<CompilationError, ValueExpression> {
+   private fun parseRhs(context: TaxiParser.PropertyToParameterConstraintExpressionContext): Either<List<CompilationError>, ValueExpression> {
+      val rhs = context.propertyToParameterConstraintRhs()
+      val literal = rhs.literal()?.value()
+      val attributePath = rhs.qualifiedName()?.asDotJoinedPath()?.let { AttributePath.from(it) }
       return when {
-         rhs.literal != null -> Either.right(ConstantValueExpression(rhs.literal))
-         rhs.attributePath != null -> Either.right(RelativeValueExpression(rhs.attributePath))
+         literal != null -> Either.right(ConstantValueExpression(literal))
+         attributePath != null -> Either.right(RelativeValueExpression(attributePath))
          else -> error("Unhandled scenario parsing rhs of constraint")
       }
    }
-
-}
-
-private fun TaxiParser.QualifiedNameContext.asDotJoinedPath(): String {
-   return this.Identifier().joinToString(".") { it.text }
 }

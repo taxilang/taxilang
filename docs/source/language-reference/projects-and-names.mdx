@@ -1,0 +1,128 @@
+---
+title: Projects, docs and names
+description: An overview of projects, files, and naming things in Taxi
+---
+
+import { Hint } from "../components/hint"
+
+
+## Taxi projects and files
+A Taxi project contains a `taxi.conf` file, and a collection of files saved with a `.taxi.` extension.
+
+A typical project might look like this:
+```text
+.
+├── src/
+│   └── sample.taxi
+├── tests/
+│   └── hello-world/
+│       ├── hello-world.spec.json
+│       ├── input.csv
+│       └── expected-output.json
+└── taxi.conf
+```
+
+Taxi files are simple text files, saved with a `.taxi` extension.
+
+An overview of the `taxi.conf` file is provided here TODO.
+
+## Taxi Doc
+
+All elements in taxi can be documented using taxidoc - which is simply markdown, wrapped in a `[[` and `]]`
+
+```text
+[[
+This is some documentation.
+Any [markdown](https://daringfireball.net/projects/markdown/syntax) is valid
+]]
+type TaxiDocExample
+```
+Most things within Taxi can be documented with Taxi doc, including:
+
+* Types and models
+* Fields in types
+* Enums and their values
+* Services and operations
+
+## Comments
+Comments can appear anywhere in a taxi file.  There are two flavours of comments, multiline (`/* ... */`) and single line (`//`):
+
+```taxi
+
+/*
+You can declare multiline comments anywhere.
+Anything inside this block is a comment
+*/
+
+// alternatively, you can have single line comments.
+// Of course, you can have lots of single line comments too.
+
+```
+## Namespaces
+Like in most languages, things in Taxi (types, services, operations, etc) need to have a unique name.
+
+
+To help prevent name clashes, Taxi uses namespaces - simply a way of disambiguating between two things with the same name.
+
+```taxi
+namespace customers
+
+type Name inherits String // The fully qualified name is customers.Name
+
+```
+
+Namespaces can be declared in two ways.
+
+#### Single namespace files
+If everything in a single file belongs to the same namespace, simply add `namespace xxx` at the top of the file.
+Everything that is declared in the file becomes part of the namespace.
+
+```taxi
+namespace customers
+
+type Name inherits String // The fully qualified name is customers.Name
+```
+#### Multi-namespace files
+If you have multiple namespaces within the same file, you can define namespaces using curly brace syntax:
+
+```taxi
+namespace people {
+    // fullyQualifiedName is people.Name
+    type Name inherits String
+}
+namepace pets {
+    // fullyQualifiedName is pets.Name
+    type Name inherits String
+}
+```
+
+<Hint type="Convention">
+    Namespaces typically start with lower-case letters.
+    
+    <Prefer>namespace people</Prefer>
+    <Discourage>namespace People</Discourage>
+</Hint>
+<Hint type="Convention">
+    Where there's a choice between singular and plural, prefer naming namespaces after plurals
+    
+    <Prefer>namespace people</Prefer>
+    <Discourage>namespace person</Discourage>
+</Hint>
+
+## Imports
+Imports are a way of including a type declared in another file.
+When a type or model is imported, it can be referenced using it's name, rather than requiring the fully qualified name.
+
+Imports come before a namespace declaration.
+
+
+```taxi
+import people.Name
+
+namespace customers 
+
+// The same as type customers.CustomerFirstName inherits people.Name
+type CustomerFirstName inherits Name
+```
+
+

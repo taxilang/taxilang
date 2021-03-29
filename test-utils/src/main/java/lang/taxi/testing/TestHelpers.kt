@@ -2,18 +2,26 @@ package lang.taxi.testing
 
 import lang.taxi.Compiler
 import lang.taxi.TaxiDocument
-import lang.taxi.types.Type
 import lang.taxi.services.Service
-import java.lang.AssertionError
+import lang.taxi.types.Type
 
 object TestHelpers {
-    fun expectToCompileTheSame(generated: List<String>, expected: String) {
+   /**
+    * Asserts both objects compile to the same taxi object model.
+    * Returns the taxi doc from the generated model, for further assertions
+    */
+    fun expectToCompileTheSame(generated: List<String>, expected: String):TaxiDocument {
         return expectToCompileTheSame(generated, listOf(expected))
     }
-    fun expectToCompileTheSame(generated: List<String>, expected: List<String>) {
+   /**
+    * Asserts both objects compile to the same taxi object model.
+    * Returns the taxi doc from the generated model, for further assertions
+    */
+
+   fun expectToCompileTheSame(generated: List<String>, expected: List<String>):TaxiDocument {
         val generatedDoc = Compiler.forStrings(generated).compile()
         val expectedDoc = Compiler.forStrings(expected).compile()
-        if (generatedDoc == expectedDoc) return
+        if (generatedDoc == expectedDoc) return generatedDoc
 
         val typeErros = expectedDoc.types.flatMap { type -> collateTypeErrors(type, generatedDoc) }
         val serviceErrors = expectedDoc.services.flatMap { service -> collateServiceErrors(service, generatedDoc) }

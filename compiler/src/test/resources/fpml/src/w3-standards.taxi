@@ -1,0 +1,93 @@
+namespace org.w3 {
+   type alias string as String
+   
+   type alias anyType as Any
+   
+   type alias integer as Int
+   
+   type alias date as Date
+   
+   type alias boolean as Boolean
+   
+   type alias time as Time
+   
+   type alias dateTime as DateTime
+   
+   type alias float as Decimal
+   
+   type alias double as Decimal
+   
+   type alias decimal as Decimal
+   
+   type base64Binary inherits lang.taxi.String
+   
+   type hexBinary inherits lang.taxi.String
+   
+   type anyURI inherits lang.taxi.String
+   
+   type ID inherits org.w3.NCName
+   
+   type IDREF inherits org.w3.NCName
+   
+   type QName inherits lang.taxi.String
+   
+   type NOTATION inherits lang.taxi.String
+   
+   type normalizedString inherits lang.taxi.String
+   
+   type token inherits org.w3.normalizedString
+   
+   type language inherits org.w3.token
+   
+   type Name inherits org.w3.token
+   
+   type NCName inherits org.w3.Name
+   
+   type alias IDREFS as IDREF[]
+   
+   type NMTOKEN inherits org.w3.token
+   
+   type alias NMTOKENS as NMTOKEN[]
+   
+   type ENTITY inherits org.w3.NCName
+   
+   type alias ENTITIES as ENTITY[]
+   
+   type nonPositiveInteger inherits org.w3.integer
+   
+   type long inherits org.w3.integer
+   
+   type nonNegativeInteger inherits org.w3.integer
+   
+   type negativeInteger inherits org.w3.nonPositiveInteger
+   
+   type int inherits org.w3.long
+   
+   type short inherits org.w3.int
+   
+   type byte inherits org.w3.short
+   
+   type unsignedLong inherits org.w3.nonNegativeInteger
+   
+   type positiveInteger inherits org.w3.nonNegativeInteger
+   
+   type unsignedInt inherits org.w3.unsignedLong
+   
+   type unsignedShort inherits org.w3.unsignedInt
+   
+   type unsignedByte inherits org.w3.unsignedShort
+   
+   type duration inherits lang.taxi.String
+   
+   type gYearMonth inherits lang.taxi.String
+   
+   type gYear inherits lang.taxi.String
+   
+   type gMonthDay inherits lang.taxi.String
+   
+   type gDay inherits lang.taxi.String
+   
+   type gMonth inherits lang.taxi.String
+   
+   
+}

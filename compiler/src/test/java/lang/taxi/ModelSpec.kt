@@ -1,6 +1,9 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.functions.FunctionAccessor
+import lang.taxi.types.CalculatedFieldSetExpression
+import lang.taxi.types.ConditionalAccessor
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.QualifiedName
 import org.spekframework.spek2.Spek
@@ -173,6 +176,120 @@ model Person {
                   }
                """.trimIndent()
                Compiler(src).compile().model("Trade")
+            }
+         }
+
+         it("should allow formulas on fields") {
+            val src = """
+               type FirstName inherits String
+               type LastName inherits String
+               type FullName inherits String
+
+               model Person {
+                  firstName: FirstName
+                  lastName: LastName
+                  fullName : FullName by (this.firstName + this.lastName)
+               }
+
+            """.trimIndent()
+            val transaction = Compiler(src).compile().model("Person")
+            val accessor = transaction.field("fullName").accessor as ConditionalAccessor
+            val calculatedFieldSetExpression = accessor.expression as CalculatedFieldSetExpression
+            calculatedFieldSetExpression.operator.should.equal(FormulaOperator.Add)
+            calculatedFieldSetExpression.operand1.fieldName.should.equal("firstName")
+            calculatedFieldSetExpression.operand2.fieldName.should.equal("lastName")
+         }
+
+         it("compilation should fail for invalid formulas") {
+            assertFailsWith(CompilationException::class) {
+               val src = """
+               type FirstName inherits String
+               type LastName inherits String
+               type FullName inherits String
+
+               model Person {
+                  firstName: FirstName
+                  lastName: LastName
+                  fullName : FullName by (this.firstName + this.invalidField)
+               }
+
+            """.trimIndent()
+               val transaction = Compiler(src).compile().model("Person")
+            }
+         }
+
+         it("should allow coalesce on strings") {
+            val src = """
+               type FirstName inherits String
+               type LastName inherits String
+               type FullName inherits String
+
+               model Person {
+                  field1: String as coalesce(FirstName, LastName, FullName)
+               }
+
+            """.trimIndent()
+            val transaction = Compiler(src).compile().model("Person")
+            val formula = transaction.field("field1").formula!!
+            formula.operator.should.equal(FormulaOperator.Coalesce)
+            formula.operandFields[0].fullyQualifiedName.should.equal("FirstName")
+            formula.operandFields[1].fullyQualifiedName.should.equal("LastName")
+            formula.operandFields[2].fullyQualifiedName.should.equal("FullName")
+         }
+
+         it("should allow coalesce on Decimals") {
+            val src = """
+               type Qty inherits Decimal
+               type QtyHit inherits Decimal
+               type QtyFill inherits Decimal
+               type SomeQty inherits Decimal
+               type SomeAnotherQty inherits SomeQty
+
+               model Foo {
+                  field1: SomeAnotherQty as coalesce(Qty, QtyHit, QtyFill)
+               }
+
+            """.trimIndent()
+            val transaction = Compiler(src).compile().model("Foo")
+            val formula = transaction.field("field1").formula!!
+            formula.operator.should.equal(FormulaOperator.Coalesce)
+            formula.operandFields[0].fullyQualifiedName.should.equal("Qty")
+            formula.operandFields[1].fullyQualifiedName.should.equal("QtyHit")
+            formula.operandFields[2].fullyQualifiedName.should.equal("QtyFill")
+         }
+
+         it("should allow coalesce on Ints") {
+            val src = """
+               type IntOne inherits Int
+               type IntTwo inherits Int
+               type IntThree inherits Int
+
+               model Foo {
+                  field1: Int as coalesce(IntOne, IntTwo, IntThree)
+               }
+
+            """.trimIndent()
+            val transaction = Compiler(src).compile().model("Foo")
+            val formula = transaction.field("field1").formula!!
+            formula.operator.should.equal(FormulaOperator.Coalesce)
+            formula.operandFields[0].fullyQualifiedName.should.equal("IntOne")
+            formula.operandFields[1].fullyQualifiedName.should.equal("IntTwo")
+            formula.operandFields[2].fullyQualifiedName.should.equal("IntThree")
+         }
+
+         it("Can't mix types with coalesce") {
+            assertFailsWith(CompilationException::class) {
+               val src = """
+               type IntOne inherits Int
+               type DecimalOne inherits Decimal
+               type IntThree inherits Int
+
+               model Foo {
+                  field1: Int as coalesce(IntOne, DecimalOne, IntThree)
+               }
+
+            """.trimIndent()
+               val transaction = Compiler(src).compile().model("Foo")
             }
          }
       }

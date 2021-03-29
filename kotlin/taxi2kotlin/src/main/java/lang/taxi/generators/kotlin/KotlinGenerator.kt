@@ -1,12 +1,35 @@
 package lang.taxi.generators.kotlin
 
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.plusParameter
+import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeAliasSpec
+import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.asTypeName
 import lang.taxi.TaxiDocument
 import lang.taxi.annotations.DataType
-import lang.taxi.generators.*
+import lang.taxi.generators.FieldProcessor
+import lang.taxi.generators.ModelGenerator
+import lang.taxi.generators.Processor
+import lang.taxi.generators.TaxiProjectEnvironment
+import lang.taxi.generators.TypeProcessor
+import lang.taxi.generators.WritableSource
 import lang.taxi.jvm.common.PrimitiveTypes
-import lang.taxi.types.*
+import lang.taxi.types.ArrayType
+import lang.taxi.types.EnumType
+import lang.taxi.types.Field
+import lang.taxi.types.Named
+import lang.taxi.types.ObjectType
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.Type
+import lang.taxi.types.TypeAlias
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -22,7 +45,7 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
 
    }
 
-   override fun generate(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiEnvironment): List<WritableSource> {
+   override fun generate(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiProjectEnvironment): List<WritableSource> {
       // TODO : Shouldn't be assinging a field here - should be passing it through
       this.processorHelper = ProcessorHelper(processors)
       val typeNameConstantsGenerator = TypeNamesAsConstantsGenerator(typeNamesTopLevelPackageName)

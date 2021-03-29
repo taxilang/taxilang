@@ -1,6 +1,9 @@
 package lang.taxi.utils
 
 import arrow.core.Either
+import arrow.core.ValidatedNel
+import arrow.core.extensions.either.foldable.foldRight
+
 
 fun <A, B> List<Either<A, B>>.invertEitherList(): Either<List<A>, List<B>> {
    val mapLeft = this.any { it.isLeft() }
@@ -54,6 +57,6 @@ fun <A, B> Either<List<List<A>>, B>.flattenErrors(): Either<List<A>, B> {
    return this.mapLeft { it.flatten() }
 }
 
-fun <A,B> Either<A,B>.wrapErrorsInList():Either<List<A>,B> {
+fun <A, B> Either<A, B>.wrapErrorsInList(): Either<List<A>, B> {
    return this.mapLeft { listOf(it) }
 }

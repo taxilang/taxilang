@@ -1,5 +1,6 @@
 package lang.taxi.types
 
+import com.google.common.cache.CacheBuilder
 import java.io.IOException
 import java.io.StreamTokenizer
 import java.io.StringReader
@@ -17,21 +18,27 @@ private data class GenericTypeName(val baseType: String, val params: List<Generi
 // Note - tests for this are currently in Vyne, let's move them
 //
 object QualifiedNameParser {
+   private val nameCache = CacheBuilder.newBuilder()
+      .build<String,QualifiedName>()
    fun parse(s: String): QualifiedName {
-      // If there's a # reference (like for a field reference), we strip it
-      // out before parsing
-      val sanitized = s.split("#")[0]
-      val expandedName = convertArrayShorthand(sanitized)
-      val tokenizer = StreamTokenizer(StringReader(expandedName))
-      tokenizer.wordChars('_'.toInt(), '_'.toInt())
-      tokenizer.wordChars('@'.toInt(), '@'.toInt())
-      tokenizer.wordChars('#'.toInt(), '#'.toInt())
-      try {
-         val genericName = parse(tokenizer, listOf(StreamTokenizer.TT_EOF)) // Parse until the end
-         return genericName.toQualifiedName()
-      } catch (e: IOException) {
-         throw RuntimeException()
+      return nameCache.get(s) {
+         // If there's a # reference (like for a field reference), we strip it
+         // out before parsing
+         val sanitized = s.split("#")[0]
+         val expandedName = convertArrayShorthand(sanitized)
+         val tokenizer = StreamTokenizer(StringReader(expandedName))
+         tokenizer.wordChars('_'.toInt(), '_'.toInt())
+         tokenizer.wordChars('@'.toInt(), '@'.toInt())
+         tokenizer.wordChars('#'.toInt(), '#'.toInt())
+         tokenizer.wordChars('$'.toInt(), '$'.toInt())
+         try {
+            val genericName = parse(tokenizer, listOf(StreamTokenizer.TT_EOF)) // Parse until the end
+            genericName.toQualifiedName()
+         } catch (e: IOException) {
+            throw RuntimeException(e)
+         }
       }
+
 
    }
 
@@ -40,7 +47,7 @@ object QualifiedNameParser {
    private fun convertArrayShorthand(name: String): String {
       if (name.endsWith("[]")) {
          val arrayType = name.removeSuffix("[]")
-         return PrimitiveType.ARRAY.qualifiedName + "<$arrayType>"
+         return ArrayType.NAME + "<$arrayType>"
       } else {
          return name
       }

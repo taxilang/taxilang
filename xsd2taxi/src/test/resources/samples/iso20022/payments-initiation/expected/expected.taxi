@@ -1,0 +1,943 @@
+namespace iso.std.iso20022.tech.xsd.pain00100110 {
+   type AccountIdentification4Choice {
+      IBAN : IBAN2007Identifier?
+      Othr : GenericAccountIdentification1?
+   }
+
+   type IBAN2007Identifier inherits lang.taxi.String(@format = "[A-Z]{2,2}[0-9]{2,2}[a-zA-Z0-9]{1,30}")
+
+   type GenericAccountIdentification1 {
+      Id : Max34Text
+      SchmeNm : AccountSchemeName1Choice?
+      Issr : Max35Text?
+   }
+
+   type Max34Text inherits lang.taxi.String
+
+   type AccountSchemeName1Choice {
+      Cd : ExternalAccountIdentification1Code?
+      Prtry : Max35Text?
+   }
+
+   type ExternalAccountIdentification1Code inherits lang.taxi.String
+
+   type Max35Text inherits lang.taxi.String
+
+   type ActiveOrHistoricCurrencyAndAmount_SimpleType inherits lang.taxi.Decimal
+
+   type ActiveOrHistoricCurrencyAndAmount inherits iso.std.iso20022.tech.xsd.pain00100110.ActiveOrHistoricCurrencyAndAmount_SimpleType {
+      @lang.taxi.xml.XmlAttribute Ccy : ActiveOrHistoricCurrencyCode
+   }
+
+   type ActiveOrHistoricCurrencyCode inherits lang.taxi.String(@format = "[A-Z]{3,3}")
+
+   enum AddressType2Code {
+      ADDR,
+      PBOX,
+      HOME,
+      BIZZ,
+      MLTO,
+      DLVY
+   }
+
+   type AddressType3Choice {
+      Cd : AddressType2Code?
+      Prtry : GenericIdentification30?
+   }
+
+   type GenericIdentification30 {
+      Id : Exact4AlphaNumericText
+      Issr : Max35Text
+      SchmeNm : Max35Text?
+   }
+
+   type Exact4AlphaNumericText inherits lang.taxi.String(@format = "[a-zA-Z0-9]{4}")
+
+   type AdviceType1 {
+      CdtAdvc : AdviceType1Choice?
+      DbtAdvc : AdviceType1Choice?
+   }
+
+   type AdviceType1Choice {
+      Cd : AdviceType1Code?
+      Prtry : Max35Text?
+   }
+
+   enum AdviceType1Code {
+      ADWD,
+      ADND
+   }
+
+   type AmountType4Choice {
+      InstdAmt : ActiveOrHistoricCurrencyAndAmount?
+      EqvtAmt : EquivalentAmount2?
+   }
+
+   type EquivalentAmount2 {
+      Amt : ActiveOrHistoricCurrencyAndAmount
+      CcyOfTrf : ActiveOrHistoricCurrencyCode
+   }
+
+   type AnyBICDec2014Identifier inherits lang.taxi.String(@format = "[A-Z0-9]{4,4}[A-Z]{2,2}[A-Z0-9]{2,2}([A-Z0-9]{3,3}){0,1}")
+
+   type Authorisation1Choice {
+      Cd : Authorisation1Code?
+      Prtry : Max128Text?
+   }
+
+   enum Authorisation1Code {
+      AUTH,
+      FDET,
+      FSUM,
+      ILEV
+   }
+
+   type Max128Text inherits lang.taxi.String
+
+   type BICFIDec2014Identifier inherits lang.taxi.String(@format = "[A-Z0-9]{4,4}[A-Z]{2,2}[A-Z0-9]{2,2}([A-Z0-9]{3,3}){0,1}")
+
+   type BaseOneRate inherits lang.taxi.Decimal
+
+   type BatchBookingIndicator inherits lang.taxi.Boolean
+
+   type BranchAndFinancialInstitutionIdentification6 {
+      FinInstnId : FinancialInstitutionIdentification18
+      BrnchId : BranchData3?
+   }
+
+   type FinancialInstitutionIdentification18 {
+      BICFI : BICFIDec2014Identifier?
+      ClrSysMmbId : ClearingSystemMemberIdentification2?
+      LEI : LEIIdentifier?
+      Nm : Max140Text?
+      PstlAdr : PostalAddress24?
+      Othr : GenericFinancialIdentification1?
+   }
+
+   type ClearingSystemMemberIdentification2 {
+      ClrSysId : ClearingSystemIdentification2Choice?
+      MmbId : Max35Text
+   }
+
+   type ClearingSystemIdentification2Choice {
+      Cd : ExternalClearingSystemIdentification1Code?
+      Prtry : Max35Text?
+   }
+
+   type ExternalClearingSystemIdentification1Code inherits lang.taxi.String
+
+   type LEIIdentifier inherits lang.taxi.String(@format = "[A-Z0-9]{18,18}[0-9]{2,2}")
+
+   type Max140Text inherits lang.taxi.String
+
+   type PostalAddress24 {
+      AdrTp : AddressType3Choice?
+      Dept : Max70Text?
+      SubDept : Max70Text?
+      StrtNm : Max70Text?
+      BldgNb : Max16Text?
+      BldgNm : Max35Text?
+      Flr : Max70Text?
+      PstBx : Max16Text?
+      Room : Max70Text?
+      PstCd : Max16Text?
+      TwnNm : Max35Text?
+      TwnLctnNm : Max35Text?
+      DstrctNm : Max35Text?
+      CtrySubDvsn : Max35Text?
+      Ctry : CountryCode?
+      AdrLine : Max70Text?
+   }
+
+   type Max70Text inherits lang.taxi.String
+
+   type Max16Text inherits lang.taxi.String
+
+   type CountryCode inherits lang.taxi.String(@format = "[A-Z]{2,2}")
+
+   type GenericFinancialIdentification1 {
+      Id : Max35Text
+      SchmeNm : FinancialIdentificationSchemeName1Choice?
+      Issr : Max35Text?
+   }
+
+   type FinancialIdentificationSchemeName1Choice {
+      Cd : ExternalFinancialInstitutionIdentification1Code?
+      Prtry : Max35Text?
+   }
+
+   type ExternalFinancialInstitutionIdentification1Code inherits lang.taxi.String
+
+   type BranchData3 {
+      Id : Max35Text?
+      LEI : LEIIdentifier?
+      Nm : Max140Text?
+      PstlAdr : PostalAddress24?
+   }
+
+   type CashAccount38 {
+      Id : AccountIdentification4Choice
+      Tp : CashAccountType2Choice?
+      Ccy : ActiveOrHistoricCurrencyCode?
+      Nm : Max70Text?
+      Prxy : ProxyAccountIdentification1?
+   }
+
+   type CashAccountType2Choice {
+      Cd : ExternalCashAccountType1Code?
+      Prtry : Max35Text?
+   }
+
+   type ExternalCashAccountType1Code inherits lang.taxi.String
+
+   type ProxyAccountIdentification1 {
+      Tp : ProxyAccountType1Choice?
+      Id : Max2048Text
+   }
+
+   type ProxyAccountType1Choice {
+      Cd : ExternalProxyAccountType1Code?
+      Prtry : Max35Text?
+   }
+
+   type ExternalProxyAccountType1Code inherits lang.taxi.String
+
+   type Max2048Text inherits lang.taxi.String
+
+   type CategoryPurpose1Choice {
+      Cd : ExternalCategoryPurpose1Code?
+      Prtry : Max35Text?
+   }
+
+   type ExternalCategoryPurpose1Code inherits lang.taxi.String
+
+   enum ChargeBearerType1Code {
+      DEBT,
+      CRED,
+      SHAR,
+      SLEV
+   }
+
+   type Cheque11 {
+      ChqTp : ChequeType2Code?
+      ChqNb : Max35Text?
+      ChqFr : NameAndAddress16?
+      DlvryMtd : ChequeDeliveryMethod1Choice?
+      DlvrTo : NameAndAddress16?
+      InstrPrty : Priority2Code?
+      ChqMtrtyDt : ISODate?
+      FrmsCd : Max35Text?
+      MemoFld : Max35Text?
+      RgnlClrZone : Max35Text?
+      PrtLctn : Max35Text?
+      Sgntr : Max70Text?
+   }
+
+   enum ChequeType2Code {
+      CCHQ,
+      CCCH,
+      BCHQ,
+      DRFT,
+      ELDR
+   }
+
+   type NameAndAddress16 {
+      Nm : Max140Text
+      Adr : PostalAddress24
+   }
+
+   type ChequeDeliveryMethod1Choice {
+      Cd : ChequeDelivery1Code?
+      Prtry : Max35Text?
+   }
+
+   enum ChequeDelivery1Code {
+      MLDB,
+      MLCD,
+      MLFA,
+      CRDB,
+      CRCD,
+      CRFA,
+      PUDB,
+      PUCD,
+      PUFA,
+      RGDB,
+      RGCD,
+      RGFA
+   }
+
+   enum Priority2Code {
+      HIGH,
+      NORM
+   }
+
+   type ISODate inherits lang.taxi.Date(@format = "yyyy-MM-dd")
+
+   type Contact4 {
+      NmPrfx : NamePrefix2Code?
+      Nm : Max140Text?
+      PhneNb : PhoneNumber?
+      MobNb : PhoneNumber?
+      FaxNb : PhoneNumber?
+      EmailAdr : Max2048Text?
+      EmailPurp : Max35Text?
+      JobTitl : Max35Text?
+      Rspnsblty : Max35Text?
+      Dept : Max70Text?
+      Othr : OtherContact1?
+      PrefrdMtd : PreferredContactMethod1Code?
+   }
+
+   enum NamePrefix2Code {
+      DOCT,
+      MADM,
+      MISS,
+      MIST,
+      MIKS
+   }
+
+   type PhoneNumber inherits lang.taxi.String(@format = "\\+[0-9]{1,3}-[0-9()+\\-]{1,30}")
+
+   type OtherContact1 {
+      ChanlTp : Max4Text
+      Id : Max128Text?
+   }
+
+   type Max4Text inherits lang.taxi.String
+
+   enum PreferredContactMethod1Code {
+      LETT,
+      MAIL,
+      PHON,
+      FAXX,
+      CELL
+   }
+
+   enum CreditDebitCode {
+      CRDT,
+      DBIT
+   }
+
+   type CreditTransferMandateData1 {
+      MndtId : Max35Text?
+      Tp : MandateTypeInformation2?
+      DtOfSgntr : ISODate?
+      DtOfVrfctn : ISODateTime?
+      ElctrncSgntr : Max10KBinary?
+      FrstPmtDt : ISODate?
+      FnlPmtDt : ISODate?
+      Frqcy : Frequency36Choice?
+      Rsn : MandateSetupReason1Choice?
+   }
+
+   type MandateTypeInformation2 {
+      SvcLvl : ServiceLevel8Choice?
+      LclInstrm : LocalInstrument2Choice?
+      CtgyPurp : CategoryPurpose1Choice?
+      Clssfctn : MandateClassification1Choice?
+   }
+
+   type ServiceLevel8Choice {
+      Cd : ExternalServiceLevel1Code?
+      Prtry : Max35Text?
+   }
+
+   type ExternalServiceLevel1Code inherits lang.taxi.String
+
+   type LocalInstrument2Choice {
+      Cd : ExternalLocalInstrument1Code?
+      Prtry : Max35Text?
+   }
+
+   type ExternalLocalInstrument1Code inherits lang.taxi.String
+
+   type MandateClassification1Choice {
+      Cd : MandateClassification1Code?
+      Prtry : Max35Text?
+   }
+
+   enum MandateClassification1Code {
+      FIXE,
+      USGB,
+      VARI
+   }
+
+   type ISODateTime inherits lang.taxi.DateTime(@format = "yyyy-MM-dd'T'HH:mm:ss.SSS")
+
+   type Max10KBinary inherits org.w3.base64Binary
+
+   type Frequency36Choice {
+      Tp : Frequency6Code?
+      Prd : FrequencyPeriod1?
+      PtInTm : FrequencyAndMoment1?
+   }
+
+   enum Frequency6Code {
+      YEAR,
+      MNTH,
+      QURT,
+      MIAN,
+      WEEK,
+      DAIL,
+      ADHO,
+      INDA,
+      FRTN
+   }
+
+   type FrequencyPeriod1 {
+      Tp : Frequency6Code
+      CntPerPrd : DecimalNumber
+   }
+
+   type DecimalNumber inherits lang.taxi.Decimal
+
+   type FrequencyAndMoment1 {
+      Tp : Frequency6Code
+      PtInTm : Exact2NumericText
+   }
+
+   type Exact2NumericText inherits lang.taxi.String(@format = "[0-9]{2}")
+
+   type MandateSetupReason1Choice {
+      Cd : ExternalMandateSetupReason1Code?
+      Prtry : Max70Text?
+   }
+
+   type ExternalMandateSetupReason1Code inherits lang.taxi.String
+
+   type CreditTransferTransaction40 {
+      PmtId : PaymentIdentification6
+      PmtTpInf : PaymentTypeInformation26?
+      Amt : AmountType4Choice
+      XchgRateInf : ExchangeRate1?
+      ChrgBr : ChargeBearerType1Code?
+      MndtRltdInf : CreditTransferMandateData1?
+      ChqInstr : Cheque11?
+      UltmtDbtr : PartyIdentification135?
+      IntrmyAgt1 : BranchAndFinancialInstitutionIdentification6?
+      IntrmyAgt1Acct : CashAccount38?
+      IntrmyAgt2 : BranchAndFinancialInstitutionIdentification6?
+      IntrmyAgt2Acct : CashAccount38?
+      IntrmyAgt3 : BranchAndFinancialInstitutionIdentification6?
+      IntrmyAgt3Acct : CashAccount38?
+      CdtrAgt : BranchAndFinancialInstitutionIdentification6?
+      CdtrAgtAcct : CashAccount38?
+      Cdtr : PartyIdentification135?
+      CdtrAcct : CashAccount38?
+      UltmtCdtr : PartyIdentification135?
+      InstrForCdtrAgt : InstructionForCreditorAgent3?
+      InstrForDbtrAgt : InstructionForDebtorAgent1?
+      Purp : Purpose2Choice?
+      RgltryRptg : RegulatoryReporting3?
+      Tax : TaxInformation8?
+      RltdRmtInf : RemittanceLocation7?
+      RmtInf : RemittanceInformation16?
+      SplmtryData : SupplementaryData1?
+   }
+
+   type PaymentIdentification6 {
+      InstrId : Max35Text?
+      EndToEndId : Max35Text
+      UETR : UUIDv4Identifier?
+   }
+
+   type UUIDv4Identifier inherits lang.taxi.String(@format = "[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}")
+
+   type PaymentTypeInformation26 {
+      InstrPrty : Priority2Code?
+      SvcLvl : ServiceLevel8Choice?
+      LclInstrm : LocalInstrument2Choice?
+      CtgyPurp : CategoryPurpose1Choice?
+   }
+
+   type ExchangeRate1 {
+      UnitCcy : ActiveOrHistoricCurrencyCode?
+      XchgRate : BaseOneRate?
+      RateTp : ExchangeRateType1Code?
+      CtrctId : Max35Text?
+   }
+
+   enum ExchangeRateType1Code {
+      SPOT,
+      SALE,
+      AGRD
+   }
+
+   type PartyIdentification135 {
+      Nm : Max140Text?
+      PstlAdr : PostalAddress24?
+      Id : Party38Choice?
+      CtryOfRes : CountryCode?
+      CtctDtls : Contact4?
+   }
+
+   type Party38Choice {
+      OrgId : OrganisationIdentification29?
+      PrvtId : PersonIdentification13?
+   }
+
+   type OrganisationIdentification29 {
+      AnyBIC : AnyBICDec2014Identifier?
+      LEI : LEIIdentifier?
+      Othr : GenericOrganisationIdentification1?
+   }
+
+   type GenericOrganisationIdentification1 {
+      Id : Max35Text
+      SchmeNm : OrganisationIdentificationSchemeName1Choice?
+      Issr : Max35Text?
+   }
+
+   type OrganisationIdentificationSchemeName1Choice {
+      Cd : ExternalOrganisationIdentification1Code?
+      Prtry : Max35Text?
+   }
+
+   type ExternalOrganisationIdentification1Code inherits lang.taxi.String
+
+   type PersonIdentification13 {
+      DtAndPlcOfBirth : DateAndPlaceOfBirth1?
+      Othr : GenericPersonIdentification1?
+   }
+
+   type DateAndPlaceOfBirth1 {
+      BirthDt : ISODate
+      PrvcOfBirth : Max35Text?
+      CityOfBirth : Max35Text
+      CtryOfBirth : CountryCode
+   }
+
+   type GenericPersonIdentification1 {
+      Id : Max35Text
+      SchmeNm : PersonIdentificationSchemeName1Choice?
+      Issr : Max35Text?
+   }
+
+   type PersonIdentificationSchemeName1Choice {
+      Cd : ExternalPersonIdentification1Code?
+      Prtry : Max35Text?
+   }
+
+   type ExternalPersonIdentification1Code inherits lang.taxi.String
+
+   type InstructionForCreditorAgent3 {
+      Cd : ExternalCreditorAgentInstruction1Code?
+      InstrInf : Max140Text?
+   }
+
+   type ExternalCreditorAgentInstruction1Code inherits lang.taxi.String
+
+   type InstructionForDebtorAgent1 {
+      Cd : ExternalDebtorAgentInstruction1Code?
+      InstrInf : Max140Text?
+   }
+
+   type ExternalDebtorAgentInstruction1Code inherits lang.taxi.String
+
+   type Purpose2Choice {
+      Cd : ExternalPurpose1Code?
+      Prtry : Max35Text?
+   }
+
+   type ExternalPurpose1Code inherits lang.taxi.String
+
+   type RegulatoryReporting3 {
+      DbtCdtRptgInd : RegulatoryReportingType1Code?
+      Authrty : RegulatoryAuthority2?
+      Dtls : StructuredRegulatoryReporting3?
+   }
+
+   enum RegulatoryReportingType1Code {
+      CRED,
+      DEBT,
+      BOTH
+   }
+
+   type RegulatoryAuthority2 {
+      Nm : Max140Text?
+      Ctry : CountryCode?
+   }
+
+   type StructuredRegulatoryReporting3 {
+      Tp : Max35Text?
+      Dt : ISODate?
+      Ctry : CountryCode?
+      Cd : Max10Text?
+      Amt : ActiveOrHistoricCurrencyAndAmount?
+      Inf : Max35Text?
+   }
+
+   type Max10Text inherits lang.taxi.String
+
+   type TaxInformation8 {
+      Cdtr : TaxParty1?
+      Dbtr : TaxParty2?
+      AdmstnZone : Max35Text?
+      RefNb : Max140Text?
+      Mtd : Max35Text?
+      TtlTaxblBaseAmt : ActiveOrHistoricCurrencyAndAmount?
+      TtlTaxAmt : ActiveOrHistoricCurrencyAndAmount?
+      Dt : ISODate?
+      SeqNb : Number?
+      Rcrd : TaxRecord2?
+   }
+
+   type TaxParty1 {
+      TaxId : Max35Text?
+      RegnId : Max35Text?
+      TaxTp : Max35Text?
+   }
+
+   type TaxParty2 {
+      TaxId : Max35Text?
+      RegnId : Max35Text?
+      TaxTp : Max35Text?
+      Authstn : TaxAuthorisation1?
+   }
+
+   type TaxAuthorisation1 {
+      Titl : Max35Text?
+      Nm : Max140Text?
+   }
+
+   type Number inherits lang.taxi.Decimal
+
+   type TaxRecord2 {
+      Tp : Max35Text?
+      Ctgy : Max35Text?
+      CtgyDtls : Max35Text?
+      DbtrSts : Max35Text?
+      CertId : Max35Text?
+      FrmsCd : Max35Text?
+      Prd : TaxPeriod2?
+      TaxAmt : TaxAmount2?
+      AddtlInf : Max140Text?
+   }
+
+   type TaxPeriod2 {
+      Yr : ISODate?
+      Tp : TaxRecordPeriod1Code?
+      FrToDt : DatePeriod2?
+   }
+
+   enum TaxRecordPeriod1Code {
+      MM01,
+      MM02,
+      MM03,
+      MM04,
+      MM05,
+      MM06,
+      MM07,
+      MM08,
+      MM09,
+      MM10,
+      MM11,
+      MM12,
+      QTR1,
+      QTR2,
+      QTR3,
+      QTR4,
+      HLF1,
+      HLF2
+   }
+
+   type DatePeriod2 {
+      FrDt : ISODate
+      ToDt : ISODate
+   }
+
+   type TaxAmount2 {
+      Rate : PercentageRate?
+      TaxblBaseAmt : ActiveOrHistoricCurrencyAndAmount?
+      TtlAmt : ActiveOrHistoricCurrencyAndAmount?
+      Dtls : TaxRecordDetails2?
+   }
+
+   type PercentageRate inherits lang.taxi.Decimal
+
+   type TaxRecordDetails2 {
+      Prd : TaxPeriod2?
+      Amt : ActiveOrHistoricCurrencyAndAmount
+   }
+
+   type RemittanceLocation7 {
+      RmtId : Max35Text?
+      RmtLctnDtls : RemittanceLocationData1?
+   }
+
+   type RemittanceLocationData1 {
+      Mtd : RemittanceLocationMethod2Code
+      ElctrncAdr : Max2048Text?
+      PstlAdr : NameAndAddress16?
+   }
+
+   enum RemittanceLocationMethod2Code {
+      FAXI,
+      EDIC,
+      URID,
+      EMAL,
+      POST,
+      SMSM
+   }
+
+   type RemittanceInformation16 {
+      Ustrd : Max140Text?
+      Strd : StructuredRemittanceInformation16?
+   }
+
+   type StructuredRemittanceInformation16 {
+      RfrdDocInf : ReferredDocumentInformation7?
+      RfrdDocAmt : RemittanceAmount2?
+      CdtrRefInf : CreditorReferenceInformation2?
+      Invcr : PartyIdentification135?
+      Invcee : PartyIdentification135?
+      TaxRmt : TaxInformation7?
+      GrnshmtRmt : Garnishment3?
+      AddtlRmtInf : Max140Text?
+   }
+
+   type ReferredDocumentInformation7 {
+      Tp : ReferredDocumentType4?
+      Nb : Max35Text?
+      RltdDt : ISODate?
+      LineDtls : DocumentLineInformation1?
+   }
+
+   type ReferredDocumentType4 {
+      CdOrPrtry : ReferredDocumentType3Choice
+      Issr : Max35Text?
+   }
+
+   type ReferredDocumentType3Choice {
+      Cd : DocumentType6Code?
+      Prtry : Max35Text?
+   }
+
+   enum DocumentType6Code {
+      MSIN,
+      CNFA,
+      DNFA,
+      CINV,
+      CREN,
+      DEBN,
+      HIRI,
+      SBIN,
+      CMCN,
+      SOAC,
+      DISP,
+      BOLD,
+      VCHR,
+      AROI,
+      TSUT,
+      PUOR
+   }
+
+   type DocumentLineInformation1 {
+      Id : DocumentLineIdentification1
+      Desc : Max2048Text?
+      Amt : RemittanceAmount3?
+   }
+
+   type DocumentLineIdentification1 {
+      Tp : DocumentLineType1?
+      Nb : Max35Text?
+      RltdDt : ISODate?
+   }
+
+   type DocumentLineType1 {
+      CdOrPrtry : DocumentLineType1Choice
+      Issr : Max35Text?
+   }
+
+   type DocumentLineType1Choice {
+      Cd : ExternalDocumentLineType1Code?
+      Prtry : Max35Text?
+   }
+
+   type ExternalDocumentLineType1Code inherits lang.taxi.String
+
+   type RemittanceAmount3 {
+      DuePyblAmt : ActiveOrHistoricCurrencyAndAmount?
+      DscntApldAmt : DiscountAmountAndType1?
+      CdtNoteAmt : ActiveOrHistoricCurrencyAndAmount?
+      TaxAmt : TaxAmountAndType1?
+      AdjstmntAmtAndRsn : DocumentAdjustment1?
+      RmtdAmt : ActiveOrHistoricCurrencyAndAmount?
+   }
+
+   type DiscountAmountAndType1 {
+      Tp : DiscountAmountType1Choice?
+      Amt : ActiveOrHistoricCurrencyAndAmount
+   }
+
+   type DiscountAmountType1Choice {
+      Cd : ExternalDiscountAmountType1Code?
+      Prtry : Max35Text?
+   }
+
+   type ExternalDiscountAmountType1Code inherits lang.taxi.String
+
+   type TaxAmountAndType1 {
+      Tp : TaxAmountType1Choice?
+      Amt : ActiveOrHistoricCurrencyAndAmount
+   }
+
+   type TaxAmountType1Choice {
+      Cd : ExternalTaxAmountType1Code?
+      Prtry : Max35Text?
+   }
+
+   type ExternalTaxAmountType1Code inherits lang.taxi.String
+
+   type DocumentAdjustment1 {
+      Amt : ActiveOrHistoricCurrencyAndAmount
+      CdtDbtInd : CreditDebitCode?
+      Rsn : Max4Text?
+      AddtlInf : Max140Text?
+   }
+
+   type RemittanceAmount2 {
+      DuePyblAmt : ActiveOrHistoricCurrencyAndAmount?
+      DscntApldAmt : DiscountAmountAndType1?
+      CdtNoteAmt : ActiveOrHistoricCurrencyAndAmount?
+      TaxAmt : TaxAmountAndType1?
+      AdjstmntAmtAndRsn : DocumentAdjustment1?
+      RmtdAmt : ActiveOrHistoricCurrencyAndAmount?
+   }
+
+   type CreditorReferenceInformation2 {
+      Tp : CreditorReferenceType2?
+      Ref : Max35Text?
+   }
+
+   type CreditorReferenceType2 {
+      CdOrPrtry : CreditorReferenceType1Choice
+      Issr : Max35Text?
+   }
+
+   type CreditorReferenceType1Choice {
+      Cd : DocumentType3Code?
+      Prtry : Max35Text?
+   }
+
+   enum DocumentType3Code {
+      RADM,
+      RPIN,
+      FXDR,
+      DISP,
+      PUOR,
+      SCOR
+   }
+
+   type TaxInformation7 {
+      Cdtr : TaxParty1?
+      Dbtr : TaxParty2?
+      UltmtDbtr : TaxParty2?
+      AdmstnZone : Max35Text?
+      RefNb : Max140Text?
+      Mtd : Max35Text?
+      TtlTaxblBaseAmt : ActiveOrHistoricCurrencyAndAmount?
+      TtlTaxAmt : ActiveOrHistoricCurrencyAndAmount?
+      Dt : ISODate?
+      SeqNb : Number?
+      Rcrd : TaxRecord2?
+   }
+
+   type Garnishment3 {
+      Tp : GarnishmentType1
+      Grnshee : PartyIdentification135?
+      GrnshmtAdmstr : PartyIdentification135?
+      RefNb : Max140Text?
+      Dt : ISODate?
+      RmtdAmt : ActiveOrHistoricCurrencyAndAmount?
+      FmlyMdclInsrncInd : TrueFalseIndicator?
+      MplyeeTermntnInd : TrueFalseIndicator?
+   }
+
+   type GarnishmentType1 {
+      CdOrPrtry : GarnishmentType1Choice
+      Issr : Max35Text?
+   }
+
+   type GarnishmentType1Choice {
+      Cd : ExternalGarnishmentType1Code?
+      Prtry : Max35Text?
+   }
+
+   type ExternalGarnishmentType1Code inherits lang.taxi.String
+
+   type TrueFalseIndicator inherits lang.taxi.Boolean
+
+   type SupplementaryData1 {
+      PlcAndNm : Max350Text?
+      Envlp : SupplementaryDataEnvelope1
+   }
+
+   type Max350Text inherits lang.taxi.String
+
+   type SupplementaryDataEnvelope1 inherits lang.taxi.Any
+
+   type CustomerCreditTransferInitiationV10 {
+      GrpHdr : GroupHeader95
+      PmtInf : PaymentInstruction34
+      SplmtryData : SupplementaryData1?
+   }
+
+   type GroupHeader95 {
+      MsgId : Max35Text
+      CreDtTm : ISODateTime
+      Authstn : Authorisation1Choice?
+      NbOfTxs : Max15NumericText
+      CtrlSum : DecimalNumber?
+      InitgPty : PartyIdentification135
+      FwdgAgt : BranchAndFinancialInstitutionIdentification6?
+      InitnSrc : PaymentInitiationSource1?
+   }
+
+   type Max15NumericText inherits lang.taxi.String(@format = "[0-9]{1,15}")
+
+   type PaymentInitiationSource1 {
+      Nm : Max140Text
+      Prvdr : Max35Text?
+      Vrsn : Max35Text?
+   }
+
+   type PaymentInstruction34 {
+      PmtInfId : Max35Text
+      PmtMtd : PaymentMethod3Code
+      ReqdAdvcTp : AdviceType1?
+      BtchBookg : BatchBookingIndicator?
+      NbOfTxs : Max15NumericText?
+      CtrlSum : DecimalNumber?
+      PmtTpInf : PaymentTypeInformation26?
+      ReqdExctnDt : DateAndDateTime2Choice
+      PoolgAdjstmntDt : ISODate?
+      Dbtr : PartyIdentification135
+      DbtrAcct : CashAccount38
+      DbtrAgt : BranchAndFinancialInstitutionIdentification6
+      DbtrAgtAcct : CashAccount38?
+      InstrForDbtrAgt : Max140Text?
+      UltmtDbtr : PartyIdentification135?
+      ChrgBr : ChargeBearerType1Code?
+      ChrgsAcct : CashAccount38?
+      ChrgsAcctAgt : BranchAndFinancialInstitutionIdentification6?
+      CdtTrfTxInf : CreditTransferTransaction40
+   }
+
+   enum PaymentMethod3Code {
+      CHK,
+      TRF,
+      TRA
+   }
+
+   type DateAndDateTime2Choice {
+      Dt : ISODate?
+      DtTm : ISODateTime?
+   }
+
+   type Document {
+      CstmrCdtTrfInitn : CustomerCreditTransferInitiationV10
+   }
+
+
+}

@@ -5,10 +5,17 @@ import arrow.core.getOrHandle
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import lang.taxi.compiler.TokenProcessor
-import lang.taxi.packages.TaxiPackageProject
+import lang.taxi.compiler.TypeChecker
+import lang.taxi.functions.stdlib.StdLib
+import lang.taxi.linter.Linter
+import lang.taxi.linter.LinterRuleConfiguration
+import lang.taxi.linter.toLinterRules
+import lang.taxi.messages.Severity
 import lang.taxi.packages.TaxiPackageSources
+import lang.taxi.query.TaxiQlQuery
 import lang.taxi.sources.SourceCode
 import lang.taxi.sources.SourceLocation
+import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.*
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
@@ -24,7 +31,11 @@ fun ParserRuleContext?.toCompilationUnit(): lang.taxi.types.CompilationUnit {
    return if (this == null) {
       CompilationUnit.unspecified()
    } else {
-      lang.taxi.types.CompilationUnit(this, this.source(), SourceLocation(this.start.line, this.start.charPositionInLine));
+      lang.taxi.types.CompilationUnit(
+         this,
+         this.source(),
+         SourceLocation(this.start.line, this.start.charPositionInLine)
+      );
    }
 }
 
@@ -32,33 +43,72 @@ fun ParserRuleContext?.toCompilationUnits(): List<CompilationUnit> {
    return listOf(this.toCompilationUnit())
 }
 
-data class CompilationError(val line: Int,
-                            val char: Int,
-                            val detailMessage: String,
-                            val sourceName: String? = null,
-                            val severity: Severity = Severity.ERROR) : Serializable {
-   constructor(compiled: Compiled, detailMessage: String, sourceName: String = compiled.compilationUnits.first().source.sourceName, severity: Severity = Severity.ERROR) : this(compiled.compilationUnits.firstOrNull()?.location
-      ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity)
+typealias CompilationMessage = CompilationError
 
-   constructor(position: SourceLocation, detailMessage: String, sourceName: String? = null, severity: Severity = Severity.ERROR) : this(position.line, position.char, detailMessage, sourceName, severity)
-   constructor(offendingToken: Token, detailMessage: String, sourceName: String = offendingToken.tokenSource.sourceName, severity: Severity = Severity.ERROR) : this(offendingToken.line, offendingToken.charPositionInLine, detailMessage, sourceName, severity)
+data class CompilationError(
+   val line: Int,
+   val char: Int,
+   val detailMessage: String,
+   val sourceName: String? = null,
+   val severity: Severity = Severity.ERROR
+) : Serializable {
+   constructor(
+      compiled: Compiled,
+      detailMessage: String,
+      sourceName: String = compiled.compilationUnits.first().source.sourceName,
+      severity: Severity = Severity.ERROR
+   ) : this(
+      compiled.compilationUnits.firstOrNull()?.location
+         ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity
+   )
 
-   enum class Severity {
-      INFO,
-      WARNING,
-      ERROR
-   }
+   constructor(
+      compilationUnit: CompilationUnit,
+      detailMessage: String,
+      sourceName: String = compilationUnit.source.sourceName,
+      severity: Severity = Severity.ERROR
+   ) : this(
+      compilationUnit.location, detailMessage, sourceName, severity
+   )
 
-   override fun toString(): String = "Compilation Error: ${sourceName.orEmpty()}($line,$char) $detailMessage"
+   constructor(
+      position: SourceLocation,
+      detailMessage: String,
+      sourceName: String? = null,
+      severity: Severity = Severity.ERROR
+   ) : this(position.line, position.char, detailMessage, sourceName, severity)
+
+   constructor(
+      offendingToken: Token,
+      detailMessage: String,
+      sourceName: String = offendingToken.tokenSource.sourceName,
+      severity: Severity = Severity.ERROR
+   ) : this(offendingToken.line, offendingToken.charPositionInLine, detailMessage, sourceName, severity)
+
+
+   override fun toString(): String = "[${severity.label}]: ${sourceName.orEmpty()}($line,$char) $detailMessage"
 }
 
-open class CompilationException(val errors: List<CompilationError>) : RuntimeException(errors.joinToString("\n") { it.toString() }) {
+fun List<CompilationError>.errors(): List<CompilationError> = this.filter { it.severity == Severity.ERROR }
+
+open class CompilationException(val errors: List<CompilationError>) :
+   RuntimeException(errors.joinToString("\n") { it.toString() }) {
    constructor(error: CompilationError) : this(listOf(error))
-   constructor(offendingToken: Token, detailMessage: String, sourceName: String) : this(listOf(CompilationError(offendingToken, detailMessage, sourceName)))
+   constructor(offendingToken: Token, detailMessage: String, sourceName: String) : this(
+      listOf(
+         CompilationError(
+            offendingToken,
+            detailMessage,
+            sourceName
+         )
+      )
+   )
 }
 
 data class DocumentStrucutreError(val detailMessage: String)
-class DocumentMalformedException(val errors: List<DocumentStrucutreError>) : RuntimeException(errors.joinToString { it.detailMessage })
+class DocumentMalformedException(val errors: List<DocumentStrucutreError>) :
+   RuntimeException(errors.joinToString { it.detailMessage })
+
 class CompilerTokenCache {
    private val streamNameToStream = mutableMapOf<String, CharStream>()
    private val cache: Cache<CharStream, TokenStreamParseResult> = CacheBuilder.newBuilder()
@@ -88,9 +138,11 @@ class CompilerTokenCache {
             compilerExceptions.add(
                CompilationError(
                   parser.currentToken,
-                  "An exception occurred in the compilation process.  This is likely a bug in the Taxi Compiler. \n ${e.message}", parser.currentToken?.tokenSource?.sourceName
-                  ?: "Unknown"
-               ))
+                  "An exception occurred in the compilation process.  This is likely a bug in the Taxi Compiler. \n ${e.message}",
+                  parser.currentToken?.tokenSource?.sourceName
+                     ?: "Unknown"
+               )
+            )
          }
 
          val result = TokenStreamParseResult(listener.tokens(), compilerExceptions + errorListener.errors)
@@ -104,17 +156,59 @@ class CompilerTokenCache {
 }
 
 data class TokenStreamParseResult(val tokens: Tokens, val errors: List<CompilationError>)
-class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocument> = emptyList(), private val tokenCache: CompilerTokenCache = CompilerTokenCache()) {
-   constructor(input: CharStream, importSources: List<TaxiDocument> = emptyList()) : this(listOf(input), importSources)
-   constructor(source: String, sourceName: String = UNKNOWN_SOURCE, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromString(source, sourceName), importSources)
-   constructor(file: File, importSources: List<TaxiDocument> = emptyList()) : this(CharStreams.fromPath(file.toPath()), importSources)
-   constructor(project: TaxiPackageSources) : this(project.sources.map { CharStreams.fromString(it.content, it.sourceName) })
+data class CompilerConfig(
+   val typeCheckerEnabled: FeatureToggle = FeatureToggle.DISABLED,
+   val linterRuleConfiguration: List<LinterRuleConfiguration> = emptyList()
+) {
+   val linter: Linter by lazy { Linter(linterRuleConfiguration) }
+
+   companion object {
+
+   }
+}
+
+class Compiler(
+   val inputs: List<CharStream>,
+   val importSources: List<TaxiDocument> = emptyList(),
+   private val tokenCache: CompilerTokenCache = CompilerTokenCache(),
+   val config: CompilerConfig = CompilerConfig()
+) {
+   constructor(
+      input: CharStream,
+      importSources: List<TaxiDocument> = emptyList(),
+      config: CompilerConfig = CompilerConfig()
+   ) : this(listOf(input), importSources, config = config)
+
+   constructor(
+      source: String,
+      sourceName: String = UNKNOWN_SOURCE,
+      importSources: List<TaxiDocument> = emptyList(),
+      config: CompilerConfig = CompilerConfig()
+   ) : this(CharStreams.fromString(source, sourceName), importSources, config = config)
+
+   constructor(
+      file: File,
+      importSources: List<TaxiDocument> = emptyList(),
+      config: CompilerConfig = CompilerConfig()
+   ) : this(CharStreams.fromPath(file.toPath()), importSources, config = config)
+
+   constructor(
+      project: TaxiPackageSources,
+      config: CompilerConfig = CompilerConfig(linterRuleConfiguration = project.project.linter.toLinterRules())
+   ) : this(project.sources.map { CharStreams.fromString(it.content, it.sourceName) }, config = config)
 
    companion object {
       const val UNKNOWN_SOURCE = "UnknownSource"
-      fun forStrings(sources: List<String>) = Compiler(sources.mapIndexed { index, source -> CharStreams.fromString(source, "StringSource-$index") })
+      fun forStrings(sources: List<String>) =
+         Compiler(sources.mapIndexed { index, source -> CharStreams.fromString(source, "StringSource-$index") })
+
+      fun forFiles(sources: List<File>) =
+         Compiler(sources.mapIndexed { index, source -> CharStreams.fromPath(source.toPath()) })
+
       fun forStrings(vararg source: String) = forStrings(source.toList())
    }
+
+   private val typeChecker: TypeChecker = TypeChecker(config.typeCheckerEnabled)
 
    private val parseResult: Pair<Tokens, List<CompilationError>> by lazy {
       collectTokens()
@@ -127,6 +221,12 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    private val syntaxErrors: List<CompilationError> by lazy {
       parseResult.second
    }
+   private val tokenProcessrWithImports: TokenProcessor by lazy {
+      TokenProcessor(tokens, importSources, typeChecker = typeChecker, linter = config.linter)
+   }
+   private val tokenprocessorWithoutImports: TokenProcessor by lazy {
+      TokenProcessor(tokens, collectImports = false, typeChecker = typeChecker, linter = config.linter)
+   }
 
    fun validate(): List<CompilationError> {
       val compilationErrors = parseResult.second
@@ -134,11 +234,11 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
          return compilationErrors
       }
       try {
-         compile()
+         val (messages, _) = compileWithMessages()
+         return messages
       } catch (e: CompilationException) {
          return e.errors
       }
-      return emptyList()
    }
 
    /**
@@ -147,18 +247,21 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
     * and the file may not be valid source.
     */
    fun declaredTypeNames(): List<QualifiedName> {
-      val tokenProcessor = TokenProcessor(tokens, collectImports = false)
-      return tokenProcessor.findDeclaredTypeNames()
+      return tokenprocessorWithoutImports.findDeclaredTypeNames()
    }
 
    fun lookupTypeByName(typeType: TaxiParser.TypeTypeContext): QualifiedName {
-      return QualifiedName.from(TokenProcessor(tokens, importSources).lookupTypeByName(typeType))
+      return QualifiedName.from(tokenProcessrWithImports.lookupTypeByName(typeType))
    }
 
    fun getDeclarationSource(text: String, context: ParserRuleContext): CompilationUnit? {
-      val processor = TokenProcessor(tokens, importSources)
-      val qualifiedName = processor.lookupTypeByName(text, context)
-      return getCompilationUnit(processor, qualifiedName)
+      val qualifiedName = tokenProcessrWithImports.lookupTypeByName(text, context)
+         .getOrHandle { errors -> throw CompilationException(errors) }
+      return getCompilationUnit(tokenProcessrWithImports, qualifiedName)
+   }
+
+   fun getDeclarationSource(name: QualifiedName): CompilationUnit? {
+      return getCompilationUnit(tokenProcessrWithImports, name.fullyQualifiedName)
    }
 
    private fun getCompilationUnit(processor: TokenProcessor, qualifiedName: String): CompilationUnit? {
@@ -166,21 +269,21 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
 
       // don't return the start of the documentation, as that's not really what
       // was intended
-      val startOfDeclaration = if (definition.children.any { it::class.java == TaxiParser.TypeDocContext::class.java }) {
-         definition.children.filter { it::class.java != TaxiParser.TypeDocContext::class.java }
-            .filterIsInstance<ParserRuleContext>()
-            .firstOrNull() ?: definition
+      val startOfDeclaration =
+         if (definition.children.any { it::class.java == TaxiParser.TypeDocContext::class.java }) {
+            definition.children.filter { it::class.java != TaxiParser.TypeDocContext::class.java }
+               .filterIsInstance<ParserRuleContext>()
+               .firstOrNull() ?: definition
 
-      } else {
-         definition
-      }
+         } else {
+            definition
+         }
       return startOfDeclaration.toCompilationUnit()
    }
 
    fun getDeclarationSource(typeName: TaxiParser.TypeTypeContext): CompilationUnit? {
-      val processor = TokenProcessor(tokens, importSources)
-      val qualifiedName = processor.lookupTypeByName(typeName)
-      return getCompilationUnit(processor, qualifiedName)
+      val qualifiedName = tokenProcessrWithImports.lookupTypeByName(typeName)
+      return getCompilationUnit(tokenProcessrWithImports, qualifiedName)
    }
 
    /**
@@ -192,15 +295,40 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       return tokens.imports.map { (name, _) -> QualifiedName.from(name) }
    }
 
-   fun compile(): TaxiDocument {
+   fun queries(): List<TaxiQlQuery> {
+      val (messages, queries) = queriesWithErrorMessages()
+      val errors = messages.filter { it.severity == Severity.ERROR }
+      if (errors.isNotEmpty()) {
+         throw CompilationException(errors)
+      }
+      return queries
+   }
+
+   fun queriesWithErrorMessages(): Pair<List<CompilationError>, List<TaxiQlQuery>> {
+      if (syntaxErrors.isNotEmpty()) {
+        return syntaxErrors to listOf()
+      }
+      val builder = tokenProcessrWithImports
+      val (errors, queries) = builder.buildQueries()
+     return  errors to queries
+   }
+
+
+   fun compileWithMessages(): Pair<List<CompilationError>, TaxiDocument> {
       // Note - leaving this approach for backwards compatiability
       // We could try to continue compiling, with the tokens we do have
       if (syntaxErrors.isNotEmpty()) {
-         throw CompilationException(syntaxErrors)
+         return syntaxErrors to TaxiDocument.empty()
       }
-      val builder = TokenProcessor(tokens = tokens, importSources = importSources, collectImports = true)
+      val builder = tokenProcessrWithImports
       // Similarly to above, we could do somethign with these errors now.
       val (errors, document) = builder.buildTaxiDocument()
+      return errors to document
+   }
+
+   fun compile(): TaxiDocument {
+      val (messages, document) = compileWithMessages()
+      val errors = messages.filter { it.severity == Severity.ERROR }
       if (errors.isNotEmpty()) {
          throw CompilationException(errors)
       }
@@ -208,7 +336,7 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
    }
 
    /**
-    * Note that indexes are 1-Based, not 0-Based
+    * Note that indexes are 0-Based
     */
    fun contextAt(line: Int, char: Int, sourceName: String = UNKNOWN_SOURCE): ParserRuleContext? {
       val tokenTable = tokens.tokenStore.tokenTable(sourceName)
@@ -233,8 +361,10 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
     * as possible
     */
    private fun collectTokens(): Pair<Tokens, List<CompilationError>> {
+      val builtInSources = CharStreams.fromString(StdLib.taxi, "Native StdLib")
 
-      val collectionResult = inputs.map { input ->
+      val allInputs = inputs + builtInSources
+      val collectionResult = allInputs.map { input ->
          // We cache the result.
          // This is primarily because the input is a stream, and once parsed the first
          // time, we have to seek back to the start to reparse.
@@ -252,8 +382,23 @@ class Compiler(val inputs: List<CharStream>, val importSources: List<TaxiDocumen
       return tokens.typeNamesForSource(sourceName)
    }
 
+   fun importTokensInSource(sourceName: String): List<Pair<QualifiedName, TaxiParser.ImportDeclarationContext>> {
+      return tokens.importTokensInSource(sourceName)
+   }
+
    fun importedTypesInSource(sourceName: String): List<QualifiedName> {
       return tokens.importedTypeNamesInSource(sourceName)
+   }
+
+   fun usedTypedNamesInSource(sourceName: String): Set<QualifiedName> {
+      return tokenProcessrWithImports.tokens.tokenStore.getTypeReferencesForSourceName(sourceName).mapNotNull {
+         try {
+            tokenProcessrWithImports.lookupTypeByName(it)
+         } catch (error: CompilationException) {
+            null
+         }
+      }.map { QualifiedName.from(it) }
+         .toSet()
    }
 }
 
@@ -285,14 +430,14 @@ fun TaxiParser.LiteralContext.isNullValue(): Boolean {
 
 interface NamespaceQualifiedTypeResolver {
    val namespace: String
-   fun resolve(context: TaxiParser.TypeTypeContext): Either<CompilationError, Type>
+   fun resolve(context: TaxiParser.TypeTypeContext): Either<List<CompilationError>, Type>
 
    /**
     * Resolves a type name that has been requested in a source file.
     * Considers the namespace it's declared in, and declared imports to qualify
     * short-hand references to fully-qualified imports
     */
-   fun resolve(requestedTypeName: String, context: ParserRuleContext): Either<CompilationError, Type>
+   fun resolve(requestedTypeName: String, context: ParserRuleContext): Either<List<CompilationError>, Type>
 }
 
 
@@ -300,12 +445,17 @@ interface NamespaceQualifiedTypeResolver {
 // wrapping Either<> call sites to handle the error.
 // Just throw the exception.
 // In future, we'll be better, promise.
-fun Either<CompilationError, Type>.orThrowCompilationException(): Type {
-   return this.getOrHandle { e -> throw CompilationException(listOf(e)) }
+fun Either<List<CompilationError>, Type>.orThrowCompilationException(): Type {
+   return this.getOrHandle { e -> throw CompilationException(e) }
 }
 
 fun RuleContext.importsInFile(): List<QualifiedName> {
-   val topLevel = this.searchUpForRule(listOf(TaxiParser.SingleNamespaceDocumentContext::class.java, TaxiParser.MultiNamespaceDocumentContext::class.java))
+   val topLevel = this.searchUpForRule(
+      listOf(
+         TaxiParser.SingleNamespaceDocumentContext::class.java,
+         TaxiParser.MultiNamespaceDocumentContext::class.java
+      )
+   )
    if (topLevel == null || topLevel !is ParserRuleContext) {
       return emptyList()
    }
@@ -344,15 +494,19 @@ tailrec fun RuleContext.searchUpForRule(ruleTypes: List<Class<out RuleContext>>)
 }
 
 fun RuleContext.findNamespace(): String {
-   val namespaceRule = this.searchUpForRule(listOf(
-      TaxiParser.NamespaceDeclarationContext::class.java,
-      TaxiParser.NamespaceBlockContext::class.java,
-      TaxiParser.SingleNamespaceDocumentContext::class.java
-   ))
+   val namespaceRule = this.searchUpForRule(
+      listOf(
+         TaxiParser.NamespaceDeclarationContext::class.java,
+         TaxiParser.NamespaceBlockContext::class.java,
+         TaxiParser.SingleNamespaceDocumentContext::class.java
+      )
+   )
    return when (namespaceRule) {
       is TaxiParser.NamespaceDeclarationContext -> return namespaceRule.qualifiedName().Identifier().text()
-      is TaxiParser.NamespaceBlockContext -> return namespaceRule.children.filterIsInstance<TaxiParser.QualifiedNameContext>().first().Identifier().text()
-      is TaxiParser.SingleNamespaceDocumentContext -> namespaceRule.children.filterIsInstance<TaxiParser.NamespaceDeclarationContext>().firstOrNull()?.qualifiedName()?.Identifier()?.text()
+      is TaxiParser.NamespaceBlockContext -> return namespaceRule.children.filterIsInstance<TaxiParser.QualifiedNameContext>()
+         .first().Identifier().text()
+      is TaxiParser.SingleNamespaceDocumentContext -> namespaceRule.children.filterIsInstance<TaxiParser.NamespaceDeclarationContext>()
+         .firstOrNull()?.qualifiedName()?.Identifier()?.text()
          ?: Namespaces.DEFAULT_NAMESPACE
       else -> Namespaces.DEFAULT_NAMESPACE
    }

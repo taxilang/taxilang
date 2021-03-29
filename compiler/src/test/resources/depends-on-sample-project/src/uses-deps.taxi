@@ -1,0 +1,7 @@
+import testB.Trader
+
+namespace withDeps
+
+model Desk {
+   traders : Trader[]
+}

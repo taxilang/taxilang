@@ -6,7 +6,7 @@ import com.squareup.kotlinpoet.TypeSpec
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
 import lang.taxi.Compiler
-import lang.taxi.generators.TaxiEnvironment
+import lang.taxi.generators.TaxiProjectEnvironment
 import lang.taxi.packages.TaxiPackageProject
 import org.junit.Test
 import java.nio.file.Path
@@ -579,7 +579,7 @@ fun String.trimNewLines(): String {
    return this.removePrefix("\n").removeSuffix("\n").trim()
 }
 
-object MockEnvironment : TaxiEnvironment {
+object MockEnvironment : TaxiProjectEnvironment {
    override val projectRoot: Path
       get() = TODO("Not yet implemented")
    override val outputPath: Path
