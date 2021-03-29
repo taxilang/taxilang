@@ -2,12 +2,14 @@ package lang.taxi.cli.commands
 
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
+import com.google.common.io.Resources
 import lang.taxi.cli.utils.ConfigWriter
 import lang.taxi.cli.utils.log
 import lang.taxi.generators.TaxiEnvironment
 import lang.taxi.packages.ProjectName
 import lang.taxi.packages.TaxiPackageProject
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
 import org.beryx.textio.TextIO
 import org.springframework.stereotype.Component
 import java.nio.file.Files
@@ -66,6 +68,12 @@ class InitCommand(private val prompt: TextIO) : ProjectlessShellCommand {
          log().info("Generating source directory at $sourcePath")
          FileUtils.forceMkdir(sourcePath.toFile())
       }
+
+      val gitIgnoreFile = Files.createFile(environment.outputPath.resolve(".gitignore"))
+      IOUtils.copy(
+         Resources.getResource("taxi-cli-files/default-git-ignore").openStream(),
+         gitIgnoreFile.toFile().outputStream()
+      )
 
       log().info("Finished")
    }
