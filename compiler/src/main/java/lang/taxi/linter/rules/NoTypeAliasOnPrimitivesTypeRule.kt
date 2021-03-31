@@ -15,9 +15,8 @@ object NoTypeAliasOnPrimitivesTypeRule : TypeAliasLinterRule {
               CompilationMessage(
                  source.compilationUnits.first(),
                  "You should not declare a type alias against a primitive type.  This makes all ${source.toQualifiedName().typeName} entirely interchangeable with a ${source.aliasType!!.toQualifiedName().typeName}, which is almost never correct.  Use inherits instead.",
-                 // Intentionally setting the severity to ERROR here, as this is a big deal.
-                 // Users can override this using settings if they're crazy.
-                 severity = Severity.ERROR
+                 // We should bump this to an error in the near future.
+                 severity = Severity.WARNING
               )
          )
       } else {
