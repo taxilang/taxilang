@@ -228,9 +228,8 @@
     </build>
     <distributionManagement>
         <repository>
-            <id>bintray-taxi-lang-releases</id>
-            <name>taxi-lang-releases</name>
-            <url>https://api.bintray.com/maven/taxi-lang/taxi-lang-server/${project.artifactId}/;publish=1</url>
+            <id>repo.vyne.co</id>
+            <url>s3://repo.vyne.co/release</url>
         </repository>
         <snapshotRepository>
             <id>repo.vyne.co</id>
