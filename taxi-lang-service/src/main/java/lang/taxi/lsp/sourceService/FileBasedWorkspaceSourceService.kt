@@ -1,9 +1,15 @@
-package lang.taxi.lsp
+package lang.taxi.lsp.sourceService
 
+import lang.taxi.lsp.LspClientPackageManagerMessageLogger
 import lang.taxi.packages.MessageLogger
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.sources.SourceCode
+import lang.taxi.types.SourceNames
+import org.eclipse.lsp4j.InitializeParams
+import org.eclipse.lsp4j.services.LanguageClient
+import java.io.File
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -17,12 +23,25 @@ import java.nio.file.Path
  *
  * Otherwise, just takes all the sources sitting under the root that end in .taxi
  */
-class WorkspaceSourceService(
+class FileBasedWorkspaceSourceService(
     private val root: Path,
     private val messageLogger: MessageLogger
-) {
+) : WorkspaceSourceService {
 
-    fun loadSources(): Sequence<SourceCode> {
+    companion object {
+        class Factory : WorkspaceSourceServiceFactory {
+            override fun build(params: InitializeParams, client: LanguageClient): WorkspaceSourceService {
+                val rootUri = params.rootUri
+                val root = File(URI.create(SourceNames.normalize(rootUri)))
+                require(root.exists()) { "Fatal error - the workspace root location ($rootUri) doesn't appear to exist" }
+
+                return FileBasedWorkspaceSourceService(root.toPath(), LspClientPackageManagerMessageLogger(client))
+            }
+
+        }
+    }
+
+    override fun loadSources(): Sequence<SourceCode> {
         val taxiConfFile = root.resolve("taxi.conf")
         return if (Files.exists(taxiConfFile)) {
             val packageSources = TaxiSourcesLoader.loadPackageAndDependencies(root, messageLogger)
@@ -32,7 +51,7 @@ class WorkspaceSourceService(
         }
     }
 
-    fun loadProject(): TaxiPackageProject? {
+    override fun loadProject(): TaxiPackageProject? {
         val taxiConfFile = root.resolve("taxi.conf")
         return if (Files.exists(taxiConfFile)) {
             val packageSources = TaxiSourcesLoader.loadPackage(root)
@@ -47,11 +66,5 @@ class WorkspaceSourceService(
             .walk()
             .filter { it.extension == "taxi" && !it.isDirectory }
             .map { file -> SourceCode.from(file) }
-//            .forEach { file ->
-//                val source = file.readText()
-//                 Note - use the uri from the path, not the file, to ensure consistency.
-//                 on windows, file uri's are file:///C:/ ... and path uris are file:///c:/...
-//                compilerService.updateSource(SourceNames.normalize(file.toPath().toUri().toString()), source)
-//            }
     }
 }

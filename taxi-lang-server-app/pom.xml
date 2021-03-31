@@ -8,6 +8,9 @@
         <version>0.1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
+    <properties>
+        <reactor.version>3.4.3</reactor.version>
+    </properties>
 
     <artifactId>taxi-lang-server-app</artifactId>
 
@@ -16,6 +19,11 @@
             <groupId>lang.taxi</groupId>
             <artifactId>taxi-lang-service</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <version>${reactor.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

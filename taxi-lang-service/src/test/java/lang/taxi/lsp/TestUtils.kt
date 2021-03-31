@@ -2,6 +2,7 @@ package lang.taxi.lsp
 
 import com.google.common.io.Resources
 import com.nhaarman.mockito_kotlin.mock
+import lang.taxi.lsp.sourceService.FileBasedWorkspaceSourceService
 import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier
@@ -16,19 +17,22 @@ fun documentServiceFor(rootResourcePath: String): Pair<TaxiTextDocumentService, 
     // that financial-terms.taxi contains "namesapce" instead of "namespace"
     val workspaceUri = Resources.getResource(rootResourcePath)
     val workspaceRoot = Paths.get(workspaceUri.toURI())
-    val languageClient:LanguageClient = mock {  }
-    service.initialize(InitializeParams().apply {
-        rootUri = workspaceUri.toString()
-    })
-    // Must connect to a language client to allow initialization to kick off
+    val languageClient: LanguageClient = mock { }
     service.connect(languageClient)
+
+    val sourceServiceFactory = FileBasedWorkspaceSourceService.Companion.Factory()
+    val initializeParams = InitializeParams().apply {
+        rootUri = workspaceUri.toString()
+    }
+    service.initialize(initializeParams, sourceServiceFactory.build(initializeParams, languageClient))
+
     return service to workspaceRoot
 }
 
 fun Path.versionedDocument(name: String, version: Int = 1): VersionedTextDocumentIdentifier {
     return VersionedTextDocumentIdentifier(
-            this.resolve(name).toUri().toString(),
-            version
+        this.resolve(name).toUri().toString(),
+        version
     )
 }
 
