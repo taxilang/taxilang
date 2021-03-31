@@ -306,11 +306,11 @@ class Compiler(
 
    fun queriesWithErrorMessages(): Pair<List<CompilationError>, List<TaxiQlQuery>> {
       if (syntaxErrors.isNotEmpty()) {
-        return syntaxErrors to listOf()
+         return syntaxErrors to listOf()
       }
       val builder = tokenProcessrWithImports
       val (errors, queries) = builder.buildQueries()
-     return  errors to queries
+      return errors to queries
    }
 
 
@@ -341,12 +341,16 @@ class Compiler(
    fun contextAt(line: Int, char: Int, sourceName: String = UNKNOWN_SOURCE): ParserRuleContext? {
       val tokenTable = tokens.tokenStore.tokenTable(sourceName)
       val row = tokenTable.row(line) as SortedMap
-      if (row.isEmpty() || row[0]!!.isEmpty) {
-            return null
+      if (row.isEmpty()) {
+         return null
       }
       val tokenStartIndices = row.keys as SortedSet
       val nearestStartIndex = tokenStartIndices.takeWhile { startIndex -> startIndex <= char }.lastOrNull()
       return nearestStartIndex?.let { index -> row.get(index) }
+   }
+
+   fun containsTokensForSource(sourceName: String): Boolean {
+      return tokens.tokenStore.containsTokensForSource(sourceName)
    }
 
    /**
