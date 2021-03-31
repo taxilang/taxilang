@@ -89,7 +89,7 @@ class TypeBodyContext(private val typeBody: TaxiParser.TypeBodyContext?, val nam
 
 }
 
-internal class FieldCompiler(private val tokenProcessor: TokenProcessor,
+internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
                              private val typeBody: TypeWithFieldsContext,
                              private val typeName: String,
                              private val errors: MutableList<CompilationError>,

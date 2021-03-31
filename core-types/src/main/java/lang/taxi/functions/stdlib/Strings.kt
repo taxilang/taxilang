@@ -69,9 +69,9 @@ object Length: FunctionApi {
 
 object Find: FunctionApi {
    override val taxi: String
-      get() = "declare function find(String, String):Int"
+      get() = "declare function indexOf(String, String):Int"
    override val name: QualifiedName
-      get() = stdLibName("find")
+      get() = stdLibName("indexOf")
 
 }
 

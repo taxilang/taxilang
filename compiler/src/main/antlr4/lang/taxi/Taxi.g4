@@ -42,6 +42,7 @@ toplevelObject
     |   functionDeclaration
     |   annotationTypeDeclaration
     |   query
+    |   viewDeclaration
     ;
 
 typeModifier
@@ -685,6 +686,7 @@ queryParam: Identifier ':' typeType;
 // findOneDirective: 'findAll';
 
 queryDirective: FindAll | FindOne;
+findDirective: Find;
 
 givenBlock : 'given' '{' factList '}';
 
@@ -696,7 +698,8 @@ fact : variableName typeType '=' literal;
 variableName: Identifier ':';
 queryBody:
    givenBlock?
-	queryDirective '{' queryTypeList '}' queryProjection?;
+	queryDirective '{' queryTypeList '}' queryProjection?
+	;
 
 queryTypeList: typeType (',' typeType)*;
 
@@ -728,6 +731,15 @@ anonymousField:
                                     //    } (by this.salesUtCode)
    ;
 
+viewDeclaration
+    :  typeDoc? annotation* typeModifier* 'view' Identifier
+            ('inherits' listOfInheritedTypes)?
+            'with' 'query' '{' findBody (',' findBody)* '}'
+    ;
+
+findBody: findDirective '{' findBodyQuery '}' ('as' typeBody)?;
+findBodyQuery: joinTo;
+joinTo: typeType ('(' 'joinTo'  typeType ')')?;
 
 IN: 'in';
 LIKE: 'like';
@@ -736,6 +748,7 @@ OR  : 'or' ;
 
 FindAll: 'findAll';
 FindOne: 'findOne';
+Find: 'find';
 
 Identifier
     :   Letter LetterOrDigit*

@@ -5,7 +5,6 @@ import arrow.core.getOrHandle
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import lang.taxi.compiler.TokenProcessor
-import lang.taxi.compiler.TypeChecker
 import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.linter.Linter
 import lang.taxi.linter.LinterRuleConfiguration
@@ -88,6 +87,8 @@ data class CompilationError(
 
    override fun toString(): String = "[${severity.label}]: ${sourceName.orEmpty()}($line,$char) $detailMessage"
 }
+
+fun List<CompilationError>.errors(): List<CompilationError> = this.filter { it.severity == Severity.ERROR }
 
 open class CompilationException(val errors: List<CompilationError>) :
    RuntimeException(errors.joinToString("\n") { it.toString() }) {

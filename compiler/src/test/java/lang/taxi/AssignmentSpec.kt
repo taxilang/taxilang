@@ -1,8 +1,6 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
-import lang.taxi.compiler.isAssignableTo
-import lang.taxi.compiler.resolveAliases
 import lang.taxi.types.PrimitiveType
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe

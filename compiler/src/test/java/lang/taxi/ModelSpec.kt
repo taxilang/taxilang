@@ -293,6 +293,113 @@ model Person {
                val transaction = Compiler(src).compile().model("Foo")
             }
          }
+
+         describe("finding fields") {
+            val baseSchema = """
+               type Name inherits String
+               type FirstName inherits Name
+               type LastName inherits Name
+            """.trimIndent()
+
+            it("does not return fields that are primitive when looking for assignable") {
+               val taxi = """
+                  $baseSchema
+                  model Person {
+                     title : String
+                     firstName : FirstName
+                     lastName : LastName
+                  }
+               """.compiled()
+               val person = taxi.model("Person")
+               person.fieldReferencesAssignableTo(taxi.type("FirstName")).let { fields ->
+                  fields.should.have.size(1)
+               }
+            }
+
+            it("can find top-level fields with type") {
+               val taxi = """
+               $baseSchema
+               model Person {
+                  firstName : FirstName
+                  lastName : LastName
+               }
+            """.compiled()
+
+               val person = taxi.model("Person")
+               person.fieldReferencesAssignableTo(taxi.type("FirstName"))
+                  .should.have.size(1)
+               person.fieldReferencesAssignableTo(taxi.type("LastName"))
+                  .should.have.size(1)
+               person.fieldReferencesAssignableTo(taxi.type("Name"))
+                  .should.have.size(2)
+
+            }
+            it("can find nested fields with type") {
+               val taxi = """
+               $baseSchema
+               model Names {
+                  firstName : FirstName
+                  lastName : LastName
+               }
+               model Person {
+                  names : Names
+               }
+            """.compiled()
+
+               val person = taxi.model("Person")
+               person.fieldReferencesAssignableTo(taxi.type("FirstName")).let { firstNameReferences ->
+                  firstNameReferences.should.have.size(1)
+                  firstNameReferences.first().description.should.equal("Person.names.firstName")
+               }
+               person.fieldReferencesAssignableTo(taxi.type("LastName")).let { lastNameReferences ->
+                  lastNameReferences.should.have.size(1)
+                  lastNameReferences.first().description.should.equal("Person.names.lastName")
+               }
+
+               person.fieldReferencesAssignableTo(taxi.type("Name")).let { nameReferences ->
+                  nameReferences.should.have.size(2)
+                  nameReferences.map { it.description }.should.equal(
+                     listOf(
+                        "Person.names.firstName", "Person.names.lastName"
+                     )
+                  )
+               }
+            }
+            it("can find deeply nested fields with type") {
+               val taxi = """
+               $baseSchema
+               model Identifier {
+                  personNames : Names
+               }
+               model Names {
+                  firstName : FirstName
+                  lastName : LastName
+               }
+               model Person {
+                  id : Identifier
+               }
+            """.compiled()
+
+               val person = taxi.model("Person")
+               person.fieldReferencesAssignableTo(taxi.type("FirstName")).let { firstNameReferences ->
+                  firstNameReferences.should.have.size(1)
+                  firstNameReferences.first().description.should.equal("Person.id.personNames.firstName")
+               }
+               person.fieldReferencesAssignableTo(taxi.type("LastName")).let { lastNameReferences ->
+                  lastNameReferences.should.have.size(1)
+                  lastNameReferences.first().description.should.equal("Person.id.personNames.lastName")
+               }
+
+               person.fieldReferencesAssignableTo(taxi.type("Name")).let { nameReferences ->
+                  nameReferences.should.have.size(2)
+                  nameReferences.map { it.description }.should.equal(
+                     listOf(
+                        "Person.id.personNames.firstName", "Person.id.personNames.lastName"
+                     )
+                  )
+               }
+            }
+         }
       }
    }
 })
