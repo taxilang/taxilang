@@ -7,7 +7,7 @@
     <groupId>lang.taxi</groupId>
     <artifactId>taxi-lang-server</artifactId>
     <packaging>pom</packaging>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>1.27.0-SNAPSHOT</version>
 
     <modules>
         <module>taxi-lang-service</module>
