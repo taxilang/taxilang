@@ -4,7 +4,7 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>lang.taxi</groupId>
-      <version>0.13.1-SNAPSHOT</version>
+      <version>0.13.1</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -26,12 +26,12 @@
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>package-repository-api</artifactId>
-         <version>0.13.1-SNAPSHOT</version>
+         <version>0.13.1</version>
       </dependency>
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>core-types</artifactId>
-         <version>0.13.1-SNAPSHOT</version>
+         <version>0.13.1</version>
       </dependency>
       <dependency>
          <groupId>commons-io</groupId>
