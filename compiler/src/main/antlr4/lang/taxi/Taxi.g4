@@ -54,8 +54,10 @@ typeModifier
     | 'closed'
     ;
 
+typeKind : 'type' | 'model';
+
 typeDeclaration
-    :  typeDoc? annotation* typeModifier* ('type'|'model') Identifier
+    :  typeDoc? annotation* typeModifier* typeKind Identifier
 
         ('inherits' listOfInheritedTypes)?
         typeBody?
@@ -180,7 +182,7 @@ fieldDeclaration
 simpleFieldDeclaration: typeType accessor?;
 
 typeType
-    :   classOrInterfaceType typeArguments? listType? optionalType? parameterConstraint? aliasedType?
+    :   classOrInterfaceType typeArguments? listType? optionalType? parameterConstraint? (aliasedType? | inlineInheritedType?)?
     ;
 
 accessor : scalarAccessor | objectAccessor;
@@ -271,6 +273,10 @@ typeAliasDeclaration
 
 aliasedType
    : 'as' typeType
+   ;
+
+inlineInheritedType
+   : 'inherits' typeType
    ;
 
 typeAliasExtensionDeclaration
@@ -901,7 +907,6 @@ COMMENT
 LINE_COMMENT
     :   '//' ~[\r\n]* -> channel(HIDDEN)
     ;
-
 
 GT : '>' ;
 GE : '>=' ;

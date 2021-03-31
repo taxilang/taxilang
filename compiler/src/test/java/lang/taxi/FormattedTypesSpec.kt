@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.messages.Severity
 import lang.taxi.types.PrimitiveType
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -141,7 +142,7 @@ object FormattedTypesSpec : Spek({
       it("should not allowed offset definition for date based types") {
          val errors = """
             type TransactionEventDate inherits Date
-            type Order {
+            model Order {
                 orderDateQuote : TransactionEventDate( @format = ['yyyyMMdd'], @offset = -300 )
             }
          """.trimMargin()
@@ -153,7 +154,7 @@ object FormattedTypesSpec : Spek({
       it("should not allowed offset definition for time based types") {
          val errors = """
             type TransactionEventTime inherits Time
-            type Order {
+            model Order {
                 orderTimeQuote : TransactionEventTime( @format = ['HH:mm:ss'], @offset = -300 )
             }
          """.trimMargin()
@@ -175,6 +176,7 @@ object FormattedTypesSpec : Spek({
          val errors = """
             type TradeDate inherits Instant( @format = ['mm/dd/yyThh:nn:ss.mmmmZ'] @offset = 900 )
          """.validated()
+            .filter { it.severity == Severity.ERROR }
          errors.should.have.size(1)
          errors.first().detailMessage.should.equal("""@offset value can't be larger than 840 (UTC+14) or smaller than -720 (UTC-12)""")
       }

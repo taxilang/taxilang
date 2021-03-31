@@ -5,7 +5,6 @@ import arrow.core.getOrHandle
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import lang.taxi.compiler.TokenProcessor
-import lang.taxi.compiler.TypeChecker
 import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.linter.Linter
 import lang.taxi.linter.LinterRuleConfiguration
@@ -306,11 +305,11 @@ class Compiler(
 
    fun queriesWithErrorMessages(): Pair<List<CompilationError>, List<TaxiQlQuery>> {
       if (syntaxErrors.isNotEmpty()) {
-        return syntaxErrors to listOf()
+         return syntaxErrors to listOf()
       }
       val builder = tokenProcessrWithImports
       val (errors, queries) = builder.buildQueries()
-     return  errors to queries
+      return errors to queries
    }
 
 
@@ -347,6 +346,10 @@ class Compiler(
       val tokenStartIndices = row.keys as SortedSet
       val nearestStartIndex = tokenStartIndices.takeWhile { startIndex -> startIndex <= char }.lastOrNull()
       return nearestStartIndex?.let { index -> row.get(index) }
+   }
+
+   fun containsTokensForSource(sourceName: String): Boolean {
+      return tokens.tokenStore.containsTokensForSource(sourceName)
    }
 
    /**

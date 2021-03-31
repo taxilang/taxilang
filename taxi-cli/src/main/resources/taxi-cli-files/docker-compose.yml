@@ -1,0 +1,31 @@
+version: "3.3"
+services:
+   vyne:
+      image: vyneco/vyne:latest
+      ports:
+         - 5701-5705
+         - 9022:9022
+      environment:
+         PROFILE: embedded-discovery,inmemory-query-history
+         OPTIONS: --vyne.schema.publicationMethod=DISTRIBUTED
+
+   file-schema-server:
+      image: vyneco/file-schema-server:latest
+      ports:
+         - 5701-5705
+      volumes:
+         - ./:/var/lib/vyne/schemas
+      environment:
+         OPTIONS: --taxi.schema-local-storage=/var/lib/vyne/schemas --eureka.uri=http://vyne:9022 --vyne.schema.publicationMethod=DISTRIBUTED
+
+   cask:
+      image: vyneco/cask:latest
+      depends_on:
+         - vyne
+      environment:
+         PROFILE: local
+         OPTIONS: --eureka.uri=http://vyne:9022 --vyne.schema.publicationMethod=DISTRIBUTED
+      ports:
+         - 5701-5705
+         - 15432:5432
+         - 8800:8800

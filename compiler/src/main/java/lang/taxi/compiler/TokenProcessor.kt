@@ -67,7 +67,12 @@ class TokenProcessor(
 
    }
 
-   constructor(tokens: Tokens, collectImports: Boolean, typeChecker: TypeChecker, linter: Linter = Linter.empty()) : this(
+   constructor(
+      tokens: Tokens,
+      collectImports: Boolean,
+      typeChecker: TypeChecker,
+      linter: Linter = Linter.empty()
+   ) : this(
       tokens,
       emptyList(),
       collectImports,
@@ -111,7 +116,14 @@ class TokenProcessor(
       compile()
       // TODO: Unsure if including the imported types here is a good iddea or not.
       val types = typeSystem.typeList(includeImportedTypes = true).toSet()
-      return errors to TaxiDocument(types, services.toSet(), policies.toSet(), functions.toSet(), annotations.toSet(), views.toSet())
+      return errors to TaxiDocument(
+         types,
+         services.toSet(),
+         policies.toSet(),
+         functions.toSet(),
+         annotations.toSet(),
+         views.toSet()
+      )
    }
 
    fun buildQueries(): Pair<List<CompilationError>, List<TaxiQlQuery>> {
@@ -144,10 +156,17 @@ class TokenProcessor(
          val (namespace, ctx) = tokenPair
          val typeCtx = ctx as TaxiParser.TypeDeclarationContext
          val typeAliasNames = typeCtx.typeBody()?.typeMemberDeclaration()
-            ?.filter { it.exception == null }
+            ?.filter { memberDeclaration ->
+               memberDeclaration.exception == null
+                  // When compiling partial sources in the editors, the field declaration can be
+                  // null at this point.  It's invalid, but we don't want to throw an NPE
+                  && memberDeclaration.fieldDeclaration() != null
+            }
             ?.mapNotNull { memberDeclaration ->
                val fieldDeclaration = memberDeclaration.fieldDeclaration()
-               if (fieldDeclaration.simpleFieldDeclaration().typeType() != null && fieldDeclaration.simpleFieldDeclaration().typeType().aliasedType() != null) {
+               if (fieldDeclaration.simpleFieldDeclaration()
+                     ?.typeType() != null && fieldDeclaration.simpleFieldDeclaration().typeType().aliasedType() != null
+               ) {
                   // This is an inline type alias
                   lookupTypeByName(namespace, memberDeclaration.fieldDeclaration().simpleFieldDeclaration().typeType())
                } else {
@@ -198,7 +217,11 @@ class TokenProcessor(
 
    }
 
-   internal fun getType(namespace: Namespace, name: String, context: ParserRuleContext): Either<List<CompilationError>, Type> {
+   internal fun getType(
+      namespace: Namespace,
+      name: String,
+      context: ParserRuleContext
+   ): Either<List<CompilationError>, Type> {
       return attemptToLookupTypeByName(namespace, name, context).map { qfn ->
          typeSystem.getType(qfn)
       }.wrapErrorsInList()
@@ -248,14 +271,15 @@ class TokenProcessor(
 
       this.tokens.namedQueries.forEach { (qualifiedName, namedQueryContext) ->
          val queryName = namedQueryContext.queryName().Identifier().text
-         val parametersOrErrors = namedQueryContext.queryName().queryParameters()?.queryParamList()?.queryParam()?.map { queryParam ->
-            val parameterName = queryParam.Identifier().text
-            val queryParameter: Either<List<CompilationError>, Pair<String, QualifiedName>> =
-               typeOrError(namedQueryContext.findNamespace(), queryParam.typeType()).map { parameterType ->
-                  parameterName to parameterType.toQualifiedName()
-               }
-            queryParameter
-         }?.invertEitherList() ?: Either.right(emptyList())
+         val parametersOrErrors =
+            namedQueryContext.queryName().queryParameters()?.queryParamList()?.queryParam()?.map { queryParam ->
+               val parameterName = queryParam.Identifier().text
+               val queryParameter: Either<List<CompilationError>, Pair<String, QualifiedName>> =
+                  typeOrError(namedQueryContext.findNamespace(), queryParam.typeType()).map { parameterType ->
+                     parameterName to parameterType.toQualifiedName()
+                  }
+               queryParameter
+            }?.invertEitherList() ?: Either.right(emptyList())
          parametersOrErrors
             .mapLeft { compilationErrors -> errors.addAll(compilationErrors.flatten()) }
             .map { parameters ->
@@ -783,6 +807,7 @@ class TokenProcessor(
       typeName: String,
       ctx: TaxiParser.TypeDeclarationContext
    ): Either<List<CompilationError>, ObjectType> {
+      val typeKind = TypeKind.fromSymbol(ctx.typeKind().text)
       val fields = ctx.typeBody()?.let { typeBody ->
          val typeBodyContext = TypeBodyContext(typeBody, namespace)
          FieldCompiler(this, typeBodyContext, typeName, this.errors)
@@ -796,14 +821,15 @@ class TokenProcessor(
       return this.typeSystem.register(
          ObjectType(
             typeName, ObjectTypeDefinition(
-            fields = fields.toSet(),
-            annotations = annotations.toSet(),
-            modifiers = modifiers,
-            inheritsFrom = inherits,
-            format = null,
-            typeDoc = typeDoc,
-            compilationUnit = ctx.toCompilationUnit()
-         )
+               fields = fields.toSet(),
+               annotations = annotations.toSet(),
+               modifiers = modifiers,
+               inheritsFrom = inherits,
+               format = null,
+               typeDoc = typeDoc,
+               typeKind = typeKind,
+               compilationUnit = ctx.toCompilationUnit()
+            )
          )
       ).right()
    }
@@ -812,7 +838,8 @@ class TokenProcessor(
       namespace: Namespace,
       typeName: String,
       ctx: TaxiParser.TypeBodyContext,
-      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext()) {
+      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext()
+   ) {
       val fields = ctx.let { typeBody ->
          val typeBodyContext = TypeBodyContext(typeBody, namespace)
          FieldCompiler(this, typeBodyContext, typeName, this.errors, anonymousTypeResolutionContext)
@@ -833,15 +860,19 @@ class TokenProcessor(
          fields
       }
 
-      this.typeSystem.register(ObjectType(typeName, ObjectTypeDefinition(
-         fields = anonymousTypeFields.toSet(),
-         annotations = annotations.toSet(),
-         modifiers = listOf(),
-         inheritsFrom = emptySet(),
-         format = null,
-         compilationUnit = ctx.toCompilationUnit(),
-         isAnonymous = true
-      )))
+      this.typeSystem.register(
+         ObjectType(
+            typeName, ObjectTypeDefinition(
+               fields = anonymousTypeFields.toSet(),
+               annotations = annotations.toSet(),
+               modifiers = listOf(),
+               inheritsFrom = emptySet(),
+               format = null,
+               compilationUnit = ctx.toCompilationUnit(),
+               isAnonymous = true
+            )
+         )
+      )
 
    }
 
@@ -1062,7 +1093,8 @@ class TokenProcessor(
       namespace: String,
       anonymousTypeCtx: TaxiParser.TypeBodyContext,
       anonymousTypeName: String = AnonymousTypeNameGenerator.generate(),
-      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext()): Either<List<CompilationError>, Type> {
+      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext()
+   ): Either<List<CompilationError>, Type> {
       compileAnonymousType(namespace, anonymousTypeName, anonymousTypeCtx, anonymousTypeResolutionContext)
       return attemptToLookupTypeByName(namespace, anonymousTypeName, anonymousTypeCtx, SymbolKind.TYPE_OR_MODEL)
          .wrapErrorsInList()
@@ -1094,6 +1126,7 @@ class TokenProcessor(
       typeType: TaxiParser.TypeTypeContext
    ): Either<List<CompilationError>, Type> {
       return when {
+         typeType.inlineInheritedType() != null -> compileInlineInheritedType(namespace, typeType)
          typeType.aliasedType() != null -> compileInlineTypeAlias(namespace, typeType)
          typeType.classOrInterfaceType() != null -> resolveUserType(
             namespace,
@@ -1104,6 +1137,7 @@ class TokenProcessor(
          else -> throw IllegalArgumentException()
       }
    }
+
 
    private fun generateFormattedSubtype(
       type: Type,
@@ -1202,6 +1236,23 @@ class TokenProcessor(
       val offsetValue = typeType
          .parameterConstraint()?.temporalFormatList()?.instantOffsetExpression()?.intValue()
       return Either.right(FormatsAndZoneoffset(formatExpressions, offsetValue))
+   }
+
+   private fun compileInlineInheritedType(
+      namespace: Namespace,
+      typeType: TaxiParser.TypeTypeContext
+   ): Either<List<CompilationError>, Type> {
+      return parseType(namespace, typeType.inlineInheritedType().typeType()).map { inlineInheritedType ->
+         val declaredTypeName = typeType.classOrInterfaceType().Identifier().text()
+
+         typeSystem.register(ObjectType(
+            QualifiedName(namespace, declaredTypeName).fullyQualifiedName,
+            ObjectTypeDefinition(
+               inheritsFrom = setOf(inlineInheritedType),
+               compilationUnit = typeType.toCompilationUnit()
+            )
+         ))
+      }
    }
 
    /**
@@ -1336,7 +1387,7 @@ class TokenProcessor(
          }
    }
 
-    fun resolveUserType(
+   fun resolveUserType(
       namespace: Namespace,
       requestedTypeName: String,
       context: ParserRuleContext,
@@ -1383,14 +1434,14 @@ class TokenProcessor(
             val isLenient = ctx.lenientKeyword() != null
             val enumType = EnumType(
                typeName, EnumDefinition(
-               enumValues,
-               annotations,
-               ctx.toCompilationUnit(),
-               inheritsFrom = if (inherits != null) setOf(inherits) else emptySet(),
-               typeDoc = parseTypeDoc(ctx.typeDoc()),
-               basePrimitive = basePrimitive,
-               isLenient = isLenient
-            )
+                  enumValues,
+                  annotations,
+                  ctx.toCompilationUnit(),
+                  inheritsFrom = if (inherits != null) setOf(inherits) else emptySet(),
+                  typeDoc = parseTypeDoc(ctx.typeDoc()),
+                  basePrimitive = basePrimitive,
+                  isLenient = isLenient
+               )
             )
             typeSystem.register(enumType)
             enumType

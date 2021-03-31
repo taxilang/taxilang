@@ -1,11 +1,30 @@
 ---
-title: Configuring Taxi projects
-description: An overview of the `taxi.conf` file
+title: Taxi projects & configuration
+description: Layout of a taxi project, and configuring it's build
 ---
 
-import {Link} from "gatsby"
-import {Hint, Discourage} from '../components/hint'
+import { Hint } from "../components/hint"
 
+
+## Taxi projects and files
+A Taxi project contains a `taxi.conf` file, and a collection of files saved with a `.taxi.` extension.
+
+A typical project might look like this:
+```text
+.
+├── src/
+│   └── sample.taxi
+├── tests/
+│   └── hello-world/
+│       ├── hello-world.spec.json
+│       ├── input.csv
+│       └── expected-output.json
+└── taxi.conf
+```
+
+Taxi files are simple text files, saved with a `.taxi` extension.
+
+## The taxi.conf file
 A `taxi.conf` file describes a project's layout, and the plugins to be invoked after compilation.  It follows the [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md#hocon-human-optimized-config-object-notation) format, which is like supercharged JSON.
 
 ```text
