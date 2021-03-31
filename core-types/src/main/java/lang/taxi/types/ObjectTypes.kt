@@ -6,20 +6,23 @@ import lang.taxi.services.FieldName
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.utils.quoted
-import lang.taxi.utils.quotedIfNotAlready
 import lang.taxi.utils.quotedIfNecessary
+import lang.taxi.utils.quotedIfNotAlready
 import kotlin.reflect.KProperty1
 
 data class FieldExtension(
    val name: String,
    override val annotations: List<Annotation>,
    val refinedType: Type?,
-   val defaultValue: Any?) : Annotatable
+   val defaultValue: Any?
+) : Annotatable
 
-data class ObjectTypeExtension(val annotations: List<Annotation> = emptyList(),
-                               val fieldExtensions: List<FieldExtension> = emptyList(),
-                               val typeDoc: String? = null,
-                               override val compilationUnit: CompilationUnit) : TypeDefinition {
+data class ObjectTypeExtension(
+   val annotations: List<Annotation> = emptyList(),
+   val fieldExtensions: List<FieldExtension> = emptyList(),
+   val typeDoc: String? = null,
+   override val compilationUnit: CompilationUnit
+) : TypeDefinition {
    fun fieldExtensions(name: String): List<FieldExtension> {
       return this.fieldExtensions.filter { it.name == name }
    }
@@ -40,7 +43,13 @@ data class ObjectTypeDefinition(
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
-   private val equality = Equality(this, ObjectTypeDefinition::fields.toSet(), ObjectTypeDefinition::annotations.toSet(), ObjectTypeDefinition::modifiers.toSet())
+   private val equality = Equality(
+      this,
+      ObjectTypeDefinition::fields.toSet(),
+      ObjectTypeDefinition::annotations.toSet(),
+      ObjectTypeDefinition::modifiers.toSet()
+   )
+
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
 }
@@ -193,7 +202,8 @@ data class ObjectType(
 
    override val typeDoc: String?
       get() {
-         return listOfNotNull(this.definition?.typeDoc).plus(this.extensions.mapNotNull { it.typeDoc }).joinToString("\n")
+         return listOfNotNull(this.definition?.typeDoc).plus(this.extensions.mapNotNull { it.typeDoc })
+            .joinToString("\n")
       }
    val fields: List<Field>
       get() {
@@ -222,10 +232,82 @@ data class ObjectType(
    fun hasField(name: String): Boolean = allFields.any { it.name == name }
    fun field(name: String): Field = allFields.first { it.name == name }
    fun annotation(name: String): Annotation = annotations.first { it.qualifiedName == name }
+
+   /**
+    * Returns a list of field references for any fields on this type, or
+    * any of it's fields which are assignable to the requested type.
+    *
+    * Assignable indicates that the field either is the requested type, or is a superclass
+    * of the requested type
+    *
+    * FieldReferences indicate the path from the base object (this) through fields
+    * to access the available field.
+    */
+   fun fieldReferencesAssignableTo(
+      type: Type,
+      considerTypeParameters: Boolean = true,
+      typeChecker: TypeChecker = TypeChecker.DEFAULT,
+      includePrimitives: Boolean = false
+   ): List<FieldReference> {
+      return this.fieldReferencesAssignableTo(
+         type,
+         considerTypeParameters,
+         typeChecker,
+         baseObject = this,
+         parentFields = emptyList(),
+         includePrimitives = includePrimitives
+      )
+   }
+
+   private fun fieldReferencesAssignableTo(
+      type: Type,
+      considerTypeParameters: Boolean = true,
+      typeChecker: TypeChecker = TypeChecker.DEFAULT,
+      baseObject: ObjectType,
+      parentFields: List<Field>,
+      includePrimitives: Boolean = false
+   ): List<FieldReference> {
+      return this.fields
+         .filter { field ->
+            // Generally, when asking "is this field assignable to that type?",
+            // we don't want to consider fields that have primitive types, as they're
+            // not really good candidates.
+            if (field.type is PrimitiveType) {
+               includePrimitives
+            } else {
+               true
+            }
+         }
+         .flatMap { field ->
+            when {
+               // Top-level fields
+               field.type.isAssignableTo(type, considerTypeParameters, typeChecker) -> listOf(
+                  FieldReference(
+                     baseObject,
+                     parentFields + field
+                  )
+               )
+               field.type is ObjectType -> {
+                  field.type.fieldReferencesAssignableTo(
+                     type,
+                     considerTypeParameters,
+                     typeChecker,
+                     baseObject,
+                     parentFields = parentFields + field,
+                     includePrimitives = includePrimitives
+                  )
+               }
+               else -> emptyList()
+            }
+         }
+   }
+
+   @Deprecated("Use fieldReferencesAssignableTo instead", replaceWith = ReplaceWith("fieldReferencesAssignableTo"))
    fun fieldsWithType(typeName: QualifiedName): List<Field> {
       return this.fields.filter { applicableQualifiedNames(it.type).contains(typeName) }
    }
 
+   @Deprecated("Use fieldReferencesAssignableTo instead", replaceWith = ReplaceWith("fieldReferencesAssignableTo"))
    fun applicableQualifiedNames(type: Type): List<QualifiedName> {
       return type.inheritsFrom.map { it.toQualifiedName() }.plus(type.toQualifiedName())
    }
@@ -262,9 +344,10 @@ interface NameTypePair {
 
 }
 
-data class Annotation(val name: String,
-                      val parameters: Map<String, Any?> = emptyMap(),
-                      val type: AnnotationType? = null
+data class Annotation(
+   val name: String,
+   val parameters: Map<String, Any?> = emptyMap(),
+   val type: AnnotationType? = null
 ) : TaxiStatementGenerator {
    constructor(type: AnnotationType, parameters: Map<String, Any?>) : this(type.qualifiedName, parameters, type)
 
@@ -292,6 +375,16 @@ data class Annotation(val name: String,
    }
 }
 
+/**
+ * A path to a specific attribute, which may be any arbitrary number
+ * of fields dep
+ */
+data class FieldReference(
+   val baseType: ObjectType,
+   val path: List<Field>
+) {
+   val description = "${baseType.toQualifiedName().typeName}." + path.joinToString(".") { it.name }
+}
 
 data class Field(
    override val name: String,
@@ -323,7 +416,8 @@ data class Field(
 
    // For equality - don't compare on the type (as this can cause stackOverflow when the type is an Object type)
    private val typeName = type.qualifiedName
-   private val equality = Equality(this, Field::name, Field::typeName, Field::nullable, Field::annotations, Field::constraints)
+   private val equality =
+      Equality(this, Field::name, Field::typeName, Field::nullable, Field::annotations, Field::constraints)
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
@@ -369,16 +463,19 @@ data class LiteralAccessor(val value: Any) : Accessor, TaxiStatementGenerator {
 
 }
 
-data class XpathAccessor(override val expression: String, override val returnType: Type) : ExpressionAccessor, TaxiStatementGenerator {
+data class XpathAccessor(override val expression: String, override val returnType: Type) : ExpressionAccessor,
+   TaxiStatementGenerator {
    override fun asTaxi(): String = """by xpath("$expression")"""
 }
 
-data class JsonPathAccessor(override val expression: String, override val returnType: Type) : ExpressionAccessor, TaxiStatementGenerator {
+data class JsonPathAccessor(override val expression: String, override val returnType: Type) : ExpressionAccessor,
+   TaxiStatementGenerator {
    override fun asTaxi(): String = """by jsonPath("$expression")"""
 }
 
 // TODO : This is duplicating concepts in ColumnMapping, one should die.
-data class ColumnAccessor(val index: Any?, override val defaultValue: Any?, override val returnType: Type) : ExpressionAccessor, TaxiStatementGenerator, AccessorWithDefault {
+data class ColumnAccessor(val index: Any?, override val defaultValue: Any?, override val returnType: Type) :
+   ExpressionAccessor, TaxiStatementGenerator, AccessorWithDefault {
    override val expression: String = index.toString()
    override fun asTaxi(): String {
       return when {
@@ -402,7 +499,8 @@ data class ConditionalAccessor(val expression: FieldSetExpression) : Accessor, T
 data class FieldSourceAccessor(
    val sourceAttributeName: FieldName,
    val attributeType: QualifiedName,
-   val sourceType: QualifiedName) : Accessor, TaxiStatementGenerator {
+   val sourceType: QualifiedName
+) : Accessor, TaxiStatementGenerator {
    override fun asTaxi(): String {
       return "by (this.$sourceAttributeName)"
    }
@@ -411,7 +509,8 @@ data class FieldSourceAccessor(
 data class DestructuredAccessor(val fields: Map<String, Accessor>) : Accessor
 
 @Deprecated("Use lang.taxi.functions.Function instead")
-data class ReadFunctionFieldAccessor(val readFunction: ReadFunction, val arguments: List<ReadFunctionArgument>) : Accessor
+data class ReadFunctionFieldAccessor(val readFunction: ReadFunction, val arguments: List<ReadFunctionArgument>) :
+   Accessor
 
 @Deprecated("Use lang.taxi.functions.Function instead")
 data class ReadFunctionArgument(val columnAccessor: ColumnAccessor?, val value: Any?)
