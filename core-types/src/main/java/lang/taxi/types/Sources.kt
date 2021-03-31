@@ -2,6 +2,7 @@ package lang.taxi.types
 
 import com.google.common.cache.CacheBuilder
 import java.io.File
+import java.lang.Exception
 import java.net.URI
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -32,7 +33,8 @@ object SourceNames {
             // This isn't a filename or path - it's probably one of the 'unknown path' markers
             sourceName
          } else {
-            tryParseAsUri(sourceName)
+            tryParseAsInMemory(sourceName)
+               ?: tryParseAsUri(sourceName)
                ?: tryParseAsFile(sourceName)
                ?: tryParseAsPath(sourceName)
                ?: sourceName
@@ -40,11 +42,21 @@ object SourceNames {
       }
    }
 
+   // When usig the in-memory LSP, source URI's are passed as
+   // inmemory:// ....
+   private fun tryParseAsInMemory(sourceName: String): String? {
+      return try {
+         if(sourceName.startsWith("inmemory:")) sourceName else null
+      } catch(e:Exception) {
+         null
+      }
+
+   }
+
    private fun tryParseAsFile(sourceName: String): String? {
       return try {
-         val s = File(sourceName).toPath().toAbsolutePath().toUri().toString()
-         s
-      } catch (e: Exception) {
+         File(sourceName).toPath().toAbsolutePath().toUri().toString()
+      } catch(e:Exception) {
          return null
       }
 

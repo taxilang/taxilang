@@ -110,6 +110,12 @@ data class Tokens(
          // The sourceName wasn't found in the cache of tokens.
          // This can happen typically if the file is empty, or failed to compile
          // and we weren't able to get any tokens.
+         if (this.tokenStore.containsTokensForSource(sourceName)) {
+            // The compiler knows about the sourceName, but there weren't
+            // any types in it.  That's valid.
+            return@getOrElse emptyList()
+         }
+
          // However, more recently this happens if the file names aren't normalized
          // consistently.
          // So, adding this bomb here.

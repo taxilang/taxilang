@@ -116,7 +116,14 @@ class TokenProcessor(
       compile()
       // TODO: Unsure if including the imported types here is a good iddea or not.
       val types = typeSystem.typeList(includeImportedTypes = true).toSet()
-      return errors to TaxiDocument(types, services.toSet(), policies.toSet(), functions.toSet(), annotations.toSet(), views.toSet())
+      return errors to TaxiDocument(
+         types,
+         services.toSet(),
+         policies.toSet(),
+         functions.toSet(),
+         annotations.toSet(),
+         views.toSet()
+      )
    }
 
    fun buildQueries(): Pair<List<CompilationError>, List<TaxiQlQuery>> {
@@ -149,11 +156,16 @@ class TokenProcessor(
          val (namespace, ctx) = tokenPair
          val typeCtx = ctx as TaxiParser.TypeDeclarationContext
          val typeAliasNames = typeCtx.typeBody()?.typeMemberDeclaration()
-            ?.filter { it.exception == null }
+            ?.filter { memberDeclaration ->
+               memberDeclaration.exception == null
+                  // When compiling partial sources in the editors, the field declaration can be
+                  // null at this point.  It's invalid, but we don't want to throw an NPE
+                  && memberDeclaration.fieldDeclaration() != null
+            }
             ?.mapNotNull { memberDeclaration ->
                val fieldDeclaration = memberDeclaration.fieldDeclaration()
                if (fieldDeclaration.simpleFieldDeclaration()
-                     .typeType() != null && fieldDeclaration.simpleFieldDeclaration().typeType().aliasedType() != null
+                     ?.typeType() != null && fieldDeclaration.simpleFieldDeclaration().typeType().aliasedType() != null
                ) {
                   // This is an inline type alias
                   lookupTypeByName(namespace, memberDeclaration.fieldDeclaration().simpleFieldDeclaration().typeType())
@@ -809,13 +821,13 @@ class TokenProcessor(
       return this.typeSystem.register(
          ObjectType(
             typeName, ObjectTypeDefinition(
-            fields = fields.toSet(),
-            annotations = annotations.toSet(),
-            modifiers = modifiers,
-            inheritsFrom = inherits,
-            format = null,
-            typeDoc = typeDoc,
-            typeKind = typeKind,
+               fields = fields.toSet(),
+               annotations = annotations.toSet(),
+               modifiers = modifiers,
+               inheritsFrom = inherits,
+               format = null,
+               typeDoc = typeDoc,
+               typeKind = typeKind,
                compilationUnit = ctx.toCompilationUnit()
             )
          )
@@ -1375,7 +1387,7 @@ class TokenProcessor(
          }
    }
 
-    fun resolveUserType(
+   fun resolveUserType(
       namespace: Namespace,
       requestedTypeName: String,
       context: ParserRuleContext,
@@ -1422,14 +1434,14 @@ class TokenProcessor(
             val isLenient = ctx.lenientKeyword() != null
             val enumType = EnumType(
                typeName, EnumDefinition(
-               enumValues,
-               annotations,
-               ctx.toCompilationUnit(),
-               inheritsFrom = if (inherits != null) setOf(inherits) else emptySet(),
-               typeDoc = parseTypeDoc(ctx.typeDoc()),
-               basePrimitive = basePrimitive,
-               isLenient = isLenient
-            )
+                  enumValues,
+                  annotations,
+                  ctx.toCompilationUnit(),
+                  inheritsFrom = if (inherits != null) setOf(inherits) else emptySet(),
+                  typeDoc = parseTypeDoc(ctx.typeDoc()),
+                  basePrimitive = basePrimitive,
+                  isLenient = isLenient
+               )
             )
             typeSystem.register(enumType)
             enumType
