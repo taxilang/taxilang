@@ -164,7 +164,8 @@ class TokenProcessor(
             }
             ?.mapNotNull { memberDeclaration ->
                val fieldDeclaration = memberDeclaration.fieldDeclaration()
-               if (fieldDeclaration.simpleFieldDeclaration()?.typeType() != null && fieldDeclaration.simpleFieldDeclaration().typeType().aliasedType() != null
+               if (fieldDeclaration.simpleFieldDeclaration()
+                     ?.typeType() != null && fieldDeclaration.simpleFieldDeclaration().typeType().aliasedType() != null
                ) {
                   // This is an inline type alias
                   lookupTypeByName(namespace, memberDeclaration.fieldDeclaration().simpleFieldDeclaration().typeType())
@@ -806,6 +807,7 @@ class TokenProcessor(
       typeName: String,
       ctx: TaxiParser.TypeDeclarationContext
    ): Either<List<CompilationError>, ObjectType> {
+      val typeKind = TypeKind.fromSymbol(ctx.typeKind().text)
       val fields = ctx.typeBody()?.let { typeBody ->
          val typeBodyContext = TypeBodyContext(typeBody, namespace)
          FieldCompiler(this, typeBodyContext, typeName, this.errors)
@@ -825,6 +827,7 @@ class TokenProcessor(
                inheritsFrom = inherits,
                format = null,
                typeDoc = typeDoc,
+               typeKind = typeKind,
                compilationUnit = ctx.toCompilationUnit()
             )
          )
@@ -1123,6 +1126,7 @@ class TokenProcessor(
       typeType: TaxiParser.TypeTypeContext
    ): Either<List<CompilationError>, Type> {
       return when {
+         typeType.inlineInheritedType() != null -> compileInlineInheritedType(namespace, typeType)
          typeType.aliasedType() != null -> compileInlineTypeAlias(namespace, typeType)
          typeType.classOrInterfaceType() != null -> resolveUserType(
             namespace,
@@ -1133,6 +1137,7 @@ class TokenProcessor(
          else -> throw IllegalArgumentException()
       }
    }
+
 
    private fun generateFormattedSubtype(
       type: Type,
@@ -1231,6 +1236,23 @@ class TokenProcessor(
       val offsetValue = typeType
          .parameterConstraint()?.temporalFormatList()?.instantOffsetExpression()?.intValue()
       return Either.right(FormatsAndZoneoffset(formatExpressions, offsetValue))
+   }
+
+   private fun compileInlineInheritedType(
+      namespace: Namespace,
+      typeType: TaxiParser.TypeTypeContext
+   ): Either<List<CompilationError>, Type> {
+      return parseType(namespace, typeType.inlineInheritedType().typeType()).map { inlineInheritedType ->
+         val declaredTypeName = typeType.classOrInterfaceType().Identifier().text()
+
+         typeSystem.register(ObjectType(
+            QualifiedName(namespace, declaredTypeName).fullyQualifiedName,
+            ObjectTypeDefinition(
+               inheritsFrom = setOf(inlineInheritedType),
+               compilationUnit = typeType.toCompilationUnit()
+            )
+         ))
+      }
    }
 
    /**

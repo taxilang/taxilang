@@ -30,6 +30,37 @@ type ListOfPerson inherits Person[]
    }
 
    @Test
+   fun `can define inline inheritence`() {
+      val doc = """model Person {
+         |firstName : FirstName inherits String
+         |}
+      """.trimMargin()
+         .compiled()
+      doc.type("FirstName")
+         .basePrimitive.should.equal(PrimitiveType.STRING)
+      doc.model("Person")
+         .field("firstName")
+         .type.qualifiedName.should.equal("FirstName")
+   }
+
+   @Test
+   fun `can define inline inheritence in namespace`() {
+      val doc = """
+         |namespace foo
+         |
+         |model Person {
+         |firstName : FirstName inherits String
+         |}
+      """.trimMargin()
+         .compiled()
+      doc.type("foo.FirstName")
+         .basePrimitive.should.equal(PrimitiveType.STRING)
+      doc.model("foo.Person")
+         .field("firstName")
+         .type.qualifiedName.should.equal("foo.FirstName")
+   }
+
+   @Test
    fun canInheritFromAlias() {
       val src = """
    type alias CcySymbol as String
@@ -173,18 +204,18 @@ type ListOfPerson inherits Person[]
       Compiler(src).compile()
    }
 
-    @Test
-    fun cacheAliasTypeProperties() {
-        val src = """
+   @Test
+   fun cacheAliasTypeProperties() {
+      val src = """
          type alias CcySymbol as String""".trimIndent()
-       val doc = Compiler(src).compile()
-       doc.type("CcySymbol").basePrimitive.should.be.equal(PrimitiveType.STRING)
-       doc.type("CcySymbol").basePrimitive.should.be.equal(PrimitiveType.STRING)
-       doc.type("CcySymbol").allInheritedTypes.should.be.equal(setOf(PrimitiveType.STRING))
-       doc.type("CcySymbol").allInheritedTypes.should.be.equal(setOf(PrimitiveType.STRING))
-       doc.type("CcySymbol").inheritsFromPrimitive.should.be.`true`
-       doc.type("CcySymbol").inheritsFromPrimitive.should.be.`true`
-    }
+      val doc = Compiler(src).compile()
+      doc.type("CcySymbol").basePrimitive.should.be.equal(PrimitiveType.STRING)
+      doc.type("CcySymbol").basePrimitive.should.be.equal(PrimitiveType.STRING)
+      doc.type("CcySymbol").allInheritedTypes.should.be.equal(setOf(PrimitiveType.STRING))
+      doc.type("CcySymbol").allInheritedTypes.should.be.equal(setOf(PrimitiveType.STRING))
+      doc.type("CcySymbol").inheritsFromPrimitive.should.be.`true`
+      doc.type("CcySymbol").inheritsFromPrimitive.should.be.`true`
+   }
 
    @Test
    fun cachePrimitiveTypeProperties() {

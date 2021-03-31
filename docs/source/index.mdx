@@ -20,7 +20,9 @@ import {
 <!--import { ReactComponent as Diving } from './assets/diving.svg';-->
 <!--import { ReactComponent as HeadLight } from './assets/head-light.svg';-->
 
-Welcome! 👋 Taxi is a language for documenting APIs - the models they return, and the operations they can perform.
+Welcome! 👋 Taxi is a language for documenting data schemas - such as data models, and the contracts of APIs.
+
+Taxi describes data semantically, which allows powerful tooling to discover and map data based on it's meaning, rather than the name of a field.
 
 ![](https://img.shields.io/bintray/v/taxi-lang/releases/parent?label=Taxi&style=for-the-badge)
 
@@ -35,6 +37,34 @@ As a language, Taxi focuses on:
 Taxi is used heavily to power [Vyne](https://vyne.co) - and the projects have influenced each other & evolved together.    The expressiveness of Taxi allows Vyne to automate integration between services.
 
 However, Taxi is intended to be a standalone tool, and is not coupled to Vyne.  There's lots of amazing things you can do with Taxi on it's own.
+
+## Example
+Taxi allows you to be really expressive about what the meaning is of data returned from an API.  By describing the **meaning**  of our data, we can start to make data interchangable.
+
+For example:
+```
+model Customer {
+   id : CustomerId inherits String
+   firstName : FirstName inherits String
+   lastName : LastName inherits String
+}
+
+model Invoice {
+   invoiceId : InvoiceId as Int
+   customerId : CustomerId
+}
+```
+
+Those `String`s now have a little more meaning.  And look - we now know that `Invoice.customerId` and `Customer.id` describe the same piece of information - a `CustomerId`.
+
+By building out this set of terms - we create a Taxonomy of interchangable types.  This allows us to better document how data is intended to be used.  Tooling such as [Vyne](https://vyne.co)
+can leverage this to link and discover data automatically, and automate API integration.
+
+
+```
+@HttpOperation(method = "GET", url = "http://myApp/customers/{id}")
+operation getPerson(id: CustomerId):Customer
+```
 
 ## New to Taxi or Vyne?
 
