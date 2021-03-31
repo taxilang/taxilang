@@ -3,15 +3,15 @@ title: Types and models
 description: Types and Models are the foundation of describing data within Taxi
 ---
 
-import { Hint } from '../components/hint'
+import { Hint, Discourage } from '../components/hint'
 
-Types and Models form the core building blocks of data and API's.  These describe the contracts of data that float about 
+Types and Models form the core building blocks of data and API's.  These describe the contracts of data that float about
 in our ecosystems - published by services, exposed via processes, and sent from 3rd party suppliers.
 
 In Taxi, as part of building out an robust composable type system, we differentiate between xxxx
 
 ## Types
-Types declare a simple, resuable concept.  
+Types declare a simple, resuable concept.
 
 **Basic syntax:**
 ```
@@ -51,7 +51,7 @@ Semantic typing simply means defining types that describe the actual information
 | Information | The actual facts sitting inside the data | `CustomerName`,`Age`,`DateOfBirth`    |
 
 The **information** is the most useful part of any data, and so Taxi is intended to build type systems that describe this.
-Taxi encourages using lots of small, descriptive and narrowly focussed types as the building blocks of a shared enterprise taxonomy. 
+Taxi encourages using lots of small, descriptive and narrowly focussed types as the building blocks of a shared enterprise taxonomy.
 
 This is one of the key features of Taxi, and allows tooling to make intelligent choices about the information our systems are exposing.
 
@@ -103,7 +103,7 @@ Models describe the contract of data either produced or consumed by a system.  M
 ```
 type PersonId inherits Int
 type FirstName inherits String
-model Person {            
+model Person {
    id : PersonId // refernece to another custom type
    firstName : FirstName
    lastName : String // You don't have to use microtypes if they don't add value
@@ -115,14 +115,14 @@ Models can use inheritence, but this is less common and generally less useful th
 
 <Hint>
     Models should be produced and owned by a single system, rather than shared widely across mutliple systems in an enterprise.
-    
+
     When models start getting shared too widely, it becomes difficult for them to change and evolve.
 
     Instead, favour single-system models, composed of terms from a widely shared Taxonomy of types.
 </Hint>
 
 ### Parameter models
-Parameter models are special models that indicate to tooling that it's safe to construct these at runtime.  
+Parameter models are special models that indicate to tooling that it's safe to construct these at runtime.
 Declaring something as a Parameter type has no other impact within Taxi on the type's definition, but is used in other tooling.  \(Eg., Vyne\).
 
 ```taxi
@@ -171,8 +171,8 @@ Taxi currently supports the following primitive types.  \(See the [Language Spec
 | Boolean | `true` or `false` | - |
 | String | A list of characters | - |
 | Int | A numeric type without decimal places | - |
-| Double | A numeric type with decimal places, using floating-point precision | - | 
-| Decimal | A numeric type with decimal places | - | 
+| Double | A numeric type with decimal places, using floating-point precision | - |
+| Decimal | A numeric type with decimal places | - |
 | Date | Represents a day, without time, or a time zone.  | `yyyy-MM-dd` |
 | Time | A time, in the form of `hh:mm:ss`.  Does not support dates, or time-zones. | `HH:mm:ss` |
 | DateTime | Describes both a date and a time, but without a timezone. | `yyyy-MM-dd'T'HH:mm:ss.SSS` |
@@ -184,7 +184,7 @@ An Array (specifically, `lang.taxi.Array`) is a special type within Taxi, and ca
 
 ```
 model Person {
-    friends : Person[] 
+    friends : Person[]
 }
 
 // or:
@@ -289,9 +289,9 @@ model Person {
 }
 ```
 
-Note that Taxi does not enforce nullabillity constraints - that's left to the systems which interpret the data.  
+Note that Taxi does not enforce nullabillity constraints - that's left to the systems which interpret the data.
 
-## Inheritence 
+## Inheritence
 
 Taxi provides inheritence across both Types and Models.  It's recommended that inheritence is used heavily in Types to increase
 the specificity of a concept, and sparingly in Models.
@@ -310,8 +310,39 @@ As with most languages, inheritence is one-way -- ie., in the above example, all
 
 Likewise, all FirstNames are Names, but not all Names are FirstNames.
 
-This is incredibly useful in building out a taxonomy that allows publishers and consumers to be more or less sepcific about the 
+This is incredibly useful in building out a taxonomy that allows publishers and consumers to be more or less sepcific about the
 types of data they are providing.
+
+### Inline inheritance
+
+It is possible to define a type with inheritance inline within a model definition.
+
+
+```
+model Person {
+   // This declares a new type called FirstName, which inherits PersonName
+   firstName : FirstName inherits PersonName
+   lastName : LastName inherits PersonName
+}
+
+// is exactly the same as writing:
+
+type FirstName inherits PersonName
+type LastName inherits PersonName
+
+model Person {
+   firstName : FirstName
+   lastName : LastName
+}
+```
+
+
+<Discourage>
+   Inline inheritance is a great way to quickly start building out your taxonomy.
+   However, it can make it harder to see where types are, and can lead to errors by accidentally
+   declaring duplicate types (which will cause a compilation error).
+</Discourage>
+
 
 ## Annotations
 
@@ -374,7 +405,7 @@ Here's how it might be used:
 model MeterReading {}
 ```
 
-When an annotation has an associated type, then it's contract is checked by the compiler. 
+When an annotation has an associated type, then it's contract is checked by the compiler.
 
 For example, given the above sample, the following would be invalid:
 
@@ -401,7 +432,7 @@ type FirstName inherits String
 
 type alias GivenName as FirstName
 ```
-This states that *anywhere* `FirstName` is used, `GivenName` may also be used.  
+This states that *anywhere* `FirstName` is used, `GivenName` may also be used.
 
 Unlike [Inheritence](#inheritence), aliases are bi-directional.  That is all `FirstName`s are `GivenName`s, and all `GivenName`s are `FirstName`s.
 
@@ -436,7 +467,7 @@ namespace acme {
 }
 
 namespace foo {
-   
+
    enum Country {
       NZ synonym of acme.Country.NEW_ZEALAND,
       AUS synonym of acme.Country.AUSTRALIA,
@@ -462,7 +493,7 @@ Parsers will match inputs against either the name or the value of the enum.
 
 ie:
 
-```json 
+```json
 {
     "countryOfBirth" : "NZ", // Matches Country.NEW_ZEALAND
     "countryOfResidence" : "UNITED_KINGDOM" // Matches Country.UNITED_KINGDOM

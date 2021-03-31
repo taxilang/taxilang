@@ -14,9 +14,11 @@ class ModelSpec : Spek({
       describe("simple grammar") {
          it("should allow declaration of a model") {
             val src = """
+type FirstName inherits String
+type LastName inherits String
 model Person {
-   firstName : FirstName as String
-   lastName : LastName as String
+   firstName : FirstName
+   lastName : LastName
 }
            """.trimIndent()
             val person = Compiler(src).compile().model("Person")

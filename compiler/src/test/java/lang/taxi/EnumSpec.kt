@@ -213,7 +213,7 @@ enum Australian {
          it("should throw an error if the reference value is not an enum") {
             val src = """
 enum English { One }
-type Word
+type Word inherits String
 enum Australian {
    One synonym of Word.Single
 }

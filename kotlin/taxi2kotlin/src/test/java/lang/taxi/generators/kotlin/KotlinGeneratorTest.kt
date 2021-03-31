@@ -78,10 +78,10 @@ object TypeNames {
       val taxi = """
 namespace vyne {
     type Person {
-        firstName : FirstName as String
-        lastName : LastName as String
-        age : Age as Int
-        living : IsAlive as Boolean
+        firstName : FirstName inherits String
+        lastName : LastName inherits String
+        age : Age inherits Int
+        living : IsAlive inherits Boolean
     }
 }
         """.trimIndent()
@@ -431,8 +431,8 @@ object TypeNames {
       val taxi = """
 type Instrument
 type Money inherits Instrument {
-            currency : CurrencySymbol as String
-            amount : MoneyAmount as Decimal
+            currency : CurrencySymbol inherits String
+            amount : MoneyAmount inherits Decimal
          }
       """.trimIndent()
       val output = compileAndGenerate(taxi).trimNewLines()
@@ -498,8 +498,8 @@ object TypeNames {
    fun objectTypesThatInherit() {
       val taxi = """
          type Money {
-            currency : CurrencySymbol as String
-            amount : MoneyAmount as Decimal
+            currency : CurrencySymbol inherits String
+            amount : MoneyAmount inherits Decimal
          }
          type Notional inherits Money
       """.trimIndent()

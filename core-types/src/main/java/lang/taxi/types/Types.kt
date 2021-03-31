@@ -127,6 +127,22 @@ interface ImportableToken : Named, Compiled
  */
 typealias Model = Type
 
+// This should become deprecated when Types and Models are differnt things
+enum class TypeKind {
+   Type,
+   Model;
+
+   companion object {
+      fun fromSymbol(symbol: String): TypeKind {
+         return when (symbol) {
+            "model" -> Model
+            "type" -> Type
+            else -> error("Expected either model or type, got $symbol")
+         }
+      }
+   }
+}
+
 interface Type : Named, Compiled, ImportableToken, Documented {
    val inheritsFrom: Set<Type>
 

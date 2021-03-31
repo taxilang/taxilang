@@ -23,8 +23,8 @@ class ViewSpec : Spek({
       it("simple view definition") {
          val src = """
          model Person {
-            firstName : FirstName as String
-            lastName : LastName as String
+            firstName : FirstName inherits String
+            lastName : LastName inherits String
          }
 
           [[
@@ -49,7 +49,7 @@ class ViewSpec : Spek({
             {
               type LastName inherits String
                model Person {
-                  firstName : FirstName as String
+                  firstName : FirstName inherits String
                   lastName : LastName
                }
            }

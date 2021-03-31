@@ -3,6 +3,9 @@ package lang.taxi.linter
 import lang.taxi.CompilationMessage
 import lang.taxi.linter.rules.NoDuplicateTypesOnModelsRule
 import lang.taxi.linter.rules.NoPrimitiveTypesOnModelsRule
+import lang.taxi.linter.rules.NoTypeAliasOnPrimitivesTypeRule
+import lang.taxi.linter.rules.TypesShouldInheritRule
+import lang.taxi.linter.rules.TypesShouldNotHaveFieldsRule
 import lang.taxi.types.EnumType
 import lang.taxi.types.ObjectType
 import lang.taxi.types.Type
@@ -56,7 +59,10 @@ object LinterRules {
 
    val ALL_RULES = listOf(
       NoPrimitiveTypesOnModelsRule,
-      NoDuplicateTypesOnModelsRule
+      NoDuplicateTypesOnModelsRule,
+      NoTypeAliasOnPrimitivesTypeRule,
+      TypesShouldInheritRule,
+      TypesShouldNotHaveFieldsRule
    )
 }
 

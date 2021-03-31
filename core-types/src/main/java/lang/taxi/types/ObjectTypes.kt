@@ -40,6 +40,7 @@ data class ObjectTypeDefinition(
    val calculation: Formula? = null,
    val offset: Int? = null,
    val isAnonymous: Boolean = false,
+   val typeKind: TypeKind = TypeKind.Type,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
