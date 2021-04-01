@@ -82,7 +82,7 @@ package-plugin:
 
 release-major:
   variables:
-    GIT_STRATEGY: none
+    GIT_STRATEGY: clone
   image: maven:3.3.9-jdk-8
   stage: release
   script:
@@ -94,7 +94,7 @@ release-major:
 
 release-minor:
   variables:
-    GIT_STRATEGY: none
+    GIT_STRATEGY: clone
   image: maven:3.3.9-jdk-8
   stage: release
   script:
@@ -106,7 +106,7 @@ release-minor:
 
 release-patch:
   variables:
-    GIT_STRATEGY: none
+    GIT_STRATEGY: clone
   image: maven:3.3.9-jdk-8
   stage: release
   script:
