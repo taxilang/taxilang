@@ -573,4 +573,23 @@ type TradeRecord {
          error.detailMessage == "when case for quantityStatus in ComplexWhen can only logical expression when cases"
       } }
    }
+
+   @Test
+   fun `model attribute based definitions are no allowed`() {
+      val src = """
+         type Status inherits String
+         type QtyStatus inherits String
+         model ComplexWhen {
+            status: Status
+            quantityStatus: QtyStatus by when {
+                ComplexWhen::Status != null -> "ZeroFill"
+                else -> "CompleteFill"
+            }
+         }
+      """.trimIndent()
+      val errors = Compiler(src).validate()
+      errors.should.satisfy { it.any { error ->
+         error.detailMessage == "SourceType::FieldType notation is only allowed in view definitions"
+      } }
+   }
 }

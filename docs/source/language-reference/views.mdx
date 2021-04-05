@@ -64,21 +64,21 @@ Based on these two models, we will create a taxi view that will provide us all O
 ]]
 view OrderView inherits OrderEvent with query {
    find { OrderSent[] } as {
-      orderId: OrderSent.SentOrderId
-      orderDateTime: OrderSent.OrderEventDateTime
-      orderType: OrderSent.OrderType
-      subSecurityType: OrderSent.SecurityDescription
-      requestedQuantity: OrderSent.RequestedQuantity
-      orderEntry: OrderSent.OrderStatus
+      orderId: OrderSent::SentOrderId
+      orderDateTime: OrderSent::OrderEventDateTime
+      orderType: OrderSent::OrderType
+      subSecurityType: OrderSent::SecurityDescription
+      requestedQuantity: OrderSent::RequestedQuantity
+      orderEntry: OrderSent::OrderStatus
      },
    find { OrderSent[] (joinTo OrderFill[]) } as {
-      orderId: OrderFill.FillOrderId
+      orderId: OrderFill::FillOrderId
       orderDateTime: OrderEventDateTime
-      orderType: OrderFill.OrderType
-      subSecurityType: OrderFill.SecurityDescription
-      requestedQuantity: OrderSent.RequestedQuantity
+      orderType: OrderFill::OrderType
+      subSecurityType: OrderFill::SecurityDescription
+      requestedQuantity: OrderSent::RequestedQuantity
       orderEntry: OrderStatus by when {
-        OrderSent.RequestedQuantity = OrderFill.DecimalFieldOrderFilled -> OrderFill.OrderStatus
+        OrderSent::RequestedQuantity = OrderFill::DecimalFieldOrderFilled -> OrderFill::OrderStatus
         else -> "PartiallyFilled"
         }
      }
@@ -97,12 +97,12 @@ so, a view definition:
 ## ‘find’ Expression
 
 ```
-find  
-   { 
-      <Query Expression> 
-   } 
-   as 
-   { 
+find
+   {
+      <Query Expression>
+   }
+   as
+   {
       <Find Body>
    }
 ```
@@ -153,12 +153,12 @@ so the corresponding ‘find body’ should contain field definitions to indicat
 
 ```
 find { OrderSent[] } as {
-      orderId: OrderSent.SentOrderId
-      orderDateTime: OrderSent.OrderEventDateTime
-      orderType: OrderSent.OrderType
-      subSecurityType: OrderSent.SecurityDescription
-      requestedQuantity: OrderSent.RequestedQuantity
-      orderEntry: OrderSent.OrderStatus
+      orderId: OrderSent::SentOrderId
+      orderDateTime: OrderSent::OrderEventDateTime
+      orderType: OrderSent::OrderType
+      subSecurityType: OrderSent::SecurityDescription
+      requestedQuantity: OrderSent::RequestedQuantity
+      orderEntry: OrderSent::OrderStatus
      }
 ```
 
@@ -166,18 +166,18 @@ Each field definition is in the following format:
 
 fieldName: SourceTypeName:FieldTypeName
 
-‘SourceTypeName’ refers to the types that are used in ```<Query Expression>``` of ‘find’ statement and ‘FieldTypeName’ refers to a type name of a property in ‘Source Type’. 
+‘SourceTypeName’ refers to the types that are used in ```<Query Expression>``` of ‘find’ statement and ‘FieldTypeName’ refers to a type name of a property in ‘Source Type’.
 As an example, consider the first field definition:
 
 ```
-orderId: OrderSent.SentOrderId
+orderId: OrderSent::SentOrderId
 ```
 
 fieldName = orderId
 SourceTypeName = OrderSent
 FieldTypeName = SentOrderId
 
-As ‘OrderSent’ is part of the find query expression ( find {OrderSent[]} ) and it has a single field with 
+As ‘OrderSent’ is part of the find query expression ( find {OrderSent[]} ) and it has a single field with
 SentOrderId (sentOrderId : SentOrderId )
 This field definition is considered as a valid ‘view find body field’ declaration. If either ‘OrderSent’ is not part of the initial find query expression or OrderSent doesn’t have / have multiple fields with SentOrderId, compiler will throw a compiler expression.
 
@@ -191,13 +191,13 @@ has a join expression, so its body can refer to types participating in join (Ord
 
 ```
    find { OrderSent[] (joinTo OrderFill[]) } as {
-      orderId: OrderFill.FillOrderId
+      orderId: OrderFill::FillOrderId
       orderDateTime: OrderEventDateTime
-      orderType: OrderFill.OrderType
-      subSecurityType: OrderFill.SecurityDescription
-      requestedQuantity: OrderSent.RequestedQuantity
+      orderType: OrderFill::OrderType
+      subSecurityType: OrderFill::SecurityDescription
+      requestedQuantity: OrderSent::RequestedQuantity
       orderEntry: OrderStatus by when {
-        OrderSent.RequestedQuantity = OrderFill.DecimalFieldOrderFilled -> OrderFill.OrderStatus
+        OrderSent::RequestedQuantity = OrderFill::DecimalFieldOrderFilled -> OrderFill::OrderStatus
         else -> "PartiallyFilled"
         }
      }
@@ -205,13 +205,13 @@ has a join expression, so its body can refer to types participating in join (Ord
 
 ```orderId``` field is defined via OrderFill type:
 
-```orderId: OrderFill.FillOrderId```
+```orderId: OrderFill::FillOrderId```
 
 and
 
 ```requestedQuantity``` field is defined vie OrderSent type:
 
-```requestedQuantity: OrderSent.RequestedQuantity```
+```requestedQuantity: OrderSent::RequestedQuantity```
 
 Also, ‘when’ based field definitions can refer to both OrderSent and OrderFill types.
 When a view definition contains multiple ‘find’ statements, each ‘find’ statement body must be compatible with each other so that Vyne can perform ‘union’ operation to combine the result of each ‘find’ statement. If two ‘field’ statements are compatible, then:
@@ -219,7 +219,7 @@ When a view definition contains multiple ‘find’ statements, each ‘find’ 
     • Both field bodies have equal number of fields.
     • Both field body fields are compatible with each other. As an example, here is the definition of the second field in the first ‘find’ body:
 
-```orderDateTime: OrderSent.OrderEventDateTime```
+```orderDateTime: OrderSent::OrderEventDateTime```
 
 which declares that the type ‘orderDateTime’ is ‘OrderEventDateTime’ and should be populated from the ‘OrderSent’ property with ‘OrderEventDateTime’. Since two ‘find’ statements must be compatible, the second field type in the second ‘find’ body must also be ‘OrderEventDateTime’, so if you check the ‘find’ body, the definition of the second field is:
 

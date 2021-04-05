@@ -2,17 +2,21 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.functions.FunctionAccessor
+import lang.taxi.functions.FunctionModifiers
 import lang.taxi.functions.FunctionExpressionAccessor
 import lang.taxi.functions.stdlib.Left
 import lang.taxi.linter.LinterRules
+import lang.taxi.messages.Severity
 import lang.taxi.types.ColumnAccessor
 import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.LiteralAccessor
+import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TypeReferenceSelector
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.util.EnumSet
 import kotlin.test.assertFailsWith
 
 object FunctionSpec : Spek({
@@ -65,6 +69,23 @@ object FunctionSpec : Spek({
          function.parameters[1].name.should.equal("b")
 
          function.returnType.should.equal(PrimitiveType.STRING)
+      }
+
+      it("a function can be defined with query modifier") {
+         val taxi = """
+            declare query function concat(a:String,b:String):String
+         """.compiled()
+
+         val function = taxi.function("concat")
+         function.parameters.should.have.size(2)
+
+         function.parameters[0].type.should.equal(PrimitiveType.STRING)
+         function.parameters[0].name.should.equal("a")
+         function.parameters[1].type.should.equal(PrimitiveType.STRING)
+         function.parameters[1].name.should.equal("b")
+
+         function.returnType.should.equal(PrimitiveType.STRING)
+         function.modifiers.should.equal(EnumSet.of(FunctionModifiers.Query))
       }
    }
    describe("using read functions") {
@@ -252,6 +273,53 @@ namespace pkgB {
             val transaction = Compiler(src).compile().model("Foo")
          }
       }
+
+      it("a query function can be part of anonymous type definition") {
+         val taxiDocument = """
+            declare query function upper(String):String
+            model Record {
+               primaryKey: String
+            }
+
+
+         """.compiled()
+
+         val src = """
+            findAll {
+               Record[]
+            } as {
+              upperPrimaryKey: String by upper(this.primaryKey)
+            }[]
+         """.trimIndent()
+         val err = Compiler(source = src, importSources = listOf(taxiDocument)).queriesWithErrorMessages()
+         // Currently our only query function is sumOver
+         // and its implementation is pushed to the database therefore we restrict application of the query
+         // function only to View definitions, but we'll relax this in the future.
+         err.first.first().detailMessage.should.equal("a query function can only referenced from view definitions!")
+      }
+
+      it("a  query function can be part of a field definition in a model") {
+         val taxiDocument = """
+            declare function upper(String):String
+            model Record {
+               primaryKey: String
+               upperPrimaryKey: String by upper(this.primaryKey)
+            }
+
+
+         """.compiled()
+
+         val src = """
+            findAll {
+               Record[]
+            } as {
+              upperPrimaryKey: String by upper(this.primaryKey)
+            }[]
+         """.trimIndent()
+
+         val (errors, _) = Compiler(source = src, importSources = listOf(taxiDocument)).queriesWithErrorMessages()
+         errors.should.be.empty
+      }
    }
 
    describe("Function expressions are allowed for limited cases") {
@@ -344,5 +412,18 @@ namespace pkgB {
          accessor.operator.should.equal(FormulaOperator.Multiply)
          accessor.operand.should.equal(5)
       }
+      it("query functions can't be referenced from model fields") {
+         val compilationMessages = """
+            import vyne.aggregations.sumOver
+            model Foo {
+                field1: Decimal
+                field2: Decimal by sumOver(this.field1)
+            }
+         """.validated()
+         compilationMessages.should.not.be.empty
+         compilationMessages.first().severity.should.equal(Severity.ERROR)
+         compilationMessages.first().detailMessage.should.equal("a query function can only referenced from view definitions!")
+      }
+
    }
 })
