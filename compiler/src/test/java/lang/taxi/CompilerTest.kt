@@ -9,7 +9,7 @@ import org.spekframework.spek2.style.specification.describe
 
 class CompilerTest: Spek({
    describe("compilation") {
-      it("should infer the return type from the field") {
+      it("should yield correct Type definition when compiled with imports") {
          val schema = """
          model OrderView {
                orderId : String?
