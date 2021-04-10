@@ -114,8 +114,24 @@ class TokenProcessor(
 
    fun buildTaxiDocument(): Pair<List<CompilationError>, TaxiDocument> {
       compile()
-      // TODO: Unsure if including the imported types here is a good iddea or not.
-      val types = typeSystem.typeList(includeImportedTypes = true).toSet()
+      /*
+       * Excluding imported types here. Consider that we have the following model.
+       * model MyModel {
+       *   field1: String
+       * }
+       *
+       * a process updates the definition of MyModel as
+       *
+       * model MyModel {
+       *   field1: String
+       *   field2: Decimal
+       * }
+       *
+       * When compile new 'MyModel' by importing existing sources including old 'MyModel'
+       * includeImportedTypes = true results in 'old' MyModel injectedt into the new 'TaxiDocument'
+       *
+       */
+      val types = typeSystem.typeList(includeImportedTypes = false).toSet()
       return errors to TaxiDocument(
          types,
          services.toSet(),
