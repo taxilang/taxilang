@@ -2,7 +2,7 @@ package lang.taxi.types
 
 import arrow.core.Either
 import com.google.common.cache.CacheBuilder
-import lang.taxi.Equality
+import lang.taxi.ImmutableEquality
 
 object Enums {
    fun enumValue(enum: QualifiedName, enumValueName: String): EnumValueQualifiedName {
@@ -30,7 +30,7 @@ data class EnumValueExtension(val name: String,
                               val synonyms: List<EnumValueQualifiedName>,
                               override val typeDoc: String? = null,
                               override val compilationUnit: CompilationUnit) : Annotatable, Documented, TypeDefinition {
-   private val equality = Equality(this, EnumValueExtension::name, EnumValueExtension::annotations, EnumValueExtension::synonyms, EnumValueExtension::typeDoc)
+   private val equality = ImmutableEquality(this, EnumValueExtension::name, EnumValueExtension::annotations, EnumValueExtension::synonyms, EnumValueExtension::typeDoc)
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
 }
@@ -64,7 +64,7 @@ data class EnumDefinition(val values: List<EnumValue>,
                           val basePrimitive: PrimitiveType,
                           val isLenient: Boolean = false,
                           override val typeDoc: String? = null) : Annotatable, TypeDefinition, Documented {
-   private val equality = Equality(this, EnumDefinition::values.toSet(), EnumDefinition::annotations.toSet(), EnumDefinition::typeDoc, EnumDefinition::basePrimitive, EnumDefinition::inheritsFrom.toSet())
+   private val equality = ImmutableEquality(this, EnumDefinition::values, EnumDefinition::annotations, EnumDefinition::typeDoc, EnumDefinition::basePrimitive, EnumDefinition::inheritsFrom)
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
 }
@@ -74,7 +74,7 @@ data class EnumExtension(val values: List<EnumValueExtension>,
                          override val annotations: List<Annotation> = emptyList(),
                          override val compilationUnit: CompilationUnit,
                          override val typeDoc: String? = null) : Annotatable, TypeDefinition, Documented {
-   private val equality = Equality(this, EnumExtension::values.toSet(), EnumExtension::annotations.toSet(), EnumExtension::typeDoc)
+   private val equality = ImmutableEquality(this, EnumExtension::values, EnumExtension::annotations, EnumExtension::typeDoc)
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
 }
