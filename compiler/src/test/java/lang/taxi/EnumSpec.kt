@@ -2,8 +2,10 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.types.PrimitiveType
+import lang.taxi.utils.Benchmark
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.util.concurrent.TimeUnit
 
 object EnumSpec : Spek({
 
@@ -124,9 +126,18 @@ enum Australian {
    One synonym of English.One
 }
             """.trimIndent()
-            Compiler(src).compile().enumType("English").value("One").synonyms.should.contain.elements("Australian.One", "French.Un")
-            Compiler(src).compile().enumType("French").value("Un").synonyms.should.contain.elements("Australian.One", "English.One")
-            Compiler(src).compile().enumType("Australian").value("One").synonyms.should.contain.elements("French.Un", "English.One")
+            Compiler(src).compile().enumType("English").value("One").synonyms.should.contain.elements(
+               "Australian.One",
+               "French.Un"
+            )
+            Compiler(src).compile().enumType("French").value("Un").synonyms.should.contain.elements(
+               "Australian.One",
+               "English.One"
+            )
+            Compiler(src).compile().enumType("Australian").value("One").synonyms.should.contain.elements(
+               "French.Un",
+               "English.One"
+            )
          }
          it("should allow lists of synonyms") {
             val src = """
@@ -136,9 +147,18 @@ enum Australian {
    One synonym of [English.One, French.Un]
 }
             """.trimIndent()
-            Compiler(src).compile().enumType("English").value("One").synonyms.should.contain.elements("Australian.One", "French.Un")
-            Compiler(src).compile().enumType("French").value("Un").synonyms.should.contain.elements("Australian.One", "English.One")
-            Compiler(src).compile().enumType("Australian").value("One").synonyms.should.contain.elements("French.Un", "English.One")
+            Compiler(src).compile().enumType("English").value("One").synonyms.should.contain.elements(
+               "Australian.One",
+               "French.Un"
+            )
+            Compiler(src).compile().enumType("French").value("Un").synonyms.should.contain.elements(
+               "Australian.One",
+               "English.One"
+            )
+            Compiler(src).compile().enumType("Australian").value("One").synonyms.should.contain.elements(
+               "French.Un",
+               "English.One"
+            )
          }
          it("should allow declaration of synonyms with an imported source") {
             val srcA = """
@@ -367,6 +387,41 @@ enum English {
          }
 
 
+      }
+
+      it("should have efficient hashcode implementations") {
+         val src = """
+enum French {
+   Un synonym of English.One,
+   Deux synonym of English.Two
+}
+enum English {
+   One synonym of French.Un,
+   Two synonym of French.Deux
+}
+            """.trimIndent()
+         val taxiA = Compiler(src).compile()
+         val taxiB = Compiler(src).compile()
+         val frenchA = taxiA.enumType("French")
+         val unA = frenchA.of("Un")
+         val frenchB = taxiB.enumType("French")
+         val unB = frenchB.of("Un")
+         Benchmark.benchmark(
+            "Enum Value hashcode",
+            warmup = 100,
+            iterations = 50_000,
+            timeUnit = TimeUnit.NANOSECONDS
+         ) {
+            unA.hashCode()
+            unB.hashCode()
+            unA.should.equal(unB)
+            unA.hashCode().should.equal(unB.hashCode())
+         }
+         Benchmark.benchmark("Enum hashcode", warmup = 100, iterations = 50_000, timeUnit = TimeUnit.NANOSECONDS) {
+            val hash1 = frenchA.hashCode()
+            val hash2 = frenchB.hashCode()
+            hash1 == hash2
+         }
       }
    }
 })

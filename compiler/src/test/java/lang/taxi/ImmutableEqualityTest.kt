@@ -3,10 +3,10 @@ package lang.taxi
 import com.winterbe.expekt.expect
 import org.junit.Test
 
-class EqualityTest {
+class ImmutableEqualityTest {
 
     data class TestMember(val firstName:String?, val lastName:String?, val age:Int)  {
-        val equality = Equality(this,TestMember::firstName, TestMember::lastName)
+        val equality = ImmutableEquality(this,TestMember::firstName, TestMember::lastName)
         override fun equals(other: Any?): Boolean = equality.isEqualTo(other)
         override fun hashCode(): Int = equality.hash()
     }

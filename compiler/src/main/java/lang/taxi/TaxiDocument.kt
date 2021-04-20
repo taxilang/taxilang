@@ -45,7 +45,7 @@ open class TaxiDocument(
    val annotations: Set<Annotation> = emptySet(),
    val views: Set<View> = emptySet()
 ) {
-   private val equality = Equality(this, TaxiDocument::types, TaxiDocument::services)
+   private val equality = ImmutableEquality(this, TaxiDocument::types, TaxiDocument::services)
    private val typeMap = types.associateBy { it.qualifiedName }
    private val servicesMap = services.associateBy { it.qualifiedName }
    private val policiesMap = policies.associateBy { it.qualifiedName }

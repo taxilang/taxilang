@@ -1,7 +1,7 @@
 package lang.taxi.types
 
 import arrow.core.Either
-import lang.taxi.Equality
+import lang.taxi.ImmutableEquality
 import lang.taxi.services.FieldName
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
@@ -44,11 +44,11 @@ data class ObjectTypeDefinition(
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
-   private val equality = Equality(
+   private val equality = ImmutableEquality(
       this,
-      ObjectTypeDefinition::fields.toSet(),
-      ObjectTypeDefinition::annotations.toSet(),
-      ObjectTypeDefinition::modifiers.toSet()
+      ObjectTypeDefinition::fields,
+      ObjectTypeDefinition::annotations,
+      ObjectTypeDefinition::modifiers
    )
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
@@ -418,7 +418,7 @@ data class Field(
    // For equality - don't compare on the type (as this can cause stackOverflow when the type is an Object type)
    private val typeName = type.qualifiedName
    private val equality =
-      Equality(this, Field::name, Field::typeName, Field::nullable, Field::annotations, Field::constraints)
+      ImmutableEquality(this, Field::name, Field::typeName, Field::nullable, Field::annotations, Field::constraints)
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
