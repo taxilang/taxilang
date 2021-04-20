@@ -2,7 +2,7 @@ package lang.taxi.types
 
 import com.google.common.hash.Hasher
 import com.google.common.hash.Hashing
-import lang.taxi.Equality
+import lang.taxi.ImmutableEquality
 
 data class ViewDefinition(
    val inheritsFrom: Set<Type>,
@@ -11,7 +11,7 @@ data class ViewDefinition(
    val viewBodyDefinitions: List<ViewBodyDefinition> = emptyList(),
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit): TokenDefinition, Documented {
-   private val equality = Equality(this, ViewDefinition::annotations.toSet(), ViewDefinition::modifiers.toSet())
+   private val equality = ImmutableEquality(this, ViewDefinition::annotations.toSet(), ViewDefinition::modifiers.toSet())
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
 }
