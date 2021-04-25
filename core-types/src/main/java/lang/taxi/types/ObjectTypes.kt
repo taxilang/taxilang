@@ -405,6 +405,11 @@ data class Field(
    // Need to standardise.
    val defaultValue: Any? = null,
    val formula: Formula? = null,
+   // populated for Anonymous field definitions used in views. Example:
+   // orderId: Order::SentOrderId
+   // For above, field name is 'orderId', field type is 'SentOrderId' and memberSource is 'Order'
+   // it is set to null for all other cases.
+   val memberSource : QualifiedName? = null,
    override val compilationUnit: CompilationUnit
 ) : Annotatable, ConstraintTarget, Documented, NameTypePair, TokenDefinition {
 

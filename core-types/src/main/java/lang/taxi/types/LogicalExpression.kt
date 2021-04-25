@@ -60,9 +60,9 @@ data class FieldReferenceEntity(val fieldName: String): ComparisonOperandEntity(
    }
 }
 
-data class ViewFindFieldReferenceEntity(val sourceType: Type, val fieldType: Type): ComparisonOperandEntity("") {
+data class ModelAttributeFieldReferenceEntity(val source: QualifiedName, val fieldType: Type): ComparisonOperandEntity("") {
    override fun asTaxi(): String {
-      return  "${sourceType.qualifiedName}.${fieldType.qualifiedName}"
+      return  "${source}.${fieldType.qualifiedName}"
    }
 }
 

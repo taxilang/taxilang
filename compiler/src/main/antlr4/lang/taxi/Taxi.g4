@@ -140,7 +140,7 @@ fieldReferenceSelector: propertyFieldNameQualifier? Identifier;
 typeReferenceSelector: typeType;
 
 conditionalTypeWhenCaseDeclaration:
-   caseDeclarationMatchExpression '->' ( caseFieldAssignmentBlock |  caseScalarAssigningDeclaration);
+   caseDeclarationMatchExpression '->' ( caseFieldAssignmentBlock |  caseScalarAssigningDeclaration | modelAttributeTypeReference);
 
 caseFieldAssignmentBlock:
 '{' caseFieldAssigningDeclaration*'}' ;
@@ -176,8 +176,13 @@ fieldModifier
    : 'closed'
    ;
 fieldDeclaration
-  :   fieldModifier? Identifier (':' (simpleFieldDeclaration | anonymousTypeDefinition))?
+  :   fieldModifier? Identifier (':' (simpleFieldDeclaration | anonymousTypeDefinition | modelAttributeTypeReference))?
   ;
+
+// A type reference that refers to the attribute on a model.
+// eg:  firstName : Person::FirstName.
+// Only meaningful within views.
+modelAttributeTypeReference: typeType '::' typeType;
 
 simpleFieldDeclaration: typeType accessor?;
 
@@ -210,6 +215,7 @@ scalarAccessorExpression
 byFieldSourceExpression:  '(' fieldReferenceSelector ')';
 xpathAccessorDeclaration : 'xpath' '(' accessorExpression ')';
 jsonPathAccessorDeclaration : 'jsonPath' '(' accessorExpression ')';
+
 
 objectAccessor
     : '{' destructuredFieldDeclaration* '}'
@@ -398,7 +404,7 @@ operationReturnValueOriginExpression
 propertyToParameterConstraintExpression
    : propertyToParameterConstraintLhs comparisonOperator propertyToParameterConstraintRhs;
 
-propertyToParameterConstraintLhs : propertyFieldNameQualifier? qualifiedName;
+propertyToParameterConstraintLhs : (propertyFieldNameQualifier? qualifiedName)? | modelAttributeTypeReference?;
 propertyToParameterConstraintRhs : (literal | qualifiedName);
 
 propertyFieldNameQualifier : 'this' '.';
@@ -548,7 +554,10 @@ defaultDefinition: 'default' '(' (literal | qualifiedName) ')';
 // rather than permitting void return types.
 // This is because in a mapping declaration, functions really only have purpose if
 // they return things.
-functionDeclaration: 'declare' 'function' functionName '(' operationParameterList? ')' ':' typeType;
+functionDeclaration: 'declare' (functionModifiers)? 'function' functionName '(' operationParameterList? ')' ':' typeType;
+
+functionModifiers: 'query';
+
 
 // Deprecated, use functionDeclaration
 readFunction: functionName '(' formalParameterList? ')';
@@ -569,7 +578,7 @@ formalParameterList
       //    | defaultDefinition
       //    | readFunction
       //    ;
-parameter: literal |  scalarAccessorExpression | fieldReferenceSelector | typeReferenceSelector;
+parameter: literal |  scalarAccessorExpression | fieldReferenceSelector | typeReferenceSelector | modelAttributeTypeReference;
 
 columnIndex : IntegerLiteral | StringLiteral;
 
@@ -737,7 +746,7 @@ viewDeclaration
             'with' 'query' '{' findBody (',' findBody)* '}'
     ;
 
-findBody: findDirective '{' findBodyQuery '}' ('as' typeBody)?;
+findBody: findDirective '{' findBodyQuery '}' ('as' anonymousTypeDefinition)?;
 findBodyQuery: joinTo;
 joinTo: typeType ('(' 'joinTo'  typeType ')')?;
 

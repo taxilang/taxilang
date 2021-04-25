@@ -1,7 +1,6 @@
 package lang.taxi.compiler
 
 import arrow.core.Either
-import arrow.core.extensions.either.monad.flatMap
 import arrow.core.flatMap
 import arrow.core.getOrElse
 import arrow.core.getOrHandle
@@ -13,7 +12,9 @@ import lang.taxi.CompilationException
 import lang.taxi.Namespace
 import lang.taxi.TaxiParser
 import lang.taxi.findNamespace
+import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
+import lang.taxi.functions.FunctionModifiers
 import lang.taxi.functions.FunctionExpressionAccessor
 import lang.taxi.source
 import lang.taxi.text
@@ -23,7 +24,6 @@ import lang.taxi.types.Annotation
 import lang.taxi.types.ColumnAccessor
 import lang.taxi.types.ConditionalAccessor
 import lang.taxi.types.DestructuredAccessor
-import lang.taxi.types.DiscoveryType
 import lang.taxi.types.Field
 import lang.taxi.types.FieldModifier
 import lang.taxi.types.FieldReferenceSelector
@@ -32,12 +32,10 @@ import lang.taxi.types.Formula
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.JsonPathAccessor
 import lang.taxi.types.LiteralAccessor
+import lang.taxi.types.ModelAttributeReferenceSelector
 import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
-import lang.taxi.types.ReadFunction
-import lang.taxi.types.ReadFunctionArgument
-import lang.taxi.types.ReadFunctionFieldAccessor
 import lang.taxi.types.Type
 import lang.taxi.types.TypeReferenceSelector
 import lang.taxi.types.XpathAccessor
@@ -47,6 +45,7 @@ import lang.taxi.utils.log
 import lang.taxi.utils.wrapErrorsInList
 import lang.taxi.value
 import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.RuleContext
 
 /**
  * Wrapper interface for "Things we need to compile fields from".
@@ -66,6 +65,7 @@ interface TypeWithFieldsContext {
    val conditionalTypeDeclarations: List<TaxiParser.ConditionalTypeStructureDeclarationContext>
    val calculatedMemberDeclarations: List<TaxiParser.CalculatedMemberDeclarationContext>
    val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
+   val parent: RuleContext?
 }
 
 class AnnotationTypeBodyContent(private val typeBody: TaxiParser.AnnotationTypeBodyContext?, val namespace: String) : TypeWithFieldsContext {
@@ -75,6 +75,8 @@ class AnnotationTypeBodyContent(private val typeBody: TaxiParser.AnnotationTypeB
    override val calculatedMemberDeclarations: List<TaxiParser.CalculatedMemberDeclarationContext> = emptyList()
    override val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
       get() = typeBody?.typeMemberDeclaration() ?: emptyList()
+   override val parent: RuleContext?
+      get() = typeBody?.parent
 }
 
 class TypeBodyContext(private val typeBody: TaxiParser.TypeBodyContext?, val namespace: String) : TypeWithFieldsContext {
@@ -86,6 +88,8 @@ class TypeBodyContext(private val typeBody: TaxiParser.TypeBodyContext?, val nam
       get() = typeBody?.calculatedMemberDeclaration() ?: emptyList()
    override val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
       get() = typeBody?.typeMemberDeclaration() ?: emptyList()
+   override val parent: RuleContext?
+      get() = typeBody?.parent
 
 }
 
@@ -180,11 +184,15 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
 
       val typeDoc = tokenProcessor.parseTypeDoc(member.typeDoc())
       val namespace = member.findNamespace()
+      // orderId: String
       val simpleType = member.fieldDeclaration().simpleFieldDeclaration()?.typeType()
+      // orderId: {  foo: String }
       val anonymousTypeDefinition = member.fieldDeclaration().anonymousTypeDefinition()
+      // orderId: Order::OrderId
+      val modelAttributeType = member.fieldDeclaration().modelAttributeTypeReference()
       return when {
          simpleType != null -> {
-            val fieldType = tokenProcessor.parseType(namespace, simpleType);
+            val fieldType = tokenProcessor.parseType(namespace, simpleType)
             fieldType.flatMap { type -> toField(member, namespace, type, typeDoc, fieldAnnotations) }
          }
 
@@ -193,6 +201,13 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
             val anonymousTypeName = "$typeName$${member.fieldDeclaration().Identifier().text.capitalize()}"
             val fieldType = tokenProcessor.parseAnonymousType(namespace, anonymousTypeBody, anonymousTypeName)
             fieldType.flatMap { type -> toField(member, namespace, type, typeDoc, fieldAnnotations) }
+         }
+
+         modelAttributeType != null -> {
+            this.parseModelAttributeTypeReference(namespace, modelAttributeType)
+               .flatMap {(memberSourceType, memberType) ->
+                  toField(member, namespace, memberType, typeDoc, fieldAnnotations, memberSourceType)
+               }
          }
 
          else -> {
@@ -218,7 +233,6 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
             }
          }
       }
-
    }
 
 
@@ -226,42 +240,66 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
                        namespace: Namespace,
                        type: Type,
                        typeDoc: String?,
-                       fieldAnnotations: List<Annotation>): Either<List<CompilationError>, Field> {
-      return if (member.fieldDeclaration().anonymousTypeDefinition() != null) {
-         val accessor = compileAccessor(member.fieldDeclaration().anonymousTypeDefinition().accessor(), type)
-            .getOrHandle {
-               errors.addAll(it)
-               null
-            }
-         Field(
-            name = TokenProcessor.unescape(member.fieldDeclaration().Identifier().text),
-            type = type,
-            nullable = false,
-            modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
-            annotations = fieldAnnotations,
-            constraints = emptyList(),
-            accessor = accessor,
-            typeDoc = typeDoc,
-            compilationUnit = member.fieldDeclaration().toCompilationUnit()
-         ).right()
-      } else {
-         val accessor = compileAccessor(member.fieldDeclaration().simpleFieldDeclaration().accessor(), type)
-            .getOrHandle {
-               errors.addAll(it)
-               null
-            }
-         val simpleType = member.fieldDeclaration().simpleFieldDeclaration().typeType()
-         tokenProcessor.mapConstraints(simpleType, type, namespace).map { constraints ->
+                       fieldAnnotations: List<Annotation>,
+                       memberSource: QualifiedName? = null): Either<List<CompilationError>, Field> {
+      return when {
+         // orderId:  Order::OrderSentId
+         memberSource != null -> {
             Field(
                name = TokenProcessor.unescape(member.fieldDeclaration().Identifier().text),
                type = type,
-               nullable = simpleType.optionalType() != null,
+               nullable = false,
+               modifiers = emptyList(),
+               annotations = fieldAnnotations,
+               constraints = emptyList(),
+               accessor = null,
+               typeDoc = typeDoc,
+               memberSource = memberSource,
+               compilationUnit = member.fieldDeclaration().toCompilationUnit()).right()
+         }
+
+         // trader: { traderId: TraderId, traderName: TraderName }
+         member.fieldDeclaration().anonymousTypeDefinition() != null -> {
+            val accessor = compileAccessor(member.fieldDeclaration().anonymousTypeDefinition().accessor(), type)
+               .getOrHandle {
+                  errors.addAll(it)
+                  null
+               }
+            Field(
+               name = TokenProcessor.unescape(member.fieldDeclaration().Identifier().text),
+               type = type,
+               nullable = false,
                modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
                annotations = fieldAnnotations,
-               constraints = constraints,
+               constraints = emptyList(),
                accessor = accessor,
                typeDoc = typeDoc,
-            compilationUnit = member.fieldDeclaration().toCompilationUnit())
+               compilationUnit = member.fieldDeclaration().toCompilationUnit(),
+               memberSource = memberSource
+            ).right()
+
+         }
+
+         // orderId: OrderId
+         else -> {
+            val accessor = compileAccessor(member.fieldDeclaration().simpleFieldDeclaration().accessor(), type)
+               .getOrHandle {
+                  errors.addAll(it)
+                  null
+               }
+            val simpleType = member.fieldDeclaration().simpleFieldDeclaration().typeType()
+            tokenProcessor.mapConstraints(simpleType, type, namespace).map { constraints ->
+               Field(
+                  name = TokenProcessor.unescape(member.fieldDeclaration().Identifier().text),
+                  type = type,
+                  nullable = simpleType.optionalType() != null,
+                  modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
+                  annotations = fieldAnnotations,
+                  constraints = constraints,
+                  accessor = accessor,
+                  typeDoc = typeDoc,
+                  compilationUnit = member.fieldDeclaration().toCompilationUnit())
+            }
          }
       }
    }
@@ -374,12 +412,12 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
             buildReadFunctionAccessor(functionContext, targetType)
          }
          expression.readExpression() != null -> buildReadFunctionExpressionAccessor(expression.readExpression(), targetType)
-         expression.byFieldSourceExpression() != null -> buildReadFieldAccessor(expression.byFieldSourceExpression(), targetType)
+         expression.byFieldSourceExpression() != null -> buildReadFieldAccessor(expression.byFieldSourceExpression())
          else -> error("Unhandled type of accessor expression at ${expression.source().content}")
       }
    }
 
-   private fun buildReadFieldAccessor(byFieldSourceExpression: TaxiParser.ByFieldSourceExpressionContext, targetType: Type): Either<List<CompilationError>, Accessor> {
+   private fun buildReadFieldAccessor(byFieldSourceExpression: TaxiParser.ByFieldSourceExpressionContext): Either<List<CompilationError>, Accessor> {
       //as {
       //      traderEmail: UserEmail by (this.traderId)
       //}
@@ -437,14 +475,14 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
          if (!allowedFunctionReturnTypes.contains(functionBaseReturnType)) {
             throw CompilationException(CompilationError(
                readExpressionContext.start,
-               "function needs to return one of these types => ${allowedFunctionReturnTypes.map { it.qualifiedName }.joinToString()}",
+               "function needs to return one of these types => ${allowedFunctionReturnTypes.joinToString { it.qualifiedName }}",
                readExpressionContext.source().sourceName))
          }
          val arithmeticOperator = FormulaOperator.forSymbol(readExpressionContext.arithmaticOperator().text)
          if (!allowedOperationTypes[functionBaseReturnType]!!.contains(arithmeticOperator)) {
             throw CompilationException(CompilationError(
                readExpressionContext.start,
-               "only the following operations are allowed => ${allowedOperationTypes[functionBaseReturnType]!!.map { it.symbol }.joinToString()}",
+               "only the following operations are allowed => ${allowedOperationTypes[functionBaseReturnType]!!.joinToString { it.symbol }}",
                readExpressionContext.source().sourceName))
          }
          val operand = readExpressionContext.literal().value()
@@ -465,37 +503,64 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
 
    }
 
-   private fun buildReadFunctionAccessor(functionContext: TaxiParser.ReadFunctionContext, targetType: Type): Either<List<CompilationError>, FunctionAccessor> {
+   internal fun buildReadFunctionAccessor(functionContext: TaxiParser.ReadFunctionContext, targetType: Type): Either<List<CompilationError>, FunctionAccessor> {
       val namespace = functionContext.findNamespace()
       return tokenProcessor.attemptToLookupTypeByName(namespace, functionContext.functionName().qualifiedName().Identifier().text(), functionContext, symbolKind = SymbolKind.FUNCTION)
          .wrapErrorsInList()
          .flatMap { qualifiedName ->
-
-            tokenProcessor.resolveFunction(qualifiedName, functionContext).map { function ->
+            tokenProcessor.resolveFunction(qualifiedName, functionContext).flatMap { function ->
                require(function.isDefined) { "Function should have already been compiled before evaluation in a read function expression" }
                typeChecker.assertIsAssignable(function.returnType!!, targetType, functionContext)?.let { compilationError ->
                   errors.add(compilationError)
                }
+
                val parameters = functionContext.formalParameterList().parameter().mapIndexed { parameterIndex, parameterContext ->
                   val parameterType = function.getParameterType(parameterIndex)
+                  if (parameterContext.modelAttributeTypeReference() == null && tokenProcessor.isInViewContext(this.typeBody.parent)) {
+                    return@flatMap  CompilationError(
+                        parameterContext.start,
+                        "Only Model Attribute References are  allowed within Views"
+                     ).asList().left()
+                  }
                   val parameterAccessor = when {
                      parameterContext.literal() != null -> LiteralAccessor(parameterContext.literal().value()).right()
                      parameterContext.scalarAccessorExpression() != null -> compileScalarAccessor(parameterContext.scalarAccessorExpression(), parameterType)
 //                  parameterContext.readFunction() !s= null -> buildReadFunctionAccessor(parameterContext.readFunction()).right()
 //                  parameterContext.columnDefinition() != null -> buildColumnAccessor(parameterContext.columnDefinition()).right()
-                     parameterContext.fieldReferenceSelector() != null -> compileFieldReferenceAccessor(parameterContext).right()
+                     parameterContext.fieldReferenceSelector() != null -> compileFieldReferenceAccessor(function, parameterContext).right()
                      parameterContext.typeReferenceSelector() != null -> compileTypeReferenceAccessor(namespace, parameterContext)
+                     parameterContext.modelAttributeTypeReference() != null -> {
+                        if (tokenProcessor.isInViewContext(this.typeBody.parent)) {
+                           this.parseModelAttributeTypeReference(namespace, parameterContext.modelAttributeTypeReference())
+                              .flatMap {(memberSourceType, memberType) ->
+                                 ModelAttributeReferenceSelector(memberSourceType, memberType).right()
+                              }
+                        } else {
+                           CompilationError(
+                              parameterContext.start,
+                              "Model Attribute References are only allowed within Views"
+                           ).asList().left()
+
+                        }
+                     }
                      else -> TODO("readFunction parameter accessor not defined for code ${functionContext.source().content}")
+
                   }.flatMap { parameterAccessor ->
                      typeChecker.ifAssignable(parameterAccessor.returnType, parameterType.basePrimitive
                         ?: PrimitiveType.ANY, parameterContext) {
                         parameterAccessor
                      }.wrapErrorsInList()
                   }
-
                   parameterAccessor
                }.reportAndRemoveErrorList(errors)
-               FunctionAccessor(function, parameters)
+               if (function.modifiers.contains(FunctionModifiers.Query) && !tokenProcessor.isInViewContext(functionContext)) {
+                  CompilationError(
+                     functionContext.start,
+                     "a query function can only referenced from view definitions!"
+                  ).asList().left()
+               } else {
+                  FunctionAccessor(function, parameters).right()
+               }
             }
          }
    }
@@ -506,45 +571,29 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
       }
    }
 
-   private fun compileFieldReferenceAccessor(parameterContext: TaxiParser.ParameterContext): FieldReferenceSelector {
+   private fun compileFieldReferenceAccessor(function: Function , parameterContext: TaxiParser.ParameterContext): FieldReferenceSelector {
       val fieldName = parameterContext.fieldReferenceSelector().Identifier().text
-      val fieldType = provideField(fieldName, parameterContext.fieldReferenceSelector())
-         .collectErrors(errors)
-         .map { it.type }
-         .getOrElse { PrimitiveType.ANY }
-      return FieldReferenceSelector(fieldName, fieldType)
-   }
-
-   private fun buildColumnAccessor(columnDefinition: TaxiParser.ColumnDefinitionContext, targetType: Type): Accessor {
-      val columnIndex = columnDefinition.columnIndex()
-      return when {
-         columnIndex.IntegerLiteral() != null -> ColumnAccessor(columnIndex.IntegerLiteral().text.toInt(), defaultValue = null, returnType = targetType)
-         columnIndex.StringLiteral() != null -> ColumnAccessor(columnIndex.StringLiteral().text, defaultValue = null, returnType = targetType)
-         else -> error("Unhandled buildColumnAccessor() scenario")
-      }
-   }
-
-   // This is to provide backwards compatability to hard-coded functions.
-   // We need to move to declared functions, with a form of stdlib as well
-   private fun processLegacyReadFunction(readFunction: ReadFunction, expression: TaxiParser.ReadFunctionContext): ReadFunctionFieldAccessor {
-      val parameters = expression.formalParameterList().parameter().map { parameterContext ->
-         when {
-            parameterContext.literal() != null -> ReadFunctionArgument(value = parameterContext.literal().value(), columnAccessor = null)
-//            parameterContext.scalarAccessorExpression() !=
-//            parameterContext.columnDefinition() != null -> ReadFunctionArgument(value = null,
-//               columnAccessor = ColumnAccessor(index =
-//               parameterContext.columnDefinition().columnIndex().StringLiteral()?.text
-//                  ?: parameterContext.columnDefinition().columnIndex().IntegerLiteral().text.toInt(), defaultValue = null)
-//            )
-            else -> throw CompilationException(CompilationError(expression.start, "invalid parameter", expression.source().normalizedSourceName))
+      val fieldType = if (anonymousTypeResolutionContext.concreteProjectionTypeContext != null || anonymousTypeResolutionContext.typesToDiscover.isNotEmpty()) {
+         val errorsOrFieldType = if (anonymousTypeResolutionContext.concreteProjectionTypeContext != null) {
+            tokenProcessor.typeOrError(parameterContext.findNamespace(), anonymousTypeResolutionContext.concreteProjectionTypeContext)
+         } else {
+            tokenProcessor.getType(parameterContext.findNamespace(),
+            anonymousTypeResolutionContext.typesToDiscover.first().type.firstTypeParameterOrSelf, parameterContext)
          }
+         errorsOrFieldType.collectErrors(errors).map { it }.getOrElse { PrimitiveType.ANY }
+      } else {
+         provideField(fieldName, parameterContext.fieldReferenceSelector())
+            .collectErrors(errors)
+            .map { it.type }
+            .getOrElse { PrimitiveType.ANY }
       }
-      return ReadFunctionFieldAccessor(readFunction = readFunction, arguments = parameters)
-
+      return FieldReferenceSelector(fieldName, fieldType)
    }
 
    fun typeResolver(namespace: Namespace) = tokenProcessor.typeResolver(namespace)
    fun lookupTypeByName(text: String, contextRule: ParserRuleContext) = tokenProcessor.lookupTypeByName(text, contextRule)
    fun lookupTypeByName(typeContext: TaxiParser.TypeTypeContext) = tokenProcessor.lookupTypeByName(typeContext)
    fun parseType(namespace: Namespace, typeType: TaxiParser.TypeTypeContext) = tokenProcessor.parseType(namespace, typeType)
+   fun parseModelAttributeTypeReference(namespace: Namespace, modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext) =
+      tokenProcessor.parseModelAttributeTypeReference(namespace, modelAttributeReferenceCtx)
 }
