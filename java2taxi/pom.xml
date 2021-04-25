@@ -3,12 +3,12 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>lang.taxi</groupId>
-      <version>0.15.0</version>
+      <version>0.15.1-SNAPSHOT</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
    <artifactId>java2taxi</artifactId>
-   <version>0.15.0</version>
+   <version>0.15.1-SNAPSHOT</version>
 
    <properties>
       <spring.cloud.version>Finchley.SR1</spring.cloud.version>
@@ -33,38 +33,38 @@
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>taxi-annotations</artifactId>
-         <version>0.15.0</version>
+         <version>0.15.1-SNAPSHOT</version>
       </dependency>
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>compiler</artifactId>
-         <version>0.15.0</version>
+         <version>0.15.1-SNAPSHOT</version>
       </dependency>
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>core-types</artifactId>
-         <version>0.15.0</version>
+         <version>0.15.1-SNAPSHOT</version>
       </dependency>
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>taxi-writer</artifactId>
-         <version>0.15.0</version>
+         <version>0.15.1-SNAPSHOT</version>
       </dependency>
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>taxi-stdlib-annotations</artifactId>
-         <version>0.15.0</version>
+         <version>0.15.1-SNAPSHOT</version>
       </dependency>
 
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>taxi-jvm-common</artifactId>
-         <version>0.15.0</version>
+         <version>0.15.1-SNAPSHOT</version>
       </dependency>
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>test-utils</artifactId>
-         <version>0.15.0</version>
+         <version>0.15.1-SNAPSHOT</version>
          <scope>test</scope>
       </dependency>
       <!-- For SpringMvc to feign support.  Note - once this is split out, spring-webmvc is still required as test scope-->
@@ -88,7 +88,7 @@
       <dependency>
          <groupId>lang.taxi</groupId>
          <artifactId>taxi-annotation-processor</artifactId>
-         <version>0.15.0</version>
+         <version>0.15.1-SNAPSHOT</version>
          <!--<scope>test</scope>-->
       </dependency>
 
