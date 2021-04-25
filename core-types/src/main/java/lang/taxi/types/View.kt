@@ -20,10 +20,8 @@ data class JoinInfo(val mainField: Field, val joinField: Field)
 data class ViewBodyDefinition(
    val bodyType: Type,
    val joinType: Type? = null,
-   val viewBodyTypeDefinition: ViewBodyTypeDefinition? = null,
+   val viewBodyType: Type? = null,
    val joinInfo: JoinInfo? = null)
-data class ViewBodyTypeDefinition(val fields: List<ViewBodyFieldDefinition> = emptyList())
-data class ViewBodyFieldDefinition(val sourceType: Type, val fieldType: Type, val fieldName: String, val accessor: ConditionalAccessor? = null)
 
 /*
   Representation of a view:

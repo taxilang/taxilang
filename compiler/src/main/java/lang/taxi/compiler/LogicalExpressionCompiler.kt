@@ -19,35 +19,21 @@ import lang.taxi.types.LogicalVariable
 import lang.taxi.types.NullAssignment
 import lang.taxi.types.OrExpression
 import lang.taxi.types.ValueAssignment
-import lang.taxi.types.ViewFindFieldReferenceAssignment
-import lang.taxi.types.ViewFindFieldReferenceEntity
+import lang.taxi.types.ModelAttributeFieldReferenceEntity
 import lang.taxi.value
 import lang.taxi.valueOrNull
-import org.antlr.v4.runtime.tree.TerminalNode
 
 class LogicalExpressionCompiler(private val tokenProcessor: TokenProcessor) {
-   fun processLogicalExpressionContext(logicalExpressionCtx: TaxiParser.Logical_exprContext, forViewField: Boolean = false): Either<CompilationError, LogicalExpression> {
+   fun processLogicalExpressionContext(logicalExpressionCtx: TaxiParser.Logical_exprContext): Either<CompilationError, LogicalExpression> {
       return when (logicalExpressionCtx) {
-         is TaxiParser.ComparisonExpressionContext -> processComparisonExpressionContext(logicalExpressionCtx.comparison_expr(), forViewField)
-         is TaxiParser.LogicalExpressionAndContext -> processLogicalAndContext(logicalExpressionCtx, forViewField)
-         is TaxiParser.LogicalExpressionOrContext -> processLogicalOrContext(logicalExpressionCtx, forViewField)
+         is TaxiParser.ComparisonExpressionContext -> processComparisonExpressionContext(logicalExpressionCtx.comparison_expr())
+         is TaxiParser.LogicalExpressionAndContext -> processLogicalAndContext(logicalExpressionCtx)
+         is TaxiParser.LogicalExpressionOrContext -> processLogicalOrContext(logicalExpressionCtx)
          is TaxiParser.LogicalEntityContext -> processLogicalEntityContext(logicalExpressionCtx)
          else -> CompilationError(logicalExpressionCtx.start, "invalid logical expression").left()
       }
    }
 
-   fun toViewFindFieldReferenceAssignment(identifiers: List<TerminalNode>, ctx: TaxiParser.CaseFieldReferenceAssignmentContext): Either<List<CompilationError>, ViewFindFieldReferenceAssignment> {
-      if (identifiers.size != 2) {
-         return listOf(CompilationError(ctx.start, "Should be SourceType.FieldType")).left()
-      }
-     return this.tokenProcessor.getType(ctx.findNamespace(), identifiers.first().text, ctx)
-         .flatMap { sourceType ->
-            this.tokenProcessor.getType(ctx.findNamespace(), identifiers[1].text, ctx)
-               .flatMap { fieldType ->
-                  ViewFindFieldReferenceAssignment(fieldType, sourceType).right()
-               }.mapLeft { it}
-         }.mapLeft { it }
-   }
 
    fun compileLiteralValueAssignment(literal: TaxiParser.LiteralContext): Either<List<CompilationError>, ValueAssignment> {
       return if (literal.valueOrNull() == null) {
@@ -58,8 +44,7 @@ class LogicalExpressionCompiler(private val tokenProcessor: TokenProcessor) {
 
    }
 
-   private fun processComparisonExpressionContext(comparisonExpressionContext: TaxiParser.Comparison_exprContext,
-                                                  forViewField: Boolean = false): Either<CompilationError, LogicalExpression> {
+   private fun processComparisonExpressionContext(comparisonExpressionContext: TaxiParser.Comparison_exprContext): Either<CompilationError, LogicalExpression> {
       val comparisonExpressionContextWithOperator = comparisonExpressionContext as TaxiParser.ComparisonExpressionWithOperatorContext
       val retVal = comparisonExpressionContextWithOperator.comparison_operand().map { comparisonOperandcontext ->
          val arithmeticExpression = comparisonOperandcontext.arithmetic_expr() as TaxiParser.ArithmeticExpressionNumericEntityContext
@@ -76,21 +61,29 @@ class LogicalExpressionCompiler(private val tokenProcessor: TokenProcessor) {
 
             }
             is TaxiParser.NumericVariableContext -> {
-               if (forViewField) {
-                  val identifiers = numericEntity.propertyToParameterConstraintLhs().qualifiedName().Identifier()
-                  if (identifiers.size != 2) {
-                     return CompilationError(comparisonExpressionContext.start, "Should be SourceType.FieldType").left()
-                  }
+               // Case for:
+               // this.fieldName =
+               val qualifiedName = numericEntity.propertyToParameterConstraintLhs().qualifiedName()
+               // Case for:
+               // Order::OrderSentId =
+               val modelAttributeTypeReference = numericEntity.propertyToParameterConstraintLhs().modelAttributeTypeReference()
 
-                  this.tokenProcessor.getType(comparisonExpressionContext.findNamespace(), identifiers.first().text, comparisonExpressionContext)
-                     .flatMap { sourceType ->
-                        this.tokenProcessor.getType(comparisonExpressionContext.findNamespace(), identifiers[1].text, comparisonExpressionContext)
-                           .flatMap { fieldType ->
-                              ViewFindFieldReferenceEntity(sourceType, fieldType).right()
-                           }.mapLeft { it }
-                     }.mapLeft { it }
-               } else {
-                  FieldReferenceEntity(numericEntity.propertyToParameterConstraintLhs().qualifiedName().text).right()
+               when {
+                  qualifiedName != null -> FieldReferenceEntity(numericEntity.propertyToParameterConstraintLhs().qualifiedName().text).right()
+                  modelAttributeTypeReference != null -> {
+                     if (!this.tokenProcessor.isInViewContext(comparisonExpressionContext)) {
+                        Either.left(CompilationError(comparisonExpressionContext.start, "SourceType::FieldType notation is only allowed in view definitions"))
+                     } else {
+                        this
+                           .tokenProcessor
+                           .parseModelAttributeTypeReference(comparisonExpressionContext.findNamespace(), modelAttributeTypeReference)
+                           .flatMap { (memberSourceType, memberType) ->  ModelAttributeFieldReferenceEntity(memberSourceType, memberType)
+                              .right()
+                           }
+                     }
+
+                  }
+                  else -> Either.left(CompilationError(comparisonExpressionContext.start, "invalid numeric entity"))
                }
             }
             else -> Either.left(CompilationError(comparisonExpressionContext.start,
@@ -108,8 +101,17 @@ class LogicalExpressionCompiler(private val tokenProcessor: TokenProcessor) {
                   it.b
                }
                is Either.Left -> {
-                  return Either.left(CompilationError(comparisonExpressionContext.start,
-                     "invalid numeric entity"))
+                  // TODO sort out this mess:
+                  val left = it.a
+                  return if (left is CompilationError) {
+                     left.left()
+                  } else if (left is List<*> && left.size >= 1 && left.first() is CompilationError) {
+                     (left.first() as CompilationError).left()
+                  } else {
+                     Either.left(CompilationError(comparisonExpressionContext.start,
+                        "invalid numeric entity"))
+                  }
+
                }
             }
          }
@@ -117,9 +119,9 @@ class LogicalExpressionCompiler(private val tokenProcessor: TokenProcessor) {
       }
    }
 
-   private fun processLogicalAndContext(logicalExpressionAndCtx: TaxiParser.LogicalExpressionAndContext, forViewField: Boolean = false): Either<CompilationError, LogicalExpression> {
+   private fun processLogicalAndContext(logicalExpressionAndCtx: TaxiParser.LogicalExpressionAndContext): Either<CompilationError, LogicalExpression> {
       val logicalExpr = logicalExpressionAndCtx.logical_expr()
-      val retVal = logicalExpr.map { processLogicalExpressionContext(it, forViewField) }
+      val retVal = logicalExpr.map { processLogicalExpressionContext(it) }
       if (retVal.size != 2) {
          return Either.left(CompilationError(logicalExpressionAndCtx.start, "invalid and expression"))
       }
@@ -137,9 +139,9 @@ class LogicalExpressionCompiler(private val tokenProcessor: TokenProcessor) {
       return AndExpression(mapped[0], mapped[1]).right()
    }
 
-   private fun processLogicalOrContext(logicalExpressionCtx: TaxiParser.LogicalExpressionOrContext, forViewField: Boolean = false): Either<CompilationError, LogicalExpression> {
+   private fun processLogicalOrContext(logicalExpressionCtx: TaxiParser.LogicalExpressionOrContext): Either<CompilationError, LogicalExpression> {
       val logicalExpr = logicalExpressionCtx.logical_expr()
-      val retVal = logicalExpr.map { processLogicalExpressionContext(it, forViewField) }
+      val retVal = logicalExpr.map { processLogicalExpressionContext(it) }
       if (retVal.size != 2) {
          return Either.left(CompilationError(logicalExpressionCtx.start, "invalid and expression"))
       }

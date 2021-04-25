@@ -31,6 +31,7 @@ import lang.taxi.services.operations.constraints.ConstraintValidator
 import lang.taxi.services.operations.constraints.OperationConstraintConverter
 import lang.taxi.toCompilationError
 import lang.taxi.functions.Function
+import lang.taxi.functions.FunctionModifiers
 import lang.taxi.functions.FunctionDefinition
 import lang.taxi.query.TaxiQlQuery
 import lang.taxi.linter.Linter
@@ -40,17 +41,18 @@ import lang.taxi.services.QueryOperationCapability
 import lang.taxi.services.SimpleQueryCapability
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.View.Companion.JoinAnnotationName
 import lang.taxi.utils.errorOrNull
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.log
 import lang.taxi.utils.wrapErrorsInList
 import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.nio.charset.Charset
 import java.security.SecureRandom
 import java.util.Base64
+import java.util.EnumSet
 
 class TokenProcessor(
    val tokens: Tokens,
@@ -180,6 +182,19 @@ class TokenProcessor(
       return declaredTypeNames + inlineTypeAliases
    }
 
+   internal fun isInViewContext(ruleContext: RuleContext?): Boolean {
+      if (ruleContext == null) {
+         return false
+      }
+
+      if (ruleContext is TaxiParser.ViewDeclarationContext) {
+         return true
+      }
+
+      return isInViewContext(ruleContext.parent)
+   }
+
+   internal fun fieldCompiler(typeName: String, namespace: String) = FieldCompiler(this, TypeBodyContext(null, namespace), typeName, this.errors)
 
    private fun lookupTypeByName(namespace: Namespace, type: TaxiParser.TypeTypeContext): String {
       return if (PrimitiveType.isPrimitiveType(type.text)) {
@@ -305,7 +320,7 @@ class TokenProcessor(
                   .filter { (_, parserContext) -> registerErrorsForInvalidSynonyms(enum, enumValueName, parserContext) }
                   .filter { (synonymEnumValue, _) ->
                      synonymEnumValue != enumValueQualifiedName &&// Don't allow synonyms to ourselves
-                        enum.value(enumValueName).synonyms.none { it == synonymEnumValue } // Ignore synonyms that are already present
+                        enum.ofName(enumValueName).synonyms.none { it == synonymEnumValue } // Ignore synonyms that are already present
                   }
                   .map { (synonym, context) ->
                      EnumValueExtension(
@@ -551,7 +566,7 @@ class TokenProcessor(
 
       tokensCurrentlyCompiling.add(tokenName)
       try {
-         val type = when (tokenRule) {
+          when (tokenRule) {
             is TaxiParser.TypeDeclarationContext -> compileType(namespace, tokenName, tokenRule)
             is TaxiParser.AnnotationTypeDeclarationContext -> compileAnnotationType(tokenName, namespace, tokenRule)
             is TaxiParser.EnumDeclarationContext -> compileEnum(namespace, tokenName, tokenRule).collectErrors(errors)
@@ -846,11 +861,9 @@ class TokenProcessor(
             .compileAllFields()
       }
 
-      val fieldsFromConcreteProjectedToType = anonymousTypeResolutionContext?.concreteProjectionTypeContext?.let {
+      val fieldsFromConcreteProjectedToType = anonymousTypeResolutionContext.concreteProjectionTypeContext?.let {
          this.parseType(namespace, it).map { type ->
-            (type as ObjectType?)?.let { objectType ->
-               objectType.fields
-            }
+            (type as ObjectType?)?.fields
          }
       }
 
@@ -860,9 +873,11 @@ class TokenProcessor(
          fields
       }
 
+
       this.typeSystem.register(
          ObjectType(
-            typeName, ObjectTypeDefinition(
+            QualifiedName(namespace, typeName).fullyQualifiedName,
+            ObjectTypeDefinition(
                fields = anonymousTypeFields.toSet(),
                annotations = annotations.toSet(),
                modifiers = listOf(),
@@ -1089,6 +1104,25 @@ class TokenProcessor(
       }
    }
 
+  internal fun parseModelAttributeTypeReference(namespace: Namespace, modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext):
+      Either<List<CompilationError>, Pair<QualifiedName, Type>> {
+      val memberSourceTypeType = modelAttributeReferenceCtx.typeType().first()
+      val memberTypeType = modelAttributeReferenceCtx.typeType()[1]
+     val sourceTypeName = try {
+        QualifiedName.from(lookupTypeByName(memberSourceTypeType)).right()
+     } catch (e: Exception) {
+        CompilationError(
+           modelAttributeReferenceCtx.start,
+           "Only Model AttributeReference expressions (SourceType::FieldType) are allowed for views"
+        ).asList().left()
+     }
+      return sourceTypeName.flatMap { memberSourceType ->
+         this.parseType(namespace, memberTypeType).flatMap { memberType ->
+            Pair(memberSourceType, memberType).right()
+         }
+      }
+   }
+
    fun parseAnonymousType(
       namespace: String,
       anonymousTypeCtx: TaxiParser.TypeBodyContext,
@@ -1144,7 +1178,7 @@ class TokenProcessor(
       formatOffsetPair: FormatsAndZoneoffset,
       typeType: TaxiParser.TypeTypeContext
    ): Either<List<CompilationError>, Type> {
-      val (format, offset) = formatOffsetPair;
+      val (format, offset) = formatOffsetPair
       if (offset != null && type.basePrimitive != PrimitiveType.INSTANT) {
          return CompilationError(typeType.start, "@offset is only applicable to Instant based types").asList().left()
       }
@@ -1647,21 +1681,33 @@ class TokenProcessor(
          return Either.right(typeSystem.getFunction(qualifiedName))
       }
       val (namespace, functionToken) = namespaceAndParserContext
-      return parseType(namespace, functionToken.typeType()).map { returnType ->
+      return parseType(namespace, functionToken.typeType()).flatMap { returnType ->
          val parameters = functionToken.operationParameterList()?.operationParameter()?.map { parameterDefinition ->
             parseParameter(namespace, parameterDefinition)
          }?.reportAndRemoveErrorList(errors) ?: emptyList()
 
+         if (functionToken.functionModifiers() != null && functionToken.functionModifiers().text != "query") {
+            return@flatMap CompilationError(
+               functionToken.start,
+               "Only query function modifier is allowed!"
+            ).asList().left()
+         }
+
+         val functionAttributes = functionToken.functionModifiers()?.let {
+            EnumSet.of(FunctionModifiers.Query)
+         }
+            ?: EnumSet.noneOf(FunctionModifiers::class.java)
+
          val function = Function(
             qualifiedName,
             FunctionDefinition(
-               parameters, returnType, functionToken.toCompilationUnit()
+               parameters, returnType, functionAttributes, functionToken.toCompilationUnit()
             )
          )
          this.functions.add(function)
          this.typeSystem.register(function)
 
-         function
+         function.right()
       }
    }
 
@@ -2009,3 +2055,4 @@ object AnonymousTypeNameGenerator {
       return "AnonymousProjectedType${encoder.encodeToString(buffer)}"
    }
 }
+

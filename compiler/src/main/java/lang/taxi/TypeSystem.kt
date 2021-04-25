@@ -129,7 +129,7 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       }
 
       if (isImported(qualifiedName, symbolKind)) {
-         return Either.right(getImportedType(qualifiedName))
+         return Either.right(getImportedToken(qualifiedName))
       }
 
 
@@ -164,8 +164,12 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
          return PrimitiveType.fromDeclaration(qualifiedName)
       }
 
+
       if (isImported(qualifiedName, symbolKind)) {
-         return getImportedType(qualifiedName)
+         // TODO Handle case where SymbolKind is an annotation
+         return if (symbolKind == SymbolKind.FUNCTION) {
+            getImportedFunction(qualifiedName)
+         } else { return getImportedType(qualifiedName) }
       }
 
       if (this.compiledTokens.containsKey(qualifiedName) && symbolKind.matches(this.compiledTokens.getValue(qualifiedName))) {
