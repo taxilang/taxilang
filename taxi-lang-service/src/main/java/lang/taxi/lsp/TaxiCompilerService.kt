@@ -1,6 +1,7 @@
 package lang.taxi.lsp
 
 import com.google.common.base.Stopwatch
+import lang.taxi.CompilationError
 import lang.taxi.CompilationException
 import lang.taxi.Compiler
 import lang.taxi.CompilerConfig
@@ -13,10 +14,16 @@ import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.eclipse.lsp4j.TextDocumentIdentifier
 import org.eclipse.lsp4j.services.LanguageClient
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Sinks
 import java.io.File
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.net.URI
+import java.time.Duration
 import java.util.concurrent.atomic.AtomicReference
 
+private object CompilationTrigger {}
 class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig()) {
     private var taxiProjectConfig: TaxiPackageProject? = null
     private lateinit var workspaceSourceService: WorkspaceSourceService
@@ -27,6 +34,39 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
     val lastCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
     private val tokenCache: CompilerTokenCache = CompilerTokenCache()
     val typeProvider = TypeProvider(lastSuccessfulCompilationResult, lastCompilationResult)
+
+    private val compileTriggerSink = Sinks.many().unicast().onBackpressureBuffer<CompilationTrigger>()
+    val compilationResults: Flux<CompilationResult>
+
+
+    init {
+        compilationResults = compileTriggerSink.asFlux()
+            .bufferTimeout(50, Duration.ofMillis(500))
+            .map { _ ->
+                try {
+                    compile()
+                } catch (e: Exception) {
+                    val writer = StringWriter()
+                    val printWriter = PrintWriter(writer)
+                    e.printStackTrace(printWriter)
+                    val errorMessage =
+                        "An exception was thrown when compiling.  This is a bug in the compiler, and should be reported. \n${e.message} \n$writer"
+                    CompilationResult(
+                        Compiler(emptyList()), document = null, errors = listOf(
+                            CompilationError(
+                                0,
+                                0,
+                                errorMessage
+                            )
+                        ), countOfSources = 0, duration = Duration.ZERO
+                    )
+                }
+            }
+    }
+
+    fun triggerAsyncCompilation(): Sinks.EmitResult {
+        return this.compileTriggerSink.tryEmitNext(CompilationTrigger)
+    }
 
     val sourceCount: Int
         get() {
@@ -63,6 +103,17 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
             }
     }
 
+    fun reloadSourcesAndTriggerCompilation(): Sinks.EmitResult {
+        reloadSourcesWithoutCompiling()
+        return this.triggerAsyncCompilation()
+    }
+
+    /**
+     * Compiles immediately
+     * Note that the results are not emitted on the flux, meaning that they
+     * are not pushed out to the listening LanguageServerClient
+     */
+    @Deprecated("Prefer reloadSourcesAndTriggerCompilation")
     fun reloadSourcesAndCompile(): CompilationResult {
         reloadSourcesWithoutCompiling()
         return this.compile()
@@ -82,13 +133,7 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
     }
 
     fun compile(): CompilationResult {
-        val charStreams = this.charStreams.values.toList()
-        val configWithTaxiProjectSettings = taxiProjectConfig?.let { taxiConf ->
-            compilerConfig.copy(
-                linterRuleConfiguration = taxiConf.linter.toLinterRules()
-            )
-        } ?: this.compilerConfig
-        val compiler = Compiler(charStreams, tokenCache = tokenCache, config = configWithTaxiProjectSettings)
+        val (charStreams, compiler) = buildCompiler()
         val stopwatch = Stopwatch.createStarted()
         val compilationResult = try {
 
@@ -103,6 +148,17 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
             lastSuccessfulCompilationResult.set(compilationResult)
         }
         return compilationResult
+    }
+
+    private fun buildCompiler(): Pair<List<CharStream>, Compiler> {
+        val charStreams = this.charStreams.values.toList()
+        val configWithTaxiProjectSettings = taxiProjectConfig?.let { taxiConf ->
+            compilerConfig.copy(
+                linterRuleConfiguration = taxiConf.linter.toLinterRules()
+            )
+        } ?: this.compilerConfig
+        val compiler = Compiler(charStreams, tokenCache = tokenCache, config = configWithTaxiProjectSettings)
+        return Pair(charStreams, compiler)
     }
 
     fun getOrComputeLastCompilationResult(): CompilationResult {

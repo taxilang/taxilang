@@ -1,9 +1,14 @@
 package lang.taxi.lsp
 
 import lang.taxi.lsp.gotoDefinition.toLocation
-import org.eclipse.lsp4j.*
-import org.eclipse.lsp4j.services.LanguageClient
-import org.eclipse.lsp4j.services.LanguageClientAware
+import org.eclipse.lsp4j.DidChangeConfigurationParams
+import org.eclipse.lsp4j.DidChangeWatchedFilesParams
+import org.eclipse.lsp4j.DidChangeWorkspaceFoldersParams
+import org.eclipse.lsp4j.FileChangeType
+import org.eclipse.lsp4j.InitializeParams
+import org.eclipse.lsp4j.SymbolInformation
+import org.eclipse.lsp4j.SymbolKind
+import org.eclipse.lsp4j.WorkspaceSymbolParams
 import org.eclipse.lsp4j.services.WorkspaceService
 import java.util.concurrent.CompletableFuture
 
@@ -28,6 +33,13 @@ class TaxiWorkspaceService(private val compilerService: TaxiCompilerService) : W
     }
 
     override fun didChangeWatchedFiles(params: DidChangeWatchedFilesParams) {
+        // Reload sources if a new file was added or deleted.  Changes are handled in the compiler service
+        val reloadSources = params.changes.any { fileEvent ->
+            fileEvent.type == FileChangeType.Created || fileEvent.type == FileChangeType.Deleted
+        }
+        if (reloadSources) {
+            compilerService.reloadSourcesAndTriggerCompilation()
+        }
         receivedEvents.add(params)
     }
 
