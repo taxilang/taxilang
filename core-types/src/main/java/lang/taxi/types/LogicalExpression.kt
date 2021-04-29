@@ -18,7 +18,7 @@ data class AndExpression(val left: LogicalExpression, val right: LogicalExpressi
    }
 }
 
-data class ComparisonExpression(val operator: ComparisonOperator, val left: ComparisonOperand, val right: ComparisonOperand): LogicalExpression("comp") {
+data class ComparisonExpression(val operator: ComparisonOperator, val left: ComparisonOperand, val right: ComparisonOperand): LogicalExpression("comp"), FilterExpression {
    override fun asTaxi(): String {
       return "${left.asTaxi()} ${operator.symbol} ${right.asTaxi()}"
    }

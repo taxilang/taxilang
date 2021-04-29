@@ -304,14 +304,6 @@ class ViewValidator(private val viewName: String) {
       }
    }
 
-   private fun hasFieldWithGivenType(fields: List<Field>?, fieldType: Type): Boolean {
-     return  fields?.firstOrNull { field ->
-         val actualFieldType = field.type.formattedInstanceOfType ?: field.type
-         actualFieldType == fieldType
-      } != null
-   }
-
-
    private fun validateFunction(accessor: FunctionAccessor,
                                 ctx: TaxiParser.FindBodyContext,
                                 errors: MutableList<CompilationError>,
@@ -382,6 +374,14 @@ class ViewValidator(private val viewName: String) {
             getPrimitiveTypeForField(fieldType.inheritsFrom.first(), fieldName, findBodyCtx)
          }
          else -> CompilationError(findBodyCtx.start, "type ${fieldType.qualifiedName} for field $fieldName is not allowed in view definitions").left()
+      }
+   }
+   companion object {
+       fun hasFieldWithGivenType(fields: List<Field>?, fieldType: Type): Boolean {
+         return  fields?.firstOrNull { field ->
+            val actualFieldType = field.type.formattedInstanceOfType ?: field.type
+            actualFieldType == fieldType
+         } != null
       }
    }
 }

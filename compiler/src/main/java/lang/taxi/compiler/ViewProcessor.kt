@@ -16,6 +16,7 @@ import lang.taxi.types.ViewBodyDefinition
 import lang.taxi.types.ViewDefinition
 
 class ViewProcessor(private val tokenProcessor: TokenProcessor) {
+   private val filterCriteriaProcessor = ViewCriteriaFilterProcessor(tokenProcessor)
    fun compileView(
       viewName: String,
       namespace: Namespace,
@@ -60,13 +61,14 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
 
    private fun resolveViewBody(namespace: Namespace, bodyCtx: TaxiParser.FindBodyContext):
       Either<List<CompilationError>, ViewBodyDefinition> {
-      val joinTypes = bodyCtx.findBodyQuery().joinTo().typeType()
-      return listTypeTypeOrError(joinTypes.first()).flatMap { bodyTypeType ->
+      val joinTypes = bodyCtx.findBodyQuery().joinTo().filterableTypeType()
+      val firstFilterableType = joinTypes.first()
+      return listTypeTypeOrError(firstFilterableType.typeType()).flatMap { bodyTypeType ->
          tokenProcessor.typeOrError(namespace, bodyTypeType).flatMap { bodyType ->
             if (joinTypes.size > 1) {
                viewBodyDefinitionForJoinFind(joinTypes, namespace, bodyCtx, bodyType)
             } else {
-               viewBodyDefinitionForSimpleFind(namespace, bodyCtx, bodyType)
+               viewBodyDefinitionForSimpleFind(namespace, bodyCtx, bodyType, firstFilterableType)
             }
          }
       }.mapLeft { it }
@@ -78,13 +80,28 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
    private fun viewBodyDefinitionForSimpleFind(
       namespace: Namespace,
       bodyCtx: TaxiParser.FindBodyContext,
-      bodyType: Type): Either<List<CompilationError>, ViewBodyDefinition> {
+      bodyType: Type,
+      filterableTypeTypeCtx: TaxiParser.FilterableTypeTypeContext): Either<List<CompilationError>, ViewBodyDefinition> {
       return if (bodyCtx.anonymousTypeDefinition() != null) {
          parseViewBodyDefinition(namespace, bodyCtx).flatMap { viewBodyTypeDefinition ->
-            ViewBodyDefinition(bodyType).copy(viewBodyType = viewBodyTypeDefinition).right()
+            if (filterableTypeTypeCtx.filterExpression() != null) {
+               filterCriteriaProcessor.processFilterExpressionContext(bodyType, filterableTypeTypeCtx.filterExpression())
+                  .flatMap { filterExpression ->
+                     ViewBodyDefinition(bodyType = bodyType, bodyTypeFilter = filterExpression, viewBodyType = viewBodyTypeDefinition).right()
+                  }
+            } else {
+               ViewBodyDefinition(bodyType).copy(viewBodyType = viewBodyTypeDefinition).right()
+            }
          }.mapLeft { it }
       } else {
-         ViewBodyDefinition(bodyType).right()
+         if (filterableTypeTypeCtx.filterExpression() != null) {
+            filterCriteriaProcessor.processFilterExpressionContext(bodyType, filterableTypeTypeCtx.filterExpression())
+               .flatMap { filterExpression ->
+                  ViewBodyDefinition(bodyType = bodyType, bodyTypeFilter = filterExpression).right()
+               }
+         } else {
+            ViewBodyDefinition(bodyType).right()
+         }
       }
    }
 
@@ -92,21 +109,50 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
     * Case for a find with a join, e.g. find { Foo[] (joinTo Bar[]) } as { .. }
     */
    private fun viewBodyDefinitionForJoinFind(
-      joinTypes: List<TaxiParser.TypeTypeContext>,
+      joinTypes: List<TaxiParser.FilterableTypeTypeContext>,
       namespace: Namespace,
       bodyCtx: TaxiParser.FindBodyContext,
       bodyType: Type): Either<List<CompilationError>, ViewBodyDefinition> {
       val joinTypeTypeCtx = joinTypes[1]
-      return listTypeTypeOrError(joinTypeTypeCtx).flatMap { joinType ->
-         tokenProcessor.typeOrError(namespace, joinTypeTypeCtx).flatMap { joinType ->
+      return listTypeTypeOrError(joinTypeTypeCtx.typeType()).flatMap { joinType ->
+         tokenProcessor.typeOrError(namespace, joinTypeTypeCtx.typeType()).flatMap { joinType ->
             validateJoinBasedViewBodyDefinition(bodyCtx, ViewBodyDefinition(bodyType, joinType))
                .flatMap { validViewDefinition ->
+                  val firstFilterExpression =  if (joinTypes.first().filterExpression() != null) {
+                     filterCriteriaProcessor.processFilterExpressionContext(bodyType, joinTypes.first().filterExpression())
+                  } else null
+
+                  val secondFilterExpression = if (joinTypeTypeCtx.filterExpression() != null) {
+                     filterCriteriaProcessor.processFilterExpressionContext(joinType, joinTypes[1].filterExpression())
+                  } else null
+
                   if (bodyCtx.anonymousTypeDefinition() != null) {
                      parseViewBodyDefinition(namespace, bodyCtx).flatMap { viewBodyTypeDefinition ->
-                        validViewDefinition.copy(viewBodyType = viewBodyTypeDefinition).right()
+                        when {
+                           firstFilterExpression != null && firstFilterExpression is Either.Left -> firstFilterExpression.a.left()
+                           secondFilterExpression != null && secondFilterExpression is Either.Left -> secondFilterExpression.a.left()
+                           firstFilterExpression != null && secondFilterExpression != null && firstFilterExpression is Either.Right && secondFilterExpression is Either.Right ->
+                              validViewDefinition.copy(viewBodyType = viewBodyTypeDefinition, bodyTypeFilter = firstFilterExpression.b, joinTypeFilter = secondFilterExpression.b)
+                                 .right()
+                           firstFilterExpression != null && secondFilterExpression == null && firstFilterExpression is Either.Right ->
+                              validViewDefinition.copy(viewBodyType = viewBodyTypeDefinition, bodyTypeFilter = firstFilterExpression.b).right()
+                           firstFilterExpression == null && secondFilterExpression != null && secondFilterExpression is Either.Right ->
+                              validViewDefinition.copy(viewBodyType = viewBodyTypeDefinition, joinTypeFilter = secondFilterExpression.b).right()
+                           else ->  validViewDefinition.copy(viewBodyType = viewBodyTypeDefinition).right()
+                        }
                      }.mapLeft { it }
                   } else {
-                     validViewDefinition.right()
+                     when {
+                        firstFilterExpression != null && firstFilterExpression is Either.Left -> firstFilterExpression.a.left()
+                        secondFilterExpression != null && secondFilterExpression is Either.Left -> secondFilterExpression.a.left()
+                        firstFilterExpression != null && secondFilterExpression != null && firstFilterExpression is Either.Right && secondFilterExpression is Either.Right ->
+                           validViewDefinition.copy(bodyTypeFilter = firstFilterExpression.b, joinTypeFilter = secondFilterExpression.b).right()
+                        firstFilterExpression != null && secondFilterExpression == null && firstFilterExpression is Either.Right ->
+                           validViewDefinition.copy(bodyTypeFilter = firstFilterExpression.b).right()
+                        firstFilterExpression == null && secondFilterExpression != null && secondFilterExpression is Either.Right ->
+                           validViewDefinition.copy(joinTypeFilter = secondFilterExpression.b).right()
+                        else ->  validViewDefinition.right()
+                     }
                   }
                }
                .mapLeft { it }
@@ -125,8 +171,11 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
 
 
    private fun listTypeTypeOrError(typeTypeCtx: TaxiParser.TypeTypeContext): Either<List<CompilationError>, TaxiParser.TypeTypeContext> {
+
       return if (typeTypeCtx.listType() == null) {
          listOf(CompilationError(typeTypeCtx.start, "Currently, only list types are supported in view definitions. Replace ${typeTypeCtx.text} with ${typeTypeCtx.text}[]")).left()
+      } else if(typeTypeCtx.parameterConstraint() != null) {
+         listOf(CompilationError(typeTypeCtx.start, "Replace ${typeTypeCtx.parameterConstraint().text} with (${typeTypeCtx.parameterConstraint().text})")).left()
       } else {
          typeTypeCtx.right()
       }
