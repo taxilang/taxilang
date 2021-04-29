@@ -1,11 +1,7 @@
 package lang.taxi.lsp
 
 import com.google.common.base.Stopwatch
-import lang.taxi.CompilationError
-import lang.taxi.CompilationException
-import lang.taxi.Compiler
-import lang.taxi.CompilerConfig
-import lang.taxi.CompilerTokenCache
+import lang.taxi.*
 import lang.taxi.linter.toLinterRules
 import lang.taxi.lsp.completion.TypeProvider
 import lang.taxi.packages.TaxiPackageProject
@@ -142,6 +138,8 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
             CompilationResult(compiler, compiled, charStreams.size, stopwatch.elapsed(), messages)
         } catch (e: CompilationException) {
             CompilationResult(compiler, null, charStreams.size, stopwatch.elapsed(), e.errors)
+        } catch (e: Exception) {
+            TODO()
         }
         lastCompilationResult.set(compilationResult)
         if (compilationResult.successful) {

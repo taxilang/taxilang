@@ -13,12 +13,14 @@ import java.util.concurrent.CompletableFuture
 
 class CompletionService(private val typeProvider: TypeProvider) {
     fun computeCompletions(compilationResult: CompilationResult, params: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
-        val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.uriPath())
-                ?: return completions(TopLevelCompletions.topLevelCompletionItems)
-
         val importDecorator = ImportCompletionDecorator(compilationResult.compiler, params.textDocument.uriPath())
+
+        val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.uriPath())
+                ?: return bestGuessCompletionsWithoutContext(compilationResult, params, importDecorator)
+
         val completionItems = when (context.ruleIndex) {
             TaxiParser.RULE_columnIndex -> buildColumnIndexSuggestions()
+            TaxiParser.RULE_simpleFieldDeclaration -> typeProvider.getTypes(listOf(importDecorator))
             TaxiParser.RULE_fieldDeclaration -> typeProvider.getTypes(listOf(importDecorator))
             TaxiParser.RULE_typeMemberDeclaration -> typeProvider.getTypes(listOf(importDecorator))
             TaxiParser.RULE_listOfInheritedTypes -> typeProvider.getTypes(listOf(importDecorator))
@@ -32,6 +34,23 @@ class CompletionService(private val typeProvider: TypeProvider) {
             else -> emptyList()
         }
         return completions(completionItems)
+    }
+
+    /**
+     * We weren't able to resolve the context at the provided location.
+     * This could be there's no text there, or the text doesn't compile yet.
+     * Therefore, look around, and try to guess what the user is doing.
+     */
+    private fun bestGuessCompletionsWithoutContext(
+        compilationResult: CompilationResult,
+        params: CompletionParams,
+        importDecorator: ImportCompletionDecorator
+    ): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
+        val lookupResult = compilationResult.compiler.inferrableContext(params.position.line, params.position.character, params.textDocument.uriPath())
+        return when {
+            isIncompleteFieldDefinition(lookupResult) ->  completions(typeProvider.getTypes(listOf(importDecorator)))
+            else ->  completions(TopLevelCompletions.topLevelCompletionItems)
+        }
     }
 
     private fun buildColumnIndexSuggestions(): List<CompletionItem> {

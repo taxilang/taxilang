@@ -1,13 +1,12 @@
 package lang.taxi.lsp
 
-import com.google.common.io.Resources
-import com.nhaarman.mockito_kotlin.mock
 import com.winterbe.expekt.should
-import org.assertj.core.util.Files
-import org.eclipse.lsp4j.*
+import org.eclipse.lsp4j.DidChangeTextDocumentParams
+import org.eclipse.lsp4j.TextDocumentContentChangeEvent
+import org.eclipse.lsp4j.VersionedTextDocumentIdentifier
 import org.eclipse.lsp4j.services.LanguageClient
 import org.junit.Test
-import java.nio.file.Paths
+import org.mockito.kotlin.mock
 
 class TaxiTextDocumentServiceTest {
 

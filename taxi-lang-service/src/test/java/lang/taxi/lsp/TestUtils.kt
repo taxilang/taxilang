@@ -1,11 +1,11 @@
 package lang.taxi.lsp
 
 import com.google.common.io.Resources
-import com.nhaarman.mockito_kotlin.mock
 import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier
 import org.eclipse.lsp4j.services.LanguageClient
+import org.mockito.kotlin.mock
 import java.nio.file.Path
 import java.nio.file.Paths
 
