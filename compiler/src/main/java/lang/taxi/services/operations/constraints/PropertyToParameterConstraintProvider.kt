@@ -99,6 +99,16 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       return constraint.propertyToParameterConstraintExpression() != null
    }
 
+   fun build(propertyToParameterConstraintExpression: TaxiParser.PropertyToParameterConstraintExpressionContext,
+             typeResolver: NamespaceQualifiedTypeResolver): Either<List<CompilationError>, PropertyToParameterConstraint> {
+      val operator = Operator.parse(propertyToParameterConstraintExpression.comparisonOperator().text)
+      return parseLhs(typeResolver, propertyToParameterConstraintExpression).flatMap { propertyIdentifier ->
+         parseRhs(propertyToParameterConstraintExpression).map { valueExpression ->
+            PropertyToParameterConstraint(propertyIdentifier, operator, valueExpression, propertyToParameterConstraintExpression.toCompilationUnits())
+         }
+      }
+   }
+
    fun build(type: Type, typeResolver: NamespaceQualifiedTypeResolver, context: TaxiParser.ParameterConstraintExpressionContext): Either<List<CompilationError>, Constraint> {
       // Could be either a type name or a field name
       val propertyToParameterConstraintExpression = context.propertyToParameterConstraintExpression()

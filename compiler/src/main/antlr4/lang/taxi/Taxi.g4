@@ -748,7 +748,23 @@ viewDeclaration
 
 findBody: findDirective '{' findBodyQuery '}' ('as' anonymousTypeDefinition)?;
 findBodyQuery: joinTo;
-joinTo: typeType ('(' 'joinTo'  typeType ')')?;
+filterableTypeType: typeType ('(' filterExpression ')')?;
+joinTo: filterableTypeType ('(' 'joinTo'  filterableTypeType ')')?;
+filterExpression
+    : LPAREN filterExpression RPAREN           # ParenExp
+    | filterExpression AND filterExpression    # AndBlock
+    | filterExpression OR filterExpression     # OrBlock
+    | propertyToParameterConstraintExpression  # AtomExp
+    | in_exprs                                 # InExpr
+    | like_exprs                               # LikeExpr
+    ;
+in_exprs: qualifiedName IN literalArray;
+like_exprs: qualifiedName LIKE literal;
+
+modelAttributeTypeReferenceComparison: modelAttributeTypeReference comparison_operand modelAttributeTypeReference;
+modelAttributeTypeReferenceLiteralComparison: modelAttributeTypeReferenceComparison comparison_operand literal;
+modelAttributeTypeReferenceFunctionComparison: modelAttributeTypeReference filterCapability modelAttributeTypeReferenceFunctionComparisonExpression;
+modelAttributeTypeReferenceFunctionComparisonExpression: literalArray | literal;
 
 IN: 'in';
 LIKE: 'like';

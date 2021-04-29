@@ -21,7 +21,10 @@ data class ViewBodyDefinition(
    val bodyType: Type,
    val joinType: Type? = null,
    val viewBodyType: Type? = null,
-   val joinInfo: JoinInfo? = null)
+   val joinInfo: JoinInfo? = null,
+   val bodyTypeFilter: FilterExpression? = null,
+   val joinTypeFilter: FilterExpression? = null
+)
 
 /*
   Representation of a view:
