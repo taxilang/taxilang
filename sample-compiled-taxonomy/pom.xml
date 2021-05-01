@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <parent>
       <artifactId>parent</artifactId>
-      <groupId>lang.taxi</groupId>
-      <version>0.15.1-SNAPSHOT</version>
+      <groupId>org.taxilang</groupId>
+      <version>1.28.0-SNAPSHOT</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -13,13 +13,13 @@
 
    <dependencies>
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>taxi-annotations</artifactId>
          <version>${project.version}</version>
       </dependency>
       <!-- Only required to get the build order correct within the project.  Normally not necessary -->
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>taxi-annotation-processor</artifactId>
          <version>${project.version}</version>
       </dependency>
@@ -48,7 +48,7 @@
                      </sourceDirs>
                      <annotationProcessorPaths>
                         <annotationProcessorPath>
-                           <groupId>lang.taxi</groupId>
+                           <groupId>org.taxilang</groupId>
                            <artifactId>taxi-annotation-processor</artifactId>
                            <version>${project.version}</version>
                         </annotationProcessorPath>
