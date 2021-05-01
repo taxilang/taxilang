@@ -1,0 +1,26 @@
+{
+  "extends": "@semantic-release/gitlab-config",
+  "pkgRoot": "out",
+  "plugins": [
+    ["@semantic-release/commit-analyzer", {
+      "preset": "angular",
+      "releaseRules" : [
+        { "type" :  "refactor","release": "patch"},
+        { "type" :  "style","release": "patch"}
+      ]
+    }],
+    "@semantic-release/release-notes-generator",
+    ["@semantic-release/changelog", {
+      "changelogFile" : "CHANGELOG.md"
+    }],
+    ["@semantic-release/exec", {
+      "publishCmd" : "npm version ${nextRelease.version} && vsce package ${nextRelease.version}"
+    }],
+    "@semantic-release/git",
+    ["@semantic-release/gitlab", {
+      "assets": [
+        {"path": "*.vsix ", "label": "VSCode Plugin"}
+      ]
+    }]
+  ]
+}

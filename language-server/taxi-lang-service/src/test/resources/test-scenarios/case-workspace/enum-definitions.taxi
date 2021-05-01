@@ -1,0 +1,7 @@
+namespace acme.fx
+
+enum CountryCode {
+   US,
+   UK,
+   DE
+}
