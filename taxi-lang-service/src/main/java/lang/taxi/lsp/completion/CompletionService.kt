@@ -46,7 +46,7 @@ class CompletionService(private val typeProvider: TypeProvider) {
         params: CompletionParams,
         importDecorator: ImportCompletionDecorator
     ): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
-        val lookupResult = compilationResult.compiler.inferrableContext(params.position.line, params.position.character, params.textDocument.uriPath())
+        val lookupResult = compilationResult.compiler.getNearestToken(params.position.line, params.position.character, params.textDocument.uriPath())
         return when {
             isIncompleteFieldDefinition(lookupResult) ->  completions(typeProvider.getTypes(listOf(importDecorator)))
             else ->  completions(TopLevelCompletions.topLevelCompletionItems)

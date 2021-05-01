@@ -98,7 +98,9 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
         if (position.textDocument.uri.endsWith(".conf")) {
             return CompletableFuture.completedFuture(Either.forLeft(mutableListOf()))
         }
-        val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
+//        val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
+        val lastCompilationResult = compilerService.compile()
+
         return completionService.computeCompletions(lastCompilationResult, position)
     }
 
