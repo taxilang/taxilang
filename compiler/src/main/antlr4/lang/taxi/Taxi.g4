@@ -450,6 +450,7 @@ comparisonOperator
    | '>='
    | '<='
    | '<'
+   | '!='
    ;
 
 arithmaticOperator
@@ -757,15 +758,17 @@ filterExpression
     | propertyToParameterConstraintExpression  # AtomExp
     | in_exprs                                 # InExpr
     | like_exprs                               # LikeExpr
+    | not_in_exprs                             # NotInExpr
     ;
 in_exprs: qualifiedName IN literalArray;
 like_exprs: qualifiedName LIKE literal;
+not_in_exprs: qualifiedName NOT_IN literalArray;
 
 modelAttributeTypeReferenceComparison: modelAttributeTypeReference comparison_operand modelAttributeTypeReference;
 modelAttributeTypeReferenceLiteralComparison: modelAttributeTypeReferenceComparison comparison_operand literal;
 modelAttributeTypeReferenceFunctionComparison: modelAttributeTypeReference filterCapability modelAttributeTypeReferenceFunctionComparisonExpression;
 modelAttributeTypeReferenceFunctionComparisonExpression: literalArray | literal;
-
+NOT_IN: 'not in';
 IN: 'in';
 LIKE: 'like';
 AND : 'and' ;

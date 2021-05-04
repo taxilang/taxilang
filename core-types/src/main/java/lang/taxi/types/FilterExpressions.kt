@@ -20,6 +20,17 @@ data class InFilterExpression(val values: List<Any>, val type: Type): FilterExpr
    }
 }
 
+data class NotInFilterExpression(val values: List<Any>, val type: Type): FilterExpression {
+   override fun asTaxi(): String {
+      return "${type.qualifiedName} not in [${values.map {
+         when(it) {
+            is String -> "'$it'"
+            else -> "$it"
+         }
+      }}]"
+   }
+}
+
 data class  LikeFilterExpression(val value: String, val type: Type): FilterExpression {
    override fun asTaxi(): String {
       return "${type.qualifiedName} like '$value'"
