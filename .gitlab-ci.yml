@@ -22,6 +22,13 @@ cache:
   paths:
     - .m2/repository
 
+.setup-nvm: &setup-nvm
+   - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash'
+   - 'export NVM_DIR="$HOME/.nvm"'
+   - 'unset NPM_CONFIG_PREFIX'
+   - '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm'
+   - 'nvm use stable'
+   - 'vsce --help'
 
 stages:
    - pre-build
@@ -33,12 +40,7 @@ stages:
 setup:
    stage: pre-build
    script:
-    - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash'
-    - 'export NVM_DIR="$HOME/.nvm"'
-    - 'unset NPM_CONFIG_PREFIX'
-    - '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm'
-    - 'nvm use stable'
-    - 'vsce --help'
+    - *setup-nvm
 
 # This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
 # Because some enforcer rules might check dependency convergence and class duplications
