@@ -54,13 +54,13 @@ build-beta-plugin:
    script:
       - 'cd language-server/vscode-extension'
       - 'npm install'
-      - 'npm install -g vsce'
+      - 'npm install vsce'
       - 'vsce package'
    only:
       - develop
    artifacts:
       paths:
-         - 'vscode-extension/*.vsix'
+         - 'language-server/vscode-extension/*.vsix'
 
 package-plugin:
    image: node:13
@@ -68,13 +68,13 @@ package-plugin:
    script:
       - 'cd language-server/vscode-extension'
       - 'npm install'
-      - 'npm install -g vsce semantic-release'
+      - 'npm install vsce semantic-release'
       - 'npx semantic-release'
    only:
       - master
    artifacts:
       paths:
-         - 'vscode-extension/*.vsix'
+         - 'language-server/vscode-extension/*.vsix'
 
 release-major:
    variables:

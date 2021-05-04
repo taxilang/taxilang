@@ -69,7 +69,7 @@ build-beta-plugin:
   artifacts:
     paths:
       - 'vscode-extension/*.vsix'
-    
+
 package-plugin:
   image: node:13
   stage: build-plugin
