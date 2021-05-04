@@ -18,6 +18,7 @@
       <module>taxi-lang-service</module>
       <module>taxi-lang-server-app</module>
       <module>taxi-lang-server-standalone</module>
+      <module>vscode-extension</module>
    </modules>
 
    <properties>
