@@ -262,6 +262,7 @@ class TokenProcessor(
       compileQueries()
       //
       compileViews()
+      validateViewNames()
    }
 
    private fun compileViews() {
@@ -272,6 +273,27 @@ class TokenProcessor(
          .flattenErrors()
          .collectErrors(errors)
          .map { this.views.addAll(it) }
+   }
+
+   /**
+    * Temprorary check on view names as we use view name to create the corresponding Sql view
+    * in Vyne (by ignoring namespace)
+    */
+   private fun validateViewNames() {
+      val uniqueViewNames = mutableSetOf<String>()
+      val nonUniqueViews = this.views.filterNot {
+         uniqueViewNames.add(it.toQualifiedName().typeName)
+      }
+
+      if (nonUniqueViews.isNotEmpty()) {
+         val duplicateView = nonUniqueViews.first()
+         errors.add(
+            CompilationError(
+               duplicateView,
+               "view, name - ${duplicateView.toQualifiedName().typeName} must be unique"
+            )
+         )
+      }
    }
 
    private fun compileQueries() {
