@@ -32,7 +32,10 @@ stages:
 
 setup:
    stage: pre-build
-   script: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+   script:
+    - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash'
+    - 'nvm use stable'
+    - 'vsce --help'
 
 # This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
 # Because some enforcer rules might check dependency convergence and class duplications
