@@ -25,6 +25,7 @@ cache:
 
 stages:
    - build
+   - build-plugin
    - release
    - deploy
 
@@ -37,13 +38,43 @@ validate:
   except:
      - tags
   script:
-    - 'mvn $MAVEN_CLI_OPTS install'
+    - 'mvn $MAVEN_CLI_OPTS clean deploy'
   artifacts:
+    paths:
+       - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
     reports:
       junit:
       # Note:This won't actually work, b/c of https://gitlab.com/gitlab-org/gitlab-runner/issues/2620
       # However, leaving this here to pick up later
         - "*/target/surefire-reports/TEST-*.xml"
+
+build-beta-plugin:
+   image: node:13
+   stage: build-plugin
+   script:
+      - 'cd language-server/vscode-extension'
+      - 'npm install'
+      - 'npm install -g vsce'
+      - 'vsce package'
+   only:
+      - develop
+   artifacts:
+      paths:
+         - 'vscode-extension/*.vsix'
+
+package-plugin:
+   image: node:13
+   stage: build-plugin
+   script:
+      - 'cd language-server/vscode-extension'
+      - 'npm install'
+      - 'npm install -g vsce semantic-release'
+      - 'npx semantic-release'
+   only:
+      - master
+   artifacts:
+      paths:
+         - 'vscode-extension/*.vsix'
 
 release-major:
    variables:
