@@ -1,0 +1,5 @@
+import FirstName
+
+model Country {
+    countryName : CountryName as String
+}

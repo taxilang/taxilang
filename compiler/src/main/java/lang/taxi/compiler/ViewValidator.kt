@@ -101,7 +101,7 @@ class ViewValidator(private val viewName: String) {
          currentViewBodyType = (viewBodyDefinition.viewBodyType!! as ObjectType)
          currentViewBodyType!!
             .fields
-            .map { field -> validateField(field.accessor, findBodyContext, compilationErrors, typesInViewFindDefinitions) }
+            .map { field -> validateField(field.accessor, findBodyContext, compilationErrors, typesInViewFindDefinitions, viewBodyDefinition.viewBodyType) }
       }
       return compilationErrors.toList()
    }
@@ -109,7 +109,8 @@ class ViewValidator(private val viewName: String) {
    private fun validateField(
       accessor: Accessor?,
       ctx: TaxiParser.FindBodyContext, compilationErrors: MutableList<CompilationError>,
-      typesInViewFindDefinitions: Set<Type>):
+      typesInViewFindDefinitions: Set<Type>,
+      viewBodyType: Type?):
       List<CompilationError> {
       if (accessor != null) {
          when (accessor) {
@@ -117,14 +118,14 @@ class ViewValidator(private val viewName: String) {
                when (val accessorExpression = accessor.expression) {
                    is WhenFieldSetCondition -> {
                       accessorExpression.cases.forEach { caseBlock ->
-                         processWhenCaseMatchExpression(caseBlock, ctx, compilationErrors, typesInViewFindDefinitions)
+                         processWhenCaseMatchExpression(caseBlock, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
                       }
                    }
                   is CalculatedModelAttributeFieldSetExpression -> {
                      val op1 = accessorExpression.operand1
                      val op2 = accessorExpression.operand2
-                     validateValidateSourceAndField(op1.memberSource, op1.memberType, ctx, compilationErrors, typesInViewFindDefinitions)
-                     validateValidateSourceAndField(op2.memberSource, op2.memberType, ctx, compilationErrors, typesInViewFindDefinitions)
+                     validateValidateSourceAndField(op1.memberSource, op1.memberType, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
+                     validateValidateSourceAndField(op2.memberSource, op2.memberType, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
                   }
                   else -> compilationErrors.add(
                      CompilationError(
@@ -136,7 +137,7 @@ class ViewValidator(private val viewName: String) {
             }
 
             is FunctionAccessor -> {
-               validateFunction(accessor, ctx, compilationErrors, typesInViewFindDefinitions)
+               validateFunction(accessor, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
             }
 
             else -> {
@@ -155,14 +156,15 @@ class ViewValidator(private val viewName: String) {
       caseBlock: WhenCaseBlock,
       ctx: TaxiParser.FindBodyContext,
       errors: MutableList<CompilationError>,
-      typesInViewFindDefinitions: Set<Type>) {
+      typesInViewFindDefinitions: Set<Type>,
+      viewBodyType: Type?) {
       val caseExpression = caseBlock.matchExpression
       val assignments = caseBlock.assignments
       when (caseExpression) {
-         is ComparisonExpression -> processComparisonExpression(caseExpression, ctx, errors, typesInViewFindDefinitions)
-         is AndExpression -> validateLogicalExpressions(caseExpression.left, caseExpression.right, ctx, errors, typesInViewFindDefinitions)
-         is OrExpression -> validateLogicalExpressions(caseExpression.left, caseExpression.right, ctx, errors, typesInViewFindDefinitions)
-         is ElseMatchExpression -> processAssignments(assignments, ctx, errors, typesInViewFindDefinitions)
+         is ComparisonExpression -> processComparisonExpression(caseExpression, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+         is AndExpression -> validateLogicalExpressions(caseExpression.left, caseExpression.right, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+         is OrExpression -> validateLogicalExpressions(caseExpression.left, caseExpression.right, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+         is ElseMatchExpression -> processAssignments(assignments, ctx, errors, typesInViewFindDefinitions, viewBodyType)
          // this is also covered by compiler.
          else -> errors.add(
             CompilationError(
@@ -177,7 +179,8 @@ class ViewValidator(private val viewName: String) {
       right: LogicalExpression,
       ctx: TaxiParser.FindBodyContext,
       errors: MutableList<CompilationError>,
-      typesInViewFindDefinitions: Set<Type>) {
+      typesInViewFindDefinitions: Set<Type>,
+      viewBodyType: Type?) {
       if (left !is ComparisonExpression && right !is ComparisonExpression) {
          errors.add(
             CompilationError(
@@ -185,8 +188,8 @@ class ViewValidator(private val viewName: String) {
                "Both left and right hand-side of AND / OR should be a comparison expression!")
          )
       } else {
-         processComparisonExpression(left as ComparisonExpression, ctx, errors, typesInViewFindDefinitions)
-         processComparisonExpression(right as ComparisonExpression, ctx, errors, typesInViewFindDefinitions)
+         processComparisonExpression(left as ComparisonExpression, ctx, errors, typesInViewFindDefinitions,viewBodyType)
+         processComparisonExpression(right as ComparisonExpression, ctx, errors, typesInViewFindDefinitions, viewBodyType)
       }
    }
 
@@ -194,18 +197,20 @@ class ViewValidator(private val viewName: String) {
       caseExpression: ComparisonExpression,
       ctx: TaxiParser.FindBodyContext,
       errors: MutableList<CompilationError>,
-      typesInViewFindDefinitions: Set<Type>) {
-      processComparisonOperand(caseExpression.left, ctx, errors, typesInViewFindDefinitions)
-      processComparisonOperand(caseExpression.right, ctx, errors, typesInViewFindDefinitions)
+      typesInViewFindDefinitions: Set<Type>,
+      viewBodyType: Type?) {
+      processComparisonOperand(caseExpression.left, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+      processComparisonOperand(caseExpression.right, ctx, errors, typesInViewFindDefinitions, viewBodyType)
    }
 
    private fun processComparisonOperand(
       operand: ComparisonOperand,
       ctx: TaxiParser.FindBodyContext,
       errors: MutableList<CompilationError>,
-      typesInViewFindDefinitions: Set<Type>) {
+      typesInViewFindDefinitions: Set<Type>,
+      viewBodyType: Type?) {
       when (operand) {
-         is ModelAttributeFieldReferenceEntity -> validateValidateSourceAndField(operand.source, operand.fieldType, ctx, errors, typesInViewFindDefinitions, false)
+         is ModelAttributeFieldReferenceEntity -> validateValidateSourceAndField(operand.source, operand.fieldType, ctx, errors, typesInViewFindDefinitions, viewBodyType,false)
          is ConstantEntity -> {
          }
          else -> errors.add(
@@ -220,7 +225,8 @@ class ViewValidator(private val viewName: String) {
       assignments: List<AssignmentExpression>,
       ctx: TaxiParser.FindBodyContext,
       errors: MutableList<CompilationError>,
-      typesInViewFindDefinitions: Set<Type>) {
+      typesInViewFindDefinitions: Set<Type>,
+      viewBodyType: Type?) {
       if (assignments.size != 1) {
          errors.add(CompilationError(
             ctx.start,
@@ -236,14 +242,14 @@ class ViewValidator(private val viewName: String) {
       }
 
       when (val expression = assignment.assignment) {
-         is ModelAttributeTypeReferenceAssignment -> validateModelAttributeTypeReference(expression, ctx, errors, typesInViewFindDefinitions)
+         is ModelAttributeTypeReferenceAssignment -> validateModelAttributeTypeReference(expression, ctx, errors, typesInViewFindDefinitions, viewBodyType)
          is LiteralAssignment -> { }
          is NullAssignment -> { }
          is ScalarAccessorValueAssignment -> {
             when (val accessor = expression.accessor) {
-               is ConditionalAccessor -> validateField(accessor, ctx, errors, typesInViewFindDefinitions)
+               is ConditionalAccessor -> validateField(accessor, ctx, errors, typesInViewFindDefinitions, viewBodyType)
                is FunctionAccessor -> {
-                  validateFunction(accessor, ctx, errors, typesInViewFindDefinitions)
+                  validateFunction(accessor, ctx, errors, typesInViewFindDefinitions, viewBodyType)
                }
                else -> errors.add(CompilationError(
                   ctx.start,
@@ -262,8 +268,9 @@ class ViewValidator(private val viewName: String) {
       expression: ModelAttributeTypeReferenceAssignment,
       ctx: TaxiParser.FindBodyContext,
       errors: MutableList<CompilationError>,
-      typesInViewFindDefinitions: Set<Type>) {
-      return validateValidateSourceAndField(expression.source, expression.type, ctx, errors, typesInViewFindDefinitions)
+      typesInViewFindDefinitions: Set<Type>,
+      viewBodyType: Type?) {
+      return validateValidateSourceAndField(expression.source, expression.type, ctx, errors, typesInViewFindDefinitions, viewBodyType)
    }
 
    private fun validateValidateSourceAndField(
@@ -272,14 +279,42 @@ class ViewValidator(private val viewName: String) {
       ctx: TaxiParser.FindBodyContext,
       errors: MutableList<CompilationError>,
       typesInViewFindDefinitions: Set<Type>,
+      viewBodyType: Type?,
       canUseViewName: Boolean = true) {
       if (!canUseViewName && (source.fullyQualifiedName == viewName)) {
-         errors.add(
-            CompilationError(
-               ctx.start,
-               "Invalid context for ${source.typeName}::${type.toQualifiedName().typeName}. You can not use a reference to View on the left hand side of a case when expression.")
-         )
+         if (viewBodyType == null) {
+            errors.add(
+               CompilationError(
+                  ctx.start,
+                  "Invalid context for ${source.typeName}::${type.toQualifiedName().typeName}. You can not use a reference to View on the left hand side of a case when expression.")
+            )
+         } else {
+            val referencedViewField = getFieldWithGivenType((viewBodyType as? ObjectType)?.fields, type)
+            if (referencedViewField == null) {
+               errors.add(
+                  CompilationError(
+                     ctx.start,
+                     "Invalid context for ${source.typeName}::${type.toQualifiedName().typeName}. You can not use a reference to View on the left hand side of a case when expression.")
+               )
+            } else {
+               when (val accessor = referencedViewField.accessor) {
+                  is FunctionAccessor -> if (!accessor.function.modifiers.contains(FunctionModifiers.Query)) {
+                     errors.add(
+                        CompilationError(
+                           ctx.start,
+                           "Invalid context for ${source.typeName}::${type.toQualifiedName().typeName}. You can not use a reference to View on the left hand side of a case when expression.")
+                     )
+                  }
+                  else -> errors.add(
+                     CompilationError(
+                        ctx.start,
+                        "Invalid context for ${source.typeName}::${type.toQualifiedName().typeName}. You can not use a reference to View on the left hand side of a case when expression.")
+                  )
+               }
+            }
+         }
       }
+
       if (source.fullyQualifiedName != viewName &&
          !typesInViewFindDefinitions.map { it.toQualifiedName() }.contains(source)) {
          errors.add(
@@ -307,7 +342,8 @@ class ViewValidator(private val viewName: String) {
    private fun validateFunction(accessor: FunctionAccessor,
                                 ctx: TaxiParser.FindBodyContext,
                                 errors: MutableList<CompilationError>,
-                                typesInViewFindDefinitions: Set<Type>) {
+                                typesInViewFindDefinitions: Set<Type>,
+                                viewBodyType: Type?) {
       if (!accessor.function.modifiers.contains(FunctionModifiers.Query)) {
          errors.add(CompilationError(
             ctx.start,
@@ -320,7 +356,7 @@ class ViewValidator(private val viewName: String) {
                ctx.start,
                "Function input must in SourceType::FieldType format."))
          } else {
-            validateValidateSourceAndField(input.memberSource, input.memberType, ctx, errors, typesInViewFindDefinitions)
+            validateValidateSourceAndField(input.memberSource, input.memberType, ctx, errors, typesInViewFindDefinitions, viewBodyType)
          }
       }
    }
@@ -382,6 +418,13 @@ class ViewValidator(private val viewName: String) {
             val actualFieldType = field.type.formattedInstanceOfType ?: field.type
             actualFieldType == fieldType
          } != null
+      }
+
+      fun getFieldWithGivenType(fields: List<Field>?, fieldType: Type): Field? {
+         return  fields?.firstOrNull { field ->
+            val actualFieldType = field.type.formattedInstanceOfType ?: field.type
+            actualFieldType == fieldType
+         }
       }
    }
 }

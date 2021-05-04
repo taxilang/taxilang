@@ -2,8 +2,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <parent>
       <artifactId>parent</artifactId>
-      <groupId>lang.taxi</groupId>
-      <version>0.15.1</version>
+      <groupId>org.taxilang</groupId>
+      <version>1.28.0</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -19,14 +19,14 @@
          <version>3.4.1</version>
       </dependency>
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>compiler</artifactId>
-         <version>0.15.1</version>
+         <version>1.28.0</version>
       </dependency>
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>taxi-generator-api</artifactId>
-         <version>0.15.1</version>
+         <version>1.28.0</version>
       </dependency>
       <dependency>
          <groupId>com.fasterxml.jackson.core</groupId>
@@ -54,9 +54,9 @@
          <version>2.6</version>
       </dependency>
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>taxi-plugin-api</artifactId>
-         <version>0.15.1</version>
+         <version>1.28.0</version>
       </dependency>
       <dependency>
          <groupId>org.pf4j</groupId>
@@ -96,7 +96,7 @@
          <artifactId>config4k</artifactId>
       </dependency>
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>package-importer</artifactId>
          <version>${project.version}</version>
       </dependency>
@@ -113,9 +113,9 @@
 
       <!-- TODO : Move this out so that Kotlin plugin isn't bundled -->
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>taxi2kotlin</artifactId>
-         <version>0.15.1</version>
+         <version>1.28.0</version>
       </dependency>
    </dependencies>
 

@@ -2,10 +2,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
-   <groupId>lang.taxi</groupId>
+   <groupId>org.taxilang</groupId>
    <artifactId>parent</artifactId>
    <packaging>pom</packaging>
-   <version>0.15.1</version>
+   <version>1.28.0</version>
    <description>taxi is a language for defining API contracts. A Dsl that sits atop RAML for resource definition. Taxi
       (short for Taxonomy)
    </description>
@@ -19,6 +19,7 @@
    </scm>
 
    <modules>
+      <module>language-server</module>
       <module>compiler</module>
       <module>taxi-annotations</module>
       <module>java2taxi</module>
@@ -53,6 +54,8 @@
       <junit.jupiter.version>5.6.2</junit.jupiter.version>
       <junit.vintage.version>5.6.2</junit.vintage.version>
       <zip4j.version>2.7.0</zip4j.version>
+
+      <taxi.version>${project.version}</taxi.version>
    </properties>
 
    <dependencies>
@@ -306,9 +309,8 @@
    </build>
    <distributionManagement>
       <repository>
-         <id>bintray-taxi-lang-releases</id>
-         <name>taxi-lang-releases</name>
-         <url>https://api.bintray.com/maven/taxi-lang/releases/${project.artifactId}/;publish=1</url>
+         <id>repo.vyne.co</id>
+         <url>s3://repo.vyne.co/release</url>
       </repository>
       <snapshotRepository>
          <id>repo.vyne.co</id>

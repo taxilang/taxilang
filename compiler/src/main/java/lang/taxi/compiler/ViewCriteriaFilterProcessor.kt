@@ -18,6 +18,7 @@ import lang.taxi.types.FilterExpression
 import lang.taxi.types.FilterExpressionInParenthesis
 import lang.taxi.types.InFilterExpression
 import lang.taxi.types.LikeFilterExpression
+import lang.taxi.types.NotInFilterExpression
 import lang.taxi.types.ObjectType
 import lang.taxi.types.OrFilterExpression
 import lang.taxi.types.PrimitiveType
@@ -51,6 +52,8 @@ class ViewCriteriaFilterProcessor(private val tokenProcessor: TokenProcessor) {
          is TaxiParser.OrBlockContext -> processOrBlockExpressionContext(ctx, targetType)
          // case for ( OrderStatus != 'Cancelled' and OrderStatus != 'Rejected')
          is TaxiParser.AndBlockContext -> processAndBlockExpressionContext(ctx, targetType)
+         // case for  ( OrderStatus not in ['Filled', 'PartiallyFilled'])
+         is TaxiParser.NotInExprContext -> processNotInExpressionContext(ctx, targetType)
          else -> listOf(CompilationError(ctx.start, "Expected that constraint would be declared in an operation.  This is likely a bug in the compiler")).left()
       }
    }
@@ -121,15 +124,7 @@ class ViewCriteriaFilterProcessor(private val tokenProcessor: TokenProcessor) {
       return typeResolver.resolve(qfnm, ctx).flatMap { fieldType ->
          hasFieldWithType(fieldType, targetType, ctx.start).flatMap {
             val values = ctx.in_exprs().literalArray().value()
-            val firstValue = values.first()
-            val firstValueClass = firstValue.javaClass
-            val inArgumentErrors = values.mapNotNull { value ->
-               when {
-                  !firstValueClass.isInstance(value) ->  CompilationError(ctx.start, "arguments of in must be of same type $firstValue is not compatible with $value")
-                  else -> validateArgumentValue(value, fieldType, ctx.start)
-               }
-            }
-
+            val inArgumentErrors = validateLiteralArrayVals(values, fieldType, ctx)
             if (inArgumentErrors.isEmpty()) {
                InFilterExpression(values, fieldType).right()
             } else {
@@ -139,6 +134,45 @@ class ViewCriteriaFilterProcessor(private val tokenProcessor: TokenProcessor) {
       }
    }
 
+   /**
+    * Validates the given literal Array values.
+    */
+   private fun validateLiteralArrayVals(values: List<Any>, fieldType: Type, ctx: TaxiParser.FilterExpressionContext): List<CompilationError> {
+      val firstValue = values.first()
+      val firstValueClass = firstValue.javaClass
+      return values.mapNotNull { value ->
+         when {
+            !firstValueClass.isInstance(value) -> CompilationError(ctx.start, "arguments of in must be of same type $firstValue is not compatible with $value")
+            else -> validateArgumentValue(value, fieldType, ctx.start)
+         }
+      }
+   }
+
+   /**
+    * Parses the 'not in' filter expression which is only applicable to 'String' based fields.
+    * @param ctx Corresponding parser context
+    * @param targetType The type for which the filter expression is defined.
+    * Example:
+    * Order (OrderId in ['Id1', 'Id2'])
+    *
+    * Order -> targetType
+    * @return list of compilation errors or InFilterExpression.
+    */
+   private fun processNotInExpressionContext(ctx: TaxiParser.NotInExprContext, targetType: Type): Either<List<CompilationError>, FilterExpression> {
+      val qfnm = ctx.not_in_exprs().qualifiedName().asDotJoinedPath()
+      val typeResolver = tokenProcessor.typeResolver(ctx.findNamespace())
+      return typeResolver.resolve(qfnm, ctx).flatMap { fieldType ->
+         hasFieldWithType(fieldType, targetType, ctx.start).flatMap {
+            val values = ctx.not_in_exprs().literalArray().value()
+            val inArgumentErrors = validateLiteralArrayVals(values, fieldType, ctx)
+            if (inArgumentErrors.isEmpty()) {
+               NotInFilterExpression(values, fieldType).right()
+            } else {
+               inArgumentErrors.left()
+            }
+         }
+      }
+   }
 
    /**
     *  Make sure the the constraint is in  'FullyQualifiedName <operator> Literal' Format

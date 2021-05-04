@@ -1,0 +1,121 @@
+variables:
+  MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true -U -P shade"
+  # Used during gitflow interaction.
+  MAJOR_RELEASE_DIGIT: 0
+  MINOR_RELEASE_DIGIT: 1
+  PATCH_RELEASE_DIGIT: 2
+
+# Cache downloaded dependencies and plugins between builds.
+# To keep cache across branches add 'key: "$CI_JOB_NAME"'
+cache:
+  paths:
+    - .m2/repository
+
+.git_template: &git_setup |
+  git remote set-url --push origin "https://oauth2:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+  git config user.name "taxi-cd"
+  git config user.email taxi-cd@vyne.co
+
+stages:
+  - build
+  - build-plugin
+  - release
+
+# For merge requests do .bitlnot `deploy` but only run `verify`.
+# See https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
+build-jar:
+  image: maven:3.3.9-jdk-8
+  stage: build
+  script:
+    - 'mvn $MAVEN_CLI_OPTS verify'
+  except:
+    - master
+    - develop
+
+package-jar:
+  image: maven:3.3.9-jdk-8
+  stage: build
+  script:
+    - 'mvn $MAVEN_CLI_OPTS clean install'
+  only:
+    - master
+  artifacts:
+    paths:
+      - 'taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
+
+build-publish-snapshot:
+  image: maven:3.3.9-jdk-8
+  stage: build
+  script:
+    - *git_setup
+    - 'mvn $MAVEN_CLI_OPTS clean deploy -DskipTests'
+  only:
+    - develop
+  artifacts:
+    paths:
+      - 'taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
+
+build-beta-plugin:
+  image: node:13
+  stage: build-plugin
+  script:
+    - 'cd vscode-extension'
+    - 'npm install'
+    - 'npm install -g vsce'
+    - 'vsce package'
+  only:
+    - develop
+  artifacts:
+    paths:
+      - 'vscode-extension/*.vsix'
+
+package-plugin:
+  image: node:13
+  stage: build-plugin
+  script:
+    - 'cd vscode-extension'
+    - 'npm install'
+    - 'npm install -g vsce semantic-release'
+    - 'npx semantic-release'
+  only:
+    - master
+  artifacts:
+    paths:
+      - 'vscode-extension/*.vsix'
+
+release-major:
+  variables:
+    GIT_STRATEGY: clone
+  image: maven:3.3.9-jdk-8
+  stage: release
+  script:
+    - *git_setup
+    - 'mvn gitflow:release -B -DversionDigitToIncrement=$MAJOR_RELEASE_DIGIT -DskipTestProject=true'
+  only:
+    - develop
+  when: manual
+
+release-minor:
+  variables:
+    GIT_STRATEGY: clone
+  image: maven:3.3.9-jdk-8
+  stage: release
+  script:
+    - *git_setup
+    - 'mvn gitflow:release -B -DversionDigitToIncrement=$MINOR_RELEASE_DIGIT -DskipTestProject=true'
+  only:
+    - develop
+  when: manual
+
+release-patch:
+  variables:
+    GIT_STRATEGY: clone
+  image: maven:3.3.9-jdk-8
+  stage: release
+  script:
+    - *git_setup
+    - 'mvn gitflow:release -B -DversionDigitToIncrement=$PATCH_RELEASE_DIGIT -DskipTestProject=true'
+  only:
+    - develop
+  when: manual

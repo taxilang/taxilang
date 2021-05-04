@@ -1,0 +1,42 @@
+namesapce acme.fx
+[[
+ISO currency codes are the three-letter alphabetic codes that represent the various [currencies](https://www.investopedia.com/terms/i/isocurrencycode.asp) used
+throughout the world. When combined in pairs, they make up the symbols and [cross rates](https://www.investopedia.com/terms/c/crossrate.asp) used in currency
+trading.
+
+Each of the country-specific three-letter alphabetic codes also have a
+corresponding three-digit numeric code. These codes are identified by the
+[International Organization for Standardization (ISO)](https://www.investopedia.com/terms/i/international-organization-for-standardization-iso.asp) a nongovernmental organization
+which provides standards for manufacturing, commerce, technology and communication.
+
+For currencies, the governing document is called ISO [4217:2015](https://www.iso.org/standard/64758.html).
+]]
+type alias CurrencySymbol as String
+
+
+[[
+In the forex market, currency unit prices are quoted as currency pairs. The base currency – also
+called the transaction currency - is the first currency appearing in a currency pair quotation,
+followed by the second part of the quotation, called the quote currency or the counter currency.
+For accounting purposes, a firm may use the base currency as the domestic currency or accounting currency
+to represent all profits and losses.
+
+## Breaking down Base Currency
+In forex, the base currency represents how much of the quote currency is needed for you to get one unit of the base currency. For example, if you were looking at the CAD/USD currency pair, the Canadian dollar would be the base currency and the U.S. dollar would be the quote currency.
+]]
+type BaseCurrency inherits CurrencySymbol
+
+[[
+The quote currency, commonly known as "counter currency,"
+is the second currency in both a direct and indirect currency pair and is used to
+determine the value of the base currency. In a direct quote, the quote currency is the foreign currency,
+while in an indirect quote, the quote currency is the domestic currency. Quote currency
+is also referred to as the "secondary currency."
+
+#### Key Takeaways
+ * The quote currency, commonly known as "counter currency," is the second currency in both a direct and indirect currency pair and is used to value the base currency.
+ * In a direct quote, the quote currency is the foreign currency, while in an indirect quote, the quote currency is the domestic currency.
+ * As the rate in a currency pair increases, the value of the quote currency is falling, whether the pair is direct or indirect.
+
+]]
+type QuoteCurrency inherits CurrencySymbol
