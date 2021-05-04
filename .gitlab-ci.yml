@@ -62,6 +62,7 @@ build-beta-plugin:
       - 'cd language-server/vscode-extension'
       - 'npm install'
       - 'npm install -g vsce'
+      - 'npm run sync-pom-version'
       - 'vsce package'
    only:
       - develop
@@ -75,6 +76,7 @@ package-plugin:
       - *setup-nvm
       - 'cd language-server/vscode-extension'
       - 'npm install'
+      - 'npm run sync-pom-version'
       - 'npm install -g vsce'
       - 'vsce publish'
    only:
