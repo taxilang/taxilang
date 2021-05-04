@@ -24,10 +24,15 @@ cache:
 
 
 stages:
+   - pre-build
    - build
    - build-plugin
    - release
    - deploy
+
+setup:
+   stage: pre-build
+   script: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
 
 # This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
 # Because some enforcer rules might check dependency convergence and class duplications
@@ -38,7 +43,7 @@ validate:
   except:
      - tags
   script:
-    - 'vsce --help'
+    - 'nvm use stable'
     - 'mvn $MAVEN_CLI_OPTS clean deploy'
   artifacts:
     paths:
