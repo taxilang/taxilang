@@ -36,7 +36,7 @@
             <executions>
                <execution>
                   <id>copy-dependencies</id>
-                  <phase>validate</phase>
+                  <phase>install</phase>
                   <goals>
                      <goal>copy-dependencies</goal>
                   </goals>
