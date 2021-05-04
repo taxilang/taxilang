@@ -3,12 +3,12 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>org.taxilang</groupId>
-      <version>1.28.2-SNAPSHOT</version>
+      <version>1.28.2</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
    <artifactId>java2taxi</artifactId>
-   <version>1.28.2-SNAPSHOT</version>
+   <version>1.28.2</version>
 
    <properties>
       <spring.cloud.version>Finchley.SR1</spring.cloud.version>
@@ -33,38 +33,38 @@
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>taxi-annotations</artifactId>
-         <version>1.28.2-SNAPSHOT</version>
+         <version>1.28.2</version>
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>compiler</artifactId>
-         <version>1.28.2-SNAPSHOT</version>
+         <version>1.28.2</version>
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>core-types</artifactId>
-         <version>1.28.2-SNAPSHOT</version>
+         <version>1.28.2</version>
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>taxi-writer</artifactId>
-         <version>1.28.2-SNAPSHOT</version>
+         <version>1.28.2</version>
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>taxi-stdlib-annotations</artifactId>
-         <version>1.28.2-SNAPSHOT</version>
+         <version>1.28.2</version>
       </dependency>
 
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>taxi-jvm-common</artifactId>
-         <version>1.28.2-SNAPSHOT</version>
+         <version>1.28.2</version>
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>test-utils</artifactId>
-         <version>1.28.2-SNAPSHOT</version>
+         <version>1.28.2</version>
          <scope>test</scope>
       </dependency>
       <!-- For SpringMvc to feign support.  Note - once this is split out, spring-webmvc is still required as test scope-->
@@ -88,7 +88,7 @@
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>taxi-annotation-processor</artifactId>
-         <version>1.28.2-SNAPSHOT</version>
+         <version>1.28.2</version>
          <!--<scope>test</scope>-->
       </dependency>
 
