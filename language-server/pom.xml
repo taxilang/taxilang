@@ -8,6 +8,12 @@
    <packaging>pom</packaging>
    <version>1.28.2-SNAPSHOT</version>
 
+   <!--
+   If you're reading this trying to manually build the vscode plugin,
+   make sure you run maven with the shade profile enabled.  (-P shade)
+   That is used to create a fat jar.  Enable by default in ci/cd,
+   disabled by default locally
+   -->
    <parent>
       <groupId>org.taxilang</groupId>
       <artifactId>parent</artifactId>

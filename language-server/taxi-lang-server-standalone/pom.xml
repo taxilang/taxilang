@@ -9,6 +9,13 @@
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
+   <!--
+If you're reading this trying to manually build the vscode plugin,
+make sure you run maven with the shade profile enabled.  (-P shade)
+That is used to create a fat jar.  Enable by default in ci/cd,
+disabled by default locally
+-->
+
    <artifactId>taxi-lang-server-standalone</artifactId>
 
    <dependencies>
