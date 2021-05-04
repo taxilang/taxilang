@@ -5,9 +5,16 @@
    <parent>
       <artifactId>taxi-lang-server</artifactId>
       <groupId>org.taxilang</groupId>
-      <version>1.28.1</version>
+      <version>1.28.2</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
+
+   <!--
+If you're reading this trying to manually build the vscode plugin,
+make sure you run maven with the shade profile enabled.  (-P shade)
+That is used to create a fat jar.  Enable by default in ci/cd,
+disabled by default locally
+-->
 
    <artifactId>taxi-lang-server-standalone</artifactId>
 

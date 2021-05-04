@@ -5,7 +5,7 @@ variables:
   # As of Maven 3.3.0 instead of this you may define these options in `.mvn/maven.config` so the same config is used
   # when running from the command line.
   # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
-  MAVEN_CLI_OPTS: "-s mvn-settings.xml --batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+  MAVEN_CLI_OPTS: "-s mvn-settings.xml --batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true -P shade"
   # Used during gitflow interaction.
   MAJOR_RELEASE_DIGIT: 0
   MINOR_RELEASE_DIGIT: 1
@@ -62,7 +62,6 @@ build-beta-plugin:
       - 'cd language-server/vscode-extension'
       - 'npm install'
       - 'npm install -g vsce'
-      - 'npm run sync-pom-version'
       - 'vsce package'
    only:
       - develop
@@ -77,7 +76,6 @@ package-plugin:
       - 'cd language-server/vscode-extension'
       - 'npm install'
       - 'npm install -g vsce'
-      - 'npm run sync-pom-version'
       - 'vsce publish'
    only:
       - master
@@ -92,7 +90,7 @@ release-major:
    stage: release
    script:
       - *git_setup
-      - 'mvn gitflow:release -B -DversionDigitToIncrement=$MAJOR_RELEASE_DIGIT'
+      - 'mvn gitflow:release -B -DversionDigitToIncrement=$MAJOR_RELEASE_DIGIT -DskipTestProject=true'
    only:
       - develop
    when: manual
@@ -104,7 +102,7 @@ release-minor:
    stage: release
    script:
       - *git_setup
-      - 'mvn gitflow:release -B -DversionDigitToIncrement=$MINOR_RELEASE_DIGIT'
+      - 'mvn gitflow:release -B -DversionDigitToIncrement=$MINOR_RELEASE_DIGIT  -DskipTestProject=true'
    only:
       - develop
    when: manual
@@ -116,7 +114,7 @@ release-patch:
    stage: release
    script:
       - *git_setup
-      - 'mvn gitflow:release -B -DversionDigitToIncrement=$PATCH_RELEASE_DIGIT'
+      - 'mvn gitflow:release -B -DversionDigitToIncrement=$PATCH_RELEASE_DIGIT  -DskipTestProject=true'
    only:
       - develop
    when: manual
