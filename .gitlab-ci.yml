@@ -38,10 +38,7 @@ validate:
   except:
      - tags
   script:
-    - 'whoami'
-    - 'source /home/gitlab-runner/.bashrc'
-    - 'echo $PATH'
-    - 'echo $NVM_DIR'
+    - 'vsce --help'
     - 'mvn $MAVEN_CLI_OPTS clean deploy'
   artifacts:
     paths:
