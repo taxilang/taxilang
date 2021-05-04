@@ -31,16 +31,10 @@ cache:
    - 'vsce --help'
 
 stages:
-   - pre-build
    - build
    - build-plugin
    - release
    - deploy
-
-setup:
-   stage: pre-build
-   script:
-    - *setup-nvm
 
 # This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
 # Because some enforcer rules might check dependency convergence and class duplications
@@ -51,7 +45,6 @@ validate:
   except:
      - tags
   script:
-    - 'nvm use stable'
     - 'mvn $MAVEN_CLI_OPTS clean deploy'
   artifacts:
     paths:
@@ -63,11 +56,11 @@ validate:
         - "*/target/surefire-reports/TEST-*.xml"
 
 build-beta-plugin:
-   image: node:13
+#   image: node:13
    stage: build-plugin
    script:
+      - *setup-nvm
       - 'cd language-server/vscode-extension'
-      - 'nvm use stable'
       - 'npm install'
       - 'npm install -g vsce'
       - 'vsce package'
@@ -78,11 +71,11 @@ build-beta-plugin:
          - 'language-server/vscode-extension/*.vsix'
 
 package-plugin:
-   image: node:13
+#   image: node:13
    stage: build-plugin
    script:
+      - *setup-nvm
       - 'cd language-server/vscode-extension'
-      - 'nvm use stable'
       - 'npm install'
       - 'npm install -g vsce semantic-release'
       - 'npx semantic-release'
