@@ -38,6 +38,7 @@ validate:
   except:
      - tags
   script:
+    - 'source .bashrc'
     - 'echo $PATH'
     - 'mvn $MAVEN_CLI_OPTS clean deploy'
   artifacts:
