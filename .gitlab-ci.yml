@@ -56,7 +56,6 @@ validate:
         - "*/target/surefire-reports/TEST-*.xml"
 
 build-beta-plugin:
-#   image: node:13
    stage: build-plugin
    script:
       - *setup-nvm
@@ -71,7 +70,6 @@ build-beta-plugin:
          - 'language-server/vscode-extension/*.vsix'
 
 package-plugin:
-#   image: node:13
    stage: build-plugin
    script:
       - *setup-nvm
