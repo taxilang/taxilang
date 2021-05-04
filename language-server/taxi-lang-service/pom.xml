@@ -38,10 +38,4 @@
          <version>${reactor.version}</version>
       </dependency>
    </dependencies>
-   <repositories>
-      <repository>
-         <id>bintray-spekframework-spek</id>
-         <url>https://dl.bintray.com/spekframework/spek</url>
-      </repository>
-   </repositories>
 </project>

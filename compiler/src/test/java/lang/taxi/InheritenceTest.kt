@@ -180,10 +180,8 @@ type ListOfPerson inherits Person[]
          }
       """.trimIndent()
 
-      expectedException.expect(CompilationException::class.java)
-      expectedException.expectMessage(startsWith("Compilation Error: UnknownSource(6,34) extraneous input '{'"))
-
-      Compiler(src).compile()
+      val (error, _) = Compiler(src).compileWithMessages()
+      error.first().detailMessage.should.equal("Syntax error at '{'.  That's all we know.")
    }
 
    @Test
@@ -198,10 +196,8 @@ type ListOfPerson inherits Person[]
          enum AllCountries inherits BestCountry, BetterCountry
       """.trimIndent()
 
-      expectedException.expect(CompilationException::class.java)
-      expectedException.expectMessage(startsWith("Compilation Error: UnknownSource(7,38) extraneous input ','"))
-
-      Compiler(src).compile()
+      val (error, _) = Compiler(src).compileWithMessages()
+      error.first().detailMessage.should.equal("Syntax error at ','.  That's all we know.")
    }
 
    @Test

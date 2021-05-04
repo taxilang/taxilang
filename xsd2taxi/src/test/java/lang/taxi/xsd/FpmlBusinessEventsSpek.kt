@@ -3,6 +3,7 @@ package lang.taxi.xsd
 import com.google.common.io.Resources
 import com.winterbe.expekt.should
 import lang.taxi.Compiler
+import lang.taxi.messages.Severity
 import lang.taxi.testing.TestHelpers
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -12,7 +13,7 @@ object FpmlBusinessEventsSpek : Spek({
       it("should parse a business events file") {
          val (generated, errors) = compileXsdResource("samples/fpml/confirmation-5-10_xml/confirmation/fpml-business-events-5-10.xsd")
 
-         errors.should.be.empty
+         errors.filter { it.severity == Severity.ERROR } .should.be.empty
          val expected = Resources.getResource("samples/fpml/confirmation-5-10_xml/confirmation/expected-taxi/fpml.taxi")
             .readText()
 

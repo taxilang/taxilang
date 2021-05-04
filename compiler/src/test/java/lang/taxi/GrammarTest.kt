@@ -2,6 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
+import lang.taxi.messages.Severity
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.types.*
 import org.antlr.v4.runtime.CharStreams
@@ -37,7 +38,7 @@ type FooType {
          firstName : String
          }
       """.validated()
-      errors.should.have.size(2)
+      errors.filter { it.severity == Severity.ERROR }.should.have.size(2)
       // 2 errors - an error is captured for both the fields
       errors[0].detailMessage.should.equal("Field firstName is declared multiple times")
       errors[1].detailMessage.should.equal("Field firstName is declared multiple times")
@@ -641,7 +642,7 @@ namespace foo {
 }
         """.trimIndent()
       val errors = Compiler(sourceB).validate()
-      expect(errors).to.have.size(2)
+      expect(errors.filter { it.severity == Severity.ERROR }).to.have.size(2)
       expect(errors.first().detailMessage).to.equal("Cannot import test.FirstName as it is not defined")
    }
 
@@ -979,7 +980,7 @@ type Person {
 }
       """.trimIndent()
       val errors = Compiler(src).validate()
-      errors.should.have.size(2)
+      errors.filter { it.severity == Severity.ERROR }.should.have.size(2)
    }
 
    @Test

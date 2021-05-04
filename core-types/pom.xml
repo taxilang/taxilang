@@ -43,14 +43,4 @@
          <version>1.7.13</version>
       </dependency>
    </dependencies>
-   <repositories>
-      <repository>
-         <snapshots>
-            <enabled>false</enabled>
-         </snapshots>
-         <id>bintray-config4k-config4k</id>
-         <name>bintray</name>
-         <url>https://dl.bintray.com/config4k/config4k</url>
-      </repository>
-   </repositories>
 </project>

@@ -31,7 +31,7 @@ It should be allowed to [contain square brackets]""".trimIndent()
 type Foo
       """.compiled()
          .type("Foo")
-         .typeDoc.should.equal("type alias foo")
+         .typeDoc.should.equal("type foo type alias function")
    }
 
    @Test
