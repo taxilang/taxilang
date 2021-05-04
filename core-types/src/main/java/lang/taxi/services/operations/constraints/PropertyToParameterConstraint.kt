@@ -4,6 +4,7 @@ import lang.taxi.ImmutableEquality
 import lang.taxi.Operator
 import lang.taxi.types.AttributePath
 import lang.taxi.types.CompilationUnit
+import lang.taxi.types.FilterExpression
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
 import lang.taxi.utils.prependIfAbsent
@@ -29,7 +30,7 @@ open class PropertyToParameterConstraint(
    val operator: Operator = Operator.EQUAL,
    val expectedValue: ValueExpression,
    override val compilationUnits: List<CompilationUnit>
-) : Constraint {
+) : Constraint, FilterExpression {
    override fun asTaxi(): String {
       return "${propertyIdentifier.taxi} ${operator.symbol} ${expectedValue.taxi}"
    }
