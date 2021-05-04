@@ -38,7 +38,8 @@ validate:
   except:
      - tags
   script:
-    - 'source ~/.bashrc'
+    - 'whoami'
+    - 'source /home/gitlab-runner/.bashrc'
     - 'echo $PATH'
     - 'echo $NVM_DIR'
     - 'mvn $MAVEN_CLI_OPTS clean deploy'
