@@ -53,8 +53,9 @@ build-beta-plugin:
    stage: build-plugin
    script:
       - 'cd language-server/vscode-extension'
+      - 'nvm use stable'
       - 'npm install'
-      - 'npm install vsce'
+      - 'npm install -g vsce'
       - 'vsce package'
    only:
       - develop
@@ -67,8 +68,9 @@ package-plugin:
    stage: build-plugin
    script:
       - 'cd language-server/vscode-extension'
+      - 'nvm use stable'
       - 'npm install'
-      - 'npm install vsce semantic-release'
+      - 'npm install -g vsce semantic-release'
       - 'npx semantic-release'
    only:
       - master
