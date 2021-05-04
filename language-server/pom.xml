@@ -6,18 +6,19 @@
 
    <artifactId>taxi-lang-server</artifactId>
    <packaging>pom</packaging>
-   <version>1.28.0</version>
+   <version>1.28.1</version>
 
    <parent>
       <groupId>org.taxilang</groupId>
       <artifactId>parent</artifactId>
-      <version>1.28.0</version>
+      <version>1.28.1</version>
    </parent>
 
    <modules>
       <module>taxi-lang-service</module>
       <module>taxi-lang-server-app</module>
       <module>taxi-lang-server-standalone</module>
+      <module>vscode-extension</module>
    </modules>
 
    <properties>

@@ -5,7 +5,7 @@
    <parent>
       <artifactId>taxi-lang-server</artifactId>
       <groupId>org.taxilang</groupId>
-      <version>1.28.0</version>
+      <version>1.28.1</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -38,10 +38,4 @@
          <version>${reactor.version}</version>
       </dependency>
    </dependencies>
-   <repositories>
-      <repository>
-         <id>bintray-spekframework-spek</id>
-         <url>https://dl.bintray.com/spekframework/spek</url>
-      </repository>
-   </repositories>
 </project>

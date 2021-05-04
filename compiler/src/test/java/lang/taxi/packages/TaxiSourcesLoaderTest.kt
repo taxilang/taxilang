@@ -3,6 +3,7 @@ package lang.taxi.packages
 import com.google.common.io.Resources
 import com.winterbe.expekt.should
 import lang.taxi.Compiler
+import lang.taxi.messages.Severity
 import lang.taxi.packages.SimpleFilePackageService.Companion.fileServiceFactory
 import lang.taxi.packages.repository.PackageServiceFactory
 import org.junit.Before
@@ -46,7 +47,7 @@ class TaxiSourcesLoaderTest {
 
       // Let's compile
       val (compilationErrors,taxi) = Compiler(taxiSources).compileWithMessages()
-      compilationErrors.should.be.empty
+      compilationErrors.filter { it.severity == Severity.ERROR }.should.be.empty
 
       // Desk uses an imported type from a dependent repository
       val deskModel = taxi.objectType("withDeps.Desk")

@@ -29,7 +29,7 @@ class MavenPomGeneratorPlugin(private val configurers: List<MavenModelConfigurer
          ),
          Repository(
             id = "taxi-releases",
-            url = "https://dl.bintray.com/taxi-lang/releases",
+            url = "http://repo.vyne.co/release",
             snapshots = false,
             releases = true
          )
