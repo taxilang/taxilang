@@ -6,7 +6,15 @@ import lang.taxi.lsp.CompilationResult
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.SourceNames
 import lang.taxi.types.Type
-import org.eclipse.lsp4j.*
+import org.eclipse.lsp4j.CompletionItem
+import org.eclipse.lsp4j.CompletionList
+import org.eclipse.lsp4j.CompletionParams
+import org.eclipse.lsp4j.InsertTextFormat
+import org.eclipse.lsp4j.MarkupContent
+import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.eclipse.lsp4j.TextEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import java.net.URI
 import java.util.concurrent.CompletableFuture

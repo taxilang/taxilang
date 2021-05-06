@@ -7,6 +7,7 @@ import lang.taxi.lsp.formatter.FormatterService
 import lang.taxi.lsp.gotoDefinition.GotoDefinitionService
 import lang.taxi.lsp.hover.HoverService
 import lang.taxi.lsp.linter.LintingService
+import lang.taxi.lsp.sourceService.WorkspaceSourceService
 import lang.taxi.messages.Severity
 import lang.taxi.types.SourceNames
 import org.eclipse.lsp4j.*
@@ -20,7 +21,8 @@ import java.time.Duration
 import java.util.concurrent.CompletableFuture
 
 object UnknownSource {
-    val UNKNOWN_SOURCE = "Unknown source"
+    // Must be a URI, or code services blow up
+    const val UNKNOWN_SOURCE = "inmemory://unknown-source"
 }
 
 /**
@@ -38,8 +40,19 @@ data class CompilationResult(
 
 
 ) {
+    fun containsTokensForSource(uri: String): Boolean {
+        return compiler.containsTokensForSource(uri)
+    }
+
     val successful = document != null && errors.none { it.severity == Severity.ERROR }
 }
+
+/**
+ * Triggers compilation from a changed path.
+ * Note - use a URI, not a Path here, as the changed path may be
+ * an imnemory:// file, when using a web-client LSP client.
+ */
+data class CompilationTrigger(val changedPath: URI?)
 
 class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) : TextDocumentService,
     LanguageClientAware {
@@ -98,10 +111,11 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
         if (position.textDocument.uri.endsWith(".conf")) {
             return CompletableFuture.completedFuture(Either.forLeft(mutableListOf()))
         }
-//        val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
+//        val lastCompilationResult =
+            compilerService.getOrComputeLastCompilationResult(uriToAssertIsPreset = position.textDocument.uri)
         val lastCompilationResult = compilerService.compile()
-
         return completionService.computeCompletions(lastCompilationResult, position)
+
     }
 
     override fun definition(params: DefinitionParams): CompletableFuture<Either<MutableList<out Location>, MutableList<out LocationLink>>> {
@@ -159,7 +173,7 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
         }
     }
 
-    private fun forceReload(reason: String) {
+    fun forceReload(reason: String) {
         client.logMessage(
             MessageParams(
                 MessageType.Info,
@@ -189,8 +203,12 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
         if (sourceName.endsWith("taxi.conf")) {
             // SKip it, we'll wait for a save.
         } else {
+            val compilationTrigger = CompilationTrigger(
+                URI.create(SourceNames.normalize(params.textDocument.uri))
+            )
             compilerService.updateSource(params.textDocument, content)
-            this.compilerService.triggerAsyncCompilation()
+           this.compilerService.triggerAsyncCompilation(compilationTrigger)
+//           this.compileTriggerSink.tryEmitNext(compilationTrigger)
         }
     }
 
@@ -245,8 +263,12 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
             // VSCode on windows seems to not like the URI
 
             val filePath = try {
-                File(URI.create(uri)).canonicalPath
-            } catch (e: Exception) {
+                val parsedURI = URI.create(uri)
+                when (parsedURI.scheme) {
+                    "file" -> File(parsedURI).canonicalPath
+           "inmemory" -> uri
+                    else -> uri
+                } } catch (e: Exception) {
                 UnknownSource.UNKNOWN_SOURCE
             }
             PublishDiagnosticsParams(filePath, diagnostics)
@@ -276,24 +298,25 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
         this.client = client
         connected = true
         if (ready) {
-            initializeCompilerService()
+            // Not sure if this is true, but it makes this sequence trickier
+            error("Can't connect after initialze - should be other way around.")
+//            initializeCompilerService(workspaceSourceService)
         }
     }
 
-    fun initialize(params: InitializeParams) {
+    fun initialize(params: InitializeParams, workspaceSourceService: WorkspaceSourceService) {
         this.rootUri = params.rootUri
         this.initializeParams = params
 
         initialized = true
 
         if (ready) {
-            initializeCompilerService()
+            initializeCompilerService(workspaceSourceService)
         }
     }
 
-    internal fun initializeCompilerService() {
-        this.compilerService.initialize(rootUri!!, client)
-        this.compilerService.reloadSourcesWithoutCompiling()
+    private fun initializeCompilerService(workspaceSourceService: WorkspaceSourceService) {
+        this.compilerService.initialize(workspaceSourceService)
         compile()
         publishDiagnosticMessages()
     }

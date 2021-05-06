@@ -1,6 +1,8 @@
 package lang.taxi.lsp
 
 import lang.taxi.CompilerConfig
+import lang.taxi.lsp.sourceService.FileBasedWorkspaceSourceService
+import lang.taxi.lsp.sourceService.WorkspaceSourceServiceFactory
 import lang.taxi.utils.log
 import org.eclipse.lsp4j.CompletionOptions
 import org.eclipse.lsp4j.InitializeParams
@@ -23,11 +25,12 @@ import kotlin.system.exitProcess
 
 
 class TaxiLanguageServer(
-        private val compilerConfig:CompilerConfig = CompilerConfig(),
-        private val compilerService: TaxiCompilerService = TaxiCompilerService(compilerConfig),
-        private val textDocumentService: TaxiTextDocumentService = TaxiTextDocumentService(compilerService),
-        private val workspaceService: TaxiWorkspaceService = TaxiWorkspaceService(compilerService),
-        private val lifecycleHandler: LanguageServerLifecycleHandler = NoOpLifecycleHandler
+    private val compilerConfig: CompilerConfig = CompilerConfig(),
+    private val compilerService: TaxiCompilerService = TaxiCompilerService(compilerConfig),
+    private val textDocumentService: TaxiTextDocumentService = TaxiTextDocumentService(compilerService),
+    private val workspaceService: TaxiWorkspaceService = TaxiWorkspaceService(compilerService),
+    private val lifecycleHandler: LanguageServerLifecycleHandler = NoOpLifecycleHandler,
+    private val workspaceSourceServiceFactory: WorkspaceSourceServiceFactory = FileBasedWorkspaceSourceService.Companion.Factory()
 ) : LanguageServer, LanguageClientAware {
 
     private lateinit var client: LanguageClient
@@ -50,9 +53,14 @@ class TaxiLanguageServer(
         lifecycleHandler.terminate(exitCode)
     }
 
+    fun forceReloadOfSources(reason: String) {
+        textDocumentService.forceReload(reason)
+    }
+
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
         workspaceService.initialize(params)
-        textDocumentService.initialize(params)
+        val workspaceSourceService = workspaceSourceServiceFactory.build(params, client)
+        textDocumentService.initialize(params, workspaceSourceService)
         // Copied from:
         // https://github.com/NipunaMarcus/hellols/blob/master/language-server/src/main/java/org/hello/ls/langserver/HelloLanguageServer.java
 
@@ -65,7 +73,7 @@ class TaxiLanguageServer(
             change = TextDocumentSyncKind.Full
             save = SaveOptions(false)
         })
-        capabilities.definitionProvider  = true
+        capabilities.definitionProvider = true
         capabilities.workspaceSymbolProvider = true
         capabilities.hoverProvider = true
         capabilities.documentFormattingProvider = true
@@ -86,11 +94,13 @@ class TaxiLanguageServer(
     override fun connect(client: LanguageClient) {
         this.client = client
         listOf(this.textDocumentService, this.workspaceService)
-                .filterIsInstance<LanguageClientAware>()
-                .forEach { it.connect(client) }
-        client.logMessage(MessageParams(
+            .filterIsInstance<LanguageClientAware>()
+            .forEach { it.connect(client) }
+        client.logMessage(
+            MessageParams(
                 MessageType.Info, "Taxi Language Server Connected"
-        ))
+            )
+        )
     }
 
 }

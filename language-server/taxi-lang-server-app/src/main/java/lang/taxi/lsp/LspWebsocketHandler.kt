@@ -1,38 +1,45 @@
 package lang.taxi.lsp
 
-import org.eclipse.lsp4j.jsonrpc.MessageConsumer
-import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint
-import org.eclipse.lsp4j.jsonrpc.json.JsonRpcMethod
-import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler
-import org.eclipse.lsp4j.jsonrpc.services.ServiceEndpoints
-import org.eclipse.lsp4j.services.LanguageClient
-import org.eclipse.lsp4j.services.LanguageServer
-import org.springframework.messaging.simp.SimpMessagingTemplate
+import com.google.common.cache.CacheBuilder
+import lang.taxi.packages.utils.log
+import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.handler.TextWebSocketHandler
 
-// WIP, DOESN'T WORK
+/**
+ * Simple websocket handler, which defers messages off to an instance
+ * of the Taxi Language server, which is bound to the specific websocket session.
+ */
+class LspWebsocketHandler(
+    // TODO : Make this configurable.  Current size is a complete guess.
+    val maximumSize: Long = 100
+) : TextWebSocketHandler() {
 
-class LspWebsocketHandler(val simpMessagingTemplate: SimpMessagingTemplate) : TextWebSocketHandler() {
-    init {
-        // Code inspired by this post:
-        // https://stackoverflow.com/questions/50874473/springboot-get-inputstream-and-outputstream-from-websocket
+    private val languageServerCache = CacheBuilder
+        .newBuilder()
+        .maximumSize(maximumSize)
+        .build<WebSocketSession, WebsocketSessionLanguageServer>()
 
-        val languageServer = TaxiLanguageServer()
+    override fun afterConnectionEstablished(session: WebSocketSession) {
+        log().info("New websocket session established - ${session.id} - spawning a new language server instance")
+        this.languageServerCache.put(session, WebsocketSessionLanguageServer(session))
+    }
 
-        val supportedMethods: MutableMap<String, JsonRpcMethod> = LinkedHashMap()
-        supportedMethods.putAll(ServiceEndpoints.getSupportedMethods(LanguageClient::class.java))
-        supportedMethods.putAll(ServiceEndpoints.getSupportedMethods(LanguageServer::class.java))
-//        supportedMethods.putAll(languageServer.supportedMethods())
-        val jsonHandler = MessageJsonHandler(supportedMethods)
+    override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
+        val languageServer = languageServerCache.getIfPresent(session)
+        if (languageServer == null) {
+            log().warn("Received a message on a websocket session (${session.id}), but no LSP instance has been created for the session - $message")
+        } else {
+            languageServer.handleTextMessage(message)
+        }
+    }
 
-        val remoteEndpoint = RemoteEndpoint(MessageConsumer { message ->
-            simpMessagingTemplate.convertAndSendToUser("user", "/lang/message",
-                    jsonHandler.serialize(message))
-        }, ServiceEndpoints.toEndpoint(languageServer))
-        jsonHandler.methodProvider = remoteEndpoint
-
+    override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
+        super.afterConnectionClosed(session, status)
+        log().info("Websocket session ${session.id} closed with status $status - killing the language server instance")
+        this.languageServerCache.getIfPresent(session)?.shutdown()
+        this.languageServerCache.invalidate(session)
     }
 
 
