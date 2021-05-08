@@ -6,24 +6,16 @@ import lang.taxi.lsp.CompilationResult
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.SourceNames
 import lang.taxi.types.Type
-import org.eclipse.lsp4j.CompletionItem
-import org.eclipse.lsp4j.CompletionList
-import org.eclipse.lsp4j.CompletionParams
-import org.eclipse.lsp4j.InsertTextFormat
-import org.eclipse.lsp4j.MarkupContent
-import org.eclipse.lsp4j.Position
-import org.eclipse.lsp4j.Range
-import org.eclipse.lsp4j.TextDocumentIdentifier
-import org.eclipse.lsp4j.TextEdit
+import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import java.net.URI
 import java.util.concurrent.CompletableFuture
 
 class CompletionService(private val typeProvider: TypeProvider) {
     fun computeCompletions(compilationResult: CompilationResult, params: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
-        val importDecorator = ImportCompletionDecorator(compilationResult.compiler, params.textDocument.uriPath())
+        val importDecorator = ImportCompletionDecorator(compilationResult.compiler, params.textDocument.normalizedUriPath())
 
-        val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.uriPath())
+        val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.normalizedUriPath())
                 ?: return bestGuessCompletionsWithoutContext(compilationResult, params, importDecorator)
 
         val completionItems = when (context.ruleIndex) {
@@ -54,7 +46,7 @@ class CompletionService(private val typeProvider: TypeProvider) {
         params: CompletionParams,
         importDecorator: ImportCompletionDecorator
     ): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
-        val lookupResult = compilationResult.compiler.getNearestToken(params.position.line, params.position.character, params.textDocument.uriPath())
+        val lookupResult = compilationResult.compiler.getNearestToken(params.position.line, params.position.character, params.textDocument.normalizedUriPath())
         return when {
             isIncompleteFieldDefinition(lookupResult) ->  completions(typeProvider.getTypes(listOf(importDecorator)))
             else ->  completions(TopLevelCompletions.topLevelCompletionItems)
