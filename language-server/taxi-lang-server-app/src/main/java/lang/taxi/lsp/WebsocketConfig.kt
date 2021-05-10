@@ -7,9 +7,9 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 
 @EnableWebSocket
 @Configuration
-class WebsocketConfig : WebSocketConfigurer{
+class WebsocketConfig : WebSocketConfigurer {
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
-        TODO("Not yet implemented")
+        registry.addHandler(LspWebsocketHandler(), "/lsp").setAllowedOrigins("*")
     }
 
 }

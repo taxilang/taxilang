@@ -111,14 +111,15 @@ class DocumentMalformedException(val errors: List<DocumentStrucutreError>) :
 
 class CompilerTokenCache {
    init {
-       val f = ""
+      val f = ""
       f.toString()
    }
+
    private val streamNameToStream = mutableMapOf<String, CharStream>()
    private val cache: Cache<CharStream, TokenStreamParseResult> = CacheBuilder.newBuilder()
       .build<CharStream, TokenStreamParseResult>()
 
-   fun get(sourceName:String) : TokenStreamParseResult? {
+   fun get(sourceName: String): TokenStreamParseResult? {
       val normalizedSourceName = SourceNames.normalize(sourceName)
       val cacheMap = cache.asMap()
       return cacheMap.keys
@@ -352,11 +353,22 @@ class Compiler(
     */
    fun contextAt(zeroBasedLineIndex: Int, char: Int, sourceName: String = UNKNOWN_SOURCE): ParserRuleContext? {
       val sourceUri = SourceNames.normalize(sourceName)
-      val tokensFromCache = tokenCache.get(sourceName)
-      val tokenTableFromCache = tokensFromCache?.tokens?.tokenStore?.tokenTable(sourceName)
       val tokenTable = tokens.tokenStore.tokenTable(sourceName)
 
-      val row = tokenTable.row(zeroBasedLineIndex) as SortedMap
+      val row = tokenTable.row(zeroBasedLineIndex).let {
+         if (it.isEmpty()) {
+            // This is a workaround.  I've noticed that sometimes the value the compiler
+            // contains in it's token table is different than the independent value within the tokenCache.
+            // This is clearly a bug, but I can't work out the flow.
+            // Instead of fixing the issue, imma just hack around it.  Hackity hackity hackity.
+            // There's...like...no chance this'll come back and bite me, right?
+            val tokensFromCache = tokenCache.get(sourceName)
+            val tokenTableFromCache = tokensFromCache?.tokens?.tokenStore?.tokenTable(sourceName)
+            tokenTableFromCache?.row(zeroBasedLineIndex) ?: it
+         } else {
+            it
+         }
+      } as SortedMap
       if (row.isEmpty()) {
          return null
       }
@@ -365,11 +377,12 @@ class Compiler(
       return nearestStartIndex?.let { index -> row.get(index) }
    }
 
+
    /**
     * When an exact match isn't possible from location, (ie., because of cmpilation errors),
     * look for the nearest possible context based on the source location.
     */
-   fun getNearestToken(line: Int, char: Int, sourceName: String = UNKNOWN_SOURCE):ParseTree? {
+   fun getNearestToken(line: Int, char: Int, sourceName: String = UNKNOWN_SOURCE): ParseTree? {
       val tokenTable = tokens.tokenStore.tokenTable(sourceName)
 
       // we can't look up directly from the line number, as some tokens will span multiple lines
@@ -379,7 +392,7 @@ class Compiler(
          ?.let { rowIndex -> tokenTable.row(rowIndex) }
          ?: return null
 
-      val nearestTree =  nearestRow.values
+      val nearestTree = nearestRow.values
          .firstOrNull { token -> token.containsLocation(line + 1, char) }
          ?.childAtLocation(line + 1, char)
 
