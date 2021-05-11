@@ -588,6 +588,56 @@ class ViewSpec : Spek({
          error.should.be.empty
          taxi.views.size.should.equal(3)
       }
-   }
 
+      it("a view with when statements using arithmetic operations") {
+         val src = """
+            namespace notional
+            {
+               type ExecutedQuantity inherits Decimal
+               type OrderBuy inherits String
+               type MarketTradeId inherits String
+               type OrderSell inherits String
+               type BuyCumulativeQuantity inherits Decimal
+               type OrderId inherits String
+
+               model OrderFilled {
+                  orderId: OrderId
+                  execQty: ExecutedQuantity
+                  orderBuy: OrderBuy
+                  marketId: MarketTradeId
+                  orderSell: OrderSell
+               }
+           }
+           """.trimIndent()
+
+         val viewSrc = """
+            import notional.ExecutedQuantity;
+            import notional.OrderBuy;
+            import notional.MarketTradeId;
+            import notional.OrderSell;
+            import notional.BuyCumulativeQuantity;
+            import notional.OrderFilled;
+            import notional.OrderId;
+            import vyne.aggregations.sumOver;
+            namespace notional.views {
+               type CumulativeQty inherits Decimal
+               type SellCumulativeQty inherits Decimal
+               view ReportView with query {
+                  find { OrderFilled[] } as  {
+                       cumQty: CumulativeQty by sumOver(OrderFilled::ExecutedQuantity, OrderFilled::OrderId, OrderFilled::MarketTradeId)
+                       sellCumulativeQty: SellCumulativeQty by sumOver(OrderFilled::ExecutedQuantity, OrderFilled::OrderSell, OrderFilled::MarketTradeId)
+                       buyCumulativeQuantity: BuyCumulativeQuantity by when {
+                        OrderFilled::OrderBuy != null  -> sumOver(OrderFilled::ExecutedQuantity, OrderFilled::OrderBuy, OrderFilled::MarketTradeId)
+                        else -> (ReportView::CumulativeQty - ReportView::SellCumulativeQty)
+                      }
+                  }
+               }
+            }
+         """.trimIndent()
+         //sumOver(OrderFilled::ExecutedQuantity, OrderFilled::OrderId, OrderFilled::MarketTradeId) - sumOver(OrderFilled::ExecutedQuantity, OrderFilled::OrderSell, OrderFilled::MarketTradeId)
+         val (error, taxi) = Compiler.forStrings(listOf(src, viewSrc)).compileWithMessages()
+         error.should.be.empty
+         taxi.views.size.should.equal(1)
+      }
+   }
 })
