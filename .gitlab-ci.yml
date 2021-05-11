@@ -28,7 +28,17 @@ cache:
    - 'unset NPM_CONFIG_PREFIX'
    - '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm'
    - 'nvm use stable'
-   - 'vsce --help'
+
+.prepare-vscode-plugin-build: &prepare-vscode-plugin-build
+   - 'cd language-server/vscode-extension'
+   - 'npm install'
+   - 'npm install -g vsce'
+   - 'npm run sync-pom-version'
+
+.cleanup-after-vscode-plugin-build: &cleanup-after-vscode-plugin-build
+#   These files are modified during the build process, as we update their versions dynamically.
+#   Currently, we don't commit the changes, although we could add that at a later date
+   - 'git restore package.json package-lock.json'
 
 stages:
    - build
@@ -59,13 +69,12 @@ build-beta-plugin:
    stage: build-plugin
    script:
       - *setup-nvm
-      - 'cd language-server/vscode-extension'
-      - 'npm install'
-      - 'npm install -g vsce'
-      - 'npm run sync-pom-version'
+      - *prepare-vscode-plugin-build
       - 'vsce package'
    only:
       - develop
+   after_script:
+      - *cleanup-after-vscode-plugin-build
    artifacts:
       paths:
          - 'language-server/vscode-extension/*.vsix'
@@ -74,17 +83,15 @@ package-plugin:
    stage: build-plugin
    script:
       - *setup-nvm
-      - 'cd language-server/vscode-extension'
-      - 'npm install'
-      - 'npm run sync-pom-version'
-      - 'npm install -g vsce'
+      - *prepare-vscode-plugin-build
       - 'vsce publish'
    only:
       - master
    artifacts:
       paths:
          - 'language-server/vscode-extension/*.vsix'
-
+   after_script:
+      - *cleanup-after-vscode-plugin-build
 release-major:
    variables:
       GIT_STRATEGY: none
