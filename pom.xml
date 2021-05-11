@@ -357,12 +357,6 @@
                   <version>2.5.2</version>
                   <executions>
                      <execution>
-                        <id>default-install</id>
-                        <configuration>
-                           <skip>true</skip>
-                        </configuration>
-                     </execution>
-                     <execution>
                         <id>default-test</id>
                         <configuration>
                            <skip>true</skip>
