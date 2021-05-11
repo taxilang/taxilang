@@ -139,7 +139,9 @@ publish-release:
    stage: deploy
    script:
       - docker login -u vynecd -p $DOCKER_HUB_PASSWORD
-      - 'mvn $MAVEN_CLI_OPTS -DskipTests -Dmaven.test.skip=true deploy -P release,deploy-only' # Don't run tests on master, as already passed on develop
+      # Don't run tests on master, as already passed on develop
+      # Use -DskipTests, but not -Dmaven.test.skip=true as we need to compile the tests (as other projects have test dependencies), but not run them.
+      - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P release'
    only:
       - master
    artifacts:
