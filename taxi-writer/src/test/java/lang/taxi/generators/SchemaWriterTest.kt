@@ -144,6 +144,7 @@ model Person {
    @Test
    fun `outputs coalesce statements`() {
       val generated = """
+
                type Qty inherits Decimal
                type QtyHit inherits Decimal
                type QtyFill inherits Decimal
@@ -151,7 +152,9 @@ model Person {
                type SomeAnotherQty inherits SomeQty
 
                model Foo {
-                  field1: SomeAnotherQty as coalesce(Qty, QtyHit, QtyFill)
+                  qty1: Qty inherits Decimal
+                  qty2: QtyHit inherits Decimal
+                  field1: SomeAnotherQty by coalesce(this.qty1, this.qty2)
                }
 
             """.trimIndent()
@@ -169,7 +172,9 @@ type SomeQty inherits lang.taxi.Decimal
 type SomeAnotherQty inherits SomeQty
 
 model Foo {
-   field1 : SomeAnotherQty as coalesce(Qty, QtyHit, QtyFill)
+   qty1 : Qty
+   qty2 : QtyHit
+   field1 : SomeAnotherQty  by taxi.stdlib.coalesce( this.qty1,this.qty2 )
 }
 
       """.trimIndent()
