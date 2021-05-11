@@ -38,6 +38,7 @@ cache:
 .cleanup-after-vscode-plugin-build: &cleanup-after-vscode-plugin-build
 #   These files are modified during the build process, as we update their versions dynamically.
 #   Currently, we don't commit the changes, although we could add that at a later date
+   - 'cd language-server/vscode-extension'
    - 'git restore package.json package-lock.json'
 
 stages:
