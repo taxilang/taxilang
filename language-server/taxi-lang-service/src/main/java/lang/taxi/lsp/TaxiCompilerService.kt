@@ -4,22 +4,20 @@ import com.google.common.base.Stopwatch
 import lang.taxi.*
 import lang.taxi.linter.toLinterRules
 import lang.taxi.lsp.completion.TypeProvider
+import lang.taxi.lsp.sourceService.WorkspaceSourceService
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.eclipse.lsp4j.TextDocumentIdentifier
-import org.eclipse.lsp4j.services.LanguageClient
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Sinks
-import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.net.URI
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicReference
 
-private object CompilationTrigger {}
 class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig()) {
     private var taxiProjectConfig: TaxiPackageProject? = null
     private lateinit var workspaceSourceService: WorkspaceSourceService
@@ -60,8 +58,8 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
             }
     }
 
-    fun triggerAsyncCompilation(): Sinks.EmitResult {
-        return this.compileTriggerSink.tryEmitNext(CompilationTrigger)
+    fun triggerAsyncCompilation(trigger:CompilationTrigger): Sinks.EmitResult {
+        return this.compileTriggerSink.tryEmitNext(trigger)
     }
 
     val sourceCount: Int
@@ -101,7 +99,7 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
 
     fun reloadSourcesAndTriggerCompilation(): Sinks.EmitResult {
         reloadSourcesWithoutCompiling()
-        return this.triggerAsyncCompilation()
+        return this.triggerAsyncCompilation(CompilationTrigger(null))
     }
 
     /**
@@ -166,11 +164,34 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
         return lastCompilationResult.get()
     }
 
-    fun initialize(rootUri: String, client: LanguageClient) {
-        val root = File(URI.create(SourceNames.normalize(rootUri)))
-        require(root.exists()) { "Fatal error - the workspace root location doesn't appear to exist" }
+    /**
+     * Will use the last compilation result if present, and contains
+     * the requested uri.
+     * If the compilation result doesn't contain the uri, a compilation pass
+     * is immediately forced.
+     * If after that compilation, the uri still isn't present, an exception is thrown.
+     */
+    fun getOrComputeLastCompilationResult(uriToAssertIsPreset: String): CompilationResult {
+        val lastResult = getOrComputeLastCompilationResult()
+        if (lastResult.containsTokensForSource(uriToAssertIsPreset)) {
+            return lastResult
+        }
+        // The requested uri wasn't present - maybe we're waiting on a compilation.
+        val forcedCompilationResult = compile()
+        if (forcedCompilationResult.containsTokensForSource(uriToAssertIsPreset)) {
+            return forcedCompilationResult
+        } else {
+            throw RuntimeException("The requested uri $uriToAssertIsPreset is not known to the compiler")
+        }
+    }
 
-        workspaceSourceService = WorkspaceSourceService(root.toPath(), LspClientPackageManagerMessageLogger(client))
+    /**
+     * Initialize the compiler service, loading sources from the source service.
+     * Note: Because of initialization order implicit in the LSP startup sequences,
+     * the source service cannot be injected at creation time.
+     */
+    fun initialize(sourceService: WorkspaceSourceService) {
+        this.workspaceSourceService = sourceService
         reloadSourcesWithoutCompiling()
     }
 

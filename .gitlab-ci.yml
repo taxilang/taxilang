@@ -28,13 +28,26 @@ cache:
    - 'unset NPM_CONFIG_PREFIX'
    - '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm'
    - 'nvm use stable'
-   - 'vsce --help'
+
+.prepare-vscode-plugin-build: &prepare-vscode-plugin-build
+   - 'cd language-server/vscode-extension'
+   - 'npm install'
+   - 'npm install -g vsce'
+   - 'npm run sync-pom-version'
+
+.cleanup-after-vscode-plugin-build: &cleanup-after-vscode-plugin-build
+#   These files are modified during the build process, as we update their versions dynamically.
+#   Currently, we don't commit the changes, although we could add that at a later date
+   - 'cd language-server/vscode-extension'
+   - 'git restore package.json package-lock.json'
 
 stages:
    - build
-   - release
-   - deploy
    - build-plugin
+   - trigger-release
+   - deploy
+   - deploy-plugin
+
 
 # This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
 # Because some enforcer rules might check dependency convergence and class duplications
@@ -44,6 +57,8 @@ validate:
   stage: build
   except:
      - tags
+     - master
+     - develop
   script:
     - 'mvn $MAVEN_CLI_OPTS clean deploy'
   artifacts:
@@ -55,39 +70,12 @@ validate:
       # However, leaving this here to pick up later
         - "*/target/surefire-reports/TEST-*.xml"
 
-build-beta-plugin:
-   stage: build-plugin
-   script:
-      - *setup-nvm
-      - 'cd language-server/vscode-extension'
-      - 'npm install'
-      - 'npm install -g vsce'
-      - 'vsce package'
-   only:
-      - develop
-   artifacts:
-      paths:
-         - 'language-server/vscode-extension/*.vsix'
-
-package-plugin:
-   stage: build-plugin
-   script:
-      - *setup-nvm
-      - 'cd language-server/vscode-extension'
-      - 'npm install'
-      - 'npm install -g vsce'
-      - 'vsce publish'
-   only:
-      - master
-   artifacts:
-      paths:
-         - 'language-server/vscode-extension/*.vsix'
-
-release-major:
+## Manual jobs to trigger a release and increment the version (major,minor,patch)
+release-then-increment-major:
    variables:
       GIT_STRATEGY: none
    image: maven:3.3.9-jdk-8
-   stage: release
+   stage: trigger-release
    script:
       - *git_setup
       - 'mvn gitflow:release -B -DversionDigitToIncrement=$MAJOR_RELEASE_DIGIT -DskipTestProject=true'
@@ -95,11 +83,11 @@ release-major:
       - develop
    when: manual
 
-release-minor:
+release-then-increment-minor:
    variables:
       GIT_STRATEGY: none
    image: maven:3.3.9-jdk-8
-   stage: release
+   stage: trigger-release
    script:
       - *git_setup
       - 'mvn gitflow:release -B -DversionDigitToIncrement=$MINOR_RELEASE_DIGIT  -DskipTestProject=true'
@@ -107,11 +95,11 @@ release-minor:
       - develop
    when: manual
 
-release-patch:
+release-then-increment-patch:
    variables:
       GIT_STRATEGY: none
    image: maven:3.3.9-jdk-8
-   stage: release
+   stage: trigger-release
    script:
       - *git_setup
       - 'mvn gitflow:release -B -DversionDigitToIncrement=$PATCH_RELEASE_DIGIT  -DskipTestProject=true'
@@ -119,27 +107,56 @@ release-patch:
       - develop
    when: manual
 
-publish-snapshot:
-   stage: deploy
+## Publishing tasks (snapshots and releases)
+publish-snapshot-jars:
+   stage: build
    script:
       - docker login -u vynecd -p $DOCKER_HUB_PASSWORD
-      - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P snapshot-release,deploy-only ' # Skip UI and tests. Already there from previous stages and artifacts
+      - 'mvn $MAVEN_CLI_OPTS deploy -P snapshot-release'
    only:
       - develop
    artifacts:
       paths:
          - "taxi-cli/target/*.zip"
+         - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
+
+build-beta-plugin:
+   stage: build-plugin
+   script:
+      - *setup-nvm
+      - *prepare-vscode-plugin-build
+      - 'vsce package'
+   only:
+      - develop
+   after_script:
+      - *cleanup-after-vscode-plugin-build
+   artifacts:
+      paths:
+         - 'language-server/vscode-extension/*.vsix'
 
 publish-release:
    #image: maven:3.6.3-jdk-8
    stage: deploy
    script:
       - docker login -u vynecd -p $DOCKER_HUB_PASSWORD
-      - 'mvn $MAVEN_CLI_OPTS -DskipTests -Dmaven.test.skip=true deploy -P release,deploy-only'
-
+      - 'mvn $MAVEN_CLI_OPTS -DskipTests -Dmaven.test.skip=true deploy -P release,deploy-only' # Don't run tests on master, as already passed on develop
    only:
       - master
    artifacts:
       paths:
          - "taxi-cli/target/*.zip"
+         - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
 
+publish-plugin:
+   stage: deploy-plugin
+   script:
+      - *setup-nvm
+      - *prepare-vscode-plugin-build
+      - 'vsce publish'
+   only:
+      - master
+   artifacts:
+      paths:
+         - 'language-server/vscode-extension/*.vsix'
+   after_script:
+      - *cleanup-after-vscode-plugin-build
