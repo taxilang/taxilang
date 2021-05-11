@@ -43,8 +43,9 @@ cache:
 stages:
    - build
    - build-plugin
-   - release
+   - trigger-release
    - deploy
+   - deploy-plugin
 
 
 # This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
@@ -68,27 +69,12 @@ validate:
       # However, leaving this here to pick up later
         - "*/target/surefire-reports/TEST-*.xml"
 
-package-plugin:
-   stage: build-plugin
-   script:
-      - *setup-nvm
-      - *prepare-vscode-plugin-build
-      - 'vsce publish'
-   only:
-      - master
-   artifacts:
-      paths:
-         - 'language-server/vscode-extension/*.vsix'
-   after_script:
-      - *cleanup-after-vscode-plugin-build
-
-
 ## Manual jobs to trigger a release and increment the version (major,minor,patch)
 release-then-increment-major:
    variables:
       GIT_STRATEGY: none
    image: maven:3.3.9-jdk-8
-   stage: release
+   stage: trigger-release
    script:
       - *git_setup
       - 'mvn gitflow:release -B -DversionDigitToIncrement=$MAJOR_RELEASE_DIGIT -DskipTestProject=true'
@@ -100,7 +86,7 @@ release-then-increment-minor:
    variables:
       GIT_STRATEGY: none
    image: maven:3.3.9-jdk-8
-   stage: release
+   stage: trigger-release
    script:
       - *git_setup
       - 'mvn gitflow:release -B -DversionDigitToIncrement=$MINOR_RELEASE_DIGIT  -DskipTestProject=true'
@@ -112,7 +98,7 @@ release-then-increment-patch:
    variables:
       GIT_STRATEGY: none
    image: maven:3.3.9-jdk-8
-   stage: release
+   stage: trigger-release
    script:
       - *git_setup
       - 'mvn gitflow:release -B -DversionDigitToIncrement=$PATCH_RELEASE_DIGIT  -DskipTestProject=true'
@@ -122,7 +108,7 @@ release-then-increment-patch:
 
 ## Publishing tasks (snapshots and releases)
 publish-snapshot-jars:
-   stage: deploy
+   stage: build
    script:
       - docker login -u vynecd -p $DOCKER_HUB_PASSWORD
       - 'mvn $MAVEN_CLI_OPTS deploy -P snapshot-release'
@@ -134,8 +120,7 @@ publish-snapshot-jars:
          - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
 
 build-beta-plugin:
-   stage: deploy
-   needs: ["publish-snapshot-jars"]
+   stage: build-plugin
    script:
       - *setup-nvm
       - *prepare-vscode-plugin-build
@@ -160,4 +145,17 @@ publish-release:
       paths:
          - "taxi-cli/target/*.zip"
          - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
+
+publish-plugin:
+   stage: deploy-plugin
+   script:
+      - *setup-nvm
+      - *prepare-vscode-plugin-build
+      - 'vsce publish'
+   only:
+      - master
+   artifacts:
+      paths:
          - 'language-server/vscode-extension/*.vsix'
+   after_script:
+      - *cleanup-after-vscode-plugin-build
