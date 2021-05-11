@@ -3,7 +3,7 @@
    <parent>
       <groupId>org.taxilang</groupId>
       <artifactId>parent</artifactId>
-      <version>1.29.1-SNAPSHOT</version>
+      <version>1.29.1</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
