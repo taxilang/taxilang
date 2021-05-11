@@ -81,21 +81,10 @@ annotationTypeBody: '{' typeMemberDeclaration* '}';
 
 calculatedMemberDeclaration
    : typeMemberDeclaration  'as'
-   (operatorExpression
-   |
-   calculatedExpression)
+   (operatorExpression)
    ;
 
 
-// THIS IS TO BE DEPRECRATED.  Use function infrastructrue, rather than adding new formulas
-calculatedExpression:
-           calculatedFormula '(' calculatedExpressionBody? ')'
-           ;
-
-// THIS IS TO BE DEPRECRATED.  Use function infrastructrue, rather than adding new formulas
-calculatedFormula:
-          'coalesce'
-          ;
 
 calculatedExpressionBody:
          typeType (',' typeType)*

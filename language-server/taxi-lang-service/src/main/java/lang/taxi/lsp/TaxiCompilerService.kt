@@ -137,7 +137,12 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
         } catch (e: CompilationException) {
             CompilationResult(compiler, null, charStreams.size, stopwatch.elapsed(), e.errors)
         } catch (e: Exception) {
-            TODO()
+            CompilationResult(
+               compiler,
+               null,
+               charStreams.size,
+               stopwatch.elapsed(),
+               listOf(CompilationError(1,1, e.message ?: e.localizedMessage, null)))
         }
         lastCompilationResult.set(compilationResult)
         if (compilationResult.successful) {

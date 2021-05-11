@@ -224,8 +224,6 @@ class ViewAggregationSpec : Spek({
          type ProductName inherits String
          type Price inherits Decimal
 
-         declare query function avgOver(Decimal,String):Decimal
-
          model ProductGroup {
             @Id
             id: GroupId
@@ -247,7 +245,7 @@ class ViewAggregationSpec : Spek({
                productName: Product::ProductName
                price: Product::Price
                groupName: ProductGroup::GroupName
-               avgGroupPrice: Price by avgOver(Product::Price, ProductGroup::GroupName)
+               cumulativeGroupPrice: Price by vyne.aggregations.sumOver(Product::Price, ProductGroup::GroupName)
             }
          }
            """.trimIndent()
@@ -263,13 +261,13 @@ class ViewAggregationSpec : Spek({
          bodyType.field("productName").memberSource?.fullyQualifiedName.should.equal("Product")
          bodyType.field("price").memberSource?.fullyQualifiedName.should.equal("Product")
          bodyType.field("groupName").memberSource?.fullyQualifiedName.should.equal("ProductGroup")
-         val avgGroupPriceField = bodyType.field("avgGroupPrice")
-         avgGroupPriceField.memberSource.should.be.`null`
-         val avgGroupAccessor = avgGroupPriceField.accessor as FunctionAccessor
-         avgGroupAccessor.function.qualifiedName.should.equal("avgOver")
-         val firstArgument = avgGroupAccessor.inputs.first() as ModelAttributeReferenceSelector
+         val cumulativeGroupPriceField = bodyType.field("cumulativeGroupPrice")
+         cumulativeGroupPriceField.memberSource.should.be.`null`
+         val cumulativeGroupPriceAccessor = cumulativeGroupPriceField.accessor as FunctionAccessor
+         cumulativeGroupPriceAccessor.function.qualifiedName.should.equal("vyne.aggregations.sumOver")
+         val firstArgument = cumulativeGroupPriceAccessor.inputs.first() as ModelAttributeReferenceSelector
          firstArgument.memberSource.fullyQualifiedName.should.equal("Product")
-         val secondArgument = avgGroupAccessor.inputs[1] as ModelAttributeReferenceSelector
+         val secondArgument = cumulativeGroupPriceAccessor.inputs[1] as ModelAttributeReferenceSelector
          secondArgument.memberSource.fullyQualifiedName.should.equal("ProductGroup")
       }
 
@@ -371,7 +369,7 @@ class ViewAggregationSpec : Spek({
               orderId: OrderFill::FillOrderId
               orderDateTime: OrderEventDateTime
               orderType: OrderFill::OrderType
-              subSecurityType: OrderFill::SecurityDescription
+              subSecurityType: SecurityDescription by coalesce(OrderFill::SecurityDescription, OrderSent::SecurityDescription)
               requestedQuantity: OrderSent::RequestedQuantity
               orderEntry: OrderStatus by when {
                  OrderSent::RequestedQuantity = OrderFill::DecimalFieldOrderFilled -> OrderFill::OrderStatus
