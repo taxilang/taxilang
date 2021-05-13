@@ -81,7 +81,7 @@ data class AttributePath(val parts: List<String>) {
 
    val path = parts.joinToString(".")
 
-   fun append(name: String): AttributePath = AttributePath(this.parts + name)
+   fun append(name:String):AttributePath = AttributePath(this.parts + name)
 
    override fun toString() = "AttributePath ($path)"
    fun canResolve(parameters: List<NameTypePair>): Boolean {

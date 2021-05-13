@@ -1,49 +1,17 @@
 package lang.taxi.compiler
 
-import arrow.core.Either
-import arrow.core.flatMap
-import arrow.core.getOrElse
-import arrow.core.getOrHandle
-import arrow.core.left
-import arrow.core.right
-import arrow.core.rightIfNotNull
-import lang.taxi.CompilationError
-import lang.taxi.CompilationException
-import lang.taxi.Namespace
-import lang.taxi.TaxiParser
-import lang.taxi.findNamespace
+import arrow.core.*
+import lang.taxi.*
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
-import lang.taxi.functions.FunctionModifiers
 import lang.taxi.functions.FunctionExpressionAccessor
-import lang.taxi.source
-import lang.taxi.text
-import lang.taxi.toCompilationUnit
-import lang.taxi.types.Accessor
+import lang.taxi.functions.FunctionModifiers
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.ColumnAccessor
-import lang.taxi.types.ConditionalAccessor
-import lang.taxi.types.DestructuredAccessor
-import lang.taxi.types.Field
-import lang.taxi.types.FieldModifier
-import lang.taxi.types.FieldReferenceSelector
-import lang.taxi.types.FieldSourceAccessor
-import lang.taxi.types.Formula
-import lang.taxi.types.FormulaOperator
-import lang.taxi.types.JsonPathAccessor
-import lang.taxi.types.LiteralAccessor
-import lang.taxi.types.ModelAttributeReferenceSelector
-import lang.taxi.types.ObjectType
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.Type
-import lang.taxi.types.TypeReferenceSelector
-import lang.taxi.types.XpathAccessor
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.log
 import lang.taxi.utils.wrapErrorsInList
-import lang.taxi.value
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RuleContext
 
@@ -407,8 +375,8 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
             ).right()
          }
 
-         expression.readFunction() != null -> {
-            val functionContext = expression.readFunction()
+         expression.functionExpression() != null -> {
+            val functionContext = expression.functionExpression()
             buildReadFunctionAccessor(functionContext, targetType)
          }
          expression.readExpression() != null -> buildReadFunctionExpressionAccessor(expression.readExpression(), targetType)
@@ -470,7 +438,7 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
          PrimitiveType.INTEGER to { value -> value is Int },
          PrimitiveType.STRING to { value -> value is String })
 
-      return buildReadFunctionAccessor(readExpressionContext.readFunction(), targetType).flatMap { readFunctionAccessor ->
+      return buildReadFunctionAccessor(readExpressionContext.functionExpression(), targetType).flatMap { readFunctionAccessor ->
          val functionBaseReturnType = readFunctionAccessor.function.returnType?.basePrimitive
          if (!allowedFunctionReturnTypes.contains(functionBaseReturnType)) {
             throw CompilationException(CompilationError(
@@ -503,7 +471,7 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
 
    }
 
-   internal fun buildReadFunctionAccessor(functionContext: TaxiParser.ReadFunctionContext, targetType: Type): Either<List<CompilationError>, FunctionAccessor> {
+   internal fun buildReadFunctionAccessor(functionContext: TaxiParser.FunctionExpressionContext, targetType: Type): Either<List<CompilationError>, FunctionAccessor> {
       val namespace = functionContext.findNamespace()
       return tokenProcessor.attemptToLookupTypeByName(namespace, functionContext.functionName().qualifiedName().Identifier().text(), functionContext, symbolKind = SymbolKind.FUNCTION)
          .wrapErrorsInList()

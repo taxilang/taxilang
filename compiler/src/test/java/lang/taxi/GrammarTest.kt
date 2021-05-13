@@ -31,6 +31,16 @@ type FooType {
    }
 
    @Test
+   fun `can compile a simple array`() {
+      """
+         model Foo {
+            name : lang.taxi.Array<String>
+         }
+      """.compiled()
+
+   }
+
+   @Test
    fun `declaring the same field twice in a type should cause an error`() {
       val errors = """type Person {
          firstName : String

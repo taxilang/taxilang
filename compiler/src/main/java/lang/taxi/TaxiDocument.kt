@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.google.common.collect.Multimaps
+import lang.taxi.dataQuality.DataQualityRule
 import lang.taxi.functions.Function
 import lang.taxi.policies.Policy
 import lang.taxi.services.Service
@@ -44,7 +45,8 @@ open class TaxiDocument(
    val policies: Set<Policy> = emptySet(),
    val functions: Set<Function> = emptySet(),
    val annotations: Set<Annotation> = emptySet(),
-   val views: Set<View> = emptySet()
+   val views: Set<View> = emptySet(),
+   val dataQualityRules: Set<DataQualityRule> = emptySet()
 ) {
    private val equality = ImmutableEquality(this, TaxiDocument::types, TaxiDocument::services)
    private val typeMap = types.associateBy { it.qualifiedName }
@@ -52,6 +54,7 @@ open class TaxiDocument(
    private val policiesMap = policies.associateBy { it.qualifiedName }
    private val functionsMap = functions.associateBy { it.qualifiedName }
    private val viewMap = views.associateBy { it.qualifiedName }
+   private val dataQualityRulesMap = dataQualityRules.associateBy { it.qualifiedName }
 
    companion object {
       fun empty(): TaxiDocument {
@@ -116,6 +119,8 @@ open class TaxiDocument(
 
    fun view(name: String) = viewMap[name]
 
+   fun dataQualityRule(name: String) = dataQualityRulesMap[name]
+
    fun containsImportable(tokenName: String): Boolean {
       return typeMap.containsKey(tokenName) || functionsMap.containsKey(tokenName)
    }
@@ -123,6 +128,8 @@ open class TaxiDocument(
    fun containsType(typeName: String) = typeMap.containsKey(typeName)
    fun containsService(serviceName: String) = servicesMap.containsKey(serviceName)
    fun containsFunction(functionName: String) = functionsMap.containsKey(functionName)
+   fun containsDataQualityRule(ruleName: String) = dataQualityRulesMap.containsKey(ruleName)
+
 
    override fun hashCode() = equality.hash()
    override fun equals(other: Any?) = equality.isEqualTo(other)
@@ -202,7 +209,10 @@ open class TaxiDocument(
          this.types + other.types.filterNot { duplicateNames.contains(it.qualifiedName) },
          this.services + other.services,
          this.policies + other.policies,
-         this.functions + other.functions
+         this.functions + other.functions,
+         this.annotations + other.annotations,
+         this.views + other.views,
+         this.dataQualityRules + other.dataQualityRules
       )
    }
 

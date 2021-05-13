@@ -19,6 +19,7 @@ import lang.taxi.TaxiParser
 import lang.taxi.Tokens
 import lang.taxi.TypeSystem
 import lang.taxi.compiler.CalculatedFieldSetProcessor.Companion.validate
+import lang.taxi.dataQuality.DataQualityRule
 import lang.taxi.findNamespace
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionDefinition
@@ -111,7 +112,8 @@ import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.nio.charset.Charset
 import java.security.SecureRandom
-import java.util.*
+import java.util.Base64
+import java.util.EnumSet
 
 class TokenProcessor(
    val tokens: Tokens,
@@ -146,9 +148,10 @@ class TokenProcessor(
    private val synonymRegistry: SynonymRegistry<ParserRuleContext>
    private val services = mutableListOf<Service>()
    private val policies = mutableListOf<Policy>()
-   private val functions = mutableListOf<Function>()
+   private val functions = mutableListOf<lang.taxi.functions.Function>()
    private val annotations = mutableListOf<Annotation>()
    private val views = mutableListOf<View>()
+   private val dataQualityRules = mutableListOf<DataQualityRule>()
    private val constraintValidator = ConstraintValidator()
 
    private val errors = mutableListOf<CompilationError>()
@@ -183,7 +186,8 @@ class TokenProcessor(
          policies.toSet(),
          functions.toSet(),
          annotations.toSet(),
-         views.toSet()
+         views.toSet(),
+         dataQualityRules.toSet()
       )
    }
 
@@ -323,6 +327,8 @@ class TokenProcessor(
       //
       compileViews()
       validateViewNames()
+
+      compileDataQualityRules()
    }
 
    private fun compileViews() {
@@ -333,6 +339,17 @@ class TokenProcessor(
          .flattenErrors()
          .collectErrors(errors)
          .map { this.views.addAll(it) }
+   }
+
+   private fun compileDataQualityRules() {
+      val dataQualityRuleProcessor = DataQualityRuleProcessor(this)
+      this.tokens.unparsedDataQualityRules.map { (name, rulePair) ->
+         val (namespace, ruleContext) = rulePair
+         dataQualityRuleProcessor.compileRule(name, namespace, ruleContext)
+      }.invertEitherList()
+         .flattenErrors()
+         .collectErrors(errors)
+         .map { this.dataQualityRules.addAll(it) }
    }
 
    /**

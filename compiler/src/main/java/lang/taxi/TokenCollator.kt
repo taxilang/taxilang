@@ -20,6 +20,7 @@ data class Tokens(
    val namedQueries: List<Pair<Namespace, TaxiParser.NamedQueryContext>>,
    val anonymousQueries: List<Pair<Namespace, TaxiParser.AnonymousQueryContext>>,
    val unparsedViews: Map<String, Pair<Namespace, TaxiParser.ViewDeclarationContext>>,
+   val unparsedDataQualityRules: Map<String, Pair<Namespace, TaxiParser.DataQualityRuleContext>>,
    val tokenStore: TokenStore
 ) {
 
@@ -54,6 +55,7 @@ data class Tokens(
          this.namedQueries + others.namedQueries,
          this.anonymousQueries + others.anonymousQueries,
          this.unparsedViews + others.unparsedViews,
+         this.unparsedDataQualityRules + others.unparsedDataQualityRules,
          this.tokenStore + others.tokenStore
 
       )
@@ -81,8 +83,11 @@ data class Tokens(
       val duplicateTypeNames = this.unparsedTypes.keys.filter { others.unparsedTypes.containsKey(it) }
       val errors = if (duplicateTypeNames.isNotEmpty()) {
          val compilationErrors = duplicateTypeNames.map {
-            CompilationError((others.unparsedTypes[it]
-               ?: error("")).second.start, "Attempt to redefine type $it. Types may be extended (using an extension), but not redefined")
+            CompilationError(
+               (others.unparsedTypes[it]
+                  ?: error("")).second.start,
+               "Attempt to redefine type $it. Types may be extended (using an extension), but not redefined"
+            )
          }
          compilationErrors
       } else emptyList()
@@ -91,7 +96,12 @@ data class Tokens(
 
    private fun collectDuplicateServices(others: Tokens): List<CompilationError> {
       val duplicateServices = this.unparsedServices.keys.filter { others.unparsedServices.containsKey(it) }
-      val errors = duplicateServices.map { CompilationError(others.unparsedServices[it]!!.second.start, "Attempt to redefine service $it. Services may be extended (using an extension), but not redefined") }
+      val errors = duplicateServices.map {
+         CompilationError(
+            others.unparsedServices[it]!!.second.start,
+            "Attempt to redefine service $it. Services may be extended (using an extension), but not redefined"
+         )
+      }
       return errors
    }
 
@@ -157,6 +167,7 @@ class TokenCollator : TaxiBaseListener() {
    private val unparsedFunctions = mutableMapOf<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>()
    private val namedQueries = mutableListOf<Pair<Namespace, TaxiParser.NamedQueryContext>>()
    private val anonymousQueries = mutableListOf<Pair<Namespace, TaxiParser.AnonymousQueryContext>>()
+   private val unparsedDataQualityRules = mutableMapOf<String, Pair<Namespace, TaxiParser.DataQualityRuleContext>>()
    private val unparsedViews = mutableMapOf<String, Pair<Namespace, TaxiParser.ViewDeclarationContext>>()
 
    //    private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
@@ -174,7 +185,9 @@ class TokenCollator : TaxiBaseListener() {
          namedQueries,
          anonymousQueries,
          unparsedViews,
-         tokenStore)
+         unparsedDataQualityRules,
+         tokenStore
+      )
    }
 
    override fun exitEveryRule(ctx: ParserRuleContext) {
@@ -190,7 +203,6 @@ class TokenCollator : TaxiBaseListener() {
       }
       super.exitImportDeclaration(ctx)
    }
-
 
    override fun exitFieldDeclaration(ctx: TaxiParser.FieldDeclarationContext) {
       collateExceptions(ctx)
@@ -307,6 +319,12 @@ class TokenCollator : TaxiBaseListener() {
          unparsedViews.put(name, namespace to ctx)
       }
       super.exitViewDeclaration(ctx)
+   }
+
+   override fun exitDataQualityRule(ctx: TaxiParser.DataQualityRuleContext) {
+      collateExceptions(ctx)
+      val qualifiedName = qualify(ctx.qualifiedName().Identifier().text())
+      unparsedDataQualityRules[qualifiedName] = namespace to ctx
    }
 
    /**

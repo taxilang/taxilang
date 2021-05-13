@@ -43,6 +43,7 @@ toplevelObject
     |   annotationTypeDeclaration
     |   query
     |   viewDeclaration
+    |   dataQualityRule
     ;
 
 typeModifier
@@ -191,7 +192,7 @@ scalarAccessorExpression
     | columnDefinition
     | conditionalTypeConditionDeclaration
     | defaultDefinition
-    | readFunction
+    | functionExpression
     | readExpression
     | byFieldSourceExpression
     ;
@@ -550,12 +551,9 @@ functionModifiers: 'query';
 
 
 // Deprecated, use functionDeclaration
-readFunction: functionName '(' formalParameterList? ')';
-//         'concat' |
-//         'leftAndUpperCase' |
-//         'midAndUpperCase'
-//         ;
-readExpression: readFunction arithmaticOperator literal;
+functionExpression: functionName '(' formalParameterList? ')';
+
+readExpression: functionExpression arithmaticOperator literal;
 functionName: qualifiedName;
 formalParameterList
     : parameter  (',' parameter)*
@@ -599,6 +597,19 @@ optionalType
    : '?'
    ;
 
+
+//  Data Quality rules
+ruleScope : 'type' | 'concept' | 'model';
+
+dataQualityRule :  typeDoc? annotation* ruleScope? 'rule' qualifiedName dataQualityRuleBody?;
+
+dataQualityRuleBody : '{' dataQualityRuleApplyTo? '}';
+dataQualityRuleApplyTo : 'applyTo' '{' dataQualityApplyToFunctionList '}';
+dataQualityApplyToFunctionList : functionExpression (',' functionExpression)*;
+
+// End Data Quality Rules
+
+
 //primitiveType
 //    : primitiveTypeName
 //    | 'lang.taxi.' primitiveTypeName
@@ -631,7 +642,7 @@ literal
     ;
 
 typeExtensionDeclaration
-   :  typeDoc? annotation* 'type extension' Identifier typeExtensionBody
+   :  typeDoc? annotation* 'type' 'extension' Identifier typeExtensionBody
    ;
 
 typeExtensionBody
