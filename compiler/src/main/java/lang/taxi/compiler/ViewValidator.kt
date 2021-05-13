@@ -7,6 +7,8 @@ import lang.taxi.CompilationError
 import lang.taxi.TaxiParser
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionModifiers
+import lang.taxi.functions.stdlib.Coalesce
+import lang.taxi.functions.vyne.aggregations.SumOver
 import lang.taxi.types.Accessor
 import lang.taxi.types.AndExpression
 import lang.taxi.types.AssignmentExpression
@@ -17,6 +19,7 @@ import lang.taxi.types.ConditionalAccessor
 import lang.taxi.types.ConstantEntity
 import lang.taxi.types.ElseMatchExpression
 import lang.taxi.types.EnumType
+import lang.taxi.types.EnumValueAssignment
 import lang.taxi.types.Field
 import lang.taxi.types.InlineAssignmentExpression
 import lang.taxi.types.LiteralAssignment
@@ -60,12 +63,12 @@ class ViewValidator(private val viewName: String) {
                compilationErrors.add(CompilationError(bodyCtx.start, "Invalid View Definition - empty as {} block"))
             }
 
-            val nonQueryableFunctions = fields.mapNotNull { it.accessor }
+            val invalidFunctions = fields.mapNotNull { it.accessor }
                .filterIsInstance(FunctionAccessor::class.java)
-               .filter { functionAccessor -> !functionAccessor.function.modifiers.contains(FunctionModifiers.Query) }
+               .filter { functionAccessor -> !isValidFunctionForViewField(functionAccessor) }
 
-            if (nonQueryableFunctions.isNotEmpty()) {
-               compilationErrors.add(CompilationError(bodyCtx.start, "Invalid View Definition. Functions, ${nonQueryableFunctions.joinToString { it.function.qualifiedName }}, must be queryable"))
+            if (invalidFunctions.isNotEmpty()) {
+               compilationErrors.add(CompilationError(bodyCtx.start, "Invalid View Definition. Functions, only ${validViewFieldFunctionNames()} are allowed."))
             }
             viewFieldTypes.add(fromViewBodyFieldDefinitionToPrimitiveFields(fields, bodyDefinition, bodyCtx, compilationErrors))
          }
@@ -181,15 +184,37 @@ class ViewValidator(private val viewName: String) {
       errors: MutableList<CompilationError>,
       typesInViewFindDefinitions: Set<Type>,
       viewBodyType: Type?) {
-      if (left !is ComparisonExpression && right !is ComparisonExpression) {
-         errors.add(
+      when {
+         left is ComparisonExpression &&  right is ComparisonExpression -> {
+            processComparisonExpression(left, ctx, errors, typesInViewFindDefinitions,viewBodyType)
+            processComparisonExpression(right, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+         }
+
+         left is ComparisonExpression && right is AndExpression -> {
+            processComparisonExpression(left, ctx, errors, typesInViewFindDefinitions,viewBodyType)
+            validateLogicalExpressions(right.left, right.right, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+         }
+
+         left is ComparisonExpression && right is OrExpression -> {
+            processComparisonExpression(left, ctx, errors, typesInViewFindDefinitions,viewBodyType)
+            validateLogicalExpressions(right.left, right.right, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+         }
+
+         right is ComparisonExpression && left is AndExpression -> {
+            processComparisonExpression(right, ctx, errors, typesInViewFindDefinitions,viewBodyType)
+            validateLogicalExpressions(left.left, left.right, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+         }
+
+         right is ComparisonExpression && left is OrExpression -> {
+            processComparisonExpression(right, ctx, errors, typesInViewFindDefinitions,viewBodyType)
+            validateLogicalExpressions(left.left, left.right, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+         }
+
+         else -> errors.add(
             CompilationError(
                ctx.start,
                "Both left and right hand-side of AND / OR should be a comparison expression!")
          )
-      } else {
-         processComparisonExpression(left as ComparisonExpression, ctx, errors, typesInViewFindDefinitions,viewBodyType)
-         processComparisonExpression(right as ComparisonExpression, ctx, errors, typesInViewFindDefinitions, viewBodyType)
       }
    }
 
@@ -257,6 +282,7 @@ class ViewValidator(private val viewName: String) {
 
             }
          }
+         is EnumValueAssignment -> { }
          // This is also covered by the compiler.
          else -> errors.add(CompilationError(
             ctx.start,
@@ -344,10 +370,10 @@ class ViewValidator(private val viewName: String) {
                                 errors: MutableList<CompilationError>,
                                 typesInViewFindDefinitions: Set<Type>,
                                 viewBodyType: Type?) {
-      if (!accessor.function.modifiers.contains(FunctionModifiers.Query)) {
+      if (!isValidFunctionForViewField(accessor)) {
          errors.add(CompilationError(
             ctx.start,
-            "Only query function are allowed."))
+            "Only ${validViewFieldFunctionNames()} function are allowed."))
       }
       val inputs = accessor.inputs
       inputs.forEach { input ->
@@ -359,7 +385,34 @@ class ViewValidator(private val viewName: String) {
             validateValidateSourceAndField(input.memberSource, input.memberType, ctx, errors, typesInViewFindDefinitions, viewBodyType)
          }
       }
+
+      if (accessor.function.toQualifiedName() == Coalesce.name) {
+         if (inputs.size < 2) {
+            errors.add(CompilationError(
+               ctx.start,
+               "${Coalesce.name.typeName} requires at least two arguments"))
+            return
+         }
+         val firstCoalesceArgumentType = (inputs.first() as ModelAttributeReferenceSelector).memberType
+         if(!inputs.all {(it as ModelAttributeReferenceSelector).memberType == firstCoalesceArgumentType}) {
+            errors.add(CompilationError(
+               ctx.start,
+               "${Coalesce.name.typeName} arguments must be of same type"))
+         }
+      }
+
+
    }
+
+   /**
+    * We only Allow sumOver and coalesce for view fields as we map these function to their postgres counterparts in Vyne.
+    */
+   private fun isValidFunctionForViewField(accessor: FunctionAccessor): Boolean {
+      val functionQualifiedName = accessor.function.toQualifiedName()
+      return (functionQualifiedName == SumOver.name || functionQualifiedName == Coalesce.name)
+   }
+
+   private fun validViewFieldFunctionNames() = "${SumOver.name} and ${Coalesce.name}"
 
    private fun fromViewBodyFieldDefinitionToPrimitiveFields(
       fields: List<Field>,

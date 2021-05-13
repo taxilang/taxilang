@@ -132,7 +132,7 @@ class LogicalExpressionCompiler(private val tokenProcessor: TokenProcessor) {
                it.b
             }
             is Either.Left -> {
-               return Either.left(CompilationError(logicalExpressionAndCtx.start, "invalid numeric entity"))
+               return it.a.left()
             }
          }
       }
