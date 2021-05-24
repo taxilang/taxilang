@@ -3,6 +3,7 @@ package lang.taxi.compiler
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
+import com.google.common.graph.GraphBuilder
 import lang.taxi.CompilationError
 import lang.taxi.TaxiParser
 import lang.taxi.functions.FunctionAccessor
@@ -44,6 +45,10 @@ import lang.taxi.types.WhenFieldSetCondition
  */
 class ViewValidator(private val viewName: String) {
    private var currentViewBodyType: ObjectType? = null
+   /*
+    * a directed graph to detect cyclic relations for accessors.
+    */
+   private val accessorNodeGraph = GraphBuilder.directed().build<AccessorNode>()
    fun validateViewBodyDefinitions(
       bodyDefinitions: List<Pair<ViewBodyDefinition, TaxiParser.FindBodyContext>>,
       viewCtx: TaxiParser.ViewDeclarationContext): Either<List<CompilationError>, List<ViewBodyDefinition>> {
@@ -272,6 +277,7 @@ class ViewValidator(private val viewName: String) {
          is NullAssignment -> { }
          is ScalarAccessorValueAssignment -> {
             when (val accessor = expression.accessor) {
+               // Example: (OrderSent::RequestedQuantity - OrderView::CumulativeQty)
                is ConditionalAccessor -> validateField(accessor, ctx, errors, typesInViewFindDefinitions, viewBodyType)
                is FunctionAccessor -> {
                   validateFunction(accessor, ctx, errors, typesInViewFindDefinitions, viewBodyType)
@@ -331,6 +337,7 @@ class ViewValidator(private val viewName: String) {
                            "Invalid context for ${source.typeName}::${type.toQualifiedName().typeName}. You can not use a reference to View on the left hand side of a case when expression.")
                      )
                   }
+                  is ConditionalAccessor -> {}
                   else -> errors.add(
                      CompilationError(
                         ctx.start,
@@ -481,3 +488,5 @@ class ViewValidator(private val viewName: String) {
       }
    }
 }
+
+data class AccessorNode(val sourceType: QualifiedName, val fieldType: QualifiedName)

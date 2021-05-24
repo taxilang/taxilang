@@ -403,20 +403,37 @@ class ViewAggregationSpec : Spek({
          import vyne.aggregations.sumOver
          type SentOrderId inherits String
          type FillOrderId inherits String
+         type MarketTradeId inherits String
          type DecimalFieldOrderFilled inherits Decimal
          type CumulativeQuantity inherits Decimal
+         type BuyCumulativeSumOrdered inherits Decimal
+         type SellCumulativeSumOrdered inherits Decimal
+         type BrokerOrderBuy inherits String
+         type BrokerOrderSell inherits String
+         type OrderBankDirection inherits String
+         type SellCumulativeQuantity inherits Decimal
+         type BuyCumulativeQuantity inherits Decimal
+         type OrderCumulativeSum inherits Decimal
+         type OrderStatus inherits String
+         type RequestedQuantity inherits Decimal
 
 
 
          model OrderSent {
             @Id
             sentOrderId : SentOrderId
+            direction: OrderBankDirection
+            requestedQty: RequestedQuantity
          }
 
          model OrderFill {
            @Id
            fillOrderId: FillOrderId
            executedQuantity: DecimalFieldOrderFilled? by column("Quantity")
+           brokerOrderBy: BrokerOrderBuy
+           brokerOrderSell: BrokerOrderSell
+           marketTradeId: MarketTradeId
+           status: OrderStatus
          }
 
           [[
@@ -426,20 +443,42 @@ class ViewAggregationSpec : Spek({
             find { OrderSent[] } as {
               orderId: OrderSent::SentOrderId
               executedQuantity: DecimalFieldOrderFilled
+              orderCumulativeSum: OrderCumulativeSum
+              buyCumulativeSumOrdered: BuyCumulativeSumOrdered
+              sellCumulativeSumOrdered: SellCumulativeSumOrdered
+              sellCumulativeQuantity: SellCumulativeQuantity
+              buyCumulativeQuantity: BuyCumulativeQuantity
               cumulativeQty: CumulativeQuantity
+              status: OrderStatus
             },
             find { OrderSent[] (joinTo OrderFill[]) } as {
               orderId: OrderFill::FillOrderId
-              executedQuantity: DecimalFieldOrderFilled by when {
-                 OrderView::CumulativeQuantity = null -> 0
-                 else -> OrderView::CumulativeQuantity
+
+              executedQuantity: OrderFill::DecimalFieldOrderFilled
+              orderCumulativeSum: OrderCumulativeSum by sumOver(OrderFill::DecimalFieldOrderFilled, OrderFill:: FillOrderId, OrderFill::MarketTradeId)
+              buyCumulativeSumOrdered: BuyCumulativeSumOrdered by sumOver(OrderFill::DecimalFieldOrderFilled, OrderFill::BrokerOrderBuy, OrderFill::MarketTradeId)
+              sellCumulativeSumOrdered: SellCumulativeSumOrdered by sumOver(OrderFill::DecimalFieldOrderFilled, OrderFill::BrokerOrderSell, OrderFill::MarketTradeId)
+              sellCumulativeQuantity: SellCumulativeQuantity by when {
+                       OrderFill::BrokerOrderSell != null -> sumOver(OrderFill::DecimalFieldOrderFilled, OrderFill::BrokerOrderSell, OrderFill::MarketTradeId)
+                       else -> (OrderView::OrderCumulativeSum - OrderView::BuyCumulativeSumOrdered)
               }
-              cumulativeQty: CumulativeQuantity
+              buyCumulativeQuantity: BuyCumulativeQuantity by when {
+                  OrderFill::BrokerOrderBuy != null -> sumOver(OrderFilled::DecimalFieldOrderFilled, OrderFilled::BrokerOrderBuy, OrderFilled::MarketTradeId)
+                  else -> (OrderView::OrderCumulativeSum - OrderView::SellCumulativeSumOrdered)
+               }
+              cumulativeQuantity: CumulativeQuantity by when {
+                OrderSent::OrderBankDirection = "BankBuys" -> (OrderView::BuyCumulativeQuantity - OrderView::SellCumulativeQuantity)
+                else -> (OrderView::SellCumulativeQuantity - OrderView::BuyCumulativeQuantity)
+                }
+              status: OrderStatus by when {
+                OrderSent::RequestedQuantity = OrderView::CumulativeQuantity -> OrderFill::OrderStatus
+                else -> "PartiallyFilled"
+              }
             }
          }
    """.trimIndent()
          val (errors, _) = Compiler(src).compileWithMessages()
-         errors.first().detailMessage.should.equal("Invalid context for OrderView::CumulativeQuantity. You can not use a reference to View on the left hand side of a case when expression.")
+        errors.should.be.empty
       }
 
       it("should allow view field references on the left hand side of when statements if the referenced field has a function accessor only") {
@@ -449,6 +488,7 @@ class ViewAggregationSpec : Spek({
          type FillOrderId inherits String
          type DecimalFieldOrderFilled inherits Decimal
          type CumulativeQuantity inherits Decimal
+         type LeavesQty inherits Decimal
 
 
 
@@ -471,6 +511,7 @@ class ViewAggregationSpec : Spek({
               orderId: OrderSent::SentOrderId
               executedQuantity: DecimalFieldOrderFilled
               cumulativeQty: CumulativeQuantity
+              leavesQty: LeavesQty
             },
             find { OrderSent[] (joinTo OrderFill[]) } as {
               orderId: OrderFill::FillOrderId
@@ -479,6 +520,10 @@ class ViewAggregationSpec : Spek({
                  else -> OrderView::CumulativeQuantity
               }
               cumulativeQty: CumulativeQuantity by sumOver(OrderFill::DecimalFieldOrderFilled, OrderFill::FillOrderId)
+              LeavesQty:LeavesQty by when {
+                 OrderSent::SentOrderId = OrderFill::FillOrderId -> null
+                 else -> null
+              }
             }
          }
    """.trimIndent()
