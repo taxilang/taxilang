@@ -45,10 +45,6 @@ import lang.taxi.types.WhenFieldSetCondition
  */
 class ViewValidator(private val viewName: String) {
    private var currentViewBodyType: ObjectType? = null
-   /*
-    * a directed graph to detect cyclic relations for accessors.
-    */
-   private val accessorNodeGraph = GraphBuilder.directed().build<AccessorNode>()
    fun validateViewBodyDefinitions(
       bodyDefinitions: List<Pair<ViewBodyDefinition, TaxiParser.FindBodyContext>>,
       viewCtx: TaxiParser.ViewDeclarationContext): Either<List<CompilationError>, List<ViewBodyDefinition>> {
@@ -488,5 +484,3 @@ class ViewValidator(private val viewName: String) {
       }
    }
 }
-
-data class AccessorNode(val sourceType: QualifiedName, val fieldType: QualifiedName)
