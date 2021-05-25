@@ -125,6 +125,12 @@ object TaxiQlSpec : Spek({
          name.should.equal("email")
          fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
          fact.value.should.equal("jimmy@demo.com")
+
+         query.typesToFind.should.have.size(1)
+         val discoveryType = query.typesToFind.first()
+         discoveryType.type.fullyQualifiedName.should.equal("foo.Trade")
+         discoveryType.startingFacts.should.have.size(1)
+         discoveryType.startingFacts.should.equal(query.facts)
       }
 
       it("should compile an unnamed query") {
