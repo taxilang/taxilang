@@ -4,7 +4,7 @@ import lang.taxi.functions.stdlib.FunctionApi
 import lang.taxi.types.QualifiedName
 
 object Aggregations {
-   val functions: List<FunctionApi> = listOf(
+   val   functions: List<FunctionApi> = listOf(
       SumOver
    )
    const val namespace = "vyne.aggregations"
