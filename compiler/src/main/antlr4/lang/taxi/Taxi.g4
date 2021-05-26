@@ -767,11 +767,15 @@ FindAll: 'findAll';
 FindOne: 'findOne';
 Find: 'find';
 
+// Must come before Identifier, to capture booleans correctly
+BooleanLiteral
+    :   TRUE | FALSE
+    ;
+
 Identifier
     :   Letter LetterOrDigit*
     | '`' ~('`')+ '`'
     ;
-
 
 StringLiteral
     :   '"' DoubleQuoteStringCharacter* '"'
@@ -779,9 +783,6 @@ StringLiteral
     ;
 
 
-BooleanLiteral
-    :   'true' | 'false'
-    ;
 
 
 fragment

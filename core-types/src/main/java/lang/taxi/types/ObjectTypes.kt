@@ -482,6 +482,10 @@ data class JsonPathAccessor(override val expression: String, override val return
 // TODO : This is duplicating concepts in ColumnMapping, one should die.
 data class ColumnAccessor(val index: Any?, override val defaultValue: Any?, override val returnType: Type) :
    ExpressionAccessor, TaxiStatementGenerator, AccessorWithDefault {
+   override fun toString(): String {
+      return "ColumnAccessor(index=$index, defaultValue=$defaultValue, returnType=${returnType.qualifiedName})"
+   }
+
    override val expression: String = index.toString()
    override fun asTaxi(): String {
       return when {

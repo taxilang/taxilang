@@ -7,7 +7,7 @@ object Aggregations {
    val functions: List<FunctionApi> = listOf(
       SumOver
    )
-   val namespace = "vyne.aggregations"
+   const val namespace = "vyne.aggregations"
    fun aggregationLibName(name:String): QualifiedName = QualifiedName.from("$namespace.$name")
 }
 
