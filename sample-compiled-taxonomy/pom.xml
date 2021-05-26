@@ -17,12 +17,6 @@
          <artifactId>taxi-annotations</artifactId>
          <version>${project.version}</version>
       </dependency>
-      <!-- Only required to get the build order correct within the project.  Normally not necessary -->
-      <dependency>
-         <groupId>org.taxilang</groupId>
-         <artifactId>taxi-annotation-processor</artifactId>
-         <version>${project.version}</version>
-      </dependency>
       <dependency>
          <groupId>com.google.guava</groupId>
          <artifactId>guava</artifactId>
@@ -35,7 +29,7 @@
          <plugin>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-maven-plugin</artifactId>
-            <version>1.3.50</version>
+            <version>${kotlin.version}</version>
             <executions>
                <execution>
                   <id>kapt</id>
@@ -46,13 +40,6 @@
                      <sourceDirs>
                         <sourceDir>src/main/java</sourceDir>
                      </sourceDirs>
-                     <annotationProcessorPaths>
-                        <annotationProcessorPath>
-                           <groupId>org.taxilang</groupId>
-                           <artifactId>taxi-annotation-processor</artifactId>
-                           <version>${project.version}</version>
-                        </annotationProcessorPath>
-                     </annotationProcessorPaths>
                   </configuration>
                </execution>
                <execution>
