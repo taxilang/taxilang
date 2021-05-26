@@ -59,9 +59,7 @@ class TypeAliasRegister private constructor(classes: Collection<Class<*>>) {
                }
             }
             .map { (clazz, typeAlias, dataType) ->
-               // Compiler is being weird, and clazz.packageName is throwing an error
-               val packageName = clazz.`package`.name
-               AnnotatedTypeAlias(packageName + "." + typeAlias.name, dataType)
+               AnnotatedTypeAlias(clazz.packageName + "." + typeAlias.name, dataType)
             }
          typeAliasesWithDataType
       }

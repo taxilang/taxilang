@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal
 
 class ServiceTests {
-   val typeMapper = DefaultTypeMapper(typeAliasRegister = TypeAliasRegister.forPackageNames(listOf("lang.taxi.generators.java", "lang.taxi.demo")))
+   val typeMapper = DefaultTypeMapper(typeAliasRegister = TypeAliasRegister.forPackageNames(listOf("lang.taxi.generators.java")))
 
    @DataType("taxi.example.Money")
    data class Money(

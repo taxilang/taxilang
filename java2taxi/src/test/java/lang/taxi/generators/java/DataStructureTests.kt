@@ -335,6 +335,7 @@ namespace namespaceA {
    @Test
    @Ignore("Needs investigation - looks like type aliases not being registered correctly - is the plugin running in the build?")
    fun given_typeDeclaresFieldUsingTypeAlias_then_typeAliasIsCorrectlyEmitted() {
+
       val taxiDef = TaxiGenerator(typeMapper).forClasses(Car::class.java).generateAsStrings()
       val expected = """
             namespace foo {
