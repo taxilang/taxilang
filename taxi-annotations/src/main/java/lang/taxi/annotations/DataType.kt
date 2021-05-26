@@ -37,7 +37,6 @@ annotation class DataType (
    val documentation: String = ""
 )
 
-
 /**
  * Indicates that a class is a Parameter type, meaning that
  * it's valid to be constructed during query time for passing

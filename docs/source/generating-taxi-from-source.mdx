@@ -64,6 +64,8 @@ If you're working in Kotlin, using `typealias` with the `@DataType` annotation i
 Type aliases can be directly annotated with the `@DataType` annotation.
 
 ```kotlin
+package com.foo.bar
+
 @DataType
 data class Bus(val passengers: Passengers)
 
@@ -76,90 +78,34 @@ data class Person(val name: PersonName)
 @DataType("foo.PersonName")
 typealias PersonName = String
 
-TypeAliasRegistry.register(TypeAliases::class)
+TypeAliasRegister.registerPackage("com.foo.bar")
 val taxiDef = TaxiGenerator().forClasses(Bus::class.java).generateAsStrings()
 
 // Generates:
-type Bus {
+model Bus {
     passengers : Passengers
 }
 
- type Person {
+model Person {
     name : PersonName
 }
 
-type alias PersonName as String
+type PersonName inherits String
 type alias Passengers as Person[]
 ```
 
-### 
+If using the `@DataType` against a Kotlin type alias, you need to declare the package(s) at startup.
 
-### Taxi Annotation Processor [ ![Download](https://api.bintray.com/packages/taxi-lang/releases/taxi-annotation-processor/images/download.svg) ](https://bintray.com/taxi-lang/releases/taxi-annotation-processor/_latestVersion)
+This is as simple as:
 
-Annotations on `typealias` are [not supported](https://youtrack.jetbrains.com/issue/KT-21489) out-of-the-box through Kotlin's reflection API.  In order to get these to work, we need to use an annotation processor.
 
-#### Capturing annotations at compile time
+```
+import lang.taxi.generators.kotlin.TypeAliasRegister
 
-Add the following to your Maven build:
-
-```text
-<build>
-   <plugins>
-      <plugin>
-         <artifactId>kotlin-maven-plugin</artifactId>
-         <groupId>org.jetbrains.kotlin</groupId>
-         <version>${kotlin.version}</version>
-         <executions>
-            <execution>
-               <id>kapt</id>
-               <goals>
-                  <goal>kapt</goal>
-               </goals>
-               <configuration>
-                  <annotationProcessorPaths>
-                     <annotationProcessorPath>
-                        <groupId>lang.taxi</groupId>
-                        <artifactId>taxi-annotation-processor</artifactId>
-                        <version>0.1.0</version>
-                     </annotationProcessorPath>
-                  </annotationProcessorPaths>
-               </configuration>
-            </execution>
-            <!-- other executions go here -->
-         </executions>
-      </plugin>
-   </plugins>
-</build>
+TypeAliasRegister.registerPackage("com.foo.bar")
 ```
 
-This will generate a class called `TypeAliases` which will be compiled into your source, containing the annotation metadata.
-
-#### Using typealias annotations when generating Taxi
-
-To consume the annotations generating Taxi, you need to first register the captured metadata.
-
-Add the annotation processor **as a dependency** to your project, then register the alias metadata:
-
-```markup
-<dependency>
-    <groupId>lang.taxi</groupId>
-    <artifactId>taxi-annotation-processor</artifactId>
-    <version>0.1.0</version>
-</dependency>
-```
-
-```kotlin
-TypeAliasRegistry.register(TypeAliases::class)
-```
-
-<Discourage>
-If you're consuming models from multiple different libraries, each will have it's own `TypeAliases` class generated.  Be sure to register them all.
-</Discourage>
-
-<Discourage>
-You must have at least one class that **isn't a type alias** annotated with `@DataType` present in your jar in order for type aliases to be generated.   
-</Discourage>
-
+Any annotated type aliases in the provided package will be discovered and have their names generated correctly.
 
 
 ### Constraints
@@ -175,7 +121,7 @@ data class Money(val amount: BigDecimal, val currency: String)
 data class SomeRequest(
         @Constraint("currency = 'USD'")
         val amount: Money)
-        
+
 TaxiGenerator().forClasses(Money::class.java, SomeRequest::class.java).generateAsStrings()
 
 // Generates:
@@ -262,7 +208,7 @@ service MoneyService {
 
 ### Taxi Generator customisation & extensions
 
-Taxi's generator can be customized, adding additional annotations or modfiying the tree structure before source is output.  
+Taxi's generator can be customized, adding additional annotations or modfiying the tree structure before source is output.
 
 The most common scenario here is to provide extensions to modify how services are generated.  However, you can inject an entirely separate `TypeMapper` and `ServiceMapper` for complete control over the generation process.  Take a look at [TaxiGenerator](https://gitlab.com/taxi-lang/taxi-lang/blob/master/java2taxi/src/main/java/lang/taxi/generators/java/TaxiGenerator.kt) to get started.
 
@@ -339,7 +285,7 @@ namespace vyne.demo {
 
 The [tests](https://gitlab.com/taxi-lang/taxi-lang/blob/master/java2taxi/src/test/java/lang/taxi/generators/java/extensions/HttpExtensionTest.kt) give the best example of usage.
 
-### 
+###
 
 ### Maven / Gradle
 
@@ -394,14 +340,14 @@ Grab the taxi generator from maven:
 
 Then run the converter as follows:
 
-\(Note, this example loads source from [this reference example](https://gitlab.com/taxi-lang/taxi-lang/raw/master/swagger2taxi/src/test/resources/openApiSpec/v2.0/yaml/petstore-simple.yaml) from the OpenApi project - 
+\(Note, this example loads source from [this reference example](https://gitlab.com/taxi-lang/taxi-lang/raw/master/swagger2taxi/src/test/resources/openApiSpec/v2.0/yaml/petstore-simple.yaml) from the OpenApi project -
 
 ```text
 // The actual swagger source is omitted for brevity
 val source = IOUtils.toString(URI.create("https://gitlab.com/taxi-lang/taxi-lang/raw/master/swagger2taxi/src/test/resources/openApiSpec/v2.0/yaml/petstore-simple.yaml"))
 TaxiGenerator().generateAsStrings(source, "vyne.openApi")
 
-// generated: 
+// generated:
 namespace vyne.openApi  {
 
     type NewPet {

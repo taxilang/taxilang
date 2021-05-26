@@ -52,13 +52,6 @@
 
       <dependency>
          <groupId>org.taxilang</groupId>
-         <artifactId>taxi-annotation-processor</artifactId>
-         <version>1.29.3-SNAPSHOT</version>
-         <!--<scope>test</scope>-->
-      </dependency>
-
-      <dependency>
-         <groupId>org.taxilang</groupId>
          <artifactId>taxi-writer</artifactId>
          <version>1.29.3-SNAPSHOT</version>
       </dependency>
