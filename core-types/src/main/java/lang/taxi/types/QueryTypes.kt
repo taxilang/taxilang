@@ -16,7 +16,8 @@ data class DiscoveryType(
 
 enum class QueryMode(val directive: String) {
    FIND_ONE("findOne"),
-   FIND_ALL("findAll"); // TODO : Stream
+   FIND_ALL("findAll"),
+   STREAM("stream");
 }
 
 typealias TaxiQLQueryString = String

@@ -20,15 +20,20 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
       val queryDirective = when {
          ctx.queryDirective().FindAll() != null -> QueryMode.FIND_ALL
          ctx.queryDirective().FindOne() != null -> QueryMode.FIND_ONE
+         //Deprecating FindAll/FindOne in favour of Find which behaves the same as FindAll
+         ctx.queryDirective().Find() != null -> QueryMode.FIND_ALL
+         ctx.queryDirective().Stream() != null -> QueryMode.STREAM
          else -> error("Unhandled Query Directive")
       }
 
       val factsOrErrors = ctx.givenBlock()?.let { parseFacts(it) } ?: Either.right(emptyMap())
       val queryOrErrors = factsOrErrors.flatMap { facts ->
-         parseQueryTypeList(ctx.queryTypeList(), facts)
+         parseQueryTypeList(ctx.queryTypeList(), facts, queryDirective)
             .flatMap { typesToDiscover ->
                parseTypeToProject(ctx.queryProjection(), typesToDiscover)
                   .map { typeToProject ->
+
+
                      TaxiQlQuery(
                         name = name,
                         facts = facts,
@@ -45,7 +50,8 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
 
    private fun parseQueryTypeList(
       queryTypeList: TaxiParser.QueryTypeListContext,
-      facts: Map<String, TypedValue>
+      facts: Map<String, TypedValue>,
+      queryDirective: QueryMode
    ): Either<List<CompilationError>, List<DiscoveryType>> {
       val namespace = queryTypeList.findNamespace()
       val constraintBuilder = ConstraintBuilder(tokenProcessor.typeResolver(namespace))
@@ -58,7 +64,15 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
                      constraintBuilder.build(constraintExpressionList, type)
                   } ?: Either.right(emptyList())
                constraintsOrErrors.map { constraints ->
-                  DiscoveryType(type.toQualifiedName(), constraints, facts)
+                  // If we're building a streaming query, then wrap the requested type
+                  // in a stream
+                  val typeToDiscover = if (queryDirective == QueryMode.STREAM) {
+                     StreamType.of(type)
+                  } else {
+                     type
+                  }
+
+                  DiscoveryType(typeToDiscover.toQualifiedName(), constraints, facts)
                }
             }
       }.invertEitherList().flattenErrors()

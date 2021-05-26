@@ -684,7 +684,7 @@ queryParam: Identifier ':' typeType;
 // findAllDirective: 'findAll';
 // findOneDirective: 'findAll';
 
-queryDirective: FindAll | FindOne;
+queryDirective: FindAll | FindOne | Stream | Find;
 findDirective: Find;
 
 givenBlock : 'given' '{' factList '}';
@@ -766,6 +766,7 @@ OR  : 'or' ;
 FindAll: 'findAll';
 FindOne: 'findOne';
 Find: 'find';
+Stream: 'stream';
 
 Identifier
     :   Letter LetterOrDigit*

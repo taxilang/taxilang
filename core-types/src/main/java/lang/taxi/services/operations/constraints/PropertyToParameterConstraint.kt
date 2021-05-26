@@ -6,7 +6,6 @@ import lang.taxi.types.AttributePath
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.FilterExpression
 import lang.taxi.types.QualifiedName
-import lang.taxi.types.Type
 import lang.taxi.utils.prependIfAbsent
 import lang.taxi.utils.quotedIfNecessary
 
