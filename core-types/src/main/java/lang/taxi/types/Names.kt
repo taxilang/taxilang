@@ -2,7 +2,11 @@ package lang.taxi.types
 
 import lang.taxi.utils.takeHead
 
-data class QualifiedName(val namespace: String, val typeName: String, val parameters: List<QualifiedName> = emptyList()) {
+data class QualifiedName(
+   val namespace: String,
+   val typeName: String,
+   val parameters: List<QualifiedName> = emptyList()
+) {
    companion object {
       private val nativeNamespaces = listOf("lang.taxi")
       fun from(value: String): QualifiedName {
@@ -10,15 +14,17 @@ data class QualifiedName(val namespace: String, val typeName: String, val parame
       }
    }
 
-   val parameterizedName: String
-      get() {
-         return if (parameters.isEmpty()) {
-            toString()
-         } else {
-            val params = this.parameters.joinToString(",") { it.parameterizedName }
-            "${toString()}<$params>"
-         }
-      }
+   private val parameterizedTypeNames: String = if (parameters.isEmpty()) {
+      ""
+   } else {
+      this.parameters.joinToString(",") { it.parameterizedName }
+   }
+
+   val parameterizedName: String = if (parameters.isEmpty()) {
+      toString()
+   } else {
+      "${toString()}<$parameterizedTypeNames>"
+   }
 
    val fullyQualifiedName = this.toString()
    override fun toString(): String {
@@ -30,11 +36,13 @@ data class QualifiedName(val namespace: String, val typeName: String, val parame
    }
 
    fun qualifiedRelativeTo(otherNamespace: String): String {
+      val parameterizedNameWithoutNamespace =
+         if (parameters.isEmpty()) typeName else "$typeName<$parameterizedTypeNames>"
       return when {
-         this.namespace == otherNamespace -> typeName
-         nativeNamespaces.contains(this.namespace) -> typeName
-         this.namespace.isEmpty() -> typeName
-         else -> "$namespace.$typeName"
+         this.namespace == otherNamespace -> parameterizedNameWithoutNamespace
+         nativeNamespaces.contains(this.namespace) -> parameterizedNameWithoutNamespace
+         this.namespace.isEmpty() -> parameterizedNameWithoutNamespace
+         else -> parameterizedName
       }
    }
 
@@ -47,7 +55,6 @@ data class QualifiedName(val namespace: String, val typeName: String, val parame
          }
       }
 }
-
 
 interface Named {
    val qualifiedName: String
@@ -66,12 +73,15 @@ data class AttributePath(val parts: List<String>) {
 //    constructor(qualifiedName: TaxiParser.QualifiedNameContext) : this(qualifiedName.Identifier().map { it.text })
 
    companion object {
+      val EMPTY: AttributePath = AttributePath(emptyList())
       fun from(value: String): AttributePath {
          return AttributePath(value.split("."))
       }
    }
 
    val path = parts.joinToString(".")
+
+   fun append(name: String): AttributePath = AttributePath(this.parts + name)
 
    override fun toString() = "AttributePath ($path)"
    fun canResolve(parameters: List<NameTypePair>): Boolean {
@@ -92,5 +102,3 @@ data class AttributePath(val parts: List<String>) {
    }
 
 }
-
-

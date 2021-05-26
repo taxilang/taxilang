@@ -1400,6 +1400,10 @@ class TokenProcessor(
                return@flatMap ArrayType.untyped().right()
             }
 
+            if (StreamType.isStreamTypeName(requestedTypeName)) {
+               return@flatMap StreamType.untyped().right()
+            }
+
             val requestedNameIsQualified = requestedTypeName.contains(".")
             if (!requestedNameIsQualified) {
                val importedTypeName = imports.firstOrNull { it.typeName == requestedTypeName }

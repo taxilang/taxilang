@@ -2,6 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.linter.LinterRuleConfiguration
+import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.services.operations.constraints.PropertyTypeIdentifier
@@ -192,6 +193,13 @@ fun String.compiled(
    linterRules: List<LinterRuleConfiguration> = emptyList()
 ): TaxiDocument {
    return Compiler(this, config = config.copy(linterRuleConfiguration = linterRules)).compile()
+}
+
+fun String.compiledQueries(
+   config: CompilerConfig = TestCompilerOptions.config,
+   linterRules: List<LinterRuleConfiguration> = emptyList()
+): List<TaxiQlQuery> {
+   return Compiler(this, config = config.copy(linterRuleConfiguration = linterRules)).queries()
 }
 
 object TestCompilerOptions {
