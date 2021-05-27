@@ -1,32 +1,12 @@
 package lang.taxi.generators.java
 
-import lang.taxi.TypeAliasRegistry
 import lang.taxi.TypeNames
-import lang.taxi.annotations.Constraint
-import lang.taxi.annotations.DataType
-import lang.taxi.annotations.Namespaces
-import lang.taxi.annotations.Operation
-import lang.taxi.annotations.ParameterType
-import lang.taxi.annotations.Service
-import lang.taxi.annotations.declaresName
-import lang.taxi.annotations.qualifiedName
+import lang.taxi.annotations.*
+import lang.taxi.generators.kotlin.TypeAliasRegister
 import lang.taxi.jvm.common.PrimitiveTypes
-import lang.taxi.kapt.KotlinTypeAlias
 import lang.taxi.sources.SourceCode
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.ArrayType
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.EnumDefinition
-import lang.taxi.types.EnumType
-import lang.taxi.types.EnumValue
-import lang.taxi.types.Enums
-import lang.taxi.types.Modifier
-import lang.taxi.types.ObjectType
-import lang.taxi.types.ObjectTypeDefinition
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.Type
-import lang.taxi.types.UnresolvedImportedType
 import lang.taxi.utils.log
 import org.jetbrains.annotations.NotNull
 import org.springframework.core.ResolvableType
@@ -68,7 +48,10 @@ interface TypeMapper {
 
 }
 
-class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnotationMapper = ConstraintAnnotationMapper()) :
+class DefaultTypeMapper(
+   private val constraintAnnotationMapper: ConstraintAnnotationMapper = ConstraintAnnotationMapper(),
+   private val typeAliasRegister: TypeAliasRegister = TypeAliasRegister.forRegisteredPackages()
+) :
    TypeMapper {
 
    fun MutableSet<Type>.findByName(qualifiedTypeName: String): Type? {
@@ -173,12 +156,9 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
    }
 
    private fun declaredAsImport(element: AnnotatedElement): Boolean {
-      val typeAlias = kotlinTypeAlias(element)
-      if (typeAlias != null) {
-         val annotation = typeAlias.getAnnotation("lang.taxi.annotations.DataType") ?: return false
-         return annotation.arg("imported") as Boolean? ?: false
-      }
-      val dataType = element.getAnnotation(DataType::class.java) ?: return false
+      val dataType =
+         getDataTypeFromKotlinTypeAlias(element)
+            ?: element.getAnnotation(DataType::class.java) ?: return false
       return dataType.imported
    }
 
@@ -276,10 +256,12 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
          )
          ArrayType(collectionType, compilationUnit)
       } else {
-         ObjectType(typeAliasName,ObjectTypeDefinition(
-            compilationUnit = compilationUnit,
-            inheritsFrom = setOf(getTypeDeclaredOnClass(element, existingTypes))
-         ))
+         ObjectType(
+            typeAliasName, ObjectTypeDefinition(
+               compilationUnit = compilationUnit,
+               inheritsFrom = setOf(getTypeDeclaredOnClass(element, existingTypes))
+            )
+         )
       }
       existingTypes.add(type)
       return type
@@ -295,12 +277,10 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
    }
 
    private fun getDeclaredTypeAliasName(element: AnnotatedElement, defaultNamespace: String): String? {
-      // TODO : We may consider type aliases for Objects later.
-      val kotlinTypeAlias = kotlinTypeAlias(element)
-      if (kotlinTypeAlias != null) return deriveQualifiedAliasName(kotlinTypeAlias)
-      if (element !is Field && element !is Parameter && element !is Method) return null
-
-      val dataType = element.getAnnotation(DataType::class.java) ?: return null
+      val dataType = getDataTypeFromKotlinTypeAlias(element)
+         ?: element.getAnnotation(DataType::class.java) ?: return null
+      // Not sure why we need this, but without it, a stack overflow is caused...
+      if (element !is Field && element !is Parameter && element !is Method && element !is KTypeWrapper) return null
       return if (dataType.declaresName()) {
          dataType.qualifiedName(defaultNamespace)
       } else {
@@ -308,19 +288,16 @@ class DefaultTypeMapper(private val constraintAnnotationMapper: ConstraintAnnota
       }
    }
 
-   private fun kotlinTypeAlias(element: Any): KotlinTypeAlias? {
-      val kotlinTypeAlias = when (element) {
-         is KTypeWrapper -> TypeAliasRegistry.findTypeAlias(element.ktype)
-         is Field -> TypeAliasRegistry.findTypeAlias(element.kotlinProperty)
-         is Method -> TypeAliasRegistry.findTypeAlias(element.kotlinFunction)
-         is Parameter -> TypeAliasRegistry.findTypeAlias(element.kotlinParam)
+   private fun getDataTypeFromKotlinTypeAlias(element: Any): DataType? {
+      val dataType = when (element) {
+
+         is KTypeWrapper -> typeAliasRegister.findDataType(element.ktype)
+         is Field -> typeAliasRegister.findDataType(element.kotlinProperty)
+         is Method -> typeAliasRegister.findDataType(element.kotlinFunction)
+         is Parameter -> typeAliasRegister.findDataType(element.kotlinParam)
          else -> null
       }
-      return kotlinTypeAlias
-   }
-
-   private fun deriveQualifiedAliasName(kotlinTypeAlias: KotlinTypeAlias): String {
-      return kotlinTypeAlias.deriveNamespace() + "." + kotlinTypeAlias.simpleName
+      return dataType
    }
 
    private fun mapNewObjectType(
@@ -511,19 +488,6 @@ private fun AnnotatedElement.isCollection(): Boolean {
    return Collection::class.java.isAssignableFrom(type)
 }
 
-
-fun KotlinTypeAlias.deriveNamespace(): String {
-   // Note : These rules should match whats in TypeNames.deriveNamespace.
-   // In future, we should collapse the two functions, but right now, that's not happening
-   val dataType = this.getAnnotation(DataType::class.qualifiedName!!)
-   val namespaceAnnotation = this.getAnnotation(lang.taxi.annotations.Namespace::class.qualifiedName!!)
-   val dataTypeValue = dataType?.arg("value") as String?
-   return when {
-      namespaceAnnotation != null -> namespaceAnnotation.arg("value")!! as String
-      dataTypeValue != null && Namespaces.hasNamespace(dataTypeValue) -> Namespaces.pluckNamespace(dataTypeValue)!!
-      else -> this.packageName
-   }
-}
 
 fun KProperty<*>.toAnnotatedElement(): KTypeWrapper {
    return KTypeWrapper(this.returnType)

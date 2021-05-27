@@ -684,7 +684,7 @@ queryParam: Identifier ':' typeType;
 // findAllDirective: 'findAll';
 // findOneDirective: 'findAll';
 
-queryDirective: FindAll | FindOne;
+queryDirective: FindAll | FindOne | Stream | Find;
 findDirective: Find;
 
 givenBlock : 'given' '{' factList '}';
@@ -766,12 +766,17 @@ OR  : 'or' ;
 FindAll: 'findAll';
 FindOne: 'findOne';
 Find: 'find';
+Stream: 'stream';
+
+// Must come before Identifier, to capture booleans correctly
+BooleanLiteral
+    :   TRUE | FALSE
+    ;
 
 Identifier
     :   Letter LetterOrDigit*
     | '`' ~('`')+ '`'
     ;
-
 
 StringLiteral
     :   '"' DoubleQuoteStringCharacter* '"'
@@ -779,9 +784,6 @@ StringLiteral
     ;
 
 
-BooleanLiteral
-    :   'true' | 'false'
-    ;
 
 
 fragment

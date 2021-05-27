@@ -1400,6 +1400,10 @@ class TokenProcessor(
                return@flatMap ArrayType.untyped().right()
             }
 
+            if (StreamType.isStreamTypeName(requestedTypeName)) {
+               return@flatMap StreamType.untyped().right()
+            }
+
             val requestedNameIsQualified = requestedTypeName.contains(".")
             if (!requestedNameIsQualified) {
                val importedTypeName = imports.firstOrNull { it.typeName == requestedTypeName }
@@ -1545,7 +1549,7 @@ class TokenProcessor(
       } else {
          enumConstants.enumConstant().map { enumConstant ->
             val annotations = collateAnnotations(enumConstant.annotation())
-            val name = enumConstant.Identifier().text
+            val name = unescape(enumConstant.Identifier().text)
             val qualifiedName = "$enumQualifiedName.$name"
             val value = enumConstant.enumValue()?.literal()?.value() ?: name
             val isDefault = enumConstant.defaultKeyword() != null

@@ -2,6 +2,7 @@ package lang.taxi.services.operations.constraints
 
 import arrow.core.Either
 import arrow.core.flatMap
+import arrow.core.left
 import lang.taxi.*
 import lang.taxi.query.asDotJoinedPath
 import lang.taxi.services.Operation
@@ -90,8 +91,9 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       return when (type) {
          is TypeAlias -> getUnderlyingType(type.aliasType!!, constraint, target)
          is ArrayType -> getUnderlyingType(type.type, constraint, target)
+         is StreamType -> getUnderlyingType(type.type, constraint, target)
          is ObjectType -> Either.right(type)
-         else -> Either.left(MalformedConstraint.from("Constraint for ${constraint.propertyIdentifier.description} on ${target.description} is malformed - constraints are only supported on Object types.", constraint))
+         else -> Either.left(MalformedConstraint.from("Constraint for ${constraint.propertyIdentifier.description} type ${type} on ${target.description} is malformed - constraints are only supported on Object types.", constraint))
       }
    }
 

@@ -211,16 +211,26 @@ data class EnumType(override val qualifiedName: String,
    }
 
    fun hasValue(value: Any?): Boolean {
-      return this.values.any { lenientEqual(it.value, value) } || this.hasDefault
+      return hasExplicitValue(value)  || this.hasDefault
+   }
+
+   /**
+    * Examines is a value is defined that matches lenient rules.
+    * Ignores default values if defined.
+    */
+   fun hasExplicitValue(value: Any?): Boolean {
+      return this.values.any { lenientEqual(it.value, value) }
    }
 
    private fun lenientEqual(first: Any, second: Any?): Boolean {
+      // Regardless of lenient, we toString() the values, so that an enum of "1" matches a value of 1, and vice versa.
+      // This is a concious choice.
       return if (!this.isLenient) {
-         first == second
+         first.toString() == second.toString()
       } else {
          when {
             (first is String && second is String) -> first.toLowerCase() == second.toLowerCase()
-            else -> first == second
+            else -> first.toString() == second.toString()
          }
       }
    }

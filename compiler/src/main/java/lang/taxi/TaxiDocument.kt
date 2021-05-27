@@ -16,6 +16,7 @@ import lang.taxi.types.Named
 import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
+import lang.taxi.types.StreamType
 import lang.taxi.types.Type
 import lang.taxi.types.TypeAlias
 import lang.taxi.types.View
@@ -81,6 +82,21 @@ open class TaxiDocument(
             qualifiedName.parameters.size == 1 -> {
                val innerType = type(qualifiedName.parameters.first())
                ArrayType(innerType, CompilationUnit.unspecified())
+            }
+
+            else -> error("Cannot construct an array with multiple type parameters")
+         }
+      }
+      if (StreamType.isStreamTypeName(qualifiedName)) {
+         return when {
+            qualifiedName.parameters.isEmpty() -> {
+               log().warn("Requested raw stream.  This is strongly discouraged.  Tsk Tsk Tsk.")
+               StreamType.untyped()
+            }
+
+            qualifiedName.parameters.size == 1 -> {
+               val innerType = type(qualifiedName.parameters.first())
+               StreamType(innerType, CompilationUnit.unspecified())
             }
 
             else -> error("Cannot construct an array with multiple type parameters")

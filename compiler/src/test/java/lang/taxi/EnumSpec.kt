@@ -385,8 +385,42 @@ enum English {
                enum.ofName("nz").name.should.equal("NZ")
             }
          }
+      }
 
+      it("should allow selection of numeric values") {
+         val taxi = """
+            enum Numbers {
+               One(1),
+               Two(2)
+            }
+         """.compiled()
+         taxi.enumType("Numbers").of(1).name.should.equal("One")
+         taxi.enumType("Numbers").of("1").name.should.equal("One")
+      }
 
+      it("should parse string booleans as enum members") {
+         val taxi = """
+            enum Selected {
+               `true`,
+               `false`
+            }
+         """.compiled()
+         taxi.enumType("Selected").of(true).name.should.equal("true")
+         taxi.enumType("Selected").of("true").name.should.equal("true")
+         taxi.enumType("Selected").of(false).name.should.equal("false")
+         taxi.enumType("Selected").of("false").name.should.equal("false")
+
+      }
+
+      it("should allow selection of boolean values") {
+         val taxi = """
+            enum Selected {
+               Yes(true),
+               No(false)
+            }
+         """.compiled()
+         taxi.enumType("Selected").of(true).name.should.equal("Yes")
+         taxi.enumType("Selected").of("true").name.should.equal("Yes")
       }
 
       it("should have efficient hashcode implementations") {
