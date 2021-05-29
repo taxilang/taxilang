@@ -1,6 +1,7 @@
 package lang.taxi.quality
 
 import com.winterbe.expekt.should
+import lang.taxi.Compiler
 import lang.taxi.compiled
 import lang.taxi.dataQuality.DataQualityRuleScope
 import org.spekframework.spek2.Spek
@@ -36,14 +37,42 @@ object RulesSpec : Spek({
          rule.annotations.should.have.size(1)
          rule.annotations.first().name.should.equal("Annotated")
       }
-      xit("should be possible to define a rule and apply it against a type") {
+      it("should be possible to define a rule and apply it against a type") {
          val taxi = """
+
             type rule NullableShouldNotBeNull
 
             @Rule(NullableShouldNotBeNull)
             type FirstName inherits String
          """.compiled()
+         val rule = taxi.objectType("FirstName").annotation("Rule")
+         rule.parameter("value").should.equal("NullableShouldNotBeNull")
       }
+
+      it("should be possible to use an imported rule against a type") {
+         val rules = """
+               namespace foo.rules
+               type rule NullableShouldNotBeNull
+
+               type Name inherits String
+            """.compiled()
+         val ruleUsage = Compiler(
+            """
+               import foo.rules.NullableShouldNotBeNull
+
+               namespace foo.types
+
+
+                @Rule(NullableShouldNotBeNull)
+            type FirstName inherits String
+            """, importSources = listOf(rules)
+         ).compile()
+         val rule = ruleUsage.objectType("foo.types.FirstName").annotation("Rule")
+         rule.parameter("value").should.equal("foo.rules.NullableShouldNotBeNull")
+      }
+
+
+
       it("is invalid to a apply a type rule to a model") {
          """
             model rule NullableShouldNotBeNull

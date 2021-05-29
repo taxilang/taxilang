@@ -37,7 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
     const taxiConfig = workspace.getConfiguration('taxi');
     const typeCheckerEnabled = (taxiConfig.get('typeChecker') as string).toUpperCase() as FeatureToggle;
     compilerConfig.typeChecker = typeCheckerEnabled;
-    
+
     const definedJavaHome = workspace.getConfiguration('taxi').get('javaHome', '');
     if (definedJavaHome !== '') {
         startPlugin(definedJavaHome, context, compilerConfig);
@@ -55,6 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
 function startPlugin(javaHome: string, context: vscode.ExtensionContext, config:CompilerConfig) {
     const useDebugJar = workspace.getConfiguration('taxi').get('useDevJar', false);
     const enableDebug = workspace.getConfiguration('taxi').get('enableDebugSession', false);
+    const waitForDebuggerToAttach = workspace.getConfiguration('taxi').get('waitForDebugger', false);
     if (javaHome) {
         console.log(`Using java from ${javaHome}`);
         // Java execution path.
@@ -81,7 +82,6 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext, config:
         }
 
         // let classPath = (useDebugJar) ? path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', jarName) : path.join(__dirname, jarName);
-        const waitForDebuggerToAttach = true;
         const debugSettings = (enableDebug) ? [`-agentlib:jdwp=transport=dt_socket,server=y,suspend=${waitForDebuggerToAttach ? 'y' : 'n'},address=5005,quiet=y`] : [];
         const args: string[] = debugSettings.concat(['-cp', classPath]);
         console.log(JSON.stringify(args));

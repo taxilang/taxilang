@@ -66,6 +66,7 @@ open class TaxiDocument(
       return when {
          containsType(qualifiedName) -> type(qualifiedName)
          containsFunction(qualifiedName) -> function(qualifiedName)
+         containsDataQualityRule(qualifiedName) -> dataQualityRule(qualifiedName)
          else -> error("Importable token $qualifiedName is not defined")
       }
    }
@@ -119,10 +120,14 @@ open class TaxiDocument(
 
    fun view(name: String) = viewMap[name]
 
-   fun dataQualityRule(name: String) = dataQualityRulesMap[name]
+   fun dataQualityRule(name: String): DataQualityRule {
+      return dataQualityRulesMap[name] ?: error("Data quality rule $name is not defined")
+   }
 
    fun containsImportable(tokenName: String): Boolean {
-      return typeMap.containsKey(tokenName) || functionsMap.containsKey(tokenName)
+      return typeMap.containsKey(tokenName) ||
+         functionsMap.containsKey(tokenName) ||
+         dataQualityRulesMap.containsKey(tokenName)
    }
 
    fun containsType(typeName: String) = typeMap.containsKey(typeName)

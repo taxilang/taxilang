@@ -1177,8 +1177,27 @@ class TokenProcessor(
    private fun parseElementValue(elementValue: TaxiParser.ElementValueContext): Either<List<CompilationError>, Any> {
       return when {
          elementValue.literal() != null -> elementValue.literal().value().right()
-         elementValue.qualifiedName() != null -> resolveEnumMember(elementValue.qualifiedName())
+         elementValue.qualifiedName() != null -> resolveQualifiedNameFromAnnotation(elementValue.qualifiedName())
          else -> error("Unhandled element value: ${elementValue.text}")
+      }
+   }
+
+   private fun resolveQualifiedNameFromAnnotation(qualifiedName: TaxiParser.QualifiedNameContext): Either<List<CompilationError>, Any> {
+//      resolveEnumMember(elementValue.qualifiedName())
+      // This might be an enum reference, or it might be a type name.
+      // First, try to resolve it as a type reference.
+      val lookup = attemptToLookupTypeByName(
+         qualifiedName.findNamespace(),
+         qualifiedName.Identifier().text(),
+         qualifiedName,
+         SymbolKind.TYPE_OR_MODEL
+      )
+      return when (lookup) {
+         // If the type wasn't resolved as a type name, try it as an enum.
+         is Either.Left -> resolveEnumMember(qualifiedName).mapLeft {
+            listOf(CompilationError(qualifiedName.toCompilationUnit(), "${qualifiedName.Identifier().text()} is not recognised as either a type or an enum"))
+         }
+         is Either.Right -> lookup
       }
    }
 
