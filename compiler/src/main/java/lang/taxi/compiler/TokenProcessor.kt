@@ -7,9 +7,24 @@ import arrow.core.getOrHandle
 import arrow.core.left
 import arrow.core.right
 import com.google.common.hash.Hashing
-import lang.taxi.*
+import lang.taxi.AmbiguousNameException
+import lang.taxi.CompilationError
+import lang.taxi.CompilationException
+import lang.taxi.ErrorMessages
 import lang.taxi.Namespace
+import lang.taxi.NamespaceQualifiedTypeResolver
+import lang.taxi.Operator
+import lang.taxi.TaxiDocument
+import lang.taxi.TaxiParser
+import lang.taxi.Tokens
+import lang.taxi.TypeSystem
 import lang.taxi.compiler.CalculatedFieldSetProcessor.Companion.validate
+import lang.taxi.findNamespace
+import lang.taxi.functions.Function
+import lang.taxi.functions.FunctionDefinition
+import lang.taxi.functions.FunctionModifiers
+import lang.taxi.intValue
+import lang.taxi.linter.Linter
 import lang.taxi.parameters
 import lang.taxi.policies.CaseCondition
 import lang.taxi.policies.Condition
@@ -22,37 +37,81 @@ import lang.taxi.policies.PolicyScope
 import lang.taxi.policies.PolicyStatement
 import lang.taxi.policies.RuleSet
 import lang.taxi.policies.Subjects
+import lang.taxi.query.TaxiQlQuery
+import lang.taxi.services.FilterCapability
 import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract
 import lang.taxi.services.Parameter
+import lang.taxi.services.QueryOperation
+import lang.taxi.services.QueryOperationCapability
 import lang.taxi.services.Service
+import lang.taxi.services.SimpleQueryCapability
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintValidator
 import lang.taxi.services.operations.constraints.OperationConstraintConverter
+import lang.taxi.source
+import lang.taxi.stringLiteralValue
 import lang.taxi.toCompilationError
-import lang.taxi.functions.Function
-import lang.taxi.functions.FunctionModifiers
-import lang.taxi.functions.FunctionDefinition
-import lang.taxi.query.TaxiQlQuery
-import lang.taxi.linter.Linter
-import lang.taxi.services.FilterCapability
-import lang.taxi.services.QueryOperation
-import lang.taxi.services.QueryOperationCapability
-import lang.taxi.services.SimpleQueryCapability
-import lang.taxi.types.*
+import lang.taxi.toCompilationUnit
+import lang.taxi.types.AndExpression
 import lang.taxi.types.Annotation
+import lang.taxi.types.AnnotationType
+import lang.taxi.types.AnnotationTypeDefinition
+import lang.taxi.types.ArrayType
+import lang.taxi.types.ComparisonExpression
+import lang.taxi.types.ComparisonOperator
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.ConditionalAccessor
+import lang.taxi.types.ConstantEntity
+import lang.taxi.types.DefinableToken
+import lang.taxi.types.ElseMatchExpression
+import lang.taxi.types.EmptyReferenceSelector
+import lang.taxi.types.EnumDefinition
+import lang.taxi.types.EnumExtension
+import lang.taxi.types.EnumMember
+import lang.taxi.types.EnumType
+import lang.taxi.types.EnumValue
+import lang.taxi.types.EnumValueExtension
+import lang.taxi.types.EnumValueQualifiedName
+import lang.taxi.types.Enums
+import lang.taxi.types.Field
+import lang.taxi.types.FieldExtension
+import lang.taxi.types.FieldReferenceEntity
+import lang.taxi.types.Formula
+import lang.taxi.types.GenericType
+import lang.taxi.types.ImportableToken
+import lang.taxi.types.LogicalExpression
+import lang.taxi.types.Modifier
+import lang.taxi.types.ObjectType
+import lang.taxi.types.ObjectTypeDefinition
+import lang.taxi.types.ObjectTypeExtension
+import lang.taxi.types.OrExpression
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.QualifiedNameParser
+import lang.taxi.types.StreamType
+import lang.taxi.types.Type
+import lang.taxi.types.TypeAlias
+import lang.taxi.types.TypeAliasDefinition
+import lang.taxi.types.TypeAliasExtension
+import lang.taxi.types.TypeChecker
+import lang.taxi.types.TypeKind
+import lang.taxi.types.UserType
+import lang.taxi.types.View
+import lang.taxi.types.VoidType
+import lang.taxi.types.WhenFieldSetCondition
 import lang.taxi.utils.errorOrNull
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.log
 import lang.taxi.utils.wrapErrorsInList
+import lang.taxi.value
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.nio.charset.Charset
 import java.security.SecureRandom
-import java.util.Base64
-import java.util.EnumSet
+import java.util.*
 
 class TokenProcessor(
    val tokens: Tokens,
@@ -194,7 +253,8 @@ class TokenProcessor(
       return isInViewContext(ruleContext.parent)
    }
 
-   internal fun fieldCompiler(typeName: String, namespace: String) = FieldCompiler(this, TypeBodyContext(null, namespace), typeName, this.errors)
+   internal fun fieldCompiler(typeName: String, namespace: String) =
+      FieldCompiler(this, TypeBodyContext(null, namespace), typeName, this.errors)
 
    private fun lookupTypeByName(namespace: Namespace, type: TaxiParser.TypeTypeContext): String {
       return if (PrimitiveType.isPrimitiveType(type.text)) {
@@ -588,8 +648,8 @@ class TokenProcessor(
 
       tokensCurrentlyCompiling.add(tokenName)
       try {
-          when (tokenRule) {
-            is TaxiParser.TypeDeclarationContext -> compileType(namespace, tokenName, tokenRule)
+         when (tokenRule) {
+            is TaxiParser.TypeDeclarationContext -> compileType(namespace, tokenName, tokenRule).collectErrors(errors)
             is TaxiParser.AnnotationTypeDeclarationContext -> compileAnnotationType(tokenName, namespace, tokenRule)
             is TaxiParser.EnumDeclarationContext -> compileEnum(namespace, tokenName, tokenRule).collectErrors(errors)
             is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(
@@ -764,35 +824,6 @@ class TokenProcessor(
       }
    }
 
-
-//
-//   private fun <T> Either<CompilationError, T>.collectError(): Either<ReportedError, T> {
-//      return this.mapLeft { error ->
-//         this@TokenProcessor.errors.add(error)
-//         ReportedError(error)
-//      }
-//   }
-//
-//   private fun <T : Any> List<Either<List<CompilationError>, T>>.reportAndRemoveErrorList(): List<T> {
-//      return this.mapNotNull { item ->
-//         item.getOrHandle { errors ->
-//            this@TokenProcessor.errors.addAll(errors)
-//            null
-//         }
-//      }
-//   }
-//
-//   private fun <T : Any> List<Either<CompilationError, T>>.reportAndRemoveErrors(): List<T> {
-//     return reportAndRemoveErrors(this.er)
-//   }
-//
-//   private fun <T : Any> Either<CompilationError, T>.reportIfCompilationError(): T? {
-//      return this.getOrHandle { compilationError ->
-//         this@TokenProcessor.errors.add(compilationError)
-//         null
-//      }
-//   }
-
    fun List<TerminalNode>.text(): String {
       return this.joinToString(".")
    }
@@ -854,6 +885,11 @@ class TokenProcessor(
       val annotations = collateAnnotations(ctx.annotation())
       val modifiers = parseModifiers(ctx.typeModifier())
       val inherits = parseTypeInheritance(namespace, ctx.listOfInheritedTypes())
+
+      checkForCircularTypeInheritance(typeName, ctx, inherits)?.let { compilationError ->
+         return listOf(compilationError).left()
+      }
+
       val typeDoc = parseTypeDoc(ctx.typeDoc()?.source()?.content)
       return this.typeSystem.register(
          ObjectType(
@@ -869,6 +905,44 @@ class TokenProcessor(
             )
          )
       ).right()
+   }
+
+   private fun checkForCircularTypeInheritance(
+      typeName: String,
+      ctx: TaxiParser.TypeDeclarationContext,
+      inherits: Set<Type>,
+      detectedTypeNames: MutableSet<String> = mutableSetOf()
+   ): CompilationError? {
+      if (inherits.isEmpty()) {
+         return null
+      }
+      val inheritsFromTypeNames = inherits.map { it.qualifiedName }.toSet()
+      val typesToCheck = inherits.filterNot { detectedTypeNames.contains(it.qualifiedName) }
+         .filter { it !is PrimitiveType }
+
+      // Does this directly inherit from itself?
+      if (inheritsFromTypeNames.contains(typeName)) {
+         return CompilationError(
+            ctx.toCompilationUnit(),
+            "$typeName cannot inherit from itself"
+         )
+      }
+
+      // Is there a loop somewhere?
+      val loopTypeNames = inheritsFromTypeNames.filter { detectedTypeNames.contains(it) }
+      if (loopTypeNames.isNotEmpty()) {
+         return CompilationError(
+            ctx.toCompilationUnit(),
+            "$typeName contains a loop in it's inheritance.  Check the inheritance of the following types: ${loopTypeNames.filter { it != typeName }.joinToString(", ")}"
+         )
+      }
+      detectedTypeNames.add(typeName)
+      return typesToCheck
+         .asSequence()
+         .mapNotNull {
+            checkForCircularTypeInheritance(it.qualifiedName, ctx, it.inheritsFrom, detectedTypeNames)
+         }
+         .firstOrNull()
    }
 
    private fun compileAnonymousType(
@@ -1126,18 +1200,21 @@ class TokenProcessor(
       }
    }
 
-  internal fun parseModelAttributeTypeReference(namespace: Namespace, modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext):
+   internal fun parseModelAttributeTypeReference(
+      namespace: Namespace,
+      modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext
+   ):
       Either<List<CompilationError>, Pair<QualifiedName, Type>> {
       val memberSourceTypeType = modelAttributeReferenceCtx.typeType().first()
       val memberTypeType = modelAttributeReferenceCtx.typeType()[1]
-     val sourceTypeName = try {
-        QualifiedName.from(lookupTypeByName(memberSourceTypeType)).right()
-     } catch (e: Exception) {
-        CompilationError(
-           modelAttributeReferenceCtx.start,
-           "Only Model AttributeReference expressions (SourceType::FieldType) are allowed for views"
-        ).asList().left()
-     }
+      val sourceTypeName = try {
+         QualifiedName.from(lookupTypeByName(memberSourceTypeType)).right()
+      } catch (e: Exception) {
+         CompilationError(
+            modelAttributeReferenceCtx.start,
+            "Only Model AttributeReference expressions (SourceType::FieldType) are allowed for views"
+         ).asList().left()
+      }
       return sourceTypeName.flatMap { memberSourceType ->
          this.parseType(namespace, memberTypeType).flatMap { memberType ->
             Pair(memberSourceType, memberType).right()
@@ -1301,13 +1378,15 @@ class TokenProcessor(
       return parseType(namespace, typeType.inlineInheritedType().typeType()).map { inlineInheritedType ->
          val declaredTypeName = typeType.classOrInterfaceType().Identifier().text()
 
-         typeSystem.register(ObjectType(
-            QualifiedName(namespace, declaredTypeName).fullyQualifiedName,
-            ObjectTypeDefinition(
-               inheritsFrom = setOf(inlineInheritedType),
-               compilationUnit = typeType.toCompilationUnit()
+         typeSystem.register(
+            ObjectType(
+               QualifiedName(namespace, declaredTypeName).fullyQualifiedName,
+               ObjectTypeDefinition(
+                  inheritsFrom = setOf(inlineInheritedType),
+                  compilationUnit = typeType.toCompilationUnit()
+               )
             )
-         ))
+         )
       }
    }
 

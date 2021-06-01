@@ -1045,6 +1045,33 @@ namespace foo {
    }
 
 
+   @Test
+   fun `a type cannot inherit itself`() {
+      val (messages,_) = Compiler("""model Person inherits Person""").compileWithMessages()
+      messages.should.have.size(1)
+      messages.first().detailMessage.should.equal("Person cannot inherit from itself")
+   }
+
+   @Test
+   fun `a type cannot create an inheritence loop`() {
+      val (messages,_) = Compiler("""
+         model Human inherits Person
+
+         model Person inherits Human
+         """.trimIndent()).compileWithMessages()
+      messages.map { it.detailMessage }
+         .should.contain.elements("Person contains a loop in it's inheritance.  Check the inheritance of the following types: Human")
+   }
+
+   @Test
+   fun `a type that inherits normally does not trigger an inheritance loop error`() {
+      val (messages,_) = Compiler("""
+      type Name inherits String
+      type FirstName inherits Name
+      """).compileWithMessages()
+      messages.should.be.empty
+   }
+
 }
 
 
