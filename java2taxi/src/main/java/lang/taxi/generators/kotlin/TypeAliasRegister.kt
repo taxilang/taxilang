@@ -74,13 +74,17 @@ class TypeAliasRegister private constructor(classes: Collection<Class<*>>) {
        * Main way to register a package for scanning in production apps.
        * Call with registerPackage("foo.bar.baz").
        */
+      @JvmStatic
       fun registerPackage(packageName: String) = registeredPackageNames.add(packageName)
 
+      @JvmStatic
       fun forRegisteredPackages():TypeAliasRegister = forPackageNames(registeredPackageNames)
+      @JvmStatic
       fun empty(): TypeAliasRegister {
          return TypeAliasRegister(emptyList())
       }
 
+      @JvmStatic
       fun forPackageNames(packageNames: List<String>): TypeAliasRegister {
          val urls = packageNames.flatMap { ClasspathHelper.forPackage(it) }
             .toTypedArray()
