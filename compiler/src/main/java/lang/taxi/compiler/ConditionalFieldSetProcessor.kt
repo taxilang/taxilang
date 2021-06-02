@@ -30,16 +30,15 @@ import lang.taxi.types.LiteralAssignment
 import lang.taxi.types.LiteralCaseMatchExpression
 import lang.taxi.types.LogicalExpression
 import lang.taxi.types.ModelAttributeReferenceSelector
+import lang.taxi.types.ModelAttributeTypeReferenceAssignment
 import lang.taxi.types.NullAssignment
 import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
 import lang.taxi.types.ReferenceAssignment
 import lang.taxi.types.ReferenceCaseMatchExpression
 import lang.taxi.types.ScalarAccessorValueAssignment
 import lang.taxi.types.Type
 import lang.taxi.types.ValueAssignment
-import lang.taxi.types.ModelAttributeTypeReferenceAssignment
 import lang.taxi.types.WhenCaseBlock
 import lang.taxi.types.WhenCaseMatchExpression
 import lang.taxi.types.WhenFieldSetCondition
