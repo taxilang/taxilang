@@ -165,6 +165,8 @@ interface Type : Named, Compiled, ImportableToken, Documented {
    val anonymous: Boolean
       get() = false
 
+   val typeKind: TypeKind?
+
    fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
       val allExcludedTypes: Set<Type> = typesToExclude + setOf(this)
       val aliasType = if (this is TypeAlias) {

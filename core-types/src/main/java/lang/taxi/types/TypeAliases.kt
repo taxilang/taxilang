@@ -98,4 +98,5 @@ data class TypeAlias(
          return collatedAnnotations.toList()
       }
 
+   override val typeKind: TypeKind? = aliasType?.typeKind
 }

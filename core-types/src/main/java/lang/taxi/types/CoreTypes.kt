@@ -84,6 +84,7 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
    override val calculation: Formula?
       get() = null
    override val offset: Int? = null
+   override val typeKind: TypeKind = TypeKind.Type
 }
 
 interface Annotatable {

@@ -35,5 +35,7 @@ class UnresolvedImportedType(override val qualifiedName: String) : Type {
       get() = TODO("Not yet implemented")
    override val typeDoc: String?
       get() = TODO("Not yet implemented")
+   override val typeKind: TypeKind?
+      get() = TODO("Not yet implemented")
 
 }

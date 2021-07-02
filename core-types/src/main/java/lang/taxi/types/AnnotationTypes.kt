@@ -73,4 +73,6 @@ data class AnnotationType(
          }
          """
    }
+
+   override val typeKind: TypeKind = TypeKind.Type
 }
