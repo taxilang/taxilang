@@ -278,4 +278,6 @@ data class EnumType(override val qualifiedName: String,
             && this.values.none { lenientEqual(it.value, valueOrName) }
       }
    }
+
+   override val typeKind: TypeKind = TypeKind.Type
 }
