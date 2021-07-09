@@ -21,6 +21,7 @@ enum class VoidType : Type {
    override val calculation: Formula?
       get() = null
    override val offset: Int? = null
+   override val typeKind: TypeKind = TypeKind.Type
 }
 
 enum class PrimitiveType(
@@ -58,6 +59,8 @@ enum class PrimitiveType(
    override val inheritsFrom: Set<Type> = emptySet()
 
    override val compilationUnits: List<CompilationUnit> = listOf(CompilationUnit.ofSource(SourceCode("native.taxi", "// Built-in type")))
+
+   override val typeKind: TypeKind = TypeKind.Type
 
    companion object {
       private val typesByName = values().associateBy { it.declaration }

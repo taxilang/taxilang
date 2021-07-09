@@ -327,6 +327,9 @@ data class ObjectType(
          }
       }
 
+   override val typeKind: TypeKind?
+      get() = definition?.typeKind
+
 }
 
 
