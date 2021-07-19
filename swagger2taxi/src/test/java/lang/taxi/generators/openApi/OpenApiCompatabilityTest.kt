@@ -86,10 +86,7 @@ class OpenApiCompatabilityTest {
               }
 
               // Check the result can compile
-              val expectedSources = taxiDef.taxi.mapIndexed { index, _ ->
-                 testResource("${filename}_$index.taxi")
-              }
-              expectToCompileTheSame(taxiDef.taxi, expectedSources)
+              expectToCompileTheSame(taxiDef.taxi, testResource("$filename.taxi"))
            }
         }
     }

@@ -30,8 +30,11 @@ class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private 
       if (api.components == null) {
          return emptySet()
       }
-      api.components.schemas.map { (name, schema) ->
-         generatedTypes[name] = generateType(name, schema)
+      api.components.schemas.mapNotNull { (name, schema) ->
+         val generatedType = generateType(name, schema)
+         if (generatedType !is ArrayType) {
+            generatedTypes[name] = generateType(name, schema)
+         } else null
       }
       return generatedTypes.values.toSet()
    }

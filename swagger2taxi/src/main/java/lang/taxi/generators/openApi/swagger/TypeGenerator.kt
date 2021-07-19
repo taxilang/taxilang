@@ -58,7 +58,10 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
             return emptySet()
         }
         swagger.definitions.forEach { (name, model) ->
-            generatedTypes.put(name, generateType(name, model))
+           val type = generateType(name, model)
+           if (type !is ArrayType) {
+              generatedTypes.put(name, type)
+           }
 
         }
 
