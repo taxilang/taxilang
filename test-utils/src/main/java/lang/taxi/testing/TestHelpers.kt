@@ -25,13 +25,13 @@ object TestHelpers {
       val expectedDoc = compile(expected)
       if (generatedDoc == expectedDoc) return generatedDoc
 
-      val typeErros = expectedDoc.types.flatMap { type -> collateTypeErrors(type, generatedDoc) }
-      val serviceErrors = expectedDoc.services.flatMap { service -> collateServiceErrors(service, generatedDoc) }
-      val errors = typeErros + serviceErrors
+      val typeErros = expectedDoc.types.flatMap { type -> collateTypeErrors(type, generatedDoc) } + generatedDoc.types.flatMap { type -> collateTypeErrors(type, expectedDoc) }
+      val serviceErrors = expectedDoc.services.flatMap { service -> collateServiceErrors(service, generatedDoc) } + generatedDoc.services.flatMap { service -> collateServiceErrors(service, expectedDoc) }
+      val errors = (typeErros + serviceErrors).toSet()
       if (errors.isEmpty()) {
          return generatedDoc
       }
-      throw AssertionError("Generated docs did not match expected.  Errors: \n" + errors.joinToString("\n"))
+      throw AssertionError("Generated docs did not match expected.  Errors:\n" + errors.joinToString("\n"))
    }
 
    fun compile(generated: List<String>) =
