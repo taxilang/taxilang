@@ -21,7 +21,7 @@ namespace vyne.openApi {
    }
    service PetsIdService {
       @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets/{id}")
-      operation find pet by id(  id : Int ) : Pet
+      operation find_pet_by_id(  id : Int ) : Pet
       @HttpOperation(method = "DELETE" , url = "http://petstore.swagger.io/api/pets/{id}")
       operation deletePet(  id : Int )
    }

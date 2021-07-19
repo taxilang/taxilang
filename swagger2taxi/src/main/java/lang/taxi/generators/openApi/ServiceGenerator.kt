@@ -7,6 +7,7 @@ import lang.taxi.types.Type
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.generators.Logger
+import lang.taxi.generators.openApi.Utils.normalise
 import lang.taxi.generators.openApi.swagger.SwaggerTypeMapper
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.Annotation
@@ -156,13 +157,11 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
 }
 
 object OperationIdProvider {
-    fun getOperationId(operation: v2.io.swagger.models.Operation, pathMapping: String, method: HttpMethod): String {
-        return if (operation.operationId != null) {
-            return operation.operationId
-        } else {
-            generateOperationId(pathMapping, method.name.toLowerCase())
-        }
-    }
+    fun getOperationId(operation: v2.io.swagger.models.Operation, pathMapping: String, method: HttpMethod): String =
+        getOperationId(operation.operationId, pathMapping, method.name)
+
+    private fun getOperationId(operationId: String?, pathMapping: String, methodName: String) =
+        operationId?.normalise() ?: generateOperationId(pathMapping, methodName.toLowerCase())
 
     private fun generateOperationId(pathMapping: String, methodName: String): String {
         val path = pathMapping.urlPath().split("/")
@@ -170,13 +169,9 @@ object OperationIdProvider {
         return words.joinToString("") { it.capitalize() }
     }
 
-    fun getOperationId(operation: Operation, pathMapping: String, method: PathItem.HttpMethod): String {
-        return if (operation.operationId != null) {
-            return operation.operationId
-        } else {
-            generateOperationId(pathMapping, method.name.toLowerCase())
-        }
-    }
+    fun getOperationId(operation: Operation, pathMapping: String, method: PathItem.HttpMethod): String =
+        getOperationId(operation.operationId, pathMapping, method.name)
+
 }
 
 private fun String.urlPath(): String {

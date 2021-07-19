@@ -2,6 +2,7 @@ package lang.taxi.generators.openApi.swagger
 
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.Utils
+import lang.taxi.generators.openApi.Utils.normalise
 import lang.taxi.types.ArrayType
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Field
@@ -145,7 +146,7 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
     }
 
     private fun generateField(name: String, property: Property): Field {
-        return Field(name, getOrGenerateType(property), nullable = !property.required, compilationUnit = CompilationUnit.unspecified())
+        return Field(name.normalise(), getOrGenerateType(property), nullable = !property.required, compilationUnit = CompilationUnit.unspecified())
     }
 
 

@@ -5,7 +5,6 @@ import lang.taxi.generators.Level
 import lang.taxi.generators.Message
 import lang.taxi.generators.hasErrors
 import lang.taxi.generators.hasWarnings
-import lang.taxi.testing.TestHelpers.compile
 import lang.taxi.testing.TestHelpers.expectToCompileTheSame
 import lang.taxi.utils.log
 import org.junit.Test
