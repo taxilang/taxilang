@@ -26,18 +26,22 @@ import lang.taxi.types.Type
 
 class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private val logger: Logger) {
 
-   private val generatedTypes = mutableMapOf<String, Type>()
-   fun generateTypes(): Set<Type> {
-      if (api.components == null) {
-         return emptySet()
+   private val _generatedTypes = mutableMapOf<String, Type>()
+
+   val generatedTypes: Set<Type> get() = _generatedTypes.values.toSet()
+
+   fun generateTypes() {
+      api.components?.schemas?.forEach { (name, schema) ->
+         generateAndStoreType(name, schema)
       }
-      api.components.schemas.mapNotNull { (name, schema) ->
-         val generatedType = generateType(name, schema)
-         if (generatedType !is ArrayType) {
-            generatedTypes[name] = generateType(name, schema)
-         } else null
+   }
+
+   private fun generateAndStoreType(name: String, schema: Schema<*>): Type {
+      val generatedType = generateType(name, schema)
+      if (generatedType !is ArrayType) {
+         _generatedTypes[name] = generatedType
       }
-      return generatedTypes.values.toSet()
+      return generatedType
    }
 
    private fun generateType(name: String, schema: Schema<*>): Type {
@@ -69,14 +73,15 @@ class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private 
 
    private fun getOrGenerateType(schema: Schema<*>, anonymousTypeNamePartial: String? = null, defaultToAny: Boolean = false): Type {
       val type = getPrimitiveType(schema)
-         ?: generatedTypes[schema.type]
+         ?: _generatedTypes[schema.type]
          ?: getTypeFromRef(schema.`$ref`)
          ?: getTypeFromAllOfDeclaration(schema, anonymousTypeNamePartial)
 
       if (type != null) {
          return type
       } else if (canDetectTypeName(schema, anonymousTypeNamePartial)) {
-         return generateType(typeNameFromSchema(schema, anonymousTypeNamePartial), schema)
+         val name = typeNameFromSchema(schema, anonymousTypeNamePartial)
+         return generateAndStoreType(name, schema)
       } else if (defaultToAny) {
          return PrimitiveType.ANY
       } else {
@@ -123,7 +128,7 @@ class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private 
    private fun getTypeFromRef(typeRef: String?): Type? {
       if (typeRef == null) return null;
       val typeName = typeRef.split("/").last()
-      val type = this.generatedTypes[typeName]
+      val type = this._generatedTypes[typeName]
       if (type == null) {
          val schema = RefEvaluator.navigate(this.api, typeRef)
          return getOrGenerateType(schema)
