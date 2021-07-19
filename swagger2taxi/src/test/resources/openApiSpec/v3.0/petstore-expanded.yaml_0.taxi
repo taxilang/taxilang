@@ -1,0 +1,26 @@
+namespace vyne.openApi {
+   type Pet
+   
+   model NewPet {
+      name : String?
+      tag : String
+   }
+   
+   model Error {
+      code : Int?
+      message : String?
+   }
+   
+   service PetsService {
+      @HttpOperation(method = "GET" , url = "/pets")
+      operation findPets(  tags : String[],  limit : Int ) : Pet[]
+      @HttpOperation(method = "POST" , url = "/pets")
+      operation addPet(  ) : Pet
+   }
+   service PetsIdService {
+      @HttpOperation(method = "GET" , url = "/pets/{id}")
+      operation find pet by id(  id : Int ) : Pet
+      @HttpOperation(method = "DELETE" , url = "/pets/{id}")
+      operation deletePet(  id : Int )
+   }
+}

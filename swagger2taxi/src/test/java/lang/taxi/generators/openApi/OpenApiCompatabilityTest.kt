@@ -5,9 +5,12 @@ import lang.taxi.generators.Level
 import lang.taxi.generators.Message
 import lang.taxi.generators.hasErrors
 import lang.taxi.generators.hasWarnings
+import lang.taxi.testing.TestHelpers.compile
+import lang.taxi.testing.TestHelpers.expectToCompileTheSame
 import lang.taxi.utils.log
 import org.junit.Test
 import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.TestFactory
 import kotlin.test.fail
 
@@ -62,19 +65,16 @@ class OpenApiCompatabilityTest {
     fun canImportAllSwaggerFiles(): List<DynamicTest> {
         val generator = TaxiGenerator();
         return sources.map { (filename, source) ->
-           DynamicTest.dynamicTest("Can import swagger file $filename") {
-              var issues = emptyList<Message>()
+           dynamicTest("Can import swagger file $filename") {
               val taxiDef = generator.generateAsStrings(source, "vyne.openApi")
-              if (taxiDef.taxi.isEmpty()) {
-                 issues = listOf(
+              val issues = (if (taxiDef.taxi.isEmpty()) {
+                 listOf(
                     Message(
                        Level.ERROR,
                        "No source generated"
                     )
-                 ) + taxiDef.messages
-              } else if (taxiDef.messages.isNotEmpty()) {
-                 issues = taxiDef.messages
-              }
+                 )
+              } else emptyList()) + taxiDef.messages
               if (issues.hasErrors()) {
                  issues.filter { it.level == Level.ERROR }.forEach { log().error("==> ${it.message}") }
               }
@@ -84,6 +84,12 @@ class OpenApiCompatabilityTest {
               if (issues.hasErrors()) {
                  fail("Some schemas failed to import")
               }
+
+              // Check the result can compile
+              val expectedSources = taxiDef.taxi.mapIndexed { index, _ ->
+                 testResource("${filename}_$index.taxi")
+              }
+              expectToCompileTheSame(taxiDef.taxi, expectedSources)
            }
         }
     }

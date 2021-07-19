@@ -1,0 +1,8 @@
+namespace vyne.openApi {
+   
+   
+   service StreamsService {
+      @HttpOperation(method = "POST" , url = "/streams")
+      operation PostStreams(  callbackUrl : String ) : AnonymousTypePostStreams
+   }
+}

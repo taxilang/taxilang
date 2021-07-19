@@ -1,0 +1,19 @@
+namespace vyne.openApi {
+   model dataSetList {
+      total : Int
+      apis : Any[]
+   }
+   
+   service Service {
+      @HttpOperation(method = "GET" , url = "/")
+      operation list-data-sets(  ) : dataSetList
+   }
+   service DatasetVersionFieldsService {
+      @HttpOperation(method = "GET" , url = "/{dataset}/{version}/fields")
+      operation list-searchable-fields(  dataset : String,  version : String ) : String
+   }
+   service DatasetVersionRecordsService {
+      @HttpOperation(method = "POST" , url = "/{dataset}/{version}/records")
+      operation perform-search(  version : String,  dataset : String ) : Any[]
+   }
+}
