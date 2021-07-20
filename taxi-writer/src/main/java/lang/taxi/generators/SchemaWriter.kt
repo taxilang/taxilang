@@ -168,7 +168,7 @@ $operations
          val constraintString = constraintString(param.constraints)
          val paramAnnotations = generateAnnotations(param) + " "
 
-         val paramName = if (!param.name.isNullOrEmpty()) param.name + " : " else ""
+         val paramName = if (!param.name.isNullOrEmpty()) param.name?.reservedWordEscaped() + " : " else ""
          val paramDeclaration = typeAsTaxi(param.type, namespace)
          paramAnnotations + paramName + paramDeclaration + constraintString
       }.joinToString(", ")
