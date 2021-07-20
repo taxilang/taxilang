@@ -15,7 +15,7 @@ import io.swagger.oas.models.media.StringSchema
 import io.swagger.oas.models.media.UUIDSchema
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.Utils
-import lang.taxi.generators.openApi.Utils.normalise
+import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
 import lang.taxi.types.ArrayType
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Field
@@ -79,7 +79,7 @@ class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private 
    }
 
    private fun generateField(name: String, schema: Schema<*>, required: Boolean): Field {
-      return Field(name.normalise(), getOrGenerateType(schema, defaultToAny = true), nullable = required, compilationUnit = CompilationUnit.unspecified())
+      return Field(name.replaceIllegalCharacters(), getOrGenerateType(schema, defaultToAny = true), nullable = required, compilationUnit = CompilationUnit.unspecified())
    }
 
    private fun getOrGenerateType(schema: Schema<*>, anonymousTypeNamePartial: String? = null, defaultToAny: Boolean = false): Type {

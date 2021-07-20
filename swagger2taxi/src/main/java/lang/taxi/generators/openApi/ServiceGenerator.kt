@@ -7,7 +7,7 @@ import lang.taxi.types.Type
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.generators.Logger
-import lang.taxi.generators.openApi.Utils.normalise
+import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
 import lang.taxi.generators.openApi.swagger.SwaggerTypeMapper
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.Annotation
@@ -161,7 +161,7 @@ object OperationIdProvider {
         getOperationId(operation.operationId, pathMapping, method.name)
 
     private fun getOperationId(operationId: String?, pathMapping: String, methodName: String) =
-        operationId?.normalise() ?: generateOperationId(pathMapping, methodName.toLowerCase())
+        operationId?.replaceIllegalCharacters() ?: generateOperationId(pathMapping, methodName.toLowerCase())
 
     private fun generateOperationId(pathMapping: String, methodName: String): String {
         val path = pathMapping.urlPath().split("/")
