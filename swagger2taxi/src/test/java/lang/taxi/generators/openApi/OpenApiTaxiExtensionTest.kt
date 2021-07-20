@@ -11,40 +11,63 @@ class OpenApiTaxiExtensionTest {
 
       val taxiDef = TaxiGenerator().generateAsStrings(openApiWithXTaxiType, "vyne.openApi")
 
-      expectToCompileTheSame(
-         taxiDef.taxi,
-         """
-         namespace vyne.openApi {
-            type Pet
+      val imaginaryExistingTaxonomy = """
+         namespace petstore {
+
+            type Id inherits String
+
+            type PetId inherits Id
 
             type Name inherits String
-            type PetId inherits Int
-            type ErrorCode inherits Int
 
-            model NewPet {
-               name : Name?
-               tag : String
-            }
-
-            model Error {
-               code : ErrorCode?
-               message : String?
-            }
-
-            service PetsService {
-               @HttpOperation(method = "GET" , url = "/pets")
-               operation findPets(  tags : String[],  limit : Int ) : Pet[]
-               @HttpOperation(method = "POST" , url = "/pets")
-               operation addPet(  ) : Pet
-            }
-            service PetsIdService {
-               @HttpOperation(method = "GET" , url = "/pets/{id}")
-               operation find_pet_by_id(  id : PetId ) : Pet
-               @HttpOperation(method = "DELETE" , url = "/pets/{id}")
-               operation deletePet(  id : PetId )
+            model Pet {
+              id : PetId
+              name : Name?
+              tag : String
             }
          }
          """.trimIndent()
+
+      println(taxiDef.taxi)
+
+      expectToCompileTheSame(
+         generated = listOf(imaginaryExistingTaxonomy) + taxiDef.taxi,
+         expected = listOf(
+            imaginaryExistingTaxonomy,
+            """
+            import petstore.Pet
+            import petstore.PetId
+            import petstore.Name
+
+            namespace vyne.openApi {
+
+               type ErrorCode inherits Int
+
+               model NewPet {
+                  name : Name?
+                  tag : String
+               }
+
+               model Error {
+                  code : ErrorCode?
+                  message : String?
+               }
+
+               service PetsService {
+                  @HttpOperation(method = "GET" , url = "/pets")
+                  operation findPets(  tags : String[],  limit : Int ) : Pet[]
+                  @HttpOperation(method = "POST" , url = "/pets")
+                  operation addPet(   ) : Pet
+               }
+               service PetsIdService {
+                  @HttpOperation(method = "GET" , url = "/pets/{id}")
+                  operation find_pet_by_id(  id : PetId ) : Pet
+                  @HttpOperation(method = "DELETE" , url = "/pets/{id}")
+                  operation deletePet(  id : PetId )
+               }
+            }
+            """.trimIndent()
+         )
       )
    }
 }

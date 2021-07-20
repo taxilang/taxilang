@@ -87,7 +87,8 @@ paths:
           description: ID of pet to fetch
           required: true
           schema:
-            x-taxi-type: PetId
+            x-taxi-type:
+              name: petstore.PetId
             type: integer
             format: int64
       responses:
@@ -112,7 +113,8 @@ paths:
           description: ID of pet to delete
           required: true
           schema:
-            x-taxi-type: PetId
+            x-taxi-type:
+              name: petstore.PetId
             type: integer
             format: int64
       responses:
@@ -127,13 +129,15 @@ paths:
 components:
   schemas:
     Pet:
+      x-taxi-type:
+        name: petstore.Pet
+        create: false
       allOf:
         - $ref: '#/components/schemas/NewPet'
         - required:
           - id
           properties:
             id:
-              x-taxi-type: PetId
               type: integer
               format: int64
 
@@ -142,7 +146,8 @@ components:
         - name
       properties:
         name:
-          x-taxi-type: Name
+          x-taxi-type:
+            name: petstore.Name
           type: string
         tag:
           type: string
@@ -153,7 +158,9 @@ components:
         - message
       properties:
         code:
-          x-taxi-type: ErrorCode
+          x-taxi-type:
+            name: ErrorCode
+            create: true
           type: integer
           format: int32
         message:

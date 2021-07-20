@@ -15,14 +15,20 @@ import io.swagger.oas.models.media.StringSchema
 import io.swagger.oas.models.media.UUIDSchema
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.Utils
+import lang.taxi.generators.openApi.Utils.qualifyTypeNameIfRaw
 import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
-import lang.taxi.types.ArrayType
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.Field
-import lang.taxi.types.ObjectType
-import lang.taxi.types.ObjectTypeDefinition
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.Type
+import lang.taxi.types.*
+
+data class TaxiExtension(val name: String, val create: Boolean?)
+private val <T> Schema<T>.taxiExtension: TaxiExtension?
+   get() {
+      val extensionObject = extensions?.get("x-taxi-type") as? Map<String, Any?>
+      val name = extensionObject?.get("name") as? String
+      val create = extensionObject?.get("create") as? Boolean
+      return if (name != null) {
+         TaxiExtension(name = name, create = create)
+      } else null
+   }
 
 class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private val logger: Logger) {
 
@@ -37,7 +43,20 @@ class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private 
    }
 
    private fun generateAndStoreType(name: String, schema: Schema<*>): Type {
-      val generatedType = generateType(name, schema)
+      val explicitTaxiType = schema.taxiExtension
+      val (calculatedName, generatedType) = if (explicitTaxiType != null) {
+         val shouldCreate = explicitTaxiType.create ?: (schema.isModel())
+         if (shouldCreate) {
+            val generatedType = generateType(explicitTaxiType.name, schema)
+            explicitTaxiType.name to generatedType
+         } else {
+            explicitTaxiType.name to UnresolvedImportedType(
+               qualifyTypeNameIfRaw(explicitTaxiType.name, defaultNamespace)
+            )
+         }
+      } else {
+         name to generateType(name, schema)
+      }
       /*
        * generatedTypes is the set of types we want to write out in the
        * generated taxi code. We don't want to write out
@@ -49,11 +68,19 @@ class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private 
        * generated becomes the sole array used in future, despite them
        * having different generic types.
        */
-      if (generatedType !is ArrayType) {
-         _generatedTypes[name] = generatedType
+      val existing = _generatedTypes[calculatedName]
+
+      return if (existing == null) {
+         if (generatedType !is ArrayType) {
+            _generatedTypes[calculatedName] = generatedType
+         }
+         generatedType
+      } else {
+         existing
       }
-      return generatedType
    }
+
+   private fun Schema<*>.isModel() = properties?.isNullOrEmpty() == false
 
    private fun generateType(name: String, schema: Schema<*>): Type {
       return when (schema) {
@@ -83,7 +110,8 @@ class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private 
    }
 
    private fun getOrGenerateType(schema: Schema<*>, anonymousTypeNamePartial: String? = null, defaultToAny: Boolean = false): Type {
-      val type = getPrimitiveType(schema)
+      val type = getTypeFromExtensions(schema)
+         ?: getPrimitiveType(schema)
          ?: _generatedTypes[schema.type]
          ?: getTypeFromRef(schema.`$ref`)
          ?: getTypeFromAllOfDeclaration(schema, anonymousTypeNamePartial)
@@ -100,6 +128,15 @@ class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private 
       }
 
 
+   }
+
+   private fun getTypeFromExtensions(schema: Schema<*>): Type? {
+      val explicitTaxiType = schema.taxiExtension
+      return if (explicitTaxiType != null) {
+         generateAndStoreType(explicitTaxiType.name, schema)
+      } else {
+         null
+      }
    }
 
 
@@ -142,7 +179,7 @@ class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private 
       val type = this._generatedTypes[typeName]
       if (type == null) {
          val schema = RefEvaluator.navigate(this.api, typeRef)
-         return getOrGenerateType(schema)
+         return generateAndStoreType(typeName, schema)
       }
       return type
    }
