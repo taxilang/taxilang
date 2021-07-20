@@ -1,6 +1,5 @@
 package lang.taxi.generators.openApi.v3
 
-import com.google.common.base.Objects
 import io.swagger.oas.models.OpenAPI
 import io.swagger.oas.models.Operation
 import io.swagger.oas.models.PathItem
@@ -12,6 +11,7 @@ import lang.taxi.types.Type
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.OperationIdProvider
+import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
 import lang.taxi.services.Service
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.Annotation
@@ -44,7 +44,7 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
                     generateOperation(method, operation, pathMapping)
                 }
         val derivedServiceName = pathMapping.split("/")
-                .joinToString(separator = "") { it.removeSurrounding("{", "}").capitalize() } + "Service"
+                .joinToString(separator = "") { it.removeSurrounding("{", "}").replaceIllegalCharacters().capitalize() } + "Service"
         val qualifiedServiceName = "${typeGenerator.defaultNamespace}.$derivedServiceName"
         return Service(
                 qualifiedServiceName,
@@ -64,7 +64,7 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
             val annotations = getParamAnnotations(swaggerParam)
             val type = getParamType(swaggerParam)
             val constraints = emptyList<Constraint>()
-            lang.taxi.services.Parameter(annotations, type, swaggerParam.name, constraints)
+            lang.taxi.services.Parameter(annotations, type, swaggerParam.name.replaceIllegalCharacters(), constraints)
         }
         val operationId = OperationIdProvider.getOperationId(openApiOperation, pathMapping, method)
         val returnType = getReturnType(openApiOperation, operationId)

@@ -62,7 +62,7 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
                 .filter { canSupport(it.value) }
                 .map { (method, swaggerOperation) -> generateOperation(method, swaggerOperation, fullPath) }
         val derivedServiceName = relativePath.split("/")
-                .map { it.removeSurrounding("{", "}").capitalize() }
+                .map { it.removeSurrounding("{", "}").replaceIllegalCharacters().capitalize() }
                 .joinToString(separator = "") + "Service"
         val qualifiedServiceName = "${defaultNamespace}.$derivedServiceName"
         return TaxiService(
@@ -98,7 +98,7 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
             val annotations = getParamAnnotations(swaggerParam)
             val type = getParamType(swaggerParam)
             val constraints = emptyList<Constraint>()
-            lang.taxi.services.Parameter(annotations, type, swaggerParam.name, constraints)
+            lang.taxi.services.Parameter(annotations, type, swaggerParam.name.replaceIllegalCharacters(), constraints)
         }
         val returnType = getReturnType(swaggerOperation)
         val operationId = OperationIdProvider.getOperationId(swaggerOperation, pathMapping, method)

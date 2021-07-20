@@ -1,12 +1,13 @@
 package lang.taxi.generators
 
-object ReservedWords {
-    val words = listOf("type", "service", "alias")
+import lang.taxi.ReservedWords
 
-}
+private val validIdentifier = "^[A-Za-z\$_][a-zA-Z0-9\$_]+\$".toRegex()
+private fun String.isReservedWord() = ReservedWords.words.contains(this)
+private fun String.isValidIdentifier() = this.matches(validIdentifier)
 
 fun String.reservedWordEscaped(): String {
-    return if (ReservedWords.words.contains(this)) {
+    return if (this.isReservedWord() || !this.isValidIdentifier()) {
         "`$this`"
     } else {
         this
