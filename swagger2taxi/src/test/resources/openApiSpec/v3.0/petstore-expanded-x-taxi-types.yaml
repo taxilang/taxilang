@@ -87,6 +87,7 @@ paths:
           description: ID of pet to fetch
           required: true
           schema:
+            x-taxi-type: PetId
             type: integer
             format: int64
       responses:
@@ -111,6 +112,7 @@ paths:
           description: ID of pet to delete
           required: true
           schema:
+            x-taxi-type: PetId
             type: integer
             format: int64
       responses:
@@ -131,17 +133,19 @@ components:
           - id
           properties:
             id:
+              x-taxi-type: PetId
               type: integer
               format: int64
 
     NewPet:
       required:
-        - name  
+        - name
       properties:
         name:
+          x-taxi-type: Name
           type: string
         tag:
-          type: string    
+          type: string
 
     Error:
       required:
@@ -149,6 +153,7 @@ components:
         - message
       properties:
         code:
+          x-taxi-type: ErrorCode
           type: integer
           format: int32
         message:
