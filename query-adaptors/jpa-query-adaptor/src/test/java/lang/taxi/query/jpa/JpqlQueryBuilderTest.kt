@@ -5,7 +5,7 @@ import lang.taxi.Compiler
 import lang.taxi.TaxiDocument
 import lang.taxi.generators.java.TaxiGenerator
 import lang.taxi.query.TaxiQlQuery
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class JpqlQueryBuilderTest {
 

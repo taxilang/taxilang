@@ -3,13 +3,13 @@ package lang.taxi.generators.openApi
 import com.winterbe.expekt.expect
 import lang.taxi.testing.TestHelpers
 import org.apache.commons.io.IOUtils
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class SimpleConversionTest {
 
     lateinit var generator: TaxiGenerator
-    @Before
+    @BeforeEach
     fun setup() {
         generator = TaxiGenerator();
     }

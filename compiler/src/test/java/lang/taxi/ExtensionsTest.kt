@@ -2,10 +2,11 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
-import junit.framework.Assert.fail
 import lang.taxi.types.EnumType
 import org.antlr.v4.runtime.CharStreams
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class ExtensionsTest {
 
@@ -74,7 +75,7 @@ type extension Person {
       expect(person.field("age").type.qualifiedName).to.equal("lang.taxi.Int")
    }
 
-   @Test(expected = CompilationException::class)
+   @Test
    fun refiningTypesMustMatchSamePrimitive() {
       val source = """
 type Person {
@@ -88,10 +89,12 @@ type extension Person {
     name : FirstName
 }
         """
-      Compiler(source).compile()
+      assertThrows<CompilationException> {
+         Compiler(source).compile()
+      }
    }
 
-   @Test(expected = CompilationException::class)
+   @Test
    fun cannotDefineMultipleTypeNarrowingExtensions() {
       val source = """
 type Person {
@@ -107,7 +110,9 @@ type extension Person {
     name : LastName
 }
         """
-      Compiler(source).compile()
+      assertThrows<CompilationException> {
+         Compiler(source).compile()
+      }
    }
 
    @Test
@@ -295,7 +300,7 @@ RED
       expect(heightField.defaultValue).to.equal(18200000)
    }
 
-   @Test(expected = CompilationException::class)
+   @Test
    fun `An Int default value can't be assigned to a String based field`() {
       val source = """
          type alias FirstName as String
@@ -306,10 +311,12 @@ RED
             name: FirstName by default (42)
          }
         """
-      val doc = Compiler(source).compile()
+      assertThrows<CompilationException> {
+         Compiler(source).compile()
+      }
    }
 
-   @Test(expected = CompilationException::class)
+   @Test
    fun `A String default value can't be assigned to a Int based field`() {
       val source = """
          type alias Age as Int
@@ -320,9 +327,11 @@ RED
             age: Age by default ('jimmy')
          }
         """
-      val doc = Compiler(source).compile()
+      assertThrows<CompilationException> {
+         Compiler(source).compile()
+      }
    }
-   @Test(expected = CompilationException::class)
+   @Test
    fun `A non-existing enum default value can't be assigned to a enum based field`() {
       val source = """
          enum CountryCode {
@@ -336,7 +345,9 @@ RED
             birthCountry: CountryCode by default (CountryCode.TR)
          }
         """
-      val doc = Compiler(source).compile()
+      assertThrows<CompilationException> {
+         Compiler(source).compile()
+      }
    }
 }
 

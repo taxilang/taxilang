@@ -7,7 +7,7 @@ import lang.taxi.generators.hasErrors
 import lang.taxi.generators.hasWarnings
 import lang.taxi.testing.TestHelpers.expectToCompileTheSame
 import lang.taxi.utils.log
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.TestFactory

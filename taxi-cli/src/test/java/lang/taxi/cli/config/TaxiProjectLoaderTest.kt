@@ -2,7 +2,7 @@ package lang.taxi.cli.config
 
 import com.google.common.io.Resources
 import com.winterbe.expekt.should
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 
 
@@ -16,7 +16,7 @@ class TaxiProjectLoaderTest {
          .load()
       project.credentials.should.have.size(1)
       project.repositories.should.have.size(1)
-      
+
       // Test deserialzation of repository properties
       project.publishToRepository!!.settings["repositoryName"].should.equal("taxi")
    }

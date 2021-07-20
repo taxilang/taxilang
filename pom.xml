@@ -59,6 +59,7 @@
       <zip4j.version>2.7.0</zip4j.version>
 
       <taxi.version>${project.version}</taxi.version>
+      <testcontainers.version>1.15.2</testcontainers.version>
    </properties>
 
    <dependencies>
@@ -85,12 +86,6 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>junit</groupId>
-         <artifactId>junit</artifactId>
-         <version>4.12</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>org.junit.jupiter</groupId>
          <artifactId>junit-jupiter-api</artifactId>
          <version>${junit.jupiter.version}</version>
@@ -100,12 +95,6 @@
          <groupId>org.junit.jupiter</groupId>
          <artifactId>junit-jupiter-engine</artifactId>
          <version>${junit.jupiter.version}</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.junit.vintage</groupId>
-         <artifactId>junit-vintage-engine</artifactId>
-         <version>${junit.vintage.version}</version>
          <scope>test</scope>
       </dependency>
       <dependency>

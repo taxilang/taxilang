@@ -1,7 +1,7 @@
 package lang.taxi.xsd
 
 import lang.taxi.Compiler
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class TypeDocsTest {
    @Test
