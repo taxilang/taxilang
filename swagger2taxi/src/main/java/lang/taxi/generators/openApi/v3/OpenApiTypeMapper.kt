@@ -38,6 +38,17 @@ class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private 
 
    private fun generateAndStoreType(name: String, schema: Schema<*>): Type {
       val generatedType = generateType(name, schema)
+      /*
+       * generatedTypes is the set of types we want to write out in the
+       * generated taxi code. We don't want to write out
+       * `type lang.taxi.Array` - it gets skipped by `SchemaWriter` anyway,
+       * resulting in an empty `namespace lang.taxi` being written out.
+       *
+       * In addition, generatedTypes is used as a cache by definition name,
+       * which is the same for all arrays, meaning that the first array
+       * generated becomes the sole array used in future, despite them
+       * having different generic types.
+       */
       if (generatedType !is ArrayType) {
          _generatedTypes[name] = generatedType
       }
