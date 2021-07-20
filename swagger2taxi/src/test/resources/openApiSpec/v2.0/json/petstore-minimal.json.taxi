@@ -1,0 +1,12 @@
+namespace vyne.openApi {
+   model Pet {
+      id : Int
+      name : String
+      tag : String?
+   }
+   
+   service PetsService {
+      @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets")
+      operation GetApiPets(  ) : Pet[]
+   }
+}

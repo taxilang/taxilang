@@ -5,8 +5,12 @@ import lang.taxi.generators.Level
 import lang.taxi.generators.Message
 import lang.taxi.generators.hasErrors
 import lang.taxi.generators.hasWarnings
+import lang.taxi.testing.TestHelpers.expectToCompileTheSame
 import lang.taxi.utils.log
 import org.junit.Test
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.DynamicTest.dynamicTest
+import org.junit.jupiter.api.TestFactory
 import kotlin.test.fail
 
 class OpenApiCompatabilityTest {
@@ -56,40 +60,33 @@ class OpenApiCompatabilityTest {
       expect(generator.detectVersion(testFile("/openApiSpec/v2.0/json/pets.json").second)).to.equal(TaxiGenerator.SwaggerVersion.SWAGGER_2)
    }
 
-    @Test
-    fun canImportAllSwaggerFiles() {
+    @TestFactory
+    fun canImportAllSwaggerFiles(): List<DynamicTest> {
         val generator = TaxiGenerator();
-        val specsWithIssues = mutableMapOf<Filename, List<Message>>()
-        sources.forEach { (filename, source) ->
-            val taxiDef = generator.generateAsStrings(source, "vyne.openApi")
-            if (taxiDef.taxi.isEmpty()) {
-                specsWithIssues[filename] = listOf(Message(Level.ERROR, "No source generated")) + taxiDef.messages
-            } else if (taxiDef.messages.isNotEmpty()) {
-                specsWithIssues[filename] = taxiDef.messages
-            }
-        }
+        return sources.map { (filename, source) ->
+           dynamicTest("Can import swagger file $filename") {
+              val taxiDef = generator.generateAsStrings(source, "vyne.openApi")
+              val issues = (if (taxiDef.taxi.isEmpty()) {
+                 listOf(
+                    Message(
+                       Level.ERROR,
+                       "No source generated"
+                    )
+                 )
+              } else emptyList()) + taxiDef.messages
+              if (issues.hasErrors()) {
+                 issues.filter { it.level == Level.ERROR }.forEach { log().error("==> ${it.message}") }
+              }
+              if (issues.hasWarnings()) {
+                 issues.filter { it.level == Level.WARN }.forEach { message -> log().warn("==> $message") }
+              }
+              if (issues.hasErrors()) {
+                 fail("Some schemas failed to import")
+              }
 
-        val failures = specsWithIssues.filter { it.value.hasErrors() }
-        if (failures.isNotEmpty()) {
-            log().error("The following files failed to import:")
-            failures.forEach { filename, messages ->
-                log().error("=> $filename")
-                messages.forEach { log().error("==> ${it.message}") }
-            }
+              // Check the result can compile
+              expectToCompileTheSame(taxiDef.taxi, testResource("$filename.taxi"))
+           }
         }
-        val warnings = specsWithIssues.filter { it.value.hasWarnings() }
-        if (warnings.isNotEmpty()) {
-            log().warn("The following files imported with warnings:")
-            warnings.forEach { filename, messages ->
-                log().warn("=> $filename")
-                messages.forEach { log().warn("==> ${it.message}") }
-            }
-        }
-
-        if (failures.isNotEmpty()) {
-            fail("Some schemas failed to import")
-        }
-
     }
 }
-

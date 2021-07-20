@@ -1,5 +1,6 @@
 package lang.taxi.testing
 
+import lang.taxi.CompilationException
 import lang.taxi.Compiler
 import lang.taxi.TaxiDocument
 import lang.taxi.services.Service
@@ -20,18 +21,26 @@ object TestHelpers {
     */
 
    fun expectToCompileTheSame(generated: List<String>, expected: List<String>): TaxiDocument {
-      val generatedDoc = Compiler.forStrings(generated).compile()
-      val expectedDoc = Compiler.forStrings(expected).compile()
+      val generatedDoc = compile(generated)
+      val expectedDoc = compile(expected)
       if (generatedDoc == expectedDoc) return generatedDoc
 
-      val typeErros = expectedDoc.types.flatMap { type -> collateTypeErrors(type, generatedDoc) }
-      val serviceErrors = expectedDoc.services.flatMap { service -> collateServiceErrors(service, generatedDoc) }
-      val errors = typeErros + serviceErrors
+      val typeErros = expectedDoc.types.flatMap { type -> collateTypeErrors(type, generatedDoc) } + generatedDoc.types.flatMap { type -> collateTypeErrors(type, expectedDoc) }
+      val serviceErrors = expectedDoc.services.flatMap { service -> collateServiceErrors(service, generatedDoc) } + generatedDoc.services.flatMap { service -> collateServiceErrors(service, expectedDoc) }
+      val errors = (typeErros + serviceErrors).toSet()
       if (errors.isEmpty()) {
          return generatedDoc
       }
-      throw AssertionError("Generated docs did not match expected.  Errors: \n" + errors.joinToString("\n"))
+      throw AssertionError("Generated docs did not match expected.  Errors:\n" + errors.joinToString("\n"))
    }
+
+   fun compile(generated: List<String>) =
+      try {
+         Compiler.forStrings(generated).compile()
+      } catch (e: CompilationException) {
+         println("Failed to compile:\n\n$generated")
+         throw e
+      }
 
    private fun collateTypeErrors(type: Type, generatedDoc: TaxiDocument): List<String> {
       if (!generatedDoc.containsType(type.qualifiedName)) {

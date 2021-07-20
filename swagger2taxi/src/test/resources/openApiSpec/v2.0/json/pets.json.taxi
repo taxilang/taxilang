@@ -1,0 +1,110 @@
+namespace vyne.openApi {
+   model Order {
+      id : Int?
+      petId : Int?
+      quantity : Int?
+      shipDate : DateTime?
+      status : String?
+      complete : Boolean?
+   }
+   
+   model User {
+      id : Int?
+      username : String?
+      firstName : String?
+      lastName : String?
+      email : String?
+      password : String?
+      phone : String?
+      userStatus : Int?
+   }
+   
+   model Category {
+      id : Int?
+      name : String?
+   }
+   
+   model Tag {
+      id : Int?
+      name : String?
+   }
+   
+   model Pet {
+      id : Int?
+      category : Category?
+      name : String
+      photoUrls : String[]
+      tags : Tag[]?
+      status : String?
+   }
+   
+   model ApiResponse {
+      code : Int?
+      `type` : String?
+      message : String?
+   }
+   
+   service PetService {
+      @HttpOperation(method = "PUT" , url = "https://petstore.swagger.io/v2/pet")
+      operation updatePet( @RequestBody body : Pet )
+      @HttpOperation(method = "POST" , url = "https://petstore.swagger.io/v2/pet")
+      operation addPet( @RequestBody body : Pet )
+   }
+   service PetFindByStatusService {
+      @HttpOperation(method = "GET" , url = "https://petstore.swagger.io/v2/pet/findByStatus")
+      operation findPetsByStatus(  status : String ) : Pet[]
+   }
+   service PetFindByTagsService {
+      @HttpOperation(method = "GET" , url = "https://petstore.swagger.io/v2/pet/findByTags")
+      operation findPetsByTags(  tags : String ) : Pet[]
+   }
+   service PetPetIdService {
+      @HttpOperation(method = "GET" , url = "https://petstore.swagger.io/v2/pet/{petId}")
+      operation getPetById(  petId : Int ) : Pet
+   }
+   service PetPetIdUploadImageService {
+      
+   }
+   service StoreInventoryService {
+      @HttpOperation(method = "GET" , url = "https://petstore.swagger.io/v2/store/inventory")
+      operation getInventory(  ) : Any
+   }
+   service StoreOrderService {
+      @HttpOperation(method = "POST" , url = "https://petstore.swagger.io/v2/store/order")
+      operation placeOrder( @RequestBody body : Order ) : Order
+   }
+   service StoreOrderOrderIdService {
+      @HttpOperation(method = "GET" , url = "https://petstore.swagger.io/v2/store/order/{orderId}")
+      operation getOrderById(  orderId : Int ) : Order
+      @HttpOperation(method = "DELETE" , url = "https://petstore.swagger.io/v2/store/order/{orderId}")
+      operation deleteOrder(  orderId : Int )
+   }
+   service UserService {
+      @HttpOperation(method = "POST" , url = "https://petstore.swagger.io/v2/user")
+      operation createUser( @RequestBody body : User )
+   }
+   service UserCreateWithArrayService {
+      @HttpOperation(method = "POST" , url = "https://petstore.swagger.io/v2/user/createWithArray")
+      operation createUsersWithArrayInput( @RequestBody body : User[] )
+   }
+   service UserCreateWithListService {
+      @HttpOperation(method = "POST" , url = "https://petstore.swagger.io/v2/user/createWithList")
+      operation createUsersWithListInput( @RequestBody body : User[] )
+   }
+   service UserLoginService {
+      @HttpOperation(method = "GET" , url = "https://petstore.swagger.io/v2/user/login")
+      operation loginUser(  username : String,  password : String ) : String
+   }
+   service UserLogoutService {
+      @HttpOperation(method = "GET" , url = "https://petstore.swagger.io/v2/user/logout")
+      operation logoutUser(  )
+   }
+   service UserUsernameService {
+      @HttpOperation(method = "GET" , url = "https://petstore.swagger.io/v2/user/{username}")
+      operation getUserByName(  username : String ) : User
+      @HttpOperation(method = "PUT" , url = "https://petstore.swagger.io/v2/user/{username}")
+      operation updateUser(  username : String, @RequestBody body : User )
+      @HttpOperation(method = "DELETE" , url = "https://petstore.swagger.io/v2/user/{username}")
+      operation deleteUser(  username : String )
+   }
+}

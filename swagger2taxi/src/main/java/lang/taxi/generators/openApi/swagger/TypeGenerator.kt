@@ -2,6 +2,7 @@ package lang.taxi.generators.openApi.swagger
 
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.Utils
+import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
 import lang.taxi.types.ArrayType
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Field
@@ -58,7 +59,21 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
             return emptySet()
         }
         swagger.definitions.forEach { (name, model) ->
-            generatedTypes.put(name, generateType(name, model))
+           val type = generateType(name, model)
+           /*
+            * generatedTypes is the set of types we want to write out in the
+            * generated taxi code. We don't want to write out
+            * `type lang.taxi.Array` - it gets skipped by `SchemaWriter` anyway,
+            * resulting in an empty `namespace lang.taxi` being written out.
+            *
+            * In addition, generatedTypes is used as a cache by definition name,
+            * which is the same for all arrays, meaning that the first array
+            * generated becomes the sole array used in future, despite them
+            * having different generic types.
+            */
+           if (type !is ArrayType) {
+              generatedTypes.put(name, type)
+           }
 
         }
 
@@ -142,7 +157,7 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
     }
 
     private fun generateField(name: String, property: Property): Field {
-        return Field(name, getOrGenerateType(property), nullable = !property.required, compilationUnit = CompilationUnit.unspecified())
+        return Field(name.replaceIllegalCharacters(), getOrGenerateType(property), nullable = !property.required, compilationUnit = CompilationUnit.unspecified())
     }
 
 

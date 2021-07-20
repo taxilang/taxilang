@@ -1,0 +1,65 @@
+namespace vyne.openApi {
+   model Product {
+      product_id : String?
+      description : String?
+      display_name : String?
+      capacity : String?
+      image : String?
+   }
+   
+   model PriceEstimate {
+      product_id : String?
+      currency_code : String?
+      display_name : String?
+      estimate : String?
+      low_estimate : Decimal?
+      high_estimate : Decimal?
+      surge_multiplier : Decimal?
+   }
+   
+   model Profile {
+      first_name : String?
+      last_name : String?
+      email : String?
+      picture : String?
+      promo_code : String?
+   }
+   
+   model Activity {
+      uuid : String?
+   }
+   
+   model Activities {
+      offset : Int?
+      limit : Int?
+      count : Int?
+      history : Activity[]?
+   }
+   
+   model Error {
+      code : Int?
+      message : String?
+      fields : String?
+   }
+   
+   service ProductsService {
+      @HttpOperation(method = "GET" , url = "https://api.uber.com/v1/products")
+      operation GetV1Products(  latitude : Decimal,  longitude : Decimal ) : Product[]
+   }
+   service EstimatesPriceService {
+      @HttpOperation(method = "GET" , url = "https://api.uber.com/v1/estimates/price")
+      operation GetV1EstimatesPrice(  start_latitude : Decimal,  start_longitude : Decimal,  end_latitude : Decimal,  end_longitude : Decimal ) : PriceEstimate[]
+   }
+   service EstimatesTimeService {
+      @HttpOperation(method = "GET" , url = "https://api.uber.com/v1/estimates/time")
+      operation GetV1EstimatesTime(  start_latitude : Decimal,  start_longitude : Decimal,  customer_uuid : String,  product_id : String ) : Product[]
+   }
+   service MeService {
+      @HttpOperation(method = "GET" , url = "https://api.uber.com/v1/me")
+      operation GetV1Me(  ) : Profile
+   }
+   service HistoryService {
+      @HttpOperation(method = "GET" , url = "https://api.uber.com/v1/history")
+      operation GetV1History(  offset : Int,  limit : Int ) : Activities
+   }
+}

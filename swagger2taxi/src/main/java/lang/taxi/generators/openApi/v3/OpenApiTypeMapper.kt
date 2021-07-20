@@ -15,6 +15,7 @@ import io.swagger.oas.models.media.StringSchema
 import io.swagger.oas.models.media.UUIDSchema
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.Utils
+import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
 import lang.taxi.types.ArrayType
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Field
@@ -25,15 +26,33 @@ import lang.taxi.types.Type
 
 class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private val logger: Logger) {
 
-   private val generatedTypes = mutableMapOf<String, Type>()
-   fun generateTypes(): Set<Type> {
-      if (api.components == null) {
-         return emptySet()
+   private val _generatedTypes = mutableMapOf<String, Type>()
+
+   val generatedTypes: Set<Type> get() = _generatedTypes.values.toSet()
+
+   fun generateTypes() {
+      api.components?.schemas?.forEach { (name, schema) ->
+         generateAndStoreType(name, schema)
       }
-      api.components.schemas.map { (name, schema) ->
-         generatedTypes[name] = generateType(name, schema)
+   }
+
+   private fun generateAndStoreType(name: String, schema: Schema<*>): Type {
+      val generatedType = generateType(name, schema)
+      /*
+       * generatedTypes is the set of types we want to write out in the
+       * generated taxi code. We don't want to write out
+       * `type lang.taxi.Array` - it gets skipped by `SchemaWriter` anyway,
+       * resulting in an empty `namespace lang.taxi` being written out.
+       *
+       * In addition, generatedTypes is used as a cache by definition name,
+       * which is the same for all arrays, meaning that the first array
+       * generated becomes the sole array used in future, despite them
+       * having different generic types.
+       */
+      if (generatedType !is ArrayType) {
+         _generatedTypes[name] = generatedType
       }
-      return generatedTypes.values.toSet()
+      return generatedType
    }
 
    private fun generateType(name: String, schema: Schema<*>): Type {
@@ -60,19 +79,20 @@ class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private 
    }
 
    private fun generateField(name: String, schema: Schema<*>, required: Boolean): Field {
-      return Field(name, getOrGenerateType(schema, defaultToAny = true), nullable = required, compilationUnit = CompilationUnit.unspecified())
+      return Field(name.replaceIllegalCharacters(), getOrGenerateType(schema, defaultToAny = true), nullable = required, compilationUnit = CompilationUnit.unspecified())
    }
 
    private fun getOrGenerateType(schema: Schema<*>, anonymousTypeNamePartial: String? = null, defaultToAny: Boolean = false): Type {
       val type = getPrimitiveType(schema)
-         ?: generatedTypes[schema.type]
+         ?: _generatedTypes[schema.type]
          ?: getTypeFromRef(schema.`$ref`)
          ?: getTypeFromAllOfDeclaration(schema, anonymousTypeNamePartial)
 
       if (type != null) {
          return type
       } else if (canDetectTypeName(schema, anonymousTypeNamePartial)) {
-         return generateType(typeNameFromSchema(schema, anonymousTypeNamePartial), schema)
+         val name = typeNameFromSchema(schema, anonymousTypeNamePartial)
+         return generateAndStoreType(name, schema)
       } else if (defaultToAny) {
          return PrimitiveType.ANY
       } else {
@@ -119,7 +139,7 @@ class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private 
    private fun getTypeFromRef(typeRef: String?): Type? {
       if (typeRef == null) return null;
       val typeName = typeRef.split("/").last()
-      val type = this.generatedTypes[typeName]
+      val type = this._generatedTypes[typeName]
       if (type == null) {
          val schema = RefEvaluator.navigate(this.api, typeRef)
          return getOrGenerateType(schema)

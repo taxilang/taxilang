@@ -1,0 +1,10 @@
+namespace vyne.openApi {
+   model AnonymousTypePostStreams {
+      subscriptionId : String?
+   }
+   
+   service StreamsService {
+      @HttpOperation(method = "POST" , url = "/streams")
+      operation PostStreams(  callbackUrl : String ) : AnonymousTypePostStreams
+   }
+}
