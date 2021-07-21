@@ -2,19 +2,13 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.types.PrimitiveType
-import org.hamcrest.CoreMatchers.startsWith
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.ExpectedException
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 // NOte : I'm trying to split tests out from GrammarTest
 // to more specific areas.
 // There's also a bunch of tests in GrammarTest that cover type Inheritence
 class InheritenceTest {
-
-   @Rule
-   @JvmField
-   val expectedException = ExpectedException.none()
 
    @Test
    fun canInheritFromCollection() {
@@ -148,10 +142,10 @@ type ListOfPerson inherits Person[]
          type BetterCountry inherits Country
       """.trimIndent()
 
-      expectedException.expect(CompilationException::class.java)
-      expectedException.expectMessage("UnknownSource(5,28) A Type cannot inherit from an Enum")
-
-      Compiler(src).compile()
+      val exception = assertThrows<CompilationException> {
+         Compiler(src).compile()
+      }
+      exception.message.should.contain("UnknownSource(5,28) A Type cannot inherit from an Enum")
    }
 
    @Test
@@ -161,10 +155,10 @@ type ListOfPerson inherits Person[]
          enum BetterCountry inherits Country
       """.trimIndent()
 
-      expectedException.expect(CompilationException::class.java)
-      expectedException.expectMessage("UnknownSource(2,28) An Enum can only inherit from an Enum")
-
-      Compiler(src).compile()
+      val exception = assertThrows<CompilationException> {
+         Compiler(src).compile()
+      }
+      exception.message.should.contain("UnknownSource(2,28) An Enum can only inherit from an Enum")
    }
 
    @Test

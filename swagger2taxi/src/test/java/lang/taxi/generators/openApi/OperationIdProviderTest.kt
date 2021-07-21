@@ -1,7 +1,7 @@
 package lang.taxi.generators.openApi
 
 import com.winterbe.expekt.expect
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import v2.io.swagger.models.HttpMethod
 import v2.io.swagger.models.Operation as SwaggerOperation
 

@@ -1,13 +1,13 @@
 package lang.taxi.cli.init
 
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
 
 class ProjectInitTest {
-   @Rule
+   @TempDir
    @JvmField
-   val folder = TemporaryFolder()
+   var folder: Path? = null
 
    @Test
    fun whenRunFromAnEmptyDirectory_then_helpfulMessagesAreShown() {

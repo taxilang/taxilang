@@ -26,7 +26,7 @@ import lang.taxi.types.ReferenceCaseMatchExpression
 import lang.taxi.types.ScalarAccessorValueAssignment
 import lang.taxi.types.WhenFieldSetCondition
 import lang.taxi.types.XpathAccessor
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class ConditionalDataTypesTest {
 

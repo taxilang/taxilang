@@ -1,7 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 // NOte : I'm trying to split tests out from GrammarTest
 // to more specific areas.

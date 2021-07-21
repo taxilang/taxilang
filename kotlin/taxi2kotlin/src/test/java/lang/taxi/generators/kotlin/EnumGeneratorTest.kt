@@ -1,7 +1,7 @@
 package lang.taxi.generators.kotlin
 
 import com.winterbe.expekt.expect
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class EnumGeneratorTest {
 

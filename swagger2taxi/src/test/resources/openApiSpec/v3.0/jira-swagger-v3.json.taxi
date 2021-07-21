@@ -1,0 +1,3450 @@
+namespace vyne.openApi {
+   model WorkflowStatusProperties {
+      issueEditable : Boolean?
+   }
+
+   model EventNotification {
+      expand : String
+      id : Int
+      notificationType : String
+      `parameter` : String
+      group : Any
+      field : Any
+      emailAddress : String
+      projectRole : Any
+      user : Any
+   }
+
+   model Configuration {
+      votingEnabled : Boolean
+      watchingEnabled : Boolean
+      unassignedIssuesAllowed : Boolean
+      subTasksEnabled : Boolean
+      issueLinkingEnabled : Boolean
+      timeTrackingEnabled : Boolean
+      attachmentsEnabled : Boolean
+      timeTrackingConfiguration : Any
+   }
+
+   model Transitions {
+      expand : String
+      transitions : Any[]
+   }
+
+   model UserKey {
+      key : String
+      accountId : String
+   }
+
+   model IssuePickerSuggestionsIssueType {
+      label : String
+      sub : String
+      id : String
+      msg : String
+      issues : Any[]
+   }
+
+   model WorkflowId {
+      name : String?
+      draft : Boolean?
+   }
+
+   model IssueFieldOptionCreateBean {
+      value : String?
+      properties : Any
+      config : Any
+   }
+
+   model NotificationRecipientsRestrictions {
+      groups : Any[]
+      permissions : Any[]
+   }
+
+   model Watchers {
+      self : String
+      isWatching : Boolean
+      watchCount : Int
+      watchers : Any[]
+   }
+
+   model RemoteObject {
+      url : String?
+      title : String?
+      summary : String
+      icon : Any
+      status : Any
+   }
+
+   model ProjectIssueTypeHierarchy {
+      projectId : Int
+      hierarchy : Any[]
+   }
+
+   model LinkedIssue {
+      id : String
+      key : String
+      self : String
+      fields : Any
+   }
+
+   model IssueFieldOption {
+      id : Int?
+      value : String?
+      properties : Any
+      config : Any
+   }
+
+   model Status {
+      resolved : Boolean
+      icon : Any
+   }
+
+   model IssueLink {
+      id : String
+      self : String
+      `type` : Any
+      inwardIssue : LinkedIssue
+      outwardIssue : LinkedIssue
+   }
+
+   model ChangedWorklog {
+      worklogId : Int
+      updatedTime : Int
+      properties : Any[]
+   }
+
+   type avatarUrls
+
+   model BulkOperationErrorResult {
+      status : Int
+      elementErrors : Any
+      failedElementNumber : Int
+   }
+
+   model SimpleErrorCollection {
+      errors : Any
+      errorMessages : String[]
+      httpStatusCode : Int
+   }
+
+   model IssuesAndJQLQueries {
+      jqls : String[]?
+      issueIds : Int[]?
+   }
+
+   model Workflow {
+      id : Any
+      description : String?
+      transitions : Any[]
+      statuses : Any[]
+   }
+
+   model ConnectWorkflowTransitionRule {
+      id : String?
+      key : String?
+      configuration : Any
+      transition : Any
+   }
+
+   model JqlQueriesToParse {
+      queries : String[]?
+   }
+
+   model FoundGroups {
+      header : String
+      total : Int
+      groups : Any[]
+   }
+
+   model SimpleListWrapperGroupName {
+      size : Int
+      items : Any[]
+      pagingCallback : Any
+      callback : Any
+      max_results : Int
+   }
+
+   model Project {
+      expand : String
+      self : String
+      id : String
+      key : String
+      description : String
+      lead : Any
+      components : Any[]
+      issueTypes : Any[]
+      url : String
+      email : String
+      assigneeType : String
+      versions : Any[]
+      name : String
+      roles : Any
+      avatarUrls : Any
+      projectCategory : Any
+      projectTypeKey : String
+      simplified : Boolean
+      style : String
+      favourite : Boolean
+      isPrivate : Boolean
+      issueTypeHierarchy : Any
+      permissions : Any
+      properties : Any
+      uuid : String
+      insight : Any
+   }
+
+   model SimpleListWrapperApplicationRole {
+      size : Int
+      items : Any[]
+      pagingCallback : Any
+      callback : Any
+      max_results : Int
+   }
+
+   model ProjectAvatars {
+      system : Any[]
+      custom : Any[]
+   }
+
+   model LinkIssueRequestJsonBean {
+      `type` : Any
+      inwardIssue : LinkedIssue
+      outwardIssue : LinkedIssue
+      comment : Any
+   }
+
+   model IssueFieldOptionConfiguration {
+      scope : Any
+      attributes : String[]
+   }
+
+   model ProjectIssueSecurityLevels {
+      levels : Any[]?
+   }
+
+   model PageBeanUser {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : Any[]
+   }
+
+   model PermittedProjects {
+      projects : Any[]
+   }
+
+   model IconBean {
+      url16x16 : String
+      title : String
+      link : String
+   }
+
+   model IssueTypeIssueCreateMetadata {
+      self : String
+      id : String
+      description : String
+      iconUrl : String
+      name : String
+      subtask : Boolean
+      avatarId : Int
+      entityId : String
+      scope : Any
+      expand : String
+      fields : Any
+   }
+
+   model Group {
+      name : String
+      self : String
+      users : Any
+      expand : String
+   }
+
+   model WebhookDetails {
+      jqlFilter : String?
+      events : String[]
+   }
+
+   model PermissionScheme {
+      expand : String
+      id : Int
+      self : String
+      name : String?
+      description : String
+      scope : Any
+      permissions : Any[]
+   }
+
+   model PageBeanContext {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : Any[]
+   }
+
+   model CustomFieldOptionDetails {
+      id : Int
+      value : String
+      cascadingOptions : String[]
+   }
+
+   model FieldDetails {
+      id : String
+      key : String
+      name : String
+      custom : Boolean
+      orderable : Boolean
+      navigable : Boolean
+      searchable : Boolean
+      clauseNames : String[]
+      scope : Any
+      schema : Any
+   }
+
+   model CreateUpdateRoleRequestBean {
+      name : String
+      description : String
+   }
+
+   type object
+
+   model JqlQuery {
+      where : object
+      orderBy : Any
+   }
+
+   model PageBeanWebhook {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : Any[]
+   }
+
+   model DeleteAndReplaceVersionBean {
+      moveFixIssuesTo : Int
+      moveAffectedIssuesTo : Int
+      customFieldReplacementList : Any[]
+   }
+
+   model Notification {
+      subject : String
+      textBody : String
+      htmlBody : String
+      to : Any
+      restrict : NotificationRecipientsRestrictions
+   }
+
+   model ChangeDetails {
+      field : String
+      fieldtype : String
+      fieldId : String
+      `from` : String
+      fromString : String
+      to : String
+      toString : String
+   }
+
+   model UserWriteBean {
+      self : String
+      key : String
+      name : String
+      password : String
+      emailAddress : String?
+      displayName : String?
+      notification : String
+      applicationKeys : String[]
+   }
+
+   model IssueTypeWithStatus {
+      self : String?
+      id : String?
+      name : String?
+      subtask : Boolean?
+      statuses : Any[]?
+   }
+
+   model IssueLinkType {
+      id : String
+      name : String
+      inward : String
+      outward : String
+      self : String
+   }
+
+   model StatusCategory {
+      self : String
+      id : Int
+      key : String
+      colorName : String
+      name : String
+   }
+
+   model Worklog {
+      self : String
+      author : Any
+      updateAuthor : Any
+      comment : Any
+      created : DateTime
+      updated : DateTime
+      visibility : Any
+      started : DateTime
+      timeSpent : String
+      timeSpentSeconds : Int
+      id : String
+      issueId : String
+      properties : Any[]
+   }
+
+   model JqlQueryOrderByClauseElement {
+      field : Any
+      direction : String
+   }
+
+   type JqlQueryUnitaryOperand
+
+   model SystemAvatars {
+      system : Any[]
+   }
+
+   model Votes {
+      self : String
+      votes : Int
+      hasVoted : Boolean
+      voters : Any[]
+   }
+
+   model ChangedValueBean {
+      fieldName : String
+      changedFrom : String
+      changedTo : String
+   }
+
+   model WorkflowTransitionRule {
+      `type` : String?
+      configuration : Any
+   }
+
+   model BulkIssuePropertyUpdateRequest {
+      value : Any
+      `filter` : Any
+   }
+
+   model PermissionsKeysBean {
+      permissions : String[]?
+   }
+
+   model Context {
+      id : Int
+      name : String
+      scope : Any
+   }
+
+   model IssueBean {
+      expand : String
+      id : String
+      self : String
+      key : String
+      renderedFields : Any
+      properties : Any
+      names : Any
+      schema : Any
+      transitions : Any[]
+      operations : Any
+      editmeta : Any
+      changelog : Any
+      versionedRepresentations : Any
+      fieldsToInclude : Any
+      fields : Any
+   }
+
+   model ValueOperand {
+      value : String?
+   }
+
+   model PermissionSchemes {
+      permissionSchemes : PermissionScheme[]
+   }
+
+   model AddGroupBean {
+      name : String?
+   }
+
+   model PageBeanScreen {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : Any[]
+   }
+
+   model ProjectRole {
+      self : String
+      name : String
+      id : Int
+      description : String
+      actors : Any[]
+      scope : Any
+      admin : Boolean
+      `default` : Boolean
+   }
+
+   model PermissionHolder {
+      `type` : String?
+      `parameter` : String
+      expand : String
+   }
+
+   type JqlQueryClause
+
+   model IssuePickerSuggestions {
+      sections : IssuePickerSuggestionsIssueType[]
+   }
+
+   model IssueTypeDetails {
+      id : Int
+      name : String
+      avatarId : Int
+   }
+
+   model IssueTypeUpdateBean {
+      name : String
+      description : String
+      avatarId : Int
+   }
+
+   model WorkflowTransition {
+      id : Int?
+      name : String?
+   }
+
+   model JexpJqlIssues {
+      `query` : String
+      startAt : Int
+      maxResults : Int
+      validation : String
+   }
+
+   model Webhook {
+      id : Int?
+      jqlFilter : String?
+      events : String[]
+      expirationDate : Int?
+   }
+
+   model WorkflowTransitionRulesUpdateErrorDetails {
+      workflowId : WorkflowId
+      ruleUpdateErrors : Any?
+      updateErrors : String[]
+   }
+
+   model PropertyKey {
+      self : String
+      key : String
+   }
+
+   model IssueCreateMetadata {
+      expand : String
+      projects : Any[]
+   }
+
+   model MoveFieldBean {
+      after : String
+      position : String
+   }
+
+   model UserPermission {
+      id : String
+      key : String
+      name : String
+      `type` : String
+      description : String
+      havePermission : Boolean
+      deprecatedKey : Boolean
+   }
+
+   model ErrorCollection {
+      errorMessages : String[]
+      errors : Any
+      status : Int
+   }
+
+   model GroupName {
+      name : String
+      self : String
+   }
+
+   model IncludedFields {
+      actuallyIncluded : String[]
+      included : String[]
+      excluded : String[]
+   }
+
+   model NestedResponse {
+      status : Int
+      errorCollection : ErrorCollection
+   }
+
+   model FieldMetadata {
+      required : Boolean?
+      schema : Any
+      name : String?
+      key : String?
+      autoCompleteUrl : String
+      hasDefaultValue : Boolean
+      operations : String[]?
+      allowedValues : Any[]
+      defaultValue : Any
+   }
+
+   model PageOfChangelogs {
+      startAt : Int
+      maxResults : Int
+      total : Int
+      histories : Any[]
+   }
+
+   model IssueUpdateDetails {
+      transition : Any
+      fields : Any
+      update : Any
+      historyMetadata : Any
+      properties : Any[]
+   }
+
+   model AssociatedItemBean {
+      id : String
+      name : String
+      typeName : String
+      parentId : String
+      parentName : String
+   }
+
+   model IssueLinkTypes {
+      issueLinkTypes : IssueLinkType[]
+   }
+
+   model Dashboard {
+      description : String
+      id : String
+      isFavourite : Boolean
+      name : String
+      owner : Any
+      popularity : Int
+      rank : Int
+      self : String
+      sharePermissions : Any[]
+      `view` : String
+   }
+
+   model Attachment {
+      self : String
+      id : String
+      filename : String
+      author : Any
+      created : DateTime
+      size : Int
+      mimeType : String
+      content : String
+      thumbnail : String
+   }
+
+   model SecuritySchemes {
+      issueSecuritySchemes : Any[]
+   }
+
+   model SearchResults {
+      expand : String
+      startAt : Int
+      maxResults : Int
+      total : Int
+      issues : IssueBean[]
+      warningMessages : String[]
+      names : Any
+      schema : Any
+   }
+
+   model FieldReferenceData {
+      value : String
+      displayName : String
+      orderable : String
+      searchable : String
+      auto : String
+      cfid : String
+      operators : String[]
+      types : String[]
+   }
+
+   model ListOperand {
+      values : JqlQueryUnitaryOperand[]
+   }
+
+   model DefaultShareScope {
+      scope : String?
+   }
+
+   model WebhookRegistrationDetails {
+      webhooks : WebhookDetails[]?
+      url : String?
+   }
+
+   model AutoCompleteSuggestions {
+      results : Any[]
+   }
+
+   model ActorsMap {
+      user : String[]
+      group : String[]
+   }
+
+   model JqlQueryClauseTimePredicate {
+      operator : String?
+      operand : object?
+   }
+
+   model Version {
+      expand : String
+      self : String
+      id : String
+      description : String
+      name : String
+      archived : Boolean
+      released : Boolean
+      startDate : Date
+      releaseDate : Date
+      overdue : Boolean
+      userStartDate : String
+      userReleaseDate : String
+      project : String
+      projectId : Int
+      moveUnfixedIssuesTo : String
+      operations : Any[]
+      issuesStatusForFixVersion : Any
+   }
+
+   model WorkflowScheme {
+      id : Int
+      name : String
+      description : String
+      defaultWorkflow : String
+      issueTypeMappings : Any
+      originalDefaultWorkflow : String
+      originalIssueTypeMappings : Any
+      draft : Boolean
+      lastModifiedUser : Any
+      lastModified : String
+      self : String
+      updateDraftIfNeeded : Boolean
+      issueTypes : Any
+   }
+
+   model ScreenableTab {
+      id : Int
+      name : String?
+   }
+
+   model SecurityLevel {
+      self : String
+      id : String
+      description : String
+      name : String
+   }
+
+   model BulkPermissionsRequestBean {
+      projectPermissions : Any[]
+      globalPermissions : String[]
+   }
+
+   model Permissions {
+      permissions : Any
+   }
+
+   model SimpleApplicationPropertyBean {
+      id : String
+      value : String
+   }
+
+   model SecurityScheme {
+      self : String
+      id : Int
+      name : String
+      description : String
+      defaultSecurityLevelId : Int
+      levels : SecurityLevel[]
+   }
+
+   model DeprecatedWorkflow {
+      name : String
+      description : String
+      lastModifiedDate : String
+      lastModifiedUser : String
+      lastModifiedUserAccountId : String
+      steps : Int
+      scope : Any
+      `default` : Boolean
+   }
+
+   model WorkflowRules {
+      conditions : WorkflowTransitionRule[]?
+      validators : WorkflowTransitionRule[]?
+      postFunctions : WorkflowTransitionRule[]?
+   }
+
+   model CustomFieldOptionValue {
+      value : String
+      cascadingOptions : String[]
+   }
+
+   model ApplicationProperty {
+      id : String
+      key : String
+      value : String
+      name : String
+      desc : String
+      `type` : String
+      defaultValue : String
+      example : String
+      allowedValues : String[]
+   }
+
+   model PagedListUserDetailsApplicationUser {
+      size : Int
+      items : Any[]
+      max_results : Int
+      start_index : Int
+      end_index : Int
+   }
+
+   model PublishedWorkflowId {
+      name : String?
+   }
+
+   model ContainerForWebhookIDs {
+      webhookIds : Int[]?
+   }
+
+   model ProjectType {
+      key : String
+      formattedKey : String
+      descriptionI18nKey : String
+      icon : String
+      color : String
+   }
+
+   model FieldUpdateOperation {
+      add : Any
+      set : Any
+      remove : Any
+      edit : Any
+   }
+
+   model Icon {
+      url16x16 : String
+      title : String
+      link : String
+   }
+
+   model SearchRequestBean {
+      jql : String
+      startAt : Int
+      maxResults : Int
+      fields : String[]
+      validateQuery : String
+      expand : String[]
+      properties : String[]
+      fieldsByKeys : Boolean
+   }
+
+   model AddFieldBean {
+      fieldId : String?
+   }
+
+   model FoundFilter {
+      self : String
+      id : String
+      name : String?
+      description : String
+      owner : Any
+      jql : String
+      viewUrl : String
+      searchUrl : String
+      favourite : Boolean
+      favouritedCount : Int
+      sharePermissions : Any[]
+      subscriptions : Any[]
+   }
+
+   model IssueFilterForBulkPropertySet {
+      entityIds : Int[]
+      currentValue : Any
+      hasProperty : Boolean
+   }
+
+   model JQLReferenceData {
+      visibleFieldNames : FieldReferenceData[]
+      visibleFunctionNames : Any[]
+      jqlReservedWords : String[]
+   }
+
+   model ProjectRoleActorsUpdateBean {
+      id : Int
+      categorisedActors : Any
+   }
+
+   model ParsedJqlQueries {
+      queries : Any[]?
+   }
+
+   model DefaultWorkflow {
+      workflow : String?
+      updateDraftIfNeeded : Boolean
+   }
+
+   model ProjectIdentifiers {
+      self : String?
+      id : Int?
+      key : String?
+   }
+
+   model ChangedWorklogs {
+      values : ChangedWorklog[]
+      since : Int
+      until : Int
+      self : String
+      nextPage : String
+      lastPage : Boolean
+   }
+
+   model WebhooksExpirationDate {
+      expirationDate : Int?
+   }
+
+   model RemoteIssueLinkRequest {
+      globalId : String
+      application : Any
+      relationship : String
+      object : RemoteObject
+   }
+
+   model PageOfWorklogs {
+      startAt : Int
+      maxResults : Int
+      total : Int
+      worklogs : Worklog[]
+   }
+
+   model ContainerOfWorkflowSchemeAssociations {
+      values : Any[]?
+   }
+
+   model JiraExpressionsComplexityValueBean {
+      value : Int?
+      limit : Int?
+   }
+
+   model RuleConfiguration {
+      value : String?
+   }
+
+   model Field {
+      id : String?
+      name : String?
+      schema : Any
+      description : String
+      key : String
+      isLocked : Boolean
+      lastUsed : DateTime
+      screensCount : Int
+      contextsCount : Int
+   }
+
+   model ServerInformation {
+      baseUrl : String
+      version : String
+      versionNumbers : Int[]
+      deploymentType : String
+      buildNumber : Int
+      buildDate : DateTime
+      serverTime : DateTime
+      scmInfo : String
+      serverTitle : String
+      healthChecks : Any[]
+   }
+
+   model RegisteredWebhook {
+      createdWebhookId : Int
+      errors : String[]
+   }
+
+   model FunctionReferenceData {
+      value : String
+      displayName : String
+      isList : String
+      types : String[]
+   }
+
+   model CustomFieldOption {
+      self : String
+      value : String
+   }
+
+   model Component {
+      self : String
+      id : String
+      name : String
+      description : String
+      lead : Any
+      leadUserName : String
+      leadAccountId : String
+      assigneeType : String
+      assignee : Any
+      realAssigneeType : String
+      realAssignee : Any
+      isAssigneeTypeValid : Boolean
+      project : String
+      projectId : Int
+   }
+
+   model UserList {
+      size : Int
+      items : Any[]
+      max_results : Int
+      start_index : Int
+      end_index : Int
+   }
+
+   model PageOfDashboards {
+      startAt : Int
+      maxResults : Int
+      total : Int
+      prev : String
+      next : String
+      dashboards : Dashboard[]
+   }
+
+   model JqlQueryOrderByClause {
+      fields : JqlQueryOrderByClauseElement[]?
+   }
+
+   model JiraExpressionEvalContextBean {
+      issue : Any
+      issues : Any
+      project : Any
+      sprint : Int
+      board : Int
+      serviceDesk : Int
+      customerRequest : Int
+   }
+
+   model PageBeanString {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : String[]
+   }
+
+   model CustomFieldReplacement {
+      customFieldId : Int
+      moveTo : Int
+   }
+
+   model ColumnItem {
+      label : String
+      value : String
+   }
+
+   model RemoteIssueLinkIdentifies {
+      id : Int
+      self : String
+   }
+
+   type ConnectModule
+
+   model PageBeanVersion {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : Version[]
+   }
+
+   model Avatar {
+      id : String?
+      owner : String
+      isSystemAvatar : Boolean
+      isSelected : Boolean
+      isDeletable : Boolean
+      fileName : String
+      urls : Any
+   }
+
+   model CustomFieldDefinitionJsonBean {
+      name : String?
+      description : String
+      `type` : String?
+      searcherKey : String?
+   }
+
+   model PageBeanUserKey {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : UserKey[]
+   }
+
+   model PageBeanScreenScheme {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : Any[]
+   }
+
+   model Scope {
+      `type` : String
+      project : Any
+   }
+
+   model PermissionGrant {
+      id : Int
+      self : String
+      holder : PermissionHolder
+      permission : String
+   }
+
+   model Filter {
+      self : String
+      id : String
+      name : String?
+      description : String
+      owner : Any
+      jql : String
+      viewUrl : String
+      searchUrl : String
+      favourite : Boolean
+      favouritedCount : Int
+      sharePermissions : Any[]
+      sharedUsers : UserList
+      subscriptions : Any
+   }
+
+   model VersionUsageInCustomField {
+      fieldName : String
+      customFieldId : Int
+      issueCountWithVersionInCustomField : Int
+   }
+
+   model IssuesJqlMetaDataBean {
+      startAt : Int?
+      maxResults : Int?
+      count : Int?
+      totalCount : Int?
+      validationWarnings : String[]
+   }
+
+   model BulkCreateCustomFieldOptionRequest {
+      options : CustomFieldOptionValue[]
+   }
+
+   model CreatedIssues {
+      issues : Any[]
+      errors : BulkOperationErrorResult[]
+   }
+
+   model PageBeanWorkflowTransitionRules {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : Any[]
+   }
+
+   model VersionUnresolvedIssuesCount {
+      self : String
+      issuesUnresolvedCount : Int
+      issuesCount : Int
+   }
+
+   model PageBeanWorkflow {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : Workflow[]
+   }
+
+   model WorklogIdsRequestBean {
+      ids : Int[]?
+   }
+
+   model RemoteIssueLink {
+      id : Int
+      self : String
+      globalId : String
+      application : Any
+      relationship : String
+      object : RemoteObject
+   }
+
+   model ComponentIssuesCount {
+      self : String
+      issueCount : Int
+   }
+
+   type string
+
+   model JsonNode {
+      elements : Any
+      number : Boolean
+      valueNode : Boolean
+      containerNode : Boolean
+      missingNode : Boolean
+      object : Boolean
+      pojo : Boolean
+      integralNumber : Boolean
+      floatingPointNumber : Boolean
+      int : Boolean
+      long : Boolean
+      double : Boolean
+      bigDecimal : Boolean
+      bigInteger : Boolean
+      textual : Boolean
+      boolean : Boolean
+      binary : Boolean
+      numberValue : Decimal
+      numberType : String
+      intValue : Int
+      longValue : Int
+      bigIntegerValue : Int
+      doubleValue : Decimal
+      decimalValue : Decimal
+      booleanValue : Boolean
+      binaryValue : string[]
+      valueAsInt : Int
+      valueAsLong : Int
+      valueAsDouble : Decimal
+      valueAsBoolean : Boolean
+      fieldNames : Any
+      valueAsText : String
+      textValue : String
+      array : Boolean
+      fields : Any
+      `null` : Boolean
+   }
+
+   model IssueTypeCreateBean {
+      name : String?
+      description : String
+      `type` : String
+   }
+
+   model IssueFieldOptionScopeBean {
+      projects : Int[]
+      projects2 : Any[]
+      global : Any
+   }
+
+   model CreatedIssue {
+      id : String
+      key : String
+      self : String
+      transition : NestedResponse
+   }
+
+   model ProjectInputBean {
+      key : String
+      name : String
+      projectTypeKey : String
+      projectTemplateKey : String
+      description : String
+      lead : String
+      leadAccountId : String
+      url : String
+      assigneeType : String
+      avatarId : Int
+      issueSecurityScheme : Int
+      permissionScheme : Int
+      notificationScheme : Int
+      categoryId : Int
+   }
+
+   type ConnectModules
+
+   model TaskProgressBeanRemoveOptionFromIssuesResult {
+      self : String?
+      id : String?
+      description : String
+      status : String?
+      message : String
+      result : Any
+      submittedBy : Int?
+      progress : Int?
+      elapsedRuntime : Int?
+      submitted : Int?
+      started : Int
+      finished : Int
+      lastUpdate : Int?
+   }
+
+   model JqlQueryFieldEntityProperty {
+      entity : String?
+      key : String?
+      path : String?
+      `type` : String
+   }
+
+   model FilterSubscriptionsList {
+      size : Int
+      items : Any[]
+      max_results : Int
+      start_index : Int
+      end_index : Int
+   }
+
+   model RichText {
+      emptyAdf : Boolean
+      valueSet : Boolean
+   }
+
+   model RemoveOptionFromIssuesResult {
+      modifiedIssues : Int[]
+      unmodifiedIssues : Int[]
+      errors : SimpleErrorCollection
+   }
+
+   model IssueTypeBean {
+      self : String
+      id : String
+      description : String
+      iconUrl : String
+      name : String
+      subtask : Boolean
+      avatarId : Int
+      entityId : String
+      scope : Scope
+   }
+
+   model AttachmentArchiveMetadataReadable {
+      id : Int
+      name : String
+      entries : Any[]
+      totalEntryCount : Int
+      mediaType : String
+   }
+
+   model Operations {
+      linkGroups : Any[]
+   }
+
+   model ProjectForScope {
+      self : String
+      id : String
+      key : String
+      name : String
+      projectTypeKey : String
+      simplified : Boolean
+      avatarUrls : Any
+      projectCategory : Any
+   }
+
+   model HistoryMetadataParticipant {
+      id : String
+      displayName : String
+      displayNameKey : String
+      `type` : String
+      avatarUrl : String
+      url : String
+   }
+
+   model ParsedJqlQuery {
+      `query` : String?
+      structure : JqlQuery
+      errors : String[]
+   }
+
+   model ProjectCategory {
+      self : String
+      id : String
+      name : String
+      description : String
+   }
+
+   model PageBeanFoundFilter {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : FoundFilter[]
+   }
+
+   model AttachmentMetadata {
+      id : Int
+      self : String
+      filename : String
+      author : Any
+      created : DateTime
+      size : Int
+      mimeType : String
+      properties : Any
+      content : String
+      thumbnail : String
+   }
+
+   model SuggestedIssue {
+      id : Int
+      key : String
+      keyHtml : String
+      img : String
+      summary : String
+      summaryText : String
+   }
+
+   model AuditRecords {
+      offset : Int
+      limit : Int
+      total : Int
+      records : Any[]
+   }
+
+   model PermissionGrants {
+      permissions : PermissionGrant[]
+      expand : String
+   }
+
+   model ProjectIssueCreateMetadata {
+      expand : String
+      self : String
+      id : String
+      key : String
+      name : String
+      avatarUrls : Any
+      issuetypes : IssueTypeIssueCreateMetadata[]
+   }
+
+   model PageBeanChangelog {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : Any[]
+   }
+
+   model RoleActor {
+      id : Int
+      displayName : String
+      `type` : String
+      name : String
+      avatarUrl : String
+      actorUser : Any
+      actorGroup : Any
+      user : String
+   }
+
+   model UnrestrictedUserEmail {
+      accountId : String
+      email : String
+   }
+
+   model FieldChangedClause {
+      field : Any?
+      operator : String?
+      predicates : JqlQueryClauseTimePredicate[]?
+   }
+
+   model IssuesUpdateBean {
+      issueUpdates : IssueUpdateDetails[]
+   }
+
+   model ProjectPermissions {
+      canEdit : Boolean
+   }
+
+   model AttachmentArchiveItemReadable {
+      path : String
+      index : Int
+      size : String
+      mediaType : String
+      label : String
+   }
+
+   model AttachmentArchiveImpl {
+      entries : Any[]
+      totalEntryCount : Int
+   }
+
+   model ComponentWithIssueCount {
+      issueCount : Int
+      description : String
+      self : String
+      assigneeType : String
+      project : String
+      lead : Any
+      projectId : Int
+      assignee : Any
+      realAssignee : Any
+      isAssigneeTypeValid : Boolean
+      realAssigneeType : String
+      name : String
+      id : String
+   }
+
+   model Application {
+      `type` : String
+      name : String
+   }
+
+   model ProjectScopeBean {
+      id : Int
+      attributes : String[]
+   }
+
+   model Avatars {
+      system : Avatar[]
+      custom : Avatar[]
+   }
+
+   model NotificationScheme {
+      expand : String
+      id : Int
+      self : String
+      name : String
+      description : String
+      notificationSchemeEvents : Any[]
+      scope : Scope
+   }
+
+   model UserBeanAvatarUrls {
+      `32x32` : String
+      `48x48` : String
+      `16x16` : String
+      `24x24` : String
+   }
+
+   model UserPickerUser {
+      accountId : String
+      name : String
+      key : String
+      html : String
+      displayName : String
+      avatarUrl : String
+   }
+
+   model UserMigrationBean {
+      key : String
+      username : String
+      accountId : String
+   }
+
+   model EntityProperty {
+      key : String
+      value : Any
+   }
+
+   model TimeTrackingConfiguration {
+      workingHoursPerDay : Decimal?
+      workingDaysPerWeek : Decimal?
+      timeFormat : String?
+      defaultUnit : String?
+   }
+
+   model IssuesMetaBean {
+      jql : IssuesJqlMetaDataBean
+   }
+
+   model JQLQueryWithUnknownUsers {
+      originalQuery : String
+      convertedQuery : String
+   }
+
+   model AttachmentArchiveEntry {
+      mediaType : String
+      entryIndex : Int
+      abbreviatedName : String
+      name : String
+      size : Int
+   }
+
+   model ProjectIdentifierBean {
+      id : Int
+      key : String
+   }
+
+   model PageBeanNotificationScheme {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : NotificationScheme[]
+   }
+
+   type JqlQueryClauseOperand
+
+   model FailedWebhook {
+      id : String?
+      body : String
+      url : String?
+      failureTime : Int?
+   }
+
+   model FilterSubscription {
+      id : Int
+      user : Any
+      group : GroupName
+   }
+
+   model JiraExpressionEvalRequestBean {
+      expression : String?
+      context : JiraExpressionEvalContextBean
+   }
+
+   model Changelog {
+      id : String
+      author : Any
+      created : DateTime
+      items : ChangeDetails[]
+      historyMetadata : Any
+   }
+
+   model SharePermissionInputBean {
+      `type` : String?
+      projectId : String
+      groupname : String
+      projectRoleId : String
+   }
+
+   model TimeTrackingProvider {
+      key : String?
+      name : String
+      url : String
+   }
+
+   model PageBeanDashboard {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : Dashboard[]
+   }
+
+   model GlobalScopeBean {
+      attributes : String[]
+   }
+
+   model FoundGroup {
+      name : String
+      html : String
+      labels : Any[]
+      groupId : String
+   }
+
+   model IssueTransition {
+      id : String
+      name : String
+      to : Any
+      hasScreen : Boolean
+      isGlobal : Boolean
+      isInitial : Boolean
+      isConditional : Boolean
+      fields : Any
+      expand : String
+   }
+
+   model HealthCheckResult {
+      name : String
+      description : String
+      passed : Boolean
+   }
+
+   model JiraExpressionResult {
+      value : Any?
+      meta : Any
+   }
+
+   model WorkflowStatus {
+      id : String?
+      name : String?
+      properties : WorkflowStatusProperties
+   }
+
+   model PageOfComments {
+      startAt : Int
+      maxResults : Int
+      total : Int
+      comments : Any[]
+   }
+
+   model BulkPermissionGrants {
+      projectPermissions : Any[]?
+      globalPermissions : String[]?
+   }
+
+   model WorkflowTransitionRules {
+      workflowId : WorkflowId
+      postFunctions : ConnectWorkflowTransitionRule[]
+      conditions : ConnectWorkflowTransitionRule[]
+      validators : ConnectWorkflowTransitionRule[]
+   }
+
+   model Transition {
+      id : String?
+      name : String?
+      description : String?
+      `from` : String[]?
+      to : String?
+      `type` : String?
+      screen : Any
+      rules : WorkflowRules
+   }
+
+   model UpdatedProjectCategory {
+      self : String
+      id : String
+      description : String
+      name : String
+   }
+
+   model WorkflowTransitionRulesUpdateErrors {
+      updateResults : WorkflowTransitionRulesUpdateErrorDetails[]?
+   }
+
+   model ScreenableField {
+      id : String
+      name : String
+   }
+
+   model ErrorMessage {
+      message : String?
+   }
+
+   model NotificationSchemeEvent {
+      event : Any
+      notifications : EventNotification[]
+   }
+
+   model AutoCompleteSuggestion {
+      value : String
+      displayName : String
+   }
+
+   model Locale {
+      locale : String
+   }
+
+   model ContainerForRegisteredWebhooks {
+      webhookRegistrationResult : RegisteredWebhook[]
+   }
+
+   model PageBeanCustomFieldOptionDetails {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : CustomFieldOptionDetails[]
+   }
+
+   model ConvertedJQLQueries {
+      queryStrings : String[]
+      queriesWithUnknownUsers : JQLQueryWithUnknownUsers[]
+   }
+
+   model UpdateUserToGroupBean {
+      name : String
+      accountId : String
+   }
+
+   model WorkflowTransitionProperty {
+      key : String
+      value : String?
+      id : String
+   }
+
+   model FailedWebhooks {
+      values : FailedWebhook[]?
+      maxResults : Int?
+      next : String
+   }
+
+   model HistoryMetadata {
+      `type` : String
+      description : String
+      descriptionKey : String
+      activityDescription : String
+      activityDescriptionKey : String
+      emailDescription : String
+      emailDescriptionKey : String
+      actor : HistoryMetadataParticipant
+      generator : HistoryMetadataParticipant
+      cause : HistoryMetadataParticipant
+      extraData : Any
+   }
+
+   model PageBeanComment {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : Any[]
+   }
+
+   type ListWrapperCallbackApplicationRole
+
+   model JQLPersonalDataMigrationRequest {
+      queryStrings : String[]
+   }
+
+   model ScreenTypeIDsBean {
+      edit : Int?
+      create : Int?
+      `view` : Int?
+      `default` : Int
+   }
+
+   model IssueTypesWorkflowMapping {
+      workflow : String
+      issueTypes : String[]
+      defaultMapping : Boolean
+      updateDraftIfNeeded : Boolean
+   }
+
+   model AttachmentSettings {
+      enabled : Boolean
+      uploadLimit : Int
+   }
+
+   model PageBeanField {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : Field[]
+   }
+
+   model ProjectRoleActorsCount {
+      actorsCount : Int
+   }
+
+   model JiraExpressionsComplexityBean {
+      steps : JiraExpressionsComplexityValueBean
+      expensiveOperations : JiraExpressionsComplexityValueBean
+      beans : JiraExpressionsComplexityValueBean
+      primitiveValues : JiraExpressionsComplexityValueBean
+   }
+
+   model Hierarchy {
+      level : Any[]
+   }
+
+   model UserDetails {
+      self : String
+      name : String
+      key : String
+      accountId : String
+      emailAddress : String
+      avatarUrls : Any
+      displayName : String
+      active : Boolean
+      timeZone : String
+      accountType : String
+   }
+
+   model SimpleLink {
+      id : String
+      styleClass : String
+      iconClass : String
+      label : String
+      title : String
+      href : String
+      weight : Int
+   }
+
+   model ScreenScheme {
+      id : Int
+      name : String
+      description : String
+      screens : ScreenTypeIDsBean
+   }
+
+   model IssueMatchesForJQL {
+      matchedIssues : Int[]?
+      errors : String[]?
+   }
+
+   model IssueCommentListRequestBean {
+      ids : Int[]?
+   }
+
+   model FoundUsersAndGroups {
+      users : Any
+      groups : FoundGroups
+   }
+
+   model HierarchyLevel {
+      id : Int
+      name : String
+      aboveLevelId : Int
+      belowLevelId : Int
+      projectConfigurationId : Int
+      issueTypeIds : Int[]
+      externalUuid : String
+   }
+
+   model RestrictedPermission {
+      id : String
+      key : String
+   }
+
+   model NotificationRecipients {
+      reporter : Boolean
+      assignee : Boolean
+      watchers : Boolean
+      voters : Boolean
+      users : UserDetails[]
+      groups : GroupName[]
+   }
+
+   model WorkflowTransitionRulesUpdate {
+      workflows : WorkflowTransitionRules[]
+   }
+
+   model VersionIssueCounts {
+      self : String
+      issuesFixedCount : Int
+      issuesAffectedCount : Int
+      issueCountWithCustomFieldsShowingVersion : Int
+      customFieldUsage : VersionUsageInCustomField[]
+   }
+
+   model Priority {
+      self : String
+      statusColor : String
+      description : String
+      iconUrl : String
+      name : String
+      id : String
+   }
+
+   model BulkProjectPermissions {
+      issues : Int[]
+      projects : Int[]
+      permissions : String[]?
+   }
+
+   model VersionIssuesStatus {
+      unmapped : Int
+      toDo : Int
+      inProgress : Int
+      done : Int
+   }
+
+   model PageBeanComponentWithIssueCount {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : ComponentWithIssueCount[]
+   }
+
+   model JexpIssues {
+      jql : JexpJqlIssues
+   }
+
+   model AvatarUrlsBean {
+      `16x16` : String
+      `24x24` : String
+      `32x32` : String
+      `48x48` : String
+   }
+
+   model IdOrKeyBean {
+      id : Int
+      key : String
+   }
+
+   model Fields {
+      summary : String
+      status : Any
+      priority : Priority
+      assignee : UserDetails
+      issuetype : IssueTypeBean
+      issueType : IssueTypeBean
+   }
+
+   model TaskProgressBeanObject {
+      self : String?
+      id : String?
+      description : String
+      status : String?
+      message : String
+      result : Any
+      submittedBy : Int?
+      progress : Int?
+      elapsedRuntime : Int?
+      submitted : Int?
+      started : Int
+      finished : Int
+      lastUpdate : Int?
+   }
+
+   model PropertyKeys {
+      keys : PropertyKey[]
+   }
+
+   model StatusDetails {
+      self : String
+      description : String
+      iconUrl : String
+      name : String
+      id : String
+      statusCategory : StatusCategory
+   }
+
+   model ProjectRoleUserBean {
+      accountId : String
+   }
+
+   model PageBeanIssueFieldOption {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : IssueFieldOption[]
+   }
+
+   model IdBean {
+      id : Int?
+   }
+
+   model Visibility {
+      `type` : String
+      value : String
+   }
+
+   model OperationMessage {
+      message : String?
+      statusCode : Int?
+   }
+
+   model IssueFilterForBulkPropertyDelete {
+      entityIds : Int[]
+      currentValue : Any
+   }
+
+   model Resolution {
+      self : String
+      id : String
+      description : String
+      name : String
+   }
+
+   model FieldValueClause {
+      field : Any?
+      operator : String?
+      operand : JqlQueryClauseOperand?
+   }
+
+   model User {
+      self : String
+      key : String
+      accountId : String
+      accountType : String
+      name : String
+      emailAddress : String
+      avatarUrls : AvatarUrlsBean
+      displayName : String
+      active : Boolean
+      timeZone : String
+      locale : String
+      groups : SimpleListWrapperGroupName
+      applicationRoles : SimpleListWrapperApplicationRole
+      expand : String
+   }
+
+   model PageBeanUserDetails {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : UserDetails[]
+   }
+
+   model ActorInputBean {
+      user : String[]
+      group : String[]
+   }
+
+   model Screen {
+      id : Int
+      name : String
+      scope : Scope
+   }
+
+   model FunctionOperand {
+      `function` : String?
+      arguments : String[]
+   }
+
+   model CompoundClause {
+      clauses : JqlQueryClause[]?
+      operator : String?
+   }
+
+   model PageBeanProject {
+      self : String
+      nextPage : String
+      maxResults : Int
+      startAt : Int
+      total : Int
+      isLast : Boolean
+      values : Project[]
+   }
+
+   model IssueUpdateMetadata {
+      fields : Any
+   }
+
+   model LinkGroup {
+      id : String
+      styleClass : String
+      header : SimpleLink
+      weight : Int
+      links : SimpleLink[]
+      groups : Any[]
+   }
+
+   model ProjectIssueTypesHierarchyLevel {
+      entityId : String
+      level : Int
+      name : String
+      issueTypes : IssueTypeDetails[]
+   }
+
+   model IssueTypeWorkflowMapping {
+      issueType : String
+      workflow : String
+      updateDraftIfNeeded : Boolean
+   }
+
+   model UserBean {
+      key : String
+      self : String
+      name : String
+      displayName : String
+      active : Boolean
+      accountId : String
+      avatarUrls : UserBeanAvatarUrls
+   }
+
+   model IssueEntityProperties {
+      entitiesIds : Int[]
+      properties : Any
+   }
+
+   model SharePermission {
+      id : Int
+      `type` : String?
+      project : Project
+      role : ProjectRole
+      group : GroupName
+   }
+
+   model Comment {
+      self : String
+      id : String
+      author : UserDetails
+      body : Any
+      renderedBody : String
+      updateAuthor : UserDetails
+      created : DateTime
+      updated : DateTime
+      visibility : Visibility
+      jsdPublic : Boolean
+      properties : EntityProperty[]
+   }
+
+   model WorkflowSchemeAssociations {
+      projectIds : String[]?
+      workflowScheme : WorkflowScheme
+   }
+
+   model ProjectInsight {
+      totalIssueCount : Int
+      lastIssueUpdateTime : DateTime
+   }
+
+   model FoundUsers {
+      users : UserPickerUser[]
+      total : Int
+      header : String
+   }
+
+   model FieldWasClause {
+      field : Any?
+      operator : String?
+      operand : JqlQueryClauseOperand?
+      predicates : JqlQueryClauseTimePredicate[]?
+   }
+
+   model KeywordOperand {
+      keyword : String?
+   }
+
+   model ProjectRoleGroupBean {
+      displayName : String
+      name : String
+   }
+
+   model JiraExpressionEvaluationMetaDataBean {
+      complexity : JiraExpressionsComplexityBean
+      issues : IssuesMetaBean
+   }
+
+   model JsonTypeBean {
+      `type` : String?
+      items : String
+      system : String
+      custom : String
+      customId : Int
+      configuration : Any
+   }
+
+   model AuditRecordBean {
+      id : Int
+      summary : String
+      remoteAddress : String
+      authorKey : String
+      created : DateTime
+      category : String
+      eventSource : String
+      description : String
+      objectItem : AssociatedItemBean
+      changedValues : ChangedValueBean[]
+      associatedItems : AssociatedItemBean[]
+   }
+
+   model NotificationEvent {
+      id : Int
+      name : String
+      description : String
+      templateEvent : Any
+   }
+
+   model BulkProjectPermissionGrants {
+      permission : String?
+      issues : Int[]?
+      projects : Int[]?
+   }
+
+   model IssueMatches {
+      matches : IssueMatchesForJQL[]?
+   }
+
+   type ListWrapperCallbackGroupName
+
+   model ScreenID {
+      id : String?
+   }
+
+   model VersionMoveBean {
+      after : String
+      position : String
+   }
+
+   model GroupLabel {
+      text : String
+      title : String
+      `type` : String
+   }
+
+   model JqlQueryField {
+      name : String?
+      property : JqlQueryFieldEntityProperty[]
+   }
+
+   model ApplicationRole {
+      key : String
+      groups : String[]
+      name : String
+      defaultGroups : String[]
+      selectedByDefault : Boolean
+      defined : Boolean
+      numberOfSeats : Int
+      remainingSeats : Int
+      userCount : Int
+      userCountDescription : String
+      hasUnlimitedSeats : Boolean
+      platform : Boolean
+   }
+
+   service RestApi3Application_propertiesService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/application-properties")
+      operation com_atlassian_jira_rest_v2_admin_ApplicationPropertiesResource_getApplicationProperty_get(  key : String,  permissionLevel : String,  keyFilter : String ) : ApplicationProperty[]
+   }
+   service RestApi3Application_propertiesAdvanced_settingsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/application-properties/advanced-settings")
+      operation com_atlassian_jira_rest_v2_admin_ApplicationPropertiesResource_getAdvancedSettings_get(  ) : ApplicationProperty[]
+   }
+   service RestApi3Application_propertiesIdService {
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/application-properties/{id}")
+      operation com_atlassian_jira_rest_v2_admin_ApplicationPropertiesResource_setApplicationProperty_put(  id : String ) : ApplicationProperty
+   }
+   service RestApi3ApplicationroleService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/applicationrole")
+      operation com_atlassian_jira_rest_v2_admin_applicationrole_ApplicationRoleResource_getAllApplicationRoles_get(  ) : ApplicationRole[]
+   }
+   service RestApi3ApplicationroleKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/applicationrole/{key}")
+      operation com_atlassian_jira_rest_v2_admin_applicationrole_ApplicationRoleResource_getApplicationRole_get(  key : String ) : ApplicationRole
+   }
+   service RestApi3AttachmentMetaService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/attachment/meta")
+      operation com_atlassian_jira_rest_v2_issue_attachment_AttachmentResource_getAttachmentMeta_get(  ) : AttachmentSettings
+   }
+   service RestApi3AttachmentIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/attachment/{id}")
+      operation com_atlassian_jira_rest_v2_issue_attachment_AttachmentResource_getAttachment_get(  id : String ) : AttachmentMetadata
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/attachment/{id}")
+      operation com_atlassian_jira_rest_v2_issue_attachment_AttachmentResource_removeAttachment_delete(  id : String )
+   }
+   service RestApi3AttachmentIdExpandHumanService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/attachment/{id}/expand/human")
+      operation com_atlassian_jira_rest_v2_issue_attachment_AttachmentResource_expandAttachmentForHumans_get(  id : String ) : AttachmentArchiveMetadataReadable
+   }
+   service RestApi3AttachmentIdExpandRawService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/attachment/{id}/expand/raw")
+      operation com_atlassian_jira_rest_v2_issue_attachment_AttachmentResource_expandAttachmentForMachines_get(  id : String ) : AttachmentArchiveImpl
+   }
+   service RestApi3AuditingRecordService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/auditing/record")
+      operation com_atlassian_jira_rest_v2_admin_auditing_AuditingResource_getAuditRecords_get(  offset : Int,  limit : Int,  `filter` : String,  `from` : DateTime,  to : DateTime ) : AuditRecords
+   }
+   service RestApi3AvatarTypeSystemService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/avatar/{type}/system")
+      operation com_atlassian_jira_rest_v2_issue_AvatarResource_getAllSystemAvatars_get(  `type` : String ) : SystemAvatars
+   }
+   service RestApi3CommentListService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/comment/list")
+      operation com_atlassian_jira_rest_v2_issue_IssueCommentListResource_getCommentsByIds_post(  expand : String ) : PageBeanComment
+   }
+   service RestApi3CommentCommentIdPropertiesService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/comment/{commentId}/properties")
+      operation com_atlassian_jira_rest_v2_issue_CommentPropertyResource_getCommentPropertyKeys_get(  commentId : String ) : PropertyKeys
+   }
+   service RestApi3CommentCommentIdPropertiesPropertyKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/comment/{commentId}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_issue_CommentPropertyResource_getCommentProperty_get(  commentId : String,  propertyKey : String ) : EntityProperty
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/comment/{commentId}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_issue_CommentPropertyResource_setCommentProperty_put(  commentId : String,  propertyKey : String ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/comment/{commentId}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_issue_CommentPropertyResource_deleteCommentProperty_delete(  commentId : String,  propertyKey : String )
+   }
+   service RestApi3ComponentService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/component")
+      operation com_atlassian_jira_rest_v2_issue_ComponentResource_createComponent_post(  ) : Component
+   }
+   service RestApi3ComponentIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/component/{id}")
+      operation com_atlassian_jira_rest_v2_issue_ComponentResource_getComponent_get(  id : String ) : Component
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/component/{id}")
+      operation com_atlassian_jira_rest_v2_issue_ComponentResource_updateComponent_put(  id : String ) : Component
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/component/{id}")
+      operation com_atlassian_jira_rest_v2_issue_ComponentResource_deleteComponent_delete(  id : String,  moveIssuesTo : String )
+   }
+   service RestApi3ComponentIdRelatedIssueCountsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/component/{id}/relatedIssueCounts")
+      operation com_atlassian_jira_rest_v2_issue_ComponentResource_getComponentRelatedIssues_get(  id : String ) : ComponentIssuesCount
+   }
+   service RestApi3ConfigurationService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/configuration")
+      operation com_atlassian_jira_rest_v2_admin_ConfigurationResource_getConfiguration_get(  ) : Configuration
+   }
+   service RestApi3ConfigurationTimetrackingService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/configuration/timetracking")
+      operation com_atlassian_jira_rest_v2_admin_timetracking_TimeTrackingResource_getSelectedTimeTrackingImplementation_get(  ) : TimeTrackingProvider
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/configuration/timetracking")
+      operation com_atlassian_jira_rest_v2_admin_timetracking_TimeTrackingResource_selectTimeTrackingImplementation_put(  ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/configuration/timetracking")
+      operation com_atlassian_jira_rest_v2_admin_timetracking_TimeTrackingResource_disableTimeTracking_delete(  ) : Any
+   }
+   service RestApi3ConfigurationTimetrackingListService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/configuration/timetracking/list")
+      operation com_atlassian_jira_rest_v2_admin_timetracking_TimeTrackingResource_getAvailableTimeTrackingImplementations_get(  ) : TimeTrackingProvider[]
+   }
+   service RestApi3ConfigurationTimetrackingOptionsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/configuration/timetracking/options")
+      operation com_atlassian_jira_rest_v2_admin_timetracking_TimeTrackingResource_getSharedTimeTrackingConfiguration_get(  ) : TimeTrackingConfiguration
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/configuration/timetracking/options")
+      operation com_atlassian_jira_rest_v2_admin_timetracking_TimeTrackingResource_setSharedTimeTrackingConfiguration_put(  ) : TimeTrackingConfiguration
+   }
+   service RestApi3CustomFieldFieldIdOptionService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/customField/{fieldId}/option")
+      operation com_atlassian_jira_rest_v2_issue_BulkCustomFieldOptionResource_getOptionsForField_get(  fieldId : Int,  startAt : Int,  maxResults : Int ) : PageBeanCustomFieldOptionDetails
+      @HttpOperation(method = "POST" , url = "/rest/api/3/customField/{fieldId}/option")
+      operation com_atlassian_jira_rest_v2_issue_BulkCustomFieldOptionResource_createCustomFieldOptions_post(  fieldId : Int ) : Any
+   }
+   service RestApi3CustomFieldOptionIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/customFieldOption/{id}")
+      operation com_atlassian_jira_rest_v2_issue_customfield_CustomFieldOptionResource_getCustomFieldOption_get(  id : String ) : CustomFieldOption
+   }
+   service RestApi3DashboardService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/dashboard")
+      operation com_atlassian_jira_rest_v2_dashboard_DashboardResource_getAllDashboards_get(  `filter` : String,  startAt : Int,  maxResults : Int ) : PageOfDashboards
+   }
+   service RestApi3DashboardSearchService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/dashboard/search")
+      operation com_atlassian_jira_rest_v2_dashboard_DashboardResource_getDashboardsPaginated_get(  dashboardName : String,  accountId : String,  owner : String,  groupname : String,  projectId : Int,  orderBy : String,  startAt : Int,  maxResults : Int,  expand : String ) : PageBeanDashboard
+   }
+   service RestApi3DashboardDashboardIdItemsItemIdPropertiesService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/dashboard/{dashboardId}/items/{itemId}/properties")
+      operation com_atlassian_jira_rest_v2_dashboard_DashboardItemPropertyResource_getDashboardItemPropertyKeys_get(  dashboardId : String,  itemId : String ) : PropertyKeys
+   }
+   service RestApi3DashboardDashboardIdItemsItemIdPropertiesPropertyKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/dashboard/{dashboardId}/items/{itemId}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_dashboard_DashboardItemPropertyResource_getDashboardItemProperty_get(  dashboardId : String,  itemId : String,  propertyKey : String ) : EntityProperty
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/dashboard/{dashboardId}/items/{itemId}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_dashboard_DashboardItemPropertyResource_setDashboardItemProperty_put(  dashboardId : String,  itemId : String,  propertyKey : String ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/dashboard/{dashboardId}/items/{itemId}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_dashboard_DashboardItemPropertyResource_deleteDashboardItemProperty_delete(  dashboardId : String,  itemId : String,  propertyKey : String )
+   }
+   service RestApi3DashboardIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/dashboard/{id}")
+      operation com_atlassian_jira_rest_v2_dashboard_DashboardResource_getDashboard_get(  id : String ) : Dashboard
+   }
+   service RestApi3ExpressionEvalService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/expression/eval")
+      operation com_atlassian_jira_rest_v2_expression_JiraExpressionsResource_evaluateJiraExpression_post(  expand : String ) : JiraExpressionResult
+   }
+   service RestApi3FieldService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/field")
+      operation com_atlassian_jira_rest_v2_issue_FieldResource_getFields_get(  ) : FieldDetails[]
+      @HttpOperation(method = "POST" , url = "/rest/api/3/field")
+      operation com_atlassian_jira_rest_v2_issue_FieldResource_createCustomField_post(  ) : FieldDetails
+   }
+   service RestApi3FieldSearchService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/field/search")
+      operation com_atlassian_jira_rest_v2_issue_field_FieldSearchResource_getFieldsPaginated_get(  startAt : Int,  maxResults : Int,  `type` : String[],  id : String[],  `query` : String,  orderBy : String,  expand : String ) : PageBeanField
+   }
+   service RestApi3FieldFieldIdContextsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/field/{fieldId}/contexts")
+      operation com_atlassian_jira_rest_v2_issue_FieldResource_getContextsForField_get(  fieldId : String,  startAt : Int,  maxResults : Int ) : PageBeanContext
+   }
+   service RestApi3FieldFieldIdScreensService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/field/{fieldId}/screens")
+      operation com_atlassian_jira_rest_v2_issue_FieldResource_getScreensForField_get(  fieldId : String,  startAt : Int,  maxResults : Int ) : PageBeanScreen
+   }
+   service RestApi3FieldFieldKeyOptionService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/field/{fieldKey}/option")
+      operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_getAllIssueFieldOptions_get(  startAt : Int,  maxResults : Int,  fieldKey : String ) : PageBeanIssueFieldOption
+      @HttpOperation(method = "POST" , url = "/rest/api/3/field/{fieldKey}/option")
+      operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_createIssueFieldOption_post(  fieldKey : String ) : IssueFieldOption
+   }
+   service RestApi3FieldFieldKeyOptionSuggestionsEditService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/field/{fieldKey}/option/suggestions/edit")
+      operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_getSelectableIssueFieldOptions_get(  startAt : Int,  maxResults : Int,  projectId : Int,  fieldKey : String ) : PageBeanIssueFieldOption
+   }
+   service RestApi3FieldFieldKeyOptionSuggestionsSearchService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/field/{fieldKey}/option/suggestions/search")
+      operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_getVisibleIssueFieldOptions_get(  startAt : Int,  maxResults : Int,  projectId : Int,  fieldKey : String ) : PageBeanIssueFieldOption
+   }
+   service RestApi3FieldFieldKeyOptionOptionIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/field/{fieldKey}/option/{optionId}")
+      operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_getIssueFieldOption_get(  fieldKey : String,  optionId : Int ) : IssueFieldOption
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/field/{fieldKey}/option/{optionId}")
+      operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_updateIssueFieldOption_put(  fieldKey : String,  optionId : Int ) : IssueFieldOption
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/field/{fieldKey}/option/{optionId}")
+      operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_deleteIssueFieldOption_delete(  fieldKey : String,  optionId : Int ) : Any
+   }
+   service RestApi3FieldFieldKeyOptionOptionIdIssueService {
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/field/{fieldKey}/option/{optionId}/issue")
+      operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_replaceIssueFieldOption_delete(  replaceWith : Int,  jql : String,  fieldKey : String,  optionId : Int )
+   }
+   service RestApi3FilterService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/filter")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_getFilters_get(  expand : String ) : Filter[]
+      @HttpOperation(method = "POST" , url = "/rest/api/3/filter")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_createFilter_post(  expand : String ) : Filter
+   }
+   service RestApi3FilterDefaultShareScopeService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/filter/defaultShareScope")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_getDefaultShareScope_get(  ) : DefaultShareScope
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/filter/defaultShareScope")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_setDefaultShareScope_put(  ) : DefaultShareScope
+   }
+   service RestApi3FilterFavouriteService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/filter/favourite")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_getFavouriteFilters_get(  expand : String ) : Filter[]
+   }
+   service RestApi3FilterMyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/filter/my")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_getMyFilters_get(  expand : String,  includeFavourites : Boolean ) : Filter[]
+   }
+   service RestApi3FilterSearchService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/filter/search")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_getFiltersPaginated_get(  filterName : String,  accountId : String,  owner : String,  groupname : String,  projectId : Int,  orderBy : String,  startAt : Int,  maxResults : Int,  expand : String ) : PageBeanFoundFilter
+   }
+   service RestApi3FilterIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/filter/{id}")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_getFilter_get(  id : Int,  expand : String ) : Filter
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/filter/{id}")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_updateFilter_put(  id : Int,  expand : String ) : Filter
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/filter/{id}")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_deleteFilter_delete(  id : Int )
+   }
+   service RestApi3FilterIdColumnsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/filter/{id}/columns")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_getColumns_get(  id : Int ) : ColumnItem[]
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/filter/{id}/columns")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_setColumns_put(  id : Int ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/filter/{id}/columns")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_resetColumns_delete(  id : Int )
+   }
+   service RestApi3FilterIdFavouriteService {
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/filter/{id}/favourite")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_setFavouriteForFilter_put(  id : Int,  expand : String ) : Filter
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/filter/{id}/favourite")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_deleteFavouriteForFilter_delete(  id : Int,  expand : String ) : Filter
+   }
+   service RestApi3FilterIdPermissionService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/filter/{id}/permission")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_getSharePermissions_get(  id : Int ) : SharePermission[]
+      @HttpOperation(method = "POST" , url = "/rest/api/3/filter/{id}/permission")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_addSharePermission_post(  id : Int ) : SharePermission[]
+   }
+   service RestApi3FilterIdPermissionPermissionIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/filter/{id}/permission/{permissionId}")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_getSharePermission_get(  id : Int,  permissionId : Int ) : SharePermission
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/filter/{id}/permission/{permissionId}")
+      operation com_atlassian_jira_rest_v2_search_FilterResource_deleteSharePermission_delete(  id : Int,  permissionId : Int )
+   }
+   service RestApi3GroupService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/group")
+      operation com_atlassian_jira_rest_v2_issue_GroupResource_getGroup_get(  groupname : String,  expand : String ) : Group
+      @HttpOperation(method = "POST" , url = "/rest/api/3/group")
+      operation com_atlassian_jira_rest_v2_issue_GroupResource_createGroup_post(  ) : Group
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/group")
+      operation com_atlassian_jira_rest_v2_issue_GroupResource_removeGroup_delete(  groupname : String,  swapGroup : String )
+   }
+   service RestApi3GroupMemberService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/group/member")
+      operation com_atlassian_jira_rest_v2_issue_GroupResource_getUsersFromGroup_get(  groupname : String,  includeInactiveUsers : Boolean,  startAt : Int,  maxResults : Int ) : PageBeanUserDetails
+   }
+   service RestApi3GroupUserService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/group/user")
+      operation com_atlassian_jira_rest_v2_issue_GroupResource_addUserToGroup_post(  groupname : String ) : Group
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/group/user")
+      operation com_atlassian_jira_rest_v2_issue_GroupResource_removeUserFromGroup_delete(  groupname : String,  username : String,  accountId : String )
+   }
+   service RestApi3GroupsPickerService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/groups/picker")
+      operation com_atlassian_jira_rest_v2_issue_GroupPickerResource_findGroups_get(  accountId : String,  `query` : String,  exclude : String[],  maxResults : Int,  userName : String ) : FoundGroups
+   }
+   service RestApi3GroupuserpickerService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/groupuserpicker")
+      operation com_atlassian_jira_rest_v2_issue_GroupAndUserPickerResource_findUsersAndGroups_get(  `query` : String,  maxResults : Int,  showAvatar : Boolean,  fieldId : String,  projectId : String[],  issueTypeId : String[],  avatarSize : String,  caseInsensitive : Boolean,  excludeConnectAddons : Boolean ) : FoundUsersAndGroups
+   }
+   service RestApi3IssueService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/issue")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_createIssue_post(  updateHistory : Boolean ) : CreatedIssue
+   }
+   service RestApi3IssueBulkService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/issue/bulk")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_createIssues_post(  ) : CreatedIssues
+   }
+   service RestApi3IssueCreatemetaService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/createmeta")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_getCreateIssueMeta_get(  projectIds : String[],  projectKeys : String[],  issuetypeIds : String[],  issuetypeNames : String[],  expand : String ) : IssueCreateMetadata
+   }
+   service RestApi3IssuePickerService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/picker")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_getIssuePickerResource_get(  `query` : String,  currentJQL : String,  currentIssueKey : String,  currentProjectId : String,  showSubTasks : Boolean,  showSubTaskParent : Boolean ) : IssuePickerSuggestions
+   }
+   service RestApi3IssuePropertiesService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/issue/properties")
+      operation com_atlassian_jira_rest_v2_property_IssuePropertyBulkUpdateResource_bulkSetIssuesProperties_post(  )
+   }
+   service RestApi3IssuePropertiesPropertyKeyService {
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/issue/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_property_IssuePropertyBulkUpdateResource_bulkSetIssueProperty_put(  propertyKey : String )
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_property_IssuePropertyBulkUpdateResource_bulkDeleteIssueProperty_delete(  propertyKey : String )
+   }
+   service RestApi3IssueIssueIdOrKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_getIssue_get(  issueIdOrKey : String,  fields : String[],  fieldsByKeys : Boolean,  expand : String,  properties : String[],  updateHistory : Boolean ) : IssueBean
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/issue/{issueIdOrKey}")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_editIssue_put(  issueIdOrKey : String,  notifyUsers : Boolean,  overrideScreenSecurity : Boolean,  overrideEditableFlag : Boolean ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_deleteIssue_delete(  issueIdOrKey : String,  deleteSubtasks : String )
+   }
+   service RestApi3IssueIssueIdOrKeyAssigneeService {
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/issue/{issueIdOrKey}/assignee")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_assignIssue_put(  issueIdOrKey : String ) : Any
+   }
+   service RestApi3IssueIssueIdOrKeyAttachmentsService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/issue/{issueIdOrKey}/attachments")
+      operation com_atlassian_jira_rest_v2_issue_IssueAttachmentsResource_addAttachment_post(  issueIdOrKey : String ) : Attachment[]
+   }
+   service RestApi3IssueIssueIdOrKeyChangelogService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/changelog")
+      operation com_atlassian_jira_rest_v2_issue_IssueChangelogResource_getChangeLogs_get(  issueIdOrKey : String,  startAt : Int,  maxResults : Int ) : PageBeanChangelog
+   }
+   service RestApi3IssueIssueIdOrKeyCommentService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/comment")
+      operation com_atlassian_jira_rest_v2_issue_IssueCommentResource_getComments_get(  issueIdOrKey : String,  startAt : Int,  maxResults : Int,  orderBy : String,  expand : String ) : PageOfComments
+      @HttpOperation(method = "POST" , url = "/rest/api/3/issue/{issueIdOrKey}/comment")
+      operation com_atlassian_jira_rest_v2_issue_IssueCommentResource_addComment_post(  issueIdOrKey : String,  expand : String ) : Comment
+   }
+   service RestApi3IssueIssueIdOrKeyCommentIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/comment/{id}")
+      operation com_atlassian_jira_rest_v2_issue_IssueCommentResource_getComment_get(  issueIdOrKey : String,  id : String,  expand : String ) : Comment
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/issue/{issueIdOrKey}/comment/{id}")
+      operation com_atlassian_jira_rest_v2_issue_IssueCommentResource_updateComment_put(  issueIdOrKey : String,  id : String,  expand : String ) : Comment
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/comment/{id}")
+      operation com_atlassian_jira_rest_v2_issue_IssueCommentResource_deleteComment_delete(  issueIdOrKey : String,  id : String )
+   }
+   service RestApi3IssueIssueIdOrKeyEditmetaService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/editmeta")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_getEditIssueMeta_get(  issueIdOrKey : String,  overrideScreenSecurity : Boolean,  overrideEditableFlag : Boolean ) : IssueUpdateMetadata
+   }
+   service RestApi3IssueIssueIdOrKeyNotifyService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/issue/{issueIdOrKey}/notify")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_notify_post(  issueIdOrKey : String ) : Any
+   }
+   service RestApi3IssueIssueIdOrKeyPropertiesService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/properties")
+      operation com_atlassian_jira_rest_v2_issue_IssuePropertyResource_getIssuePropertyKeys_get(  issueIdOrKey : String ) : PropertyKeys
+   }
+   service RestApi3IssueIssueIdOrKeyPropertiesPropertyKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_issue_IssuePropertyResource_getIssueProperty_get(  issueIdOrKey : String,  propertyKey : String ) : EntityProperty
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/issue/{issueIdOrKey}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_issue_IssuePropertyResource_setIssueProperty_put(  issueIdOrKey : String,  propertyKey : String ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_issue_IssuePropertyResource_deleteIssueProperty_delete(  issueIdOrKey : String,  propertyKey : String )
+   }
+   service RestApi3IssueIssueIdOrKeyRemotelinkService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/remotelink")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_getRemoteIssueLinks_get(  issueIdOrKey : String,  globalId : String ) : RemoteIssueLink
+      @HttpOperation(method = "POST" , url = "/rest/api/3/issue/{issueIdOrKey}/remotelink")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_createOrUpdateRemoteIssueLink_post(  issueIdOrKey : String ) : RemoteIssueLinkIdentifies
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/remotelink")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_deleteRemoteIssueLinkByGlobalId_delete(  issueIdOrKey : String,  globalId : String )
+   }
+   service RestApi3IssueIssueIdOrKeyRemotelinkLinkIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/remotelink/{linkId}")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_getRemoteIssueLinkById_get(  issueIdOrKey : String,  linkId : String ) : RemoteIssueLink
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/issue/{issueIdOrKey}/remotelink/{linkId}")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_updateRemoteIssueLink_put(  issueIdOrKey : String,  linkId : String ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/remotelink/{linkId}")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_deleteRemoteIssueLinkById_delete(  issueIdOrKey : String,  linkId : String )
+   }
+   service RestApi3IssueIssueIdOrKeyTransitionsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/transitions")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_getTransitions_get(  issueIdOrKey : String,  expand : String,  transitionId : String,  skipRemoteOnlyCondition : Boolean ) : Transitions
+      @HttpOperation(method = "POST" , url = "/rest/api/3/issue/{issueIdOrKey}/transitions")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_doTransition_post(  issueIdOrKey : String ) : Any
+   }
+   service RestApi3IssueIssueIdOrKeyVotesService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/votes")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_getVotes_get(  issueIdOrKey : String ) : Votes
+      @HttpOperation(method = "POST" , url = "/rest/api/3/issue/{issueIdOrKey}/votes")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_addVote_post(  issueIdOrKey : String ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/votes")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_removeVote_delete(  issueIdOrKey : String )
+   }
+   service RestApi3IssueIssueIdOrKeyWatchersService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/watchers")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_getIssueWatchers_get(  issueIdOrKey : String ) : Watchers
+      @HttpOperation(method = "POST" , url = "/rest/api/3/issue/{issueIdOrKey}/watchers")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_addWatcher_post(  issueIdOrKey : String ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/watchers")
+      operation com_atlassian_jira_rest_v2_issue_IssueResource_removeWatcher_delete(  issueIdOrKey : String,  username : String,  accountId : String )
+   }
+   service RestApi3IssueIssueIdOrKeyWorklogService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/worklog")
+      operation com_atlassian_jira_rest_v2_issue_IssueWorklogsResource_getIssueWorklog_get(  issueIdOrKey : String,  startAt : Int,  maxResults : Int,  startedAfter : Int,  expand : String ) : PageOfWorklogs
+      @HttpOperation(method = "POST" , url = "/rest/api/3/issue/{issueIdOrKey}/worklog")
+      operation com_atlassian_jira_rest_v2_issue_IssueWorklogsResource_addWorklog_post(  issueIdOrKey : String,  notifyUsers : Boolean,  adjustEstimate : String,  newEstimate : String,  reduceBy : String,  expand : String,  overrideEditableFlag : Boolean ) : Worklog
+   }
+   service RestApi3IssueIssueIdOrKeyWorklogIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/worklog/{id}")
+      operation com_atlassian_jira_rest_v2_issue_IssueWorklogsResource_getWorklog_get(  issueIdOrKey : String,  id : String,  expand : String ) : Worklog
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/issue/{issueIdOrKey}/worklog/{id}")
+      operation com_atlassian_jira_rest_v2_issue_IssueWorklogsResource_updateWorklog_put(  issueIdOrKey : String,  id : String,  notifyUsers : Boolean,  adjustEstimate : String,  newEstimate : String,  expand : String,  overrideEditableFlag : Boolean ) : Worklog
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/worklog/{id}")
+      operation com_atlassian_jira_rest_v2_issue_IssueWorklogsResource_deleteWorklog_delete(  issueIdOrKey : String,  id : String,  notifyUsers : Boolean,  adjustEstimate : String,  newEstimate : String,  increaseBy : String,  overrideEditableFlag : Boolean )
+   }
+   service RestApi3IssueIssueIdOrKeyWorklogWorklogIdPropertiesService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/worklog/{worklogId}/properties")
+      operation com_atlassian_jira_rest_v2_issue_WorklogPropertyResource_getWorklogPropertyKeys_get(  issueIdOrKey : String,  worklogId : String ) : PropertyKeys
+   }
+   service RestApi3IssueIssueIdOrKeyWorklogWorklogIdPropertiesPropertyKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/worklog/{worklogId}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_issue_WorklogPropertyResource_getWorklogProperty_get(  issueIdOrKey : String,  worklogId : String,  propertyKey : String ) : EntityProperty
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/issue/{issueIdOrKey}/worklog/{worklogId}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_issue_WorklogPropertyResource_setWorklogProperty_put(  issueIdOrKey : String,  worklogId : String,  propertyKey : String ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/worklog/{worklogId}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_issue_WorklogPropertyResource_deleteWorklogProperty_delete(  issueIdOrKey : String,  worklogId : String,  propertyKey : String )
+   }
+   service RestApi3IssueLinkService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/issueLink")
+      operation com_atlassian_jira_rest_v2_issue_LinkIssueResource_linkIssues_post(  ) : Any
+   }
+   service RestApi3IssueLinkLinkIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issueLink/{linkId}")
+      operation com_atlassian_jira_rest_v2_issue_LinkIssueResource_getIssueLink_get(  linkId : String ) : IssueLink
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/issueLink/{linkId}")
+      operation com_atlassian_jira_rest_v2_issue_LinkIssueResource_deleteIssueLink_delete(  linkId : String )
+   }
+   service RestApi3IssueLinkTypeService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issueLinkType")
+      operation com_atlassian_jira_rest_v2_issue_IssueLinkTypeResource_getIssueLinkTypes_get(  ) : IssueLinkTypes
+      @HttpOperation(method = "POST" , url = "/rest/api/3/issueLinkType")
+      operation com_atlassian_jira_rest_v2_issue_IssueLinkTypeResource_createIssueLinkType_post(  ) : IssueLinkType
+   }
+   service RestApi3IssueLinkTypeIssueLinkTypeIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issueLinkType/{issueLinkTypeId}")
+      operation com_atlassian_jira_rest_v2_issue_IssueLinkTypeResource_getIssueLinkType_get(  issueLinkTypeId : String ) : IssueLinkType
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/issueLinkType/{issueLinkTypeId}")
+      operation com_atlassian_jira_rest_v2_issue_IssueLinkTypeResource_updateIssueLinkType_put(  issueLinkTypeId : String ) : IssueLinkType
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/issueLinkType/{issueLinkTypeId}")
+      operation com_atlassian_jira_rest_v2_issue_IssueLinkTypeResource_deleteIssueLinkType_delete(  issueLinkTypeId : String )
+   }
+   service RestApi3IssuesecurityschemesService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issuesecurityschemes")
+      operation com_atlassian_jira_rest_v2_issue_IssueSecuritySchemeResource_getIssueSecuritySchemes_get(  ) : SecuritySchemes
+   }
+   service RestApi3IssuesecurityschemesIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issuesecurityschemes/{id}")
+      operation com_atlassian_jira_rest_v2_issue_IssueSecuritySchemeResource_getIssueSecurityScheme_get(  id : Int ) : SecurityScheme
+   }
+   service RestApi3IssuetypeService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issuetype")
+      operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_getIssueAllTypes_get(  ) : IssueTypeBean[]
+      @HttpOperation(method = "POST" , url = "/rest/api/3/issuetype")
+      operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_createIssueType_post(  ) : IssueTypeBean
+   }
+   service RestApi3IssuetypeIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issuetype/{id}")
+      operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_getIssueType_get(  id : String ) : IssueTypeBean
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/issuetype/{id}")
+      operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_updateIssueType_put(  id : String ) : IssueTypeBean
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/issuetype/{id}")
+      operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_deleteIssueType_delete(  id : String,  alternativeIssueTypeId : String )
+   }
+   service RestApi3IssuetypeIdAlternativesService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issuetype/{id}/alternatives")
+      operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_getAlternativeIssueTypes_get(  id : String ) : IssueTypeBean[]
+   }
+   service RestApi3IssuetypeIdAvatar2Service {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/issuetype/{id}/avatar2")
+      operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_createIssueTypeAvatar_post(  id : String,  `x` : Int,  `y` : Int,  size : Int ) : Avatar
+   }
+   service RestApi3IssuetypeIssueTypeIdPropertiesService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issuetype/{issueTypeId}/properties")
+      operation com_atlassian_jira_rest_v2_issue_IssueTypePropertyResource_getIssueTypePropertyKeys_get(  issueTypeId : String ) : PropertyKeys
+   }
+   service RestApi3IssuetypeIssueTypeIdPropertiesPropertyKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/issuetype/{issueTypeId}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_issue_IssueTypePropertyResource_getIssueTypeProperty_get(  issueTypeId : String,  propertyKey : String ) : EntityProperty
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/issuetype/{issueTypeId}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_issue_IssueTypePropertyResource_setIssueTypeProperty_put(  issueTypeId : String,  propertyKey : String ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/issuetype/{issueTypeId}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_issue_IssueTypePropertyResource_deleteIssueTypeProperty_delete(  issueTypeId : String,  propertyKey : String )
+   }
+   service RestApi3JqlAutocompletedataService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/jql/autocompletedata")
+      operation com_atlassian_jira_rest_v2_search_SearchAutoCompleteResource_getAutoComplete_get(  ) : JQLReferenceData
+   }
+   service RestApi3JqlAutocompletedataSuggestionsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/jql/autocompletedata/suggestions")
+      operation com_atlassian_jira_rest_v2_search_SearchAutoCompleteResource_getFieldAutoCompleteForQueryString_get(  fieldName : String,  fieldValue : String,  predicateName : String,  predicateValue : String ) : AutoCompleteSuggestions
+   }
+   service RestApi3JqlMatchService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/jql/match")
+      operation com_atlassian_jira_rest_v2_match_IssueMatchResource_matchIssues_post(  ) : IssueMatches
+   }
+   service RestApi3JqlParseService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/jql/parse")
+      operation com_atlassian_jira_rest_v2_jql_JqlParserResource_parseJqlQueries_post(  ) : ParsedJqlQueries
+   }
+   service RestApi3JqlPdcleanerService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/jql/pdcleaner")
+      operation com_atlassian_jira_rest_v2_search_JQLPersonalDataMigrationResource_migrateQueries_post(  ) : ConvertedJQLQueries
+   }
+   service RestApi3LabelService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/label")
+      operation com_atlassian_jira_rest_v2_label_LabelResource_getAllLabels_get(  startAt : Int,  maxResults : Int ) : PageBeanString
+   }
+   service RestApi3MypermissionsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/mypermissions")
+      operation com_atlassian_jira_rest_v2_permission_PermissionsResource_getMyPermissions_get(  projectKey : String,  projectId : String,  issueKey : String,  issueId : String,  permissions : String,  projectUuid : String,  projectConfigurationUuid : String ) : Permissions
+   }
+   service RestApi3MypreferencesService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/mypreferences")
+      operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_getPreference_get(  key : String ) : String
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/mypreferences")
+      operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_setPreference_put(  key : String ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/mypreferences")
+      operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_removePreference_delete(  key : String )
+   }
+   service RestApi3MypreferencesLocaleService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/mypreferences/locale")
+      operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_getLocale_get(  ) : Locale
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/mypreferences/locale")
+      operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_setLocale_put(  ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/mypreferences/locale")
+      operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_deleteLocale_delete(  ) : Any
+   }
+   service RestApi3MyselfService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/myself")
+      operation com_atlassian_jira_rest_v2_issue_CurrentUserResource_getCurrentUser_get(  expand : String ) : User
+   }
+   service RestApi3NotificationschemeService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/notificationscheme")
+      operation com_atlassian_jira_rest_v2_notification_NotificationSchemeResource_getNotificationSchemes_get(  startAt : Int,  maxResults : Int,  expand : String ) : PageBeanNotificationScheme
+   }
+   service RestApi3NotificationschemeIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/notificationscheme/{id}")
+      operation com_atlassian_jira_rest_v2_notification_NotificationSchemeResource_getNotificationScheme_get(  id : Int,  expand : String ) : NotificationScheme
+   }
+   service RestApi3PermissionsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/permissions")
+      operation com_atlassian_jira_rest_v2_permission_PermissionsResource_getAllPermissions_get(  ) : Permissions
+   }
+   service RestApi3PermissionsCheckService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/permissions/check")
+      operation com_atlassian_jira_rest_v2_permission_PermissionsResource_getBulkPermissions_post(  ) : BulkPermissionGrants
+   }
+   service RestApi3PermissionsProjectService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/permissions/project")
+      operation com_atlassian_jira_rest_v2_permission_PermissionsResource_getPermittedProjects_post(  ) : PermittedProjects
+   }
+   service RestApi3PermissionschemeService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/permissionscheme")
+      operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_getAllPermissionSchemes_get(  expand : String ) : PermissionSchemes
+      @HttpOperation(method = "POST" , url = "/rest/api/3/permissionscheme")
+      operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_createPermissionScheme_post(  expand : String ) : PermissionScheme
+   }
+   service RestApi3PermissionschemeSchemeIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/permissionscheme/{schemeId}")
+      operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_getPermissionScheme_get(  schemeId : Int,  expand : String ) : PermissionScheme
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/permissionscheme/{schemeId}")
+      operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_updatePermissionScheme_put(  schemeId : Int,  expand : String ) : PermissionScheme
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/permissionscheme/{schemeId}")
+      operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_deletePermissionScheme_delete(  schemeId : Int )
+   }
+   service RestApi3PermissionschemeSchemeIdPermissionService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/permissionscheme/{schemeId}/permission")
+      operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_getPermissionSchemeGrants_get(  schemeId : Int,  expand : String ) : PermissionGrants
+      @HttpOperation(method = "POST" , url = "/rest/api/3/permissionscheme/{schemeId}/permission")
+      operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_createPermissionGrant_post(  schemeId : Int,  expand : String ) : PermissionGrant
+   }
+   service RestApi3PermissionschemeSchemeIdPermissionPermissionIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/permissionscheme/{schemeId}/permission/{permissionId}")
+      operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_getPermissionSchemeGrant_get(  schemeId : Int,  permissionId : Int,  expand : String ) : PermissionGrant
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/permissionscheme/{schemeId}/permission/{permissionId}")
+      operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_deletePermissionSchemeEntity_delete(  schemeId : Int,  permissionId : Int )
+   }
+   service RestApi3PriorityService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/priority")
+      operation com_atlassian_jira_rest_v2_issue_PriorityResource_getPriorities_get(  ) : Priority[]
+   }
+   service RestApi3PriorityIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/priority/{id}")
+      operation com_atlassian_jira_rest_v2_issue_PriorityResource_getPriority_get(  id : String ) : Priority
+   }
+   service RestApi3ProjectService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_getAllProjects_get(  expand : String,  recent : Int,  properties : String[] ) : Project[]
+      @HttpOperation(method = "POST" , url = "/rest/api/3/project")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_createProject_post(  ) : ProjectIdentifiers
+   }
+   service RestApi3ProjectSearchService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/search")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_searchProjects_get(  startAt : Int,  maxResults : Int,  orderBy : String,  `query` : String,  typeKey : String,  categoryId : Int,  searchBy : String,  action : String,  expand : String ) : PageBeanProject
+   }
+   service RestApi3ProjectTypeService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/type")
+      operation com_atlassian_jira_rest_v2_project_type_ProjectTypeResource_getAllProjectTypes_get(  ) : ProjectType[]
+   }
+   service RestApi3ProjectTypeProjectTypeKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/type/{projectTypeKey}")
+      operation com_atlassian_jira_rest_v2_project_type_ProjectTypeResource_getProjectTypeByKey_get(  projectTypeKey : String ) : ProjectType
+   }
+   service RestApi3ProjectTypeProjectTypeKeyAccessibleService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/type/{projectTypeKey}/accessible")
+      operation com_atlassian_jira_rest_v2_project_type_ProjectTypeResource_getAccessibleProjectTypeByKey_get(  projectTypeKey : String ) : ProjectType
+   }
+   service RestApi3ProjectProjectIdOrKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_getProject_get(  projectIdOrKey : String,  expand : String,  properties : String[] ) : Project
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/project/{projectIdOrKey}")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_updateProject_put(  projectIdOrKey : String,  expand : String ) : Project
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/project/{projectIdOrKey}")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_deleteProject_delete(  projectIdOrKey : String )
+   }
+   service RestApi3ProjectProjectIdOrKeyAvatarService {
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/project/{projectIdOrKey}/avatar")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_updateProjectAvatar_put(  projectIdOrKey : String ) : Any
+   }
+   service RestApi3ProjectProjectIdOrKeyAvatarIdService {
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/project/{projectIdOrKey}/avatar/{id}")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_deleteProjectAvatar_delete(  projectIdOrKey : String,  id : Int )
+   }
+   service RestApi3ProjectProjectIdOrKeyAvatar2Service {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/project/{projectIdOrKey}/avatar2")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_createProjectAvatar_post(  projectIdOrKey : String,  `x` : Int,  `y` : Int,  size : Int ) : Avatar
+   }
+   service RestApi3ProjectProjectIdOrKeyAvatarsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/avatars")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_getAllProjectAvatars_get(  projectIdOrKey : String ) : ProjectAvatars
+   }
+   service RestApi3ProjectProjectIdOrKeyComponentService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/component")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_getProjectComponentsPaginated_get(  projectIdOrKey : String,  startAt : Int,  maxResults : Int,  orderBy : String,  `query` : String ) : PageBeanComponentWithIssueCount
+   }
+   service RestApi3ProjectProjectIdOrKeyComponentsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/components")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_getProjectComponents_get(  projectIdOrKey : String ) : Component[]
+   }
+   service RestApi3ProjectProjectIdOrKeyPropertiesService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/properties")
+      operation com_atlassian_jira_rest_v2_issue_ProjectPropertyResource_getProjectPropertyKeys_get(  projectIdOrKey : String ) : PropertyKeys
+   }
+   service RestApi3ProjectProjectIdOrKeyPropertiesPropertyKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_issue_ProjectPropertyResource_getProjectProperty_get(  projectIdOrKey : String,  propertyKey : String ) : EntityProperty
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/project/{projectIdOrKey}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_issue_ProjectPropertyResource_setProjectProperty_put(  projectIdOrKey : String,  propertyKey : String ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/project/{projectIdOrKey}/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_issue_ProjectPropertyResource_deleteProjectProperty_delete(  projectIdOrKey : String,  propertyKey : String )
+   }
+   service RestApi3ProjectProjectIdOrKeyRoleService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/role")
+      operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleResource_getProjectRoles_get(  projectIdOrKey : String ) : Any
+   }
+   service RestApi3ProjectProjectIdOrKeyRoleIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/role/{id}")
+      operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleResource_getProjectRole_get(  projectIdOrKey : String,  id : Int ) : ProjectRole
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/project/{projectIdOrKey}/role/{id}")
+      operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleResource_setActors_put(  projectIdOrKey : String,  id : Int ) : ProjectRole
+      @HttpOperation(method = "POST" , url = "/rest/api/3/project/{projectIdOrKey}/role/{id}")
+      operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleResource_addActorUsers_post(  projectIdOrKey : String,  id : Int ) : ProjectRole
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/project/{projectIdOrKey}/role/{id}")
+      operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleResource_deleteActor_delete(  projectIdOrKey : String,  id : Int,  user : String,  group : String )
+   }
+   service RestApi3ProjectProjectIdOrKeyRoleIdActorCountService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/role/{id}/actorCount")
+      operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleResource_getProjectRoleActorsCount_get(  projectIdOrKey : String,  id : Int ) : ProjectRoleActorsCount
+   }
+   service RestApi3ProjectProjectIdOrKeyRoledetailsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/roledetails")
+      operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleDetailsResource_getProjectRoleDetails_get(  projectIdOrKey : String,  currentMember : Boolean,  excludeConnectAddons : Boolean ) : ProjectRole[]
+   }
+   service RestApi3ProjectProjectIdOrKeyStatusesService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/statuses")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_getAllStatuses_get(  projectIdOrKey : String ) : IssueTypeWithStatus[]
+   }
+   service RestApi3ProjectProjectIdOrKeyTypeNewProjectTypeKeyService {
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/project/{projectIdOrKey}/type/{newProjectTypeKey}")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_updateProjectType_put(  projectIdOrKey : String,  newProjectTypeKey : String ) : Project
+   }
+   service RestApi3ProjectProjectIdOrKeyVersionService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/version")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_getProjectVersionsPaginated_get(  projectIdOrKey : String,  startAt : Int,  maxResults : Int,  orderBy : String,  `query` : String,  status : String,  expand : String ) : PageBeanVersion
+   }
+   service RestApi3ProjectProjectIdOrKeyVersionsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/versions")
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_getProjectVersions_get(  projectIdOrKey : String,  expand : String ) : Version[]
+   }
+   service RestApi3ProjectProjectIdHierarchyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectId}/hierarchy")
+      operation com_atlassian_jira_rest_v2_nextgen_HierarchyResource_getHierarchy_get(  projectId : Int ) : ProjectIssueTypeHierarchy
+   }
+   service RestApi3ProjectProjectKeyOrIdIssuesecuritylevelschemeService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectKeyOrId}/issuesecuritylevelscheme")
+      operation com_atlassian_jira_rest_v2_issue_ProjectIssueSecurityLevelSchemeResource_getIssueSecurityScheme_get(  projectKeyOrId : String ) : SecurityScheme
+   }
+   service RestApi3ProjectProjectKeyOrIdNotificationschemeService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectKeyOrId}/notificationscheme")
+      operation com_atlassian_jira_rest_v2_notification_ProjectNotificationSchemeResource_getNotificationScheme_get(  projectKeyOrId : String,  expand : String ) : NotificationScheme
+   }
+   service RestApi3ProjectProjectKeyOrIdPermissionschemeService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectKeyOrId}/permissionscheme")
+      operation com_atlassian_jira_rest_v2_permission_ProjectPermissionSchemeResource_getAssignedPermissionScheme_get(  projectKeyOrId : String,  expand : String ) : PermissionScheme
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/project/{projectKeyOrId}/permissionscheme")
+      operation com_atlassian_jira_rest_v2_permission_ProjectPermissionSchemeResource_assignPermissionScheme_put(  projectKeyOrId : String,  expand : String ) : PermissionScheme
+   }
+   service RestApi3ProjectProjectKeyOrIdSecuritylevelService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectKeyOrId}/securitylevel")
+      operation com_atlassian_jira_rest_v2_securitylevel_ProjectSecurityLevelResource_getSecurityLevelsForProject_get(  projectKeyOrId : String ) : ProjectIssueSecurityLevels
+   }
+   service RestApi3ProjectCategoryService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/projectCategory")
+      operation com_atlassian_jira_rest_v2_issue_ProjectCategoryResource_getAllProjectCategories_get(  ) : ProjectCategory[]
+      @HttpOperation(method = "POST" , url = "/rest/api/3/projectCategory")
+      operation com_atlassian_jira_rest_v2_issue_ProjectCategoryResource_createProjectCategory_post(  ) : ProjectCategory
+   }
+   service RestApi3ProjectCategoryIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/projectCategory/{id}")
+      operation com_atlassian_jira_rest_v2_issue_ProjectCategoryResource_getProjectCategoryById_get(  id : Int ) : ProjectCategory
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/projectCategory/{id}")
+      operation com_atlassian_jira_rest_v2_issue_ProjectCategoryResource_updateProjectCategory_put(  id : Int ) : UpdatedProjectCategory
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/projectCategory/{id}")
+      operation com_atlassian_jira_rest_v2_issue_ProjectCategoryResource_removeProjectCategory_delete(  id : Int )
+   }
+   service RestApi3ProjectvalidateKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/projectvalidate/key")
+      operation com_atlassian_jira_rest_v2_issue_ProjectValidateResource_validateProjectKey_get(  key : String ) : ErrorCollection
+   }
+   service RestApi3ProjectvalidateValidProjectKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/projectvalidate/validProjectKey")
+      operation com_atlassian_jira_rest_v2_issue_ProjectValidateResource_getValidProjectKey_get(  key : String ) : String
+   }
+   service RestApi3ProjectvalidateValidProjectNameService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/projectvalidate/validProjectName")
+      operation com_atlassian_jira_rest_v2_issue_ProjectValidateResource_getValidProjectName_get(  name : String ) : String
+   }
+   service RestApi3ResolutionService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/resolution")
+      operation com_atlassian_jira_rest_v2_issue_ResolutionResource_getResolutions_get(  ) : Resolution[]
+   }
+   service RestApi3ResolutionIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/resolution/{id}")
+      operation com_atlassian_jira_rest_v2_issue_ResolutionResource_getResolution_get(  id : String ) : Resolution
+   }
+   service RestApi3RoleService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/role")
+      operation com_atlassian_jira_rest_v2_issue_project_RoleResource_getAllProjectRoles_get(  ) : ProjectRole[]
+      @HttpOperation(method = "POST" , url = "/rest/api/3/role")
+      operation com_atlassian_jira_rest_v2_issue_project_RoleResource_createProjectRole_post(  ) : ProjectRole
+   }
+   service RestApi3RoleIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/role/{id}")
+      operation com_atlassian_jira_rest_v2_issue_project_RoleResource_getProjectRoleById_get(  id : Int ) : ProjectRole
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/role/{id}")
+      operation com_atlassian_jira_rest_v2_issue_project_RoleResource_fullyUpdateProjectRole_put(  id : Int ) : ProjectRole
+      @HttpOperation(method = "POST" , url = "/rest/api/3/role/{id}")
+      operation com_atlassian_jira_rest_v2_issue_project_RoleResource_partialUpdateProjectRole_post(  id : Int ) : ProjectRole
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/role/{id}")
+      operation com_atlassian_jira_rest_v2_issue_project_RoleResource_deleteProjectRole_delete(  id : Int,  swap : Int )
+   }
+   service RestApi3RoleIdActorsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/role/{id}/actors")
+      operation com_atlassian_jira_rest_v2_issue_project_RoleResource_getProjectRoleActorsForRole_get(  id : Int ) : ProjectRole
+      @HttpOperation(method = "POST" , url = "/rest/api/3/role/{id}/actors")
+      operation com_atlassian_jira_rest_v2_issue_project_RoleResource_addProjectRoleActorsToRole_post(  id : Int ) : ProjectRole
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/role/{id}/actors")
+      operation com_atlassian_jira_rest_v2_issue_project_RoleResource_deleteProjectRoleActorsFromRole_delete(  id : Int,  user : String,  group : String ) : ProjectRole
+   }
+   service RestApi3ScreensService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/screens")
+      operation com_atlassian_jira_rest_v2_issue_ScreensResource_getAllScreens_get(  startAt : Int,  maxResults : Int ) : PageBeanScreen
+   }
+   service RestApi3ScreensAddToDefaultFieldIdService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/screens/addToDefault/{fieldId}")
+      operation com_atlassian_jira_rest_v2_issue_ScreensResource_addFieldToDefaultScreen_post(  fieldId : String ) : Any
+   }
+   service RestApi3ScreensScreenIdAvailableFieldsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/screens/{screenId}/availableFields")
+      operation com_atlassian_jira_rest_v2_issue_ScreensResource_getAvailableScreenFields_get(  screenId : Int ) : ScreenableField[]
+   }
+   service RestApi3ScreensScreenIdTabsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/screens/{screenId}/tabs")
+      operation com_atlassian_jira_rest_v2_issue_ScreensResource_getAllScreenTabs_get(  screenId : Int,  projectKey : String ) : ScreenableTab[]
+      @HttpOperation(method = "POST" , url = "/rest/api/3/screens/{screenId}/tabs")
+      operation com_atlassian_jira_rest_v2_issue_ScreensResource_addScreenTab_post(  screenId : Int ) : ScreenableTab
+   }
+   service RestApi3ScreensScreenIdTabsTabIdService {
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/screens/{screenId}/tabs/{tabId}")
+      operation com_atlassian_jira_rest_v2_issue_ScreensResource_renameScreenTab_put(  screenId : Int,  tabId : Int ) : ScreenableTab
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/screens/{screenId}/tabs/{tabId}")
+      operation com_atlassian_jira_rest_v2_issue_ScreensResource_deleteScreenTab_delete(  screenId : Int,  tabId : Int )
+   }
+   service RestApi3ScreensScreenIdTabsTabIdFieldsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/screens/{screenId}/tabs/{tabId}/fields")
+      operation com_atlassian_jira_rest_v2_issue_ScreensResource_getAllScreenTabFields_get(  screenId : Int,  tabId : Int,  projectKey : String ) : ScreenableField[]
+      @HttpOperation(method = "POST" , url = "/rest/api/3/screens/{screenId}/tabs/{tabId}/fields")
+      operation com_atlassian_jira_rest_v2_issue_ScreensResource_addScreenTabField_post(  screenId : Int,  tabId : Int ) : ScreenableField
+   }
+   service RestApi3ScreensScreenIdTabsTabIdFieldsIdService {
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/screens/{screenId}/tabs/{tabId}/fields/{id}")
+      operation com_atlassian_jira_rest_v2_issue_ScreensResource_removeScreenTabField_delete(  screenId : Int,  tabId : Int,  id : String )
+   }
+   service RestApi3ScreensScreenIdTabsTabIdFieldsIdMoveService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/screens/{screenId}/tabs/{tabId}/fields/{id}/move")
+      operation com_atlassian_jira_rest_v2_issue_ScreensResource_moveScreenTabField_post(  screenId : Int,  tabId : Int,  id : String ) : Any
+   }
+   service RestApi3ScreensScreenIdTabsTabIdMovePosService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/screens/{screenId}/tabs/{tabId}/move/{pos}")
+      operation com_atlassian_jira_rest_v2_issue_ScreensResource_moveScreenTab_post(  screenId : Int,  tabId : Int,  pos : Int ) : Any
+   }
+   service RestApi3ScreenschemeService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/screenscheme")
+      operation com_atlassian_jira_rest_v2_issue_screenscheme_ScreenSchemeResource_getAllScreenSchemes_get(  startAt : Int,  maxResults : Int ) : PageBeanScreenScheme
+   }
+   service RestApi3SearchService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/search")
+      operation com_atlassian_jira_rest_v2_search_SearchResource_searchForIssuesUsingJql_get(  jql : String,  startAt : Int,  maxResults : Int,  validateQuery : String,  fields : String[],  expand : String,  properties : String[],  fieldsByKeys : Boolean ) : SearchResults
+      @HttpOperation(method = "POST" , url = "/rest/api/3/search")
+      operation com_atlassian_jira_rest_v2_search_SearchResource_searchForIssuesUsingJql_post(  ) : SearchResults
+   }
+   service RestApi3SecuritylevelIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/securitylevel/{id}")
+      operation com_atlassian_jira_rest_v2_issue_IssueSecurityLevelResource_getIssueSecurityLevel_get(  id : String ) : SecurityLevel
+   }
+   service RestApi3ServerInfoService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/serverInfo")
+      operation com_atlassian_jira_rest_v2_ServerInfoResource_getServerInfo_get(  ) : ServerInformation
+   }
+   service RestApi3SettingsColumnsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/settings/columns")
+      operation com_atlassian_jira_rest_v2_admin_SettingsResource_getIssueNavigatorDefaultColumns_get(  ) : ColumnItem[]
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/settings/columns")
+      operation com_atlassian_jira_rest_v2_admin_SettingsResource_setIssueNavigatorDefaultColumns_put(  ) : Any
+   }
+   service RestApi3StatusService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/status")
+      operation com_atlassian_jira_rest_v2_issue_StatusResource_getStatuses_get(  ) : StatusDetails[]
+   }
+   service RestApi3StatusIdOrNameService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/status/{idOrName}")
+      operation com_atlassian_jira_rest_v2_issue_StatusResource_getStatus_get(  idOrName : String ) : StatusDetails
+   }
+   service RestApi3StatuscategoryService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/statuscategory")
+      operation com_atlassian_jira_rest_v2_issue_StatusCategoryResource_getStatusCategories_get(  ) : StatusCategory[]
+   }
+   service RestApi3StatuscategoryIdOrKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/statuscategory/{idOrKey}")
+      operation com_atlassian_jira_rest_v2_issue_StatusCategoryResource_getStatusCategory_get(  idOrKey : String ) : StatusCategory
+   }
+   service RestApi3TaskTaskIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/task/{taskId}")
+      operation com_atlassian_jira_rest_v2_task_TaskResource_getTask_get(  taskId : String ) : TaskProgressBeanObject
+   }
+   service RestApi3TaskTaskIdCancelService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/task/{taskId}/cancel")
+      operation com_atlassian_jira_rest_v2_task_TaskResource_cancelTask_post(  taskId : String ) : Any
+   }
+   service RestApi3Universal_avatarTypeTypeOwnerEntityIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/universal_avatar/type/{type}/owner/{entityId}")
+      operation com_atlassian_jira_rest_v2_issue_UniversalAvatarResource_getAvatars_get(  `type` : String,  entityId : String ) : Avatars
+      @HttpOperation(method = "POST" , url = "/rest/api/3/universal_avatar/type/{type}/owner/{entityId}")
+      operation com_atlassian_jira_rest_v2_issue_UniversalAvatarResource_storeAvatar_post(  `type` : String,  entityId : String,  `x` : Int,  `y` : Int,  size : Int ) : Avatar
+   }
+   service RestApi3Universal_avatarTypeTypeOwnerOwningObjectIdAvatarIdService {
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/universal_avatar/type/{type}/owner/{owningObjectId}/avatar/{id}")
+      operation com_atlassian_jira_rest_v2_issue_UniversalAvatarResource_deleteAvatar_delete(  `type` : String,  owningObjectId : String,  id : Int )
+   }
+   service RestApi3UserService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user")
+      operation com_atlassian_jira_rest_v2_issue_UserResource_getUser_get(  accountId : String,  username : String,  key : String,  expand : String ) : User
+      @HttpOperation(method = "POST" , url = "/rest/api/3/user")
+      operation com_atlassian_jira_rest_v2_issue_UserResource_createUser_post(  ) : User
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/user")
+      operation com_atlassian_jira_rest_v2_issue_UserResource_removeUser_delete(  accountId : String,  username : String,  key : String )
+   }
+   service RestApi3UserAssignableMultiProjectSearchService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/assignable/multiProjectSearch")
+      operation com_atlassian_jira_rest_v2_issue_UserResource_findBulkAssignableUsers_get(  `query` : String,  username : String,  accountId : String,  projectKeys : String,  startAt : Int,  maxResults : Int ) : User[]
+   }
+   service RestApi3UserAssignableSearchService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/assignable/search")
+      operation com_atlassian_jira_rest_v2_issue_UserResource_findAssignableUsers_get(  `query` : String,  sessionId : String,  username : String,  accountId : String,  project : String,  issueKey : String,  startAt : Int,  maxResults : Int,  actionDescriptorId : Int,  recommend : Boolean ) : User[]
+   }
+   service RestApi3UserBulkService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/bulk")
+      operation com_atlassian_jira_rest_v2_user_UserBulkResource_bulkGetUsers_get(  startAt : Int,  maxResults : Int,  username : String[],  key : String[],  accountId : String[] ) : PageBeanUser
+   }
+   service RestApi3UserBulkMigrationService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/bulk/migration")
+      operation com_atlassian_jira_rest_v2_user_UserBulkResource_bulkGetUsersMigration_get(  startAt : Int,  maxResults : Int,  username : String[],  key : String[] ) : UserMigrationBean[]
+   }
+   service RestApi3UserColumnsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/columns")
+      operation com_atlassian_jira_rest_v2_issue_UserResource_getUserDefaultColumns_get(  accountId : String,  username : String ) : ColumnItem[]
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/user/columns")
+      operation com_atlassian_jira_rest_v2_issue_UserResource_setUserColumns_put(  accountId : String ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/user/columns")
+      operation com_atlassian_jira_rest_v2_issue_UserResource_resetUserColumns_delete(  accountId : String,  username : String )
+   }
+   service RestApi3UserEmailService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/email")
+      operation com_atlassian_jira_rest_v2_user_UnrestrictedUserEmailResource_getUserEmail_get(  accountId : String ) : UnrestrictedUserEmail
+   }
+   service RestApi3UserEmailBulkService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/email/bulk")
+      operation com_atlassian_jira_rest_v2_user_UnrestrictedUserEmailResource_getUserEmailBulk_get(  accountId : String[] ) : UnrestrictedUserEmail
+   }
+   service RestApi3UserGroupsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/groups")
+      operation com_atlassian_jira_rest_v2_issue_UserResource_getUserGroups_get(  accountId : String,  username : String,  key : String ) : GroupName[]
+   }
+   service RestApi3UserPermissionSearchService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/permission/search")
+      operation com_atlassian_jira_rest_v2_issue_UserResource_findUsersWithAllPermissions_get(  `query` : String,  username : String,  accountId : String,  permissions : String,  issueKey : String,  projectKey : String,  startAt : Int,  maxResults : Int ) : User[]
+   }
+   service RestApi3UserPickerService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/picker")
+      operation com_atlassian_jira_rest_v2_issue_UserResource_findUsersForPicker_get(  `query` : String,  maxResults : Int,  showAvatar : Boolean,  exclude : String[],  excludeAccountIds : String[],  avatarSize : String,  excludeConnectUsers : Boolean ) : FoundUsers
+   }
+   service RestApi3UserPropertiesService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/properties")
+      operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_getUserPropertyKeys_get(  accountId : String,  userKey : String,  username : String ) : PropertyKeys
+   }
+   service RestApi3UserPropertiesPropertyKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_getUserProperty_get(  accountId : String,  userKey : String,  username : String,  propertyKey : String ) : EntityProperty
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/user/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_setUserProperty_put(  accountId : String,  userKey : String,  username : String,  propertyKey : String ) : Any
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/user/properties/{propertyKey}")
+      operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_deleteUserProperty_delete(  accountId : String,  userKey : String,  username : String,  propertyKey : String )
+   }
+   service RestApi3UserSearchService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/search")
+      operation com_atlassian_jira_rest_v2_issue_UserResource_findUsers_get(  `query` : String,  username : String,  accountId : String,  startAt : Int,  maxResults : Int,  property : String ) : User[]
+   }
+   service RestApi3UserSearchQueryService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/search/query")
+      operation com_atlassian_jira_rest_v2_search_UserSearchResource_findUsersByQuery_get(  `query` : String,  startAt : Int,  maxResults : Int ) : PageBeanUser
+   }
+   service RestApi3UserSearchQueryKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/search/query/key")
+      operation com_atlassian_jira_rest_v2_search_UserSearchResource_findUserKeysByQuery_get(  `query` : String,  startAt : Int,  maxResults : Int ) : PageBeanUserKey
+   }
+   service RestApi3UserViewissueSearchService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/user/viewissue/search")
+      operation com_atlassian_jira_rest_v2_issue_UserResource_findUsersWithBrowsePermission_get(  `query` : String,  username : String,  accountId : String,  issueKey : String,  projectKey : String,  startAt : Int,  maxResults : Int ) : User[]
+   }
+   service RestApi3UsersSearchService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/users/search")
+      operation com_atlassian_jira_rest_v2_issue_UsersResource_getAllUsers_get(  startAt : Int,  maxResults : Int ) : User[]
+   }
+   service RestApi3VersionService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/version")
+      operation com_atlassian_jira_rest_v2_issue_VersionResource_createVersion_post(  ) : Version
+   }
+   service RestApi3VersionIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/version/{id}")
+      operation com_atlassian_jira_rest_v2_issue_VersionResource_getVersion_get(  id : String,  expand : String ) : Version
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/version/{id}")
+      operation com_atlassian_jira_rest_v2_issue_VersionResource_updateVersion_put(  id : String ) : Version
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/version/{id}")
+      operation com_atlassian_jira_rest_v2_issue_VersionResource_deleteVersion_delete(  id : String,  moveFixIssuesTo : String,  moveAffectedIssuesTo : String )
+   }
+   service RestApi3VersionIdMergetoMoveIssuesToService {
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/version/{id}/mergeto/{moveIssuesTo}")
+      operation com_atlassian_jira_rest_v2_issue_VersionResource_mergeVersions_put(  id : String,  moveIssuesTo : String ) : Any
+   }
+   service RestApi3VersionIdMoveService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/version/{id}/move")
+      operation com_atlassian_jira_rest_v2_issue_VersionResource_moveVersion_post(  id : String ) : Version
+   }
+   service RestApi3VersionIdRelatedIssueCountsService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/version/{id}/relatedIssueCounts")
+      operation com_atlassian_jira_rest_v2_issue_VersionResource_getVersionRelatedIssues_get(  id : String ) : VersionIssueCounts
+   }
+   service RestApi3VersionIdRemoveAndSwapService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/version/{id}/removeAndSwap")
+      operation com_atlassian_jira_rest_v2_issue_VersionResource_deleteAndReplaceVersion_post(  id : String ) : Any
+   }
+   service RestApi3VersionIdUnresolvedIssueCountService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/version/{id}/unresolvedIssueCount")
+      operation com_atlassian_jira_rest_v2_issue_VersionResource_getVersionUnresolvedIssues_get(  id : String ) : VersionUnresolvedIssuesCount
+   }
+   service RestApi3WebhookService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/webhook")
+      operation com_atlassian_jira_rest_v2_webhook_DynamicWebhookResource_getDynamicWebhooksForApp_get(  startAt : Int,  maxResults : Int ) : PageBeanWebhook
+      @HttpOperation(method = "POST" , url = "/rest/api/3/webhook")
+      operation com_atlassian_jira_rest_v2_webhook_DynamicWebhookResource_registerDynamicWebhooks_post(  ) : ContainerForRegisteredWebhooks
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/webhook")
+      operation com_atlassian_jira_rest_v2_webhook_DynamicWebhookResource_deleteWebhookById_delete(  )
+   }
+   service RestApi3WebhookFailedService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/webhook/failed")
+      operation com_atlassian_jira_rest_v2_webhook_FailedWebhookResource_getFailedWebhooks_get(  maxResults : Int,  after : Int ) : FailedWebhooks
+   }
+   service RestApi3WebhookRefreshService {
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/webhook/refresh")
+      operation com_atlassian_jira_rest_v2_webhook_DynamicWebhookResource_refreshWebhooks_put(  ) : WebhooksExpirationDate
+   }
+   service RestApi3WorkflowService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/workflow")
+      operation com_atlassian_jira_rest_v2_admin_WorkflowsResource_getAllWorkflows_get(  workflowName : String ) : DeprecatedWorkflow[]
+   }
+   service RestApi3WorkflowRuleConfigService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/workflow/rule/config")
+      operation com_atlassian_jira_rest_v2_admin_workflow_WorkflowRuleConfigResource_getWorkflowTransitionRuleConfigurations_get(  startAt : Int,  maxResults : Int,  types : String[],  keys : String[],  expand : String ) : PageBeanWorkflowTransitionRules
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/workflow/rule/config")
+      operation com_atlassian_jira_rest_v2_admin_workflow_WorkflowRuleConfigResource_updateWorkflowTransitionRuleConfigurations_put(  ) : WorkflowTransitionRulesUpdateErrors
+   }
+   service RestApi3WorkflowSearchService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/workflow/search")
+      operation com_atlassian_jira_rest_v2_admin_workflow_WorkflowSearchResource_getWorkflowsPaginated_get(  startAt : Int,  maxResults : Int,  workflowName : String[],  expand : String ) : PageBeanWorkflow
+   }
+   service RestApi3WorkflowTransitionsTransitionIdPropertiesService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/workflow/transitions/{transitionId}/properties")
+      operation com_atlassian_jira_rest_v2_admin_WorkflowTransitionResource_getWorkflowTransitionProperties_get(  transitionId : Int,  includeReservedKeys : Boolean,  key : String,  workflowName : String,  workflowMode : String ) : WorkflowTransitionProperty
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/workflow/transitions/{transitionId}/properties")
+      operation com_atlassian_jira_rest_v2_admin_WorkflowTransitionResource_updateWorkflowTransitionProperty_put(  transitionId : Int,  key : String,  workflowName : String,  workflowMode : String ) : WorkflowTransitionProperty
+      @HttpOperation(method = "POST" , url = "/rest/api/3/workflow/transitions/{transitionId}/properties")
+      operation com_atlassian_jira_rest_v2_admin_WorkflowTransitionResource_createWorkflowTransitionProperty_post(  transitionId : Int,  key : String,  workflowName : String,  workflowMode : String ) : WorkflowTransitionProperty
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflow/transitions/{transitionId}/properties")
+      operation com_atlassian_jira_rest_v2_admin_WorkflowTransitionResource_deleteWorkflowTransitionProperty_delete(  transitionId : Int,  key : String,  workflowName : String,  workflowMode : String )
+   }
+   service RestApi3WorkflowschemeService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/workflowscheme")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_getAllWorkflowSchemes_get(  startAt : Int,  maxResults : Int ) : WorkflowScheme[]
+      @HttpOperation(method = "POST" , url = "/rest/api/3/workflowscheme")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_createWorkflowScheme_post(  ) : WorkflowScheme
+   }
+   service RestApi3WorkflowschemeProjectService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/workflowscheme/project")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_project_WorkflowSchemeProjectResource_getWorkflowSchemeProjectAssociations_get(  projectId : Int[] ) : ContainerOfWorkflowSchemeAssociations
+   }
+   service RestApi3WorkflowschemeIdService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/workflowscheme/{id}")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_getWorkflowScheme_get(  id : Int,  returnDraftIfExists : Boolean ) : WorkflowScheme
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/workflowscheme/{id}")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateWorkflowScheme_put(  id : Int ) : WorkflowScheme
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowScheme_delete(  id : Int )
+   }
+   service RestApi3WorkflowschemeIdCreatedraftService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/workflowscheme/{id}/createdraft")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_createWorkflowSchemeDraftFromParent_post(  id : Int ) : WorkflowScheme
+   }
+   service RestApi3WorkflowschemeIdDefaultService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/workflowscheme/{id}/default")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_getDefaultWorkflow_get(  id : Int,  returnDraftIfExists : Boolean ) : DefaultWorkflow
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/workflowscheme/{id}/default")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateDefaultWorkflow_put(  id : Int ) : WorkflowScheme
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}/default")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteDefaultWorkflow_delete(  id : Int,  updateDraftIfNeeded : Boolean ) : WorkflowScheme
+   }
+   service RestApi3WorkflowschemeIdDraftService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/workflowscheme/{id}/draft")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_getWorkflowSchemeDraft_get(  id : Int ) : WorkflowScheme
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/workflowscheme/{id}/draft")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateWorkflowSchemeDraft_put(  id : Int ) : WorkflowScheme
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}/draft")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowSchemeDraft_delete(  id : Int )
+   }
+   service RestApi3WorkflowschemeIdDraftDefaultService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/workflowscheme/{id}/draft/default")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_getDraftDefaultWorkflow_get(  id : Int ) : DefaultWorkflow
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/workflowscheme/{id}/draft/default")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateDraftDefaultWorkflow_put(  id : Int ) : WorkflowScheme
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}/draft/default")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteDraftDefaultWorkflow_delete(  id : Int ) : WorkflowScheme
+   }
+   service RestApi3WorkflowschemeIdDraftIssuetypeIssueTypeService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/workflowscheme/{id}/draft/issuetype/{issueType}")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_getWorkflowSchemeDraftIssueType_get(  id : Int,  issueType : String ) : IssueTypeWorkflowMapping
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/workflowscheme/{id}/draft/issuetype/{issueType}")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_setWorkflowSchemeDraftIssueType_put(  id : Int,  issueType : String ) : WorkflowScheme
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}/draft/issuetype/{issueType}")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowSchemeDraftIssueType_delete(  id : Int,  issueType : String ) : WorkflowScheme
+   }
+   service RestApi3WorkflowschemeIdDraftWorkflowService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/workflowscheme/{id}/draft/workflow")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_getDraftWorkflow_get(  id : Int,  workflowName : String ) : IssueTypesWorkflowMapping
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/workflowscheme/{id}/draft/workflow")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateDraftWorkflowMapping_put(  id : Int,  workflowName : String ) : WorkflowScheme
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}/draft/workflow")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteDraftWorkflowMapping_delete(  id : Int,  workflowName : String )
+   }
+   service RestApi3WorkflowschemeIdIssuetypeIssueTypeService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/workflowscheme/{id}/issuetype/{issueType}")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_getWorkflowSchemeIssueType_get(  id : Int,  issueType : String,  returnDraftIfExists : Boolean ) : IssueTypeWorkflowMapping
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/workflowscheme/{id}/issuetype/{issueType}")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_setWorkflowSchemeIssueType_put(  id : Int,  issueType : String ) : WorkflowScheme
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}/issuetype/{issueType}")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowSchemeIssueType_delete(  id : Int,  issueType : String,  updateDraftIfNeeded : Boolean ) : WorkflowScheme
+   }
+   service RestApi3WorkflowschemeIdWorkflowService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/workflowscheme/{id}/workflow")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_getWorkflow_get(  id : Int,  workflowName : String,  returnDraftIfExists : Boolean ) : IssueTypesWorkflowMapping
+      @HttpOperation(method = "PUT" , url = "/rest/api/3/workflowscheme/{id}/workflow")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateWorkflowMapping_put(  id : Int,  workflowName : String ) : WorkflowScheme
+      @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}/workflow")
+      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowMapping_delete(  id : Int,  workflowName : String,  updateDraftIfNeeded : Boolean )
+   }
+   service RestApi3WorklogDeletedService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/worklog/deleted")
+      operation com_atlassian_jira_rest_v2_issue_worklog_WorklogResource_getIdsOfWorklogsDeletedSince_get(  since : Int ) : ChangedWorklogs
+   }
+   service RestApi3WorklogListService {
+      @HttpOperation(method = "POST" , url = "/rest/api/3/worklog/list")
+      operation com_atlassian_jira_rest_v2_issue_worklog_WorklogResource_getWorklogsForIds_post(  expand : String ) : Worklog[]
+   }
+   service RestApi3WorklogUpdatedService {
+      @HttpOperation(method = "GET" , url = "/rest/api/3/worklog/updated")
+      operation com_atlassian_jira_rest_v2_issue_worklog_WorklogResource_getIdsOfWorklogsModifiedSince_get(  since : Int,  expand : String ) : ChangedWorklogs
+   }
+   service RestAtlassian_connect1AddonsAddonKeyPropertiesService {
+      @HttpOperation(method = "GET" , url = "/rest/atlassian-connect/1/addons/{addonKey}/properties")
+      operation AddonPropertiesResource_getAddonProperties_get(  addonKey : String ) : PropertyKeys
+   }
+   service RestAtlassian_connect1AddonsAddonKeyPropertiesPropertyKeyService {
+      @HttpOperation(method = "GET" , url = "/rest/atlassian-connect/1/addons/{addonKey}/properties/{propertyKey}")
+      operation AddonPropertiesResource_getAddonProperty_get(  addonKey : String,  propertyKey : String ) : EntityProperty
+      @HttpOperation(method = "PUT" , url = "/rest/atlassian-connect/1/addons/{addonKey}/properties/{propertyKey}")
+      operation AddonPropertiesResource_putAddonProperty_put(  addonKey : String,  propertyKey : String ) : OperationMessage
+      @HttpOperation(method = "DELETE" , url = "/rest/atlassian-connect/1/addons/{addonKey}/properties/{propertyKey}")
+      operation AddonPropertiesResource_deleteAddonProperty_delete(  addonKey : String,  propertyKey : String )
+   }
+   service RestAtlassian_connect1AppModuleDynamicService {
+      @HttpOperation(method = "GET" , url = "/rest/atlassian-connect/1/app/module/dynamic")
+      operation DynamicModulesResource_getModules_get(  ) : ConnectModules
+      @HttpOperation(method = "POST" , url = "/rest/atlassian-connect/1/app/module/dynamic")
+      operation DynamicModulesResource_registerModules_post(  )
+      @HttpOperation(method = "DELETE" , url = "/rest/atlassian-connect/1/app/module/dynamic")
+      operation DynamicModulesResource_removeModules_delete(  moduleKey : String[] )
+   }
+}

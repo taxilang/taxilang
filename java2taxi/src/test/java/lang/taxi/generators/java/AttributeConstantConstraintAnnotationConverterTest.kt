@@ -9,7 +9,7 @@ import lang.taxi.annotations.ResponseConstraint
 import lang.taxi.annotations.ResponseContract
 import lang.taxi.services.operations.constraints.ConstantValueExpression
 import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class AttributeConstantConstraintAnnotationConverterTest {
 

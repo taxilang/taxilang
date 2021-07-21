@@ -1,7 +1,8 @@
 package lang.taxi
 
 import com.winterbe.expekt.expect
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class TaxiDocumentTest {
 
@@ -44,7 +45,7 @@ class TaxiDocumentTest {
         expect(doc.containsType("Author")).to.be.`true`
     }
 
-    @Test(expected = DocumentMalformedException::class)
+    @Test
     fun given_documentsContainingConflictingDefinitions_when_mergingDocuments_then_exceptionIsThrown() {
         val src1 = """
             type Person {
@@ -56,7 +57,9 @@ class TaxiDocumentTest {
                name : Name as String
             }
             """.compile()
-        src1.merge(src2)
+        assertThrows<DocumentMalformedException> {
+           src1.merge(src2)
+        }
     }
 
     fun String.compile(): TaxiDocument {

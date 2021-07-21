@@ -2,8 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import lang.taxi.types.QualifiedName
-import org.junit.Assert.*
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class QualifiedNameTest {
 

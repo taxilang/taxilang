@@ -3,7 +3,7 @@ package lang.taxi.generators
 import com.winterbe.expekt.should
 import lang.taxi.Compiler
 import lang.taxi.messages.Severity
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.fail
 
 // Note - this is also more heavily tested via the Kotlin to Taxi projects.

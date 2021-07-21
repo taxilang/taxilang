@@ -5,7 +5,7 @@ import com.winterbe.expekt.should
 import lang.taxi.services.operations.constraints.*
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.VoidType
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class ServicesGrammarTest {
    @Test
