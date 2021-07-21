@@ -29,10 +29,12 @@ class OpenApiTaxiExtensionTest {
 
                   type Name inherits String
 
+                  type Tag inherits String
+
                   model Pet {
                     id : PetId
                     name : Name?
-                    tag : String
+                    tag : Tag
                   }
                }
                """.trimIndent()
@@ -45,6 +47,7 @@ class OpenApiTaxiExtensionTest {
                   import petstore.Pet
                   import petstore.PetId
                   import petstore.Name
+                  import petstore.Tag
 
                   namespace vyne.openApi {
 
@@ -52,7 +55,7 @@ class OpenApiTaxiExtensionTest {
 
                      model NewPet {
                         name : Name?
-                        tag : String
+                        tag : Tag
                      }
 
                      model Error {
@@ -62,7 +65,7 @@ class OpenApiTaxiExtensionTest {
 
                      service PetsService {
                         @HttpOperation(method = "GET" , url = "/pets")
-                        operation findPets(  tags : String[],  limit : Int ) : Pet[]
+                        operation findPets(  tags : Tag[],  limit : Int ) : Pet[]
                         @HttpOperation(method = "POST" , url = "/pets")
                         operation addPet(   ) : Pet
                      }

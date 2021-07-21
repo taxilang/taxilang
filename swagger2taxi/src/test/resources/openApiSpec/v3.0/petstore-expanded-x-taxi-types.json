@@ -35,6 +35,9 @@
                   "schema": {
                      "type": "array",
                      "items": {
+                        "x-taxi-type": {
+                           "name": "petstore.Tag"
+                        },
                         "type": "string"
                      }
                   }
@@ -228,6 +231,9 @@
                   "type": "string"
                },
                "tag": {
+                  "x-taxi-type": {
+                     "name": "petstore.Tag"
+                  },
                   "type": "string"
                }
             }
