@@ -108,7 +108,8 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
                 annotations.toAnnotations(),
                 parameters,
                 returnType,
-                listOf(CompilationUnit.unspecified())
+                listOf(CompilationUnit.unspecified()),
+                typeDoc = swaggerOperation.description,
         )
 
     }

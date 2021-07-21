@@ -50,7 +50,8 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
                 qualifiedServiceName,
                 operations,
                 annotations = emptyList(),
-                compilationUnits = emptyList()
+                compilationUnits = emptyList(),
+                typeDoc = pathOperation.description,
         )
     }
 
@@ -75,7 +76,8 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
                 annotations.toAnnotations(),
                 parameters,
                 returnType,
-                listOf(CompilationUnit.unspecified())
+                listOf(CompilationUnit.unspecified()),
+                typeDoc = openApiOperation.description,
         )
     }
 
