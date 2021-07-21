@@ -49,4 +49,37 @@ class OpenApiModelAndTypeExportTest {
       val field = compiledModel.field("id")
       field.typeDoc.should.equal("The ID of the Pet")
    }
+
+   @Test
+   fun `illegal identifiers in model & field names are replaced correctly`() {
+      @Language("yaml")
+      val openApiSpec = """
+         openapi: "3.0.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         servers:
+           - url: http://petstore.swagger.io/api
+         paths: {}
+         components:
+           schemas:
+             Pet:
+               properties:
+                 pet id:
+                   type: integer
+                   format: int64
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            model Pet {
+               pet_id : Int
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
 }

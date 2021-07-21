@@ -49,4 +49,67 @@ class SwaggerModelAndTypeExportTest {
       val field = compiledModel.field("id")
       field.typeDoc.should.equal("The ID of the Pet")
    }
+
+   @Test
+   fun `fully qualified types work`() {
+      @Language("yaml")
+      val openApiSpec = """
+         swagger: "2.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         host: petstore.swagger.io
+         basePath: /v1
+         paths: {}
+         definitions:
+           io.petstore.Pet:
+             properties:
+               id:
+                 type: integer
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace io.petstore {
+            model Pet {
+               id : Int?
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
+
+   @Test
+   fun `illegal identifiers in field names are replaced correctly`() {
+      @Language("yaml")
+      val openApiSpec = """
+         swagger: "2.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         host: petstore.swagger.io
+         basePath: /v1
+         paths: {}
+         definitions:
+           Pet:
+             properties:
+               pet id:
+                 type: integer
+                 format: int64
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            model Pet {
+               pet_id : Int?
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
 }
