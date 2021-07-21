@@ -1,6 +1,6 @@
 package lang.taxi.types
 
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class NamesTest {

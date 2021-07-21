@@ -2,13 +2,13 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import lang.taxi.policies.*
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class AccessPolicyTest {
 
     lateinit var doc: TaxiDocument
-    @Before
+    @BeforeEach
     fun setup() {
         val taxiDef = """
 namespace test {

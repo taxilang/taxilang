@@ -4,7 +4,7 @@ import com.nhaarman.mockitokotlin2.mock
 import com.winterbe.expekt.expect
 import lang.taxi.Compiler
 import lang.taxi.generators.Processor
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class GeneratorProcessorTest {
 

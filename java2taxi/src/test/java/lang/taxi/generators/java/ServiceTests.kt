@@ -6,8 +6,8 @@ import lang.taxi.annotations.*
 import lang.taxi.demo.FirstName
 import lang.taxi.generators.kotlin.TypeAliasRegister
 import lang.taxi.testing.TestHelpers
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal
 
@@ -101,7 +101,7 @@ service TestService {
 
 
    @Test
-   @Ignore("Needs investigation - looks like type aliases not being registered correctly - is the plugin running in the build?")
+   @Disabled("Needs investigation - looks like type aliases not being registered correctly - is the plugin running in the build?")
    fun givenOperationReturnsTypeAliasedList_then_schemaIsGeneratedCorrectly() {
       @Service("TestService")
       @Namespace("foo")
@@ -195,7 +195,7 @@ namespace foo {
    }
 
    @Test
-   @Ignore("Needs investigation - looks like type aliases not being registered correctly - is the plugin running in the build?")
+   @Disabled("Needs investigation - looks like type aliases not being registered correctly - is the plugin running in the build?")
    fun given_serviceAcceptsTypeAliasedPrimitive_then_signatureIsGeneratedCorrectly() {
       @Service("TestService")
       @Namespace("taxi.example")

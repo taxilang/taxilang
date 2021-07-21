@@ -3,7 +3,7 @@ package lang.taxi
 import com.google.common.io.Resources
 import com.winterbe.expekt.should
 import lang.taxi.packages.TaxiSourcesLoader
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 
 class TaxiProjectTest {

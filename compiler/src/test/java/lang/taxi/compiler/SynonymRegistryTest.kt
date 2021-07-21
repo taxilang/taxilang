@@ -1,15 +1,13 @@
 package lang.taxi.compiler
 
-import com.nhaarman.mockitokotlin2.mock
 import com.winterbe.expekt.should
 import lang.taxi.TypeSystem
-import org.junit.Assert.*
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class SynonymRegistryTest {
    lateinit var registry : SynonymRegistry<String>
-   @Before
+   @BeforeEach
    fun setup() {
      registry = SynonymRegistry(TypeSystem(emptyList()))
    }
