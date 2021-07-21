@@ -56,5 +56,24 @@
          <version>1.30.4-SNAPSHOT</version>
       </dependency>
 
+      <dependency>
+         <groupId>com.fasterxml.jackson.core</groupId>
+         <artifactId>jackson-core</artifactId>
+         <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>com.fasterxml.jackson.core</groupId>
+         <artifactId>jackson-databind</artifactId>
+         <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>com.fasterxml.jackson.module</groupId>
+         <artifactId>jackson-module-kotlin</artifactId>
+         <version>${jackson.version}</version>
+      </dependency>
+
    </dependencies>
+   <properties>
+      <jackson.version>2.12.4</jackson.version>
+   </properties>
 </project>

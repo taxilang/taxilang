@@ -19,17 +19,6 @@ import lang.taxi.generators.openApi.Utils.qualifyTypeNameIfRaw
 import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
 import lang.taxi.types.*
 
-data class TaxiExtension(val name: String, val create: Boolean?)
-private val <T> Schema<T>.taxiExtension: TaxiExtension?
-   get() {
-      val extensionObject = extensions?.get("x-taxi-type") as? Map<String, Any?>
-      val name = extensionObject?.get("name") as? String
-      val create = extensionObject?.get("create") as? Boolean
-      return if (name != null) {
-         TaxiExtension(name = name, create = create)
-      } else null
-   }
-
 class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private val logger: Logger) {
 
    private val _generatedTypes = mutableMapOf<String, Type>()

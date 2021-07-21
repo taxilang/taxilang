@@ -28,8 +28,6 @@ class OpenApiTaxiExtensionTest {
          }
          """.trimIndent()
 
-      println(taxiDef.taxi)
-
       expectToCompileTheSame(
          generated = listOf(imaginaryExistingTaxonomy) + taxiDef.taxi,
          expected = listOf(
