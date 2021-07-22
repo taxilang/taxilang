@@ -7,7 +7,7 @@ import lang.taxi.testing.TestHelpers.expectToCompileTheSame
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
 
-class OpenApiServiceExportTest {
+class SwaggerServiceExportTest {
 
    @Test
    fun `taxi documentation is generated from openapi description`() {
@@ -45,8 +45,6 @@ class OpenApiServiceExportTest {
       """.trimIndent()
 
       val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
-
-      taxiDef.taxi.forEach(::println)
 
       expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
 

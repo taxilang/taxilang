@@ -148,7 +148,11 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
 //
 //        )
         // TODO: Compililation Units / sourceCode linking
-        val typeDef = ObjectTypeDefinition(fields.toSet(), compilationUnit = CompilationUnit.unspecified())
+        val typeDef = ObjectTypeDefinition(
+           fields = fields.toSet(),
+           compilationUnit = CompilationUnit.unspecified(),
+           typeDoc = model.description,
+        )
         return ObjectType(qualifiedName, typeDef)
     }
 
@@ -157,7 +161,13 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
     }
 
     private fun generateField(name: String, property: Property): Field {
-        return Field(name.replaceIllegalCharacters(), getOrGenerateType(property), nullable = !property.required, compilationUnit = CompilationUnit.unspecified())
+        return Field(
+           name = name.replaceIllegalCharacters(),
+           type = getOrGenerateType(property),
+           nullable = !property.required,
+           compilationUnit = CompilationUnit.unspecified(),
+           typeDoc = property.description,
+        )
     }
 
 

@@ -50,8 +50,6 @@ class OpenApiServiceExportTest {
 
       val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
 
-      taxiDef.taxi.forEach(::println)
-
       expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
 
       val compiledService = compile(taxiDef.taxi).service("vyne.openApi.PetsService")

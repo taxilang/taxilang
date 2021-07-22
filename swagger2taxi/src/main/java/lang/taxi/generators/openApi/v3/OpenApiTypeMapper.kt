@@ -74,12 +74,22 @@ class OpenApiTypeMapper(val api: OpenAPI, val defaultNamespace: String, private 
       val fields = properties.map { (name, schema) ->
          generateField(name, schema, requiredFields.contains(name))
       }
-      val typeDef = ObjectTypeDefinition(fields.toSet(), compilationUnit = CompilationUnit.unspecified())
+      val typeDef = ObjectTypeDefinition(
+         fields = fields.toSet(),
+         compilationUnit = CompilationUnit.unspecified(),
+         typeDoc = schema.description,
+      )
       return ObjectType(qualifiedName, typeDef)
    }
 
    private fun generateField(name: String, schema: Schema<*>, required: Boolean): Field {
-      return Field(name.replaceIllegalCharacters(), getOrGenerateType(schema, defaultToAny = true), nullable = required, compilationUnit = CompilationUnit.unspecified())
+      return Field(
+         name = name.replaceIllegalCharacters(),
+         type = getOrGenerateType(schema, defaultToAny = true),
+         nullable = required,
+         compilationUnit = CompilationUnit.unspecified(),
+         typeDoc = schema.description,
+      )
    }
 
    private fun getOrGenerateType(schema: Schema<*>, anonymousTypeNamePartial: String? = null, defaultToAny: Boolean = false): Type {
