@@ -4,11 +4,13 @@ import io.swagger.oas.models.OpenAPI
 import io.swagger.oas.models.Operation
 import io.swagger.oas.models.PathItem
 import io.swagger.oas.models.parameters.Parameter
+import io.swagger.oas.models.parameters.PathParameter
 import io.swagger.oas.models.parameters.QueryParameter
 import io.swagger.oas.models.responses.ApiResponse
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Type
 import lang.taxi.annotations.HttpOperation
+import lang.taxi.annotations.HttpPathVariable
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.OperationIdProvider
 import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
@@ -123,6 +125,7 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
                 logger.warn("Param Query parameters are not currently supported", "https://gitlab.com/taxi-lang/taxi-lang/issues/21")
                 emptyList()
             }
+            is PathParameter -> listOf(HttpPathVariable(param.name).toAnnotation())
             else -> emptyList()
         }
     }

@@ -100,4 +100,48 @@ class OpenApiServiceExportTest {
 
       expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
    }
+
+
+   @Test
+   fun `path parameters are annotated correctly`() {
+      @Language("yaml")
+      val openApiSpec = """
+         openapi: "3.0.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         servers:
+           - url: http://petstore.swagger.io/api
+         paths:
+           /pets/{id}:
+             get:
+               operationId: getPet
+               parameters:
+                 - name: id
+                   in: path
+                   required: true
+                   schema:
+                     type: integer
+               responses:
+                 '200':
+                   description: pet response
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            service PetsIdService {
+               @HttpOperation(method = "GET" , url = "/pets/{id}")
+               operation getPet(
+                  @PathVariable("id")
+                  id : Int
+               )
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+      taxiDef.taxi.forEach(::println)
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
 }

@@ -1,17 +1,16 @@
 package lang.taxi.generators.openApi
 
 import com.winterbe.expekt.expect
-import lang.taxi.generators.Level
-import lang.taxi.generators.Message
-import lang.taxi.generators.hasErrors
-import lang.taxi.generators.hasWarnings
+import lang.taxi.generators.*
 import lang.taxi.testing.TestHelpers.expectToCompileTheSame
 import lang.taxi.utils.log
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.TestFactory
+import java.io.File
 import kotlin.test.fail
+import kotlin.text.Charsets.UTF_8
 
 class OpenApiCompatabilityTest {
     val sources = listOf(
@@ -49,7 +48,8 @@ class OpenApiCompatabilityTest {
       val taxi = generator.generateAsStrings(jira, "vyne.openApi", GeneratorOptions(serviceBasePath = "http://myjira/"))
       expect(taxi.successful).to.be.`true`
       expect(taxi.messages.hasErrors()).to.be.`false`
-      expectToCompileTheSame(taxi.taxi, testResource("/openApiSpec/v3.0/jira-swagger-v3.json.taxi"))
+      val expectedOutputFile = "/openApiSpec/v3.0/jira-swagger-v3.json.taxi"
+      expectToCompileTheSameReplacingResult(taxi, expectedOutputFile)
    }
 
    @Test
@@ -86,8 +86,27 @@ class OpenApiCompatabilityTest {
               }
 
               // Check the result can compile
-              expectToCompileTheSame(taxiDef.taxi, testResource("$filename.taxi"))
+              expectToCompileTheSameReplacingResult(taxiDef, "$filename.taxi")
            }
         }
     }
+
+   // Convenient way to generate the actual taxi expectation
+   // Can then check if it matches what you wanted, and check it in - giving a
+   // history of how the generated taxi output has changed over time
+   private fun expectToCompileTheSameReplacingResult(
+      taxi: GeneratedTaxiCode,
+      expectedOutputFile: String
+   ) {
+      try {
+         expectToCompileTheSame(taxi.taxi, testResource(expectedOutputFile))
+      } catch (e: AssertionError) {
+         val runningOnCi = System.getenv("GITLAB_CI")?.toBoolean() ?: false
+         if (!runningOnCi) {
+            File("src/test/resources$expectedOutputFile")
+               .writeText(taxi.taxi.single(), UTF_8)
+         }
+         throw e
+      }
+   }
 }

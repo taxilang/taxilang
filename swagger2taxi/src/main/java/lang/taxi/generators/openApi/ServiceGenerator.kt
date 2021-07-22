@@ -5,6 +5,7 @@ import io.swagger.oas.models.PathItem
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Type
 import lang.taxi.annotations.HttpOperation
+import lang.taxi.annotations.HttpPathVariable
 import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
@@ -151,6 +152,7 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
     private fun getParamAnnotations(param: Parameter): List<Annotation> {
         return when (param) {
             is BodyParameter -> listOf(HttpRequestBody.toAnnotation())
+            is PathParameter -> listOf(HttpPathVariable(param.name).toAnnotation())
             // TODO : Path variables?
             else -> emptyList()
         }

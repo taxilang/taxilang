@@ -14,15 +14,19 @@ namespace vyne.openApi {
    }
    
    service PetsService {
+      [[ Returns all pets from the system that the user has access to ]]
       @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets")
       operation findPets(  tags : String,  limit : Int ) : Pet[]
+      [[ Creates a new pet in the store.  Duplicates are allowed ]]
       @HttpOperation(method = "POST" , url = "http://petstore.swagger.io/api/pets")
       operation addPet( @RequestBody pet : NewPet ) : Pet
    }
    service PetsIdService {
+      [[ Returns a user based on a single ID, if the user does not have access to the pet ]]
       @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets/{id}")
-      operation findPetById(  id : Int ) : Pet
+      operation findPetById( @PathVariable(value = "id") id : Int ) : Pet
+      [[ deletes a single pet based on the ID supplied ]]
       @HttpOperation(method = "DELETE" , url = "http://petstore.swagger.io/api/pets/{id}")
-      operation deletePet(  id : Int )
+      operation deletePet( @PathVariable(value = "id") id : Int )
    }
 }

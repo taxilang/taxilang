@@ -4,6 +4,7 @@ namespace vyne.openApi {
       petId : Int?
       quantity : Int?
       shipDate : DateTime?
+      [[ Order Status ]]
       status : String?
       complete : Boolean?
    }
@@ -16,6 +17,7 @@ namespace vyne.openApi {
       email : String?
       password : String?
       phone : String?
+      [[ User Status ]]
       userStatus : Int?
    }
    
@@ -35,6 +37,7 @@ namespace vyne.openApi {
       name : String
       photoUrls : String[]
       tags : Tag[]?
+      [[ pet status in the store ]]
       status : String?
    }
    
@@ -51,21 +54,25 @@ namespace vyne.openApi {
       operation addPet( @RequestBody body : Pet )
    }
    service PetFindByStatusService {
+      [[ Multiple status values can be provided with comma separated strings ]]
       @HttpOperation(method = "GET" , url = "https://petstore.swagger.io/v2/pet/findByStatus")
       operation findPetsByStatus(  status : String ) : Pet[]
    }
    service PetFindByTagsService {
+      [[ Muliple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing. ]]
       @HttpOperation(method = "GET" , url = "https://petstore.swagger.io/v2/pet/findByTags")
       operation findPetsByTags(  tags : String ) : Pet[]
    }
    service PetPetIdService {
+      [[ Returns a single pet ]]
       @HttpOperation(method = "GET" , url = "https://petstore.swagger.io/v2/pet/{petId}")
-      operation getPetById(  petId : Int ) : Pet
+      operation getPetById( @PathVariable(value = "petId") petId : Int ) : Pet
    }
    service PetPetIdUploadImageService {
       
    }
    service StoreInventoryService {
+      [[ Returns a map of status codes to quantities ]]
       @HttpOperation(method = "GET" , url = "https://petstore.swagger.io/v2/store/inventory")
       operation getInventory(  ) : Any
    }
@@ -74,12 +81,15 @@ namespace vyne.openApi {
       operation placeOrder( @RequestBody body : Order ) : Order
    }
    service StoreOrderOrderIdService {
+      [[ For valid response try integer IDs with value >= 1 and <= 10. Other values will generated exceptions ]]
       @HttpOperation(method = "GET" , url = "https://petstore.swagger.io/v2/store/order/{orderId}")
-      operation getOrderById(  orderId : Int ) : Order
+      operation getOrderById( @PathVariable(value = "orderId") orderId : Int ) : Order
+      [[ For valid response try integer IDs with positive integer value. Negative or non-integer values will generate API errors ]]
       @HttpOperation(method = "DELETE" , url = "https://petstore.swagger.io/v2/store/order/{orderId}")
-      operation deleteOrder(  orderId : Int )
+      operation deleteOrder( @PathVariable(value = "orderId") orderId : Int )
    }
    service UserService {
+      [[ This can only be done by the logged in user. ]]
       @HttpOperation(method = "POST" , url = "https://petstore.swagger.io/v2/user")
       operation createUser( @RequestBody body : User )
    }
@@ -101,10 +111,12 @@ namespace vyne.openApi {
    }
    service UserUsernameService {
       @HttpOperation(method = "GET" , url = "https://petstore.swagger.io/v2/user/{username}")
-      operation getUserByName(  username : String ) : User
+      operation getUserByName( @PathVariable(value = "username") username : String ) : User
+      [[ This can only be done by the logged in user. ]]
       @HttpOperation(method = "PUT" , url = "https://petstore.swagger.io/v2/user/{username}")
-      operation updateUser(  username : String, @RequestBody body : User )
+      operation updateUser( @PathVariable(value = "username") username : String, @RequestBody body : User )
+      [[ This can only be done by the logged in user. ]]
       @HttpOperation(method = "DELETE" , url = "https://petstore.swagger.io/v2/user/{username}")
-      operation deleteUser(  username : String )
+      operation deleteUser( @PathVariable(value = "username") username : String )
    }
 }
