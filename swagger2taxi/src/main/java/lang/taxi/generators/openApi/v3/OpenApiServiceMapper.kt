@@ -11,6 +11,7 @@ import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Type
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpPathVariable
+import lang.taxi.annotations.ServiceDiscoveryClient
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.OperationIdProvider
 import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
@@ -27,19 +28,18 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
                            private val logger: Logger) {
     fun generateServices(basePath:String? = null): Set<Service> {
         val basePathFromSwagger = openAPI.servers.firstOrNull()?.url
-       val basePathToUse = listOfNotNull(basePath, basePathFromSwagger).firstOrNull()
+        val basePathToUse = listOfNotNull(basePath, basePathFromSwagger).firstOrNull()
         if (basePathToUse == null) {
             logger.error("No URL provided in the set of servers, and no manual basePath provided")
             return emptySet()
         }
         val services = openAPI.paths.map { (pathMapping, pathOperation) ->
-            val qualifiedPath = "$basePathToUse/$pathMapping".replace("//", "/")
-            generateService(qualifiedPath, pathOperation, pathMapping)
+            generateService(basePathToUse, pathOperation, pathMapping)
         }.toSet()
         return services
     }
 
-    private fun generateService(qualifiedPath: String, pathOperation: PathItem, pathMapping: String): Service {
+    private fun generateService(basePathToUse: String, pathOperation: PathItem, pathMapping: String): Service {
         val operations = pathOperation.readOperationsMap()
                 .filter { canSupport(it.value) }
                 .map { (method, operation) ->
@@ -48,10 +48,11 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
         val derivedServiceName = pathMapping.split("/")
                 .joinToString(separator = "") { it.removeSurrounding("{", "}").replaceIllegalCharacters().capitalize() } + "Service"
         val qualifiedServiceName = "${typeGenerator.defaultNamespace}.$derivedServiceName"
-        return Service(
+       val serviceDiscoveryClientAnnotation = if (basePathToUse != "/") ServiceDiscoveryClient(basePathToUse).toAnnotation() else null
+       return Service(
                 qualifiedServiceName,
                 operations,
-                annotations = emptyList(),
+                annotations = listOfNotNull(serviceDiscoveryClientAnnotation),
                 compilationUnits = emptyList(),
                 typeDoc = pathOperation.description,
         )

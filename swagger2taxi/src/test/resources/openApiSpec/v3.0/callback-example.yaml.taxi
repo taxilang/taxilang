@@ -1,9 +1,12 @@
 namespace vyne.openApi {
+   [[ subscription information ]]
    model AnonymousTypePostStreams {
+      [[ this unique identifier allows management of the subscription ]]
       subscriptionId : String?
    }
    
    service StreamsService {
+      [[ subscribes a client to receive out-of-band data ]]
       @HttpOperation(method = "POST" , url = "/streams")
       operation PostStreams(  callbackUrl : String ) : AnonymousTypePostStreams
    }

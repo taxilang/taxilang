@@ -3940,6 +3940,7 @@ namespace vyne.openApi {
       platform : Boolean
    }
    
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3Application_propertiesService {
       [[ Returns all application properties or an application property.
       If you specify a value for the `key` parameter, then an application property is returned as an object (not in an array). Otherwise, an array of all editable application properties is returned. See [Set application property](#api-rest-api-3-application-properties-id-put) for descriptions of editable properties.
@@ -3947,12 +3948,14 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/application-properties")
       operation com_atlassian_jira_rest_v2_admin_ApplicationPropertiesResource_getApplicationProperty_get(  key : String,  permissionLevel : String,  keyFilter : String ) : ApplicationProperty[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3Application_propertiesAdvanced_settingsService {
       [[ Returns the application properties that are accessible on the *Advanced Settings* page. To navigate to the *Advanced Settings* page in Jira, choose the Jira icon > **Jira settings** > **System**, **General Configuration** and then click **Advanced Settings** (in the upper right).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/application-properties/advanced-settings")
       operation com_atlassian_jira_rest_v2_admin_ApplicationPropertiesResource_getAdvancedSettings_get(  ) : ApplicationProperty[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3Application_propertiesIdService {
       [[ Changes the value of an application property. For example, you can change the value of the `jira.clone.prefix` from its default value of *CLONE -* to *Clone -* if you prefer sentence case capitalization. Editable properties are described below along with their default values.
       #### Advanced settings ####
@@ -3997,18 +4000,21 @@ namespace vyne.openApi {
       @HttpOperation(method = "PUT" , url = "/rest/api/3/application-properties/{id}")
       operation com_atlassian_jira_rest_v2_admin_ApplicationPropertiesResource_setApplicationProperty_put( @PathVariable(value = "id") id : String ) : ApplicationProperty
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ApplicationroleService {
       [[ Returns all application roles. In Jira, application roles are managed using the [Application access configuration](https://confluence.atlassian.com/x/3YxjL) page.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/applicationrole")
       operation com_atlassian_jira_rest_v2_admin_applicationrole_ApplicationRoleResource_getAllApplicationRoles_get(  ) : ApplicationRole[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ApplicationroleKeyService {
       [[ Returns an application role.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/applicationrole/{key}")
       operation com_atlassian_jira_rest_v2_admin_applicationrole_ApplicationRoleResource_getApplicationRole_get( @PathVariable(value = "key") key : String ) : ApplicationRole
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3AttachmentMetaService {
       [[ Returns the attachment settings, that is, whether attachments are enabled and the maximum attachment size allowed.
       Note that there are also [project permissions](https://confluence.atlassian.com/x/yodKLg) that restrict whether users can create and delete attachments.
@@ -4017,6 +4023,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/attachment/meta")
       operation com_atlassian_jira_rest_v2_issue_attachment_AttachmentResource_getAttachmentMeta_get(  ) : AttachmentSettings
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3AttachmentIdService {
       [[ Returns the metadata for an attachment. Note that the attachment itself is not returned.
       This operation can be accessed anonymously.
@@ -4033,6 +4040,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/attachment/{id}")
       operation com_atlassian_jira_rest_v2_issue_attachment_AttachmentResource_removeAttachment_delete( @PathVariable(value = "id") id : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3AttachmentIdExpandHumanService {
       [[ Returns the metadata for the contents of an attachment, if it is an archive, and metadata for the attachment itself. For example, if the attachment is a ZIP archive, then information about the files in the archive is returned and metadata for the ZIP archive. Currently, only the ZIP archive format is supported.
       Use this operation to retrieve data that is presented to the user, as this operation returns the metadata for the attachment itself, such as the attachment's ID and name. Otherwise, use [ Get contents metadata for an expanded attachment](#api-rest-api-3-attachment-id-expand-raw-get), which only returns the metadata for the attachment's contents.
@@ -4043,6 +4051,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/attachment/{id}/expand/human")
       operation com_atlassian_jira_rest_v2_issue_attachment_AttachmentResource_expandAttachmentForHumans_get( @PathVariable(value = "id") id : String ) : AttachmentArchiveMetadataReadable
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3AttachmentIdExpandRawService {
       [[ Returns the metadata for the contents of an attachment, if it is an archive. For example, if the attachment is a ZIP archive, then information about the files in the archive is returned. Currently, only the ZIP archive format is supported.
       Use this operation if you are processing the data without presenting it to the user, as this operation only returns the metadata for the contents of the attachment. Otherwise, to retrieve data to present to the user, use [ Get all metadata for an expanded attachment](#api-rest-api-3-attachment-id-expand-human-get) which also returns the metadata for the attachment itself, such as the attachment's ID and name.
@@ -4053,6 +4062,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/attachment/{id}/expand/raw")
       operation com_atlassian_jira_rest_v2_issue_attachment_AttachmentResource_expandAttachmentForMachines_get( @PathVariable(value = "id") id : String ) : AttachmentArchiveImpl
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3AuditingRecordService {
       [[ Returns a list of audit records. The list can be filtered to include items:
       *  containing a string in at least one field. For example, providing *up* will return all audit records where one or more fields contains words such as *update*.
@@ -4063,6 +4073,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/auditing/record")
       operation com_atlassian_jira_rest_v2_admin_auditing_AuditingResource_getAuditRecords_get(  offset : Int,  limit : Int,  `filter` : String,  `from` : DateTime,  to : DateTime ) : AuditRecords
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3AvatarTypeSystemService {
       [[ Returns a list of system avatar details by owner type, where the owner types are issue type, project, or user.
       This operation can be accessed anonymously.
@@ -4070,6 +4081,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/avatar/{type}/system")
       operation com_atlassian_jira_rest_v2_issue_AvatarResource_getAllSystemAvatars_get( @PathVariable(value = "type") `type` : String ) : SystemAvatars
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3CommentListService {
       [[ Returns the comments for a list of comment IDs.
       This operation can be accessed anonymously.
@@ -4080,6 +4092,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/comment/list")
       operation com_atlassian_jira_rest_v2_issue_IssueCommentListResource_getCommentsByIds_post(  expand : String ) : PageBeanComment
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3CommentCommentIdPropertiesService {
       [[ Returns the keys of all the properties of a comment.
       This operation can be accessed anonymously.
@@ -4090,6 +4103,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/comment/{commentId}/properties")
       operation com_atlassian_jira_rest_v2_issue_CommentPropertyResource_getCommentPropertyKeys_get( @PathVariable(value = "commentId") commentId : String ) : PropertyKeys
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3CommentCommentIdPropertiesPropertyKeyService {
       [[ Returns the value of a comment property.
       This operation can be accessed anonymously.
@@ -4115,6 +4129,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/comment/{commentId}/properties/{propertyKey}")
       operation com_atlassian_jira_rest_v2_issue_CommentPropertyResource_deleteCommentProperty_delete( @PathVariable(value = "commentId") commentId : String, @PathVariable(value = "propertyKey") propertyKey : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ComponentService {
       [[ Creates a component. Use components to provide containers for issues within a project.
       This operation can be accessed anonymously.
@@ -4122,6 +4137,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/component")
       operation com_atlassian_jira_rest_v2_issue_ComponentResource_createComponent_post(  ) : Component
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ComponentIdService {
       [[ Returns a component.
       This operation can be accessed anonymously.
@@ -4139,6 +4155,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/component/{id}")
       operation com_atlassian_jira_rest_v2_issue_ComponentResource_deleteComponent_delete( @PathVariable(value = "id") id : String,  moveIssuesTo : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ComponentIdRelatedIssueCountsService {
       [[ Returns the counts of issues assigned to the component.
       This operation can be accessed anonymously.
@@ -4146,6 +4163,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/component/{id}/relatedIssueCounts")
       operation com_atlassian_jira_rest_v2_issue_ComponentResource_getComponentRelatedIssues_get( @PathVariable(value = "id") id : String ) : ComponentIssuesCount
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ConfigurationService {
       [[ Returns the [global settings](https://confluence.atlassian.com/x/qYXKM) in Jira. These settings determine whether optional features (for example, subtasks, time tracking, and others) are enabled. If time tracking is enabled, this operation also returns the time tracking configuration.
       This operation can be accessed anonymously.
@@ -4153,6 +4171,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/configuration")
       operation com_atlassian_jira_rest_v2_admin_ConfigurationResource_getConfiguration_get(  ) : Configuration
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ConfigurationTimetrackingService {
       [[ Returns the time tracking provider that is currently selected. Note that if time tracking is disabled, then a successful but empty response is returned.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -4167,12 +4186,14 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/configuration/timetracking")
       operation com_atlassian_jira_rest_v2_admin_timetracking_TimeTrackingResource_disableTimeTracking_delete(  ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ConfigurationTimetrackingListService {
       [[ Returns all time tracking providers. By default, Jira only has one time tracking provider: *JIRA provided time tracking*. However, you can install other time tracking providers via apps from the Atlassian Marketplace. For more information on time tracking providers, see the documentation for the [ Time Tracking Provider](https://developer.atlassian.com/cloud/jira/platform/modules/time-tracking-provider/) module.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/configuration/timetracking/list")
       operation com_atlassian_jira_rest_v2_admin_timetracking_TimeTrackingResource_getAvailableTimeTrackingImplementations_get(  ) : TimeTrackingProvider[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ConfigurationTimetrackingOptionsService {
       [[ Returns the time tracking settings. This includes settings such as the time format, default time unit, and others. For more information, see [Configuring time tracking](https://confluence.atlassian.com/x/qoXKM).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -4183,6 +4204,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "PUT" , url = "/rest/api/3/configuration/timetracking/options")
       operation com_atlassian_jira_rest_v2_admin_timetracking_TimeTrackingResource_setSharedTimeTrackingConfiguration_put(  ) : TimeTrackingConfiguration
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3CustomFieldFieldIdOptionService {
       [[ Returns the options and, where the custom select field is of the type *Select List (cascading)*, cascading options for custom select fields. Cascading options are included in the item count when determining pagination.
       Note that this operation **only works for issue field select list options created in Jira or using operations from the [Issue custom field options](#api-group-Issue-custom-field-options) resource**, it cannot be used with issue field select list options created by Connect apps.
@@ -4195,6 +4217,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/customField/{fieldId}/option")
       operation com_atlassian_jira_rest_v2_issue_BulkCustomFieldOptionResource_createCustomFieldOptions_post( @PathVariable(value = "fieldId") fieldId : Int ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3CustomFieldOptionIdService {
       [[ Returns a custom field option. For example, an option in a select list.
       Note that this operation **only works for issue field select list options created in Jira or using operations from the [Issue custom field options](#api-group-Issue-custom-field-options) resource**, it cannot be used with issue field select list options created by Connect apps.
@@ -4203,6 +4226,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/customFieldOption/{id}")
       operation com_atlassian_jira_rest_v2_issue_customfield_CustomFieldOptionResource_getCustomFieldOption_get( @PathVariable(value = "id") id : String ) : CustomFieldOption
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3DashboardService {
       [[ Returns a list of dashboards owned by or shared with the user. The list may be filtered to include only favorite or owned dashboards.
       This operation can be accessed anonymously.
@@ -4210,6 +4234,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/dashboard")
       operation com_atlassian_jira_rest_v2_dashboard_DashboardResource_getAllDashboards_get(  `filter` : String,  startAt : Int,  maxResults : Int ) : PageOfDashboards
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3DashboardSearchService {
       [[ Searches for dashboards. This operation is similar to [Get dashboards](#api-rest-api-3-dashboard-get) except that the results can be refined to include dashboards that have specific attributes. For example, dashboards with a particular name. When multiple attributes are specified only filters matching all attributes are returned.
       This operation can be accessed anonymously.
@@ -4222,6 +4247,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/dashboard/search")
       operation com_atlassian_jira_rest_v2_dashboard_DashboardResource_getDashboardsPaginated_get(  dashboardName : String,  accountId : String,  owner : String,  groupname : String,  projectId : Int,  orderBy : String,  startAt : Int,  maxResults : Int,  expand : String ) : PageBeanDashboard
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3DashboardDashboardIdItemsItemIdPropertiesService {
       [[ Returns the keys of all properties for a dashboard item.
       This operation can be accessed anonymously.
@@ -4229,6 +4255,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/dashboard/{dashboardId}/items/{itemId}/properties")
       operation com_atlassian_jira_rest_v2_dashboard_DashboardItemPropertyResource_getDashboardItemPropertyKeys_get( @PathVariable(value = "dashboardId") dashboardId : String, @PathVariable(value = "itemId") itemId : String ) : PropertyKeys
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3DashboardDashboardIdItemsItemIdPropertiesPropertyKeyService {
       [[ Returns the key and value of a dashboard item property.
       A dashboard item enables an app to add user-specific information to a user dashboard. Dashboard items are exposed to users as gadgets that users can add to their dashboards. For more information on how users do this, see [Adding and customizing gadgets](https://confluence.atlassian.com/x/7AeiLQ).
@@ -4253,6 +4280,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/dashboard/{dashboardId}/items/{itemId}/properties/{propertyKey}")
       operation com_atlassian_jira_rest_v2_dashboard_DashboardItemPropertyResource_deleteDashboardItemProperty_delete( @PathVariable(value = "dashboardId") dashboardId : String, @PathVariable(value = "itemId") itemId : String, @PathVariable(value = "propertyKey") propertyKey : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3DashboardIdService {
       [[ Returns a dashboard.
       This operation can be accessed anonymously.
@@ -4261,6 +4289,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/dashboard/{id}")
       operation com_atlassian_jira_rest_v2_dashboard_DashboardResource_getDashboard_get( @PathVariable(value = "id") id : String ) : Dashboard
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ExpressionEvalService {
       [[ Evaluates a Jira expression and returns its value.
       This resource can be used to test Jira expressions that you plan to use elsewhere, or to fetch data in a flexible way. Consult the [Jira expressions documentation](https://developer.atlassian.com/cloud/jira/platform/jira-expressions/) for more details.
@@ -4281,6 +4310,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/expression/eval")
       operation com_atlassian_jira_rest_v2_expression_JiraExpressionsResource_evaluateJiraExpression_post(  expand : String ) : JiraExpressionResult
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FieldService {
       [[ Returns system and custom issue fields according to the following rules:
       *  Fields that cannot be added to the issue navigator are always returned.
@@ -4296,24 +4326,28 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/field")
       operation com_atlassian_jira_rest_v2_issue_FieldResource_createCustomField_post(  ) : FieldDetails
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FieldSearchService {
       [[ Returns a [paginated](#pagination) list of fields for Classic Jira projects. Only custom fields can be queried, `type` must be set to `custom`.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/field/search")
       operation com_atlassian_jira_rest_v2_issue_field_FieldSearchResource_getFieldsPaginated_get(  startAt : Int,  maxResults : Int,  `type` : String[],  id : String[],  `query` : String,  orderBy : String,  expand : String ) : PageBeanField
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FieldFieldIdContextsService {
       [[ Returns a [paginated](#pagination) list of the contexts a field is used in.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/field/{fieldId}/contexts")
       operation com_atlassian_jira_rest_v2_issue_FieldResource_getContextsForField_get( @PathVariable(value = "fieldId") fieldId : String,  startAt : Int,  maxResults : Int ) : PageBeanContext
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FieldFieldIdScreensService {
       [[ Returns a [paginated](#pagination) list of the screens a field is used in.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/field/{fieldId}/screens")
       operation com_atlassian_jira_rest_v2_issue_FieldResource_getScreensForField_get( @PathVariable(value = "fieldId") fieldId : String,  startAt : Int,  maxResults : Int ) : PageBeanScreen
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FieldFieldKeyOptionService {
       [[ Returns all the options of a select list issue field. A select list issue field is a type of [issue field](https://developer.atlassian.com/cloud/jira/platform/modules/issue-field/) that enables a user to select a value from a list of options.
       Note that this operation **only works for issue field select list options added by Connect apps**, it cannot be used with issue field select list options created in Jira or using operations from the [Issue custom field options](#api-group-Issue-custom-field-options) resource.
@@ -4326,6 +4360,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/field/{fieldKey}/option")
       operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_createIssueFieldOption_post( @PathVariable(value = "fieldKey") fieldKey : String ) : IssueFieldOption
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FieldFieldKeyOptionSuggestionsEditService {
       [[ Returns options for a select list issue field that can be viewed and selected by the user.
       Note that this operation **only works for issue field select list options added by Connect apps**, it cannot be used with issue field select list options created in Jira or using operations from the [Issue custom field options](#api-group-Issue-custom-field-options) resource.
@@ -4333,6 +4368,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/field/{fieldKey}/option/suggestions/edit")
       operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_getSelectableIssueFieldOptions_get(  startAt : Int,  maxResults : Int,  projectId : Int, @PathVariable(value = "fieldKey") fieldKey : String ) : PageBeanIssueFieldOption
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FieldFieldKeyOptionSuggestionsSearchService {
       [[ Returns options for a select list issue field that can be viewed by the user.
       Note that this operation **only works for issue field select list options added by Connect apps**, it cannot be used with issue field select list options created in Jira or using operations from the [Issue custom field options](#api-group-Issue-custom-field-options) resource.
@@ -4340,6 +4376,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/field/{fieldKey}/option/suggestions/search")
       operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_getVisibleIssueFieldOptions_get(  startAt : Int,  maxResults : Int,  projectId : Int, @PathVariable(value = "fieldKey") fieldKey : String ) : PageBeanIssueFieldOption
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FieldFieldKeyOptionOptionIdService {
       [[ Returns an option from a select list issue field.
       Note that this operation **only works for issue field select list options added by Connect apps**, it cannot be used with issue field select list options created in Jira or using operations from the [Issue custom field options](#api-group-Issue-custom-field-options) resource.
@@ -4357,6 +4394,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/field/{fieldKey}/option/{optionId}")
       operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_deleteIssueFieldOption_delete( @PathVariable(value = "fieldKey") fieldKey : String, @PathVariable(value = "optionId") optionId : Int ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FieldFieldKeyOptionOptionIdIssueService {
       [[ Deselects an issue-field select-list option from all issues where it is selected. A different option can be selected to replace the deselected option. The update can also be limited to a smaller set of issues by using a JQL query.
       This is an [asynchronous operation](#async). The response object contains a link to the long-running task.
@@ -4365,6 +4403,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/field/{fieldKey}/option/{optionId}/issue")
       operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_replaceIssueFieldOption_delete(  replaceWith : Int,  jql : String, @PathVariable(value = "fieldKey") fieldKey : String, @PathVariable(value = "optionId") optionId : Int )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FilterService {
       [[ Returns all filters. Deprecated, use [ Search for filters](#api-rest-api-3-filter-search-get) that supports search and pagination.
       This operation can be accessed anonymously.
@@ -4381,6 +4420,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/filter")
       operation com_atlassian_jira_rest_v2_search_FilterResource_createFilter_post(  expand : String ) : Filter
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FilterDefaultShareScopeService {
       [[ Returns the default sharing settings for new filters and dashboards for a user.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
@@ -4391,6 +4431,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "PUT" , url = "/rest/api/3/filter/defaultShareScope")
       operation com_atlassian_jira_rest_v2_search_FilterResource_setDefaultShareScope_put(  ) : DefaultShareScope
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FilterFavouriteService {
       [[ Returns the visible favorite filters of the user.
       This operation can be accessed anonymously.
@@ -4404,6 +4445,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/filter/favourite")
       operation com_atlassian_jira_rest_v2_search_FilterResource_getFavouriteFilters_get(  expand : String ) : Filter[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FilterMyService {
       [[ Returns the filters owned by the user. If `includeFavourites` is `true`, the user's visible favorite filters are also returned.
       **[Permissions](#permissions) required:** Permission to access Jira, however, a favorite filters is only visible to the user where the filter is:
@@ -4416,6 +4458,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/filter/my")
       operation com_atlassian_jira_rest_v2_search_FilterResource_getMyFilters_get(  expand : String,  includeFavourites : Boolean ) : Filter[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FilterSearchService {
       [[ Searches for filters. This operation is similar to [Get filters](#api-rest-api-3-filter-get) except that the results can be refined to include filters that have specific attributes. For example, filters with a particular name. When multiple attributes are specified only filters matching all attributes are returned.
       This operation can be accessed anonymously.
@@ -4428,6 +4471,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/filter/search")
       operation com_atlassian_jira_rest_v2_search_FilterResource_getFiltersPaginated_get(  filterName : String,  accountId : String,  owner : String,  groupname : String,  projectId : Int,  orderBy : String,  startAt : Int,  maxResults : Int,  expand : String ) : PageBeanFoundFilter
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FilterIdService {
       [[ Returns a filter.
       This operation can be accessed anonymously.
@@ -4448,6 +4492,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/filter/{id}")
       operation com_atlassian_jira_rest_v2_search_FilterResource_deleteFilter_delete( @PathVariable(value = "id") id : Int )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FilterIdColumnsService {
       [[ Returns the columns configured for a filter. The column configuration is used when the filter's results are viewed in *List View* with the *Columns* set to *Filter*.
       This operation can be accessed anonymously.
@@ -4480,6 +4525,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/filter/{id}/columns")
       operation com_atlassian_jira_rest_v2_search_FilterResource_resetColumns_delete( @PathVariable(value = "id") id : Int )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FilterIdFavouriteService {
       [[ Add a filter as a favorite for the user.
       **[Permissions](#permissions) required:** Permission to access Jira, however, the user can only favorite:
@@ -4495,6 +4541,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/filter/{id}/favourite")
       operation com_atlassian_jira_rest_v2_search_FilterResource_deleteFavouriteForFilter_delete( @PathVariable(value = "id") id : Int,  expand : String ) : Filter
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FilterIdPermissionService {
       [[ Returns the share permissions for a filter. A filter can be shared with groups, projects, all logged-in users, or the public. Sharing with all logged-in users or the public is known as a global share permission.
       This operation can be accessed anonymously.
@@ -4512,6 +4559,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/filter/{id}/permission")
       operation com_atlassian_jira_rest_v2_search_FilterResource_addSharePermission_post( @PathVariable(value = "id") id : Int ) : SharePermission[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3FilterIdPermissionPermissionIdService {
       [[ Returns a share permission for a filter. A filter can be shared with groups, projects, all logged-in users, or the public. Sharing with all logged-in users or the public is known as a global share permission.
       This operation can be accessed anonymously.
@@ -4528,6 +4576,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/filter/{id}/permission/{permissionId}")
       operation com_atlassian_jira_rest_v2_search_FilterResource_deleteSharePermission_delete( @PathVariable(value = "id") id : Int, @PathVariable(value = "permissionId") permissionId : Int )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3GroupService {
       [[ This operation is deprecated, use [`group/member`](#api-rest-api-3-group-member-get).
       Returns all users in a group.
@@ -4543,6 +4592,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/group")
       operation com_atlassian_jira_rest_v2_issue_GroupResource_removeGroup_delete(  groupname : String,  swapGroup : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3GroupMemberService {
       [[ Returns all users in a group.
       Note that users are ordered by username, however the username is not returned in the results due to privacy reasons.
@@ -4550,6 +4600,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/group/member")
       operation com_atlassian_jira_rest_v2_issue_GroupResource_getUsersFromGroup_get(  groupname : String,  includeInactiveUsers : Boolean,  startAt : Int,  maxResults : Int ) : PageBeanUserDetails
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3GroupUserService {
       [[ Adds a user to a group.
       **[Permissions](#permissions) required:** Site administration (that is, member of the *site-admin* [group](https://confluence.atlassian.com/x/24xjL)). ]]
@@ -4560,6 +4611,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/group/user")
       operation com_atlassian_jira_rest_v2_issue_GroupResource_removeUserFromGroup_delete(  groupname : String,  username : String,  accountId : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3GroupsPickerService {
       [[ Returns a list of groups whose names contain a query string. A list of group names can be provided to exclude groups from the results.
       The primary use case for this resource is to populate a group picker suggestions list. To this end, the returned object includes the `html` field where the matched query term is highlighted in the group name with the HTML strong tag. Also, the groups list is wrapped in a response object that contains a header for use in the picker, specifically *Showing X of Y matching groups*.
@@ -4569,6 +4621,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/groups/picker")
       operation com_atlassian_jira_rest_v2_issue_GroupPickerResource_findGroups_get(  accountId : String,  `query` : String,  exclude : String[],  maxResults : Int,  userName : String ) : FoundGroups
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3GroupuserpickerService {
       [[ Returns a list of users and groups matching a string. The string is used:
       *  for users, to find a case-insensitive match with display name and e-mail address. Note that if a user has hidden their email address in their user profile, partial matches of the email address will not find the user. An exact match is required.
@@ -4587,6 +4640,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/groupuserpicker")
       operation com_atlassian_jira_rest_v2_issue_GroupAndUserPickerResource_findUsersAndGroups_get(  `query` : String,  maxResults : Int,  showAvatar : Boolean,  fieldId : String,  projectId : String[],  issueTypeId : String[],  avatarSize : String,  caseInsensitive : Boolean,  excludeConnectAddons : Boolean ) : FoundUsersAndGroups
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueService {
       [[ Creates an issue or, where the option to create subtasks is enabled in Jira, a subtask. A transition may be applied, to move the issue or subtask to a workflow step other than the default start step, and issue properties set.
       The content of the issue or subtask is defined using `update` and `fields`. The fields that can be set in the issue or subtask are determined using the [ Get create issue metadata](#api-rest-api-3-issue-createmeta-get). These are the same fields that appear on the issue's create screen. Note that the `description`, `environment`, and any `textarea` type custom fields (multi-line text fields) take Atlassian Document Format content. Single line custom fields (`textfield`) accept a string and don't handle Atlassian Document Format content.
@@ -4598,6 +4652,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/issue")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_createIssue_post(  updateHistory : Boolean ) : CreatedIssue
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueBulkService {
       [[ Creates issues and, where the option to create subtasks is enabled in Jira, subtasks. Transitions may be applied, to move the issues or subtasks to a workflow step other than the default start step, and issue properties set.
       The content of each issue or subtask is defined using `update` and `fields`. The fields that can be set in the issue or subtask are determined using the [ Get create issue metadata](#api-rest-api-3-issue-createmeta-get). These are the same fields that appear on the issues' create screens. Note that the `description`, `environment`, and any `textarea` type custom fields (multi-line text fields) take Atlassian Document Format content. Single line custom fields (`textfield`) accept a string and don't handle Atlassian Document Format content.
@@ -4608,6 +4663,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/issue/bulk")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_createIssues_post(  ) : CreatedIssues
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueCreatemetaService {
       [[ Returns details of projects, issue types within projects, and, when requested, the create screen fields for each issue type for the user. Use the information to populate the requests in [ Create issue](#api-rest-api-3-issue-post) and [Create issues](#api-rest-api-3-issue-bulk-post).
       The request can be restricted to specific projects or issue types using the query parameters. The response will contain information for the valid projects, issue types, or project and issue type combinations requested. Note that invalid project, issue type, or project and issue type combinations do not generate errors.
@@ -4616,6 +4672,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/issue/createmeta")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_getCreateIssueMeta_get(  projectIds : String[],  projectKeys : String[],  issuetypeIds : String[],  issuetypeNames : String[],  expand : String ) : IssueCreateMetadata
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssuePickerService {
       [[ Returns lists of issues matching a query string. Use this resource to provide auto-completion suggestions when the user is looking for an issue using a word or string.
       This operation returns two lists:
@@ -4626,6 +4683,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/issue/picker")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_getIssuePickerResource_get(  `query` : String,  currentJQL : String,  currentIssueKey : String,  currentProjectId : String,  showSubTasks : Boolean,  showSubTaskParent : Boolean ) : IssuePickerSuggestions
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssuePropertiesService {
       [[ Sets the values of entity properties on issues. It can set up to 10 entity properties on up to 10,000 issues.
       The value of the request body must be a [valid](http://tools.ietf.org/html/rfc4627), non-empty JSON. The maximum length of single issue property value is 32768 characters. This operation can be accessed anonymously.
@@ -4638,6 +4696,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/issue/properties")
       operation com_atlassian_jira_rest_v2_property_IssuePropertyBulkUpdateResource_bulkSetIssuesProperties_post(  )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssuePropertiesPropertyKeyService {
       [[ Sets a property value on multiple issues. The issues to be updated can be specified by a filter.
       The filter identifies issues eligible for update using these criteria:
@@ -4674,6 +4733,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/properties/{propertyKey}")
       operation com_atlassian_jira_rest_v2_property_IssuePropertyBulkUpdateResource_bulkDeleteIssueProperty_delete( @PathVariable(value = "propertyKey") propertyKey : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyService {
       [[ Returns the details for an issue.
       The issue is identified by its ID or key, however, if the identifier doesn't match an issue, a case-insensitive search and check for moved issues is performed. If a matching issue is found its details are returned, a 302 or other redirect is **not** returned. The issue key returned in the response is the key of the issue found.
@@ -4702,6 +4762,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_deleteIssue_delete( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String,  deleteSubtasks : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyAssigneeService {
       [[ Assigns an issue to a user. Use this operation when the calling user does not have the *Edit Issues* permission but has the *Assign issue* permission for the project that the issue is in.
       If `name` or `accountId` is set to:
@@ -4714,6 +4775,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "PUT" , url = "/rest/api/3/issue/{issueIdOrKey}/assignee")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_assignIssue_put( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyAttachmentsService {
       [[ Adds one or more attachments to an issue. Attachments are posted as multipart/form-data ([RFC 1867](https://www.ietf.org/rfc/rfc1867.txt)).
       Note that:
@@ -4729,6 +4791,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/issue/{issueIdOrKey}/attachments")
       operation com_atlassian_jira_rest_v2_issue_IssueAttachmentsResource_addAttachment_post( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String ) : Attachment[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyChangelogService {
       [[ Returns all changelogs for an issue sorted by date, starting from the oldest.
       This operation can be accessed anonymously.
@@ -4738,6 +4801,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/changelog")
       operation com_atlassian_jira_rest_v2_issue_IssueChangelogResource_getChangeLogs_get( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String,  startAt : Int,  maxResults : Int ) : PageBeanChangelog
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyCommentService {
       [[ Returns all comments for an issue.
       This operation can be accessed anonymously.
@@ -4755,6 +4819,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/issue/{issueIdOrKey}/comment")
       operation com_atlassian_jira_rest_v2_issue_IssueCommentResource_addComment_post( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String,  expand : String ) : Comment
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyCommentIdService {
       [[ Returns a comment.
       This operation can be accessed anonymously.
@@ -4782,6 +4847,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/comment/{id}")
       operation com_atlassian_jira_rest_v2_issue_IssueCommentResource_deleteComment_delete( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String, @PathVariable(value = "id") id : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyEditmetaService {
       [[ Returns the edit screen fields for an issue that are visible to and editable by the user. Use the information to populate the requests in [Edit issue](#api-rest-api-3-issue-issueIdOrKey-put).
       Connect app users with admin permissions (from user permissions and app scopes) can return additional details using:
@@ -4795,6 +4861,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/editmeta")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_getEditIssueMeta_get( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String,  overrideScreenSecurity : Boolean,  overrideEditableFlag : Boolean ) : IssueUpdateMetadata
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyNotifyService {
       [[ Creates an email notification for an issue and adds it to the mail queue.
       **[Permissions](#permissions) required:**
@@ -4803,6 +4870,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/issue/{issueIdOrKey}/notify")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_notify_post( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyPropertiesService {
       [[ Returns the URLs and keys of an issue's properties.
       This operation can be accessed anonymously.
@@ -4812,6 +4880,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/properties")
       operation com_atlassian_jira_rest_v2_issue_IssuePropertyResource_getIssuePropertyKeys_get( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String ) : PropertyKeys
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyPropertiesPropertyKeyService {
       [[ Returns the key and value of an issue's property.
       This operation can be accessed anonymously.
@@ -4836,6 +4905,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/properties/{propertyKey}")
       operation com_atlassian_jira_rest_v2_issue_IssuePropertyResource_deleteIssueProperty_delete( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String, @PathVariable(value = "propertyKey") propertyKey : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyRemotelinkService {
       [[ Returns the remote issue links for an issue. When a remote issue link global ID is provided the record with that global ID is returned, otherwise all remote issue links are returned. Where a global ID includes reserved URL characters these must be escaped in the request. For example, pass `system=http://www.mycompany.com/support&id=1` as `system%3Dhttp%3A%2F%2Fwww.mycompany.com%2Fsupport%26id%3D1`.
       This operation requires [issue linking to be active](https://confluence.atlassian.com/x/yoXKM).
@@ -4863,6 +4933,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/remotelink")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_deleteRemoteIssueLinkByGlobalId_delete( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String,  globalId : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyRemotelinkLinkIdService {
       [[ Returns a remote issue link for an issue.
       This operation requires [issue linking to be active](https://confluence.atlassian.com/x/yoXKM).
@@ -4890,6 +4961,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/remotelink/{linkId}")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_deleteRemoteIssueLinkById_delete( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String, @PathVariable(value = "linkId") linkId : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyTransitionsService {
       [[ Returns either all transitions or a transition that can be performed by the user on an issue, based on the issue's status.
       Note, if a request is made for a transition that does not exist or cannot be performed on the issue, given its status, the response will return any empty transitions list.
@@ -4909,6 +4981,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/issue/{issueIdOrKey}/transitions")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_doTransition_post( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyVotesService {
       [[ Returns details about the votes on an issue.
       This operation requires the **Allow users to vote on issues** option to be *ON*. This option is set in General configuration for Jira. See [Configuring Jira application options](https://confluence.atlassian.com/x/uYXKM) for details.
@@ -4934,6 +5007,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/votes")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_removeVote_delete( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyWatchersService {
       [[ Returns the watchers for an issue.
       This operation requires the **Allow users to watch issues** option to be *ON*. This option is set in General configuration for Jira. See [Configuring Jira application options](https://confluence.atlassian.com/x/uYXKM) for details.
@@ -4961,6 +5035,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/watchers")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_removeWatcher_delete( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String,  username : String,  accountId : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyWorklogService {
       [[ Returns worklogs for an issue, starting from the oldest worklog or from the worklog started on or after a date and time.
       Time tracking must be enabled in Jira, otherwise this operation returns an error. For more information, see [Configuring time tracking](https://confluence.atlassian.com/x/qoXKM).
@@ -4980,6 +5055,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/issue/{issueIdOrKey}/worklog")
       operation com_atlassian_jira_rest_v2_issue_IssueWorklogsResource_addWorklog_post( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String,  notifyUsers : Boolean,  adjustEstimate : String,  newEstimate : String,  reduceBy : String,  expand : String,  overrideEditableFlag : Boolean ) : Worklog
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyWorklogIdService {
       [[ Returns a worklog.
       Time tracking must be enabled in Jira, otherwise this operation returns an error. For more information, see [Configuring time tracking](https://confluence.atlassian.com/x/qoXKM).
@@ -5011,6 +5087,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/worklog/{id}")
       operation com_atlassian_jira_rest_v2_issue_IssueWorklogsResource_deleteWorklog_delete( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String, @PathVariable(value = "id") id : String,  notifyUsers : Boolean,  adjustEstimate : String,  newEstimate : String,  increaseBy : String,  overrideEditableFlag : Boolean )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyWorklogWorklogIdPropertiesService {
       [[ Returns the keys of all properties for a worklog.
       This operation can be accessed anonymously.
@@ -5021,6 +5098,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/issue/{issueIdOrKey}/worklog/{worklogId}/properties")
       operation com_atlassian_jira_rest_v2_issue_WorklogPropertyResource_getWorklogPropertyKeys_get( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String, @PathVariable(value = "worklogId") worklogId : String ) : PropertyKeys
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyWorklogWorklogIdPropertiesPropertyKeyService {
       [[ Returns the value of a worklog property.
       This operation can be accessed anonymously.
@@ -5049,6 +5127,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/issue/{issueIdOrKey}/worklog/{worklogId}/properties/{propertyKey}")
       operation com_atlassian_jira_rest_v2_issue_WorklogPropertyResource_deleteWorklogProperty_delete( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String, @PathVariable(value = "worklogId") worklogId : String, @PathVariable(value = "propertyKey") propertyKey : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueLinkService {
       [[ Creates a link between two issues. Use this operation to indicate a relationship between two issues and optionally add a comment to the from (outward) issue. To use this resource the site must have [Issue Linking](https://confluence.atlassian.com/x/yoXKM) enabled.
       This resource returns nothing on the creation of an issue link. To obtain the ID of the issue link, use `https://your-domain.atlassian.net/rest/api/3/issue/[linked issue key]?fields=issuelinks`.
@@ -5062,6 +5141,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/issueLink")
       operation com_atlassian_jira_rest_v2_issue_LinkIssueResource_linkIssues_post(  ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueLinkLinkIdService {
       [[ Returns an issue link.
       This operation can be accessed anonymously.
@@ -5079,6 +5159,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/issueLink/{linkId}")
       operation com_atlassian_jira_rest_v2_issue_LinkIssueResource_deleteIssueLink_delete( @PathVariable(value = "linkId") linkId : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueLinkTypeService {
       [[ Returns a list of all issue link types.
       To use this operation, the site must have [issue linking](https://confluence.atlassian.com/x/yoXKM) enabled.
@@ -5092,6 +5173,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/issueLinkType")
       operation com_atlassian_jira_rest_v2_issue_IssueLinkTypeResource_createIssueLinkType_post(  ) : IssueLinkType
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueLinkTypeIssueLinkTypeIdService {
       [[ Returns an issue link type.
       To use this operation, the site must have [issue linking](https://confluence.atlassian.com/x/yoXKM) enabled.
@@ -5110,6 +5192,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/issueLinkType/{issueLinkTypeId}")
       operation com_atlassian_jira_rest_v2_issue_IssueLinkTypeResource_deleteIssueLinkType_delete( @PathVariable(value = "issueLinkTypeId") issueLinkTypeId : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssuesecurityschemesService {
       [[ Returns all [issue security schemes](https://confluence.atlassian.com/x/J4lKLg).
       This operation can be accessed anonymously.
@@ -5117,6 +5200,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/issuesecurityschemes")
       operation com_atlassian_jira_rest_v2_issue_IssueSecuritySchemeResource_getIssueSecuritySchemes_get(  ) : SecuritySchemes
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssuesecurityschemesIdService {
       [[ Returns an issue security scheme along with its security levels.
       This operation can be accessed anonymously.
@@ -5126,6 +5210,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/issuesecurityschemes/{id}")
       operation com_atlassian_jira_rest_v2_issue_IssueSecuritySchemeResource_getIssueSecurityScheme_get( @PathVariable(value = "id") id : Int ) : SecurityScheme
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssuetypeService {
       [[ Returns all issue types.
       This operation can be accessed anonymously.
@@ -5139,6 +5224,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/issuetype")
       operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_createIssueType_post(  ) : IssueTypeBean
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssuetypeIdService {
       [[ Returns an issue type.
       This operation can be accessed anonymously.
@@ -5154,6 +5240,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/issuetype/{id}")
       operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_deleteIssueType_delete( @PathVariable(value = "id") id : String,  alternativeIssueTypeId : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssuetypeIdAlternativesService {
       [[ Returns a list of issue types that can be used to replace the issue type. The alternative issue types are those assigned to the same workflow scheme, field configuration scheme, and screen scheme.
       This operation can be accessed anonymously.
@@ -5161,6 +5248,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/issuetype/{id}/alternatives")
       operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_getAlternativeIssueTypes_get( @PathVariable(value = "id") id : String ) : IssueTypeBean[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssuetypeIdAvatar2Service {
       [[ Loads an avatar for the issue type.
       Specify the avatar's local file location in the body of the request. Also, include the following headers:
@@ -5175,6 +5263,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/issuetype/{id}/avatar2")
       operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_createIssueTypeAvatar_post( @PathVariable(value = "id") id : String,  `x` : Int,  `y` : Int,  size : Int ) : Avatar
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssuetypeIssueTypeIdPropertiesService {
       [[ Returns all the [issue type property](https://developer.atlassian.com/cloud/jira/platform/storing-data-without-a-database/#a-id-jira-entity-properties-a-jira-entity-properties) keys of the issue type.
       This operation can be accessed anonymously.
@@ -5184,6 +5273,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/issuetype/{issueTypeId}/properties")
       operation com_atlassian_jira_rest_v2_issue_IssueTypePropertyResource_getIssueTypePropertyKeys_get( @PathVariable(value = "issueTypeId") issueTypeId : String ) : PropertyKeys
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssuetypeIssueTypeIdPropertiesPropertyKeyService {
       [[ Returns the key and value of the [issue type property](https://developer.atlassian.com/cloud/jira/platform/storing-data-without-a-database/#a-id-jira-entity-properties-a-jira-entity-properties).
       This operation can be accessed anonymously.
@@ -5202,6 +5292,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/issuetype/{issueTypeId}/properties/{propertyKey}")
       operation com_atlassian_jira_rest_v2_issue_IssueTypePropertyResource_deleteIssueTypeProperty_delete( @PathVariable(value = "issueTypeId") issueTypeId : String, @PathVariable(value = "propertyKey") propertyKey : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3JqlAutocompletedataService {
       [[ Returns reference data for JQL searches. This is a downloadable version of the documentation provided in [Advanced searching - fields reference](https://confluence.atlassian.com/x/gwORLQ) and [Advanced searching - functions reference](https://confluence.atlassian.com/x/hgORLQ), along with a list of JQL-reserved words. Use this information to assist with the programmatic creation of JQL queries or the validation of queries built in a custom query builder.
       This operation can be accessed anonymously.
@@ -5209,6 +5300,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/jql/autocompletedata")
       operation com_atlassian_jira_rest_v2_search_SearchAutoCompleteResource_getAutoComplete_get(  ) : JQLReferenceData
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3JqlAutocompletedataSuggestionsService {
       [[ Returns the JQL search auto complete suggestions for a field.
       Suggestions can be obtained by providing:
@@ -5221,6 +5313,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/jql/autocompletedata/suggestions")
       operation com_atlassian_jira_rest_v2_search_SearchAutoCompleteResource_getFieldAutoCompleteForQueryString_get(  fieldName : String,  fieldValue : String,  predicateName : String,  predicateValue : String ) : AutoCompleteSuggestions
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3JqlMatchService {
       [[ Checks whether one or more issues would be returned by one or more JQL queries.
       **[Permissions](#permissions) required:** None, however, issues are only matched against JQL queries where the user has:
@@ -5229,6 +5322,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/jql/match")
       operation com_atlassian_jira_rest_v2_match_IssueMatchResource_matchIssues_post(  ) : IssueMatches
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3JqlParseService {
       [[ Parses and validates JQL queries.
       Validation is performed in context of the current user.
@@ -5237,6 +5331,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/jql/parse")
       operation com_atlassian_jira_rest_v2_jql_JqlParserResource_parseJqlQueries_post(  ) : ParsedJqlQueries
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3JqlPdcleanerService {
       [[ Converts one or more JQL queries with user identifiers (username or user key) to equivalent JQL queries with account IDs.
       You may wish to use this operation if your system stores JQL queries and you want to make them GDPR-compliant. For more information about GDPR-related changes, see the [migration guide](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/).
@@ -5244,11 +5339,13 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/jql/pdcleaner")
       operation com_atlassian_jira_rest_v2_search_JQLPersonalDataMigrationResource_migrateQueries_post(  ) : ConvertedJQLQueries
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3LabelService {
       [[ Returns a [paginated](#pagination) list of labels. ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/label")
       operation com_atlassian_jira_rest_v2_label_LabelResource_getAllLabels_get(  startAt : Int,  maxResults : Int ) : PageBeanString
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3MypermissionsService {
       [[ Returns a list of permissions indicating which permissions the user has. Details of the user's permissions can be obtained in a global, project, or issue context.
       The user is reported as having a project permission:
@@ -5262,6 +5359,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/mypermissions")
       operation com_atlassian_jira_rest_v2_permission_PermissionsResource_getMyPermissions_get(  projectKey : String,  projectId : String,  issueKey : String,  issueId : String,  permissions : String,  projectUuid : String,  projectConfigurationUuid : String ) : Permissions
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3MypreferencesService {
       [[ Returns the value of a preference of the current user.
       Note that these keys are deprecated:
@@ -5293,6 +5391,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/mypreferences")
       operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_removePreference_delete(  key : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3MypreferencesLocaleService {
       [[ Returns the locale for the user.
       If the user has no language preference set (which is the default setting) or this resource is accessed anonymous, the browser locale detected by Jira is returned. Jira detects the browser locale using the *Accept-Language* header in the request. However, if this doesn't match a locale available Jira, the site default locale is returned.
@@ -5311,12 +5410,14 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/mypreferences/locale")
       operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_deleteLocale_delete(  ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3MyselfService {
       [[ Returns details for the current user.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/myself")
       operation com_atlassian_jira_rest_v2_issue_CurrentUserResource_getCurrentUser_get(  expand : String ) : User
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3NotificationschemeService {
       [[ Returns a [paginated](#pagination) list of [notification schemes](https://confluence.atlassian.com/x/8YdKLg) ordered by display name.
       ### About notification schemes ###
@@ -5340,12 +5441,14 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/notificationscheme")
       operation com_atlassian_jira_rest_v2_notification_NotificationSchemeResource_getNotificationSchemes_get(  startAt : Int,  maxResults : Int,  expand : String ) : PageBeanNotificationScheme
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3NotificationschemeIdService {
       [[ Returns a [notification scheme](https://confluence.atlassian.com/x/8YdKLg), including the list of events and the recipients who will receive notifications for those events.
       **[Permissions](#permissions) required:** Permission to access Jira, however the user must have permission to administer at least one project associated with the notification scheme. ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/notificationscheme/{id}")
       operation com_atlassian_jira_rest_v2_notification_NotificationSchemeResource_getNotificationScheme_get( @PathVariable(value = "id") id : Int,  expand : String ) : NotificationScheme
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3PermissionsService {
       [[ Returns all permissions, including:
       *  global permissions.
@@ -5355,6 +5458,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/permissions")
       operation com_atlassian_jira_rest_v2_permission_PermissionsResource_getAllPermissions_get(  ) : Permissions
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3PermissionsCheckService {
       [[ Returns:
       *  for a list of global permissions, the global permissions granted to the user.
@@ -5367,6 +5471,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/permissions/check")
       operation com_atlassian_jira_rest_v2_permission_PermissionsResource_getBulkPermissions_post(  ) : BulkPermissionGrants
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3PermissionsProjectService {
       [[ Returns all the projects where the user is granted a list of project permissions.
       This operation can be accessed anonymously.
@@ -5374,6 +5479,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/permissions/project")
       operation com_atlassian_jira_rest_v2_permission_PermissionsResource_getPermittedProjects_post(  ) : PermittedProjects
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3PermissionschemeService {
       [[ Returns all permission schemes.
       ### About permission schemes and grants ###
@@ -5444,6 +5550,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/permissionscheme")
       operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_createPermissionScheme_post(  expand : String ) : PermissionScheme
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3PermissionschemeSchemeIdService {
       [[ Returns a permission scheme.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
@@ -5463,6 +5570,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/permissionscheme/{schemeId}")
       operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_deletePermissionScheme_delete( @PathVariable(value = "schemeId") schemeId : Int )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3PermissionschemeSchemeIdPermissionService {
       [[ Returns all permission grants for a permission scheme.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
@@ -5473,6 +5581,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/permissionscheme/{schemeId}/permission")
       operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_createPermissionGrant_post( @PathVariable(value = "schemeId") schemeId : Int,  expand : String ) : PermissionGrant
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3PermissionschemeSchemeIdPermissionPermissionIdService {
       [[ Returns a permission grant.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
@@ -5483,18 +5592,21 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/permissionscheme/{schemeId}/permission/{permissionId}")
       operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_deletePermissionSchemeEntity_delete( @PathVariable(value = "schemeId") schemeId : Int, @PathVariable(value = "permissionId") permissionId : Int )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3PriorityService {
       [[ Returns the list of all issue priorities.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/priority")
       operation com_atlassian_jira_rest_v2_issue_PriorityResource_getPriorities_get(  ) : Priority[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3PriorityIdService {
       [[ Returns an issue priority.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/priority/{id}")
       operation com_atlassian_jira_rest_v2_issue_PriorityResource_getPriority_get( @PathVariable(value = "id") id : String ) : Priority
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectService {
       [[ Returns all projects visible to the user. Deprecated, use [ Get projects paginated](#api-rest-api-3-project-search-get) that supports search and pagination.
       This operation can be accessed anonymously.
@@ -5516,6 +5628,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/project")
       operation com_atlassian_jira_rest_v2_issue_ProjectResource_createProject_post(  ) : ProjectIdentifiers
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectSearchService {
       [[ Returns projects visible to the user.
       This operation can be accessed anonymously.
@@ -5523,6 +5636,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/search")
       operation com_atlassian_jira_rest_v2_issue_ProjectResource_searchProjects_get(  startAt : Int,  maxResults : Int,  orderBy : String,  `query` : String,  typeKey : String,  categoryId : Int,  searchBy : String,  action : String,  expand : String ) : PageBeanProject
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectTypeService {
       [[ Returns all [project types](https://confluence.atlassian.com/x/Var1Nw), whether or not the instance has a valid license for each type.
       This operation can be accessed anonymously.
@@ -5530,6 +5644,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/type")
       operation com_atlassian_jira_rest_v2_project_type_ProjectTypeResource_getAllProjectTypes_get(  ) : ProjectType[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectTypeProjectTypeKeyService {
       [[ Returns a [project type](https://confluence.atlassian.com/x/Var1Nw).
       This operation can be accessed anonymously.
@@ -5537,12 +5652,14 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/type/{projectTypeKey}")
       operation com_atlassian_jira_rest_v2_project_type_ProjectTypeResource_getProjectTypeByKey_get( @PathVariable(value = "projectTypeKey") projectTypeKey : String ) : ProjectType
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectTypeProjectTypeKeyAccessibleService {
       [[ Returns a [project type](https://confluence.atlassian.com/x/Var1Nw) if it is accessible to the user.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/type/{projectTypeKey}/accessible")
       operation com_atlassian_jira_rest_v2_project_type_ProjectTypeResource_getAccessibleProjectTypeByKey_get( @PathVariable(value = "projectTypeKey") projectTypeKey : String ) : ProjectType
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyService {
       [[ Returns the [project details](https://confluence.atlassian.com/x/ahLpNw) for a project.
       This operation can be accessed anonymously.
@@ -5559,6 +5676,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/project/{projectIdOrKey}")
       operation com_atlassian_jira_rest_v2_issue_ProjectResource_deleteProject_delete( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyAvatarService {
       [[ Sets the avatar displayed for a project.
       Use [Load project avatar](#api-rest-api-3-project-projectIdOrKey-avatar2-post) to store avatars against the project, before using this operation to set the displayed avatar.
@@ -5566,12 +5684,14 @@ namespace vyne.openApi {
       @HttpOperation(method = "PUT" , url = "/rest/api/3/project/{projectIdOrKey}/avatar")
       operation com_atlassian_jira_rest_v2_issue_ProjectResource_updateProjectAvatar_put( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyAvatarIdService {
       [[ Deletes a custom avatar from a project. Note that system avatars cannot be deleted.
       **[Permissions](#permissions) required:** *Administer projects* [project permission](https://confluence.atlassian.com/x/yodKLg). ]]
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/project/{projectIdOrKey}/avatar/{id}")
       operation com_atlassian_jira_rest_v2_issue_ProjectResource_deleteProjectAvatar_delete( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String, @PathVariable(value = "id") id : Int )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyAvatar2Service {
       [[ Loads an avatar for a project.
       Specify the avatar's local file location in the body of the request. Also, include the following headers:
@@ -5591,6 +5711,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/project/{projectIdOrKey}/avatar2")
       operation com_atlassian_jira_rest_v2_issue_ProjectResource_createProjectAvatar_post( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String,  `x` : Int,  `y` : Int,  size : Int ) : Avatar
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyAvatarsService {
       [[ Returns all project avatars, grouped by system and custom avatars.
       This operation can be accessed anonymously.
@@ -5598,6 +5719,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/avatars")
       operation com_atlassian_jira_rest_v2_issue_ProjectResource_getAllProjectAvatars_get( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String ) : ProjectAvatars
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyComponentService {
       [[ Returns a [paginated](#pagination) representation of all components in a project. See the [Get project components](#api-rest-api-3-project-projectIdOrKey-components-get) resource if you want to get a full list of versions without pagination.
       This operation can be accessed anonymously.
@@ -5605,6 +5727,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/component")
       operation com_atlassian_jira_rest_v2_issue_ProjectResource_getProjectComponentsPaginated_get( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String,  startAt : Int,  maxResults : Int,  orderBy : String,  `query` : String ) : PageBeanComponentWithIssueCount
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyComponentsService {
       [[ Returns all components in a project. See the [Get project components paginated](#api-rest-api-3-project-projectIdOrKey-component-get) resource if you want to get a full list of components with pagination.
       This operation can be accessed anonymously.
@@ -5612,6 +5735,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/components")
       operation com_atlassian_jira_rest_v2_issue_ProjectResource_getProjectComponents_get( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String ) : Component[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyPropertiesService {
       [[ Returns all [project property](https://developer.atlassian.com/cloud/jira/platform/storing-data-without-a-database/#a-id-jira-entity-properties-a-jira-entity-properties) keys for the project.
       This operation can be accessed anonymously.
@@ -5619,6 +5743,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/properties")
       operation com_atlassian_jira_rest_v2_issue_ProjectPropertyResource_getProjectPropertyKeys_get( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String ) : PropertyKeys
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyPropertiesPropertyKeyService {
       [[ Returns the value of a [project property](https://developer.atlassian.com/cloud/jira/platform/storing-data-without-a-database/#a-id-jira-entity-properties-a-jira-entity-properties).
       This operation can be accessed anonymously.
@@ -5637,6 +5762,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/project/{projectIdOrKey}/properties/{propertyKey}")
       operation com_atlassian_jira_rest_v2_issue_ProjectPropertyResource_deleteProjectProperty_delete( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String, @PathVariable(value = "propertyKey") propertyKey : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyRoleService {
       [[ Returns a list of [project roles](https://confluence.atlassian.com/x/3odKLg) for the project returning the name and self URL for each role.
       Note that all project roles are shared with all projects in Jira Cloud. See [Get all project roles](#api-rest-api-3-role-get) for more information.
@@ -5645,6 +5771,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/role")
       operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleResource_getProjectRoles_get( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyRoleIdService {
       [[ Returns a project role's details and actors associated with the project. The list of actors is sorted by display name.
       To check whether a user belongs to a role based on their group memberships, use [Get user](#api-rest-api-3-user-get) with the `groups` expand parameter selected. Then check whether the user keys and groups match with the actors returned for the project.
@@ -5669,12 +5796,14 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/project/{projectIdOrKey}/role/{id}")
       operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleResource_deleteActor_delete( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String, @PathVariable(value = "id") id : Int,  user : String,  group : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyRoleIdActorCountService {
       [[ Returns the number of actors (users and groups) assigned to a role in a project role.
       **[Permissions](#permissions) required:** *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for any project on the site or *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/role/{id}/actorCount")
       operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleResource_getProjectRoleActorsCount_get( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String, @PathVariable(value = "id") id : Int ) : ProjectRoleActorsCount
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyRoledetailsService {
       [[ Returns all [project roles](https://confluence.atlassian.com/x/3odKLg) and the details for each role. Note that the list of project roles is common to all projects.
       This operation can be accessed anonymously.
@@ -5682,6 +5811,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/roledetails")
       operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleDetailsResource_getProjectRoleDetails_get( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String,  currentMember : Boolean,  excludeConnectAddons : Boolean ) : ProjectRole[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyStatusesService {
       [[ Returns the valid statuses for a project. The statuses are grouped by issue type, as each project has a set of valid issue types and each issue type has a set of valid statuses.
       This operation can be accessed anonymously.
@@ -5689,12 +5819,14 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/statuses")
       operation com_atlassian_jira_rest_v2_issue_ProjectResource_getAllStatuses_get( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String ) : IssueTypeWithStatus[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyTypeNewProjectTypeKeyService {
       [[ Deprecated, this feature is no longer supported and no alternatives are available, see [Convert project to a different template or type](https://confluence.atlassian.com/x/yEKeOQ). Updates a [project type](https://confluence.atlassian.com/x/GwiiLQ). The project type can be updated for classic projects only, project type cannot be updated for next-gen projects.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "PUT" , url = "/rest/api/3/project/{projectIdOrKey}/type/{newProjectTypeKey}")
       operation com_atlassian_jira_rest_v2_issue_ProjectResource_updateProjectType_put( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String, @PathVariable(value = "newProjectTypeKey") newProjectTypeKey : String ) : Project
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyVersionService {
       [[ Returns a [paginated](#pagination) representation of all versions in a project. See the [Get project versions](#api-rest-api-3-project-projectIdOrKey-versions-get) resource if you want to get a full list of versions without pagination.
       This operation can be accessed anonymously.
@@ -5702,6 +5834,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/version")
       operation com_atlassian_jira_rest_v2_issue_ProjectResource_getProjectVersionsPaginated_get( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String,  startAt : Int,  maxResults : Int,  orderBy : String,  `query` : String,  status : String,  expand : String ) : PageBeanVersion
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyVersionsService {
       [[ Returns all versions in a project. The response is not paginated. Use [Get project versions paginated](#api-rest-api-3-project-projectIdOrKey-version-get) if you want to get the versions in a project with pagination.
       This operation can be accessed anonymously.
@@ -5709,6 +5842,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectIdOrKey}/versions")
       operation com_atlassian_jira_rest_v2_issue_ProjectResource_getProjectVersions_get( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String,  expand : String ) : Version[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdHierarchyService {
       [[ Get the issue type hierarchy for a next-gen project.
       The issue type hierarchy for a project consists of:
@@ -5719,18 +5853,21 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectId}/hierarchy")
       operation com_atlassian_jira_rest_v2_nextgen_HierarchyResource_getHierarchy_get( @PathVariable(value = "projectId") projectId : Int ) : ProjectIssueTypeHierarchy
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectKeyOrIdIssuesecuritylevelschemeService {
       [[ Returns the [issue security scheme](https://confluence.atlassian.com/x/J4lKLg) associated with the project.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) or the *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectKeyOrId}/issuesecuritylevelscheme")
       operation com_atlassian_jira_rest_v2_issue_ProjectIssueSecurityLevelSchemeResource_getIssueSecurityScheme_get( @PathVariable(value = "projectKeyOrId") projectKeyOrId : String ) : SecurityScheme
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectKeyOrIdNotificationschemeService {
       [[ Gets a [notification scheme](https://confluence.atlassian.com/x/8YdKLg) associated with the project. See the [Get notification scheme](#api-rest-api-3-notificationscheme-id-get) resource for more information about notification schemes.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) or *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectKeyOrId}/notificationscheme")
       operation com_atlassian_jira_rest_v2_notification_ProjectNotificationSchemeResource_getNotificationScheme_get( @PathVariable(value = "projectKeyOrId") projectKeyOrId : String,  expand : String ) : NotificationScheme
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectKeyOrIdPermissionschemeService {
       [[ Gets the [permission scheme](https://confluence.atlassian.com/x/yodKLg) associated with the project.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) or *Administer projects* [project permission](https://confluence.atlassian.com/x/yodKLg). ]]
@@ -5741,6 +5878,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "PUT" , url = "/rest/api/3/project/{projectKeyOrId}/permissionscheme")
       operation com_atlassian_jira_rest_v2_permission_ProjectPermissionSchemeResource_assignPermissionScheme_put( @PathVariable(value = "projectKeyOrId") projectKeyOrId : String,  expand : String ) : PermissionScheme
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectKeyOrIdSecuritylevelService {
       [[ Returns all [issue security](https://confluence.atlassian.com/x/J4lKLg) levels for the project that the user has access to.
       This operation can be accessed anonymously.
@@ -5748,6 +5886,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/project/{projectKeyOrId}/securitylevel")
       operation com_atlassian_jira_rest_v2_securitylevel_ProjectSecurityLevelResource_getSecurityLevelsForProject_get( @PathVariable(value = "projectKeyOrId") projectKeyOrId : String ) : ProjectIssueSecurityLevels
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectCategoryService {
       [[ Returns all project categories.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
@@ -5758,6 +5897,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/projectCategory")
       operation com_atlassian_jira_rest_v2_issue_ProjectCategoryResource_createProjectCategory_post(  ) : ProjectCategory
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectCategoryIdService {
       [[ Returns a project category.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
@@ -5772,6 +5912,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/projectCategory/{id}")
       operation com_atlassian_jira_rest_v2_issue_ProjectCategoryResource_removeProjectCategory_delete( @PathVariable(value = "id") id : Int )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectvalidateKeyService {
       [[ Validates a project key by confirming the key is a valid string and not in use.
       This operation can be accessed anonymously.
@@ -5779,6 +5920,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/projectvalidate/key")
       operation com_atlassian_jira_rest_v2_issue_ProjectValidateResource_validateProjectKey_get(  key : String ) : ErrorCollection
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectvalidateValidProjectKeyService {
       [[ Validates a project key and, if the key is invalid or in use, generates a valid random string for the project key.
       This operation can be accessed anonymously.
@@ -5786,6 +5928,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/projectvalidate/validProjectKey")
       operation com_atlassian_jira_rest_v2_issue_ProjectValidateResource_getValidProjectKey_get(  key : String ) : String
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectvalidateValidProjectNameService {
       [[ Checks that a project name isn't in use. If the name isn't in use, the passed string is returned. If the name is in use, this operation attempts to generate a valid project name based on the one supplied, usually by adding a sequence number. If a valid project name cannot be generated, a 404 response is returned.
       This operation can be accessed anonymously.
@@ -5793,18 +5936,21 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/projectvalidate/validProjectName")
       operation com_atlassian_jira_rest_v2_issue_ProjectValidateResource_getValidProjectName_get(  name : String ) : String
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ResolutionService {
       [[ Returns a list of all issue resolution values.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/resolution")
       operation com_atlassian_jira_rest_v2_issue_ResolutionResource_getResolutions_get(  ) : Resolution[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ResolutionIdService {
       [[ Returns an issue resolution value.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/resolution/{id}")
       operation com_atlassian_jira_rest_v2_issue_ResolutionResource_getResolution_get( @PathVariable(value = "id") id : String ) : Resolution
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3RoleService {
       [[ Gets a list of all project roles, complete with project role details and default actors.
       ### About project roles ###
@@ -5824,6 +5970,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/role")
       operation com_atlassian_jira_rest_v2_issue_project_RoleResource_createProjectRole_post(  ) : ProjectRole
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3RoleIdService {
       [[ Gets the project role details and the default actors associated with the role. The list of default actors is sorted by display name.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -5843,6 +5990,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/role/{id}")
       operation com_atlassian_jira_rest_v2_issue_project_RoleResource_deleteProjectRole_delete( @PathVariable(value = "id") id : Int,  swap : Int )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3RoleIdActorsService {
       [[ Returns the [default actors](#api-rest-api-3-resolution-get) for the project role.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -5859,24 +6007,28 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/role/{id}/actors")
       operation com_atlassian_jira_rest_v2_issue_project_RoleResource_deleteProjectRoleActorsFromRole_delete( @PathVariable(value = "id") id : Int,  user : String,  group : String ) : ProjectRole
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ScreensService {
       [[ Returns all screens.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/screens")
       operation com_atlassian_jira_rest_v2_issue_ScreensResource_getAllScreens_get(  startAt : Int,  maxResults : Int ) : PageBeanScreen
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ScreensAddToDefaultFieldIdService {
       [[ Adds a field to the default tab of the default screen.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "POST" , url = "/rest/api/3/screens/addToDefault/{fieldId}")
       operation com_atlassian_jira_rest_v2_issue_ScreensResource_addFieldToDefaultScreen_post( @PathVariable(value = "fieldId") fieldId : String ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ScreensScreenIdAvailableFieldsService {
       [[ Returns the fields that can be added to a tab on a screen.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/screens/{screenId}/availableFields")
       operation com_atlassian_jira_rest_v2_issue_ScreensResource_getAvailableScreenFields_get( @PathVariable(value = "screenId") screenId : Int ) : ScreenableField[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ScreensScreenIdTabsService {
       [[ Returns the list of tabs for a screen.
       **[Permissions](#permissions) required:**
@@ -5889,6 +6041,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/screens/{screenId}/tabs")
       operation com_atlassian_jira_rest_v2_issue_ScreensResource_addScreenTab_post( @PathVariable(value = "screenId") screenId : Int ) : ScreenableTab
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ScreensScreenIdTabsTabIdService {
       [[ Updates the name of a screen tab.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -5899,6 +6052,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/screens/{screenId}/tabs/{tabId}")
       operation com_atlassian_jira_rest_v2_issue_ScreensResource_deleteScreenTab_delete( @PathVariable(value = "screenId") screenId : Int, @PathVariable(value = "tabId") tabId : Int )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ScreensScreenIdTabsTabIdFieldsService {
       [[ Returns all fields for a screen tab.
       **[Permissions](#permissions) required:**
@@ -5911,12 +6065,14 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/screens/{screenId}/tabs/{tabId}/fields")
       operation com_atlassian_jira_rest_v2_issue_ScreensResource_addScreenTabField_post( @PathVariable(value = "screenId") screenId : Int, @PathVariable(value = "tabId") tabId : Int ) : ScreenableField
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ScreensScreenIdTabsTabIdFieldsIdService {
       [[ Removes a field from a screen tab.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/screens/{screenId}/tabs/{tabId}/fields/{id}")
       operation com_atlassian_jira_rest_v2_issue_ScreensResource_removeScreenTabField_delete( @PathVariable(value = "screenId") screenId : Int, @PathVariable(value = "tabId") tabId : Int, @PathVariable(value = "id") id : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ScreensScreenIdTabsTabIdFieldsIdMoveService {
       [[ Moves a screen tab field.
       If `after` and `position` are provided in the request, `position` is ignored.
@@ -5924,18 +6080,21 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/screens/{screenId}/tabs/{tabId}/fields/{id}/move")
       operation com_atlassian_jira_rest_v2_issue_ScreensResource_moveScreenTabField_post( @PathVariable(value = "screenId") screenId : Int, @PathVariable(value = "tabId") tabId : Int, @PathVariable(value = "id") id : String ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ScreensScreenIdTabsTabIdMovePosService {
       [[ Moves a screen tab.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "POST" , url = "/rest/api/3/screens/{screenId}/tabs/{tabId}/move/{pos}")
       operation com_atlassian_jira_rest_v2_issue_ScreensResource_moveScreenTab_post( @PathVariable(value = "screenId") screenId : Int, @PathVariable(value = "tabId") tabId : Int, @PathVariable(value = "pos") pos : Int ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ScreenschemeService {
       [[ Returns all screen schemes.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/screenscheme")
       operation com_atlassian_jira_rest_v2_issue_screenscheme_ScreenSchemeResource_getAllScreenSchemes_get(  startAt : Int,  maxResults : Int ) : PageBeanScreenScheme
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3SearchService {
       [[ Searches for issues using [JQL](https://confluence.atlassian.com/x/egORLQ).
       If the JQL query expression is too large to be encoded as a query parameter, use the [POST](#api-rest-api-3-search-post) version of this resource.
@@ -5954,6 +6113,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/search")
       operation com_atlassian_jira_rest_v2_search_SearchResource_searchForIssuesUsingJql_post(  ) : SearchResults
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3SecuritylevelIdService {
       [[ Returns details of an issue security level.
       Use [Get issue security scheme](#api-rest-api-3-issuesecurityschemes-id-get) to obtain the IDs of issue security levels associated with the issue security scheme.
@@ -5962,6 +6122,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/securitylevel/{id}")
       operation com_atlassian_jira_rest_v2_issue_IssueSecurityLevelResource_getIssueSecurityLevel_get( @PathVariable(value = "id") id : String ) : SecurityLevel
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ServerInfoService {
       [[ Returns information about the Jira instance.
       This operation can be accessed anonymously.
@@ -5969,6 +6130,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/serverInfo")
       operation com_atlassian_jira_rest_v2_ServerInfoResource_getServerInfo_get(  ) : ServerInformation
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3SettingsColumnsService {
       [[ Returns the default issue navigator columns.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -5983,6 +6145,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "PUT" , url = "/rest/api/3/settings/columns")
       operation com_atlassian_jira_rest_v2_admin_SettingsResource_setIssueNavigatorDefaultColumns_put(  ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3StatusService {
       [[ Returns a list of all statuses associated with workflows.
       This operation can be accessed anonymously.
@@ -5990,6 +6153,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/status")
       operation com_atlassian_jira_rest_v2_issue_StatusResource_getStatuses_get(  ) : StatusDetails[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3StatusIdOrNameService {
       [[ Returns a status. The status must be associated with a workflow to be returned.
       If a name is used on more than one status, only the status found first is returned. Therefore, identifying the status by its ID may be preferable.
@@ -5998,18 +6162,21 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/status/{idOrName}")
       operation com_atlassian_jira_rest_v2_issue_StatusResource_getStatus_get( @PathVariable(value = "idOrName") idOrName : String ) : StatusDetails
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3StatuscategoryService {
       [[ Returns a list of all status categories.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/statuscategory")
       operation com_atlassian_jira_rest_v2_issue_StatusCategoryResource_getStatusCategories_get(  ) : StatusCategory[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3StatuscategoryIdOrKeyService {
       [[ Returns a status category. Status categories provided a mechanism for categorizing [statuses](#api-rest-api-3-status-idOrName-get).
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/statuscategory/{idOrKey}")
       operation com_atlassian_jira_rest_v2_issue_StatusCategoryResource_getStatusCategory_get( @PathVariable(value = "idOrKey") idOrKey : String ) : StatusCategory
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3TaskTaskIdService {
       [[ Returns the status of a [long-running asynchronous task](#async).
       When a task has finished, this operation returns the JSON blob applicable to the task. See the documentation of the operation that created the task for details. Task details are not permanently retained. As of September 2019, details are retained for 14 days although this period may change without notice.
@@ -6019,6 +6186,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/task/{taskId}")
       operation com_atlassian_jira_rest_v2_task_TaskResource_getTask_get( @PathVariable(value = "taskId") taskId : String ) : TaskProgressBeanObject
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3TaskTaskIdCancelService {
       [[ Cancels a task.
       **[Permissions](#permissions) required:** either of:
@@ -6027,6 +6195,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/task/{taskId}/cancel")
       operation com_atlassian_jira_rest_v2_task_TaskResource_cancelTask_post( @PathVariable(value = "taskId") taskId : String ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3Universal_avatarTypeTypeOwnerEntityIdService {
       [[ Returns the system and custom avatars for a project or issue type.
       This operation can be accessed anonymously.
@@ -6053,12 +6222,14 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/universal_avatar/type/{type}/owner/{entityId}")
       operation com_atlassian_jira_rest_v2_issue_UniversalAvatarResource_storeAvatar_post( @PathVariable(value = "type") `type` : String, @PathVariable(value = "entityId") entityId : String,  `x` : Int,  `y` : Int,  size : Int ) : Avatar
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3Universal_avatarTypeTypeOwnerOwningObjectIdAvatarIdService {
       [[ Deletes an avatar from a project or issue type.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/universal_avatar/type/{type}/owner/{owningObjectId}/avatar/{id}")
       operation com_atlassian_jira_rest_v2_issue_UniversalAvatarResource_deleteAvatar_delete( @PathVariable(value = "type") `type` : String, @PathVariable(value = "owningObjectId") owningObjectId : String, @PathVariable(value = "id") id : Int )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserService {
       [[ Returns a user.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
@@ -6074,6 +6245,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/user")
       operation com_atlassian_jira_rest_v2_issue_UserResource_removeUser_delete(  accountId : String,  username : String,  key : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserAssignableMultiProjectSearchService {
       [[ Returns a list of users who can be assigned issues in one or more projects. The list may be restricted to users whose attributes match a string.
       This operation takes the users in the range defined by `startAt` and `maxResults`, up to the thousandth user, and then returns only the users from that range that can be assigned issues in the projects. This means the operation usually returns fewer users than specified in `maxResults`. To get all the users who can be assigned issues in the projects, use [Get all users](#api-rest-api-3-users-search-get) and filter the records in your code.
@@ -6082,6 +6254,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/user/assignable/multiProjectSearch")
       operation com_atlassian_jira_rest_v2_issue_UserResource_findBulkAssignableUsers_get(  `query` : String,  username : String,  accountId : String,  projectKeys : String,  startAt : Int,  maxResults : Int ) : User[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserAssignableSearchService {
       [[ Returns a list of users that can be assigned to an issue. Use this operation to find the list of users who can be assigned to:
       *  a new issue, by providing the `projectKeyOrId`.
@@ -6093,18 +6266,21 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/user/assignable/search")
       operation com_atlassian_jira_rest_v2_issue_UserResource_findAssignableUsers_get(  `query` : String,  sessionId : String,  username : String,  accountId : String,  project : String,  issueKey : String,  startAt : Int,  maxResults : Int,  actionDescriptorId : Int,  recommend : Boolean ) : User[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserBulkService {
       [[ Returns details of the users specified by one or more account IDs.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/user/bulk")
       operation com_atlassian_jira_rest_v2_user_UserBulkResource_bulkGetUsers_get(  startAt : Int,  maxResults : Int,  username : String[],  key : String[],  accountId : String[] ) : PageBeanUser
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserBulkMigrationService {
       [[ Returns the account IDs for the users specified in the `key` or `username` parameters. Note that multiple `key` or `username` parameters can be specified.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/user/bulk/migration")
       operation com_atlassian_jira_rest_v2_user_UserBulkResource_bulkGetUsersMigration_get(  startAt : Int,  maxResults : Int,  username : String[],  key : String[] ) : UserMigrationBean[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserColumnsService {
       [[ Returns the default [issue table columns](https://confluence.atlassian.com/x/XYdKLg) for the user. If `accountId` is not passed in the request, the calling user's details are returned.
       **[Permissions](#permissions) required:**
@@ -6127,22 +6303,26 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/user/columns")
       operation com_atlassian_jira_rest_v2_issue_UserResource_resetUserColumns_delete(  accountId : String,  username : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserEmailService {
       [[ Returns a user's email address. This API is only available to apps approved by Atlassian, according to these [guidelines](https://community.developer.atlassian.com/t/guidelines-for-requesting-access-to-email-address/27603). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/user/email")
       operation com_atlassian_jira_rest_v2_user_UnrestrictedUserEmailResource_getUserEmail_get(  accountId : String ) : UnrestrictedUserEmail
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserEmailBulkService {
       [[ Returns a user's email address. This API is only available to apps approved by Atlassian, according to these [guidelines](https://community.developer.atlassian.com/t/guidelines-for-requesting-access-to-email-address/27603). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/user/email/bulk")
       operation com_atlassian_jira_rest_v2_user_UnrestrictedUserEmailResource_getUserEmailBulk_get(  accountId : String[] ) : UnrestrictedUserEmail
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserGroupsService {
       [[ Returns the groups to which a user belongs.
       **[Permissions](#permissions) required:** *Browse users and groups* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/user/groups")
       operation com_atlassian_jira_rest_v2_issue_UserResource_getUserGroups_get(  accountId : String,  username : String,  key : String ) : GroupName[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserPermissionSearchService {
       [[ Returns a list of users who fulfill these criteria:
       *  their user attributes match a search string.
@@ -6156,6 +6336,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/user/permission/search")
       operation com_atlassian_jira_rest_v2_issue_UserResource_findUsersWithAllPermissions_get(  `query` : String,  username : String,  accountId : String,  permissions : String,  issueKey : String,  projectKey : String,  startAt : Int,  maxResults : Int ) : User[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserPickerService {
       [[ Returns a list of users whose attributes match the query term. The returned object includes the `html` field where the matched query term is highlighted with the HTML strong tag. A list of account IDs can be provided to exclude users from the results.
       This operation takes the users in the range defined by `maxResults`, up to the thousandth user, and then returns only the users from that range that match the query term. This means the operation usually returns fewer users than specified in `maxResults`. To get all the users who match the query term, use [Get all users](#api-rest-api-3-users-search-get) and filter the records in your code.
@@ -6164,6 +6345,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/user/picker")
       operation com_atlassian_jira_rest_v2_issue_UserResource_findUsersForPicker_get(  `query` : String,  maxResults : Int,  showAvatar : Boolean,  exclude : String[],  excludeAccountIds : String[],  avatarSize : String,  excludeConnectUsers : Boolean ) : FoundUsers
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserPropertiesService {
       [[ Returns the keys of all properties for a user.
       Note: This operation does not access the [user properties](https://confluence.atlassian.com/x/8YxjL) created and maintained in Jira.
@@ -6173,6 +6355,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/user/properties")
       operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_getUserPropertyKeys_get(  accountId : String,  userKey : String,  username : String ) : PropertyKeys
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserPropertiesPropertyKeyService {
       [[ Returns the value of a user's property. If no property key is provided [Get user property keys](#api-rest-api-3-user-properties-get) is called.
       Note: This operation does not access the [user properties](https://confluence.atlassian.com/x/8YxjL) created and maintained in Jira.
@@ -6196,6 +6379,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/user/properties/{propertyKey}")
       operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_deleteUserProperty_delete(  accountId : String,  userKey : String,  username : String, @PathVariable(value = "propertyKey") propertyKey : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserSearchService {
       [[ Returns a list of users that match the search string and property.
       This operation takes the users in the range defined by `startAt` and `maxResults`, up to the thousandth user, and then returns only the users from that range that match the search string and property. This means the operation usually returns fewer users than specified in `maxResults`. To get all the users who match the search string and property, use [Get all users](#api-rest-api-3-users-search-get) and filter the records in your code.
@@ -6204,6 +6388,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/user/search")
       operation com_atlassian_jira_rest_v2_issue_UserResource_findUsers_get(  `query` : String,  username : String,  accountId : String,  startAt : Int,  maxResults : Int,  property : String ) : User[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserSearchQueryService {
       [[ Finds users with a structured query and returns user details.
       This operation takes the users in the range defined by `startAt` and `maxResults`, up to the thousandth user, and then returns only the users from that range that match the structured query. This means the operation usually returns fewer users than specified in `maxResults`. To get all the users who match the structured query, use [Get all users](#api-rest-api-3-users-search-get) and filter the records in your code.
@@ -6222,6 +6407,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/user/search/query")
       operation com_atlassian_jira_rest_v2_search_UserSearchResource_findUsersByQuery_get(  `query` : String,  startAt : Int,  maxResults : Int ) : PageBeanUser
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserSearchQueryKeyService {
       [[ Finds users with a structured query and returns a list of user keys.
       This operation takes the users in the range defined by `startAt` and `maxResults`, up to the thousandth user, and then returns only the users from that range that match the structured query. This means the operation usually returns fewer users than specified in `maxResults`. To get all the users who match the structured query, use [Get all users](#api-rest-api-3-users-search-get) and filter the records in your code.
@@ -6240,6 +6426,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/user/search/query/key")
       operation com_atlassian_jira_rest_v2_search_UserSearchResource_findUserKeysByQuery_get(  `query` : String,  startAt : Int,  maxResults : Int ) : PageBeanUserKey
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UserViewissueSearchService {
       [[ Returns a list of users who fulfill these criteria:
       *  their user attributes match a search string.
@@ -6253,12 +6440,14 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/user/viewissue/search")
       operation com_atlassian_jira_rest_v2_issue_UserResource_findUsersWithBrowsePermission_get(  `query` : String,  username : String,  accountId : String,  issueKey : String,  projectKey : String,  startAt : Int,  maxResults : Int ) : User[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3UsersSearchService {
       [[ Returns a list of all (active and inactive) users.
       **[Permissions](#permissions) required:** *Browse users and groups* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/users/search")
       operation com_atlassian_jira_rest_v2_issue_UsersResource_getAllUsers_get(  startAt : Int,  maxResults : Int ) : User[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3VersionService {
       [[ Creates a project version.
       This operation can be accessed anonymously.
@@ -6266,6 +6455,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/version")
       operation com_atlassian_jira_rest_v2_issue_VersionResource_createVersion_post(  ) : Version
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3VersionIdService {
       [[ Returns a project version.
       This operation can be accessed anonymously.
@@ -6285,6 +6475,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/version/{id}")
       operation com_atlassian_jira_rest_v2_issue_VersionResource_deleteVersion_delete( @PathVariable(value = "id") id : String,  moveFixIssuesTo : String,  moveAffectedIssuesTo : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3VersionIdMergetoMoveIssuesToService {
       [[ Merges two project versions. The merge is completed by deleting the version specified in `id` and replacing any occurrences of its ID in `fixVersion` with the version ID specified in `moveIssuesTo`.
       Consider using [ Delete and replace version](#api-rest-api-3-version-id-removeAndSwap-post) instead. This resource supports swapping version values in `fixVersion`, `affectedVersion`, and custom fields.
@@ -6293,6 +6484,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "PUT" , url = "/rest/api/3/version/{id}/mergeto/{moveIssuesTo}")
       operation com_atlassian_jira_rest_v2_issue_VersionResource_mergeVersions_put( @PathVariable(value = "id") id : String, @PathVariable(value = "moveIssuesTo") moveIssuesTo : String ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3VersionIdMoveService {
       [[ Modifies the version's sequence within the project, which affects the display order of the versions in Jira.
       This operation can be accessed anonymously.
@@ -6300,6 +6492,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/version/{id}/move")
       operation com_atlassian_jira_rest_v2_issue_VersionResource_moveVersion_post( @PathVariable(value = "id") id : String ) : Version
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3VersionIdRelatedIssueCountsService {
       [[ Returns the following counts for a version:
       *  Number of issues where the `fixVersion` is set to the version.
@@ -6310,6 +6503,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/version/{id}/relatedIssueCounts")
       operation com_atlassian_jira_rest_v2_issue_VersionResource_getVersionRelatedIssues_get( @PathVariable(value = "id") id : String ) : VersionIssueCounts
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3VersionIdRemoveAndSwapService {
       [[ Deletes a project version.
       Alternative versions can be provided to update issues that use the deleted version in `fixVersion`, `affectedVersion`, or any version picker custom fields. If alternatives are not provided, occurrences of `fixVersion`, `affectedVersion`, and any version picker custom field, that contain the deleted version, are cleared. Any replacement version must be in the same project as the version being deleted and cannot be the version being deleted.
@@ -6318,6 +6512,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/version/{id}/removeAndSwap")
       operation com_atlassian_jira_rest_v2_issue_VersionResource_deleteAndReplaceVersion_post( @PathVariable(value = "id") id : String ) : Any
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3VersionIdUnresolvedIssueCountService {
       [[ Returns counts of the issues and unresolved issues for the project version.
       This operation can be accessed anonymously.
@@ -6325,6 +6520,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/version/{id}/unresolvedIssueCount")
       operation com_atlassian_jira_rest_v2_issue_VersionResource_getVersionUnresolvedIssues_get( @PathVariable(value = "id") id : String ) : VersionUnresolvedIssuesCount
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WebhookService {
       [[ Returns the webhooks registered by the calling app.
       **[Permissions](#permissions) required:** Only [Connect apps](https://developer.atlassian.com/cloud/jira/platform/integrating-with-jira-cloud/#atlassian-connect) can use this operation. ]]
@@ -6339,6 +6535,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/webhook")
       operation com_atlassian_jira_rest_v2_webhook_DynamicWebhookResource_deleteWebhookById_delete(  )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WebhookFailedService {
       [[ Returns webhooks that have recently failed to be delivered to the requesting app after the maximum number of retries.
       After 72 hours the failure may no longer be returned by this operation.
@@ -6348,6 +6545,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/webhook/failed")
       operation com_atlassian_jira_rest_v2_webhook_FailedWebhookResource_getFailedWebhooks_get(  maxResults : Int,  after : Int ) : FailedWebhooks
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WebhookRefreshService {
       [[ Webhooks registered through the REST API expire after 30 days. Call this resource periodically to keep them alive.
       Unrecognized webhook IDs (nonexistent or belonging to other apps) are ignored.
@@ -6355,6 +6553,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "PUT" , url = "/rest/api/3/webhook/refresh")
       operation com_atlassian_jira_rest_v2_webhook_DynamicWebhookResource_refreshWebhooks_put(  ) : WebhooksExpirationDate
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorkflowService {
       [[ Returns all workflows in Jira or a workflow. Deprecated, use [Get workflows paginated](#api-rest-api-3-workflow-search-get).
       If the `workflowName` parameter is specified, the workflow is returned as an object (not in an array). Otherwise, an array of workflow objects is returned.
@@ -6362,6 +6561,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/workflow")
       operation com_atlassian_jira_rest_v2_admin_WorkflowsResource_getAllWorkflows_get(  workflowName : String ) : DeprecatedWorkflow[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorkflowRuleConfigService {
       [[ Returns a paginated list of workflows with transition rules. The workflows can be filtered to return only those containing workflow transition rules:
       *  of one or more transition rule types, such as [workflow post functions](https://developer.atlassian.com/cloud/jira/platform/modules/workflow-post-function/).
@@ -6380,6 +6580,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "PUT" , url = "/rest/api/3/workflow/rule/config")
       operation com_atlassian_jira_rest_v2_admin_workflow_WorkflowRuleConfigResource_updateWorkflowTransitionRuleConfigurations_put(  ) : WorkflowTransitionRulesUpdateErrors
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorkflowSearchService {
       [[ Returns a [paginated](#pagination) list of published classic workflows. When workflow names are specified, details of those workflows are returned. Otherwise, all published classic workflows are returned.
       This operation does not return next-gen workflows.
@@ -6387,6 +6588,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/workflow/search")
       operation com_atlassian_jira_rest_v2_admin_workflow_WorkflowSearchResource_getWorkflowsPaginated_get(  startAt : Int,  maxResults : Int,  workflowName : String[],  expand : String ) : PageBeanWorkflow
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorkflowTransitionsTransitionIdPropertiesService {
       [[ Returns the properties on a workflow transition. Transition properties are used to change the behavior of a transition. For more information, see [Transition properties](https://confluence.atlassian.com/x/zIhKLg#Advancedworkflowconfiguration-transitionproperties) and [Workflow properties](https://confluence.atlassian.com/x/JYlKLg).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -6405,6 +6607,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflow/transitions/{transitionId}/properties")
       operation com_atlassian_jira_rest_v2_admin_WorkflowTransitionResource_deleteWorkflowTransitionProperty_delete( @PathVariable(value = "transitionId") transitionId : Int,  key : String,  workflowName : String,  workflowMode : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorkflowschemeService {
       [[ Returns a paginated list of all workflow schemes, not including draft workflow schemes.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -6415,12 +6618,14 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/workflowscheme")
       operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_createWorkflowScheme_post(  ) : WorkflowScheme
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorkflowschemeProjectService {
       [[ Returns a list of the workflow schemes associated with a list of projects. Each returned workflow scheme includes a list of the requested projects associated with it. Any next-gen or non-existent projects in the request are ignored and no errors are returned.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "GET" , url = "/rest/api/3/workflowscheme/project")
       operation com_atlassian_jira_rest_v2_admin_workflowscheme_project_WorkflowSchemeProjectResource_getWorkflowSchemeProjectAssociations_get(  projectId : Int[] ) : ContainerOfWorkflowSchemeAssociations
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorkflowschemeIdService {
       [[ Returns a workflow scheme.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -6435,12 +6640,14 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}")
       operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowScheme_delete( @PathVariable(value = "id") id : Int )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorkflowschemeIdCreatedraftService {
       [[ Create a draft workflow scheme from an active workflow scheme, by copying the active workflow scheme. Note that an active workflow scheme can only have one draft workflow scheme.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "POST" , url = "/rest/api/3/workflowscheme/{id}/createdraft")
       operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_createWorkflowSchemeDraftFromParent_post( @PathVariable(value = "id") id : Int ) : WorkflowScheme
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorkflowschemeIdDefaultService {
       [[ Returns the default workflow for a workflow scheme. The default workflow is the workflow that is assigned any issue types that have not been mapped to any other workflow. The default workflow has *All Unassigned Issue Types* listed in its issue types for the workflow scheme in Jira.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -6457,6 +6664,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}/default")
       operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteDefaultWorkflow_delete( @PathVariable(value = "id") id : Int,  updateDraftIfNeeded : Boolean ) : WorkflowScheme
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorkflowschemeIdDraftService {
       [[ Returns the draft workflow scheme for an active workflow scheme. Draft workflow schemes allow changes to be made to the active workflow schemes: When an active workflow scheme is updated, a draft copy is created. The draft is modified, then the changes in the draft are copied back to the active workflow scheme. See [Configuring workflow schemes](https://confluence.atlassian.com/x/tohKLg) for more information.
       Note that:
@@ -6474,6 +6682,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}/draft")
       operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowSchemeDraft_delete( @PathVariable(value = "id") id : Int )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorkflowschemeIdDraftDefaultService {
       [[ Returns the default workflow for a workflow scheme's draft. The default workflow is the workflow that is assigned any issue types that have not been mapped to any other workflow. The default workflow has *All Unassigned Issue Types* listed in its issue types for the workflow scheme in Jira.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -6488,6 +6697,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}/draft/default")
       operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteDraftDefaultWorkflow_delete( @PathVariable(value = "id") id : Int ) : WorkflowScheme
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorkflowschemeIdDraftIssuetypeIssueTypeService {
       [[ Returns the issue type-workflow mapping for an issue type in a workflow scheme's draft.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -6502,6 +6712,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}/draft/issuetype/{issueType}")
       operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowSchemeDraftIssueType_delete( @PathVariable(value = "id") id : Int, @PathVariable(value = "issueType") issueType : String ) : WorkflowScheme
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorkflowschemeIdDraftWorkflowService {
       [[ Returns the workflow-issue type mappings for a workflow scheme's draft.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -6516,6 +6727,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}/draft/workflow")
       operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteDraftWorkflowMapping_delete( @PathVariable(value = "id") id : Int,  workflowName : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorkflowschemeIdIssuetypeIssueTypeService {
       [[ Returns the issue type-workflow mapping for an issue type in a workflow scheme.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -6532,6 +6744,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}/issuetype/{issueType}")
       operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowSchemeIssueType_delete( @PathVariable(value = "id") id : Int, @PathVariable(value = "issueType") issueType : String,  updateDraftIfNeeded : Boolean ) : WorkflowScheme
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorkflowschemeIdWorkflowService {
       [[ Returns the workflow-issue type mappings for a workflow scheme.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -6548,6 +6761,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/workflowscheme/{id}/workflow")
       operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowMapping_delete( @PathVariable(value = "id") id : Int,  workflowName : String,  updateDraftIfNeeded : Boolean )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorklogDeletedService {
       [[ Returns a list of IDs and delete timestamps for worklogs deleted after a date and time.
       This resource is paginated, with a limit of 1000 worklogs per page. Each page lists worklogs from oldest to youngest. If the number of items in the date range exceeds 1000, `until` indicates the timestamp of the youngest item on the page. Also, `nextPage` provides the URL for the next page of worklogs. The `lastPage` parameter is set to true on the last page of worklogs.
@@ -6556,6 +6770,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/worklog/deleted")
       operation com_atlassian_jira_rest_v2_issue_worklog_WorklogResource_getIdsOfWorklogsDeletedSince_get(  since : Int ) : ChangedWorklogs
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorklogListService {
       [[ Returns worklog details for a list of worklog IDs.
       The returned list of worklogs is limited to 1000 items.
@@ -6565,6 +6780,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "POST" , url = "/rest/api/3/worklog/list")
       operation com_atlassian_jira_rest_v2_issue_worklog_WorklogResource_getWorklogsForIds_post(  expand : String ) : Worklog[]
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3WorklogUpdatedService {
       [[ Returns a list of IDs and update timestamps for worklogs updated after a date and time.
       This resource is paginated, with a limit of 1000 worklogs per page. Each page lists worklogs from oldest to youngest. If the number of items in the date range exceeds 1000, `until` indicates the timestamp of the youngest item on the page. Also, `nextPage` provides the URL for the next page of worklogs. The `lastPage` parameter is set to true on the last page of worklogs.
@@ -6575,12 +6791,14 @@ namespace vyne.openApi {
       @HttpOperation(method = "GET" , url = "/rest/api/3/worklog/updated")
       operation com_atlassian_jira_rest_v2_issue_worklog_WorklogResource_getIdsOfWorklogsModifiedSince_get(  since : Int,  expand : String ) : ChangedWorklogs
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestAtlassian_connect1AddonsAddonKeyPropertiesService {
       [[ Gets all the properties of an app.
       **[Permissions](#permissions) required:** Only a Connect app whose key matches `addonKey` can make this request. ]]
       @HttpOperation(method = "GET" , url = "/rest/atlassian-connect/1/addons/{addonKey}/properties")
       operation AddonPropertiesResource_getAddonProperties_get( @PathVariable(value = "addonKey") addonKey : String ) : PropertyKeys
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestAtlassian_connect1AddonsAddonKeyPropertiesPropertyKeyService {
       [[ Returns the key and value of an app's property.
       **[Permissions](#permissions) required:** Only a Connect app whose key matches `addonKey` can make this request. ]]
@@ -6596,6 +6814,7 @@ namespace vyne.openApi {
       @HttpOperation(method = "DELETE" , url = "/rest/atlassian-connect/1/addons/{addonKey}/properties/{propertyKey}")
       operation AddonPropertiesResource_deleteAddonProperty_delete( @PathVariable(value = "addonKey") addonKey : String, @PathVariable(value = "propertyKey") propertyKey : String )
    }
+   @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestAtlassian_connect1AppModuleDynamicService {
       [[ Returns all modules registered dynamically by the calling app.
       **[Permissions](#permissions) required:** Only Connect apps can make this request. ]]

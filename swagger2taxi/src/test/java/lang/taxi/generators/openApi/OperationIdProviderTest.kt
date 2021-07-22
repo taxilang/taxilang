@@ -13,4 +13,11 @@ class OperationIdProviderTest {
         val operationId = OperationIdProvider.getOperationId(operation, "https://localhost:8080/foo/bar", HttpMethod.GET)
         expect(operationId).to.equal("GetFooBar")
     }
+
+   @Test
+   fun generatesNameIfNoIdAndPathHasVariable() {
+      val operation = SwaggerOperation()
+      val operationId = OperationIdProvider.getOperationId(operation, "/pets/{id}", HttpMethod.GET)
+      expect(operationId).to.equal("GetPetsId")
+   }
 }

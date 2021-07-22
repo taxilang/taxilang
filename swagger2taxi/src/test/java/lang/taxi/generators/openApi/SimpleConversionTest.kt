@@ -118,12 +118,15 @@ namespace vyne.openApi {
       message : String?
    }
 
+   @ServiceDiscoveryClient(serviceName = "http://petstore.swagger.io/v1")
    service PetsService {
       @HttpOperation(method = "GET" , url = "/pets")
       operation listPets(  limit : Int ) : Pet[]
       @HttpOperation(method = "POST" , url = "/pets")
       operation createPets(  )
    }
+
+   @ServiceDiscoveryClient(serviceName = "http://petstore.swagger.io/v1")
    service PetsPetIdService {
       @HttpOperation(method = "GET" , url = "/pets/{petId}")
       operation showPetById( @PathVariable("petId")  petId : String ) : Pet[]
