@@ -16,10 +16,10 @@ import lang.taxi.types.LiteralAssignment
 import lang.taxi.types.LogicalConstant
 import lang.taxi.types.LogicalExpression
 import lang.taxi.types.LogicalVariable
+import lang.taxi.types.ModelAttributeFieldReferenceEntity
 import lang.taxi.types.NullAssignment
 import lang.taxi.types.OrExpression
 import lang.taxi.types.ValueAssignment
-import lang.taxi.types.ModelAttributeFieldReferenceEntity
 import lang.taxi.value
 import lang.taxi.valueOrNull
 
@@ -71,7 +71,7 @@ class LogicalExpressionCompiler(private val tokenProcessor: TokenProcessor) {
                when {
                   qualifiedName != null -> FieldReferenceEntity(numericEntity.propertyToParameterConstraintLhs().qualifiedName().text).right()
                   modelAttributeTypeReference != null -> {
-                     if (!this.tokenProcessor.isInViewContext(comparisonExpressionContext)) {
+                     if (!comparisonExpressionContext.isInViewContext()) {
                         Either.left(CompilationError(comparisonExpressionContext.start, "SourceType::FieldType notation is only allowed in view definitions"))
                      } else {
                         this

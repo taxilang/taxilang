@@ -1,10 +1,12 @@
 package lang.taxi.utils
 
 import arrow.core.Either
-import arrow.core.ValidatedNel
-import arrow.core.extensions.either.foldable.foldRight
+import arrow.core.getOrHandle
 
 
+fun <A,B> Either<A,B>.getOrThrow(message:String = "Unhandled failure of Either"):B {
+   return this.getOrHandle { error(message) }
+}
 fun <A, B> List<Either<A, B>>.invertEitherList(): Either<List<A>, List<B>> {
    val mapLeft = this.any { it.isLeft() }
    val values = this.mapNotNull { either ->

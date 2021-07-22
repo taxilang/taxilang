@@ -60,7 +60,7 @@ typeDeclaration
     :  typeDoc? annotation* typeModifier* typeKind Identifier
 
         ('inherits' listOfInheritedTypes)?
-        typeBody?
+        (typeBody | expressionTypeDeclaration)?
     ;
 
 listOfInheritedTypes
@@ -73,6 +73,29 @@ typeBody
 typeMemberDeclaration
      :   typeDoc? annotation* fieldDeclaration
      ;
+
+expressionTypeDeclaration : 'by' expressionGroup*;
+
+// Added for expression types.
+// However, I suspect with a few modifications e can simplify
+// all expressions to
+// this group (fields, queries, etc.).
+// This definition is based off of this:
+// https://github.com/antlr/grammars-v4/blob/master/arithmetic/arithmetic.g4
+// which ensures order-of-precedence and supports grouped / parenthesis
+// expressions
+expressionGroup:
+   expressionGroup POW expressionGroup
+   | expressionGroup (MULT | DIV) expressionGroup
+   | expressionGroup (PLUS | MINUS) expressionGroup
+   | LPAREN expressionGroup RPAREN
+   | (PLUS | MINUS)* expressionAtom;
+
+// readFunction before typeType to avoid functons being identified
+// as types
+expressionAtom: readFunction | typeType |  literal;
+
+
 
 annotationTypeDeclaration
    : typeDoc? annotation* 'annotation' Identifier annotationTypeBody?;
@@ -125,7 +148,14 @@ mappedExpressionSelector: // xpath('/foo/bar') : SomeType
 // Note: Have had to relax the requirement for propertyFieldNameQualifier
 // to be mandatory, as this created bacwards comapatbility issues
 // in when() clauses
-fieldReferenceSelector: propertyFieldNameQualifier? Identifier;
+//
+// Update: In the type expressions feature branch
+// I've remove the relaxed requirement, re-enforcing that
+// field refereces must be prefixed.
+// Otherwise, these no lexer difference between
+// a fieldReferenceSelector (not permitted in expression types)
+// and a typeReferenceSelector (which is permitted)
+fieldReferenceSelector: propertyFieldNameQualifier Identifier;
 typeReferenceSelector: typeType;
 
 conditionalTypeWhenCaseDeclaration:
@@ -442,11 +472,10 @@ comparisonOperator
    | '!='
    ;
 
-arithmaticOperator
-   : '+'
-   | '-'
-   | '*'
-   | '/'
+arithmaticOperator:PLUS
+   | MINUS
+   | MULT
+   | DIV
    ;
 
 
@@ -941,6 +970,7 @@ MULT  : '*' ;
 DIV   : '/' ;
 PLUS  : '+' ;
 MINUS : '-' ;
+POW: '^';
 
 LPAREN : '(' ;
 RPAREN : ')' ;

@@ -14,8 +14,8 @@ import lang.taxi.TaxiParser
 import lang.taxi.findNamespace
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
-import lang.taxi.functions.FunctionModifiers
 import lang.taxi.functions.FunctionExpressionAccessor
+import lang.taxi.functions.FunctionModifiers
 import lang.taxi.source
 import lang.taxi.text
 import lang.taxi.toCompilationUnit
@@ -516,7 +516,7 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
 
                val parameters = functionContext.formalParameterList().parameter().mapIndexed { parameterIndex, parameterContext ->
                   val parameterType = function.getParameterType(parameterIndex)
-                  if (parameterContext.modelAttributeTypeReference() == null && tokenProcessor.isInViewContext(this.typeBody.parent)) {
+                  if (parameterContext.modelAttributeTypeReference() == null && this.typeBody.parent.isInViewContext()) {
                     return@flatMap  CompilationError(
                         parameterContext.start,
                         "Only Model Attribute References are  allowed within Views"
@@ -530,7 +530,7 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
                      parameterContext.fieldReferenceSelector() != null -> compileFieldReferenceAccessor(function, parameterContext).right()
                      parameterContext.typeReferenceSelector() != null -> compileTypeReferenceAccessor(namespace, parameterContext)
                      parameterContext.modelAttributeTypeReference() != null -> {
-                        if (tokenProcessor.isInViewContext(this.typeBody.parent)) {
+                        if (this.typeBody.parent.isInViewContext()) {
                            this.parseModelAttributeTypeReference(namespace, parameterContext.modelAttributeTypeReference())
                               .flatMap {(memberSourceType, memberType) ->
                                  ModelAttributeReferenceSelector(memberSourceType, memberType).right()
@@ -553,7 +553,7 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
                   }
                   parameterAccessor
                }.reportAndRemoveErrorList(errors)
-               if (function.modifiers.contains(FunctionModifiers.Query) && !tokenProcessor.isInViewContext(functionContext)) {
+               if (function.modifiers.contains(FunctionModifiers.Query) && !functionContext.isInViewContext()) {
                   CompilationError(
                      functionContext.start,
                      "a query function can only referenced from view definitions!"
@@ -594,6 +594,6 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
    fun lookupTypeByName(text: String, contextRule: ParserRuleContext) = tokenProcessor.lookupTypeByName(text, contextRule)
    fun lookupTypeByName(typeContext: TaxiParser.TypeTypeContext) = tokenProcessor.lookupTypeByName(typeContext)
    fun parseType(namespace: Namespace, typeType: TaxiParser.TypeTypeContext) = tokenProcessor.parseType(namespace, typeType)
-   fun parseModelAttributeTypeReference(namespace: Namespace, modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext) =
+   fun parseModelAttributeTypeReference(namespace: Namespace, modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext): Either<List<CompilationError>, Pair<QualifiedName, Type>> =
       tokenProcessor.parseModelAttributeTypeReference(namespace, modelAttributeReferenceCtx)
 }

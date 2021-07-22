@@ -1,5 +1,6 @@
 package lang.taxi.types
 
+@Deprecated("Formulas are replaced by functons and expressions")
 interface Formula : TaxiStatementGenerator {
    val operandFields: List<QualifiedName>
    val operator: FormulaOperator
@@ -25,7 +26,7 @@ data class MultiplicationFormula(
    override val operator: FormulaOperator = FormulaOperator.Multiply) : Formula {
 }
 
-enum class FormulaOperator(val symbol: String, val cardinality: Int) {
+enum class FormulaOperator(val symbol: String, @Deprecated("this concept doesn't work") val cardinality: Int) {
    Add("+", 2) {
       override fun validArgumentSize(argumentSize: Int): Boolean {
          return argumentSize == cardinality
@@ -74,6 +75,7 @@ enum class FormulaOperator(val symbol: String, val cardinality: Int) {
       }
    };
 
+   @Deprecated("This doesn't make any sense, as math operations can have n arguments")
    abstract fun validArgumentSize(argumentSize: Int): Boolean;
    abstract fun validateArguments(arguments: List<PrimitiveType>, fieldPrimitiveType: PrimitiveType): Boolean;
 
@@ -81,6 +83,9 @@ enum class FormulaOperator(val symbol: String, val cardinality: Int) {
       private val bySymbol = FormulaOperator.values().associateBy { it.symbol }
       fun forSymbol(symbol: String): FormulaOperator {
          return bySymbol[symbol] ?: error("No operator defined for symbol $symbol")
+      }
+      fun isSymbol(symbol: String): Boolean {
+         return bySymbol.containsKey(symbol)
       }
    }
 }

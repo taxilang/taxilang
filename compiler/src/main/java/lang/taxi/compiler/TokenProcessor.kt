@@ -19,6 +19,8 @@ import lang.taxi.TaxiParser
 import lang.taxi.Tokens
 import lang.taxi.TypeSystem
 import lang.taxi.compiler.CalculatedFieldSetProcessor.Companion.validate
+import lang.taxi.expressions.Expression
+import lang.taxi.expressions.toExpressionGroup
 import lang.taxi.findNamespace
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionDefinition
@@ -241,17 +243,6 @@ class TokenProcessor(
       return declaredTypeNames + inlineTypeAliases
    }
 
-   internal fun isInViewContext(ruleContext: RuleContext?): Boolean {
-      if (ruleContext == null) {
-         return false
-      }
-
-      if (ruleContext is TaxiParser.ViewDeclarationContext) {
-         return true
-      }
-
-      return isInViewContext(ruleContext.parent)
-   }
 
    internal fun fieldCompiler(typeName: String, namespace: String) =
       FieldCompiler(this, TypeBodyContext(null, namespace), typeName, this.errors)
@@ -263,7 +254,6 @@ class TokenProcessor(
          lookupTypeByName(namespace, type.classOrInterfaceType().text, importsInSource(type))
       }
    }
-
 
    internal fun attemptToLookupTypeByName(
       namespace: Namespace,
@@ -885,7 +875,15 @@ class TokenProcessor(
       val annotations = collateAnnotations(ctx.annotation())
       val modifiers = parseModifiers(ctx.typeModifier())
       val inherits = parseTypeInheritance(namespace, ctx.listOfInheritedTypes())
-
+      val expression = ctx.expressionTypeDeclaration()?.let {
+         it.expressionGroup().map { expressionGroup -> parseTypeExpression(expressionGroup) }
+      }?.invertEitherList()
+         ?.flattenErrors()
+         ?.map { it.toExpressionGroup() }
+         ?.getOrHandle { errors ->
+            this.errors.addAll(errors)
+            null
+         }
       checkForCircularTypeInheritance(typeName, ctx, inherits)?.let { compilationError ->
          return listOf(compilationError).left()
       }
@@ -901,10 +899,15 @@ class TokenProcessor(
                format = null,
                typeDoc = typeDoc,
                typeKind = typeKind,
+               expression = expression,
                compilationUnit = ctx.toCompilationUnit()
             )
          )
       ).right()
+   }
+
+   private fun parseTypeExpression(expressionGroup: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, Expression> {
+      return ExpressionCompiler(this, typeChecker, errors).compile(expressionGroup)
    }
 
    private fun checkForCircularTypeInheritance(
@@ -933,7 +936,9 @@ class TokenProcessor(
       if (loopTypeNames.isNotEmpty()) {
          return CompilationError(
             ctx.toCompilationUnit(),
-            "$typeName contains a loop in it's inheritance.  Check the inheritance of the following types: ${loopTypeNames.filter { it != typeName }.joinToString(", ")}"
+            "$typeName contains a loop in it's inheritance.  Check the inheritance of the following types: ${
+               loopTypeNames.filter { it != typeName }.joinToString(", ")
+            }"
          )
       }
       detectedTypeNames.add(typeName)
@@ -1534,6 +1539,24 @@ class TokenProcessor(
    ): Either<List<CompilationError>, Type> {
       return resolveUserType(namespace, requestedTypeName, importsInSource(context), context, symbolKind)
    }
+//
+//   internal fun resolveTypeOrFunction(
+//      requestedName: String,
+//      context: ParserRuleContext
+//   ): Either<List<CompilationError>, ImportableToken> {
+//      val type = resolveUserType(
+//         context.findNamespace(),
+//         requestedName,
+//         context
+//      )
+//      return if (type.isRight()) {
+//         type
+//      } else {
+//         resolveFunction(requestedName, context).mapLeft {
+//            listOf(CompilationError(context.toCompilationUnit(), "$requestedName was not resolved as either a type or a function"))
+//         }
+//      }
+//   }
 
    internal fun resolveFunction(
       requestedFunctionName: String,
@@ -2066,6 +2089,10 @@ class TokenProcessor(
 
 }
 
+fun List<Either<List<CompilationError>, *>>.allValid(): Boolean {
+   return this.all { it.isRight() }
+}
+
 fun <T> Either<List<CompilationError>, T>.collectErrors(errorCollection: MutableList<CompilationError>): Either<List<ReportedError>, T> {
    return this.mapLeft { errors ->
       errors.map { error ->
@@ -2161,3 +2188,14 @@ object AnonymousTypeNameGenerator {
    }
 }
 
+fun RuleContext?.isInViewContext(): Boolean {
+   if (this == null) {
+      return false
+   }
+
+   if (this is TaxiParser.ViewDeclarationContext) {
+      return true
+   }
+
+   return ruleContext.parent.isInViewContext()
+}

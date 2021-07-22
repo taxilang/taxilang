@@ -84,7 +84,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
    private fun compileFieldExpression(fieldExpression: TaxiParser.FieldExpressionContext,
                                       namespace: Namespace, targetType: Type): Either<List<CompilationError>, FieldSetExpression> {
 
-      if (this.compiler.tokenProcessor.isInViewContext(fieldExpression)) {
+      if (fieldExpression.isInViewContext()) {
         return compileModelAttributeReference(fieldExpression, namespace, targetType)
       }
       val field1Name = fieldExpression.propertyToParameterConstraintLhs(0).qualifiedName().text

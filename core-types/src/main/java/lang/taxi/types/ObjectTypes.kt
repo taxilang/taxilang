@@ -2,6 +2,7 @@ package lang.taxi.types
 
 import arrow.core.Either
 import lang.taxi.ImmutableEquality
+import lang.taxi.expressions.Expression
 import lang.taxi.services.FieldName
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
@@ -37,10 +38,12 @@ data class ObjectTypeDefinition(
    val pattern: String? = null,
    val formattedInstanceOfType: Type? = null,
    val calculatedInstanceOfType: Type? = null,
+   @Deprecated("Formulas are replaced by functions and expressions")
    val calculation: Formula? = null,
    val offset: Int? = null,
    val isAnonymous: Boolean = false,
    val typeKind: TypeKind = TypeKind.Type,
+   val expression: Expression? = null,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
@@ -117,6 +120,11 @@ data class ObjectType(
    override val definitionHash: String?
       get() {
          return if (isDefined) wrapper.definitionHash else null
+      }
+
+   val expression: Expression?
+      get() {
+         return definition?.expression
       }
 
    override val format: List<String>?
@@ -413,7 +421,7 @@ data class Field(
    // orderId: Order::SentOrderId
    // For above, field name is 'orderId', field type is 'SentOrderId' and memberSource is 'Order'
    // it is set to null for all other cases.
-   val memberSource : QualifiedName? = null,
+   val memberSource: QualifiedName? = null,
    override val compilationUnit: CompilationUnit
 ) : Annotatable, ConstraintTarget, Documented, NameTypePair, TokenDefinition {
 
@@ -445,6 +453,10 @@ interface AccessorWithDefault {
    val defaultValue: Any?
 }
 
+// TODO : Need to rename this.  It's actually
+// something like a LookupAccessor - as it's things like
+// JsonPath, XPath, Column etc.
+// Expressions are richer formulas.
 interface ExpressionAccessor : Accessor {
    val expression: String
 }
