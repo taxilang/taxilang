@@ -11,6 +11,7 @@ import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Type
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpPathVariable
+import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.annotations.ServiceDiscoveryClient
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.OperationIdProvider
@@ -71,13 +72,22 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
             lang.taxi.services.Parameter(annotations, type, swaggerParam.name.replaceIllegalCharacters(), constraints)
         }
         val operationId = OperationIdProvider.getOperationId(openApiOperation, pathMapping, method)
+        val requestBodyParam = openApiOperation.requestBody?.content?.values?.firstOrNull()?.schema?.let { requestBodySchema ->
+           val type = typeGenerator.findType(requestBodySchema, operationId+"Body")
+           lang.taxi.services.Parameter(
+              annotations = listOf(HttpRequestBody.toAnnotation()),
+              type = type,
+              name = type.toQualifiedName().typeName.decapitalize(),
+              constraints = emptyList(),
+           )
+        }
         val returnType = getReturnType(openApiOperation, operationId)
 
         return lang.taxi.services.Operation(
                 operationId,
                 null, // scope - TODO
                 annotations.toAnnotations(),
-                parameters,
+                parameters + listOfNotNull(requestBodyParam),
                 returnType,
                 listOf(CompilationUnit.unspecified()),
                 typeDoc = openApiOperation.description,

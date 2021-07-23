@@ -180,4 +180,97 @@ class OpenApiServiceExportTest {
 
       expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
    }
+
+   @Test
+   fun `request body is captured as a param`() {
+      @Language("yaml")
+      val openApiSpec = """
+         openapi: "3.0.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         paths:
+           /pets:
+             post:
+               requestBody:
+                 description: Pet to add to the store
+                 required: true
+                 content:
+                   application/json:
+                     schema:
+                       properties:
+                         name:
+                           type: string
+               responses:
+                 '200':
+                   description: pet response
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            model AnonymousTypePostPetsBody {
+              name: String
+            }
+            service PetsService {
+               @HttpOperation(method = "POST" , url = "/pets")
+               operation PostPets(
+                 @RequestBody anonymousTypePostPetsBody : AnonymousTypePostPetsBody
+               )
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
+
+   @Test
+   fun `request body is captured as a param when a declared schema`() {
+      @Language("yaml")
+      val openApiSpec = """
+         openapi: "3.0.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         components:
+           schemas:
+             NewPet:
+               type: object
+               properties:
+                 name:
+                   type: string
+         paths:
+           /pets:
+             post:
+               requestBody:
+                 description: Pet to add to the store
+                 required: true
+                 content:
+                   application/json:
+                     schema:
+                       ${'$'}ref: "#/components/schemas/NewPet"
+               responses:
+                 '200':
+                   description: pet response
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            model NewPet {
+              name: String
+            }
+            service PetsService {
+               @HttpOperation(method = "POST" , url = "/pets")
+               operation PostPets(
+                 @RequestBody newPet : NewPet
+               )
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
 }

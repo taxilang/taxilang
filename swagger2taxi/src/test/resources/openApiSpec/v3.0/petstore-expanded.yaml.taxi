@@ -21,7 +21,7 @@ namespace vyne.openApi {
       operation findPets(  tags : String[],  limit : Int ) : Pet[]
       [[ Creates a new pet in the store.  Duplicates are allowed ]]
       @HttpOperation(method = "POST" , url = "/pets")
-      operation addPet(  ) : Pet
+      operation addPet( @RequestBody newPet : NewPet ) : Pet
    }
    @ServiceDiscoveryClient(serviceName = "http://petstore.swagger.io/api")
    service PetsIdService {
