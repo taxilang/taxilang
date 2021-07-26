@@ -124,10 +124,10 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
 
     private fun getOrGenerateType(name: String): Type {
         val qualifiedName = Utils.qualifyTypeNameIfRaw(name, defaultNamespace)
-        return generatedTypes.getOrPut(qualifiedName) {
+        return generatedTypes.getOrPut(qualifiedName.toString()) {
             val model = swagger.definitions[name]
                     ?: error("No definition is present within the swagger file for type $name")
-            generateType(qualifiedName, model)
+            generateType(qualifiedName.toString(), model)
         }
     }
 
@@ -153,7 +153,7 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
            compilationUnit = CompilationUnit.unspecified(),
            typeDoc = model.description,
         )
-        return ObjectType(qualifiedName, typeDef)
+        return ObjectType(qualifiedName.toString(), typeDef)
     }
 
     private fun generateFields(properties: Map<String, Property>): Set<Field> {
@@ -179,7 +179,7 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
         // TODO : This could be significantly over-simplifying.
         val fields: Set<Field> = model.allOf.filterNot { interfaces.containsKey(it) }
                 .flatMap { generateFields(it.properties) }.toSet()
-        return ObjectType(qualifiedName, ObjectTypeDefinition(
+        return ObjectType(qualifiedName.toString(), ObjectTypeDefinition(
                 fields,
                 inheritsFrom = interfaces.values.toSet(),
                 compilationUnit = CompilationUnit.unspecified() // TODO

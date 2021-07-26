@@ -113,6 +113,8 @@ namespace vyne.openApi {
       tag : String
    }
 
+   type Pets inherits Pet[]
+
    type Error {
       code : Int?
       message : String?
@@ -121,7 +123,7 @@ namespace vyne.openApi {
    @ServiceDiscoveryClient(serviceName = "http://petstore.swagger.io/v1")
    service PetsService {
       @HttpOperation(method = "GET" , url = "/pets")
-      operation listPets(  limit : Int ) : Pet[]
+      operation listPets(  limit : Int ) : Pets
       @HttpOperation(method = "POST" , url = "/pets")
       operation createPets(  )
    }
@@ -129,7 +131,7 @@ namespace vyne.openApi {
    @ServiceDiscoveryClient(serviceName = "http://petstore.swagger.io/v1")
    service PetsPetIdService {
       @HttpOperation(method = "GET" , url = "/pets/{petId}")
-      operation showPetById( @PathVariable("petId")  petId : String ) : Pet[]
+      operation showPetById( @PathVariable("petId")  petId : String ) : Pets
    }
 }
         """.trimIndent()

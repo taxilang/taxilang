@@ -28,7 +28,7 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
                            private val typeGenerator: OpenApiTypeMapper,
                            private val logger: Logger) {
     fun generateServices(basePath:String? = null): Set<Service> {
-        val basePathFromSwagger = openAPI.servers.firstOrNull()?.url
+        val basePathFromSwagger = openAPI.servers?.firstOrNull()?.url
         val basePathToUse = listOfNotNull(basePath, basePathFromSwagger).firstOrNull()
         if (basePathToUse == null) {
             logger.error("No URL provided in the set of servers, and no manual basePath provided")
@@ -73,7 +73,7 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
         }
         val operationId = OperationIdProvider.getOperationId(openApiOperation, pathMapping, method)
         val requestBodyParam = openApiOperation.requestBody?.content?.values?.firstOrNull()?.schema?.let { requestBodySchema ->
-           val type = typeGenerator.findType(requestBodySchema, operationId+"Body")
+           val type = typeGenerator.generateUnnamedTypeRecursively(requestBodySchema, operationId+"Body")
            lang.taxi.services.Parameter(
               annotations = listOf(HttpRequestBody.toAnnotation()),
               type = type,
@@ -122,11 +122,11 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
                 return PrimitiveType.ANY
             }
         }
-        return typeGenerator.findType(mediaType.schema, operationId)
+        return typeGenerator.generateUnnamedTypeRecursively(mediaType.schema, operationId)
     }
 
     private fun getParamType(swaggerParam: Parameter): Type {
-        return typeGenerator.findType(swaggerParam.schema)
+        return typeGenerator.generateUnnamedTypeRecursively(swaggerParam.schema, swaggerParam.name)
     }
 
     private fun getParamAnnotations(param: Parameter): List<Annotation> {

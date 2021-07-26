@@ -269,6 +269,47 @@ class OpenApiServiceExportTest {
          }
       """.trimIndent()
 
+
+      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
+
+   @Test
+   fun `inline response is captured as a named type`() {
+      @Language("yaml")
+      val openApiSpec = """
+         openapi: "3.0.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         paths:
+           /pets:
+             post:
+               responses:
+                 '200':
+                   description: successful operation
+                   content:
+                     application/json:
+                       schema:
+                         type: object
+                         properties:
+                           name:
+                             type: string
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            model AnonymousTypePostPets {
+              name: String
+            }
+            service PetsService {
+               @HttpOperation(method = "POST" , url = "/pets")
+               operation PostPets(): AnonymousTypePostPets
+            }
+         }
+      """.trimIndent()
+
       val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
 
       expectToCompileTheSame(taxiDef.taxi, expectedTaxi)

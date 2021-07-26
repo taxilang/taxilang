@@ -32,14 +32,14 @@ object TestHelpers {
       if (errors.isEmpty()) {
          return generatedDoc
       }
-      throw AssertionError("Generated docs did not match expected.  Errors:\n" + errors.joinToString("\n"))
+      throw AssertionError("Generated docs did not match expected.  Errors:\n" + errors.joinToString("\n") +"\n\nGenerated:\n${generated.joinToString("\n")}")
    }
 
    fun compile(generated: List<String>) =
       try {
          Compiler.forStrings(generated).compile()
       } catch (e: CompilationException) {
-         println("Failed to compile:\n\n$generated")
+         println("Failed to compile:\n\n${generated.joinToString("\n")}")
          throw e
       }
 
