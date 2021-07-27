@@ -23,47 +23,34 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       name: QualifiedName
    ): Type {
       return _generatedTypes.getOrPut(name) {
-         val type = when (schema) {
-            is BooleanSchema -> inheritsFrom(name, PrimitiveType.BOOLEAN)
-            is DateSchema -> inheritsFrom(name, PrimitiveType.LOCAL_DATE)
-            is DateTimeSchema -> inheritsFrom(name, PrimitiveType.DATE_TIME)
-            is IntegerSchema -> inheritsFrom(name, PrimitiveType.INTEGER)
-            is NumberSchema -> inheritsFrom(name, PrimitiveType.DECIMAL)
-            is StringSchema -> inheritsFrom(name, PrimitiveType.STRING)
-            is BinarySchema,
-            is FileSchema,
-            is ByteArraySchema,
-            is PasswordSchema,
-            is UUIDSchema,
-            is EmailSchema -> {
-               namedIntermediateType(schema, name)
-            }
-            is ObjectSchema, is MapSchema -> {
-               makeModel(name, schema)
-            }
-            is ComposedSchema -> TODO()
-            is ArraySchema -> {
-               makeType(name, supertype = ArrayType(generateUnnamedTypeRecursively(schema.items, name.typeName+"Element"), CompilationUnit.unspecified()))
-            }
-            else -> {
-               if (schema.properties.isNullOrEmpty()) {
-                  inheritsFrom(name, PrimitiveType.ANY)
-               } else {
-                  makeModel(name, schema)
+         val type =
+            primitiveTypeFor(schema)?.let { type -> makeType(name, type) }
+            ?: when (schema) {
+               is BinarySchema,
+               is FileSchema,
+               is ByteArraySchema,
+               is PasswordSchema,
+               is UUIDSchema,
+               is EmailSchema -> {
+                  val formatType = makeIntermediateType(schema)
+                  makeType(name, formatType)
+               }
+               is ComposedSchema -> TODO()
+               is ArraySchema -> {
+                  val supertype = makeArrayType(schema, name.typeName + "Element")
+                  makeType(name, supertype = supertype)
+               }
+               else -> {
+                  if (schema.properties.isNullOrEmpty()) {
+                     makeType(name, PrimitiveType.ANY)
+                  } else {
+                     makeModel(name, schema)
+                  }
                }
             }
-         }
          type
       }
    }
-
-   private fun inheritsFrom(name: QualifiedName, type: PrimitiveType) = ObjectType(
-      name.toString(),
-      ObjectTypeDefinition(
-         inheritsFrom = setOf(type),
-         compilationUnit = CompilationUnit.unspecified()
-      )
-   )
 
    fun generateUnnamedTypeRecursively(
       schema: Schema<*>,
@@ -72,32 +59,18 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       return if (schema.`$ref` != null) {
          getTypeFromRef(schema.`$ref`)
       } else {
+         primitiveTypeFor(schema) ?:
          when (schema) {
-            is BooleanSchema -> PrimitiveType.BOOLEAN
-            is DateSchema -> PrimitiveType.LOCAL_DATE
-            is DateTimeSchema -> PrimitiveType.DATE_TIME
-            is IntegerSchema -> PrimitiveType.INTEGER
-            is NumberSchema -> PrimitiveType.DECIMAL
-            is StringSchema -> PrimitiveType.STRING
             is BinarySchema,
             is FileSchema,
             is ByteArraySchema,
             is PasswordSchema,
             is UUIDSchema,
             is EmailSchema -> {
-               val formatTypeQualifiedName =
-                  qualify(schema.format)
-               _generatedTypes.getOrPut(formatTypeQualifiedName) {
-                  makeType(formatTypeQualifiedName, PrimitiveType.STRING)
-               }
+               makeIntermediateType(schema)
             }
             is ArraySchema -> {
-               ArrayType(
-                  generateUnnamedTypeRecursively(
-                     schema.items,
-                     context + "Element"
-                  ), CompilationUnit.unspecified()
-               )
+               makeArrayType(schema, context + "Element")
             }
             else -> {
                if (schema.properties.isNullOrEmpty()) {
@@ -116,22 +89,21 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       }
    }
 
-   private fun namedIntermediateType(
-      schema: Schema<*>,
-      name: QualifiedName
-   ): ObjectType {
-      val formatTypeQualifiedName =
-         qualify(schema.format)
-      val formatType = _generatedTypes.getOrPut(formatTypeQualifiedName) {
+   private fun primitiveTypeFor(schema: Schema<*>) = when (schema) {
+      is BooleanSchema -> PrimitiveType.BOOLEAN
+      is DateSchema -> PrimitiveType.LOCAL_DATE
+      is DateTimeSchema -> PrimitiveType.DATE_TIME
+      is IntegerSchema -> PrimitiveType.INTEGER
+      is NumberSchema -> PrimitiveType.DECIMAL
+      is StringSchema -> PrimitiveType.STRING
+      else -> null
+   }
+
+   private fun makeIntermediateType(schema: Schema<*>): Type {
+      val formatTypeQualifiedName = qualify(schema.format)
+      return _generatedTypes.getOrPut(formatTypeQualifiedName) {
          makeType(formatTypeQualifiedName, PrimitiveType.STRING)
       }
-      return ObjectType(
-         name.fullyQualifiedName,
-         ObjectTypeDefinition(
-            inheritsFrom = setOf(formatType),
-            compilationUnit = CompilationUnit.unspecified()
-         )
-      )
    }
 
    private fun makeType(
@@ -145,13 +117,17 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       )
    )
 
+   private fun makeArrayType(schema: ArraySchema, context: String): ArrayType {
+      val innerType = generateUnnamedTypeRecursively(schema.items, context)
+      return ArrayType.of(innerType)
+   }
+
    private fun makeModel(
       name: QualifiedName,
       schema: Schema<*>
    ): ObjectType {
-      val objectType = ObjectType(name.fullyQualifiedName, null)
       // This allows us to support recursion - the undefined type will prevent us getting into an endless loop
-      _generatedTypes[name] = objectType
+      _generatedTypes[name] = ObjectType.undefined(name.fullyQualifiedName)
       val requiredFields = schema.required ?: emptyList()
       val properties = schema.properties ?: emptyMap()
       val fields = properties.map { (propName, schema) ->
