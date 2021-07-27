@@ -2,13 +2,13 @@ namespace vyne.openApi {
    type Pet
    
    model NewPet {
-      name : String?
-      tag : String
+      name : String
+      tag : String?
    }
    
    model Error {
-      code : Int?
-      message : String?
+      code : Int
+      message : String
    }
    
    @ServiceDiscoveryClient(serviceName = "http://petstore.swagger.io/api")

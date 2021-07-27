@@ -129,7 +129,7 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       return Field(
          name = legalName,
          type = generateUnnamedTypeRecursively(schema, context = parent.typeName+legalName.capitalize()),
-         nullable = required,
+         nullable = !required,
          compilationUnit = CompilationUnit.unspecified(),
          typeDoc = schema.description,
       )

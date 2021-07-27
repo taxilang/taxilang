@@ -209,7 +209,7 @@ class OpenApiServiceExportTest {
       val expectedTaxi = """
          namespace vyne.openApi {
             model AnonymousTypePostPetsBody {
-              name: String
+              name: String?
             }
             service PetsService {
                @HttpOperation(method = "POST" , url = "/pets")
@@ -258,7 +258,7 @@ class OpenApiServiceExportTest {
       val expectedTaxi = """
          namespace vyne.openApi {
             model NewPet {
-              name: String
+              name: String?
             }
             service PetsService {
                @HttpOperation(method = "POST" , url = "/pets")
@@ -301,7 +301,7 @@ class OpenApiServiceExportTest {
       val expectedTaxi = """
          namespace vyne.openApi {
             model AnonymousTypePostPets {
-              name: String
+              name: String?
             }
             service PetsService {
                @HttpOperation(method = "POST" , url = "/pets")

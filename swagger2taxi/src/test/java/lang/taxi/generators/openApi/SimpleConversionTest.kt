@@ -108,16 +108,16 @@ namespace vyne.openApi  {
 namespace vyne.openApi {
 
    type Pet {
-      id : Int?
-      name : String?
-      tag : String
+      id : Int
+      name : String
+      tag : String?
    }
 
    type Pets inherits Pet[]
 
    type Error {
-      code : Int?
-      message : String?
+      code : Int
+      message : String
    }
 
    @ServiceDiscoveryClient(serviceName = "http://petstore.swagger.io/v1")

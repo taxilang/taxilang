@@ -1,27 +1,27 @@
 namespace vyne.openApi {
    model dataSetList {
-      total : Int
-      apis : AnonymousTypeDataSetListApisElement[]
+      total : Int?
+      apis : AnonymousTypeDataSetListApisElement[]?
    }
    
    model AnonymousTypeDataSetListApisElement {
       [[ To be used as a dataset parameter value ]]
-      apiKey : String
+      apiKey : String?
       [[ To be used as a version parameter value ]]
-      apiVersionNumber : String
+      apiVersionNumber : String?
       [[ The URL describing the dataset's fields ]]
-      apiUrl : String
+      apiUrl : String?
       [[ A URL to the API console for each API ]]
-      apiDocumentationUrl : String
+      apiDocumentationUrl : String?
    }
    
    model AnonymousTypePerform_searchBody {
       [[ Uses Lucene Query Syntax in the format of propertyName:value, propertyName:[num1 TO num2] and date range format: propertyName:[yyyyMMdd TO yyyyMMdd]. In the response please see the 'docs' element which has the list of record objects. Each record structure would consist of all the fields and their corresponding values. ]]
-      criteria : String?
+      criteria : String
       [[ Starting record number. Default value is 0. ]]
-      start : Int
+      start : Int?
       [[ Specify number of rows to be returned. If you run the search with default values, in the response you will see 'numFound' attribute which will tell the number of records available in the dataset. ]]
-      rows : Int
+      rows : Int?
    }
    
    @ServiceDiscoveryClient(serviceName = "{scheme}://developer.uspto.gov/ds-api")

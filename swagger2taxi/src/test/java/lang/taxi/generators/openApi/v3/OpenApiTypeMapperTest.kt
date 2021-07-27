@@ -53,7 +53,7 @@ internal class OpenApiTypeMapperTest {
       ) generates """
          namespace vyne.openApi {
             model Person {
-              name: String
+              name: String?
             }
          }
       """
@@ -76,10 +76,10 @@ internal class OpenApiTypeMapperTest {
       ) generates """
          namespace vyne.openApi {
             model AnonymousTypePersonAddress {
-              street: String
+              street: String?
             }
             model Person {
-              address: AnonymousTypePersonAddress
+              address: AnonymousTypePersonAddress?
             }
          }
       """
@@ -106,13 +106,13 @@ internal class OpenApiTypeMapperTest {
       ) generates """
          namespace vyne.openApi {
             model AnonymousTypePersonAddressHouse {
-              number: Int
+              number: Int?
             }
             model AnonymousTypePersonAddress {
-              house: AnonymousTypePersonAddressHouse
+              house: AnonymousTypePersonAddressHouse?
             }
             model Person {
-              address: AnonymousTypePersonAddress
+              address: AnonymousTypePersonAddress?
             }
          }
       """
@@ -137,10 +137,10 @@ internal class OpenApiTypeMapperTest {
       ) generates """
          namespace vyne.openApi {
             model Address {
-              street: String
+              street: String?
             }
             model Person {
-              address: Address
+              address: Address?
             }
          }
       """
@@ -160,7 +160,7 @@ internal class OpenApiTypeMapperTest {
       ) generates """
          namespace vyne.openApi {
             model Person {
-              partner: Person
+              partner: Person?
             }
          }
       """
@@ -199,7 +199,7 @@ internal class OpenApiTypeMapperTest {
       ) generates """
          namespace vyne.openApi {
             model AnonymousTypePeopleElement {
-              name : String
+              name : String?
             }
             type People inherits AnonymousTypePeopleElement[]
          }
@@ -224,7 +224,7 @@ internal class OpenApiTypeMapperTest {
       ) generates """
          namespace vyne.openApi {
             model Person {
-              name : String
+              name : String?
             }
             type People inherits Person[]
          }
@@ -271,7 +271,7 @@ internal class OpenApiTypeMapperTest {
       ) generates """
          namespace vyne.openApi {
             model Person {
-              name : String
+              name : String?
             }
             type People inherits Array<Array<Person>>
          }
@@ -294,7 +294,7 @@ internal class OpenApiTypeMapperTest {
       ) generates """
          namespace vyne.openApi {
             model Organisation {
-              people : String[]
+              people : String[]?
             }
          }
       """
@@ -319,10 +319,10 @@ internal class OpenApiTypeMapperTest {
       ) generates """
          namespace vyne.openApi {
             model AnonymousTypeOrganisationPeopleElement {
-              name : String
+              name : String?
             }
             model Organisation {
-              people : AnonymousTypeOrganisationPeopleElement[]
+              people : AnonymousTypeOrganisationPeopleElement[]?
             }
          }
       """
@@ -349,10 +349,10 @@ internal class OpenApiTypeMapperTest {
       ) generates """
          namespace vyne.openApi {
             model Person {
-              name : String
+              name : String?
             }
             model Organisation {
-              people : Person[]
+              people : Person[]?
             }
          }
       """
@@ -378,7 +378,7 @@ internal class OpenApiTypeMapperTest {
       ) generates """
          namespace vyne.openApi {
             model Organisation {
-              people : Array<Array<Array<String>>>
+              people : Array<Array<Array<String>>>?
             }
          }
       """
@@ -409,10 +409,10 @@ internal class OpenApiTypeMapperTest {
       ) generates """
          namespace vyne.openApi {
             model Person {
-              name : String
+              name : String?
             }
             model Organisation {
-              people : Array<Array<Array<Person>>>
+              people : Array<Array<Array<Person>>>?
             }
          }
       """
@@ -437,7 +437,7 @@ internal class OpenApiTypeMapperTest {
          namespace vyne.openApi {
             type People inherits String[]
             model Organisation {
-              people: People
+              people: People?
             }
          }
       """
@@ -465,13 +465,13 @@ internal class OpenApiTypeMapperTest {
          namespace vyne.openApi {
 
             model AnonymousTypePeopleElement {
-               name : String
+               name : String?
             }
 
             type People inherits AnonymousTypePeopleElement[]
 
             model Organisation {
-               people : People
+               people : People?
             }
          }
          """
@@ -501,13 +501,13 @@ internal class OpenApiTypeMapperTest {
          namespace vyne.openApi {
 
             model Person {
-               name : String
+               name : String?
             }
 
             type People inherits Person[]
 
             model Organisation {
-               people : People
+               people : People?
             }
          }
          """
@@ -538,7 +538,7 @@ internal class OpenApiTypeMapperTest {
             type People inherits Array<Array<Array<String>>>
 
             model Organisation {
-               people : People
+               people : People?
             }
          }
          """
@@ -572,13 +572,13 @@ internal class OpenApiTypeMapperTest {
          namespace vyne.openApi {
 
             model Person {
-               name : String
+               name : String?
             }
 
             type People inherits Array<Array<Array<Person>>>
 
             model Organisation {
-               people : People
+               people : People?
             }
          }
          """
