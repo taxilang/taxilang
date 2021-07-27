@@ -12,7 +12,7 @@ import java.io.File
 import kotlin.test.fail
 import kotlin.text.Charsets.UTF_8
 
-class OpenApiCompatabilityTest {
+class OpenApiCompatibilityTest {
     val sources = listOf(
             testFile("/openApiSpec/v2.0/json/api-with-examples.json"),
             testFile("/openApiSpec/v2.0/json/pets.json"),
@@ -91,22 +91,25 @@ class OpenApiCompatabilityTest {
         }
     }
 
-   // Convenient way to generate the actual taxi expectation
-   // Can then check if it matches what you wanted, and check it in - giving a
-   // history of how the generated taxi output has changed over time
    private fun expectToCompileTheSameReplacingResult(
       taxi: GeneratedTaxiCode,
       expectedOutputFile: String
    ) {
-      try {
-         expectToCompileTheSame(taxi.taxi, testResource(expectedOutputFile))
-      } catch (e: AssertionError) {
-         val runningOnCi = System.getenv("GITLAB_CI")?.toBoolean() ?: false
-         if (!runningOnCi) {
-            File("src/test/resources$expectedOutputFile")
-               .writeText(taxi.taxi.single(), UTF_8)
-         }
-         throw e
+      storeTheResult(expectedOutputFile, taxi)
+      expectToCompileTheSame(taxi.taxi, testResource(expectedOutputFile))
+   }
+
+   // Convenient way to generate the actual taxi expectation
+   // Can then check if it matches what you wanted, and check it in - giving a
+   // history of how the generated taxi output has changed over time
+   private fun storeTheResult(
+      expectedOutputFile: String,
+      taxi: GeneratedTaxiCode
+   ) {
+      val runningOnCi = System.getenv("CI")?.toBoolean() ?: false
+      if (!runningOnCi) {
+         File("src/test/resources$expectedOutputFile")
+            .writeText(taxi.taxi.single(), UTF_8)
       }
    }
 }
