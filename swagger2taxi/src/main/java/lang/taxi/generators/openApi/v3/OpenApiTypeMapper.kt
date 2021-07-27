@@ -24,8 +24,9 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
    ): Type {
       return _generatedTypes.getOrPut(name) {
          val type =
-            primitiveTypeFor(schema)?.let { type -> makeType(name, type) }
-            ?: when (schema) {
+            primitiveTypeFor(schema)?.let { type ->
+               makeType(name, type)
+            } ?: when (schema) {
                is BinarySchema,
                is FileSchema,
                is ByteArraySchema,
@@ -35,14 +36,13 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
                   val formatType = makeIntermediateType(schema)
                   makeType(name, formatType)
                }
-               is ComposedSchema -> TODO()
                is ArraySchema -> {
                   val supertype = makeArrayType(schema, name.typeName + "Element")
                   makeType(name, supertype = supertype)
                }
                else -> {
                   if (schema.properties.isNullOrEmpty()) {
-                     makeType(name, PrimitiveType.ANY)
+                     makeType(name)
                   } else {
                      makeModel(name, schema)
                   }
@@ -71,6 +71,13 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
             }
             is ArraySchema -> {
                makeArrayType(schema, context + "Element")
+            }
+            is ComposedSchema -> {
+               if (!schema.oneOf.isNullOrEmpty() || !schema.anyOf.isNullOrEmpty() || schema.allOf?.size != 1) {
+                  PrimitiveType.ANY // we don't know how to handle it, so just say it is of type ANY
+               } else {
+                  generateUnnamedTypeRecursively(schema.allOf.single(), context)
+               }
             }
             else -> {
                if (schema.properties.isNullOrEmpty()) {
@@ -108,7 +115,7 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
 
    private fun makeType(
       formatTypeQualifiedName: QualifiedName,
-      supertype: Type?
+      supertype: Type? = null
    ) = ObjectType(
       formatTypeQualifiedName.toString(),
       ObjectTypeDefinition(

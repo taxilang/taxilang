@@ -21,15 +21,182 @@ namespace vyne.openApi {
       *  `GroupCustomField` The `parameter` is the ID of the custom field. ]]
       `parameter` : String
       [[ The specified group. ]]
-      group : Any
+      group : GroupName
       [[ The custom user or group field. ]]
-      field : Any
+      field : FieldDetails
       [[ The email address. ]]
       emailAddress : String
       [[ The specified project role. ]]
-      projectRole : Any
+      projectRole : ProjectRole
       [[ The specified user. ]]
-      user : Any
+      user : UserDetails
+   }
+   
+   [[ Details about a group name. ]]
+   model GroupName {
+      [[ The name of group. ]]
+      name : String
+      [[ The URL for these group details. ]]
+      self : String
+   }
+   
+   [[ Details about a field. ]]
+   model FieldDetails {
+      [[ The ID of the field. ]]
+      id : String
+      [[ The key of the field. ]]
+      key : String
+      [[ The name of the field. ]]
+      name : String
+      [[ Indicates whether the field is a custom field. ]]
+      custom : Boolean
+      [[ Indicates whether the content of the field can be used to order lists. ]]
+      orderable : Boolean
+      [[ Indicates whether the field can be used as a column on the issue navigator. ]]
+      navigable : Boolean
+      [[ Indicates whether the content of the field can be searched. ]]
+      searchable : Boolean
+      [[ The names that can be used to reference the field in an advanced search. For more information, see [Advanced searching - fields reference](https://confluence.atlassian.com/x/gwORLQ). ]]
+      clauseNames : String[]
+      [[ The scope of the field. ]]
+      scope : Scope
+      [[ The data schema for the field. ]]
+      schema : JsonTypeBean
+   }
+   
+   [[ The scope of an entity. Indicated for entities associated with [next-gen projects](https://confluence.atlassian.com/x/loMyO). ]]
+   model Scope {
+      [[ The type of scope. ]]
+      `type` : String
+      [[ The project the entity has scope in. ]]
+      project : ProjectForScope
+   }
+   
+   [[ Details about a next-gen project. ]]
+   model ProjectForScope {
+      [[ The URL of the project details. ]]
+      self : String
+      [[ The ID of the project. ]]
+      id : String
+      [[ The key of the project. ]]
+      key : String
+      [[ The name of the project. ]]
+      name : String
+      [[ The [project type](https://confluence.atlassian.com/x/GwiiLQ#Jiraapplicationsoverview-Productfeaturesandprojecttypes) of the project. ]]
+      projectTypeKey : String
+      [[ Whether or not the project is simplified. ]]
+      simplified : Boolean
+      [[ The URLs of the project's avatars. ]]
+      avatarUrls : AvatarUrlsBean
+      [[ The category the project belongs to. ]]
+      projectCategory : UpdatedProjectCategory
+   }
+   
+   model AvatarUrlsBean {
+      [[ The URL of the item's 16x16 pixel avatar. ]]
+      `16x16` : String
+      [[ The URL of the item's 24x24 pixel avatar. ]]
+      `24x24` : String
+      [[ The URL of the item's 32x32 pixel avatar. ]]
+      `32x32` : String
+      [[ The URL of the item's 48x48 pixel avatar. ]]
+      `48x48` : String
+   }
+   
+   [[ A project category. ]]
+   model UpdatedProjectCategory {
+      [[ The URL of the project category. ]]
+      self : String
+      [[ The ID of the project category. ]]
+      id : String
+      [[ The name of the project category. ]]
+      description : String
+      [[ The description of the project category. ]]
+      name : String
+   }
+   
+   [[ The schema of a field. ]]
+   model JsonTypeBean {
+      [[ The data type of the field. ]]
+      `type` : String?
+      [[ When the data type is an array, the name of the field items within the array. ]]
+      items : String
+      [[ If the field is a system field, the name of the field. ]]
+      system : String
+      [[ If the field is a custom field, the URI of the field. ]]
+      custom : String
+      [[ If the field is a custom field, the custom ID of the field. ]]
+      customId : Int
+      [[ If the field is a custom field, the configuration of the field. ]]
+      configuration : Any
+   }
+   
+   [[ Details about the roles in a project. ]]
+   model ProjectRole {
+      [[ The URL the project role details. ]]
+      self : String
+      [[ The name of the project role. ]]
+      name : String
+      [[ The ID of the project role. ]]
+      id : Int
+      [[ The description of the project role. ]]
+      description : String
+      [[ The list of users who act in this role. ]]
+      actors : RoleActor[]
+      [[ The scope of the role. Indicated for roles associated with [next-gen projects](https://confluence.atlassian.com/x/loMyO). ]]
+      scope : Scope
+      [[ Whether this role is the admin role for the project. ]]
+      admin : Boolean
+      [[ Whether this role is the default role for the project ]]
+      `default` : Boolean
+   }
+   
+   [[ Details about a user assigned to a project role. ]]
+   model RoleActor {
+      id : Int
+      [[ The display name of the user. Depending on the user’s privacy setting, this may return an alternative value. ]]
+      displayName : String
+      `type` : String
+      [[ This property is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
+      name : String
+      avatarUrl : String
+      actorUser : ProjectRoleUserBean
+      actorGroup : ProjectRoleGroupBean
+      user : String
+   }
+   
+   model ProjectRoleUserBean {
+      [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. An account ID with value `unknown` is returned when there is missing data for a user, which only happens for deleted users. We recommend you treat this value as an error case if you need to access more information about the user. ]]
+      accountId : String
+   }
+   
+   model ProjectRoleGroupBean {
+      displayName : String
+      name : String
+   }
+   
+   [[ User details. ]]
+   model UserDetails {
+      [[ The URL of the user. ]]
+      self : String
+      [[ This property is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
+      name : String
+      [[ This property is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
+      key : String
+      [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. An account ID with value `unknown` is returned when there is missing data for a user, which only happens for deleted users. We recommend you treat this value as an error case if you need to access more information about the user. ]]
+      accountId : String
+      [[ The email address of the user. Depending on the user’s privacy settings, this may be returned as null. ]]
+      emailAddress : String
+      [[ The avatars of the user. ]]
+      avatarUrls : AvatarUrlsBean
+      [[ The display name of the user. Depending on the user’s privacy settings, this may return an alternative value. ]]
+      displayName : String
+      [[ Whether the user is active. ]]
+      active : Boolean
+      [[ The time zone specified in the user's profile. Depending on the user’s privacy settings, this may be returned as null. ]]
+      timeZone : String
+      [[ The type of account represented by this user. This will be one of 'atlassian' (normal users), 'app' (application user) or 'customer' (Jira Service Desk customer user) ]]
+      accountType : String
    }
    
    [[ Details about the configuration of Jira. ]]
@@ -49,7 +216,19 @@ namespace vyne.openApi {
       [[ Whether the ability to add attachments to issues is enabled. ]]
       attachmentsEnabled : Boolean
       [[ The configuration of time tracking. ]]
-      timeTrackingConfiguration : Any
+      timeTrackingConfiguration : TimeTrackingConfiguration
+   }
+   
+   [[ Details of the time tracking configuration. ]]
+   model TimeTrackingConfiguration {
+      [[ The number of hours in a working day. ]]
+      workingHoursPerDay : Decimal?
+      [[ The number of days in a working week. ]]
+      workingDaysPerWeek : Decimal?
+      [[ The format that will appear on an issue's *Time Spent* field. ]]
+      timeFormat : String?
+      [[ The default unit of time applied to logged time. ]]
+      defaultUnit : String?
    }
    
    [[ List of issue transitions. ]]
@@ -57,7 +236,59 @@ namespace vyne.openApi {
       [[ Expand options that include additional transitions details in the response. ]]
       expand : String
       [[ List of issue transitions. ]]
-      transitions : Any[]
+      transitions : IssueTransition[]
+   }
+   
+   [[ Details of an issue transition. ]]
+   model IssueTransition {
+      [[ The ID of the issue transition. Required when specifying a transition to undertake. ]]
+      id : String
+      [[ The name of the issue transition. ]]
+      name : String
+      [[ Details of the issue status after the transition. ]]
+      to : StatusDetails
+      [[ Whether there is a screen associated with the issue transition. ]]
+      hasScreen : Boolean
+      [[ Whether the issue transition is global, that is, the transition is applied to issues regardless of their status. ]]
+      isGlobal : Boolean
+      [[ Whether this is the initial issue transition for the workflow. ]]
+      isInitial : Boolean
+      [[ Whether the issue has to meet criteria before the issue transition is applied. ]]
+      isConditional : Boolean
+      [[ Details of the fields associated with the issue transition screen. Use this information to populate `fields` and `update` in a transition request. ]]
+      fields : Any
+      [[ Expand options that include additional transition details in the response. ]]
+      expand : String
+   }
+   
+   [[ A status. ]]
+   model StatusDetails {
+      [[ The URL of the status. ]]
+      self : String
+      [[ The description of the status. ]]
+      description : String
+      [[ The URL of the icon used to represent the status. ]]
+      iconUrl : String
+      [[ The name of the status. ]]
+      name : String
+      [[ The ID of the status. ]]
+      id : String
+      [[ The category assigned to the status. ]]
+      statusCategory : StatusCategory
+   }
+   
+   [[ A status category. ]]
+   model StatusCategory {
+      [[ The URL of the status category. ]]
+      self : String
+      [[ The ID of the status category. ]]
+      id : Int
+      [[ The key of the status category. ]]
+      key : String
+      [[ The name of the color used to represent the status category. ]]
+      colorName : String
+      [[ The name of the status category. ]]
+      name : String
    }
    
    [[ List of user account IDs. ]]
@@ -79,7 +310,23 @@ namespace vyne.openApi {
       [[ If no issue suggestions are found, returns a message indicating no suggestions were found, ]]
       msg : String
       [[ A list of issues suggested for use in auto-completion. ]]
-      issues : Any[]
+      issues : SuggestedIssue[]
+   }
+   
+   [[ An issue suggested for use in the issue picker auto-completion. ]]
+   model SuggestedIssue {
+      [[ The ID of the issue. ]]
+      id : Int
+      [[ The key of the issue. ]]
+      key : String
+      [[ The key of the issue in HTML format. ]]
+      keyHtml : String
+      [[ The URL of the issue type's avatar. ]]
+      img : String
+      [[ The phrase containing the query string in HTML format, with the string highlighted with HTML bold tags. ]]
+      summary : String
+      [[ The phrase containing the query string, as plain text. ]]
+      summaryText : String
    }
    
    [[ Properties that identify a workflow. ]]
@@ -95,15 +342,52 @@ namespace vyne.openApi {
       value : String?
       [[ The properties of the option as arbitrary key-value pairs. These properties can be searched using JQL, if the extractions (see https://developer.atlassian.com/cloud/jira/platform/modules/issue-field-option-property-index/) are defined in the descriptor for the issue field module. ]]
       properties : Any
-      config : Any
+      config : IssueFieldOptionConfiguration
+   }
+   
+   [[ Details of the projects the option is available in. ]]
+   model IssueFieldOptionConfiguration {
+      [[ Defines the projects that the option is available in. If the scope is not defined, then the option is available in all projects. ]]
+      scope : IssueFieldOptionScopeBean
+      [[ DEPRECATED ]]
+      attributes : String[]
+   }
+   
+   model IssueFieldOptionScopeBean {
+      [[ DEPRECATED ]]
+      projects : Int[]
+      [[ Defines the projects in which the option is available and the behavior of the option within each project. Specify one object per project. The behavior of the option in a project context overrides the behavior in the global context. ]]
+      projects2 : ProjectScopeBean[]
+      [[ Defines the behavior of the option within the global context. If this property is set, even if set to an empty object, then the option is available in all projects. ]]
+      global : GlobalScopeBean
+   }
+   
+   model ProjectScopeBean {
+      [[ The ID of the project that the option's behavior applies to. ]]
+      id : Int
+      [[ Defines the behavior of the option in the project.If notSelectable is set, the option cannot be set as the field's value. This is useful for archiving an option that has previously been selected but shouldn't be used anymore.If defaultValue is set, the option is selected by default. ]]
+      attributes : String[]
+   }
+   
+   model GlobalScopeBean {
+      [[ Defines the behavior of the option in the global context.If notSelectable is set, the option cannot be set as the field's value. This is useful for archiving an option that has previously been selected but shouldn't be used anymore.If defaultValue is set, the option is selected by default. ]]
+      attributes : String[]
    }
    
    [[ Details of the group membership or permissions needed to receive the notification. ]]
    model NotificationRecipientsRestrictions {
       [[ List of group memberships required to receive the notification. ]]
-      groups : Any[]
+      groups : GroupName[]
       [[ List of permissions required to receive the notification. ]]
-      permissions : Any[]
+      permissions : RestrictedPermission[]
+   }
+   
+   [[ Details of the permission. ]]
+   model RestrictedPermission {
+      [[ The ID of the permission. Either `id` or `key` must be specified. Use [Get all permissions](#api-rest-api-3-permissions-get) to get the list of permissions. ]]
+      id : String
+      [[ The key of the permission. Either `id` or `key` must be specified. Use [Get all permissions](#api-rest-api-3-permissions-get) to get the list of permissions. ]]
+      key : String
    }
    
    [[ The details of watchers on an issue. ]]
@@ -115,7 +399,7 @@ namespace vyne.openApi {
       [[ The number of users watching this issue. ]]
       watchCount : Int
       [[ Details of the users watching this issue. ]]
-      watchers : Any[]
+      watchers : UserDetails[]
    }
    
    [[ The linked item. ]]
@@ -127,9 +411,31 @@ namespace vyne.openApi {
       [[ The summary details of the item. ]]
       summary : String
       [[ Details of the icon for the item. If no icon is defined, the default link icon is used in Jira. ]]
-      icon : Any
+      icon : Icon
       [[ The status of the item. ]]
-      status : Any
+      status : Status
+   }
+   
+   [[ An icon. If no icon is defined:
+   *  for a status icon, no status icon displays in Jira.
+   *  for the remote object icon, the default link icon displays in Jira. ]]
+   model Icon {
+      [[ The URL of an icon that displays at 16x16 pixel in Jira. ]]
+      url16x16 : String
+      [[ The title of the icon. This is used as follows:
+      *  For a status icon it is used as a tooltip on the icon. If not set, the status icon doesn't display a tooltip in Jira.
+      *  For the remote object icon it is used in conjunction with the application name to display a tooltip for the link's icon. The tooltip takes the format "\[application name\] icon title". Blank itemsare excluded from the tooltip title. If both items are blank, the icon tooltop displays as "Web Link". ]]
+      title : String
+      [[ The URL of the tooltip, used only for a status icon. If not set, the status icon in Jira is not clickable. ]]
+      link : String
+   }
+   
+   [[ The status of the item. ]]
+   model Status {
+      [[ Indicates whether the item is resolved. If set to "true", the link to the issue is displayed in a strikethrough font, otherwise the link displays in normal font. ]]
+      resolved : Boolean
+      [[ Details of the icon representing the status. If not provided, no status icon displays in Jira. ]]
+      icon : Icon
    }
    
    [[ The hierarchy of issue types within a project. ]]
@@ -137,7 +443,31 @@ namespace vyne.openApi {
       [[ The ID of the project. ]]
       projectId : Int
       [[ Details of an issue type hierarchy level. ]]
-      hierarchy : Any[]
+      hierarchy : ProjectIssueTypesHierarchyLevel[]
+   }
+   
+   [[ Details of an issue type hierarchy level. ]]
+   model ProjectIssueTypesHierarchyLevel {
+      [[ The ID of the issue type hierarchy level. ]]
+      entityId : uuid
+      [[ The level of the issue type hierarchy level. ]]
+      level : Int
+      [[ The name of the issue type hierarchy level. ]]
+      name : String
+      [[ The list of issue types in the hierarchy level. ]]
+      issueTypes : IssueTypeDetails[]
+   }
+   
+   type uuid inherits String
+   
+   [[ Details of an issue type. ]]
+   model IssueTypeDetails {
+      [[ The ID of the issue type. ]]
+      id : Int
+      [[ The name of the issue type. ]]
+      name : String
+      [[ The avatar of the issue type. ]]
+      avatarId : Int
    }
    
    [[ The ID or key of a linked issue. ]]
@@ -149,7 +479,60 @@ namespace vyne.openApi {
       [[ The URL of the issue. ]]
       self : String
       [[ The fields associated with the issue. ]]
-      fields : Any
+      fields : Fields
+   }
+   
+   [[ Key fields from the linked issue. ]]
+   model Fields {
+      [[ The summary description of the linked issue. ]]
+      summary : String
+      [[ The status of the linked issue. ]]
+      status : StatusDetails
+      [[ The priority of the linked issue. ]]
+      priority : Priority
+      [[ The assignee of the linked issue. ]]
+      assignee : UserDetails
+      issuetype : IssueTypeBean
+      [[ The type of the linked issue. ]]
+      issueType : IssueTypeBean
+   }
+   
+   [[ An issue priority. ]]
+   model Priority {
+      [[ The URL of the issue priority. ]]
+      self : String
+      [[ The color used to indicate the issue priority. ]]
+      statusColor : String
+      [[ The description of the issue priority. ]]
+      description : String
+      [[ The URL of the icon for the issue priority. ]]
+      iconUrl : String
+      [[ The name of the issue priority. ]]
+      name : String
+      [[ The ID of the issue priority. ]]
+      id : String
+   }
+   
+   [[ Details about an issue type. ]]
+   model IssueTypeBean {
+      [[ The URL of these issue type details. ]]
+      self : String
+      [[ The ID of the issue type. ]]
+      id : String
+      [[ The description of the issue type. ]]
+      description : String
+      [[ The URL of the issue type's avatar. ]]
+      iconUrl : String
+      [[ The name of the issue type. ]]
+      name : String
+      [[ Indicates whether this issue type is used to create subtasks. ]]
+      subtask : Boolean
+      [[ The ID of the issue type's avatar. ]]
+      avatarId : Int
+      [[ project unique ID for next-gen entities ]]
+      entityId : uuid
+      [[ Details of the next-gen projects the issue type is available in. ]]
+      scope : Scope
    }
    
    [[ Details of the options for a select list issue field. ]]
@@ -160,15 +543,7 @@ namespace vyne.openApi {
       value : String?
       [[ The properties of the object, as arbitrary key-value pairs. These properties can be searched using JQL, if the extractions (see [Issue Field Option Property Index](https://developer.atlassian.com/cloud/jira/platform/modules/issue-field-option-property-index/)) are defined in the descriptor for the issue field module. ]]
       properties : Any
-      config : Any
-   }
-   
-   [[ The status of the item. ]]
-   model Status {
-      [[ Indicates whether the item is resolved. If set to "true", the link to the issue is displayed in a strikethrough font, otherwise the link displays in normal font. ]]
-      resolved : Boolean
-      [[ Details of the icon representing the status. If not provided, no status icon displays in Jira. ]]
-      icon : Any
+      config : IssueFieldOptionConfiguration
    }
    
    [[ Details of a link between issues. ]]
@@ -178,11 +553,35 @@ namespace vyne.openApi {
       [[ The URL of the issue link. ]]
       self : String
       [[ The type of link between the issues. ]]
-      `type` : Any
+      `type` : IssueLinkType
       [[ The issue the link joins to. ]]
       inwardIssue : LinkedIssue
       [[ The issue the link originates from. ]]
       outwardIssue : LinkedIssue
+   }
+   
+   [[ This object is used as follows:
+   *  In the [ issueLink](#api-rest-api-3-issueLink-post) resource it defines and reports on the type of link between the issues. Find a list of issue link types with [Get issue link types](#api-rest-api-3-issueLinkType-get).
+   *  In the [ issueLinkType](#api-rest-api-3-issueLinkType-post) resource it defines and reports on issue link types. ]]
+   model IssueLinkType {
+      [[ The ID of the issue link type and is used as follows:
+      *  In the [ issueLink](#api-rest-api-3-issueLink-post) resource it is the type of issue link. Required on create when `name` isn't provided. Otherwise, read only.
+      *  In the [ issueLinkType](#api-rest-api-3-issueLinkType-post) resource it is read only. ]]
+      id : String
+      [[ The name of the issue link type and is used as follows:
+      *  In the [ issueLink](#api-rest-api-3-issueLink-post) resource it is the type of issue link. Required on create when `id` isn't provided. Otherwise, read only.
+      *  In the [ issueLinkType](#api-rest-api-3-issueLinkType-post) resource it is required on create and optional on update. Otherwise, read only. ]]
+      name : String
+      [[ The description of the issue link type inward link and is used as follows:
+      *  In the [ issueLink](#api-rest-api-3-issueLink-post) resource it is read only.
+      *  In the [ issueLinkType](#api-rest-api-3-issueLinkType-post) resource it is required on create and optional on update. Otherwise, read only. ]]
+      inward : String
+      [[ The description of the issue link type outward link and is used as follows:
+      *  In the [ issueLink](#api-rest-api-3-issueLink-post) resource it is read only.
+      *  In the [ issueLinkType](#api-rest-api-3-issueLinkType-post) resource it is required on create and optional on update. Otherwise, read only. ]]
+      outward : String
+      [[ The URL of the issue link type. Read only. ]]
+      self : String
    }
    
    [[ Details of a changed worklog. ]]
@@ -192,15 +591,32 @@ namespace vyne.openApi {
       [[ The datetime of the change. ]]
       updatedTime : Int
       [[ Details of properties associated with the change. ]]
-      properties : Any[]
+      properties : EntityProperty[]
+   }
+   
+   [[ An entity property, for more information see [Entity properties](https://developer.atlassian.com/cloud/jira/platform/jira-entity-properties/). ]]
+   model EntityProperty {
+      [[ The key of the property. Required on create and update. ]]
+      key : String
+      [[ The value of the property. Required on create and update. ]]
+      value : Any
    }
    
    type avatarUrls
    
    model BulkOperationErrorResult {
       status : Int
-      elementErrors : Any
+      elementErrors : ErrorCollection
       failedElementNumber : Int
+   }
+   
+   [[ Error messages from an operation. ]]
+   model ErrorCollection {
+      [[ The list of error messages produced by this operation. For example, "input parameter 'key' must be provided" ]]
+      errorMessages : String[]
+      [[ The list of errors by parameter returned by the operation. For example,"projectKey": "Project keys must start with an uppercase letter, followed by one or more uppercase alphanumeric characters." ]]
+      errors : Any
+      status : Int
    }
    
    model SimpleErrorCollection {
@@ -221,13 +637,70 @@ namespace vyne.openApi {
    
    [[ Details about a workflow. ]]
    model Workflow {
-      id : Any
+      id : PublishedWorkflowId
       [[ The description of the workflow. ]]
       description : String?
       [[ The transitions of the workflow. ]]
-      transitions : Any[]
+      transitions : Transition[]
       [[ The statuses of the workflow. ]]
-      statuses : Any[]
+      statuses : WorkflowStatus[]
+   }
+   
+   [[ Properties that identify a published workflow. ]]
+   model PublishedWorkflowId {
+      [[ The name of the workflow. ]]
+      name : String?
+   }
+   
+   [[ Details of a workflow transition. ]]
+   model Transition {
+      [[ The ID of the transition. ]]
+      id : String?
+      [[ The name of the transition. ]]
+      name : String?
+      [[ The description of the transition. ]]
+      description : String?
+      [[ The statuses the transition can start from. ]]
+      `from` : String[]?
+      [[ The status the transition goes to. ]]
+      to : String?
+      [[ The type of the transition. ]]
+      `type` : String?
+      screen : ScreenID
+      rules : WorkflowRules
+   }
+   
+   [[ ID of a screen. ]]
+   model ScreenID {
+      [[ The ID of the screen. ]]
+      id : String?
+   }
+   
+   [[ A collection of transition rules. ]]
+   model WorkflowRules {
+      [[ The workflow conditions. ]]
+      conditions : WorkflowTransitionRule[]?
+      [[ The workflow validators. ]]
+      validators : WorkflowTransitionRule[]?
+      [[ The workflow post functions. ]]
+      postFunctions : WorkflowTransitionRule[]?
+   }
+   
+   [[ A workflow transition rule. ]]
+   model WorkflowTransitionRule {
+      [[ The type of the transition rule. ]]
+      `type` : String?
+      [[ The configuration of the transition rule. This is currently returned only for some of the rule types. Availability of this property is subject to change. ]]
+      configuration : Any
+   }
+   
+   [[ Details of a workflow status. ]]
+   model WorkflowStatus {
+      [[ The ID of the issue status. ]]
+      id : String?
+      [[ The name of the status in the workflow. ]]
+      name : String?
+      properties : WorkflowStatusProperties
    }
    
    [[ A workflow transition rule. ]]
@@ -236,8 +709,22 @@ namespace vyne.openApi {
       id : String?
       [[ The key of the rule, as defined in the Connect app descriptor. ]]
       key : String?
-      configuration : Any
-      transition : Any
+      configuration : RuleConfiguration
+      transition : WorkflowTransition
+   }
+   
+   [[ A rule configuration. ]]
+   model RuleConfiguration {
+      [[ Configuration of the rule, as it is stored by the Connect app on the rule configuration page. ]]
+      value : String?
+   }
+   
+   [[ A workflow transition. ]]
+   model WorkflowTransition {
+      [[ The transition ID. ]]
+      id : Int?
+      [[ The transition name. ]]
+      name : String?
    }
    
    [[ A list of JQL queries to parse. ]]
@@ -252,16 +739,39 @@ namespace vyne.openApi {
       header : String
       [[ The total number of groups found in the search. ]]
       total : Int
-      groups : Any[]
+      groups : FoundGroup[]
+   }
+   
+   [[ A group found in a search. ]]
+   model FoundGroup {
+      [[ The name of the group. ]]
+      name : String
+      [[ The group name with the matched query string highlighted with the HTML bold tag. ]]
+      html : String
+      labels : GroupLabel[]
+      [[ The ID of the group, if available, which uniquely identifies the group across all Atlassian products. For example, *952d12c3-5b5b-4d04-bb32-44d383afc4b2*. ]]
+      groupId : String
+   }
+   
+   [[ A group label. ]]
+   model GroupLabel {
+      [[ The group label name. ]]
+      text : String
+      [[ The title of the group label. ]]
+      title : String
+      [[ The type of the group label. ]]
+      `type` : String
    }
    
    model SimpleListWrapperGroupName {
       size : Int
-      items : Any[]
-      pagingCallback : Any
-      callback : Any
+      items : GroupName[]
+      pagingCallback : ListWrapperCallbackGroupName
+      callback : ListWrapperCallbackGroupName
       max_results : Int
    }
+   
+   type ListWrapperCallbackGroupName
    
    [[ Details about a project. ]]
    model Project {
@@ -276,11 +786,11 @@ namespace vyne.openApi {
       [[ A brief description of the project. ]]
       description : String
       [[ The username of the project lead. ]]
-      lead : Any
+      lead : User
       [[ List of the components contained in the project. ]]
-      components : Any[]
+      components : Component[]
       [[ List of the issue types available in the project. ]]
-      issueTypes : Any[]
+      issueTypes : IssueTypeBean[]
       [[ A link to information about this project, such as project documentation. ]]
       url : String
       [[ An email address associated with the project. ]]
@@ -288,15 +798,15 @@ namespace vyne.openApi {
       [[ The default assignee when creating issues for this project. ]]
       assigneeType : String
       [[ The versions defined in the project. For more information, see [Create version](#api-rest-api-3-version-post). ]]
-      versions : Any[]
+      versions : Version[]
       [[ The name of the project. ]]
       name : String
       [[ The name and self URL for each role defined in the project. For more information, see [Create project role](#api-rest-api-3-role-post). ]]
       roles : Any
       [[ The URLs of the project's avatars. ]]
-      avatarUrls : Any
+      avatarUrls : AvatarUrlsBean
       [[ The category the project belongs to. ]]
-      projectCategory : Any
+      projectCategory : ProjectCategory
       [[ The [project type](https://confluence.atlassian.com/x/GwiiLQ#Jiraapplicationsoverview-Productfeaturesandprojecttypes) of the project. ]]
       projectTypeKey : String
       [[ Whether the project is simplified. ]]
@@ -308,52 +818,319 @@ namespace vyne.openApi {
       [[ Whether the project is private. ]]
       isPrivate : Boolean
       [[ The issue type hierarchy for the project ]]
-      issueTypeHierarchy : Any
+      issueTypeHierarchy : Hierarchy
       [[ User permissions on the project ]]
-      permissions : Any
+      permissions : ProjectPermissions
       [[ Map of project properties ]]
       properties : Any
       [[ unique ID for next-gen projects ]]
-      uuid : String
+      uuid : uuid
       [[ Insights about the project. ]]
-      insight : Any
+      insight : ProjectInsight
+   }
+   
+   [[ A user. ]]
+   model User {
+      [[ The URL of the user. ]]
+      self : String
+      [[ This property is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
+      key : String
+      [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. Required in requests. An account ID with value `unknown` is returned when there is missing data for a user, which only happens for deleted users. We recommend you treat this value as an error case if you need to access more information about the user. ]]
+      accountId : String
+      [[ The user account type. Can take the following values:
+      *  `atlassian` regular Atlassian user account
+      *  `app` system account used for Connect applications and OAuth to represent external systems
+      *  `customer` Jira Service Desk account representing an external service desk ]]
+      accountType : String
+      [[ This property is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
+      name : String
+      [[ The email address of the user. Depending on the user’s privacy setting, this may be returned as null. ]]
+      emailAddress : String
+      [[ The avatars of the user. ]]
+      avatarUrls : AvatarUrlsBean
+      [[ The display name of the user. Depending on the user’s privacy setting, this may return an alternative value. ]]
+      displayName : String
+      [[ Indicates whether the user is active. ]]
+      active : Boolean
+      [[ The time zone specified in the user's profile. Depending on the user’s privacy setting, this may be returned as null. ]]
+      timeZone : String
+      [[ The locale of the user. Depending on the user’s privacy setting, this may be returned as null. ]]
+      locale : String
+      [[ The groups that the user belongs to. ]]
+      groups : SimpleListWrapperGroupName
+      [[ The application roles the user is assigned to. ]]
+      applicationRoles : SimpleListWrapperApplicationRole
+      [[ Expand options that include additional user details in the response. ]]
+      expand : String
    }
    
    model SimpleListWrapperApplicationRole {
       size : Int
-      items : Any[]
-      pagingCallback : Any
-      callback : Any
+      items : ApplicationRole[]
+      pagingCallback : ListWrapperCallbackApplicationRole
+      callback : ListWrapperCallbackApplicationRole
       max_results : Int
+   }
+   
+   [[ Details of an application role. ]]
+   model ApplicationRole {
+      [[ The key of the application role. ]]
+      key : String
+      [[ The groups associated with the application role. ]]
+      groups : String[]
+      [[ The display name of the application role. ]]
+      name : String
+      [[ The groups that are granted default access for this application role. ]]
+      defaultGroups : String[]
+      [[ Determines whether this application role should be selected by default on user creation. ]]
+      selectedByDefault : Boolean
+      [[ Deprecated. ]]
+      defined : Boolean
+      [[ The maximum count of users on your license. ]]
+      numberOfSeats : Int
+      [[ The count of users remaining on your license. ]]
+      remainingSeats : Int
+      [[ The number of users counting against your license. ]]
+      userCount : Int
+      [[ The [type of users](https://confluence.atlassian.com/x/lRW3Ng) being counted against your license. ]]
+      userCountDescription : String
+      hasUnlimitedSeats : Boolean
+      [[ Indicates if the application role belongs to Jira platform (`jira-core`). ]]
+      platform : Boolean
+   }
+   
+   type ListWrapperCallbackApplicationRole
+   
+   [[ Details about a project component. ]]
+   model Component {
+      [[ The URL of the component. ]]
+      self : String
+      [[ The unique identifier for the component. ]]
+      id : String
+      [[ The unique name for the component in the project. Required when creating a component. Optional when updating a component. The maximum length is 255 characters. ]]
+      name : String
+      [[ The description for the component. Optional when creating or updating a component. ]]
+      description : String
+      [[ The user details for the component's lead user. ]]
+      lead : User
+      [[ This property is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
+      leadUserName : String
+      [[ The accountId of the component's lead user. The accountId uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. An account ID with value `unknown` is returned when there is missing data for a user, which only happens for deleted users. We recommend you treat this value as an error case if you need to access more information about the user. Optional when creating or updating a component. ]]
+      leadAccountId : String
+      [[ The nominal user type used to determine the assignee for issues created with this component. See `realAssigneeType` for details on how the type of the user, and hence the user, assigned to issues is determined. Can take the following values:
+      *  `PROJECT_LEAD` the assignee to any issues created with this component is nominally the lead for the project the component is in.
+      *  `COMPONENT_LEAD` the assignee to any issues created with this component is nominally the lead for the component.
+      *  `UNASSIGNED` an assignee is not set for issues created with this component.
+      *  `PROJECT_DEFAULT` the assignee to any issues created with this component is nominally the default assignee for the project that the component is in.
+      Default value: `PROJECT_DEFAULT`.
+      Optional when creating or updating a component. ]]
+      assigneeType : String
+      [[ The details of the user associated with `assigneeType`, if any. See `realAssignee` for details of the user assigned to issues created with this component. ]]
+      assignee : User
+      [[ The type of the assignee that is assigned to issues created with this component, when an assignee cannot be set from the `assigneeType`. For example, `assigneeType` is set to `COMPONENT_LEAD` but no component lead is set. This property is set to one of the following values:
+      *  `PROJECT_LEAD` when `assigneeType` is `PROJECT_LEAD` and the project lead has permission to be assigned issues in the project that the component is in.
+      *  `COMPONENT_LEAD` when `assignee`Type is `COMPONENT_LEAD` and the component lead has permission to be assigned issues in the project that the component is in.
+      *  `UNASSIGNED` when `assigneeType` is `UNASSIGNED` and Jira is configured to allow unassigned issues.
+      *  `PROJECT_DEFAULT` when none of the preceding cases are true. ]]
+      realAssigneeType : String
+      [[ The user assigned to issues created with this component, when `assigneeType` does not identify a valid assignee. ]]
+      realAssignee : User
+      [[ Indicates whether a user is associated with `assigneeType`. For example, if the `assigneeType` is set to `COMPONENT_LEAD` but the component lead is not set, then `false` is returned. ]]
+      isAssigneeTypeValid : Boolean
+      [[ The key of the project the component is assigned to. Required when creating a component. Can't be updated. ]]
+      project : String
+      [[ The ID of the project the component is assigned to. ]]
+      projectId : Int
+   }
+   
+   [[ Details about a project version. ]]
+   model Version {
+      [[ Use [expand](em>#expansion) to include additional information about version in the response. This parameter accepts a comma-separated list. Expand options include:
+      *  `operations` Returns the list of operations available for this version.
+      *  `issuesstatus` Returns the count of issues in this version for each of the status categories *to do*, *in progress*, *done*, and *unmapped*. The *unmapped* property contains a count of issues with a status other than *to do*, *in progress*, and *done*.
+      Optional for create and update. ]]
+      expand : String
+      [[ The URL of the version. ]]
+      self : String
+      [[ The ID of the version. ]]
+      id : String
+      [[ The description of the version. Optional when creating or updating a version. ]]
+      description : String
+      [[ The unique name of the version. Required when creating a version. Optional when updating a version. The maximum length is 255 characters. ]]
+      name : String
+      [[ Indicates that the version is archived. Optional when creating or updating a version. ]]
+      archived : Boolean
+      [[ Indicates that the version is released. If the version is released a request to release again is ignored. Not applicable when creating a version. Optional when updating a version. ]]
+      released : Boolean
+      [[ The start date of the version. Expressed in ISO 8601 format (yyyy-mm-dd). Optional when creating or updating a version. ]]
+      startDate : Date
+      [[ The release date of the version. Expressed in ISO 8601 format (yyyy-mm-dd). Optional when creating or updating a version. ]]
+      releaseDate : Date
+      [[ Indicates that the version is overdue. ]]
+      overdue : Boolean
+      [[ The date on which work on this version is expected to start, expressed in the instance's *Day/Month/Year Format* date format. ]]
+      userStartDate : String
+      [[ The date on which work on this version is expected to finish, expressed in the instance's *Day/Month/Year Format* date format. ]]
+      userReleaseDate : String
+      [[ Deprecated. Use `projectId`. ]]
+      project : String
+      [[ The ID of the project to which this version is attached. Required when creating a version. Not applicable when updating a version. ]]
+      projectId : Int
+      [[ The URL of the self link to the version to which all unfixed issues are moved when a version is released. Not applicable when creating a version. Optional when updating a version. ]]
+      moveUnfixedIssuesTo : String
+      [[ If the expand option `operations` is used, returns the list of operations available for this version. ]]
+      operations : SimpleLink[]
+      [[ If the expand option `issuesstatus` is used, returns the count of issues in this version for each of the status categories *to do*, *in progress*, *done*, and *unmapped*. The *unmapped* property contains a count of issues with a status other than *to do*, *in progress*, and *done*. ]]
+      issuesStatusForFixVersion : VersionIssuesStatus
+   }
+   
+   [[ Details about the operations available in this version. ]]
+   model SimpleLink {
+      id : String
+      styleClass : String
+      iconClass : String
+      label : String
+      title : String
+      href : String
+      weight : Int
+   }
+   
+   [[ Counts of the number of issues in various statuses. ]]
+   model VersionIssuesStatus {
+      [[ Count of issues with a status other than *to do*, *in progress*, and *done*. ]]
+      unmapped : Int
+      [[ Count of issues with status *to do*. ]]
+      toDo : Int
+      [[ Count of issues with status *in progress*. ]]
+      inProgress : Int
+      [[ Count of issues with status *done*. ]]
+      done : Int
+   }
+   
+   [[ A project category. ]]
+   model ProjectCategory {
+      [[ The URL of the project category. ]]
+      self : String
+      [[ The ID of the project category. ]]
+      id : String
+      [[ The name of the project category. Required on create, optional on update. ]]
+      name : String
+      [[ The description of the project category. Required on create, optional on update. ]]
+      description : String
+   }
+   
+   [[ Project Issue Type Hierarchy ]]
+   model Hierarchy {
+      level : HierarchyLevel[]
+   }
+   
+   model HierarchyLevel {
+      id : Int
+      name : String
+      aboveLevelId : Int
+      belowLevelId : Int
+      projectConfigurationId : Int
+      issueTypeIds : Int[]
+      externalUuid : uuid
+   }
+   
+   [[ Permissions which a user has on a project. ]]
+   model ProjectPermissions {
+      [[ Indicates whether the logged user can edit the project. ]]
+      canEdit : Boolean
+   }
+   
+   [[ Additional details about a project. ]]
+   model ProjectInsight {
+      [[ Total issue count. ]]
+      totalIssueCount : Int
+      [[ The last issue update time. ]]
+      lastIssueUpdateTime : DateTime
    }
    
    [[ List of project avatars. ]]
    model ProjectAvatars {
       [[ List of avatars included with Jira. These avatars cannot be deleted. ]]
-      system : Any[]
+      system : Avatar[]
       [[ List of avatars added to Jira. These avatars may be deleted. ]]
-      custom : Any[]
+      custom : Avatar[]
+   }
+   
+   [[ Details of an avatar. ]]
+   model Avatar {
+      [[ The ID of the avatar. ]]
+      id : String?
+      [[ The owner of the avatar. For a system avatar the owner is null (and nothing is returned). For non-system avatars this is the appropriate identifier, such as the ID for a project or the account ID for a user. ]]
+      owner : String
+      [[ Indicates whether the avatar is a system avatar. ]]
+      isSystemAvatar : Boolean
+      [[ Indicates whether the avatar is used in Jira. For example, shown as a project's avatar. ]]
+      isSelected : Boolean
+      [[ Indicates whether the avatar can be deleted. ]]
+      isDeletable : Boolean
+      [[ The file name of the avatar icon. Returned for system avatars. ]]
+      fileName : String
+      [[ The list of avatar icon URLs. ]]
+      urls : Any
    }
    
    model LinkIssueRequestJsonBean {
-      `type` : Any
+      `type` : IssueLinkType
       inwardIssue : LinkedIssue
       outwardIssue : LinkedIssue
-      comment : Any
+      comment : Comment
    }
    
-   [[ Details of the projects the option is available in. ]]
-   model IssueFieldOptionConfiguration {
-      [[ Defines the projects that the option is available in. If the scope is not defined, then the option is available in all projects. ]]
-      scope : Any
-      [[ DEPRECATED ]]
-      attributes : String[]
+   [[ A comment. ]]
+   model Comment {
+      [[ The URL of the comment. ]]
+      self : String
+      [[ The ID of the comment. ]]
+      id : String
+      [[ The ID of the user who created the comment. ]]
+      author : UserDetails
+      [[ The comment text in [Atlassian Document Format](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/). ]]
+      body : Any
+      [[ The rendered version of the comment. ]]
+      renderedBody : String
+      [[ The ID of the user who updated the comment last. ]]
+      updateAuthor : UserDetails
+      [[ The date and time at which the comment was created. ]]
+      created : DateTime
+      [[ The date and time at which the comment was updated last. ]]
+      updated : DateTime
+      [[ The group or role to which this comment is visible. Optional on create and update. ]]
+      visibility : Visibility
+      [[ Indicates whether the comment is visible in Jira Service Desk. Defaults to true when comments are created in the Jira Cloud Platform. This includes when the site doesn't use Jira Service Desk or the project isn't a Jira Service Desk project and, therefore, there is no Jira Service Desk for the issue to be visible on. To create a comment with its visibility in Jira Service Desk set to false, use the Jira Service Desk REST API [Create request comment](https://developer.atlassian.com/cloud/jira/service-desk/rest/#api-rest-servicedeskapi-request-issueIdOrKey-comment-post) operation. ]]
+      jsdPublic : Boolean
+      [[ A list of comment properties. Optional on create and update. ]]
+      properties : EntityProperty[]
+   }
+   
+   [[ The group or role to which this item is visible. ]]
+   model Visibility {
+      [[ Indicates whether visibility of this item is restricted to a group or role. ]]
+      `type` : String
+      [[ The name of the group or role to which visibility of this item is restricted. ]]
+      value : String
    }
    
    [[ List of issue level security items in a project. ]]
    model ProjectIssueSecurityLevels {
       [[ Issue level security items list. ]]
-      levels : Any[]?
+      levels : SecurityLevel[]?
+   }
+   
+   [[ Details of an issue level security item. ]]
+   model SecurityLevel {
+      [[ The URL of the issue level security item. ]]
+      self : String
+      [[ The ID of the issue level security item. ]]
+      id : String
+      [[ The description of the issue level security item. ]]
+      description : String
+      [[ The name of the issue level security item. ]]
+      name : String
    }
    
    [[ A page of items. ]]
@@ -371,13 +1148,21 @@ namespace vyne.openApi {
       [[ Indicates whether this is the last page. ]]
       isLast : Boolean
       [[ The list of items. ]]
-      values : Any[]
+      values : User[]
    }
    
    [[ A list of projects in which a user is granted permissions. ]]
    model PermittedProjects {
       [[ A list of projects. ]]
-      projects : Any[]
+      projects : ProjectIdentifierBean[]
+   }
+   
+   [[ The identifiers for a project. ]]
+   model ProjectIdentifierBean {
+      [[ The ID of the project. ]]
+      id : Int
+      [[ The key of the project. ]]
+      key : String
    }
    
    [[ An icon. ]]
@@ -407,9 +1192,9 @@ namespace vyne.openApi {
       [[ The ID of the issue type's avatar. ]]
       avatarId : Int
       [[ project unique ID for next-gen entities ]]
-      entityId : String
+      entityId : uuid
       [[ Details of the next-gen projects the issue type is available in. ]]
-      scope : Any
+      scope : Scope
       [[ Expand options that include additional issue type metadata details in the response. ]]
       expand : String
       [[ List of the fields available when creating an issue for the issue type. ]]
@@ -422,9 +1207,23 @@ namespace vyne.openApi {
       [[ The URL for these group details. ]]
       self : String
       [[ A paginated list of the users that are members of the group. A maximum of 50 users is returned in the list, to access additional users append `[start-index:end-index]` to the expand request. For example, to access the next 50 users, use`?expand=users[51:100]`. ]]
-      users : Any
+      users : PagedListUserDetailsApplicationUser
       [[ Expand options that include additional group details in the response. ]]
       expand : String
+   }
+   
+   [[ A paged list. To access additional details append `[start-index:end-index]` to the expand request. For example, `?expand=sharedUsers[10:40]` returns a list starting at item 10 and finishing at item 40. ]]
+   model PagedListUserDetailsApplicationUser {
+      [[ The number of items on the page. ]]
+      size : Int
+      [[ The list of items. ]]
+      items : UserDetails[]
+      [[ The maximum number of results that could be on the page. ]]
+      max_results : Int
+      [[ The index of the first item returned on the page. ]]
+      start_index : Int
+      [[ The index of the last item returned on the page. ]]
+      end_index : Int
    }
    
    [[ A list of webhooks. ]]
@@ -450,9 +1249,31 @@ namespace vyne.openApi {
       [[ A description for the permission scheme. ]]
       description : String
       [[ The scope of the permission scheme. ]]
-      scope : Any
+      scope : Scope
       [[ The permission scheme to create or update. See [About permission schemes and grants](#about-permission-schemes-and-grants) for more information. ]]
-      permissions : Any[]
+      permissions : PermissionGrant[]
+   }
+   
+   [[ Details about a permission granted to a user or group. ]]
+   model PermissionGrant {
+      [[ The ID of the permission granted details. ]]
+      id : Int
+      [[ The URL of the permission granted details. ]]
+      self : String
+      [[ The user or group being granted the permission. It consists of a `type` and a type-dependent `parameter`. See [Holder object](#holder-object) in *Get all permission schemes* for more information. ]]
+      holder : PermissionHolder
+      [[ The permission to grant. This permission can be one of the built-in permissions or a custom permission added by an app. See [Built-in permissions](#built-in-permissions) in *Get all permission schemes* for more information about the built-in permissions. See the [project permission](https://developer.atlassian.com/cloud/jira/platform/modules/project-permission/) and [global permission](https://developer.atlassian.com/cloud/jira/platform/modules/global-permission/) module documentation for more information about custom permissions. ]]
+      permission : String
+   }
+   
+   [[ Details of a user, group, field, or project role that holds a permission. See [Holder object](#holder-object) in *Get all permission schemes* for more information. ]]
+   model PermissionHolder {
+      [[ The type of permission holder. ]]
+      `type` : String?
+      [[ The identifier of permission holder. ]]
+      `parameter` : String
+      [[ Expand options that include additional permission holder details in the response. ]]
+      expand : String
    }
    
    [[ A page of items. ]]
@@ -470,7 +1291,17 @@ namespace vyne.openApi {
       [[ Indicates whether this is the last page. ]]
       isLast : Boolean
       [[ The list of items. ]]
-      values : Any[]
+      values : Context[]
+   }
+   
+   [[ A context. ]]
+   model Context {
+      [[ The ID of the context. ]]
+      id : Int
+      [[ The name of the context. ]]
+      name : String
+      [[ The scope of the context. ]]
+      scope : Scope
    }
    
    [[ Details of a custom field option and its cascading options. ]]
@@ -483,30 +1314,6 @@ namespace vyne.openApi {
       cascadingOptions : String[]
    }
    
-   [[ Details about a field. ]]
-   model FieldDetails {
-      [[ The ID of the field. ]]
-      id : String
-      [[ The key of the field. ]]
-      key : String
-      [[ The name of the field. ]]
-      name : String
-      [[ Indicates whether the field is a custom field. ]]
-      custom : Boolean
-      [[ Indicates whether the content of the field can be used to order lists. ]]
-      orderable : Boolean
-      [[ Indicates whether the field can be used as a column on the issue navigator. ]]
-      navigable : Boolean
-      [[ Indicates whether the content of the field can be searched. ]]
-      searchable : Boolean
-      [[ The names that can be used to reference the field in an advanced search. For more information, see [Advanced searching - fields reference](https://confluence.atlassian.com/x/gwORLQ). ]]
-      clauseNames : String[]
-      [[ The scope of the field. ]]
-      scope : Any
-      [[ The data schema for the field. ]]
-      schema : Any
-   }
-   
    model CreateUpdateRoleRequestBean {
       [[ The name of the project role. Must be unique. Cannot begin or end with whitespace. The maximum length is 255 characters. Required when creating a project role. Optional when partially updating a project role. ]]
       name : String
@@ -514,13 +1321,45 @@ namespace vyne.openApi {
       description : String
    }
    
-   [[ A JQL query clause. ]]
-   type object
-   
    [[ A parsed JQL query. ]]
    model JqlQuery {
-      where : object
-      orderBy : Any
+      where : JqlQueryClause
+      orderBy : JqlQueryOrderByClause
+   }
+   
+   type JqlQueryClause
+   
+   [[ Details of the order-by JQL clause. ]]
+   model JqlQueryOrderByClause {
+      [[ The list of order-by clause fields and their ordering directives. ]]
+      fields : JqlQueryOrderByClauseElement[]?
+   }
+   
+   [[ An element of the order-by JQL clause. ]]
+   model JqlQueryOrderByClauseElement {
+      field : JqlQueryField
+      [[ The direction in which to order the results. ]]
+      direction : String
+   }
+   
+   [[ A field used in a JQL query. See [Advanced searching - fields reference](https://confluence.atlassian.com/x/dAiiLQ) for more information about fields in JQL queries. ]]
+   model JqlQueryField {
+      [[ The name of the field. ]]
+      name : String?
+      [[ When the field refers to a value in an entity property, details of the entity property value. ]]
+      property : JqlQueryFieldEntityProperty[]
+   }
+   
+   [[ Details of an entity property. ]]
+   model JqlQueryFieldEntityProperty {
+      [[ The object on which the property is set. ]]
+      entity : String?
+      [[ The key of the property. ]]
+      key : String?
+      [[ The path in the property value to query. ]]
+      path : String?
+      [[ The type of the property value extraction. Not available if the extraction for the property is not registered on the instance with the [Entity property](https://developer.atlassian.com/cloud/jira/platform/modules/entity-property/) module. ]]
+      `type` : String
    }
    
    [[ A page of items. ]]
@@ -538,7 +1377,18 @@ namespace vyne.openApi {
       [[ Indicates whether this is the last page. ]]
       isLast : Boolean
       [[ The list of items. ]]
-      values : Any[]
+      values : Webhook[]
+   }
+   
+   [[ A webhook. ]]
+   model Webhook {
+      [[ The ID of the webhook. ]]
+      id : Int?
+      [[ The JQL filter that specifies which issues the webhook is sent for. ]]
+      jqlFilter : String?
+      [[ The Jira events that trigger the webhook. ]]
+      events : String[]
+      expirationDate : Int?
    }
    
    model DeleteAndReplaceVersionBean {
@@ -547,7 +1397,15 @@ namespace vyne.openApi {
       [[ The ID of the version to update `affectedVersion` to when the field contains the deleted version. ]]
       moveAffectedIssuesTo : Int
       [[ An array of custom field IDs (`customFieldId`) and version IDs (`moveTo`) to update when the fields contain the deleted version. ]]
-      customFieldReplacementList : Any[]
+      customFieldReplacementList : CustomFieldReplacement[]
+   }
+   
+   [[ Details about the replacement for a deleted version. ]]
+   model CustomFieldReplacement {
+      [[ The ID of the custom field in which to replace the version number. ]]
+      customFieldId : Int
+      [[ The version number to use as a replacement for the deleted version. ]]
+      moveTo : Int
    }
    
    [[ Details about a notification. ]]
@@ -559,9 +1417,25 @@ namespace vyne.openApi {
       [[ The HTML body of the email notification for the issue. ]]
       htmlBody : String
       [[ The recipients of the email notification for the issue. ]]
-      to : Any
+      to : NotificationRecipients
       [[ Restricts the notifications to users with the specified permissions. ]]
       restrict : NotificationRecipientsRestrictions
+   }
+   
+   [[ Details of the users and groups to receive the notification. ]]
+   model NotificationRecipients {
+      [[ Indicates whether the notification should be sent to the issue's reporter. ]]
+      reporter : Boolean
+      [[ Indicates whether the notification should be sent to the issue's assignees. ]]
+      assignee : Boolean
+      [[ Indicates whether the notification should be sent to the issue's watchers. ]]
+      watchers : Boolean
+      [[ Indicates whether the notification should be sent to the issue's voters. ]]
+      voters : Boolean
+      [[ List of users to receive the notification. ]]
+      users : UserDetails[]
+      [[ List of groups to receive the notification. ]]
+      groups : GroupName[]
    }
    
    [[ A change item. ]]
@@ -612,45 +1486,7 @@ namespace vyne.openApi {
       [[ Indicates whether this issue type represents subtasks. ]]
       subtask : Boolean?
       [[ List of status details for the issue type. ]]
-      statuses : Any[]?
-   }
-   
-   [[ This object is used as follows:
-   *  In the [ issueLink](#api-rest-api-3-issueLink-post) resource it defines and reports on the type of link between the issues. Find a list of issue link types with [Get issue link types](#api-rest-api-3-issueLinkType-get).
-   *  In the [ issueLinkType](#api-rest-api-3-issueLinkType-post) resource it defines and reports on issue link types. ]]
-   model IssueLinkType {
-      [[ The ID of the issue link type and is used as follows:
-      *  In the [ issueLink](#api-rest-api-3-issueLink-post) resource it is the type of issue link. Required on create when `name` isn't provided. Otherwise, read only.
-      *  In the [ issueLinkType](#api-rest-api-3-issueLinkType-post) resource it is read only. ]]
-      id : String
-      [[ The name of the issue link type and is used as follows:
-      *  In the [ issueLink](#api-rest-api-3-issueLink-post) resource it is the type of issue link. Required on create when `id` isn't provided. Otherwise, read only.
-      *  In the [ issueLinkType](#api-rest-api-3-issueLinkType-post) resource it is required on create and optional on update. Otherwise, read only. ]]
-      name : String
-      [[ The description of the issue link type inward link and is used as follows:
-      *  In the [ issueLink](#api-rest-api-3-issueLink-post) resource it is read only.
-      *  In the [ issueLinkType](#api-rest-api-3-issueLinkType-post) resource it is required on create and optional on update. Otherwise, read only. ]]
-      inward : String
-      [[ The description of the issue link type outward link and is used as follows:
-      *  In the [ issueLink](#api-rest-api-3-issueLink-post) resource it is read only.
-      *  In the [ issueLinkType](#api-rest-api-3-issueLinkType-post) resource it is required on create and optional on update. Otherwise, read only. ]]
-      outward : String
-      [[ The URL of the issue link type. Read only. ]]
-      self : String
-   }
-   
-   [[ A status category. ]]
-   model StatusCategory {
-      [[ The URL of the status category. ]]
-      self : String
-      [[ The ID of the status category. ]]
-      id : Int
-      [[ The key of the status category. ]]
-      key : String
-      [[ The name of the color used to represent the status category. ]]
-      colorName : String
-      [[ The name of the status category. ]]
-      name : String
+      statuses : StatusDetails[]?
    }
    
    [[ Details of a worklog. ]]
@@ -658,9 +1494,9 @@ namespace vyne.openApi {
       [[ The URL of the worklog item. ]]
       self : String
       [[ Details of the user who created the worklog. ]]
-      author : Any
+      author : UserDetails
       [[ Details of the user who last updated the worklog. ]]
-      updateAuthor : Any
+      updateAuthor : UserDetails
       [[ A comment about the worklog in [Atlassian Document Format](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/). Optional when creating or updating a worklog. ]]
       comment : Any
       [[ The datetime on which the worklog was created. ]]
@@ -668,7 +1504,7 @@ namespace vyne.openApi {
       [[ The datetime on which the worklog was last updated. ]]
       updated : DateTime
       [[ Details about any restrictions in the visibility of the worklog. Optional when creating or updating a worklog. ]]
-      visibility : Any
+      visibility : Visibility
       [[ The datetime on which the worklog effort was started. Required when creating a worklog. Optional when updating a worklog. ]]
       started : DateTime
       [[ The time spent working on the issue as days (\#d), hours (\#h), or minutes (\#m or \#). Required when creating a worklog if `timeSpentSeconds` isn't provided. Optional when updating a worklog. Cannot be provided if `timeSpentSecond` is provided. ]]
@@ -680,23 +1516,15 @@ namespace vyne.openApi {
       [[ The ID of the issue this worklog is for. ]]
       issueId : String
       [[ Details of properties for the worklog. Optional when creating or updating a worklog. ]]
-      properties : Any[]
+      properties : EntityProperty[]
    }
    
-   [[ An element of the order-by JQL clause. ]]
-   model JqlQueryOrderByClauseElement {
-      field : Any
-      [[ The direction in which to order the results. ]]
-      direction : String
-   }
-   
-   [[ An operand that can be part of a list operand. ]]
    type JqlQueryUnitaryOperand
    
    [[ List of system avatars. ]]
    model SystemAvatars {
       [[ A list of avatar details. ]]
-      system : Any[]
+      system : Avatar[]
    }
    
    [[ The details of votes on an issue. ]]
@@ -708,7 +1536,7 @@ namespace vyne.openApi {
       [[ Indicates whether the user making this request has voted on the issue. ]]
       hasVoted : Boolean
       [[ List of the users who have voted on this issue. An empty list is returned when the calling user doesn't have the *View voters and watchers* project permission. ]]
-      voters : Any[]
+      voters : User[]
    }
    
    [[ Details of names changed in the record event. ]]
@@ -721,35 +1549,27 @@ namespace vyne.openApi {
       changedTo : String
    }
    
-   [[ A workflow transition rule. ]]
-   model WorkflowTransitionRule {
-      [[ The type of the transition rule. ]]
-      `type` : String?
-      [[ The configuration of the transition rule. This is currently returned only for some of the rule types. Availability of this property is subject to change. ]]
-      configuration : Any
-   }
-   
    [[ Bulk issue property update request details. ]]
    model BulkIssuePropertyUpdateRequest {
       [[ The value of the property. The value must be a [valid](http://tools.ietf.org/html/rfc4627), non-empty JSON blob. The maximum length is 32768 characters. ]]
       value : Any
       [[ The bulk operation filter. ]]
-      `filter` : Any
+      `filter` : IssueFilterForBulkPropertySet
+   }
+   
+   [[ Bulk operation filter details. ]]
+   model IssueFilterForBulkPropertySet {
+      [[ List of issues to perform the bulk operation on. ]]
+      entityIds : Int[]
+      [[ The value of properties to perform the bulk operation on. ]]
+      currentValue : Any
+      [[ Indicates whether the bulk operation occurs only when the property is present on or absent from an issue. ]]
+      hasProperty : Boolean
    }
    
    model PermissionsKeysBean {
       [[ A list of permission keys. ]]
       permissions : String[]?
-   }
-   
-   [[ A context. ]]
-   model Context {
-      [[ The ID of the context. ]]
-      id : Int
-      [[ The name of the context. ]]
-      name : String
-      [[ The scope of the context. ]]
-      scope : Any
    }
    
    model IssueBean {
@@ -770,17 +1590,113 @@ namespace vyne.openApi {
       [[ The schema describing each field present on the issue. ]]
       schema : Any
       [[ The transitions that can be performed on the issue. ]]
-      transitions : Any[]
+      transitions : IssueTransition[]
       [[ The operations that can be performed on the issue. ]]
-      operations : Any
+      operations : Operations
       [[ The metadata for the fields on the issue that can be amended. ]]
-      editmeta : Any
+      editmeta : IssueUpdateMetadata
       [[ Details of changelogs associated with the issue. ]]
-      changelog : Any
+      changelog : PageOfChangelogs
       [[ The versions of each field on the issue. ]]
       versionedRepresentations : Any
-      fieldsToInclude : Any
+      fieldsToInclude : IncludedFields
       fields : Any
+   }
+   
+   [[ Details of the operations that can be performed on the issue. ]]
+   model Operations {
+      [[ Details of the link groups defining issue operations. ]]
+      linkGroups : LinkGroup[]
+   }
+   
+   [[ Details a link group, which defines issue operations. ]]
+   model LinkGroup {
+      id : String
+      styleClass : String
+      header : SimpleLink
+      weight : Int
+      links : SimpleLink[]
+      groups : LinkGroup[]
+   }
+   
+   [[ A list of editable field details. ]]
+   model IssueUpdateMetadata {
+      [[ A list of editable field details. ]]
+      fields : Any
+   }
+   
+   [[ A page of changelogs. ]]
+   model PageOfChangelogs {
+      [[ The index of the first item returned on the page. ]]
+      startAt : Int
+      [[ The maximum number of results that could be on the page. ]]
+      maxResults : Int
+      [[ The number of results on the page. ]]
+      total : Int
+      [[ The list of changelogs. ]]
+      histories : Changelog[]
+   }
+   
+   [[ A changelog. ]]
+   model Changelog {
+      [[ The ID of the changelog. ]]
+      id : String
+      [[ The user who made the change. ]]
+      author : UserDetails
+      [[ The date on which the change took place. ]]
+      created : DateTime
+      [[ The list of items changed. ]]
+      items : ChangeDetails[]
+      [[ The history metadata associated with the changed. ]]
+      historyMetadata : HistoryMetadata
+   }
+   
+   [[ Details of issue history metadata. ]]
+   model HistoryMetadata {
+      [[ The type of the history record. ]]
+      `type` : String
+      [[ The description of the history record. ]]
+      description : String
+      [[ The description key of the history record. ]]
+      descriptionKey : String
+      [[ The activity described in the history record. ]]
+      activityDescription : String
+      [[ The key of the activity described in the history record. ]]
+      activityDescriptionKey : String
+      [[ The description of the email address associated the history record. ]]
+      emailDescription : String
+      [[ The description key of the email address associated the history record. ]]
+      emailDescriptionKey : String
+      [[ Details of the user whose action created the history record. ]]
+      actor : HistoryMetadataParticipant
+      [[ Details of the system that generated the history record. ]]
+      generator : HistoryMetadataParticipant
+      [[ Details of the cause that triggered the creation the history record. ]]
+      cause : HistoryMetadataParticipant
+      [[ Additional arbitrary information about the history record. ]]
+      extraData : Any
+   }
+   
+   [[ Details of user or system associated with a issue history metadata item. ]]
+   model HistoryMetadataParticipant {
+      [[ The ID of the user or system associated with a history record. ]]
+      id : String
+      [[ The display name of the user or system associated with a history record. ]]
+      displayName : String
+      [[ The key of the display name of the user or system associated with a history record. ]]
+      displayNameKey : String
+      [[ The type of the user or system associated with a history record. ]]
+      `type` : String
+      [[ The URL to an avatar for the user or system associated with a history record. ]]
+      avatarUrl : String
+      [[ The URL of the user or system associated with a history record. ]]
+      url : String
+   }
+   
+   model IncludedFields {
+      actuallyIncluded : String[]
+      included : String[]
+      excluded : String[]
    }
    
    [[ An operand that is a user-provided value. ]]
@@ -815,56 +1731,23 @@ namespace vyne.openApi {
       [[ Indicates whether this is the last page. ]]
       isLast : Boolean
       [[ The list of items. ]]
-      values : Any[]
+      values : Screen[]
    }
    
-   [[ Details about the roles in a project. ]]
-   model ProjectRole {
-      [[ The URL the project role details. ]]
-      self : String
-      [[ The name of the project role. ]]
-      name : String
-      [[ The ID of the project role. ]]
+   [[ A screen. ]]
+   model Screen {
+      [[ The ID of the screen. ]]
       id : Int
-      [[ The description of the project role. ]]
-      description : String
-      [[ The list of users who act in this role. ]]
-      actors : Any[]
-      [[ The scope of the role. Indicated for roles associated with [next-gen projects](https://confluence.atlassian.com/x/loMyO). ]]
-      scope : Any
-      [[ Whether this role is the admin role for the project. ]]
-      admin : Boolean
-      [[ Whether this role is the default role for the project ]]
-      `default` : Boolean
+      [[ The name of the screen. ]]
+      name : String
+      [[ The scope of the screen. ]]
+      scope : Scope
    }
-   
-   [[ Details of a user, group, field, or project role that holds a permission. See [Holder object](#holder-object) in *Get all permission schemes* for more information. ]]
-   model PermissionHolder {
-      [[ The type of permission holder. ]]
-      `type` : String?
-      [[ The identifier of permission holder. ]]
-      `parameter` : String
-      [[ Expand options that include additional permission holder details in the response. ]]
-      expand : String
-   }
-   
-   [[ A JQL query clause. ]]
-   type JqlQueryClause
    
    [[ A list of issues suggested for use in auto-completion. ]]
    model IssuePickerSuggestions {
       [[ A list of issues for an issue type suggested for use in auto-completion. ]]
       sections : IssuePickerSuggestionsIssueType[]
-   }
-   
-   [[ Details of an issue type. ]]
-   model IssueTypeDetails {
-      [[ The ID of the issue type. ]]
-      id : Int
-      [[ The name of the issue type. ]]
-      name : String
-      [[ The avatar of the issue type. ]]
-      avatarId : Int
    }
    
    model IssueTypeUpdateBean {
@@ -874,14 +1757,6 @@ namespace vyne.openApi {
       description : String
       [[ The ID of an issue type avatar. ]]
       avatarId : Int
-   }
-   
-   [[ A workflow transition. ]]
-   model WorkflowTransition {
-      [[ The transition ID. ]]
-      id : Int?
-      [[ The transition name. ]]
-      name : String?
    }
    
    [[ The JQL specifying the issues available in the evaluated Jira expression under the `issues` context variable. Not all issues returned by the JQL query are loaded, only those described by the `startAt` and `maxResults` properties. To determine whether it is necessary to iterate to ensure all the issues returned by the JQL query are evaluated, inspect `meta.issues.jql.count` in the response. ]]
@@ -894,17 +1769,6 @@ namespace vyne.openApi {
       maxResults : Int
       [[ Determines how to validate the JQL query and treat the validation results. ]]
       validation : String
-   }
-   
-   [[ A webhook. ]]
-   model Webhook {
-      [[ The ID of the webhook. ]]
-      id : Int?
-      [[ The JQL filter that specifies which issues the webhook is sent for. ]]
-      jqlFilter : String?
-      [[ The Jira events that trigger the webhook. ]]
-      events : String[]
-      expirationDate : Int?
    }
    
    [[ Details of any errors encountered while updating workflow transition rules for a workflow. ]]
@@ -929,7 +1793,25 @@ namespace vyne.openApi {
       [[ Expand options that include additional project details in the response. ]]
       expand : String
       [[ List of projects and their issue creation metadata. ]]
-      projects : Any[]
+      projects : ProjectIssueCreateMetadata[]
+   }
+   
+   [[ Details of the issue creation metadata for a project. ]]
+   model ProjectIssueCreateMetadata {
+      [[ Expand options that include additional project issue create metadata details in the response. ]]
+      expand : String
+      [[ The URL of the project. ]]
+      self : String
+      [[ The ID of the project. ]]
+      id : String
+      [[ The key of the project. ]]
+      key : String
+      [[ The name of the project. ]]
+      name : String
+      [[ List of the project's avatars, returning the avatar size and associated URL. ]]
+      avatarUrls : AvatarUrlsBean
+      [[ List of the issue types supported by the project. ]]
+      issuetypes : IssueTypeIssueCreateMetadata[]
    }
    
    model MoveFieldBean {
@@ -957,29 +1839,6 @@ namespace vyne.openApi {
       deprecatedKey : Boolean
    }
    
-   [[ Error messages from an operation. ]]
-   model ErrorCollection {
-      [[ The list of error messages produced by this operation. For example, "input parameter 'key' must be provided" ]]
-      errorMessages : String[]
-      [[ The list of errors by parameter returned by the operation. For example,"projectKey": "Project keys must start with an uppercase letter, followed by one or more uppercase alphanumeric characters." ]]
-      errors : Any
-      status : Int
-   }
-   
-   [[ Details about a group name. ]]
-   model GroupName {
-      [[ The name of group. ]]
-      name : String
-      [[ The URL for these group details. ]]
-      self : String
-   }
-   
-   model IncludedFields {
-      actuallyIncluded : String[]
-      included : String[]
-      excluded : String[]
-   }
-   
    model NestedResponse {
       status : Int
       errorCollection : ErrorCollection
@@ -990,7 +1849,7 @@ namespace vyne.openApi {
       [[ Indicates whether the field is required. ]]
       required : Boolean?
       [[ The data type of the field. ]]
-      schema : Any
+      schema : JsonTypeBean
       [[ The name of the field. ]]
       name : String?
       [[ The key of the field. ]]
@@ -1007,30 +1866,18 @@ namespace vyne.openApi {
       defaultValue : Any
    }
    
-   [[ A page of changelogs. ]]
-   model PageOfChangelogs {
-      [[ The index of the first item returned on the page. ]]
-      startAt : Int
-      [[ The maximum number of results that could be on the page. ]]
-      maxResults : Int
-      [[ The number of results on the page. ]]
-      total : Int
-      [[ The list of changelogs. ]]
-      histories : Any[]
-   }
-   
    [[ Details of an issue update request. ]]
    model IssueUpdateDetails {
       [[ Details of a transition. Required when performing a transition, optional when creating or editing an issue. ]]
-      transition : Any
+      transition : IssueTransition
       [[ List of issue screen fields to update, specifying the sub-field to update and its value for each field. This field provides a straightforward option when setting a sub-field. When multiple sub-fields or other operations are required, use `update`. Fields included in here cannot be included in `update`. ]]
       fields : Any
       [[ List of operations to perform on issue screen fields. Note that fields included in here cannot be included in `fields`. ]]
       update : Any
       [[ Additional issue history details. ]]
-      historyMetadata : Any
+      historyMetadata : HistoryMetadata
       [[ Details of issue properties to be add or update. ]]
-      properties : Any[]
+      properties : EntityProperty[]
    }
    
    [[ Details of an item associated with the changed record. ]]
@@ -1063,7 +1910,7 @@ namespace vyne.openApi {
       [[ The name of the dashboard. ]]
       name : String
       [[ The owner of the dashboard. ]]
-      owner : Any
+      owner : UserBean
       [[ The number of users who have this dashboard as a favorite. ]]
       popularity : Int
       [[ The rank of this dashboard. ]]
@@ -1071,9 +1918,61 @@ namespace vyne.openApi {
       [[ The URL of these dashboard details. ]]
       self : String
       [[ The details of any share permissions for the dashboard. ]]
-      sharePermissions : Any[]
+      sharePermissions : SharePermission[]
       [[ The URL of the dashboard. ]]
       `view` : String
+   }
+   
+   model UserBean {
+      [[ This property is deprecated in favor of `accountId` because of privacy changes. See the [migration guide](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details.
+      The key of the user. ]]
+      key : String
+      [[ The URL of the user. ]]
+      self : String
+      [[ This property is deprecated in favor of `accountId` because of privacy changes. See the [migration guide](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details.
+      The username of the user. ]]
+      name : String
+      [[ The display name of the user. Depending on the user’s privacy setting, this may return an alternative value. ]]
+      displayName : String
+      [[ Indicates whether the user is active. ]]
+      active : Boolean
+      [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. An account ID with value `unknown` is returned when there is missing data for a user, which only happens for deleted users. We recommend you treat this value as an error case if you need to access more information about the user. ]]
+      accountId : String
+      [[ The avatars of the user. ]]
+      avatarUrls : UserBeanAvatarUrls
+   }
+   
+   model UserBeanAvatarUrls {
+      [[ The URL of the user's 32x32 pixel avatar. ]]
+      `32x32` : String
+      [[ The URL of the user's 48x48 pixel avatar. ]]
+      `48x48` : String
+      [[ The URL of the user's 16x16 pixel avatar. ]]
+      `16x16` : String
+      [[ The URL of the user's 24x24 pixel avatar. ]]
+      `24x24` : String
+   }
+   
+   [[ Details of a share permission for the filter. ]]
+   model SharePermission {
+      [[ The unique identifier of the share permission. ]]
+      id : Int
+      [[ The type of share permission:
+      *  `group` Shared with a group. If set in a request, then specify `sharePermission.group` as well.
+      *  `project` Shared with a project. If set in a request, then specify `sharePermission.project` as well.
+      *  `projectRole` Share with a project role in a project. This value is not returned in responses. It is used in requests, where it needs to be specify with `projectId` and `projectRoleId`.
+      *  `global` Shared globally. If set in a request, no other `sharePermission` properties need to be specified.
+      *  `loggedin` Shared with all logged-in users. Note: This value is set in a request by specifying `authenticated` as the `type`.
+      *  `project-unknown` Shared with a project that the user does not have access to. Cannot be set in a request. ]]
+      `type` : String?
+      [[ The project that the filter is shared with. This is similar to the project object returned by [Get project](#api-rest-api-3-project-projectIdOrKey-get) but it contains a subset of the properties, which are: `self`, `id`, `key`, `assigneeType`, `name`, `roles`, `avatarUrls`, `projectType`, `simplified`.
+      For a request, specify the `id` for the project. ]]
+      project : Project
+      [[ The project role that the filter is shared with.
+      For a request, specify the `id` for the role. You must also specify the `project` object and `id` for the project that the role is in. ]]
+      role : ProjectRole
+      [[ The group that the filter is shared with. For a request, specify the `name` property for the group. ]]
+      group : GroupName
    }
    
    [[ Details about an attachment. ]]
@@ -1085,7 +1984,7 @@ namespace vyne.openApi {
       [[ The file name of the attachment. ]]
       filename : String
       [[ Details of the user who added the attachment. ]]
-      author : Any
+      author : UserDetails
       [[ The datetime the attachment was created. ]]
       created : DateTime
       [[ The size of the attachment. ]]
@@ -1101,7 +2000,22 @@ namespace vyne.openApi {
    [[ List of security schemes. ]]
    model SecuritySchemes {
       [[ List of security schemes. ]]
-      issueSecuritySchemes : Any[]
+      issueSecuritySchemes : SecurityScheme[]
+   }
+   
+   [[ Details about a security scheme. ]]
+   model SecurityScheme {
+      [[ The URL of the issue security scheme. ]]
+      self : String
+      [[ The ID of the issue security scheme. ]]
+      id : Int
+      [[ The name of the issue security scheme. ]]
+      name : String
+      [[ The description of the issue security scheme. ]]
+      description : String
+      [[ The ID of the default security level. ]]
+      defaultSecurityLevelId : Int
+      levels : SecurityLevel[]
    }
    
    [[ The result of a JQL search. ]]
@@ -1170,7 +2084,15 @@ namespace vyne.openApi {
    [[ The results from a JQL query. ]]
    model AutoCompleteSuggestions {
       [[ The list of suggested item. ]]
-      results : Any[]
+      results : AutoCompleteSuggestion[]
+   }
+   
+   [[ A field auto-complete suggestion. ]]
+   model AutoCompleteSuggestion {
+      [[ The value of a suggested item. ]]
+      value : String
+      [[ The display name of a suggested item. If `fieldValue` or `predicateValue` are provided, the matching text is highlighted with the HTML bold tag. ]]
+      displayName : String
    }
    
    model ActorsMap {
@@ -1184,49 +2106,10 @@ namespace vyne.openApi {
    model JqlQueryClauseTimePredicate {
       [[ The operator between the field and the operand. ]]
       operator : String?
-      operand : object?
+      operand : JqlQueryClauseOperand?
    }
    
-   [[ Details about a project version. ]]
-   model Version {
-      [[ Use [expand](em>#expansion) to include additional information about version in the response. This parameter accepts a comma-separated list. Expand options include:
-      *  `operations` Returns the list of operations available for this version.
-      *  `issuesstatus` Returns the count of issues in this version for each of the status categories *to do*, *in progress*, *done*, and *unmapped*. The *unmapped* property contains a count of issues with a status other than *to do*, *in progress*, and *done*.
-      Optional for create and update. ]]
-      expand : String
-      [[ The URL of the version. ]]
-      self : String
-      [[ The ID of the version. ]]
-      id : String
-      [[ The description of the version. Optional when creating or updating a version. ]]
-      description : String
-      [[ The unique name of the version. Required when creating a version. Optional when updating a version. The maximum length is 255 characters. ]]
-      name : String
-      [[ Indicates that the version is archived. Optional when creating or updating a version. ]]
-      archived : Boolean
-      [[ Indicates that the version is released. If the version is released a request to release again is ignored. Not applicable when creating a version. Optional when updating a version. ]]
-      released : Boolean
-      [[ The start date of the version. Expressed in ISO 8601 format (yyyy-mm-dd). Optional when creating or updating a version. ]]
-      startDate : Date
-      [[ The release date of the version. Expressed in ISO 8601 format (yyyy-mm-dd). Optional when creating or updating a version. ]]
-      releaseDate : Date
-      [[ Indicates that the version is overdue. ]]
-      overdue : Boolean
-      [[ The date on which work on this version is expected to start, expressed in the instance's *Day/Month/Year Format* date format. ]]
-      userStartDate : String
-      [[ The date on which work on this version is expected to finish, expressed in the instance's *Day/Month/Year Format* date format. ]]
-      userReleaseDate : String
-      [[ Deprecated. Use `projectId`. ]]
-      project : String
-      [[ The ID of the project to which this version is attached. Required when creating a version. Not applicable when updating a version. ]]
-      projectId : Int
-      [[ The URL of the self link to the version to which all unfixed issues are moved when a version is released. Not applicable when creating a version. Optional when updating a version. ]]
-      moveUnfixedIssuesTo : String
-      [[ If the expand option `operations` is used, returns the list of operations available for this version. ]]
-      operations : Any[]
-      [[ If the expand option `issuesstatus` is used, returns the count of issues in this version for each of the status categories *to do*, *in progress*, *done*, and *unmapped*. The *unmapped* property contains a count of issues with a status other than *to do*, *in progress*, and *done*. ]]
-      issuesStatusForFixVersion : Any
-   }
+   type JqlQueryClauseOperand
    
    [[ Details about a workflow scheme. ]]
    model WorkflowScheme {
@@ -1247,7 +2130,7 @@ namespace vyne.openApi {
       [[ Indicates whether the workflow scheme is a draft or not. ]]
       draft : Boolean
       [[ The user that last modified the draft workflow scheme. A modification is a change to the issue type-project mappings only. This property does not apply to non-draft workflows. ]]
-      lastModifiedUser : Any
+      lastModifiedUser : User
       [[ The date-time that the draft workflow scheme was last modified. A modification is a change to the issue type-project mappings only. This property does not apply to non-draft workflows. ]]
       lastModified : String
       self : String
@@ -1269,24 +2152,22 @@ namespace vyne.openApi {
       name : String?
    }
    
-   [[ Details of an issue level security item. ]]
-   model SecurityLevel {
-      [[ The URL of the issue level security item. ]]
-      self : String
-      [[ The ID of the issue level security item. ]]
-      id : String
-      [[ The description of the issue level security item. ]]
-      description : String
-      [[ The name of the issue level security item. ]]
-      name : String
-   }
-   
    [[ Details of global permissions to look up and project permissions with associated projects and issues to look up. ]]
    model BulkPermissionsRequestBean {
       [[ Project permissions with associated projects and issues to look up. ]]
-      projectPermissions : Any[]
+      projectPermissions : BulkProjectPermissions[]
       [[ Global permissions to look up. ]]
       globalPermissions : String[]
+   }
+   
+   [[ Details of project permissions and associated issues and projects to look up. ]]
+   model BulkProjectPermissions {
+      [[ List of issue IDs. ]]
+      issues : Int[]
+      [[ List of project IDs. ]]
+      projects : Int[]
+      [[ List of project permissions. ]]
+      permissions : String[]?
    }
    
    [[ Details about permissions. ]]
@@ -1300,21 +2181,6 @@ namespace vyne.openApi {
       id : String
       [[ The new value. ]]
       value : String
-   }
-   
-   [[ Details about a security scheme. ]]
-   model SecurityScheme {
-      [[ The URL of the issue security scheme. ]]
-      self : String
-      [[ The ID of the issue security scheme. ]]
-      id : Int
-      [[ The name of the issue security scheme. ]]
-      name : String
-      [[ The description of the issue security scheme. ]]
-      description : String
-      [[ The ID of the default security level. ]]
-      defaultSecurityLevelId : Int
-      levels : SecurityLevel[]
    }
    
    [[ Details about a workflow. ]]
@@ -1332,18 +2198,8 @@ namespace vyne.openApi {
       [[ The number of steps included in the workflow. ]]
       steps : Int
       [[ The scope where this workflow applies ]]
-      scope : Any
+      scope : Scope
       `default` : Boolean
-   }
-   
-   [[ A collection of transition rules. ]]
-   model WorkflowRules {
-      [[ The workflow conditions. ]]
-      conditions : WorkflowTransitionRule[]?
-      [[ The workflow validators. ]]
-      validators : WorkflowTransitionRule[]?
-      [[ The workflow post functions. ]]
-      postFunctions : WorkflowTransitionRule[]?
    }
    
    [[ Value of a custom field option and the values of its cascading options. ]]
@@ -1373,26 +2229,6 @@ namespace vyne.openApi {
       example : String
       [[ The allowed values, if applicable. ]]
       allowedValues : String[]
-   }
-   
-   [[ A paged list. To access additional details append `[start-index:end-index]` to the expand request. For example, `?expand=sharedUsers[10:40]` returns a list starting at item 10 and finishing at item 40. ]]
-   model PagedListUserDetailsApplicationUser {
-      [[ The number of items on the page. ]]
-      size : Int
-      [[ The list of items. ]]
-      items : Any[]
-      [[ The maximum number of results that could be on the page. ]]
-      max_results : Int
-      [[ The index of the first item returned on the page. ]]
-      start_index : Int
-      [[ The index of the last item returned on the page. ]]
-      end_index : Int
-   }
-   
-   [[ Properties that identify a published workflow. ]]
-   model PublishedWorkflowId {
-      [[ The name of the workflow. ]]
-      name : String?
    }
    
    [[ Container for a list of webhook IDs. ]]
@@ -1425,20 +2261,6 @@ namespace vyne.openApi {
       remove : Any
       [[ A map containing the name of a field and the value to edit in it. ]]
       edit : Any
-   }
-   
-   [[ An icon. If no icon is defined:
-   *  for a status icon, no status icon displays in Jira.
-   *  for the remote object icon, the default link icon displays in Jira. ]]
-   model Icon {
-      [[ The URL of an icon that displays at 16x16 pixel in Jira. ]]
-      url16x16 : String
-      [[ The title of the icon. This is used as follows:
-      *  For a status icon it is used as a tooltip on the icon. If not set, the status icon doesn't display a tooltip in Jira.
-      *  For the remote object icon it is used in conjunction with the application name to display a tooltip for the link's icon. The tooltip takes the format "\[application name\] icon title". Blank itemsare excluded from the tooltip title. If both items are blank, the icon tooltop displays as "Web Link". ]]
-      title : String
-      [[ The URL of the tooltip, used only for a status icon. If not set, the status icon in Jira is not clickable. ]]
-      link : String
    }
    
    model SearchRequestBean {
@@ -1501,7 +2323,7 @@ namespace vyne.openApi {
       [[ A description of the filter. ]]
       description : String
       [[ The user who owns the filter. This is defaulted to the creator of the filter, however Jira administrators can change the owner of a shared filter in the admin settings. ]]
-      owner : Any
+      owner : User
       [[ The JQL query for the filter. For example, *project = SSP AND issuetype = Bug*. ]]
       jql : String
       [[ A URL to view the filter results in Jira, using the ID of the filter. For example, *https://your-domain.atlassian.net/issues/?filter=10100*. ]]
@@ -1513,19 +2335,19 @@ namespace vyne.openApi {
       [[ The count of how many users have selected this filter as a favorite, including the filter owner. ]]
       favouritedCount : Int
       [[ The groups and projects that the filter is shared with. This can be specified when updating a filter, but not when creating a filter. ]]
-      sharePermissions : Any[]
+      sharePermissions : SharePermission[]
       [[ The users that are subscribed to the filter. ]]
-      subscriptions : Any[]
+      subscriptions : FilterSubscription[]
    }
    
-   [[ Bulk operation filter details. ]]
-   model IssueFilterForBulkPropertySet {
-      [[ List of issues to perform the bulk operation on. ]]
-      entityIds : Int[]
-      [[ The value of properties to perform the bulk operation on. ]]
-      currentValue : Any
-      [[ Indicates whether the bulk operation occurs only when the property is present on or absent from an issue. ]]
-      hasProperty : Boolean
+   [[ Details of a user or group subscribing to a filter. ]]
+   model FilterSubscription {
+      [[ The ID of the filter subscription. ]]
+      id : Int
+      [[ The user subscribing to filter. ]]
+      user : User
+      [[ The group subscribing to filter. ]]
+      group : GroupName
    }
    
    [[ Lists of JQL reference data. ]]
@@ -1533,9 +2355,21 @@ namespace vyne.openApi {
       [[ List of fields usable in JQL queries. ]]
       visibleFieldNames : FieldReferenceData[]
       [[ List of functions usable in JQL queries. ]]
-      visibleFunctionNames : Any[]
+      visibleFunctionNames : FunctionReferenceData[]
       [[ List of JQL query reserved words. ]]
       jqlReservedWords : String[]
+   }
+   
+   [[ Details of functions that can be used in advanced searches. ]]
+   model FunctionReferenceData {
+      [[ The function identifier. ]]
+      value : String
+      [[ The display name of the function. ]]
+      displayName : String
+      [[ Indicates whether the function can take a list of arguments. ]]
+      isList : String
+      [[ The data types returned by the function. ]]
+      types : String[]
    }
    
    model ProjectRoleActorsUpdateBean {
@@ -1548,7 +2382,17 @@ namespace vyne.openApi {
    [[ A list of parsed JQL queries. ]]
    model ParsedJqlQueries {
       [[ A list of parsed JQL queries. ]]
-      queries : Any[]?
+      queries : ParsedJqlQuery[]?
+   }
+   
+   [[ Details of a parsed JQL query. ]]
+   model ParsedJqlQuery {
+      [[ The JQL query that was parsed and validated. ]]
+      `query` : String?
+      [[ The syntax tree of the query. Empty if the query was invalid. ]]
+      structure : JqlQuery
+      [[ The list of syntax or validation errors. ]]
+      errors : String[]
    }
    
    [[ Details about the default workflow. ]]
@@ -1596,11 +2440,19 @@ namespace vyne.openApi {
       The maximum length is 255 characters. ]]
       globalId : String
       [[ Details of the remote application the linked item is in. For example, trello. ]]
-      application : Any
+      application : Application
       [[ Description of the relationship between the issue and the linked item. If not set, the relationship description "links to" is used in Jira. ]]
       relationship : String
       [[ Details of the item linked to. ]]
       object : RemoteObject
+   }
+   
+   [[ The application the linked item is in. ]]
+   model Application {
+      [[ The name-spaced type of the application, used by registered rendering apps. ]]
+      `type` : String
+      [[ The name of the application. Used in conjunction with the (remote) object icon title to display a tooltip for the link's icon. The tooltip takes the format "\[application name\] icon title". Blank items are excluded from the tooltip title. If both items are blank, the icon tooltop displays as "Web Link". Grouping and sorting of links may place links without an application name last. ]]
+      name : String
    }
    
    [[ Paginated list of worklog details ]]
@@ -1618,7 +2470,15 @@ namespace vyne.openApi {
    [[ A container for a list of workflow schemes together with the projects they are associated with. ]]
    model ContainerOfWorkflowSchemeAssociations {
       [[ A list of workflow schemes together with projects they are associated with. ]]
-      values : Any[]?
+      values : WorkflowSchemeAssociations[]?
+   }
+   
+   [[ A workflow scheme along with a list of projects that use it. ]]
+   model WorkflowSchemeAssociations {
+      [[ The list of projects that use the workflow scheme. ]]
+      projectIds : String[]?
+      [[ The workflow scheme. ]]
+      workflowScheme : WorkflowScheme
    }
    
    model JiraExpressionsComplexityValueBean {
@@ -1628,19 +2488,13 @@ namespace vyne.openApi {
       limit : Int?
    }
    
-   [[ A rule configuration. ]]
-   model RuleConfiguration {
-      [[ Configuration of the rule, as it is stored by the Connect app on the rule configuration page. ]]
-      value : String?
-   }
-   
    [[ Details of a field. ]]
    model Field {
       [[ The ID of the field. ]]
       id : String?
       [[ The name of the field. ]]
       name : String?
-      schema : Any
+      schema : JsonTypeBean
       [[ The description of the field. ]]
       description : String
       [[ The key of the field. ]]
@@ -1676,7 +2530,17 @@ namespace vyne.openApi {
       [[ The name of the Jira instance. ]]
       serverTitle : String
       [[ Jira instance health check results. Deprecated and no longer returned. ]]
-      healthChecks : Any[]
+      healthChecks : HealthCheckResult[]
+   }
+   
+   [[ Jira instance health check results. Deprecated and no longer returned. ]]
+   model HealthCheckResult {
+      [[ The name of the Jira health check item. ]]
+      name : String
+      [[ The description of the Jira health check item. ]]
+      description : String
+      [[ Indicates whether the Jira health check item passed or failed. ]]
+      passed : Boolean
    }
    
    [[ ID of a registered webhook or error messages explaining why a webhook wasn't registered. ]]
@@ -1687,18 +2551,6 @@ namespace vyne.openApi {
       errors : String[]
    }
    
-   [[ Details of functions that can be used in advanced searches. ]]
-   model FunctionReferenceData {
-      [[ The function identifier. ]]
-      value : String
-      [[ The display name of the function. ]]
-      displayName : String
-      [[ Indicates whether the function can take a list of arguments. ]]
-      isList : String
-      [[ The data types returned by the function. ]]
-      types : String[]
-   }
-   
    [[ Details of a custom option for a field. ]]
    model CustomFieldOption {
       [[ The URL of these custom field option details. ]]
@@ -1707,54 +2559,12 @@ namespace vyne.openApi {
       value : String
    }
    
-   [[ Details about a project component. ]]
-   model Component {
-      [[ The URL of the component. ]]
-      self : String
-      [[ The unique identifier for the component. ]]
-      id : String
-      [[ The unique name for the component in the project. Required when creating a component. Optional when updating a component. The maximum length is 255 characters. ]]
-      name : String
-      [[ The description for the component. Optional when creating or updating a component. ]]
-      description : String
-      [[ The user details for the component's lead user. ]]
-      lead : Any
-      [[ This property is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      leadUserName : String
-      [[ The accountId of the component's lead user. The accountId uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. An account ID with value `unknown` is returned when there is missing data for a user, which only happens for deleted users. We recommend you treat this value as an error case if you need to access more information about the user. Optional when creating or updating a component. ]]
-      leadAccountId : String
-      [[ The nominal user type used to determine the assignee for issues created with this component. See `realAssigneeType` for details on how the type of the user, and hence the user, assigned to issues is determined. Can take the following values:
-      *  `PROJECT_LEAD` the assignee to any issues created with this component is nominally the lead for the project the component is in.
-      *  `COMPONENT_LEAD` the assignee to any issues created with this component is nominally the lead for the component.
-      *  `UNASSIGNED` an assignee is not set for issues created with this component.
-      *  `PROJECT_DEFAULT` the assignee to any issues created with this component is nominally the default assignee for the project that the component is in.
-      Default value: `PROJECT_DEFAULT`.
-      Optional when creating or updating a component. ]]
-      assigneeType : String
-      [[ The details of the user associated with `assigneeType`, if any. See `realAssignee` for details of the user assigned to issues created with this component. ]]
-      assignee : Any
-      [[ The type of the assignee that is assigned to issues created with this component, when an assignee cannot be set from the `assigneeType`. For example, `assigneeType` is set to `COMPONENT_LEAD` but no component lead is set. This property is set to one of the following values:
-      *  `PROJECT_LEAD` when `assigneeType` is `PROJECT_LEAD` and the project lead has permission to be assigned issues in the project that the component is in.
-      *  `COMPONENT_LEAD` when `assignee`Type is `COMPONENT_LEAD` and the component lead has permission to be assigned issues in the project that the component is in.
-      *  `UNASSIGNED` when `assigneeType` is `UNASSIGNED` and Jira is configured to allow unassigned issues.
-      *  `PROJECT_DEFAULT` when none of the preceding cases are true. ]]
-      realAssigneeType : String
-      [[ The user assigned to issues created with this component, when `assigneeType` does not identify a valid assignee. ]]
-      realAssignee : Any
-      [[ Indicates whether a user is associated with `assigneeType`. For example, if the `assigneeType` is set to `COMPONENT_LEAD` but the component lead is not set, then `false` is returned. ]]
-      isAssigneeTypeValid : Boolean
-      [[ The key of the project the component is assigned to. Required when creating a component. Can't be updated. ]]
-      project : String
-      [[ The ID of the project the component is assigned to. ]]
-      projectId : Int
-   }
-   
    [[ A paginated list of users sharing the filter. This includes users that are members of the groups or can browse the projects that the filter is shared with. ]]
    model UserList {
       [[ The number of items on the page. ]]
       size : Int
       [[ The list of items. ]]
-      items : Any[]
+      items : User[]
       [[ The maximum number of results that could be on the page. ]]
       max_results : Int
       [[ The index of the first item returned on the page. ]]
@@ -1779,19 +2589,13 @@ namespace vyne.openApi {
       dashboards : Dashboard[]
    }
    
-   [[ Details of the order-by JQL clause. ]]
-   model JqlQueryOrderByClause {
-      [[ The list of order-by clause fields and their ordering directives. ]]
-      fields : JqlQueryOrderByClauseElement[]?
-   }
-   
    model JiraExpressionEvalContextBean {
       [[ The issue that is available under the `issue` variable when evaluating the expression. ]]
-      issue : Any
+      issue : IdOrKeyBean
       [[ The collection of issues that is available under the `issues` variable when evaluating the expression. ]]
-      issues : Any
+      issues : JexpIssues
       [[ The project that is available under the `project` variable when evaluating the expression. ]]
-      project : Any
+      project : IdOrKeyBean
       [[ The ID of the sprint that is available under the `sprint` variable when evaluating the expression. ]]
       sprint : Int
       [[ The ID of the board that is available under the `board` variable when evaluating the expression. ]]
@@ -1800,6 +2604,19 @@ namespace vyne.openApi {
       serviceDesk : Int
       [[ The ID of the customer request that is available under the `customerRequest` variable when evaluating the expression. This is the same as the ID of the underlying Jira issue, but the customer request context variable will have a different type. ]]
       customerRequest : Int
+   }
+   
+   model IdOrKeyBean {
+      [[ The ID of the referenced item. ]]
+      id : Int
+      [[ The key of the referenced item. ]]
+      key : String
+   }
+   
+   [[ The JQL specifying the issues available in the evaluated Jira expression under the `issues` context variable. ]]
+   model JexpIssues {
+      [[ The JQL query that specifies the set of issues available in the Jira expression. ]]
+      jql : JexpJqlIssues
    }
    
    [[ A page of items. ]]
@@ -1820,14 +2637,6 @@ namespace vyne.openApi {
       values : String[]
    }
    
-   [[ Details about the replacement for a deleted version. ]]
-   model CustomFieldReplacement {
-      [[ The ID of the custom field in which to replace the version number. ]]
-      customFieldId : Int
-      [[ The version number to use as a replacement for the deleted version. ]]
-      moveTo : Int
-   }
-   
    [[ Details of an issue navigator column item. ]]
    model ColumnItem {
       [[ The issue navigator column label. ]]
@@ -1844,8 +2653,6 @@ namespace vyne.openApi {
       self : String
    }
    
-   [[ A [Connect module](https://developer.atlassian.com/cloud/jira/platform/about-jira-modules/) in the same format as in the
-   [app descriptor](https://developer.atlassian.com/cloud/jira/platform/app-descriptor/). ]]
    type ConnectModule
    
    [[ A page of items. ]]
@@ -1864,24 +2671,6 @@ namespace vyne.openApi {
       isLast : Boolean
       [[ The list of items. ]]
       values : Version[]
-   }
-   
-   [[ Details of an avatar. ]]
-   model Avatar {
-      [[ The ID of the avatar. ]]
-      id : String?
-      [[ The owner of the avatar. For a system avatar the owner is null (and nothing is returned). For non-system avatars this is the appropriate identifier, such as the ID for a project or the account ID for a user. ]]
-      owner : String
-      [[ Indicates whether the avatar is a system avatar. ]]
-      isSystemAvatar : Boolean
-      [[ Indicates whether the avatar is used in Jira. For example, shown as a project's avatar. ]]
-      isSelected : Boolean
-      [[ Indicates whether the avatar can be deleted. ]]
-      isDeletable : Boolean
-      [[ The file name of the avatar icon. Returned for system avatars. ]]
-      fileName : String
-      [[ The list of avatar icon URLs. ]]
-      urls : Any
    }
    
    model CustomFieldDefinitionJsonBean {
@@ -1971,27 +2760,31 @@ namespace vyne.openApi {
       [[ Indicates whether this is the last page. ]]
       isLast : Boolean
       [[ The list of items. ]]
-      values : Any[]
+      values : ScreenScheme[]
    }
    
-   [[ The scope of an entity. Indicated for entities associated with [next-gen projects](https://confluence.atlassian.com/x/loMyO). ]]
-   model Scope {
-      [[ The type of scope. ]]
-      `type` : String
-      [[ The project the entity has scope in. ]]
-      project : Any
-   }
-   
-   [[ Details about a permission granted to a user or group. ]]
-   model PermissionGrant {
-      [[ The ID of the permission granted details. ]]
+   [[ A screen scheme. ]]
+   model ScreenScheme {
+      [[ The ID of the screen scheme. ]]
       id : Int
-      [[ The URL of the permission granted details. ]]
-      self : String
-      [[ The user or group being granted the permission. It consists of a `type` and a type-dependent `parameter`. See [Holder object](#holder-object) in *Get all permission schemes* for more information. ]]
-      holder : PermissionHolder
-      [[ The permission to grant. This permission can be one of the built-in permissions or a custom permission added by an app. See [Built-in permissions](#built-in-permissions) in *Get all permission schemes* for more information about the built-in permissions. See the [project permission](https://developer.atlassian.com/cloud/jira/platform/modules/project-permission/) and [global permission](https://developer.atlassian.com/cloud/jira/platform/modules/global-permission/) module documentation for more information about custom permissions. ]]
-      permission : String
+      [[ The name of the screen scheme. ]]
+      name : String
+      [[ The description of the screen scheme. ]]
+      description : String
+      [[ IDs of the screens for the associated screen types. ]]
+      screens : ScreenTypeIDsBean
+   }
+   
+   [[ IDs of the screens for the various screen types associated with the screen scheme. ]]
+   model ScreenTypeIDsBean {
+      [[ The ID of the edit screen. ]]
+      edit : Int?
+      [[ The ID of the create screen. ]]
+      create : Int?
+      [[ The ID of the view screen. ]]
+      `view` : Int?
+      [[ The ID of the default screen. ]]
+      `default` : Int
    }
    
    [[ Details about a filter. ]]
@@ -2005,7 +2798,7 @@ namespace vyne.openApi {
       [[ A description of the filter. ]]
       description : String
       [[ The user who owns the filter. This is defaulted to the creator of the filter, however Jira administrators can change the owner of a shared filter in the admin settings. ]]
-      owner : Any
+      owner : User
       [[ The JQL query for the filter. For example, *project = SSP AND issuetype = Bug*. ]]
       jql : String
       [[ A URL to view the filter results in Jira, using the ID of the filter. For example, *https://your-domain.atlassian.net/issues/?filter=10100*. ]]
@@ -2017,11 +2810,25 @@ namespace vyne.openApi {
       [[ The count of how many users have selected this filter as a favorite, including the filter owner. ]]
       favouritedCount : Int
       [[ The groups and projects that the filter is shared with. ]]
-      sharePermissions : Any[]
+      sharePermissions : SharePermission[]
       [[ A paginated list of the users that the filter is shared with. This includes users that are members of the groups or can browse the projects that the filter is shared with. ]]
       sharedUsers : UserList
       [[ A paginated list of the users that are subscribed to the filter. ]]
-      subscriptions : Any
+      subscriptions : FilterSubscriptionsList
+   }
+   
+   [[ A paginated list of subscriptions to a filter. ]]
+   model FilterSubscriptionsList {
+      [[ The number of items on the page. ]]
+      size : Int
+      [[ The list of items. ]]
+      items : FilterSubscription[]
+      [[ The maximum number of results that could be on the page. ]]
+      max_results : Int
+      [[ The index of the first item returned on the page. ]]
+      start_index : Int
+      [[ The index of the last item returned on the page. ]]
+      end_index : Int
    }
    
    [[ List of custom fields using the version. ]]
@@ -2057,9 +2864,21 @@ namespace vyne.openApi {
    [[ Details about the issues created and the errors for requests that failed. ]]
    model CreatedIssues {
       [[ Details of the issues created. ]]
-      issues : Any[]
+      issues : CreatedIssue[]
       [[ Error details for failed issue creation requests. ]]
       errors : BulkOperationErrorResult[]
+   }
+   
+   [[ Details about a created issue or subtask. ]]
+   model CreatedIssue {
+      [[ The ID of the created issue or subtask. ]]
+      id : String
+      [[ The key of the created issue or subtask. ]]
+      key : String
+      [[ The URL of the created issue or subtask. ]]
+      self : String
+      [[ The response code and messages related to any requested transition. ]]
+      transition : NestedResponse
    }
    
    [[ A page of items. ]]
@@ -2077,7 +2896,18 @@ namespace vyne.openApi {
       [[ Indicates whether this is the last page. ]]
       isLast : Boolean
       [[ The list of items. ]]
-      values : Any[]
+      values : WorkflowTransitionRules[]
+   }
+   
+   [[ A workflow with transition rules. ]]
+   model WorkflowTransitionRules {
+      workflowId : WorkflowId
+      [[ The list of post functions within the workflow. ]]
+      postFunctions : ConnectWorkflowTransitionRule[]
+      [[ The list of conditions within the workflow. ]]
+      conditions : ConnectWorkflowTransitionRule[]
+      [[ The list of validators within the workflow. ]]
+      validators : ConnectWorkflowTransitionRule[]
    }
    
    [[ Count of a version's unresolved issues. ]]
@@ -2122,7 +2952,7 @@ namespace vyne.openApi {
       [[ The global ID of the link, such as the ID of the item on the remote system. ]]
       globalId : String
       [[ Details of the remote application the linked item is in. ]]
-      application : Any
+      application : Application
       [[ Description of the relationship between the issue and the linked item. ]]
       relationship : String
       [[ Details of the item linked to. ]]
@@ -2136,8 +2966,6 @@ namespace vyne.openApi {
       [[ The count of issues assigned to a component. ]]
       issueCount : Int
    }
-   
-   type string
    
    model JsonNode {
       elements : Any
@@ -2165,7 +2993,7 @@ namespace vyne.openApi {
       doubleValue : Decimal
       decimalValue : Decimal
       booleanValue : Boolean
-      binaryValue : string[]
+      binaryValue : byte[]
       valueAsInt : Int
       valueAsLong : Int
       valueAsDouble : Decimal
@@ -2178,6 +3006,8 @@ namespace vyne.openApi {
       `null` : Boolean
    }
    
+   type byte inherits String
+   
    model IssueTypeCreateBean {
       [[ The unique name for the issue type. The maximum length is 60 characters. ]]
       name : String?
@@ -2185,27 +3015,6 @@ namespace vyne.openApi {
       description : String
       [[ Whether the issue type is `subtype` or `standard`. Defaults to `standard`. ]]
       `type` : String
-   }
-   
-   model IssueFieldOptionScopeBean {
-      [[ DEPRECATED ]]
-      projects : Int[]
-      [[ Defines the projects in which the option is available and the behavior of the option within each project. Specify one object per project. The behavior of the option in a project context overrides the behavior in the global context. ]]
-      projects2 : Any[]
-      [[ Defines the behavior of the option within the global context. If this property is set, even if set to an empty object, then the option is available in all projects. ]]
-      global : Any
-   }
-   
-   [[ Details about a created issue or subtask. ]]
-   model CreatedIssue {
-      [[ The ID of the created issue or subtask. ]]
-      id : String
-      [[ The key of the created issue or subtask. ]]
-      key : String
-      [[ The URL of the created issue or subtask. ]]
-      self : String
-      [[ The response code and messages related to any requested transition. ]]
-      transition : NestedResponse
    }
    
    model ProjectInputBean {
@@ -2239,8 +3048,6 @@ namespace vyne.openApi {
       categoryId : Int
    }
    
-   [[ A list of app modules in the same format as the `modules` property in the
-   [app descriptor](https://developer.atlassian.com/cloud/jira/platform/app-descriptor/). ]]
    type ConnectModules
    
    [[ Details about a task. ]]
@@ -2256,7 +3063,7 @@ namespace vyne.openApi {
       [[ Information about the progress of the task. ]]
       message : String
       [[ The result of the task execution. ]]
-      result : Any
+      result : RemoveOptionFromIssuesResult
       [[ The ID of the user who submitted the task. ]]
       submittedBy : Int?
       [[ The progress of the task, as a percentage complete. ]]
@@ -2273,37 +3080,6 @@ namespace vyne.openApi {
       lastUpdate : Int?
    }
    
-   [[ Details of an entity property. ]]
-   model JqlQueryFieldEntityProperty {
-      [[ The object on which the property is set. ]]
-      entity : String?
-      [[ The key of the property. ]]
-      key : String?
-      [[ The path in the property value to query. ]]
-      path : String?
-      [[ The type of the property value extraction. Not available if the extraction for the property is not registered on the instance with the [Entity property](https://developer.atlassian.com/cloud/jira/platform/modules/entity-property/) module. ]]
-      `type` : String
-   }
-   
-   [[ A paginated list of subscriptions to a filter. ]]
-   model FilterSubscriptionsList {
-      [[ The number of items on the page. ]]
-      size : Int
-      [[ The list of items. ]]
-      items : Any[]
-      [[ The maximum number of results that could be on the page. ]]
-      max_results : Int
-      [[ The index of the first item returned on the page. ]]
-      start_index : Int
-      [[ The index of the last item returned on the page. ]]
-      end_index : Int
-   }
-   
-   model RichText {
-      emptyAdf : Boolean
-      valueSet : Boolean
-   }
-   
    model RemoveOptionFromIssuesResult {
       [[ The IDs of the modified issues. ]]
       modifiedIssues : Int[]
@@ -2313,26 +3089,9 @@ namespace vyne.openApi {
       errors : SimpleErrorCollection
    }
    
-   [[ Details about an issue type. ]]
-   model IssueTypeBean {
-      [[ The URL of these issue type details. ]]
-      self : String
-      [[ The ID of the issue type. ]]
-      id : String
-      [[ The description of the issue type. ]]
-      description : String
-      [[ The URL of the issue type's avatar. ]]
-      iconUrl : String
-      [[ The name of the issue type. ]]
-      name : String
-      [[ Indicates whether this issue type is used to create subtasks. ]]
-      subtask : Boolean
-      [[ The ID of the issue type's avatar. ]]
-      avatarId : Int
-      [[ project unique ID for next-gen entities ]]
-      entityId : String
-      [[ Details of the next-gen projects the issue type is available in. ]]
-      scope : Scope
+   model RichText {
+      emptyAdf : Boolean
+      valueSet : Boolean
    }
    
    [[ Metadata for an archive (for example a zip) and its contents. ]]
@@ -2342,75 +3101,25 @@ namespace vyne.openApi {
       [[ The name of the archive file. ]]
       name : String
       [[ The list of the items included in the archive. ]]
-      entries : Any[]
+      entries : AttachmentArchiveItemReadable[]
       [[ The number of items included in the archive. ]]
       totalEntryCount : Int
       [[ The MIME type of the attachment. ]]
       mediaType : String
    }
    
-   [[ Details of the operations that can be performed on the issue. ]]
-   model Operations {
-      [[ Details of the link groups defining issue operations. ]]
-      linkGroups : Any[]
-   }
-   
-   [[ Details about a next-gen project. ]]
-   model ProjectForScope {
-      [[ The URL of the project details. ]]
-      self : String
-      [[ The ID of the project. ]]
-      id : String
-      [[ The key of the project. ]]
-      key : String
-      [[ The name of the project. ]]
-      name : String
-      [[ The [project type](https://confluence.atlassian.com/x/GwiiLQ#Jiraapplicationsoverview-Productfeaturesandprojecttypes) of the project. ]]
-      projectTypeKey : String
-      [[ Whether or not the project is simplified. ]]
-      simplified : Boolean
-      [[ The URLs of the project's avatars. ]]
-      avatarUrls : Any
-      [[ The category the project belongs to. ]]
-      projectCategory : Any
-   }
-   
-   [[ Details of user or system associated with a issue history metadata item. ]]
-   model HistoryMetadataParticipant {
-      [[ The ID of the user or system associated with a history record. ]]
-      id : String
-      [[ The display name of the user or system associated with a history record. ]]
-      displayName : String
-      [[ The key of the display name of the user or system associated with a history record. ]]
-      displayNameKey : String
-      [[ The type of the user or system associated with a history record. ]]
-      `type` : String
-      [[ The URL to an avatar for the user or system associated with a history record. ]]
-      avatarUrl : String
-      [[ The URL of the user or system associated with a history record. ]]
-      url : String
-   }
-   
-   [[ Details of a parsed JQL query. ]]
-   model ParsedJqlQuery {
-      [[ The JQL query that was parsed and validated. ]]
-      `query` : String?
-      [[ The syntax tree of the query. Empty if the query was invalid. ]]
-      structure : JqlQuery
-      [[ The list of syntax or validation errors. ]]
-      errors : String[]
-   }
-   
-   [[ A project category. ]]
-   model ProjectCategory {
-      [[ The URL of the project category. ]]
-      self : String
-      [[ The ID of the project category. ]]
-      id : String
-      [[ The name of the project category. Required on create, optional on update. ]]
-      name : String
-      [[ The description of the project category. Required on create, optional on update. ]]
-      description : String
+   [[ Metadata for an item in an attachment archive. ]]
+   model AttachmentArchiveItemReadable {
+      [[ The path of the archive item. ]]
+      path : String
+      [[ The position of the item within the archive. ]]
+      index : Int
+      [[ The size of the archive item. ]]
+      size : String
+      [[ The MIME type of the archive item. ]]
+      mediaType : String
+      [[ The label for the archive item. ]]
+      label : String
    }
    
    [[ A page of items. ]]
@@ -2440,7 +3149,7 @@ namespace vyne.openApi {
       [[ The name of the attachment file. ]]
       filename : String
       [[ Details of the user who attached the file. ]]
-      author : Any
+      author : User
       [[ The datetime the attachment was created. ]]
       created : DateTime
       [[ The size of the attachment. ]]
@@ -2455,22 +3164,6 @@ namespace vyne.openApi {
       thumbnail : String
    }
    
-   [[ An issue suggested for use in the issue picker auto-completion. ]]
-   model SuggestedIssue {
-      [[ The ID of the issue. ]]
-      id : Int
-      [[ The key of the issue. ]]
-      key : String
-      [[ The key of the issue in HTML format. ]]
-      keyHtml : String
-      [[ The URL of the issue type's avatar. ]]
-      img : String
-      [[ The phrase containing the query string in HTML format, with the string highlighted with HTML bold tags. ]]
-      summary : String
-      [[ The phrase containing the query string, as plain text. ]]
-      summaryText : String
-   }
-   
    [[ Container for a list of audit records. ]]
    model AuditRecords {
       [[ The number of audit items skipped before the first item in this list. ]]
@@ -2480,7 +3173,32 @@ namespace vyne.openApi {
       [[ The total number of audit items returned. ]]
       total : Int
       [[ The list of audit items. ]]
-      records : Any[]
+      records : AuditRecordBean[]
+   }
+   
+   [[ An audit record. ]]
+   model AuditRecordBean {
+      [[ The ID of the audit record. ]]
+      id : Int
+      [[ The summary of the audit record. ]]
+      summary : String
+      [[ The URL of the computer where the creation of the audit record was initiated. ]]
+      remoteAddress : String
+      [[ The key of the user who created the audit record. ]]
+      authorKey : String
+      [[ The date and time on which the audit record was created. ]]
+      created : DateTime
+      [[ The category of the audit record. For a list of these categories, see the help article [Auditing in Jira applications](https://confluence.atlassian.com/x/noXKM). ]]
+      category : String
+      [[ The event the audit record originated from. ]]
+      eventSource : String
+      [[ The description of the audit record. ]]
+      description : String
+      objectItem : AssociatedItemBean
+      [[ The list of values changed in the record event. ]]
+      changedValues : ChangedValueBean[]
+      [[ The list of items associated with the changed record. ]]
+      associatedItems : AssociatedItemBean[]
    }
    
    [[ List of permission grants. ]]
@@ -2489,24 +3207,6 @@ namespace vyne.openApi {
       permissions : PermissionGrant[]
       [[ Expand options that include additional permission grant details in the response. ]]
       expand : String
-   }
-   
-   [[ Details of the issue creation metadata for a project. ]]
-   model ProjectIssueCreateMetadata {
-      [[ Expand options that include additional project issue create metadata details in the response. ]]
-      expand : String
-      [[ The URL of the project. ]]
-      self : String
-      [[ The ID of the project. ]]
-      id : String
-      [[ The key of the project. ]]
-      key : String
-      [[ The name of the project. ]]
-      name : String
-      [[ List of the project's avatars, returning the avatar size and associated URL. ]]
-      avatarUrls : Any
-      [[ List of the issue types supported by the project. ]]
-      issuetypes : IssueTypeIssueCreateMetadata[]
    }
    
    [[ A page of items. ]]
@@ -2524,21 +3224,7 @@ namespace vyne.openApi {
       [[ Indicates whether this is the last page. ]]
       isLast : Boolean
       [[ The list of items. ]]
-      values : Any[]
-   }
-   
-   [[ Details about a user assigned to a project role. ]]
-   model RoleActor {
-      id : Int
-      [[ The display name of the user. Depending on the user’s privacy setting, this may return an alternative value. ]]
-      displayName : String
-      `type` : String
-      [[ This property is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      name : String
-      avatarUrl : String
-      actorUser : Any
-      actorGroup : Any
-      user : String
+      values : Changelog[]
    }
    
    model UnrestrictedUserEmail {
@@ -2550,7 +3236,7 @@ namespace vyne.openApi {
    
    [[ A clause that asserts whether a field was changed. For example, `status CHANGED AFTER startOfMonth(-1M)`.See [CHANGED](https://confluence.atlassian.com/x/dgiiLQ#Advancedsearching-operatorsreference-CHANGEDCHANGED) for more information about the CHANGED operator. ]]
    model FieldChangedClause {
-      field : Any?
+      field : JqlQueryField?
       [[ The operator applied to the field. ]]
       operator : String?
       [[ The list of time predicates. ]]
@@ -2561,31 +3247,19 @@ namespace vyne.openApi {
       issueUpdates : IssueUpdateDetails[]
    }
    
-   [[ Permissions which a user has on a project. ]]
-   model ProjectPermissions {
-      [[ Indicates whether the logged user can edit the project. ]]
-      canEdit : Boolean
-   }
-   
-   [[ Metadata for an item in an attachment archive. ]]
-   model AttachmentArchiveItemReadable {
-      [[ The path of the archive item. ]]
-      path : String
-      [[ The position of the item within the archive. ]]
-      index : Int
-      [[ The size of the archive item. ]]
-      size : String
-      [[ The MIME type of the archive item. ]]
-      mediaType : String
-      [[ The label for the archive item. ]]
-      label : String
-   }
-   
    model AttachmentArchiveImpl {
       [[ The list of the items included in the archive. ]]
-      entries : Any[]
+      entries : AttachmentArchiveEntry[]
       [[ The number of items in the archive. ]]
       totalEntryCount : Int
+   }
+   
+   model AttachmentArchiveEntry {
+      mediaType : String
+      entryIndex : Int
+      abbreviatedName : String
+      name : String
+      size : Int
    }
    
    [[ Details about a component with a count of the issues it contains. ]]
@@ -2605,13 +3279,13 @@ namespace vyne.openApi {
       [[ The key of the project to which the component is assigned. ]]
       project : String
       [[ The user details for the component's lead user. ]]
-      lead : Any
+      lead : User
       [[ Not used. ]]
       projectId : Int
       [[ The details of the user associated with `assigneeType`, if any. See `realAssignee` for details of the user assigned to issues created with this component. ]]
-      assignee : Any
+      assignee : User
       [[ The user assigned to issues created with this component, when `assigneeType` does not identify a valid assignee. ]]
-      realAssignee : Any
+      realAssignee : User
       [[ Indicates whether a user is associated with `assigneeType`. For example, if the `assigneeType` is set to `COMPONENT_LEAD` but the component lead is not set, then `false` is returned. ]]
       isAssigneeTypeValid : Boolean
       [[ The type of the assignee that is assigned to issues created with this component, when an assignee cannot be set from the `assigneeType`. For example, `assigneeType` is set to `COMPONENT_LEAD` but no component lead is set. This property is set to one of the following values:
@@ -2624,21 +3298,6 @@ namespace vyne.openApi {
       name : String
       [[ The unique identifier for the component. ]]
       id : String
-   }
-   
-   [[ The application the linked item is in. ]]
-   model Application {
-      [[ The name-spaced type of the application, used by registered rendering apps. ]]
-      `type` : String
-      [[ The name of the application. Used in conjunction with the (remote) object icon title to display a tooltip for the link's icon. The tooltip takes the format "\[application name\] icon title". Blank items are excluded from the tooltip title. If both items are blank, the icon tooltop displays as "Web Link". Grouping and sorting of links may place links without an application name last. ]]
-      name : String
-   }
-   
-   model ProjectScopeBean {
-      [[ The ID of the project that the option's behavior applies to. ]]
-      id : Int
-      [[ Defines the behavior of the option in the project.If notSelectable is set, the option cannot be set as the field's value. This is useful for archiving an option that has previously been selected but shouldn't be used anymore.If defaultValue is set, the option is selected by default. ]]
-      attributes : String[]
    }
    
    [[ Details about system and custom avatars. ]]
@@ -2661,20 +3320,27 @@ namespace vyne.openApi {
       [[ The description of the notification scheme. ]]
       description : String
       [[ The notification events and associated recipients. ]]
-      notificationSchemeEvents : Any[]
+      notificationSchemeEvents : NotificationSchemeEvent[]
       [[ The scope of the notification scheme. ]]
       scope : Scope
    }
    
-   model UserBeanAvatarUrls {
-      [[ The URL of the user's 32x32 pixel avatar. ]]
-      `32x32` : String
-      [[ The URL of the user's 48x48 pixel avatar. ]]
-      `48x48` : String
-      [[ The URL of the user's 16x16 pixel avatar. ]]
-      `16x16` : String
-      [[ The URL of the user's 24x24 pixel avatar. ]]
-      `24x24` : String
+   [[ Details about a notification scheme event. ]]
+   model NotificationSchemeEvent {
+      event : NotificationEvent
+      notifications : EventNotification[]
+   }
+   
+   [[ Details about a notification event. ]]
+   model NotificationEvent {
+      [[ The ID of the event. The event can be a [Jira system event](https://confluence.atlassian.com/x/8YdKLg#Creatinganotificationscheme-eventsEvents) or a [custom event](https://confluence.atlassian.com/x/AIlKLg). ]]
+      id : Int
+      [[ The name of the event. ]]
+      name : String
+      [[ The description of the event. ]]
+      description : String
+      [[ The template of the event. Only custom events configured by Jira administrators have template. ]]
+      templateEvent : NotificationEvent
    }
    
    [[ A user found in a search. ]]
@@ -2699,26 +3365,6 @@ namespace vyne.openApi {
       accountId : String
    }
    
-   [[ An entity property, for more information see [Entity properties](https://developer.atlassian.com/cloud/jira/platform/jira-entity-properties/). ]]
-   model EntityProperty {
-      [[ The key of the property. Required on create and update. ]]
-      key : String
-      [[ The value of the property. Required on create and update. ]]
-      value : Any
-   }
-   
-   [[ Details of the time tracking configuration. ]]
-   model TimeTrackingConfiguration {
-      [[ The number of hours in a working day. ]]
-      workingHoursPerDay : Decimal?
-      [[ The number of days in a working week. ]]
-      workingDaysPerWeek : Decimal?
-      [[ The format that will appear on an issue's *Time Spent* field. ]]
-      timeFormat : String?
-      [[ The default unit of time applied to logged time. ]]
-      defaultUnit : String?
-   }
-   
    [[ Meta data describing the `issues` context variable. ]]
    model IssuesMetaBean {
       jql : IssuesJqlMetaDataBean
@@ -2730,22 +3376,6 @@ namespace vyne.openApi {
       originalQuery : String
       [[ The converted query, with accountIDs instead of user identifiers, or 'unknown' for users that could not be found ]]
       convertedQuery : String
-   }
-   
-   model AttachmentArchiveEntry {
-      mediaType : String
-      entryIndex : Int
-      abbreviatedName : String
-      name : String
-      size : Int
-   }
-   
-   [[ The identifiers for a project. ]]
-   model ProjectIdentifierBean {
-      [[ The ID of the project. ]]
-      id : Int
-      [[ The key of the project. ]]
-      key : String
    }
    
    [[ A page of items. ]]
@@ -2766,9 +3396,6 @@ namespace vyne.openApi {
       values : NotificationScheme[]
    }
    
-   [[ Details of an operand in a JQL clause. ]]
-   type JqlQueryClauseOperand
-   
    [[ Details about a failed webhook. ]]
    model FailedWebhook {
       [[ The webhook ID, as sent in the `X-Atlassian-Webhook-Identifier` header with the webhook. ]]
@@ -2781,35 +3408,11 @@ namespace vyne.openApi {
       failureTime : Int?
    }
    
-   [[ Details of a user or group subscribing to a filter. ]]
-   model FilterSubscription {
-      [[ The ID of the filter subscription. ]]
-      id : Int
-      [[ The user subscribing to filter. ]]
-      user : Any
-      [[ The group subscribing to filter. ]]
-      group : GroupName
-   }
-   
    model JiraExpressionEvalRequestBean {
       [[ The Jira expression to evaluate. ]]
       expression : String?
       [[ The context in which the Jira expression is evaluated. ]]
       context : JiraExpressionEvalContextBean
-   }
-   
-   [[ A changelog. ]]
-   model Changelog {
-      [[ The ID of the changelog. ]]
-      id : String
-      [[ The user who made the change. ]]
-      author : Any
-      [[ The date on which the change took place. ]]
-      created : DateTime
-      [[ The list of items changed. ]]
-      items : ChangeDetails[]
-      [[ The history metadata associated with the changed. ]]
-      historyMetadata : Any
    }
    
    model SharePermissionInputBean {
@@ -2856,69 +3459,30 @@ namespace vyne.openApi {
       values : Dashboard[]
    }
    
-   model GlobalScopeBean {
-      [[ Defines the behavior of the option in the global context.If notSelectable is set, the option cannot be set as the field's value. This is useful for archiving an option that has previously been selected but shouldn't be used anymore.If defaultValue is set, the option is selected by default. ]]
-      attributes : String[]
-   }
-   
-   [[ A group found in a search. ]]
-   model FoundGroup {
-      [[ The name of the group. ]]
-      name : String
-      [[ The group name with the matched query string highlighted with the HTML bold tag. ]]
-      html : String
-      labels : Any[]
-      [[ The ID of the group, if available, which uniquely identifies the group across all Atlassian products. For example, *952d12c3-5b5b-4d04-bb32-44d383afc4b2*. ]]
-      groupId : String
-   }
-   
-   [[ Details of an issue transition. ]]
-   model IssueTransition {
-      [[ The ID of the issue transition. Required when specifying a transition to undertake. ]]
-      id : String
-      [[ The name of the issue transition. ]]
-      name : String
-      [[ Details of the issue status after the transition. ]]
-      to : Any
-      [[ Whether there is a screen associated with the issue transition. ]]
-      hasScreen : Boolean
-      [[ Whether the issue transition is global, that is, the transition is applied to issues regardless of their status. ]]
-      isGlobal : Boolean
-      [[ Whether this is the initial issue transition for the workflow. ]]
-      isInitial : Boolean
-      [[ Whether the issue has to meet criteria before the issue transition is applied. ]]
-      isConditional : Boolean
-      [[ Details of the fields associated with the issue transition screen. Use this information to populate `fields` and `update` in a transition request. ]]
-      fields : Any
-      [[ Expand options that include additional transition details in the response. ]]
-      expand : String
-   }
-   
-   [[ Jira instance health check results. Deprecated and no longer returned. ]]
-   model HealthCheckResult {
-      [[ The name of the Jira health check item. ]]
-      name : String
-      [[ The description of the Jira health check item. ]]
-      description : String
-      [[ Indicates whether the Jira health check item passed or failed. ]]
-      passed : Boolean
-   }
-   
    [[ The result of evaluating a Jira expression. ]]
    model JiraExpressionResult {
       [[ The value of the evaluated expression. It may be a primitive JSON value or a Jira REST API object. (Some expressions do not produce any meaningful results—for example, an expression that returns a lambda function—if that's the case a simple string representation is returned. These string representations should not be relied upon and may change without notice.) ]]
       value : Any?
       [[ Contains various characteristics of the performed expression evaluation. ]]
-      meta : Any
+      meta : JiraExpressionEvaluationMetaDataBean
    }
    
-   [[ Details of a workflow status. ]]
-   model WorkflowStatus {
-      [[ The ID of the issue status. ]]
-      id : String?
-      [[ The name of the status in the workflow. ]]
-      name : String?
-      properties : WorkflowStatusProperties
+   model JiraExpressionEvaluationMetaDataBean {
+      [[ Contains information about the expression complexity. For example, the number of steps it took to evaluate the expression. ]]
+      complexity : JiraExpressionsComplexityBean
+      [[ Contains information about the `issues` variable in the context. For example, is the issues were loaded with JQL, information about the page will be included here. ]]
+      issues : IssuesMetaBean
+   }
+   
+   model JiraExpressionsComplexityBean {
+      [[ The number of steps it took to evaluate the expression. ]]
+      steps : JiraExpressionsComplexityValueBean
+      [[ The number of expensive operations executed while evaluating the expression. Expensive operations are those that load additional data, such as entity properties, comments, or custom fields. ]]
+      expensiveOperations : JiraExpressionsComplexityValueBean
+      [[ The number of Jira REST API beans returned in the response. ]]
+      beans : JiraExpressionsComplexityValueBean
+      [[ The number of primitive values returned in the response. ]]
+      primitiveValues : JiraExpressionsComplexityValueBean
    }
    
    [[ A page of comments. ]]
@@ -2930,56 +3494,25 @@ namespace vyne.openApi {
       [[ The number of items returned. ]]
       total : Int
       [[ The list of comments. ]]
-      comments : Any[]
+      comments : Comment[]
    }
    
    [[ Details of global and project permissions granted to the user. ]]
    model BulkPermissionGrants {
       [[ List of project permissions and the projects and issues those permissions provide access to. ]]
-      projectPermissions : Any[]?
+      projectPermissions : BulkProjectPermissionGrants[]?
       [[ List of permissions granted to the user. ]]
       globalPermissions : String[]?
    }
    
-   [[ A workflow with transition rules. ]]
-   model WorkflowTransitionRules {
-      workflowId : WorkflowId
-      [[ The list of post functions within the workflow. ]]
-      postFunctions : ConnectWorkflowTransitionRule[]
-      [[ The list of conditions within the workflow. ]]
-      conditions : ConnectWorkflowTransitionRule[]
-      [[ The list of validators within the workflow. ]]
-      validators : ConnectWorkflowTransitionRule[]
-   }
-   
-   [[ Details of a workflow transition. ]]
-   model Transition {
-      [[ The ID of the transition. ]]
-      id : String?
-      [[ The name of the transition. ]]
-      name : String?
-      [[ The description of the transition. ]]
-      description : String?
-      [[ The statuses the transition can start from. ]]
-      `from` : String[]?
-      [[ The status the transition goes to. ]]
-      to : String?
-      [[ The type of the transition. ]]
-      `type` : String?
-      screen : Any
-      rules : WorkflowRules
-   }
-   
-   [[ A project category. ]]
-   model UpdatedProjectCategory {
-      [[ The URL of the project category. ]]
-      self : String
-      [[ The ID of the project category. ]]
-      id : String
-      [[ The name of the project category. ]]
-      description : String
-      [[ The description of the project category. ]]
-      name : String
+   [[ List of project permissions and the projects and issues those permissions grant access to. ]]
+   model BulkProjectPermissionGrants {
+      [[ A project permission, ]]
+      permission : String?
+      [[ IDs of the issues the user has the permission for. ]]
+      issues : Int[]?
+      [[ IDs of the projects the user has the permission for. ]]
+      projects : Int[]?
    }
    
    [[ Details of any errors encountered while updating workflow transition rules. ]]
@@ -2999,20 +3532,6 @@ namespace vyne.openApi {
    model ErrorMessage {
       [[ The error message. ]]
       message : String?
-   }
-   
-   [[ Details about a notification scheme event. ]]
-   model NotificationSchemeEvent {
-      event : Any
-      notifications : EventNotification[]
-   }
-   
-   [[ A field auto-complete suggestion. ]]
-   model AutoCompleteSuggestion {
-      [[ The value of a suggested item. ]]
-      value : String
-      [[ The display name of a suggested item. If `fieldValue` or `predicateValue` are provided, the matching text is highlighted with the HTML bold tag. ]]
-      displayName : String
    }
    
    [[ Details of a locale. ]]
@@ -3080,32 +3599,6 @@ namespace vyne.openApi {
       next : String
    }
    
-   [[ Details of issue history metadata. ]]
-   model HistoryMetadata {
-      [[ The type of the history record. ]]
-      `type` : String
-      [[ The description of the history record. ]]
-      description : String
-      [[ The description key of the history record. ]]
-      descriptionKey : String
-      [[ The activity described in the history record. ]]
-      activityDescription : String
-      [[ The key of the activity described in the history record. ]]
-      activityDescriptionKey : String
-      [[ The description of the email address associated the history record. ]]
-      emailDescription : String
-      [[ The description key of the email address associated the history record. ]]
-      emailDescriptionKey : String
-      [[ Details of the user whose action created the history record. ]]
-      actor : HistoryMetadataParticipant
-      [[ Details of the system that generated the history record. ]]
-      generator : HistoryMetadataParticipant
-      [[ Details of the cause that triggered the creation the history record. ]]
-      cause : HistoryMetadataParticipant
-      [[ Additional arbitrary information about the history record. ]]
-      extraData : Any
-   }
-   
    [[ A page of items. ]]
    model PageBeanComment {
       [[ The URL of the page. ]]
@@ -3121,27 +3614,13 @@ namespace vyne.openApi {
       [[ Indicates whether this is the last page. ]]
       isLast : Boolean
       [[ The list of items. ]]
-      values : Any[]
+      values : Comment[]
    }
-   
-   type ListWrapperCallbackApplicationRole
    
    [[ The JQL queries to be converted. ]]
    model JQLPersonalDataMigrationRequest {
       [[ A list of queries with user identifiers. Maximum of 100 queries. ]]
       queryStrings : String[]
-   }
-   
-   [[ IDs of the screens for the various screen types associated with the screen scheme. ]]
-   model ScreenTypeIDsBean {
-      [[ The ID of the edit screen. ]]
-      edit : Int?
-      [[ The ID of the create screen. ]]
-      create : Int?
-      [[ The ID of the view screen. ]]
-      `view` : Int?
-      [[ The ID of the default screen. ]]
-      `default` : Int
    }
    
    [[ Details about the mapping between issue types and a workflow. ]]
@@ -3188,69 +3667,6 @@ namespace vyne.openApi {
       actorsCount : Int
    }
    
-   model JiraExpressionsComplexityBean {
-      [[ The number of steps it took to evaluate the expression. ]]
-      steps : JiraExpressionsComplexityValueBean
-      [[ The number of expensive operations executed while evaluating the expression. Expensive operations are those that load additional data, such as entity properties, comments, or custom fields. ]]
-      expensiveOperations : JiraExpressionsComplexityValueBean
-      [[ The number of Jira REST API beans returned in the response. ]]
-      beans : JiraExpressionsComplexityValueBean
-      [[ The number of primitive values returned in the response. ]]
-      primitiveValues : JiraExpressionsComplexityValueBean
-   }
-   
-   [[ Project Issue Type Hierarchy ]]
-   model Hierarchy {
-      level : Any[]
-   }
-   
-   [[ User details. ]]
-   model UserDetails {
-      [[ The URL of the user. ]]
-      self : String
-      [[ This property is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      name : String
-      [[ This property is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      key : String
-      [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. An account ID with value `unknown` is returned when there is missing data for a user, which only happens for deleted users. We recommend you treat this value as an error case if you need to access more information about the user. ]]
-      accountId : String
-      [[ The email address of the user. Depending on the user’s privacy settings, this may be returned as null. ]]
-      emailAddress : String
-      [[ The avatars of the user. ]]
-      avatarUrls : Any
-      [[ The display name of the user. Depending on the user’s privacy settings, this may return an alternative value. ]]
-      displayName : String
-      [[ Whether the user is active. ]]
-      active : Boolean
-      [[ The time zone specified in the user's profile. Depending on the user’s privacy settings, this may be returned as null. ]]
-      timeZone : String
-      [[ The type of account represented by this user. This will be one of 'atlassian' (normal users), 'app' (application user) or 'customer' (Jira Service Desk customer user) ]]
-      accountType : String
-   }
-   
-   [[ Details about the operations available in this version. ]]
-   model SimpleLink {
-      id : String
-      styleClass : String
-      iconClass : String
-      label : String
-      title : String
-      href : String
-      weight : Int
-   }
-   
-   [[ A screen scheme. ]]
-   model ScreenScheme {
-      [[ The ID of the screen scheme. ]]
-      id : Int
-      [[ The name of the screen scheme. ]]
-      name : String
-      [[ The description of the screen scheme. ]]
-      description : String
-      [[ IDs of the screens for the associated screen types. ]]
-      screens : ScreenTypeIDsBean
-   }
-   
    [[ A list of the issues matched to a JQL query or details of errors encountered during matching. ]]
    model IssueMatchesForJQL {
       [[ A list of issue IDs. ]]
@@ -3266,42 +3682,17 @@ namespace vyne.openApi {
    
    [[ List of users and groups found in a search. ]]
    model FoundUsersAndGroups {
-      users : Any
+      users : FoundUsers
       groups : FoundGroups
    }
    
-   model HierarchyLevel {
-      id : Int
-      name : String
-      aboveLevelId : Int
-      belowLevelId : Int
-      projectConfigurationId : Int
-      issueTypeIds : Int[]
-      externalUuid : String
-   }
-   
-   [[ Details of the permission. ]]
-   model RestrictedPermission {
-      [[ The ID of the permission. Either `id` or `key` must be specified. Use [Get all permissions](#api-rest-api-3-permissions-get) to get the list of permissions. ]]
-      id : String
-      [[ The key of the permission. Either `id` or `key` must be specified. Use [Get all permissions](#api-rest-api-3-permissions-get) to get the list of permissions. ]]
-      key : String
-   }
-   
-   [[ Details of the users and groups to receive the notification. ]]
-   model NotificationRecipients {
-      [[ Indicates whether the notification should be sent to the issue's reporter. ]]
-      reporter : Boolean
-      [[ Indicates whether the notification should be sent to the issue's assignees. ]]
-      assignee : Boolean
-      [[ Indicates whether the notification should be sent to the issue's watchers. ]]
-      watchers : Boolean
-      [[ Indicates whether the notification should be sent to the issue's voters. ]]
-      voters : Boolean
-      [[ List of users to receive the notification. ]]
-      users : UserDetails[]
-      [[ List of groups to receive the notification. ]]
-      groups : GroupName[]
+   [[ The list of users found in a search, including header text (Showing X of Y matching users) and total of matched users. ]]
+   model FoundUsers {
+      users : UserPickerUser[]
+      [[ The total number of users found in the search. ]]
+      total : Int
+      [[ Header text indicating the number of users in the response and the total number of users found in the search. ]]
+      header : String
    }
    
    [[ Details about a workflow configuration update request. ]]
@@ -3324,44 +3715,6 @@ namespace vyne.openApi {
       customFieldUsage : VersionUsageInCustomField[]
    }
    
-   [[ An issue priority. ]]
-   model Priority {
-      [[ The URL of the issue priority. ]]
-      self : String
-      [[ The color used to indicate the issue priority. ]]
-      statusColor : String
-      [[ The description of the issue priority. ]]
-      description : String
-      [[ The URL of the icon for the issue priority. ]]
-      iconUrl : String
-      [[ The name of the issue priority. ]]
-      name : String
-      [[ The ID of the issue priority. ]]
-      id : String
-   }
-   
-   [[ Details of project permissions and associated issues and projects to look up. ]]
-   model BulkProjectPermissions {
-      [[ List of issue IDs. ]]
-      issues : Int[]
-      [[ List of project IDs. ]]
-      projects : Int[]
-      [[ List of project permissions. ]]
-      permissions : String[]?
-   }
-   
-   [[ Counts of the number of issues in various statuses. ]]
-   model VersionIssuesStatus {
-      [[ Count of issues with a status other than *to do*, *in progress*, and *done*. ]]
-      unmapped : Int
-      [[ Count of issues with status *to do*. ]]
-      toDo : Int
-      [[ Count of issues with status *in progress*. ]]
-      inProgress : Int
-      [[ Count of issues with status *done*. ]]
-      done : Int
-   }
-   
    [[ A page of items. ]]
    model PageBeanComponentWithIssueCount {
       [[ The URL of the page. ]]
@@ -3378,45 +3731,6 @@ namespace vyne.openApi {
       isLast : Boolean
       [[ The list of items. ]]
       values : ComponentWithIssueCount[]
-   }
-   
-   [[ The JQL specifying the issues available in the evaluated Jira expression under the `issues` context variable. ]]
-   model JexpIssues {
-      [[ The JQL query that specifies the set of issues available in the Jira expression. ]]
-      jql : JexpJqlIssues
-   }
-   
-   model AvatarUrlsBean {
-      [[ The URL of the item's 16x16 pixel avatar. ]]
-      `16x16` : String
-      [[ The URL of the item's 24x24 pixel avatar. ]]
-      `24x24` : String
-      [[ The URL of the item's 32x32 pixel avatar. ]]
-      `32x32` : String
-      [[ The URL of the item's 48x48 pixel avatar. ]]
-      `48x48` : String
-   }
-   
-   model IdOrKeyBean {
-      [[ The ID of the referenced item. ]]
-      id : Int
-      [[ The key of the referenced item. ]]
-      key : String
-   }
-   
-   [[ Key fields from the linked issue. ]]
-   model Fields {
-      [[ The summary description of the linked issue. ]]
-      summary : String
-      [[ The status of the linked issue. ]]
-      status : Any
-      [[ The priority of the linked issue. ]]
-      priority : Priority
-      [[ The assignee of the linked issue. ]]
-      assignee : UserDetails
-      issuetype : IssueTypeBean
-      [[ The type of the linked issue. ]]
-      issueType : IssueTypeBean
    }
    
    [[ Details about a task. ]]
@@ -3455,27 +3769,6 @@ namespace vyne.openApi {
       keys : PropertyKey[]
    }
    
-   [[ A status. ]]
-   model StatusDetails {
-      [[ The URL of the status. ]]
-      self : String
-      [[ The description of the status. ]]
-      description : String
-      [[ The URL of the icon used to represent the status. ]]
-      iconUrl : String
-      [[ The name of the status. ]]
-      name : String
-      [[ The ID of the status. ]]
-      id : String
-      [[ The category assigned to the status. ]]
-      statusCategory : StatusCategory
-   }
-   
-   model ProjectRoleUserBean {
-      [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. An account ID with value `unknown` is returned when there is missing data for a user, which only happens for deleted users. We recommend you treat this value as an error case if you need to access more information about the user. ]]
-      accountId : String
-   }
-   
    [[ A page of items. ]]
    model PageBeanIssueFieldOption {
       [[ The URL of the page. ]]
@@ -3497,14 +3790,6 @@ namespace vyne.openApi {
    model IdBean {
       [[ The ID of the permission scheme to associate with the project. Use the [Get all permission schemes](#api-rest-api-3-permissionscheme-get) resource to get a list of permission scheme IDs. ]]
       id : Int?
-   }
-   
-   [[ The group or role to which this item is visible. ]]
-   model Visibility {
-      [[ Indicates whether visibility of this item is restricted to a group or role. ]]
-      `type` : String
-      [[ The name of the group or role to which visibility of this item is restricted. ]]
-      value : String
    }
    
    model OperationMessage {
@@ -3536,45 +3821,10 @@ namespace vyne.openApi {
    
    [[ A clause that asserts the current value of a field. For example, `summary ~ test`. ]]
    model FieldValueClause {
-      field : Any?
+      field : JqlQueryField?
       [[ The operator between the field and operand. ]]
       operator : String?
       operand : JqlQueryClauseOperand?
-   }
-   
-   [[ A user. ]]
-   model User {
-      [[ The URL of the user. ]]
-      self : String
-      [[ This property is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      key : String
-      [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. Required in requests. An account ID with value `unknown` is returned when there is missing data for a user, which only happens for deleted users. We recommend you treat this value as an error case if you need to access more information about the user. ]]
-      accountId : String
-      [[ The user account type. Can take the following values:
-      *  `atlassian` regular Atlassian user account
-      *  `app` system account used for Connect applications and OAuth to represent external systems
-      *  `customer` Jira Service Desk account representing an external service desk ]]
-      accountType : String
-      [[ This property is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      name : String
-      [[ The email address of the user. Depending on the user’s privacy setting, this may be returned as null. ]]
-      emailAddress : String
-      [[ The avatars of the user. ]]
-      avatarUrls : AvatarUrlsBean
-      [[ The display name of the user. Depending on the user’s privacy setting, this may return an alternative value. ]]
-      displayName : String
-      [[ Indicates whether the user is active. ]]
-      active : Boolean
-      [[ The time zone specified in the user's profile. Depending on the user’s privacy setting, this may be returned as null. ]]
-      timeZone : String
-      [[ The locale of the user. Depending on the user’s privacy setting, this may be returned as null. ]]
-      locale : String
-      [[ The groups that the user belongs to. ]]
-      groups : SimpleListWrapperGroupName
-      [[ The application roles the user is assigned to. ]]
-      applicationRoles : SimpleListWrapperApplicationRole
-      [[ Expand options that include additional user details in the response. ]]
-      expand : String
    }
    
    [[ A page of items. ]]
@@ -3600,16 +3850,6 @@ namespace vyne.openApi {
       user : String[]
       [[ The name of the group to add as a default actor. This parameter accepts a comma-separated list. For example, `"group":["project-admin", "jira-developers"]`. ]]
       group : String[]
-   }
-   
-   [[ A screen. ]]
-   model Screen {
-      [[ The ID of the screen. ]]
-      id : Int
-      [[ The name of the screen. ]]
-      name : String
-      [[ The scope of the screen. ]]
-      scope : Scope
    }
    
    [[ An operand that is a function. See [Advanced searching - functions reference](https://confluence.atlassian.com/x/dwiiLQ) for more information about JQL functions. ]]
@@ -3646,34 +3886,6 @@ namespace vyne.openApi {
       values : Project[]
    }
    
-   [[ A list of editable field details. ]]
-   model IssueUpdateMetadata {
-      [[ A list of editable field details. ]]
-      fields : Any
-   }
-   
-   [[ Details a link group, which defines issue operations. ]]
-   model LinkGroup {
-      id : String
-      styleClass : String
-      header : SimpleLink
-      weight : Int
-      links : SimpleLink[]
-      groups : Any[]
-   }
-   
-   [[ Details of an issue type hierarchy level. ]]
-   model ProjectIssueTypesHierarchyLevel {
-      [[ The ID of the issue type hierarchy level. ]]
-      entityId : String
-      [[ The level of the issue type hierarchy level. ]]
-      level : Int
-      [[ The name of the issue type hierarchy level. ]]
-      name : String
-      [[ The list of issue types in the hierarchy level. ]]
-      issueTypes : IssueTypeDetails[]
-   }
-   
    [[ Details about the mapping between an issue type and a workflow. ]]
    model IssueTypeWorkflowMapping {
       [[ The ID of the issue type. Not required if updating the issue type-workflow mapping. ]]
@@ -3684,25 +3896,6 @@ namespace vyne.openApi {
       updateDraftIfNeeded : Boolean
    }
    
-   model UserBean {
-      [[ This property is deprecated in favor of `accountId` because of privacy changes. See the [migration guide](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details.
-      The key of the user. ]]
-      key : String
-      [[ The URL of the user. ]]
-      self : String
-      [[ This property is deprecated in favor of `accountId` because of privacy changes. See the [migration guide](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details.
-      The username of the user. ]]
-      name : String
-      [[ The display name of the user. Depending on the user’s privacy setting, this may return an alternative value. ]]
-      displayName : String
-      [[ Indicates whether the user is active. ]]
-      active : Boolean
-      [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. An account ID with value `unknown` is returned when there is missing data for a user, which only happens for deleted users. We recommend you treat this value as an error case if you need to access more information about the user. ]]
-      accountId : String
-      [[ The avatars of the user. ]]
-      avatarUrls : UserBeanAvatarUrls
-   }
-   
    [[ Lists of issues and entity properties. See [Entity properties](https://developer.atlassian.com/cloud/jira/platform/jira-entity-properties/) for more information. ]]
    model IssueEntityProperties {
       [[ A list of entity IDs. ]]
@@ -3711,82 +3904,9 @@ namespace vyne.openApi {
       properties : Any
    }
    
-   [[ Details of a share permission for the filter. ]]
-   model SharePermission {
-      [[ The unique identifier of the share permission. ]]
-      id : Int
-      [[ The type of share permission:
-      *  `group` Shared with a group. If set in a request, then specify `sharePermission.group` as well.
-      *  `project` Shared with a project. If set in a request, then specify `sharePermission.project` as well.
-      *  `projectRole` Share with a project role in a project. This value is not returned in responses. It is used in requests, where it needs to be specify with `projectId` and `projectRoleId`.
-      *  `global` Shared globally. If set in a request, no other `sharePermission` properties need to be specified.
-      *  `loggedin` Shared with all logged-in users. Note: This value is set in a request by specifying `authenticated` as the `type`.
-      *  `project-unknown` Shared with a project that the user does not have access to. Cannot be set in a request. ]]
-      `type` : String?
-      [[ The project that the filter is shared with. This is similar to the project object returned by [Get project](#api-rest-api-3-project-projectIdOrKey-get) but it contains a subset of the properties, which are: `self`, `id`, `key`, `assigneeType`, `name`, `roles`, `avatarUrls`, `projectType`, `simplified`.
-      For a request, specify the `id` for the project. ]]
-      project : Project
-      [[ The project role that the filter is shared with.
-      For a request, specify the `id` for the role. You must also specify the `project` object and `id` for the project that the role is in. ]]
-      role : ProjectRole
-      [[ The group that the filter is shared with. For a request, specify the `name` property for the group. ]]
-      group : GroupName
-   }
-   
-   [[ A comment. ]]
-   model Comment {
-      [[ The URL of the comment. ]]
-      self : String
-      [[ The ID of the comment. ]]
-      id : String
-      [[ The ID of the user who created the comment. ]]
-      author : UserDetails
-      [[ The comment text in [Atlassian Document Format](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/). ]]
-      body : Any
-      [[ The rendered version of the comment. ]]
-      renderedBody : String
-      [[ The ID of the user who updated the comment last. ]]
-      updateAuthor : UserDetails
-      [[ The date and time at which the comment was created. ]]
-      created : DateTime
-      [[ The date and time at which the comment was updated last. ]]
-      updated : DateTime
-      [[ The group or role to which this comment is visible. Optional on create and update. ]]
-      visibility : Visibility
-      [[ Indicates whether the comment is visible in Jira Service Desk. Defaults to true when comments are created in the Jira Cloud Platform. This includes when the site doesn't use Jira Service Desk or the project isn't a Jira Service Desk project and, therefore, there is no Jira Service Desk for the issue to be visible on. To create a comment with its visibility in Jira Service Desk set to false, use the Jira Service Desk REST API [Create request comment](https://developer.atlassian.com/cloud/jira/service-desk/rest/#api-rest-servicedeskapi-request-issueIdOrKey-comment-post) operation. ]]
-      jsdPublic : Boolean
-      [[ A list of comment properties. Optional on create and update. ]]
-      properties : EntityProperty[]
-   }
-   
-   [[ A workflow scheme along with a list of projects that use it. ]]
-   model WorkflowSchemeAssociations {
-      [[ The list of projects that use the workflow scheme. ]]
-      projectIds : String[]?
-      [[ The workflow scheme. ]]
-      workflowScheme : WorkflowScheme
-   }
-   
-   [[ Additional details about a project. ]]
-   model ProjectInsight {
-      [[ Total issue count. ]]
-      totalIssueCount : Int
-      [[ The last issue update time. ]]
-      lastIssueUpdateTime : DateTime
-   }
-   
-   [[ The list of users found in a search, including header text (Showing X of Y matching users) and total of matched users. ]]
-   model FoundUsers {
-      users : UserPickerUser[]
-      [[ The total number of users found in the search. ]]
-      total : Int
-      [[ Header text indicating the number of users in the response and the total number of users found in the search. ]]
-      header : String
-   }
-   
    [[ A clause that asserts a previous value of a field. For example, `status WAS "Resolved" BY currentUser() BEFORE "2019/02/02"`. See [WAS](https://confluence.atlassian.com/x/dgiiLQ#Advancedsearching-operatorsreference-WASWAS) for more information about the WAS operator. ]]
    model FieldWasClause {
-      field : Any?
+      field : JqlQueryField?
       [[ The operator between the field and operand. ]]
       operator : String?
       operand : JqlQueryClauseOperand?
@@ -3800,92 +3920,9 @@ namespace vyne.openApi {
       keyword : String?
    }
    
-   model ProjectRoleGroupBean {
-      displayName : String
-      name : String
-   }
-   
-   model JiraExpressionEvaluationMetaDataBean {
-      [[ Contains information about the expression complexity. For example, the number of steps it took to evaluate the expression. ]]
-      complexity : JiraExpressionsComplexityBean
-      [[ Contains information about the `issues` variable in the context. For example, is the issues were loaded with JQL, information about the page will be included here. ]]
-      issues : IssuesMetaBean
-   }
-   
-   [[ The schema of a field. ]]
-   model JsonTypeBean {
-      [[ The data type of the field. ]]
-      `type` : String?
-      [[ When the data type is an array, the name of the field items within the array. ]]
-      items : String
-      [[ If the field is a system field, the name of the field. ]]
-      system : String
-      [[ If the field is a custom field, the URI of the field. ]]
-      custom : String
-      [[ If the field is a custom field, the custom ID of the field. ]]
-      customId : Int
-      [[ If the field is a custom field, the configuration of the field. ]]
-      configuration : Any
-   }
-   
-   [[ An audit record. ]]
-   model AuditRecordBean {
-      [[ The ID of the audit record. ]]
-      id : Int
-      [[ The summary of the audit record. ]]
-      summary : String
-      [[ The URL of the computer where the creation of the audit record was initiated. ]]
-      remoteAddress : String
-      [[ The key of the user who created the audit record. ]]
-      authorKey : String
-      [[ The date and time on which the audit record was created. ]]
-      created : DateTime
-      [[ The category of the audit record. For a list of these categories, see the help article [Auditing in Jira applications](https://confluence.atlassian.com/x/noXKM). ]]
-      category : String
-      [[ The event the audit record originated from. ]]
-      eventSource : String
-      [[ The description of the audit record. ]]
-      description : String
-      objectItem : AssociatedItemBean
-      [[ The list of values changed in the record event. ]]
-      changedValues : ChangedValueBean[]
-      [[ The list of items associated with the changed record. ]]
-      associatedItems : AssociatedItemBean[]
-   }
-   
-   [[ Details about a notification event. ]]
-   model NotificationEvent {
-      [[ The ID of the event. The event can be a [Jira system event](https://confluence.atlassian.com/x/8YdKLg#Creatinganotificationscheme-eventsEvents) or a [custom event](https://confluence.atlassian.com/x/AIlKLg). ]]
-      id : Int
-      [[ The name of the event. ]]
-      name : String
-      [[ The description of the event. ]]
-      description : String
-      [[ The template of the event. Only custom events configured by Jira administrators have template. ]]
-      templateEvent : Any
-   }
-   
-   [[ List of project permissions and the projects and issues those permissions grant access to. ]]
-   model BulkProjectPermissionGrants {
-      [[ A project permission, ]]
-      permission : String?
-      [[ IDs of the issues the user has the permission for. ]]
-      issues : Int[]?
-      [[ IDs of the projects the user has the permission for. ]]
-      projects : Int[]?
-   }
-   
    [[ A list of matched issues or errors for each JQL query, in the order the JQL queries were passed. ]]
    model IssueMatches {
       matches : IssueMatchesForJQL[]?
-   }
-   
-   type ListWrapperCallbackGroupName
-   
-   [[ ID of a screen. ]]
-   model ScreenID {
-      [[ The ID of the screen. ]]
-      id : String?
    }
    
    model VersionMoveBean {
@@ -3895,72 +3932,7 @@ namespace vyne.openApi {
       position : String
    }
    
-   [[ A group label. ]]
-   model GroupLabel {
-      [[ The group label name. ]]
-      text : String
-      [[ The title of the group label. ]]
-      title : String
-      [[ The type of the group label. ]]
-      `type` : String
-   }
-   
-   [[ A field used in a JQL query. See [Advanced searching - fields reference](https://confluence.atlassian.com/x/dAiiLQ) for more information about fields in JQL queries. ]]
-   model JqlQueryField {
-      [[ The name of the field. ]]
-      name : String?
-      [[ When the field refers to a value in an entity property, details of the entity property value. ]]
-      property : JqlQueryFieldEntityProperty[]
-   }
-   
-   [[ Details of an application role. ]]
-   model ApplicationRole {
-      [[ The key of the application role. ]]
-      key : String
-      [[ The groups associated with the application role. ]]
-      groups : String[]
-      [[ The display name of the application role. ]]
-      name : String
-      [[ The groups that are granted default access for this application role. ]]
-      defaultGroups : String[]
-      [[ Determines whether this application role should be selected by default on user creation. ]]
-      selectedByDefault : Boolean
-      [[ Deprecated. ]]
-      defined : Boolean
-      [[ The maximum count of users on your license. ]]
-      numberOfSeats : Int
-      [[ The count of users remaining on your license. ]]
-      remainingSeats : Int
-      [[ The number of users counting against your license. ]]
-      userCount : Int
-      [[ The [type of users](https://confluence.atlassian.com/x/lRW3Ng) being counted against your license. ]]
-      userCountDescription : String
-      hasUnlimitedSeats : Boolean
-      [[ Indicates if the application role belongs to Jira platform (`jira-core`). ]]
-      platform : Boolean
-   }
-   
-   type AnonymousTypecom_atlassian_jira_rest_v2_issue_CommentPropertyResource_setCommentProperty_putBody
-   
-   type AnonymousTypecom_atlassian_jira_rest_v2_dashboard_DashboardItemPropertyResource_setDashboardItemProperty_putBody
-   
-   type AnonymousTypecom_atlassian_jira_rest_v2_issue_IssuePropertyResource_setIssueProperty_putBody
-   
-   type AnonymousTypecom_atlassian_jira_rest_v2_issue_WorklogPropertyResource_setWorklogProperty_putBody
-   
-   type AnonymousTypecom_atlassian_jira_rest_v2_issue_IssueTypeResource_createIssueTypeAvatar_postBody
-   
-   type AnonymousTypecom_atlassian_jira_rest_v2_issue_IssueTypePropertyResource_setIssueTypeProperty_putBody
-   
-   type AnonymousTypecom_atlassian_jira_rest_v2_issue_ProjectResource_createProjectAvatar_postBody
-   
-   type AnonymousTypecom_atlassian_jira_rest_v2_issue_ProjectPropertyResource_setProjectProperty_putBody
-   
-   type AnonymousTypecom_atlassian_jira_rest_v2_issue_UniversalAvatarResource_storeAvatar_postBody
-   
-   type AnonymousTypecom_atlassian_jira_rest_v2_userproperty_UserPropertyResource_setUserProperty_putBody
-   
-   type AnonymousTypeAddonPropertiesResource_putAddonProperty_putBody
+   type binary inherits String
    
    @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3Application_propertiesService {
@@ -4142,7 +4114,7 @@ namespace vyne.openApi {
       *  *Edit Own Comments* [project permission](https://confluence.atlassian.com/x/yodKLg) to create or update the value of a property on a comment created by the user.
       Also, when the visibility of a comment is restricted to a role or group the user must be a member of that role or group. ]]
       @HttpOperation(method = "PUT" , url = "/rest/api/3/comment/{commentId}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_issue_CommentPropertyResource_setCommentProperty_put( @PathVariable(value = "commentId") commentId : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody anonymousTypecom_atlassian_jira_rest_v2_issue_CommentPropertyResource_setCommentProperty_putBody : AnonymousTypecom_atlassian_jira_rest_v2_issue_CommentPropertyResource_setCommentProperty_putBody ) : Any
+      operation com_atlassian_jira_rest_v2_issue_CommentPropertyResource_setCommentProperty_put( @PathVariable(value = "commentId") commentId : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody any : Any ) : Any
       [[ Deletes a comment property.
       **[Permissions](#permissions) required:** either of:
       *  *Edit All Comments* [project permission](https://confluence.atlassian.com/x/yodKLg) to delete a property from any comment.
@@ -4295,7 +4267,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** The user must be the owner of the dashboard. Note, users with the *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) are considered owners of the System dashboard. ]]
       @HttpOperation(method = "PUT" , url = "/rest/api/3/dashboard/{dashboardId}/items/{itemId}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_dashboard_DashboardItemPropertyResource_setDashboardItemProperty_put( @PathVariable(value = "dashboardId") dashboardId : String, @PathVariable(value = "itemId") itemId : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody anonymousTypecom_atlassian_jira_rest_v2_dashboard_DashboardItemPropertyResource_setDashboardItemProperty_putBody : AnonymousTypecom_atlassian_jira_rest_v2_dashboard_DashboardItemPropertyResource_setDashboardItemProperty_putBody ) : Any
+      operation com_atlassian_jira_rest_v2_dashboard_DashboardItemPropertyResource_setDashboardItemProperty_put( @PathVariable(value = "dashboardId") dashboardId : String, @PathVariable(value = "itemId") itemId : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody any : Any ) : Any
       [[ Deletes a dashboard item property.
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** The user must be the owner of the dashboard. Note, users with the *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) are considered owners of the System dashboard. ]]
@@ -4811,7 +4783,7 @@ namespace vyne.openApi {
       *  *Browse Projects* and *Create attachments* [ project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @HttpOperation(method = "POST" , url = "/rest/api/3/issue/{issueIdOrKey}/attachments")
-      operation com_atlassian_jira_rest_v2_issue_IssueAttachmentsResource_addAttachment_post( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String, @RequestBody string : string ) : Attachment[]
+      operation com_atlassian_jira_rest_v2_issue_IssueAttachmentsResource_addAttachment_post( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String, @RequestBody binary : binary ) : Attachment[]
    }
    @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssueIssueIdOrKeyChangelogService {
@@ -4918,7 +4890,7 @@ namespace vyne.openApi {
       *  *Browse projects* and *Edit issues* [project permissions](https://confluence.atlassian.com/x/yodKLg) for the project containing the issue.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @HttpOperation(method = "PUT" , url = "/rest/api/3/issue/{issueIdOrKey}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_issue_IssuePropertyResource_setIssueProperty_put( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody anonymousTypecom_atlassian_jira_rest_v2_issue_IssuePropertyResource_setIssueProperty_putBody : AnonymousTypecom_atlassian_jira_rest_v2_issue_IssuePropertyResource_setIssueProperty_putBody ) : Any
+      operation com_atlassian_jira_rest_v2_issue_IssuePropertyResource_setIssueProperty_put( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody any : Any ) : Any
       [[ Deletes an issue's property.
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:**
@@ -5139,7 +5111,7 @@ namespace vyne.openApi {
       *  *Edit all worklogs*[ project permission](https://confluence.atlassian.com/x/yodKLg) to update any worklog or *Edit own worklogs* to update worklogs created by the user.
       *  If the worklog has visibility restrictions, belongs to the group or has the role visibility is restricted to. ]]
       @HttpOperation(method = "PUT" , url = "/rest/api/3/issue/{issueIdOrKey}/worklog/{worklogId}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_issue_WorklogPropertyResource_setWorklogProperty_put( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String, @PathVariable(value = "worklogId") worklogId : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody anonymousTypecom_atlassian_jira_rest_v2_issue_WorklogPropertyResource_setWorklogProperty_putBody : AnonymousTypecom_atlassian_jira_rest_v2_issue_WorklogPropertyResource_setWorklogProperty_putBody ) : Any
+      operation com_atlassian_jira_rest_v2_issue_WorklogPropertyResource_setWorklogProperty_put( @PathVariable(value = "issueIdOrKey") issueIdOrKey : String, @PathVariable(value = "worklogId") worklogId : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody any : Any ) : Any
       [[ Deletes a worklog property.
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:**
@@ -5283,7 +5255,7 @@ namespace vyne.openApi {
       After creating the avatar, use [ Update issue type](#api-rest-api-3-issuetype-id-put) to set it as the issue type's displayed avatar.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "POST" , url = "/rest/api/3/issuetype/{id}/avatar2")
-      operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_createIssueTypeAvatar_post( @PathVariable(value = "id") id : String,  `x` : Int,  `y` : Int,  size : Int, @RequestBody anonymousTypecom_atlassian_jira_rest_v2_issue_IssueTypeResource_createIssueTypeAvatar_postBody : AnonymousTypecom_atlassian_jira_rest_v2_issue_IssueTypeResource_createIssueTypeAvatar_postBody ) : Avatar
+      operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_createIssueTypeAvatar_post( @PathVariable(value = "id") id : String,  `x` : Int,  `y` : Int,  size : Int, @RequestBody any : Any ) : Avatar
    }
    @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3IssuetypeIssueTypeIdPropertiesService {
@@ -5308,7 +5280,7 @@ namespace vyne.openApi {
       The value of the request body must be a [valid](http://tools.ietf.org/html/rfc4627), non-empty JSON blob. The maximum length is 32768 characters.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "PUT" , url = "/rest/api/3/issuetype/{issueTypeId}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_issue_IssueTypePropertyResource_setIssueTypeProperty_put( @PathVariable(value = "issueTypeId") issueTypeId : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody anonymousTypecom_atlassian_jira_rest_v2_issue_IssueTypePropertyResource_setIssueTypeProperty_putBody : AnonymousTypecom_atlassian_jira_rest_v2_issue_IssueTypePropertyResource_setIssueTypeProperty_putBody ) : Any
+      operation com_atlassian_jira_rest_v2_issue_IssueTypePropertyResource_setIssueTypeProperty_put( @PathVariable(value = "issueTypeId") issueTypeId : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody any : Any ) : Any
       [[ Deletes the [issue type property](https://developer.atlassian.com/cloud/jira/platform/storing-data-without-a-database/#a-id-jira-entity-properties-a-jira-entity-properties).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "DELETE" , url = "/rest/api/3/issuetype/{issueTypeId}/properties/{propertyKey}")
@@ -5731,7 +5703,7 @@ namespace vyne.openApi {
       After creating the avatar use [Set project avatar](#api-rest-api-3-project-projectIdOrKey-avatar-put) to set it as the project's displayed avatar.
       **[Permissions](#permissions) required:** *Administer projects* [project permission](https://confluence.atlassian.com/x/yodKLg). ]]
       @HttpOperation(method = "POST" , url = "/rest/api/3/project/{projectIdOrKey}/avatar2")
-      operation com_atlassian_jira_rest_v2_issue_ProjectResource_createProjectAvatar_post( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String,  `x` : Int,  `y` : Int,  size : Int, @RequestBody anonymousTypecom_atlassian_jira_rest_v2_issue_ProjectResource_createProjectAvatar_postBody : AnonymousTypecom_atlassian_jira_rest_v2_issue_ProjectResource_createProjectAvatar_postBody ) : Avatar
+      operation com_atlassian_jira_rest_v2_issue_ProjectResource_createProjectAvatar_post( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String,  `x` : Int,  `y` : Int,  size : Int, @RequestBody any : Any ) : Avatar
    }
    @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3ProjectProjectIdOrKeyAvatarsService {
@@ -5777,7 +5749,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) or *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project in which the property is created. ]]
       @HttpOperation(method = "PUT" , url = "/rest/api/3/project/{projectIdOrKey}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_issue_ProjectPropertyResource_setProjectProperty_put( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody anonymousTypecom_atlassian_jira_rest_v2_issue_ProjectPropertyResource_setProjectProperty_putBody : AnonymousTypecom_atlassian_jira_rest_v2_issue_ProjectPropertyResource_setProjectProperty_putBody ) : Any
+      operation com_atlassian_jira_rest_v2_issue_ProjectPropertyResource_setProjectProperty_put( @PathVariable(value = "projectIdOrKey") projectIdOrKey : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody any : Any ) : Any
       [[ Deletes the [property](https://developer.atlassian.com/cloud/jira/platform/storing-data-without-a-database/#a-id-jira-entity-properties-a-jira-entity-properties) from a project.
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) or *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project containing the property. ]]
@@ -6242,7 +6214,7 @@ namespace vyne.openApi {
       *  [Set project avatar](#api-rest-api-3-project-projectIdOrKey-avatar-put) to set it as the project's displayed avatar.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @HttpOperation(method = "POST" , url = "/rest/api/3/universal_avatar/type/{type}/owner/{entityId}")
-      operation com_atlassian_jira_rest_v2_issue_UniversalAvatarResource_storeAvatar_post( @PathVariable(value = "type") `type` : String, @PathVariable(value = "entityId") entityId : String,  `x` : Int,  `y` : Int,  size : Int, @RequestBody anonymousTypecom_atlassian_jira_rest_v2_issue_UniversalAvatarResource_storeAvatar_postBody : AnonymousTypecom_atlassian_jira_rest_v2_issue_UniversalAvatarResource_storeAvatar_postBody ) : Avatar
+      operation com_atlassian_jira_rest_v2_issue_UniversalAvatarResource_storeAvatar_post( @PathVariable(value = "type") `type` : String, @PathVariable(value = "entityId") entityId : String,  `x` : Int,  `y` : Int,  size : Int, @RequestBody any : Any ) : Avatar
    }
    @ServiceDiscoveryClient(serviceName = "http://myjira/")
    service RestApi3Universal_avatarTypeTypeOwnerOwningObjectIdAvatarIdService {
@@ -6392,7 +6364,7 @@ namespace vyne.openApi {
       *  *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg), to set a property on any user.
       *  Access to Jira, to set a property on the calling user's record. ]]
       @HttpOperation(method = "PUT" , url = "/rest/api/3/user/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_setUserProperty_put(  accountId : String,  userKey : String,  username : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody anonymousTypecom_atlassian_jira_rest_v2_userproperty_UserPropertyResource_setUserProperty_putBody : AnonymousTypecom_atlassian_jira_rest_v2_userproperty_UserPropertyResource_setUserProperty_putBody ) : Any
+      operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_setUserProperty_put(  accountId : String,  userKey : String,  username : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody any : Any ) : Any
       [[ Deletes a property from a user.
       Note: This operation does not access the [user properties](https://confluence.atlassian.com/x/8YxjL) created and maintained in Jira.
       **[Permissions](#permissions) required:**
@@ -6830,7 +6802,7 @@ namespace vyne.openApi {
       The value of the request body must be a [valid](http://tools.ietf.org/html/rfc4627), non-empty JSON blob. The maximum length is 32768 characters.
       **[Permissions](#permissions) required:** Only a Connect app whose key matches `addonKey` can make this request. ]]
       @HttpOperation(method = "PUT" , url = "/rest/atlassian-connect/1/addons/{addonKey}/properties/{propertyKey}")
-      operation AddonPropertiesResource_putAddonProperty_put( @PathVariable(value = "addonKey") addonKey : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody anonymousTypeAddonPropertiesResource_putAddonProperty_putBody : AnonymousTypeAddonPropertiesResource_putAddonProperty_putBody ) : OperationMessage
+      operation AddonPropertiesResource_putAddonProperty_put( @PathVariable(value = "addonKey") addonKey : String, @PathVariable(value = "propertyKey") propertyKey : String, @RequestBody any : Any ) : OperationMessage
       [[ Deletes an app's property.
       **[Permissions](#permissions) required:** Only a Connect app whose key matches `addonKey` can make this request. ]]
       @HttpOperation(method = "DELETE" , url = "/rest/atlassian-connect/1/addons/{addonKey}/properties/{propertyKey}")

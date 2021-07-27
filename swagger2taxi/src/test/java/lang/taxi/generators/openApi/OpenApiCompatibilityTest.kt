@@ -95,8 +95,9 @@ class OpenApiCompatibilityTest {
       taxi: GeneratedTaxiCode,
       expectedOutputFile: String
    ) {
+      val expected = testResource(expectedOutputFile)
       storeTheResult(expectedOutputFile, taxi)
-      expectToCompileTheSame(taxi.taxi, testResource(expectedOutputFile))
+      expectToCompileTheSame(taxi.taxi, expected)
    }
 
    // Convenient way to generate the actual taxi expectation
