@@ -21,80 +21,43 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
    private fun generateNamedTypeRecursively(
       schema: Schema<*>,
       name: QualifiedName
-   ): Type {
-      return _generatedTypes.getOrPut(name) {
-         val type =
-            primitiveTypeFor(schema)?.let { type ->
-               makeType(name, type)
-            } ?: when (schema) {
-               is BinarySchema,
-               is FileSchema,
-               is ByteArraySchema,
-               is PasswordSchema,
-               is UUIDSchema,
-               is EmailSchema -> {
-                  val formatType = makeIntermediateType(schema)
-                  makeType(name, formatType)
-               }
-               is ArraySchema -> {
-                  val supertype = makeArrayType(schema, name.typeName + "Element")
-                  makeType(name, supertype = supertype)
-               }
-               else -> {
-                  if (schema.properties.isNullOrEmpty()) {
-                     makeType(name)
-                  } else {
-                     makeModel(name, schema)
-                  }
-               }
-            }
-         type
+   ): Type = _generatedTypes.getOrPut(name) {
+      if (schema.properties.isNullOrEmpty()) {
+         val supertype = toType(schema, name.typeName)
+         makeType(name, supertype)
+      } else {
+         makeModel(name, schema)
       }
    }
 
    fun generateUnnamedTypeRecursively(
       schema: Schema<*>,
       context: String
-   ): Type {
-      return if (schema.`$ref` != null) {
-         getTypeFromRef(schema.`$ref`)
-      } else {
-         primitiveTypeFor(schema) ?:
-         when (schema) {
-            is BinarySchema,
-            is FileSchema,
-            is ByteArraySchema,
-            is PasswordSchema,
-            is UUIDSchema,
-            is EmailSchema -> {
-               makeIntermediateType(schema)
-            }
-            is ArraySchema -> {
-               makeArrayType(schema, context + "Element")
-            }
-            is ComposedSchema -> {
-               if (!schema.oneOf.isNullOrEmpty() || !schema.anyOf.isNullOrEmpty() || schema.allOf?.size != 1) {
-                  PrimitiveType.ANY // we don't know how to handle it, so just say it is of type ANY
-               } else {
-                  generateUnnamedTypeRecursively(schema.allOf.single(), context)
-               }
-            }
-            else -> {
-               if (schema.properties.isNullOrEmpty()) {
-                  PrimitiveType.ANY
-               } else {
-                  val typeName =
-                     if (context.startsWith("AnonymousType")) context
-                     else "AnonymousType${context.capitalize()}"
-                  val name = qualify(typeName)
-                  _generatedTypes.getOrPut(name) {
-                     makeModel(name, schema)
-                  }
-               }
-            }
-         }
-      }
-   }
+   ): Type =
+      toType(schema, context) ?:
+      schema.`$ref`?.getTypeFromRef() ?:
+      when {
+          schema is ComposedSchema && schema.allOf?.size == 1 -> {
+             generateUnnamedTypeRecursively(schema.allOf.single(), context)
+          }
+          schema.hasProperties() -> {
+             val name = anonymousModelName(context)
+             _generatedTypes.getOrPut(name) {
+                makeModel(name, schema)
+             }
+          }
+          else -> null
+      } ?:
+      PrimitiveType.ANY
+
+   private fun Schema<*>.hasProperties() = !properties.isNullOrEmpty()
+
+   private fun toType(schema: Schema<*>, context: String) =
+      primitiveTypeFor(schema) ?:
+      intermediateTypeFor(schema) ?:
+      if (schema is ArraySchema) {
+         makeArrayType(schema, context + "Element")
+      } else null
 
    private fun primitiveTypeFor(schema: Schema<*>) = when (schema) {
       is BooleanSchema -> PrimitiveType.BOOLEAN
@@ -106,11 +69,19 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       else -> null
    }
 
-   private fun makeIntermediateType(schema: Schema<*>): Type {
-      val formatTypeQualifiedName = qualify(schema.format)
-      return _generatedTypes.getOrPut(formatTypeQualifiedName) {
-         makeType(formatTypeQualifiedName, PrimitiveType.STRING)
+   private fun intermediateTypeFor(schema: Schema<*>): Type? = when (schema) {
+      is BinarySchema,
+      is FileSchema,
+      is ByteArraySchema,
+      is PasswordSchema,
+      is UUIDSchema,
+      is EmailSchema -> {
+         val formatTypeQualifiedName = qualify(schema.format)
+         _generatedTypes.getOrPut(formatTypeQualifiedName) {
+            makeType(formatTypeQualifiedName, PrimitiveType.STRING)
+         }
       }
+      else -> null
    }
 
    private fun makeType(
@@ -164,11 +135,16 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       )
    }
 
-   private fun getTypeFromRef(
-      typeRef: String
-   ): Type {
-      val (name, schema) = RefEvaluator.navigate(this.api, typeRef)
+   private fun String.getTypeFromRef(): Type {
+      val (name, schema) = RefEvaluator.navigate(this@OpenApiTypeMapper.api, this)
       return generateNamedTypeRecursively(schema, qualify(name))
+   }
+
+   private fun anonymousModelName(context: String): QualifiedName {
+      val typeName =
+         if (context.startsWith("AnonymousType")) context
+         else "AnonymousType${context.capitalize()}"
+      return qualify(typeName)
    }
 
    private fun qualify(name: String) =
