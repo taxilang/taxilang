@@ -10,53 +10,39 @@ internal class OpenApiTypeMapperTest {
    @Test
    fun `named schema of primitive type`() {
 
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+      openApiYaml(
          schemas = """
             Name:
               type: string
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             type Name inherits String
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `named schema of intermediate type`() {
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+
+      openApiYaml(
          schemas = """
             AdminPassword:
               type: string
               format: password
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             type password inherits String
             type AdminPassword inherits password
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `named schema of object type`() {
 
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+      openApiYaml(
          schemas = """
             Person:
               type: object
@@ -64,26 +50,19 @@ internal class OpenApiTypeMapperTest {
                 name:
                   type: string
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             model Person {
               name: String
             }
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `named schema of object type with nested anonymous model`() {
 
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+      openApiYaml(
          schemas = """
             Person:
               type: object
@@ -94,8 +73,7 @@ internal class OpenApiTypeMapperTest {
                     street:
                       type: string
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             model AnonymousTypePersonAddress {
               street: String
@@ -105,18 +83,12 @@ internal class OpenApiTypeMapperTest {
             }
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `named schema of object type with doubly nested anonymous model`() {
 
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+      openApiYaml(
          schemas = """
             Person:
               type: object
@@ -131,8 +103,7 @@ internal class OpenApiTypeMapperTest {
                           type: integer
                           format: int32
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             model AnonymousTypePersonAddressHouse {
               number: Int
@@ -145,18 +116,12 @@ internal class OpenApiTypeMapperTest {
             }
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `named schema of object type with reference to another named schema`() {
 
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+      openApiYaml(
          schemas = """
             Person:
               type: object
@@ -169,8 +134,7 @@ internal class OpenApiTypeMapperTest {
                 street:
                   type: string
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             model Address {
               street: String
@@ -180,18 +144,12 @@ internal class OpenApiTypeMapperTest {
             }
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `named schema of object type with recursive reference`() {
 
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+      openApiYaml(
          schemas = """
             Person:
               type: object
@@ -199,50 +157,36 @@ internal class OpenApiTypeMapperTest {
                 partner:
                   ${'$'}ref: "#/components/schemas/Person"
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             model Person {
               partner: Person
             }
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `component array of primitive type`() {
 
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+      openApiYaml(
          schemas = """
             Strings:
               type: array
               items:
                 type: string
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             type Strings inherits String[]
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `component array of inline object type`() {
 
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+      openApiYaml(
          schemas = """
             People:
               type: array
@@ -252,8 +196,7 @@ internal class OpenApiTypeMapperTest {
                   name:
                     type: string
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             model AnonymousTypePeopleElement {
               name : String
@@ -261,17 +204,12 @@ internal class OpenApiTypeMapperTest {
             type People inherits AnonymousTypePeopleElement[]
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `component array of reference to object type`() {
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+
+      openApiYaml(
          schemas = """
             Person:
               type: object
@@ -283,8 +221,7 @@ internal class OpenApiTypeMapperTest {
               items:
                 ${'$'}ref: "#/components/schemas/Person"
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             model Person {
               name : String
@@ -292,17 +229,12 @@ internal class OpenApiTypeMapperTest {
             type People inherits Person[]
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `component array of array of array of primitive type`() {
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+
+      openApiYaml(
          schemas = """
             Strings:
               type: array
@@ -311,24 +243,17 @@ internal class OpenApiTypeMapperTest {
                 items:
                   type: string
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             type Strings inherits Array<Array<String>>
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `component array of array of array of reference to object type`() {
 
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+      openApiYaml(
          schemas = """
             Person:
               type: object
@@ -343,8 +268,7 @@ internal class OpenApiTypeMapperTest {
                   type: object
                   ${'$'}ref: "#/components/schemas/Person"
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             model Person {
               name : String
@@ -352,17 +276,12 @@ internal class OpenApiTypeMapperTest {
             type People inherits Array<Array<Person>>
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `inline array of primitive type`() {
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+
+      openApiYaml(
          schemas = """
             Organisation:
               type: object
@@ -372,25 +291,19 @@ internal class OpenApiTypeMapperTest {
                   items:
                     type: string
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             model Organisation {
               people : String[]
             }
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `inline array of inline object type`() {
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+
+      openApiYaml(
          schemas = """
             Organisation:
               type: object
@@ -403,8 +316,7 @@ internal class OpenApiTypeMapperTest {
                       name:
                         type: string
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             model AnonymousTypeOrganisationPeopleElement {
               name : String
@@ -414,17 +326,12 @@ internal class OpenApiTypeMapperTest {
             }
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `inline array of reference to object type`() {
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+
+      openApiYaml(
          schemas = """
             Person:
               type: object
@@ -439,8 +346,7 @@ internal class OpenApiTypeMapperTest {
                   items:
                     ${'$'}ref: "#/components/schemas/Person"
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             model Person {
               name : String
@@ -450,17 +356,12 @@ internal class OpenApiTypeMapperTest {
             }
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `inline array of array of array of primitive type`() {
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+
+      openApiYaml(
          schemas = """
             Organisation:
               type: object
@@ -474,45 +375,38 @@ internal class OpenApiTypeMapperTest {
                       items:
                         type: string
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             model Organisation {
               people : Array<Array<Array<String>>>
             }
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `inline array of array of array of reference to object type`() {
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+
+      openApiYaml(
          schemas = """
-         Person:
-           type: object
-           properties:
-             name:
-               type: string
-         Organisation:
-           type: object
-           properties:
-             people:
-               type: array
-               items:
+           Person:
+             type: object
+             properties:
+               name:
+                 type: string
+           Organisation:
+             type: object
+             properties:
+               people:
                  type: array
                  items:
                    type: array
                    items:
-                     ${'$'}ref: "#/components/schemas/Person"
-      """
-      )
-      val expectedTaxi = """
+                     type: array
+                     items:
+                       ${'$'}ref: "#/components/schemas/Person"
+         """
+      ) generates """
          namespace vyne.openApi {
             model Person {
               name : String
@@ -522,17 +416,12 @@ internal class OpenApiTypeMapperTest {
             }
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `reference to array of primitive type`() {
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+
+      openApiYaml(
          schemas = """
             People:
               type: array
@@ -544,8 +433,7 @@ internal class OpenApiTypeMapperTest {
                 people:
                    ${'$'}ref: "#/components/schemas/People"
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
             type People inherits String[]
             model Organisation {
@@ -553,17 +441,12 @@ internal class OpenApiTypeMapperTest {
             }
          }
       """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `reference to array of inline object type`() {
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+
+      openApiYaml(
          schemas = """
             People:
               type: array
@@ -578,8 +461,7 @@ internal class OpenApiTypeMapperTest {
                 people:
                    ${'$'}ref: "#/components/schemas/People"
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
 
             model AnonymousTypePeopleElement {
@@ -593,18 +475,12 @@ internal class OpenApiTypeMapperTest {
             }
          }
          """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `reference to array of reference to object type`() {
 
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+      openApiYaml(
          schemas = """
             Person:
               type: object
@@ -621,8 +497,7 @@ internal class OpenApiTypeMapperTest {
                 people:
                    ${'$'}ref: "#/components/schemas/People"
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
 
             model Person {
@@ -636,17 +511,12 @@ internal class OpenApiTypeMapperTest {
             }
          }
          """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `reference to array of array of array of primitive type`() {
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+
+      openApiYaml(
          schemas = """
             People:
               type: array
@@ -662,8 +532,7 @@ internal class OpenApiTypeMapperTest {
                 people:
                    ${'$'}ref: "#/components/schemas/People"
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
 
             type People inherits Array<Array<Array<String>>>
@@ -673,18 +542,12 @@ internal class OpenApiTypeMapperTest {
             }
          }
          """
-
-      expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
-         expected = expectedTaxi
-      )
    }
 
    @Test
    fun `reference to array of array of array of reference to object type`() {
 
-      @Language("yaml")
-      val openApiSpec = openApiYaml(
+      openApiYaml(
          schemas = """
             Person:
               type: object
@@ -705,8 +568,7 @@ internal class OpenApiTypeMapperTest {
                 people:
                    ${'$'}ref: "#/components/schemas/People"
          """
-      )
-      val expectedTaxi = """
+      ) generates """
          namespace vyne.openApi {
 
             model Person {
@@ -720,16 +582,20 @@ internal class OpenApiTypeMapperTest {
             }
          }
          """
+   }
 
+   private infix fun String.generates(@Language("taxi") expectedTaxi: String) {
       expectToCompileTheSame(
-         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
+         generated = TaxiGenerator().generateAsStrings(this, "vyne.openApi").taxi,
          expected = expectedTaxi
       )
    }
 
    @Language("yaml")
    private fun openApiYaml(
+      @Language("yaml")
       schemas: String? = null,
+      @Language("yaml")
       paths: String? = null
    ): String {
       fun yamlObjectProperty(propName: String, propValue: String?) = if (propValue == null) {
