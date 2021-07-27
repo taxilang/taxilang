@@ -330,23 +330,26 @@ internal class OpenApiTypeMapperTest {
       @Language("yaml")
       val openApiSpec = openApiYaml(
          schemas = """
+            Person:
+              type: object
+              properties:
+                name:
+                  type: string
             People:
               type: array
               items:
                 type: array
                 items:
                   type: object
-                  properties:
-                    name:
-                      type: string
+                  ${'$'}ref: "#/components/schemas/Person"
          """
       )
       val expectedTaxi = """
          namespace vyne.openApi {
-            model AnonymousTypePeopleElementElement {
+            model Person {
               name : String
             }
-            type People inherits Array<Array<AnonymousTypePeopleElementElement>>
+            type People inherits Array<Array<Person>>
          }
       """
 
@@ -418,45 +421,311 @@ internal class OpenApiTypeMapperTest {
       )
    }
 
-//   @Test
-//   fun `inline array of reference to object type`() {
-//
-//   }
-//
-//   @Test
-//   fun `inline array of array of array of primitive type`() {
-//
-//   }
-//
-//   @Test
-//   fun `inline array of array of array of reference to object type`() {
-//
-//   }
-//
-//   @Test
-//   fun `reference to array of primitive type`() {
-//
-//   }
-//
-//   @Test
-//   fun `reference to array of inline object type`() {
-//
-//   }
-//
-//   @Test
-//   fun `reference to array of reference to object type`() {
-//
-//   }
-//
-//   @Test
-//   fun `reference to array of array of array of primitive type`() {
-//
-//   }
-//
-//   @Test
-//   fun `reference to array of array of array of reference to object type`() {
-//
-//   }
+   @Test
+   fun `inline array of reference to object type`() {
+      @Language("yaml")
+      val openApiSpec = openApiYaml(
+         schemas = """
+            Person:
+              type: object
+              properties:
+                name:
+                  type: string
+            Organisation:
+              type: object
+              properties:
+                people:
+                  type: array
+                  items:
+                    ${'$'}ref: "#/components/schemas/Person"
+         """
+      )
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            model Person {
+              name : String
+            }
+            model Organisation {
+              people : Person[]
+            }
+         }
+      """
+
+      expectToCompileTheSame(
+         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
+         expected = expectedTaxi
+      )
+   }
+
+   @Test
+   fun `inline array of array of array of primitive type`() {
+      @Language("yaml")
+      val openApiSpec = openApiYaml(
+         schemas = """
+            Organisation:
+              type: object
+              properties:
+                people:
+                  type: array
+                  items:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        type: string
+         """
+      )
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            model Organisation {
+              people : Array<Array<Array<String>>>
+            }
+         }
+      """
+
+      expectToCompileTheSame(
+         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
+         expected = expectedTaxi
+      )
+   }
+
+   @Test
+   fun `inline array of array of array of reference to object type`() {
+      @Language("yaml")
+      val openApiSpec = openApiYaml(
+         schemas = """
+         Person:
+           type: object
+           properties:
+             name:
+               type: string
+         Organisation:
+           type: object
+           properties:
+             people:
+               type: array
+               items:
+                 type: array
+                 items:
+                   type: array
+                   items:
+                     ${'$'}ref: "#/components/schemas/Person"
+      """
+      )
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            model Person {
+              name : String
+            }
+            model Organisation {
+              people : Array<Array<Array<Person>>>
+            }
+         }
+      """
+
+      expectToCompileTheSame(
+         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
+         expected = expectedTaxi
+      )
+   }
+
+   @Test
+   fun `reference to array of primitive type`() {
+      @Language("yaml")
+      val openApiSpec = openApiYaml(
+         schemas = """
+            People:
+              type: array
+              items:
+                type: string
+            Organisation:
+              type: object
+              properties:
+                people:
+                   ${'$'}ref: "#/components/schemas/People"
+         """
+      )
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            type People inherits String[]
+            model Organisation {
+              people: People
+            }
+         }
+      """
+
+      expectToCompileTheSame(
+         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
+         expected = expectedTaxi
+      )
+   }
+
+   @Test
+   fun `reference to array of inline object type`() {
+      @Language("yaml")
+      val openApiSpec = openApiYaml(
+         schemas = """
+            People:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+            Organisation:
+              type: object
+              properties:
+                people:
+                   ${'$'}ref: "#/components/schemas/People"
+         """
+      )
+      val expectedTaxi = """
+         namespace vyne.openApi {
+
+            model AnonymousTypePeopleElement {
+               name : String
+            }
+
+            type People inherits AnonymousTypePeopleElement[]
+
+            model Organisation {
+               people : People
+            }
+         }
+         """
+
+      expectToCompileTheSame(
+         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
+         expected = expectedTaxi
+      )
+   }
+
+   @Test
+   fun `reference to array of reference to object type`() {
+
+      @Language("yaml")
+      val openApiSpec = openApiYaml(
+         schemas = """
+            Person:
+              type: object
+              properties:
+                name:
+                  type: string
+            People:
+              type: array
+              items:
+                ${'$'}ref: "#/components/schemas/Person"
+            Organisation:
+              type: object
+              properties:
+                people:
+                   ${'$'}ref: "#/components/schemas/People"
+         """
+      )
+      val expectedTaxi = """
+         namespace vyne.openApi {
+
+            model Person {
+               name : String
+            }
+
+            type People inherits Person[]
+
+            model Organisation {
+               people : People
+            }
+         }
+         """
+
+      expectToCompileTheSame(
+         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
+         expected = expectedTaxi
+      )
+   }
+
+   @Test
+   fun `reference to array of array of array of primitive type`() {
+      @Language("yaml")
+      val openApiSpec = openApiYaml(
+         schemas = """
+            People:
+              type: array
+              items:
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: string
+            Organisation:
+              type: object
+              properties:
+                people:
+                   ${'$'}ref: "#/components/schemas/People"
+         """
+      )
+      val expectedTaxi = """
+         namespace vyne.openApi {
+
+            type People inherits Array<Array<Array<String>>>
+
+            model Organisation {
+               people : People
+            }
+         }
+         """
+
+      expectToCompileTheSame(
+         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
+         expected = expectedTaxi
+      )
+   }
+
+   @Test
+   fun `reference to array of array of array of reference to object type`() {
+
+      @Language("yaml")
+      val openApiSpec = openApiYaml(
+         schemas = """
+            Person:
+              type: object
+              properties:
+                name:
+                  type: string
+            People:
+              type: array
+              items:
+                type: array
+                items:
+                  type: array
+                  items:
+                    ${'$'}ref: "#/components/schemas/Person"
+            Organisation:
+              type: object
+              properties:
+                people:
+                   ${'$'}ref: "#/components/schemas/People"
+         """
+      )
+      val expectedTaxi = """
+         namespace vyne.openApi {
+
+            model Person {
+               name : String
+            }
+
+            type People inherits Array<Array<Array<Person>>>
+
+            model Organisation {
+               people : People
+            }
+         }
+         """
+
+      expectToCompileTheSame(
+         generated = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi").taxi,
+         expected = expectedTaxi
+      )
+   }
 
    @Language("yaml")
    private fun openApiYaml(

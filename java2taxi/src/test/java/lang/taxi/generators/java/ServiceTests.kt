@@ -180,7 +180,7 @@ namespace foo {
       name : PersonName
    }
 
-   type PersonName inherits lang.taxi.String
+   type PersonName inherits String
 
 
 }""".trimNewLines())
