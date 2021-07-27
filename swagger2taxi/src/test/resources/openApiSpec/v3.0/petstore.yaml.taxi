@@ -5,7 +5,7 @@ namespace vyne.openApi {
       tag : String
    }
    
-   type Pets inherits lang.taxi.Array<vyne.openApi.Pet>
+   type Pets inherits Pet[]
    
    model Error {
       code : Int?

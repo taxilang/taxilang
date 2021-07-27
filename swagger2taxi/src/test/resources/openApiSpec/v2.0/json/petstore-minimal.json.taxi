@@ -6,6 +6,7 @@ namespace vyne.openApi {
    }
    
    service PetsService {
+      [[ Returns all pets from the system that the user has access to ]]
       @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets")
       operation GetApiPets(  ) : Pet[]
    }

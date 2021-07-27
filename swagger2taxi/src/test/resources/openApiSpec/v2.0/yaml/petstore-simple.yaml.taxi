@@ -4,7 +4,7 @@ namespace vyne.openApi {
       tag : String?
    }
    
-   model Pet inherits vyne.openApi.NewPet {
+   model Pet inherits NewPet {
       id : Int
    }
    
