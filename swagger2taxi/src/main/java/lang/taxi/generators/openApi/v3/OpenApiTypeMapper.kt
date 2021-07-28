@@ -21,12 +21,25 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
    private fun generateNamedTypeRecursively(
       schema: Schema<*>,
       name: QualifiedName
-   ): Type = _generatedTypes.getOrPut(name) {
-      if (schema.properties.isNullOrEmpty()) {
-         val supertype = toType(schema, name.typeName)
-         makeType(name, supertype)
+   ): Type {
+      val taxiExtension = schema.taxiExtension
+      return if (taxiExtension == null) {
+         if (schema.hasProperties()) {
+            generateModel(name, schema)
+         } else {
+            val supertype = toType(schema, name.typeName)
+            generateType(name, supertype)
+         }
       } else {
-         makeModel(name, schema)
+         val taxiExtName = qualify(taxiExtension.name)
+         if (schema.hasProperties() && taxiExtension.create != false) {
+            generateModel(taxiExtName, schema)
+         } else if (!schema.hasProperties() && taxiExtension.create == true) {
+            val supertype = toType(schema, name.typeName)
+            generateType(taxiExtName, supertype)
+         } else {
+            makeType(taxiExtName)
+         }
       }
    }
 
@@ -34,21 +47,29 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       schema: Schema<*>,
       context: String
    ): Type =
+      getTypeFromExtensions(schema) ?:
       toType(schema, context) ?:
       schema.`$ref`?.getTypeFromRef() ?:
       when {
-          schema is ComposedSchema && schema.allOf?.size == 1 -> {
-             generateUnnamedTypeRecursively(schema.allOf.single(), context)
-          }
-          schema.hasProperties() -> {
-             val name = anonymousModelName(context)
-             _generatedTypes.getOrPut(name) {
-                makeModel(name, schema)
-             }
-          }
-          else -> null
+         schema is ComposedSchema && schema.allOf?.size == 1 -> {
+            generateUnnamedTypeRecursively(schema.allOf.single(), context)
+         }
+         schema.hasProperties() -> {
+            val name = anonymousModelName(context)
+            generateModel(name, schema)
+         }
+         else -> null
       } ?:
       PrimitiveType.ANY
+
+   private fun getTypeFromExtensions(schema: Schema<*>): Type? {
+      val explicitTaxiType = schema.taxiExtension
+      return if (explicitTaxiType != null) {
+         generateNamedTypeRecursively(schema, qualify(explicitTaxiType.name))
+      } else {
+         null
+      }
+   }
 
    private fun Schema<*>.hasProperties() = !properties.isNullOrEmpty()
 
@@ -77,11 +98,16 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       is UUIDSchema,
       is EmailSchema -> {
          val formatTypeQualifiedName = qualify(schema.format)
-         _generatedTypes.getOrPut(formatTypeQualifiedName) {
-            makeType(formatTypeQualifiedName, PrimitiveType.STRING)
-         }
+         generateType(formatTypeQualifiedName, PrimitiveType.STRING)
       }
       else -> null
+   }
+
+   private fun generateType(
+      taxiExtName: QualifiedName,
+      supertype: Type?
+   ) = _generatedTypes.getOrPut(taxiExtName) {
+      makeType(taxiExtName, supertype)
    }
 
    private fun makeType(
@@ -99,6 +125,14 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       val innerType = generateUnnamedTypeRecursively(schema.items, context)
       return ArrayType.of(innerType)
    }
+
+   private fun generateModel(
+      taxiExtName: QualifiedName,
+      schema: Schema<*>
+   ) = _generatedTypes.getOrPut(taxiExtName) {
+      makeModel(taxiExtName, schema)
+   }
+
 
    private fun makeModel(
       name: QualifiedName,

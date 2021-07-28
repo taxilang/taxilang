@@ -72,7 +72,7 @@ object TestHelpers {
          }
          service.operations.forEach { operation ->
             if (!generatedService.containsOperation(operation.name)) {
-               listOf("Operation ${operation.name} is not present")
+               errors.add("Operation ${operation.name} is not present")
             } else {
                val generatedOperation = generatedService.operation(operation.name)
                if (generatedOperation.contract != operation.contract) errors.add(error("Contract on ${operation.name} differs from expected", operation.contract, generatedOperation.contract))
