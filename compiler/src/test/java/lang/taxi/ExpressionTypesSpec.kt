@@ -6,9 +6,6 @@ import lang.taxi.expressions.TypeExpression
 import lang.taxi.types.FormulaOperator
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.contract
-import kotlin.reflect.KClass
 
 object ExpressionTypesSpec : Spek({
    describe("Expression types") {
@@ -67,6 +64,21 @@ object ExpressionTypesSpec : Spek({
          TODO()
 
       }
+      it("can declare a expression type on a model") {
+         """
+            type Height inherits Int
+         type Width inherits Int
+//       type Area inherits Int by Height * Width
+         model Rectangle {
+            height : Height
+            width : Width
+            area : Area
+         }
+         """.compiled()
+            .model("Rectangle")
+            .field("area")
+            .type.qualifiedName.should.equal("Area")
+      }
       it("can use functions in expression types") {
          """
             declare function squared(Int):Int
@@ -78,7 +90,6 @@ object ExpressionTypesSpec : Spek({
             type Another inherits Int by Height * squared(Height)
          """.compiled()
          val foo = emptyList<String>()
-         foo.filterIsInstance<>()
          TODO()
       }
    }
