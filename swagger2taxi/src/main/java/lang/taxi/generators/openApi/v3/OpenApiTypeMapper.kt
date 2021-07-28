@@ -50,16 +50,8 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       getTypeFromExtensions(schema) ?:
       toType(schema, context) ?:
       schema.`$ref`?.getTypeFromRef() ?:
-      when {
-         schema is ComposedSchema && schema.allOf?.size == 1 -> {
-            generateUnnamedTypeRecursively(schema.allOf.single(), context)
-         }
-         schema.hasProperties() -> {
-            val name = anonymousModelName(context)
-            generateModel(name, schema)
-         }
-         else -> null
-      } ?:
+      generateFromComposedSchema(schema, context) ?:
+      generateModelIfAppropriate(schema, context) ?:
       PrimitiveType.ANY
 
    private fun getTypeFromExtensions(schema: Schema<*>): Type? {
@@ -70,6 +62,17 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
          null
       }
    }
+
+   private fun generateFromComposedSchema(schema: Schema<*>, context: String): Type? =
+      if (schema is ComposedSchema && schema.allOf?.size == 1) {
+         generateUnnamedTypeRecursively(schema.allOf.single(), context)
+      } else null
+
+   private fun generateModelIfAppropriate(schema: Schema<*>, context: String): Type? =
+      if (schema.hasProperties()) {
+         val name = anonymousModelName(context)
+         generateModel(name, schema)
+      } else null
 
    private fun Schema<*>.hasProperties() = !properties.isNullOrEmpty()
 
