@@ -1,5 +1,7 @@
 namespace vyne.openApi {
-   type Pet
+   model Pet inherits NewPet {
+      id : Int
+   }
    
    model NewPet {
       name : String

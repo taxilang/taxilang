@@ -21,16 +21,19 @@ namespace vyne.openApi {
       *  `GroupCustomField` The `parameter` is the ID of the custom field. ]]
       `parameter` : String?
       [[ The specified group. ]]
-      group : GroupName?
+      group : AnonymousTypeEventNotificationGroup?
       [[ The custom user or group field. ]]
-      field : FieldDetails?
+      field : AnonymousTypeEventNotificationField?
       [[ The email address. ]]
       emailAddress : String?
       [[ The specified project role. ]]
-      projectRole : ProjectRole?
+      projectRole : AnonymousTypeEventNotificationProjectRole?
       [[ The specified user. ]]
-      user : UserDetails?
+      user : AnonymousTypeEventNotificationUser?
    }
+   
+   [[ The specified group. ]]
+   type AnonymousTypeEventNotificationGroup inherits GroupName
    
    [[ Details about a group name. ]]
    model GroupName {
@@ -39,6 +42,9 @@ namespace vyne.openApi {
       [[ The URL for these group details. ]]
       self : String?
    }
+   
+   [[ The custom user or group field. ]]
+   type AnonymousTypeEventNotificationField inherits FieldDetails
    
    [[ Details about a field. ]]
    model FieldDetails {
@@ -59,18 +65,24 @@ namespace vyne.openApi {
       [[ The names that can be used to reference the field in an advanced search. For more information, see [Advanced searching - fields reference](https://confluence.atlassian.com/x/gwORLQ). ]]
       clauseNames : String[]?
       [[ The scope of the field. ]]
-      scope : Scope?
+      scope : AnonymousTypeFieldDetailsScope?
       [[ The data schema for the field. ]]
-      schema : JsonTypeBean?
+      schema : AnonymousTypeFieldDetailsSchema?
    }
+   
+   [[ The scope of the field. ]]
+   type AnonymousTypeFieldDetailsScope inherits Scope
    
    [[ The scope of an entity. Indicated for entities associated with [next-gen projects](https://confluence.atlassian.com/x/loMyO). ]]
    model Scope {
       [[ The type of scope. ]]
       `type` : String?
       [[ The project the entity has scope in. ]]
-      project : ProjectForScope?
+      project : AnonymousTypeScopeProject?
    }
+   
+   [[ The project the entity has scope in. ]]
+   type AnonymousTypeScopeProject inherits ProjectForScope
    
    [[ Details about a next-gen project. ]]
    model ProjectForScope {
@@ -87,10 +99,13 @@ namespace vyne.openApi {
       [[ Whether or not the project is simplified. ]]
       simplified : Boolean?
       [[ The URLs of the project's avatars. ]]
-      avatarUrls : AvatarUrlsBean?
+      avatarUrls : AnonymousTypeProjectForScopeAvatarUrls?
       [[ The category the project belongs to. ]]
-      projectCategory : UpdatedProjectCategory?
+      projectCategory : AnonymousTypeProjectForScopeProjectCategory?
    }
+   
+   [[ The URLs of the project's avatars. ]]
+   type AnonymousTypeProjectForScopeAvatarUrls inherits AvatarUrlsBean
    
    model AvatarUrlsBean {
       [[ The URL of the item's 16x16 pixel avatar. ]]
@@ -103,6 +118,9 @@ namespace vyne.openApi {
       `48x48` : String?
    }
    
+   [[ The category the project belongs to. ]]
+   type AnonymousTypeProjectForScopeProjectCategory inherits UpdatedProjectCategory
+   
    [[ A project category. ]]
    model UpdatedProjectCategory {
       [[ The URL of the project category. ]]
@@ -114,6 +132,9 @@ namespace vyne.openApi {
       [[ The description of the project category. ]]
       name : String?
    }
+   
+   [[ The data schema for the field. ]]
+   type AnonymousTypeFieldDetailsSchema inherits JsonTypeBean
    
    [[ The schema of a field. ]]
    model JsonTypeBean {
@@ -131,6 +152,9 @@ namespace vyne.openApi {
       configuration : Any?
    }
    
+   [[ The specified project role. ]]
+   type AnonymousTypeEventNotificationProjectRole inherits ProjectRole
+   
    [[ Details about the roles in a project. ]]
    model ProjectRole {
       [[ The URL the project role details. ]]
@@ -144,7 +168,7 @@ namespace vyne.openApi {
       [[ The list of users who act in this role. ]]
       actors : RoleActor[]?
       [[ The scope of the role. Indicated for roles associated with [next-gen projects](https://confluence.atlassian.com/x/loMyO). ]]
-      scope : Scope?
+      scope : AnonymousTypeProjectRoleScope?
       [[ Whether this role is the admin role for the project. ]]
       admin : Boolean?
       [[ Whether this role is the default role for the project ]]
@@ -175,6 +199,12 @@ namespace vyne.openApi {
       name : String?
    }
    
+   [[ The scope of the role. Indicated for roles associated with [next-gen projects](https://confluence.atlassian.com/x/loMyO). ]]
+   type AnonymousTypeProjectRoleScope inherits Scope
+   
+   [[ The specified user. ]]
+   type AnonymousTypeEventNotificationUser inherits UserDetails
+   
    [[ User details. ]]
    model UserDetails {
       [[ The URL of the user. ]]
@@ -188,7 +218,7 @@ namespace vyne.openApi {
       [[ The email address of the user. Depending on the user’s privacy settings, this may be returned as null. ]]
       emailAddress : String?
       [[ The avatars of the user. ]]
-      avatarUrls : AvatarUrlsBean?
+      avatarUrls : AnonymousTypeUserDetailsAvatarUrls?
       [[ The display name of the user. Depending on the user’s privacy settings, this may return an alternative value. ]]
       displayName : String?
       [[ Whether the user is active. ]]
@@ -198,6 +228,9 @@ namespace vyne.openApi {
       [[ The type of account represented by this user. This will be one of 'atlassian' (normal users), 'app' (application user) or 'customer' (Jira Service Desk customer user) ]]
       accountType : String?
    }
+   
+   [[ The avatars of the user. ]]
+   type AnonymousTypeUserDetailsAvatarUrls inherits AvatarUrlsBean
    
    [[ Details about the configuration of Jira. ]]
    model Configuration {
@@ -216,8 +249,11 @@ namespace vyne.openApi {
       [[ Whether the ability to add attachments to issues is enabled. ]]
       attachmentsEnabled : Boolean?
       [[ The configuration of time tracking. ]]
-      timeTrackingConfiguration : TimeTrackingConfiguration?
+      timeTrackingConfiguration : AnonymousTypeConfigurationTimeTrackingConfiguration?
    }
+   
+   [[ The configuration of time tracking. ]]
+   type AnonymousTypeConfigurationTimeTrackingConfiguration inherits TimeTrackingConfiguration
    
    [[ Details of the time tracking configuration. ]]
    model TimeTrackingConfiguration {
@@ -246,7 +282,7 @@ namespace vyne.openApi {
       [[ The name of the issue transition. ]]
       name : String?
       [[ Details of the issue status after the transition. ]]
-      to : StatusDetails?
+      to : AnonymousTypeIssueTransitionTo?
       [[ Whether there is a screen associated with the issue transition. ]]
       hasScreen : Boolean?
       [[ Whether the issue transition is global, that is, the transition is applied to issues regardless of their status. ]]
@@ -261,6 +297,9 @@ namespace vyne.openApi {
       expand : String?
    }
    
+   [[ Details of the issue status after the transition. ]]
+   type AnonymousTypeIssueTransitionTo inherits StatusDetails
+   
    [[ A status. ]]
    model StatusDetails {
       [[ The URL of the status. ]]
@@ -274,8 +313,11 @@ namespace vyne.openApi {
       [[ The ID of the status. ]]
       id : String?
       [[ The category assigned to the status. ]]
-      statusCategory : StatusCategory?
+      statusCategory : AnonymousTypeStatusDetailsStatusCategory?
    }
+   
+   [[ The category assigned to the status. ]]
+   type AnonymousTypeStatusDetailsStatusCategory inherits StatusCategory
    
    [[ A status category. ]]
    model StatusCategory {
@@ -348,10 +390,13 @@ namespace vyne.openApi {
    [[ Details of the projects the option is available in. ]]
    model IssueFieldOptionConfiguration {
       [[ Defines the projects that the option is available in. If the scope is not defined, then the option is available in all projects. ]]
-      scope : IssueFieldOptionScopeBean?
+      scope : AnonymousTypeIssueFieldOptionConfigurationScope?
       [[ DEPRECATED ]]
       attributes : String[]?
    }
+   
+   [[ Defines the projects that the option is available in. If the scope is not defined, then the option is available in all projects. ]]
+   type AnonymousTypeIssueFieldOptionConfigurationScope inherits IssueFieldOptionScopeBean
    
    model IssueFieldOptionScopeBean {
       [[ DEPRECATED ]]
@@ -359,7 +404,7 @@ namespace vyne.openApi {
       [[ Defines the projects in which the option is available and the behavior of the option within each project. Specify one object per project. The behavior of the option in a project context overrides the behavior in the global context. ]]
       projects2 : ProjectScopeBean[]?
       [[ Defines the behavior of the option within the global context. If this property is set, even if set to an empty object, then the option is available in all projects. ]]
-      global : GlobalScopeBean?
+      global : AnonymousTypeIssueFieldOptionScopeBeanGlobal?
    }
    
    model ProjectScopeBean {
@@ -368,6 +413,9 @@ namespace vyne.openApi {
       [[ Defines the behavior of the option in the project.If notSelectable is set, the option cannot be set as the field's value. This is useful for archiving an option that has previously been selected but shouldn't be used anymore.If defaultValue is set, the option is selected by default. ]]
       attributes : String[]?
    }
+   
+   [[ Defines the behavior of the option within the global context. If this property is set, even if set to an empty object, then the option is available in all projects. ]]
+   type AnonymousTypeIssueFieldOptionScopeBeanGlobal inherits GlobalScopeBean
    
    model GlobalScopeBean {
       [[ Defines the behavior of the option in the global context.If notSelectable is set, the option cannot be set as the field's value. This is useful for archiving an option that has previously been selected but shouldn't be used anymore.If defaultValue is set, the option is selected by default. ]]
@@ -411,10 +459,13 @@ namespace vyne.openApi {
       [[ The summary details of the item. ]]
       summary : String?
       [[ Details of the icon for the item. If no icon is defined, the default link icon is used in Jira. ]]
-      icon : Icon?
+      icon : AnonymousTypeRemoteObjectIcon?
       [[ The status of the item. ]]
-      status : Status?
+      status : AnonymousTypeRemoteObjectStatus?
    }
+   
+   [[ Details of the icon for the item. If no icon is defined, the default link icon is used in Jira. ]]
+   type AnonymousTypeRemoteObjectIcon inherits Icon
    
    [[ An icon. If no icon is defined:
    *  for a status icon, no status icon displays in Jira.
@@ -431,12 +482,18 @@ namespace vyne.openApi {
    }
    
    [[ The status of the item. ]]
+   type AnonymousTypeRemoteObjectStatus inherits Status
+   
+   [[ The status of the item. ]]
    model Status {
       [[ Indicates whether the item is resolved. If set to "true", the link to the issue is displayed in a strikethrough font, otherwise the link displays in normal font. ]]
       resolved : Boolean?
       [[ Details of the icon representing the status. If not provided, no status icon displays in Jira. ]]
-      icon : Icon?
+      icon : AnonymousTypeStatusIcon?
    }
+   
+   [[ Details of the icon representing the status. If not provided, no status icon displays in Jira. ]]
+   type AnonymousTypeStatusIcon inherits Icon
    
    [[ The hierarchy of issue types within a project. ]]
    model ProjectIssueTypeHierarchy {
@@ -479,23 +536,32 @@ namespace vyne.openApi {
       [[ The URL of the issue. ]]
       self : String?
       [[ The fields associated with the issue. ]]
-      fields : Fields?
+      fields : AnonymousTypeLinkedIssueFields?
    }
+   
+   [[ The fields associated with the issue. ]]
+   type AnonymousTypeLinkedIssueFields inherits Fields
    
    [[ Key fields from the linked issue. ]]
    model Fields {
       [[ The summary description of the linked issue. ]]
       summary : String?
       [[ The status of the linked issue. ]]
-      status : StatusDetails?
+      status : AnonymousTypeFieldsStatus?
       [[ The priority of the linked issue. ]]
-      priority : Priority?
+      priority : AnonymousTypeFieldsPriority?
       [[ The assignee of the linked issue. ]]
-      assignee : UserDetails?
+      assignee : AnonymousTypeFieldsAssignee?
       issuetype : IssueTypeBean?
       [[ The type of the linked issue. ]]
-      issueType : IssueTypeBean?
+      issueType : AnonymousTypeFieldsIssueType?
    }
+   
+   [[ The status of the linked issue. ]]
+   type AnonymousTypeFieldsStatus inherits StatusDetails
+   
+   [[ The priority of the linked issue. ]]
+   type AnonymousTypeFieldsPriority inherits Priority
    
    [[ An issue priority. ]]
    model Priority {
@@ -512,6 +578,9 @@ namespace vyne.openApi {
       [[ The ID of the issue priority. ]]
       id : String?
    }
+   
+   [[ The assignee of the linked issue. ]]
+   type AnonymousTypeFieldsAssignee inherits UserDetails
    
    [[ Details about an issue type. ]]
    model IssueTypeBean {
@@ -532,8 +601,14 @@ namespace vyne.openApi {
       [[ project unique ID for next-gen entities ]]
       entityId : uuid?
       [[ Details of the next-gen projects the issue type is available in. ]]
-      scope : Scope?
+      scope : AnonymousTypeIssueTypeBeanScope?
    }
+   
+   [[ Details of the next-gen projects the issue type is available in. ]]
+   type AnonymousTypeIssueTypeBeanScope inherits Scope
+   
+   [[ The type of the linked issue. ]]
+   type AnonymousTypeFieldsIssueType inherits IssueTypeBean
    
    [[ Details of the options for a select list issue field. ]]
    model IssueFieldOption {
@@ -553,12 +628,15 @@ namespace vyne.openApi {
       [[ The URL of the issue link. ]]
       self : String?
       [[ The type of link between the issues. ]]
-      `type` : IssueLinkType?
+      `type` : AnonymousTypeIssueLinkType?
       [[ The issue the link joins to. ]]
-      inwardIssue : LinkedIssue?
+      inwardIssue : AnonymousTypeIssueLinkInwardIssue?
       [[ The issue the link originates from. ]]
-      outwardIssue : LinkedIssue?
+      outwardIssue : AnonymousTypeIssueLinkOutwardIssue?
    }
+   
+   [[ The type of link between the issues. ]]
+   type AnonymousTypeIssueLinkType inherits IssueLinkType
    
    [[ This object is used as follows:
    *  In the [ issueLink](#api-rest-api-3-issueLink-post) resource it defines and reports on the type of link between the issues. Find a list of issue link types with [Get issue link types](#api-rest-api-3-issueLinkType-get).
@@ -583,6 +661,12 @@ namespace vyne.openApi {
       [[ The URL of the issue link type. Read only. ]]
       self : String?
    }
+   
+   [[ The issue the link joins to. ]]
+   type AnonymousTypeIssueLinkInwardIssue inherits LinkedIssue
+   
+   [[ The issue the link originates from. ]]
+   type AnonymousTypeIssueLinkOutwardIssue inherits LinkedIssue
    
    [[ Details of a changed worklog. ]]
    model ChangedWorklog {
@@ -710,7 +794,7 @@ namespace vyne.openApi {
       [[ The key of the rule, as defined in the Connect app descriptor. ]]
       key : String
       configuration : RuleConfiguration?
-      transition : WorkflowTransition?
+      transition : AnonymousTypeConnectWorkflowTransitionRuleTransition?
    }
    
    [[ A rule configuration. ]]
@@ -718,6 +802,8 @@ namespace vyne.openApi {
       [[ Configuration of the rule, as it is stored by the Connect app on the rule configuration page. ]]
       value : String
    }
+   
+   type AnonymousTypeConnectWorkflowTransitionRuleTransition inherits WorkflowTransition
    
    [[ A workflow transition. ]]
    model WorkflowTransition {
@@ -786,7 +872,7 @@ namespace vyne.openApi {
       [[ A brief description of the project. ]]
       description : String?
       [[ The username of the project lead. ]]
-      lead : User?
+      lead : AnonymousTypeProjectLead?
       [[ List of the components contained in the project. ]]
       components : Component[]?
       [[ List of the issue types available in the project. ]]
@@ -804,9 +890,9 @@ namespace vyne.openApi {
       [[ The name and self URL for each role defined in the project. For more information, see [Create project role](#api-rest-api-3-role-post). ]]
       roles : Any?
       [[ The URLs of the project's avatars. ]]
-      avatarUrls : AvatarUrlsBean?
+      avatarUrls : AnonymousTypeProjectAvatarUrls?
       [[ The category the project belongs to. ]]
-      projectCategory : ProjectCategory?
+      projectCategory : AnonymousTypeProjectProjectCategory?
       [[ The [project type](https://confluence.atlassian.com/x/GwiiLQ#Jiraapplicationsoverview-Productfeaturesandprojecttypes) of the project. ]]
       projectTypeKey : String?
       [[ Whether the project is simplified. ]]
@@ -818,16 +904,19 @@ namespace vyne.openApi {
       [[ Whether the project is private. ]]
       isPrivate : Boolean?
       [[ The issue type hierarchy for the project ]]
-      issueTypeHierarchy : Hierarchy?
+      issueTypeHierarchy : AnonymousTypeProjectIssueTypeHierarchy?
       [[ User permissions on the project ]]
-      permissions : ProjectPermissions?
+      permissions : AnonymousTypeProjectPermissions?
       [[ Map of project properties ]]
       properties : Any?
       [[ unique ID for next-gen projects ]]
       uuid : uuid?
       [[ Insights about the project. ]]
-      insight : ProjectInsight?
+      insight : AnonymousTypeProjectInsight?
    }
+   
+   [[ The username of the project lead. ]]
+   type AnonymousTypeProjectLead inherits User
    
    [[ A user. ]]
    model User {
@@ -847,7 +936,7 @@ namespace vyne.openApi {
       [[ The email address of the user. Depending on the user’s privacy setting, this may be returned as null. ]]
       emailAddress : String?
       [[ The avatars of the user. ]]
-      avatarUrls : AvatarUrlsBean?
+      avatarUrls : AnonymousTypeUserAvatarUrls?
       [[ The display name of the user. Depending on the user’s privacy setting, this may return an alternative value. ]]
       displayName : String?
       [[ Indicates whether the user is active. ]]
@@ -857,12 +946,21 @@ namespace vyne.openApi {
       [[ The locale of the user. Depending on the user’s privacy setting, this may be returned as null. ]]
       locale : String?
       [[ The groups that the user belongs to. ]]
-      groups : SimpleListWrapperGroupName?
+      groups : AnonymousTypeUserGroups?
       [[ The application roles the user is assigned to. ]]
-      applicationRoles : SimpleListWrapperApplicationRole?
+      applicationRoles : AnonymousTypeUserApplicationRoles?
       [[ Expand options that include additional user details in the response. ]]
       expand : String?
    }
+   
+   [[ The avatars of the user. ]]
+   type AnonymousTypeUserAvatarUrls inherits AvatarUrlsBean
+   
+   [[ The groups that the user belongs to. ]]
+   type AnonymousTypeUserGroups inherits SimpleListWrapperGroupName
+   
+   [[ The application roles the user is assigned to. ]]
+   type AnonymousTypeUserApplicationRoles inherits SimpleListWrapperApplicationRole
    
    model SimpleListWrapperApplicationRole {
       size : Int?
@@ -912,7 +1010,7 @@ namespace vyne.openApi {
       [[ The description for the component. Optional when creating or updating a component. ]]
       description : String?
       [[ The user details for the component's lead user. ]]
-      lead : User?
+      lead : AnonymousTypeComponentLead?
       [[ This property is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
       leadUserName : String?
       [[ The accountId of the component's lead user. The accountId uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. An account ID with value `unknown` is returned when there is missing data for a user, which only happens for deleted users. We recommend you treat this value as an error case if you need to access more information about the user. Optional when creating or updating a component. ]]
@@ -926,7 +1024,7 @@ namespace vyne.openApi {
       Optional when creating or updating a component. ]]
       assigneeType : String?
       [[ The details of the user associated with `assigneeType`, if any. See `realAssignee` for details of the user assigned to issues created with this component. ]]
-      assignee : User?
+      assignee : AnonymousTypeComponentAssignee?
       [[ The type of the assignee that is assigned to issues created with this component, when an assignee cannot be set from the `assigneeType`. For example, `assigneeType` is set to `COMPONENT_LEAD` but no component lead is set. This property is set to one of the following values:
       *  `PROJECT_LEAD` when `assigneeType` is `PROJECT_LEAD` and the project lead has permission to be assigned issues in the project that the component is in.
       *  `COMPONENT_LEAD` when `assignee`Type is `COMPONENT_LEAD` and the component lead has permission to be assigned issues in the project that the component is in.
@@ -934,7 +1032,7 @@ namespace vyne.openApi {
       *  `PROJECT_DEFAULT` when none of the preceding cases are true. ]]
       realAssigneeType : String?
       [[ The user assigned to issues created with this component, when `assigneeType` does not identify a valid assignee. ]]
-      realAssignee : User?
+      realAssignee : AnonymousTypeComponentRealAssignee?
       [[ Indicates whether a user is associated with `assigneeType`. For example, if the `assigneeType` is set to `COMPONENT_LEAD` but the component lead is not set, then `false` is returned. ]]
       isAssigneeTypeValid : Boolean?
       [[ The key of the project the component is assigned to. Required when creating a component. Can't be updated. ]]
@@ -942,6 +1040,15 @@ namespace vyne.openApi {
       [[ The ID of the project the component is assigned to. ]]
       projectId : Int?
    }
+   
+   [[ The user details for the component's lead user. ]]
+   type AnonymousTypeComponentLead inherits User
+   
+   [[ The details of the user associated with `assigneeType`, if any. See `realAssignee` for details of the user assigned to issues created with this component. ]]
+   type AnonymousTypeComponentAssignee inherits User
+   
+   [[ The user assigned to issues created with this component, when `assigneeType` does not identify a valid assignee. ]]
+   type AnonymousTypeComponentRealAssignee inherits User
    
    [[ Details about a project version. ]]
    model Version {
@@ -981,7 +1088,7 @@ namespace vyne.openApi {
       [[ If the expand option `operations` is used, returns the list of operations available for this version. ]]
       operations : SimpleLink[]?
       [[ If the expand option `issuesstatus` is used, returns the count of issues in this version for each of the status categories *to do*, *in progress*, *done*, and *unmapped*. The *unmapped* property contains a count of issues with a status other than *to do*, *in progress*, and *done*. ]]
-      issuesStatusForFixVersion : VersionIssuesStatus?
+      issuesStatusForFixVersion : AnonymousTypeVersionIssuesStatusForFixVersion?
    }
    
    [[ Details about the operations available in this version. ]]
@@ -995,6 +1102,9 @@ namespace vyne.openApi {
       weight : Int?
    }
    
+   [[ If the expand option `issuesstatus` is used, returns the count of issues in this version for each of the status categories *to do*, *in progress*, *done*, and *unmapped*. The *unmapped* property contains a count of issues with a status other than *to do*, *in progress*, and *done*. ]]
+   type AnonymousTypeVersionIssuesStatusForFixVersion inherits VersionIssuesStatus
+   
    [[ Counts of the number of issues in various statuses. ]]
    model VersionIssuesStatus {
       [[ Count of issues with a status other than *to do*, *in progress*, and *done*. ]]
@@ -1007,6 +1117,12 @@ namespace vyne.openApi {
       done : Int?
    }
    
+   [[ The URLs of the project's avatars. ]]
+   type AnonymousTypeProjectAvatarUrls inherits AvatarUrlsBean
+   
+   [[ The category the project belongs to. ]]
+   type AnonymousTypeProjectProjectCategory inherits ProjectCategory
+   
    [[ A project category. ]]
    model ProjectCategory {
       [[ The URL of the project category. ]]
@@ -1018,6 +1134,9 @@ namespace vyne.openApi {
       [[ The description of the project category. Required on create, optional on update. ]]
       description : String?
    }
+   
+   [[ The issue type hierarchy for the project ]]
+   type AnonymousTypeProjectIssueTypeHierarchy inherits Hierarchy
    
    [[ Project Issue Type Hierarchy ]]
    model Hierarchy {
@@ -1034,11 +1153,17 @@ namespace vyne.openApi {
       externalUuid : uuid?
    }
    
+   [[ User permissions on the project ]]
+   type AnonymousTypeProjectPermissions inherits ProjectPermissions
+   
    [[ Permissions which a user has on a project. ]]
    model ProjectPermissions {
       [[ Indicates whether the logged user can edit the project. ]]
       canEdit : Boolean?
    }
+   
+   [[ Insights about the project. ]]
+   type AnonymousTypeProjectInsight inherits ProjectInsight
    
    [[ Additional details about a project. ]]
    model ProjectInsight {
@@ -1088,24 +1213,33 @@ namespace vyne.openApi {
       [[ The ID of the comment. ]]
       id : String?
       [[ The ID of the user who created the comment. ]]
-      author : UserDetails?
+      author : AnonymousTypeCommentAuthor?
       [[ The comment text in [Atlassian Document Format](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/). ]]
       body : Any?
       [[ The rendered version of the comment. ]]
       renderedBody : String?
       [[ The ID of the user who updated the comment last. ]]
-      updateAuthor : UserDetails?
+      updateAuthor : AnonymousTypeCommentUpdateAuthor?
       [[ The date and time at which the comment was created. ]]
       created : DateTime?
       [[ The date and time at which the comment was updated last. ]]
       updated : DateTime?
       [[ The group or role to which this comment is visible. Optional on create and update. ]]
-      visibility : Visibility?
+      visibility : AnonymousTypeCommentVisibility?
       [[ Indicates whether the comment is visible in Jira Service Desk. Defaults to true when comments are created in the Jira Cloud Platform. This includes when the site doesn't use Jira Service Desk or the project isn't a Jira Service Desk project and, therefore, there is no Jira Service Desk for the issue to be visible on. To create a comment with its visibility in Jira Service Desk set to false, use the Jira Service Desk REST API [Create request comment](https://developer.atlassian.com/cloud/jira/service-desk/rest/#api-rest-servicedeskapi-request-issueIdOrKey-comment-post) operation. ]]
       jsdPublic : Boolean?
       [[ A list of comment properties. Optional on create and update. ]]
       properties : EntityProperty[]?
    }
+   
+   [[ The ID of the user who created the comment. ]]
+   type AnonymousTypeCommentAuthor inherits UserDetails
+   
+   [[ The ID of the user who updated the comment last. ]]
+   type AnonymousTypeCommentUpdateAuthor inherits UserDetails
+   
+   [[ The group or role to which this comment is visible. Optional on create and update. ]]
+   type AnonymousTypeCommentVisibility inherits Visibility
    
    [[ The group or role to which this item is visible. ]]
    model Visibility {
@@ -1194,12 +1328,15 @@ namespace vyne.openApi {
       [[ project unique ID for next-gen entities ]]
       entityId : uuid?
       [[ Details of the next-gen projects the issue type is available in. ]]
-      scope : Scope?
+      scope : AnonymousTypeIssueTypeIssueCreateMetadataScope?
       [[ Expand options that include additional issue type metadata details in the response. ]]
       expand : String?
       [[ List of the fields available when creating an issue for the issue type. ]]
       fields : Any?
    }
+   
+   [[ Details of the next-gen projects the issue type is available in. ]]
+   type AnonymousTypeIssueTypeIssueCreateMetadataScope inherits Scope
    
    model Group {
       [[ The name of group. ]]
@@ -1207,10 +1344,13 @@ namespace vyne.openApi {
       [[ The URL for these group details. ]]
       self : String?
       [[ A paginated list of the users that are members of the group. A maximum of 50 users is returned in the list, to access additional users append `[start-index:end-index]` to the expand request. For example, to access the next 50 users, use`?expand=users[51:100]`. ]]
-      users : PagedListUserDetailsApplicationUser?
+      users : AnonymousTypeGroupUsers?
       [[ Expand options that include additional group details in the response. ]]
       expand : String?
    }
+   
+   [[ A paginated list of the users that are members of the group. A maximum of 50 users is returned in the list, to access additional users append `[start-index:end-index]` to the expand request. For example, to access the next 50 users, use`?expand=users[51:100]`. ]]
+   type AnonymousTypeGroupUsers inherits PagedListUserDetailsApplicationUser
    
    [[ A paged list. To access additional details append `[start-index:end-index]` to the expand request. For example, `?expand=sharedUsers[10:40]` returns a list starting at item 10 and finishing at item 40. ]]
    model PagedListUserDetailsApplicationUser {
@@ -1249,10 +1389,13 @@ namespace vyne.openApi {
       [[ A description for the permission scheme. ]]
       description : String?
       [[ The scope of the permission scheme. ]]
-      scope : Scope?
+      scope : AnonymousTypePermissionSchemeScope?
       [[ The permission scheme to create or update. See [About permission schemes and grants](#about-permission-schemes-and-grants) for more information. ]]
       permissions : PermissionGrant[]?
    }
+   
+   [[ The scope of the permission scheme. ]]
+   type AnonymousTypePermissionSchemeScope inherits Scope
    
    [[ Details about a permission granted to a user or group. ]]
    model PermissionGrant {
@@ -1261,10 +1404,13 @@ namespace vyne.openApi {
       [[ The URL of the permission granted details. ]]
       self : String?
       [[ The user or group being granted the permission. It consists of a `type` and a type-dependent `parameter`. See [Holder object](#holder-object) in *Get all permission schemes* for more information. ]]
-      holder : PermissionHolder?
+      holder : AnonymousTypePermissionGrantHolder?
       [[ The permission to grant. This permission can be one of the built-in permissions or a custom permission added by an app. See [Built-in permissions](#built-in-permissions) in *Get all permission schemes* for more information about the built-in permissions. See the [project permission](https://developer.atlassian.com/cloud/jira/platform/modules/project-permission/) and [global permission](https://developer.atlassian.com/cloud/jira/platform/modules/global-permission/) module documentation for more information about custom permissions. ]]
       permission : String?
    }
+   
+   [[ The user or group being granted the permission. It consists of a `type` and a type-dependent `parameter`. See [Holder object](#holder-object) in *Get all permission schemes* for more information. ]]
+   type AnonymousTypePermissionGrantHolder inherits PermissionHolder
    
    [[ Details of a user, group, field, or project role that holds a permission. See [Holder object](#holder-object) in *Get all permission schemes* for more information. ]]
    model PermissionHolder {
@@ -1301,8 +1447,11 @@ namespace vyne.openApi {
       [[ The name of the context. ]]
       name : String?
       [[ The scope of the context. ]]
-      scope : Scope?
+      scope : AnonymousTypeContextScope?
    }
+   
+   [[ The scope of the context. ]]
+   type AnonymousTypeContextScope inherits Scope
    
    [[ Details of a custom field option and its cascading options. ]]
    model CustomFieldOptionDetails {
@@ -1417,10 +1566,13 @@ namespace vyne.openApi {
       [[ The HTML body of the email notification for the issue. ]]
       htmlBody : String?
       [[ The recipients of the email notification for the issue. ]]
-      to : NotificationRecipients?
+      to : AnonymousTypeNotificationTo?
       [[ Restricts the notifications to users with the specified permissions. ]]
-      restrict : NotificationRecipientsRestrictions?
+      restrict : AnonymousTypeNotificationRestrict?
    }
+   
+   [[ The recipients of the email notification for the issue. ]]
+   type AnonymousTypeNotificationTo inherits NotificationRecipients
    
    [[ Details of the users and groups to receive the notification. ]]
    model NotificationRecipients {
@@ -1437,6 +1589,9 @@ namespace vyne.openApi {
       [[ List of groups to receive the notification. ]]
       groups : GroupName[]?
    }
+   
+   [[ Restricts the notifications to users with the specified permissions. ]]
+   type AnonymousTypeNotificationRestrict inherits NotificationRecipientsRestrictions
    
    [[ A change item. ]]
    model ChangeDetails {
@@ -1494,9 +1649,9 @@ namespace vyne.openApi {
       [[ The URL of the worklog item. ]]
       self : String?
       [[ Details of the user who created the worklog. ]]
-      author : UserDetails?
+      author : AnonymousTypeWorklogAuthor?
       [[ Details of the user who last updated the worklog. ]]
-      updateAuthor : UserDetails?
+      updateAuthor : AnonymousTypeWorklogUpdateAuthor?
       [[ A comment about the worklog in [Atlassian Document Format](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/). Optional when creating or updating a worklog. ]]
       comment : Any?
       [[ The datetime on which the worklog was created. ]]
@@ -1504,7 +1659,7 @@ namespace vyne.openApi {
       [[ The datetime on which the worklog was last updated. ]]
       updated : DateTime?
       [[ Details about any restrictions in the visibility of the worklog. Optional when creating or updating a worklog. ]]
-      visibility : Visibility?
+      visibility : AnonymousTypeWorklogVisibility?
       [[ The datetime on which the worklog effort was started. Required when creating a worklog. Optional when updating a worklog. ]]
       started : DateTime?
       [[ The time spent working on the issue as days (\#d), hours (\#h), or minutes (\#m or \#). Required when creating a worklog if `timeSpentSeconds` isn't provided. Optional when updating a worklog. Cannot be provided if `timeSpentSecond` is provided. ]]
@@ -1518,6 +1673,15 @@ namespace vyne.openApi {
       [[ Details of properties for the worklog. Optional when creating or updating a worklog. ]]
       properties : EntityProperty[]?
    }
+   
+   [[ Details of the user who created the worklog. ]]
+   type AnonymousTypeWorklogAuthor inherits UserDetails
+   
+   [[ Details of the user who last updated the worklog. ]]
+   type AnonymousTypeWorklogUpdateAuthor inherits UserDetails
+   
+   [[ Details about any restrictions in the visibility of the worklog. Optional when creating or updating a worklog. ]]
+   type AnonymousTypeWorklogVisibility inherits Visibility
    
    type JqlQueryUnitaryOperand
    
@@ -1554,8 +1718,11 @@ namespace vyne.openApi {
       [[ The value of the property. The value must be a [valid](http://tools.ietf.org/html/rfc4627), non-empty JSON blob. The maximum length is 32768 characters. ]]
       value : Any?
       [[ The bulk operation filter. ]]
-      `filter` : IssueFilterForBulkPropertySet?
+      `filter` : AnonymousTypeBulkIssuePropertyUpdateRequestFilter?
    }
+   
+   [[ The bulk operation filter. ]]
+   type AnonymousTypeBulkIssuePropertyUpdateRequestFilter inherits IssueFilterForBulkPropertySet
    
    [[ Bulk operation filter details. ]]
    model IssueFilterForBulkPropertySet {
@@ -1592,16 +1759,19 @@ namespace vyne.openApi {
       [[ The transitions that can be performed on the issue. ]]
       transitions : IssueTransition[]?
       [[ The operations that can be performed on the issue. ]]
-      operations : Operations?
+      operations : AnonymousTypeIssueBeanOperations?
       [[ The metadata for the fields on the issue that can be amended. ]]
-      editmeta : IssueUpdateMetadata?
+      editmeta : AnonymousTypeIssueBeanEditmeta?
       [[ Details of changelogs associated with the issue. ]]
-      changelog : PageOfChangelogs?
+      changelog : AnonymousTypeIssueBeanChangelog?
       [[ The versions of each field on the issue. ]]
       versionedRepresentations : Any?
       fieldsToInclude : IncludedFields?
       fields : Any?
    }
+   
+   [[ The operations that can be performed on the issue. ]]
+   type AnonymousTypeIssueBeanOperations inherits Operations
    
    [[ Details of the operations that can be performed on the issue. ]]
    model Operations {
@@ -1619,11 +1789,17 @@ namespace vyne.openApi {
       groups : LinkGroup[]?
    }
    
+   [[ The metadata for the fields on the issue that can be amended. ]]
+   type AnonymousTypeIssueBeanEditmeta inherits IssueUpdateMetadata
+   
    [[ A list of editable field details. ]]
    model IssueUpdateMetadata {
       [[ A list of editable field details. ]]
       fields : Any?
    }
+   
+   [[ Details of changelogs associated with the issue. ]]
+   type AnonymousTypeIssueBeanChangelog inherits PageOfChangelogs
    
    [[ A page of changelogs. ]]
    model PageOfChangelogs {
@@ -1642,14 +1818,20 @@ namespace vyne.openApi {
       [[ The ID of the changelog. ]]
       id : String?
       [[ The user who made the change. ]]
-      author : UserDetails?
+      author : AnonymousTypeChangelogAuthor?
       [[ The date on which the change took place. ]]
       created : DateTime?
       [[ The list of items changed. ]]
       items : ChangeDetails[]?
       [[ The history metadata associated with the changed. ]]
-      historyMetadata : HistoryMetadata?
+      historyMetadata : AnonymousTypeChangelogHistoryMetadata?
    }
+   
+   [[ The user who made the change. ]]
+   type AnonymousTypeChangelogAuthor inherits UserDetails
+   
+   [[ The history metadata associated with the changed. ]]
+   type AnonymousTypeChangelogHistoryMetadata inherits HistoryMetadata
    
    [[ Details of issue history metadata. ]]
    model HistoryMetadata {
@@ -1668,14 +1850,17 @@ namespace vyne.openApi {
       [[ The description key of the email address associated the history record. ]]
       emailDescriptionKey : String?
       [[ Details of the user whose action created the history record. ]]
-      actor : HistoryMetadataParticipant?
+      actor : AnonymousTypeHistoryMetadataActor?
       [[ Details of the system that generated the history record. ]]
-      generator : HistoryMetadataParticipant?
+      generator : AnonymousTypeHistoryMetadataGenerator?
       [[ Details of the cause that triggered the creation the history record. ]]
-      cause : HistoryMetadataParticipant?
+      cause : AnonymousTypeHistoryMetadataCause?
       [[ Additional arbitrary information about the history record. ]]
       extraData : Any?
    }
+   
+   [[ Details of the user whose action created the history record. ]]
+   type AnonymousTypeHistoryMetadataActor inherits HistoryMetadataParticipant
    
    [[ Details of user or system associated with a issue history metadata item. ]]
    model HistoryMetadataParticipant {
@@ -1692,6 +1877,12 @@ namespace vyne.openApi {
       [[ The URL of the user or system associated with a history record. ]]
       url : String?
    }
+   
+   [[ Details of the system that generated the history record. ]]
+   type AnonymousTypeHistoryMetadataGenerator inherits HistoryMetadataParticipant
+   
+   [[ Details of the cause that triggered the creation the history record. ]]
+   type AnonymousTypeHistoryMetadataCause inherits HistoryMetadataParticipant
    
    model IncludedFields {
       actuallyIncluded : String[]?
@@ -1741,8 +1932,11 @@ namespace vyne.openApi {
       [[ The name of the screen. ]]
       name : String?
       [[ The scope of the screen. ]]
-      scope : Scope?
+      scope : AnonymousTypeScreenScope?
    }
+   
+   [[ The scope of the screen. ]]
+   type AnonymousTypeScreenScope inherits Scope
    
    [[ A list of issues suggested for use in auto-completion. ]]
    model IssuePickerSuggestions {
@@ -1809,10 +2003,13 @@ namespace vyne.openApi {
       [[ The name of the project. ]]
       name : String?
       [[ List of the project's avatars, returning the avatar size and associated URL. ]]
-      avatarUrls : AvatarUrlsBean?
+      avatarUrls : AnonymousTypeProjectIssueCreateMetadataAvatarUrls?
       [[ List of the issue types supported by the project. ]]
       issuetypes : IssueTypeIssueCreateMetadata[]?
    }
+   
+   [[ List of the project's avatars, returning the avatar size and associated URL. ]]
+   type AnonymousTypeProjectIssueCreateMetadataAvatarUrls inherits AvatarUrlsBean
    
    model MoveFieldBean {
       [[ The ID of the screen tab field after which to place the moved screen tab field. Required if `position` isn't provided. ]]
@@ -1849,7 +2046,7 @@ namespace vyne.openApi {
       [[ Indicates whether the field is required. ]]
       required : Boolean
       [[ The data type of the field. ]]
-      schema : JsonTypeBean?
+      schema : AnonymousTypeFieldMetadataSchema?
       [[ The name of the field. ]]
       name : String
       [[ The key of the field. ]]
@@ -1866,19 +2063,28 @@ namespace vyne.openApi {
       defaultValue : Any?
    }
    
+   [[ The data type of the field. ]]
+   type AnonymousTypeFieldMetadataSchema inherits JsonTypeBean
+   
    [[ Details of an issue update request. ]]
    model IssueUpdateDetails {
       [[ Details of a transition. Required when performing a transition, optional when creating or editing an issue. ]]
-      transition : IssueTransition?
+      transition : AnonymousTypeIssueUpdateDetailsTransition?
       [[ List of issue screen fields to update, specifying the sub-field to update and its value for each field. This field provides a straightforward option when setting a sub-field. When multiple sub-fields or other operations are required, use `update`. Fields included in here cannot be included in `update`. ]]
       fields : Any?
       [[ List of operations to perform on issue screen fields. Note that fields included in here cannot be included in `fields`. ]]
       update : Any?
       [[ Additional issue history details. ]]
-      historyMetadata : HistoryMetadata?
+      historyMetadata : AnonymousTypeIssueUpdateDetailsHistoryMetadata?
       [[ Details of issue properties to be add or update. ]]
       properties : EntityProperty[]?
    }
+   
+   [[ Details of a transition. Required when performing a transition, optional when creating or editing an issue. ]]
+   type AnonymousTypeIssueUpdateDetailsTransition inherits IssueTransition
+   
+   [[ Additional issue history details. ]]
+   type AnonymousTypeIssueUpdateDetailsHistoryMetadata inherits HistoryMetadata
    
    [[ Details of an item associated with the changed record. ]]
    model AssociatedItemBean {
@@ -1910,7 +2116,7 @@ namespace vyne.openApi {
       [[ The name of the dashboard. ]]
       name : String?
       [[ The owner of the dashboard. ]]
-      owner : UserBean?
+      owner : AnonymousTypeDashboardOwner?
       [[ The number of users who have this dashboard as a favorite. ]]
       popularity : Int?
       [[ The rank of this dashboard. ]]
@@ -1922,6 +2128,9 @@ namespace vyne.openApi {
       [[ The URL of the dashboard. ]]
       `view` : String?
    }
+   
+   [[ The owner of the dashboard. ]]
+   type AnonymousTypeDashboardOwner inherits UserBean
    
    model UserBean {
       [[ This property is deprecated in favor of `accountId` because of privacy changes. See the [migration guide](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details.
@@ -1939,8 +2148,11 @@ namespace vyne.openApi {
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. An account ID with value `unknown` is returned when there is missing data for a user, which only happens for deleted users. We recommend you treat this value as an error case if you need to access more information about the user. ]]
       accountId : String?
       [[ The avatars of the user. ]]
-      avatarUrls : UserBeanAvatarUrls?
+      avatarUrls : AnonymousTypeUserBeanAvatarUrls?
    }
+   
+   [[ The avatars of the user. ]]
+   type AnonymousTypeUserBeanAvatarUrls inherits UserBeanAvatarUrls
    
    model UserBeanAvatarUrls {
       [[ The URL of the user's 32x32 pixel avatar. ]]
@@ -1967,13 +2179,24 @@ namespace vyne.openApi {
       `type` : String
       [[ The project that the filter is shared with. This is similar to the project object returned by [Get project](#api-rest-api-3-project-projectIdOrKey-get) but it contains a subset of the properties, which are: `self`, `id`, `key`, `assigneeType`, `name`, `roles`, `avatarUrls`, `projectType`, `simplified`.
       For a request, specify the `id` for the project. ]]
-      project : Project?
+      project : AnonymousTypeSharePermissionProject?
       [[ The project role that the filter is shared with.
       For a request, specify the `id` for the role. You must also specify the `project` object and `id` for the project that the role is in. ]]
-      role : ProjectRole?
+      role : AnonymousTypeSharePermissionRole?
       [[ The group that the filter is shared with. For a request, specify the `name` property for the group. ]]
-      group : GroupName?
+      group : AnonymousTypeSharePermissionGroup?
    }
+   
+   [[ The project that the filter is shared with. This is similar to the project object returned by [Get project](#api-rest-api-3-project-projectIdOrKey-get) but it contains a subset of the properties, which are: `self`, `id`, `key`, `assigneeType`, `name`, `roles`, `avatarUrls`, `projectType`, `simplified`.
+   For a request, specify the `id` for the project. ]]
+   type AnonymousTypeSharePermissionProject inherits Project
+   
+   [[ The project role that the filter is shared with.
+   For a request, specify the `id` for the role. You must also specify the `project` object and `id` for the project that the role is in. ]]
+   type AnonymousTypeSharePermissionRole inherits ProjectRole
+   
+   [[ The group that the filter is shared with. For a request, specify the `name` property for the group. ]]
+   type AnonymousTypeSharePermissionGroup inherits GroupName
    
    [[ Details about an attachment. ]]
    model Attachment {
@@ -1984,7 +2207,7 @@ namespace vyne.openApi {
       [[ The file name of the attachment. ]]
       filename : String?
       [[ Details of the user who added the attachment. ]]
-      author : UserDetails?
+      author : AnonymousTypeAttachmentAuthor?
       [[ The datetime the attachment was created. ]]
       created : DateTime?
       [[ The size of the attachment. ]]
@@ -1996,6 +2219,9 @@ namespace vyne.openApi {
       [[ The URL of a thumbnail representing the attachment. ]]
       thumbnail : String?
    }
+   
+   [[ Details of the user who added the attachment. ]]
+   type AnonymousTypeAttachmentAuthor inherits UserDetails
    
    [[ List of security schemes. ]]
    model SecuritySchemes {
@@ -2130,7 +2356,7 @@ namespace vyne.openApi {
       [[ Indicates whether the workflow scheme is a draft or not. ]]
       draft : Boolean?
       [[ The user that last modified the draft workflow scheme. A modification is a change to the issue type-project mappings only. This property does not apply to non-draft workflows. ]]
-      lastModifiedUser : User?
+      lastModifiedUser : AnonymousTypeWorkflowSchemeLastModifiedUser?
       [[ The date-time that the draft workflow scheme was last modified. A modification is a change to the issue type-project mappings only. This property does not apply to non-draft workflows. ]]
       lastModified : String?
       self : String?
@@ -2143,6 +2369,9 @@ namespace vyne.openApi {
       [[ The issue types available in Jira. ]]
       issueTypes : Any?
    }
+   
+   [[ The user that last modified the draft workflow scheme. A modification is a change to the issue type-project mappings only. This property does not apply to non-draft workflows. ]]
+   type AnonymousTypeWorkflowSchemeLastModifiedUser inherits User
    
    [[ A screen tab. ]]
    model ScreenableTab {
@@ -2198,9 +2427,12 @@ namespace vyne.openApi {
       [[ The number of steps included in the workflow. ]]
       steps : Int?
       [[ The scope where this workflow applies ]]
-      scope : Scope?
+      scope : AnonymousTypeDeprecatedWorkflowScope?
       `default` : Boolean?
    }
+   
+   [[ The scope where this workflow applies ]]
+   type AnonymousTypeDeprecatedWorkflowScope inherits Scope
    
    [[ Value of a custom field option and the values of its cascading options. ]]
    model CustomFieldOptionValue {
@@ -2323,7 +2555,7 @@ namespace vyne.openApi {
       [[ A description of the filter. ]]
       description : String?
       [[ The user who owns the filter. This is defaulted to the creator of the filter, however Jira administrators can change the owner of a shared filter in the admin settings. ]]
-      owner : User?
+      owner : AnonymousTypeFoundFilterOwner?
       [[ The JQL query for the filter. For example, *project = SSP AND issuetype = Bug*. ]]
       jql : String?
       [[ A URL to view the filter results in Jira, using the ID of the filter. For example, *https://your-domain.atlassian.net/issues/?filter=10100*. ]]
@@ -2340,15 +2572,24 @@ namespace vyne.openApi {
       subscriptions : FilterSubscription[]?
    }
    
+   [[ The user who owns the filter. This is defaulted to the creator of the filter, however Jira administrators can change the owner of a shared filter in the admin settings. ]]
+   type AnonymousTypeFoundFilterOwner inherits User
+   
    [[ Details of a user or group subscribing to a filter. ]]
    model FilterSubscription {
       [[ The ID of the filter subscription. ]]
       id : Int?
       [[ The user subscribing to filter. ]]
-      user : User?
+      user : AnonymousTypeFilterSubscriptionUser?
       [[ The group subscribing to filter. ]]
-      group : GroupName?
+      group : AnonymousTypeFilterSubscriptionGroup?
    }
+   
+   [[ The user subscribing to filter. ]]
+   type AnonymousTypeFilterSubscriptionUser inherits User
+   
+   [[ The group subscribing to filter. ]]
+   type AnonymousTypeFilterSubscriptionGroup inherits GroupName
    
    [[ Lists of JQL reference data. ]]
    model JQLReferenceData {
@@ -2390,10 +2631,13 @@ namespace vyne.openApi {
       [[ The JQL query that was parsed and validated. ]]
       `query` : String
       [[ The syntax tree of the query. Empty if the query was invalid. ]]
-      structure : JqlQuery?
+      structure : AnonymousTypeParsedJqlQueryStructure?
       [[ The list of syntax or validation errors. ]]
       errors : String[]?
    }
+   
+   [[ The syntax tree of the query. Empty if the query was invalid. ]]
+   type AnonymousTypeParsedJqlQueryStructure inherits JqlQuery
    
    [[ Details about the default workflow. ]]
    model DefaultWorkflow {
@@ -2440,12 +2684,15 @@ namespace vyne.openApi {
       The maximum length is 255 characters. ]]
       globalId : String?
       [[ Details of the remote application the linked item is in. For example, trello. ]]
-      application : Application?
+      application : AnonymousTypeRemoteIssueLinkRequestApplication?
       [[ Description of the relationship between the issue and the linked item. If not set, the relationship description "links to" is used in Jira. ]]
       relationship : String?
       [[ Details of the item linked to. ]]
-      object : RemoteObject?
+      object : AnonymousTypeRemoteIssueLinkRequestObject?
    }
+   
+   [[ Details of the remote application the linked item is in. For example, trello. ]]
+   type AnonymousTypeRemoteIssueLinkRequestApplication inherits Application
    
    [[ The application the linked item is in. ]]
    model Application {
@@ -2454,6 +2701,9 @@ namespace vyne.openApi {
       [[ The name of the application. Used in conjunction with the (remote) object icon title to display a tooltip for the link's icon. The tooltip takes the format "\[application name\] icon title". Blank items are excluded from the tooltip title. If both items are blank, the icon tooltop displays as "Web Link". Grouping and sorting of links may place links without an application name last. ]]
       name : String?
    }
+   
+   [[ Details of the item linked to. ]]
+   type AnonymousTypeRemoteIssueLinkRequestObject inherits RemoteObject
    
    [[ Paginated list of worklog details ]]
    model PageOfWorklogs {
@@ -2478,8 +2728,11 @@ namespace vyne.openApi {
       [[ The list of projects that use the workflow scheme. ]]
       projectIds : String[]
       [[ The workflow scheme. ]]
-      workflowScheme : WorkflowScheme?
+      workflowScheme : AnonymousTypeWorkflowSchemeAssociationsWorkflowScheme?
    }
+   
+   [[ The workflow scheme. ]]
+   type AnonymousTypeWorkflowSchemeAssociationsWorkflowScheme inherits WorkflowScheme
    
    model JiraExpressionsComplexityValueBean {
       [[ The complexity value of the current expression. ]]
@@ -2591,11 +2844,11 @@ namespace vyne.openApi {
    
    model JiraExpressionEvalContextBean {
       [[ The issue that is available under the `issue` variable when evaluating the expression. ]]
-      issue : IdOrKeyBean?
+      issue : AnonymousTypeJiraExpressionEvalContextBeanIssue?
       [[ The collection of issues that is available under the `issues` variable when evaluating the expression. ]]
-      issues : JexpIssues?
+      issues : AnonymousTypeJiraExpressionEvalContextBeanIssues?
       [[ The project that is available under the `project` variable when evaluating the expression. ]]
-      project : IdOrKeyBean?
+      project : AnonymousTypeJiraExpressionEvalContextBeanProject?
       [[ The ID of the sprint that is available under the `sprint` variable when evaluating the expression. ]]
       sprint : Int?
       [[ The ID of the board that is available under the `board` variable when evaluating the expression. ]]
@@ -2606,6 +2859,9 @@ namespace vyne.openApi {
       customerRequest : Int?
    }
    
+   [[ The issue that is available under the `issue` variable when evaluating the expression. ]]
+   type AnonymousTypeJiraExpressionEvalContextBeanIssue inherits IdOrKeyBean
+   
    model IdOrKeyBean {
       [[ The ID of the referenced item. ]]
       id : Int?
@@ -2613,11 +2869,20 @@ namespace vyne.openApi {
       key : String?
    }
    
+   [[ The collection of issues that is available under the `issues` variable when evaluating the expression. ]]
+   type AnonymousTypeJiraExpressionEvalContextBeanIssues inherits JexpIssues
+   
    [[ The JQL specifying the issues available in the evaluated Jira expression under the `issues` context variable. ]]
    model JexpIssues {
       [[ The JQL query that specifies the set of issues available in the Jira expression. ]]
-      jql : JexpJqlIssues?
+      jql : AnonymousTypeJexpIssuesJql?
    }
+   
+   [[ The JQL query that specifies the set of issues available in the Jira expression. ]]
+   type AnonymousTypeJexpIssuesJql inherits JexpJqlIssues
+   
+   [[ The project that is available under the `project` variable when evaluating the expression. ]]
+   type AnonymousTypeJiraExpressionEvalContextBeanProject inherits IdOrKeyBean
    
    [[ A page of items. ]]
    model PageBeanString {
@@ -2772,8 +3037,11 @@ namespace vyne.openApi {
       [[ The description of the screen scheme. ]]
       description : String?
       [[ IDs of the screens for the associated screen types. ]]
-      screens : ScreenTypeIDsBean?
+      screens : AnonymousTypeScreenSchemeScreens?
    }
+   
+   [[ IDs of the screens for the associated screen types. ]]
+   type AnonymousTypeScreenSchemeScreens inherits ScreenTypeIDsBean
    
    [[ IDs of the screens for the various screen types associated with the screen scheme. ]]
    model ScreenTypeIDsBean {
@@ -2798,7 +3066,7 @@ namespace vyne.openApi {
       [[ A description of the filter. ]]
       description : String?
       [[ The user who owns the filter. This is defaulted to the creator of the filter, however Jira administrators can change the owner of a shared filter in the admin settings. ]]
-      owner : User?
+      owner : AnonymousTypeFilterOwner?
       [[ The JQL query for the filter. For example, *project = SSP AND issuetype = Bug*. ]]
       jql : String?
       [[ A URL to view the filter results in Jira, using the ID of the filter. For example, *https://your-domain.atlassian.net/issues/?filter=10100*. ]]
@@ -2812,10 +3080,19 @@ namespace vyne.openApi {
       [[ The groups and projects that the filter is shared with. ]]
       sharePermissions : SharePermission[]?
       [[ A paginated list of the users that the filter is shared with. This includes users that are members of the groups or can browse the projects that the filter is shared with. ]]
-      sharedUsers : UserList?
+      sharedUsers : AnonymousTypeFilterSharedUsers?
       [[ A paginated list of the users that are subscribed to the filter. ]]
-      subscriptions : FilterSubscriptionsList?
+      subscriptions : AnonymousTypeFilterSubscriptions?
    }
+   
+   [[ The user who owns the filter. This is defaulted to the creator of the filter, however Jira administrators can change the owner of a shared filter in the admin settings. ]]
+   type AnonymousTypeFilterOwner inherits User
+   
+   [[ A paginated list of the users that the filter is shared with. This includes users that are members of the groups or can browse the projects that the filter is shared with. ]]
+   type AnonymousTypeFilterSharedUsers inherits UserList
+   
+   [[ A paginated list of the users that are subscribed to the filter. ]]
+   type AnonymousTypeFilterSubscriptions inherits FilterSubscriptionsList
    
    [[ A paginated list of subscriptions to a filter. ]]
    model FilterSubscriptionsList {
@@ -2878,8 +3155,11 @@ namespace vyne.openApi {
       [[ The URL of the created issue or subtask. ]]
       self : String?
       [[ The response code and messages related to any requested transition. ]]
-      transition : NestedResponse?
+      transition : AnonymousTypeCreatedIssueTransition?
    }
+   
+   [[ The response code and messages related to any requested transition. ]]
+   type AnonymousTypeCreatedIssueTransition inherits NestedResponse
    
    [[ A page of items. ]]
    model PageBeanWorkflowTransitionRules {
@@ -2952,12 +3232,18 @@ namespace vyne.openApi {
       [[ The global ID of the link, such as the ID of the item on the remote system. ]]
       globalId : String?
       [[ Details of the remote application the linked item is in. ]]
-      application : Application?
+      application : AnonymousTypeRemoteIssueLinkApplication?
       [[ Description of the relationship between the issue and the linked item. ]]
       relationship : String?
       [[ Details of the item linked to. ]]
-      object : RemoteObject?
+      object : AnonymousTypeRemoteIssueLinkObject?
    }
+   
+   [[ Details of the remote application the linked item is in. ]]
+   type AnonymousTypeRemoteIssueLinkApplication inherits Application
+   
+   [[ Details of the item linked to. ]]
+   type AnonymousTypeRemoteIssueLinkObject inherits RemoteObject
    
    [[ Count of issues assigned to a component. ]]
    model ComponentIssuesCount {
@@ -3063,7 +3349,7 @@ namespace vyne.openApi {
       [[ Information about the progress of the task. ]]
       message : String?
       [[ The result of the task execution. ]]
-      result : RemoveOptionFromIssuesResult?
+      result : AnonymousTypeTaskProgressBeanRemoveOptionFromIssuesResultResult?
       [[ The ID of the user who submitted the task. ]]
       submittedBy : Int
       [[ The progress of the task, as a percentage complete. ]]
@@ -3080,14 +3366,20 @@ namespace vyne.openApi {
       lastUpdate : Int
    }
    
+   [[ The result of the task execution. ]]
+   type AnonymousTypeTaskProgressBeanRemoveOptionFromIssuesResultResult inherits RemoveOptionFromIssuesResult
+   
    model RemoveOptionFromIssuesResult {
       [[ The IDs of the modified issues. ]]
       modifiedIssues : Int[]?
       [[ The IDs of the unchanged issues, those issues where errors prevent modification. ]]
       unmodifiedIssues : Int[]?
       [[ A collection of errors related to unchanged issues. The collection size is limited, which means not all errors may be returned. ]]
-      errors : SimpleErrorCollection?
+      errors : AnonymousTypeRemoveOptionFromIssuesResultErrors?
    }
+   
+   [[ A collection of errors related to unchanged issues. The collection size is limited, which means not all errors may be returned. ]]
+   type AnonymousTypeRemoveOptionFromIssuesResultErrors inherits SimpleErrorCollection
    
    model RichText {
       emptyAdf : Boolean?
@@ -3149,7 +3441,7 @@ namespace vyne.openApi {
       [[ The name of the attachment file. ]]
       filename : String?
       [[ Details of the user who attached the file. ]]
-      author : User?
+      author : AnonymousTypeAttachmentMetadataAuthor?
       [[ The datetime the attachment was created. ]]
       created : DateTime?
       [[ The size of the attachment. ]]
@@ -3163,6 +3455,9 @@ namespace vyne.openApi {
       [[ The URL of a thumbnail representing the attachment. ]]
       thumbnail : String?
    }
+   
+   [[ Details of the user who attached the file. ]]
+   type AnonymousTypeAttachmentMetadataAuthor inherits User
    
    [[ Container for a list of audit records. ]]
    model AuditRecords {
@@ -3279,13 +3574,13 @@ namespace vyne.openApi {
       [[ The key of the project to which the component is assigned. ]]
       project : String?
       [[ The user details for the component's lead user. ]]
-      lead : User?
+      lead : AnonymousTypeComponentWithIssueCountLead?
       [[ Not used. ]]
       projectId : Int?
       [[ The details of the user associated with `assigneeType`, if any. See `realAssignee` for details of the user assigned to issues created with this component. ]]
-      assignee : User?
+      assignee : AnonymousTypeComponentWithIssueCountAssignee?
       [[ The user assigned to issues created with this component, when `assigneeType` does not identify a valid assignee. ]]
-      realAssignee : User?
+      realAssignee : AnonymousTypeComponentWithIssueCountRealAssignee?
       [[ Indicates whether a user is associated with `assigneeType`. For example, if the `assigneeType` is set to `COMPONENT_LEAD` but the component lead is not set, then `false` is returned. ]]
       isAssigneeTypeValid : Boolean?
       [[ The type of the assignee that is assigned to issues created with this component, when an assignee cannot be set from the `assigneeType`. For example, `assigneeType` is set to `COMPONENT_LEAD` but no component lead is set. This property is set to one of the following values:
@@ -3299,6 +3594,15 @@ namespace vyne.openApi {
       [[ The unique identifier for the component. ]]
       id : String?
    }
+   
+   [[ The user details for the component's lead user. ]]
+   type AnonymousTypeComponentWithIssueCountLead inherits User
+   
+   [[ The details of the user associated with `assigneeType`, if any. See `realAssignee` for details of the user assigned to issues created with this component. ]]
+   type AnonymousTypeComponentWithIssueCountAssignee inherits User
+   
+   [[ The user assigned to issues created with this component, when `assigneeType` does not identify a valid assignee. ]]
+   type AnonymousTypeComponentWithIssueCountRealAssignee inherits User
    
    [[ Details about system and custom avatars. ]]
    model Avatars {
@@ -3322,7 +3626,7 @@ namespace vyne.openApi {
       [[ The notification events and associated recipients. ]]
       notificationSchemeEvents : NotificationSchemeEvent[]?
       [[ The scope of the notification scheme. ]]
-      scope : Scope?
+      scope : AnonymousTypeNotificationSchemeScope?
    }
    
    [[ Details about a notification scheme event. ]]
@@ -3340,8 +3644,14 @@ namespace vyne.openApi {
       [[ The description of the event. ]]
       description : String?
       [[ The template of the event. Only custom events configured by Jira administrators have template. ]]
-      templateEvent : NotificationEvent?
+      templateEvent : AnonymousTypeNotificationEventTemplateEvent?
    }
+   
+   [[ The template of the event. Only custom events configured by Jira administrators have template. ]]
+   type AnonymousTypeNotificationEventTemplateEvent inherits NotificationEvent
+   
+   [[ The scope of the notification scheme. ]]
+   type AnonymousTypeNotificationSchemeScope inherits Scope
    
    [[ A user found in a search. ]]
    model UserPickerUser {
@@ -3412,8 +3722,11 @@ namespace vyne.openApi {
       [[ The Jira expression to evaluate. ]]
       expression : String
       [[ The context in which the Jira expression is evaluated. ]]
-      context : JiraExpressionEvalContextBean?
+      context : AnonymousTypeJiraExpressionEvalRequestBeanContext?
    }
+   
+   [[ The context in which the Jira expression is evaluated. ]]
+   type AnonymousTypeJiraExpressionEvalRequestBeanContext inherits JiraExpressionEvalContextBean
    
    model SharePermissionInputBean {
       [[ The type of the share permission.Specify the type as follows:
@@ -3464,26 +3777,47 @@ namespace vyne.openApi {
       [[ The value of the evaluated expression. It may be a primitive JSON value or a Jira REST API object. (Some expressions do not produce any meaningful results—for example, an expression that returns a lambda function—if that's the case a simple string representation is returned. These string representations should not be relied upon and may change without notice.) ]]
       value : Any
       [[ Contains various characteristics of the performed expression evaluation. ]]
-      meta : JiraExpressionEvaluationMetaDataBean?
+      meta : AnonymousTypeJiraExpressionResultMeta?
    }
+   
+   [[ Contains various characteristics of the performed expression evaluation. ]]
+   type AnonymousTypeJiraExpressionResultMeta inherits JiraExpressionEvaluationMetaDataBean
    
    model JiraExpressionEvaluationMetaDataBean {
       [[ Contains information about the expression complexity. For example, the number of steps it took to evaluate the expression. ]]
-      complexity : JiraExpressionsComplexityBean?
+      complexity : AnonymousTypeJiraExpressionEvaluationMetaDataBeanComplexity?
       [[ Contains information about the `issues` variable in the context. For example, is the issues were loaded with JQL, information about the page will be included here. ]]
-      issues : IssuesMetaBean?
+      issues : AnonymousTypeJiraExpressionEvaluationMetaDataBeanIssues?
    }
+   
+   [[ Contains information about the expression complexity. For example, the number of steps it took to evaluate the expression. ]]
+   type AnonymousTypeJiraExpressionEvaluationMetaDataBeanComplexity inherits JiraExpressionsComplexityBean
    
    model JiraExpressionsComplexityBean {
       [[ The number of steps it took to evaluate the expression. ]]
-      steps : JiraExpressionsComplexityValueBean?
+      steps : AnonymousTypeJiraExpressionsComplexityBeanSteps?
       [[ The number of expensive operations executed while evaluating the expression. Expensive operations are those that load additional data, such as entity properties, comments, or custom fields. ]]
-      expensiveOperations : JiraExpressionsComplexityValueBean?
+      expensiveOperations : AnonymousTypeJiraExpressionsComplexityBeanExpensiveOperations?
       [[ The number of Jira REST API beans returned in the response. ]]
-      beans : JiraExpressionsComplexityValueBean?
+      beans : AnonymousTypeJiraExpressionsComplexityBeanBeans?
       [[ The number of primitive values returned in the response. ]]
-      primitiveValues : JiraExpressionsComplexityValueBean?
+      primitiveValues : AnonymousTypeJiraExpressionsComplexityBeanPrimitiveValues?
    }
+   
+   [[ The number of steps it took to evaluate the expression. ]]
+   type AnonymousTypeJiraExpressionsComplexityBeanSteps inherits JiraExpressionsComplexityValueBean
+   
+   [[ The number of expensive operations executed while evaluating the expression. Expensive operations are those that load additional data, such as entity properties, comments, or custom fields. ]]
+   type AnonymousTypeJiraExpressionsComplexityBeanExpensiveOperations inherits JiraExpressionsComplexityValueBean
+   
+   [[ The number of Jira REST API beans returned in the response. ]]
+   type AnonymousTypeJiraExpressionsComplexityBeanBeans inherits JiraExpressionsComplexityValueBean
+   
+   [[ The number of primitive values returned in the response. ]]
+   type AnonymousTypeJiraExpressionsComplexityBeanPrimitiveValues inherits JiraExpressionsComplexityValueBean
+   
+   [[ Contains information about the `issues` variable in the context. For example, is the issues were loaded with JQL, information about the page will be included here. ]]
+   type AnonymousTypeJiraExpressionEvaluationMetaDataBeanIssues inherits IssuesMetaBean
    
    [[ A page of comments. ]]
    model PageOfComments {

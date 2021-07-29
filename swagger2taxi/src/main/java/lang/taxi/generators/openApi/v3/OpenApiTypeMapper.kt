@@ -24,7 +24,7 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
    ): Type {
       val taxiExtension = schema.taxiExtension
       return if (taxiExtension == null) {
-         if (schema.hasProperties()) {
+         if (schema.isModel()) {
             generateModel(name, schema)
          } else {
             val supertype = toType(schema, name.typeName)
@@ -32,9 +32,9 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
          }
       } else {
          val taxiExtName = qualify(taxiExtension.name)
-         if (schema.hasProperties() && taxiExtension.create != false) {
+         if (schema.isModel() && taxiExtension.create != false) {
             generateModel(taxiExtName, schema)
-         } else if (!schema.hasProperties() && taxiExtension.create == true) {
+         } else if (!schema.isModel() && taxiExtension.create == true) {
             val supertype = toType(schema, name.typeName)
             generateType(taxiExtName, supertype)
          } else {
@@ -50,7 +50,6 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       getTypeFromExtensions(schema) ?:
       toType(schema, context) ?:
       schema.`$ref`?.getTypeFromRef() ?:
-      generateFromComposedSchema(schema, context) ?:
       generateModelIfAppropriate(schema, context) ?:
       PrimitiveType.ANY
 
@@ -63,18 +62,13 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       }
    }
 
-   private fun generateFromComposedSchema(schema: Schema<*>, context: String): Type? =
-      if (schema is ComposedSchema && schema.allOf?.size == 1) {
-         generateUnnamedTypeRecursively(schema.allOf.single(), context)
-      } else null
-
    private fun generateModelIfAppropriate(schema: Schema<*>, context: String): Type? =
-      if (schema.hasProperties()) {
+      if (schema.isModel()) {
          val name = anonymousModelName(context)
          generateModel(name, schema)
       } else null
 
-   private fun Schema<*>.hasProperties() = !properties.isNullOrEmpty()
+   private fun Schema<*>.isModel() = (this is ComposedSchema && oneOf == null && anyOf == null) || !properties.isNullOrEmpty()
 
    private fun toType(schema: Schema<*>, context: String) =
       primitiveTypeFor(schema) ?:
@@ -130,21 +124,43 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
    }
 
    private fun generateModel(
-      taxiExtName: QualifiedName,
+      name: QualifiedName,
       schema: Schema<*>
-   ) = _generatedTypes.getOrPut(taxiExtName) {
-      makeModel(taxiExtName, schema)
+   ) = _generatedTypes.getOrPut(name) {
+      // This allows us to support recursion - the undefined type will prevent us getting into an endless loop
+      _generatedTypes[name] = ObjectType.undefined(name.fullyQualifiedName)
+      if (schema is ComposedSchema) {
+         val allOf = schema.allOf ?: emptyList()
+         val inherits = allOf.mapNotNull { it.`$ref`?.getTypeFromRef() }.toSet()
+         val requiredFields = allOf.flatMap { it.required ?: emptyList() }
+         val properties =
+            allOf.flatMap { it.properties?.toList() ?: emptyList() }
+               .toMap()
+         makeModel(
+            name = name,
+            inherits = inherits,
+            properties = properties,
+            requiredFields = requiredFields,
+            description = schema.description
+         )
+      } else {
+         makeModel(
+            name = name,
+            inherits = emptySet(),
+            properties = schema.properties ?: emptyMap(),
+            requiredFields = schema.required ?: emptyList(),
+            description = schema.description
+         )
+      }
    }
-
 
    private fun makeModel(
       name: QualifiedName,
-      schema: Schema<*>
+      inherits: Set<Type>,
+      properties: Map<String, Schema<Any>>,
+      requiredFields: List<String>,
+      description: String?
    ): ObjectType {
-      // This allows us to support recursion - the undefined type will prevent us getting into an endless loop
-      _generatedTypes[name] = ObjectType.undefined(name.fullyQualifiedName)
-      val requiredFields = schema.required ?: emptyList()
-      val properties = schema.properties ?: emptyMap()
       val fields = properties.map { (propName, schema) ->
          generateField(
             name = propName,
@@ -154,9 +170,10 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
          )
       }
       val typeDef = ObjectTypeDefinition(
+         inheritsFrom = inherits,
          fields = fields.toSet(),
          compilationUnit = CompilationUnit.unspecified(),
-         typeDoc = schema.description,
+         typeDoc = description,
       )
       return ObjectType(name.fullyQualifiedName, typeDef)
    }
