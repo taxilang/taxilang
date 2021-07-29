@@ -38,7 +38,9 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
             val supertype = toType(schema, name.typeName)
             generateType(taxiExtName, supertype)
          } else {
-            makeType(taxiExtName)
+            _generatedTypes.getOrPut(taxiExtName) {
+               UnresolvedImportedType(taxiExtName.fullyQualifiedName)
+            }
          }
       }
    }
@@ -104,19 +106,14 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       taxiExtName: QualifiedName,
       supertype: Type?
    ) = _generatedTypes.getOrPut(taxiExtName) {
-      makeType(taxiExtName, supertype)
-   }
-
-   private fun makeType(
-      formatTypeQualifiedName: QualifiedName,
-      supertype: Type? = null
-   ) = ObjectType(
-      formatTypeQualifiedName.toString(),
-      ObjectTypeDefinition(
-         inheritsFrom = setOfNotNull(supertype),
-         compilationUnit = CompilationUnit.unspecified()
+      ObjectType(
+         taxiExtName.toString(),
+         ObjectTypeDefinition(
+            inheritsFrom = setOfNotNull(supertype),
+            compilationUnit = CompilationUnit.unspecified()
+         )
       )
-   )
+   }
 
    private fun makeArrayType(schema: ArraySchema, context: String): ArrayType {
       val innerType = generateUnnamedTypeRecursively(schema.items, context)
