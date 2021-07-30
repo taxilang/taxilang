@@ -31,18 +31,7 @@ class OpenApiModelAndTypeExportTest {
                    format: int64
       """.trimIndent()
 
-      val expectedTaxi = """
-         namespace vyne.openApi {
-            model Pet {
-               id : Int?
-            }
-         }
-      """.trimIndent()
-
       val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
-
-      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
-
       val compiledModel = compile(taxiDef.taxi).model("vyne.openApi.Pet")
 
       compiledModel.typeDoc.should.equal("A Dog or Cat")
