@@ -132,7 +132,6 @@ class SwaggerServiceExportTest {
       """.trimIndent()
 
       val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
-      taxiDef.taxi.forEach(::println)
 
       expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
    }
