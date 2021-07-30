@@ -24,19 +24,11 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
    ): Type {
       val taxiExtension = schema.taxiExtension
       return if (taxiExtension == null) {
-         if (schema.isModel()) {
-            generateModel(name, schema)
-         } else {
-            val supertype = toType(schema, name.typeName)
-            generateType(name, supertype)
-         }
+         generate(name, schema)
       } else {
          val taxiExtName = qualify(taxiExtension.name)
-         if (schema.isModel() && taxiExtension.create != false) {
-            generateModel(taxiExtName, schema)
-         } else if (!schema.isModel() && taxiExtension.create == true) {
-            val supertype = toType(schema, name.typeName)
-            generateType(taxiExtName, supertype)
+         if (taxiExtension.shouldGenerateFor(schema)) {
+            generate(taxiExtName, schema)
          } else {
             _generatedTypes.getOrPut(taxiExtName) {
                UnresolvedImportedType(taxiExtName.fullyQualifiedName)
@@ -44,6 +36,14 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
          }
       }
    }
+
+   private fun generate(name: QualifiedName, schema: Schema<*>) =
+      if (schema.isModel()) {
+         generateModel(name, schema)
+      } else {
+         val supertype = toType(schema, name.typeName)
+         generateType(name, supertype)
+      }
 
    fun generateUnnamedTypeRecursively(
       schema: Schema<*>,
@@ -69,8 +69,6 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
          val name = anonymousModelName(context)
          generateModel(name, schema)
       } else null
-
-   private fun Schema<*>.isModel() = (this is ComposedSchema && oneOf == null && anyOf == null) || !properties.isNullOrEmpty()
 
    private fun toType(schema: Schema<*>, context: String) =
       primitiveTypeFor(schema) ?:
@@ -201,3 +199,6 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
    private fun qualify(name: String) =
       Utils.qualifyTypeNameIfRaw(name, defaultNamespace)
 }
+
+fun Schema<*>.isModel() = (this is ComposedSchema && oneOf == null && anyOf == null) || !properties.isNullOrEmpty()
+fun Schema<*>.isType() = !isModel()

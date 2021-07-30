@@ -12,6 +12,15 @@ data class TaxiExtension(
 ) {
    companion object {
       const val extensionKey = "x-taxi-type"
+
+      const val createModelByDefault = true
+      const val createTypeByDefault = false
+   }
+
+   fun shouldGenerateFor(schema: Schema<*>): Boolean = when {
+      schema.isModel() && (create ?: createModelByDefault) -> true
+      schema.isType() && (create ?: createTypeByDefault) -> true
+      else -> false
    }
 }
 
