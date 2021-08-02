@@ -5,6 +5,7 @@ import lang.taxi.generators.openApi.TaxiGenerator
 import lang.taxi.testing.TestHelpers.compile
 import lang.taxi.testing.TestHelpers.expectToCompileTheSame
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class SwaggerServiceExportTest {
@@ -127,6 +128,187 @@ class SwaggerServiceExportTest {
                   @PathVariable("id")
                   id : Int
                )
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
+
+   @Test @Disabled("inline parameter schemas are not yet supported for swagger")
+   fun `inline request body is captured as a param`() {
+      @Language("yaml")
+      val openApiSpec = """
+         swagger: "2.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         host: petstore.swagger.io
+         basePath: /v1
+         paths:
+           /pets:
+             post:
+               parameters:
+                 -
+                   name: pet
+                   description: Pet to add to the store
+                   in: body
+                   required: true
+                   schema:
+                     properties:
+                       name:
+                         type: string
+               responses:
+                 '200':
+                   description: pet response
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            model AnonymousTypePostPetsBody {
+              name: String?
+            }
+            service PetsService {
+               @HttpOperation(method = "POST" , url = "/pets")
+               operation PostPets(
+                 @RequestBody anonymousTypePostPetsBody : AnonymousTypePostPetsBody
+               )
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
+
+   @Test
+   fun `request body is captured as a param when a reference to a definition`() {
+      @Language("yaml")
+      val openApiSpec = """
+         swagger: "2.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         host: petstore.swagger.io
+         basePath: /v1
+         definitions:
+           NewPet:
+             type: object
+             properties:
+               name:
+                 type: string
+         paths:
+           /pets:
+             post:
+               parameters:
+                 -
+                   name: pet
+                   description: Pet to add to the store
+                   in: body
+                   required: true
+                   schema:
+                       ${'$'}ref: "#/definitions/NewPet"
+               responses:
+                 '200':
+                   description: pet response
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            model NewPet {
+              name: String?
+            }
+            service PetsService {
+               @HttpOperation(method = "POST" , url = "/pets")
+               operation PostPets(
+                 @RequestBody newPet : NewPet
+               )
+            }
+         }
+      """.trimIndent()
+
+
+      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
+
+   @Test @Disabled("inline parameter schemas are not yet supported for swagger")
+   fun `inline response is captured as a named type`() {
+      @Language("yaml")
+      val openApiSpec = """
+         swagger: "2.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         host: petstore.swagger.io
+         basePath: /v1
+         paths:
+           /pets:
+             post:
+               responses:
+                 '200':
+                   description: successful operation
+                   schema:
+                     type: object
+                     properties:
+                       name:
+                         type: string
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            model AnonymousTypePostPets {
+              name: String?
+            }
+            service PetsService {
+               @HttpOperation(method = "POST" , url = "/pets")
+               operation PostPets(): AnonymousTypePostPets
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
+
+   @Test
+   fun `response as a reference to a definition`() {
+      @Language("yaml")
+      val openApiSpec = """
+         swagger: "2.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         host: petstore.swagger.io
+         basePath: /v1
+         definitions:
+           Pet:
+             type: object
+             properties:
+               name:
+                 type: string
+         paths:
+           /pets:
+             post:
+               responses:
+                 '200':
+                   description: successful operation
+                   ${'$'}ref: "#/definitions/Pet"
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            model Pet {
+              name: String?
+            }
+            service PetsService {
+               @HttpOperation(method = "POST" , url = "/pets")
+               operation PostPets(): Pet
             }
          }
       """.trimIndent()

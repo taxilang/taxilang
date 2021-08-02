@@ -84,7 +84,7 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
         return when (model) {
             is RefModel -> findTypeByName(model.simpleRef)
             is ArrayModel -> findArrayType(model)
-            else -> TODO()
+            else -> TODO("Cannot yet handle model of type $model")
         }
     }
 
@@ -125,7 +125,7 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
     private fun getOrGenerateType(name: String): Type {
         val qualifiedName = Utils.qualifyTypeNameIfRaw(name, defaultNamespace)
         return generatedTypes.getOrPut(qualifiedName.toString()) {
-            val model = swagger.definitions[name]
+            val model = swagger.definitions?.get(name)
                     ?: error("No definition is present within the swagger file for type $name")
             generateType(qualifiedName.toString(), model)
         }

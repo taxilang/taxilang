@@ -312,4 +312,48 @@ class OpenApiServiceExportTest {
 
       expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
    }
+
+   @Test
+   fun `response as a reference to a component schema`() {
+      @Language("yaml")
+      val openApiSpec = """
+         openapi: "3.0.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         components:
+           schemas:
+             Pet:
+               type: object
+               properties:
+                 name:
+                   type: string
+         paths:
+           /pets:
+             post:
+               responses:
+                 '200':
+                   description: successful operation
+                   content:
+                     application/json:
+                       schema:
+                         ${'$'}ref: "#/components/schemas/Pet"
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            model Pet {
+              name: String?
+            }
+            service PetsService {
+               @HttpOperation(method = "POST" , url = "/pets")
+               operation PostPets(): Pet
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
 }
