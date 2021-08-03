@@ -50,7 +50,7 @@ namespace vyne.openApi {
    }
    service PetsPetIdService {
       @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/v1/pets/{petId}")
-      operation showPetById(  petId : String ) : Pet[]
+      operation showPetById(  @PathVariable("petId") petId : String ) : Pet[]
    }
 }
 
@@ -89,9 +89,9 @@ namespace vyne.openApi  {
     }
     service PetsIdService {
         @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets/{id}")
-        operation findPetById(  id : Int ) : Pet
+        operation findPetById(  @PathVariable("id") id : Int ) : Pet
         @HttpOperation(method = "DELETE" , url = "http://petstore.swagger.io/api/pets/{id}")
-        operation deletePet(  id : Int )
+        operation deletePet(  @PathVariable("id") id : Int )
     }
 }
 
@@ -108,25 +108,30 @@ namespace vyne.openApi  {
 namespace vyne.openApi {
 
    type Pet {
-      id : Int?
-      name : String?
-      tag : String
+      id : Int
+      name : String
+      tag : String?
    }
+
+   type Pets inherits Pet[]
 
    type Error {
-      code : Int?
-      message : String?
+      code : Int
+      message : String
    }
 
+   @ServiceDiscoveryClient(serviceName = "http://petstore.swagger.io/v1")
    service PetsService {
       @HttpOperation(method = "GET" , url = "/pets")
-      operation listPets(  limit : Int ) : Pet[]
+      operation listPets(  limit : Int ) : Pets
       @HttpOperation(method = "POST" , url = "/pets")
       operation createPets(  )
    }
+
+   @ServiceDiscoveryClient(serviceName = "http://petstore.swagger.io/v1")
    service PetsPetIdService {
       @HttpOperation(method = "GET" , url = "/pets/{petId}")
-      operation showPetById(  petId : String ) : Pet[]
+      operation showPetById( @PathVariable("petId")  petId : String ) : Pets
    }
 }
         """.trimIndent()

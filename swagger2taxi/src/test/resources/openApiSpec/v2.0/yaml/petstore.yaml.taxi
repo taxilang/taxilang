@@ -18,6 +18,6 @@ namespace vyne.openApi {
    }
    service PetsPetIdService {
       @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/v1/pets/{petId}")
-      operation showPetById(  petId : String ) : Pet[]
+      operation showPetById( @PathVariable(value = "petId") petId : String ) : Pet[]
    }
 }

@@ -5,8 +5,10 @@ import io.swagger.oas.models.PathItem
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Type
 import lang.taxi.annotations.HttpOperation
+import lang.taxi.annotations.HttpPathVariable
 import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.generators.Logger
+import lang.taxi.generators.openApi.Utils.removeIllegalCharacters
 import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
 import lang.taxi.generators.openApi.swagger.SwaggerTypeMapper
 import lang.taxi.services.operations.constraints.Constraint
@@ -108,7 +110,8 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
                 annotations.toAnnotations(),
                 parameters,
                 returnType,
-                listOf(CompilationUnit.unspecified())
+                listOf(CompilationUnit.unspecified()),
+                typeDoc = swaggerOperation.description,
         )
 
     }
@@ -150,6 +153,7 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
     private fun getParamAnnotations(param: Parameter): List<Annotation> {
         return when (param) {
             is BodyParameter -> listOf(HttpRequestBody.toAnnotation())
+            is PathParameter -> listOf(HttpPathVariable(param.name).toAnnotation())
             // TODO : Path variables?
             else -> emptyList()
         }
@@ -166,7 +170,7 @@ object OperationIdProvider {
     private fun generateOperationId(pathMapping: String, methodName: String): String {
         val path = pathMapping.urlPath().split("/")
         val words = listOf(methodName) + path
-        return words.joinToString("") { it.capitalize() }
+        return words.joinToString("") { it.removeIllegalCharacters().capitalize() }
     }
 
     fun getOperationId(operation: Operation, pathMapping: String, method: PathItem.HttpMethod): String =

@@ -61,12 +61,12 @@ type Person
          }
       """.trimIndent()).compile()
       val generated = SchemaWriter().generateSchemas(listOf(src))[0]
-      val expected = """type DateOfBirth inherits lang.taxi.Date
-type TimeOfBirth inherits lang.taxi.Time
-type BirthTimestamp inherits lang.taxi.Instant
-type WeightInGrams inherits lang.taxi.Decimal
-type WeightInOunces inherits lang.taxi.Decimal
-type OuncesToGramsMultiplier inherits lang.taxi.Decimal
+      val expected = """type DateOfBirth inherits Date
+type TimeOfBirth inherits Time
+type BirthTimestamp inherits Instant
+type WeightInGrams inherits Decimal
+type WeightInOunces inherits Decimal
+type OuncesToGramsMultiplier inherits Decimal
 
 model Person {
    birthDate : DateOfBirth( @format = "dd-mm-yyyy" )
@@ -92,9 +92,9 @@ model Person {
       """.trimIndent()).compile()
       val generated = SchemaWriter().generateSchemas(listOf(src))[0]
       val expected = """
-         type StringField inherits lang.taxi.String
+         type StringField inherits String
 
-         type NumberField inherits lang.taxi.Int
+         type NumberField inherits Int
 
          model Thing {
             stringThing : StringField  by default("foo")
@@ -115,7 +115,7 @@ model Person {
       val schema = Compiler(src).compile()
       val generated = SchemaWriter().generateSchemas(listOf(schema))[0]
       val expected = """
-         type TransactionEventDateTime inherits lang.taxi.Instant
+         type TransactionEventDateTime inherits Instant
 
          model Order {
             orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", @format = "yyyy-MM-dd'T'HH:mm:ss.SSS" )
@@ -133,7 +133,7 @@ model Person {
             }"""
       val schema = Compiler(src).compile()
       val generated = SchemaWriter().generateSchemas(listOf(schema))[0]
-      val expected = """type TransactionEventDateTime inherits lang.taxi.Instant
+      val expected = """type TransactionEventDateTime inherits Instant
       model Order {
          orderDateTime : TransactionEventDateTime( @format = ["yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "yyyy-MM-dd'T'HH:mm:ss.SSS"] @offset = 60 )
       }""".trimIndent()
@@ -161,13 +161,13 @@ model Person {
          .compileAndRegenerateSource()
 
       val expected = """
-        type Qty inherits lang.taxi.Decimal
+        type Qty inherits Decimal
 
-type QtyHit inherits lang.taxi.Decimal
+type QtyHit inherits Decimal
 
-type QtyFill inherits lang.taxi.Decimal
+type QtyFill inherits Decimal
 
-type SomeQty inherits lang.taxi.Decimal
+type SomeQty inherits Decimal
 
 type SomeAnotherQty inherits SomeQty
 
@@ -240,12 +240,12 @@ model Foo {
          }
       """.trimIndent()).compile()
       val generated = SchemaWriter().generateSchemas(listOf(src))[0]
-      val expected = """type DateOfBirth inherits lang.taxi.Date
-type TimeOfBirth inherits lang.taxi.Time
-type BirthTimestamp inherits lang.taxi.Instant
-type WeightInGrams inherits lang.taxi.Decimal
-type WeightInOunces inherits lang.taxi.Decimal
-type OuncesToGramsMultiplier inherits lang.taxi.Decimal
+      val expected = """type DateOfBirth inherits Date
+type TimeOfBirth inherits Time
+type BirthTimestamp inherits Instant
+type WeightInGrams inherits Decimal
+type WeightInOunces inherits Decimal
+type OuncesToGramsMultiplier inherits Decimal
 
 model Person {
    birthDate : DateOfBirth?( @format = "dd-mm-yyyy" )

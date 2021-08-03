@@ -1,23 +1,27 @@
 namespace vyne.openApi {
    model Pet {
-      id : Int?
-      name : String?
-      tag : String
+      id : Int
+      name : String
+      tag : String?
    }
+   
+   type Pets inherits Pet[]
    
    model Error {
-      code : Int?
-      message : String?
+      code : Int
+      message : String
    }
    
+   @ServiceDiscoveryClient(serviceName = "http://petstore.swagger.io/v1")
    service PetsService {
       @HttpOperation(method = "GET" , url = "/pets")
-      operation listPets(  limit : Int ) : Pet[]
+      operation listPets(  limit : Int ) : Pets
       @HttpOperation(method = "POST" , url = "/pets")
       operation createPets(  )
    }
+   @ServiceDiscoveryClient(serviceName = "http://petstore.swagger.io/v1")
    service PetsPetIdService {
       @HttpOperation(method = "GET" , url = "/pets/{petId}")
-      operation showPetById(  petId : String ) : Pet[]
+      operation showPetById( @PathVariable(value = "petId") petId : String ) : Pets
    }
 }
