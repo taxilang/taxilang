@@ -166,7 +166,7 @@ class OpenApiServiceExportTest {
             @ServiceDiscoveryClient(serviceName = "https://petstore.swagger.io/api")
             service PetsIdService {
                @HttpOperation(method = "GET" , url = "/pets/{id}")
-               operation getPet(
+               operation GetPetsId(
                   @PathVariable("id")
                   id : Int
                )

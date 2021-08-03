@@ -584,6 +584,67 @@ internal class OpenApiTypeMapperTest {
          """
    }
 
+   @Test
+   fun `component with allOf`() {
+      openApiYaml(
+         schemas = """
+            Named:
+              type: object
+              properties:
+                name:
+                  type: string
+            Organisation:
+              allOf:
+                - ${'$'}ref: "#/components/schemas/Named"
+                - properties:
+                    age:
+                      type: integer
+         """
+      ) shouldGenerate """
+         namespace vyne.openApi {
+
+            model Named {
+               name : String?
+            }
+
+            model Organisation inherits Named {
+              age: Int?
+            }
+         }
+         """
+   }
+
+   @Test
+   fun `component with field with allOf`() {
+      openApiYaml(
+         schemas = """
+            Group:
+              type: object
+              properties:
+                name:
+                  type: string
+            Person:
+              properties:
+                group:
+                  allOf:
+                    - ${'$'}ref: "#/components/schemas/Group"
+         """
+      ) shouldGenerate """
+         namespace vyne.openApi {
+
+            model Group {
+               name : String?
+            }
+
+            model AnonymousTypePersonGroup inherits Group
+
+            model Person {
+               group : AnonymousTypePersonGroup?
+            }
+         }
+         """
+   }
+
    private infix fun String.shouldGenerate(@Language("taxi") expectedTaxi: String) {
       expectToCompileTheSame(
          generated = TaxiGenerator().generateAsStrings(this, "vyne.openApi").taxi,

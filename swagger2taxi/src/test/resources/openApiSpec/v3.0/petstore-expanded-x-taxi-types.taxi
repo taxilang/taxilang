@@ -1,18 +1,19 @@
+import petstore.Pet
+import petstore.PetId
+
 namespace vyne.openApi {
-   model Pet inherits NewPet {
-      id : Int
-   }
-   
    model NewPet {
-      name : String
-      tag : String?
+      name : petstore.Name
+      tag : petstore.Tag?
    }
-   
+
    model Error {
-      code : Int
+      code : ErrorCode
       message : String
    }
-   
+
+   type ErrorCode inherits Int
+
    @ServiceDiscoveryClient(serviceName = "http://petstore.swagger.io/api")
    service PetsService {
       [[ Returns all pets from the system that the user has access to
@@ -20,18 +21,18 @@ namespace vyne.openApi {
       Sed tempus felis lobortis leo pulvinar rutrum. Nam mattis velit nisl, eu condimentum ligula luctus nec. Phasellus semper velit eget aliquet faucibus. In a mattis elit. Phasellus vel urna viverra, condimentum lorem id, rhoncus nibh. Ut pellentesque posuere elementum. Sed a varius odio. Morbi rhoncus ligula libero, vel eleifend nunc tristique vitae. Fusce et sem dui. Aenean nec scelerisque tortor. Fusce malesuada accumsan magna vel tempus. Quisque mollis felis eu dolor tristique, sit amet auctor felis gravida. Sed libero lorem, molestie sed nisl in, accumsan tempor nisi. Fusce sollicitudin massa ut lacinia mattis. Sed vel eleifend lorem. Pellentesque vitae felis pretium, pulvinar elit eu, euismod sapien.
       ]]
       @HttpOperation(method = "GET" , url = "/pets")
-      operation findPets(  tags : String[],  limit : Int ) : Pet[]
+      operation findPets(  tags : petstore.Tag[],  limit : Int ) : petstore.Pet[]
       [[ Creates a new pet in the store.  Duplicates are allowed ]]
       @HttpOperation(method = "POST" , url = "/pets")
-      operation addPet( @RequestBody newPet : NewPet ) : Pet
+      operation addPet( @RequestBody newPet : NewPet ) : petstore.Pet
    }
    @ServiceDiscoveryClient(serviceName = "http://petstore.swagger.io/api")
    service PetsIdService {
       [[ Returns a user based on a single ID, if the user does not have access to the pet ]]
       @HttpOperation(method = "GET" , url = "/pets/{id}")
-      operation find_pet_by_id( @PathVariable(value = "id") id : Int ) : Pet
+      operation find_pet_by_id( @PathVariable(value = "id") id : petstore.PetId ) : petstore.Pet
       [[ deletes a single pet based on the ID supplied ]]
       @HttpOperation(method = "DELETE" , url = "/pets/{id}")
-      operation deletePet( @PathVariable(value = "id") id : Int )
+      operation deletePet( @PathVariable(value = "id") id : petstore.PetId )
    }
 }
