@@ -171,8 +171,8 @@ class SwaggerServiceExportTest {
               name: String?
             }
             service PetsService {
-               @HttpOperation(method = "POST" , url = "/pets")
-               operation PostPets(
+               @HttpOperation(method = "POST" , url = "http://petstore.swagger.io/v1/pets")
+               operation PostV1Pets(
                  @RequestBody anonymousTypePostPetsBody : AnonymousTypePostPetsBody
                )
             }
@@ -222,14 +222,13 @@ class SwaggerServiceExportTest {
               name: String?
             }
             service PetsService {
-               @HttpOperation(method = "POST" , url = "/pets")
-               operation PostPets(
-                 @RequestBody newPet : NewPet
+               @HttpOperation(method = "POST" , url = "http://petstore.swagger.io/v1/pets")
+               operation PostV1Pets(
+                 @RequestBody pet : NewPet
                )
             }
          }
       """.trimIndent()
-
 
       val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
 
@@ -265,8 +264,8 @@ class SwaggerServiceExportTest {
               name: String?
             }
             service PetsService {
-               @HttpOperation(method = "POST" , url = "/pets")
-               operation PostPets(): AnonymousTypePostPets
+               @HttpOperation(method = "POST" , url = "http://petstore.swagger.io/v1/pets")
+               operation PostV1Pets(): AnonymousTypePostPets
             }
          }
       """.trimIndent()
@@ -298,7 +297,8 @@ class SwaggerServiceExportTest {
                responses:
                  '200':
                    description: successful operation
-                   ${'$'}ref: "#/definitions/Pet"
+                   schema:
+                     ${'$'}ref: "#/definitions/Pet"
       """.trimIndent()
 
       val expectedTaxi = """
@@ -307,8 +307,8 @@ class SwaggerServiceExportTest {
               name: String?
             }
             service PetsService {
-               @HttpOperation(method = "POST" , url = "/pets")
-               operation PostPets(): Pet
+               @HttpOperation(method = "POST" , url = "http://petstore.swagger.io/v1/pets")
+               operation PostV1Pets(): Pet
             }
          }
       """.trimIndent()
