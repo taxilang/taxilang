@@ -11,6 +11,21 @@ import org.junit.jupiter.api.Test
 class ExpressionsTest {
 
    @Test
+   fun `can use an expression type on a model`() {
+      """ type Height inherits Int
+         type Width inherits Int
+         type Area inherits Int by Height * Width
+         model Rectangle {
+            height : Height
+            width : Width
+            area : Area
+         }"""
+         .compiled()
+         .model("Rectangle")
+         .field("area")
+         .type.qualifiedName.should.equal("Area")
+   }
+   @Test
    fun `can use functions in expression types`() {
       val expressionType = """
             declare function squared(Int):Int
