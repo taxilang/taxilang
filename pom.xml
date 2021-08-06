@@ -5,7 +5,7 @@
    <groupId>org.taxilang</groupId>
    <artifactId>parent</artifactId>
    <packaging>pom</packaging>
-   <version>1.30.2-SNAPSHOT</version>
+   <version>1.30.4-SNAPSHOT</version>
    <description>taxi is a language for defining API contracts. A Dsl that sits atop RAML for resource definition. Taxi
       (short for Taxonomy)
    </description>
@@ -59,6 +59,7 @@
       <zip4j.version>2.7.0</zip4j.version>
 
       <taxi.version>${project.version}</taxi.version>
+      <testcontainers.version>1.15.2</testcontainers.version>
    </properties>
 
    <dependencies>
@@ -85,9 +86,15 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>junit</groupId>
-         <artifactId>junit</artifactId>
-         <version>4.12</version>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter-api</artifactId>
+         <version>${junit.jupiter.version}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter-engine</artifactId>
+         <version>${junit.jupiter.version}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -118,12 +125,6 @@
             <groupId>org.spekframework.spek2</groupId>
             <artifactId>spek-runner-junit5</artifactId>
             <version>${spek.version}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <version>${junit.vintage.version}</version>
             <scope>test</scope>
          </dependency>
          <dependency>

@@ -2,15 +2,10 @@ package lang.taxi.types
 
 import com.winterbe.expekt.should
 import lang.taxi.sources.SourceCode
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.ExpectedException
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class EnumTypeTest {
-
-   @Rule
-   @JvmField
-   val expectedException = ExpectedException.none()
 
    @Test
    fun lookupByNameOrValueWithName() {
@@ -56,11 +51,11 @@ class EnumTypeTest {
          EnumValue("EUR", "Euro", "Currency.EUR", emptyList(), emptyList())
       ))
 
-      expectedException.expect(IllegalStateException::class.java)
-      expectedException.expectMessage("Enum Currency does not contain either a name nor a value of GBP")
-
       enumType.has("GBP").should.be.`false`
-      enumType.of("GBP")
+      val exception = assertThrows<IllegalStateException> {
+         enumType.of("GBP")
+      }
+      exception.message.should.equal("Enum Currency does not contain either a name nor a value of GBP")
    }
 
    @Test
@@ -82,11 +77,11 @@ class EnumTypeTest {
          EnumValue("EUR", "Euro", "Currency.EUR", emptyList(), emptyList())
       ))
 
-      expectedException.expect(IllegalStateException::class.java)
-      expectedException.expectMessage("Enum Currency does not contains a member named US Dollars")
-
       enumType.hasName("US Dollars").should.be.`false`
-      enumType.ofName("US Dollars")
+      val exception = assertThrows<IllegalStateException> {
+         enumType.ofName("US Dollars")
+      }
+      exception.message.should.equal("Enum Currency does not contains a member named US Dollars")
    }
 
    @Test
@@ -108,13 +103,14 @@ class EnumTypeTest {
          EnumValue("EUR", "Euro", "Currency.EUR", emptyList(), emptyList())
       ))
 
-      expectedException.expect(IllegalStateException::class.java)
-      expectedException.expectMessage("Enum Currency does not contain a member with a value of EUR")
-
       enumType.hasValue("EUR").should.be.`false`
-      enumType.ofValue("EUR")
+      val exception = assertThrows<IllegalStateException> {
+         enumType.ofValue("EUR")
+      }
+      exception.message.should.equal("Enum Currency does not contain a member with a value of EUR")
    }
 
+   @Test
    fun lookupWithNulls() {
       val enumType = enumType(listOf(
          EnumValue("USD", "US Dollars", "Currency.USD", emptyList(), emptyList()),

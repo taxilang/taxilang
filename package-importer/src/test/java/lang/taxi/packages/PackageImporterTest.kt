@@ -5,29 +5,28 @@ import com.winterbe.expekt.should
 import lang.taxi.packages.repository.PackageServiceFactory
 import lang.taxi.packages.utils.log
 import org.apache.commons.io.FileUtils
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import java.nio.file.Paths
 
 class PackageImporterTest {
 
-   @Rule
+   @TempDir
    @JvmField
-   val folder = TemporaryFolder()
+   val folder: File? = null
 
 
-   @Rule
+   @TempDir
    @JvmField
-   val mockRepoRoot = TemporaryFolder()
+   val mockRepoRoot: File? = null
 
-   @Before
+   @BeforeEach
    fun deployTestRepo() {
       val testRepo = File(Resources.getResource("testRepo").toURI())
-      FileUtils.copyDirectory(testRepo, folder.root)
-      log().info("Copied test repo to ${folder.root}")
+      FileUtils.copyDirectory(testRepo, folder)
+      log().info("Copied test repo to $folder")
    }
 
    @Test
@@ -59,12 +58,12 @@ class PackageImporterTest {
 
    private fun importerConfig(): ImporterConfig {
       return ImporterConfig(
-         localCache = folder.root.toPath()
+         localCache = folder!!.toPath()
       )
    }
 
    private fun fileServiceFactory(): Pair<SimpleFilePackageService, PackageServiceFactory> {
-      return SimpleFilePackageService.fileServiceFactory(mockRepoRoot.root.toPath())
+      return SimpleFilePackageService.fileServiceFactory(mockRepoRoot!!.toPath())
    }
 
 }

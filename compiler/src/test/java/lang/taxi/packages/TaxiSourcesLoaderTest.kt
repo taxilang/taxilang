@@ -6,28 +6,28 @@ import lang.taxi.Compiler
 import lang.taxi.messages.Severity
 import lang.taxi.packages.SimpleFilePackageService.Companion.fileServiceFactory
 import lang.taxi.packages.repository.PackageServiceFactory
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
 import java.nio.file.Paths
 
 class TaxiSourcesLoaderTest {
 
-   @Rule
+   @TempDir
    @JvmField
-   val localCache = TemporaryFolder()
+   var localCache: Path? = null
 
-   @Rule
+   @TempDir
    @JvmField
-   val mockRepoRoot = TemporaryFolder()
+   var mockRepoRoot: Path? = null
    private lateinit var packageService: SimpleFilePackageService
    private lateinit var packageServiceFactory: PackageServiceFactory
    private lateinit var downloaderFactory: PackageDownloaderFactory
 
-   @Before
+   @BeforeEach
    fun setup() {
-      val (packageService, packageServiceFactory) = fileServiceFactory(mockRepoRoot.root.toPath())
+      val (packageService, packageServiceFactory) = fileServiceFactory(mockRepoRoot!!)
       this.packageService = packageService
       this.packageServiceFactory = packageServiceFactory
       this.downloaderFactory = PackageDownloaderFactory(importerConfig(),packageServiceFactory, LogWritingMessageLogger)
@@ -56,5 +56,5 @@ class TaxiSourcesLoaderTest {
    }
 
 
-   private fun importerConfig() = ImporterConfig(localCache.root.toPath())
+   private fun importerConfig() = ImporterConfig(localCache!!)
 }

@@ -81,5 +81,39 @@ object WhenBlockSpec : Spek({
          errors.should.have.size(1)
          errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.Int is not assignable to type Identifier")
       }
+
+      it("should allow enums to be assigned in when clause") {
+         """
+            enum Country {
+               NZ("New Zealand"),
+               AUS("Australia")
+            }
+            model Person {
+               identifiesAs : String
+               country : Country by when (this.identifiesAs) {
+                  "Kiwi" -> Country.NZ
+                  "Ozzie" -> Country.AUS
+               }
+            }
+         """.validated().errors().should.be.empty
+      }
+      it("should not allow strings in when clause against enum") {
+         val errors = """
+            enum Country {
+               NZ("New Zealand"),
+               AUS("Australia")
+            }
+            model Person {
+               identifiesAs : String
+               country : Country by when (this.identifiesAs) {
+                  "Kiwi" -> "NZ"
+                  "Ozzie" -> "AUS"
+               }
+            }
+         """.validated().errors()
+         errors.should.have.size(2)
+         errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.String is not assignable to type Country")
+
+      }
    }
 })

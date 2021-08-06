@@ -3,7 +3,7 @@ package lang.taxi
 import com.google.common.hash.Hashing
 import com.winterbe.expekt.should
 import org.antlr.v4.runtime.CharStreams
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.*
 import kotlin.test.todo
 

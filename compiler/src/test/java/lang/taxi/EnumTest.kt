@@ -2,16 +2,9 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.types.PrimitiveType
-import org.hamcrest.CoreMatchers.startsWith
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.ExpectedException
+import org.junit.jupiter.api.Test
 
 class EnumTest {
-
-   @Rule
-   @JvmField
-   val expectedException = ExpectedException.none()
 
    @Test
    fun enumsWithContentOfIntHaveContentParsedCorrectly() {

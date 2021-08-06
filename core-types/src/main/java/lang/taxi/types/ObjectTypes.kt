@@ -48,7 +48,8 @@ data class ObjectTypeDefinition(
       this,
       ObjectTypeDefinition::fields,
       ObjectTypeDefinition::annotations,
-      ObjectTypeDefinition::modifiers
+      ObjectTypeDefinition::modifiers,
+      ObjectTypeDefinition::inheritsFrom,
    )
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
@@ -326,6 +327,9 @@ data class ObjectType(
             }
          }
       }
+
+   override val typeKind: TypeKind?
+      get() = definition?.typeKind
 
 }
 

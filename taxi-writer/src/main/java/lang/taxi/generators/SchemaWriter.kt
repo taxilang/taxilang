@@ -168,7 +168,7 @@ $operations
          val constraintString = constraintString(param.constraints)
          val paramAnnotations = generateAnnotations(param) + " "
 
-         val paramName = if (!param.name.isNullOrEmpty()) param.name + " : " else ""
+         val paramName = if (!param.name.isNullOrEmpty()) param.name?.reservedWordEscaped() + " : " else ""
          val paramDeclaration = typeAsTaxi(param.type, namespace)
          paramAnnotations + paramName + paramDeclaration + constraintString
       }.joinToString(", ")
@@ -258,7 +258,7 @@ $enumValueDeclarations
       } else ""
 
       val modifiers = type.modifiers.joinToString(" ") { it.token }
-      val inheritanceString = getInheritenceString(type)
+      val inheritanceString = getInheritanceString(type, currentNamespace)
 
       // When writing formats, we only care about the ones declared on this type, not inherited elsewhere
       val inheritedFormats = type.inheritsFrom.flatMap { it.format ?: emptyList() }
@@ -277,11 +277,11 @@ $enumValueDeclarations
          .trimEmptyLines()
    }
 
-   private fun getInheritenceString(type: ObjectType): String {
-      return if (type.inheritsFromNames.isEmpty()) {
+   private fun getInheritanceString(type: ObjectType, currentNamespace: String): String {
+      return if (type.inheritsFrom.isEmpty()) {
          ""
       } else {
-         " inherits ${type.inheritsFromNames.joinToString(",")}"
+         " inherits " + type.inheritsFrom.joinToString(",") { typeAsTaxi(it, currentNamespace) }
       }
    }
 
@@ -303,10 +303,12 @@ $enumValueDeclarations
       }
    }
 
-   private fun typeAsTaxi(type: Type, currentNamespace: String, nullability: Boolean? = null): String {
-      val nullableString = nullability?.let { nullability -> if (nullability) "?" else "" } ?: ""
+   private fun typeAsTaxi(type: Type, currentNamespace: String, nullability: Boolean = false): String {
+      val nullableString = if (nullability) "?" else ""
+      fun nestedArray(type: ArrayType) = "Array<" + typeAsTaxi(type.type, currentNamespace) + ">"
+      fun simpleArray(type: ArrayType) = typeAsTaxi(type.type, currentNamespace) + "[]"
       return when {
-         type is ArrayType -> typeAsTaxi(type.type, currentNamespace) + "[]" + nullableString
+         type is ArrayType -> (if (type.type is ArrayType) nestedArray(type) else simpleArray(type)) + nullableString
          type is UnresolvedImportedType -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace) + nullableString
          type.formattedInstanceOfType != null -> typeAsTaxi(type.formattedInstanceOfType!!, currentNamespace) + nullableString + """( ${writeFormat(type.format, type.offset)} )"""
          type is ObjectType && type.calculatedInstanceOfType != null -> typeAsTaxi(type.calculatedInstanceOfType!!, currentNamespace) + nullableString + " " + type.calculation!!.asTaxi()

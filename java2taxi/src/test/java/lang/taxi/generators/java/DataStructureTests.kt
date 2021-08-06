@@ -8,8 +8,8 @@ import lang.taxi.annotations.ParameterType
 import lang.taxi.generators.kotlin.TypeAliasRegister
 import lang.taxi.testing.TestHelpers
 import lang.taxi.types.PrimitiveType
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 
 class DataStructureTests {
@@ -333,7 +333,7 @@ namespace namespaceA {
 
 
    @Test
-   @Ignore("Needs investigation - looks like type aliases not being registered correctly - is the plugin running in the build?")
+   @Disabled("Needs investigation - looks like type aliases not being registered correctly - is the plugin running in the build?")
    fun given_typeDeclaresFieldUsingTypeAlias_then_typeAliasIsCorrectlyEmitted() {
 
       val taxiDef = TaxiGenerator(typeMapper).forClasses(Car::class.java).generateAsStrings()

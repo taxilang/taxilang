@@ -3,7 +3,7 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>org.taxilang</groupId>
-      <version>1.30.2-SNAPSHOT</version>
+      <version>1.30.4-SNAPSHOT</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -20,7 +20,7 @@
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>lang-to-taxi-api</artifactId>
-         <version>1.30.2-SNAPSHOT</version>
+         <version>1.30.4-SNAPSHOT</version>
       </dependency>
       <dependency>
          <groupId>io.swagger</groupId>
@@ -30,31 +30,50 @@
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>test-utils</artifactId>
-         <version>1.30.2-SNAPSHOT</version>
+         <version>1.30.4-SNAPSHOT</version>
          <scope>test</scope>
       </dependency>
 
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>taxi-annotations</artifactId>
-         <version>1.30.2-SNAPSHOT</version>
+         <version>1.30.4-SNAPSHOT</version>
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>compiler</artifactId>
-         <version>1.30.2-SNAPSHOT</version>
+         <version>1.30.4-SNAPSHOT</version>
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>taxi-stdlib-annotations</artifactId>
-         <version>1.30.2-SNAPSHOT</version>
+         <version>1.30.4-SNAPSHOT</version>
       </dependency>
 
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>taxi-writer</artifactId>
-         <version>1.30.2-SNAPSHOT</version>
+         <version>1.30.4-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+         <groupId>com.fasterxml.jackson.core</groupId>
+         <artifactId>jackson-core</artifactId>
+         <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>com.fasterxml.jackson.core</groupId>
+         <artifactId>jackson-databind</artifactId>
+         <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>com.fasterxml.jackson.module</groupId>
+         <artifactId>jackson-module-kotlin</artifactId>
+         <version>${jackson.version}</version>
       </dependency>
 
    </dependencies>
+   <properties>
+      <jackson.version>2.12.4</jackson.version>
+   </properties>
 </project>

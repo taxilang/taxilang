@@ -4,7 +4,7 @@ import io.swagger.oas.models.OpenAPI
 import io.swagger.oas.models.media.Schema
 
 object RefEvaluator {
-   fun navigate(api: OpenAPI, ref: String): Schema<Any> {
+   fun navigate(api: OpenAPI, ref: String): Pair<String, Schema<Any>> {
       if (!ref.startsWith("#")) {
          error("External refs are not supported")
       }
@@ -12,7 +12,9 @@ object RefEvaluator {
       return when {
          ref.startsWith("#/components/schemas/") -> {
             val schemaName = ref.removePrefix("#/components/schemas/")
-            api.components.schemas[schemaName] ?: error("Ref $ref refers to schema $schemaName which does not exist")
+            val schema = api.components.schemas[schemaName]
+               ?: error("Ref $ref refers to schema $schemaName which does not exist")
+            schemaName to schema
          }
          else -> TODO("Not yet supported.  Add use cases as you hit this point")
       }
