@@ -11,7 +11,7 @@ import lang.taxi.types.Type
 sealed class Expression : Compiled, TaxiStatementGenerator {
    override fun asTaxi(): String {
       // TODO: Check this... probably not right
-      return this.compilationUnits.first().toString()
+      return this.compilationUnits.first().source.content
    }
 }
 

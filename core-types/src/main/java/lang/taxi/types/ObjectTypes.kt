@@ -9,6 +9,7 @@ import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.utils.quoted
 import lang.taxi.utils.quotedIfNecessary
 import lang.taxi.utils.quotedIfNotAlready
+import java.math.BigDecimal
 import kotlin.reflect.KProperty1
 
 data class FieldExtension(
@@ -462,18 +463,23 @@ interface ExpressionAccessor : Accessor {
 }
 
 data class LiteralAccessor(val value: Any) : Accessor, TaxiStatementGenerator {
-   override val returnType: Type
-      get() {
+   companion object {
+      fun returnTypeOf(value:Any):PrimitiveType {
          return when (value) {
             is String -> PrimitiveType.STRING
             is Int -> PrimitiveType.INTEGER
             is Double -> PrimitiveType.DECIMAL
+            is BigDecimal -> PrimitiveType.DECIMAL
             is Boolean -> PrimitiveType.BOOLEAN
             else -> {
                PrimitiveType.ANY
             }
          }
-
+      }
+   }
+   override val returnType: Type
+      get() {
+         return returnTypeOf(value)
       }
 
    override fun asTaxi(): String {
