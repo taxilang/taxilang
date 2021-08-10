@@ -108,3 +108,45 @@ These constraints are applicable on types too - see <Link to="../taxi-language#t
 <Hint>
 This is an area of taxi that we expect to see significant development in, to improve the richness of the possible expressions
 </Hint>
+
+## Query operations
+RESTful style API's are great for discovering resources that have fairly predictable resource paths - such as `/Author/jkrowling/Books`, returns all the books that `jkrowling` has authored.
+
+However, once you get beyond simple resource lookup, and into more bespoke query-style operations, services tend to expose their own query APIs.
+Taxi supports this with a rich, extensible syntax for exposing query contracts.
+
+Here's an example:
+
+```
+taxiQl query personQuery(@RequestBody body:VyneQlQuery):Person[] with capabilities {
+   filter(=,in,like),
+   sum,
+   count
+}
+```
+
+This describes:
+
+ * A `query` endpoint that understands a query language called `taxiQl`
+ * An operation named `personQuery`, which accepts a `VyneQlQuery`
+ * The operation understands how to perform filtering using `=`, `in` and `like` semantics
+ * And supports custom aggregation functions called `sum` and `count`.
+
+### Grammar names
+In the above example, we saw a query endpoint that understands a query language called `taxiQl`.
+
+From taxi's perspective, the name of the grammar being used is entirely arbitary.  The query server that is
+invoking endpoints must understand how to construct queries in the described language.
+
+The Vyne query server understands how to construct <Link to="../querying-with-taxiql">taxiQl</Link> queries, with support for additional grammars (such as `SQL`, and `GraphQL`) planned.
+However, query servers may implement their own grammar support.
+
+
+## Streaming data
+Data sources that expose a stream of data (such as a websocket, or a message queue) can expose this using the `Stream<>` type:
+
+```
+service PriceService {
+   operation getPrices(): Stream<Price>
+}
+```
