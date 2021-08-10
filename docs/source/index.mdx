@@ -20,23 +20,11 @@ import {
 <!--import { ReactComponent as Diving } from './assets/diving.svg';-->
 <!--import { ReactComponent as HeadLight } from './assets/head-light.svg';-->
 
-Welcome! 👋 Taxi is a language for documenting data schemas - such as data models, and the contracts of APIs.
+Welcome! 👋 Taxi is a language for documenting data - such as data models - and the contracts of APIs.
 
 Taxi describes data semantically, which allows powerful tooling to discover and map data based on it's meaning, rather than the name of a field.
 
-![](https://img.shields.io/bintray/v/taxi-lang/releases/parent?label=Taxi&style=for-the-badge)
-
-As a language, Taxi focuses on:
-
-* **Readability**  - A familiar syntax that should be easy to write, and easy to understand.
-* **Expressiveness** - Taxi should be able to describe the semantic meaning of your data, and rich quirky contracts of our APIs
-* **Typesafe** - A strongly typed, expressive language, purpose-built for describing API operations & types
-* **Tooling** - Taxi is intended to allow next-generation tooling integration - the syntax allows rich expression of what services can do \(rather than just where to find them\).
-* **Extensibility** - Taxi allows you to refine and compose API schemas, adding context, annotations, and improving type signatures.
-
-Taxi is used heavily to power [Vyne](https://vyne.co) - and the projects have influenced each other & evolved together.    The expressiveness of Taxi allows Vyne to automate integration between services.
-
-However, Taxi is intended to be a standalone tool, and is not coupled to Vyne.  There's lots of amazing things you can do with Taxi on it's own.
+![](https://img.shields.io/badge/dynamic/xml.svg?label=Taxi&url=http%3A%2F%2Frepo.vyne.co%2Frelease%2Forg%2Ftaxilang%2Fparent%2Fmaven-metadata.xml&query=%2F%2Frelease&colorB=green&prefix=v&style=for-the-badge&logo=kotlin&logoColor=white)
 
 ## Example
 Taxi allows you to be really expressive about what the meaning is of data returned from an API.  By describing the **meaning**  of our data, we can start to make data interchangable.
@@ -50,7 +38,7 @@ model Customer {
 }
 
 model Invoice {
-   invoiceId : InvoiceId as Int
+   invoiceId : InvoiceId inherits Int
    customerId : CustomerId
 }
 ```
@@ -65,6 +53,21 @@ can leverage this to link and discover data automatically, and automate API inte
 @HttpOperation(method = "GET", url = "http://myApp/customers/{id}")
 operation getPerson(id: CustomerId):Customer
 ```
+
+## Language Goals
+
+As a language, Taxi focuses on:
+
+* **Readability**  - A familiar syntax that should be easy to write, and easy to understand.
+* **Expressiveness** - Taxi should be able to describe the semantic meaning of your data, and rich quirky contracts of our APIs
+* **Typesafe** - A strongly typed, expressive language, purpose-built for describing API operations & types
+* **Tooling** - Taxi is intended to allow next-generation tooling integration - the syntax allows rich expression of what services can do \(rather than just where to find them\).
+* **Extensibility** - Taxi allows you to refine and compose API schemas, adding context, annotations, and improving type signatures.
+
+Taxi is used heavily to power [Vyne](https://vyne.co) - and the projects have influenced each other & evolved together.    The expressiveness of Taxi allows Vyne to automate integration between services.
+
+However, Taxi is intended to be a standalone tool, and is not coupled to Vyne.  There's lots of amazing things you can do with Taxi on it's own.
+
 
 ## New to Taxi or Vyne?
 
