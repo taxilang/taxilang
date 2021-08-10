@@ -224,28 +224,23 @@ type DateOfBirth inherits Date(@format = 'dd/MMM/yy')
 type Timestamp inherits Instant(@format = 'yyyy-MM-dd HH:mm:ss.SSSZ')
 ```
 
-| Symbol | Meaning                                                                                                                                         | Presentation | Examples                                       |
-|--------|-------------------------------------------------------------------------------------------------------------------------------------------------|--------------|------------------------------------------------|
-| y      | Year of era                                                                                                                                     | year         | 2018; 18                                       |
-| M      | Month of year                                                                                                                                   | number/text  | 07; 7; July; Jul                               |
-| d      | Day of month                                                                                                                                    | number       | 10                                             |
-| E      | Day of week                                                                                                                                     | text         | Tuesday; Tue; T                                |
-| a      | Am/PM of day                                                                                                                                    | text         | PM                                             |
-| H      | Hour in day (0-23)                                                                                                                              | number       | 0                                              |
-| h      | clock hour of am/pm (1-12)                                                                                                                      | number       | 12                                             |
-| m      | Minute of hour                                                                                                                                  | number       | 30                                             |
-| s      | Second of minute                                                                                                                                | number       | 55                                             |
-| S      | Millisecond (fraction of second)                                                                                                                | number       | 978                                            |
-| z      | Timezone name ([Formal spec](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html#timezone))                               | text         | Pacific Standard Time; PST; GMT-08:00          |
-| Z      | Timezone (RFC 822 time zone)  ([Formal spec](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html#rfc822timezone))         | text         | +0000; -0800; -08:00;                          |
-| X      | Timezone offset, accepts 'Z' as zero ([Formal spec](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html#iso8601timezone)) | text         | Z; -08; -0830; -08:30; -083015; -08:30:15;     |
-| x      | Timezone offset                                                                                                                                 | text         | +0000; -08; -0830; -08:30; -083015; -08:30:15; |
 
-The actual parsing of dates is left to parser implementations.
-Our reference implementation ([Vyne](https://vyne.co)) uses the Java [SimpleDateFormat rules](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html) for parsing, assuming a [lenient](https://docs.oracle.com/javase/8/docs/api/java/text/DateFormat.html#setLenient-boolean-) parser.
+| Symbol               | Meaning                                         | Presentation              | Examples                        |
+|----------------------|-------------------------------------------------|---------------------------|----------------------------------|
+| y                    | Year of era                                     | year                      | 2018; 18                         |
+| M                    | Month of year                                   | number/text               | 07; 7; July; Jul                |
+| d                    | Day of month                                    | number                    | 10                               |
+| E                    | Day of week                                     | text                      | Tuesday; Tue; T                 |
+| a                    | Am/PM of day                                    | text                      | PM                               |
+| H                    | Hour in day (0-23)                              | number                    | 0                                |
+| h                    | clock hour of am/pm (1-12)                      | number                    | 12                               |
+| m                    | Minute of hour                                  | number                    | 30                               |
+| s                    | Second of minute                                | number                    | 55                               |
+| S                    | Millisecond (fraction of second)                | number                    | 978                              |
+
 
 #### Sample patterns
-| Date and Time Pattern              | Will match                                                       |
+| Date and Time Pattern              | Result                                                      |
 |-------------------------------------|--------------------------------------------------------------|
 | `dd/MM/yy`                          | 04/09/19                                                     |
 | `dd MMM yyyy`                       | 04 Sep 2019                                                  |
@@ -255,31 +250,8 @@ Our reference implementation ([Vyne](https://vyne.co)) uses the Java [SimpleDate
 | `dd-MM-yyyy HH:mm:ss`               | 04-09-2019 01:45:48                                          |
 | `yyyy-MM-dd HH:mm:ss.SSS`           | 2019-09-04 01:45:48.616                                      |
 | `yyyy-MM-dd HH:mm:ss.SSSZ`          | 2019-09-04 01:45:48.616+0800                                 |
-| `yyyy-MM-dd HH:mm:ss.SSSXXX`          | 2019-09-04 01:45:48.616Z ; 2019-09-04 01:45:48.616554Z ; 2019-09-04 01:45:48.616+01:00                                   |
 | `EEEE, dd MMMM yyyy HH:mm:ss.SSSZ`  | Wednesday, 04 September 2019 01:45:48.616+0800               |
-
-#### More timezone examples
-
-| Timezone pattern |  Will match           |
-|------------------|----------------------|
-| `XXX` <br /> Timezone offset with a `:`, also accepts `Z` for zero. <br /><br /> eg:`yyyy-MM-dd'T'HH:mm:ss.SSSXXX`               |  `1979-03-02T08:41:04.551Z` ; <br/> `1979-03-02T08:41:04.551+01:00` ;  <br/>`1979-03-02T08:41:04.551-01:00`        |
-| `XXXX` <br/> Timezone offset without a `:`, also accepts `Z` for zero. <br/><br /> eg: `yyyy-MM-dd'T'HH:mm:ss.SSSXXXX`               |  `1979-03-02T08:41:04.551Z` ; <br/> `1979-03-02T08:41:04.551+0100` ; <br/> `1979-03-02T08:41:04.551-0100`         |
-
-#### Optional and lenient matching.
-Sections of a pattern can be marked optional by using `[]`.
-
-The reference implementation follows lenient parsing rules, so values like `S` and `SSS` are equivalent.  More details on Lenient are [here](https://docs.oracle.com/javase/6/docs/api/java/text/DateFormat.html#setLenient%28boolean%29).
-
-
-For example:
-
-| Date and Time Pattern              | Will match                                                       |
-|-------------------------------------|--------------------------------------------------------------|
-| `yyyy-MM-dd'T'HH:mm:ss[.S]XXX`           | `2021-06-07T08:41:04.551555+01:00` ; <br/> `2021-06-07T08:41:04.551+01:00` ; <br/>`2021-06-07T08:41:04.551Z` ; <br/>`2021-06-07T08:41:04Z`                              |
-| `yyyy-MM-dd HH:mm:ss.SSSZ`          | `2019-09-04 01:45:48.616+0800 `                                |
-| `yyyy-MM-dd HH:mm:ss.SSSXXX`          | `2019-09-04 01:45:48.616Z` ; <br/>`2019-09-04 01:45:48.616554Z` ; <br/>`2019-09-04 01:45:48.616+01:00`                                  |
-
-
+| `yyMMddHHmmssSSS`                   | 190904014548616                                              |
 
 
 #### Date/Time offsets
