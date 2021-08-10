@@ -18,7 +18,7 @@ data class AndExpression(val left: LogicalExpression, val right: LogicalExpressi
    }
 }
 
-data class ComparisonExpression(val operator: ComparisonOperator, val left: ComparisonOperand, val right: ComparisonOperand): LogicalExpression("comp") {
+data class ComparisonExpression(val operator: ComparisonOperator, val left: ComparisonOperand, val right: ComparisonOperand): LogicalExpression("comp"), FilterExpression {
    override fun asTaxi(): String {
       return "${left.asTaxi()} ${operator.symbol} ${right.asTaxi()}"
    }
@@ -57,6 +57,12 @@ data class ConstantEntity(val value: Any?): ComparisonOperandEntity("constAny") 
 data class FieldReferenceEntity(val fieldName: String): ComparisonOperandEntity("var") {
    override fun asTaxi(): String {
       return "this.$fieldName"
+   }
+}
+
+data class ModelAttributeFieldReferenceEntity(val source: QualifiedName, val fieldType: Type): ComparisonOperandEntity("") {
+   override fun asTaxi(): String {
+      return  "${source}.${fieldType.qualifiedName}"
    }
 }
 

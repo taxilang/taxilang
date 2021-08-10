@@ -1,19 +1,11 @@
 package lang.taxi.services
 
-import lang.taxi.Equality
+import lang.taxi.ImmutableEquality
 import lang.taxi.Operator
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
-import lang.taxi.types.Annotatable
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.Compiled
-import lang.taxi.types.Documented
-import lang.taxi.types.NameTypePair
-import lang.taxi.types.Named
-import lang.taxi.types.TaxiStatementGenerator
-import lang.taxi.types.Type
-import lang.taxi.types.toSet
 
 data class Parameter(override val annotations: List<Annotation>, override val type: Type, override val name: String?, override val constraints: List<Constraint>, val isVarArg: Boolean = false) : Annotatable, ConstraintTarget, NameTypePair, TaxiStatementGenerator {
    override val description: String = "param $name"
@@ -37,7 +29,7 @@ data class QueryOperation(
    override val compilationUnits: List<CompilationUnit>,
    val capabilities: List<QueryOperationCapability>,
    override val typeDoc: String? = null) : ServiceMember, Annotatable, Compiled, Documented, TaxiStatementGenerator {
-   private val equality = Equality(this, QueryOperation::name, QueryOperation::annotations, QueryOperation::returnType)
+   private val equality = ImmutableEquality(this, QueryOperation::name, QueryOperation::annotations, QueryOperation::returnType)
    override fun asTaxi(): String {
       val parameterTaxi = parameters.joinToString(",") {it.asTaxi() }
       val annotations = this.annotations.joinToString { it.asTaxi() }
@@ -96,7 +88,7 @@ data class Operation(override val name: String,
                      override val compilationUnits: List<CompilationUnit>,
                      val contract: OperationContract? = null,
                      override val typeDoc: String? = null) : ServiceMember, Annotatable, Compiled, Documented {
-   private val equality = Equality(this, Operation::name, Operation::annotations, Operation::parameters, Operation::returnType, Operation::contract)
+   private val equality = ImmutableEquality(this, Operation::name, Operation::annotations, Operation::parameters, Operation::returnType, Operation::contract)
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
@@ -108,7 +100,7 @@ data class Service(override val qualifiedName: String,
                    override val annotations: List<Annotation>,
                    override val compilationUnits: List<CompilationUnit>,
                    override val typeDoc: String? = null) : Annotatable, Named, Compiled, Documented {
-   private val equality = Equality(this, Service::qualifiedName, Service::operations.toSet(), Service::annotations)
+   private val equality = ImmutableEquality(this, Service::qualifiedName, Service::operations, Service::annotations)
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()

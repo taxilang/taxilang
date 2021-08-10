@@ -22,18 +22,6 @@ class CalculatedFieldSetProcessor internal constructor(private val compiler: Fie
             f.copy(formula = formula)
          }
       }
-
-      if (calculatedExpressionContext.calculatedExpression() != null) {
-         val operands =  calculatedExpressionContext.calculatedExpression().calculatedExpressionBody().typeType().map {
-            QualifiedName.from(compiler.lookupTypeByName(it))
-         }
-
-         val operator = FormulaOperator.forSymbol(calculatedExpressionContext.calculatedExpression().calculatedFormula().text)
-         val formula = OperatorFormula(operands, operator)
-         return compiler.compileCalculatedField(typeMemberDeclaration, formula, namespace).map { f ->
-            f.copy(formula = formula)
-         }
-      }
       return Either.left(listOf(CompilationError(calculatedExpressionContext.start, "Invalid Calculated Field Definition")))
    }
 

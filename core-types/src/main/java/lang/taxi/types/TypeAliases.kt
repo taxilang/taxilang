@@ -1,17 +1,17 @@
 package lang.taxi.types
 
 import arrow.core.Either
-import lang.taxi.Equality
+import lang.taxi.ImmutableEquality
 
 data class TypeAliasExtension(val annotations: List<Annotation>, override val compilationUnit: CompilationUnit, override val typeDoc: String? = null) : TypeDefinition, Documented {
-   private val equalty = Equality(this, TypeAliasExtension::annotations)
+   private val equalty = ImmutableEquality(this, TypeAliasExtension::annotations)
 
    override fun hashCode() = equalty.hash()
    override fun equals(other: Any?) = equalty.isEqualTo(other)
 }
 
 data class TypeAliasDefinition(val aliasType: Type, val annotations: List<Annotation> = emptyList(), override val compilationUnit: CompilationUnit, override val typeDoc: String? = null) : TypeDefinition, Documented {
-   private val equalty = Equality(this, TypeAliasDefinition::aliasType, TypeAliasDefinition::annotations)
+   private val equalty = ImmutableEquality(this, TypeAliasDefinition::aliasType, TypeAliasDefinition::annotations)
 
    override fun hashCode() = equalty.hash()
    override fun equals(other: Any?) = equalty.isEqualTo(other)
@@ -98,4 +98,6 @@ data class TypeAlias(
          return collatedAnnotations.toList()
       }
 
+   override val typeKind: TypeKind?
+      get() = aliasType?.typeKind
 }

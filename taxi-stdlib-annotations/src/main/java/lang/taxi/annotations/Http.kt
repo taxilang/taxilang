@@ -18,3 +18,7 @@ data class ServiceDiscoveryClient(val serviceName: String) : AnnotationProvider 
       return lang.taxi.types.Annotation("ServiceDiscoveryClient", mapOf("serviceName" to serviceName))
    }
 }
+
+data class HttpPathVariable(val value: String) : AnnotationProvider {
+   override fun toAnnotation() = Annotation("PathVariable", mapOf("value" to value))
+}

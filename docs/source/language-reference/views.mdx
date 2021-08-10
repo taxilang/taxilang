@@ -1,0 +1,228 @@
+---
+title: Views
+description: Views are virtual types. One or more taxi models define views contents by means of find expressions.
+---
+
+
+
+
+## Taxi Views
+
+A taxi view derives a new model by combining one or more other existing model attributes.
+
+
+**Basic syntax:**
+```
+// views can have comments (ignored by the parser), or docs, as shown below:
+[[ A view to combine OrderFill and OrderSent models.]]
+view OrderView inherits OrderEvent with query  {
+   <VIEW BODY>
+}
+```
+
+As you can see from above example, a view can inherit from existing model if required. To describe the contents of the view body, we will use an example view based on two models, OrderSent and OrderFill:
+
+```
+type SentOrderId inherits String
+type FillOrderId inherits String
+type OrderEventDateTime inherits Instant
+type OrderType inherits String
+type SecurityDescription inherits String
+type RequestedQuantity inherits String
+type OrderStatus inherits String
+type DecimalFieldOrderFilled inherits Decimal
+
+model OrderSent {
+    @Id
+    sentOrderId : SentOrderId
+    @Between
+	orderDateTime: OrderEventDateTime( @format = "MM/dd/yy HH:mm:ss") by column("Time Submitted")
+    orderType: OrderType by default("Market")
+    subSecurityType: SecurityDescription? by column("Instrument Desc")
+    requestedQuantity: RequestedQuantity? by column("Size")
+    entryType: OrderStatus by default("New")
+   }
+
+model OrderFill {
+    @Id
+    fillOrderId: FillOrderId
+    orderType: OrderType by default("Market")
+    subSecurityType: SecurityDescription? by column("Instrument Desc")
+    executedQuantity: DecimalFieldOrderFilled? by column("Quantity")
+    entryType: OrderStatus by default("Filled")
+  }
+
+[[ A market model, our taxi will inherit from OrderEvent ]]
+model OrderEvent { }
+```
+
+Based on these two models, we will create a taxi view that will provide us all OrderSents plus left join of OrderFills and OrderSents:
+
+```
+[[
+  Sample View
+]]
+view OrderView inherits OrderEvent with query {
+   find { OrderSent[] } as {
+      orderId: OrderSent::SentOrderId
+      orderDateTime: OrderSent::OrderEventDateTime
+      orderType: OrderSent::OrderType
+      subSecurityType: OrderSent::SecurityDescription
+      requestedQuantity: OrderSent::RequestedQuantity
+      orderEntry: OrderSent::OrderStatus
+     },
+   find { OrderSent[] (joinTo OrderFill[]) } as {
+      orderId: OrderFill::FillOrderId
+      orderDateTime: OrderEventDateTime
+      orderType: OrderFill::OrderType
+      subSecurityType: OrderFill::SecurityDescription
+      requestedQuantity: OrderSent::RequestedQuantity
+      orderEntry: OrderStatus by when {
+        OrderSent::RequestedQuantity = OrderFill::DecimalFieldOrderFilled -> OrderFill::OrderStatus
+        else -> "PartiallyFilled"
+        }
+     }
+ }
+```
+
+so, a view definition:
+
+- Starts with ‘view’ keyword indicating we will define a taxi view.
+- Followed by the name of the view, ‘OrderView’ in the case.
+- View name can be followed by ‘inherits’ keyword, if want the view to derive from an existing type. In this example, our view derives from OrderView.
+- 'with query’ keywords completes the initial declaration of the view.
+
+ We must provide one or more 'find' expression as part of the view definition. In this example, first ‘find’ expression is for all ‘OrderSents’ and the second ‘find’ expression is for joining OrderFills to OrderSents.
+
+## ‘find’ Expression
+
+```
+find
+   {
+      <Query Expression>
+   }
+   as
+   {
+      <Find Body>
+   }
+```
+
+
+Currently, we only support:
+- a list type, e.g. ‘OrderSent[]’
+- ‘joinTo’ expression
+
+for ```<QueryExpression>```
+
+## ```<QueryExpression>```
+
+Our first ‘find’ in the above example, contains a list type:
+
+```find { OrderSent[] }```
+
+which will grab all ‘OrderSent’ instances from the corresponding OrderSent model provider.
+In the second example, we have ‘joinTo’ based ‘find’ statement:
+
+```find { OrderSent[] (joinTo OrderFill[]) }```
+
+which will left join ‘OrderSent’s on OrderFills. Taxi compile will inspect OrderSent and OrderFill types to detect a join column. The detection logic looks for a single field with @Id annotation in both type so it found the following fields as the join fields in OrderSent and OrderFill types:
+
+From OrderSent:
+
+```
+@Id
+sentOrderId : SentOrderId
+```
+
+From OrderFill:
+
+```
+@Id
+fillOrderId: FillOrderId
+```
+
+If compiler fails to find such two fields in corresponding join types, it will throw a compilation error.
+
+## ```<Find Body>```
+
+Find body defines the fields that you want to be the part of the ‘find’ result. In our example, our first find definition is a simple ‘select’ for ‘OrderSent’ instances:
+
+```find { OrderSent[] }```
+
+so the corresponding ‘find body’ should contain field definitions to indicate  which bits of an ‘OrderSent’ should be included in the ‘find’ result. Here is the corresponding definition:
+
+```
+find { OrderSent[] } as {
+      orderId: OrderSent::SentOrderId
+      orderDateTime: OrderSent::OrderEventDateTime
+      orderType: OrderSent::OrderType
+      subSecurityType: OrderSent::SecurityDescription
+      requestedQuantity: OrderSent::RequestedQuantity
+      orderEntry: OrderSent::OrderStatus
+     }
+```
+
+Each field definition is in the following format:
+
+fieldName: SourceTypeName:FieldTypeName
+
+‘SourceTypeName’ refers to the types that are used in ```<Query Expression>``` of ‘find’ statement and ‘FieldTypeName’ refers to a type name of a property in ‘Source Type’.
+As an example, consider the first field definition:
+
+```
+orderId: OrderSent::SentOrderId
+```
+
+fieldName = orderId
+SourceTypeName = OrderSent
+FieldTypeName = SentOrderId
+
+As ‘OrderSent’ is part of the find query expression ( find {OrderSent[]} ) and it has a single field with
+SentOrderId (sentOrderId : SentOrderId )
+This field definition is considered as a valid ‘view find body field’ declaration. If either ‘OrderSent’ is not part of the initial find query expression or OrderSent doesn’t have / have multiple fields with SentOrderId, compiler will throw a compiler expression.
+
+
+The second find expression:
+
+
+```find { OrderSent[] (joinTo OrderFill[]) }```
+
+has a join expression, so its body can refer to types participating in join (OrderFill and OrderSent):
+
+```
+   find { OrderSent[] (joinTo OrderFill[]) } as {
+      orderId: OrderFill::FillOrderId
+      orderDateTime: OrderEventDateTime
+      orderType: OrderFill::OrderType
+      subSecurityType: OrderFill::SecurityDescription
+      requestedQuantity: OrderSent::RequestedQuantity
+      orderEntry: OrderStatus by when {
+        OrderSent::RequestedQuantity = OrderFill::DecimalFieldOrderFilled -> OrderFill::OrderStatus
+        else -> "PartiallyFilled"
+        }
+     }
+```
+
+```orderId``` field is defined via OrderFill type:
+
+```orderId: OrderFill::FillOrderId```
+
+and
+
+```requestedQuantity``` field is defined vie OrderSent type:
+
+```requestedQuantity: OrderSent::RequestedQuantity```
+
+Also, ‘when’ based field definitions can refer to both OrderSent and OrderFill types.
+When a view definition contains multiple ‘find’ statements, each ‘find’ statement body must be compatible with each other so that Vyne can perform ‘union’ operation to combine the result of each ‘find’ statement. If two ‘field’ statements are compatible, then:
+
+    • Both field bodies have equal number of fields.
+    • Both field body fields are compatible with each other. As an example, here is the definition of the second field in the first ‘find’ body:
+
+```orderDateTime: OrderSent::OrderEventDateTime```
+
+which declares that the type ‘orderDateTime’ is ‘OrderEventDateTime’ and should be populated from the ‘OrderSent’ property with ‘OrderEventDateTime’. Since two ‘find’ statements must be compatible, the second field type in the second ‘find’ body must also be ‘OrderEventDateTime’, so if you check the ‘find’ body, the definition of the second field is:
+
+```orderDateTime: OrderEventDateTime```
+
+since the type of orderDateTime is ‘OrderEventDateTime’ both fields are compatible with each other.

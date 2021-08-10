@@ -6,9 +6,11 @@ import lang.taxi.Tokens
 import lang.taxi.types.ArrayType
 import lang.taxi.types.ImportableToken
 import lang.taxi.types.PrimitiveType
+import lang.taxi.types.StreamType
 import lang.taxi.types.UserType
 import org.antlr.v4.runtime.Token
 import java.util.*
+
 
 internal class ImportedTypeCollator(
    private val tokens: Tokens,
@@ -45,7 +47,7 @@ internal class ImportedTypeCollator(
       }
 
       return if (importQueue.isEmpty()) {
-         errors to importSources.flatMap { it.types }
+         errors to importSources.flatMap { it.types.plus(it.functions) }
       } else {
          errors to collected.values.toList()
       }
@@ -59,6 +61,9 @@ internal class ImportedTypeCollator(
       }
       if (ArrayType.isArrayTypeName(name)) {
          return ArrayType.untyped()
+      }
+      if (StreamType.isStreamTypeName(name)) {
+         return StreamType.untyped()
       }
 
       val importableToken = this.importSources.firstOrNull { it.containsImportable(name) }?.importableToken(name)

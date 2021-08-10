@@ -1,7 +1,6 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
-import lang.taxi.compiler.typeParameters
 import lang.taxi.types.ObjectType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.QueryMode
@@ -20,20 +19,22 @@ object TaxiQlSpec : Spek({
          type LastName inherits String
          type OutputId inherits String
 
-         type Customer {
-            email : CustomerEmailAddress as String
+         type CustomerEmailAddress inherits String
+         model Customer {
+            email : CustomerEmailAddress
          }
-         type Trade
+         model Trade
 
-         type OutputOrder {
+         model OutputOrder {
             outputId: OutputId
          }
-         type Order {
-            tradeTimestamp : TradeDate as Instant
+         type TradeDate inherits Instant
+         model Order {
+            tradeTimestamp : TradeDate
             traderId: TraderId
          }
 
-         type Trade {
+         model Trade {
             traderId: TraderId
          }
       """.trimIndent()
@@ -124,6 +125,12 @@ object TaxiQlSpec : Spek({
          name.should.equal("email")
          fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
          fact.value.should.equal("jimmy@demo.com")
+
+         query.typesToFind.should.have.size(1)
+         val discoveryType = query.typesToFind.first()
+         discoveryType.type.fullyQualifiedName.should.equal("foo.Trade")
+         discoveryType.startingFacts.should.have.size(1)
+         discoveryType.startingFacts.should.equal(query.facts)
       }
 
       it("should compile an unnamed query") {

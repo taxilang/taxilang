@@ -127,6 +127,22 @@ interface ImportableToken : Named, Compiled
  */
 typealias Model = Type
 
+// This should become deprecated when Types and Models are differnt things
+enum class TypeKind {
+   Type,
+   Model;
+
+   companion object {
+      fun fromSymbol(symbol: String): TypeKind {
+         return when (symbol) {
+            "model" -> Model
+            "type" -> Type
+            else -> error("Expected either model or type, got $symbol")
+         }
+      }
+   }
+}
+
 interface Type : Named, Compiled, ImportableToken, Documented {
    val inheritsFrom: Set<Type>
 
@@ -148,6 +164,8 @@ interface Type : Named, Compiled, ImportableToken, Documented {
 
    val anonymous: Boolean
       get() = false
+
+   val typeKind: TypeKind?
 
    fun getInheritanceGraph(typesToExclude: Set<Type> = emptySet()): Set<Type> {
       val allExcludedTypes: Set<Type> = typesToExclude + setOf(this)
@@ -171,6 +189,44 @@ interface Type : Named, Compiled, ImportableToken, Documented {
                setOf(inheritedType) + inheritedType.getInheritanceGraph(allExcludedTypes)
             else emptySet<Type>()
          }.toSet()
+   }
+
+   fun isAssignableTo(
+      assignmentTargetType: Type,
+      considerTypeParameters: Boolean = true,
+      typeChecker: TypeChecker = TypeChecker.DEFAULT
+   ): Boolean {
+      return typeChecker.isAssignableTo(this, assignmentTargetType, considerTypeParameters)
+   }
+
+   fun resolveAliases(): Type {
+      return TypeAlias.underlyingType(this)
+   }
+
+   fun resolvesSameAs(
+      other: Type,
+      considerTypeParameters: Boolean = true,
+      typeChecker: TypeChecker = TypeChecker.DEFAULT
+   ): Boolean {
+      return typeChecker.resolvesSameAs(this, other, considerTypeParameters)
+   }
+
+   fun typeParameters(): List<Type> {
+      return when (this) {
+         is GenericType -> this.parameters
+         else -> emptyList()
+      }
+   }
+
+   fun inheritsFrom(other: Type, considerTypeParameters: Boolean = true): Boolean {
+      if (this.resolvesSameAs(other)) {
+         return true
+      }
+      val unaliasedOther = other.resolveAliases()
+      return (this.allInheritedTypes + this).any { inheritedType ->
+         val unaliasedInheritedType = inheritedType.resolveAliases()
+         unaliasedInheritedType.resolvesSameAs(unaliasedOther, considerTypeParameters)
+      }
    }
 }
 

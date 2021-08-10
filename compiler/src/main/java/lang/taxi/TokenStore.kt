@@ -17,7 +17,7 @@ typealias TokenTable = Table<RowIndex, ColumnIndex, ParserRuleContext>
  */
 class UnknownTokenReferenceException(val providedSourcePath: String, val currentKeys: Collection<String>) :
    RuntimeException(
-      "$providedSourcePath has not been normalized properly.  Current keys are ${currentKeys.joinToString(",")}"
+      "$providedSourcePath is not present in the token store.  Current keys are ${currentKeys.joinToString(",")}"
    )
 
 class TokenStore {
@@ -29,6 +29,11 @@ class TokenStore {
          throw UnknownTokenReferenceException(sourceName, tables.keys)
       }
       return tables.getValue(sourcePath)
+   }
+
+   fun containsTokensForSource(sourceName: String): Boolean {
+      val sourcePath = SourceNames.normalize(sourceName)
+      return tables.containsKey(sourcePath)
    }
 
    fun getTypeReferencesForSourceName(sourceName: String): List<TaxiParser.TypeTypeContext> {

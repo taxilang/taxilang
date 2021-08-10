@@ -27,7 +27,7 @@ model Person {
 
 The value passed can either be:
 
- * the name of the column 
+ * the name of the column
  * the index of the column.  Indexes are assumed to be 1-based.  (That is, the first column is index 1, not index 0).
 
 ### Describing Json data - `jsonPath()`
@@ -137,17 +137,17 @@ model PurchaseOrder {
 
 ## Calculated fields
 Fields may be defined as the output of a calcualted expression from other fields.
-Calculations are defined after the type, in the form of `... as (A operator B)`
+Calculations are defined after the type, in the form of `... by (A operator B)`
 
 eg:
 
 ```
 model Purchase {
-    price : PerItemPrice 
+    price : PerItemPrice
     quantity : Quantity
-    total : TotalCost as (PerItemPrice * Quantity)
+    total : TotalCost by (PerItemPrice * Quantity)
     // alternatively:
-    anotherTotal : TotalCost as (this.price * this.quantity)
+    anotherTotal : TotalCost by (this.price * this.quantity)
 }
 ```
 
@@ -167,11 +167,11 @@ Calcuation operations aren't limited to just numeric types.  The following speci
 
 | Operation       | Result type | Effect        | Example                                                      |
 |-----------------|-------------|---------------|--------------------------------------------------------------|
-| String + String | String      | Concatenation | `fullName : FullName as (this.firstName + this.lastName)`    |
-| Date + Time     | Instant     | Combines      | `timestamp : Instant as (this.recordDate + this.recordTime)` |
+| String + String | String      | Concatenation | `fullName : FullName by (this.firstName + this.lastName)`    |
+| Date + Time     | Instant     | Combines      | `timestamp : Instant by (this.recordDate + this.recordTime)` |
 |                 |             |               |                                                              |
 
-Note: Taxi does not perform the evaluations.  This is left to parsers to handle. 
+Note: Taxi does not perform the evaluations.  This is left to parsers to handle.
 
 As such, other parsers may provide additional operations.  The above outlines the capabilities supported by Vyne.
 
@@ -187,7 +187,7 @@ When referencing other fields, either in functions, or when clasues, you can ref
 
 ## Type Extensions
 
-Type extensions allow mixing in additional data to a type after it's been defined.  
+Type extensions allow mixing in additional data to a type after it's been defined.
 
 It's possible to extend a type by adding either annotations, or type refinements.  Structural changes to types are not permitted \(and the compiler will prevent them\).
 
@@ -205,11 +205,11 @@ type alias FirstName as String
 // Extending the type to provide additional context:
 type extension Person {
 
-    // Adding an annotation.  No additional type is defined, so the 
+    // Adding an annotation.  No additional type is defined, so the
     // underlying type remains the same -- an Int
     @Id
-    personId 
-    
+    personId
+
     // Refining the type.  Note that FirstName represents the same
     // type as the original String, so this is permitted.
     // If the types were incompatible, the compiler would alert an error
@@ -227,8 +227,8 @@ Type extensions allow this, by adding taxidoc to the types
 
 ### Refining types with semantic types
 
-Not all languages and spec tools are created equal - and some don't have great support for 
-semantic types.  Extensions allow for the narrowing \(but not redefinition\) of the type, 
+Not all languages and spec tools are created equal - and some don't have great support for
+semantic types.  Extensions allow for the narrowing \(but not redefinition\) of the type,
 through specifiying more narrow types.
 
 The compiler will prevent type extensions from introducing incompatible type changes.
@@ -237,8 +237,8 @@ The compiler also restricts type refinements to a single refinement per type
 
 ### Mixing-in metadata
 
-A consumer of an API may wish to leverage tooling that uses annotations - eg., 
-persisting an entity into a database.  
+A consumer of an API may wish to leverage tooling that uses annotations - eg.,
+persisting an entity into a database.
 
-Type extensions allow providing tooling specific metadata that's only useful to the 
+Type extensions allow providing tooling specific metadata that's only useful to the
 consumer - not the producer.

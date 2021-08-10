@@ -2,13 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <parent>
       <artifactId>parent</artifactId>
-      <groupId>lang.taxi</groupId>
-      <version>0.12.2-SNAPSHOT</version>
+      <groupId>org.taxilang</groupId>
+      <version>1.30.4-SNAPSHOT</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
    <artifactId>java2taxi</artifactId>
-   <version>0.12.2-SNAPSHOT</version>
+   <version>1.30.4-SNAPSHOT</version>
 
    <properties>
       <spring.cloud.version>Finchley.SR1</spring.cloud.version>
@@ -19,7 +19,7 @@
 
    <dependencies>
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>sample-compiled-taxonomy</artifactId>
          <version>${project.version}</version>
          <scope>test</scope>
@@ -29,42 +29,56 @@
          <artifactId>validation-api</artifactId>
          <version>1.1.0.Final</version>
       </dependency>
+      <dependency>
+         <groupId>org.jetbrains.kotlinx</groupId>
+         <artifactId>kotlinx-metadata-jvm</artifactId>
+         <version>0.3.0</version>
+      </dependency>
+      <!-- Note: Using reflections8 instead of reflections because of
+     this bug: https://github.com/ronmamo/reflections/issues/273
+     Migrate back if/when that issue is closed
+     -->
+      <dependency>
+         <groupId>net.oneandone.reflections8</groupId>
+         <artifactId>reflections8</artifactId>
+         <version>0.11.5</version>
+      </dependency>
 
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>taxi-annotations</artifactId>
-         <version>0.12.2-SNAPSHOT</version>
+         <version>1.30.4-SNAPSHOT</version>
       </dependency>
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>compiler</artifactId>
-         <version>0.12.2-SNAPSHOT</version>
+         <version>1.30.4-SNAPSHOT</version>
       </dependency>
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>core-types</artifactId>
-         <version>0.12.2-SNAPSHOT</version>
+         <version>1.30.4-SNAPSHOT</version>
       </dependency>
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>taxi-writer</artifactId>
-         <version>0.12.2-SNAPSHOT</version>
+         <version>1.30.4-SNAPSHOT</version>
       </dependency>
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>taxi-stdlib-annotations</artifactId>
-         <version>0.12.2-SNAPSHOT</version>
+         <version>1.30.4-SNAPSHOT</version>
       </dependency>
 
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>taxi-jvm-common</artifactId>
-         <version>0.12.2-SNAPSHOT</version>
+         <version>1.30.4-SNAPSHOT</version>
       </dependency>
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>test-utils</artifactId>
-         <version>0.12.2-SNAPSHOT</version>
+         <version>1.30.4-SNAPSHOT</version>
          <scope>test</scope>
       </dependency>
       <!-- For SpringMvc to feign support.  Note - once this is split out, spring-webmvc is still required as test scope-->
@@ -84,14 +98,6 @@
          <groupId>org.springframework.cloud</groupId>
          <artifactId>spring-cloud-starter-openfeign</artifactId>
       </dependency>
-
-      <dependency>
-         <groupId>lang.taxi</groupId>
-         <artifactId>taxi-annotation-processor</artifactId>
-         <version>0.12.2-SNAPSHOT</version>
-         <!--<scope>test</scope>-->
-      </dependency>
-
    </dependencies>
 
    <dependencyManagement>
@@ -137,13 +143,6 @@
                      <sourceDirs>
                         <sourceDir>src/test/java</sourceDir>
                      </sourceDirs>
-                     <annotationProcessorPaths>
-                        <annotationProcessorPath>
-                           <groupId>lang.taxi</groupId>
-                           <artifactId>taxi-annotation-processor</artifactId>
-                           <version>${project.version}</version>
-                        </annotationProcessorPath>
-                     </annotationProcessorPaths>
                   </configuration>
                </execution>
             </executions>

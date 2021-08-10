@@ -64,6 +64,8 @@ If you're working in Kotlin, using `typealias` with the `@DataType` annotation i
 Type aliases can be directly annotated with the `@DataType` annotation.
 
 ```kotlin
+package com.foo.bar
+
 @DataType
 data class Bus(val passengers: Passengers)
 
@@ -76,90 +78,34 @@ data class Person(val name: PersonName)
 @DataType("foo.PersonName")
 typealias PersonName = String
 
-TypeAliasRegistry.register(TypeAliases::class)
+TypeAliasRegister.registerPackage("com.foo.bar")
 val taxiDef = TaxiGenerator().forClasses(Bus::class.java).generateAsStrings()
 
 // Generates:
-type Bus {
+model Bus {
     passengers : Passengers
 }
 
- type Person {
+model Person {
     name : PersonName
 }
 
-type alias PersonName as String
+type PersonName inherits String
 type alias Passengers as Person[]
 ```
 
-### 
+If using the `@DataType` against a Kotlin type alias, you need to declare the package(s) at startup.
 
-### Taxi Annotation Processor [ ![Download](https://api.bintray.com/packages/taxi-lang/releases/taxi-annotation-processor/images/download.svg) ](https://bintray.com/taxi-lang/releases/taxi-annotation-processor/_latestVersion)
+This is as simple as:
 
-Annotations on `typealias` are [not supported](https://youtrack.jetbrains.com/issue/KT-21489) out-of-the-box through Kotlin's reflection API.  In order to get these to work, we need to use an annotation processor.
 
-#### Capturing annotations at compile time
+```
+import lang.taxi.generators.kotlin.TypeAliasRegister
 
-Add the following to your Maven build:
-
-```text
-<build>
-   <plugins>
-      <plugin>
-         <artifactId>kotlin-maven-plugin</artifactId>
-         <groupId>org.jetbrains.kotlin</groupId>
-         <version>${kotlin.version}</version>
-         <executions>
-            <execution>
-               <id>kapt</id>
-               <goals>
-                  <goal>kapt</goal>
-               </goals>
-               <configuration>
-                  <annotationProcessorPaths>
-                     <annotationProcessorPath>
-                        <groupId>lang.taxi</groupId>
-                        <artifactId>taxi-annotation-processor</artifactId>
-                        <version>0.1.0</version>
-                     </annotationProcessorPath>
-                  </annotationProcessorPaths>
-               </configuration>
-            </execution>
-            <!-- other executions go here -->
-         </executions>
-      </plugin>
-   </plugins>
-</build>
+TypeAliasRegister.registerPackage("com.foo.bar")
 ```
 
-This will generate a class called `TypeAliases` which will be compiled into your source, containing the annotation metadata.
-
-#### Using typealias annotations when generating Taxi
-
-To consume the annotations generating Taxi, you need to first register the captured metadata.
-
-Add the annotation processor **as a dependency** to your project, then register the alias metadata:
-
-```markup
-<dependency>
-    <groupId>lang.taxi</groupId>
-    <artifactId>taxi-annotation-processor</artifactId>
-    <version>0.1.0</version>
-</dependency>
-```
-
-```kotlin
-TypeAliasRegistry.register(TypeAliases::class)
-```
-
-<Discourage>
-If you're consuming models from multiple different libraries, each will have it's own `TypeAliases` class generated.  Be sure to register them all.
-</Discourage>
-
-<Discourage>
-You must have at least one class that **isn't a type alias** annotated with `@DataType` present in your jar in order for type aliases to be generated.   
-</Discourage>
-
+Any annotated type aliases in the provided package will be discovered and have their names generated correctly.
 
 
 ### Constraints
@@ -175,7 +121,7 @@ data class Money(val amount: BigDecimal, val currency: String)
 data class SomeRequest(
         @Constraint("currency = 'USD'")
         val amount: Money)
-        
+
 TaxiGenerator().forClasses(Money::class.java, SomeRequest::class.java).generateAsStrings()
 
 // Generates:
@@ -262,7 +208,7 @@ service MoneyService {
 
 ### Taxi Generator customisation & extensions
 
-Taxi's generator can be customized, adding additional annotations or modfiying the tree structure before source is output.  
+Taxi's generator can be customized, adding additional annotations or modfiying the tree structure before source is output.
 
 The most common scenario here is to provide extensions to modify how services are generated.  However, you can inject an entirely separate `TypeMapper` and `ServiceMapper` for complete control over the generation process.  Take a look at [TaxiGenerator](https://gitlab.com/taxi-lang/taxi-lang/blob/master/java2taxi/src/main/java/lang/taxi/generators/java/TaxiGenerator.kt) to get started.
 
@@ -339,7 +285,7 @@ namespace vyne.demo {
 
 The [tests](https://gitlab.com/taxi-lang/taxi-lang/blob/master/java2taxi/src/test/java/lang/taxi/generators/java/extensions/HttpExtensionTest.kt) give the best example of usage.
 
-### 
+###
 
 ### Maven / Gradle
 
@@ -394,41 +340,139 @@ Grab the taxi generator from maven:
 
 Then run the converter as follows:
 
-\(Note, this example loads source from [this reference example](https://gitlab.com/taxi-lang/taxi-lang/raw/master/swagger2taxi/src/test/resources/openApiSpec/v2.0/yaml/petstore-simple.yaml) from the OpenApi project - 
+\(Note, this example loads source from [this reference example](https://gitlab.com/taxi-lang/taxi-lang/raw/master/swagger2taxi/src/test/resources/openApiSpec/v2.0/yaml/petstore-simple.yaml) from the OpenApi project -
 
 ```text
 // The actual swagger source is omitted for brevity
 val source = IOUtils.toString(URI.create("https://gitlab.com/taxi-lang/taxi-lang/raw/master/swagger2taxi/src/test/resources/openApiSpec/v2.0/yaml/petstore-simple.yaml"))
 TaxiGenerator().generateAsStrings(source, "vyne.openApi")
 
-// generated: 
+// generated:
 namespace vyne.openApi  {
 
-    type NewPet {
-        name : String
-        tag : String
-    }
+   model NewPet {
+      name : String
+      tag : String?
+   }
 
-     type Pet inherits NewPet {
-        id : Int
-    }
+   model Pet inherits NewPet {
+      id : Int
+   }
 
-     type ErrorModel {
-        code : Int
-        message : String
-    }
+   model ErrorModel {
+      code : Int
+      message : String
+   }
 
-    service PetsService {
-        @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets")
-        operation findPets(  tags : String,  limit : Int ) : Pet[]
-        @HttpOperation(method = "POST" , url = "http://petstore.swagger.io/api/pets")
-        operation addPet( @RequestBody pet : NewPet ) : Pet
-    }
-    service PetsIdService {
-        @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets/{id}")
-        operation findPetById(  id : Int ) : Pet
-        @HttpOperation(method = "DELETE" , url = "http://petstore.swagger.io/api/pets/{id}")
-        operation deletePet(  id : Int )
-    }
+   service PetsService {
+      [[ Returns all pets from the system that the user has access to ]]
+      @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets")
+      operation findPets(  tags : String,  limit : Int ) : Pet[]
+      [[ Creates a new pet in the store.  Duplicates are allowed ]]
+      @HttpOperation(method = "POST" , url = "http://petstore.swagger.io/api/pets")
+      operation addPet( @RequestBody pet : NewPet ) : Pet
+   }
+   service PetsIdService {
+      [[ Returns a user based on a single ID, if the user does not have access to the pet ]]
+      @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets/{id}")
+      operation findPetById( @PathVariable(value = "id") id : Int ) : Pet
+      [[ deletes a single pet based on the ID supplied ]]
+      @HttpOperation(method = "DELETE" , url = "http://petstore.swagger.io/api/pets/{id}")
+      operation deletePet( @PathVariable(value = "id") id : Int )
+   }
+}
+```
+### OpenAPI x-taxi-type Extension
+
+Like any generator, `TaxiGenerator` can only do its best with what is provided.
+Both Swagger and OpenAPI specifications rely heavily on unnamed schemas.
+`TaxiGenerator` has to turn these into types, and so has to invent names for
+them.
+
+In addition `TaxiGenerator` cannot know about your existing Taxi taxonomy, nor
+could it reliably match schemas from the OpenAPI specification with types in
+that taxonomy without further help.
+
+To solve this, `TaxiGenerator` supports an [OpenAPI Extension](https://swagger.io/docs/specification/openapi-extensions/)
+`x-taxi-type`, allowing you to specify the name, fully qualified or otherwise,
+of the type, and whether it should be generated, or assumed to exist.
+
+The `x-taxi-type` extension can be applied to the schema of parameters, request
+bodies, and response contents of OpenAPI operations.
+
+The `x-taxi-type` extension can be applied in both `json` and `yaml` OpenAPI
+specification documents. For example:
+[OpenAPI JSON specification with `x-taxi-type`](https://gitlab.com/taxi-lang/taxi-lang/-/raw/master/swagger2taxi/src/test/resources/openApiSpec/v3.0/petstore-expanded-x-taxi-types.json)
+[OpenAPI YAML specification with `x-taxi-type`](https://gitlab.com/taxi-lang/taxi-lang/-/raw/master/swagger2taxi/src/test/resources/openApiSpec/v3.0/petstore-expanded-x-taxi-types.yaml)
+[Resulting generated taxi](https://gitlab.com/taxi-lang/taxi-lang/-/raw/master/swagger2taxi/src/test/resources/openApiSpec/v3.0/petstore-expanded-x-taxi-types.taxi)
+
+#### Specification
+
+* Any OpenAPI schema object *may* contain an `x-taxi-type` object at the top
+  level
+* An `x-taxi-type` object *must* contain a `name` property of type `string`
+* If the value of the name is unqualified, the generator considers it to be in
+  the default namespace provided as an argument to `generateAsStrings`
+* The generator will use that name as the name of the type in preference to the
+  name the generator would otherwise have generated.
+* An `x-taxi-type` object *may* contain a `create` property of type `boolean`
+* The `create` property defaults to true if the schema would generate a `model`
+  (i.e., it either has properties or is composed via an `allOf`)
+* The `create` property defaults to false if the schema would generate a `type`
+  (i.e., it neither has properties nor is composed via an `allOf`)
+
+#### Examples
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Swagger Petstore
+components:
+  schemas:
+    Person:
+      type: object
+      properties:
+        name:
+          x-taxi-type:
+            name: org.other.Name
+          type: string
+        dob:
+          x-taxi-type:
+            name: DateOfBirth
+            create: true
+          type: string
+          format: date
+        address:
+          x-taxi-type:
+            name: org.other.Address
+            create: false
+          properties:
+            street:
+              type: string
+        job:
+          x-taxi-type:
+            name: Career
+          properties:
+            title:
+              type: string
+paths: {}
+```
+generates
+```
+namespace vyne.openApi {
+
+   type DateOfBirth inherits Date
+
+   model Career {
+      title : String?
+   }
+
+   model Person {
+      name : org.other.Name?
+      dob : DateOfBirth?
+      address : org.other.Address?
+      job : Career?
+   }
 }
 ```

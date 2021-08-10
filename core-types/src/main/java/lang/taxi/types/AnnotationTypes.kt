@@ -1,7 +1,7 @@
 package lang.taxi.types
 
 import arrow.core.Either
-import lang.taxi.Equality
+import lang.taxi.ImmutableEquality
 
 data class AnnotationTypeDefinition(
    val fields: List<Field> = emptyList(),
@@ -9,7 +9,7 @@ data class AnnotationTypeDefinition(
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : Annotatable, TypeDefinition, Documented {
-   private val equality = Equality(
+   private val equality = ImmutableEquality(
       this,
       AnnotationTypeDefinition::fields,
       AnnotationTypeDefinition::annotations,
@@ -73,4 +73,6 @@ data class AnnotationType(
          }
          """
    }
+
+   override val typeKind: TypeKind = TypeKind.Type
 }

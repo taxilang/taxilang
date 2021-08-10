@@ -8,6 +8,13 @@ data class ConditionalFieldSet(val fields: List<Field>, val expression: FieldSet
 
 interface FieldSetExpression : TaxiStatementGenerator
 
+data class CalculatedModelAttributeFieldSetExpression(
+   val operand1: ModelAttributeReferenceSelector,
+   val operand2: ModelAttributeReferenceSelector,
+   val operator: FormulaOperator
+): FieldSetExpression {
+   override fun asTaxi(): String = "(${operand1.asTaxi()} ${operator.symbol} ${operand2.asTaxi()})"
+}
 data class CalculatedFieldSetExpression(
    val operand1: FieldReferenceSelector,
    val operand2: FieldReferenceSelector,
@@ -46,7 +53,11 @@ data class AccessorExpressionSelector(
       TODO("Not yet implemented")
    }
 }
-
+data class ModelAttributeReferenceSelector(
+   val memberSource: QualifiedName,
+   val memberType: Type): TaxiStatementGenerator, Accessor {
+   override fun asTaxi(): String = "$memberSource::${memberType.qualifiedName}"
+}
 data class TypeReferenceSelector(val type: Type) : Accessor
 // TODO : Can FieldReferenceSelector, ReferenceAssignment and ReferenceCaseMatchExpression all be merged?
 data class FieldReferenceSelector(val fieldName: String, override val returnType: Type) : WhenSelectorExpression, Accessor {
@@ -61,7 +72,7 @@ data class FieldReferenceSelector(val fieldName: String, override val returnType
    override fun asTaxi(): String = "this.$fieldName"
 }
 
-class EmptyReferenceSelector: WhenSelectorExpression {
+object EmptyReferenceSelector: WhenSelectorExpression {
    override fun asTaxi(): String {
       return ""
    }
@@ -201,4 +212,8 @@ object NullAssignment : ValueAssignment {
 
    // TODO : Can we infer the type better?
    override val type: Type = PrimitiveType.ANY
+}
+
+data class ModelAttributeTypeReferenceAssignment(val source: QualifiedName, override val type: Type) : ValueAssignment {
+   override fun asTaxi(): String = "${source}.${type.qualifiedName}"
 }

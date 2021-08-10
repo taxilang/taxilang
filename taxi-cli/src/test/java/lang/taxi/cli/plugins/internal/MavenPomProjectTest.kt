@@ -11,10 +11,9 @@ import lang.taxi.generators.TaxiProjectEnvironment
 import org.apache.commons.io.FileUtils
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import org.springframework.boot.info.BuildProperties
 import java.io.File
 import java.io.FileReader
@@ -22,18 +21,18 @@ import java.util.*
 
 class MavenPomProjectTest {
 
-   @Rule
+   @TempDir
    @JvmField
-   val folder = TemporaryFolder()
+   var folder: File? = null
 
-   @Before
+   @BeforeEach
    fun deployTestRepo() {
 
    }
 
    private fun copyProject(path: String) {
       val testProject = File(Resources.getResource(path).toURI())
-      FileUtils.copyDirectory(testProject, folder.root)
+      FileUtils.copyDirectory(testProject, folder!!)
    }
 
    @Test
@@ -52,11 +51,11 @@ class MavenPomProjectTest {
       model.distributionManagement.repository.id.should.equal("some-internal-repo")
       model.distributionManagement.repository.url.should.equal("https://our-internal-repo")
 
-      assert(this.folder.root.exists())
-      assert(folder.root.list().contains("taxi.conf"))
-      assert(folder.root.list().contains("src"))
-      assert(folder.root.list().contains("dist"))
-      assert(File(folder.root.absolutePath, "dist").list().contains("pom.xml"))
+      assert(this.folder!!.exists())
+      assert(folder!!.list().contains("taxi.conf"))
+      assert(folder!!.list().contains("src"))
+      assert(folder!!.list().contains("dist"))
+      assert(File(folder!!.absolutePath, "dist").list().contains("pom.xml"))
    }
 
 
@@ -73,17 +72,17 @@ class MavenPomProjectTest {
 
 
    private fun executeBuild() {
-      val project = TaxiProjectLoader().withConfigFileAt(folder.root.toPath().resolve("taxi.conf")).load()
+      val project = TaxiProjectLoader().withConfigFileAt(folder!!.toPath().resolve("taxi.conf")).load()
       val build = BuildCommand(PluginRegistry(
          internalPlugins = listOf(KotlinPlugin(BuildProperties(Properties()))),
          requiredPlugins = project.pluginArtifacts()
       ))
-      val environment = CliTaxiEnvironment.forRoot(folder.root.toPath(), project) as TaxiProjectEnvironment
+      val environment = CliTaxiEnvironment.forRoot(folder!!.toPath(), project) as TaxiProjectEnvironment
       build.execute(environment)
    }
 
    private fun loadMavenModel(): Model {
-      val pom = File(folder.root.absolutePath, "dist/pom.xml")
+      val pom = File(folder!!.absolutePath, "dist/pom.xml")
       val mvnReader = MavenXpp3Reader()
       val reader = FileReader(pom)
       var model = Model()

@@ -3,7 +3,7 @@ package lang.taxi.types
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import lang.taxi.Equality
+import lang.taxi.ImmutableEquality
 
 interface TypeProvider {
    fun getType(qualifiedName: String): Type
@@ -62,7 +62,7 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
    override val basePrimitive: PrimitiveType? by lazy { wrapper.basePrimitive }
    override val definitionHash: String? by lazy { wrapper.definitionHash }
 
-   private val equality = Equality(this, ArrayType::type)
+   private val equality = ImmutableEquality(this, ArrayType::type)
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
 
@@ -84,6 +84,7 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
    override val calculation: Formula?
       get() = null
    override val offset: Int? = null
+   override val typeKind: TypeKind = TypeKind.Type
 }
 
 interface Annotatable {

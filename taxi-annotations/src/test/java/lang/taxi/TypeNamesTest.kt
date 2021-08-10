@@ -2,7 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import lang.taxi.annotations.DataType
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class TypeNamesTest {
     @Test

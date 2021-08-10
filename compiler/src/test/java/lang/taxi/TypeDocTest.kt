@@ -2,7 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class TypeDocTest {
    @Test
@@ -31,7 +31,7 @@ It should be allowed to [contain square brackets]""".trimIndent()
 type Foo
       """.compiled()
          .type("Foo")
-         .typeDoc.should.equal("type alias foo")
+         .typeDoc.should.equal("type foo type alias function")
    }
 
    @Test

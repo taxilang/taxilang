@@ -35,15 +35,14 @@ module.exports = {
                ],
                Language: [
                   "language-reference/taxi-language",
-                  "language-reference/projects-and-names",
                   "language-reference/types-and-models",
                   "language-reference/advanced-types",
                   "language-reference/describing-services",
                   "language-reference/querying-with-taxiql",
+                  "language-reference/taxi-projects",
                ],
                "The Taxi CLI": [
                   "taxi-cli/intro",
-                  "taxi-cli/taxi-conf-file",
                   "taxi-cli/linter",
                ],
                "Publishing and sharing taxonomies": [

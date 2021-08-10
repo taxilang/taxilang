@@ -1,9 +1,10 @@
 package lang.taxi.services.operations.constraints
 
-import lang.taxi.Equality
+import lang.taxi.ImmutableEquality
 import lang.taxi.Operator
 import lang.taxi.types.AttributePath
 import lang.taxi.types.CompilationUnit
+import lang.taxi.types.FilterExpression
 import lang.taxi.types.QualifiedName
 import lang.taxi.utils.prependIfAbsent
 import lang.taxi.utils.quotedIfNecessary
@@ -28,12 +29,12 @@ open class PropertyToParameterConstraint(
    val operator: Operator = Operator.EQUAL,
    val expectedValue: ValueExpression,
    override val compilationUnits: List<CompilationUnit>
-) : Constraint {
+) : Constraint, FilterExpression {
    override fun asTaxi(): String {
       return "${propertyIdentifier.taxi} ${operator.symbol} ${expectedValue.taxi}"
    }
 
-   private val equality = Equality(this, PropertyToParameterConstraint::propertyIdentifier, PropertyToParameterConstraint::operator, PropertyToParameterConstraint::expectedValue)
+   private val equality = ImmutableEquality(this, PropertyToParameterConstraint::propertyIdentifier, PropertyToParameterConstraint::operator, PropertyToParameterConstraint::expectedValue)
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()

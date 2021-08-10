@@ -10,13 +10,10 @@ import lang.taxi.TaxiParser
 import lang.taxi.findNamespace
 import lang.taxi.text
 import lang.taxi.types.AccessorExpressionSelector
-import lang.taxi.types.AndExpression
 import lang.taxi.types.AssignmentExpression
 import lang.taxi.types.CalculatedFieldSetExpression
-import lang.taxi.types.ComparisonExpression
-import lang.taxi.types.ComparisonOperator
+import lang.taxi.types.CalculatedModelAttributeFieldSetExpression
 import lang.taxi.types.ConditionalFieldSet
-import lang.taxi.types.ConstantEntity
 import lang.taxi.types.DestructuredAssignment
 import lang.taxi.types.ElseMatchExpression
 import lang.taxi.types.EmptyReferenceSelector
@@ -25,19 +22,17 @@ import lang.taxi.types.EnumType
 import lang.taxi.types.EnumValue
 import lang.taxi.types.EnumValueAssignment
 import lang.taxi.types.FieldAssignmentExpression
-import lang.taxi.types.FieldReferenceEntity
 import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.FieldSetExpression
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.InlineAssignmentExpression
 import lang.taxi.types.LiteralAssignment
 import lang.taxi.types.LiteralCaseMatchExpression
-import lang.taxi.types.LogicalConstant
 import lang.taxi.types.LogicalExpression
-import lang.taxi.types.LogicalVariable
+import lang.taxi.types.ModelAttributeReferenceSelector
+import lang.taxi.types.ModelAttributeTypeReferenceAssignment
 import lang.taxi.types.NullAssignment
 import lang.taxi.types.ObjectType
-import lang.taxi.types.OrExpression
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.ReferenceAssignment
 import lang.taxi.types.ReferenceCaseMatchExpression
@@ -53,7 +48,6 @@ import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.wrapErrorsInList
 import lang.taxi.value
 import lang.taxi.valueOrNull
-import org.antlr.v4.runtime.RuleContext
 
 class ConditionalFieldSetProcessor internal constructor(private val compiler: FieldCompiler) {
    private val typeChecker = compiler.typeChecker
@@ -87,7 +81,12 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
       }
    }
 
-   private fun compileFieldExpression(fieldExpression: TaxiParser.FieldExpressionContext, namespace: Namespace, targetType: Type): Either<List<CompilationError>, FieldSetExpression> {
+   private fun compileFieldExpression(fieldExpression: TaxiParser.FieldExpressionContext,
+                                      namespace: Namespace, targetType: Type): Either<List<CompilationError>, FieldSetExpression> {
+
+      if (this.compiler.tokenProcessor.isInViewContext(fieldExpression)) {
+        return compileModelAttributeReference(fieldExpression, namespace, targetType)
+      }
       val field1Name = fieldExpression.propertyToParameterConstraintLhs(0).qualifiedName().text
       val field2Name = fieldExpression.propertyToParameterConstraintLhs(1).qualifiedName().text
       return compiler.provideField(field1Name, fieldExpression.propertyToParameterConstraintLhs(0).qualifiedName())
@@ -101,12 +100,28 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
          }
    }
 
-   private fun getTypeDeclarationContext(parserRuleContext: RuleContext?): TaxiParser.TypeDeclarationContext? {
-      return when {
-         parserRuleContext is TaxiParser.TypeDeclarationContext -> parserRuleContext
-         parserRuleContext?.parent != null -> getTypeDeclarationContext(parserRuleContext.parent)
-         else -> null
+   private fun compileModelAttributeReference(fieldExpression: TaxiParser.FieldExpressionContext,
+                                              namespace: Namespace,
+                                              targetType: Type): Either<List<CompilationError>, CalculatedModelAttributeFieldSetExpression> {
+      val firstModelAttrRef = fieldExpression.propertyToParameterConstraintLhs(0).modelAttributeTypeReference()
+      val secondModelAttrRef = fieldExpression.propertyToParameterConstraintLhs(1).modelAttributeTypeReference()
+      if (firstModelAttrRef == null || secondModelAttrRef == null) {
+         return CompilationError(
+            fieldExpression.start,
+            "Only Model AttributeReference expressions (SourceType::FieldType) are allowed for views"
+         ).asList().left()
       }
+
+      return compiler.tokenProcessor.parseModelAttributeTypeReference(namespace, firstModelAttrRef)
+         .flatMap { (op1Source, op1Prop) ->
+            compiler.tokenProcessor.parseModelAttributeTypeReference(namespace, secondModelAttrRef)
+               .flatMap { (op2Source, op2Prop) ->
+                  val operator = FormulaOperator.forSymbol(fieldExpression.arithmaticOperator().text)
+                  CalculatedModelAttributeFieldSetExpression(ModelAttributeReferenceSelector(
+                     op1Source,op1Prop), ModelAttributeReferenceSelector(op2Source, op2Prop), operator)
+                     .right()
+               }
+         }
    }
 
    private fun compileWhenCondition(whenBlock: TaxiParser.ConditionalTypeWhenDeclarationContext, namespace: Namespace, whenSelectorType: Type): Either<List<CompilationError>, WhenFieldSetCondition> {
@@ -124,7 +139,8 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
       return conditionalTypeWhenCaseDeclaration.map { compileWhenCase(it, whenSelectorType, assignmentTargetType) }
    }
 
-   private fun compileWhenCase(whenCase: TaxiParser.ConditionalTypeWhenCaseDeclarationContext, whenClauseSelectorType: Type, assignmentTargetType: Type): Either<List<CompilationError>, WhenCaseBlock> {
+   private fun compileWhenCase(whenCase: TaxiParser.ConditionalTypeWhenCaseDeclarationContext,
+                               whenClauseSelectorType: Type, assignmentTargetType: Type): Either<List<CompilationError>, WhenCaseBlock> {
       return compileMatchExpression(whenCase.caseDeclarationMatchExpression())
          .flatMap { matchExpression ->
             typeChecker.ifAssignable(matchExpression.type, whenClauseSelectorType, whenCase) { matchExpression }.wrapErrorsInList()
@@ -145,6 +161,12 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
                      }
 
 
+               }
+
+               whenCase.modelAttributeTypeReference() != null -> {
+                  compiler.parseModelAttributeTypeReference(whenCase.findNamespace(), whenCase.modelAttributeTypeReference())
+                     .flatMap {(memberSourceType, memberType) ->
+                        listOf(InlineAssignmentExpression(ModelAttributeTypeReferenceAssignment(memberSourceType, memberType))).right()}
                }
                else -> error("Unhandled when case branch")
             }
@@ -240,7 +262,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
             .resolve(typeName, caseFieldReferenceAssignment)
             .flatMap { type ->
                require(type is EnumType) { "Expected $typeName to be an enum" }
-               val enumType = type as EnumType// for readability
+               val enumType = type // for readability
                val enumReference = caseFieldReferenceAssignment.Identifier().last()
                if (enumType.has(enumReference.text)) {
                   EnumValueAssignment(enumType, type.of(enumReference.text)).right()
@@ -304,108 +326,14 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
    }
 
    private fun processLogicalExpressionContext(logicalExpressionCtx: TaxiParser.Logical_exprContext): Either<CompilationError, LogicalExpression> {
-      return when (logicalExpressionCtx) {
-         is TaxiParser.ComparisonExpressionContext -> processComparisonExpressionContext(logicalExpressionCtx.comparison_expr())
-         is TaxiParser.LogicalExpressionAndContext -> processLogicalAndContext(logicalExpressionCtx)
-         is TaxiParser.LogicalExpressionOrContext -> processLogicalOrContext(logicalExpressionCtx)
-         is TaxiParser.LogicalEntityContext -> processLogicalEntityContext(logicalExpressionCtx)
-         else -> CompilationError(logicalExpressionCtx.start, "invalid logical expression").left()
-      }
-   }
-
-   private fun processLogicalEntityContext(logicalExpressionCtx: TaxiParser.LogicalEntityContext): Either<CompilationError, LogicalExpression> {
-      return when (val logicalEntity = logicalExpressionCtx.logical_entity()) {
-         is TaxiParser.LogicalVariableContext -> LogicalVariable(logicalEntity.text).right()
-         is TaxiParser.LogicalConstContext -> LogicalConstant(logicalEntity.TRUE() != null).right()
-         else -> CompilationError(logicalExpressionCtx.start, "invalid logical expression").left()
-      }
-   }
-
-   private fun processLogicalOrContext(logicalExpressionCtx: TaxiParser.LogicalExpressionOrContext): Either<CompilationError, LogicalExpression> {
-      val logicalExpr = logicalExpressionCtx.logical_expr()
-      val retVal = logicalExpr.map { processLogicalExpressionContext(it) }
-      if (retVal.size != 2) {
-         return Either.left(CompilationError(logicalExpressionCtx.start, "invalid and expression"))
-      }
-
-      val mapped = retVal.map {
-         when (it) {
-            is Either.Right -> {
-               it.b
-            }
-            is Either.Left -> {
-               return Either.left(CompilationError(logicalExpressionCtx.start, "invalid numeric entity"))
-            }
-         }
-      }
-      return OrExpression(mapped[0], mapped[1]).right()
-   }
-
-   private fun processLogicalAndContext(logicalExpressionAndCtx: TaxiParser.LogicalExpressionAndContext): Either<CompilationError, LogicalExpression> {
-      val logicalExpr = logicalExpressionAndCtx.logical_expr()
-      val retVal = logicalExpr.map { processLogicalExpressionContext(it) }
-      if (retVal.size != 2) {
-         return Either.left(CompilationError(logicalExpressionAndCtx.start, "invalid and expression"))
-      }
-
-      val mapped = retVal.map {
-         when (it) {
-            is Either.Right -> {
-               it.b
-            }
-            is Either.Left -> {
-               return Either.left(CompilationError(logicalExpressionAndCtx.start, "invalid numeric entity"))
-            }
-         }
-      }
-      return AndExpression(mapped[0], mapped[1]).right()
-   }
-
-   private fun processComparisonExpressionContext(comparisonExpressionContext: TaxiParser.Comparison_exprContext): Either<CompilationError, LogicalExpression> {
-      val comparisonExpressionContextWithOperator = comparisonExpressionContext as TaxiParser.ComparisonExpressionWithOperatorContext
-      val retVal = comparisonExpressionContextWithOperator.comparison_operand().map { comparisonOperandcontext ->
-         val arithmeticExpression = comparisonOperandcontext.arithmetic_expr() as TaxiParser.ArithmeticExpressionNumericEntityContext
-         when (val numericEntity = arithmeticExpression.numeric_entity()) {
-            is TaxiParser.LiteralConstContext -> {
-               val str = numericEntity.literal().valueOrNull()
-               try {
-                  ConstantEntity(str).right()
-               } catch (e: Exception) {
-                  Either.left(CompilationError(comparisonExpressionContext.start,
-                     "$str must be a valid decimal"))
-
-               }
-
-            }
-            is TaxiParser.NumericVariableContext -> FieldReferenceEntity(numericEntity.propertyToParameterConstraintLhs().qualifiedName().text).right()
-            else -> Either.left(CompilationError(comparisonExpressionContext.start,
-               "invalid numeric entity"))
-         }
-      }
-
-      if (retVal.size != 2) {
-         return Either.left(CompilationError(comparisonExpressionContext.start,
-            "invalid numeric entity"))
-      } else {
-         val mapped = retVal.map {
-            when (it) {
-               is Either.Right -> {
-                  it.b
-               }
-               is Either.Left -> {
-                  return Either.left(CompilationError(comparisonExpressionContext.start,
-                     "invalid numeric entity"))
-               }
-            }
-         }
-         return ComparisonExpression(ComparisonOperator.forSymbol(comparisonExpressionContextWithOperator.comp_operator().text), mapped[0], mapped[1]).right()
-      }
+      val logicalExpressionCompiler = LogicalExpressionCompiler(this.compiler.tokenProcessor)
+      return logicalExpressionCompiler.processLogicalExpressionContext(logicalExpressionCtx)
    }
 
    private fun compileSelectorExpression(selectorBlock: TaxiParser.ConditionalTypeWhenSelectorContext?, namespace: Namespace, targetType: Type): Either<List<CompilationError>, WhenSelectorExpression> {
       return when {
-         selectorBlock == null -> EmptyReferenceSelector().right()
-         selectorBlock.mappedExpressionSelector() != null -> compileTypedAccessor(selectorBlock.mappedExpressionSelector(), namespace, targetType)
+         selectorBlock == null -> EmptyReferenceSelector.right()
+         selectorBlock.mappedExpressionSelector() != null -> compileTypedAccessor(selectorBlock.mappedExpressionSelector(), namespace)
          selectorBlock.fieldReferenceSelector() != null -> compileFieldReferenceSelector(selectorBlock.fieldReferenceSelector(), targetType)
          else -> error("Unhandled where block selector condition")
       }
@@ -427,7 +355,7 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
       return field
    }
 
-   private fun compileTypedAccessor(expressionSelector: TaxiParser.MappedExpressionSelectorContext, namespace: Namespace, targetType: Type): Either<List<CompilationError>, AccessorExpressionSelector> {
+   private fun compileTypedAccessor(expressionSelector: TaxiParser.MappedExpressionSelectorContext, namespace: Namespace): Either<List<CompilationError>, AccessorExpressionSelector> {
       return compiler.parseType(namespace, expressionSelector.typeType())
          .flatMap { type ->
             compiler.compileScalarAccessor(expressionSelector.scalarAccessorExpression(), type).map { accessor ->

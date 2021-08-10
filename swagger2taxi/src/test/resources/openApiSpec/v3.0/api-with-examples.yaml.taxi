@@ -1,0 +1,12 @@
+namespace vyne.openApi {
+   
+   
+   service Service {
+      @HttpOperation(method = "GET" , url = "/")
+      operation listVersionsv2(  ) : Any
+   }
+   service V2Service {
+      @HttpOperation(method = "GET" , url = "/v2")
+      operation getVersionDetailsv2(  ) : Any
+   }
+}

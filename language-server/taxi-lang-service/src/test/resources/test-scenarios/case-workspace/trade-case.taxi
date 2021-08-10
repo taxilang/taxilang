@@ -1,0 +1,7 @@
+import acme.fx.CountryCode
+
+type Country inherits String
+
+type baz {
+   code: CountryCode
+}

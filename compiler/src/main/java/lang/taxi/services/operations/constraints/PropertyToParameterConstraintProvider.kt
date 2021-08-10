@@ -2,6 +2,7 @@ package lang.taxi.services.operations.constraints
 
 import arrow.core.Either
 import arrow.core.flatMap
+import arrow.core.left
 import lang.taxi.*
 import lang.taxi.query.asDotJoinedPath
 import lang.taxi.services.Operation
@@ -90,13 +91,24 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       return when (type) {
          is TypeAlias -> getUnderlyingType(type.aliasType!!, constraint, target)
          is ArrayType -> getUnderlyingType(type.type, constraint, target)
+         is StreamType -> getUnderlyingType(type.type, constraint, target)
          is ObjectType -> Either.right(type)
-         else -> Either.left(MalformedConstraint.from("Constraint for ${constraint.propertyIdentifier.description} on ${target.description} is malformed - constraints are only supported on Object types.", constraint))
+         else -> Either.left(MalformedConstraint.from("Constraint for ${constraint.propertyIdentifier.description} type ${type} on ${target.description} is malformed - constraints are only supported on Object types.", constraint))
       }
    }
 
    override fun applies(constraint: TaxiParser.ParameterConstraintExpressionContext): Boolean {
       return constraint.propertyToParameterConstraintExpression() != null
+   }
+
+   fun build(propertyToParameterConstraintExpression: TaxiParser.PropertyToParameterConstraintExpressionContext,
+             typeResolver: NamespaceQualifiedTypeResolver): Either<List<CompilationError>, PropertyToParameterConstraint> {
+      val operator = Operator.parse(propertyToParameterConstraintExpression.comparisonOperator().text)
+      return parseLhs(typeResolver, propertyToParameterConstraintExpression).flatMap { propertyIdentifier ->
+         parseRhs(propertyToParameterConstraintExpression).map { valueExpression ->
+            PropertyToParameterConstraint(propertyIdentifier, operator, valueExpression, propertyToParameterConstraintExpression.toCompilationUnits())
+         }
+      }
    }
 
    fun build(type: Type, typeResolver: NamespaceQualifiedTypeResolver, context: TaxiParser.ParameterConstraintExpressionContext): Either<List<CompilationError>, Constraint> {

@@ -3,7 +3,7 @@ package lang.taxi.generators
 import com.winterbe.expekt.should
 import lang.taxi.Compiler
 import lang.taxi.messages.Severity
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.fail
 
 // Note - this is also more heavily tested via the Kotlin to Taxi projects.
@@ -61,12 +61,12 @@ type Person
          }
       """.trimIndent()).compile()
       val generated = SchemaWriter().generateSchemas(listOf(src))[0]
-      val expected = """type DateOfBirth inherits lang.taxi.Date
-type TimeOfBirth inherits lang.taxi.Time
-type BirthTimestamp inherits lang.taxi.Instant
-type WeightInGrams inherits lang.taxi.Decimal
-type WeightInOunces inherits lang.taxi.Decimal
-type OuncesToGramsMultiplier inherits lang.taxi.Decimal
+      val expected = """type DateOfBirth inherits Date
+type TimeOfBirth inherits Time
+type BirthTimestamp inherits Instant
+type WeightInGrams inherits Decimal
+type WeightInOunces inherits Decimal
+type OuncesToGramsMultiplier inherits Decimal
 
 model Person {
    birthDate : DateOfBirth( @format = "dd-mm-yyyy" )
@@ -92,9 +92,9 @@ model Person {
       """.trimIndent()).compile()
       val generated = SchemaWriter().generateSchemas(listOf(src))[0]
       val expected = """
-         type StringField inherits lang.taxi.String
+         type StringField inherits String
 
-         type NumberField inherits lang.taxi.Int
+         type NumberField inherits Int
 
          model Thing {
             stringThing : StringField  by default("foo")
@@ -115,7 +115,7 @@ model Person {
       val schema = Compiler(src).compile()
       val generated = SchemaWriter().generateSchemas(listOf(schema))[0]
       val expected = """
-         type TransactionEventDateTime inherits lang.taxi.Instant
+         type TransactionEventDateTime inherits Instant
 
          model Order {
             orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", @format = "yyyy-MM-dd'T'HH:mm:ss.SSS" )
@@ -133,7 +133,7 @@ model Person {
             }"""
       val schema = Compiler(src).compile()
       val generated = SchemaWriter().generateSchemas(listOf(schema))[0]
-      val expected = """type TransactionEventDateTime inherits lang.taxi.Instant
+      val expected = """type TransactionEventDateTime inherits Instant
       model Order {
          orderDateTime : TransactionEventDateTime( @format = ["yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "yyyy-MM-dd'T'HH:mm:ss.SSS"] @offset = 60 )
       }""".trimIndent()
@@ -144,6 +144,7 @@ model Person {
    @Test
    fun `outputs coalesce statements`() {
       val generated = """
+
                type Qty inherits Decimal
                type QtyHit inherits Decimal
                type QtyFill inherits Decimal
@@ -151,25 +152,29 @@ model Person {
                type SomeAnotherQty inherits SomeQty
 
                model Foo {
-                  field1: SomeAnotherQty as coalesce(Qty, QtyHit, QtyFill)
+                  qty1: Qty inherits Decimal
+                  qty2: QtyHit inherits Decimal
+                  field1: SomeAnotherQty by coalesce(this.qty1, this.qty2)
                }
 
             """.trimIndent()
          .compileAndRegenerateSource()
 
       val expected = """
-        type Qty inherits lang.taxi.Decimal
+        type Qty inherits Decimal
 
-type QtyHit inherits lang.taxi.Decimal
+type QtyHit inherits Decimal
 
-type QtyFill inherits lang.taxi.Decimal
+type QtyFill inherits Decimal
 
-type SomeQty inherits lang.taxi.Decimal
+type SomeQty inherits Decimal
 
 type SomeAnotherQty inherits SomeQty
 
 model Foo {
-   field1 : SomeAnotherQty as coalesce(Qty, QtyHit, QtyFill)
+   qty1 : Qty
+   qty2 : QtyHit
+   field1 : SomeAnotherQty  by taxi.stdlib.coalesce( this.qty1,this.qty2 )
 }
 
       """.trimIndent()
@@ -216,6 +221,44 @@ model Foo {
       generated.trimNewLines().should.equal(expected.trimNewLines())
       generated.shouldCompile()
    }
+
+   @Test
+   fun outputsFormatsOnNullableTypes() {
+      val src = Compiler("""
+         type DateOfBirth inherits Date
+         type TimeOfBirth inherits Time
+         type BirthTimestamp inherits Instant
+         type WeightInGrams inherits Decimal
+         type WeightInOunces inherits Decimal
+         type OuncesToGramsMultiplier inherits Decimal
+         model Person {
+            birthDate : DateOfBirth?( @format = "dd-mm-yyyy" )
+            timeOfBirth : TimeOfBirth?( @format = "hh:mm:ss" )
+            startupTime : BirthTimestamp? by (this.birthDate + this.timeOfBirth)
+            weightInGrams : WeightInGrams? by xpath("/foo")
+            weightInOunces : WeightInOunces? as (WeightInGrams * OuncesToGramsMultiplier)
+         }
+      """.trimIndent()).compile()
+      val generated = SchemaWriter().generateSchemas(listOf(src))[0]
+      val expected = """type DateOfBirth inherits Date
+type TimeOfBirth inherits Time
+type BirthTimestamp inherits Instant
+type WeightInGrams inherits Decimal
+type WeightInOunces inherits Decimal
+type OuncesToGramsMultiplier inherits Decimal
+
+model Person {
+   birthDate : DateOfBirth?( @format = "dd-mm-yyyy" )
+   timeOfBirth : TimeOfBirth?( @format = "hh:mm:ss" )
+   startupTime : BirthTimestamp?  by (this.birthDate + this.timeOfBirth)
+   weightInGrams : WeightInGrams?  by xpath("/foo")
+   weightInOunces : WeightInOunces? as (WeightInGrams * OuncesToGramsMultiplier )
+}
+"""
+      generated.trimNewLines().should.equal(expected.trimNewLines())
+      generated.shouldCompile()
+   }
+
 }
 
 

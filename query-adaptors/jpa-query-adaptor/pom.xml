@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <parent>
       <artifactId>query-adaptors</artifactId>
-      <groupId>lang.taxi</groupId>
-      <version>0.12.2-SNAPSHOT</version>
+      <groupId>org.taxilang</groupId>
+      <version>1.30.4-SNAPSHOT</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -21,17 +21,17 @@
 
    <dependencies>
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>compiler</artifactId>
          <version>${project.version}</version>
       </dependency>
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>taxi-annotations</artifactId>
          <version>${project.version}</version>
       </dependency>
       <dependency>
-         <groupId>lang.taxi</groupId>
+         <groupId>org.taxilang</groupId>
          <artifactId>java2taxi</artifactId>
          <version>${project.version}</version>
       </dependency>

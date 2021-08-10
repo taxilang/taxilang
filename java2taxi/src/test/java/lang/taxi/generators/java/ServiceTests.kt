@@ -2,23 +2,18 @@ package lang.taxi.generators.java
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
-import lang.taxi.TypeAliasRegistry
-import lang.taxi.annotations.Constraint
-import lang.taxi.annotations.DataType
-import lang.taxi.annotations.Namespace
-import lang.taxi.annotations.Operation
-import lang.taxi.annotations.Parameter
-import lang.taxi.annotations.ResponseConstraint
-import lang.taxi.annotations.ResponseContract
-import lang.taxi.annotations.Service
+import lang.taxi.annotations.*
 import lang.taxi.demo.FirstName
+import lang.taxi.generators.kotlin.TypeAliasRegister
 import lang.taxi.testing.TestHelpers
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal
 
 class ServiceTests {
+   val typeMapper = DefaultTypeMapper(typeAliasRegister = TypeAliasRegister.forPackageNames(listOf("lang.taxi.generators.java", "lang.taxi.demo")))
+
    @DataType("taxi.example.Money")
    data class Money(
       @field:DataType("taxi.example.Currency", documentation = "Describes the currency") val currency: String,
@@ -106,7 +101,7 @@ service TestService {
 
 
    @Test
-   @Ignore("Needs investigation - looks like type aliases not being registered correctly - is the plugin running in the build?")
+   @Disabled("Needs investigation - looks like type aliases not being registered correctly - is the plugin running in the build?")
    fun givenOperationReturnsTypeAliasedList_then_schemaIsGeneratedCorrectly() {
       @Service("TestService")
       @Namespace("foo")
@@ -116,8 +111,7 @@ service TestService {
             TODO()
          }
       }
-      TypeAliasRegistry.register(TypeAliases::class)
-      val taxiDef = TaxiGenerator().forClasses(TestService::class.java).generateAsStrings()
+      val taxiDef = TaxiGenerator(typeMapper).forClasses(TestService::class.java).generateAsStrings()
       val expected = """
 namespace foo {
 
@@ -141,8 +135,7 @@ namespace foo {
             TODO()
          }
       }
-      TypeAliasRegistry.register(TypeAliases::class)
-      val taxiDef = TaxiGenerator().forClasses(TestService::class.java).generateAsStrings()
+      val taxiDef = TaxiGenerator(typeMapper).forClasses(TestService::class.java).generateAsStrings()
       val expected = """
     namespace taxi.example {
 
@@ -171,21 +164,15 @@ namespace foo {
             TODO("Not a real service")
          }
       }
-      TypeAliasRegistry.register(lang.taxi.demo.TypeAliases::class)
-      TypeAliasRegistry.register(TypeAliases::class)
-
       // Note - we're not using compilesSameAs(..) for tests involving imports, as they likely don't compile without the imported definition
-      val taxiDef = TaxiGenerator().forClasses(TestService::class.java).generateAsStrings()
+      val taxiDef = TaxiGenerator(typeMapper).forClasses(TestService::class.java).generateAsStrings()
       taxiDef.joinToString("\n").should.contain("import lang.taxi.demo.FirstName")
    }
 
    @Test
    fun generatesValidTaxiFromJavaService() {
-      TypeAliasRegistry.register(lang.taxi.demo.TypeAliases::class)
-      TypeAliasRegistry.register(TypeAliases::class)
-
       // Note - we're not using compilesSameAs(..) for tests involving imports, as they likely don't compile without the imported definition
-      val taxiDef = TaxiGenerator().forClasses(JavaServiceTest::class.java).generateAsStrings()
+      val taxiDef = TaxiGenerator(typeMapper).forClasses(JavaServiceTest::class.java).generateAsStrings()
       // Imports should be collated to the top
       taxiDef[0].should.equal("import lang.taxi.FirstName")
       taxiDef[1].trimNewLines().should.equal("""namespace foo {
@@ -193,7 +180,7 @@ namespace foo {
       name : PersonName
    }
 
-   type PersonName inherits lang.taxi.String
+   type PersonName inherits String
 
 
 }""".trimNewLines())
@@ -208,7 +195,7 @@ namespace foo {
    }
 
    @Test
-   @Ignore("Needs investigation - looks like type aliases not being registered correctly - is the plugin running in the build?")
+   @Disabled("Needs investigation - looks like type aliases not being registered correctly - is the plugin running in the build?")
    fun given_serviceAcceptsTypeAliasedPrimitive_then_signatureIsGeneratedCorrectly() {
       @Service("TestService")
       @Namespace("taxi.example")
@@ -218,9 +205,7 @@ namespace foo {
             TODO("Not a real service")
          }
       }
-      TypeAliasRegistry.register(TypeAliases::class)
-
-      val taxiDef = TaxiGenerator().forClasses(TestService::class.java).generateAsStrings()
+      val taxiDef = TaxiGenerator(typeMapper).forClasses(TestService::class.java).generateAsStrings()
       val expected = """
 namespace foo {
     type PersonName inherits String
@@ -246,7 +231,7 @@ namespace taxi.example {
          }
       }
 
-      val taxiDef = TaxiGenerator().forClasses(TestService::class.java).generateAsStrings()
+      val taxiDef = TaxiGenerator(typeMapper).forClasses(TestService::class.java).generateAsStrings()
       val expected = """
 namespace taxi.example {
     service TestService {

@@ -9,9 +9,7 @@ import lang.taxi.annotations.ResponseConstraint
 import lang.taxi.annotations.ResponseContract
 import lang.taxi.services.operations.constraints.ConstantValueExpression
 import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
-import me.eugeniomarletti.kotlin.metadata.shadow.utils.addToStdlib.cast
-import me.eugeniomarletti.kotlin.metadata.shadow.utils.addToStdlib.safeAs
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class AttributeConstantConstraintAnnotationConverterTest {
 
@@ -21,8 +19,8 @@ class AttributeConstantConstraintAnnotationConverterTest {
       val constraint = mockConstraint("a = 'b'")
       expect(converter.canProvide(constraint)).to.be.`true`
       val result = converter.provide(constraint)
-      result.propertyIdentifier.cast<PropertyFieldNameIdentifier>().name.path.should.equal("a")
-      result.expectedValue.cast<ConstantValueExpression>().value.should.equal("b")
+      (result.propertyIdentifier as PropertyFieldNameIdentifier).name.path.should.equal("a")
+      (result.expectedValue as ConstantValueExpression).value.should.equal("b")
    }
 
    @Test

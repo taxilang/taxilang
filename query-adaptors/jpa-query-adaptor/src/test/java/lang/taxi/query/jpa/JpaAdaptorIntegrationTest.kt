@@ -3,8 +3,8 @@ package lang.taxi.query.jpa
 import com.winterbe.expekt.should
 import lang.taxi.annotations.DataType
 import lang.taxi.types.QualifiedName
-import org.junit.Test
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringBootConfiguration
 import org.springframework.boot.autoconfigure.domain.EntityScan
@@ -12,14 +12,14 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.context.annotation.Import
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
-import org.springframework.test.context.junit4.SpringRunner
+import org.springframework.test.context.junit.jupiter.SpringExtension
 import java.time.Instant
 import java.time.LocalDate
 import javax.persistence.Entity
 import javax.persistence.Id
 
 @DataJpaTest
-@RunWith(SpringRunner::class)
+@ExtendWith(SpringExtension::class)
 class JpaAdaptorIntegrationTest {
 
    @Autowired

@@ -5,8 +5,11 @@ import io.swagger.oas.models.PathItem
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Type
 import lang.taxi.annotations.HttpOperation
+import lang.taxi.annotations.HttpPathVariable
 import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.generators.Logger
+import lang.taxi.generators.openApi.Utils.removeIllegalCharacters
+import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
 import lang.taxi.generators.openApi.swagger.SwaggerTypeMapper
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.Annotation
@@ -61,7 +64,7 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
                 .filter { canSupport(it.value) }
                 .map { (method, swaggerOperation) -> generateOperation(method, swaggerOperation, fullPath) }
         val derivedServiceName = relativePath.split("/")
-                .map { it.removeSurrounding("{", "}").capitalize() }
+                .map { it.removeSurrounding("{", "}").replaceIllegalCharacters().capitalize() }
                 .joinToString(separator = "") + "Service"
         val qualifiedServiceName = "${defaultNamespace}.$derivedServiceName"
         return TaxiService(
@@ -97,7 +100,7 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
             val annotations = getParamAnnotations(swaggerParam)
             val type = getParamType(swaggerParam)
             val constraints = emptyList<Constraint>()
-            lang.taxi.services.Parameter(annotations, type, swaggerParam.name, constraints)
+            lang.taxi.services.Parameter(annotations, type, swaggerParam.name.replaceIllegalCharacters(), constraints)
         }
         val returnType = getReturnType(swaggerOperation)
         val operationId = OperationIdProvider.getOperationId(swaggerOperation, pathMapping, method)
@@ -107,7 +110,8 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
                 annotations.toAnnotations(),
                 parameters,
                 returnType,
-                listOf(CompilationUnit.unspecified())
+                listOf(CompilationUnit.unspecified()),
+                typeDoc = swaggerOperation.description,
         )
 
     }
@@ -149,6 +153,7 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
     private fun getParamAnnotations(param: Parameter): List<Annotation> {
         return when (param) {
             is BodyParameter -> listOf(HttpRequestBody.toAnnotation())
+            is PathParameter -> listOf(HttpPathVariable(param.name).toAnnotation())
             // TODO : Path variables?
             else -> emptyList()
         }
@@ -156,27 +161,21 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
 }
 
 object OperationIdProvider {
-    fun getOperationId(operation: v2.io.swagger.models.Operation, pathMapping: String, method: HttpMethod): String {
-        return if (operation.operationId != null) {
-            return operation.operationId
-        } else {
-            generateOperationId(pathMapping, method.name.toLowerCase())
-        }
-    }
+    fun getOperationId(operation: v2.io.swagger.models.Operation, pathMapping: String, method: HttpMethod): String =
+        getOperationId(operation.operationId, pathMapping, method.name)
+
+    private fun getOperationId(operationId: String?, pathMapping: String, methodName: String) =
+        operationId?.replaceIllegalCharacters() ?: generateOperationId(pathMapping, methodName.toLowerCase())
 
     private fun generateOperationId(pathMapping: String, methodName: String): String {
         val path = pathMapping.urlPath().split("/")
         val words = listOf(methodName) + path
-        return words.joinToString("") { it.capitalize() }
+        return words.joinToString("") { it.removeIllegalCharacters().capitalize() }
     }
 
-    fun getOperationId(operation: Operation, pathMapping: String, method: PathItem.HttpMethod): String {
-        return if (operation.operationId != null) {
-            return operation.operationId
-        } else {
-            generateOperationId(pathMapping, method.name.toLowerCase())
-        }
-    }
+    fun getOperationId(operation: Operation, pathMapping: String, method: PathItem.HttpMethod): String =
+        getOperationId(operation.operationId, pathMapping, method.name)
+
 }
 
 private fun String.urlPath(): String {

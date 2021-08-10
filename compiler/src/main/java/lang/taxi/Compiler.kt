@@ -5,7 +5,6 @@ import arrow.core.getOrHandle
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import lang.taxi.compiler.TokenProcessor
-import lang.taxi.compiler.TypeChecker
 import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.linter.Linter
 import lang.taxi.linter.LinterRuleConfiguration
@@ -19,6 +18,7 @@ import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.*
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
+import org.antlr.v4.runtime.tree.ParseTree
 import java.io.File
 import java.io.Serializable
 import java.util.*
@@ -89,6 +89,8 @@ data class CompilationError(
    override fun toString(): String = "[${severity.label}]: ${sourceName.orEmpty()}($line,$char) $detailMessage"
 }
 
+fun List<CompilationError>.errors(): List<CompilationError> = this.filter { it.severity == Severity.ERROR }
+
 open class CompilationException(val errors: List<CompilationError>) :
    RuntimeException(errors.joinToString("\n") { it.toString() }) {
    constructor(error: CompilationError) : this(listOf(error))
@@ -108,9 +110,22 @@ class DocumentMalformedException(val errors: List<DocumentStrucutreError>) :
    RuntimeException(errors.joinToString { it.detailMessage })
 
 class CompilerTokenCache {
+   init {
+      val f = ""
+      f.toString()
+   }
+
    private val streamNameToStream = mutableMapOf<String, CharStream>()
    private val cache: Cache<CharStream, TokenStreamParseResult> = CacheBuilder.newBuilder()
       .build<CharStream, TokenStreamParseResult>()
+
+   fun get(sourceName: String): TokenStreamParseResult? {
+      val normalizedSourceName = SourceNames.normalize(sourceName)
+      val cacheMap = cache.asMap()
+      return cacheMap.keys
+         .firstOrNull { it.sourceName == normalizedSourceName }
+         ?.let { cacheMap.get(it) }
+   }
 
    fun parse(input: CharStream): TokenStreamParseResult {
       return cache.get(input) {
@@ -304,11 +319,11 @@ class Compiler(
 
    fun queriesWithErrorMessages(): Pair<List<CompilationError>, List<TaxiQlQuery>> {
       if (syntaxErrors.isNotEmpty()) {
-        return syntaxErrors to listOf()
+         return syntaxErrors to listOf()
       }
       val builder = tokenProcessrWithImports
       val (errors, queries) = builder.buildQueries()
-     return  errors to queries
+      return errors to queries
    }
 
 
@@ -336,15 +351,56 @@ class Compiler(
    /**
     * Note that indexes are 0-Based
     */
-   fun contextAt(line: Int, char: Int, sourceName: String = UNKNOWN_SOURCE): ParserRuleContext? {
+   fun contextAt(zeroBasedLineIndex: Int, char: Int, sourceName: String = UNKNOWN_SOURCE): ParserRuleContext? {
+      val sourceUri = SourceNames.normalize(sourceName)
       val tokenTable = tokens.tokenStore.tokenTable(sourceName)
-      val row = tokenTable.row(line) as SortedMap
+
+      val row = tokenTable.row(zeroBasedLineIndex).let {
+         if (it.isEmpty()) {
+            // This is a workaround.  I've noticed that sometimes the value the compiler
+            // contains in it's token table is different than the independent value within the tokenCache.
+            // This is clearly a bug, but I can't work out the flow.
+            // Instead of fixing the issue, imma just hack around it.  Hackity hackity hackity.
+            // There's...like...no chance this'll come back and bite me, right?
+            val tokensFromCache = tokenCache.get(sourceName)
+            val tokenTableFromCache = tokensFromCache?.tokens?.tokenStore?.tokenTable(sourceName)
+            tokenTableFromCache?.row(zeroBasedLineIndex) ?: it
+         } else {
+            it
+         }
+      } as SortedMap
       if (row.isEmpty()) {
          return null
       }
       val tokenStartIndices = row.keys as SortedSet
       val nearestStartIndex = tokenStartIndices.takeWhile { startIndex -> startIndex <= char }.lastOrNull()
       return nearestStartIndex?.let { index -> row.get(index) }
+   }
+
+
+   /**
+    * When an exact match isn't possible from location, (ie., because of cmpilation errors),
+    * look for the nearest possible context based on the source location.
+    */
+   fun getNearestToken(line: Int, char: Int, sourceName: String = UNKNOWN_SOURCE): ParseTree? {
+      val tokenTable = tokens.tokenStore.tokenTable(sourceName)
+
+      // we can't look up directly from the line number, as some tokens will span multiple lines
+      // (especially if there are compiler errors)
+      val nearestRow = tokenTable.rowKeySet()
+         .takeWhile { rowIndex -> rowIndex <= line }.lastOrNull()
+         ?.let { rowIndex -> tokenTable.row(rowIndex) }
+         ?: return null
+
+      val nearestTree = nearestRow.values
+         .firstOrNull { token -> token.containsLocation(line + 1, char) }
+         ?.childAtLocation(line + 1, char)
+
+      return nearestTree
+   }
+
+   fun containsTokensForSource(sourceName: String): Boolean {
+      return tokens.tokenStore.containsTokensForSource(sourceName)
    }
 
    /**
@@ -399,6 +455,7 @@ class Compiler(
          .toSet()
    }
 }
+
 
 internal fun <B> Either<ErrorMessage, B>.toCompilationError(start: Token): Either<CompilationError, B> {
    return this.mapLeft { errorMessage -> errorMessage.toCompilationError(start)!! }

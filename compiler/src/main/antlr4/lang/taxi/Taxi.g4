@@ -42,6 +42,7 @@ toplevelObject
     |   functionDeclaration
     |   annotationTypeDeclaration
     |   query
+    |   viewDeclaration
     ;
 
 typeModifier
@@ -53,8 +54,10 @@ typeModifier
     | 'closed'
     ;
 
+typeKind : 'type' | 'model';
+
 typeDeclaration
-    :  typeDoc? annotation* typeModifier* ('type'|'model') Identifier
+    :  typeDoc? annotation* typeModifier* typeKind Identifier
 
         ('inherits' listOfInheritedTypes)?
         typeBody?
@@ -78,21 +81,10 @@ annotationTypeBody: '{' typeMemberDeclaration* '}';
 
 calculatedMemberDeclaration
    : typeMemberDeclaration  'as'
-   (operatorExpression
-   |
-   calculatedExpression)
+   (operatorExpression)
    ;
 
 
-// THIS IS TO BE DEPRECRATED.  Use function infrastructrue, rather than adding new formulas
-calculatedExpression:
-           calculatedFormula '(' calculatedExpressionBody? ')'
-           ;
-
-// THIS IS TO BE DEPRECRATED.  Use function infrastructrue, rather than adding new formulas
-calculatedFormula:
-          'coalesce'
-          ;
 
 calculatedExpressionBody:
          typeType (',' typeType)*
@@ -137,7 +129,7 @@ fieldReferenceSelector: propertyFieldNameQualifier? Identifier;
 typeReferenceSelector: typeType;
 
 conditionalTypeWhenCaseDeclaration:
-   caseDeclarationMatchExpression '->' ( caseFieldAssignmentBlock |  caseScalarAssigningDeclaration);
+   caseDeclarationMatchExpression '->' ( caseFieldAssignmentBlock |  caseScalarAssigningDeclaration | modelAttributeTypeReference);
 
 caseFieldAssignmentBlock:
 '{' caseFieldAssigningDeclaration*'}' ;
@@ -173,13 +165,18 @@ fieldModifier
    : 'closed'
    ;
 fieldDeclaration
-  :   fieldModifier? Identifier (':' (simpleFieldDeclaration | anonymousTypeDefinition))?
+  :   fieldModifier? Identifier (':' (simpleFieldDeclaration | anonymousTypeDefinition | modelAttributeTypeReference))?
   ;
+
+// A type reference that refers to the attribute on a model.
+// eg:  firstName : Person::FirstName.
+// Only meaningful within views.
+modelAttributeTypeReference: typeType '::' typeType;
 
 simpleFieldDeclaration: typeType accessor?;
 
 typeType
-    :   classOrInterfaceType typeArguments? listType? optionalType? parameterConstraint? aliasedType?
+    :   classOrInterfaceType typeArguments? listType? optionalType? parameterConstraint? (aliasedType? | inlineInheritedType?)?
     ;
 
 accessor : scalarAccessor | objectAccessor;
@@ -207,6 +204,7 @@ scalarAccessorExpression
 byFieldSourceExpression:  '(' fieldReferenceSelector ')';
 xpathAccessorDeclaration : 'xpath' '(' accessorExpression ')';
 jsonPathAccessorDeclaration : 'jsonPath' '(' accessorExpression ')';
+
 
 objectAccessor
     : '{' destructuredFieldDeclaration* '}'
@@ -270,6 +268,10 @@ typeAliasDeclaration
 
 aliasedType
    : 'as' typeType
+   ;
+
+inlineInheritedType
+   : 'inherits' typeType
    ;
 
 typeAliasExtensionDeclaration
@@ -391,7 +393,7 @@ operationReturnValueOriginExpression
 propertyToParameterConstraintExpression
    : propertyToParameterConstraintLhs comparisonOperator propertyToParameterConstraintRhs;
 
-propertyToParameterConstraintLhs : propertyFieldNameQualifier? qualifiedName;
+propertyToParameterConstraintLhs : (propertyFieldNameQualifier? qualifiedName)? | modelAttributeTypeReference?;
 propertyToParameterConstraintRhs : (literal | qualifiedName);
 
 propertyFieldNameQualifier : 'this' '.';
@@ -437,6 +439,7 @@ comparisonOperator
    | '>='
    | '<='
    | '<'
+   | '!='
    ;
 
 arithmaticOperator
@@ -541,7 +544,10 @@ defaultDefinition: 'default' '(' (literal | qualifiedName) ')';
 // rather than permitting void return types.
 // This is because in a mapping declaration, functions really only have purpose if
 // they return things.
-functionDeclaration: 'declare' 'function' functionName '(' operationParameterList? ')' ':' typeType;
+functionDeclaration: 'declare' (functionModifiers)? 'function' functionName '(' operationParameterList? ')' ':' typeType;
+
+functionModifiers: 'query';
+
 
 // Deprecated, use functionDeclaration
 readFunction: functionName '(' formalParameterList? ')';
@@ -562,7 +568,7 @@ formalParameterList
       //    | defaultDefinition
       //    | readFunction
       //    ;
-parameter: literal |  scalarAccessorExpression | fieldReferenceSelector | typeReferenceSelector;
+parameter: literal |  scalarAccessorExpression | fieldReferenceSelector | typeReferenceSelector | modelAttributeTypeReference;
 
 columnIndex : IntegerLiteral | StringLiteral;
 
@@ -678,7 +684,8 @@ queryParam: Identifier ':' typeType;
 // findAllDirective: 'findAll';
 // findOneDirective: 'findAll';
 
-queryDirective: FindAll | FindOne;
+queryDirective: FindAll | FindOne | Stream | Find;
+findDirective: Find;
 
 givenBlock : 'given' '{' factList '}';
 
@@ -690,7 +697,8 @@ fact : variableName typeType '=' literal;
 variableName: Identifier ':';
 queryBody:
    givenBlock?
-	queryDirective '{' queryTypeList '}' queryProjection?;
+	queryDirective '{' queryTypeList '}' queryProjection?
+	;
 
 queryTypeList: typeType (',' typeType)*;
 
@@ -722,7 +730,34 @@ anonymousField:
                                     //    } (by this.salesUtCode)
    ;
 
+viewDeclaration
+    :  typeDoc? annotation* typeModifier* 'view' Identifier
+            ('inherits' listOfInheritedTypes)?
+            'with' 'query' '{' findBody (',' findBody)* '}'
+    ;
 
+findBody: findDirective '{' findBodyQuery '}' ('as' anonymousTypeDefinition)?;
+findBodyQuery: joinTo;
+filterableTypeType: typeType ('(' filterExpression ')')?;
+joinTo: filterableTypeType ('(' 'joinTo'  filterableTypeType ')')?;
+filterExpression
+    : LPAREN filterExpression RPAREN           # ParenExp
+    | filterExpression AND filterExpression    # AndBlock
+    | filterExpression OR filterExpression     # OrBlock
+    | propertyToParameterConstraintExpression  # AtomExp
+    | in_exprs                                 # InExpr
+    | like_exprs                               # LikeExpr
+    | not_in_exprs                             # NotInExpr
+    ;
+in_exprs: qualifiedName IN literalArray;
+like_exprs: qualifiedName LIKE literal;
+not_in_exprs: qualifiedName NOT_IN literalArray;
+
+modelAttributeTypeReferenceComparison: modelAttributeTypeReference comparison_operand modelAttributeTypeReference;
+modelAttributeTypeReferenceLiteralComparison: modelAttributeTypeReferenceComparison comparison_operand literal;
+modelAttributeTypeReferenceFunctionComparison: modelAttributeTypeReference filterCapability modelAttributeTypeReferenceFunctionComparisonExpression;
+modelAttributeTypeReferenceFunctionComparisonExpression: literalArray | literal;
+NOT_IN: 'not in';
 IN: 'in';
 LIKE: 'like';
 AND : 'and' ;
@@ -730,12 +765,18 @@ OR  : 'or' ;
 
 FindAll: 'findAll';
 FindOne: 'findOne';
+Find: 'find';
+Stream: 'stream';
+
+// Must come before Identifier, to capture booleans correctly
+BooleanLiteral
+    :   TRUE | FALSE
+    ;
 
 Identifier
     :   Letter LetterOrDigit*
     | '`' ~('`')+ '`'
     ;
-
 
 StringLiteral
     :   '"' DoubleQuoteStringCharacter* '"'
@@ -743,9 +784,6 @@ StringLiteral
     ;
 
 
-BooleanLiteral
-    :   'true' | 'false'
-    ;
 
 
 fragment
@@ -888,7 +926,6 @@ COMMENT
 LINE_COMMENT
     :   '//' ~[\r\n]* -> channel(HIDDEN)
     ;
-
 
 GT : '>' ;
 GE : '>=' ;

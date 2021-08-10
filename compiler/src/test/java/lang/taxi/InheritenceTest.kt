@@ -2,19 +2,13 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.types.PrimitiveType
-import org.hamcrest.CoreMatchers.startsWith
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.ExpectedException
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 // NOte : I'm trying to split tests out from GrammarTest
 // to more specific areas.
 // There's also a bunch of tests in GrammarTest that cover type Inheritence
 class InheritenceTest {
-
-   @Rule
-   @JvmField
-   val expectedException = ExpectedException.none()
 
    @Test
    fun canInheritFromCollection() {
@@ -27,6 +21,37 @@ type ListOfPerson inherits Person[]
       val doc = Compiler(src).compile()
       val type = doc.type("ListOfPerson")
       type.inheritsFrom.map { it.toQualifiedName().parameterizedName }.should.contain("lang.taxi.Array<Person>")
+   }
+
+   @Test
+   fun `can define inline inheritence`() {
+      val doc = """model Person {
+         |firstName : FirstName inherits String
+         |}
+      """.trimMargin()
+         .compiled()
+      doc.type("FirstName")
+         .basePrimitive.should.equal(PrimitiveType.STRING)
+      doc.model("Person")
+         .field("firstName")
+         .type.qualifiedName.should.equal("FirstName")
+   }
+
+   @Test
+   fun `can define inline inheritence in namespace`() {
+      val doc = """
+         |namespace foo
+         |
+         |model Person {
+         |firstName : FirstName inherits String
+         |}
+      """.trimMargin()
+         .compiled()
+      doc.type("foo.FirstName")
+         .basePrimitive.should.equal(PrimitiveType.STRING)
+      doc.model("foo.Person")
+         .field("firstName")
+         .type.qualifiedName.should.equal("foo.FirstName")
    }
 
    @Test
@@ -117,10 +142,10 @@ type ListOfPerson inherits Person[]
          type BetterCountry inherits Country
       """.trimIndent()
 
-      expectedException.expect(CompilationException::class.java)
-      expectedException.expectMessage("UnknownSource(5,28) A Type cannot inherit from an Enum")
-
-      Compiler(src).compile()
+      val exception = assertThrows<CompilationException> {
+         Compiler(src).compile()
+      }
+      exception.message.should.contain("UnknownSource(5,28) A Type cannot inherit from an Enum")
    }
 
    @Test
@@ -130,10 +155,10 @@ type ListOfPerson inherits Person[]
          enum BetterCountry inherits Country
       """.trimIndent()
 
-      expectedException.expect(CompilationException::class.java)
-      expectedException.expectMessage("UnknownSource(2,28) An Enum can only inherit from an Enum")
-
-      Compiler(src).compile()
+      val exception = assertThrows<CompilationException> {
+         Compiler(src).compile()
+      }
+      exception.message.should.contain("UnknownSource(2,28) An Enum can only inherit from an Enum")
    }
 
    @Test
@@ -149,10 +174,8 @@ type ListOfPerson inherits Person[]
          }
       """.trimIndent()
 
-      expectedException.expect(CompilationException::class.java)
-      expectedException.expectMessage(startsWith("Compilation Error: UnknownSource(6,34) extraneous input '{'"))
-
-      Compiler(src).compile()
+      val (error, _) = Compiler(src).compileWithMessages()
+      error.first().detailMessage.should.equal("Syntax error at '{'.  That's all we know.")
    }
 
    @Test
@@ -167,24 +190,22 @@ type ListOfPerson inherits Person[]
          enum AllCountries inherits BestCountry, BetterCountry
       """.trimIndent()
 
-      expectedException.expect(CompilationException::class.java)
-      expectedException.expectMessage(startsWith("Compilation Error: UnknownSource(7,38) extraneous input ','"))
-
-      Compiler(src).compile()
+      val (error, _) = Compiler(src).compileWithMessages()
+      error.first().detailMessage.should.equal("Syntax error at ','.  That's all we know.")
    }
 
-    @Test
-    fun cacheAliasTypeProperties() {
-        val src = """
+   @Test
+   fun cacheAliasTypeProperties() {
+      val src = """
          type alias CcySymbol as String""".trimIndent()
-       val doc = Compiler(src).compile()
-       doc.type("CcySymbol").basePrimitive.should.be.equal(PrimitiveType.STRING)
-       doc.type("CcySymbol").basePrimitive.should.be.equal(PrimitiveType.STRING)
-       doc.type("CcySymbol").allInheritedTypes.should.be.equal(setOf(PrimitiveType.STRING))
-       doc.type("CcySymbol").allInheritedTypes.should.be.equal(setOf(PrimitiveType.STRING))
-       doc.type("CcySymbol").inheritsFromPrimitive.should.be.`true`
-       doc.type("CcySymbol").inheritsFromPrimitive.should.be.`true`
-    }
+      val doc = Compiler(src).compile()
+      doc.type("CcySymbol").basePrimitive.should.be.equal(PrimitiveType.STRING)
+      doc.type("CcySymbol").basePrimitive.should.be.equal(PrimitiveType.STRING)
+      doc.type("CcySymbol").allInheritedTypes.should.be.equal(setOf(PrimitiveType.STRING))
+      doc.type("CcySymbol").allInheritedTypes.should.be.equal(setOf(PrimitiveType.STRING))
+      doc.type("CcySymbol").inheritsFromPrimitive.should.be.`true`
+      doc.type("CcySymbol").inheritsFromPrimitive.should.be.`true`
+   }
 
    @Test
    fun cachePrimitiveTypeProperties() {
