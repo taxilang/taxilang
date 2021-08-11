@@ -2,7 +2,7 @@ package lang.taxi.types
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class QualifiedNameParserTest {
 

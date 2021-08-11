@@ -1,0 +1,33 @@
+namespace vyne.openApi {
+   model NewPet {
+      name : String
+      tag : String?
+   }
+   
+   model Pet inherits NewPet {
+      id : Int
+   }
+   
+   model Error {
+      code : Int
+      message : String
+   }
+   
+   service PetsService {
+      [[ Returns all pets from the system that the user has access to
+      ]]
+      @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets")
+      operation findPets(  tags : String,  limit : Int ) : Pet[]
+      [[ Creates a new pet in the store.  Duplicates are allowed ]]
+      @HttpOperation(method = "POST" , url = "http://petstore.swagger.io/api/pets")
+      operation addPet( @RequestBody pet : NewPet ) : Pet
+   }
+   service PetsIdService {
+      [[ Returns a user based on a single ID, if the user does not have access to the pet ]]
+      @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets/{id}")
+      operation find_pet_by_id( @PathVariable(value = "id") id : Int ) : Pet
+      [[ deletes a single pet based on the ID supplied ]]
+      @HttpOperation(method = "DELETE" , url = "http://petstore.swagger.io/api/pets/{id}")
+      operation deletePet( @PathVariable(value = "id") id : Int )
+   }
+}

@@ -1,0 +1,96 @@
+namespace vyne.openApi {
+   model Product {
+      [[ Unique identifier representing a specific product for a given latitude & longitude. For example, uberX in San Francisco will have a different product_id than uberX in Los Angeles. ]]
+      product_id : String?
+      [[ Description of product. ]]
+      description : String?
+      [[ Display name of product. ]]
+      display_name : String?
+      [[ Capacity of product. For example, 4 people. ]]
+      capacity : Int?
+      [[ Image URL representing the product. ]]
+      image : String?
+   }
+   
+   model ProductList {
+      [[ Contains the list of products ]]
+      products : Product[]?
+   }
+   
+   model PriceEstimate {
+      [[ Unique identifier representing a specific product for a given latitude & longitude. For example, uberX in San Francisco will have a different product_id than uberX in Los Angeles ]]
+      product_id : String?
+      [[ [ISO 4217](http://en.wikipedia.org/wiki/ISO_4217) currency code. ]]
+      currency_code : String?
+      [[ Display name of product. ]]
+      display_name : String?
+      [[ Formatted string of estimate in local currency of the start location. Estimate could be a range, a single number (flat rate) or "Metered" for TAXI. ]]
+      estimate : String?
+      [[ Lower bound of the estimated price. ]]
+      low_estimate : Decimal?
+      [[ Upper bound of the estimated price. ]]
+      high_estimate : Decimal?
+      [[ Expected surge multiplier. Surge is active if surge_multiplier is greater than 1. Price estimate already factors in the surge multiplier. ]]
+      surge_multiplier : Decimal?
+   }
+   
+   model Profile {
+      [[ First name of the Uber user. ]]
+      first_name : String?
+      [[ Last name of the Uber user. ]]
+      last_name : String?
+      [[ Email address of the Uber user ]]
+      email : String?
+      [[ Image URL of the Uber user. ]]
+      picture : String?
+      [[ Promo code of the Uber user. ]]
+      promo_code : String?
+   }
+   
+   model Activity {
+      [[ Unique identifier for the activity ]]
+      uuid : String?
+   }
+   
+   model Activities {
+      [[ Position in pagination. ]]
+      offset : Int?
+      [[ Number of items to retrieve (100 max). ]]
+      limit : Int?
+      [[ Total number of items available. ]]
+      count : Int?
+      history : Activity[]?
+   }
+   
+   model Error {
+      code : Int?
+      message : String?
+      fields : String?
+   }
+   
+   service ProductsService {
+      [[ The Products endpoint returns information about the Uber products offered at a given location. The response includes the display name and other details about each product, and lists the products in the proper display order. ]]
+      @HttpOperation(method = "GET" , url = "https://api.uber.com/v1/products")
+      operation GetV1Products(  latitude : Decimal,  longitude : Decimal ) : Product[]
+   }
+   service EstimatesPriceService {
+      [[ The Price Estimates endpoint returns an estimated price range for each product offered at a given location. The price estimate is provided as a formatted string with the full price range and the localized currency symbol.<br><br>The response also includes low and high estimates, and the [ISO 4217](http://en.wikipedia.org/wiki/ISO_4217) currency code for situations requiring currency conversion. When surge is active for a particular product, its surge_multiplier will be greater than 1, but the price estimate already factors in this multiplier. ]]
+      @HttpOperation(method = "GET" , url = "https://api.uber.com/v1/estimates/price")
+      operation GetV1EstimatesPrice(  start_latitude : Decimal,  start_longitude : Decimal,  end_latitude : Decimal,  end_longitude : Decimal ) : PriceEstimate[]
+   }
+   service EstimatesTimeService {
+      [[ The Time Estimates endpoint returns ETAs for all products offered at a given location, with the responses expressed as integers in seconds. We recommend that this endpoint be called every minute to provide the most accurate, up-to-date ETAs. ]]
+      @HttpOperation(method = "GET" , url = "https://api.uber.com/v1/estimates/time")
+      operation GetV1EstimatesTime(  start_latitude : Decimal,  start_longitude : Decimal,  customer_uuid : String,  product_id : String ) : Product[]
+   }
+   service MeService {
+      [[ The User Profile endpoint returns information about the Uber user that has authorized with the application. ]]
+      @HttpOperation(method = "GET" , url = "https://api.uber.com/v1/me")
+      operation GetV1Me(  ) : Profile
+   }
+   service HistoryService {
+      [[ The User Activity endpoint returns data about a user's lifetime activity with Uber. The response will include pickup locations and times, dropoff locations and times, the distance of past requests, and information about which products were requested.<br><br>The history array in the response will have a maximum length based on the limit parameter. The response value count may exceed limit, therefore subsequent API requests may be necessary. ]]
+      @HttpOperation(method = "GET" , url = "https://api.uber.com/v1/history")
+      operation GetV1History(  offset : Int,  limit : Int ) : Activities
+   }
+}

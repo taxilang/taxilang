@@ -8,34 +8,34 @@ import lang.taxi.cli.utils.VersionUpdater
 import lang.taxi.generators.TaxiProjectEnvironment
 import lang.taxi.packages.TaxiPackageProject
 import org.apache.commons.io.FileUtils
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import java.nio.file.Path
 
 class VersionUpdaterTest {
 
-   @Rule
+   @TempDir
    @JvmField
-   val folder = TemporaryFolder()
+   var folder: Path? = null
 
    private val taxiEnvironment = object : TaxiProjectEnvironment {
       override val projectRoot: Path
-         get() = folder.root.toPath()
+         get() = folder!!
       override val outputPath: Path
-         get() = folder.root.toPath()
+         get() = folder!!
       override val project: TaxiPackageProject
          get() = TaxiPackageProject("taxi/taxi", "1.1.1")
    }
 
    lateinit var taxiConf: File
 
-   @Before
+   @BeforeEach
    fun deployTestRepo() {
       val sampleTaxiConf = File(Resources.getResource("samples/maven/taxi.conf").toURI())
-      taxiConf = folder.root.resolve("taxi.conf")
+      taxiConf = folder!!.toFile().resolve("taxi.conf")
       FileUtils.copyFile(sampleTaxiConf, taxiConf)
    }
 
@@ -74,13 +74,15 @@ class VersionUpdaterTest {
       reloaded.version.should.equal("1.1.2")
    }
 
-   @Test(expected = IllegalArgumentException::class)
+   @Test
    fun versionBumpIllegalArgument() {
       val versionBumpCommand = VersionBumpCommand(VersionUpdater()).apply {
          increment = "undefined"
       }
 
-      versionBumpCommand.execute(taxiEnvironment)
+      assertThrows<IllegalArgumentException> {
+         versionBumpCommand.execute(taxiEnvironment)
+      }
    }
 
    @Test
@@ -93,12 +95,14 @@ class VersionUpdaterTest {
       reloaded.version.should.equal(newVersion)
    }
 
-   @Test(expected = IllegalArgumentException::class)
+   @Test
    fun setVersionIllegalArgument() {
       val versionBumpCommand = VersionBumpCommand(VersionUpdater()).apply {
          increment = "undefined"
       }
 
-      versionBumpCommand.execute(taxiEnvironment)
+      assertThrows<IllegalArgumentException> {
+         versionBumpCommand.execute(taxiEnvironment)
+      }
    }
 }

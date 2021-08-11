@@ -8,7 +8,7 @@ import com.winterbe.expekt.should
 import lang.taxi.Compiler
 import lang.taxi.generators.TaxiProjectEnvironment
 import lang.taxi.packages.TaxiPackageProject
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
 

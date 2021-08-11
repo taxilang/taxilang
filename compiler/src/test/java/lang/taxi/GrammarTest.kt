@@ -6,18 +6,13 @@ import lang.taxi.messages.Severity
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.types.*
 import org.antlr.v4.runtime.CharStreams
-import org.junit.Ignore
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.ExpectedException
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.io.File
 import kotlin.test.fail
 
 class GrammarTest {
-
-   @Rule
-   @JvmField
-   val expectedException = ExpectedException.none()
 
    @Test
    fun canFindNamespaces() {
@@ -122,7 +117,7 @@ namespace Blurg {
       val doc = Compiler(testResource("petstore.taxi")).compile()
    }
 
-   @Test(expected = CompilationException::class)
+   @Test
    fun itIsInvalidToDeclareTwoNamespaceElementsWithoutUsingBlocks() {
       val source = """
 namespace foo
@@ -131,8 +126,9 @@ type FooType {}
 namespace bar
 type BarType {}
 """
-      val doc = Compiler(source).compile()
-      expect(doc).to.be.`null`
+      assertThrows<CompilationException> {
+         Compiler(source).compile()
+      }
    }
 
    @Test
@@ -211,8 +207,8 @@ namespace bar {
       foo.field("hatedNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
    }
 
-   @Ignore("Need to make this work consistently. See TokenCollator:collectDuplicateTypes for detail")
-   @Test(expected = CompilationException::class)
+   @Disabled("Need to make this work consistently. See TokenCollator:collectDuplicateTypes for detail")
+   @Test
    fun given_typeIsRedeclaredWithSemanticallyEquivalentDefinition_then_itIsInValid() {
       val source1 = """
 namespace foo {
@@ -231,11 +227,13 @@ namespace foo {
     }
 }
             """
-      Compiler(listOf(CharStreams.fromString(source1, "source1"), CharStreams.fromString(source2, "source2"))).compile()
+      assertThrows<CompilationException> {
+         Compiler(listOf(CharStreams.fromString(source1, "source1"), CharStreams.fromString(source2, "source2"))).compile()
+      }
    }
 
    @Test
-   @Ignore("Need to make this work consistently. See TokenCollator:collectDuplicateTypes for detail")
+   @Disabled("Need to make this work consistently. See TokenCollator:collectDuplicateTypes for detail")
    fun given_typeIsRedeclaredWithDifferentDefinition_then_exceptionIsThrown() {
       val source1 = """
 namespace foo {
@@ -255,8 +253,9 @@ namespace foo {
 }
             """
 
-      expectedException.expect(CompilationException::class.java)
-      Compiler(listOf(CharStreams.fromString(source1, "source1"), CharStreams.fromString(source2, "source2"))).compile()
+      assertThrows<CompilationException> {
+         Compiler(listOf(CharStreams.fromString(source1, "source1"), CharStreams.fromString(source2, "source2"))).compile()
+      }
    }
 
    @Test
@@ -274,7 +273,7 @@ type Test {
    }
 
    @Test
-   @Ignore("https://gitlab.com/vyne/taxi-lang/issues/7")
+   @Disabled("https://gitlab.com/vyne/taxi-lang/issues/7")
    fun annotationCanHaveBooleanArgument() {
       val doc = Compiler("@Bool(value = false) type Test {}").compile()
       val type = doc.objectType("Test")
@@ -385,14 +384,15 @@ type Person {
 
    @Test
    fun throwsExceptionOnUnresolvedType() {
-      expectedException.expect(CompilationException::class.java)
-      expectedException.expectMessage(ErrorMessages.unresolvedType("Bar"))
       val source = """
 type Foo {
    bar : Bar
 }
 """
-      Compiler(source).compile()
+      val exception = assertThrows<CompilationException> {
+         Compiler(source).compile()
+      }
+      expect(exception.message).to.contain(ErrorMessages.unresolvedType("Bar"))
    }
 
    @Test
@@ -874,7 +874,7 @@ type LegacyTradeNotification {
    }
 
    @Test
-   @Ignore("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
+   @Disabled("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
    fun destructuredAccessorsCannotDeclareInvalidPropertyNames() {
       val src = """
 type Money {
@@ -899,7 +899,7 @@ type LegacyTradeNotification {
    }
 
    @Test
-   @Ignore("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
+   @Disabled("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
    fun destructuredAccessorsCanOmitOptionalProperties() {
       val src = """
 type Money {
@@ -918,7 +918,7 @@ type LegacyTradeNotification {
    }
 
    @Test
-   @Ignore("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
+   @Disabled("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
    fun destructuredAccessorsCannotOmitNonNullProperties() {
       val src = """
 type Money {

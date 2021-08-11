@@ -5,7 +5,7 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>org.taxilang</groupId>
-      <version>1.30.3</version>
+      <version>1.30.4</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -29,11 +29,6 @@
       <dependency>
          <groupId>org.spekframework.spek2</groupId>
          <artifactId>spek-runner-junit5</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.junit.vintage</groupId>
-         <artifactId>junit-vintage-engine</artifactId>
          <scope>test</scope>
       </dependency>
    </dependencies>

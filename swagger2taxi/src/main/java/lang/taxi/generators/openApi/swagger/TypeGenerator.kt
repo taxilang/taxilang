@@ -2,6 +2,7 @@ package lang.taxi.generators.openApi.swagger
 
 import lang.taxi.generators.Logger
 import lang.taxi.generators.openApi.Utils
+import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
 import lang.taxi.types.ArrayType
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Field
@@ -58,7 +59,21 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
             return emptySet()
         }
         swagger.definitions.forEach { (name, model) ->
-            generatedTypes.put(name, generateType(name, model))
+           val type = generateType(name, model)
+           /*
+            * generatedTypes is the set of types we want to write out in the
+            * generated taxi code. We don't want to write out
+            * `type lang.taxi.Array` - it gets skipped by `SchemaWriter` anyway,
+            * resulting in an empty `namespace lang.taxi` being written out.
+            *
+            * In addition, generatedTypes is used as a cache by definition name,
+            * which is the same for all arrays, meaning that the first array
+            * generated becomes the sole array used in future, despite them
+            * having different generic types.
+            */
+           if (type !is ArrayType) {
+              generatedTypes.put(name, type)
+           }
 
         }
 
@@ -69,7 +84,7 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
         return when (model) {
             is RefModel -> findTypeByName(model.simpleRef)
             is ArrayModel -> findArrayType(model)
-            else -> TODO()
+            else -> TODO("Cannot yet handle model of type $model")
         }
     }
 
@@ -109,10 +124,10 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
 
     private fun getOrGenerateType(name: String): Type {
         val qualifiedName = Utils.qualifyTypeNameIfRaw(name, defaultNamespace)
-        return generatedTypes.getOrPut(qualifiedName) {
-            val model = swagger.definitions[name]
+        return generatedTypes.getOrPut(qualifiedName.toString()) {
+            val model = swagger.definitions?.get(name)
                     ?: error("No definition is present within the swagger file for type $name")
-            generateType(qualifiedName, model)
+            generateType(qualifiedName.toString(), model)
         }
     }
 
@@ -133,8 +148,12 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
 //
 //        )
         // TODO: Compililation Units / sourceCode linking
-        val typeDef = ObjectTypeDefinition(fields.toSet(), compilationUnit = CompilationUnit.unspecified())
-        return ObjectType(qualifiedName, typeDef)
+        val typeDef = ObjectTypeDefinition(
+           fields = fields.toSet(),
+           compilationUnit = CompilationUnit.unspecified(),
+           typeDoc = model.description,
+        )
+        return ObjectType(qualifiedName.toString(), typeDef)
     }
 
     private fun generateFields(properties: Map<String, Property>): Set<Field> {
@@ -142,7 +161,13 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
     }
 
     private fun generateField(name: String, property: Property): Field {
-        return Field(name, getOrGenerateType(property), nullable = !property.required, compilationUnit = CompilationUnit.unspecified())
+        return Field(
+           name = name.replaceIllegalCharacters(),
+           type = getOrGenerateType(property),
+           nullable = !property.required,
+           compilationUnit = CompilationUnit.unspecified(),
+           typeDoc = property.description,
+        )
     }
 
 
@@ -154,7 +179,7 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
         // TODO : This could be significantly over-simplifying.
         val fields: Set<Field> = model.allOf.filterNot { interfaces.containsKey(it) }
                 .flatMap { generateFields(it.properties) }.toSet()
-        return ObjectType(qualifiedName, ObjectTypeDefinition(
+        return ObjectType(qualifiedName.toString(), ObjectTypeDefinition(
                 fields,
                 inheritsFrom = interfaces.values.toSet(),
                 compilationUnit = CompilationUnit.unspecified() // TODO

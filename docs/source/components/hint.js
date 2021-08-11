@@ -52,16 +52,14 @@ export function Prefer({ props }) {
       </div>
    );
 }
-export function Discourage({ type, ...props }) {
+export function Discourage({ children }) {
    return (
-      <MDXProvider>
          <DiscourageDiv>
             <FloatingDiscourageDiv>
                <BiInfoCircle />
             </FloatingDiscourageDiv>
-            {props.children}
+            <MDXProvider>{children}</MDXProvider>
          </DiscourageDiv>
-      </MDXProvider>
    );
 }
 export function Hint({ type, ...props }) {

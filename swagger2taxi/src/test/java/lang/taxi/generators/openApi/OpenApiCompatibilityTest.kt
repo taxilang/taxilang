@@ -1,15 +1,18 @@
 package lang.taxi.generators.openApi
 
 import com.winterbe.expekt.expect
-import lang.taxi.generators.Level
-import lang.taxi.generators.Message
-import lang.taxi.generators.hasErrors
-import lang.taxi.generators.hasWarnings
+import lang.taxi.generators.*
+import lang.taxi.testing.TestHelpers.expectToCompileTheSame
 import lang.taxi.utils.log
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.DynamicTest.dynamicTest
+import org.junit.jupiter.api.TestFactory
+import java.io.File
 import kotlin.test.fail
+import kotlin.text.Charsets.UTF_8
 
-class OpenApiCompatabilityTest {
+class OpenApiCompatibilityTest {
     val sources = listOf(
             testFile("/openApiSpec/v2.0/json/api-with-examples.json"),
             testFile("/openApiSpec/v2.0/json/pets.json"),
@@ -38,13 +41,15 @@ class OpenApiCompatabilityTest {
    @Test
    fun canImportJiraSwagger() {
       // This swagger is interesting because it's big and complex.
-      // Also, it's a consumer proudct, so we had to introduce the ability to generate from swagger
-      // wihtout knowing the end url, and supplying that as an extra param.
+      // Also, it's a consumer product, so we had to introduce the ability to generate from swagger
+      // without knowing the end url, and supplying that as an extra param.
       val (_,jira) = testFile("/openApiSpec/v3.0/jira-swagger-v3.json")
       val generator = TaxiGenerator()
       val taxi = generator.generateAsStrings(jira, "vyne.openApi", GeneratorOptions(serviceBasePath = "http://myjira/"))
       expect(taxi.successful).to.be.`true`
       expect(taxi.messages.hasErrors()).to.be.`false`
+      val expectedOutputFile = "/openApiSpec/v3.0/jira-swagger-v3.json.taxi"
+      expectToCompileTheSameReplacingResult(taxi, expectedOutputFile)
    }
 
    @Test
@@ -56,40 +61,56 @@ class OpenApiCompatabilityTest {
       expect(generator.detectVersion(testFile("/openApiSpec/v2.0/json/pets.json").second)).to.equal(TaxiGenerator.SwaggerVersion.SWAGGER_2)
    }
 
-    @Test
-    fun canImportAllSwaggerFiles() {
+    @TestFactory
+    fun canImportAllSwaggerFiles(): List<DynamicTest> {
         val generator = TaxiGenerator();
-        val specsWithIssues = mutableMapOf<Filename, List<Message>>()
-        sources.forEach { (filename, source) ->
-            val taxiDef = generator.generateAsStrings(source, "vyne.openApi")
-            if (taxiDef.taxi.isEmpty()) {
-                specsWithIssues[filename] = listOf(Message(Level.ERROR, "No source generated")) + taxiDef.messages
-            } else if (taxiDef.messages.isNotEmpty()) {
-                specsWithIssues[filename] = taxiDef.messages
-            }
-        }
+        return sources.map { (filename, source) ->
+           dynamicTest("Can import swagger file $filename") {
+              val taxiDef = generator.generateAsStrings(source, "vyne.openApi")
+              val issues = (if (taxiDef.taxi.isEmpty()) {
+                 listOf(
+                    Message(
+                       Level.ERROR,
+                       "No source generated"
+                    )
+                 )
+              } else emptyList()) + taxiDef.messages
+              if (issues.hasErrors()) {
+                 issues.filter { it.level == Level.ERROR }.forEach { log().error("==> ${it.message}") }
+              }
+              if (issues.hasWarnings()) {
+                 issues.filter { it.level == Level.WARN }.forEach { message -> log().warn("==> $message") }
+              }
+              if (issues.hasErrors()) {
+                 fail("Some schemas failed to import")
+              }
 
-        val failures = specsWithIssues.filter { it.value.hasErrors() }
-        if (failures.isNotEmpty()) {
-            log().error("The following files failed to import:")
-            failures.forEach { filename, messages ->
-                log().error("=> $filename")
-                messages.forEach { log().error("==> ${it.message}") }
-            }
+              // Check the result can compile
+              expectToCompileTheSameReplacingResult(taxiDef, "$filename.taxi")
+           }
         }
-        val warnings = specsWithIssues.filter { it.value.hasWarnings() }
-        if (warnings.isNotEmpty()) {
-            log().warn("The following files imported with warnings:")
-            warnings.forEach { filename, messages ->
-                log().warn("=> $filename")
-                messages.forEach { log().warn("==> ${it.message}") }
-            }
-        }
-
-        if (failures.isNotEmpty()) {
-            fail("Some schemas failed to import")
-        }
-
     }
-}
 
+   private fun expectToCompileTheSameReplacingResult(
+      taxi: GeneratedTaxiCode,
+      expectedOutputFile: String
+   ) {
+      val expected = testResource(expectedOutputFile)
+      storeTheResult(expectedOutputFile, taxi)
+      expectToCompileTheSame(taxi.taxi, expected)
+   }
+
+   // Convenient way to generate the actual taxi expectation
+   // Can then check if it matches what you wanted, and check it in - giving a
+   // history of how the generated taxi output has changed over time
+   private fun storeTheResult(
+      expectedOutputFile: String,
+      taxi: GeneratedTaxiCode
+   ) {
+      val runningOnCi = System.getenv("CI")?.toBoolean() ?: false
+      if (!runningOnCi) {
+         File("src/test/resources$expectedOutputFile")
+            .writeText(taxi.taxi.single(), UTF_8)
+      }
+   }
+}
