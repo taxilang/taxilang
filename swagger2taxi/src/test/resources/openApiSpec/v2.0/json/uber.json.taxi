@@ -42,11 +42,6 @@ namespace vyne.openApi {
       promo_code : String?
    }
    
-   model Activity {
-      [[ Unique identifier for the activity ]]
-      uuid : String?
-   }
-   
    model Activities {
       [[ Position in pagination. ]]
       offset : Int?
@@ -55,6 +50,11 @@ namespace vyne.openApi {
       [[ Total number of items available. ]]
       count : Int?
       history : Activity[]?
+   }
+   
+   model Activity {
+      [[ Unique identifier for the activity ]]
+      uuid : String?
    }
    
    model Error {
