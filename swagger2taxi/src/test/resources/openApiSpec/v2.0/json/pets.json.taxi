@@ -1,4 +1,24 @@
 namespace vyne.openApi {
+   model Pet {
+      id : Int?
+      category : Category?
+      name : String
+      photoUrls : String[]
+      tags : Tag[]?
+      [[ pet status in the store ]]
+      status : String?
+   }
+   
+   model Category {
+      id : Int?
+      name : String?
+   }
+   
+   model Tag {
+      id : Int?
+      name : String?
+   }
+   
    model Order {
       id : Int?
       petId : Int?
@@ -19,26 +39,6 @@ namespace vyne.openApi {
       phone : String?
       [[ User Status ]]
       userStatus : Int?
-   }
-   
-   model Category {
-      id : Int?
-      name : String?
-   }
-   
-   model Tag {
-      id : Int?
-      name : String?
-   }
-   
-   model Pet {
-      id : Int?
-      category : Category?
-      name : String
-      photoUrls : String[]
-      tags : Tag[]?
-      [[ pet status in the store ]]
-      status : String?
    }
    
    model ApiResponse {
