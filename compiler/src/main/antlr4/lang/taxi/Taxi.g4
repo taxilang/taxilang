@@ -165,8 +165,16 @@ fieldModifier
    : 'closed'
    ;
 fieldDeclaration
-  :   fieldModifier? Identifier (':' (simpleFieldDeclaration | anonymousTypeDefinition | modelAttributeTypeReference))?
+  :   fieldModifier? Identifier (':' collectionProjectionScope? (simpleFieldDeclaration | anonymousTypeDefinition | modelAttributeTypeReference))?
   ;
+
+// Used in queries to scope projection of collections.
+// eg:
+//findAll { OrderTransaction[] } as {
+//   items: OrderItem -> { sku: ProductSku size: ProductSize }[]
+// }[]
+collectionProjectionScope: typeType '->';
+
 
 // A type reference that refers to the attribute on a model.
 // eg:  firstName : Person::FirstName.
@@ -719,12 +727,9 @@ anonymousComplexFieldDeclaration: Identifier ':' '{' (Identifier ':' typeType)* 
 
 anonymousField:
    Identifier  // e.g. orderId
-   |
-   anonymousFieldDeclaration // productId: ProductId
-   |
-   anonymousFieldDeclarationWithSelfReference // traderEmail : EmailAddress(by this.traderUtCode)
-   |
-   anonymousComplexFieldDeclaration //    salesPerson {
+   | anonymousFieldDeclaration // productId: ProductId
+   | anonymousFieldDeclarationWithSelfReference // traderEmail : EmailAddress(by this.traderUtCode)
+   | anonymousComplexFieldDeclaration //    salesPerson {
                                     //        firstName : FirstName
                                     //        lastName : LastName
                                     //    } (by this.salesUtCode)

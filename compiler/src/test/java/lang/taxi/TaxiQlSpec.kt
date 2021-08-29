@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.types.ArrayType
 import lang.taxi.types.ObjectType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.QueryMode
@@ -79,7 +80,12 @@ object TaxiQlSpec : Spek({
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
          query.parameters.should.have.size(2)
-         query.parameters.should.equal(mapOf("startDate" to QualifiedName.from("lang.taxi.Instant"), "endDate" to QualifiedName.from("lang.taxi.Instant")))
+         query.parameters.should.equal(
+            mapOf(
+               "startDate" to QualifiedName.from("lang.taxi.Instant"),
+               "endDate" to QualifiedName.from("lang.taxi.Instant")
+            )
+         )
          query.projectedType?.concreteType?.toQualifiedName()?.parameterizedName.should.equal("lang.taxi.Array<foo.OutputOrder>")
          query.typesToFind.should.have.size(1)
          query.typesToFind.first().type.parameterizedName.should.equal("lang.taxi.Array<foo.Order>")
@@ -102,7 +108,12 @@ object TaxiQlSpec : Spek({
          val query = queries.first()
          query.name.should.equal("RecentOrdersQuery")
          query.parameters.should.have.size(2)
-         query.parameters.should.equal(mapOf("startDate" to QualifiedName.from("lang.taxi.Instant"), "endDate" to QualifiedName.from("lang.taxi.Instant")))
+         query.parameters.should.equal(
+            mapOf(
+               "startDate" to QualifiedName.from("lang.taxi.Instant"),
+               "endDate" to QualifiedName.from("lang.taxi.Instant")
+            )
+         )
          query.projectedType?.concreteType?.toQualifiedName()?.parameterizedName.should.equal("lang.taxi.Array<foo.OutputOrder>")
          query.typesToFind.should.have.size(1)
 
@@ -159,7 +170,8 @@ object TaxiQlSpec : Spek({
                     invalidField
                  }[]
            """.trimIndent()
-         val queryCompilationError = Compiler(source = src, importSources = listOf(taxi)).queriesWithErrorMessages().first
+         val queryCompilationError =
+            Compiler(source = src, importSources = listOf(taxi)).queriesWithErrorMessages().first
          queryCompilationError.first().detailMessage.should.contain("should be an object type containing field invalidField")
       }
 
@@ -195,10 +207,25 @@ object TaxiQlSpec : Spek({
                     invalidField
                  }[]
            """.trimIndent()
-         val queryCompilationError = Compiler(source = src, importSources = listOf(taxi)).queriesWithErrorMessages().first
+         val queryCompilationError =
+            Compiler(source = src, importSources = listOf(taxi)).queriesWithErrorMessages().first
          queryCompilationError.first().detailMessage.should.contain("should be an object type containing field invalidField")
       }
 
+      it("should parse an in query") {
+         val src = """
+                 import foo.Order
+                 import foo.OutputOrder
+
+                 findAll {
+                    Order[]( TradeDate  in [''] )
+                 } as OutputOrder {
+                    insertedAt: foo.InsertedAt
+                 }[]
+           """.trimIndent()
+         val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
+         val query = queries.first()
+      }
       it("Should Allow anonymous type that extends a base type and adds additional field definitions") {
          val src = """
                  import foo.Order
@@ -292,7 +319,8 @@ object TaxiQlSpec : Spek({
                     traderEmail: InvalidType by (this.traderId)
                  }[]
            """.trimIndent()
-         val queryCompilationError = Compiler(source = src, importSources = listOf(taxi)).queriesWithErrorMessages().first
+         val queryCompilationError =
+            Compiler(source = src, importSources = listOf(taxi)).queriesWithErrorMessages().first
          queryCompilationError.first().detailMessage.should.contain("InvalidType is not defined")
       }
 
@@ -393,7 +421,8 @@ object TaxiQlSpec : Spek({
                             }by (this.traderId)
                      }[]
                """.trimIndent()
-         val queryCompilationError = Compiler(source = src, importSources = listOf(taxi)).queriesWithErrorMessages().first
+         val queryCompilationError =
+            Compiler(source = src, importSources = listOf(taxi)).queriesWithErrorMessages().first
          queryCompilationError.first().detailMessage.should.contain("InvalidType is not defined")
       }
 
@@ -405,7 +434,8 @@ object TaxiQlSpec : Spek({
                             } as OutputOrder
                          }
                       """.trimIndent()
-         val queryCompilationError = Compiler(source = src, importSources = listOf(taxi)).queriesWithErrorMessages().first
+         val queryCompilationError =
+            Compiler(source = src, importSources = listOf(taxi)).queriesWithErrorMessages().first
          queryCompilationError.first().detailMessage.should.contain("projection type is a list but the type to discover is not, both should either be list or single entity.")
       }
 
@@ -419,13 +449,68 @@ object TaxiQlSpec : Spek({
                                 }
                              }
                           """.trimIndent()
-         val queryCompilationError = Compiler(source = src, importSources = listOf(taxi)).queriesWithErrorMessages().first
+         val queryCompilationError =
+            Compiler(source = src, importSources = listOf(taxi)).queriesWithErrorMessages().first
          queryCompilationError.first().detailMessage.should.contain("projection type is a list but the type to discover is not, both should either be list or single entity.")
+      }
 
+      it("should parse nested collections of anonymous types") {
+         val (schema,query) = """
+            model Product {
+               sku : ProductSku inherits String
+               size : ProductSize inherits String
+            }
+            model TransactionItem {
+               sku : ProductSku
+            }
+            model Transaction {
+               items : TransactionItem[]
+            }
+         """.compiledWithQuery("""
+            findAll { Transaction[] } as {
+               items : {
+                  sku : ProductSku
+                  size : ProductSize
+               }[]
+            }[]
+         """)
+         val resultCollectionType = query.projectedType!!.anonymousTypeDefinition!! as ArrayType
+         val resultMemberType = resultCollectionType.type as ObjectType
+         val itemsFieldType = resultMemberType.field("items").type as ArrayType
+         val itemsFieldMemberType = itemsFieldType.type as ObjectType
+         itemsFieldMemberType.fields.should.have.size(2)
+      }
+
+      it("should parse collection projection identifiers in queries") {
+         val (schema,query) = """
+            model Product {
+               sku : ProductSku inherits String
+               size : ProductSize inherits String
+            }
+            model TransactionItem {
+               sku : ProductSku
+            }
+            model Transaction {
+               items : TransactionItem[]
+            }
+         """.compiledWithQuery("""
+            findAll { Transaction[] } as {
+               items : TransactionItem -> {
+                  sku : ProductSku
+                  size : ProductSize
+               }[]
+            }[]
+         """)
+         val resultCollectionType = query.projectedType!!.anonymousTypeDefinition!! as ArrayType
+         val resultMemberType = resultCollectionType.type as ObjectType
+         val itemsField = resultMemberType.field("items")
+         itemsField.projectionScopeTypes.should.have.size(1)
+         itemsField.projectionScopeTypes.first().qualifiedName.should.equal("TransactionItem")
       }
 
       it("by should be supported with an anonymously typed field") {
-         val taxiDoc = Compiler("""
+         val taxiDoc = Compiler(
+            """
          type QtyFill inherits Decimal
          type UnitMultiplier inherits Decimal
          type FilledNotional inherits Decimal
@@ -462,7 +547,8 @@ object TaxiQlSpec : Spek({
          service TraderService {
             operation getTrader(TraderId): TraderInfo
          }
-      """.trimIndent()).compile()
+      """.trimIndent()
+         ).compile()
 
          val queryString = """
             findAll {
@@ -478,7 +564,8 @@ object TaxiQlSpec : Spek({
          val queries = Compiler(source = queryString, importSources = listOf(taxiDoc)).queries()
          val query = queries.first()
          query.projectedType?.anonymousTypeDefinition.should.not.be.`null`
-         val anonymousTypeDefinition = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
+         val anonymousTypeDefinition =
+            query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
          anonymousTypeDefinition.hasField("trader").should.be.`true`
          val traderField = anonymousTypeDefinition.field("trader")
          traderField.accessor.should.not.be.`null`

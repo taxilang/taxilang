@@ -413,7 +413,17 @@ data class Field(
    // orderId: Order::SentOrderId
    // For above, field name is 'orderId', field type is 'SentOrderId' and memberSource is 'Order'
    // it is set to null for all other cases.
-   val memberSource : QualifiedName? = null,
+   val memberSource: QualifiedName? = null,
+   // Defines types that should be used to limit the scope when
+   // projecting this field in a query.
+   // eg:
+   //             findAll { Transaction[] } as {
+   //               items : TransactionItem -> {     // <-----This thing.  Only use a TransactionItem to generate this field
+   //                  sku : ProductSku
+   //                  size : ProductSize
+   //               }[]
+   //            }[]
+   val projectionScopeTypes: List<Type> = emptyList(),
    override val compilationUnit: CompilationUnit
 ) : Annotatable, ConstraintTarget, Documented, NameTypePair, TokenDefinition {
 
