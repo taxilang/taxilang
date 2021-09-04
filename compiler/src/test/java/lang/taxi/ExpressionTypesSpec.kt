@@ -2,6 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.expressions.FunctionExpression
+import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.functions.FunctionAccessor
@@ -35,19 +36,8 @@ object ExpressionTypesSpec : Spek({
             type MultiExpression inherits Int by Height + Width * Height
          """.compiled()
          val expression = doc.objectType("Bracketed").expression as OperatorExpression
-         (expression.lhs as OperatorExpression).let { lhs ->
-            (lhs.lhs.asA<OperatorExpression>()).let {
-               it.lhs
-            }
-         }
-//         (area.lhs as TypeExpression).let {
-//            it.type.should.equal(doc.type("Height"))
-//         }
-//         (area.rhs as TypeExpression).let {
-//            it.type.should.equal(doc.type("Width"))
-//         }
-//         area.operator.should.equal(FormulaOperator.Multiply)
-         TODO()
+         expression.lhs.compilationUnits[0].source.content.should.equal("Height + Width")
+         expression.rhs.compilationUnits[0].source.content.should.equal("Height")
       }
       it("should compile nested expression types") {
          """
@@ -63,15 +53,15 @@ object ExpressionTypesSpec : Spek({
             type ABitBigger inherits Int by Height + 1
          """.compiled()
             .objectType("ABitBigger")
-            .expression
-         TODO()
-
+            .expression as OperatorExpression
+         val rhs = expression.rhs as LiteralExpression
+         rhs.literal.value.should.equal(1)
       }
       it("can declare a expression type on a model") {
          """
             type Height inherits Int
          type Width inherits Int
-//       type Area inherits Int by Height * Width
+       type Area inherits Int by Height * Width
          model Rectangle {
             height : Height
             width : Width
