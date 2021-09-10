@@ -18,7 +18,8 @@ object Strings {
       Lowercase,
       Trim,
       Length,
-      Find
+      Find,
+      Replace
 //      Coalesce
    )
 }
@@ -72,6 +73,12 @@ object Find: FunctionApi {
       get() = "declare function indexOf(String, String):Int"
    override val name: QualifiedName
       get() = stdLibName("indexOf")
+
+}
+
+object Replace : FunctionApi {
+   override val taxi: String = "declare function replace(String,String):String"
+   override val name: QualifiedName = stdLibName("replace")
 
 }
 
