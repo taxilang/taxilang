@@ -65,6 +65,9 @@ module.exports = {
                   "best-practices-for-taxonomy-development/building-your-base-taxonomy",
                   "best-practices-for-taxonomy-development/conventions"
                ],
+               "Release notes": [
+                  "release-notes/1.31.0"
+               ],
                Resources: [
                   "[Vyne](https://vyne.co)",
                   "[Princpled Data](https://vyne.co)",
