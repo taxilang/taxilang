@@ -77,7 +77,7 @@ object Find: FunctionApi {
 }
 
 object Replace : FunctionApi {
-   override val taxi: String = "declare function replace(String,String):String"
+   override val taxi: String = "declare function replace(String, String,String):String"
    override val name: QualifiedName = stdLibName("replace")
 
 }
