@@ -108,7 +108,40 @@ find { Book[] } as {
 }
 ```
 
-## Joins and Discovery
+### Projecting nested collections
+TaxiQL supports fine-grained control over how nested collections are projected using the `->` operator in queries.
+
+The syntax is:
+
+```
+model : CollectionType -> {
+  ...projection spec...
+}[] // Note the array marker comes after the projection spec.
+```
+
+Here's an example from a fictional shopping website:
+
+```taxi
+// Here's a transaction from our shopping website
+model Transaction {
+   transactionId : TransactionId
+   transactionDate : TransactionDate
+   items : TransactionItem[]
+}
+
+model TransactionItem {
+   sku : ProductSku
+}
+
+findAll { Transaction[] } as {
+   id: TransactionId
+   items : TransactionItem -> { // Project and enrich the TransactionItems to a different, richer model...
+      sku : ProductSku // Provide the productSku
+      description : ProductDescription // We also want the description and size of the product.
+      size : ProductSize // These aren't available on the source data, so they'll need to be looked up.
+   }[]
+}[]
+```
 
 ## Linking data and `@Id`
 <Hint>This behaviour is down to server engines.  What's documented is the reference behaviour as implemented by Vyne.  However, other service implementations may vary.</Hint>
