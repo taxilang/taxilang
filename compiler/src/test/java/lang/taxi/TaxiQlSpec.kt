@@ -212,20 +212,6 @@ object TaxiQlSpec : Spek({
          queryCompilationError.first().detailMessage.should.contain("should be an object type containing field invalidField")
       }
 
-      it("should parse an in query") {
-         val src = """
-                 import foo.Order
-                 import foo.OutputOrder
-
-                 findAll {
-                    Order[]( TradeDate  in [''] )
-                 } as OutputOrder {
-                    insertedAt: foo.InsertedAt
-                 }[]
-           """.trimIndent()
-         val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
-         val query = queries.first()
-      }
       it("Should Allow anonymous type that extends a base type and adds additional field definitions") {
          val src = """
                  import foo.Order
