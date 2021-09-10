@@ -21,3 +21,26 @@ findAll { Transaction[] } as {
 
 See <Link to="/language-reference/querying-with-taxiql/#projecting-nested-collections">projecting nested collections</Link>
 for more details
+
+## String replace function
+
+The String 'replace' function has been added to Taxi lang
+
+```taxi
+replace(String, String, String)
+Replaces the contents of the provided String, returning a new String
+      Accepts three args:
+       * String: The string to search
+       * String: The string to search for
+       * String: The string to use as a replacement
+      ]]
+```
+
+Example usage
+
+```taxi
+model Trade {
+    symbol : String
+    ccy1 : String by replace(this.symbol, "TEXT_TO_REPLACE", "REPLACEMENT_TEXT")
+}
+```
