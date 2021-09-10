@@ -552,7 +552,7 @@ defaultDefinition: 'default' '(' (literal | qualifiedName) ')';
 // rather than permitting void return types.
 // This is because in a mapping declaration, functions really only have purpose if
 // they return things.
-functionDeclaration: 'declare' (functionModifiers)? 'function' functionName '(' operationParameterList? ')' ':' typeType;
+functionDeclaration: typeDoc? 'declare' (functionModifiers)? 'function' functionName '(' operationParameterList? ')' ':' typeType;
 
 functionModifiers: 'query';
 
