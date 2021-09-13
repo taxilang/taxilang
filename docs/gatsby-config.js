@@ -29,8 +29,6 @@ module.exports = {
                null: [
                   "index",
                   "intro/getting-started",
-                  "intro/benefits",
-                  "intro/platform",
                   "generating-taxi-from-source"
                ],
                Language: [
@@ -56,21 +54,19 @@ module.exports = {
                   "plugins/writing-your-own-plugins"
                ],
                "Visual Studio Code": ["taxi-vs-code/editor-plugins"],
-               Testing: [
+               "CI / CD": [
                   "testing/running-taxi-in-a-ci-cd-pipeline",
-                  "testing/testing-taxi"
                ],
                Taxonomy: [
                   "best-practices-for-taxonomy-development/README",
                   "best-practices-for-taxonomy-development/building-your-base-taxonomy",
-                  "best-practices-for-taxonomy-development/conventions"
                ],
                "Release notes": [
                   "release-notes/1.31.0"
                ],
                Resources: [
                   "[Vyne](https://vyne.co)",
-                  "[Princpled Data](https://vyne.co)",
+                  // "[Princpled Data](https://vyne.co)",
                   "resources/faq"
                ]
             }
