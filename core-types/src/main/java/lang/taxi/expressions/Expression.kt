@@ -15,6 +15,7 @@ sealed class Expression : Compiled, TaxiStatementGenerator {
    }
 }
 
+data class LambdaExpression(val inputs:List<Type>, val expression:Expression, override val compilationUnits: List<CompilationUnit>) : Expression()
 data class LiteralExpression(val literal:LiteralAccessor, override val compilationUnits: List<CompilationUnit>) : Expression()
 data class TypeExpression(val type: Type, override val compilationUnits: List<CompilationUnit>) : Expression()
 data class FunctionExpression(val function: FunctionAccessor, override val compilationUnits: List<CompilationUnit>) :

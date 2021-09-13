@@ -2,6 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.expressions.FunctionExpression
+import lang.taxi.expressions.LambdaExpression
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
@@ -107,8 +108,24 @@ object ExpressionTypesSpec : Spek({
          firstInput.type.qualifiedName.should.equal("Height")
       }
    }
+   describe("Lambda types") {
+      it("should compile simple lambda type") {
+         val expressionType = """
+            type MinimumAcceptableCalories inherits Int
+            type MaximumAcceptableCalories inherits Int
+            type ProductCalories inherits Int
+            type AcceptableCalorieRange by (MinimumAcceptableCalories , MaximumAcceptableCalories) -> ProductCalories > MinimumAcceptableCalories && ProductCalories < MaximumAcceptableCalories
+         """.trimIndent()
+            .compiled()
+            .objectType("AcceptableCalorieRange")
+            .expression!! as LambdaExpression
 
-
+         expressionType.inputs.map { it.qualifiedName }.should.equal(listOf("MinimumAcceptableCalories","MaximumAcceptableCalories"))
+         val lambdaExpression = expressionType.expression as OperatorExpression
+         lambdaExpression.asTaxi().should.equal("ProductCalories > MinimumAcceptableCalories && ProductCalories < MaximumAcceptableCalories")
+         lambdaExpression.operator.should.equal(FormulaOperator.LogicalAnd)
+      }
+   }
 })
 
 inline fun <reified T : Any> Any.asA():T  {

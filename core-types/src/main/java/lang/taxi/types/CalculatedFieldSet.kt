@@ -26,7 +26,7 @@ data class MultiplicationFormula(
    override val operator: FormulaOperator = FormulaOperator.Multiply) : Formula {
 }
 
-enum class FormulaOperator(val symbol: String, @Deprecated("this concept doesn't work") val cardinality: Int) {
+enum class FormulaOperator(val symbol: String, @Deprecated("this concept doesn't work") val cardinality: Int = -1) {
    Add("+", 2) {
       override fun validArgumentSize(argumentSize: Int): Boolean {
          return argumentSize == cardinality
@@ -63,7 +63,16 @@ enum class FormulaOperator(val symbol: String, @Deprecated("this concept doesn't
          return PrimitiveTypeOperations.isValidOperation(arguments.first(), Divide, arguments[1])
       }
    },
+   GreaterThan(">"),
+   LessThan("<"),
+   GreaterThanOrEqual(">="),
+   LessThanOrEqual("<="),
+   LogicalAnd("&&"),
+   LogicalOr("||"),
+   Equal("=="),
+   NotEqual("!="),
    // TODO : Coalesce should really be an accessor, not a formula
+   @Deprecated("Moved to function")
    Coalesce("coalesce", Int.MAX_VALUE) {
       override fun validArgumentSize(argumentSize: Int): Boolean {
          return argumentSize >= 1
@@ -76,8 +85,12 @@ enum class FormulaOperator(val symbol: String, @Deprecated("this concept doesn't
    };
 
    @Deprecated("This doesn't make any sense, as math operations can have n arguments")
-   abstract fun validArgumentSize(argumentSize: Int): Boolean;
-   abstract fun validateArguments(arguments: List<PrimitiveType>, fieldPrimitiveType: PrimitiveType): Boolean;
+   open fun validArgumentSize(argumentSize: Int): Boolean {
+      return true
+   }
+   open fun validateArguments(arguments: List<PrimitiveType>, fieldPrimitiveType: PrimitiveType): Boolean {
+      return true
+   }
 
    companion object {
       private val bySymbol = FormulaOperator.values().associateBy { it.symbol }

@@ -10,6 +10,7 @@ import lang.taxi.TaxiParser
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.ExpressionGroup
 import lang.taxi.expressions.FunctionExpression
+import lang.taxi.expressions.LambdaExpression
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
@@ -55,10 +56,25 @@ class ExpressionCompiler(
             require(expressionGroup.expressionGroup().size == 1) { "Expected only a single ExpressionGroup inside parenthesis" }
             compile(expressionGroup.expressionGroup(0))
          }
+         expressionGroup.children.size == 2 && expressionGroup.expressionInputs() != null -> parseLambdaExpression(expressionGroup)
          expressionGroup.children.size == 3 -> parseOperatorExpression(expressionGroup)          // lhs operator rhs
          expressionGroup.expressionGroup().isEmpty() -> compileSingleExpression(expressionGroup)
          else -> error("Unhandled expression group scenario: ${expressionGroup.text}")
       }
+   }
+
+   private fun parseLambdaExpression(lambdaExpression: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
+      require(lambdaExpression.children.size == 2) { "Expected exactly 2 children in the lambda expression"}
+      require(lambdaExpression.expressionGroup().size == 1) { "expected exactly 1 expression group on the rhs of the lambda"}
+      return lambdaExpression.expressionInputs().typeType().map { typeType ->
+         tokenProcessor.parseType(typeType.findNamespace(), typeType)
+      }.invertEitherList().flattenErrors()
+         .flatMap { inputs ->
+            compile(lambdaExpression.expressionGroup(0)).map { expression ->
+               LambdaExpression(inputs,expression, lambdaExpression.toCompilationUnits())
+            }
+         }
+
    }
 
    private fun compileSingleExpression(expression: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, Expression> {

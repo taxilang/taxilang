@@ -76,6 +76,8 @@ typeMemberDeclaration
 
 expressionTypeDeclaration : 'by' expressionGroup*;
 
+expressionInputs: '(' typeType (',' typeType)* ')' '->';
+
 // Added for expression types.
 // However, I suspect with a few modifications e can simplify
 // all expressions to
@@ -89,7 +91,15 @@ expressionGroup:
    | expressionGroup (MULT | DIV) expressionGroup
    | expressionGroup (PLUS | MINUS) expressionGroup
    | LPAREN expressionGroup RPAREN
-   | (PLUS | MINUS)* expressionAtom;
+   | (PLUS | MINUS)* expressionAtom
+   // The below is added for lambdas, but not sure order of precedence
+   // is correct. TBD.
+   | expressionGroup comp_operator expressionGroup
+   | expressionGroup LOGICAL_AND expressionGroup
+   | expressionGroup LOGICAL_OR expressionGroup
+   // Inputs go last, so that when parsing lambdas, the inputs are the LHS and everything remainin goes RHS.
+   // Might not work for nested lambdas, if that's a thing.
+   |    expressionInputs expressionGroup;
 
 // readFunction before typeType to avoid functons being identified
 // as types
@@ -450,6 +460,7 @@ comp_operator : GT
               | EQ
               | NQ
               ;
+
 
 arithmetic_expr
  :  numeric_entity                        # ArithmeticExpressionNumericEntity
@@ -962,6 +973,9 @@ LT : '<' ;
 LE : '<=' ;
 EQ : '=' ;
 NQ : '!=';
+
+LOGICAL_OR : '||';
+LOGICAL_AND : '&&';
 
 TRUE  : 'true' ;
 FALSE : 'false' ;
