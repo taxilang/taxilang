@@ -2,8 +2,6 @@ package lang.taxi.generators.openApi
 
 import io.swagger.oas.models.Operation
 import io.swagger.oas.models.PathItem
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.Type
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpPathVariable
 import lang.taxi.annotations.HttpRequestBody
@@ -13,10 +11,21 @@ import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
 import lang.taxi.generators.openApi.swagger.SwaggerTypeMapper
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.Annotation
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Type
 import lang.taxi.types.VoidType
 import lang.taxi.types.toAnnotations
-import v2.io.swagger.models.*
-import v2.io.swagger.models.parameters.*
+import v2.io.swagger.models.HttpMethod
+import v2.io.swagger.models.Path
+import v2.io.swagger.models.Response
+import v2.io.swagger.models.Scheme
+import v2.io.swagger.models.Swagger
+import v2.io.swagger.models.parameters.BodyParameter
+import v2.io.swagger.models.parameters.FormParameter
+import v2.io.swagger.models.parameters.HeaderParameter
+import v2.io.swagger.models.parameters.Parameter
+import v2.io.swagger.models.parameters.PathParameter
+import v2.io.swagger.models.parameters.QueryParameter
 import java.net.URL
 import lang.taxi.services.Operation as TaxiOperation
 import lang.taxi.services.Service as TaxiService
@@ -143,7 +152,7 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
 
     private fun getParamType(param: Parameter): Type {
         return when (param) {
-            is BodyParameter -> typeMapper.findType(param.schema)
+            is BodyParameter -> typeMapper.findType(param.schema, param.name)
             is PathParameter -> typeMapper.findType(param) // TODO : Use format here, to disambiguate Int/long etc
             is QueryParameter -> typeMapper.findType(param)
             else -> TODO("Unhandled Param type : ${param.javaClass.name}")

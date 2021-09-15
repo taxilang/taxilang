@@ -12,11 +12,6 @@ namespace vyne.openApi {
       image : String?
    }
    
-   model ProductList {
-      [[ Contains the list of products ]]
-      products : Product[]?
-   }
-   
    model PriceEstimate {
       [[ Unique identifier representing a specific product for a given latitude & longitude. For example, uberX in San Francisco will have a different product_id than uberX in Los Angeles ]]
       product_id : String?
@@ -47,11 +42,6 @@ namespace vyne.openApi {
       promo_code : String?
    }
    
-   model Activity {
-      [[ Unique identifier for the activity ]]
-      uuid : String?
-   }
-   
    model Activities {
       [[ Position in pagination. ]]
       offset : Int?
@@ -60,6 +50,16 @@ namespace vyne.openApi {
       [[ Total number of items available. ]]
       count : Int?
       history : Activity[]?
+   }
+   
+   model Activity {
+      [[ Unique identifier for the activity ]]
+      uuid : String?
+   }
+   
+   model ProductList {
+      [[ Contains the list of products ]]
+      products : Product[]?
    }
    
    model Error {

@@ -16,6 +16,6 @@
    <parent>
       <groupId>org.taxilang</groupId>
       <artifactId>taxi-lang-server</artifactId>
-      <version>1.30.4</version>
+      <version>1.30.5</version>
    </parent>
 </project>
