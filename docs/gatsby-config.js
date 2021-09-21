@@ -66,6 +66,7 @@ module.exports = {
                   "best-practices-for-taxonomy-development/conventions"
                ],
                "Release notes": [
+                  "release-notes/1.30.7",
                   "release-notes/1.30.6",
                   "release-notes/1.30.5"
                ],

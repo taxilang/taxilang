@@ -15,6 +15,7 @@ data class AnnotationTypeDefinition(
       AnnotationTypeDefinition::annotations,
       AnnotationTypeDefinition::typeDoc
    )
+
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
 }
@@ -36,7 +37,8 @@ data class AnnotationType(
    }
 
    fun field(name: String): Field {
-      return fields.firstOrNull { it.name == name } ?: error("Annotation $qualifiedName does not have a field name $name")
+      return fields.firstOrNull { it.name == name }
+         ?: error("Annotation $qualifiedName does not have a field name $name")
    }
 
    override val annotations: List<Annotation>
@@ -49,7 +51,7 @@ data class AnnotationType(
          return definition?.typeDoc
       }
 
-   val fields:List<Field>
+   val fields: List<Field>
       get() {
          return definition?.fields ?: emptyList()
       }
@@ -68,10 +70,21 @@ data class AnnotationType(
    override val referencedTypes: List<Type> = emptyList()
    override val offset: Int? = null
    override fun asTaxi(): String {
-      // TODO : Provide args etc
-      return """annotation ${this.toQualifiedName().typeName} {
-         }
-         """
+      val annotationTaxi = this.annotations.joinToString("\n") { it.asTaxi() }
+      val fieldTaxi = this.fields.joinToString("\n") { field ->
+         val fieldAnnotations = field.annotations.joinToString("\n") { it.asTaxi() }
+         val nullableMarker = if (field.nullable) {
+            "?"
+         } else ""
+         """$fieldAnnotations
+${field.name} : ${field.type.qualifiedName}$nullableMarker""".trim()
+      }
+      return """
+$annotationTaxi
+annotation ${this.toQualifiedName().typeName} {
+   $fieldTaxi
+}
+""".trim()
    }
 
    override val typeKind: TypeKind = TypeKind.Type

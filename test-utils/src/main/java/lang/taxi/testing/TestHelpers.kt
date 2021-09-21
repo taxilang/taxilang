@@ -24,6 +24,12 @@ object TestHelpers {
    fun expectToCompileTheSame(generated: List<String>, expected: List<String>): TaxiDocument {
       val generatedDoc = compile(generated)
       val expectedDoc = compile(expected)
+      return assertAreTheSame(generatedDoc, expectedDoc, generated)
+   }
+   fun assertAreTheSame(generatedDoc:TaxiDocument, expectedDoc:TaxiDocument, generatedSources:List<String>):TaxiDocument {
+      return assertAreTheSame(generatedDoc, expectedDoc, generatedSources.joinToString("\n"))
+   }
+   fun assertAreTheSame(generatedDoc:TaxiDocument, expectedDoc:TaxiDocument, generatedSource:String):TaxiDocument {
       if (generatedDoc == expectedDoc) return generatedDoc
 
       val typeErrors = diff(generatedDoc.types, expectedDoc.types) + expectedDoc.types.flatMap { type -> collateTypeErrors(type, generatedDoc) }
@@ -32,7 +38,7 @@ object TestHelpers {
       if (errors.isEmpty()) {
          return generatedDoc
       }
-      throw AssertionError("Generated docs did not match expected.  Errors:\n" + errors.joinToString("\n") +"\n\nGenerated:\n${generated.joinToString("\n")}")
+      throw AssertionError("Generated docs did not match expected.  Errors:\n" + errors.joinToString("\n") +"\n\nGenerated:\n${generatedSource}")
    }
 
    fun compile(generated: List<String>) =
