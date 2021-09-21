@@ -26,14 +26,16 @@ data class Parameter(override val annotations: List<Annotation>, override val ty
 
 interface ServiceMember : Annotatable, Compiled, Documented {
    val name: String
+   val parameters: List<Parameter>
+   val returnType: Type
 }
 
 data class QueryOperation(
    override val name: String,
    override val annotations: List<Annotation>,
-   val parameters: List<Parameter>,
+   override val parameters: List<Parameter>,
    val grammar: String,
-   val returnType: Type,
+   override val returnType: Type,
    override val compilationUnits: List<CompilationUnit>,
    val capabilities: List<QueryOperationCapability>,
    override val typeDoc: String? = null) : ServiceMember, Annotatable, Compiled, Documented, TaxiStatementGenerator {
@@ -91,8 +93,8 @@ enum class SimpleQueryCapability(val symbol:String) : QueryOperationCapability {
 data class Operation(override val name: String,
                      val scope: String? = null,
                      override val annotations: List<Annotation>,
-                     val parameters: List<Parameter>,
-                     val returnType: Type,
+                     override val parameters: List<Parameter>,
+                     override val returnType: Type,
                      override val compilationUnits: List<CompilationUnit>,
                      val contract: OperationContract? = null,
                      override val typeDoc: String? = null) : ServiceMember, Annotatable, Compiled, Documented {

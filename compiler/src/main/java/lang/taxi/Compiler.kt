@@ -27,13 +27,14 @@ object Namespaces {
    const val DEFAULT_NAMESPACE = ""
 }
 
-fun ParserRuleContext?.toCompilationUnit(): lang.taxi.types.CompilationUnit {
+fun ParserRuleContext?.toCompilationUnit(dependantTypeNames:List<QualifiedName> = emptyList()): lang.taxi.types.CompilationUnit {
    return if (this == null) {
       CompilationUnit.unspecified()
    } else {
+      val rawSource = this.source()
       lang.taxi.types.CompilationUnit(
          this,
-         this.source(),
+         this.source().makeStandalone(this.findNamespace(),dependantTypeNames),
          SourceLocation(this.start.line, this.start.charPositionInLine)
       );
    }

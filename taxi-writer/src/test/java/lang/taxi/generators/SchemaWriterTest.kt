@@ -270,6 +270,35 @@ model Person {
    }
 
    @Test
+   fun `outputs annotation on model`() {
+      val src = Compiler(
+         """
+         annotation Generated {
+            name : String
+         }
+
+         @Generated(name = "Compiler")
+         model Person {
+            firstName : String
+         }
+      """.trimIndent()
+      ).compile()
+      val generated = SchemaWriter().generateSchemas(listOf(src))[0]
+      val expected = """
+annotation Generated {
+   name : lang.taxi.String
+}
+
+@Generated(name = "Compiler")
+model Person {
+   firstName : String
+}
+"""
+      generated.trimNewLines().should.equal(expected.trimNewLines())
+      generated.shouldCompile()
+   }
+
+   @Test
    fun `outputs annotation types`() {
       val source = Compiler("""
          @MyAnnotation

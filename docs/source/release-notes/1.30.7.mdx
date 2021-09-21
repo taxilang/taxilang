@@ -6,4 +6,9 @@ This is a minor internal release, which contains changes to internal tooling
 
 ## Bug fixes
 
- * Annotation types now have their code correctly generated when they contain fields or other annotations
+#### Annotation types now have their code correctly generated when they contain fields or other annotations
+
+#### Internal sourceCode attributes of taxi types now try to generate valid self-contained source
+Previously, we just emitted the source as it was declared in the original file.
+We now try to make this source self-contained, adding missing namespace declarations and
+imports for dependent types.
