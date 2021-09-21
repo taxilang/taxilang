@@ -322,11 +322,11 @@ Then grab the artifacts:
 </dependency>
 ```
 
-## Swagger / OpenApi [ ![Download](https://api.bintray.com/packages/taxi-lang/releases/swagger2taxi/images/download.svg) ](https://bintray.com/taxi-lang/releases/swagger2taxi/_latestVersion)
+## Swagger / OpenApi
 
 It's possible to convert a swagger document to Taxi, using the `TaxiGenerator` from the `openApi` package.
 
-This is especially useful if you want to take advantage of Taxi's type extensions, to mix in annotations.  \(eg., persistence or validation\).
+This is especially useful if you want to take advantage of Taxi's type extensions, to mix in annotations.  (eg., persistence or validation).
 
 Grab the taxi generator from maven:
 
@@ -340,7 +340,7 @@ Grab the taxi generator from maven:
 
 Then run the converter as follows:
 
-\(Note, this example loads source from [this reference example](https://gitlab.com/taxi-lang/taxi-lang/raw/master/swagger2taxi/src/test/resources/openApiSpec/v2.0/yaml/petstore-simple.yaml) from the OpenApi project -
+This example loads source from [this reference example](https://gitlab.com/taxi-lang/taxi-lang/raw/master/swagger2taxi/src/test/resources/openApiSpec/v2.0/yaml/petstore-simple.yaml) from the OpenApi project.
 
 ```text
 // The actual swagger source is omitted for brevity
@@ -382,6 +382,22 @@ namespace vyne.openApi  {
    }
 }
 ```
+### Nullability
+OpenApi has different ways of expressing nullability on attributes
+
+ * required attributes present on a model
+ * the nullable attribute of a field definition (where nullable is false by default)
+
+The Taxi processor applies the following order of precedence to determine nullability:
+
+ * Does the model specify required attributes?
+   * If so, is this field declared as required?
+     * Yes -> field is not nullable
+     * No -> field is nullable
+ * Is the attribute defined as nullable?
+   * Yes -> field is nullable
+   * No -> field is not nullable
+
 ### OpenAPI x-taxi-type Extension
 
 Like any generator, `TaxiGenerator` can only do its best with what is provided.
