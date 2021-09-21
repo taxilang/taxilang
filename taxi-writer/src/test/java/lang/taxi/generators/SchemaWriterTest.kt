@@ -10,12 +10,14 @@ import kotlin.test.fail
 class SchemaWriterTest {
    @Test
    fun generatesAnnotationsOnFields() {
-      val src = Compiler("""
+      val src = Compiler(
+         """
          model Person {
             @Id
             firstName : String
          }
-      """.trimIndent()).compile()
+      """.trimIndent()
+      ).compile()
       val generated = SchemaWriter().generateSchemas(listOf(src))[0]
       val expected = """model Person {
       @Id firstName : String
@@ -33,9 +35,11 @@ class SchemaWriterTest {
 
    @Test
    fun `types with namespace generate namespace declaration`() {
-      val src = Compiler("""namespace foo {
+      val src = Compiler(
+         """namespace foo {
 type Person
-}""".trimIndent()).compile()
+}""".trimIndent()
+      ).compile()
       val generated = SchemaWriter().generateSchemas(listOf(src))[0]
       val expected = """namespace foo {
 type Person
@@ -45,7 +49,8 @@ type Person
 
    @Test
    fun outputsFormatsOnTypes() {
-      val src = Compiler("""
+      val src = Compiler(
+         """
          type DateOfBirth inherits Date
          type TimeOfBirth inherits Time
          type BirthTimestamp inherits Instant
@@ -59,7 +64,8 @@ type Person
             weightInGrams : WeightInGrams by xpath("/foo")
             weightInOunces : WeightInOunces as (WeightInGrams * OuncesToGramsMultiplier)
          }
-      """.trimIndent()).compile()
+      """.trimIndent()
+      ).compile()
       val generated = SchemaWriter().generateSchemas(listOf(src))[0]
       val expected = """type DateOfBirth inherits Date
 type TimeOfBirth inherits Time
@@ -82,14 +88,16 @@ model Person {
 
    @Test
    fun `outputs default values`() {
-      val src = Compiler("""
+      val src = Compiler(
+         """
          type StringField inherits String
          type NumberField inherits Int
          model Thing {
             stringThing : StringField by default("foo")
             numberThing : NumberField by default(2)
          }
-      """.trimIndent()).compile()
+      """.trimIndent()
+      ).compile()
       val generated = SchemaWriter().generateSchemas(listOf(src))[0]
       val expected = """
          type StringField inherits String
@@ -224,7 +232,8 @@ model Foo {
 
    @Test
    fun outputsFormatsOnNullableTypes() {
-      val src = Compiler("""
+      val src = Compiler(
+         """
          type DateOfBirth inherits Date
          type TimeOfBirth inherits Time
          type BirthTimestamp inherits Instant
@@ -238,7 +247,8 @@ model Foo {
             weightInGrams : WeightInGrams? by xpath("/foo")
             weightInOunces : WeightInOunces? as (WeightInGrams * OuncesToGramsMultiplier)
          }
-      """.trimIndent()).compile()
+      """.trimIndent()
+      ).compile()
       val generated = SchemaWriter().generateSchemas(listOf(src))[0]
       val expected = """type DateOfBirth inherits Date
 type TimeOfBirth inherits Time
@@ -259,9 +269,30 @@ model Person {
       generated.shouldCompile()
    }
 
+   @Test
+   fun `outputs annotation types`() {
+      val source = Compiler("""
+         @MyAnnotation
+         annotation GeneratedSource {
+            @MyFieldAnnotation
+            generatorName : String
+            anotherField : String?
+         }
+      """).compile()
+      val generated = SchemaWriter().generateSchemas(listOf(source))[0]
+      generated.shouldCompile()
+      val expected = """
+@MyAnnotation
+annotation GeneratedSource {
+   @MyFieldAnnotation
+   generatorName : lang.taxi.String
+   anotherField : lang.taxi.String?
 }
+""".trimIndent()
+      generated.trimNewLines().should.equal(expected.trimNewLines())
+   }
 
-
+}
 
 
 private fun String.shouldCompile() {
