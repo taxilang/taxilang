@@ -1,6 +1,6 @@
 package lang.taxi.generators.kotlin
 
-import com.nhaarman.mockitokotlin2.mock
+import org.mockito.kotlin.mock
 import com.winterbe.expekt.expect
 import lang.taxi.Compiler
 import lang.taxi.generators.Processor
