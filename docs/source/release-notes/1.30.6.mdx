@@ -6,3 +6,7 @@ This is a minor internal release, which contains changes to internal tooling
 
 ## Mapping of java Boolean type to Taxi Boolean types
 Code generators were unable to map the java Boolean type to Taxi when declared from Kotlin code.
+
+## OpenApi fields are non-null by default
+When generating taxi schemas from OpenApi specs, the generated types have non-nullable fields, unless explicitly
+defined using the OpenApi nullable attribute.

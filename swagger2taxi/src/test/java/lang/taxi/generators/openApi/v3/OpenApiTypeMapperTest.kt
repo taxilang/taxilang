@@ -39,6 +39,7 @@ internal class OpenApiTypeMapperTest {
       """
    }
 
+
    @Test
    fun `named schema of object type`() {
 
@@ -49,6 +50,27 @@ internal class OpenApiTypeMapperTest {
               properties:
                 name:
                   type: string
+         """
+      ) shouldGenerate """
+         namespace vyne.openApi {
+            model Person {
+              name: String
+            }
+         }
+      """
+   }
+
+   @Test
+   fun `nullable properties in openApi schema become nullable in taxi`() {
+
+      openApiYaml(
+         schemas = """
+            Person:
+              type: object
+              properties:
+                name:
+                  type: string
+                  nullable: true
          """
       ) shouldGenerate """
          namespace vyne.openApi {
@@ -76,10 +98,10 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
             model AnonymousTypePersonAddress {
-              street: String?
+              street: String
             }
             model Person {
-              address: AnonymousTypePersonAddress?
+              address: AnonymousTypePersonAddress
             }
          }
       """
@@ -106,13 +128,13 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
             model AnonymousTypePersonAddressHouse {
-              number: Int?
+              number: Int
             }
             model AnonymousTypePersonAddress {
-              house: AnonymousTypePersonAddressHouse?
+              house: AnonymousTypePersonAddressHouse
             }
             model Person {
-              address: AnonymousTypePersonAddress?
+              address: AnonymousTypePersonAddress
             }
          }
       """
@@ -137,10 +159,10 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
             model Address {
-              street: String?
+              street: String
             }
             model Person {
-              address: Address?
+              address: Address
             }
          }
       """
@@ -160,7 +182,7 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
             model Person {
-              partner: Person?
+              partner: Person
             }
          }
       """
@@ -199,7 +221,7 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
             model AnonymousTypePeopleElement {
-              name : String?
+              name : String
             }
             type People inherits AnonymousTypePeopleElement[]
          }
@@ -224,7 +246,7 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
             model Person {
-              name : String?
+              name : String
             }
             type People inherits Person[]
          }
@@ -271,7 +293,7 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
             model Person {
-              name : String?
+              name : String
             }
             type People inherits Array<Array<Person>>
          }
@@ -294,7 +316,7 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
             model Organisation {
-              people : String[]?
+              people : String[]
             }
          }
       """
@@ -319,10 +341,10 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
             model AnonymousTypeOrganisationPeopleElement {
-              name : String?
+              name : String
             }
             model Organisation {
-              people : AnonymousTypeOrganisationPeopleElement[]?
+              people : AnonymousTypeOrganisationPeopleElement[]
             }
          }
       """
@@ -349,10 +371,10 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
             model Person {
-              name : String?
+              name : String
             }
             model Organisation {
-              people : Person[]?
+              people : Person[]
             }
          }
       """
@@ -378,7 +400,7 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
             model Organisation {
-              people : Array<Array<Array<String>>>?
+              people : Array<Array<Array<String>>>
             }
          }
       """
@@ -409,10 +431,10 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
             model Person {
-              name : String?
+              name : String
             }
             model Organisation {
-              people : Array<Array<Array<Person>>>?
+              people : Array<Array<Array<Person>>>
             }
          }
       """
@@ -437,7 +459,7 @@ internal class OpenApiTypeMapperTest {
          namespace vyne.openApi {
             type People inherits String[]
             model Organisation {
-              people: People?
+              people: People
             }
          }
       """
@@ -465,13 +487,13 @@ internal class OpenApiTypeMapperTest {
          namespace vyne.openApi {
 
             model AnonymousTypePeopleElement {
-               name : String?
+               name : String
             }
 
             type People inherits AnonymousTypePeopleElement[]
 
             model Organisation {
-               people : People?
+               people : People
             }
          }
          """
@@ -501,13 +523,13 @@ internal class OpenApiTypeMapperTest {
          namespace vyne.openApi {
 
             model Person {
-               name : String?
+               name : String
             }
 
             type People inherits Person[]
 
             model Organisation {
-               people : People?
+               people : People
             }
          }
          """
@@ -538,7 +560,7 @@ internal class OpenApiTypeMapperTest {
             type People inherits Array<Array<Array<String>>>
 
             model Organisation {
-               people : People?
+               people : People
             }
          }
          """
@@ -572,13 +594,13 @@ internal class OpenApiTypeMapperTest {
          namespace vyne.openApi {
 
             model Person {
-               name : String?
+               name : String
             }
 
             type People inherits Array<Array<Array<Person>>>
 
             model Organisation {
-               people : People?
+               people : People
             }
          }
          """
@@ -604,11 +626,11 @@ internal class OpenApiTypeMapperTest {
          namespace vyne.openApi {
 
             model Named {
-               name : String?
+               name : String
             }
 
             model Organisation inherits Named {
-              age: Int?
+              age: Int
             }
          }
          """
@@ -633,13 +655,13 @@ internal class OpenApiTypeMapperTest {
          namespace vyne.openApi {
 
             model Group {
-               name : String?
+               name : String
             }
 
             model AnonymousTypePersonGroup inherits Group
 
             model Person {
-               group : AnonymousTypePersonGroup?
+               group : AnonymousTypePersonGroup
             }
          }
          """
