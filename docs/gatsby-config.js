@@ -66,7 +66,8 @@ module.exports = {
                   "best-practices-for-taxonomy-development/conventions"
                ],
                "Release notes": [
-                  "release-notes/1.31.0"
+                  "release-notes/1.30.6",
+                  "release-notes/1.30.5"
                ],
                Resources: [
                   "[Vyne](https://vyne.co)",

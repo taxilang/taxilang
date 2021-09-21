@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
    <groupId>org.taxilang</groupId>
    <artifactId>parent</artifactId>
    <packaging>pom</packaging>
-   <version>1.31.0-SNAPSHOT</version>
+   <version>1.30.6-SNAPSHOT</version>
    <description>taxi is a language for defining API contracts. A Dsl that sits atop RAML for resource definition. Taxi
       (short for Taxonomy)
    </description>
@@ -44,7 +45,7 @@
       <module>package-repository-api</module>
       <module>sample-compiled-taxonomy</module>
       <module>xsd2taxi</module>
-       <module>query-adaptors</module>
+      <module>query-adaptors</module>
    </modules>
 
    <properties>
@@ -98,11 +99,23 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>com.nhaarman.mockitokotlin2</groupId>
-         <artifactId>mockito-kotlin</artifactId>
-         <version>2.2.0</version>
+         <groupId>org.mockito</groupId>
+         <artifactId>mockito-core</artifactId>
+         <version>3.12.4</version>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.mockito.kotlin</groupId>
+         <artifactId>mockito-kotlin</artifactId>
+         <version>3.2.0</version>
+         <scope>test</scope>
+      </dependency>
+<!--      <dependency>-->
+<!--         <groupId>org.mockito</groupId>-->
+<!--         <artifactId>mockito-core</artifactId>-->
+<!--         <version>3.3.3</version>-->
+<!--         <scope>test</scope>-->
+<!--      </dependency>-->
       <!-- https://mvnrepository.com/artifact/org.assertj/assertj-core -->
       <dependency>
          <groupId>org.assertj</groupId>
@@ -115,6 +128,32 @@
 
    <dependencyManagement>
       <dependencies>
+         <!-- ByteBuddy dependencies are transitive dependencies of Mocktio, and we seem to
+         be picking up old versions, leading to "Mockito can only mock non-private & non-final classes." errors -->
+         <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>1.11.13</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <version>1.11.13</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>3.12.4</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.mockito.kotlin</groupId>
+            <artifactId>mockito-kotlin</artifactId>
+            <version>3.2.0</version>
+            <scope>test</scope>
+         </dependency>
          <dependency>
             <groupId>org.spekframework.spek2</groupId>
             <artifactId>spek-dsl-jvm</artifactId>
@@ -201,7 +240,8 @@
                <commitMessages>
                   <releaseStartMessage>Update versions for release @{version}</releaseStartMessage>
                   <releaseFinishMessage>[skip ci] Update for next development version @{version}</releaseFinishMessage>
-                  <releaseVersionUpdateMessage>[skip ci] Update for next development version @{version}</releaseVersionUpdateMessage>
+                  <releaseVersionUpdateMessage>[skip ci] Update for next development version @{version}
+                  </releaseVersionUpdateMessage>
                </commitMessages>
                <!-- Configure branches -->
                <gitFlowConfig>
