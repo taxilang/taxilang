@@ -1,18 +1,18 @@
 namespace vyne.openApi {
    model dataSetList {
-      total : Int?
-      apis : AnonymousTypeDataSetListApisElement[]?
+      total : Int
+      apis : AnonymousTypeDataSetListApisElement[]
    }
    
    model AnonymousTypeDataSetListApisElement {
       [[ To be used as a dataset parameter value ]]
-      apiKey : String?
+      apiKey : String
       [[ To be used as a version parameter value ]]
-      apiVersionNumber : String?
+      apiVersionNumber : String
       [[ The URL describing the dataset's fields ]]
-      apiUrl : String?
+      apiUrl : String
       [[ A URL to the API console for each API ]]
-      apiDocumentationUrl : String?
+      apiDocumentationUrl : String
    }
    
    model AnonymousTypePerform_searchBody {

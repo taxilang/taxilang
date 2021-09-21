@@ -1,8 +1,8 @@
 package lang.taxi.packages
 
-import com.nhaarman.mockitokotlin2.any
-import com.nhaarman.mockitokotlin2.doReturn
-import com.nhaarman.mockitokotlin2.mock
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 import lang.taxi.packages.repository.PackageService
 import lang.taxi.packages.repository.PackageServiceFactory
 import lang.taxi.packages.utils.log
