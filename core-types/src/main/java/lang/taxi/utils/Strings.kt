@@ -1,6 +1,6 @@
 package lang.taxi.utils
 
-fun String.prependIfAbsent(prefix:String):String {
+fun String.prependIfAbsent(prefix: String): String {
    return if (this.startsWith(prefix)) {
       this
    } else {
@@ -9,8 +9,12 @@ fun String.prependIfAbsent(prefix:String):String {
 }
 
 
-fun String.trimEmptyLines():String {
+fun String.trimEmptyLines(preserveIndent: Boolean = false): String {
    return this.lineSequence()
       .filter { it.trim().isNotEmpty() }
-      .joinToString("\n") { it.trim() }
+      .joinToString("\n") {
+         if (preserveIndent) {
+            it
+         } else it.trim()
+      }
 }

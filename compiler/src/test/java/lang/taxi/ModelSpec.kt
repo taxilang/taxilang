@@ -26,6 +26,35 @@ model Person {
             person.hasField("firstName").should.be.`true`
             person.hasField("lastName").should.be.`true`
          }
+
+         it("should set the source in the correct namespace") {
+            val capturedSource= """
+               namespace names {
+                  type FirstName inherits String
+                  type LastName inherits String
+                  type NickName inherits String
+               }
+               namespace foo.bar {
+                  model Person {
+                     firstName : names.FirstName
+                     lastName : names.LastName
+                     nickNames: names.NickName[]
+                  }
+               }
+            """.compiled()
+               .model("foo.bar.Person")
+               .compilationUnits.single().source
+            capturedSource.content.withoutWhitespace().should.equal("""import names.FirstName
+import names.LastName
+import names.NickName
+namespace foo.bar {
+   model Person {
+      firstName : names.FirstName
+      lastName : names.LastName
+      nickNames: names.NickName[]
+   }
+}""".withoutWhitespace())
+         }
       }
 
       describe("simple grammar") {
