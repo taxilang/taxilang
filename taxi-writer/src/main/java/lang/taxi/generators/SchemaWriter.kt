@@ -269,9 +269,11 @@ $enumValueDeclarations
          else -> "(@format = [${declaredFormats.joinToString(",") { it.quotedIfNecessary() }}])"
       }
       val typeDoc = type.typeDoc.asTypeDocBlock()
+      val annotations = generateAnnotations(type)
 
       val typeKind = if (type.fields.isEmpty()) "type" else "model"
       return """$typeDoc
+         |$annotations
          |$modifiers $typeKind ${type.toQualifiedName().typeName.reservedWordEscaped()}$inheritanceString$typeFormat $body"""
          .trimMargin()
          .trimEmptyLines()
