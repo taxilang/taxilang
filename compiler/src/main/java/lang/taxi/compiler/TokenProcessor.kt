@@ -875,7 +875,6 @@ class TokenProcessor(
 
       val annotations = collateAnnotations(ctx.annotation())
       val modifiers = parseModifiers(ctx.typeModifier())
-      val inherits = parseTypeInheritance(namespace, ctx.listOfInheritedTypes())
       val expression = ctx.expressionTypeDeclaration()?.let {
          it.expressionGroup().map { expressionGroup -> parseTypeExpression(expressionGroup) }
       }?.invertEitherList()
@@ -885,6 +884,17 @@ class TokenProcessor(
             this.errors.addAll(errors)
             null
          }
+
+      val inherits = parseTypeInheritance(namespace, ctx.listOfInheritedTypes()).let { explicitInheritence ->
+         // If we have an expression, then the return type is inferrable from that
+         if (explicitInheritence.isEmpty() && expression != null) {
+            setOf(expression.returnType)
+         } else {
+            explicitInheritence
+         }
+
+      }
+
       checkForCircularTypeInheritance(typeName, ctx, inherits)?.let { compilationError ->
          return listOf(compilationError).left()
       }

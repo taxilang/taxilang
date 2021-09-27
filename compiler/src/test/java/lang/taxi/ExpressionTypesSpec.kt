@@ -7,6 +7,7 @@ import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.types.FormulaOperator
+import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TypeReferenceSelector
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -38,6 +39,29 @@ object ExpressionTypesSpec : Spek({
          val expression = doc.objectType("Bracketed").expression as OperatorExpression
          expression.lhs.compilationUnits[0].source.content.should.equal("Height + Width")
          expression.rhs.compilationUnits[0].source.content.should.equal("Height")
+      }
+      it("can infer return type of expression types") {
+         val type = """
+            type Height inherits Int
+            type Width inherits Int
+            type Area by (Height + Width) * Height
+         """.compiled()
+            .objectType("Area")
+         type.basePrimitive!!.should.equal(PrimitiveType.INTEGER)
+      }
+      it("infers return types correctly") {
+         val doc = """
+            type ExpectedInt by Int + Int
+            type ExpectedDecimal by Int + Decimal
+            type ExpectedDouble by Int + Double
+            type ExpectedString by String + String
+            type ExpectedAny by Int + String
+         """.compiled()
+         doc.type("ExpectedInt").basePrimitive!!.should.equal(PrimitiveType.INTEGER)
+         doc.type("ExpectedDecimal").basePrimitive!!.should.equal(PrimitiveType.DECIMAL)
+         doc.type("ExpectedDouble").basePrimitive!!.should.equal(PrimitiveType.DOUBLE)
+         doc.type("ExpectedString").basePrimitive!!.should.equal(PrimitiveType.STRING)
+         doc.type("ExpectedAny").basePrimitive!!.should.equal(PrimitiveType.ANY)
       }
       it("should compile nested expression types") {
          """
@@ -111,6 +135,6 @@ object ExpressionTypesSpec : Spek({
 
 })
 
-inline fun <reified T : Any> Any.asA():T  {
+inline fun <reified T : Any> Any.asA(): T {
    return this as T
 }

@@ -32,12 +32,12 @@
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>package-repository-api</artifactId>
-         <version>1.31.EXPRESSIONS-SNAPSHOT</version>
+         <version>${project.version}</version>
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>core-types</artifactId>
-         <version>1.31.EXPRESSIONS-SNAPSHOT</version>
+         <version>${project.version}</version>
       </dependency>
       <dependency>
          <groupId>commons-io</groupId>
