@@ -1,10 +1,32 @@
 package lang.taxi.generators.openApi.v3
 
 import io.swagger.oas.models.OpenAPI
-import io.swagger.oas.models.media.*
+import io.swagger.oas.models.media.ArraySchema
+import io.swagger.oas.models.media.BinarySchema
+import io.swagger.oas.models.media.BooleanSchema
+import io.swagger.oas.models.media.ByteArraySchema
+import io.swagger.oas.models.media.ComposedSchema
+import io.swagger.oas.models.media.DateSchema
+import io.swagger.oas.models.media.DateTimeSchema
+import io.swagger.oas.models.media.EmailSchema
+import io.swagger.oas.models.media.FileSchema
+import io.swagger.oas.models.media.IntegerSchema
+import io.swagger.oas.models.media.NumberSchema
+import io.swagger.oas.models.media.PasswordSchema
+import io.swagger.oas.models.media.Schema
+import io.swagger.oas.models.media.StringSchema
+import io.swagger.oas.models.media.UUIDSchema
 import lang.taxi.generators.openApi.Utils
 import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
-import lang.taxi.types.*
+import lang.taxi.types.ArrayType
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Field
+import lang.taxi.types.ObjectType
+import lang.taxi.types.ObjectTypeDefinition
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.Type
+import lang.taxi.types.UnresolvedImportedType
 
 class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) {
 
@@ -49,11 +71,8 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       schema: Schema<*>,
       context: String
    ): Type =
-      getTypeFromExtensions(schema) ?:
-      toType(schema, context) ?:
-      schema.`$ref`?.getTypeFromRef() ?:
-      generateModelIfAppropriate(schema, context) ?:
-      PrimitiveType.ANY
+      getTypeFromExtensions(schema) ?: toType(schema, context) ?: schema.`$ref`?.getTypeFromRef()
+      ?: generateModelIfAppropriate(schema, context) ?: PrimitiveType.ANY
 
    private fun getTypeFromExtensions(schema: Schema<*>): Type? {
       val explicitTaxiType = schema.taxiExtension
@@ -71,9 +90,7 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       } else null
 
    private fun toType(schema: Schema<*>, context: String) =
-      primitiveTypeFor(schema) ?:
-      intermediateTypeFor(schema) ?:
-      if (schema is ArraySchema) {
+      primitiveTypeFor(schema) ?: intermediateTypeFor(schema) ?: if (schema is ArraySchema) {
          makeArrayType(schema, context + "Element")
       } else null
 
@@ -127,7 +144,13 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       if (schema is ComposedSchema) {
          val allOf = schema.allOf ?: emptyList()
          val inherits = allOf.mapNotNull { it.`$ref`?.getTypeFromRef() }.toSet()
-         val requiredFields = allOf.flatMap { it.required ?: emptyList() }
+         // If requiredFields is present, it contributes to the definition of nullable.
+         // However, if requiredFields is omitted we only consider the nullable attribute of fields
+         val requiredFields = if (allOf.any { it.required != null }) {
+            allOf.flatMap { it.required ?: emptyList() }
+         } else {
+            null
+         }
          val properties =
             allOf.flatMap { it.properties?.toList() ?: emptyList() }
                .toMap()
@@ -143,7 +166,7 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
             name = name,
             inherits = emptySet(),
             properties = schema.properties ?: emptyMap(),
-            requiredFields = schema.required ?: emptyList(),
+            requiredFields = schema.required,
             description = schema.description
          )
       }
@@ -153,14 +176,17 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       name: QualifiedName,
       inherits: Set<Type>,
       properties: Map<String, Schema<Any>>,
-      requiredFields: List<String>,
+      // Nullable, as the requiredFields concept is optional in OpenApi,
+      // so we allow null to indicate "defer to the property schema".
+      // See order of precedence discussed on generateField
+      requiredFields: List<String>?,
       description: String?
    ): ObjectType {
       val fields = properties.map { (propName, schema) ->
          generateField(
             name = propName,
             schema = schema,
-            required = requiredFields.contains(propName),
+            explicitlyRequired = requiredFields?.contains(propName),
             parent = name,
          )
       }
@@ -173,12 +199,27 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       return ObjectType(name.fullyQualifiedName, typeDef)
    }
 
-   private fun generateField(name: String, schema: Schema<*>, required: Boolean, parent: QualifiedName): Field {
+   /**
+    * explicitlyRequired indicates if the field was declared as "required" in the OpenApi spec.
+    * It's nullable, as declaring required fields is optional.
+    * For determining nullability, we consider the following order of precedence (highest to lowest):
+    *  - is the field marked nullable?
+    *  - were required fields declared, and - if so, was this field listed?
+    *  - default to not nullable.
+    *
+    */
+   private fun generateField(
+      name: String,
+      schema: Schema<*>,
+      explicitlyRequired: Boolean?,
+      parent: QualifiedName
+   ): Field {
       val legalName = name.replaceIllegalCharacters()
+      val nullable = schema.nullable ?: explicitlyRequired?.not() ?: false
       return Field(
          name = legalName,
-         type = generateUnnamedTypeRecursively(schema, context = parent.typeName+legalName.capitalize()),
-         nullable = !required,
+         type = generateUnnamedTypeRecursively(schema, context = parent.typeName + legalName.capitalize()),
+         nullable = nullable,
          compilationUnit = CompilationUnit.unspecified(),
          typeDoc = schema.description,
       )

@@ -113,7 +113,8 @@ import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.nio.charset.Charset
 import java.security.SecureRandom
-import java.util.*
+import java.util.Base64
+import java.util.EnumSet
 
 class TokenProcessor(
    val tokens: Tokens,
@@ -889,6 +890,9 @@ class TokenProcessor(
       }
 
       val typeDoc = parseTypeDoc(ctx.typeDoc()?.source()?.content)
+      val dependantTypeNames = fields.map { it.type.toQualifiedName() } +
+         annotations.mapNotNull { it.type?.toQualifiedName() } +
+         inherits.map { it.toQualifiedName() }
       return this.typeSystem.register(
          ObjectType(
             typeName, ObjectTypeDefinition(
@@ -900,7 +904,7 @@ class TokenProcessor(
                typeDoc = typeDoc,
                typeKind = typeKind,
                expression = expression,
-               compilationUnit = ctx.toCompilationUnit()
+               compilationUnit = ctx.toCompilationUnit(dependantTypeNames)
             )
          )
       ).right()
@@ -1851,12 +1855,16 @@ class TokenProcessor(
             }
          }
             .reportAndRemoveErrorList(errors)
-
+         val dependentTypes = members.flatMap {
+            it.annotations.mapNotNull { annotation -> annotation.type } +
+            it.parameters.map { parameter -> parameter.type } +
+            it.returnType
+         }.map { it.toQualifiedName() }
          Service(
             qualifiedName,
             members,
             collateAnnotations(serviceToken.annotation()),
-            listOf(serviceToken.toCompilationUnit()),
+            listOf(serviceToken.toCompilationUnit(dependentTypes)),
             serviceDoc
          )
       }

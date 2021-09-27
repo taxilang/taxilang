@@ -34,7 +34,7 @@ class OpenApiTaxiExtensionTest {
                   model Pet {
                     id : PetId
                     name : Name
-                    tag : Tag?
+                    tag : Tag
                   }
                }
                """.trimIndent()

@@ -110,7 +110,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
       ) generates """
          namespace org.example {
             model Person {
-              name: String?
+              name: String
             }
          }
       """
@@ -134,10 +134,10 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
       ) generates """
          namespace vyne.openApi {
             model Address {
-              street: String?
+              street: String
             }
             model Person {
-              address: Address?
+              address: Address
             }
          }
       """
@@ -164,7 +164,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
 
          namespace vyne.openApi {
             model Person {
-              address: Address?
+              address: Address
             }
          }
       """
@@ -189,7 +189,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          namespace vyne.openApi {
             type Name inherits String
             model Person {
-               name : Name?
+               name : Name
             }
          }
       """
@@ -213,7 +213,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
 
          namespace vyne.openApi {
             model Person {
-               name : Name?
+               name : Name
             }
          }
       """
@@ -242,13 +242,13 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
       ) generates """
          namespace vyne.openApi {
             model House {
-              number: Int?
+              number: Int
             }
             model AnonymousTypePersonAddress {
-              house: House?
+              house: House
             }
             model Person {
-              address: AnonymousTypePersonAddress?
+              address: AnonymousTypePersonAddress
             }
          }
       """
@@ -280,10 +280,10 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
 
          namespace vyne.openApi {
             model AnonymousTypePersonAddress {
-              house: House?
+              house: House
             }
             model Person {
-              address: AnonymousTypePersonAddress?
+              address: AnonymousTypePersonAddress
             }
          }
       """
@@ -311,14 +311,14 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          import vyne.openApi.Address
          namespace example {
             model Person {
-              address: Address?
+              address: Address
             }
          }
          """,
          """
          namespace vyne.openApi {
             model Address {
-              street: String?
+              street: String
             }
 
          }
@@ -348,10 +348,10 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
       ) generates """
          namespace example {
             model Address {
-              street: String?
+              street: String
             }
             model Person {
-              address: Address?
+              address: Address
             }
          }
       """
@@ -376,7 +376,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          """
          namespace example {
             model Person {
-              name : String?
+              name : String
             }
          }
          """,
@@ -436,7 +436,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
 
          namespace vyne.openApi {
             model Organisation {
-              people : Array<Array<Array<Name>>>?
+              people : Array<Array<Array<Name>>>
             }
          }
       """
@@ -469,7 +469,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
             type Name inherits String
 
             model Organisation {
-              people : Array<Array<Array<Name>>>?
+              people : Array<Array<Array<Name>>>
             }
          }
       """
@@ -505,7 +505,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
             type Name inherits String
 
             model Person {
-               name : Name?
+               name : Name
             }
 
             service PeopleService {
@@ -583,7 +583,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
             type Name inherits String
 
             model Person {
-               name : Name?
+               name : Name
             }
 
             service PeopleService {

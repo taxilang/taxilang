@@ -1,7 +1,5 @@
 package lang.taxi.generators.java
 
-import com.nhaarman.mockitokotlin2.doReturn
-import com.nhaarman.mockitokotlin2.mock
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
 import lang.taxi.annotations.ConstraintAnnotationModel
@@ -10,6 +8,8 @@ import lang.taxi.annotations.ResponseContract
 import lang.taxi.services.operations.constraints.ConstantValueExpression
 import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 
 class AttributeConstantConstraintAnnotationConverterTest {
 

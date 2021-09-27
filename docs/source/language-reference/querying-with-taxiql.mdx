@@ -1,0 +1,318 @@
+---
+title: Querying with TaxiQL
+description: The TaxiQL language is used to execute queries against taxi-aware sources
+---
+
+import { Hint, Discourage } from '../components/hint'
+import { Link } from 'gatsby';
+
+## Overview
+TaxiQL allows writing queries using your Taxi taxonomy -  allowing queries to be expressed independent of the services and models that are providing data.
+
+When paired with a TaxiQL server such as [Vyne](https://vyne.co), this allows dynamic discovery of data, decoupled from the upstream services.
+
+## Basic syntax
+The basic syntax of a TaxiQL query looks like this:
+
+```taxi
+// Find all the people
+find { Person[] }
+
+// Find a person named Jim
+find { Person( FirstName = 'Jim' ) }
+
+// Find all the people named Jim
+find { Person[]( FirstName = 'Jim' ) }
+```
+
+### Finding one thing, versus finding many
+<Discourage>
+Heads up! Historically, TaxiQL used to support two verbs - `findAll` and `findOne`.  These have been replaced with just `find`.  While the old
+verbs are supported for backwards compatability, they will be removed in a future release.
+</Discourage>
+
+The type being queried for determines if a single result is discovered, or multiple.  To search for multiple entries, search for an array, using the `[]` symbol.
+
+
+| Query                  | Meaning                 | What's called
+|------------------------|-------------------------|--------------------------------------------|
+| `find { Person[] }`    | Find all the people     | Fetch from all services returning `Person[]` or a subtype of `Person[]` |
+| `find { Person }`    | Find a single person     | Fetch from a single service returning `Person` or a subtype of `Person` |
+
+
+## Criteria
+Criteria are specified in parentheses, after the type the criteria are applied to.
+
+For example:
+
+```taxi
+// Find a person named Jim
+find { Person( FirstName = 'Jim' ) }
+```
+
+This finds a `Person` model, with a `FirstName` value of Jim.
+
+<Hint>
+   **Important** Throughout taxi, we favour using Types, rather than field names, to describe attributes of data - it's the same here for querying.
+
+   Referencing criteria using a type means that the criteria can be applied against a model regardless of the name of the field where the information is stored.
+   This is especially powerful when querying multiple different models, each with a different structure.
+</Hint>
+
+### Combining multiple criteria
+Multiple criteria are listed within the parentheses, and are always applied as an AND operation.
+```taxi
+// Find all people born in the year 2010.
+find { Person( DateOfBirth > '2010-01-01', DateOfBirth <= '2010-12-31' ) }
+```
+
+The following operators are supported in a query - although support is determined by the actual services running.
+
+| Symbol | Meaning      |
+|--------|--------------|
+| `=`    | Equal to     |
+| `!=`   | Not equal to |
+| `>`    | Greater than |
+| `>=`    | Greater than or equal to |
+| `<`    | Less than    |
+| `<`    | Less than or equal to   |
+
+## Projecting
+When querying the result model can be specified using the `as` operator:
+
+```
+model Author {
+   personId : PersonId inherits String
+   firstName : FirstName
+   lastName : LastName
+}
+model Book {
+   title : BookTitle inherits String
+   author : PersonId
+}
+
+// Create a type defining the desired output model
+model BookAndAuthor {
+   name : BookTitle
+   authorName :  FirstName + ' ' + LastName
+}
+
+// Find books, and project to BookAndAuthor - a named type.
+find { Book[] } as BookAndAuthor
+
+
+// Find books, and project to an anonymous type.
+find { Book[] } as {
+   title : BookTitle
+   authorName : FirstName + ' ' + LastName
+}
+```
+
+### Projecting nested collections
+TaxiQL supports fine-grained control over how nested collections are projected using the `->` operator in queries.
+
+The syntax is:
+
+```
+model : CollectionType -> {
+  ...projection spec...
+}[] // Note the array marker comes after the projection spec.
+```
+
+Here's an example from a fictional shopping website:
+
+```taxi
+// Here's a transaction from our shopping website
+model Transaction {
+   transactionId : TransactionId
+   transactionDate : TransactionDate
+   items : TransactionItem[]
+}
+
+model TransactionItem {
+   sku : ProductSku
+}
+
+findAll { Transaction[] } as {
+   id: TransactionId
+   items : TransactionItem -> { // Project and enrich the TransactionItems to a different, richer model...
+      sku : ProductSku // Provide the productSku
+      description : ProductDescription // We also want the description and size of the product.
+      size : ProductSize // These aren't available on the source data, so they'll need to be looked up.
+   }[]
+}[]
+```
+
+## Linking data and `@Id`
+<Hint>This behaviour is down to server engines.  What's documented is the reference behaviour as implemented by Vyne.  However, other service implementations may vary.</Hint>
+
+When querying across multiple models, data is automatically discovered by calling services that return the requested data.
+However, sometimes you need to be specific about what values are appropriate to use for lookups.
+
+When a `model` exposes an `@Id` attribute, then only services that accept that id will be invoked when trying to link data.
+
+For example:
+
+```
+model Movie {
+   @Id
+   id : MovieId inherits String
+   title : MovieTitle inherits String
+   yearReleased : YearReleased inherits Int
+}
+model Review {
+   movie : MovieId
+   score : ReviewScore inherits Int
+}
+service ReviewsService {
+   operation getReview(MovieId):Review
+   operation getBestReviewForYear(YearReleased):Review
+}
+```
+
+Given the above model, we can issue queries such as:
+
+```
+find { Movie[] } as {
+   title : MovieTitle
+   score : ReviewScore
+}[]
+```
+
+There are two paths to discover a `ReviewScore` from the data available in a `Movie`:
+
+ * `Movie -> MovieId -> getReview(MovieId) -> Review -> ReviewScore` (Correct!)
+ * `Movie -> YearReleased -> getBestReviewForYear(YearReleased) -> Review -> ReviewScore` (Incorrect!)
+
+Therefore, to restrict the type of data that can be discovered, models can define an `@Id` attribute.
+
+When discovering data from services for models that contain an `@Id`, *only* operations that accept the `@Id` value as an input
+will be considered.
+
+This excludes the incorrect path.
+
+## Joins
+It is possible to request data joined across multiple models.
+
+Using a join affects the number of rows that are returned to the output.
+
+<Hint>
+   It's not always necessary to specify a join.  If you simply want to discover linked data, include the desired information in your output type.
+   See <Link to='#projecting'>Projections</Link>
+</Hint>
+
+### by
+
+`by` is used to relate data explicit using a field.
+By default, data is linked using `@Id` annotated attributes.
+
+For cases where you need a different link, use `by`.
+
+```
+type PersonId inherits String
+model Person {
+   @Id id : PersonId
+   name : PersonName
+}
+model Movie {
+   id : MovieId
+   title : MovieTitle
+  // We should make ambiguous types on models prohibited, unless they are inline refined as follows.
+   directedBy : DirectorId inherits PersonId
+   producedBy : ProducerId inherits PersonId
+}
+
+operation listMovies():Movie[]
+operation getPerson( PersonId ) : Person
+operation listMoviesByActor( ActorId ) : Movie[]
+
+find {
+  Movie[]
+} as {
+  id : MovieId
+  // The below would be illegal without the (by) clause, as PersonName is ambiguous.
+  directorName : PersonName( by DirectorId )
+  producerName : PersonName( by ProducerId )
+}
+```
+
+We can also use `by` to scope data blocks.
+
+```
+find {
+  Actor[] // Define a start point
+} as {
+  name : ActorName
+  movies : [
+    {
+       title : MovieTitle
+       year : YearReleased
+     }
+  ]( by ActorId )
+}[]
+```
+
+## Enriching from multiple sources with `@FirstNotEmpty`
+Often, there's more than one place to discover data across an organisation.
+And sometimes one system will contain missing data, that can be populated elsewhere.
+
+However, it's difficult for tooling to understand when a null value is legitimately null, versus when it's
+appropriate to look for data elsewhere.
+
+That's where `@FirstNotEmpty` comes in.
+
+Adding `@FirstNotEmpty` onto attributes in a query response (either on a response model, or an inline anonymous response)
+instructs query servers to keep looking for strategies to populate the data.
+
+For example:
+```
+model Person {
+   @Id
+   id : PersonId
+   name : PersonName inherits String
+   email : EmailAddress inherits String
+}
+
+service CustomerStore {
+   operation findAllPeople():Person[]
+}
+
+[[ A person returned from a 3rd party CRM system ]]
+model CrmPerson {
+   personId : PersonId
+   email : EmailAddress
+}
+service CRMPlatform {
+   operation findPerson(PersonId):CrmPerson
+}
+```
+
+Here, we see two different systems in an organisation that contain information about people.
+
+```
+findAll { Person[] } as {
+   personName : PersonName
+   emailAddress : EmailAddress
+}
+```
+
+Issuing this query would return all the data from the `CustomerStore`, formatted into our result type with two properties.
+Any null values present in the `CustomerStore` would be left as-is.
+
+However, if we want to enrich from other sources, we can instruct query servers to try to discover missing values:
+
+```
+findAll { Person[] } as {
+   personName : PersonName
+   @FirstNotEmpty
+   emailAddress : EmailAddress
+}
+```
+
+By adding `@FirstNotEmpty` to the `emailAddress` attribute, it instructs query servers to look for data in other data stores.
+
+As discussed in <Link to="#linking-data-and-id">Linking data and `@Ids`</Link>, if models expose an `@Id` attribute, then only
+services that accept the `@Id` will be used for enrichment.
+
+In this case, for any results that a re missing an `emailAddress`, the `findPerson` operation will be invoked, passing the id, and looking up the email address.
+The email address from those calls will be merged into the result.

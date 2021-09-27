@@ -1,11 +1,11 @@
 namespace vyne.openApi {
+   model Pet inherits NewPet {
+      id : Int
+   }
+   
    model NewPet {
       name : String
       tag : String?
-   }
-   
-   model Pet inherits NewPet {
-      id : Int
    }
    
    model Error {

@@ -38,6 +38,7 @@ module.exports = {
                   "language-reference/types-and-models",
                   "language-reference/advanced-types",
                   "language-reference/describing-services",
+                  "language-reference/querying-with-taxiql",
                   "language-reference/taxi-projects",
                ],
                "The Taxi CLI": [
@@ -63,6 +64,11 @@ module.exports = {
                   "best-practices-for-taxonomy-development/README",
                   "best-practices-for-taxonomy-development/building-your-base-taxonomy",
                   "best-practices-for-taxonomy-development/conventions"
+               ],
+               "Release notes": [
+                  "release-notes/1.30.7",
+                  "release-notes/1.30.6",
+                  "release-notes/1.30.5"
                ],
                Resources: [
                   "[Vyne](https://vyne.co)",
