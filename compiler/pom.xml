@@ -9,7 +9,6 @@
    <modelVersion>4.0.0</modelVersion>
 
    <artifactId>compiler</artifactId>
-   <version>1.31.EXPRESSIONS-SNAPSHOT</version>
 
    <properties>
       <antlr.version>4.7</antlr.version>
@@ -19,7 +18,7 @@
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>core-types</artifactId>
-         <version>1.31.EXPRESSIONS-SNAPSHOT</version>
+         <version>${project.version}</version>
       </dependency>
       <dependency>
          <groupId>io.arrow-kt</groupId>

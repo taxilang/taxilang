@@ -21,6 +21,7 @@ import lang.taxi.text
 import lang.taxi.toCompilationUnit
 import lang.taxi.types.Accessor
 import lang.taxi.types.Annotation
+import lang.taxi.types.ArrayType
 import lang.taxi.types.ColumnAccessor
 import lang.taxi.types.ConditionalAccessor
 import lang.taxi.types.DestructuredAccessor
@@ -197,10 +198,22 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
          }
 
          anonymousTypeDefinition != null -> {
-            val anonymousTypeBody = member.fieldDeclaration().anonymousTypeDefinition().typeBody()
+            val anonymousTypeBody = anonymousTypeDefinition.typeBody()
+
             val anonymousTypeName = "$typeName$${member.fieldDeclaration().Identifier().text.capitalize()}"
             val fieldType = tokenProcessor.parseAnonymousType(namespace, anonymousTypeBody, anonymousTypeName)
-            fieldType.flatMap { type -> toField(member, namespace, type, typeDoc, fieldAnnotations) }
+               .map { type ->
+                  val isDeclaredAsCollection = anonymousTypeDefinition.listType() != null
+                  if (isDeclaredAsCollection) {
+                     ArrayType.of(type, anonymousTypeBody.toCompilationUnit())
+                  } else {
+                     type
+                  }
+               }
+            fieldType.flatMap { type ->
+
+               toField(member, namespace, type, typeDoc, fieldAnnotations)
+            }
          }
 
          modelAttributeType != null -> {
@@ -242,6 +255,13 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
                        typeDoc: String?,
                        fieldAnnotations: List<Annotation>,
                        memberSource: QualifiedName? = null): Either<List<CompilationError>, Field> {
+      val projectionScopeTypes = getFieldProjectionScope(member)
+         .getOrHandle { errors ->
+            this.errors.addAll(errors)
+            emptyList()
+         }
+
+
       return when {
          // orderId:  Order::OrderSentId
          memberSource != null -> {
@@ -255,6 +275,7 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
                accessor = null,
                typeDoc = typeDoc,
                memberSource = memberSource,
+               projectionScopeTypes = projectionScopeTypes,
                compilationUnit = member.fieldDeclaration().toCompilationUnit()).right()
          }
 
@@ -275,7 +296,8 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
                accessor = accessor,
                typeDoc = typeDoc,
                compilationUnit = member.fieldDeclaration().toCompilationUnit(),
-               memberSource = memberSource
+               memberSource = memberSource,
+               projectionScopeTypes = projectionScopeTypes,
             ).right()
 
          }
@@ -298,11 +320,33 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
                   constraints = constraints,
                   accessor = accessor,
                   typeDoc = typeDoc,
+                  projectionScopeTypes = projectionScopeTypes,
                   compilationUnit = member.fieldDeclaration().toCompilationUnit())
             }
          }
       }
    }
+
+   /**
+    * Returns the list of type names that should be used to define the scope for projecting the defined
+    * field in a complex projection.
+    *
+    * eg:
+    * findAll { Transaction[] } as {
+    *    items : TransactionItem -> {
+    *       sku : ProductSku
+    *       size : ProductSize
+    *    }[]
+    * }[]
+    *
+    * Note: Currently the syntax only supports defining a single value here, but we plan to expand this
+    * to a collection in the near future, so return a List<Type> rather than Type
+    */
+   private fun getFieldProjectionScope(member: TaxiParser.TypeMemberDeclarationContext): Either<List<CompilationError>, List<Type>> =
+      member.fieldDeclaration().collectionProjectionScope()?.typeType()?.let { typeType ->
+         this.tokenProcessor.typeOrError(typeType.findNamespace(), typeType)
+               .map { listOf(it) }
+      } ?: Either.right(emptyList())
 
    private fun mapFieldModifiers(fieldModifier: TaxiParser.FieldModifierContext?): List<FieldModifier> {
       if (fieldModifier == null) return emptyList()

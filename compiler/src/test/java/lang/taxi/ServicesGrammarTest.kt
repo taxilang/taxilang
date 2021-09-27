@@ -2,7 +2,11 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
-import lang.taxi.services.operations.constraints.*
+import lang.taxi.services.operations.constraints.ConstantValueExpression
+import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
+import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
+import lang.taxi.services.operations.constraints.RelativeValueExpression
+import lang.taxi.services.operations.constraints.ReturnValueDerivedFromParameterConstraint
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.VoidType
 import org.junit.jupiter.api.Test
@@ -211,6 +215,37 @@ service MyService {
       val doc = Compiler.forStrings(src).compile()
       expect(doc.service("MyService").operation("op1").returnType).to.equal(PrimitiveType.STRING)
       expect(doc.service("MyService").operation("op2").returnType).to.equal(PrimitiveType.STRING)
+   }
+
+   @Test
+   fun `services generate source with dependent types correctly`() {
+      val types = """namespace people {
+         |type PersonId inherits Int
+         |model Person {
+         |  firstName : FirstName inherits String
+         |}
+         |}
+      """.trimMargin()
+      val services = """
+         import people.PersonId
+         import people.Person
+         namespace services {
+            service PersonService {
+               operation findPerson(PersonId):Person
+            }
+         }
+      """.trimIndent()
+      val serviceSource = Compiler.forStrings(listOf(types,services)).compile()
+         .service("services.PersonService")
+         .compilationUnits.single().source
+      serviceSource.content.withoutWhitespace()
+         .should.equal("""import people.PersonId
+import people.Person
+namespace services {
+   service PersonService {
+         operation findPerson(PersonId):Person
+      }
+}""".withoutWhitespace())
    }
 
 }

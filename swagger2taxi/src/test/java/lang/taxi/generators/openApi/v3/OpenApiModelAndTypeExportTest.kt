@@ -62,7 +62,7 @@ class OpenApiModelAndTypeExportTest {
       val expectedTaxi = """
          namespace vyne.openApi {
             model Pet {
-               pet_id : Int?
+               pet_id : Int
             }
          }
       """.trimIndent()

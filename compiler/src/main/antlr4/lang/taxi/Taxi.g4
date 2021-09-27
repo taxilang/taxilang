@@ -205,8 +205,16 @@ fieldModifier
    : 'closed'
    ;
 fieldDeclaration
-  :   fieldModifier? Identifier (':' (simpleFieldDeclaration | anonymousTypeDefinition | modelAttributeTypeReference))?
+  :   fieldModifier? Identifier (':' collectionProjectionScope? (simpleFieldDeclaration | anonymousTypeDefinition | modelAttributeTypeReference))?
   ;
+
+// Used in queries to scope projection of collections.
+// eg:
+//findAll { OrderTransaction[] } as {
+//   items: OrderItem -> { sku: ProductSku size: ProductSize }[]
+// }[]
+collectionProjectionScope: typeType '->';
+
 
 // A type reference that refers to the attribute on a model.
 // eg:  firstName : Person::FirstName.
@@ -584,7 +592,7 @@ defaultDefinition: 'default' '(' (literal | qualifiedName) ')';
 // rather than permitting void return types.
 // This is because in a mapping declaration, functions really only have purpose if
 // they return things.
-functionDeclaration: 'declare' (functionModifiers)? 'function' functionName '(' operationParameterList? ')' ':' typeType;
+functionDeclaration: typeDoc? 'declare' (functionModifiers)? 'function' functionName '(' operationParameterList? ')' ':' typeType;
 
 functionModifiers: 'query';
 
@@ -759,12 +767,9 @@ anonymousComplexFieldDeclaration: Identifier ':' '{' (Identifier ':' typeType)* 
 
 anonymousField:
    Identifier  // e.g. orderId
-   |
-   anonymousFieldDeclaration // productId: ProductId
-   |
-   anonymousFieldDeclarationWithSelfReference // traderEmail : EmailAddress(by this.traderUtCode)
-   |
-   anonymousComplexFieldDeclaration //    salesPerson {
+   | anonymousFieldDeclaration // productId: ProductId
+   | anonymousFieldDeclarationWithSelfReference // traderEmail : EmailAddress(by this.traderUtCode)
+   | anonymousComplexFieldDeclaration //    salesPerson {
                                     //        firstName : FirstName
                                     //        lastName : LastName
                                     //    } (by this.salesUtCode)

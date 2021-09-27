@@ -113,7 +113,8 @@ import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.nio.charset.Charset
 import java.security.SecureRandom
-import java.util.*
+import java.util.Base64
+import java.util.EnumSet
 
 class TokenProcessor(
    val tokens: Tokens,
@@ -874,7 +875,6 @@ class TokenProcessor(
 
       val annotations = collateAnnotations(ctx.annotation())
       val modifiers = parseModifiers(ctx.typeModifier())
-      val inherits = parseTypeInheritance(namespace, ctx.listOfInheritedTypes())
       val expression = ctx.expressionTypeDeclaration()?.let {
          it.expressionGroup().map { expressionGroup -> parseTypeExpression(expressionGroup) }
       }?.invertEitherList()
@@ -884,11 +884,25 @@ class TokenProcessor(
             this.errors.addAll(errors)
             null
          }
+
+      val inherits = parseTypeInheritance(namespace, ctx.listOfInheritedTypes()).let { explicitInheritence ->
+         // If we have an expression, then the return type is inferrable from that
+         if (explicitInheritence.isEmpty() && expression != null) {
+            setOf(expression.returnType)
+         } else {
+            explicitInheritence
+         }
+
+      }
+
       checkForCircularTypeInheritance(typeName, ctx, inherits)?.let { compilationError ->
          return listOf(compilationError).left()
       }
 
       val typeDoc = parseTypeDoc(ctx.typeDoc()?.source()?.content)
+      val dependantTypeNames = fields.map { it.type.toQualifiedName() } +
+         annotations.mapNotNull { it.type?.toQualifiedName() } +
+         inherits.map { it.toQualifiedName() }
       return this.typeSystem.register(
          ObjectType(
             typeName, ObjectTypeDefinition(
@@ -900,7 +914,7 @@ class TokenProcessor(
                typeDoc = typeDoc,
                typeKind = typeKind,
                expression = expression,
-               compilationUnit = ctx.toCompilationUnit()
+               compilationUnit = ctx.toCompilationUnit(dependantTypeNames)
             )
          )
       ).right()
@@ -1851,12 +1865,16 @@ class TokenProcessor(
             }
          }
             .reportAndRemoveErrorList(errors)
-
+         val dependentTypes = members.flatMap {
+            it.annotations.mapNotNull { annotation -> annotation.type } +
+            it.parameters.map { parameter -> parameter.type } +
+            it.returnType
+         }.map { it.toQualifiedName() }
          Service(
             qualifiedName,
             members,
             collateAnnotations(serviceToken.annotation()),
-            listOf(serviceToken.toCompilationUnit()),
+            listOf(serviceToken.toCompilationUnit(dependentTypes)),
             serviceDoc
          )
       }

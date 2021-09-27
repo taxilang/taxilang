@@ -111,4 +111,36 @@ class SwaggerModelAndTypeExportTest {
 
       expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
    }
+
+   @Test
+   fun `illegal identifiers in type names are replaced correctly`() {
+      @Language("yaml")
+      val openApiSpec = """
+         swagger: "2.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         host: petstore.swagger.io
+         basePath: /v1
+         paths: {}
+         definitions:
+           io.pet-store.Pet-Model:
+             properties:
+               pet id:
+                 type: integer
+                 format: int64
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace io.pet_store {
+            model Pet_Model {
+               pet_id : Int?
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
 }

@@ -4,8 +4,16 @@ import lang.taxi.ImmutableEquality
 import lang.taxi.Operator
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
-import lang.taxi.types.*
+import lang.taxi.types.Annotatable
 import lang.taxi.types.Annotation
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Compiled
+import lang.taxi.types.Documented
+import lang.taxi.types.ImportableToken
+import lang.taxi.types.NameTypePair
+import lang.taxi.types.Named
+import lang.taxi.types.TaxiStatementGenerator
+import lang.taxi.types.Type
 
 data class Parameter(override val annotations: List<Annotation>, override val type: Type, override val name: String?, override val constraints: List<Constraint>, val isVarArg: Boolean = false) : Annotatable, ConstraintTarget, NameTypePair, TaxiStatementGenerator {
    override val description: String = "param $name"
@@ -18,14 +26,16 @@ data class Parameter(override val annotations: List<Annotation>, override val ty
 
 interface ServiceMember : Annotatable, Compiled, Documented {
    val name: String
+   val parameters: List<Parameter>
+   val returnType: Type
 }
 
 data class QueryOperation(
    override val name: String,
    override val annotations: List<Annotation>,
-   val parameters: List<Parameter>,
+   override val parameters: List<Parameter>,
    val grammar: String,
-   val returnType: Type,
+   override val returnType: Type,
    override val compilationUnits: List<CompilationUnit>,
    val capabilities: List<QueryOperationCapability>,
    override val typeDoc: String? = null) : ServiceMember, Annotatable, Compiled, Documented, TaxiStatementGenerator {
@@ -83,8 +93,8 @@ enum class SimpleQueryCapability(val symbol:String) : QueryOperationCapability {
 data class Operation(override val name: String,
                      val scope: String? = null,
                      override val annotations: List<Annotation>,
-                     val parameters: List<Parameter>,
-                     val returnType: Type,
+                     override val parameters: List<Parameter>,
+                     override val returnType: Type,
                      override val compilationUnits: List<CompilationUnit>,
                      val contract: OperationContract? = null,
                      override val typeDoc: String? = null) : ServiceMember, Annotatable, Compiled, Documented {
@@ -99,7 +109,7 @@ data class Service(override val qualifiedName: String,
                    val members: List<ServiceMember>,
                    override val annotations: List<Annotation>,
                    override val compilationUnits: List<CompilationUnit>,
-                   override val typeDoc: String? = null) : Annotatable, Named, Compiled, Documented {
+                   override val typeDoc: String? = null) : Annotatable, Named, ImportableToken, Compiled, Documented {
    private val equality = ImmutableEquality(this, Service::qualifiedName, Service::operations, Service::annotations)
 
    override fun equals(other: Any?) = equality.isEqualTo(other)

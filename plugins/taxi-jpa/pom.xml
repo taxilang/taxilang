@@ -20,7 +20,7 @@
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>kotlin-core</artifactId>
-         <version>1.31.EXPRESSIONS-SNAPSHOT</version>
+         <version>${project.version}</version>
          <scope>provided</scope>
       </dependency>
       <dependency>

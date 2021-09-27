@@ -13,12 +13,12 @@
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>compiler</artifactId>
-         <version>1.31.EXPRESSIONS-SNAPSHOT</version>
+         <version>${project.version}</version>
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>core-types</artifactId>
-         <version>1.31.EXPRESSIONS-SNAPSHOT</version>
+         <version>${project.version}</version>
       </dependency>
    </dependencies>
 </project>
