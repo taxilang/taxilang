@@ -149,7 +149,10 @@ object ExpressionTypesSpec : Spek({
          lambdaExpression.asTaxi().should.equal("ProductCalories > MinimumAcceptableCalories && ProductCalories < MaximumAcceptableCalories")
          lambdaExpression.operator.should.equal(FormulaOperator.LogicalAnd)
       }
+
    }
+
+
 })
 
 inline fun <reified T : Any> Any.asA(): T {

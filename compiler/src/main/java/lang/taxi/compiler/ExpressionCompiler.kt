@@ -66,8 +66,9 @@ class ExpressionCompiler(
    private fun parseLambdaExpression(lambdaExpression: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
       require(lambdaExpression.children.size == 2) { "Expected exactly 2 children in the lambda expression"}
       require(lambdaExpression.expressionGroup().size == 1) { "expected exactly 1 expression group on the rhs of the lambda"}
-      return lambdaExpression.expressionInputs().typeType().map { typeType ->
-         tokenProcessor.parseType(typeType.findNamespace(), typeType)
+      return lambdaExpression.expressionInputs()
+         .expressionInput().map { expressionInput ->
+         tokenProcessor.parseType(expressionInput.findNamespace(), expressionInput.typeType())
       }.invertEitherList().flattenErrors()
          .flatMap { inputs ->
             compile(lambdaExpression.expressionGroup(0)).map { expression ->

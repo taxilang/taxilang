@@ -1,6 +1,7 @@
 package lang.taxi.compiler
 
 import arrow.core.Either
+import arrow.core.extensions.list.monad.map
 import arrow.core.flatMap
 import arrow.core.getOrElse
 import arrow.core.getOrHandle
@@ -55,6 +56,7 @@ import lang.taxi.source
 import lang.taxi.stringLiteralValue
 import lang.taxi.toCompilationError
 import lang.taxi.toCompilationUnit
+import lang.taxi.toCompilationUnits
 import lang.taxi.types.AndExpression
 import lang.taxi.types.Annotation
 import lang.taxi.types.AnnotationType
@@ -81,7 +83,9 @@ import lang.taxi.types.FieldExtension
 import lang.taxi.types.FieldReferenceEntity
 import lang.taxi.types.Formula
 import lang.taxi.types.GenericType
+import lang.taxi.types.GenericTypeArgument
 import lang.taxi.types.ImportableToken
+import lang.taxi.types.LambdaExpressionType
 import lang.taxi.types.LogicalExpression
 import lang.taxi.types.Modifier
 import lang.taxi.types.ObjectType
@@ -1197,9 +1201,10 @@ class TokenProcessor(
 
    internal fun parseType(
       namespace: Namespace,
-      typeType: TaxiParser.TypeTypeContext
+      typeType: TaxiParser.TypeTypeContext,
+      typeArgumentsInScope: List<GenericTypeArgument> = emptyList()
    ): Either<List<CompilationError>, Type> {
-      return typeOrError(namespace, typeType).flatMap { type ->
+      return typeOrError(namespace, typeType, typeArgumentsInScope).flatMap { type ->
          parseTypeFormat(typeType).flatMap { (formats, zoneOffset) ->
             if (typeType.listType() != null) {
                if (formats.isNotEmpty() || zoneOffset != null) {
@@ -1275,9 +1280,14 @@ class TokenProcessor(
 
    internal fun typeOrError(
       namespace: Namespace,
-      typeType: TaxiParser.TypeTypeContext
+      typeType: TaxiParser.TypeTypeContext,
+      typeArgumentsInScope: List<GenericTypeArgument> = emptyList()
    ): Either<List<CompilationError>, Type> {
+      val referencedGenericTypeArgument = typeArgumentsInScope.firstOrNull {
+         it.declaredName == typeType.classOrInterfaceType().Identifier().text()
+      }
       return when {
+         referencedGenericTypeArgument != null -> referencedGenericTypeArgument.right()
          typeType.inlineInheritedType() != null -> compileInlineInheritedType(namespace, typeType)
          typeType.aliasedType() != null -> compileInlineTypeAlias(namespace, typeType)
          typeType.classOrInterfaceType() != null -> resolveUserType(
@@ -1288,6 +1298,19 @@ class TokenProcessor(
 //         typeType.primitiveType() != null -> PrimitiveType.fromDeclaration(typeType.getChild(0).text).right()
          else -> throw IllegalArgumentException()
       }
+   }
+
+   private fun resolveGenericTypeArgument(
+      declaringTypeOrFunctionName: String,
+      referencedGenericTypeArgument: TaxiParser.TypeTypeContext
+   ): GenericTypeArgument {
+      val typeName = listOf(declaringTypeOrFunctionName, "$", referencedGenericTypeArgument.text).joinToString("")
+      return GenericTypeArgument(
+         qualifiedName = typeName,
+         declaredName = referencedGenericTypeArgument.text,
+         compilationUnits = referencedGenericTypeArgument.toCompilationUnits()
+      )
+
    }
 
 
@@ -1823,9 +1846,13 @@ class TokenProcessor(
          return Either.right(typeSystem.getFunction(qualifiedName))
       }
       val (namespace, functionToken) = namespaceAndParserContext
-      return parseType(namespace, functionToken.typeType()).flatMap { returnType ->
-         val parameters = functionToken.operationParameterList()?.operationParameter()?.map { parameterDefinition ->
-            parseParameter(namespace, parameterDefinition)
+      val typeArguments = (functionToken.typeArguments()?.typeType() ?: emptyList()).map { typeType ->
+         resolveGenericTypeArgument(qualifiedName, typeType)
+      }
+      return parseType(namespace, functionToken.typeType(), typeArguments).flatMap { returnType ->
+         val parameters = functionToken.operationParameterList()?.operationParameter()?.mapIndexed { index,parameterDefinition ->
+            val anonymousParameterTypeName = "$qualifiedName\$Param$index"
+            parseParameter(namespace, parameterDefinition, typeArguments,anonymousParameterTypeName)
          }?.reportAndRemoveErrorList(errors) ?: emptyList()
 
          if (functionToken.functionModifiers() != null && functionToken.functionModifiers().text != "query") {
@@ -1867,8 +1894,8 @@ class TokenProcessor(
             .reportAndRemoveErrorList(errors)
          val dependentTypes = members.flatMap {
             it.annotations.mapNotNull { annotation -> annotation.type } +
-            it.parameters.map { parameter -> parameter.type } +
-            it.returnType
+               it.parameters.map { parameter -> parameter.type } +
+               it.returnType
          }.map { it.toQualifiedName() }
          Service(
             qualifiedName,
@@ -1961,20 +1988,58 @@ class TokenProcessor(
 
    private fun parseParameter(
       namespace: Namespace,
-      operationParameterContext: TaxiParser.OperationParameterContext
+      operationParameterContext: TaxiParser.OperationParameterContext,
+      typeArgumentsInScope: List<GenericTypeArgument> = emptyList(),
+      // When parsing paraeters that are lambdas we need a useful name
+      anonymousParameterTypeName:String? = null
    ): Either<List<CompilationError>, Parameter> {
-      return parseType(namespace, operationParameterContext.typeType())
-         .flatMap { paramType ->
+      val paramTypeOrError: Either<List<CompilationError>, Type> = if (operationParameterContext.typeType() != null) {
+         parseType(namespace, operationParameterContext.typeType(), typeArgumentsInScope)
+      } else if (operationParameterContext.lambdaSignature() != null) {
+         parseLambdaTypeParameter(operationParameterContext.lambdaSignature(), typeArgumentsInScope, anonymousParameterTypeName)
+      } else {
+         error("Unhandled branch in parameter parsing")
+      }
+
+      return paramTypeOrError.flatMap { paramType ->
             mapConstraints(operationParameterContext.typeType(), paramType, namespace).map { constraints ->
                val isVarargs = operationParameterContext.varargMarker() != null
                Parameter(
-                  collateAnnotations(operationParameterContext.annotation()), paramType,
+                  annotations = collateAnnotations(operationParameterContext.annotation()),
+                  type = paramType,
                   name = operationParameterContext.parameterName()?.Identifier()?.text,
                   constraints = constraints,
                   isVarArg = isVarargs
                )
             }
          }
+   }
+
+   private fun parseLambdaTypeParameter(
+      lambdaSignature: TaxiParser.LambdaSignatureContext,
+      typeArgumentsInScope: List<GenericTypeArgument>,
+      anonymousParameterTypeName: String?
+   ): Either<List<CompilationError>, Type> {
+      return lambdaSignature.expressionInputs().expressionInput().map { inputType ->
+         parseType(
+            lambdaSignature.findNamespace(),
+            inputType.typeType(),
+            typeArgumentsInScope
+         )
+      }.invertEitherList().flattenErrors().flatMap { inputTypes ->
+         parseType(
+            lambdaSignature.findNamespace(),
+            lambdaSignature.typeType(),
+            typeArgumentsInScope
+         ).map { returnType ->
+            LambdaExpressionType(
+               qualifiedName =anonymousParameterTypeName!!,
+               inputTypes,
+               returnType,
+               lambdaSignature.toCompilationUnits()
+            )
+         }
+      }
    }
 
    private fun parseOperationContract(
@@ -1999,11 +2064,11 @@ class TokenProcessor(
    }
 
    internal fun mapConstraints(
-      typeType: TaxiParser.TypeTypeContext,
+      typeType: TaxiParser.TypeTypeContext?,
       paramType: Type,
       namespace: Namespace
    ): Either<List<CompilationError>, List<Constraint>> {
-      if (typeType.parameterConstraint() == null) {
+      if (typeType?.parameterConstraint() == null) {
          return Either.right(emptyList())
       }
       return OperationConstraintConverter(

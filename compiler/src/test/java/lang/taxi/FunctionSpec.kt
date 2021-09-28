@@ -2,8 +2,8 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.functions.FunctionAccessor
-import lang.taxi.functions.FunctionModifiers
 import lang.taxi.functions.FunctionExpressionAccessor
+import lang.taxi.functions.FunctionModifiers
 import lang.taxi.functions.stdlib.Left
 import lang.taxi.linter.LinterRules
 import lang.taxi.messages.Severity
@@ -11,7 +11,6 @@ import lang.taxi.types.ColumnAccessor
 import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.LiteralAccessor
-import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TypeReferenceSelector
 import org.spekframework.spek2.Spek
@@ -87,6 +86,20 @@ object FunctionSpec : Spek({
          function.returnType.should.equal(PrimitiveType.STRING)
          function.modifiers.should.equal(EnumSet.of(FunctionModifiers.Query))
       }
+
+      it("can infer the type on a model when using a function") {
+         """
+            declare function left(String):String
+
+            model Foo {
+               firstName : String
+               initial by left(this.firstName)
+            }
+         """.compiled()
+            .model("Foo")
+            .field("initial")
+      }
+
    }
    describe("using read functions") {
       it("is valid to use a fully qualified reference to function inline") {
@@ -423,6 +436,37 @@ namespace pkgB {
          compilationMessages.should.not.be.empty
          compilationMessages.first().severity.should.equal(Severity.ERROR)
          compilationMessages.first().detailMessage.should.equal("a query function can only referenced from view definitions!")
+      }
+
+
+      describe("generic type params") {
+         it("is valid to declare a function with generic type params") {
+            val type = """
+               declare function <T,A> reduce(T[], (T,A) -> A):A
+            """.compiled()
+               .function("reduce")
+            TODO()
+         }
+         it("is valid to declare bounds on generic type params") {
+            val type = """
+               declare function <T inherits Int,A inherits Int> reduce(T[], (T,A) -> A):A
+            """.compiled()
+               .objectType("reduce")
+            TODO()
+         }
+         it("when calling a function with generic params then the generics are resolved") {
+            val type = """
+               model Entry {
+                  weight:Weight inherits Int
+                  score:Score inherits Int
+               }
+               declare function <T,A> reduce(T[], (T,A) -> A):A
+
+               type WeightedAverage by (Entry[]) -> reduce(Entry[], (Entry, Int) -> Acc + (Weight*Score))
+            """.compiled()
+               .objectType("WeightedAverage")
+            TODO()
+         }
       }
 
    }

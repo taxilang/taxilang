@@ -76,7 +76,13 @@ typeMemberDeclaration
 
 expressionTypeDeclaration : 'by' expressionGroup*;
 
-expressionInputs: '(' typeType (',' typeType)* ')' '->';
+expressionInputs: '(' expressionInput (',' expressionInput)* ')' '->';
+expressionInput: (Identifier ':')? typeType;
+
+// (A,B) -> C
+// Used in functions:
+// declare function <T,A> reduce(T[], (T,A) -> A):A
+lambdaSignature: expressionInputs typeType;
 
 // Added for expression types.
 // However, I suspect with a few modifications e can simplify
@@ -384,10 +390,11 @@ operationParameterList
     :   operationParameter (',' operationParameter)*
     ;
 
+
 operationParameter
 // Note that only one operationParameterConstraint can exist per parameter, but it can contain
 // multiple expressions
-     :   annotation* (parameterName)? typeType varargMarker?
+     :   annotation* (parameterName)? (typeType varargMarker?) | lambdaSignature
      ;
 
 varargMarker: '...';
@@ -592,7 +599,7 @@ defaultDefinition: 'default' '(' (literal | qualifiedName) ')';
 // rather than permitting void return types.
 // This is because in a mapping declaration, functions really only have purpose if
 // they return things.
-functionDeclaration: typeDoc? 'declare' (functionModifiers)? 'function' functionName '(' operationParameterList? ')' ':' typeType;
+functionDeclaration: typeDoc? 'declare' (functionModifiers)? 'function' typeArguments? functionName '(' operationParameterList? ')' ':' typeType;
 
 functionModifiers: 'query';
 
@@ -616,7 +623,7 @@ formalParameterList
       //    | defaultDefinition
       //    | readFunction
       //    ;
-parameter: literal |  scalarAccessorExpression | fieldReferenceSelector | typeReferenceSelector | modelAttributeTypeReference;
+parameter: literal |  scalarAccessorExpression | fieldReferenceSelector | typeReferenceSelector | modelAttributeTypeReference | expressionGroup;
 
 columnIndex : IntegerLiteral | StringLiteral;
 
