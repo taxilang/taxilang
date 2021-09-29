@@ -7,6 +7,7 @@ import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.Namespace
 import lang.taxi.TaxiParser
+import lang.taxi.expressions.Expression
 import lang.taxi.findNamespace
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
@@ -88,8 +89,6 @@ class FunctionAccessorCompiler(
                            parameterContext.scalarAccessorExpression(),
                            parameterType
                         )
-//                  parameterContext.readFunction() !s= null -> buildReadFunctionAccessor(parameterContext.readFunction()).right()
-//                  parameterContext.columnDefinition() != null -> buildColumnAccessor(parameterContext.columnDefinition()).right()
                         parameterContext.fieldReferenceSelector() != null -> referenceResolver.compileFieldReferenceAccessor(
                            function,
                            parameterContext
@@ -112,8 +111,10 @@ class FunctionAccessorCompiler(
                                  parameterContext.start,
                                  "Model Attribute References are only allowed within Views"
                               ).asList().left()
-
                            }
+                        }
+                        parameterContext.expressionGroup() != null -> {
+                           compileExpressionGroupParameter(parameterContext.expressionGroup())
                         }
                         else -> TODO("readFunction parameter accessor not defined for code ${functionContext.source().content}")
 
@@ -133,10 +134,14 @@ class FunctionAccessorCompiler(
                      "a query function can only referenced from view definitions!"
                   ).asList().left()
                } else {
-                  FunctionAccessor(function, parameters).right()
+                  FunctionAccessor.buildAndResolveTypeArguments(function, parameters).right()
                }
             }
          }
+   }
+
+   private fun compileExpressionGroupParameter(expressionGroup: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, Expression> {
+      return tokenProcessor.expressionCompiler().compile(expressionGroup)
    }
 
    private fun compileTypeReferenceAccessor(

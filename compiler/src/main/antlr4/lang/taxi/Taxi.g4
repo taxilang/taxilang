@@ -193,7 +193,7 @@ caseElseMatchExpression: 'else';
 caseFieldAssigningDeclaration :  // dealtAmount ...  (could be either a destructirng block, or an assignment)
    Identifier (
       caseFieldDestructuredAssignment | // dealtAmount ( ...
-      ( '=' caseScalarAssigningDeclaration ) | // dealtAmount = ccy1Amount | dealtAmount = 'foo'
+      ( EQ caseScalarAssigningDeclaration ) | // dealtAmount = ccy1Amount | dealtAmount = 'foo'
       // TODO : How do we model Enum assignments here?
       // .. some enum assignment ..
       scalarAccessor
@@ -490,7 +490,7 @@ numeric_entity : literal              # LiteralConst
                ;
 
 comparisonOperator
-   : '='
+   : '=='
    | '>'
    | '>='
    | '<='
@@ -983,7 +983,7 @@ GT : '>' ;
 GE : '>=' ;
 LT : '<' ;
 LE : '<=' ;
-EQ : '=' ;
+EQ : '==' ;
 NQ : '!=';
 
 LOGICAL_OR : '||';

@@ -1,6 +1,8 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.expressions.FunctionExpression
+import lang.taxi.expressions.LambdaExpression
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionExpressionAccessor
 import lang.taxi.functions.FunctionModifiers
@@ -169,7 +171,7 @@ namespace pkgB {
             input.inputs[1].should.equal(LiteralAccessor(3))
          }
          accessor.inputs[1].should.equal(LiteralAccessor("-"))
-         accessor.inputs[2].should.equal(ColumnAccessor(1, defaultValue = null,  returnType = PrimitiveType.STRING))
+         accessor.inputs[2].should.equal(ColumnAccessor(1, defaultValue = null, returnType = PrimitiveType.STRING))
       }
 
       it("should allow fields to reference other fields as inputs") {
@@ -183,7 +185,7 @@ namespace pkgB {
                   leftName : FullName by left(this.firstName, 5)
                }""".compiled()
 
-            val accessor = schema
+         val accessor = schema
             .objectType("Person")
             .field("leftName")
             .accessor as FunctionAccessor
@@ -455,16 +457,23 @@ namespace pkgB {
             TODO()
          }
          it("when calling a function with generic params then the generics are resolved") {
-            val type = """
+            val lambda = """
                model Entry {
                   weight:Weight inherits Int
                   score:Score inherits Int
                }
                declare function <T,A> reduce(T[], (T,A) -> A):A
 
-               type WeightedAverage by (Entry[]) -> reduce(Entry[], (Entry, Int) -> Acc + (Weight*Score))
+               type WeightedAverage by (Entry[]) -> reduce(Entry[], (Entry, Int) -> Int + (Weight*Score))
             """.compiled()
                .objectType("WeightedAverage")
+               .expression!! as LambdaExpression
+
+            // it should resolve the generic parameter types
+            val functionExpression = lambda.expression.asA<FunctionExpression>()
+            functionExpression.returnType.qualifiedName.should.equal(PrimitiveType.INTEGER.qualifiedName)
+            // TODO : More tests here...#
+            // Were all the params resolved correctly?
             TODO()
          }
       }

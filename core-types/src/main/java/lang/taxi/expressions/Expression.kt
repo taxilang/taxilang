@@ -24,7 +24,14 @@ sealed class Expression : Compiled, TaxiStatementGenerator, Accessor {
    }
 }
 
-data class LambdaExpression(val inputs:List<Type>, val expression:Expression, override val compilationUnits: List<CompilationUnit>) : Expression()
+data class LambdaExpression(
+   val inputs: List<Type>,
+   val expression: Expression,
+   override val compilationUnits: List<CompilationUnit>
+) : Expression() {
+   override val returnType: Type = expression.returnType
+}
+
 data class LiteralExpression(val literal: LiteralAccessor, override val compilationUnits: List<CompilationUnit>) :
    Expression() {
    override val returnType: Type = literal.returnType
@@ -33,6 +40,7 @@ data class LiteralExpression(val literal: LiteralAccessor, override val compilat
 data class TypeExpression(val type: Type, override val compilationUnits: List<CompilationUnit>) : Expression() {
    override val returnType: Type = type
 }
+
 data class FunctionExpression(val function: FunctionAccessor, override val compilationUnits: List<CompilationUnit>) :
    Expression() {
    override val returnType: Type = function.returnType
@@ -46,6 +54,10 @@ data class OperatorExpression(
 ) : Expression() {
    override val returnType: Type
       get() {
+         if (operator.isLogicalOperator()) {
+            return PrimitiveType.BOOLEAN
+         }
+
          val lhsType = lhs.returnType.basePrimitive ?: return PrimitiveType.ANY
          val rhsType = rhs.returnType.basePrimitive ?: return PrimitiveType.ANY
          val types = setOf(lhsType, rhsType)

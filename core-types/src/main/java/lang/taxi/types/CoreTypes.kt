@@ -30,6 +30,11 @@ interface GenericType : Type {
 }
 
 data class ArrayType(val type: Type, val source: CompilationUnit, override val inheritsFrom: Set<Type> = emptySet()) : GenericType {
+   init {
+      if (type is ArrayType) {
+         ""
+      }
+   }
    companion object {
       const val NAME = "lang.taxi.Array"
       val qualifiedName = QualifiedName.from(NAME)

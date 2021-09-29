@@ -603,7 +603,7 @@ internal class FieldCompiler(internal val tokenProcessor: TokenProcessor,
                      "a query function can only referenced from view definitions!"
                   ).asList().left()
                } else {
-                  FunctionAccessor(function, parameters).right()
+                  FunctionAccessor.buildAndResolveTypeArguments(function, parameters).right()
                }
             }
          }

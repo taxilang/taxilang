@@ -4,7 +4,7 @@ package lang.taxi.types
  * An unresolved generic argument within a function declaration
  * eg: declare function <T> sum(T[]):T
  */
-data class GenericTypeArgument(
+data class TypeArgument(
    override val qualifiedName: String,
    // This is the actual name assigned in the functio - ie., given function <T>, it's T
    val declaredName:String,

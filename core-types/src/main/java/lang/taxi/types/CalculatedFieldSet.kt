@@ -23,7 +23,8 @@ data class OperatorFormula(
 @Deprecated("Use OperatorFormula instead")
 data class MultiplicationFormula(
    override val operandFields: List<QualifiedName>,
-   override val operator: FormulaOperator = FormulaOperator.Multiply) : Formula {
+   override val operator: FormulaOperator = FormulaOperator.Multiply
+) : Formula {
 }
 
 enum class FormulaOperator(val symbol: String, @Deprecated("this concept doesn't work") val cardinality: Int = -1) {
@@ -71,6 +72,7 @@ enum class FormulaOperator(val symbol: String, @Deprecated("this concept doesn't
    LogicalOr("||"),
    Equal("=="),
    NotEqual("!="),
+
    // TODO : Coalesce should really be an accessor, not a formula
    @Deprecated("Moved to function")
    Coalesce("coalesce", Int.MAX_VALUE) {
@@ -88,15 +90,29 @@ enum class FormulaOperator(val symbol: String, @Deprecated("this concept doesn't
    open fun validArgumentSize(argumentSize: Int): Boolean {
       return true
    }
+
    open fun validateArguments(arguments: List<PrimitiveType>, fieldPrimitiveType: PrimitiveType): Boolean {
       return true
    }
 
+   fun isLogicalOperator():Boolean = LOGICAL_OPERATORS.contains(this)
+
    companion object {
+      val LOGICAL_OPERATORS = setOf(
+         FormulaOperator.GreaterThan,
+         FormulaOperator.GreaterThanOrEqual,
+         FormulaOperator.LessThan,
+         FormulaOperator.LessThanOrEqual,
+         FormulaOperator.LogicalAnd,
+         FormulaOperator.LogicalOr,
+         FormulaOperator.Equal,
+         FormulaOperator.NotEqual,
+      )
       private val bySymbol = FormulaOperator.values().associateBy { it.symbol }
       fun forSymbol(symbol: String): FormulaOperator {
          return bySymbol[symbol] ?: error("No operator defined for symbol $symbol")
       }
+
       fun isSymbol(symbol: String): Boolean {
          return bySymbol.containsKey(symbol)
       }

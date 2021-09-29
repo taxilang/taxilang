@@ -125,7 +125,7 @@ class ViewAggregationSpec : Spek({
                      assignments = listOf(
                         InlineAssignmentExpression(
                            assignment = ScalarAccessorValueAssignment(
-                              accessor = FunctionAccessor(
+                              accessor = FunctionAccessor.buildAndResolveTypeArguments(
                                  taxiDocument.function("vyne.aggregations.sumOver"),
                                  listOf(
                                     ModelAttributeReferenceSelector(memberSource = orderSentType.toQualifiedName(), memberType = testType("ExecutedQuantity")),

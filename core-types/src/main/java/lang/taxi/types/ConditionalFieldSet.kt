@@ -58,7 +58,9 @@ data class ModelAttributeReferenceSelector(
    val memberType: Type): TaxiStatementGenerator, Accessor {
    override fun asTaxi(): String = "$memberSource::${memberType.qualifiedName}"
 }
-data class TypeReferenceSelector(val type: Type) : Accessor
+data class TypeReferenceSelector(val type: Type) : Accessor {
+   override val returnType: Type = type
+}
 // TODO : Can FieldReferenceSelector, ReferenceAssignment and ReferenceCaseMatchExpression all be merged?
 data class FieldReferenceSelector(val fieldName: String, override val returnType: Type) : WhenSelectorExpression, Accessor {
    override val declaredType: Type = returnType

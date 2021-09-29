@@ -64,6 +64,21 @@ object ExpressionTypesSpec : Spek({
          doc.type("ExpectedString").basePrimitive!!.should.equal(PrimitiveType.STRING)
          doc.type("ExpectedAny").basePrimitive!!.should.equal(PrimitiveType.ANY)
       }
+      it("detects return types of logical expressions") {
+         val doc = """
+            type Height inherits Int
+            type Width inherits Int
+            type A by Height > Width
+            type B by Height >= Width
+            type C by Height < Width
+            type D by Height <= Width
+            type E by Height == Width
+            type F by Height != Width
+         """.compiled()
+         listOf("A","B","C","D","E","F").forEach { typeName ->
+            doc.objectType(typeName).basePrimitive!!.should.equal(PrimitiveType.BOOLEAN)
+         }
+      }
       it("should compile nested expression types") {
          """
             type Width inherits Int
@@ -130,6 +145,23 @@ object ExpressionTypesSpec : Spek({
          rhs.function.inputs.should.have.size(1)
          val firstInput = rhs.function.inputs.first() as TypeReferenceSelector
          firstInput.type.qualifiedName.should.equal("Height")
+      }
+      it("can use expressions within function inputs") {
+         val expression = """
+            declare function hasAvailableStock(Boolean):Int
+
+            type RequestedStock inherits Int
+            type AvailableStock inherits Int
+
+            type MyExpression by hasAvailableStock(AvailableStock > RequestedStock)
+         """.compiled()
+            .objectType("MyExpression")
+            .expression as FunctionExpression
+         val input = expression.function.inputs[0] as OperatorExpression
+         input.returnType.should.equal(PrimitiveType.BOOLEAN)
+         input.lhs.asA<TypeExpression>().type.qualifiedName.should.equal("AvailableStock")
+         input.rhs.asA<TypeExpression>().type.qualifiedName.should.equal("RequestedStock")
+         input.operator.should.equal(FormulaOperator.GreaterThan)
       }
    }
    describe("Lambda types") {
