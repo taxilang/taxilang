@@ -253,7 +253,9 @@ object TaxiQlSpec : Spek({
          anonymousType.hasField("insertedAt").should.be.`true`
       }
 
-      it("Should Allow anonymous type with field definitions referencing type to discover") {
+
+      // This syntax is under review, and likely will change
+      xit("Should Allow anonymous type with field definitions referencing type to discover") {
          val src = """
                  import foo.Order
                  import foo.OutputOrder
@@ -275,7 +277,8 @@ object TaxiQlSpec : Spek({
       }
 
 
-      it("Should Allow anonymous type with field definitions referencing projected type") {
+      // This feature is cool, and we should bring it back, but for now it's been killed.
+      xit("Should Allow anonymous type with field definitions referencing projected type") {
          val src = """
                  import foo.Order
                  import foo.OutputOrder
@@ -311,7 +314,8 @@ object TaxiQlSpec : Spek({
          queryCompilationError.first().detailMessage.should.contain("InvalidType is not defined")
       }
 
-      it("Should Allow anonymous type with complex field definitions referencing type to be discovered") {
+      // Not sure if this feature is used.  I like it, but the syntax is a little confusing
+      xit("Should Allow anonymous type with complex field definitions referencing type to be discovered") {
          val src = """
                  import foo.Order
                  import foo.OutputOrder
@@ -360,7 +364,9 @@ object TaxiQlSpec : Spek({
          query.typesToFind[0].type.parameterizedName.should.equal("lang.taxi.Array<foo.Order>")
       }
 
-      it("Should Allow anonymous type with complex field definitions referencing projected type") {
+      // This feature (referencing the parent view, and extending an projection type) is cool, but
+      // has been disabled for npow
+      xit("Should Allow anonymous type with complex field definitions referencing projected type") {
          val src = """
                       import foo.Order
                       import foo.OutputOrder
@@ -494,7 +500,8 @@ object TaxiQlSpec : Spek({
          itemsField.accessor!!.asA<CollectionProjectionExpressionAccessor>().type.qualifiedName.should.equal("TransactionItem")
       }
 
-      it("by should be supported with an anonymously typed field") {
+      // This feature has been disabled for now.
+      xit("by should be supported with an anonymously typed field") {
          val taxiDoc = Compiler(
             """
          type QtyFill inherits Decimal

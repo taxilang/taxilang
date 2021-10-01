@@ -70,7 +70,7 @@ type Money {
    fun servicesCanExpressConstraintsOnParameters() {
       val source = """
 service MyService {
-    operation calculateCreditRisk(Money(this.currency = 'GBP')) : Decimal
+    operation calculateCreditRisk(Money(this.currency == 'GBP')) : Decimal
 }
 """
       val doc = Compiler.forStrings(moneyType, source).compile()
@@ -180,7 +180,7 @@ type ConversionRequest {
     target : Currency
 }
 service MyService {
-    operation convertCurrency(request : ConversionRequest) : Money( from request.source,  this.currency = request.target )
+    operation convertCurrency(request : ConversionRequest) : Money( from request.source,  this.currency == request.target )
 }
 """
       val doc = Compiler.forStrings(moneyType, source).compile()

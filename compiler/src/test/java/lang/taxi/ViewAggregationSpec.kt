@@ -1,11 +1,11 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.types.CalculatedModelAttributeFieldSetExpression
 import lang.taxi.types.ComparisonExpression
 import lang.taxi.types.ComparisonOperator
-import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.types.ConstantEntity
 import lang.taxi.types.ElseMatchExpression
 import lang.taxi.types.EmptyReferenceSelector
@@ -80,12 +80,12 @@ class ViewAggregationSpec : Spek({
                }
 
               leavesQuantity: RemainingQuantity by when {
-                 OrderSent::RequestedQuantity = OrderSent::ExecutedQuantity -> 0
+                 OrderSent::RequestedQuantity == OrderSent::ExecutedQuantity -> 0
                  else -> (OrderSent::RequestedQuantity - OrderView::CumulativeQty)
                }
 
               displayQuantity: DisplayedQuantity by when {
-                 OrderSent::RequestedQuantity = OrderSent::ExecutedQuantity -> 0
+                 OrderSent::RequestedQuantity == OrderSent::ExecutedQuantity -> 0
                  else -> OrderView::RemainingQuantity
                }
             }
@@ -372,15 +372,15 @@ class ViewAggregationSpec : Spek({
               subSecurityType: SecurityDescription by coalesce(OrderFill::SecurityDescription, OrderSent::SecurityDescription)
               requestedQuantity: OrderSent::RequestedQuantity
               orderEntry: OrderStatus by when {
-                 OrderSent::RequestedQuantity = OrderFill::DecimalFieldOrderFilled -> OrderFill::OrderStatus
+                 OrderSent::RequestedQuantity == OrderFill::DecimalFieldOrderFilled -> OrderFill::OrderStatus
                  else -> "PartiallyFilled"
               }
               leavesQuantity: RemainingQuantity by when {
-                    OrderSent::RequestedQuantity = OrderFilled::DecimalFieldOrderFilled -> 0
+                    OrderSent::RequestedQuantity == OrderFilled::DecimalFieldOrderFilled -> 0
                     else -> (OrderSent::RequestedQuantity - OrderView::CumulativeQuantity)
               }
               displayQuantity: DisplayedQuantity by when {
-                  OrderSent::RequestedQuantity = OrderFilled::DecimalFieldOrderFilled -> 0
+                  OrderSent::RequestedQuantity == OrderFilled::DecimalFieldOrderFilled -> 0
                   else -> OrderView::RemainingQuantity
               }
               tradeNo: OrderFill::TradeNo
@@ -471,7 +471,7 @@ class ViewAggregationSpec : Spek({
                 else -> (OrderView::SellCumulativeQuantity - OrderView::BuyCumulativeQuantity)
                 }
               status: OrderStatus by when {
-                OrderSent::RequestedQuantity = OrderView::CumulativeQuantity -> OrderFill::OrderStatus
+                OrderSent::RequestedQuantity == OrderView::CumulativeQuantity -> OrderFill::OrderStatus
                 else -> "PartiallyFilled"
               }
             }
@@ -516,12 +516,12 @@ class ViewAggregationSpec : Spek({
             find { OrderSent[] (joinTo OrderFill[]) } as {
               orderId: OrderFill::FillOrderId
               executedQuantity: DecimalFieldOrderFilled by when {
-                 OrderView::CumulativeQuantity = null -> 0
+                 OrderView::CumulativeQuantity == null -> 0
                  else -> OrderView::CumulativeQuantity
               }
               cumulativeQty: CumulativeQuantity by sumOver(OrderFill::DecimalFieldOrderFilled, OrderFill::FillOrderId)
               LeavesQty:LeavesQty by when {
-                 OrderSent::SentOrderId = OrderFill::FillOrderId -> null
+                 OrderSent::SentOrderId == OrderFill::FillOrderId -> null
                  else -> null
               }
             }

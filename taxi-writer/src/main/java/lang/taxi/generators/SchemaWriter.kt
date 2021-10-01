@@ -313,7 +313,7 @@ $enumValueDeclarations
          type is ArrayType -> (if (type.type is ArrayType) nestedArray(type) else simpleArray(type)) + nullableString
          type is UnresolvedImportedType -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace) + nullableString
          type.formattedInstanceOfType != null -> typeAsTaxi(type.formattedInstanceOfType!!, currentNamespace) + nullableString + """( ${writeFormat(type.format, type.offset)} )"""
-         type is ObjectType && type.calculatedInstanceOfType != null -> typeAsTaxi(type.calculatedInstanceOfType!!, currentNamespace) + nullableString + " " + type.calculation!!.asTaxi()
+         type is ObjectType && type.calculatedInstanceOfType != null -> typeAsTaxi(type.calculatedInstanceOfType!!, currentNamespace) + nullableString //+ " " + type.calculation!!.asTaxi()
          else -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace) + nullableString
       }
    }

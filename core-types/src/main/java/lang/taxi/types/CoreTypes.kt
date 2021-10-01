@@ -32,7 +32,7 @@ interface GenericType : Type {
 data class ArrayType(val type: Type, val source: CompilationUnit, override val inheritsFrom: Set<Type> = emptySet()) : GenericType {
    init {
       if (type is ArrayType) {
-         ""
+         println("found Array<Array<>> -- this code was recently refactored -- is this a bug?")
       }
    }
    companion object {

@@ -8,6 +8,8 @@ import lang.taxi.CompilationError
 import lang.taxi.Namespace
 import lang.taxi.TaxiParser
 import lang.taxi.toCompilationUnit
+import lang.taxi.types.ArrayType
+import lang.taxi.types.Arrays
 import lang.taxi.types.JoinInfo
 import lang.taxi.types.ObjectType
 import lang.taxi.types.Type
@@ -65,10 +67,15 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
       val firstFilterableType = joinTypes.first()
       return listTypeTypeOrError(firstFilterableType.typeType()).flatMap { bodyTypeType ->
          tokenProcessor.typeOrError(namespace, bodyTypeType).flatMap { bodyType ->
-            if (joinTypes.size > 1) {
-               viewBodyDefinitionForJoinFind(joinTypes, namespace, bodyCtx, bodyType)
+            val bodyMemberType = if (Arrays.isArray(bodyType)) {
+               (bodyType as ArrayType).type
             } else {
-               viewBodyDefinitionForSimpleFind(namespace, bodyCtx, bodyType, firstFilterableType)
+               bodyType
+            }
+            if (joinTypes.size > 1) {
+               viewBodyDefinitionForJoinFind(joinTypes, namespace, bodyCtx, bodyMemberType)
+            } else {
+               viewBodyDefinitionForSimpleFind(namespace, bodyCtx, bodyMemberType, firstFilterableType)
             }
          }
       }.mapLeft { it }
@@ -116,14 +123,15 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
       val joinTypeTypeCtx = joinTypes[1]
       return listTypeTypeOrError(joinTypeTypeCtx.typeType()).flatMap { joinType ->
          tokenProcessor.typeOrError(namespace, joinTypeTypeCtx.typeType()).flatMap { joinType ->
-            validateJoinBasedViewBodyDefinition(bodyCtx, ViewBodyDefinition(bodyType, joinType))
+            val joinMemberType = Arrays.unwrapPossibleArrayType(joinType)
+            validateJoinBasedViewBodyDefinition(bodyCtx, ViewBodyDefinition(bodyType, joinMemberType))
                .flatMap { validViewDefinition ->
                   val firstFilterExpression =  if (joinTypes.first().filterExpression() != null) {
                      filterCriteriaProcessor.processFilterExpressionContext(bodyType, joinTypes.first().filterExpression())
                   } else null
 
                   val secondFilterExpression = if (joinTypeTypeCtx.filterExpression() != null) {
-                     filterCriteriaProcessor.processFilterExpressionContext(joinType, joinTypes[1].filterExpression())
+                     filterCriteriaProcessor.processFilterExpressionContext(joinMemberType, joinTypes[1].filterExpression())
                   } else null
 
                   if (bodyCtx.anonymousTypeDefinition() != null) {
