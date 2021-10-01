@@ -18,8 +18,8 @@ enum class VoidType : Type {
    override val inheritsFrom: Set<Type> = emptySet()
    override val format: List<String>? = null
    override val formattedInstanceOfType: Type? = null
-   override val calculation: Formula?
-      get() = null
+//   override val calculation: Formula?
+//      get() = null
    override val offset: Int? = null
    override val typeKind: TypeKind = TypeKind.Type
 }
@@ -43,7 +43,7 @@ enum class PrimitiveType(
    override val typeDoc: String,
    override val format: List<String>? = null,
    override val formattedInstanceOfType: Type? = null,
-   override val calculation: Formula? = null,
+//   override val calculation: Formula? = null,
    override val offset: Int? = null) : Type {
    BOOLEAN("Boolean", "Represents a value which is either `true` or `false`."),
    STRING("String", "A collection of characters."),

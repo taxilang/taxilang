@@ -7,8 +7,10 @@ import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.Namespace
 import lang.taxi.TaxiParser
+import lang.taxi.accessors.Accessor
+import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.expressions.Expression
-import lang.taxi.expressions.ExpressionGroup
+import lang.taxi.expressions.FieldReferenceExpression
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.LambdaExpression
 import lang.taxi.expressions.LiteralExpression
@@ -19,10 +21,8 @@ import lang.taxi.functions.Function
 import lang.taxi.source
 import lang.taxi.toCompilationUnit
 import lang.taxi.toCompilationUnits
-import lang.taxi.types.Accessor
 import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.FormulaOperator
-import lang.taxi.types.LiteralAccessor
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
@@ -31,13 +31,18 @@ import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.getOrThrow
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.leftOr
-import lang.taxi.utils.takeHead
 import lang.taxi.value
+import org.antlr.v4.runtime.ParserRuleContext
 
 class ExpressionCompiler(
    private val tokenProcessor: TokenProcessor,
    typeChecker: TypeChecker,
-   errors: MutableList<CompilationError>
+   errors: MutableList<CompilationError>,
+   /**
+    * Pass the fieldCompiler when the expression being compiled is within the field of a model / query result.
+    * This allows field lookups by name in expressions
+    */
+   private val fieldCompiler: FieldCompiler? = null
 ) : FunctionParameterReferenceResolver {
    private val functionCompiler = FunctionAccessorCompiler(
       tokenProcessor,
@@ -56,7 +61,9 @@ class ExpressionCompiler(
             require(expressionGroup.expressionGroup().size == 1) { "Expected only a single ExpressionGroup inside parenthesis" }
             compile(expressionGroup.expressionGroup(0))
          }
-         expressionGroup.children.size == 2 && expressionGroup.expressionInputs() != null -> parseLambdaExpression(expressionGroup)
+         expressionGroup.children.size == 2 && expressionGroup.expressionInputs() != null -> parseLambdaExpression(
+            expressionGroup
+         )
          expressionGroup.children.size == 3 -> parseOperatorExpression(expressionGroup)          // lhs operator rhs
          expressionGroup.expressionGroup().isEmpty() -> compileSingleExpression(expressionGroup)
          else -> error("Unhandled expression group scenario: ${expressionGroup.text}")
@@ -64,15 +71,15 @@ class ExpressionCompiler(
    }
 
    private fun parseLambdaExpression(lambdaExpression: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
-      require(lambdaExpression.children.size == 2) { "Expected exactly 2 children in the lambda expression"}
-      require(lambdaExpression.expressionGroup().size == 1) { "expected exactly 1 expression group on the rhs of the lambda"}
+      require(lambdaExpression.children.size == 2) { "Expected exactly 2 children in the lambda expression" }
+      require(lambdaExpression.expressionGroup().size == 1) { "expected exactly 1 expression group on the rhs of the lambda" }
       return lambdaExpression.expressionInputs()
          .expressionInput().map { expressionInput ->
-         tokenProcessor.parseType(expressionInput.findNamespace(), expressionInput.typeType())
-      }.invertEitherList().flattenErrors()
+            tokenProcessor.parseType(expressionInput.findNamespace(), expressionInput.typeType())
+         }.invertEitherList().flattenErrors()
          .flatMap { inputs ->
             compile(lambdaExpression.expressionGroup(0)).map { expression ->
-               LambdaExpression(inputs,expression, lambdaExpression.toCompilationUnits())
+               LambdaExpression(inputs, expression, lambdaExpression.toCompilationUnits())
             }
          }
 
@@ -87,7 +94,7 @@ class ExpressionCompiler(
 
    private fun compileExpressionAtom(expressionAtom: TaxiParser.ExpressionAtomContext): Either<List<CompilationError>, Expression> {
       return when {
-         expressionAtom.typeType() != null ->  parseTypeExpression(expressionAtom.typeType()) /*{
+         expressionAtom.typeType() != null -> parseTypeExpression(expressionAtom.typeType()) /*{
             // At this point the grammar isn't sufficiently strong to know if
             // we've been given a type or a function reference
             val typeType = expressionAtom.typeType()
@@ -100,7 +107,21 @@ class ExpressionCompiler(
          } */
          expressionAtom.readFunction() != null -> parseFunctionExpression(expressionAtom.readFunction())
          expressionAtom.literal() != null -> parseLiteralExpression(expressionAtom.literal())
+         expressionAtom.fieldReferenceSelector() != null -> parseFieldReferenceSelector(expressionAtom.fieldReferenceSelector())
          else -> error("Unhandled atom in expression: ${expressionAtom.text}")
+      }
+   }
+
+   private fun parseFieldReferenceSelector(fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext): Either<List<CompilationError>, Expression> {
+      return requireFieldCompilerIsPresent(fieldReferenceSelector).flatMap {
+         val fieldName = fieldReferenceSelector.Identifier().text
+         fieldCompiler!!.provideField(fieldName, fieldReferenceSelector)
+            .map { field ->
+               FieldReferenceExpression(
+                  FieldReferenceSelector.fromField(field),
+                  fieldReferenceSelector.toCompilationUnits()
+               )
+            }
       }
    }
 
@@ -110,12 +131,12 @@ class ExpressionCompiler(
 
    private fun parseOperatorExpression(expressionGroup: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
 
-      val lhs = expressionGroup.expressionGroup(0)?.let { compile(it) }
+      val lhsOrError = expressionGroup.expressionGroup(0)?.let { compile(it) }
          ?: error("Expected an expression group at index 0")
-      val rhs = expressionGroup.expressionGroup(1)?.let { compile(it) }
+      val rhsOrError = expressionGroup.expressionGroup(1)?.let { compile(it) }
          ?: error("Expected an expression group at index 1")
       val operatorSymbol = expressionGroup.children[1]
-      val operator = when {
+      val operatorOrError = when {
          FormulaOperator.isSymbol(operatorSymbol.text) -> FormulaOperator.forSymbol(operatorSymbol.text).right()
          else -> listOf(
             CompilationError(
@@ -124,14 +145,28 @@ class ExpressionCompiler(
             )
          ).left()
       }
-      val expressionComponents = listOf(lhs, rhs, operator)
+      val expressionComponents = listOf(lhsOrError, rhsOrError, operatorOrError)
       return if (expressionComponents.allValid()) {
-         OperatorExpression(
-            lhs = lhs.getOrThrow(),
-            operator = operator.getOrThrow(),
-            rhs = rhs.getOrThrow(),
-            compilationUnits = expressionGroup.toCompilationUnits()
-         ).right()
+         val lhs = lhsOrError.getOrThrow()
+         val operator = operatorOrError.getOrThrow()
+         val rhs = rhsOrError.getOrThrow()
+         val lhsType = lhs.returnType.basePrimitive ?: PrimitiveType.ANY
+         val rhsType = rhs.returnType.basePrimitive ?: PrimitiveType.ANY
+         if (!operator.supports(lhsType, rhsType)) {
+            listOf(
+               CompilationError(
+                  expressionGroup.toCompilationUnit(),
+                  "Operations with symbol '${operator.symbol}' is not supported on types ${lhsType.declaration} and ${rhsType.declaration}"
+               )
+            ).left()
+         } else {
+            OperatorExpression(
+               lhs = lhs,
+               operator = operator,
+               rhs = rhs,
+               compilationUnits = expressionGroup.toCompilationUnits()
+            ).right()
+         }
       } else {
          // Collect all the errors and bail out.
          expressionComponents.invertEitherList().flattenErrors()
@@ -141,31 +176,15 @@ class ExpressionCompiler(
 
    }
 
-   private fun reduceToOperatorExpression(operatorExpressionParts: List<Any>) {
-      if (operatorExpressionParts.size < 3) {
-         error("Expected to receive at least 3 components")
-      }
-      val (lhs, rest) = operatorExpressionParts.takeHead()
-
-      TODO()
-   }
-
-   private fun parseNestedExpressionGroup(expressionGroup: List<TaxiParser.ExpressionGroupContext>): Either<List<CompilationError>, out Expression> {
-      return expressionGroup.map { compile(it) }
-         .invertEitherList()
-         .flattenErrors()
-         .map { ExpressionGroup(it) }
-
-   }
 
    private fun parseFunctionExpression(readFunction: TaxiParser.ReadFunctionContext): Either<List<CompilationError>, FunctionExpression> {
 // Note: Using ANY as the target type for the function's return type, which effectively disables type checking here.
       // We can improve this later.
-     return tokenProcessor.getType(readFunction.findNamespace(), PrimitiveType.ANY.qualifiedName, readFunction)
+      return tokenProcessor.getType(readFunction.findNamespace(), PrimitiveType.ANY.qualifiedName, readFunction)
          .flatMap { targetType ->
-            functionCompiler.buildReadFunctionAccessor(readFunction, targetType)
+            functionCompiler.buildFunctionAccessor(readFunction, targetType)
          }.map { functionAccessor ->
-            FunctionExpression(functionAccessor,readFunction.toCompilationUnits())
+            FunctionExpression(functionAccessor, readFunction.toCompilationUnits())
          }
    }
 
@@ -179,30 +198,77 @@ class ExpressionCompiler(
       targetType: Type
    ): Either<List<CompilationError>, Accessor> {
       return when {
-         expression.jsonPathAccessorDeclaration() != null -> listOf(CompilationError(expression.toCompilationUnit(),"JsonPath accessors are not supported in Expression Types")).left()
-         expression.xpathAccessorDeclaration() != null -> listOf(CompilationError(expression.toCompilationUnit(),"XPath accessors are not supported in Expression Types")).left()
-         expression.columnDefinition() != null -> listOf(CompilationError(expression.toCompilationUnit(),"Column accessors are not supported in Expression Types")).left()
-         expression.conditionalTypeConditionDeclaration() != null -> listOf(CompilationError(expression.toCompilationUnit(),"Conditional Types are  not supported in Expression Types")).left()
+         expression.jsonPathAccessorDeclaration() != null -> listOf(
+            CompilationError(
+               expression.toCompilationUnit(),
+               "JsonPath accessors are not supported in Expression Types"
+            )
+         ).left()
+         expression.xpathAccessorDeclaration() != null -> listOf(
+            CompilationError(
+               expression.toCompilationUnit(),
+               "XPath accessors are not supported in Expression Types"
+            )
+         ).left()
+         expression.columnDefinition() != null -> listOf(
+            CompilationError(
+               expression.toCompilationUnit(),
+               "Column accessors are not supported in Expression Types"
+            )
+         ).left()
+         expression.conditionalTypeConditionDeclaration() != null -> listOf(
+            CompilationError(
+               expression.toCompilationUnit(),
+               "Conditional Types are  not supported in Expression Types"
+            )
+         ).left()
          // We could possibly relax ths one, if there's a use case.
-         expression.defaultDefinition() != null -> listOf(CompilationError(expression.toCompilationUnit(),"Default values are not supported in Expression Types")).left()
-         // Deprecated (I think - not sure what this is)
-         expression.readExpression() != null -> listOf(CompilationError(expression.toCompilationUnit(),"ReadExpressions are not supported in Expression Types")).left()
-         expression.byFieldSourceExpression() != null -> listOf(CompilationError(expression.toCompilationUnit(),"Field accessors are not supported in Expression Types")).left()
+         expression.defaultDefinition() != null -> listOf(
+            CompilationError(
+               expression.toCompilationUnit(),
+               "Default values are not supported in Expression Types"
+            )
+         ).left()
+         expression.readExpression() != null -> {
+            val compiled = compile(expression.readExpression().expressionGroup())
+            compiled
+         }
+         expression.byFieldSourceExpression() != null -> listOf(
+            CompilationError(
+               expression.toCompilationUnit(),
+               "Field accessors are not supported in Expression Types"
+            )
+         ).left()
 
          expression.readFunction() != null -> {
             val functionContext = expression.readFunction()
-            functionCompiler.buildReadFunctionAccessor(functionContext, targetType)
+            functionCompiler.buildFunctionAccessor(functionContext, targetType)
          }
          else -> error("Unhandled type of accessor expression at ${expression.source().content}")
       }
+   }
 
+   private fun requireFieldCompilerIsPresent(parserContext: ParserRuleContext): Either<List<CompilationError>, Boolean> {
+      return if (this.fieldCompiler == null) {
+         listOf(
+            CompilationError(
+               parserContext.start,
+               "Cannot use field references when outside the scope of a model"
+            )
+         ).left()
+      } else {
+         true.right()
+      }
    }
 
    override fun compileFieldReferenceAccessor(
       function: Function,
       parameterContext: TaxiParser.ParameterContext
-   ): FieldReferenceSelector {
-      TODO("Not yet implemented")
+   ): Either<List<CompilationError>, FieldReferenceSelector> {
+      return requireFieldCompilerIsPresent(parameterContext).flatMap {
+         fieldCompiler!!.provideField(parameterContext.fieldReferenceSelector().Identifier().text, parameterContext)
+            .map { field -> FieldReferenceSelector.fromField(field) }
+      }
    }
 
    override fun parseModelAttributeTypeReference(

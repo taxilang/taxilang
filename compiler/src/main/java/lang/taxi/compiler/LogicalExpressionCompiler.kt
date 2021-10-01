@@ -23,6 +23,7 @@ import lang.taxi.types.ValueAssignment
 import lang.taxi.value
 import lang.taxi.valueOrNull
 
+@Deprecated("Use expressions instead, as they support order of precedence much better")
 class LogicalExpressionCompiler(private val tokenProcessor: TokenProcessor) {
    fun processLogicalExpressionContext(logicalExpressionCtx: TaxiParser.Logical_exprContext): Either<CompilationError, LogicalExpression> {
       return when (logicalExpressionCtx) {

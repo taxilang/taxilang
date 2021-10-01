@@ -29,5 +29,24 @@ class AnonymousTypesSpec : Spek({
          fieldWithAnonymousType.hasField("highSchoolName").should.be.`true`
          fieldWithAnonymousType.hasField("undergraduate").should.be.`true`
       }
+      it("is possible to declare nested anonymous types") {
+         val model = """
+model LeiRecord {
+    data: {
+        @Id
+        id: Lei inherits String
+        attributes: {
+            entity: {
+                legalName: {
+                    name: CompanyName inherits String
+                }
+            }
+        }
+    }
+}""".compiled()
+            .model("LeiRecord")
+         model.fields.should.have.size(1)
+         model.field("data").type.asA<ObjectType>().fields.should.have.size(2)
+      }
    }
 })

@@ -7,6 +7,8 @@ import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.Namespace
 import lang.taxi.TaxiParser
+import lang.taxi.accessors.Accessor
+import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.expressions.Expression
 import lang.taxi.findNamespace
 import lang.taxi.functions.Function
@@ -14,9 +16,7 @@ import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionModifiers
 import lang.taxi.source
 import lang.taxi.text
-import lang.taxi.types.Accessor
 import lang.taxi.types.FieldReferenceSelector
-import lang.taxi.types.LiteralAccessor
 import lang.taxi.types.ModelAttributeReferenceSelector
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
@@ -36,7 +36,7 @@ interface FunctionParameterReferenceResolver {
    fun compileFieldReferenceAccessor(
       function: Function,
       parameterContext: TaxiParser.ParameterContext
-   ): FieldReferenceSelector
+   ): Either<List<CompilationError>,FieldReferenceSelector>
 
    fun parseModelAttributeTypeReference(
       namespace: Namespace,
@@ -51,7 +51,7 @@ class FunctionAccessorCompiler(
    private val referenceResolver: FunctionParameterReferenceResolver,
    private val parentContext: RuleContext?
 ) {
-   internal fun buildReadFunctionAccessor(
+   internal fun buildFunctionAccessor(
       functionContext: TaxiParser.ReadFunctionContext,
       targetType: Type,
 
@@ -81,7 +81,7 @@ class FunctionAccessorCompiler(
                            "Only Model Attribute References are  allowed within Views"
                         ).asList().left()
                      }
-                     val parameterAccessor = when {
+                     val parameterAccessor: Either<List<CompilationError>, Accessor> = when {
                         parameterContext.literal() != null -> LiteralAccessor(
                            parameterContext.literal().value()
                         ).right()
@@ -92,7 +92,7 @@ class FunctionAccessorCompiler(
                         parameterContext.fieldReferenceSelector() != null -> referenceResolver.compileFieldReferenceAccessor(
                            function,
                            parameterContext
-                        ).right()
+                        )
                         parameterContext.typeReferenceSelector() != null -> compileTypeReferenceAccessor(
                            namespace,
                            parameterContext

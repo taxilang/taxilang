@@ -1,2 +1,23 @@
 Breaking change:
- * Comparison operator has changed from `=` to `==` to align with standard conventions
+## Comparison operator has changed from `=` to `==` to align with standard conventions
+This is big, it impacts things like query predciates:
+
+```
+type SomeServiceRequest {
+// This now needs == not =
+   amount : Money(this.currency == 'GBP')
+   clientId : ClientId as String
+}
+```
+
+
+ * `as` on model types has been removed, and is now consistently using `by`
+```
+model Person {
+// Old
+   fullName : FullName as (FirstName + LastName)
+// new
+   fullName : FullName by (FirstName + LastName)
+}
+```
+ * Order of evaluation in `by` expressions is now standard and consistent

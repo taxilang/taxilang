@@ -1,5 +1,8 @@
 package lang.taxi.types
 
+import lang.taxi.accessors.Accessor
+import lang.taxi.accessors.LiteralAccessor
+
 /**
  * A set of fields with additional conditional mapping logic
  * applied
@@ -58,7 +61,11 @@ data class ModelAttributeReferenceSelector(
    val memberType: Type): TaxiStatementGenerator, Accessor {
    override fun asTaxi(): String = "$memberSource::${memberType.qualifiedName}"
 }
+@Deprecated("replaced by TypeExpression")
 data class TypeReferenceSelector(val type: Type) : Accessor {
+   init {
+       error("Where is this still used?")
+   }
    override val returnType: Type = type
 }
 // TODO : Can FieldReferenceSelector, ReferenceAssignment and ReferenceCaseMatchExpression all be merged?

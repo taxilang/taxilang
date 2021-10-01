@@ -1,6 +1,6 @@
 package lang.taxi.functions
 
-import lang.taxi.types.Accessor
+import lang.taxi.accessors.Accessor
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TaxiStatementGenerator

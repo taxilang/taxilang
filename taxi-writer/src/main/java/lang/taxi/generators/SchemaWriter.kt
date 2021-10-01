@@ -1,12 +1,12 @@
 package lang.taxi.generators
 
 import lang.taxi.TaxiDocument
+import lang.taxi.accessors.Accessor
 import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract
 import lang.taxi.services.QueryOperation
 import lang.taxi.services.Service
 import lang.taxi.services.operations.constraints.Constraint
-import lang.taxi.types.Accessor
 import lang.taxi.types.Annotatable
 import lang.taxi.types.ArrayType
 import lang.taxi.types.EnumType

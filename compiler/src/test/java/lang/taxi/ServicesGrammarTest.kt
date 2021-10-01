@@ -153,7 +153,7 @@ service MyService {
    fun servicesCanDeclareContractsOnReturnValues() {
       val source = """
 service MyService {
-    operation convertCurrency(source : Money, target : Currency) : Money( from source,  this.currency = target )
+    operation convertCurrency(source : Money, target : Currency) : Money( from source,  this.currency == target )
 }
 """
       val doc = Compiler.forStrings(moneyType, source).compile()

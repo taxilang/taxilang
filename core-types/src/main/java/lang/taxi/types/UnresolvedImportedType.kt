@@ -29,8 +29,8 @@ class UnresolvedImportedType(override val qualifiedName: String) : Type {
       get() = TODO("Not yet implemented")
    override val definitionHash: kotlin.String?
       get() = TODO("Not yet implemented")
-   override val calculation: lang.taxi.types.Formula?
-      get() = TODO("Not yet implemented")
+//   override val calculation: lang.taxi.types.Formula?
+//      get() = TODO("Not yet implemented")
    override val offset: Int?
       get() = TODO("Not yet implemented")
    override val typeDoc: String?

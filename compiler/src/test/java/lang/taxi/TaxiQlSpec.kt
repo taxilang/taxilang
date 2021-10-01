@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.accessors.CollectionProjectionExpressionAccessor
 import lang.taxi.types.ArrayType
 import lang.taxi.types.ObjectType
 import lang.taxi.types.QualifiedName
@@ -481,17 +482,16 @@ object TaxiQlSpec : Spek({
             }
          """.compiledWithQuery("""
             findAll { Transaction[] } as {
-               items : TransactionItem -> {
+               items : {
                   sku : ProductSku
                   size : ProductSize
-               }[]
+               }[] by [TransactionItem]
             }[]
          """)
          val resultCollectionType = query.projectedType!!.anonymousTypeDefinition!! as ArrayType
          val resultMemberType = resultCollectionType.type as ObjectType
          val itemsField = resultMemberType.field("items")
-         itemsField.projectionScopeTypes.should.have.size(1)
-         itemsField.projectionScopeTypes.first().qualifiedName.should.equal("TransactionItem")
+         itemsField.accessor!!.asA<CollectionProjectionExpressionAccessor>().type.qualifiedName.should.equal("TransactionItem")
       }
 
       it("by should be supported with an anonymously typed field") {

@@ -9,7 +9,6 @@ import lang.taxi.expressions.TypeExpression
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.PrimitiveType
-import lang.taxi.types.TypeReferenceSelector
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -56,13 +55,11 @@ object ExpressionTypesSpec : Spek({
             type ExpectedDecimal by Int + Decimal
             type ExpectedDouble by Int + Double
             type ExpectedString by String + String
-            type ExpectedAny by Int + String
          """.compiled()
          doc.type("ExpectedInt").basePrimitive!!.should.equal(PrimitiveType.INTEGER)
          doc.type("ExpectedDecimal").basePrimitive!!.should.equal(PrimitiveType.DECIMAL)
          doc.type("ExpectedDouble").basePrimitive!!.should.equal(PrimitiveType.DOUBLE)
          doc.type("ExpectedString").basePrimitive!!.should.equal(PrimitiveType.STRING)
-         doc.type("ExpectedAny").basePrimitive!!.should.equal(PrimitiveType.ANY)
       }
       it("detects return types of logical expressions") {
          val doc = """
@@ -126,7 +123,7 @@ object ExpressionTypesSpec : Spek({
          expression.function.inputs.should.have.size(1)
          val firstInput = expression.function.inputs.first() as FunctionAccessor
          firstInput.inputs.should.have.size(1)
-         val firstNestedInput = firstInput.inputs.first() as TypeReferenceSelector
+         val firstNestedInput = firstInput.inputs.first() as TypeExpression
          firstNestedInput.type.qualifiedName.should.equal("Height")
       }
 
@@ -143,7 +140,7 @@ object ExpressionTypesSpec : Spek({
          val rhs = expression.rhs as FunctionExpression
          rhs.function.function.qualifiedName.should.equal("squared")
          rhs.function.inputs.should.have.size(1)
-         val firstInput = rhs.function.inputs.first() as TypeReferenceSelector
+         val firstInput = rhs.function.inputs.first() as TypeExpression
          firstInput.type.qualifiedName.should.equal("Height")
       }
       it("can use expressions within function inputs") {

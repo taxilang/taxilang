@@ -11,8 +11,6 @@ import lang.taxi.findNamespace
 import lang.taxi.text
 import lang.taxi.types.AccessorExpressionSelector
 import lang.taxi.types.AssignmentExpression
-import lang.taxi.types.CalculatedFieldSetExpression
-import lang.taxi.types.CalculatedModelAttributeFieldSetExpression
 import lang.taxi.types.ConditionalFieldSet
 import lang.taxi.types.DestructuredAssignment
 import lang.taxi.types.ElseMatchExpression
@@ -24,12 +22,10 @@ import lang.taxi.types.EnumValueAssignment
 import lang.taxi.types.FieldAssignmentExpression
 import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.FieldSetExpression
-import lang.taxi.types.FormulaOperator
 import lang.taxi.types.InlineAssignmentExpression
 import lang.taxi.types.LiteralAssignment
 import lang.taxi.types.LiteralCaseMatchExpression
 import lang.taxi.types.LogicalExpression
-import lang.taxi.types.ModelAttributeReferenceSelector
 import lang.taxi.types.ModelAttributeTypeReferenceAssignment
 import lang.taxi.types.NullAssignment
 import lang.taxi.types.ObjectType
@@ -76,53 +72,10 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
    fun compileCondition(conditionDeclaration: TaxiParser.ConditionalTypeConditionDeclarationContext, namespace: Namespace, targetType: Type): Either<List<CompilationError>, FieldSetExpression> {
       return when {
          conditionDeclaration.conditionalTypeWhenDeclaration() != null -> compileWhenCondition(conditionDeclaration.conditionalTypeWhenDeclaration(), namespace, targetType)
-         conditionDeclaration.fieldExpression() != null -> compileFieldExpression(conditionDeclaration.fieldExpression(), namespace, targetType)
          else -> error("Unhandled condition type")
       }
    }
 
-   private fun compileFieldExpression(fieldExpression: TaxiParser.FieldExpressionContext,
-                                      namespace: Namespace, targetType: Type): Either<List<CompilationError>, FieldSetExpression> {
-
-      if (fieldExpression.isInViewContext()) {
-        return compileModelAttributeReference(fieldExpression, namespace, targetType)
-      }
-      val field1Name = fieldExpression.propertyToParameterConstraintLhs(0).qualifiedName().text
-      val field2Name = fieldExpression.propertyToParameterConstraintLhs(1).qualifiedName().text
-      return compiler.provideField(field1Name, fieldExpression.propertyToParameterConstraintLhs(0).qualifiedName())
-         .map { FieldReferenceSelector.fromField(it) }
-         .flatMap { field1Selector ->
-            compiler.provideField(field2Name, fieldExpression.propertyToParameterConstraintLhs(1).qualifiedName())
-               .map { field1Selector to FieldReferenceSelector.fromField(it) }
-         }.map { (field1Selector: FieldReferenceSelector, field2Selector: FieldReferenceSelector) ->
-            val operator = FormulaOperator.forSymbol(fieldExpression.arithmaticOperator().text)
-            CalculatedFieldSetExpression(field1Selector, field2Selector, operator)
-         }
-   }
-
-   private fun compileModelAttributeReference(fieldExpression: TaxiParser.FieldExpressionContext,
-                                              namespace: Namespace,
-                                              targetType: Type): Either<List<CompilationError>, CalculatedModelAttributeFieldSetExpression> {
-      val firstModelAttrRef = fieldExpression.propertyToParameterConstraintLhs(0).modelAttributeTypeReference()
-      val secondModelAttrRef = fieldExpression.propertyToParameterConstraintLhs(1).modelAttributeTypeReference()
-      if (firstModelAttrRef == null || secondModelAttrRef == null) {
-         return CompilationError(
-            fieldExpression.start,
-            "Only Model AttributeReference expressions (SourceType::FieldType) are allowed for views"
-         ).asList().left()
-      }
-
-      return compiler.tokenProcessor.parseModelAttributeTypeReference(namespace, firstModelAttrRef)
-         .flatMap { (op1Source, op1Prop) ->
-            compiler.tokenProcessor.parseModelAttributeTypeReference(namespace, secondModelAttrRef)
-               .flatMap { (op2Source, op2Prop) ->
-                  val operator = FormulaOperator.forSymbol(fieldExpression.arithmaticOperator().text)
-                  CalculatedModelAttributeFieldSetExpression(ModelAttributeReferenceSelector(
-                     op1Source,op1Prop), ModelAttributeReferenceSelector(op2Source, op2Prop), operator)
-                     .right()
-               }
-         }
-   }
 
    private fun compileWhenCondition(whenBlock: TaxiParser.ConditionalTypeWhenDeclarationContext, namespace: Namespace, whenSelectorType: Type): Either<List<CompilationError>, WhenFieldSetCondition> {
       return compileSelectorExpression(whenBlock.conditionalTypeWhenSelector(), namespace, whenSelectorType).flatMap { selectorExpression ->
@@ -209,9 +162,9 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
 
          }
          caseFieldAssignment.caseScalarAssigningDeclaration() != null -> compileCaseScalarAssignment(caseFieldAssignment.caseScalarAssigningDeclaration())
-         caseFieldAssignment.scalarAccessor() != null -> {
-            compileScalarAccessorValueAssignment(caseFieldAssignment.scalarAccessor(), type)
-         }
+//         caseFieldAssignment.accessor()?.scalarAccessorExpression() != null -> {
+//            compileScalarAccessorValueAssignment(caseFieldAssignment.accessor().scalarAccessorExpression(), type)
+//         }
          else -> error("Unhandled object field value assignment")
       }
          .map { assignment ->
@@ -229,11 +182,11 @@ class ConditionalFieldSetProcessor internal constructor(private val compiler: Fi
 
    }
 
-   private fun compileScalarAccessorValueAssignment(scalarAccessor: TaxiParser.ScalarAccessorContext, targetType: Type): Either<List<CompilationError>, ScalarAccessorValueAssignment> {
-      return compiler.compileScalarAccessor(scalarAccessor, targetType).map { accessor ->
-         ScalarAccessorValueAssignment(accessor)
-      }
-   }
+//   private fun compileScalarAccessorValueAssignment(scalarAccessor: TaxiParser.ScalarAccessorContext, targetType: Type): Either<List<CompilationError>, ScalarAccessorValueAssignment> {
+//      return compiler.compileScalarAccessor(scalarAccessor, targetType).map { accessor ->
+//         ScalarAccessorValueAssignment(accessor)
+//      }
+//   }
 
    private fun compileLiteralValueAssignment(literal: TaxiParser.LiteralContext): Either<List<CompilationError>, ValueAssignment> {
       return if (literal.valueOrNull() == null) {

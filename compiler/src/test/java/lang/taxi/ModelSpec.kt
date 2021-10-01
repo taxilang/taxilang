@@ -1,10 +1,10 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
-import lang.taxi.types.CalculatedFieldSetExpression
-import lang.taxi.types.ConditionalAccessor
+import lang.taxi.expressions.FieldReferenceExpression
+import lang.taxi.expressions.OperatorExpression
+import lang.taxi.expressions.TypeExpression
 import lang.taxi.types.FormulaOperator
-import lang.taxi.types.QualifiedName
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import kotlin.test.assertFailsWith
@@ -58,54 +58,30 @@ namespace foo.bar {
       }
 
       describe("simple grammar") {
-         it("should allow definition of calculated fields") {
-            val src = """
-               type QtyTick inherits Decimal
-               type Qty inherits Decimal
-               model Trade {
-                  qtyTotal: Decimal as (QtyTick * Qty)
-               }
-           """.trimIndent()
-            val trade = Compiler(src).compile().model("Trade")
-            trade.should.not.be.`null`
-            trade.hasField("qtyTotal").should.be.`true`
-            trade.field("qtyTotal").formula.should.not.be.`null`
-            val field = trade.field("qtyTotal")
-            field.type.qualifiedName.should.startWith("lang.taxi.CalculatedDecimal_")
-            val multiplication = field.formula
-            multiplication!!.operandFields.should.contain(QualifiedName.from("QtyTick"))
-            multiplication.operandFields.should.contain(QualifiedName.from("Qty"))
-            multiplication.operator.should.equal(FormulaOperator.Multiply)
-         }
-
          it("should allow concatenation of a date + time fields to an instant") {
             val src = """
                type TransactionDate inherits Date
                type TransactionTime inherits Time
                type TransactionDateTime inherits Instant
                model Transaction {
-                  timestamp : TransactionDateTime as (TransactionDate + TransactionTime)
+                  timestamp : TransactionDateTime by (TransactionDate + TransactionTime)
                }
             """.trimIndent()
-            val transaction = Compiler(src).compile().model("Transaction")
-            val formula = transaction.field("timestamp").formula!!
-            formula.operator.should.equal(FormulaOperator.Add)
-            formula.operandFields[0].fullyQualifiedName.should.equal("TransactionDate")
-            formula.operandFields[1].fullyQualifiedName.should.equal("TransactionTime")
+            val timestamp = Compiler(src).compile().model("Transaction")
+               .field("timestamp")
          }
 
          it("should not allow concatenation of time + date fields") {
-            assertFailsWith(CompilationException::class) {
                val src = """
                  type TransactionDate inherits Date
                type TransactionTime inherits Time
-               type TransactionDateTime inherits Instant
+               type TransactionDateTime inherits String
                model Transaction {
-                  timestamp : TransactionDateTime as (TransactionTime + TransactionDate)
+                  timestamp : TransactionDateTime by (TransactionTime + TransactionDate)
                }
-               """.trimIndent()
-               Compiler(src).compile().model("Trade")
-            }
+               """
+                  .validated()
+                  .shouldContainMessage("Type mismatch.  Type of lang.taxi.Instant is not assignable to type TransactionDateTime")
          }
 
          it("should not allow invalid operations on Date Time fields") {
@@ -131,82 +107,73 @@ namespace foo.bar {
                type FullName inherits String
 
                model Person {
-                  fullName : FullName as (FirstName + LastName)
+                  fullName : FullName by (FirstName + LastName)
                }
 
             """.trimIndent()
             val transaction = Compiler(src).compile().model("Person")
-            val formula = transaction.field("fullName").formula!!
-            formula.operator.should.equal(FormulaOperator.Add)
-            formula.operandFields[0].fullyQualifiedName.should.equal("FirstName")
-            formula.operandFields[1].fullyQualifiedName.should.equal("LastName")
+            val operatorExpression = transaction.field("fullName").accessor as OperatorExpression
+            operatorExpression.lhs.asA<TypeExpression>().type.qualifiedName.should.equal("FirstName")
+            operatorExpression.rhs.asA<TypeExpression>().type.qualifiedName.should.equal("LastName")
          }
 
-
-
          it("should not allow definition of calculated fields when one of the operand is String") {
-            assertFailsWith(CompilationException::class) {
                val src = """
                   type QtyTick inherits Decimal
                   type Qty inherits String
                   model Trade {
-                     qtyTotal: Decimal as (QtyTick * Qty)
+                     qtyTotal: Decimal by (QtyTick * Qty)
                   }
                """.trimIndent()
-               Compiler(src).compile().model("Trade")
-            }
+                  .validated()
+                  .shouldContainMessage("Operations with symbol '*' is not supported on types Decimal and String")
          }
 
          it("should not allow definition of calculated fields when one of the operand is inherited from Instant") {
-            assertFailsWith(CompilationException::class) {
                val src = """
                   type QtyTick inherits Decimal
                   type Qty inherits Instant
                   model Trade {
-                     qtyTotal: Decimal as (QtyTick * Qty)
+                     qtyTotal: Decimal by (QtyTick * Qty)
                   }
                """.trimIndent()
-               Compiler(src).compile().model("Trade")
-            }
+                  .validated()
+                  .shouldContainMessage("Operations with symbol '*' is not supported on types Decimal and Instant")
          }
 
          it("should not allow definition of calculated fields when one of the operand is inherited from Boolean") {
-            assertFailsWith(CompilationException::class) {
-               val src = """
+            """
                   type QtyTick inherits Boolean
                   type Qty inherits Decimal
                   model Trade {
-                     qtyTotal: Decimal as (QtyTick * Qty)
+                     qtyTotal: Decimal by (QtyTick * Qty)
                   }
-               """.trimIndent()
-               Compiler(src).compile().model("Trade")
-            }
+               """
+               .validated()
+               .shouldContainMessage("Operations with symbol '*' is not supported on types Boolean and Decimal")
          }
 
          it("should not allow definition of calculated fields when one of the operand is inherited from Date") {
-            assertFailsWith(CompilationException::class) {
                val src = """
                   type QtyTick inherits Date
                   type Qty inherits Decimal
                   model Trade {
-                     qtyTotal: Decimal as (QtyTick * Qty)
+                     qtyTotal: Decimal by (QtyTick * Qty)
                   }
-               """.trimIndent()
-               Compiler(src).compile().model("Trade")
-            }
+               """.validated()
+                  .shouldContainMessage("Operations with symbol '*' is not supported on types Date and Decimal")
          }
 
-         it("should not allow definition of calculated fields when one of the operand is inherited from Date") {
-            assertFailsWith(CompilationException::class) {
+         it("should not allow definition of calculated fields when one of the operand is inherited from Time") {
                val src = """
                   type QtyTick inherits Time
                   type Qty inherits Decimal
                   model Trade {
-                     qtyTotal: Decimal as (QtyTick * Qty)
+                     qtyTotal: Decimal by (QtyTick * Qty)
                   }
                """.trimIndent()
-               Compiler(src).compile().model("Trade")
-            }
+                  .validated()
+                  .shouldContainMessage("Operations with symbol '*' is not supported on types Time and Decimal")
          }
 
          it("should allow formulas on fields") {
@@ -223,15 +190,14 @@ namespace foo.bar {
 
             """.trimIndent()
             val transaction = Compiler(src).compile().model("Person")
-            val accessor = transaction.field("fullName").accessor as ConditionalAccessor
-            val calculatedFieldSetExpression = accessor.expression as CalculatedFieldSetExpression
-            calculatedFieldSetExpression.operator.should.equal(FormulaOperator.Add)
-            calculatedFieldSetExpression.operand1.fieldName.should.equal("firstName")
-            calculatedFieldSetExpression.operand2.fieldName.should.equal("lastName")
+            val accessor = transaction.field("fullName").accessor as OperatorExpression
+            accessor.lhs.asA<FieldReferenceExpression>().fieldName.should.equal("firstName")
+            accessor.lhs.asA<FieldReferenceExpression>().returnType.qualifiedName.should.equal("FirstName")
+            accessor.rhs.asA<FieldReferenceExpression>().fieldName.should.equal("lastName")
+            accessor.rhs.asA<FieldReferenceExpression>().returnType.qualifiedName.should.equal("LastName")
          }
 
          it("compilation should fail for invalid formulas") {
-            assertFailsWith(CompilationException::class) {
                val src = """
                type FirstName inherits String
                type LastName inherits String
@@ -243,25 +209,8 @@ namespace foo.bar {
                   fullName : FullName by (this.firstName + this.invalidField)
                }
 
-            """.trimIndent()
-               val transaction = Compiler(src).compile().model("Person")
-            }
-         }
-
-         it("Can't mix types with coalesce") {
-            assertFailsWith(CompilationException::class) {
-               val src = """
-               type IntOne inherits Int
-               type DecimalOne inherits Decimal
-               type IntThree inherits Int
-
-               model Foo {
-                  field1: Int as coalesce(IntOne, DecimalOne, IntThree)
-               }
-
-            """.trimIndent()
-               val transaction = Compiler(src).compile().model("Foo")
-            }
+            """.validated()
+                  .shouldContainMessage("Field invalidField does not exist on type Person")
          }
 
          describe("finding fields") {

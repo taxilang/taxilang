@@ -5,7 +5,7 @@ import lang.taxi.functions.FunctionAccessor
 import lang.taxi.types.CalculatedModelAttributeFieldSetExpression
 import lang.taxi.types.ComparisonExpression
 import lang.taxi.types.ComparisonOperator
-import lang.taxi.types.ConditionalAccessor
+import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.types.ConstantEntity
 import lang.taxi.types.ElseMatchExpression
 import lang.taxi.types.EmptyReferenceSelector

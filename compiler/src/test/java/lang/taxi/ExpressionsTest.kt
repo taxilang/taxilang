@@ -3,8 +3,8 @@ package lang.taxi
 import com.winterbe.expekt.should
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.OperatorExpression
+import lang.taxi.expressions.TypeExpression
 import lang.taxi.functions.FunctionAccessor
-import lang.taxi.types.TypeReferenceSelector
 import org.junit.jupiter.api.Test
 
 // Writing junit style tests here until a new version of Spek is released.
@@ -40,7 +40,7 @@ class ExpressionsTest {
       expression.function.inputs.should.have.size(1)
       val firstInput = expression.function.inputs.first() as FunctionAccessor
       firstInput.inputs.should.have.size(1)
-      val firstNestedInput = firstInput.inputs.first() as TypeReferenceSelector
+      val firstNestedInput = firstInput.inputs.first() as TypeExpression
       firstNestedInput.type.qualifiedName.should.equal("Height")
    }
 
@@ -58,7 +58,7 @@ class ExpressionsTest {
       val rhs = expression.rhs as FunctionExpression
       rhs.function.function.qualifiedName.should.equal("squared")
       rhs.function.inputs.should.have.size(1)
-      val firstInput = rhs.function.inputs.first() as TypeReferenceSelector
+      val firstInput = rhs.function.inputs.first() as TypeExpression
       firstInput.type.qualifiedName.should.equal("Height")
    }
 }

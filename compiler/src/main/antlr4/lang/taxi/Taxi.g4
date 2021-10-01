@@ -67,7 +67,7 @@ listOfInheritedTypes
     : typeType (',' typeType)*
     ;
 typeBody
-    :   '{' (typeMemberDeclaration | conditionalTypeStructureDeclaration | calculatedMemberDeclaration)* '}'
+    :   '{' (typeMemberDeclaration | conditionalTypeStructureDeclaration )* '}'
     ;
 
 typeMemberDeclaration
@@ -76,13 +76,24 @@ typeMemberDeclaration
 
 expressionTypeDeclaration : 'by' expressionGroup*;
 
+// (A,B) -> C
+// Used in functions:
+// declare function <T,A> sum(T[], (T) -> A):A
+// Note - this is used when the lambda is declared, not when
+// it's used in a function as an expression.
+// eg:
+// given the sum example above, it's usage would be:
+// model Output {
+// total : Int by sum(this.transactions, (Transaction) -> Cost)
+//}
+// In that example, the sum(this.transactions, (Transaction) -> Cost) is
+// an exmpression, not a lambdaSignature
+lambdaSignature: expressionInputs typeType;
+
+
 expressionInputs: '(' expressionInput (',' expressionInput)* ')' '->';
 expressionInput: (Identifier ':')? typeType;
 
-// (A,B) -> C
-// Used in functions:
-// declare function <T,A> reduce(T[], (T,A) -> A):A
-lambdaSignature: expressionInputs typeType;
 
 // Added for expression types.
 // However, I suspect with a few modifications e can simplify
@@ -105,11 +116,11 @@ expressionGroup:
    | expressionGroup LOGICAL_OR expressionGroup
    // Inputs go last, so that when parsing lambdas, the inputs are the LHS and everything remainin goes RHS.
    // Might not work for nested lambdas, if that's a thing.
-   |    expressionInputs expressionGroup;
+   | expressionInputs expressionGroup;
 
 // readFunction before typeType to avoid functons being identified
 // as types
-expressionAtom: readFunction | typeType |  literal;
+expressionAtom: readFunction | typeType | fieldReferenceSelector | literal | anonymousTypeDefinition;
 
 
 
@@ -118,24 +129,12 @@ annotationTypeDeclaration
 
 annotationTypeBody: '{' typeMemberDeclaration* '}';
 
-calculatedMemberDeclaration
-   : typeMemberDeclaration  'as'
-   (operatorExpression)
-   ;
 
 
-
-calculatedExpressionBody:
-         typeType (',' typeType)*
-         ;
-
-operatorExpression
-   : '(' typeType arithmaticOperator typeType ')'
-   ;
-
-fieldExpression
-   : '(' propertyToParameterConstraintLhs arithmaticOperator propertyToParameterConstraintLhs ')'
-   ;
+// Deprecated - use expressionGroups instead
+//fieldExpression
+//   : '(' propertyToParameterConstraintLhs arithmaticOperator propertyToParameterConstraintLhs ')'
+//   ;
 
 conditionalTypeStructureDeclaration
     :
@@ -143,8 +142,9 @@ conditionalTypeStructureDeclaration
    ;
 
 conditionalTypeConditionDeclaration:
-   (fieldExpression |
-   conditionalTypeWhenDeclaration);
+//   (fieldExpression |
+   conditionalTypeWhenDeclaration;
+//   );
 
 conditionalTypeWhenDeclaration:
    'when' ('(' conditionalTypeWhenSelector ')')? '{'
@@ -196,7 +196,7 @@ caseFieldAssigningDeclaration :  // dealtAmount ...  (could be either a destruct
       ( EQ caseScalarAssigningDeclaration ) | // dealtAmount = ccy1Amount | dealtAmount = 'foo'
       // TODO : How do we model Enum assignments here?
       // .. some enum assignment ..
-      scalarAccessor
+      accessor
    );
 
 caseScalarAssigningDeclaration:
@@ -211,15 +211,15 @@ fieldModifier
    : 'closed'
    ;
 fieldDeclaration
-  :   fieldModifier? Identifier (':' collectionProjectionScope? (simpleFieldDeclaration | anonymousTypeDefinition | modelAttributeTypeReference))?
+  :   fieldModifier? Identifier (':' (simpleFieldDeclaration | anonymousTypeDefinition | modelAttributeTypeReference))?
   ;
 
 // Used in queries to scope projection of collections.
 // eg:
 //findAll { OrderTransaction[] } as {
-//   items: OrderItem -> { sku: ProductSku size: ProductSize }[]
+//   items: Thing[] by [OrderItem]
 // }[]
-collectionProjectionScope: typeType '->';
+collectionProjectionExpression: '[' typeType ']' ;
 
 
 // A type reference that refers to the attribute on a model.
@@ -233,9 +233,7 @@ typeType
     :   classOrInterfaceType typeArguments? listType? optionalType? parameterConstraint? (aliasedType? | inlineInheritedType?)?
     ;
 
-accessor : scalarAccessor | objectAccessor;
-
-scalarAccessor
+accessor
     : 'by' scalarAccessorExpression
     ;
 
@@ -243,11 +241,12 @@ scalarAccessorExpression
     : xpathAccessorDeclaration
     | jsonPathAccessorDeclaration
     | columnDefinition
-    | conditionalTypeConditionDeclaration
     | defaultDefinition
     | readFunction
     | readExpression
     | byFieldSourceExpression
+    | collectionProjectionExpression
+   | conditionalTypeConditionDeclaration
     ;
 
 // Required for Query based Anonymous type definitions like:
@@ -256,18 +255,21 @@ scalarAccessorExpression
 // }
 //
 byFieldSourceExpression:  '(' fieldReferenceSelector ')';
-xpathAccessorDeclaration : 'xpath' '(' accessorExpression ')';
-jsonPathAccessorDeclaration : 'jsonPath' '(' accessorExpression ')';
+xpathAccessorDeclaration : 'xpath' '(' StringLiteral ')';
+jsonPathAccessorDeclaration : 'jsonPath' '(' StringLiteral ')';
 
 
-objectAccessor
-    : '{' destructuredFieldDeclaration* '}'
-    ;
+// Deprecating and removing this.
+// It was never used, and is confusing
+//objectAccessor
+//    : '{' destructuredFieldDeclaration* '}'
+//    ;
+//
+//destructuredFieldDeclaration
+//    : Identifier accessor
+//    ;
 
-destructuredFieldDeclaration
-    : Identifier accessor
-    ;
-accessorExpression : StringLiteral;
+//accessorExpression : StringLiteral;
 
 classOrInterfaceType
     :   Identifier /* typeArguments? */ ('.' Identifier /* typeArguments? */ )*
@@ -394,7 +396,7 @@ operationParameterList
 operationParameter
 // Note that only one operationParameterConstraint can exist per parameter, but it can contain
 // multiple expressions
-     :   annotation* (parameterName)? (typeType varargMarker?) | lambdaSignature
+     :   annotation* (parameterName)? ((typeType varargMarker?) | lambdaSignature)
      ;
 
 varargMarker: '...';
@@ -604,13 +606,12 @@ functionDeclaration: typeDoc? 'declare' (functionModifiers)? 'function' typeArgu
 functionModifiers: 'query';
 
 
-// Deprecated, use functionDeclaration
 readFunction: functionName '(' formalParameterList? ')';
 //         'concat' |
 //         'leftAndUpperCase' |
 //         'midAndUpperCase'
 //         ;
-readExpression: readFunction arithmaticOperator literal;
+readExpression: expressionGroup; //  readFunction arithmaticOperator literal;
 functionName: qualifiedName;
 formalParameterList
     : parameter  (',' parameter)*

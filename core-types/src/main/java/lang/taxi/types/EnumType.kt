@@ -126,8 +126,8 @@ data class EnumType(override val qualifiedName: String,
    override val format: List<String>? = null
    override val offset: Int? = null
    override val formattedInstanceOfType: Type? = null
-   override val calculation: Formula?
-      get() = null
+//   override val calculation: Formula?
+//      get() = null
 
    override val basePrimitive: PrimitiveType?
       get() = definition?.basePrimitive

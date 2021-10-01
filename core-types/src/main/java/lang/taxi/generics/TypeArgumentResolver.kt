@@ -1,9 +1,9 @@
 package lang.taxi.generics
 
 import arrow.core.getOrHandle
+import lang.taxi.accessors.Accessor
 import lang.taxi.expressions.LambdaExpression
 import lang.taxi.services.Parameter
-import lang.taxi.types.Accessor
 import lang.taxi.types.GenericType
 import lang.taxi.types.LambdaExpressionType
 import lang.taxi.types.Type
@@ -21,12 +21,36 @@ object TypeArgumentResolver {
    ): Map<TypeArgument, Type> {
       val resolvedTypes = typeArguments.map { typeArgument ->
          val resolvedType = resolveTypeArgumentFromInputAccessors(typeArgument, declaredInputs, providedInputTypes) ?:
+         resolveTypeArgumentFromExpressionReturnTypes(typeArgument, declaredInputs, providedInputTypes) ?:
          // It could be that we need more sophisticated resolution logic here - ie., interference from return types
          // etc.
          error("Unable to resolve typeArgument ${typeArgument.declaredName}")
          typeArgument to resolvedType
       }
       return resolvedTypes.toMap()
+   }
+
+   /**
+    * Checks to see if the type argument exists as the return type from an expression,
+    * and if so- looks at the expression to resolve the type
+    */
+   private fun resolveTypeArgumentFromExpressionReturnTypes(
+      typeArgument: TypeArgument,
+      declaredInputs: List<Type>,
+      providedInputTypes: List<Accessor>
+   ): Type? {
+      return declaredInputs
+         .asSequence()
+         .mapIndexed { index, input ->
+            if (input is LambdaExpressionType && input.returnType.qualifiedName == typeArgument.qualifiedName) {
+               val inputTypeAtPosition = providedInputTypes[index]
+               inputTypeAtPosition.returnType
+            } else {
+               null
+            }
+         }
+         .filterNotNull()
+         .firstOrNull()
    }
 
    /**
@@ -91,7 +115,9 @@ object TypeArgumentResolver {
          .mapIndexed { index, declaredInput ->
             val providedInput = providedInputTypes[index]
             if (declaredInput.typeParameters().isNotEmpty()) {
-               require(declaredInput.typeParameters().size == providedInput.typeParameters().size) { "Expected that the number of type parameters for input $index would be the same in the function declaration and the provided inputs.  Expected ${declaredInput.typeParameters().size} but found ${providedInput.typeParameters().size}" }
+               require(declaredInput.typeParameters().size == providedInput.typeParameters().size) {
+                  "The declared input of ${declaredInput.toQualifiedName().parameterizedName} is incompatible (as the number of type parameters differs) with the provided input of ${providedInput.toQualifiedName().parameterizedName}"
+               }
                resolveTypeArgumentFromInputTypes(
                   typeArgument,
                   declaredInput.typeParameters(),

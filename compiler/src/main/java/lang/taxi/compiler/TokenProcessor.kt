@@ -19,7 +19,7 @@ import lang.taxi.TaxiDocument
 import lang.taxi.TaxiParser
 import lang.taxi.Tokens
 import lang.taxi.TypeSystem
-import lang.taxi.compiler.CalculatedFieldSetProcessor.Companion.validate
+import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.toExpressionGroup
 import lang.taxi.findNamespace
@@ -65,7 +65,6 @@ import lang.taxi.types.ArrayType
 import lang.taxi.types.ComparisonExpression
 import lang.taxi.types.ComparisonOperator
 import lang.taxi.types.CompilationUnit
-import lang.taxi.types.ConditionalAccessor
 import lang.taxi.types.ConstantEntity
 import lang.taxi.types.DefinableToken
 import lang.taxi.types.ElseMatchExpression
@@ -81,7 +80,7 @@ import lang.taxi.types.Enums
 import lang.taxi.types.Field
 import lang.taxi.types.FieldExtension
 import lang.taxi.types.FieldReferenceEntity
-import lang.taxi.types.Formula
+import lang.taxi.types.FormulaOperator
 import lang.taxi.types.GenericType
 import lang.taxi.types.ImportableToken
 import lang.taxi.types.LambdaExpressionType
@@ -310,7 +309,7 @@ class TokenProcessor(
       // Some validations can't be performed at the time, because
       // they rely on a fully parsed document structure
       validateConstraints()
-      validateFormulas()
+//      validateFormulas()
       validaCaseWhenLogicalExpressions()
 
       // Queries
@@ -454,18 +453,18 @@ class TokenProcessor(
       errors.addAll(constraintValidator.validateAll(typeSystem, services))
    }
 
-   private fun validateFormulas() {
-      errors.addAll(typeSystem.typeList().filterIsInstance<ObjectType>()
-         .flatMap { type ->
-            type
-               .allFields
-               .filter { it.formula != null }
-               .flatMap { field ->
-                  validate(field, typeSystem, type)
-               }
-         }
-      )
-   }
+//   private fun validateFormulas() {
+//      errors.addAll(typeSystem.typeList().filterIsInstance<ObjectType>()
+//         .flatMap { type ->
+//            type
+//               .allFields
+//               .filter { it.formula != null }
+//               .flatMap { field ->
+//                  validate(field, typeSystem, type)
+//               }
+//         }
+//      )
+//   }
 
    private fun validaCaseWhenLogicalExpressions() {
       typeSystem.typeList().filterIsInstance<ObjectType>()
@@ -1271,20 +1270,20 @@ class TokenProcessor(
 
    }
 
-   internal fun parseType(
-      namespace: Namespace,
-      formula: Formula,
-      typeType: TaxiParser.TypeTypeContext
-   ): Either<List<CompilationError>, Type> {
-      val typeOrError = typeOrError(namespace, typeType)
-      return typeOrError.flatMap { type ->
-         if (typeType.listType() != null) {
-            CompilationError(typeType.start, "It is invalid to declare calculated type on an array").asList().left()
-         } else {
-            generateCalculatedFieldType(type, formula).wrapErrorsInList()
-         }
-      }
-   }
+//   internal fun parseType(
+//      namespace: Namespace,
+//      formula: Formula,
+//      typeType: TaxiParser.TypeTypeContext
+//   ): Either<List<CompilationError>, Type> {
+//      val typeOrError = typeOrError(namespace, typeType)
+//      return typeOrError.flatMap { type ->
+//         if (typeType.listType() != null) {
+//            CompilationError(typeType.start, "It is invalid to declare calculated type on an array").asList().left()
+//         } else {
+//            generateCalculatedFieldType(type, formula).wrapErrorsInList()
+//         }
+//      }
+//   }
 
    internal fun typeOrError(
       namespace: Namespace,
@@ -1385,32 +1384,32 @@ class TokenProcessor(
 
    }
 
-   private fun generateCalculatedFieldType(type: Type, formula: Formula): Either<CompilationError, Type> {
-      val operands = formula.operandFields
-      val calculatedTypeName = QualifiedName.from(type.qualifiedName).let { originalTypeName ->
-         val hash = Hashing.sha256()
-            .hashString(operands.sortedBy { it.fullyQualifiedName }.joinToString("_"), Charset.defaultCharset())
-            .toString().takeLast(6)
-         originalTypeName.copy(typeName = "Calculated${originalTypeName.typeName}_$hash")
-      }
-
-      return if (typeSystem.contains(calculatedTypeName.fullyQualifiedName)) {
-         Either.right(typeSystem.getType(calculatedTypeName.fullyQualifiedName))
-      } else {
-         val formattedType = ObjectType(
-            calculatedTypeName.fullyQualifiedName,
-            ObjectTypeDefinition(
-               emptySet(),
-               inheritsFrom = setOf(type),
-               calculatedInstanceOfType = type,
-               calculation = formula,
-               compilationUnit = CompilationUnit.generatedFor(type)
-            )
-         )
-         typeSystem.register(formattedType)
-         Either.right(formattedType)
-      }
-   }
+//   private fun generateCalculatedFieldType(type: Type, formula: Formula): Either<CompilationError, Type> {
+//      val operands = formula.operandFields
+//      val calculatedTypeName = QualifiedName.from(type.qualifiedName).let { originalTypeName ->
+//         val hash = Hashing.sha256()
+//            .hashString(operands.sortedBy { it.fullyQualifiedName }.joinToString("_"), Charset.defaultCharset())
+//            .toString().takeLast(6)
+//         originalTypeName.copy(typeName = "Calculated${originalTypeName.typeName}_$hash")
+//      }
+//
+//      return if (typeSystem.contains(calculatedTypeName.fullyQualifiedName)) {
+//         Either.right(typeSystem.getType(calculatedTypeName.fullyQualifiedName))
+//      } else {
+//         val formattedType = ObjectType(
+//            calculatedTypeName.fullyQualifiedName,
+//            ObjectTypeDefinition(
+//               emptySet(),
+//               inheritsFrom = setOf(type),
+//               calculatedInstanceOfType = type,
+//               calculation = formula,
+//               compilationUnit = CompilationUnit.generatedFor(type)
+//            )
+//         )
+//         typeSystem.register(formattedType)
+//         Either.right(formattedType)
+//      }
+//   }
 
    private fun parseTypeFormat(typeType: TaxiParser.TypeTypeContext): Either<List<CompilationError>, FormatsAndZoneoffset> {
       val formatExpressions = typeType

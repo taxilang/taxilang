@@ -1,9 +1,9 @@
 package lang.taxi.functions
 
 import lang.taxi.ImmutableEquality
+import lang.taxi.accessors.Accessor
 import lang.taxi.generics.TypeArgumentResolver
 import lang.taxi.services.Parameter
-import lang.taxi.types.Accessor
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Compiled
 import lang.taxi.types.DefinableToken
@@ -48,6 +48,7 @@ data class Function(
    override val qualifiedName: String,
    override var definition: FunctionDefinition?
 ) : Named, Compiled, ImportableToken, DefinableToken<FunctionDefinition> {
+   val typeArguments:List<TypeArgument>? = definition?.typeArguments
    fun getParameterType(parameterIndex: Int): Type {
       return when {
          parameterIndex < this.parameters.size -> {

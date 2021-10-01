@@ -1,10 +1,10 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.types.AndExpression
 import lang.taxi.types.ComparisonExpression
 import lang.taxi.types.ComparisonOperator
-import lang.taxi.types.ConditionalAccessor
 import lang.taxi.types.ConstantEntity
 import lang.taxi.types.ElseMatchExpression
 import lang.taxi.types.EmptyReferenceSelector

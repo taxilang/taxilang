@@ -1,12 +1,13 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.accessors.ConditionalAccessor
+import lang.taxi.accessors.XpathAccessor
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.types.AccessorExpressionSelector
 import lang.taxi.types.AndExpression
 import lang.taxi.types.ComparisonExpression
 import lang.taxi.types.ComparisonOperator
-import lang.taxi.types.ConditionalAccessor
 import lang.taxi.types.ConstantEntity
 import lang.taxi.types.DestructuredAssignment
 import lang.taxi.types.ElseMatchExpression
@@ -25,13 +26,13 @@ import lang.taxi.types.ReferenceAssignment
 import lang.taxi.types.ReferenceCaseMatchExpression
 import lang.taxi.types.ScalarAccessorValueAssignment
 import lang.taxi.types.WhenFieldSetCondition
-import lang.taxi.types.XpathAccessor
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class ConditionalDataTypesTest {
 
    @Test
+   @Disabled("Destructured types are currently disabled")
    fun simpleConditionalTypeGrammar() {
       val src = """
          type Money {
@@ -50,7 +51,7 @@ type TradeRecord {
         ccy1 -> {
             dealtAmount(
                 quantity by xpath("/foo/bar/quantity1")
-                currency = ccy1
+                currency == ccy1
             )
             settlementAmount(
                 quantity by xpath("/foo/bar/quantity2")
@@ -94,7 +95,7 @@ type TradeRecord {
       dealtAmountDestructuredAssignment.assignments[0].should.satisfy {
          it.fieldName.should.equal("quantity")
          val assignment = it.assignment as ScalarAccessorValueAssignment
-         (assignment.accessor as XpathAccessor).expression.should.equal("/foo/bar/quantity1")
+         (assignment.accessor as XpathAccessor).path.should.equal("/foo/bar/quantity1")
          true
       }
       dealtAmountDestructuredAssignment.assignments[1].should.satisfy {
@@ -107,6 +108,7 @@ type TradeRecord {
 
 
    @Test
+   @Disabled("Destructured types are currently disabled")
    fun canDeclareConditionalTypes() {
       val src = """
 type Money {
@@ -374,11 +376,11 @@ type TradeRecord {
             initialQuantity: Decimal
             leavesQuantity: Decimal
             quantityStatus: String by when {
-                this.initialQuantity = this.leavesQuantity -> "ZeroFill"
-                this.trader = "Marty" || this.status = "Pending" -> "ZeroFill"
+                this.initialQuantity == this.leavesQuantity -> "ZeroFill"
+                this.trader == "Marty" || this.status == "Pending" -> "ZeroFill"
                 this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity -> "PartialFill"
-                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.trader = "Marty" || this.status = "Pending"  -> "FullyFilled"
-                this.leavesQuantity = null && this.initialQuantity != null -> trader
+                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.trader == "Marty" || this.status == "Pending"  -> "FullyFilled"
+                this.leavesQuantity == null && this.initialQuantity != null -> trader
                 else -> "CompleteFill"
             }
          }
@@ -426,10 +428,10 @@ type TradeRecord {
             initialQuantity: Decimal
             leavesQuantity: Decimal
             quantityStatus: String by when {
-                this.initialQuantity = this.leavesQuantity -> "ZeroFill"
-                this.trader = "Marty" || this.status = "Pending" -> "ZeroFill"
+                this.initialQuantity == this.leavesQuantity -> "ZeroFill"
+                this.trader == "Marty" || this.status == "Pending" -> "ZeroFill"
                 this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity -> "PartialFill"
-                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.user = "Marty" || this.status = "Pending"  -> "FullyFilled"
+                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.user == "Marty" || this.status == "Pending"  -> "FullyFilled"
                 else -> "CompleteFill"
             }
          }
@@ -446,7 +448,7 @@ type TradeRecord {
          model ComplexWhen {
             trader: String
             quantityStatus: String by when {
-                this.trader = 0 -> "ZeroFill"
+                this.trader == 0 -> "ZeroFill"
                 else -> "CompleteFill"
             }
          }
@@ -463,7 +465,7 @@ type TradeRecord {
          model ComplexWhen {
             qty: Decimal
             quantityStatus: String by when {
-                this.qty = '0' -> "ZeroFill"
+                this.qty == '0' -> "ZeroFill"
                 else -> "CompleteFill"
             }
          }

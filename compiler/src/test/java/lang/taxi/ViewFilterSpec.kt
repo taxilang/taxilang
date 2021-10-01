@@ -26,7 +26,7 @@ class ViewFilterSpec : Spek({
            Sample View
           ]]
          view PersonView with query {
-            find { Person[] ( FirstName = 'foo' and LastName like '%bar%' ) } as {
+            find { Person[] ( FirstName == 'foo' and LastName like '%bar%' ) } as {
                personName: Person::FirstName
             }
          }
@@ -89,7 +89,7 @@ class ViewFilterSpec : Spek({
            Sample View
           ]]
          view PersonView with query {
-            find { Person[] ( (FirstName = 'foo' or LastName like '%bar%') and (Age in [20, 21, 22]) ) } as {
+            find { Person[] ( (FirstName == 'foo' or LastName like '%bar%') and (Age in [20, 21, 22]) ) } as {
                personName: Person::FirstName
             }
          }
@@ -132,7 +132,7 @@ class ViewFilterSpec : Spek({
            Sample View
           ]]
          view PersonView with query {
-            find { Person[] ( (FirstName = 'foo' or LastName like '%bar%') ) } as {
+            find { Person[] ( (FirstName == 'foo' or LastName like '%bar%') ) } as {
                personName: Person::FirstName
             }
          }

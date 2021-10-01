@@ -22,7 +22,7 @@ data class LambdaExpressionType(
    override val basePrimitive: PrimitiveType? = wrapper.basePrimitive
    override val formattedInstanceOfType: Type? = null
    override val definitionHash: String? = wrapper.definitionHash
-   override val calculation: Formula? = null
+//   override val calculation: Formula? = null
    override val offset: Int? = null
    override val typeKind: TypeKind? = TypeKind.Type
    override val typeDoc: String? = null
