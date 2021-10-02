@@ -3,7 +3,6 @@ package lang.taxi.compiler
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import com.google.common.graph.GraphBuilder
 import lang.taxi.CompilationError
 import lang.taxi.TaxiParser
 import lang.taxi.accessors.Accessor
@@ -18,22 +17,16 @@ import lang.taxi.types.CalculatedModelAttributeFieldSetExpression
 import lang.taxi.types.ComparisonExpression
 import lang.taxi.types.ComparisonOperand
 import lang.taxi.types.ConstantEntity
-import lang.taxi.types.ElseMatchExpression
 import lang.taxi.types.EnumType
-import lang.taxi.types.EnumValueAssignment
 import lang.taxi.types.Field
 import lang.taxi.types.InlineAssignmentExpression
-import lang.taxi.types.LiteralAssignment
 import lang.taxi.types.LogicalExpression
 import lang.taxi.types.ModelAttributeFieldReferenceEntity
 import lang.taxi.types.ModelAttributeReferenceSelector
-import lang.taxi.types.ModelAttributeTypeReferenceAssignment
-import lang.taxi.types.NullAssignment
 import lang.taxi.types.ObjectType
 import lang.taxi.types.OrExpression
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
-import lang.taxi.types.ScalarAccessorValueAssignment
 import lang.taxi.types.Type
 import lang.taxi.types.ViewBodyDefinition
 import lang.taxi.types.WhenCaseBlock
@@ -165,10 +158,10 @@ class ViewValidator(private val viewName: String) {
       val caseExpression = caseBlock.matchExpression
       val assignments = caseBlock.assignments
       when (caseExpression) {
-         is ComparisonExpression -> processComparisonExpression(caseExpression, ctx, errors, typesInViewFindDefinitions, viewBodyType)
-         is AndExpression -> validateLogicalExpressions(caseExpression.left, caseExpression.right, ctx, errors, typesInViewFindDefinitions, viewBodyType)
-         is OrExpression -> validateLogicalExpressions(caseExpression.left, caseExpression.right, ctx, errors, typesInViewFindDefinitions, viewBodyType)
-         is ElseMatchExpression -> processAssignments(assignments, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+//         is ComparisonExpression -> processComparisonExpression(caseExpression, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+//         is AndExpression -> validateLogicalExpressions(caseExpression.left, caseExpression.right, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+//         is OrExpression -> validateLogicalExpressions(caseExpression.left, caseExpression.right, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+//         is ElseMatchExpression -> processAssignments(assignments, ctx, errors, typesInViewFindDefinitions, viewBodyType)
          // this is also covered by compiler.
          else -> errors.add(
             CompilationError(
@@ -268,38 +261,38 @@ class ViewValidator(private val viewName: String) {
       }
 
       when (val expression = assignment.assignment) {
-         is ModelAttributeTypeReferenceAssignment -> validateModelAttributeTypeReference(expression, ctx, errors, typesInViewFindDefinitions, viewBodyType)
-         is LiteralAssignment -> { }
-         is NullAssignment -> { }
-         is ScalarAccessorValueAssignment -> {
-            when (val accessor = expression.accessor) {
-               // Example: (OrderSent::RequestedQuantity - OrderView::CumulativeQty)
-               is ConditionalAccessor -> validateField(accessor, ctx, errors, typesInViewFindDefinitions, viewBodyType)
-               is FunctionAccessor -> {
-                  validateFunction(accessor, ctx, errors, typesInViewFindDefinitions, viewBodyType)
-               }
-               else -> errors.add(CompilationError(
-                  ctx.start,
-                  "Unsupported Assignment for a when case!"))
-
-            }
-         }
-         is EnumValueAssignment -> { }
+//         is ModelAttributeTypeReferenceAssignment -> validateModelAttributeTypeReference(expression, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+//         is LiteralAssignment -> { }
+//         is NullAssignment -> { }
+//         is ScalarAccessorValueAssignment -> {
+//            when (val accessor = expression.accessor) {
+//               // Example: (OrderSent::RequestedQuantity - OrderView::CumulativeQty)
+//               is ConditionalAccessor -> validateField(accessor, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+//               is FunctionAccessor -> {
+//                  validateFunction(accessor, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+//               }
+//               else -> errors.add(CompilationError(
+//                  ctx.start,
+//                  "Unsupported Assignment for a when case!"))
+//
+//            }
+//         }
+//         is EnumValueAssignment -> { }
          // This is also covered by the compiler.
          else -> errors.add(CompilationError(
             ctx.start,
             "Unsupported Assignment for a when case!"))
       }
    }
-
-   private fun validateModelAttributeTypeReference(
-      expression: ModelAttributeTypeReferenceAssignment,
-      ctx: TaxiParser.FindBodyContext,
-      errors: MutableList<CompilationError>,
-      typesInViewFindDefinitions: Set<Type>,
-      viewBodyType: Type?) {
-      return validateValidateSourceAndField(expression.source, expression.type, ctx, errors, typesInViewFindDefinitions, viewBodyType)
-   }
+//
+//   private fun validateModelAttributeTypeReference(
+//      expression: ModelAttributeTypeReferenceAssignment,
+//      ctx: TaxiParser.FindBodyContext,
+//      errors: MutableList<CompilationError>,
+//      typesInViewFindDefinitions: Set<Type>,
+//      viewBodyType: Type?) {
+//      return validateValidateSourceAndField(expression.source, expression.type, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+//   }
 
    private fun validateValidateSourceAndField(
       source: QualifiedName,

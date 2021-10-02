@@ -2,6 +2,7 @@ package lang.taxi.types
 
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
+import lang.taxi.expressions.Expression
 
 /**
  * A set of fields with additional conditional mapping logic
@@ -15,9 +16,10 @@ data class CalculatedModelAttributeFieldSetExpression(
    val operand1: ModelAttributeReferenceSelector,
    val operand2: ModelAttributeReferenceSelector,
    val operator: FormulaOperator
-): FieldSetExpression {
+) : FieldSetExpression {
    override fun asTaxi(): String = "(${operand1.asTaxi()} ${operator.symbol} ${operand2.asTaxi()})"
 }
+
 data class CalculatedFieldSetExpression(
    val operand1: FieldReferenceSelector,
    val operand2: FieldReferenceSelector,
@@ -27,7 +29,7 @@ data class CalculatedFieldSetExpression(
 }
 
 data class WhenFieldSetCondition(
-   val selectorExpression: WhenSelectorExpression,
+   val selectorExpression: Expression,
    val cases: List<WhenCaseBlock>
 ) : FieldSetExpression {
    override fun asTaxi(): String {
@@ -56,20 +58,26 @@ data class AccessorExpressionSelector(
       TODO("Not yet implemented")
    }
 }
+
 data class ModelAttributeReferenceSelector(
    val memberSource: QualifiedName,
-   val memberType: Type): TaxiStatementGenerator, Accessor {
+   val memberType: Type
+) : TaxiStatementGenerator, Accessor {
    override fun asTaxi(): String = "$memberSource::${memberType.qualifiedName}"
 }
+
 @Deprecated("replaced by TypeExpression")
 data class TypeReferenceSelector(val type: Type) : Accessor {
    init {
-       error("Where is this still used?")
+      error("Where is this still used?")
    }
+
    override val returnType: Type = type
 }
+
 // TODO : Can FieldReferenceSelector, ReferenceAssignment and ReferenceCaseMatchExpression all be merged?
-data class FieldReferenceSelector(val fieldName: String, override val returnType: Type) : WhenSelectorExpression, Accessor {
+data class FieldReferenceSelector(val fieldName: String, override val returnType: Type) : WhenSelectorExpression,
+   Accessor {
    override val declaredType: Type = returnType
 
    companion object {
@@ -81,16 +89,17 @@ data class FieldReferenceSelector(val fieldName: String, override val returnType
    override fun asTaxi(): String = "this.$fieldName"
 }
 
-object EmptyReferenceSelector: WhenSelectorExpression {
+object EmptyReferenceSelector : WhenSelectorExpression {
    override fun asTaxi(): String {
       return ""
    }
+
    // TODO : What type is this?
    override val declaredType: Type = PrimitiveType.ANY
 }
 
 data class WhenCaseBlock(
-   val matchExpression: WhenCaseMatchExpression,
+   val matchExpression: Expression,
    val assignments: List<AssignmentExpression>
 ) : TaxiStatementGenerator {
    override fun asTaxi(): String {
@@ -120,7 +129,12 @@ data class WhenCaseBlock(
 }
 
 sealed class AssignmentExpression : TaxiStatementGenerator {
-   abstract val assignment: ValueAssignment
+   abstract val assignment: Accessor
+
+   val returnType: Type
+      get() {
+         return assignment.returnType
+      }
 }
 
 /**
@@ -128,7 +142,8 @@ sealed class AssignmentExpression : TaxiStatementGenerator {
  * Used when mapping a when { } block for mulitple fields, to indicate which field is going to
  * be assigned
  */
-data class FieldAssignmentExpression(val fieldName: String, override val assignment: ValueAssignment) : AssignmentExpression() {
+data class FieldAssignmentExpression(val fieldName: String, override val assignment: Expression) :
+   AssignmentExpression() {
    override fun asTaxi(): String = "$fieldName ${assignment.asTaxi()}"
 }
 
@@ -137,8 +152,14 @@ data class FieldAssignmentExpression(val fieldName: String, override val assignm
  * Used when mapping a when block for a single field, and the field name is handled higher
  * in the AST.
  */
-data class InlineAssignmentExpression(override val assignment: ValueAssignment) : AssignmentExpression() {
-   override fun asTaxi(): String = assignment.asTaxi()
+data class InlineAssignmentExpression(override val assignment: Accessor) : AssignmentExpression() {
+   override fun asTaxi(): String {
+      return if (assignment is TaxiStatementGenerator) {
+         assignment.asTaxi()
+      } else {
+         "/* Taxi generation for type ${assignment::class.simpleName} not implemented */"
+      }
+   }
 }
 
 
@@ -168,11 +189,13 @@ class LiteralCaseMatchExpression(val value: Any) : WhenCaseMatchExpression {
    override fun asTaxi(): String = accessor.asTaxi()
 }
 
-object ElseMatchExpression : WhenCaseMatchExpression {
+object ElseMatchExpression : Expression() {
    override fun asTaxi(): String = "else"
-   override val type: Type = PrimitiveType.ANY
+   override val compilationUnits: List<CompilationUnit>
+      get() = TODO("Not yet implemented")
+   override val returnType: Type = PrimitiveType.ANY
 }
-
+/*
 interface ValueAssignment : TaxiStatementGenerator {
    val type: Type
 }
@@ -226,3 +249,4 @@ object NullAssignment : ValueAssignment {
 data class ModelAttributeTypeReferenceAssignment(val source: QualifiedName, override val type: Type) : ValueAssignment {
    override fun asTaxi(): String = "${source}.${type.qualifiedName}"
 }
+*/

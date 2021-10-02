@@ -22,7 +22,7 @@ import lang.taxi.types.Type
 // However, we build Accessors first, and then expressions.
 // The only reason we specify that Expression inherits Accessor is because
 // we want to specify that an Expression should declare a returnType
-sealed class Expression : Compiled, TaxiStatementGenerator, Accessor {
+abstract class Expression : Compiled, TaxiStatementGenerator, Accessor {
    override fun asTaxi(): String {
       // TODO: Check this... probably not right
       return this.compilationUnits.first().source.content

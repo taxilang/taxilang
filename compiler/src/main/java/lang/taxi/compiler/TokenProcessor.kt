@@ -67,8 +67,6 @@ import lang.taxi.types.ComparisonOperator
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.ConstantEntity
 import lang.taxi.types.DefinableToken
-import lang.taxi.types.ElseMatchExpression
-import lang.taxi.types.EmptyReferenceSelector
 import lang.taxi.types.EnumDefinition
 import lang.taxi.types.EnumExtension
 import lang.taxi.types.EnumMember
@@ -80,7 +78,6 @@ import lang.taxi.types.Enums
 import lang.taxi.types.Field
 import lang.taxi.types.FieldExtension
 import lang.taxi.types.FieldReferenceEntity
-import lang.taxi.types.FormulaOperator
 import lang.taxi.types.GenericType
 import lang.taxi.types.ImportableToken
 import lang.taxi.types.LambdaExpressionType
@@ -481,24 +478,24 @@ class TokenProcessor(
                      .cases.map { aCase -> aCase.matchExpression }
                      .filterIsInstance<LogicalExpression>()
                   when {
-                     logicalExpressions.isNotEmpty() && whenFieldSetCondition.selectorExpression !is EmptyReferenceSelector -> {
-                        errors.add(
-                           CompilationError(
-                              type,
-                              "when case for ${it.name} in ${type.qualifiedName} cannot have reference selector use when { .. } syntax"
-                           )
-                        )
-                     }
-                     whenFieldSetCondition.selectorExpression is EmptyReferenceSelector &&
-                        whenFieldSetCondition.cases.map { it.matchExpression }.filter { it !is ElseMatchExpression }
-                           .any { it !is LogicalExpression } -> {
-                        errors.add(
-                           CompilationError(
-                              type,
-                              "when case for ${it.name} in ${type.qualifiedName} can only logical expression when cases"
-                           )
-                        )
-                     }
+//                     logicalExpressions.isNotEmpty() && whenFieldSetCondition.selectorExpression !is EmptyReferenceSelector -> {
+//                        errors.add(
+//                           CompilationError(
+//                              type,
+//                              "when case for ${it.name} in ${type.qualifiedName} cannot have reference selector use when { .. } syntax"
+//                           )
+//                        )
+//                     }
+//                     whenFieldSetCondition.selectorExpression is EmptyReferenceSelector &&
+//                        whenFieldSetCondition.cases.map { it.matchExpression }.filter { it !is ElseMatchExpression }
+//                           .any { it !is LogicalExpression } -> {
+//                        errors.add(
+//                           CompilationError(
+//                              type,
+//                              "when case for ${it.name} in ${type.qualifiedName} can only logical expression when cases"
+//                           )
+//                        )
+//                     }
                      else -> validateLogicalExpression(type, typeSystem, it, logicalExpressions)
                   }
                }

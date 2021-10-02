@@ -99,7 +99,7 @@ class FieldCompiler(
 
 ) {
    internal val typeChecker = tokenProcessor.typeChecker
-   private val conditionalFieldSetProcessor = ConditionalFieldSetProcessor(this)
+   private val conditionalFieldSetProcessor = ConditionalFieldSetProcessor(this, ExpressionCompiler(tokenProcessor, typeChecker, errors, this))
 
    //   private val calculatedFieldSetProcessor = CalculatedFieldSetProcessor(this)
    private val defaultValueParser = DefaultValueParser()

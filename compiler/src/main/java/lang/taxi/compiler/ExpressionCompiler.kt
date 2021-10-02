@@ -198,48 +198,27 @@ class ExpressionCompiler(
       targetType: Type
    ): Either<List<CompilationError>, Accessor> {
       return when {
-         expression.jsonPathAccessorDeclaration() != null -> listOf(
-            CompilationError(
-               expression.toCompilationUnit(),
-               "JsonPath accessors are not supported in Expression Types"
-            )
-         ).left()
-         expression.xpathAccessorDeclaration() != null -> listOf(
-            CompilationError(
-               expression.toCompilationUnit(),
-               "XPath accessors are not supported in Expression Types"
-            )
-         ).left()
-         expression.columnDefinition() != null -> listOf(
-            CompilationError(
-               expression.toCompilationUnit(),
-               "Column accessors are not supported in Expression Types"
-            )
-         ).left()
-         expression.conditionalTypeConditionDeclaration() != null -> listOf(
-            CompilationError(
-               expression.toCompilationUnit(),
-               "Conditional Types are  not supported in Expression Types"
-            )
-         ).left()
-         // We could possibly relax ths one, if there's a use case.
-         expression.defaultDefinition() != null -> listOf(
-            CompilationError(
-               expression.toCompilationUnit(),
-               "Default values are not supported in Expression Types"
-            )
-         ).left()
+         expression.jsonPathAccessorDeclaration() != null ||
+            expression.xpathAccessorDeclaration() != null ||
+            expression.byFieldSourceExpression() != null ||
+            expression.conditionalTypeConditionDeclaration() != null ||
+            expression.defaultDefinition() != null ||
+            expression.columnDefinition() != null -> {
+            if (this.fieldCompiler == null) {
+               listOf(
+                  CompilationError(
+                     expression.toCompilationUnit(),
+                     "Accessors are not supported in Expression Types outside of model declarations"
+                  )
+               ).left()
+            } else {
+               fieldCompiler.compileScalarAccessor(expression, targetType)
+            }
+         }
          expression.readExpression() != null -> {
             val compiled = compile(expression.readExpression().expressionGroup())
             compiled
          }
-         expression.byFieldSourceExpression() != null -> listOf(
-            CompilationError(
-               expression.toCompilationUnit(),
-               "Field accessors are not supported in Expression Types"
-            )
-         ).left()
-
          expression.readFunction() != null -> {
             val functionContext = expression.readFunction()
             functionCompiler.buildFunctionAccessor(functionContext, targetType)

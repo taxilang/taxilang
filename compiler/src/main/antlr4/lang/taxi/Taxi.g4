@@ -120,9 +120,20 @@ expressionGroup:
 
 // readFunction before typeType to avoid functons being identified
 // as types
-expressionAtom: readFunction | typeType | fieldReferenceSelector | literal | anonymousTypeDefinition;
+// 1-Oct: Tried collapsing scalarAccessorExpression into this, but it caused errors.
+// Would like to simplify...
+expressionAtom: readFunction | typeType | fieldReferenceSelector | modelAttributeTypeReference | literal | anonymousTypeDefinition;
 
-
+//scalarAccessorExpression
+  //    : xpathAccessorDeclaration
+  //    | jsonPathAccessorDeclaration
+  //    | columnDefinition
+  //    | defaultDefinition
+  //    | readFunction
+  //    | readExpression
+  //    | byFieldSourceExpression
+  //    | collectionProjectionExpression
+  //   | conditionalTypeConditionDeclaration
 
 annotationTypeDeclaration
    : typeDoc? annotation* 'annotation' Identifier annotationTypeBody?;
@@ -147,7 +158,7 @@ conditionalTypeConditionDeclaration:
 //   );
 
 conditionalTypeWhenDeclaration:
-   'when' ('(' conditionalTypeWhenSelector ')')? '{'
+   'when' ('(' expressionGroup ')')? '{'
    conditionalTypeWhenCaseDeclaration*
    '}';
 
@@ -175,17 +186,10 @@ fieldReferenceSelector: propertyFieldNameQualifier Identifier;
 typeReferenceSelector: typeType;
 
 conditionalTypeWhenCaseDeclaration:
-   caseDeclarationMatchExpression '->' ( caseFieldAssignmentBlock |  caseScalarAssigningDeclaration | modelAttributeTypeReference);
-
-caseFieldAssignmentBlock:
-'{' caseFieldAssigningDeclaration*'}' ;
-
+   caseDeclarationMatchExpression '->' (  /*caseFieldAssignmentBlock |  */  expressionGroup | scalarAccessorExpression | modelAttributeTypeReference);
 
 caseDeclarationMatchExpression: // when( ... ) {
-   Identifier  | //  someField -> ...
-   literal | //  'foo' -> ...
-   enumSynonymSingleDeclaration | // some.Enum.EnumValue -> ...
-   condition |
+   expressionGroup |
    caseElseMatchExpression;
 
 caseElseMatchExpression: 'else';
@@ -200,12 +204,10 @@ caseFieldAssigningDeclaration :  // dealtAmount ...  (could be either a destruct
    );
 
 caseScalarAssigningDeclaration:
-   caseFieldReferenceAssignment | literal | scalarAccessorExpression;
+   expressionGroup | scalarAccessorExpression;
 
 caseFieldDestructuredAssignment :  // dealtAmount ( ... )
      '(' caseFieldAssigningDeclaration* ')';
-
-caseFieldReferenceAssignment : Identifier ('.' Identifier)*;
 
 fieldModifier
    : 'closed'

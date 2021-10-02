@@ -2,198 +2,181 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.accessors.ConditionalAccessor
-import lang.taxi.accessors.XpathAccessor
-import lang.taxi.functions.FunctionAccessor
-import lang.taxi.types.AccessorExpressionSelector
 import lang.taxi.types.AndExpression
 import lang.taxi.types.ComparisonExpression
 import lang.taxi.types.ComparisonOperator
 import lang.taxi.types.ConstantEntity
-import lang.taxi.types.DestructuredAssignment
-import lang.taxi.types.ElseMatchExpression
 import lang.taxi.types.EnumLiteralCaseMatchExpression
-import lang.taxi.types.EnumValueAssignment
-import lang.taxi.types.FieldAssignmentExpression
 import lang.taxi.types.FieldReferenceEntity
-import lang.taxi.types.InlineAssignmentExpression
-import lang.taxi.types.LiteralAssignment
-import lang.taxi.types.LiteralCaseMatchExpression
-import lang.taxi.types.NullAssignment
-import lang.taxi.types.ObjectType
 import lang.taxi.types.OrExpression
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.ReferenceAssignment
-import lang.taxi.types.ReferenceCaseMatchExpression
-import lang.taxi.types.ScalarAccessorValueAssignment
 import lang.taxi.types.WhenFieldSetCondition
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class ConditionalDataTypesTest {
 
-   @Test
-   @Disabled("Destructured types are currently disabled")
-   fun simpleConditionalTypeGrammar() {
-      val src = """
-         type Money {
-             quantity : MoneyAmount as Decimal
-             currency : CurrencySymbol as String
-         }
-
-         type DealtAmount inherits Money
-         type SettlementAmount inherits Money
-type TradeRecord {
-    // define simple properties by xpath expressions
-    ccy1 : Currency as String
-    (   dealtAmount : DealtAmount
-        settlementAmount : SettlementAmount
-    ) by when( xpath("/foo/bar") : String) {
-        ccy1 -> {
-            dealtAmount(
-                quantity by xpath("/foo/bar/quantity1")
-                currency == ccy1
-            )
-            settlementAmount(
-                quantity by xpath("/foo/bar/quantity2")
-                currency = "GBP"
-            )
-        }
-        "foo" -> {
-            dealtAmount(
-                quantity by xpath("/foo/bar/quantity2")
-                currency = ccy1
-            )
-            settlementAmount(
-                quantity by xpath("/foo/bar/quantity1")
-                currency = "EUR"
-            )
-        }
-    }
-}
-      """.trimIndent()
-      val doc = Compiler(src).compile()
-      val type = doc.type("TradeRecord") as ObjectType
-
-      val dealtAmountCondition = type.field("dealtAmount").readExpression!!
-      require(dealtAmountCondition is WhenFieldSetCondition)
-      val selector = dealtAmountCondition.selectorExpression as AccessorExpressionSelector
-      val accessor = selector.accessor as XpathAccessor
-      accessor.expression.should.equal("/foo/bar")
-      selector.declaredType.should.equal(PrimitiveType.STRING)
-
-      dealtAmountCondition.cases.should.have.size(2)
-      val case1 = dealtAmountCondition.cases[0]
-      case1.matchExpression.should.satisfy {
-         require(it is ReferenceCaseMatchExpression)
-         it.reference.should.equal("ccy1")
-         true
-      }
-      val dealtAmountCaseFieldAssignmentExpression = case1.assignments[0] as FieldAssignmentExpression
-      dealtAmountCaseFieldAssignmentExpression.fieldName.should.equal("dealtAmount")
-      val dealtAmountDestructuredAssignment = dealtAmountCaseFieldAssignmentExpression.assignment as DestructuredAssignment
-      dealtAmountDestructuredAssignment.assignments.should.have.size(2)
-      dealtAmountDestructuredAssignment.assignments[0].should.satisfy {
-         it.fieldName.should.equal("quantity")
-         val assignment = it.assignment as ScalarAccessorValueAssignment
-         (assignment.accessor as XpathAccessor).path.should.equal("/foo/bar/quantity1")
-         true
-      }
-      dealtAmountDestructuredAssignment.assignments[1].should.satisfy {
-         it.fieldName.should.equal("currency")
-         val assignment = it.assignment as ReferenceAssignment
-         assignment.reference.should.equal("ccy1")
-         true
-      }
-   }
-
-
-   @Test
-   @Disabled("Destructured types are currently disabled")
-   fun canDeclareConditionalTypes() {
-      val src = """
-type Money {
-    quantity : MoneyAmount as Decimal
-    currency : CurrencySymbol as String
-}
-
-type DealtAmount inherits Money
-type SettlementAmount inherits Money
-type alias Ccy1 as String
-type alias Ccy2 as String
-
-enum QuoteBasis {
-    Currency1PerCurrency2,
-    Currency2PerCurrency1
-}
-type TradeRecord {
-    // define simple properties by xpath expressions
-    ccy1 : Ccy1 by xpath('/foo/bar/ccy1')
-    ccy2 : Ccy2 by xpath('/foo/bar/ccy2')
-    (   dealtAmount : DealtAmount
-        settlementAmount : SettlementAmount
-        quoteBasis: QuoteBasis
-    ) by when( xpath("/foo/bar") : CurrencySymbol) {
-        ccy1 -> {
-            dealtAmount(
-                quantity by xpath("/foo/bar/quantity1")
-                currency = ccy1
-            )
-            settlementAmount(
-                quantity by xpath("/foo/bar/quantity2")
-                currency = ccy2
-            )
-            quoteBasis = QuoteBasis.Currency1PerCurrency2
-        }
-        ccy2 -> {
-            dealtAmount(
-                quantity by xpath("/foo/bar/quantity2")
-                currency = ccy1
-            )
-            settlementAmount(
-                quantity by xpath("/foo/bar/quantity1")
-                currency = ccy2
-            )
-            quoteBasis  = QuoteBasis.Currency2PerCurrency1
-        }
-    }
-}
-      """.trimIndent()
-      val doc = Compiler(src).compile()
-   }
+//   @Test
+//   @Disabled("Destructured types are currently disabled")
+//   fun simpleConditionalTypeGrammar() {
+//      val src = """
+//         type Money {
+//             quantity : MoneyAmount as Decimal
+//             currency : CurrencySymbol as String
+//         }
+//
+//         type DealtAmount inherits Money
+//         type SettlementAmount inherits Money
+//type TradeRecord {
+//    // define simple properties by xpath expressions
+//    ccy1 : Currency as String
+//    (   dealtAmount : DealtAmount
+//        settlementAmount : SettlementAmount
+//    ) by when( xpath("/foo/bar") : String) {
+//        ccy1 -> {
+//            dealtAmount(
+//                quantity by xpath("/foo/bar/quantity1")
+//                currency == ccy1
+//            )
+//            settlementAmount(
+//                quantity by xpath("/foo/bar/quantity2")
+//                currency = "GBP"
+//            )
+//        }
+//        "foo" -> {
+//            dealtAmount(
+//                quantity by xpath("/foo/bar/quantity2")
+//                currency = ccy1
+//            )
+//            settlementAmount(
+//                quantity by xpath("/foo/bar/quantity1")
+//                currency = "EUR"
+//            )
+//        }
+//    }
+//}
+//      """.trimIndent()
+//      val doc = Compiler(src).compile()
+//      val type = doc.type("TradeRecord") as ObjectType
+//
+//      val dealtAmountCondition = type.field("dealtAmount").readExpression!!
+//      require(dealtAmountCondition is WhenFieldSetCondition)
+//      val selector = dealtAmountCondition.selectorExpression as AccessorExpressionSelector
+//      val accessor = selector.accessor as XpathAccessor
+//      accessor.expression.should.equal("/foo/bar")
+//      selector.declaredType.should.equal(PrimitiveType.STRING)
+//
+//      dealtAmountCondition.cases.should.have.size(2)
+//      val case1 = dealtAmountCondition.cases[0]
+//      case1.matchExpression.should.satisfy {
+//         require(it is ReferenceCaseMatchExpression)
+//         it.reference.should.equal("ccy1")
+//         true
+//      }
+//      val dealtAmountCaseFieldAssignmentExpression = case1.assignments[0] as FieldAssignmentExpression
+//      dealtAmountCaseFieldAssignmentExpression.fieldName.should.equal("dealtAmount")
+//      val dealtAmountDestructuredAssignment = dealtAmountCaseFieldAssignmentExpression.assignment as DestructuredAssignment
+//      dealtAmountDestructuredAssignment.assignments.should.have.size(2)
+//      dealtAmountDestructuredAssignment.assignments[0].should.satisfy {
+//         it.fieldName.should.equal("quantity")
+//         val assignment = it.assignment as ScalarAccessorValueAssignment
+//         (assignment.accessor as XpathAccessor).path.should.equal("/foo/bar/quantity1")
+//         true
+//      }
+//      dealtAmountDestructuredAssignment.assignments[1].should.satisfy {
+//         it.fieldName.should.equal("currency")
+//         val assignment = it.assignment as ReferenceAssignment
+//         assignment.reference.should.equal("ccy1")
+//         true
+//      }
+//   }
 
 
-   @Test
-   @Disabled("Deprecating this syntax")
-   fun `can use legacy when syntax - without the this prefix`() {
-      val src = """
-      type Direction inherits String
-      type BankDirection inherits Direction
-      type ClientDirection inherits Direction
-      type Order {
-         bankDirection: BankDirection
-         // Note: This is the point of the test
-         // that there's no this. before the bankDirection field
-         clientDirection: ClientDirection by when (bankDirection) {
-            "Buy" -> "Sell"
-            "Sell" -> "Buy"
-         }
-      }
-      """
-      val doc = Compiler(src).compile()
-      val order = doc.objectType("Order")
-      order.fields.should.have.size(2)
-      val clientDirection = order.field("clientDirection")
-      val accessor = clientDirection.accessor as ConditionalAccessor
-      val condition = accessor.expression as WhenFieldSetCondition
-      condition.cases.should.have.size(2)
-      // Buy -> Sell
-      (condition.cases[0].matchExpression as LiteralCaseMatchExpression).value.should.equal("Buy")
-      ((condition.cases[0].assignments[0] as InlineAssignmentExpression).assignment as LiteralAssignment).value.should.equal("Sell")
+//   @Test
+//   @Disabled("Destructured types are currently disabled")
+//   fun canDeclareConditionalTypes() {
+//      val src = """
+//type Money {
+//    quantity : MoneyAmount as Decimal
+//    currency : CurrencySymbol as String
+//}
+//
+//type DealtAmount inherits Money
+//type SettlementAmount inherits Money
+//type alias Ccy1 as String
+//type alias Ccy2 as String
+//
+//enum QuoteBasis {
+//    Currency1PerCurrency2,
+//    Currency2PerCurrency1
+//}
+//type TradeRecord {
+//    // define simple properties by xpath expressions
+//    ccy1 : Ccy1 by xpath('/foo/bar/ccy1')
+//    ccy2 : Ccy2 by xpath('/foo/bar/ccy2')
+//    (   dealtAmount : DealtAmount
+//        settlementAmount : SettlementAmount
+//        quoteBasis: QuoteBasis
+//    ) by when( xpath("/foo/bar") : CurrencySymbol) {
+//        ccy1 -> {
+//            dealtAmount(
+//                quantity by xpath("/foo/bar/quantity1")
+//                currency = ccy1
+//            )
+//            settlementAmount(
+//                quantity by xpath("/foo/bar/quantity2")
+//                currency = ccy2
+//            )
+//            quoteBasis = QuoteBasis.Currency1PerCurrency2
+//        }
+//        ccy2 -> {
+//            dealtAmount(
+//                quantity by xpath("/foo/bar/quantity2")
+//                currency = ccy1
+//            )
+//            settlementAmount(
+//                quantity by xpath("/foo/bar/quantity1")
+//                currency = ccy2
+//            )
+//            quoteBasis  = QuoteBasis.Currency2PerCurrency1
+//        }
+//    }
+//}
+//      """.trimIndent()
+//      val doc = Compiler(src).compile()
+//   }
+//
 
-      // Sell -> Buy
-      (condition.cases[1].matchExpression as LiteralCaseMatchExpression).value.should.equal("Sell")
-      ((condition.cases[1].assignments[0] as InlineAssignmentExpression).assignment as LiteralAssignment).value.should.equal("Buy")
-   }
+//   @Test
+//   @Disabled("Deprecating this syntax")
+//   fun `can use legacy when syntax - without the this prefix`() {
+//      val src = """
+//      type Direction inherits String
+//      type BankDirection inherits Direction
+//      type ClientDirection inherits Direction
+//      type Order {
+//         bankDirection: BankDirection
+//         // Note: This is the point of the test
+//         // that there's no this. before the bankDirection field
+//         clientDirection: ClientDirection by when (bankDirection) {
+//            "Buy" -> "Sell"
+//            "Sell" -> "Buy"
+//         }
+//      }
+//      """
+//      val doc = Compiler(src).compile()
+//      val order = doc.objectType("Order")
+//      order.fields.should.have.size(2)
+//      val clientDirection = order.field("clientDirection")
+//      val accessor = clientDirection.accessor as ConditionalAccessor
+//      val condition = accessor.expression as WhenFieldSetCondition
+//      condition.cases.should.have.size(2)
+//      // Buy -> Sell
+//      (condition.cases[0].matchExpression as LiteralCaseMatchExpression).value.should.equal("Buy")
+//      ((condition.cases[0].assignments[0] as InlineAssignmentExpression).assignment as LiteralAssignment).value.should.equal("Sell")
+//
+//      // Sell -> Buy
+//      (condition.cases[1].matchExpression as LiteralCaseMatchExpression).value.should.equal("Sell")
+//      ((condition.cases[1].assignments[0] as InlineAssignmentExpression).assignment as LiteralAssignment).value.should.equal("Buy")
+//   }
 
    @Test
    fun canDeclareSingleFieldConditionalAssignments() {
@@ -217,12 +200,13 @@ type TradeRecord {
       val condition = accessor.expression as WhenFieldSetCondition
       condition.cases.should.have.size(2)
       // Buy -> Sell
-      (condition.cases[0].matchExpression as LiteralCaseMatchExpression).value.should.equal("Buy")
-      ((condition.cases[0].assignments[0] as InlineAssignmentExpression).assignment as LiteralAssignment).value.should.equal("Sell")
-
-      // Sell -> Buy
-      (condition.cases[1].matchExpression as LiteralCaseMatchExpression).value.should.equal("Sell")
-      ((condition.cases[1].assignments[0] as InlineAssignmentExpression).assignment as LiteralAssignment).value.should.equal("Buy")
+      TODO("Fix this test")
+//      (condition.cases[0].matchExpression as LiteralCaseMatchExpression).value.should.equal("Buy")
+//      ((condition.cases[0].assignments[0] as InlineAssignmentExpression).assignment as LiteralAssignment).value.should.equal("Sell")
+//
+//      // Sell -> Buy
+//      (condition.cases[1].matchExpression as LiteralCaseMatchExpression).value.should.equal("Sell")
+//      ((condition.cases[1].assignments[0] as InlineAssignmentExpression).assignment as LiteralAssignment).value.should.equal("Buy")
    }
 
    @Test
@@ -252,13 +236,15 @@ type TradeRecord {
       val condition = accessor.expression as WhenFieldSetCondition
       condition.cases.should.have.size(3)
       // Buy -> Sell
-      (condition.cases[0].matchExpression as LiteralCaseMatchExpression).value.should.equal("Buy")
-      val assignment = ((condition.cases[0].assignments[0] as InlineAssignmentExpression).assignment as EnumValueAssignment)
-      assignment.enum.qualifiedName.should.equal("PayReceive")
-      assignment.enumValue.name.should.equal("Pay")
+      TODO("Fix this test")
+//      (condition.cases[0].matchExpression as LiteralCaseMatchExpression).value.should.equal("Buy")
+//      val assignment = ((condition.cases[0].assignments[0] as InlineAssignmentExpression).assignment as EnumValueAssignment)
+//      assignment.enum.qualifiedName.should.equal("PayReceive")
+//      assignment.enumValue.name.should.equal("Pay")
 
-      condition.cases[2].matchExpression.should.be.instanceof(ElseMatchExpression::class.java)
-      (condition.cases[2].assignments[0] as InlineAssignmentExpression).assignment.should.be.instanceof(NullAssignment::class.java)
+
+//      condition.cases[2].matchExpression.should.be.instanceof(ElseMatchExpression::class.java)
+//      (condition.cases[2].assignments[0] as InlineAssignmentExpression).assignment.should.be.instanceof(NullAssignment::class.java)
    }
 
    @Test
@@ -327,10 +313,11 @@ type TradeRecord {
          }
       """).compile().objectType("Foo").field("identifierValue")
       val whenCondition = (field.accessor as ConditionalAccessor).expression as WhenFieldSetCondition
-      val assignmentExpression = whenCondition.cases[0].assignments[0] as InlineAssignmentExpression
-      val assingment = assignmentExpression.assignment as ScalarAccessorValueAssignment
-      val accessor = assingment.accessor as FunctionAccessor
-      accessor.function.qualifiedName.should.equal("taxi.stdlib.left")
+      TODO("Fix this test")
+//      val assignmentExpression = whenCondition.cases[0].assignments[0] as InlineAssignmentExpression
+//      val assingment = assignmentExpression.assignment as ScalarAccessorValueAssignment
+//      val accessor = assingment.accessor as FunctionAccessor
+//      accessor.function.qualifiedName.should.equal("taxi.stdlib.left")
       // function parsing is tested elsewhere
    }
 
