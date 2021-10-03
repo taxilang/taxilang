@@ -9,11 +9,15 @@ import lang.taxi.types.Annotation
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Compiled
 import lang.taxi.types.Documented
+import lang.taxi.types.Field
 import lang.taxi.types.ImportableToken
 import lang.taxi.types.NameTypePair
 import lang.taxi.types.Named
+import lang.taxi.types.QualifiedName
 import lang.taxi.types.TaxiStatementGenerator
+import lang.taxi.types.TokenDefinition
 import lang.taxi.types.Type
+import lang.taxi.types.TypeDefinition
 
 data class Parameter(override val annotations: List<Annotation>, override val type: Type, override val name: String?, override val constraints: List<Constraint>, val isVarArg: Boolean = false) : Annotatable, ConstraintTarget, NameTypePair, TaxiStatementGenerator {
    override val description: String = "param $name"
@@ -105,11 +109,24 @@ data class Operation(override val name: String,
 
 }
 
+data class ServiceLineage(val consumes: List<ConsumedOperation>,
+                          val stores: List<QualifiedName>,
+                          override val annotations: List<Annotation>,
+                          override val compilationUnits: List<CompilationUnit>,
+                          override val typeDoc: String? = null): Annotatable, Compiled, Documented
+
+data class ServiceDefinition(
+   val qualifiedName: String,
+   val operations: List<String>
+)
+
+data class ConsumedOperation(val serviceName: String, val operationName: String)
 data class Service(override val qualifiedName: String,
                    val members: List<ServiceMember>,
                    override val annotations: List<Annotation>,
                    override val compilationUnits: List<CompilationUnit>,
-                   override val typeDoc: String? = null) : Annotatable, Named, ImportableToken, Compiled, Documented {
+                   override val typeDoc: String? = null,
+                   val lineage: ServiceLineage? = null) : Annotatable, Named, ImportableToken, Compiled, Documented {
    private val equality = ImmutableEquality(this, Service::qualifiedName, Service::operations, Service::annotations)
 
    override fun equals(other: Any?) = equality.isEqualTo(other)

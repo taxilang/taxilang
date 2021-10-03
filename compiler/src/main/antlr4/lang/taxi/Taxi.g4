@@ -309,7 +309,7 @@ serviceDeclaration
     ;
 
 serviceBody
-    :   '{' serviceBodyMember* '}'
+    :   '{' lineageDeclaration? serviceBodyMember* '}'
     ;
 serviceBodyMember : serviceOperationDeclaration | queryOperationDeclaration;
 // Querying
@@ -326,6 +326,20 @@ queryOperationCapability:
 queryFilterCapability: 'filter'( '(' filterCapability (',' filterCapability)* ')');
 
 filterCapability: EQ | NQ | IN | LIKE | GT | GE | LT | LE;
+
+lineageDeclaration
+      : typeDoc? annotation* 'lineage' lineageBody;
+
+lineageBody
+      : '{' lineageBodyMember* '}';
+
+lineageBodyMember
+      : consumesBody | storesBody;
+
+consumesBody: 'consumes' 'operation' qualifiedName;
+
+storesBody: 'stores' qualifiedName;
+
 
 serviceOperationDeclaration
      : typeDoc? annotation* operationScope? 'operation'  operationSignature
