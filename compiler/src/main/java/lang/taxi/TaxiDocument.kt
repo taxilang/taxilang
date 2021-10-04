@@ -53,6 +53,29 @@ open class TaxiDocument(
    private val functionsMap = functions.associateBy { it.qualifiedName }
    private val viewMap = views.associateBy { it.qualifiedName }
 
+   /**
+    * Collects a list of annotations that were used throughout, but have not been declared.
+    * We return annotation qualified names only, not full annotation instances, as the
+    * contract for annotations is undefined, so the set of parameters being used is not likely
+    * to be consistent.
+    */
+   val undeclaredAnnotationNames by lazy {
+      val annotationsOnTypes = this.types
+         .filterIsInstance<ObjectType>()
+         .flatMap { type ->
+            type.annotations + type.fields.flatMap { it.annotations }
+         }
+      val annotationsOnServices = this.services
+         .flatMap { service ->
+            service.annotations + service.operations.flatMap { it.annotations }
+         }
+      (annotationsOnServices + annotationsOnTypes)
+         // find the annotations that don't have types
+         .filter { annotation -> annotation.type == null }
+         .map { QualifiedName.from(it.qualifiedName) }
+         .distinct()
+   }
+
    companion object {
       fun empty(): TaxiDocument {
          return TaxiDocument(emptySet(), emptySet())
