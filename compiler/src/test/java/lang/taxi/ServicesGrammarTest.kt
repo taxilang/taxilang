@@ -2,12 +2,14 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
+import lang.taxi.services.ConsumedOperation
 import lang.taxi.services.operations.constraints.ConstantValueExpression
 import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.services.operations.constraints.RelativeValueExpression
 import lang.taxi.services.operations.constraints.ReturnValueDerivedFromParameterConstraint
 import lang.taxi.types.PrimitiveType
+import lang.taxi.types.QualifiedName
 import lang.taxi.types.VoidType
 import org.junit.jupiter.api.Test
 
@@ -246,6 +248,128 @@ namespace services {
          operation findPerson(PersonId):Person
       }
 }""".withoutWhitespace())
+   }
+
+   @Test
+   fun `service lineage can not consume an unknown operation`() {
+      val schema = """
+         type PersonId inherits Int
+         model Person {
+           firstName : FirstName inherits String
+          }
+         service NameService {
+                 operation findPersonId(FirstName): PersonId
+            }
+
+         service PersonService {
+               lineage {
+                   consumes operation UnknownService.findPersonId
+                   stores Person
+               }
+               operation findPerson(PersonId):Person
+            }
+      """.trimIndent()
+
+      val errors = Compiler(schema).validate()
+      errors.should.have.size(1)
+      errors.first().detailMessage.should.equal("UnknownService.findPersonId is not defined")
+   }
+
+   @Test
+   fun `service lineage can not store an unknown type`() {
+      val schema = """
+         type PersonId inherits Int
+         model Person {
+           firstName : FirstName inherits String
+          }
+         service NameService {
+                 operation findPersonId(FirstName): PersonId
+            }
+
+         service PersonService {
+               lineage {
+                   consumes operation NameService.findPersonId
+                   stores UnknownType
+               }
+               operation findPerson(PersonId):Person
+            }
+      """.trimIndent()
+
+      val errors = Compiler(schema).validate()
+      errors.should.have.size(1)
+      errors.first().detailMessage.should.equal("unknown type UnknownType")
+   }
+
+   @Test
+   fun `service lineage can define both consumed service and stored types`() {
+      val schema = """
+         type PersonId inherits Int
+         model Person {
+           firstName : FirstName inherits String
+          }
+         service NameService {
+                 operation findPersonId(FirstName): PersonId
+            }
+
+         service PersonService {
+               lineage {
+                   consumes operation NameService.findPersonId
+                   stores Person
+               }
+               operation findPerson(PersonId):Person
+            }
+      """.trimIndent()
+
+      val personService =  Compiler.forStrings(listOf(schema)).compile()
+         .service("PersonService")
+      personService.lineage!!.consumes.should.equal(listOf(ConsumedOperation("NameService", "findPersonId")))
+      personService.lineage!!.stores.should.equal(listOf(QualifiedName.from("Person")))
+   }
+
+   @Test
+   fun `services with lineage generate source with dependent types correctly`() {
+      val types = """namespace people {
+         type PersonId inherits Int
+         model Person {
+           firstName : FirstName inherits String
+          }
+         service NameService {
+                 operation findPersonId(FirstName): PersonId
+            }
+         }
+      """.trimMargin()
+      val services = """
+         import people.PersonId
+         import people.Person
+         namespace services {
+            service PersonService {
+               lineage {
+                   consumes operation people.NameService.findPersonId
+               }
+               operation findPerson(PersonId):Person
+            }
+         }
+      """.trimIndent()
+      val personService =  Compiler.forStrings(listOf(types,services)).compile()
+         .service("services.PersonService")
+
+      personService.lineage!!.consumes.should.equal(listOf(ConsumedOperation("people.NameService", "findPersonId")))
+      personService.lineage!!.stores.should.be.empty
+
+      val serviceSource = personService.compilationUnits.single().source
+      serviceSource.content.withoutWhitespace()
+         .should.equal("""
+            import people.PersonId
+            import people.Person
+            namespace services {
+               service PersonService {
+                     lineage {
+                         consumes operation people.NameService.findPersonId
+                     }
+                     operation findPerson(PersonId):Person
+                  }
+            }
+         """.trimIndent().withoutWhitespace())
    }
 
 }

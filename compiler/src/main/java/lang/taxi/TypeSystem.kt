@@ -1,9 +1,15 @@
 package lang.taxi
 
 import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import lang.taxi.compiler.SymbolKind
 import lang.taxi.functions.Function
 import lang.taxi.functions.stdlib.StdLib
+import lang.taxi.services.ConsumedOperation
+import lang.taxi.services.Operation
+import lang.taxi.services.Service
+import lang.taxi.services.ServiceDefinition
 import lang.taxi.stdlib.StdLibSchema
 import lang.taxi.types.DefinableToken
 import lang.taxi.types.ImportableToken
@@ -24,6 +30,7 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
    private val importedTokenMap: Map<String, ImportableToken> = importedTokens.associateBy { it.qualifiedName }
    private val compiledTokens = mutableMapOf<String, ImportableToken>()
    private val referencesToUnresolvedTypes = mutableMapOf<String, Token>()
+   private val serviceDefinitionMap = mutableMapOf<String, ServiceDefinition>()
 
    fun tokenList(includeImportedTypes: Boolean = false): List<ImportableToken> {
       val importedTypes = if (includeImportedTypes) importedTokenMap.values.toList()
@@ -150,6 +157,24 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       return getToken(qualifiedName) as Function
    }
 
+   fun getOperationOrError(qualifiedName: String, context: ParserRuleContext): Either<CompilationError, ConsumedOperation> {
+      return try {
+         val serviceQualifiedName = qualifiedName.split(".").dropLast(1).joinToString(".")
+         val operationName = qualifiedName.split(".").last()
+         val matchedServiceDefinition = this.serviceDefinitionMap[serviceQualifiedName]
+         return matchedServiceDefinition
+            ?.operations
+            ?.firstOrNull { opName -> opName == operationName }
+            ?.let { ConsumedOperation(serviceQualifiedName, it) }
+            ?.right() ?:
+         CompilationError(context.start, "$qualifiedName is not defined", context.source().normalizedSourceName)
+            .left()
+      } catch (e: Exception) {
+         CompilationError(context.start, "$qualifiedName is not defined", context.source().normalizedSourceName)
+            .left()
+      }
+   }
+
    override fun getType(qualifiedName: String): Type {
       return getToken(qualifiedName) as Type
    }
@@ -255,6 +280,12 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
          return name
       }
       return "$namespace.$name"
+   }
+
+   fun registerServiceDefinitions(serviceDefinitions: List<ServiceDefinition>) {
+      serviceDefinitions.forEach { serviceDefinition ->
+         serviceDefinitionMap[serviceDefinition.qualifiedName] = serviceDefinition
+      }
    }
 
 }

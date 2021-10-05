@@ -41,6 +41,7 @@ import lang.taxi.policies.PolicyStatement
 import lang.taxi.policies.RuleSet
 import lang.taxi.policies.Subjects
 import lang.taxi.query.TaxiQlQuery
+import lang.taxi.services.ConsumedOperation
 import lang.taxi.services.FilterCapability
 import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract
@@ -48,6 +49,8 @@ import lang.taxi.services.Parameter
 import lang.taxi.services.QueryOperation
 import lang.taxi.services.QueryOperationCapability
 import lang.taxi.services.Service
+import lang.taxi.services.ServiceDefinition
+import lang.taxi.services.ServiceLineage
 import lang.taxi.services.SimpleQueryCapability
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintValidator
@@ -606,6 +609,16 @@ class TokenProcessor(
             is TaxiParser.TypeAliasDeclarationContext -> typeSystem.register(TypeAlias.undefined(tokenName))
          }
       }
+      val serviceDefinitions =  tokens.unparsedServices.map { entry ->
+         val qualifiedName = entry.key
+         val serviceBody = entry.value.second.serviceBody()
+         val operations = serviceBody?.serviceBodyMember()
+            ?.mapNotNull { it.serviceOperationDeclaration()  }
+            ?.map { operationDeclaration -> operationDeclaration.operationSignature().Identifier().text }
+            ?: emptyList()
+         ServiceDefinition(qualifiedName, operations)
+      }
+      typeSystem.registerServiceDefinitions(serviceDefinitions)
       createEmptyTypesPerformed = true
    }
 
@@ -1914,32 +1927,83 @@ class TokenProcessor(
       }
    }
 
-   private fun compileServices() {
-      val services = this.tokens.unparsedServices.map { (qualifiedName, serviceTokenPair) ->
-         val (namespace, serviceToken) = serviceTokenPair
-         val serviceDoc = parseTypeDoc(serviceToken.typeDoc())
-         val members = serviceToken.serviceBody().serviceBodyMember().map { serviceBodyMember ->
+   private fun compileService(qualifiedName: String, serviceTokenPair: Pair<Namespace, TaxiParser.ServiceDeclarationContext> ):
+      Either<List<CompilationError>, Service> {
+      val (_, serviceToken) = serviceTokenPair
+      val serviceDoc = parseTypeDoc(serviceToken.typeDoc())
+      val serviceLineage = if (serviceToken.serviceBody().lineageDeclaration() != null) {
+         val lineageDeclaration = serviceToken.serviceBody().lineageDeclaration()
+         val consumes = mutableListOf<ConsumedOperation>()
+         val stores = mutableListOf<QualifiedName>()
+         lineageDeclaration.lineageBody().lineageBodyMember().map { lineageBodyMemberContext ->
             when {
-               serviceBodyMember.serviceOperationDeclaration() != null -> compileOperation(serviceBodyMember.serviceOperationDeclaration())
-               serviceBodyMember.queryOperationDeclaration() != null -> compileQueryOperation(serviceBodyMember.queryOperationDeclaration())
-               else -> error("Unhandled type of service member. ")
+               lineageBodyMemberContext.consumesBody() != null -> {
+                  val consumeQualifiedName = lineageBodyMemberContext.consumesBody().qualifiedName().text
+                  val operationOrError =
+                     typeSystem.getOperationOrError(consumeQualifiedName, lineageBodyMemberContext.consumesBody())
+                  when (operationOrError) {
+                     is Either.Left -> return operationOrError.a.asList().left()
+                     is Either.Right -> consumes.add(operationOrError.b)
+                  }
+               }
+               lineageBodyMemberContext.storesBody() != null -> {
+                  val storeQualifiedName = lineageBodyMemberContext.storesBody().qualifiedName().text
+                  if (!typeSystem.isDefined(storeQualifiedName)) {
+                     return CompilationError(
+                        lineageBodyMemberContext.storesBody().qualifiedName().start,
+                        "unknown type $storeQualifiedName"
+                     ).asList().left()
+                  }
+                  stores.add(QualifiedName.from(storeQualifiedName))
+
+               }
+               else -> {}
             }
          }
-            .reportAndRemoveErrorList(errors)
-         val dependentTypes = members.flatMap {
-            it.annotations.mapNotNull { annotation -> annotation.type } +
+
+         val lineageAnnotations = collateAnnotations(lineageDeclaration.annotation())
+         val lineageDoc = lineageDeclaration.typeDoc()
+         ServiceLineage(
+            consumes.toList(),
+            stores.toList(),
+            lineageAnnotations,
+            lineageDeclaration.toCompilationUnits(),
+            parseTypeDoc(lineageDoc))
+      } else { null }
+      val members = serviceToken.serviceBody().serviceBodyMember().map { serviceBodyMember ->
+         when {
+            serviceBodyMember.serviceOperationDeclaration() != null -> compileOperation(serviceBodyMember.serviceOperationDeclaration())
+            serviceBodyMember.queryOperationDeclaration() != null -> compileQueryOperation(serviceBodyMember.queryOperationDeclaration())
+            else -> error("Unhandled type of service member. ")
+         }
+      }
+         .reportAndRemoveErrorList(errors)
+      val dependentTypes = members.flatMap {
+         it.annotations.mapNotNull { annotation -> annotation.type } +
                it.parameters.map { parameter -> parameter.type } +
                it.returnType
-         }.map { it.toQualifiedName() }
-         Service(
-            qualifiedName,
-            members,
-            collateAnnotations(serviceToken.annotation()),
-            listOf(serviceToken.toCompilationUnit(dependentTypes)),
-            serviceDoc
-         )
+      }.map { it.toQualifiedName() }
+      val service = Service(
+         qualifiedName,
+         members,
+         collateAnnotations(serviceToken.annotation()),
+         listOf(serviceToken.toCompilationUnit(dependentTypes)),
+         serviceDoc,
+         serviceLineage
+      )
+      this.services.add(service)
+      return service.right()
+
+   }
+
+   private fun compileServices() {
+      val services = this.tokens.unparsedServices.map { (qualifiedName, serviceTokenPair) ->
+         compileService(qualifiedName, serviceTokenPair)
       }
-      this.services.addAll(services)
+
+      services.invertEitherList()
+         .flattenErrors()
+         .collectErrors(errors)
    }
 
    private fun compileQueryOperation(queryOperation: TaxiParser.QueryOperationDeclarationContext): Either<List<CompilationError>, QueryOperation> {
