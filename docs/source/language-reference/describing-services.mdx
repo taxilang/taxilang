@@ -150,3 +150,26 @@ service PriceService {
    operation getPrices(): Stream<Price>
 }
 ```
+
+## Documenting service lineage (experimental)
+Services can publish lineage information describing indicating other operations they depend on, and the types of
+data they persist.
+
+This can be useful input into data catalogs for building a graph of dependencies across an organisation.
+
+Lineage can be declared in an optional `lineage` block within the service declaration:
+
+```taxi
+service PersonService {
+   lineage {
+       consumes operation people.AddressService.resolvePostCodeToAddress
+       stores Person
+   }
+   operation findPerson(PersonId):Person
+}
+```
+
+This indicates that our `PersonService` has an upstream dependency on another operation - `resolvePostCodeToAddress`, and
+additionally holds a persistent store of the `Person` model.
+
+This data is exposed in the taxi schema and can be interrogated by tooling for integration with data catalogs.
