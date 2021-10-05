@@ -2,6 +2,7 @@ package lang.taxi.compiler
 
 import arrow.core.Either
 import arrow.core.flatMap
+import arrow.core.handleErrorWith
 import arrow.core.left
 import arrow.core.right
 import lang.taxi.CompilationError
@@ -19,8 +20,10 @@ import lang.taxi.expressions.TypeExpression
 import lang.taxi.findNamespace
 import lang.taxi.functions.Function
 import lang.taxi.source
+import lang.taxi.text
 import lang.taxi.toCompilationUnit
 import lang.taxi.toCompilationUnits
+import lang.taxi.types.Enums
 import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.PrimitiveType
@@ -31,7 +34,7 @@ import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.getOrThrow
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.leftOr
-import lang.taxi.value
+import lang.taxi.valueOrNullValue
 import org.antlr.v4.runtime.ParserRuleContext
 
 class ExpressionCompiler(
@@ -126,7 +129,7 @@ class ExpressionCompiler(
    }
 
    private fun parseLiteralExpression(literal: TaxiParser.LiteralContext): Either<List<CompilationError>, Expression> {
-      return LiteralExpression(LiteralAccessor(literal.value()), literal.toCompilationUnits()).right()
+      return LiteralExpression(LiteralAccessor(literal.valueOrNullValue()), literal.toCompilationUnits()).right()
    }
 
    private fun parseOperatorExpression(expressionGroup: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
@@ -150,22 +153,37 @@ class ExpressionCompiler(
          val lhs = lhsOrError.getOrThrow()
          val operator = operatorOrError.getOrThrow()
          val rhs = rhsOrError.getOrThrow()
+         // Don't love this, but we don't have access to the type in the null value at this point.
+         // Thereofre, we basically disable operator support checks for null comparisons.
+         // If we fix that problem, we can keep the operator checking here
+         val isNullCheck = LiteralExpression.isNullExpression(lhs) || LiteralExpression.isNullExpression(rhs)
          val lhsType = lhs.returnType.basePrimitive ?: PrimitiveType.ANY
          val rhsType = rhs.returnType.basePrimitive ?: PrimitiveType.ANY
-         if (!operator.supports(lhsType, rhsType)) {
-            listOf(
-               CompilationError(
-                  expressionGroup.toCompilationUnit(),
-                  "Operations with symbol '${operator.symbol}' is not supported on types ${lhsType.declaration} and ${rhsType.declaration}"
-               )
-            ).left()
-         } else {
-            OperatorExpression(
-               lhs = lhs,
-               operator = operator,
-               rhs = rhs,
-               compilationUnits = expressionGroup.toCompilationUnits()
-            ).right()
+         when {
+            isNullCheck && !operator.supportsNullComparison() -> {
+               listOf(
+                  CompilationError(
+                     expressionGroup.toCompilationUnit(),
+                     "Operations with symbol '${operator.symbol}' is not supported when comparing against null"
+                  )
+               ).left()
+            }
+             !isNullCheck && !operator.supports(lhsType, rhsType) -> {
+                 listOf(
+                    CompilationError(
+                       expressionGroup.toCompilationUnit(),
+                       "Operations with symbol '${operator.symbol}' is not supported on types ${lhsType.declaration} and ${rhsType.declaration}"
+                    )
+                 ).left()
+             }
+             else -> {
+                 OperatorExpression(
+                    lhs = lhs,
+                    operator = operator,
+                    rhs = rhs,
+                    compilationUnits = expressionGroup.toCompilationUnits()
+                 ).right()
+             }
          }
       } else {
          // Collect all the errors and bail out.
@@ -188,9 +206,23 @@ class ExpressionCompiler(
          }
    }
 
-   private fun parseTypeExpression(typeType: TaxiParser.TypeTypeContext): Either<List<CompilationError>, TypeExpression> {
+   private fun parseTypeExpression(typeType: TaxiParser.TypeTypeContext): Either<List<CompilationError>, Expression> {
       return tokenProcessor.parseType(typeType.findNamespace(), typeType)
          .map { type -> TypeExpression(type, typeType.toCompilationUnits()) }
+         .handleErrorWith { errors ->
+            if (Enums.isPotentialEnumMemberReference(typeType.classOrInterfaceType().Identifier().text())) {
+               tokenProcessor.resolveEnumMember(typeType.classOrInterfaceType().Identifier().text(), typeType)
+                  .map { enumMember ->
+                     LiteralExpression(
+                        LiteralAccessor(enumMember.value, enumMember.enum),
+                        typeType.toCompilationUnits()
+                     )
+                  }
+            } else {
+               errors.left()
+            }
+
+         }
    }
 
    override fun compileScalarAccessor(

@@ -162,6 +162,10 @@ data class InlineAssignmentExpression(override val assignment: Accessor) : Assig
    }
 }
 
+data class EnumValueAssignmentExpression(val enum: EnumType, val enumValue: EnumValue) : AssignmentExpression() {
+   override fun asTaxi(): String = "${enum.qualifiedName}.${enumValue.name}"
+   override val assignment: Accessor = LiteralAccessor(enumValue, enum)
+}
 
 interface WhenCaseMatchExpression : TaxiStatementGenerator {
    val type: Type

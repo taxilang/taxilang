@@ -6,9 +6,13 @@ import lang.taxi.types.Type
 import lang.taxi.utils.quoted
 import java.math.BigDecimal
 
+object NullValue
 
-data class LiteralAccessor(val value: Any) : Accessor, TaxiStatementGenerator {
+data class LiteralAccessor(val value: Any, override val returnType:Type = returnTypeOf(value)) : Accessor, TaxiStatementGenerator {
    companion object {
+      fun isNullLiteral(accessor: LiteralAccessor) = accessor.value == NullValue
+      fun typedNull(type:Type) = LiteralAccessor(NullValue, returnType = type)
+
       fun returnTypeOf(value:Any): PrimitiveType {
          return when (value) {
             is String -> PrimitiveType.STRING
@@ -22,10 +26,6 @@ data class LiteralAccessor(val value: Any) : Accessor, TaxiStatementGenerator {
          }
       }
    }
-   override val returnType: Type
-      get() {
-         return returnTypeOf(value)
-      }
 
    override fun asTaxi(): String {
       return when (value) {

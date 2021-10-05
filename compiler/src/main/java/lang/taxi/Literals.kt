@@ -1,5 +1,6 @@
 package lang.taxi
 
+import lang.taxi.accessors.NullValue
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.math.BigDecimal
 
@@ -9,6 +10,12 @@ fun TaxiParser.LiteralContext.valueOrNull(): Any? {
    return if (this.isNullValue()) null else this.value()
 }
 
+// Use in scnearios where null as a concept is permitted (such as value assignment),
+// but we want to avoid null references.
+// Returns NullValue or the underlying value
+fun TaxiParser.LiteralContext.valueOrNullValue():Any {
+   return if (this.isNullValue()) NullValue else this.value()
+}
 fun TaxiParser.LiteralContext.value(): Any {
    return when {
       this.BooleanLiteral() != null -> this.BooleanLiteral().text.toBoolean()

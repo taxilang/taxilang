@@ -42,6 +42,11 @@ data class LambdaExpression(
 // Pure tech-debt, resulting in how Accessors and Expressions have evolved.
 data class LiteralExpression(val literal: LiteralAccessor, override val compilationUnits: List<CompilationUnit>) :
    Expression() {
+   companion object {
+      fun isNullExpression(expression: Expression):Boolean {
+         return expression is LiteralExpression && LiteralAccessor.isNullLiteral(expression.literal)
+      }
+   }
    override val returnType: Type = literal.returnType
 
    val value = literal.value

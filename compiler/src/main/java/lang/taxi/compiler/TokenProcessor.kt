@@ -1769,19 +1769,28 @@ class TokenProcessor(
     * Use resolveEnumValueName if you need to handle circular references, where the enum may not
     * have already been compiled.
     */
-   private fun resolveEnumMember(enumQualifiedNameReference: TaxiParser.QualifiedNameContext): Either<List<CompilationError>, EnumMember> {
-      return resolveEnumReference(enumQualifiedNameReference) { enumType, enumValueName ->
+   fun resolveEnumMember(enumQualifiedNameReference: TaxiParser.QualifiedNameContext): Either<List<CompilationError>, EnumMember> {
+      return resolveEnumMember(enumQualifiedNameReference.Identifier().text(), enumQualifiedNameReference)
+   }
+   /**
+    * Returns an enum member - requires that the enum has already been compiled.
+    * This asserts that both the enum exists, and that it contains the requested member.
+    * Use resolveEnumValueName if you need to handle circular references, where the enum may not
+    * have already been compiled.
+    */
+   fun resolveEnumMember(enumMemberName: String, token: ParserRuleContext): Either<List<CompilationError>, EnumMember> {
+      return resolveEnumReference(enumMemberName, token) { enumType, enumValueName ->
          when {
             !enumType.isDefined -> {
                // This happens if there's an enum with a circular reference.
                // That's supported, but we defer
                CompilationError(
-                  enumQualifiedNameReference.start,
+                  token.start,
                   "An internal error occurred processing ${enumType.qualifiedName}, attempting to resolve an EnumMember on a non-compiled enum - use resolveEnumValueName, or compile the enum first."
                ).asList().left()
             }
             !enumType.has(enumValueName) -> CompilationError(
-               enumQualifiedNameReference.start,
+               token.start,
                "${enumType.qualifiedName} does not have a member $enumValueName"
             ).asList().left()
             else -> Either.right(enumType.member(enumValueName))
@@ -1802,24 +1811,32 @@ class TokenProcessor(
    }
 
    private fun <T> resolveEnumReference(
-      enumQualifiedNameReference: TaxiParser.QualifiedNameContext,
+      name: String,
+      parserRuleContext: ParserRuleContext,
       enumSelector: (EnumType, String) -> Either<List<CompilationError>, T>
    ): Either<List<CompilationError>, T> {
-      val (enumName, enumValueName) = Enums.splitEnumValueQualifiedName(enumQualifiedNameReference.Identifier().text())
+      val (enumName, enumValueName) = Enums.splitEnumValueQualifiedName(name)
 
       return resolveUserType(
-         enumQualifiedNameReference.findNamespace(),
+         parserRuleContext.findNamespace(),
          enumName.parameterizedName,
-         enumQualifiedNameReference
+         parserRuleContext
       )
          .flatMap { enumType ->
             if (enumType is EnumType) {
                enumSelector(enumType, enumValueName)
             } else {
-               CompilationError(enumQualifiedNameReference.start, "${enumType.qualifiedName} is not an Enum").asList()
+               CompilationError(parserRuleContext.start, "${enumType.qualifiedName} is not an Enum").asList()
                   .left()
             }
          }
+   }
+
+   private fun <T> resolveEnumReference(
+      enumQualifiedNameReference: TaxiParser.QualifiedNameContext,
+      enumSelector: (EnumType, String) -> Either<List<CompilationError>, T>
+   ): Either<List<CompilationError>, T> {
+      return resolveEnumReference(enumQualifiedNameReference.Identifier().text(), enumQualifiedNameReference, enumSelector)
    }
 
 

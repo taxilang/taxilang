@@ -56,6 +56,10 @@ enum class FormulaOperator(
 
 
    fun isLogicalOperator(): Boolean = LOGICAL_OPERATORS.contains(this)
+   fun supportsNullComparison():Boolean {
+      return this == Equal || this == NotEqual
+   }
+
    fun supports(lhsType:PrimitiveType, rhsType:PrimitiveType):Boolean {
       val types = setOf(lhsType,rhsType)
       return this.supportedOperandPredicates.any { predicate -> predicate(types) }

@@ -2,13 +2,17 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.accessors.ConditionalAccessor
-import lang.taxi.types.AndExpression
-import lang.taxi.types.ComparisonExpression
-import lang.taxi.types.ComparisonOperator
-import lang.taxi.types.ConstantEntity
-import lang.taxi.types.EnumLiteralCaseMatchExpression
-import lang.taxi.types.FieldReferenceEntity
-import lang.taxi.types.OrExpression
+import lang.taxi.accessors.NullValue
+import lang.taxi.expressions.FieldReferenceExpression
+import lang.taxi.expressions.FunctionExpression
+import lang.taxi.expressions.LiteralExpression
+import lang.taxi.expressions.OperatorExpression
+import lang.taxi.functions.FunctionAccessor
+import lang.taxi.types.ElseMatchExpression
+import lang.taxi.types.EnumValue
+import lang.taxi.types.FormulaOperator
+import lang.taxi.types.InlineAssignmentExpression
+import lang.taxi.types.PrimitiveType
 import lang.taxi.types.WhenFieldSetCondition
 import org.junit.jupiter.api.Test
 
@@ -236,15 +240,12 @@ class ConditionalDataTypesTest {
       val condition = accessor.expression as WhenFieldSetCondition
       condition.cases.should.have.size(3)
       // Buy -> Sell
-      TODO("Fix this test")
-//      (condition.cases[0].matchExpression as LiteralCaseMatchExpression).value.should.equal("Buy")
-//      val assignment = ((condition.cases[0].assignments[0] as InlineAssignmentExpression).assignment as EnumValueAssignment)
-//      assignment.enum.qualifiedName.should.equal("PayReceive")
-//      assignment.enumValue.name.should.equal("Pay")
+      condition.cases[0].matchExpression.asA<LiteralExpression>().value.should.equal("Buy")
+      condition.cases[0].getSingleAssignment().assignment.asA<LiteralExpression>().value.asA<EnumValue>().name.should.equal("Pay")
 
 
-//      condition.cases[2].matchExpression.should.be.instanceof(ElseMatchExpression::class.java)
-//      (condition.cases[2].assignments[0] as InlineAssignmentExpression).assignment.should.be.instanceof(NullAssignment::class.java)
+      condition.cases[2].matchExpression.should.be.instanceof(ElseMatchExpression::class.java)
+      condition.cases[2].getSingleAssignment().assignment.asA<LiteralExpression>().value.should.equal(NullValue)
    }
 
    @Test
@@ -264,21 +265,21 @@ class ConditionalDataTypesTest {
             s0_Index : Leg1Index by jsonPath("/S0_Index")
             s1_Index : Leg2Index by jsonPath("/S1_Index")
             underlyingIndex : String by when (this.s0_TypeStr) {
-               Leg1FixedOrFloat.Float -> s0_Index
-               else -> s1_Index
+               Leg1FixedOrFloat.Float -> this.s0_Index
+               else -> this.s1_Index
             }
          }
       """.trimIndent()
       val doc = Compiler(src).compile()
       val accessor = doc.objectType("Trade").field("underlyingIndex").accessor as ConditionalAccessor
       val fieldSet = accessor.expression as WhenFieldSetCondition
-      val enumExpression = fieldSet.cases[0].matchExpression as EnumLiteralCaseMatchExpression
-      enumExpression.enumValue.qualifiedName.should.equal("FixedOrFloatLeg.Float")
+      val enumExpression = fieldSet.cases[0].matchExpression as LiteralExpression
+      enumExpression.literal.value.asA<EnumValue>().qualifiedName.should.equal("FixedOrFloatLeg.Float")
    }
 
    @Test
    fun `using an enum with an invalid value in a when block should error`() {
-      val src = """
+      val accessor = """
           enum FixedOrFloatLeg {
              Fixed,
              Float
@@ -288,20 +289,19 @@ class ConditionalDataTypesTest {
             s0_Index : Leg1Index as String
             s1_Index : Leg2Index as String
             underlyingIndex : String by when (this.s0_TypeStr) {
-               FixedOrFloatLeg.Fooball -> s0_Index
-               else -> s1_Index
+               FixedOrFloatLeg.Fooball -> this.s0_Index
+               else -> this.s1_Index
             }
          }
       """.trimIndent()
-      val errors = Compiler(src).validate()
-      errors.should.satisfy { it.any { error ->
-         error.detailMessage == "'Fooball' is not defined on enum FixedOrFloatLeg"
-      } }
+         .validated()
+         .shouldContainMessage("FixedOrFloatLeg does not have a member Fooball")
    }
 
    @Test
    fun `can use functions on rhs of a when block`() {
-      val field = Compiler("""
+      val field = Compiler(
+         """
          type Identifier inherits String
          type AssetClass inherits String
          model Foo {
@@ -311,28 +311,34 @@ class ConditionalDataTypesTest {
                else -> column("ISIN")
             }
          }
-      """).compile().objectType("Foo").field("identifierValue")
+      """
+      ).compile().objectType("Foo").field("identifierValue")
       val whenCondition = (field.accessor as ConditionalAccessor).expression as WhenFieldSetCondition
-      TODO("Fix this test")
-//      val assignmentExpression = whenCondition.cases[0].assignments[0] as InlineAssignmentExpression
-//      val assingment = assignmentExpression.assignment as ScalarAccessorValueAssignment
-//      val accessor = assingment.accessor as FunctionAccessor
-//      accessor.function.qualifiedName.should.equal("taxi.stdlib.left")
-      // function parsing is tested elsewhere
+      val assignmentExpression = whenCondition.cases[0].assignments[0] as InlineAssignmentExpression
+      val assingment = assignmentExpression.assignment as FunctionExpression
+      val accessor = assingment.function as FunctionAccessor
+      accessor.function.qualifiedName.should.equal("taxi.stdlib.left")
    }
 
    @Test
    fun `can use functions inside when clauses`() {
-     val field = Compiler( """
+      val functionSelector = Compiler(
+         """
       type Order {
          bankDirection: BankDirection as String
-         clientDirection: ClientDirection as String by when (upperCase(this.bankDirection) : String) {
+         clientDirection: ClientDirection as String by when (upperCase(this.bankDirection)) {
             "BUY" -> "Sell"
             "SELL" -> "Buy"
             else -> null
          }
       }
-      """).compile().objectType("Order").field("clientDirection")
+      """
+      ).compile().objectType("Order").field("clientDirection")
+         .accessor!!.asA<ConditionalAccessor>()
+         .expression.asA<WhenFieldSetCondition>()
+         .selectorExpression.asA<FunctionExpression>()
+      functionSelector.function.function.qualifiedName.should.equal("taxi.stdlib.upperCase")
+      functionSelector.function.returnType.should.equal(PrimitiveType.STRING)
    }
 
    @Test
@@ -343,15 +349,17 @@ class ConditionalDataTypesTest {
             s0_Index : Leg1Index as String
             s1_Index : Leg2Index as String
             underlyingIndex : String by when (this.s0_TypeStr) {
-               FixedOrFloatLeg.Float -> s0_Index
-               else -> s1_Index
+               FixedOrFloatLeg.Float -> this.s0_Index
+               else -> this.s1_Index
             }
          }
       """.trimIndent()
       val errors = Compiler(src).validate()
-      errors.should.satisfy { it.any { error ->
-         error.detailMessage == "FixedOrFloatLeg is not defined"
-      } }
+      errors.should.satisfy {
+         it.any { error ->
+            error.detailMessage == "FixedOrFloatLeg is not defined"
+         }
+      }
    }
 
    @Test
@@ -367,7 +375,7 @@ class ConditionalDataTypesTest {
                 this.trader == "Marty" || this.status == "Pending" -> "ZeroFill"
                 this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity -> "PartialFill"
                 this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.trader == "Marty" || this.status == "Pending"  -> "FullyFilled"
-                this.leavesQuantity == null && this.initialQuantity != null -> trader
+                this.leavesQuantity == null && this.initialQuantity != null -> this.trader
                 else -> "CompleteFill"
             }
          }
@@ -375,34 +383,40 @@ class ConditionalDataTypesTest {
       val field = Compiler(src).compile().objectType("ComplexWhen").field("quantityStatus")
       val whenCondition = (field.accessor as ConditionalAccessor).expression as WhenFieldSetCondition
       whenCondition.cases.size.should.equal(6)
-      val case1 = whenCondition.cases[0].matchExpression as ComparisonExpression
-      case1.left.should.equal(FieldReferenceEntity("initialQuantity"))
-      case1.right.should.equal(FieldReferenceEntity("leavesQuantity"))
-      case1.operator.should.equal(ComparisonOperator.EQ)
+      val case1 = whenCondition.cases[0].matchExpression as OperatorExpression
+      case1.lhs.asA<FieldReferenceExpression>().selector.fieldName.should.equal("initialQuantity")
+      case1.rhs.asA<FieldReferenceExpression>().selector.fieldName.should.equal("leavesQuantity")
+      case1.operator.should.equal(FormulaOperator.Equal)
 
-      val case2 = whenCondition.cases[1].matchExpression as OrExpression
-      case2.left.should.equal(ComparisonExpression(ComparisonOperator.EQ, FieldReferenceEntity("trader"), ConstantEntity("Marty")))
-      case2.right.should.equal(ComparisonExpression(ComparisonOperator.EQ, FieldReferenceEntity("status"), ConstantEntity("Pending")))
-
-      val case3 = whenCondition.cases[2].matchExpression as AndExpression
-      case3.left.should.equal(ComparisonExpression(ComparisonOperator.GT, FieldReferenceEntity("leavesQuantity"), ConstantEntity(0)))
-      case3.right.should.equal(ComparisonExpression(ComparisonOperator.LT, FieldReferenceEntity("leavesQuantity"), FieldReferenceEntity("initialQuantity")))
-
-      val case4 = whenCondition.cases[3].matchExpression as OrExpression
-      case4.left.should.equal(OrExpression(
-         AndExpression(
-            ComparisonExpression(ComparisonOperator.GT, FieldReferenceEntity("leavesQuantity"), ConstantEntity(0)),
-            ComparisonExpression(ComparisonOperator.LT, FieldReferenceEntity("leavesQuantity"), FieldReferenceEntity("initialQuantity"))
-         ),
-         ComparisonExpression(ComparisonOperator.EQ, FieldReferenceEntity("trader"), ConstantEntity("Marty"))
-      ))
-      case4.right.should.equal(
-         ComparisonExpression(ComparisonOperator.EQ, FieldReferenceEntity("status"), ConstantEntity("Pending"))
-      )
-
-      val case5 = whenCondition.cases[4].matchExpression as AndExpression
-      case5.left.should.equal(ComparisonExpression(ComparisonOperator.EQ, FieldReferenceEntity("leavesQuantity"), ConstantEntity(null)))
-      case5.right.should.equal(ComparisonExpression(ComparisonOperator.NQ, FieldReferenceEntity("initialQuantity"), ConstantEntity(null)))
+      // The below is bascially operator parsing, which is tested elsewhere.
+//      // Not retesting here...
+////      case1.left.should.equal(FieldReferenceEntity("initialQuantity"))
+////      case1.right.should.equal(FieldReferenceEntity("leavesQuantity"))
+////      case1.operator.should.equal(ComparisonOperator.EQ)
+//
+//      val case2 = whenCondition.cases[1].matchExpression as OrExpression
+//      case2.left.should.equal(ComparisonExpression(ComparisonOperator.EQ, FieldReferenceEntity("trader"), ConstantEntity("Marty")))
+//      case2.right.should.equal(ComparisonExpression(ComparisonOperator.EQ, FieldReferenceEntity("status"), ConstantEntity("Pending")))
+//
+//      val case3 = whenCondition.cases[2].matchExpression as AndExpression
+//      case3.left.should.equal(ComparisonExpression(ComparisonOperator.GT, FieldReferenceEntity("leavesQuantity"), ConstantEntity(0)))
+//      case3.right.should.equal(ComparisonExpression(ComparisonOperator.LT, FieldReferenceEntity("leavesQuantity"), FieldReferenceEntity("initialQuantity")))
+//
+//      val case4 = whenCondition.cases[3].matchExpression as OrExpression
+//      case4.left.should.equal(OrExpression(
+//         AndExpression(
+//            ComparisonExpression(ComparisonOperator.GT, FieldReferenceEntity("leavesQuantity"), ConstantEntity(0)),
+//            ComparisonExpression(ComparisonOperator.LT, FieldReferenceEntity("leavesQuantity"), FieldReferenceEntity("initialQuantity"))
+//         ),
+//         ComparisonExpression(ComparisonOperator.EQ, FieldReferenceEntity("trader"), ConstantEntity("Marty"))
+//      ))
+//      case4.right.should.equal(
+//         ComparisonExpression(ComparisonOperator.EQ, FieldReferenceEntity("status"), ConstantEntity("Pending"))
+//      )
+//
+//      val case5 = whenCondition.cases[4].matchExpression as AndExpression
+//      case5.left.should.equal(ComparisonExpression(ComparisonOperator.EQ, FieldReferenceEntity("leavesQuantity"), ConstantEntity(null)))
+//      case5.right.should.equal(ComparisonExpression(ComparisonOperator.NQ, FieldReferenceEntity("initialQuantity"), ConstantEntity(null)))
 
    }
 
@@ -422,11 +436,8 @@ class ConditionalDataTypesTest {
                 else -> "CompleteFill"
             }
          }
-      """.trimIndent()
-      val errors = Compiler(src).validate()
-      errors.should.satisfy { it.any { error ->
-         error.detailMessage == "user is not a field of ComplexWhen"
-      } }
+      """.validated()
+         .shouldContainMessage("Field user does not exist on type ComplexWhen")
    }
 
    @Test
@@ -440,10 +451,8 @@ class ConditionalDataTypesTest {
             }
          }
       """.trimIndent()
-      val errors = Compiler(src).validate()
-      errors.should.satisfy { it.any { error ->
-         error.detailMessage == "trader is not a numeric based field of ComplexWhen"
-      } }
+         .validated()
+         .shouldContainMessage("Operations with symbol '==' is not supported on types String and Int")
    }
 
    @Test
@@ -457,15 +466,13 @@ class ConditionalDataTypesTest {
             }
          }
       """.trimIndent()
-      val errors = Compiler(src).validate()
-      errors.should.satisfy { it.any { error ->
-         error.detailMessage == "qty is not a String based field of ComplexWhen"
-      } }
+         .validated()
+         .shouldContainMessage("Operations with symbol '==' is not supported on types Decimal and String")
    }
 
    @Test
    fun `When Complex when condition expressions has a greater than comparison for a string field compilation error thrown`() {
-      val src = """
+      """
          model ComplexWhen {
             status: String
             quantityStatus: String by when {
@@ -473,16 +480,13 @@ class ConditionalDataTypesTest {
                 else -> "CompleteFill"
             }
          }
-      """.trimIndent()
-      val errors = Compiler(src).validate()
-      errors.should.satisfy { it.any { error ->
-         error.detailMessage == "> is not applicable to status field of ComplexWhen"
-      } }
+      """.validated()
+         .shouldContainMessage("Operations with symbol '>' is not supported on types String and String")
    }
 
    @Test
    fun `When Complex when condition expressions has a less than comparison for a string field compilation error thrown`() {
-      val src = """
+      """
          model ComplexWhen {
             status: String
             quantityStatus: String by when {
@@ -490,16 +494,13 @@ class ConditionalDataTypesTest {
                 else -> "CompleteFill"
             }
          }
-      """.trimIndent()
-      val errors = Compiler(src).validate()
-      errors.should.satisfy { it.any { error ->
-         error.detailMessage == "< is not applicable to status field of ComplexWhen"
-      } }
+      """.validated()
+         .shouldContainMessage("Operations with symbol '<' is not supported on types String and String")
    }
 
    @Test
    fun `When Complex when condition expressions has a greater than equals comparison for a string field compilation error thrown`() {
-      val src = """
+      """
          model ComplexWhen {
             status: String
             quantityStatus: String by when {
@@ -507,28 +508,8 @@ class ConditionalDataTypesTest {
                 else -> "CompleteFill"
             }
          }
-      """.trimIndent()
-      val errors = Compiler(src).validate()
-      errors.should.satisfy { it.any { error ->
-         error.detailMessage == ">= is not applicable to status field of ComplexWhen"
-      } }
-   }
-
-   @Test
-   fun `When Complex when condition expressions has a less than equals comparison for a string field compilation error thrown`() {
-      val src = """
-         model ComplexWhen {
-            status: String
-            quantityStatus: String by when {
-                this.status <= '0' -> "ZeroFill"
-                else -> "CompleteFill"
-            }
-         }
-      """.trimIndent()
-      val errors = Compiler(src).validate()
-      errors.should.satisfy { it.any { error ->
-         error.detailMessage == "<= is not applicable to status field of ComplexWhen"
-      } }
+      """.validated()
+         .shouldContainMessage("Operations with symbol '>=' is not supported on types String and String")
    }
 
    @Test
@@ -542,10 +523,8 @@ class ConditionalDataTypesTest {
             }
          }
       """.trimIndent()
-      val errors = Compiler(src).validate()
-      errors.should.satisfy { it.any { error ->
-         error.detailMessage == "when case for quantityStatus in ComplexWhen cannot have reference selector use when { .. } syntax"
-      } }
+         .validated()
+         .shouldContainMessage("Type mismatch.  Type of lang.taxi.Boolean is not assignable to type lang.taxi.String")
    }
 
    @Test
@@ -558,11 +537,8 @@ class ConditionalDataTypesTest {
                 else -> "CompleteFill"
             }
          }
-      """.trimIndent()
-      val errors = Compiler(src).validate()
-      errors.should.satisfy { it.any { error ->
-         error.detailMessage == "when case for quantityStatus in ComplexWhen can only logical expression when cases"
-      } }
+      """.validated()
+         .shouldContainMessage("Type mismatch.  Type of lang.taxi.String is not assignable to type lang.taxi.Boolean")
    }
 
    @Test
@@ -579,8 +555,10 @@ class ConditionalDataTypesTest {
          }
       """.trimIndent()
       val errors = Compiler(src).validate()
-      errors.should.satisfy { it.any { error ->
-         error.detailMessage == "SourceType::FieldType notation is only allowed in view definitions"
-      } }
+      errors.should.satisfy {
+         it.any { error ->
+            error.detailMessage == "SourceType::FieldType notation is only allowed in view definitions"
+         }
+      }
    }
 }
