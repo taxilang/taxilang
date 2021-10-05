@@ -88,6 +88,29 @@ object AnnotationSpec : Spek({
             .annotation("DataQuality")
             .should.not.be.`null`
       }
+      it("lists undeclared annotations") {
+         """
+             @AnonModelAnnotation
+             model Foo {
+               @AnonFieldAnnotation
+               field : String
+             }
+             @AnonServiceAnnotation
+             service Service {
+               @AnonOperationAnnotation
+               operation foo()
+             }
+         """.compiled()
+            .undeclaredAnnotationNames
+            .map { it.fullyQualifiedName }
+            .should.contain.elements(
+               "AnonModelAnnotation",
+               "AnonFieldAnnotation",
+               "AnonServiceAnnotation",
+               "AnonOperationAnnotation"
+            )
+      }
+
       it("should resolve compiled annotations within the same namespace") {}
       it("should be possible to declare enums within annotation usage") {
          val annotation = """
@@ -141,7 +164,7 @@ object AnnotationSpec : Spek({
          """.trimIndent()
 
          it("should resolve types correctly when the annotations are compiled before the field") {
-            val doc = Compiler.forStrings(listOf(schemaA,schemaB))
+            val doc = Compiler.forStrings(listOf(schemaA, schemaB))
                .compile()
             val field = doc.model("acme.Foo")
                .field("recordId")
@@ -149,7 +172,7 @@ object AnnotationSpec : Spek({
             field.annotations[0].qualifiedName.should.equal("annotations.Id")
          }
          it("should resolve types correctly when the field is compiled before the annotation") {
-            val doc = Compiler.forStrings(listOf(schemaB,schemaA))
+            val doc = Compiler.forStrings(listOf(schemaB, schemaA))
                .compile()
             val field = doc.model("acme.Foo")
                .field("recordId")
@@ -251,7 +274,7 @@ namespace bar
 @DataQuality(quality = Quality.HIGH)
 model Thing {}
          """.trimIndent()
-         val objectType = Compiler.forStrings(srcA,srcB)
+         val objectType = Compiler.forStrings(srcA, srcB)
             .compile()
             .objectType("bar.Thing")
          val annotation = objectType.annotation("foo.DataQuality")
