@@ -25,6 +25,7 @@ import lang.taxi.functions.FunctionModifiers
 import lang.taxi.source
 import lang.taxi.text
 import lang.taxi.toCompilationUnit
+import lang.taxi.toCompilationUnits
 import lang.taxi.types.Annotation
 import lang.taxi.types.ArrayType
 import lang.taxi.types.Field
@@ -700,7 +701,7 @@ class FieldCompiler(
                                  parameterContext.modelAttributeTypeReference()
                               )
                                  .flatMap { (memberSourceType, memberType) ->
-                                    ModelAttributeReferenceSelector(memberSourceType, memberType).right()
+                                    ModelAttributeReferenceSelector(memberSourceType, memberType, parameterContext.modelAttributeTypeReference().toCompilationUnits()).right()
                                  }
                            } else {
                               CompilationError(

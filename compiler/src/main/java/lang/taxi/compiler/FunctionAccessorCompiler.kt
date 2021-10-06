@@ -16,9 +16,7 @@ import lang.taxi.functions.FunctionModifiers
 import lang.taxi.source
 import lang.taxi.text
 import lang.taxi.types.FieldReferenceSelector
-import lang.taxi.types.ModelAttributeReferenceSelector
 import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
 import lang.taxi.types.TypeChecker
 import lang.taxi.types.TypeReferenceSelector
@@ -100,9 +98,9 @@ class FunctionAccessorCompiler(
                               referenceResolver.parseModelAttributeTypeReference(
                                  parameterContext.modelAttributeTypeReference()
                               )
-                                 .flatMap { (memberSourceType, memberType) ->
-                                    ModelAttributeReferenceSelector(memberSourceType, memberType).right()
-                                 }
+//                                 .flatMap { (memberSourceType, memberType) ->
+//                                    ModelAttributeReferenceSelector(memberSourceType, memberType).right()
+//                                 }
                            } else {
                               CompilationError(
                                  parameterContext.start,
