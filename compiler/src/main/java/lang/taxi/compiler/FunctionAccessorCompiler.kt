@@ -5,7 +5,6 @@ import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
 import lang.taxi.CompilationError
-import lang.taxi.Namespace
 import lang.taxi.TaxiParser
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
@@ -39,9 +38,8 @@ interface FunctionParameterReferenceResolver {
    ): Either<List<CompilationError>,FieldReferenceSelector>
 
    fun parseModelAttributeTypeReference(
-      namespace: Namespace,
       modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext
-   ): Either<List<CompilationError>, Pair<QualifiedName, Type>>
+   ): Either<List<CompilationError>, Expression>
 }
 
 class FunctionAccessorCompiler(
@@ -100,7 +98,6 @@ class FunctionAccessorCompiler(
                         parameterContext.modelAttributeTypeReference() != null -> {
                            if (parentContext.isInViewContext()) {
                               referenceResolver.parseModelAttributeTypeReference(
-                                 namespace,
                                  parameterContext.modelAttributeTypeReference()
                               )
                                  .flatMap { (memberSourceType, memberType) ->

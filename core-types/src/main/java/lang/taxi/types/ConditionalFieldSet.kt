@@ -61,8 +61,9 @@ data class AccessorExpressionSelector(
 
 data class ModelAttributeReferenceSelector(
    val memberSource: QualifiedName,
-   val memberType: Type
-) : TaxiStatementGenerator, Accessor {
+   val memberType: Type,
+   override val compilationUnits: List<CompilationUnit>
+) : TaxiStatementGenerator, Accessor, Expression() {
    override fun asTaxi(): String = "$memberSource::${memberType.qualifiedName}"
 }
 

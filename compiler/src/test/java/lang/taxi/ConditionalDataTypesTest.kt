@@ -204,13 +204,12 @@ class ConditionalDataTypesTest {
       val condition = accessor.expression as WhenFieldSetCondition
       condition.cases.should.have.size(2)
       // Buy -> Sell
-      TODO("Fix this test")
-//      (condition.cases[0].matchExpression as LiteralCaseMatchExpression).value.should.equal("Buy")
-//      ((condition.cases[0].assignments[0] as InlineAssignmentExpression).assignment as LiteralAssignment).value.should.equal("Sell")
+      condition.cases[0].matchExpression.asA<LiteralExpression>().value.should.equal("Buy")
+      (condition.cases[0].assignments[0] as InlineAssignmentExpression).assignment.asA<LiteralExpression>().value.should.equal("Sell")
 //
 //      // Sell -> Buy
-//      (condition.cases[1].matchExpression as LiteralCaseMatchExpression).value.should.equal("Sell")
-//      ((condition.cases[1].assignments[0] as InlineAssignmentExpression).assignment as LiteralAssignment).value.should.equal("Buy")
+      condition.cases[1].matchExpression.asA<LiteralExpression>().value.should.equal("Sell")
+      condition.cases[1].assignments[0].asA<InlineAssignmentExpression>().assignment.asA<LiteralExpression>().value.should.equal("Buy")
    }
 
    @Test

@@ -6,7 +6,6 @@ import arrow.core.handleErrorWith
 import arrow.core.left
 import arrow.core.right
 import lang.taxi.CompilationError
-import lang.taxi.Namespace
 import lang.taxi.TaxiParser
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
@@ -26,8 +25,8 @@ import lang.taxi.toCompilationUnits
 import lang.taxi.types.Enums
 import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.FormulaOperator
+import lang.taxi.types.ModelAttributeReferenceSelector
 import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
 import lang.taxi.types.TypeChecker
 import lang.taxi.utils.flattenErrors
@@ -111,6 +110,7 @@ class ExpressionCompiler(
          expressionAtom.readFunction() != null -> parseFunctionExpression(expressionAtom.readFunction())
          expressionAtom.literal() != null -> parseLiteralExpression(expressionAtom.literal())
          expressionAtom.fieldReferenceSelector() != null -> parseFieldReferenceSelector(expressionAtom.fieldReferenceSelector())
+         expressionAtom.modelAttributeTypeReference() != null -> parseModelAttributeTypeReference(expressionAtom.modelAttributeTypeReference())
          else -> error("Unhandled atom in expression: ${expressionAtom.text}")
       }
    }
@@ -168,22 +168,22 @@ class ExpressionCompiler(
                   )
                ).left()
             }
-             !isNullCheck && !operator.supports(lhsType, rhsType) -> {
-                 listOf(
-                    CompilationError(
-                       expressionGroup.toCompilationUnit(),
-                       "Operations with symbol '${operator.symbol}' is not supported on types ${lhsType.declaration} and ${rhsType.declaration}"
-                    )
-                 ).left()
-             }
-             else -> {
-                 OperatorExpression(
-                    lhs = lhs,
-                    operator = operator,
-                    rhs = rhs,
-                    compilationUnits = expressionGroup.toCompilationUnits()
-                 ).right()
-             }
+            !isNullCheck && !operator.supports(lhsType, rhsType) -> {
+               listOf(
+                  CompilationError(
+                     expressionGroup.toCompilationUnit(),
+                     "Operations with symbol '${operator.symbol}' is not supported on types ${lhsType.declaration} and ${rhsType.declaration}"
+                  )
+               ).left()
+            }
+            else -> {
+               OperatorExpression(
+                  lhs = lhs,
+                  operator = operator,
+                  rhs = rhs,
+                  compilationUnits = expressionGroup.toCompilationUnits()
+               ).right()
+            }
          }
       } else {
          // Collect all the errors and bail out.
@@ -283,9 +283,14 @@ class ExpressionCompiler(
    }
 
    override fun parseModelAttributeTypeReference(
-      namespace: Namespace,
       modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext
-   ): Either<List<CompilationError>, Pair<QualifiedName, Type>> {
-      TODO("Not yet implemented")
+   ): Either<List<CompilationError>, ModelAttributeReferenceSelector> {
+
+      // TODO - This isn't implemented, need to find the original implementation
+      return listOf(
+         CompilationError(
+            modelAttributeReferenceCtx.start, "SourceType::FieldType notation is not permitted here"
+         )
+      ).left()
    }
 }

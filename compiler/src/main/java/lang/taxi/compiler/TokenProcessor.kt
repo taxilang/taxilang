@@ -1942,14 +1942,14 @@ class TokenProcessor(
                   val operationOrError =
                      typeSystem.getOperationOrError(consumeQualifiedName, lineageBodyMemberContext.consumesBody())
                   when (operationOrError) {
-                     is Either.Left -> return operationOrError.a.asList().left()
+                     is Either.Left -> return@map operationOrError.a.asList().left()
                      is Either.Right -> consumes.add(operationOrError.b)
                   }
                }
                lineageBodyMemberContext.storesBody() != null -> {
                   val storeQualifiedName = lineageBodyMemberContext.storesBody().qualifiedName().text
                   if (!typeSystem.isDefined(storeQualifiedName)) {
-                     return CompilationError(
+                     return@map CompilationError(
                         lineageBodyMemberContext.storesBody().qualifiedName().start,
                         "unknown type $storeQualifiedName"
                      ).asList().left()
