@@ -7,7 +7,7 @@
    <parent>
       <groupId>org.taxilang</groupId>
       <artifactId>parent</artifactId>
-      <version>1.31.EXPRESSIONS-SNAPSHOT</version>
+      <version>1.32.EXPRESSIONS-SNAPSHOT</version>
    </parent>
 
    <artifactId>taxi-lang-server</artifactId>
@@ -19,8 +19,6 @@
    That is used to create a fat jar.  Enable by default in ci/cd,
    disabled by default locally
    -->
-
-
    <modules>
       <module>taxi-lang-service</module>
       <module>taxi-lang-server-app</module>
