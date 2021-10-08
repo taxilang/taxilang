@@ -8,6 +8,7 @@ import lang.taxi.TaxiParser
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.expressions.Expression
+import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.functions.FunctionAccessor
@@ -300,7 +301,15 @@ class ViewValidator(private val viewName: String) {
               // Example: (OrderSent::RequestedQuantity - OrderView::CumulativeQty)
 
            }
-//         is ModelAttributeTypeReferenceAssignment -> validateModelAttributeTypeReference(expression, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+         is ModelAttributeReferenceSelector -> validateValidateSourceAndField(
+            expression.memberSource,
+            expression.memberType,
+            ctx,
+            errors,
+            typesInViewFindDefinitions,
+            viewBodyType)
+         is FunctionExpression -> validateFunction(expression.function, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+            //validateModelAttributeTypeReference(expression, ctx, errors, typesInViewFindDefinitions, viewBodyType)
 //         is LiteralAssignment -> { }
 //         is NullAssignment -> { }
 //         is ScalarAccessorValueAssignment -> {
