@@ -65,6 +65,8 @@ data class ModelAttributeReferenceSelector(
    override val compilationUnits: List<CompilationUnit>
 ) : TaxiStatementGenerator, Accessor, Expression() {
    override fun asTaxi(): String = "$memberSource::${memberType.qualifiedName}"
+   override val returnType: Type
+      get() = this.memberType
 }
 
 @Deprecated("replaced by TypeExpression")

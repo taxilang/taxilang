@@ -82,7 +82,7 @@ data class OperatorExpression(
 ) : Expression() {
    companion object {
       fun getReturnType(lhsType: PrimitiveType, operator: FormulaOperator, rhsType: PrimitiveType): Type? {
-         if (operator.isLogicalOperator()) {
+         if (operator.isLogicalOrComparisonOperator()) {
             return PrimitiveType.BOOLEAN
          }
          val types = setOf(lhsType, rhsType)

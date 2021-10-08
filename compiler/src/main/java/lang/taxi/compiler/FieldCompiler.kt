@@ -670,11 +670,15 @@ class FieldCompiler(
                val parameters =
                   functionContext.formalParameterList().parameter().mapIndexed { parameterIndex, parameterContext ->
                      val parameterType = function.getParameterType(parameterIndex)
-                     if (parameterContext.modelAttributeTypeReference() == null && this.typeBody.parent.isInViewContext()) {
-                        return@flatMap CompilationError(
-                           parameterContext.start,
-                           "Only Model Attribute References are  allowed within Views"
-                        ).asList().left()
+                     parameterContext.scalarAccessorExpression().readExpression()
+                     if (parameterContext.scalarAccessorExpression().readExpression() != null && this.typeBody.parent.isInViewContext()) {
+                        val errorOrExpression =
+                           ExpressionCompiler(this.tokenProcessor, this.typeChecker, this.errors, this)
+                           .compile(parameterContext.scalarAccessorExpression().readExpression().expressionGroup())
+                        if (errorOrExpression is Either.Left) {
+                           return@flatMap errorOrExpression.a.left()
+
+                        }
                      }
                      val parameterAccessor = when {
                         parameterContext.literal() != null -> LiteralAccessor(
