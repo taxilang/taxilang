@@ -670,8 +670,7 @@ class FieldCompiler(
                val parameters =
                   functionContext.formalParameterList().parameter().mapIndexed { parameterIndex, parameterContext ->
                      val parameterType = function.getParameterType(parameterIndex)
-                     parameterContext.scalarAccessorExpression().readExpression()
-                     if (parameterContext.scalarAccessorExpression().readExpression() != null && this.typeBody.parent.isInViewContext()) {
+                     if (parameterContext.scalarAccessorExpression() != null && parameterContext.scalarAccessorExpression().readExpression() != null && this.typeBody.parent.isInViewContext()) {
                         val errorOrExpression =
                            ExpressionCompiler(this.tokenProcessor, this.typeChecker, this.errors, this)
                            .compile(parameterContext.scalarAccessorExpression().readExpression().expressionGroup())

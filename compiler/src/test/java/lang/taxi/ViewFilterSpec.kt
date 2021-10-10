@@ -205,7 +205,7 @@ class ViewFilterSpec : Spek({
          type OrderEventDateTime inherits Instant
          type OrderType inherits String
          type SecurityDescription inherits String
-         type RequestedQuantity inherits String
+         type RequestedQuantity inherits Decimal
          type OrderStatus inherits String
          type DecimalFieldOrderFilled inherits Decimal
 

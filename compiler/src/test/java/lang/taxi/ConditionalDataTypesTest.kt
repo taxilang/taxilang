@@ -541,7 +541,7 @@ class ConditionalDataTypesTest {
    }
 
    @Test
-   fun `model attribute based definitions are no allowed`() {
+   fun `model attribute based definitions are allowed`() {
       val src = """
          type Status inherits String
          type QtyStatus inherits String
@@ -554,10 +554,6 @@ class ConditionalDataTypesTest {
          }
       """.trimIndent()
       val errors = Compiler(src).validate()
-      errors.should.satisfy {
-         it.any { error ->
-            error.detailMessage == "SourceType::FieldType notation is only allowed in view definitions"
-         }
-      }
+      errors.should.be.empty
    }
 }
