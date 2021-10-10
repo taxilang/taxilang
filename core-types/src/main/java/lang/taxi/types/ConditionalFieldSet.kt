@@ -33,7 +33,7 @@ data class WhenFieldSetCondition(
    val cases: List<WhenCaseBlock>
 ) : FieldSetExpression {
    override fun asTaxi(): String {
-      val whenAsTaxi = if (selectorExpression.asTaxi().isEmpty()) {
+      val whenAsTaxi = if (selectorExpression.asTaxi().isEmpty() || selectorExpression.asTaxi().startsWith("when")) {
          "when"
 
       } else {

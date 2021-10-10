@@ -2,6 +2,7 @@ package lang.taxi.generators
 
 import lang.taxi.TaxiDocument
 import lang.taxi.accessors.Accessor
+import lang.taxi.expressions.Expression
 import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract
 import lang.taxi.services.QueryOperation
@@ -291,7 +292,13 @@ $enumValueDeclarations
       val fieldType = field.type
       val fieldTypeString = typeAsTaxi(fieldType, currentNamespace, field.nullable)
       val constraints = constraintString(field.constraints)
-      val accessor = field.accessor?.let { accessorAsString(field.accessor!!) } ?: ""
+      val accessor = field.accessor?.let {
+         if (it is Expression) {
+            "by ${accessorAsString(it)}"
+         } else {
+            accessorAsString(it)
+         }
+      } ?: ""
       val annotations = generateAnnotations(field)
       val typeDoc = field.typeDoc.asTypeDocBlock()
 
@@ -300,7 +307,7 @@ $enumValueDeclarations
 
    private fun accessorAsString(accessor: Accessor): String {
       return when (accessor) {
-         is TaxiStatementGenerator -> accessor.asTaxi()
+         is TaxiStatementGenerator -> "${accessor.asTaxi()}"
          else -> "/* accessor of type ${accessor::class.simpleName} does not support taxi generation */"
       }
    }

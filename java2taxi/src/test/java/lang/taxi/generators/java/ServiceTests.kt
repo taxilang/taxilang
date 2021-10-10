@@ -65,8 +65,8 @@ service PersonService {
     operation findPerson( personId: PersonId) : Person
 
     [[ Returns a converted rate, where the currency has been updated based on the target ]]
-    operation convertRates( source: Money( this.currency = "GBP" ),
-        targetCurrency : String ) : Money( from source, this.currency = targetCurrency )
+    operation convertRates( source: Money( this.currency == "GBP" ),
+        targetCurrency : String ) : Money( from source, this.currency == targetCurrency )
 }
 
 """

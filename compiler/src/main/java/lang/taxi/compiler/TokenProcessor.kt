@@ -1935,21 +1935,21 @@ class TokenProcessor(
          val lineageDeclaration = serviceToken.serviceBody().lineageDeclaration()
          val consumes = mutableListOf<ConsumedOperation>()
          val stores = mutableListOf<QualifiedName>()
-         lineageDeclaration.lineageBody().lineageBodyMember().map { lineageBodyMemberContext ->
+         lineageDeclaration.lineageBody().lineageBodyMember().forEach { lineageBodyMemberContext ->
             when {
                lineageBodyMemberContext.consumesBody() != null -> {
                   val consumeQualifiedName = lineageBodyMemberContext.consumesBody().qualifiedName().text
                   val operationOrError =
                      typeSystem.getOperationOrError(consumeQualifiedName, lineageBodyMemberContext.consumesBody())
                   when (operationOrError) {
-                     is Either.Left -> return@map operationOrError.a.asList().left()
+                     is Either.Left -> return operationOrError.a.asList().left()
                      is Either.Right -> consumes.add(operationOrError.b)
                   }
                }
                lineageBodyMemberContext.storesBody() != null -> {
                   val storeQualifiedName = lineageBodyMemberContext.storesBody().qualifiedName().text
                   if (!typeSystem.isDefined(storeQualifiedName)) {
-                     return@map CompilationError(
+                     return CompilationError(
                         lineageBodyMemberContext.storesBody().qualifiedName().start,
                         "unknown type $storeQualifiedName"
                      ).asList().left()
@@ -1980,8 +1980,8 @@ class TokenProcessor(
          .reportAndRemoveErrorList(errors)
       val dependentTypes = members.flatMap {
          it.annotations.mapNotNull { annotation -> annotation.type } +
-               it.parameters.map { parameter -> parameter.type } +
-               it.returnType
+            it.parameters.map { parameter -> parameter.type } +
+            it.returnType
       }.map { it.toQualifiedName() }
       val service = Service(
          qualifiedName,
