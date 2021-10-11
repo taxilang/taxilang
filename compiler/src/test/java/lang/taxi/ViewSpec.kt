@@ -664,5 +664,33 @@ class ViewSpec : Spek({
          error.should.be.empty
          taxi.views.size.should.equal(1)
       }
+      it("a view with a field substracting two view fields") {
+         val schema = """
+            import vyne.aggregations.sumOver
+            type CumulativeQty inherits Decimal
+            type OrderId inherits String
+            type ExecutedQuantity inherits Decimal
+            type OrderEventDateTime inherits Instant
+            type RequestedQuantity inherits Decimal
+            type RemainingQuantity inherits Decimal
+
+            model Order {
+               orderId: OrderId
+               execQty: ExecutedQuantity
+               ts: OrderEventDateTime
+               reqQty: RequestedQuantity
+            }
+
+            view Report with query {
+               find {Order[]} as {
+                     sellCumulativeQuantity:  CumulativeQty by sumOver(Order:: ExecutedQuantity, Order:: OrderId, Order:: OrderEventDateTime)
+                     buyCumulativeQuantity: RequestedQuantity by sumOver(Order:: RequestedQuantity, Order:: OrderId, Order:: OrderEventDateTime)
+                     remainingQuantity: RemainingQuantity by (Report:: RequestedQuantity - Report:: CumulativeQty)
+               }
+            }
+         """.trimIndent()
+         val (error, taxi) = Compiler.forStrings(listOf(schema)).compileWithMessages()
+         error.should.be.empty
+      }
    }
 })

@@ -109,8 +109,14 @@ class ViewValidator(private val viewName: String) {
       viewBodyType: Type?):
       List<CompilationError> {
       if (accessor != null) {
-         when (accessor) {
-            is ConditionalAccessor -> {
+         when  {
+            accessor is OperatorExpression && accessor.lhs is ModelAttributeReferenceSelector && accessor.rhs is ModelAttributeReferenceSelector-> {
+               val op1 = accessor.lhs as ModelAttributeReferenceSelector
+               val op2 = accessor.rhs as ModelAttributeReferenceSelector
+               validateValidateSourceAndField(op1.memberSource, op1.memberType, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
+               validateValidateSourceAndField(op2.memberSource, op2.memberType, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
+            }
+            accessor is ConditionalAccessor -> {
                when (val accessorExpression = accessor.expression) {
                    is WhenFieldSetCondition -> {
                       accessorExpression.cases.forEach { caseBlock ->
@@ -132,7 +138,7 @@ class ViewValidator(private val viewName: String) {
 
             }
 
-            is FunctionAccessor -> {
+            accessor is FunctionAccessor -> {
                validateFunction(accessor, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
             }
 

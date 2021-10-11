@@ -37,7 +37,7 @@ fun ParserRuleContext?.toCompilationUnit(dependantTypeNames:List<QualifiedName> 
             this,
             rawSource,
             SourceLocation(this.start.line, this.start.charPositionInLine)
-         );
+         )
 
       } else {
          CompilationUnit(
