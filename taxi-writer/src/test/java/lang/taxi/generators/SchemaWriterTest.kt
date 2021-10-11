@@ -3,6 +3,7 @@ package lang.taxi.generators
 import com.winterbe.expekt.should
 import lang.taxi.Compiler
 import lang.taxi.messages.Severity
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import kotlin.test.fail
 
@@ -319,6 +320,51 @@ annotation GeneratedSource {
 }
 """.trimIndent()
       generated.trimNewLines().should.equal(expected.trimNewLines())
+   }
+
+   @Test
+   fun `outputs complex when statements statements under a namespace`() {
+      val generated = """
+            namespace test {
+               model ComplexWhen {
+               trader: String
+               status: String
+               initialQuantity: Decimal
+               leavesQuantity: Decimal
+               quantityStatus: String by when {
+                   this.initialQuantity == this.leavesQuantity -> "ZeroFill"
+                   this.trader == "Marty" || this.status == "Pending" -> "ZeroFill"
+                   this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity -> "PartialFill"
+                   this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.trader == "Marty" || this.status == "Pending"  -> "FullyFilled"
+                   this.leavesQuantity == null && this.initialQuantity != null -> this.trader
+                   else -> "CompleteFill"
+               }
+            }
+         }
+            """.trimIndent()
+         .compileAndRegenerateSource()
+
+      val expected = """
+         namespace test {
+           model ComplexWhen {
+               trader : String
+               status : String
+               initialQuantity : Decimal
+               leavesQuantity : Decimal
+               quantityStatus : String  by when {
+                   this.initialQuantity == this.leavesQuantity -> "ZeroFill"
+                   this.trader == "Marty" || this.status == "Pending" -> "ZeroFill"
+                   this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity -> "PartialFill"
+                   this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.trader == "Marty" || this.status == "Pending" -> "FullyFilled"
+                   this.leavesQuantity == null && this.initialQuantity != null -> this.trader
+                   else -> "CompleteFill"
+               }
+            }
+         }
+      """.trimIndent()
+      // Using junit Assertion as IntelliJ nicely shows the differences between expected and actual in case of a failure.
+      Assertions.assertEquals(expected.trimNewLines(), generated.trimNewLines())
+      generated.shouldCompile()
    }
 
 }
