@@ -23,6 +23,7 @@ import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionModifiers
 import lang.taxi.source
+import lang.taxi.stringLiteralValue
 import lang.taxi.text
 import lang.taxi.toCompilationUnit
 import lang.taxi.toCompilationUnits
@@ -530,27 +531,55 @@ class FieldCompiler(
 
    private fun buildReadFieldAccessor(byFieldSourceExpression: TaxiParser.ByFieldSourceExpressionContext): Either<List<CompilationError>, Accessor> {
       //as {
-      //      traderEmail: UserEmail by (this.traderId)
+      //      traderEmail: SomeType['traderId']
       //}
-      val referencedFieldName = byFieldSourceExpression.fieldReferenceSelector().Identifier().text
+
+      val referencedFieldName = stringLiteralValue(byFieldSourceExpression.StringLiteral()) // e.g. traderId
       return if (this.anonymousTypeResolutionContext.concreteProjectionTypeContext != null) {
-         val concreteProjectionType = this.tokenProcessor.typeOrError(
+         /**
+          * Example: here our anonymous type extends foo.Trade
+          * findAll {
+               Order[]( TradeDate  >= startDate , TradeDate < endDate )
+            } as foo.Trade {
+               traderEmail: UserEmail by foo.Trade['traderId']
+            }[]
+          */
+         val sourceTypeOrError = this.tokenProcessor.typeOrError( // e.g. SomeType
             byFieldSourceExpression.findNamespace(),
-            this.anonymousTypeResolutionContext.concreteProjectionTypeContext
+            byFieldSourceExpression.typeType()
          )
-         createFieldSource(
-            concreteProjectionType,
-            byFieldSourceExpression,
-            referencedFieldName,
-            QualifiedName.from(typeName)
-         )
-      } else {
-         createFieldSource(
-            this.tokenProcessor.getType(
+
+         sourceTypeOrError.flatMap { sourceType ->
+            val baseProjectionTypeOrError = this.tokenProcessor.typeOrError(
                byFieldSourceExpression.findNamespace(),
-               this.anonymousTypeResolutionContext.typesToDiscover.first().type.firstTypeParameterOrSelf,
-               byFieldSourceExpression
-            ),
+               this.anonymousTypeResolutionContext.concreteProjectionTypeContext
+            )
+
+             baseProjectionTypeOrError.flatMap { baseProjectionType ->
+               if (baseProjectionType == sourceType) {
+                  createFieldSource(
+                     baseProjectionTypeOrError,
+                     byFieldSourceExpression,
+                     referencedFieldName,
+                     QualifiedName.from(typeName)
+                  )
+               } else {
+                   createFieldSource(
+                     sourceTypeOrError,
+                     byFieldSourceExpression,
+                     referencedFieldName
+                  )
+               }
+            }
+         }
+      } else {
+         val sourceType = this.tokenProcessor.typeOrError( // e.g. SomeType
+            byFieldSourceExpression.findNamespace(),
+            byFieldSourceExpression.typeType()
+         )
+
+         createFieldSource(
+            sourceType,
             byFieldSourceExpression,
             referencedFieldName
          )
@@ -673,7 +702,7 @@ class FieldCompiler(
                      if (parameterContext.scalarAccessorExpression() != null && parameterContext.scalarAccessorExpression().readExpression() != null && this.typeBody.parent.isInViewContext()) {
                         val errorOrExpression =
                            ExpressionCompiler(this.tokenProcessor, this.typeChecker, this.errors, this)
-                           .compile(parameterContext.scalarAccessorExpression().readExpression().expressionGroup())
+                              .compile(parameterContext.scalarAccessorExpression().readExpression().expressionGroup())
                         if (errorOrExpression is Either.Left) {
                            return@flatMap errorOrExpression.a.left()
 
@@ -719,7 +748,7 @@ class FieldCompiler(
                      }.flatMap { parameterAccessor ->
                         typeChecker.ifAssignable(
                            parameterAccessor.returnType, parameterType.basePrimitive
-                              ?: PrimitiveType.ANY, parameterContext
+                           ?: PrimitiveType.ANY, parameterContext
                         ) {
                            parameterAccessor
                         }.wrapErrorsInList()

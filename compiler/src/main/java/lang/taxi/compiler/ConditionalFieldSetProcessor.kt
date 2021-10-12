@@ -12,7 +12,6 @@ import lang.taxi.accessors.NullValue
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.toCompilationUnits
-import lang.taxi.types.AccessorExpressionSelector
 import lang.taxi.types.AssignmentExpression
 import lang.taxi.types.ConditionalFieldSet
 import lang.taxi.types.ElseMatchExpression
@@ -398,18 +397,6 @@ class ConditionalFieldSetProcessor internal constructor(
          FieldReferenceSelector(fieldName, field.type)
       }
       return field
-   }
-
-   private fun compileTypedAccessor(
-      expressionSelector: TaxiParser.MappedExpressionSelectorContext,
-      namespace: Namespace
-   ): Either<List<CompilationError>, AccessorExpressionSelector> {
-      return compiler.parseType(namespace, expressionSelector.typeType())
-         .flatMap { type ->
-            compiler.compileScalarAccessor(expressionSelector.scalarAccessorExpression(), type).map { accessor ->
-               AccessorExpressionSelector(accessor, type)
-            }
-         }
    }
 }
 
