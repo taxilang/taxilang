@@ -1,7 +1,7 @@
 package lang.taxi
 
 enum class Operator(val symbol: String) {
-   EQUAL("="),
+   EQUAL("=="),
    NOT_EQUAL("!="),
    IN("in"),
    LIKE("like"),

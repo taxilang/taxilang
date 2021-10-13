@@ -1,6 +1,8 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.accessors.CollectionProjectionExpressionAccessor
+import lang.taxi.accessors.FieldSourceAccessor
 import lang.taxi.types.ArrayType
 import lang.taxi.types.ObjectType
 import lang.taxi.types.QualifiedName
@@ -252,6 +254,7 @@ object TaxiQlSpec : Spek({
          anonymousType.hasField("insertedAt").should.be.`true`
       }
 
+
       it("Should Allow anonymous type with field definitions referencing type to discover") {
          val src = """
                  import foo.Order
@@ -260,7 +263,7 @@ object TaxiQlSpec : Spek({
                  findAll {
                     Order[]( TradeDate  >= startDate , TradeDate < endDate )
                  } as {
-                    traderEmail: UserEmail by (this.traderId)
+                    traderEmail: UserEmail by Order['traderId']
                  }[]
            """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
@@ -271,6 +274,10 @@ object TaxiQlSpec : Spek({
          val anonymousType = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
          anonymousType.hasField("traderEmail").should.be.`true`
          anonymousType.field("traderEmail").accessor.should.not.be.`null`
+         val fieldSourceAccessor = anonymousType.field("traderEmail").accessor as FieldSourceAccessor
+         fieldSourceAccessor.attributeType.should.equal(QualifiedName.from("foo.TraderId"))
+         fieldSourceAccessor.sourceAttributeName.should.equal("traderId")
+         fieldSourceAccessor.sourceType.should.equal(QualifiedName.from("foo.Order"))
       }
 
 
@@ -282,7 +289,7 @@ object TaxiQlSpec : Spek({
                  findAll {
                     Order[]( TradeDate  >= startDate , TradeDate < endDate )
                  } as foo.Trade {
-                    traderEmail: UserEmail by (this.traderId)
+                    traderEmail: UserEmail by Trade['traderId']
                  }[]
            """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
@@ -292,7 +299,36 @@ object TaxiQlSpec : Spek({
          query.projectedType!!.anonymousTypeDefinition!!.anonymous.should.be.`true`
          val anonType = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
          anonType.fields.size.should.equal(2)
+         val fieldSourceAccessor = anonType.field("traderEmail").accessor as FieldSourceAccessor
+         fieldSourceAccessor.sourceType.should.equal(anonType.toQualifiedName())
+         fieldSourceAccessor.sourceAttributeName.should.equal("traderId")
+         fieldSourceAccessor.attributeType.should.equal(QualifiedName.from("foo.TraderId"))
       }
+
+      it("Should Allow anonymous type with field definitions referencing a type in the schema") {
+         val src = """
+                 import foo.Order
+                 import foo.OutputOrder
+
+                 findAll {
+                    Order[]( TradeDate  >= startDate , TradeDate < endDate )
+                 } as foo.Trade {
+                    traderEmail: UserEmail by Order['traderId']
+                 }[]
+           """.trimIndent()
+         val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
+         val query = queries.first()
+         query.projectedType!!.concreteType!!.qualifiedName.should.equal("foo.Trade")
+         query.projectedType!!.anonymousTypeDefinition!!.qualifiedName.should.startWith("lang.taxi.Array")
+         query.projectedType!!.anonymousTypeDefinition!!.anonymous.should.be.`true`
+         val anonType = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
+         anonType.fields.size.should.equal(2)
+         val fieldSourceAccessor = anonType.field("traderEmail").accessor as FieldSourceAccessor
+         fieldSourceAccessor.sourceType.should.equal(QualifiedName.from("foo.Order"))
+         fieldSourceAccessor.sourceAttributeName.should.equal("traderId")
+         fieldSourceAccessor.attributeType.should.equal(QualifiedName.from("foo.TraderId"))
+      }
+
 
       it("Should Fail anonymous type with field definitions referencing projected type but have invalid field type") {
          val src = """
@@ -310,7 +346,8 @@ object TaxiQlSpec : Spek({
          queryCompilationError.first().detailMessage.should.contain("InvalidType is not defined")
       }
 
-      it("Should Allow anonymous type with complex field definitions referencing type to be discovered") {
+      // Not sure if this feature is used.  I like it, but the syntax is a little confusing
+      xit("Should Allow anonymous type with complex field definitions referencing type to be discovered") {
          val src = """
                  import foo.Order
                  import foo.OutputOrder
@@ -359,7 +396,9 @@ object TaxiQlSpec : Spek({
          query.typesToFind[0].type.parameterizedName.should.equal("lang.taxi.Array<foo.Order>")
       }
 
-      it("Should Allow anonymous type with complex field definitions referencing projected type") {
+      // This feature (referencing the parent view, and extending an projection type) is cool, but
+      // has been disabled for npow
+      xit("Should Allow anonymous type with complex field definitions referencing projected type") {
          val src = """
                       import foo.Order
                       import foo.OutputOrder
@@ -481,20 +520,20 @@ object TaxiQlSpec : Spek({
             }
          """.compiledWithQuery("""
             findAll { Transaction[] } as {
-               items : TransactionItem -> {
+               items : {
                   sku : ProductSku
                   size : ProductSize
-               }[]
+               }[] by [TransactionItem]
             }[]
          """)
          val resultCollectionType = query.projectedType!!.anonymousTypeDefinition!! as ArrayType
          val resultMemberType = resultCollectionType.type as ObjectType
          val itemsField = resultMemberType.field("items")
-         itemsField.projectionScopeTypes.should.have.size(1)
-         itemsField.projectionScopeTypes.first().qualifiedName.should.equal("TransactionItem")
+         itemsField.accessor!!.asA<CollectionProjectionExpressionAccessor>().type.qualifiedName.should.equal("TransactionItem")
       }
 
-      it("by should be supported with an anonymously typed field") {
+      // This feature has been disabled for now.
+      xit("by should be supported with an anonymously typed field") {
          val taxiDoc = Compiler(
             """
          type QtyFill inherits Decimal

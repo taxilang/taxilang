@@ -49,7 +49,7 @@ object OperationSpec : Spek({
                currency : CurrencySymbol inherits String
             }
             service ClientService {
-              operation convertMoney(Money(this.currency = 'GBP'),target : CurrencySymbol):Money( this.currency = target )
+              operation convertMoney(Money(this.currency == 'GBP'),target : CurrencySymbol):Money( this.currency == target )
             }
          """.trimIndent()
             .compiled().service("ClientService")
@@ -107,7 +107,7 @@ object OperationSpec : Spek({
             type VyneQlQuery inherits String
             service PersonService {
                vyneQl query personQuery(@RequestBody body:VyneQlQuery):Person[] with capabilities {
-                  filter(=,in,like),
+                  filter(==,in,like),
                   sum,
                   count
                }
@@ -139,7 +139,7 @@ object OperationSpec : Spek({
             type VyneQlQuery inherits String
             service PersonService {
                vyneQl query personQuery(@RequestBody body:VyneQlQuery):Person[] with capabilities {
-                  filter(=,in,like),
+                  filter(==,in,like),
                   sum,
                   count
                }
@@ -149,7 +149,7 @@ object OperationSpec : Spek({
             .queryOperation("personQuery")
             .asTaxi()
          val expected = """vyneQl query personQuery(@RequestBody body: VyneQlQuery):lang.taxi.Array<Person> with capabilities {
-filter(=,in,like),
+filter(==,in,like),
 sum,
 count
 }"""
@@ -163,7 +163,7 @@ count
             type VyneQlQuery inherits String
             service PersonService {
                vyneQl query personQuery(@RequestBody body:VyneQlQuery):BadType[] with capabilities {
-                  filter(=,in,like),
+                  filter(==,in,like),
                   sum,
                   count
                }
@@ -178,7 +178,7 @@ count
             model Person {}
             service PersonService {
                vyneQl query personQuery(@RequestBody body:VyneQlQuery):Person[] with capabilities {
-                  filter(=,in,like),
+                  filter(==,in,like),
                   farting,
                   count
                }
@@ -199,7 +199,7 @@ count
             }
          """.validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("mismatched input 'guessing' expecting {'in', 'like', '>', '>=', '<', '<=', '=', '!='}")
+         errors.first().detailMessage.should.equal("mismatched input 'guessing' expecting {'in', 'like', '>', '>=', '<', '<=', '==', '!='}")
       }
 
       it("should accept function names with findAll keyword") {

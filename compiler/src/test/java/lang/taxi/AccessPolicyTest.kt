@@ -1,7 +1,13 @@
 package lang.taxi
 
 import com.winterbe.expekt.expect
-import lang.taxi.policies.*
+import lang.taxi.policies.CaseCondition
+import lang.taxi.policies.ElseCondition
+import lang.taxi.policies.FilterInstruction
+import lang.taxi.policies.Instruction
+import lang.taxi.policies.LiteralArraySubject
+import lang.taxi.policies.OperationScope
+import lang.taxi.policies.RelativeSubject
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -38,7 +44,7 @@ namespace test {
 
     policy TradeDeskPolicy against Trade {
         read external {
-            case caller.DeskId = this.test.DeskId -> permit
+            case caller.DeskId == this.test.DeskId -> permit
             case caller.Groups in ["ADMIN","COMPLIANCE"] -> permit
             case caller.DeskId != this.DeskId -> filter (counterPartyName , rate)
             else -> filter
@@ -47,7 +53,7 @@ namespace test {
             permit
         }
         write {
-            case caller.DeskId = this.DeskId -> permit
+            case caller.DeskId == this.DeskId -> permit
             case caller.Groups in ["ADMIN","COMPLIANCE"] -> permit
             case caller.DeskId != this.DeskId -> filter
             else -> filter

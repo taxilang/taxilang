@@ -130,7 +130,8 @@ open class TaxiDocument(
          return PrimitiveType.fromDeclaration(qualifiedName.toString())
       }
 
-      return typeMap[qualifiedName.toString()] ?: throw error("No type named $qualifiedName defined")
+      return typeMap[qualifiedName.toString()] ?:
+         throw error("No type named $qualifiedName defined")
 
    }
 

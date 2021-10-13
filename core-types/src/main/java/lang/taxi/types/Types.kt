@@ -157,8 +157,8 @@ interface Type : Named, Compiled, ImportableToken, Documented {
    val formattedInstanceOfType: Type?
 
    val definitionHash: String?
-
-   val calculation: Formula?
+// Formulas are replaced by expressions / accessors
+//   val calculation: Formula?
 
    val offset: Int?
 

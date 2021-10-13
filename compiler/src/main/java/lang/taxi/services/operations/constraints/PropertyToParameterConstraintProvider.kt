@@ -2,15 +2,27 @@ package lang.taxi.services.operations.constraints
 
 import arrow.core.Either
 import arrow.core.flatMap
-import arrow.core.left
-import lang.taxi.*
+import lang.taxi.CompilationError
+import lang.taxi.NamespaceQualifiedTypeResolver
+import lang.taxi.Operator
+import lang.taxi.TaxiParser
+import lang.taxi.TypeSystem
 import lang.taxi.query.asDotJoinedPath
 import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract
 import lang.taxi.services.Parameter
-import lang.taxi.types.*
+import lang.taxi.toCompilationUnits
+import lang.taxi.types.ArrayType
+import lang.taxi.types.AttributePath
+import lang.taxi.types.Compiled
+import lang.taxi.types.Field
+import lang.taxi.types.ObjectType
+import lang.taxi.types.StreamType
+import lang.taxi.types.Type
+import lang.taxi.types.TypeAlias
 import lang.taxi.utils.leftOr
 import lang.taxi.utils.log
+import lang.taxi.value
 
 class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
    override fun applies(constraint: Constraint): Boolean {

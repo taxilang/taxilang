@@ -66,7 +66,8 @@ data class AnnotationType(
       get() {
          return if (isDefined) wrapper.definitionHash else null
       }
-   override val calculation: Formula? = null
+//   formulas replaced by expressions
+//   override val calculation: Formula? = null
    override val referencedTypes: List<Type> = emptyList()
    override val offset: Int? = null
    override fun asTaxi(): String {

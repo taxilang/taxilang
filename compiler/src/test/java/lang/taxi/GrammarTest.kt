@@ -2,6 +2,10 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
+import lang.taxi.accessors.ColumnAccessor
+import lang.taxi.accessors.DestructuredAccessor
+import lang.taxi.accessors.JsonPathAccessor
+import lang.taxi.accessors.XpathAccessor
 import lang.taxi.messages.Severity
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.types.*
@@ -441,7 +445,7 @@ type Money {
    currency : Currency as String
 }
 type SomeServiceRequest {
-   amount : Money(this.currency = 'GBP')
+   amount : Money(this.currency == 'GBP')
    clientId : ClientId as String
 }
 """
@@ -840,104 +844,6 @@ type LegacyTradeNotification {
       val field = notification.field("instrument")
       val accessor = field.accessor as JsonPathAccessor
       expect(accessor.expression).to.equal("$.foo[bar]")
-   }
-
-   @Test
-   fun canDeclareAccessorsOnObjectTypes() {
-      val src = """
-type Money {
-   amount : MoneyAmount as Decimal
-   currency : Currency as String
-}
-type alias Instrument as String
-type NearLegNotional inherits Money {}
-type FarLegNotional inherits Money {}
-
-type LegacyTradeNotification {
-   instrument : Instrument by xpath("/some/xpath")
-   nearLegNotional : NearLegNotional {
-       amount by xpath("/legs[0]/amount")
-       currency by xpath("/legs[0]/currency")
-   }
-   farLegNotional : FarLegNotional {
-       amount by xpath("/legs[1]/amount")
-       currency by xpath("/legs[1]/currency")
-   }
-}
-        """.trimIndent()
-      val taxi = Compiler(src).compile()
-      val notification = taxi.objectType("LegacyTradeNotification")
-      val field = notification.field("nearLegNotional")
-      val accessor = field.accessor as DestructuredAccessor
-      val fieldAccessor = accessor.fields["amount"] as XpathAccessor
-      expect(fieldAccessor.expression).to.equal("/legs[0]/amount")
-   }
-
-   @Test
-   @Disabled("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
-   fun destructuredAccessorsCannotDeclareInvalidPropertyNames() {
-      val src = """
-type Money {
-   amount : MoneyAmount as Decimal
-   currency : Currency as String
-}
-
-type LegacyTradeNotification {
-   nearLegNotional : Money {
-       // value isn't valid
-       value by xpath("/legs[0]/amount")
-       currency by xpath("/legs[0]/currency")
-   }
-}
-"""
-      try {
-         val taxi = Compiler(src).compile()
-         fail("Expected compilation exception")
-      } catch (e: Exception) {
-         TODO()
-      }
-   }
-
-   @Test
-   @Disabled("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
-   fun destructuredAccessorsCanOmitOptionalProperties() {
-      val src = """
-type Money {
-   amount : MoneyAmount? as Decimal
-   currency : Currency as String
-}
-
-type LegacyTradeNotification {
-   nearLegNotional : Money {
-       currency by xpath("/legs[0]/currency")
-   }
-}
-"""
-      val taxi = Compiler(src).compile()
-      TODO()
-   }
-
-   @Test
-   @Disabled("Not implemented - https://gitlab.com/taxi-lang/taxi-lang/issues/22")
-   fun destructuredAccessorsCannotOmitNonNullProperties() {
-      val src = """
-type Money {
-   amount : MoneyAmount as Decimal
-   currency : Currency as String
-}
-
-type LegacyTradeNotification {
-   nearLegNotional : Money {
-       currency by xpath("/legs[0]/currency")
-   }
-}
-"""
-      try {
-         val taxi = Compiler(src).compile()
-         fail("Expected compilation exception")
-      } catch (e: Exception) {
-         TODO()
-      }
    }
 
    @Test

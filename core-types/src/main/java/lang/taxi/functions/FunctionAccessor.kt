@@ -1,15 +1,30 @@
 package lang.taxi.functions
 
-import lang.taxi.types.Accessor
-import lang.taxi.types.PrimitiveType
+import lang.taxi.accessors.Accessor
 import lang.taxi.types.FormulaOperator
+import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TaxiStatementGenerator
 import lang.taxi.types.Type
 
 
-data class FunctionAccessor(val function: Function, val inputs:List<Accessor>) : Accessor, TaxiStatementGenerator {
-   override val returnType: Type
-      get() = function.returnType ?: PrimitiveType.ANY
+data class FunctionAccessor private constructor(
+   val function: Function,
+   val inputs: List<Accessor>,
+   private val rawFunction: Function = function
+) : Accessor, TaxiStatementGenerator {
+   companion object {
+      /**
+       * Constructs a FunctionAccessor where any typeArguments present in the function contract
+       * are resolved using the provided inputs
+       */
+      fun buildAndResolveTypeArguments(function: Function, inputs: List<Accessor>): FunctionAccessor {
+         val typeArgResolvedDefinition: FunctionDefinition = function.resolveTypeParametersFromInputs(inputs)
+         val typeArgResolvedFunction = function.copy(definition = typeArgResolvedDefinition)
+         return FunctionAccessor(typeArgResolvedFunction, inputs, function)
+      }
+   }
+
+   override val returnType: Type = function.returnType ?: PrimitiveType.ANY
    override fun asTaxi(): String {
       val parametersAsTaxi = inputs.joinToString(",") { inputAccessor ->
          when (inputAccessor) {
@@ -21,7 +36,11 @@ data class FunctionAccessor(val function: Function, val inputs:List<Accessor>) :
    }
 }
 
-class FunctionExpressionAccessor(val functionAccessor: FunctionAccessor, val operator: FormulaOperator, val operand: Any) : Accessor, TaxiStatementGenerator {
+class FunctionExpressionAccessor(
+   val functionAccessor: FunctionAccessor,
+   val operator: FormulaOperator,
+   val operand: Any
+) : Accessor, TaxiStatementGenerator {
    override fun asTaxi(): String {
       val parametersAsTaxi = functionAccessor.inputs.joinToString(",") { inputAccessor ->
          when (inputAccessor) {

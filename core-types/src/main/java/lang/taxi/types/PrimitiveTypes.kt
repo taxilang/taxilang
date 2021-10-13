@@ -18,18 +18,32 @@ enum class VoidType : Type {
    override val inheritsFrom: Set<Type> = emptySet()
    override val format: List<String>? = null
    override val formattedInstanceOfType: Type? = null
-   override val calculation: Formula?
-      get() = null
+//   override val calculation: Formula?
+//      get() = null
    override val offset: Int? = null
    override val typeKind: TypeKind = TypeKind.Type
 }
 
+object NumberTypes {
+   // Order is important here, list the number types in
+   // order of specificity.
+   // Numeric expressions ensure that the return type
+   // is the most specific
+   val NUMBER_TYPES = listOf(PrimitiveType.INTEGER, PrimitiveType.DECIMAL, PrimitiveType.DOUBLE)
+   fun isNumberType(type:PrimitiveType) = NUMBER_TYPES.contains(type)
+   fun areAllNumberTypes(types:Collection<PrimitiveType>) = types.all { isNumberType(it) }
+
+   fun getTypeWithHightestPrecision(types:Collection<PrimitiveType>):PrimitiveType {
+      require(types.isNotEmpty()) { "Cannot evaluate an empty collection"}
+      return types.maxByOrNull { NUMBER_TYPES.indexOf(it) }!!
+   }
+}
 enum class PrimitiveType(
    val declaration: String,
    override val typeDoc: String,
    override val format: List<String>? = null,
    override val formattedInstanceOfType: Type? = null,
-   override val calculation: Formula? = null,
+//   override val calculation: Formula? = null,
    override val offset: Int? = null) : Type {
    BOOLEAN("Boolean", "Represents a value which is either `true` or `false`."),
    STRING("String", "A collection of characters."),
@@ -69,7 +83,8 @@ enum class PrimitiveType(
 
       const val NAMESPACE = "lang.taxi"
 
-      val NUMBER_TYPES = listOf(INTEGER, DECIMAL, DOUBLE)
+
+      val NUMBER_TYPES =NumberTypes.NUMBER_TYPES
       fun fromDeclaration(value: String): PrimitiveType {
          return typesByLookup[value] ?: throw IllegalArgumentException("$value is not a valid primative")
       }

@@ -30,9 +30,7 @@ object OperationContextSpec : Spek({
             val operation = """
          $taxi
          service TradeService {
-            operation getTrade(id:TradeId):Trade(
-               TradeId = id
-            )
+            operation getTrade(id:TradeId):Trade(TradeId == id)
          }
          """.compiled().service("TradeService").operation("getTrade")
             operation.contract!!.returnTypeConstraints.should.have.size(1)
@@ -67,9 +65,7 @@ object OperationContextSpec : Spek({
             val errors = """
          $taxi
          service TradeService {
-            operation getTrade(id:TradeId):Trade(
-               EmployeeCode = id
-            )
+            operation getTrade(id:TradeId):Trade(EmployeeCode == id)
          }
          """.validated()
             errors.should.be.empty
@@ -79,9 +75,7 @@ object OperationContextSpec : Spek({
             val errors = """
          $taxi
          service TradeService {
-            operation getTrade(id:TradeId):Trade(
-               TradeId = foo
-            )
+            operation getTrade(id:TradeId):Trade(TradeId == foo)
          }
          """.validated()
             errors.should.have.size(1)
@@ -92,9 +86,7 @@ object OperationContextSpec : Spek({
             val operation = """
          $taxi
          service TradeService {
-            operation getTrade(tradeId:TradeId):Trade(
-               this.tradeId = tradeId
-            )
+            operation getTrade(tradeId:TradeId):Trade(this.tradeId == tradeId)
          }
          """.compiled().service("TradeService").operation("getTrade")
             operation.contract!!.returnTypeConstraints.should.have.size(1)
@@ -111,9 +103,7 @@ object OperationContextSpec : Spek({
             val errors = """
          $taxi
          service TradeService {
-            operation getTrade(id:TradeId):Trade(
-               this.something = id
-            )
+            operation getTrade(id:TradeId):Trade(this.something == id)
          }
          """.validated()
             errors.should.have.size(1)
@@ -125,9 +115,7 @@ object OperationContextSpec : Spek({
             val operation = """
          $taxi
          service TradeService {
-            operation getTradesAfter(startDate:Instant):Trade[](
-               TradeDate >= startDate
-            )
+            operation getTradesAfter(startDate:Instant):Trade[](TradeDate >= startDate)
          }
          """.compiled().service("TradeService").operation("getTradesAfter")
             operation.contract!!.returnTypeConstraints.should.have.size(1)
