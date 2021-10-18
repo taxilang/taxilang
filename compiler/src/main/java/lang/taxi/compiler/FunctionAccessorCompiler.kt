@@ -20,6 +20,8 @@ import lang.taxi.types.PrimitiveType
 import lang.taxi.types.Type
 import lang.taxi.types.TypeChecker
 import lang.taxi.types.TypeReferenceSelector
+import lang.taxi.utils.flattenErrors
+import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.wrapErrorsInList
 import lang.taxi.value
 import org.antlr.v4.runtime.RuleContext
@@ -68,7 +70,7 @@ class FunctionAccessorCompiler(
                      errors.add(compilationError)
                   }
 
-               val parameters =
+               val parametersOrErrors: Either<List<CompilationError>, List<Accessor>> =
                   functionContext.formalParameterList().parameter().mapIndexed { parameterIndex, parameterContext ->
                      val parameterType = function.getParameterType(parameterIndex)
                      if (parameterContext.modelAttributeTypeReference() == null && parentContext.isInViewContext()) {
@@ -122,14 +124,18 @@ class FunctionAccessorCompiler(
                         }.wrapErrorsInList()
                      }
                      parameterAccessor
-                  }.reportAndRemoveErrorList(errors)
-               if (function.modifiers.contains(FunctionModifiers.Query) && !functionContext.isInViewContext()) {
-                  CompilationError(
-                     functionContext.start,
-                     "a query function can only referenced from view definitions!"
-                  ).asList().left()
-               } else {
-                  FunctionAccessor.buildAndResolveTypeArguments(function, parameters).right()
+                  }.invertEitherList()
+                     .flattenErrors()
+               parametersOrErrors.flatMap { parameters: List<Accessor> ->
+                  if (function.modifiers.contains(FunctionModifiers.Query) && !functionContext.isInViewContext()) {
+                     CompilationError(
+                        functionContext.start,
+                        "a query function can only referenced from view definitions!"
+                     ).asList().left()
+                  } else {
+                     FunctionAccessor.buildAndResolveTypeArguments(function, parameters).right()
+                  }
+
                }
             }
          }

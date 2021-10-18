@@ -756,7 +756,7 @@ queryParam: Identifier ':' typeType;
 // findAllDirective: 'findAll';
 // findOneDirective: 'findAll';
 
-queryDirective: FindAll | FindOne | Stream | Find;
+   queryDirective: FindAll | FindOne | Stream | Find;
 findDirective: Find;
 
 givenBlock : 'given' '{' factList '}';

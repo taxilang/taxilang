@@ -24,8 +24,13 @@ import lang.taxi.types.Type
 // we want to specify that an Expression should declare a returnType
 abstract class Expression : Compiled, TaxiStatementGenerator, Accessor {
    override fun asTaxi(): String {
+      // sanitize, stripping namespace declarations
+      val raw = this.compilationUnits.first().source.content
+      val taxi = if (raw.startsWith("namespace")) {
+         raw.substring(raw.indexOf("{")).removeSurrounding("{","}").trim()
+      } else raw
       // TODO: Check this... probably not right
-      return this.compilationUnits.first().source.content
+      return taxi
    }
 }
 
