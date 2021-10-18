@@ -1,7 +1,16 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.accessors.ConditionalAccessor
+import lang.taxi.accessors.LiteralAccessor
+import lang.taxi.expressions.LiteralExpression
+import lang.taxi.expressions.OperatorExpression
+import lang.taxi.types.ElseMatchExpression
+import lang.taxi.types.FormulaOperator
+import lang.taxi.types.InlineAssignmentExpression
+import lang.taxi.types.ModelAttributeReferenceSelector
 import lang.taxi.types.ObjectType
+import lang.taxi.types.WhenFieldSetCondition
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -204,7 +213,7 @@ class ViewSpec : Spek({
          type OrderEventDateTime inherits Instant
          type OrderType inherits String
          type SecurityDescription inherits String
-         type RequestedQuantity inherits String
+         type RequestedQuantity inherits Decimal
          type OrderStatus inherits String
          type DecimalFieldOrderFilled inherits Decimal
 
@@ -290,20 +299,32 @@ class ViewSpec : Spek({
          joinBodyType.field("requestedQuantity").memberSource?.fullyQualifiedName.should.equal("OrderSent")
          val whenField = joinBodyType.field("orderEntry")
          whenField.type.qualifiedName.should.equal("OrderStatus")
-         /**
-         whenField.accessor.should.equal(ConditionalAccessor(WhenFieldSetCondition(selectorExpression = EmptyReferenceSelector,
-            cases = listOf(
-               WhenCaseBlock(
-                  matchExpression = ComparisonExpression(operator = ComparisonOperator.EQ,
-                     left = ModelAttributeFieldReferenceEntity(source = orderSentType.toQualifiedName(), fieldType = requestedQuantityType),
-                     right = ModelAttributeFieldReferenceEntity(source = orderFillType.toQualifiedName(), fieldType = decimalFieldOrderFilled)),
-                  assignments = listOf(InlineAssignmentExpression(assignment = ModelAttributeTypeReferenceAssignment(type = orderStatusType, source = orderFillType.toQualifiedName())))
-               ),
-               WhenCaseBlock(
-                  matchExpression = ElseMatchExpression,
-                  assignments = listOf(InlineAssignmentExpression(assignment = LiteralAssignment("PartiallyFilled"))))))
-         ))
-         **/
+         whenField.accessor.should.instanceof(ConditionalAccessor::class.java)
+         val conditionalAccessor = whenField.accessor as ConditionalAccessor
+         conditionalAccessor.expression.should.instanceof(WhenFieldSetCondition::class.java)
+         val whenFieldSetCondition = conditionalAccessor.expression as WhenFieldSetCondition
+         whenFieldSetCondition.selectorExpression.should.instanceof(LiteralExpression::class.java)
+         (whenFieldSetCondition.selectorExpression as LiteralExpression).literal.should.equal(
+            LiteralAccessor(true)
+         )
+         val firstCase = whenFieldSetCondition.cases.first()
+         ((firstCase.matchExpression as OperatorExpression)
+            .lhs as ModelAttributeReferenceSelector).memberType.should.equal(requestedQuantityType)
+         ((firstCase.matchExpression as OperatorExpression)
+            .lhs as ModelAttributeReferenceSelector).memberSource.should.equal(orderSentType.toQualifiedName())
+         ((firstCase.matchExpression as OperatorExpression)
+            .rhs as ModelAttributeReferenceSelector).memberType.should.equal(decimalFieldOrderFilled)
+         ((firstCase.matchExpression as OperatorExpression)
+            .rhs as ModelAttributeReferenceSelector).memberSource.should.equal(orderFillType.toQualifiedName())
+         (firstCase.matchExpression as OperatorExpression).operator.should.equal(FormulaOperator.Equal)
+         (firstCase.assignments.first().assignment as ModelAttributeReferenceSelector)
+            .memberType.should.equal(orderStatusType)
+         (firstCase.assignments.first().assignment as ModelAttributeReferenceSelector)
+            .memberSource.should.equal(orderFillType.toQualifiedName())
+         whenFieldSetCondition.cases[1].matchExpression.should.equal(ElseMatchExpression)
+         (whenFieldSetCondition.cases[1].assignments.first().assignment as LiteralExpression)
+            .value
+            .should.equal("PartiallyFilled")
       }
 
 
@@ -314,7 +335,7 @@ class ViewSpec : Spek({
          type OrderEventDateTime inherits Instant
          type OrderType inherits String
          type SecurityDescription inherits String
-         type RequestedQuantity inherits String
+         type RequestedQuantity inherits Decimal
          type OrderStatus inherits String
          type DecimalFieldOrderFilled inherits Decimal
          type OrderSize inherits String
@@ -346,7 +367,7 @@ class ViewSpec : Spek({
               requestedQuantity: OrderSent::RequestedQuantity
               orderEntry: OrderSent::OrderStatus
               orderSize: OrderSize by when {
-                 OrderSent::RequestedQuantity = 0 -> "Zero Size"
+                 OrderSent::RequestedQuantity == 0 -> "Zero Size"
                  OrderSent::RequestedQuantity > 0 && OrderSent::RequestedQuantity < 100 -> "Small Size"
                  else -> "PartiallyFilled"
               }
@@ -372,39 +393,52 @@ class ViewSpec : Spek({
          bodyType.field("requestedQuantity").memberSource?.fullyQualifiedName.should.equal("OrderSent")
          bodyType.field("orderEntry").memberSource?.fullyQualifiedName.should.equal("OrderSent")
          val whenField = bodyType.field("orderSize")
+         val conditionalAccessor = whenField.accessor as ConditionalAccessor
+         conditionalAccessor.expression.should.instanceof(WhenFieldSetCondition::class.java)
+         val whenFieldSetCondition = conditionalAccessor.expression as WhenFieldSetCondition
          whenField.type.qualifiedName.should.equal("OrderSize")
-         /**
-         whenField.accessor.should.equal(
-            ConditionalAccessor(
-               expression = WhenFieldSetCondition(
-                  selectorExpression = EmptyReferenceSelector,
-                  cases = listOf(
-                     WhenCaseBlock(
-                        matchExpression = ComparisonExpression(
-                           operator = ComparisonOperator.EQ,
-                           left = ModelAttributeFieldReferenceEntity(
-                              source = orderSentType.toQualifiedName(),
-                              fieldType = requestedQtyType),
-                           right = ConstantEntity(0)),
-                        assignments = listOf(InlineAssignmentExpression(LiteralAssignment("Zero Size")))),
-                     WhenCaseBlock(
-                        matchExpression = AndExpression(
-                           left = ComparisonExpression(
-                              operator = ComparisonOperator.GT,
-                              left = ModelAttributeFieldReferenceEntity(source = orderSentType.toQualifiedName(), fieldType = requestedQtyType),
-                              right = ConstantEntity(0)),
-                           right = ComparisonExpression(
-                              operator = ComparisonOperator.LT,
-                              left = ModelAttributeFieldReferenceEntity(source = orderSentType.toQualifiedName(), fieldType = requestedQtyType),
-                              right = ConstantEntity(100))),
-                        assignments = listOf(InlineAssignmentExpression(LiteralAssignment("Small Size")))),
-                     WhenCaseBlock(
-                        matchExpression = ElseMatchExpression,
-                        assignments = listOf(InlineAssignmentExpression(assignment = LiteralAssignment("PartiallyFilled"))))
-                  )))
+         whenFieldSetCondition.selectorExpression.should.instanceof(LiteralExpression::class.java)
+         (whenFieldSetCondition.selectorExpression as LiteralExpression).literal.should.equal(
+            LiteralAccessor(true)
          )
-         **/
+         val firstCase = whenFieldSetCondition.cases.first()
+         ((firstCase.matchExpression as OperatorExpression)
+            .lhs as ModelAttributeReferenceSelector).memberType.should.equal(requestedQtyType)
+         ((firstCase.matchExpression as OperatorExpression)
+            .lhs as ModelAttributeReferenceSelector).memberSource.should.equal(orderSentType.toQualifiedName())
+         ((firstCase.matchExpression as OperatorExpression)
+            .rhs as LiteralExpression).value.should.equal(0)
+         ((firstCase.matchExpression as OperatorExpression)
+            .rhs as LiteralExpression).literal.value.should.equal(0)
+         (firstCase.matchExpression as OperatorExpression).operator.should.equal(FormulaOperator.Equal)
+         ((firstCase.assignments.first().assignment as LiteralExpression)
+            .value.should.equal("Zero Size"))
 
+         val secondCase = whenFieldSetCondition.cases[1]
+         (((secondCase.matchExpression as OperatorExpression)
+            .lhs as OperatorExpression)
+            .lhs as ModelAttributeReferenceSelector)
+            .memberType.should.equal(requestedQtyType)
+         (((secondCase.matchExpression as OperatorExpression)
+            .lhs as OperatorExpression)
+            .rhs as LiteralExpression)
+            .value.should.equal(0)
+         (((secondCase.matchExpression as OperatorExpression)
+            .rhs as OperatorExpression)
+            .lhs as ModelAttributeReferenceSelector)
+            .memberType.should.equal(requestedQtyType)
+         (((secondCase.matchExpression as OperatorExpression)
+            .rhs as OperatorExpression)
+            .rhs as LiteralExpression)
+            .value.should.equal(100)
+         (secondCase.matchExpression as OperatorExpression).operator.should.equal(FormulaOperator.LogicalAnd)
+         ((secondCase.assignments.first().assignment as LiteralExpression)
+            .value.should.equal("Small Size"))
+
+         whenFieldSetCondition.cases[2].matchExpression.should.equal(ElseMatchExpression)
+         (whenFieldSetCondition.cases[2].assignments.first().assignment as LiteralExpression)
+            .value
+            .should.equal("PartiallyFilled")
       }
 
       it("A join view with two types with single join fields can be compiled") {
@@ -629,6 +663,34 @@ class ViewSpec : Spek({
          val (error, taxi) = Compiler.forStrings(listOf(src, viewSrc)).compileWithMessages()
          error.should.be.empty
          taxi.views.size.should.equal(1)
+      }
+      it("a view with a field substracting two view fields") {
+         val schema = """
+            import vyne.aggregations.sumOver
+            type CumulativeQty inherits Decimal
+            type OrderId inherits String
+            type ExecutedQuantity inherits Decimal
+            type OrderEventDateTime inherits Instant
+            type RequestedQuantity inherits Decimal
+            type RemainingQuantity inherits Decimal
+
+            model Order {
+               orderId: OrderId
+               execQty: ExecutedQuantity
+               ts: OrderEventDateTime
+               reqQty: RequestedQuantity
+            }
+
+            view Report with query {
+               find {Order[]} as {
+                     sellCumulativeQuantity:  CumulativeQty by sumOver(Order:: ExecutedQuantity, Order:: OrderId, Order:: OrderEventDateTime)
+                     buyCumulativeQuantity: RequestedQuantity by sumOver(Order:: RequestedQuantity, Order:: OrderId, Order:: OrderEventDateTime)
+                     remainingQuantity: RemainingQuantity by (Report:: RequestedQuantity - Report:: CumulativeQty)
+               }
+            }
+         """.trimIndent()
+         val (error, taxi) = Compiler.forStrings(listOf(schema)).compileWithMessages()
+         error.should.be.empty
       }
    }
 })

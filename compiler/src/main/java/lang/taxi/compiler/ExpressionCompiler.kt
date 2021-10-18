@@ -27,6 +27,7 @@ import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.ModelAttributeReferenceSelector
 import lang.taxi.types.PrimitiveType
+import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
 import lang.taxi.types.TypeChecker
 import lang.taxi.utils.flattenErrors
@@ -286,6 +287,21 @@ class ExpressionCompiler(
       modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext
    ): Either<List<CompilationError>, ModelAttributeReferenceSelector> {
 
+      val memberSourceTypeType = modelAttributeReferenceCtx.typeType().first()
+      val memberTypeType = modelAttributeReferenceCtx.typeType()[1]
+      val sourceTypeName = try {
+         QualifiedName.from(fieldCompiler!!.lookupTypeByName(memberSourceTypeType)).right()
+      } catch (e: Exception) {
+         CompilationError(
+            modelAttributeReferenceCtx.start,
+            "Only Model AttributeReference expressions (SourceType::FieldType) are allowed for views"
+         ).asList().left()
+      }
+      return sourceTypeName.flatMap { memberSourceType ->
+         fieldCompiler!!.parseType(modelAttributeReferenceCtx.findNamespace(), memberTypeType).flatMap { memberType ->
+            ModelAttributeReferenceSelector(memberSourceType, memberType, modelAttributeReferenceCtx.toCompilationUnits()).right()
+         }
+      }
       // TODO - This isn't implemented, need to find the original implementation
       return listOf(
          CompilationError(

@@ -51,11 +51,13 @@ enum class FormulaOperator(
    LessThanOrEqual("<=", listOf(onlyNumericTypes())),
    LogicalAnd("&&", listOf(areAllBoolean())),
    LogicalOr("||", listOf(areAllBoolean())),
-   Equal("==", listOf(areAllSameType())),
+   Equal("==", listOf(areAllSameType(), onlyNumericTypes())),
    NotEqual("!=", listOf(areAllSameType()));
 
 
    fun isLogicalOperator(): Boolean = LOGICAL_OPERATORS.contains(this)
+   fun isComparisonOperator(): Boolean = COMPARISON_OPERATORS.contains(this)
+   fun isLogicalOrComparisonOperator(): Boolean = isLogicalOperator() || isComparisonOperator()
    fun supportsNullComparison():Boolean {
       return this == Equal || this == NotEqual
    }
@@ -68,15 +70,16 @@ enum class FormulaOperator(
    companion object {
 
       val LOGICAL_OPERATORS = setOf(
-         GreaterThan,
+         LogicalAnd,
+         LogicalOr,
+      )
+
+      val COMPARISON_OPERATORS = setOf( GreaterThan,
          GreaterThanOrEqual,
          LessThan,
          LessThanOrEqual,
-         LogicalAnd,
-         LogicalOr,
          Equal,
-         NotEqual,
-      )
+         NotEqual,)
       private val bySymbol = values().associateBy { it.symbol }
       fun forSymbol(symbol: String): FormulaOperator {
          return bySymbol[symbol] ?: error("No operator defined for symbol $symbol")

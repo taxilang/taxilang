@@ -32,11 +32,20 @@ fun ParserRuleContext?.toCompilationUnit(dependantTypeNames:List<QualifiedName> 
       CompilationUnit.unspecified()
    } else {
       val rawSource = this.source()
-      lang.taxi.types.CompilationUnit(
-         this,
-         this.source().makeStandalone(this.findNamespace(),dependantTypeNames),
-         SourceLocation(this.start.line, this.start.charPositionInLine)
-      );
+      return if (dependantTypeNames.isEmpty()) {
+         CompilationUnit(
+            this,
+            rawSource,
+            SourceLocation(this.start.line, this.start.charPositionInLine)
+         )
+
+      } else {
+         CompilationUnit(
+            this,
+            rawSource.makeStandalone(this.findNamespace(),dependantTypeNames),
+            SourceLocation(this.start.line, this.start.charPositionInLine)
+         );
+      }
    }
 }
 

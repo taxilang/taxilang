@@ -33,7 +33,7 @@ data class WhenFieldSetCondition(
    val cases: List<WhenCaseBlock>
 ) : FieldSetExpression {
    override fun asTaxi(): String {
-      val whenAsTaxi = if (selectorExpression.asTaxi().isEmpty()) {
+      val whenAsTaxi = if (selectorExpression.asTaxi().isEmpty() || selectorExpression.asTaxi().startsWith("when")) {
          "when"
 
       } else {
@@ -65,6 +65,8 @@ data class ModelAttributeReferenceSelector(
    override val compilationUnits: List<CompilationUnit>
 ) : TaxiStatementGenerator, Accessor, Expression() {
    override fun asTaxi(): String = "$memberSource::${memberType.qualifiedName}"
+   override val returnType: Type
+      get() = this.memberType
 }
 
 @Deprecated("replaced by TypeExpression")

@@ -162,13 +162,6 @@ conditionalTypeWhenDeclaration:
    conditionalTypeWhenCaseDeclaration*
    '}';
 
-conditionalTypeWhenSelector:
-   mappedExpressionSelector |  // when( xpath('/foo/bar') : SomeType ) ...
-   fieldReferenceSelector; // when( someField ) ...
-
-mappedExpressionSelector: // xpath('/foo/bar') : SomeType
-   scalarAccessorExpression ':' typeType;
-
 // field references must be prefixed by this. -- ie., this.firstName
 // this is to disambiguoate lookups by type -- ie., Name
 //
@@ -248,7 +241,7 @@ scalarAccessorExpression
     | readExpression
     | byFieldSourceExpression
     | collectionProjectionExpression
-   | conditionalTypeConditionDeclaration
+    | conditionalTypeConditionDeclaration
     ;
 
 // Required for Query based Anonymous type definitions like:
@@ -256,7 +249,7 @@ scalarAccessorExpression
 //               traderEmail: UserEmail (by this.traderId)
 // }
 //
-byFieldSourceExpression:  '(' fieldReferenceSelector ')';
+byFieldSourceExpression:  typeType '['  StringLiteral  ']';
 xpathAccessorDeclaration : 'xpath' '(' StringLiteral ')';
 jsonPathAccessorDeclaration : 'jsonPath' '(' StringLiteral ')';
 
@@ -471,21 +464,6 @@ propertyToParameterConstraintRhs : (literal | qualifiedName);
 
 propertyFieldNameQualifier : 'this' '.';
 
-condition : logical_expr ;
-logical_expr
- : logical_expr '&&' logical_expr # LogicalExpressionAnd
- | logical_expr '||' logical_expr  # LogicalExpressionOr
- | comparison_expr               # ComparisonExpression
- | logical_entity                # LogicalEntity
- ;
-
-comparison_expr : comparison_operand comp_operator comparison_operand
-                    # ComparisonExpressionWithOperator
-                ;
-
-comparison_operand : arithmetic_expr
-                   ;
-
 comp_operator : GT
               | GE
               | LT
@@ -493,19 +471,6 @@ comp_operator : GT
               | EQ
               | NQ
               ;
-
-
-arithmetic_expr
- :  numeric_entity                        # ArithmeticExpressionNumericEntity
- ;
-
-logical_entity : (TRUE | FALSE) # LogicalConst
-               | propertyToParameterConstraintLhs     # LogicalVariable
-               ;
-
-numeric_entity : literal              # LiteralConst
-               | propertyToParameterConstraintLhs           # NumericVariable
-               ;
 
 comparisonOperator
    : '=='
@@ -515,14 +480,6 @@ comparisonOperator
    | '<'
    | '!='
    ;
-
-arithmaticOperator:PLUS
-   | MINUS
-   | MULT
-   | DIV
-   ;
-
-
 
 policyDeclaration
     :  annotation* 'policy' policyIdentifier 'against' typeType '{' policyRuleSet* '}';
@@ -785,19 +742,6 @@ queryProjection: 'as' typeType? anonymousTypeDefinition?;
 //    }(by this.salesUtCode)
 //}
 anonymousTypeDefinition: typeBody listType? accessor?;
-anonymousFieldDeclaration: Identifier ':' typeType;
-anonymousFieldDeclarationWithSelfReference: Identifier ':' typeType '(' 'by' propertyFieldNameQualifier Identifier ')';
-anonymousComplexFieldDeclaration: Identifier ':' '{' (Identifier ':' typeType)*  '}'  '(' 'by' propertyFieldNameQualifier Identifier ')';
-
-anonymousField:
-   Identifier  // e.g. orderId
-   | anonymousFieldDeclaration // productId: ProductId
-   | anonymousFieldDeclarationWithSelfReference // traderEmail : EmailAddress(by this.traderUtCode)
-   | anonymousComplexFieldDeclaration //    salesPerson {
-                                    //        firstName : FirstName
-                                    //        lastName : LastName
-                                    //    } (by this.salesUtCode)
-   ;
 
 viewDeclaration
     :  typeDoc? annotation* typeModifier* 'view' Identifier
@@ -822,10 +766,6 @@ in_exprs: qualifiedName IN literalArray;
 like_exprs: qualifiedName LIKE literal;
 not_in_exprs: qualifiedName NOT_IN literalArray;
 
-modelAttributeTypeReferenceComparison: modelAttributeTypeReference comparison_operand modelAttributeTypeReference;
-modelAttributeTypeReferenceLiteralComparison: modelAttributeTypeReferenceComparison comparison_operand literal;
-modelAttributeTypeReferenceFunctionComparison: modelAttributeTypeReference filterCapability modelAttributeTypeReferenceFunctionComparisonExpression;
-modelAttributeTypeReferenceFunctionComparisonExpression: literalArray | literal;
 NOT_IN: 'not in';
 IN: 'in';
 LIKE: 'like';

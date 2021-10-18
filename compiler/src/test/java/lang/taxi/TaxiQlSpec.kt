@@ -2,6 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import lang.taxi.accessors.CollectionProjectionExpressionAccessor
+import lang.taxi.accessors.FieldSourceAccessor
 import lang.taxi.types.ArrayType
 import lang.taxi.types.ObjectType
 import lang.taxi.types.QualifiedName
@@ -254,8 +255,7 @@ object TaxiQlSpec : Spek({
       }
 
 
-      // This syntax is under review, and likely will change
-      xit("Should Allow anonymous type with field definitions referencing type to discover") {
+      it("Should Allow anonymous type with field definitions referencing type to discover") {
          val src = """
                  import foo.Order
                  import foo.OutputOrder
@@ -263,7 +263,7 @@ object TaxiQlSpec : Spek({
                  findAll {
                     Order[]( TradeDate  >= startDate , TradeDate < endDate )
                  } as {
-                    traderEmail: UserEmail by (this.traderId)
+                    traderEmail: UserEmail by Order['traderId']
                  }[]
            """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
@@ -274,11 +274,14 @@ object TaxiQlSpec : Spek({
          val anonymousType = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
          anonymousType.hasField("traderEmail").should.be.`true`
          anonymousType.field("traderEmail").accessor.should.not.be.`null`
+         val fieldSourceAccessor = anonymousType.field("traderEmail").accessor as FieldSourceAccessor
+         fieldSourceAccessor.attributeType.should.equal(QualifiedName.from("foo.TraderId"))
+         fieldSourceAccessor.sourceAttributeName.should.equal("traderId")
+         fieldSourceAccessor.sourceType.should.equal(QualifiedName.from("foo.Order"))
       }
 
 
-      // This feature is cool, and we should bring it back, but for now it's been killed.
-      xit("Should Allow anonymous type with field definitions referencing projected type") {
+      it("Should Allow anonymous type with field definitions referencing projected type") {
          val src = """
                  import foo.Order
                  import foo.OutputOrder
@@ -286,7 +289,7 @@ object TaxiQlSpec : Spek({
                  findAll {
                     Order[]( TradeDate  >= startDate , TradeDate < endDate )
                  } as foo.Trade {
-                    traderEmail: UserEmail by (this.traderId)
+                    traderEmail: UserEmail by Trade['traderId']
                  }[]
            """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
@@ -296,7 +299,36 @@ object TaxiQlSpec : Spek({
          query.projectedType!!.anonymousTypeDefinition!!.anonymous.should.be.`true`
          val anonType = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
          anonType.fields.size.should.equal(2)
+         val fieldSourceAccessor = anonType.field("traderEmail").accessor as FieldSourceAccessor
+         fieldSourceAccessor.sourceType.should.equal(anonType.toQualifiedName())
+         fieldSourceAccessor.sourceAttributeName.should.equal("traderId")
+         fieldSourceAccessor.attributeType.should.equal(QualifiedName.from("foo.TraderId"))
       }
+
+      it("Should Allow anonymous type with field definitions referencing a type in the schema") {
+         val src = """
+                 import foo.Order
+                 import foo.OutputOrder
+
+                 findAll {
+                    Order[]( TradeDate  >= startDate , TradeDate < endDate )
+                 } as foo.Trade {
+                    traderEmail: UserEmail by Order['traderId']
+                 }[]
+           """.trimIndent()
+         val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
+         val query = queries.first()
+         query.projectedType!!.concreteType!!.qualifiedName.should.equal("foo.Trade")
+         query.projectedType!!.anonymousTypeDefinition!!.qualifiedName.should.startWith("lang.taxi.Array")
+         query.projectedType!!.anonymousTypeDefinition!!.anonymous.should.be.`true`
+         val anonType = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
+         anonType.fields.size.should.equal(2)
+         val fieldSourceAccessor = anonType.field("traderEmail").accessor as FieldSourceAccessor
+         fieldSourceAccessor.sourceType.should.equal(QualifiedName.from("foo.Order"))
+         fieldSourceAccessor.sourceAttributeName.should.equal("traderId")
+         fieldSourceAccessor.attributeType.should.equal(QualifiedName.from("foo.TraderId"))
+      }
+
 
       it("Should Fail anonymous type with field definitions referencing projected type but have invalid field type") {
          val src = """
