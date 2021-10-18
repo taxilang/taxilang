@@ -38,6 +38,8 @@ import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
 import lang.taxi.types.TypeReferenceSelector
+import lang.taxi.utils.flattenErrors
+import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.log
 import lang.taxi.utils.wrapErrorsInList
 import lang.taxi.value
@@ -101,7 +103,8 @@ class FieldCompiler(
 
 ) {
    internal val typeChecker = tokenProcessor.typeChecker
-   private val conditionalFieldSetProcessor = ConditionalFieldSetProcessor(this, ExpressionCompiler(tokenProcessor, typeChecker, errors, this))
+   private val conditionalFieldSetProcessor =
+      ConditionalFieldSetProcessor(this, ExpressionCompiler(tokenProcessor, typeChecker, errors, this))
 
    //   private val calculatedFieldSetProcessor = CalculatedFieldSetProcessor(this)
    private val defaultValueParser = DefaultValueParser()
@@ -696,73 +699,80 @@ class FieldCompiler(
                      errors.add(compilationError)
                   }
 
-               val parameters =
-                  functionContext.formalParameterList().parameter().mapIndexed { parameterIndex, parameterContext ->
-                     val parameterType = function.getParameterType(parameterIndex)
-                     if (parameterContext.scalarAccessorExpression() != null && parameterContext.scalarAccessorExpression().readExpression() != null && this.typeBody.parent.isInViewContext()) {
-                        val errorOrExpression =
+               functionContext.formalParameterList().parameter().mapIndexed { parameterIndex, parameterContext ->
+                  val parameterType = function.getParameterType(parameterIndex)
+                  if (parameterContext.scalarAccessorExpression() != null && parameterContext.scalarAccessorExpression().readExpression() != null && this.typeBody.parent.isInViewContext()) {
+                     val errorOrExpression =
                            ExpressionCompiler(this.tokenProcessor, this.typeChecker, this.errors, this)
-                              .compile(parameterContext.scalarAccessorExpression().readExpression().expressionGroup())
+                        .compile(parameterContext.scalarAccessorExpression().readExpression().expressionGroup())
                         if (errorOrExpression is Either.Left) {
-                           return@flatMap errorOrExpression.a.left()
+                     return@flatMap errorOrExpression.a.left()
 
                         }
-                     }
-                     val parameterAccessor = when {
-                        parameterContext.literal() != null -> LiteralAccessor(
-                           parameterContext.literal().value()
-                        ).right()
-                        parameterContext.scalarAccessorExpression() != null -> compileScalarAccessor(
-                           parameterContext.scalarAccessorExpression(),
-                           parameterType
-                        )
+                  }
+                  val parameterAccessor = when {
+                     parameterContext.literal() != null -> LiteralAccessor(
+                        parameterContext.literal().value()
+                     ).right()
+                     parameterContext.scalarAccessorExpression() != null -> compileScalarAccessor(
+                        parameterContext.scalarAccessorExpression(),
+                        parameterType
+                     )
 //                  parameterContext.readFunction() !s= null -> buildReadFunctionAccessor(parameterContext.readFunction()).right()
 //                  parameterContext.columnDefinition() != null -> buildColumnAccessor(parameterContext.columnDefinition()).right()
-                        parameterContext.fieldReferenceSelector() != null -> compileFieldReferenceAccessor(
-                           function,
-                           parameterContext
-                        ).right()
-                        parameterContext.typeReferenceSelector() != null -> compileTypeReferenceAccessor(
-                           namespace,
-                           parameterContext
-                        )
-                        parameterContext.modelAttributeTypeReference() != null -> {
-                           if (this.typeBody.parent.isInViewContext()) {
-                              this.parseModelAttributeTypeReference(
-                                 namespace,
-                                 parameterContext.modelAttributeTypeReference()
-                              )
-                                 .flatMap { (memberSourceType, memberType) ->
-                                    ModelAttributeReferenceSelector(memberSourceType, memberType, parameterContext.modelAttributeTypeReference().toCompilationUnits()).right()
-                                 }
-                           } else {
-                              CompilationError(
-                                 parameterContext.start,
-                                 "Model Attribute References are only allowed within Views"
-                              ).asList().left()
+                     parameterContext.fieldReferenceSelector() != null -> compileFieldReferenceAccessor(
+                        function,
+                        parameterContext
+                     ).right()
+                     parameterContext.typeReferenceSelector() != null -> compileTypeReferenceAccessor(
+                        namespace,
+                        parameterContext
+                     )
+                     parameterContext.modelAttributeTypeReference() != null -> {
+                        if (this.typeBody.parent.isInViewContext()) {
+                           this.parseModelAttributeTypeReference(
+                              namespace,
+                              parameterContext.modelAttributeTypeReference()
+                           )
+                              .flatMap { (memberSourceType, memberType) ->
+                                 ModelAttributeReferenceSelector(
+                                    memberSourceType,
+                                    memberType,
+                                    parameterContext.modelAttributeTypeReference().toCompilationUnits()
+                                 ).right()
+                              }
+                        } else {
+                           CompilationError(
+                              parameterContext.start,
+                              "Model Attribute References are only allowed within Views"
+                           ).asList().left()
 
-                           }
                         }
-                        else -> TODO("readFunction parameter accessor not defined for code ${functionContext.source().content}")
-
-                     }.flatMap { parameterAccessor ->
-                        typeChecker.ifAssignable(
-                           parameterAccessor.returnType, parameterType.basePrimitive
-                           ?: PrimitiveType.ANY, parameterContext
-                        ) {
-                           parameterAccessor
-                        }.wrapErrorsInList()
                      }
-                     parameterAccessor
-                  }.reportAndRemoveErrorList(errors)
-               if (function.modifiers.contains(FunctionModifiers.Query) && !functionContext.isInViewContext()) {
-                  CompilationError(
-                     functionContext.start,
-                     "a query function can only referenced from view definitions!"
-                  ).asList().left()
-               } else {
-                  FunctionAccessor.buildAndResolveTypeArguments(function, parameters).right()
+                     else -> TODO("readFunction parameter accessor not defined for code ${functionContext.source().content}")
+
+                  }.flatMap { parameterAccessor ->
+                     typeChecker.ifAssignable(
+                        parameterAccessor.returnType, parameterType.basePrimitive
+                           ?: PrimitiveType.ANY, parameterContext
+                     ) {
+                        parameterAccessor
+                     }.wrapErrorsInList()
+                  }
+                  parameterAccessor
                }
+                  .invertEitherList()
+                  .flattenErrors()
+                  .flatMap { parameters ->
+                     if (function.modifiers.contains(FunctionModifiers.Query) && !functionContext.isInViewContext()) {
+                        CompilationError(
+                           functionContext.start,
+                           "Query functions may only be used within view definitions"
+                        ).asList().left()
+                     } else {
+                        FunctionAccessor.buildAndResolveTypeArguments(function, parameters).right()
+                     }
+                  }
             }
          }
    }

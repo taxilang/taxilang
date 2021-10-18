@@ -13,7 +13,6 @@ import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionModifiers
 import lang.taxi.functions.stdlib.Left
 import lang.taxi.linter.LinterRules
-import lang.taxi.messages.Severity
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TypeReferenceSelector
@@ -305,11 +304,11 @@ namespace pkgB {
             findAll {
                Record[]
             } as {
-              upperPrimaryKey: String by upper(this.primaryKey)
+              upperPrimaryKey: String by upper(Record['primaryKey'])
             }[]
          """.trimIndent()
          val (errors, _) = Compiler(source = src, importSources = listOf(taxiDocument)).queriesWithErrorMessages()
-         errors.should.satisfy { errorMessages -> errorMessages.any { it.detailMessage == "a query function can only referenced from view definitions!" } }
+         errors.shouldContainMessage("Query functions may only be used within view definitions")
          // Currently our only query function is sumOver
          // and its implementation is pushed to the database therefore we restrict application of the query
          // function only to View definitions, but we'll relax this in the future.
@@ -439,9 +438,7 @@ namespace pkgB {
                 field2: Decimal by sumOver(this.field1)
             }
          """.validated()
-         compilationMessages.should.not.be.empty
-         compilationMessages.first().severity.should.equal(Severity.ERROR)
-         compilationMessages.first().detailMessage.should.equal("a query function can only referenced from view definitions!")
+            .errors().shouldContainMessage("Query functions may only be used within view definitions")
       }
 
 
