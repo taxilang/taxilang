@@ -726,7 +726,7 @@ fact : variableName typeType '=' literal;
 variableName: Identifier ':';
 queryBody:
    givenBlock?
-	queryDirective '{' queryTypeList '}' queryProjection?
+	queryDirective ( ('{' queryTypeList  '}') | anonymousTypeDefinition ) queryProjection?
 	;
 
 queryTypeList: typeType (',' typeType)*;
@@ -741,7 +741,7 @@ queryProjection: 'as' typeType? anonymousTypeDefinition?;
 //        lastName : LastName
 //    }(by this.salesUtCode)
 //}
-anonymousTypeDefinition: typeBody listType? accessor?;
+anonymousTypeDefinition: typeBody listType? accessor? parameterConstraint?;
 
 viewDeclaration
     :  typeDoc? annotation* typeModifier* 'view' Identifier

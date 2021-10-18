@@ -177,6 +177,53 @@ object TaxiQlSpec : Spek({
          queryCompilationError.first().detailMessage.should.contain("should be an object type containing field invalidField")
       }
 
+      it("query body can be an anonymous projection") {
+         val src = """
+                 given { email : CustomerEmailAddress = "jimmy@demo.com"}
+                 find {
+                   tradeDate: TradeDate
+                 }
+              """.trimIndent()
+         val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
+         val query = queries.first()
+         query.facts.should.have.size(1)
+         val (name, fact) = query.facts.entries.first()
+         name.should.equal("email")
+         fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
+         fact.value.should.equal("jimmy@demo.com")
+
+         query.typesToFind.should.have.size(1)
+         val discoveryType = query.typesToFind.first()
+         discoveryType.type.fullyQualifiedName.should.startWith("Anonymous")
+         discoveryType.startingFacts.should.have.size(1)
+         discoveryType.startingFacts.should.equal(query.facts)
+      }
+
+      it("query body can be an anonymous projection with constraints") {
+         val src = """
+                 given { email : CustomerEmailAddress = "jimmy@demo.com"}
+                 find {
+                   tradeDate: TradeDate
+                   traderId: TraderId
+                 }  ( TradeDate  >= startDate , TradeDate < endDate )
+              """.trimIndent()
+         val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
+         val query = queries.first()
+         query.facts.should.have.size(1)
+         val (name, fact) = query.facts.entries.first()
+         name.should.equal("email")
+         fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
+         fact.value.should.equal("jimmy@demo.com")
+
+         query.typesToFind.should.have.size(1)
+         val discoveryType = query.typesToFind.first()
+         discoveryType.anonymousType?.anonymous.should.be.`true`
+         discoveryType.startingFacts.should.have.size(1)
+         discoveryType.startingFacts.should.equal(query.facts)
+         discoveryType.constraints.size.should.equal(2)
+      }
+
+
       it("Should Allow anonymous type that extends base type") {
          val src = """
                  import foo.Order
