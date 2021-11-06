@@ -24,12 +24,12 @@ class MavenPomGeneratorPlugin(private val configurers: List<MavenModelConfigurer
       val TAXI_REPOSITORIES = listOf(
          Repository(
             id = "taxi-snapshots",
-            url = "http://repo.vyne.co/snapshot",
+            url = "https://repo.vyne.co/snapshot",
             snapshots = true
          ),
          Repository(
             id = "taxi-releases",
-            url = "http://repo.vyne.co/release",
+            url = "https://repo.vyne.co/release",
             snapshots = false,
             releases = true
          )

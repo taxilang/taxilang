@@ -58,7 +58,7 @@ typeKind : 'type' | 'model';
 
 typeDeclaration
     :  typeDoc? annotation* typeModifier* typeKind Identifier
-
+         typeArguments?
         ('inherits' listOfInheritedTypes)?
         (typeBody | expressionTypeDeclaration)?
     ;

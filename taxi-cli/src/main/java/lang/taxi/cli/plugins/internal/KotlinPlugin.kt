@@ -66,8 +66,8 @@ class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGener
             version = config.kotlinVersion
          })
          model.dependencies.add(org.apache.maven.model.Dependency().apply {
-            groupId = "lang.taxi"
-            artifactId = "taxi-annotation-processor"
+            groupId = "org.taxilang"
+            artifactId = "taxi-annotations"
             version = taxiVersion
          })
          model.dependencies.add(org.apache.maven.model.Dependency().apply {
@@ -92,27 +92,6 @@ class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGener
             groupId = "org.jetbrains.kotlin"
             artifactId = "kotlin-maven-plugin"
             version = config.kotlinVersion
-
-            val pluginConfig = Xpp3DomBuilder.build(
-               StringReader(
-                  "<configuration>" +
-                     "   <sourceDirs>" +
-                     "      <sourceDir>src/main/java</sourceDir>" +
-                     "   </sourceDirs>" +
-                     "   <annotationProcessorPaths>" +
-                     "      <annotationProcessorPath>" +
-                     "         <groupId>lang.taxi</groupId>" +
-                     "         <artifactId>taxi-annotation-processor</artifactId>" +
-                     "         <version>${taxiVersion}</version>" +
-                     "      </annotationProcessorPath>" +
-                     "   </annotationProcessorPaths>" +
-                     "</configuration>"))
-
-            executions.add(PluginExecution().apply {
-               id = "kapt"
-               goals.add("kapt")
-               configuration = pluginConfig
-            })
 
             executions.add(PluginExecution().apply {
                id = "compile"

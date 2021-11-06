@@ -200,8 +200,13 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
       val inheritsFrom = type.inheritsFrom.first()
 
       val typeAliasQualifiedName = type.toQualifiedName()
+      val javaType = try {
+         getJavaType(inheritsFrom)
+      } catch (e:Exception) {
+         throw CodeGenerationFailedException("Failed to generate Kotlin code for type ${type.qualifiedName}: ${e.message ?: "A ${e::class.simpleName} error was thrown"}")
+      }
       val typeAliasSpec = TypeAliasSpec
-         .builder(typeAliasQualifiedName.typeName, getJavaType(inheritsFrom))
+         .builder(typeAliasQualifiedName.typeName, javaType)
          .addAnnotation(AnnotationSpec.builder(DataType::class)
             .addMember("value = %M", typeNames.asConstant(type.toQualifiedName()))
             .addMember("imported = %L", true)
@@ -320,3 +325,5 @@ internal class ProcessorHelper(private val processors: List<Processor>) {
          .fold(builder) { acc: KBuilderType, fieldProcessor: FieldProcessor<KBuilderType> -> fieldProcessor.process(acc, field) }
    }
 }
+
+class CodeGenerationFailedException(message:String):RuntimeException(message)
