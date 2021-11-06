@@ -17,7 +17,7 @@ import org.junit.jupiter.api.io.TempDir
 import org.springframework.boot.info.BuildProperties
 import java.io.File
 import java.io.FileReader
-import java.util.*
+import java.util.Properties
 
 class MavenPomProjectTest {
 
@@ -66,7 +66,7 @@ class MavenPomProjectTest {
       executeBuild()
       val model = loadMavenModel()
 
-      val taxiDependency = model.dependencies.first { it.groupId == "lang.taxi" }
+      val taxiDependency = model.dependencies.first { it.groupId == "org.taxilang" }
       taxiDependency.version.should.equal("0.5.0")
    }
 
