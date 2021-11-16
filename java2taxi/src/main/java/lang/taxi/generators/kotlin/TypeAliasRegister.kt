@@ -5,12 +5,14 @@ import kotlinx.metadata.KmAnnotationArgument
 import kotlinx.metadata.jvm.KotlinClassHeader
 import kotlinx.metadata.jvm.KotlinClassMetadata
 import lang.taxi.annotations.DataType
+import lang.taxi.packages.utils.log
 import org.reflections8.Reflections
 import org.reflections8.scanners.SubTypesScanner
 import org.reflections8.scanners.TypeAnnotationsScanner
 import org.reflections8.util.ClasspathHelper
 import org.reflections8.util.ConfigurationBuilder
 import kotlin.reflect.KCallable
+import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -75,10 +77,21 @@ class TypeAliasRegister private constructor(classes: Collection<Class<*>>) {
        * Call with registerPackage("foo.bar.baz").
        */
       @JvmStatic
-      fun registerPackage(packageName: String) = registeredPackageNames.add(packageName)
+      fun registerPackage(packageName: String): Boolean {
+         log().info("Registering package $packageName for type alias detection")
+         return registeredPackageNames.add(packageName)
+      }
 
       @JvmStatic
-      fun forRegisteredPackages():TypeAliasRegister = forPackageNames(registeredPackageNames)
+      fun registerPackage(vararg packageClasses: KClass<*>) {
+         packageClasses.forEach {
+            registerPackage(it.java.packageName)
+         }
+      }
+
+      @JvmStatic
+      fun forRegisteredPackages(): TypeAliasRegister = forPackageNames(registeredPackageNames)
+
       @JvmStatic
       fun empty(): TypeAliasRegister {
          return TypeAliasRegister(emptyList())
