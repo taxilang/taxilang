@@ -29,8 +29,6 @@ module.exports = {
                null: [
                   "index",
                   "intro/getting-started",
-                  "intro/benefits",
-                  "intro/platform",
                   "generating-taxi-from-source"
                ],
                Language: [
@@ -58,7 +56,6 @@ module.exports = {
                "Visual Studio Code": ["taxi-vs-code/editor-plugins"],
                Testing: [
                   "testing/running-taxi-in-a-ci-cd-pipeline",
-                  "testing/testing-taxi"
                ],
                Taxonomy: [
                   "best-practices-for-taxonomy-development/README",

@@ -5,7 +5,7 @@ description: Instantiate Taxi from its original source
 
 import { Hint, Discourage } from './components/hint'
 
-## Java & Kotlin [ ![Download](https://api.bintray.com/packages/taxi-lang/releases/java2taxi/images/download.svg) ](https://bintray.com/taxi-lang/releases/java2taxi/_latestVersion)
+## Java & Kotlin
 
 You can generate Taxi models and services from Java and Kotlin.
 
@@ -251,7 +251,6 @@ class CreditCostService {
     @GetMapping("/interestRates/{clientId}")
     fun getInterestRate(@PathVariable("clientId") @DataType("vyne.demo.ClientId") clientId: String): BigDecimal = BigDecimal.ONE
 
-    // Back off, REST snobs.  Method names are here for testing.
     @PostMapping("/{clientId}/doCalculate")
     @Operation
     fun calculateCreditCosts(@PathVariable("clientId") @DataType("vyne.demo.ClientId") clientId: String, @RequestBody request: CreditCostRequest): CreditCostResponse = CreditCostResponse("TODO")
@@ -289,18 +288,17 @@ The [tests](https://gitlab.com/taxi-lang/taxi-lang/blob/master/java2taxi/src/tes
 
 ### Maven / Gradle
 
-The binaries are available on [Bintray](https://bintray.com/taxi-lang/releases).  Be sure to add the repository:
+The binaries are hosted by the [Vyne](https://vyne.co) team in their maven repository.  Be sure to add the repository:
 
 ```text
 <repositories>
     <repository>
-        <snapshots>
+         <id>vyne</id>
+         <url>https://repo.vyne.co/release</url>
+         <snapshots>
             <enabled>false</enabled>
-        </snapshots>
-        <id>bintray-taxi-lang-releases</id>
-        <name>bintray</name>
-        <url>https://dl.bintray.com/taxi-lang/releases</url>
-    </repository>
+         </snapshots>
+      </repository>
 </repositories>
 ```
 
