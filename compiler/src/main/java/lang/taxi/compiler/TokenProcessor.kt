@@ -844,7 +844,7 @@ class TokenProcessor(
          name,
          this.errors
       )
-      val fields = fieldCompiler
+      val fieldsOrErrors = fieldCompiler
          .compileAllFields()
          .map { field ->
             if (!field.type.inheritsFromPrimitive) {
@@ -856,22 +856,25 @@ class TokenProcessor(
             } else {
                field.right()
             }
-         }.reportAndRemoveErrors(errors)
+         }.invertEitherList()
 
-      val annotations = collateAnnotations(token.annotation())
-      val typeDoc = parseTypeDoc(token.typeDoc())
-      val definition = AnnotationTypeDefinition(
-         fields,
-         annotations,
-         typeDoc,
-         token.toCompilationUnit()
-      )
-      return typeSystem.register(
-         AnnotationType(
-            name,
-            definition
+      return fieldsOrErrors.map { fields ->
+         val annotations = collateAnnotations(token.annotation())
+         val typeDoc = parseTypeDoc(token.typeDoc())
+         val definition = AnnotationTypeDefinition(
+            fields,
+            annotations,
+            typeDoc,
+            token.toCompilationUnit()
          )
-      ).right()
+         typeSystem.register(
+            AnnotationType(
+               name,
+               definition
+            )
+         )
+      }
+
    }
 
    private fun compileType(

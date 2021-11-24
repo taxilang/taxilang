@@ -9,6 +9,7 @@ import lang.taxi.services.QueryOperation
 import lang.taxi.services.Service
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.Annotatable
+import lang.taxi.types.Annotation
 import lang.taxi.types.ArrayType
 import lang.taxi.types.EnumType
 import lang.taxi.types.Field
@@ -22,7 +23,14 @@ import lang.taxi.utils.quotedIfNecessary
 import lang.taxi.utils.trimEmptyLines
 
 
-open class SchemaWriter {
+open class SchemaWriter(
+   /**
+    * Allows the caller to optionally filter annotations that will / won't be written out.
+    * A first-pass implementation, and will likely be refactored into something more robust that
+    * allows filtering of more things than just annotations
+    */
+   val annotationFilter: (Annotatable, Annotation) -> Boolean = { _,_ -> true }
+) {
    private val formatter = SourceFormatter()
 
    enum class ImportLocation {
@@ -46,6 +54,11 @@ open class SchemaWriter {
       return docs.flatMap { generateSchema(it, importLocation) }
    }
 
+   fun generateTaxi(type:Type):String {
+      return generateTaxiForTypes(listOf(type), type.toQualifiedName().namespace)
+         .single()
+   }
+
    private fun generateSchema(doc: TaxiDocument, importLocation: ImportLocation): List<String> {
       data class SourceAndImports(val source: String, val imports: List<String>)
 
@@ -55,16 +68,7 @@ open class SchemaWriter {
             return@mapNotNull null
          }
 
-         val typeDeclarations = types
-            // Exclude formatted types -- these are declared inline at the field reference
-            // Note : This is breaking top-level fomratted types, eg:
-            // type CurrenySymbol inherits String( @format = "[A-Z]{3,3}" )
-            // For now, I've worked around it in the xml code gen (the only place that supports this currently)
-            // by not setting the formattedInstanceOfType.  It produces the correct output, but it's a bit hacky
-            .filterNot { it is ObjectType && it.formattedInstanceOfType != null }
-            // Exclude calculated types - these are declared inline at the field reference
-            .filterNot { it is ObjectType && it.calculatedInstanceOfType != null }
-            .map { generateTypeDeclaration(it, namespacedDoc.namespace) }
+         val typeDeclarations = generateTaxiForTypes(types, namespacedDoc.namespace)
          val typesTaxiString = typeDeclarations.joinToString("\n\n").trim()
 
          val requiredImportsInServices = findImportedTypesOnServices(namespacedDoc.services)
@@ -118,6 +122,23 @@ $taxiBlock
       }
    }
 
+   private fun generateTaxiForTypes(
+      types: List<Type>,
+      currentNamespace: String
+   ): List<String> {
+      val typeDeclarations = types
+         // Exclude formatted types -- these are declared inline at the field reference
+         // Note : This is breaking top-level fomratted types, eg:
+         // type CurrenySymbol inherits String( @format = "[A-Z]{3,3}" )
+         // For now, I've worked around it in the xml code gen (the only place that supports this currently)
+         // by not setting the formattedInstanceOfType.  It produces the correct output, but it's a bit hacky
+         .filterNot { it is ObjectType && it.formattedInstanceOfType != null }
+         // Exclude calculated types - these are declared inline at the field reference
+         .filterNot { it is ObjectType && it.calculatedInstanceOfType != null }
+         .map { generateTypeDeclaration(it, currentNamespace) }
+      return typeDeclarations
+   }
+
    private fun findImportedTypesOnServices(services: Set<Service>): List<UnresolvedImportedType> {
       return services.flatMap {
          it.operations.flatMap { operation ->
@@ -154,7 +175,9 @@ $operations
    }
 
    private fun generateAnnotations(annotatedElement: Annotatable): String {
-      return annotatedElement.annotations.map { annotation ->
+      return annotatedElement.annotations
+         .filter { annotation -> annotationFilter(annotatedElement,annotation) }
+         .map { annotation ->
          if (annotation.parameters.isEmpty()) {
             "@${annotation.qualifiedName}"
          } else {
