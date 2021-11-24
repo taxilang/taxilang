@@ -7,6 +7,8 @@ import lang.taxi.compiler.SymbolKind
 import lang.taxi.functions.Function
 import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.services.ConsumedOperation
+import lang.taxi.services.Operation
+import lang.taxi.services.Service
 import lang.taxi.services.ServiceDefinition
 import lang.taxi.stdlib.StdLibSchema
 import lang.taxi.types.DefinableToken
