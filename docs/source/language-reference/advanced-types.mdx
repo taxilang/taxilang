@@ -42,6 +42,56 @@ model Person {
 
 Parsers will read the `firstName` attribute from the specified jsonPath.
 
+#### Relative JsonPath:
+
+```taxi
+type Oscar inherits String
+model Actor {
+   name : ActorName inherits String
+   awards : {
+      mostRecentOscar: Oscar by jsonPath("oscars[0]")
+   }
+}
+```
+
+Given the following json:
+
+```json
+[
+   {
+      "name" : "Tom Cruise",
+       "awards" : {
+         "oscars" : [ "Best Movie" ]
+       }
+   },
+   {
+      "name" : "Tom Jones",
+       "awards" : {
+         "oscars" : [ "Best Song" ]
+       }
+   }
+]
+```
+
+This line: `oscars: Oscar by jsonPath("oscars[0]")` would flatten out the oscars property to the first value - ie:
+
+```json
+[
+   {
+      "name" : "Tom Cruise",
+       "awards" : {
+         "mostRecentOscar" : "Best Movie"
+       }
+   },
+   {
+      "name" : "Tom Jones",
+       "awards" : {
+         "mostRecentOscar" :  "Best Song"
+       }
+   }
+]
+```
+
 ### Describing Xml data - `xpath()`
 By default, xml data can be described by Taxi and parsed by parsers without any special markup.
 However, if you wish to expose a value from elsewhere in a doucment, you can use an xpath expression:
