@@ -157,7 +157,7 @@ class TokenProcessor(
    private val views = mutableListOf<View>()
    private val constraintValidator = ConstraintValidator()
 
-   private val errors = mutableListOf<CompilationError>()
+   val errors = mutableListOf<CompilationError>()
 
 //   private val conditionalFieldSetProcessor = ConditionalFieldSetProcessor(this)
 //   private val calculatedFieldSetProcessor = CalculatedFieldSetProcessor(this)
@@ -654,7 +654,7 @@ class TokenProcessor(
       try {
          when (tokenRule) {
             is TaxiParser.TypeDeclarationContext -> compileType(namespace, tokenName, tokenRule).collectErrors(errors)
-            is TaxiParser.AnnotationTypeDeclarationContext -> compileAnnotationType(tokenName, namespace, tokenRule)
+            is TaxiParser.AnnotationTypeDeclarationContext -> compileAnnotationType(tokenName, namespace, tokenRule).collectErrors(errors)
             is TaxiParser.EnumDeclarationContext -> compileEnum(namespace, tokenName, tokenRule).collectErrors(errors)
             is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(
                namespace,
@@ -989,12 +989,33 @@ class TokenProcessor(
       namespace: Namespace,
       typeName: String,
       ctx: TaxiParser.TypeBodyContext,
-      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext()
+      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext(),
+      accessorContext: TaxiParser.AccessorContext?
    ) {
-      val fields = ctx.let { typeBody ->
+      val (fields,expression) = ctx.let { typeBody ->
          val typeBodyContext = TypeBodyContext(typeBody, namespace)
-         FieldCompiler(this, typeBodyContext, typeName, this.errors, anonymousTypeResolutionContext)
-            .compileAllFields()
+         val fieldCompiler = FieldCompiler(this, typeBodyContext, typeName, this.errors, anonymousTypeResolutionContext)
+         val compiledFields = fieldCompiler.compileAllFields()
+
+         // Expressions on AnonymousTypes are to support top-level declarations
+         // of things like projection scope
+         // eg find { ... } as { ... }[] by [SomeCollectionToIterate]
+         val expression = if (accessorContext?.scalarAccessorExpression() != null) {
+            ExpressionCompiler(this,typeChecker, errors, fieldCompiler).compileScalarAccessor(accessorContext.scalarAccessorExpression())
+               .collectErrors(errors)
+               .map { accessor ->
+                  if (accessor is Expression) {
+                     accessor as Expression
+                  } else {
+                     // Not supporting Accessor expressons here, as we're trying
+                     // to capture top-level response object expressions.
+                     // However, can enrich this in future if required.
+                     null
+                  }
+               }
+               .getOrElse { null }
+         } else null
+         compiledFields to expression
       }
 
       val fieldsFromConcreteProjectedToType = anonymousTypeResolutionContext.concreteProjectionTypeContext?.let {
@@ -1002,6 +1023,7 @@ class TokenProcessor(
             (type as ObjectType?)?.fields
          }
       }
+
 
       val anonymousTypeFields = if (fieldsFromConcreteProjectedToType is Either.Right) {
          fieldsFromConcreteProjectedToType.b?.let { fields.plus(it) } ?: fields
@@ -1019,6 +1041,7 @@ class TokenProcessor(
                modifiers = listOf(),
                inheritsFrom = emptySet(),
                format = null,
+               expression = expression,
                compilationUnit = ctx.toCompilationUnit(),
                isAnonymous = true
             )
@@ -1270,9 +1293,10 @@ class TokenProcessor(
       namespace: String,
       anonymousTypeCtx: TaxiParser.TypeBodyContext,
       anonymousTypeName: String = AnonymousTypeNameGenerator.generate(),
-      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext()
+      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext(),
+      accessorContext: TaxiParser.AccessorContext? = null
    ): Either<List<CompilationError>, Type> {
-      compileAnonymousType(namespace, anonymousTypeName, anonymousTypeCtx, anonymousTypeResolutionContext)
+      compileAnonymousType(namespace, anonymousTypeName, anonymousTypeCtx, anonymousTypeResolutionContext, accessorContext)
       return attemptToLookupTypeByName(namespace, anonymousTypeName, anonymousTypeCtx, SymbolKind.TYPE_OR_MODEL)
          .wrapErrorsInList()
          .flatMap { qualifiedName ->
@@ -1282,21 +1306,6 @@ class TokenProcessor(
          }
 
    }
-
-//   internal fun parseType(
-//      namespace: Namespace,
-//      formula: Formula,
-//      typeType: TaxiParser.TypeTypeContext
-//   ): Either<List<CompilationError>, Type> {
-//      val typeOrError = typeOrError(namespace, typeType)
-//      return typeOrError.flatMap { type ->
-//         if (typeType.listType() != null) {
-//            CompilationError(typeType.start, "It is invalid to declare calculated type on an array").asList().left()
-//         } else {
-//            generateCalculatedFieldType(type, formula).wrapErrorsInList()
-//         }
-//      }
-//   }
 
    internal fun typeOrError(
       namespace: Namespace,

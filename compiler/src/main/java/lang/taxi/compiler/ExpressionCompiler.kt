@@ -236,6 +236,7 @@ class ExpressionCompiler(
             expression.byFieldSourceExpression() != null ||
             expression.conditionalTypeConditionDeclaration() != null ||
             expression.defaultDefinition() != null ||
+            expression.collectionProjectionExpression() != null ||
             expression.columnDefinition() != null -> {
             if (this.fieldCompiler == null) {
                listOf(

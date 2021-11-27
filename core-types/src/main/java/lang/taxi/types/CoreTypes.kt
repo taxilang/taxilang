@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import lang.taxi.ImmutableEquality
+import lang.taxi.expressions.Expression
 
 interface TypeProvider {
    fun getType(qualifiedName: String): Type
@@ -29,7 +30,7 @@ interface GenericType : Type {
 
 }
 
-data class ArrayType(val type: Type, val source: CompilationUnit, override val inheritsFrom: Set<Type> = emptySet()) : GenericType {
+data class ArrayType(val type: Type, val source: CompilationUnit, override val inheritsFrom: Set<Type> = emptySet(), val expression: Expression? = null) : GenericType {
    init {
       if (type is ArrayType) {
          println("found Array<Array<>> -- this code was recently refactored -- is this a bug?")
