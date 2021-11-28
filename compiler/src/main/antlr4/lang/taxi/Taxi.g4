@@ -742,7 +742,7 @@ queryProjection: 'as' typeType? anonymousTypeDefinition?;
 //        lastName : LastName
 //    }(by this.salesUtCode)
 //}
-anonymousTypeDefinition: typeBody listType? accessor? parameterConstraint?;
+anonymousTypeDefinition: annotation* typeBody listType? accessor? parameterConstraint?;
 
 viewDeclaration
     :  typeDoc? annotation* typeModifier* 'view' Identifier

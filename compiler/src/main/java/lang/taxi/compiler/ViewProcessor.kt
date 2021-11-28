@@ -173,7 +173,7 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
       val anonymousTypeDefinitionContext = bodyCtx.anonymousTypeDefinition()
       return this.tokenProcessor.parseAnonymousType(
          namespace,
-         anonymousTypeDefinitionContext.typeBody()
+         anonymousTypeDefinitionContext
       )
    }
 

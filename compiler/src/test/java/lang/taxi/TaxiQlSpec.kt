@@ -603,6 +603,17 @@ object TaxiQlSpec : Spek({
          expression.projectionScope!!.accessors.should.have.size(1)
       }
 
+      it("should support annotations on anonymous projection types") {
+         val (schema,query) = """
+         model Composer {
+            name : ComposerName inherits String
+         }""".compiledWithQuery("""findAll { Composer } as @HelloWorld {
+               name : ComposerName
+            }"""
+         )
+         query.projectedType!!.anonymousTypeDefinition!!.asA<ObjectType>().annotations.should.have.size(1)
+      }
+
       it("should parse collection projection identifiers with additional scopes in queries") {
          val (schema, query) = """
             model Product {

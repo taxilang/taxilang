@@ -37,8 +37,9 @@ data class ProjectedType(val concreteType: Type?, val anonymousTypeDefinition: T
 data class AnonymousTypeDefinition(
    val isList: Boolean = false,
    val fields: List<AnonymousFieldDefinition>,
-   override val compilationUnit: CompilationUnit
-) : TypeDefinition {
+   override val annotations: List<Annotation>,
+   override val compilationUnit: CompilationUnit,
+) : TypeDefinition, Annotatable {
 
 }
 
