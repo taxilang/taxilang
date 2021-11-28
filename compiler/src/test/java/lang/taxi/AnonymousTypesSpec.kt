@@ -29,6 +29,7 @@ class AnonymousTypesSpec : Spek({
          fieldWithAnonymousType.hasField("highSchoolName").should.be.`true`
          fieldWithAnonymousType.hasField("undergraduate").should.be.`true`
       }
+
       it("is possible to declare nested anonymous types") {
          val model = """
 model LeiRecord {
@@ -48,5 +49,23 @@ model LeiRecord {
          model.fields.should.have.size(1)
          model.field("data").type.asA<ObjectType>().fields.should.have.size(2)
       }
+
+      it("is possible to declare an annotation on an anonymous type") {
+         val model = """model Composer {
+            |  name : @HelloWorld {
+            |     firstName : String
+            |     lastName : String
+            |  }
+            |}
+         """.trimMargin()
+            .compiled()
+            .model("Composer")
+            .field("name")
+            .type as ObjectType
+         model.anonymous.should.be.`true`
+         model.annotations.should.have.size(1)
+      }
    }
+
+
 })

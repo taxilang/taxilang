@@ -166,14 +166,11 @@ class FieldCompiler(
       }
 
       val fieldsWithConditions = conditionalFieldStructures.flatMap { it.fields }
-//      val calculatedFieldStructures = typeBody.calculatedMemberDeclarations.map { calculatedMemberDeclarationContext ->
-//         calculatedFieldSetProcessor.compileCalculatedField(calculatedMemberDeclarationContext, namespace)
-//      }.invertEitherList().flattenErrors().collectErrors(errors).getOrElse { emptyList() }
 
       val fields = typeBody.memberDeclarations.map { member ->
          provideField(TokenProcessor.unescape(member.fieldDeclaration().Identifier().text), member)
       }.mapNotNull { either -> either.collectErrors(errors).getOrElse { null } }
-      return fields /* + calculatedFieldStructures  */ + fieldsWithConditions
+      return fields + fieldsWithConditions
    }
 
    private fun compileField(
@@ -218,7 +215,7 @@ class FieldCompiler(
             val anonymousTypeBody = anonymousTypeDefinition.typeBody()
 
             val anonymousTypeName = "$typeName$${member.fieldDeclaration().Identifier().text.capitalize()}"
-            val fieldType = tokenProcessor.parseAnonymousType(namespace, anonymousTypeBody, anonymousTypeName, accessorContext = anonymousTypeDefinition.accessor())
+            val fieldType = tokenProcessor.parseAnonymousType(namespace, anonymousTypeDefinition, anonymousTypeName)
                .map { type ->
                   val isDeclaredAsCollection = anonymousTypeDefinition.listType() != null
                   if (isDeclaredAsCollection) {

@@ -988,11 +988,11 @@ class TokenProcessor(
    private fun compileAnonymousType(
       namespace: Namespace,
       typeName: String,
-      ctx: TaxiParser.TypeBodyContext,
+      anonymousTypeDefinition:TaxiParser.AnonymousTypeDefinitionContext,
       anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext(),
-      accessorContext: TaxiParser.AccessorContext?
-   ) {
-      val (fields,expression) = ctx.let { typeBody ->
+   ):Either<List<CompilationError>,ObjectType> {
+      val annotations = collateAnnotations(anonymousTypeDefinition.annotation())
+      val (fields,expression) = anonymousTypeDefinition.typeBody().let { typeBody ->
          val typeBodyContext = TypeBodyContext(typeBody, namespace)
          val fieldCompiler = FieldCompiler(this, typeBodyContext, typeName, this.errors, anonymousTypeResolutionContext)
          val compiledFields = fieldCompiler.compileAllFields()
@@ -1000,8 +1000,8 @@ class TokenProcessor(
          // Expressions on AnonymousTypes are to support top-level declarations
          // of things like projection scope
          // eg find { ... } as { ... }[] by [SomeCollectionToIterate]
-         val expression = if (accessorContext?.scalarAccessorExpression() != null) {
-            ExpressionCompiler(this,typeChecker, errors, fieldCompiler).compileScalarAccessor(accessorContext.scalarAccessorExpression())
+         val expression = if (anonymousTypeDefinition.accessor()?.scalarAccessorExpression() != null) {
+            ExpressionCompiler(this,typeChecker, errors, fieldCompiler).compileScalarAccessor(anonymousTypeDefinition.accessor().scalarAccessorExpression())
                .collectErrors(errors)
                .map { accessor ->
                   if (accessor is Expression) {
@@ -1032,7 +1032,7 @@ class TokenProcessor(
       }
 
 
-      this.typeSystem.register(
+      return this.typeSystem.register(
          ObjectType(
             QualifiedName(namespace, typeName).fullyQualifiedName,
             ObjectTypeDefinition(
@@ -1042,11 +1042,11 @@ class TokenProcessor(
                inheritsFrom = emptySet(),
                format = null,
                expression = expression,
-               compilationUnit = ctx.toCompilationUnit(),
+               compilationUnit = anonymousTypeDefinition.toCompilationUnit(),
                isAnonymous = true
             )
          )
-      )
+      ).right()
 
    }
 
@@ -1291,20 +1291,11 @@ class TokenProcessor(
 
    fun parseAnonymousType(
       namespace: String,
-      anonymousTypeCtx: TaxiParser.TypeBodyContext,
+      anonymousTypeDefinition:TaxiParser.AnonymousTypeDefinitionContext,
       anonymousTypeName: String = AnonymousTypeNameGenerator.generate(),
       anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext(),
-      accessorContext: TaxiParser.AccessorContext? = null
    ): Either<List<CompilationError>, Type> {
-      compileAnonymousType(namespace, anonymousTypeName, anonymousTypeCtx, anonymousTypeResolutionContext, accessorContext)
-      return attemptToLookupTypeByName(namespace, anonymousTypeName, anonymousTypeCtx, SymbolKind.TYPE_OR_MODEL)
-         .wrapErrorsInList()
-         .flatMap { qualifiedName ->
-            typeSystem
-               .getTypeOrError(qualifiedName, anonymousTypeCtx)
-               .wrapErrorsInList()
-         }
-
+      return compileAnonymousType(namespace, anonymousTypeName, anonymousTypeDefinition, anonymousTypeResolutionContext)
    }
 
    internal fun typeOrError(
@@ -1546,7 +1537,7 @@ class TokenProcessor(
             // ccmpile if so
             val compilationResult = unparsedCheckAndCompile(qualifiedTypeName)
             if (compilationResult != null) {
-               return@flatMap compilationResult!!
+               return@flatMap compilationResult
             }
 
             // Note: Use requestedTypeName, as qualifying it to the local namespace didn't help

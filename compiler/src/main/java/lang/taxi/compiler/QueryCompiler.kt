@@ -83,7 +83,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
            .flatMap { type -> toDiscoveryType(type, queryType.parameterConstraint(), queryDirective, constraintBuilder, facts) }
      }?.invertEitherList()?.flattenErrors()
              ?: listOf(tokenProcessor
-                .parseAnonymousType(namespace, anonymousTypeDefinition.typeBody())
+                .parseAnonymousType(namespace, anonymousTypeDefinition)
                 .flatMap { anonymousType -> toDiscoveryType(
                    anonymousType,
                    anonymousTypeDefinition.parameterConstraint(),
@@ -187,28 +187,16 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
 
       return when {
          concreteProjectionTypeType == null && anonymousProjectionType != null -> {
-            val typeBodyContext = anonymousProjectionType.typeBody()
             val isList = anonymousProjectionType.listType() != null
             this
                .tokenProcessor
                .parseAnonymousType(
-                  namespace = typeBodyContext.findNamespace(),
-                  anonymousTypeCtx = typeBodyContext,
+                  namespace = anonymousProjectionType.findNamespace(),
                   anonymousTypeResolutionContext = AnonymousTypeResolutionContext(
                      typesToDiscover,
                      concreteProjectionTypeType
                   ),
-                  // Implementation tradeoff:  Strictly, we shouldn't parse the accessor
-                  // context down into the type if we're building
-                  // a collection - since it therefore becomes an attribute of the collection
-                  // type.
-                  // eg: in the example:
-                  // find { .. } as { ... }[] by [SomeTypeToIterate]
-                  // the accessor is related to the collection
-                  // However, this becomes impractical in Vyne given how anonymous
-                  // types get mapped to Vyne types.
-                  // For now, leaving as-is, but would be good to modify this in future
-                  accessorContext = anonymousProjectionType.accessor()
+                  anonymousTypeDefinition = anonymousProjectionType
                )
                .map { createdType ->
                   val compiledType =
@@ -220,17 +208,16 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
          concreteProjectionTypeType != null && anonymousProjectionType != null -> {
             val concreteProjectionType =
                this.tokenProcessor.parseType(queryProjection.findNamespace(), concreteProjectionTypeType)
-            val typeBodyContext = anonymousProjectionType.typeBody()
             val isList = anonymousProjectionType.listType() != null
             val anonymousType = this
                .tokenProcessor
                .parseAnonymousType(
-                  namespace = typeBodyContext.findNamespace(),
-                  anonymousTypeCtx = typeBodyContext,
+                  namespace = anonymousProjectionType.findNamespace(),
                   anonymousTypeResolutionContext = AnonymousTypeResolutionContext(
                      typesToDiscover,
                      concreteProjectionTypeType
-                  )
+                  ),
+                  anonymousTypeDefinition = anonymousProjectionType
                )
 
 
