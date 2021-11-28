@@ -17,6 +17,7 @@ import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.accessors.FieldSourceAccessor
 import lang.taxi.accessors.JsonPathAccessor
 import lang.taxi.accessors.LiteralAccessor
+import lang.taxi.accessors.ProjectionScopeDefinition
 import lang.taxi.accessors.XpathAccessor
 import lang.taxi.findNamespace
 import lang.taxi.functions.Function
@@ -217,7 +218,7 @@ class FieldCompiler(
             val anonymousTypeBody = anonymousTypeDefinition.typeBody()
 
             val anonymousTypeName = "$typeName$${member.fieldDeclaration().Identifier().text.capitalize()}"
-            val fieldType = tokenProcessor.parseAnonymousType(namespace, anonymousTypeBody, anonymousTypeName)
+            val fieldType = tokenProcessor.parseAnonymousType(namespace, anonymousTypeBody, anonymousTypeName, accessorContext = anonymousTypeDefinition.accessor())
                .map { type ->
                   val isDeclaredAsCollection = anonymousTypeDefinition.listType() != null
                   if (isDeclaredAsCollection) {
@@ -529,7 +530,24 @@ class FieldCompiler(
          collectionProjectionExpression.findNamespace(),
          collectionProjectionExpression.typeType()
       )
-         .map { type -> CollectionProjectionExpressionAccessor(type) }
+         .flatMap { type ->
+            val scopeOrError: Either<List<CompilationError>, ProjectionScopeDefinition?> =
+               if (collectionProjectionExpression.projectionScopeDefinition() != null) {
+                  compileProjectionScope(collectionProjectionExpression.projectionScopeDefinition())
+               } else Either.right(null)
+            scopeOrError.map { scope -> CollectionProjectionExpressionAccessor(type, scope, collectionProjectionExpression.toCompilationUnits()) }
+         }
+   }
+
+   private fun compileProjectionScope(projectionScopeDefinition: TaxiParser.ProjectionScopeDefinitionContext): Either<List<CompilationError>, ProjectionScopeDefinition> {
+      val accessors: Either<List<CompilationError>, List<Accessor>> =
+         projectionScopeDefinition.scalarAccessorExpression().map { accessor ->
+            compileScalarAccessor(accessor, targetType = PrimitiveType.ANY)
+         }.invertEitherList()
+            .flattenErrors()
+
+      return accessors.map { ProjectionScopeDefinition(it) }
+
    }
 
    private fun buildReadFieldAccessor(byFieldSourceExpression: TaxiParser.ByFieldSourceExpressionContext): Either<List<CompilationError>, Accessor> {
@@ -542,10 +560,10 @@ class FieldCompiler(
          /**
           * Example: here our anonymous type extends foo.Trade
           * findAll {
-               Order[]( TradeDate  >= startDate , TradeDate < endDate )
-            } as foo.Trade {
-               traderEmail: UserEmail by foo.Trade['traderId']
-            }[]
+         Order[]( TradeDate  >= startDate , TradeDate < endDate )
+         } as foo.Trade {
+         traderEmail: UserEmail by foo.Trade['traderId']
+         }[]
           */
          val sourceTypeOrError = this.tokenProcessor.typeOrError( // e.g. SomeType
             byFieldSourceExpression.findNamespace(),
@@ -558,7 +576,7 @@ class FieldCompiler(
                this.anonymousTypeResolutionContext.concreteProjectionTypeContext
             )
 
-             baseProjectionTypeOrError.flatMap { baseProjectionType ->
+            baseProjectionTypeOrError.flatMap { baseProjectionType ->
                if (baseProjectionType == sourceType) {
                   createFieldSource(
                      baseProjectionTypeOrError,
@@ -567,7 +585,7 @@ class FieldCompiler(
                      QualifiedName.from(typeName)
                   )
                } else {
-                   createFieldSource(
+                  createFieldSource(
                      sourceTypeOrError,
                      byFieldSourceExpression,
                      referencedFieldName
@@ -701,14 +719,16 @@ class FieldCompiler(
 
                functionContext.formalParameterList().parameter().mapIndexed { parameterIndex, parameterContext ->
                   val parameterType = function.getParameterType(parameterIndex)
-                  if (parameterContext.scalarAccessorExpression() != null && parameterContext.scalarAccessorExpression().readExpression() != null && this.typeBody.parent.isInViewContext()) {
+                  if (parameterContext.scalarAccessorExpression() != null && parameterContext.scalarAccessorExpression()
+                        .readExpression() != null && this.typeBody.parent.isInViewContext()
+                  ) {
                      val errorOrExpression =
-                           ExpressionCompiler(this.tokenProcessor, this.typeChecker, this.errors, this)
-                        .compile(parameterContext.scalarAccessorExpression().readExpression().expressionGroup())
-                        if (errorOrExpression is Either.Left) {
-                     return@flatMap errorOrExpression.a.left()
+                        ExpressionCompiler(this.tokenProcessor, this.typeChecker, this.errors, this)
+                           .compile(parameterContext.scalarAccessorExpression().readExpression().expressionGroup())
+                     if (errorOrExpression is Either.Left) {
+                        return@flatMap errorOrExpression.a.left()
 
-                        }
+                     }
                   }
                   val parameterAccessor = when {
                      parameterContext.literal() != null -> LiteralAccessor(

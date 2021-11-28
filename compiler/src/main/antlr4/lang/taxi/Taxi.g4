@@ -212,10 +212,11 @@ fieldDeclaration
 // Used in queries to scope projection of collections.
 // eg:
 //findAll { OrderTransaction[] } as {
-//   items: Thing[] by [OrderItem]
+//   items: Thing[] by [OrderItem[]]
 // }[]
-collectionProjectionExpression: '[' typeType ']' ;
+collectionProjectionExpression: '[' typeType projectionScopeDefinition? ']' ;
 
+projectionScopeDefinition: 'with' '(' scalarAccessorExpression (',' scalarAccessorExpression)*  ')';
 
 // A type reference that refers to the attribute on a model.
 // eg:  firstName : Person::FirstName.

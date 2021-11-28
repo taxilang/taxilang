@@ -4,12 +4,23 @@ import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
-import lang.taxi.*
+import lang.taxi.CompilationError
+import lang.taxi.TaxiParser
+import lang.taxi.findNamespace
 import lang.taxi.query.ConstraintBuilder
 import lang.taxi.query.TaxiQlQuery
-import lang.taxi.types.*
+import lang.taxi.toCompilationUnit
+import lang.taxi.types.ArrayType
+import lang.taxi.types.DiscoveryType
+import lang.taxi.types.ProjectedType
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.QueryMode
+import lang.taxi.types.StreamType
+import lang.taxi.types.Type
+import lang.taxi.types.TypedValue
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
+import lang.taxi.value
 
 internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
    fun parseQueryBody(
@@ -186,7 +197,18 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
                   anonymousTypeResolutionContext = AnonymousTypeResolutionContext(
                      typesToDiscover,
                      concreteProjectionTypeType
-                  )
+                  ),
+                  // Implementation tradeoff:  Strictly, we shouldn't parse the accessor
+                  // context down into the type if we're building
+                  // a collection - since it therefore becomes an attribute of the collection
+                  // type.
+                  // eg: in the example:
+                  // find { .. } as { ... }[] by [SomeTypeToIterate]
+                  // the accessor is related to the collection
+                  // However, this becomes impractical in Vyne given how anonymous
+                  // types get mapped to Vyne types.
+                  // For now, leaving as-is, but would be good to modify this in future
+                  accessorContext = anonymousProjectionType.accessor()
                )
                .map { createdType ->
                   val compiledType =
@@ -243,60 +265,11 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
 
       }
 
-      /*return when {
-         projectionType == null && anonymousProjectionType != null -> {
-            anonymousProjectionType.typeDeclaration()
-            val compilationErrorOrFields = anonymousProjectionType.anonymousField().map { toAnonymousFieldDefinition(it, queryProjection, typesToDiscover) }
-            val fieldDefinitions = mutableListOf<AnonymousFieldDefinition>()
-            compilationErrorOrFields.forEach { compilationErrorOrField ->
-               when (compilationErrorOrField) {
-                  is Either.Left -> {
-                     return compilationErrorOrField.a.left()
-                  }
-                  is Either.Right -> fieldDefinitions.add(compilationErrorOrField.b)
-               }
-            }
-
-            return ProjectedType.fomAnonymousTypeOnly(
-               AnonymousTypeDefinition(anonymousProjectionType.listType() != null, fieldDefinitions.toList(), queryProjection.toCompilationUnit())).right()
-         }
-
-         projectionType != null && anonymousProjectionType == null -> {
-            lookupType(projectionType).map { qualifiedName -> ProjectedType.fromConcreteTypeOnly(qualifiedName) }
-
-         }
-
-         projectionType != null && anonymousProjectionType != null -> {
-            val concreteProjectionType = lookupType(projectionType)
-            val compilationErrorOrFields = anonymousProjectionType.anonymousField().map { toAnonymousFieldDefinition(it, queryProjection, typesToDiscover) }
-            val fieldDefinitions = mutableListOf<AnonymousFieldDefinition>()
-            compilationErrorOrFields.forEach { compilationErrorOrField ->
-               when (compilationErrorOrField) {
-                  is Either.Left -> {
-                     return compilationErrorOrField.a.left()
-                  }
-                  is Either.Right -> fieldDefinitions.add(compilationErrorOrField.b)
-               }
-            }
-
-            if (concreteProjectionType is Either.Left) {
-               return concreteProjectionType.a.left()
-            }
-
-            return concreteProjectionType.map {
-               ProjectedType(it,
-                  AnonymousTypeDefinition(anonymousProjectionType.listType() != null, fieldDefinitions.toList(), projectionType.toCompilationUnit()))
-            }
-         }
-
-         else -> Either.left(CompilationError(queryProjection.start,
-            "Unexpected as definition"))
-      }*/
    }
-
 }
 
 data class AnonymousTypeResolutionContext(
    val typesToDiscover: List<DiscoveryType> = emptyList(),
    val concreteProjectionTypeContext: TaxiParser.TypeTypeContext? = null
 )
+

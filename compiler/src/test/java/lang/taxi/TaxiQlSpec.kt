@@ -527,7 +527,7 @@ object TaxiQlSpec : Spek({
       }
 
       it("should parse nested collections of anonymous types") {
-         val (schema,query) = """
+         val (schema, query) = """
             model Product {
                sku : ProductSku inherits String
                size : ProductSize inherits String
@@ -538,14 +538,16 @@ object TaxiQlSpec : Spek({
             model Transaction {
                items : TransactionItem[]
             }
-         """.compiledWithQuery("""
+         """.compiledWithQuery(
+            """
             findAll { Transaction[] } as {
                items : {
                   sku : ProductSku
                   size : ProductSize
                }[]
             }[]
-         """)
+         """
+         )
          val resultCollectionType = query.projectedType!!.anonymousTypeDefinition!! as ArrayType
          val resultMemberType = resultCollectionType.type as ObjectType
          val itemsFieldType = resultMemberType.field("items").type as ArrayType
@@ -554,7 +556,7 @@ object TaxiQlSpec : Spek({
       }
 
       it("should parse collection projection identifiers in queries") {
-         val (schema,query) = """
+         val (schema, query) = """
             model Product {
                sku : ProductSku inherits String
                size : ProductSize inherits String
@@ -565,18 +567,70 @@ object TaxiQlSpec : Spek({
             model Transaction {
                items : TransactionItem[]
             }
-         """.compiledWithQuery("""
+         """.compiledWithQuery(
+            """
             findAll { Transaction[] } as {
                items : {
                   sku : ProductSku
                   size : ProductSize
                }[] by [TransactionItem]
             }[]
-         """)
+         """
+         )
          val resultCollectionType = query.projectedType!!.anonymousTypeDefinition!! as ArrayType
          val resultMemberType = resultCollectionType.type as ObjectType
          val itemsField = resultMemberType.field("items")
          itemsField.accessor!!.asA<CollectionProjectionExpressionAccessor>().type.qualifiedName.should.equal("TransactionItem")
+      }
+
+      it("is possible to define projection specs on a top level return value") {
+         val (schema,query) = """model Musical {
+            title : MusicalTitle inherits String
+            year : YearProduced inherits Int
+         }
+         model Composer {
+            name : ComposerName inherits String
+            majorWorks : { musicals : Musical[] }
+         }""".compiledWithQuery("""findAll { Composer } as {
+               name : ComposerName
+               title : MusicalTitle
+               year: YearProduced
+            }[] by [Musical with ( ComposerName )]"""
+         )
+         val collectionType = query.projectedType!!.anonymousTypeDefinition!! as ArrayType
+         val expression = (collectionType.typeParameters()[0] as ObjectType).expression!! as CollectionProjectionExpressionAccessor
+         expression.type.qualifiedName.should.equal("Musical")
+         expression.projectionScope!!.accessors.should.have.size(1)
+      }
+
+      it("should parse collection projection identifiers with additional scopes in queries") {
+         val (schema, query) = """
+            model Product {
+               sku : ProductSku inherits String
+               size : ProductSize inherits String
+            }
+            model TransactionItem {
+               sku : ProductSku
+            }
+            model Transaction {
+               items : TransactionItem[]
+            }
+         """.compiledWithQuery(
+            """
+            findAll { Transaction[] } as {
+               items : {
+                  sku : ProductSku
+                  size : ProductSize
+               }[] by [TransactionItem with ( Product, 2 + 4, "Jimmy" )]
+            }[]
+         """
+         )
+         val resultCollectionType = query.projectedType!!.anonymousTypeDefinition!! as ArrayType
+         val resultMemberType = resultCollectionType.type as ObjectType
+         val itemsField = resultMemberType.field("items")
+         val projectionAccessor = itemsField.accessor!!.asA<CollectionProjectionExpressionAccessor>()
+         projectionAccessor.type.qualifiedName.should.equal("TransactionItem")
+         projectionAccessor.projectionScope!!.accessors.should.have.size(3)
       }
 
       // This feature has been disabled for now.
