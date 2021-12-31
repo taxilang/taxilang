@@ -9,7 +9,6 @@ import lang.taxi.testing.TestHelpers
 import org.everit.json.schema.loader.SchemaLoader
 import org.junit.jupiter.api.Test
 import java.net.URI
-import java.net.URL
 
 class JsonSchemaTaxiGeneratorTest {
 
@@ -88,6 +87,18 @@ namespace net.pwall {
    type VeggieLike inherits Boolean
 }""")
    }
+
+
+//   @Test
+//   fun `can load from url`() {
+//      val url = URL("https://api.ultumus.com/VYNE/apps/v1/docs/schemas/index-edge-api-doc.json")
+//      val generated = TaxiGenerator(schemaLoader = SchemaLoader
+//         .builder()
+//         .resolutionScope("https://api.ultumus.com/VYNE/apps/v1/docs/schemas/"))
+//         .generateAsStrings(url)
+//      TestHelpers.compile(generated.taxi)
+//
+//   }
 }
 
 

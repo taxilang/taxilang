@@ -15,12 +15,24 @@ class TaxiGenerator(
    private val schemaLoader: SchemaLoader.SchemaLoaderBuilder = SchemaLoader.builder(),
    private val logger: Logger = Logger()
 ) {
+   fun generateAsStrings(source: String, defaultNamespace: String? = null): GeneratedTaxiCode {
+      val jsonObject = JSONObject(JSONTokener(source))
+      return generateFromJsonObject(jsonObject, defaultNamespace)
+   }
+
    fun generateAsStrings(source: URL, defaultNamespace: String? = null): GeneratedTaxiCode {
       val schemaJson = source.toJsonObject()
+      return generateFromJsonObject(schemaJson, defaultNamespace)
+   }
+
+   private fun generateFromJsonObject(
+      schemaJson: JSONObject,
+      defaultNamespace: String?
+   ): GeneratedTaxiCode {
       val loader = schemaLoader.schemaJson(schemaJson)
          .build()
       val schema = loader.load().build()
-      return generateFromSchema(schema)
+      return generateFromSchema(schema, defaultNamespace)
    }
 
    fun generateFromSchema(jsonSchema: Schema, defaultNamespace: String? = null): GeneratedTaxiCode {
