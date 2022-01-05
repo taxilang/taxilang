@@ -9,6 +9,18 @@
          "type": "number",
          "description": "Product identifier"
       },
+      "someDateTime" : {
+         "type" : "string",
+         "format" : "date-time"
+      },
+      "someDate" : {
+         "type" : "string",
+         "format" : "date"
+      },
+      "someTime" : {
+         "type" : "string",
+         "format" : "time"
+      },
       "name": {
          "type": "string",
          "description": "Name of the product"

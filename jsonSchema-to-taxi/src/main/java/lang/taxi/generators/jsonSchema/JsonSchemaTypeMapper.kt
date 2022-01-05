@@ -25,6 +25,7 @@ import org.everit.json.schema.ArraySchema
 import org.everit.json.schema.BooleanSchema
 import org.everit.json.schema.CombinedSchema
 import org.everit.json.schema.EnumSchema
+import org.everit.json.schema.FormatValidator
 import org.everit.json.schema.NumberSchema
 import org.everit.json.schema.ObjectSchema
 import org.everit.json.schema.ReferenceSchema
@@ -143,7 +144,11 @@ class JsonSchemaTypeMapper(
       name: QualifiedName
    ): Type {
       val generated = when (schema) {
-         is StringSchema -> generateScalarType(name, PrimitiveType.STRING, schema.description)
+         is StringSchema -> {
+            val scalarType = selectScalarTypeFromFormattedStringType(schema.formatValidator)
+            generateScalarType(name, scalarType, schema.description)
+
+         }
          is BooleanSchema -> generateScalarType(name, PrimitiveType.BOOLEAN, schema.description)
          is NumberSchema -> generateScalarType(name, getNumberType(schema), schema.description)
          is ObjectSchema -> generateModel(name, schema)
@@ -154,6 +159,21 @@ class JsonSchemaTypeMapper(
          else -> TODO("Add support for schema type ${schema::class.simpleName}")
       }
       return generated
+   }
+
+   private fun selectScalarTypeFromFormattedStringType(formatValidator: FormatValidator?): PrimitiveType {
+      if (formatValidator == null) {
+         return PrimitiveType.STRING
+      }
+      return when (formatValidator.formatName()) {
+         "date" -> PrimitiveType.LOCAL_DATE
+         "date-time" -> PrimitiveType.INSTANT
+         "time" -> PrimitiveType.TIME
+         else -> {
+            logger.warn("Format of type ${formatValidator.formatName()} is not supported - defaulting to String")
+            PrimitiveType.STRING
+         }
+      }
    }
 
    private fun generateEnum(name: QualifiedName, schema: EnumSchema): Type {

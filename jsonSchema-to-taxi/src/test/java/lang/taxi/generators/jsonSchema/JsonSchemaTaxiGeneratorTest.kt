@@ -14,7 +14,8 @@ class JsonSchemaTaxiGeneratorTest {
 
    @Test
    fun `parses uri with fragment to type name`() {
-      val uri = URI.create("https://api.demoStack.com/VYNE/apps/v1/docs/schemas/reference.json#/definitions/holiday/properties/type")
+      val uri =
+         URI.create("https://api.demoStack.com/VYNE/apps/v1/docs/schemas/reference.json#/definitions/holiday/properties/type")
       val typeName = JsonSchemaTypeMapper.getTypeName(uri, Logger())
       typeName.fullyQualifiedName.should.equal("com.demoStack.api.reference.definitions.holiday.properties.Type")
    }
@@ -29,8 +30,9 @@ class JsonSchemaTaxiGeneratorTest {
    @Test
    fun `can parse a jsonSchema definition`() {
       val schemaJson = Resources.getResource("samples/simple-json-schema.json")
-      TaxiGenerator().generateAsStrings(schemaJson)
-         .shouldCompileTheSameAs("""
+      val generated = TaxiGenerator().generateAsStrings(schemaJson)
+      generated.shouldCompileTheSameAs(
+         """
 namespace net.pwall {
    model Product {
       price : Price
@@ -38,7 +40,13 @@ namespace net.pwall {
       id : Id
       stock : Stock?
       tags : TagsMember[]?
+      someTime : SomeTime?
+      someDate : SomeDate?
+      someDateTime : SomeDateTime?
    }
+   type SomeDate inherits Date
+   type SomeTime inherits Time
+   type SomeDateTime inherits Instant
 
    type Price inherits Decimal
 
@@ -60,13 +68,16 @@ namespace net.pwall {
    type TagsMember inherits String
 }
 
-         """.trimIndent())
+         """.trimIndent()
+      )
    }
+
    @Test
    fun `can parse a typed array`() {
       val schemaJson = Resources.getResource("samples/typed-array.json")
       TaxiGenerator(schemaLoader = SchemaLoader.builder().draftV6Support()).generateAsStrings(schemaJson)
-         .shouldCompileTheSameAs("""namespace com.example {
+         .shouldCompileTheSameAs(
+            """namespace com.example {
    [[ A representation of a person, company, organization, or place ]]
    model Arrays {
       fruits : FruitsMember[]?
@@ -85,23 +96,25 @@ namespace net.pwall {
 
    [[ Do I like this vegetable? ]]
    type VeggieLike inherits Boolean
-}""")
+}"""
+         )
    }
 
 
 //   @Test
 //   fun `can load from url`() {
 //      val url = URL("https://api.ultumus.com/VYNE/apps/v1/docs/schemas/index-edge-api-doc.json")
-//      val generated = TaxiGenerator(schemaLoader = SchemaLoader
-//         .builder()
-//         .resolutionScope("https://api.ultumus.com/VYNE/apps/v1/docs/schemas/"))
+//      val generated = TaxiGenerator(
+//         schemaLoader = SchemaLoader
+//            .builder()
+//            .resolutionScope("https://api.ultumus.com/VYNE/apps/v1/docs/schemas/")
+//      )
 //         .generateAsStrings(url)
 //      TestHelpers.compile(generated.taxi)
-//
 //   }
 }
 
 
-fun GeneratedTaxiCode.shouldCompileTheSameAs(expected:String):TaxiDocument {
- return TestHelpers.expectToCompileTheSame(this.taxi,expected)
+fun GeneratedTaxiCode.shouldCompileTheSameAs(expected: String): TaxiDocument {
+   return TestHelpers.expectToCompileTheSame(this.taxi, expected)
 }
