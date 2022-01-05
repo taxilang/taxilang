@@ -281,6 +281,9 @@ class Compiler(
    fun declaredTypeNames(): List<QualifiedName> {
       return tokenprocessorWithoutImports.findDeclaredTypeNames()
    }
+   fun declaredServiceNames(): List<QualifiedName> {
+      return tokenprocessorWithoutImports.findDeclaredServiceNames()
+   }
 
    fun lookupTypeByName(typeType: TaxiParser.TypeTypeContext): QualifiedName {
       return QualifiedName.from(tokenProcessrWithImports.lookupTypeByName(typeType))

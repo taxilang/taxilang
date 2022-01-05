@@ -212,6 +212,12 @@ class TokenProcessor(
       return attemptToLookupTypeByName(namespace, text, contextRule).wrapErrorsInList()
    }
 
+   fun findDeclaredServiceNames(): List<QualifiedName> {
+      return tokens.unparsedServices.map { (name, _) ->
+         QualifiedName.from(name)
+      }
+   }
+
    fun findDeclaredTypeNames(): List<QualifiedName> {
       createEmptyTypes()
 
@@ -609,11 +615,11 @@ class TokenProcessor(
             is TaxiParser.TypeAliasDeclarationContext -> typeSystem.register(TypeAlias.undefined(tokenName))
          }
       }
-      val serviceDefinitions =  tokens.unparsedServices.map { entry ->
+      val serviceDefinitions = tokens.unparsedServices.map { entry ->
          val qualifiedName = entry.key
          val serviceBody = entry.value.second.serviceBody()
          val operations = serviceBody?.serviceBodyMember()
-            ?.mapNotNull { it.serviceOperationDeclaration()  }
+            ?.mapNotNull { it.serviceOperationDeclaration() }
             ?.map { operationDeclaration -> operationDeclaration.operationSignature().Identifier().text }
             ?: emptyList()
          ServiceDefinition(qualifiedName, operations)
@@ -654,7 +660,11 @@ class TokenProcessor(
       try {
          when (tokenRule) {
             is TaxiParser.TypeDeclarationContext -> compileType(namespace, tokenName, tokenRule).collectErrors(errors)
-            is TaxiParser.AnnotationTypeDeclarationContext -> compileAnnotationType(tokenName, namespace, tokenRule).collectErrors(errors)
+            is TaxiParser.AnnotationTypeDeclarationContext -> compileAnnotationType(
+               tokenName,
+               namespace,
+               tokenRule
+            ).collectErrors(errors)
             is TaxiParser.EnumDeclarationContext -> compileEnum(namespace, tokenName, tokenRule).collectErrors(errors)
             is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(
                namespace,
@@ -988,11 +998,11 @@ class TokenProcessor(
    private fun compileAnonymousType(
       namespace: Namespace,
       typeName: String,
-      anonymousTypeDefinition:TaxiParser.AnonymousTypeDefinitionContext,
+      anonymousTypeDefinition: TaxiParser.AnonymousTypeDefinitionContext,
       anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext(),
-   ):Either<List<CompilationError>,ObjectType> {
+   ): Either<List<CompilationError>, ObjectType> {
       val annotations = collateAnnotations(anonymousTypeDefinition.annotation())
-      val (fields,expression) = anonymousTypeDefinition.typeBody().let { typeBody ->
+      val (fields, expression) = anonymousTypeDefinition.typeBody().let { typeBody ->
          val typeBodyContext = TypeBodyContext(typeBody, namespace)
          val fieldCompiler = FieldCompiler(this, typeBodyContext, typeName, this.errors, anonymousTypeResolutionContext)
          val compiledFields = fieldCompiler.compileAllFields()
@@ -1001,7 +1011,12 @@ class TokenProcessor(
          // of things like projection scope
          // eg find { ... } as { ... }[] by [SomeCollectionToIterate]
          val expression = if (anonymousTypeDefinition.accessor()?.scalarAccessorExpression() != null) {
-            ExpressionCompiler(this,typeChecker, errors, fieldCompiler).compileScalarAccessor(anonymousTypeDefinition.accessor().scalarAccessorExpression())
+            ExpressionCompiler(
+               this,
+               typeChecker,
+               errors,
+               fieldCompiler
+            ).compileScalarAccessor(anonymousTypeDefinition.accessor().scalarAccessorExpression())
                .collectErrors(errors)
                .map { accessor ->
                   if (accessor is Expression) {
@@ -1291,7 +1306,7 @@ class TokenProcessor(
 
    fun parseAnonymousType(
       namespace: String,
-      anonymousTypeDefinition:TaxiParser.AnonymousTypeDefinitionContext,
+      anonymousTypeDefinition: TaxiParser.AnonymousTypeDefinitionContext,
       anonymousTypeName: String = AnonymousTypeNameGenerator.generate(),
       anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext(),
    ): Either<List<CompilationError>, Type> {
@@ -1788,6 +1803,7 @@ class TokenProcessor(
    fun resolveEnumMember(enumQualifiedNameReference: TaxiParser.QualifiedNameContext): Either<List<CompilationError>, EnumMember> {
       return resolveEnumMember(enumQualifiedNameReference.Identifier().text(), enumQualifiedNameReference)
    }
+
    /**
     * Returns an enum member - requires that the enum has already been compiled.
     * This asserts that both the enum exists, and that it contains the requested member.
@@ -1852,7 +1868,11 @@ class TokenProcessor(
       enumQualifiedNameReference: TaxiParser.QualifiedNameContext,
       enumSelector: (EnumType, String) -> Either<List<CompilationError>, T>
    ): Either<List<CompilationError>, T> {
-      return resolveEnumReference(enumQualifiedNameReference.Identifier().text(), enumQualifiedNameReference, enumSelector)
+      return resolveEnumReference(
+         enumQualifiedNameReference.Identifier().text(),
+         enumQualifiedNameReference,
+         enumSelector
+      )
    }
 
 
@@ -1930,7 +1950,10 @@ class TokenProcessor(
       }
    }
 
-   private fun compileService(qualifiedName: String, serviceTokenPair: Pair<Namespace, TaxiParser.ServiceDeclarationContext> ):
+   private fun compileService(
+      qualifiedName: String,
+      serviceTokenPair: Pair<Namespace, TaxiParser.ServiceDeclarationContext>
+   ):
       Either<List<CompilationError>, Service> {
       val (_, serviceToken) = serviceTokenPair
       val serviceDoc = parseTypeDoc(serviceToken.typeDoc())
@@ -1971,8 +1994,11 @@ class TokenProcessor(
             stores.toList(),
             lineageAnnotations,
             lineageDeclaration.toCompilationUnits(),
-            parseTypeDoc(lineageDoc))
-      } else { null }
+            parseTypeDoc(lineageDoc)
+         )
+      } else {
+         null
+      }
       val members = serviceToken.serviceBody().serviceBodyMember().map { serviceBodyMember ->
          when {
             serviceBodyMember.serviceOperationDeclaration() != null -> compileOperation(serviceBodyMember.serviceOperationDeclaration())
