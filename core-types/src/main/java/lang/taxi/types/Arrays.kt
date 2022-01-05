@@ -10,9 +10,13 @@ object Arrays {
    }
 
    fun isArray(qualifiedName: QualifiedName): Boolean {
-      return qualifiedName.toString() == ArrayType.NAME
+      // Use fullyQualifiedName here, not ParamaterizedName
+      return qualifiedName.fullyQualifiedName == ArrayType.NAME
    }
 
+   fun isArray(parameterizedName:String):Boolean {
+      return parameterizedName.startsWith(ArrayType.NAME)
+   }
    fun isArray(type: Type): Boolean {
       return Arrays.isArray(type.toQualifiedName())
    }
