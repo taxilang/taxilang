@@ -41,7 +41,7 @@ object TestHelpers {
       throw AssertionError("Generated docs did not match expected.  Errors:\n" + errors.joinToString("\n") +"\n\nGenerated:\n${generatedSource}")
    }
 
-   fun compile(generated: List<String>) =
+   fun compile(generated: List<String>):TaxiDocument =
       try {
          Compiler.forStrings(generated).compile()
       } catch (e: CompilationException) {
