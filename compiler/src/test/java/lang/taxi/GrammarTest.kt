@@ -832,6 +832,22 @@ type LegacyTradeNotification {
    }
 
    @Test
+   fun `can list service names from source`() {
+      val src = """
+         namespace foo.test
+
+         service MyService {
+         // Person doesn't exist, so this can't compile.
+         // But we should still be able to list the names of the service
+            operation findPeople():Person[]
+         }
+      """.trimIndent()
+      val compiler = Compiler(src)
+      compiler.declaredServiceNames().should.have.size(1)
+      compiler.declaredServiceNames().single().fullyQualifiedName.should.equal("foo.test.MyService")
+   }
+
+   @Test
    fun canDeclareAJsonPAthAccessor() {
       val src = """
 type alias Instrument as String

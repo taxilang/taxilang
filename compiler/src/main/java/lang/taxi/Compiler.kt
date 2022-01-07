@@ -32,20 +32,29 @@ fun ParserRuleContext?.toCompilationUnit(dependantTypeNames:List<QualifiedName> 
       CompilationUnit.unspecified()
    } else {
       val rawSource = this.source()
-      return if (dependantTypeNames.isEmpty()) {
-         CompilationUnit(
-            this,
-            rawSource,
-            SourceLocation(this.start.line, this.start.charPositionInLine)
-         )
+      return CompilationUnit(
+         this,
+         rawSource.makeStandalone(this.findNamespace(),dependantTypeNames),
+         SourceLocation(this.start.line, this.start.charPositionInLine)
+      )
 
-      } else {
-         CompilationUnit(
-            this,
-            rawSource.makeStandalone(this.findNamespace(),dependantTypeNames),
-            SourceLocation(this.start.line, this.start.charPositionInLine)
-         );
-      }
+      // MP - 21-Dec-21 : The below was added recently, but unsure why.  Something to do with
+      // regenerating taxi in views.
+      // Serhat to investigate through regression pack
+//      return if (dependantTypeNames.isEmpty()) {
+//         CompilationUnit(
+//            this,
+//            rawSource.makeStandalone(this.findNamespace(),dependantTypeNames),
+//            SourceLocation(this.start.line, this.start.charPositionInLine)
+//         )
+//
+//      } else {
+//         CompilationUnit(
+//            this,
+//            rawSource.makeStandalone(this.findNamespace(),dependantTypeNames),
+//            SourceLocation(this.start.line, this.start.charPositionInLine)
+//         );
+//      }
    }
 }
 
@@ -271,6 +280,9 @@ class Compiler(
     */
    fun declaredTypeNames(): List<QualifiedName> {
       return tokenprocessorWithoutImports.findDeclaredTypeNames()
+   }
+   fun declaredServiceNames(): List<QualifiedName> {
+      return tokenprocessorWithoutImports.findDeclaredServiceNames()
    }
 
    fun lookupTypeByName(typeType: TaxiParser.TypeTypeContext): QualifiedName {

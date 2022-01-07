@@ -3,7 +3,7 @@ package lang.taxi.generators
 import com.winterbe.expekt.should
 import lang.taxi.Compiler
 import lang.taxi.messages.Severity
-import org.junit.jupiter.api.Assertions
+import lang.taxi.testing.shouldCompileTheSameAs
 import org.junit.jupiter.api.Test
 import kotlin.test.fail
 
@@ -83,8 +83,7 @@ model Person {
    weightInOunces : WeightInOunces  by WeightInGrams * OuncesToGramsMultiplier
 }
 """
-      generated.trimNewLines().should.equal(expected.trimNewLines())
-      generated.shouldCompile()
+      generated.shouldCompileTheSameAs(expected)
    }
 
    @Test
@@ -130,8 +129,7 @@ model Person {
             orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", @format = "yyyy-MM-dd'T'HH:mm:ss.SSS" )
          }
       """.trimIndent()
-      generated.trimNewLines().should.equal(expected.trimNewLines())
-      generated.shouldCompile()
+      generated.shouldCompileTheSameAs(expected)
    }
 
    @Test
@@ -146,8 +144,7 @@ model Person {
       model Order {
          orderDateTime : TransactionEventDateTime( @format = ["yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "yyyy-MM-dd'T'HH:mm:ss.SSS"] @offset = 60 )
       }""".trimIndent()
-      generated.trimNewLines().should.equal(expected.trimNewLines())
-      generated.shouldCompile()
+      generated.shouldCompileTheSameAs(expected)
    }
 
    @Test
@@ -266,8 +263,9 @@ model Person {
    weightInOunces : WeightInOunces?  by WeightInGrams * OuncesToGramsMultiplier
 }
 """
-      generated.trimNewLines().should.equal(expected.trimNewLines())
-      generated.shouldCompile()
+      generated.shouldCompileTheSameAs(expected)
+//      generated.trimNewLines().should.equal(expected.trimNewLines())
+//      generated.shouldCompile()
    }
 
    @Test
@@ -295,8 +293,7 @@ model Person {
    firstName : String
 }
 """
-      generated.trimNewLines().should.equal(expected.trimNewLines())
-      generated.shouldCompile()
+      generated.shouldCompileTheSameAs(expected)
    }
 
    @Test
@@ -362,9 +359,7 @@ annotation GeneratedSource {
             }
          }
       """.trimIndent()
-      // Using junit Assertion as IntelliJ nicely shows the differences between expected and actual in case of a failure.
-      Assertions.assertEquals(expected.trimNewLines(), generated.trimNewLines())
-      generated.shouldCompile()
+      generated.shouldCompileTheSameAs(expected)
    }
 
 }

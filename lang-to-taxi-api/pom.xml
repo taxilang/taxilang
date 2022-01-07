@@ -9,5 +9,11 @@
 
    <artifactId>lang-to-taxi-api</artifactId>
 
-
+   <dependencies>
+      <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>core-types</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+   </dependencies>
 </project>

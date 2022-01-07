@@ -45,6 +45,7 @@
       <module>sample-compiled-taxonomy</module>
       <module>xsd2taxi</module>
        <module>query-adaptors</module>
+       <module>jsonSchema-to-taxi</module>
    </modules>
 
    <properties>

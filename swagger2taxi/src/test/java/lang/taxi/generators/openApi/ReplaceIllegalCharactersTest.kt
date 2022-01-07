@@ -1,7 +1,7 @@
 package lang.taxi.generators.openApi
 
 import com.winterbe.expekt.should
-import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
+import lang.taxi.generators.NamingUtils.replaceIllegalCharacters
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.TestFactory
 
@@ -20,7 +20,7 @@ internal class ReplaceIllegalCharactersTest {
       "a | b" to "a_b",
       "a | b" to "a_b",
       "\$anIdentifier\$909" to "\$anIdentifier\$909",
-      "123" to "123",
+      "123" to "One23",
    ).map { (original, expected) ->
       dynamicTest("\"$original\".replaceIllegalCharacters() == \"$expected\"") {
          original.replaceIllegalCharacters().should.equal(expected)

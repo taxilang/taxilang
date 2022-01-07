@@ -1,8 +1,8 @@
 package lang.taxi.generators.openApi.swagger
 
 import lang.taxi.generators.Logger
-import lang.taxi.generators.openApi.Utils
-import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
+import lang.taxi.generators.NamingUtils
+import lang.taxi.generators.NamingUtils.replaceIllegalCharacters
 import lang.taxi.types.ArrayType
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Field
@@ -136,7 +136,7 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
    }
 
    private fun getOrGenerateType(name: String): Type {
-      val qualifiedName = Utils.qualifyTypeNameIfRaw(name, defaultNamespace)
+      val qualifiedName = NamingUtils.qualifyTypeNameIfRaw(name, defaultNamespace)
 
       var factoryMethod:(() -> Unit)? = null
       val type = generatedTypes.getOrPut(qualifiedName.toString()) {
@@ -160,7 +160,7 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
    }
 
    private fun generateType(name: String, model: ModelImpl): Pair<Type, () -> Unit> {
-      val qualifiedName = Utils.qualifyTypeNameIfRaw(name, defaultNamespace)
+      val qualifiedName = NamingUtils.qualifyTypeNameIfRaw(name, defaultNamespace)
       val emptyType = ObjectType.undefined(qualifiedName.fullyQualifiedName)
       return emptyType to {
          val fields = model.properties?.let { generateFields(it) } ?: emptySet()
@@ -189,7 +189,7 @@ class SwaggerTypeMapper(val swagger: Swagger, val defaultNamespace: String, priv
 
 
    private fun generateType(name: String, model: ComposedModel): Pair<Type, () -> Unit> {
-      val qualifiedName = Utils.qualifyTypeNameIfRaw(name, defaultNamespace)
+      val qualifiedName = NamingUtils.qualifyTypeNameIfRaw(name, defaultNamespace)
       val emptyType = ObjectType.undefined(qualifiedName.fullyQualifiedName)
       return emptyType to {
          val interfaces: Map<RefModel, ObjectType> =
