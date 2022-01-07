@@ -6,8 +6,8 @@ import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpPathVariable
 import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.generators.Logger
-import lang.taxi.generators.openApi.Utils.removeIllegalCharacters
-import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
+import lang.taxi.generators.NamingUtils.removeIllegalCharacters
+import lang.taxi.generators.NamingUtils.replaceIllegalCharacters
 import lang.taxi.generators.openApi.swagger.SwaggerTypeMapper
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.Annotation
