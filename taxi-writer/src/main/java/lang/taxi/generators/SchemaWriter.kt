@@ -144,8 +144,7 @@ $taxiBlock
          // For now, I've worked around it in the xml code gen (the only place that supports this currently)
          // by not setting the formattedInstanceOfType.  It produces the correct output, but it's a bit hacky
          //
-         // Update 2-Jan-22:  Commenting this out, as it's excluding custom Date types etc from getting output.
-//         .filterNot { it is ObjectType && it.formattedInstanceOfType != null }
+         .filterNot { it is ObjectType && it.declaresFormat }
          // Exclude calculated types - these are declared inline at the field reference
          .filterNot { it is ObjectType && it.calculatedInstanceOfType != null }
          .filter { typeFilter(it) }

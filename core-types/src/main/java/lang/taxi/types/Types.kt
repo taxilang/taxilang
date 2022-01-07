@@ -150,6 +150,18 @@ interface Type : Named, Compiled, ImportableToken, Documented {
 
    val format: List<String>?
 
+   /**
+    * Indicates if this type (excluding any inherited types)
+    * declares a format.
+    *
+    * Note that the format property will return formats
+    * from inherited types.
+    */
+   val declaresFormat: Boolean
+      get() {
+         return this.format?.isNotEmpty() ?: false
+      }
+
    val inheritsFromPrimitive: Boolean
 
    val basePrimitive: PrimitiveType?

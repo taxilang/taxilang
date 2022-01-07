@@ -126,6 +126,18 @@ data class ObjectType(
          return definition?.expression
       }
 
+   /**
+    * Indicates if this type (excluding any inherited types)
+    * declares a format.
+    *
+    * Note that the format property will return formats
+    * from inherited types.
+    */
+   override val declaresFormat: Boolean
+      get() {
+         return this.definition?.format != null
+      }
+
    override val format: List<String>?
       get() {
          return if (this.definition?.format != null) {
