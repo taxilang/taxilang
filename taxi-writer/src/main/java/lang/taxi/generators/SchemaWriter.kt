@@ -32,7 +32,7 @@ open class SchemaWriter(
    private val annotationFilter: (Annotatable, Annotation) -> Boolean = { _, _ -> true },
 
    /**
-    * Allows the caller to optioanlly filter types that will / won't be written out.
+    * Allows the caller to optionally filter types that will / won't be written out.
     * If a type is not written out, it's expected to be provided from another schema, or the
     * resulting code won't compile.
     */
