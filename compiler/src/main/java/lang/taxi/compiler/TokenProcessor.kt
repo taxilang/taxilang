@@ -928,7 +928,14 @@ class TokenProcessor(
       val typeDoc = parseTypeDoc(ctx.typeDoc()?.source()?.content)
       val dependantTypeNames = fields.map { it.type.toQualifiedName() } +
          annotations.mapNotNull { it.type?.toQualifiedName() } +
-         inherits.map { it.toQualifiedName() }
+         inherits
+            // Exclude imports of formatted types.
+            // This happens in cases like:
+            // import lang.taxi.FormattedInstant_428af4 <-- We want to exclude this import, it's not useful
+            // type FooDate inherits Instant( @format = 'mm/dd/yyThh:nn:ss.mmmmZ' )
+            .filterNot { it.declaresFormat && it.toQualifiedName().typeName.startsWith("Formatted")  }
+            .map { it.toQualifiedName() }
+
       return this.typeSystem.register(
          ObjectType(
             typeName, ObjectTypeDefinition(
@@ -1411,33 +1418,6 @@ class TokenProcessor(
 
 
    }
-
-//   private fun generateCalculatedFieldType(type: Type, formula: Formula): Either<CompilationError, Type> {
-//      val operands = formula.operandFields
-//      val calculatedTypeName = QualifiedName.from(type.qualifiedName).let { originalTypeName ->
-//         val hash = Hashing.sha256()
-//            .hashString(operands.sortedBy { it.fullyQualifiedName }.joinToString("_"), Charset.defaultCharset())
-//            .toString().takeLast(6)
-//         originalTypeName.copy(typeName = "Calculated${originalTypeName.typeName}_$hash")
-//      }
-//
-//      return if (typeSystem.contains(calculatedTypeName.fullyQualifiedName)) {
-//         Either.right(typeSystem.getType(calculatedTypeName.fullyQualifiedName))
-//      } else {
-//         val formattedType = ObjectType(
-//            calculatedTypeName.fullyQualifiedName,
-//            ObjectTypeDefinition(
-//               emptySet(),
-//               inheritsFrom = setOf(type),
-//               calculatedInstanceOfType = type,
-//               calculation = formula,
-//               compilationUnit = CompilationUnit.generatedFor(type)
-//            )
-//         )
-//         typeSystem.register(formattedType)
-//         Either.right(formattedType)
-//      }
-//   }
 
    private fun parseTypeFormat(typeType: TaxiParser.TypeTypeContext): Either<List<CompilationError>, FormatsAndZoneoffset> {
       val formatExpressions = typeType
