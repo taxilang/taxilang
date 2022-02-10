@@ -73,48 +73,55 @@ open class SchemaWriter(
    private fun generateSchema(doc: TaxiDocument, importLocation: ImportLocation): List<String> {
       data class SourceAndImports(val source: String, val imports: List<String>)
 
-      val sources = doc.toNamespacedDocs().mapNotNull { namespacedDoc ->
-         val (importedTypes, types) = getImportsAndTypes(namespacedDoc)
-         if (types.isEmpty() && namespacedDoc.services.isEmpty()) {
-            return@mapNotNull null
-         }
-
-         val typeDeclarations = generateTaxiForTypes(types, namespacedDoc.namespace)
-         val typesTaxiString = typeDeclarations.joinToString("\n\n").trim()
-
-         val requiredImportsInServices = findImportedTypesOnServices(namespacedDoc.services)
-         val requiredImports = (importedTypes + requiredImportsInServices).distinct()
-         val imports = requiredImports.map { "import ${it.qualifiedName}" }
+      val sources = doc.toNamespacedDocs()
+         .mapNotNull { namespacedDoc ->
+            val (importedTypes, types) = getImportsAndTypes(namespacedDoc)
 
 
-         val servicesTaxiString =
-            namespacedDoc.services.joinToString("\n") { generateServiceDeclaration(it, namespacedDoc.namespace) }.trim()
-         //return:
-         // Wrap in namespace declaration, if it exists
-         val rawTaxi = """${typesTaxiString.prependIndent()}
+            val typeDeclarations = generateTaxiForTypes(types, namespacedDoc.namespace)
+            // typeDeclarations excludes any types in the schema that were present,
+            // but we don't need to output. (eg., builtin types).
+            // To prevent emitting empty schemas, check now and bail
+            if (typeDeclarations.isEmpty() && namespacedDoc.services.isEmpty()) {
+               return@mapNotNull null
+            }
+
+            val typesTaxiString = typeDeclarations.joinToString("\n\n").trim()
+
+            val requiredImportsInServices = findImportedTypesOnServices(namespacedDoc.services)
+            val requiredImports = (importedTypes + requiredImportsInServices).distinct()
+            val imports = requiredImports.map { "import ${it.qualifiedName}" }
+
+
+            val servicesTaxiString =
+               namespacedDoc.services.joinToString("\n") { generateServiceDeclaration(it, namespacedDoc.namespace) }
+                  .trim()
+            //return:
+            // Wrap in namespace declaration, if it exists
+            val rawTaxi = """${typesTaxiString.prependIndent()}
 
 ${servicesTaxiString.prependIndent()}"""
-            .let { taxiBlock ->
-               if (namespacedDoc.namespace.isNotEmpty()) {
-                  """namespace ${namespacedDoc.namespace} {
+               .let { taxiBlock ->
+                  if (namespacedDoc.namespace.isNotEmpty()) {
+                     """namespace ${namespacedDoc.namespace} {
 $taxiBlock
 }
 """.trim()
-               } else {
-                  taxiBlock
+                  } else {
+                     taxiBlock
+                  }
                }
-            }
 
-         val taxiWithImports = if (importLocation == ImportLocation.WriteImportsInline) {
-            """${imports.joinToString("\n")}
+            val taxiWithImports = if (importLocation == ImportLocation.WriteImportsInline) {
+               """${imports.joinToString("\n")}
                |
                |$rawTaxi
             """.trimMargin().trim()
-         } else {
-            rawTaxi
+            } else {
+               rawTaxi
+            }
+            SourceAndImports(formatter.format(taxiWithImports), imports)
          }
-         SourceAndImports(formatter.format(taxiWithImports), imports)
-      }
 
 
       return if (importLocation == ImportLocation.CollectImports) {
