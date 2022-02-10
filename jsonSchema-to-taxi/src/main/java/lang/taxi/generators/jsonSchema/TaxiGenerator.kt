@@ -43,7 +43,7 @@ class TaxiGenerator(
       ).generateTypes()
       val taxiDoc = TaxiDocument(generatedTypes, emptySet())
       val taxi = schemaWriter.generateSchemas(listOf(taxiDoc))
-      return GeneratedTaxiCode(taxi, emptyList())
+      return GeneratedTaxiCode(taxi, logger.messages)
    }
 
 }

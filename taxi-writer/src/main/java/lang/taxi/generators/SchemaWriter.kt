@@ -14,6 +14,7 @@ import lang.taxi.types.ArrayType
 import lang.taxi.types.EnumType
 import lang.taxi.types.Field
 import lang.taxi.types.ObjectType
+import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TaxiStatementGenerator
 import lang.taxi.types.Type
 import lang.taxi.types.TypeAlias
@@ -145,6 +146,7 @@ $taxiBlock
          // by not setting the formattedInstanceOfType.  It produces the correct output, but it's a bit hacky
          //
          .filterNot { it is ObjectType && it.declaresFormat }
+         .filterNot { it is PrimitiveType }
          // Exclude calculated types - these are declared inline at the field reference
          .filterNot { it is ObjectType && it.calculatedInstanceOfType != null }
          .filter { typeFilter(it) }
