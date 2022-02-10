@@ -102,3 +102,5 @@ data class AttributePath(val parts: List<String>) {
    }
 
 }
+
+fun String.toQualifiedName():QualifiedName = QualifiedName.from(this)
