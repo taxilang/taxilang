@@ -12,17 +12,13 @@ release:
    gitlab:
       owner: taxi-lang
       name: taxi-lang
-      username: martypitt
+      username: taxi-lang
       branch: master
 
 distributions:
    taxi-cli:
       java:
          mainClass: lang.taxi.cli.TaxiCli
-#      type: JAVA_BINARY
-        # Name of the executable launcher.
-        # If left undefined, will use ${distribution.name}.
-      #
       executable: taxi/bin/taxi
       artifacts:
          -  path: target/taxi.zip
@@ -75,7 +71,7 @@ packagers:
       # The release notes URL to use.
       # Defaults to `${release.${git}.releaseNotesUrl}`.
       #
-      releaseNotesUrl: https://host.com/{{projectName}}/{{tagName}}
+#      releaseNotesUrl: https://host.com/{{projectName}}/{{tagName}}
 
       # The consumer key for publishing to Sdkman.
       # If left unspecified, the `JRELEASER_SDKMAN_CONSUMER_KEY`
