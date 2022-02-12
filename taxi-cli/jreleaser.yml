@@ -12,6 +12,8 @@ release:
    gitlab:
       owner: taxi-lang
       name: taxi-lang
+      username: martypitt
+      branch: master
 
 distributions:
    taxi-cli:
@@ -23,7 +25,7 @@ distributions:
       #
       executable: taxi/bin/taxi
       artifacts:
-         -  path: taxi-cli/target/taxi.zip
+         -  path: target/taxi.zip
 
 packagers:
    #
