@@ -1,23 +1,16 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.accessors.ConditionalAccessor
+import lang.taxi.expressions.FunctionExpression
+import lang.taxi.expressions.LiteralExpression
+import lang.taxi.expressions.OperatorExpression
 import lang.taxi.functions.FunctionAccessor
-import lang.taxi.types.CalculatedModelAttributeFieldSetExpression
-import lang.taxi.types.ComparisonExpression
-import lang.taxi.types.ComparisonOperator
-import lang.taxi.types.ConditionalAccessor
-import lang.taxi.types.ConstantEntity
 import lang.taxi.types.ElseMatchExpression
-import lang.taxi.types.EmptyReferenceSelector
-import lang.taxi.types.FormulaOperator
 import lang.taxi.types.InlineAssignmentExpression
-import lang.taxi.types.LiteralAssignment
-import lang.taxi.types.ModelAttributeFieldReferenceEntity
 import lang.taxi.types.ModelAttributeReferenceSelector
-import lang.taxi.types.ModelAttributeTypeReferenceAssignment
 import lang.taxi.types.ObjectType
-import lang.taxi.types.ScalarAccessorValueAssignment
-import lang.taxi.types.WhenCaseBlock
+import lang.taxi.types.PrimitiveType
 import lang.taxi.types.WhenFieldSetCondition
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -80,12 +73,12 @@ class ViewAggregationSpec : Spek({
                }
 
               leavesQuantity: RemainingQuantity by when {
-                 OrderSent::RequestedQuantity = OrderSent::ExecutedQuantity -> 0
+                 OrderSent::RequestedQuantity == OrderSent::ExecutedQuantity -> 0
                  else -> (OrderSent::RequestedQuantity - OrderView::CumulativeQty)
                }
 
               displayQuantity: DisplayedQuantity by when {
-                 OrderSent::RequestedQuantity = OrderSent::ExecutedQuantity -> 0
+                 OrderSent::RequestedQuantity == OrderSent::ExecutedQuantity -> 0
                  else -> OrderView::RemainingQuantity
                }
             }
@@ -111,110 +104,86 @@ class ViewAggregationSpec : Spek({
          bodyType.field("orderEntry").memberSource?.fullyQualifiedName.should.equal("taxi.test.OrderSent")
          val cumulativeQtyField = bodyType.field("cumulativeQty")
          cumulativeQtyField.memberSource.should.be.`null`
-         val conditionalAccessor = cumulativeQtyField.accessor as ConditionalAccessor
-         conditionalAccessor.expression.should.equal(
-            WhenFieldSetCondition(selectorExpression = EmptyReferenceSelector,
-               cases = listOf(
-                  WhenCaseBlock(
-                     matchExpression = ComparisonExpression(
-                        operator = ComparisonOperator.NQ,
-                        left = ModelAttributeFieldReferenceEntity(
-                           source = orderSentType.toQualifiedName(),
-                           fieldType = testType("TradeNumber")),
-                        right = ConstantEntity(value = null)),
-                     assignments = listOf(
-                        InlineAssignmentExpression(
-                           assignment = ScalarAccessorValueAssignment(
-                              accessor = FunctionAccessor(
-                                 taxiDocument.function("vyne.aggregations.sumOver"),
-                                 listOf(
-                                    ModelAttributeReferenceSelector(memberSource = orderSentType.toQualifiedName(), memberType = testType("ExecutedQuantity")),
-                                    ModelAttributeReferenceSelector(memberSource = orderSentType.toQualifiedName(), memberType = testType("SentOrderId")),
-                                    ModelAttributeReferenceSelector(memberSource = orderSentType.toQualifiedName(), memberType = testType("MarketId"))
-                                 )))))),
-                  WhenCaseBlock(
-                     matchExpression = ElseMatchExpression,
-                     assignments = listOf(
-                        InlineAssignmentExpression(
-                           assignment = ModelAttributeTypeReferenceAssignment(
-                              source = orderSentType.toQualifiedName(),
-                              type = testType("ExecutedQuantity")))))
-               ))
-         )
+         val cumulativeQtyFieldAccessor = (cumulativeQtyField.accessor as ConditionalAccessor).expression as WhenFieldSetCondition
+         (cumulativeQtyFieldAccessor.selectorExpression as LiteralExpression).value.should.equal(true)
+         val firstCaseForCumulativeQty = cumulativeQtyFieldAccessor.cases.first()
+         ((firstCaseForCumulativeQty.matchExpression as OperatorExpression).lhs as ModelAttributeReferenceSelector)
+            .memberSource.should.equal(orderSentType.toQualifiedName())
+         ((firstCaseForCumulativeQty.matchExpression as OperatorExpression).lhs as ModelAttributeReferenceSelector)
+            .memberType.should.equal(testType("TradeNumber"))
+         val sumOverFuncExpression = (firstCaseForCumulativeQty.assignments.first()
+           as InlineAssignmentExpression).assignment as FunctionExpression
+         sumOverFuncExpression.function.returnType.should.equal(PrimitiveType.DECIMAL)
+         (sumOverFuncExpression.function.inputs[0] as ModelAttributeReferenceSelector)
+            .memberType.should.equal(testType("ExecutedQuantity"))
+         (sumOverFuncExpression.function.inputs[0] as ModelAttributeReferenceSelector)
+            .memberSource.should.equal(orderSentType.toQualifiedName())
+         (sumOverFuncExpression.function.inputs[1] as ModelAttributeReferenceSelector)
+            .memberType.should.equal(testType("SentOrderId"))
+         (sumOverFuncExpression.function.inputs[1] as ModelAttributeReferenceSelector)
+            .memberSource.should.equal(orderSentType.toQualifiedName())
+         (sumOverFuncExpression.function.inputs[2] as ModelAttributeReferenceSelector)
+            .memberType.should.equal(testType("MarketId"))
+         (sumOverFuncExpression.function.inputs[2] as ModelAttributeReferenceSelector)
+            .memberSource.should.equal(orderSentType.toQualifiedName())
+         val secondCaseForCumulativeQty = cumulativeQtyFieldAccessor.cases[1]
+         secondCaseForCumulativeQty.matchExpression.should.instanceof(ElseMatchExpression::class.java)
+         ((secondCaseForCumulativeQty.assignments.first() as InlineAssignmentExpression)
+            .assignment as ModelAttributeReferenceSelector)
+            .memberSource.should.equal(orderSentType.toQualifiedName())
+         ((secondCaseForCumulativeQty.assignments.first() as InlineAssignmentExpression)
+            .assignment as ModelAttributeReferenceSelector)
+            .memberType.should.equal(testType("ExecutedQuantity"))
 
          val leavesQtyField = bodyType.field("leavesQuantity")
          leavesQtyField.memberSource.should.be.`null`
-         val leavesQtyFieldConditionalAccessor = leavesQtyField.accessor as ConditionalAccessor
-         leavesQtyFieldConditionalAccessor.expression.should.equal(
-            WhenFieldSetCondition(
-               selectorExpression = EmptyReferenceSelector,
-               cases = listOf(
-                  WhenCaseBlock(
-                     matchExpression = ComparisonExpression(
-                        operator = ComparisonOperator.EQ,
-                        left = ModelAttributeFieldReferenceEntity(
-                           source = orderSentType.toQualifiedName(),
-                           fieldType = testType("RequestedQuantity")),
-                        right = ModelAttributeFieldReferenceEntity(
-                           source = orderSentType.toQualifiedName(),
-                           fieldType = testType("ExecutedQuantity"))
-                     ),
-                     assignments = listOf(InlineAssignmentExpression(assignment = LiteralAssignment(0)))),
-                  WhenCaseBlock(
-                     matchExpression = ElseMatchExpression,
-                     assignments = listOf(
-                        InlineAssignmentExpression(
-                           ScalarAccessorValueAssignment(
-                              accessor = ConditionalAccessor(
-                                 expression = CalculatedModelAttributeFieldSetExpression(
-                                    operand1 = ModelAttributeReferenceSelector(
-                                       memberSource = orderSentType.toQualifiedName(),
-                                       memberType = testType("RequestedQuantity")),
-                                    operand2 = ModelAttributeReferenceSelector(
-                                       memberSource = orderView.toQualifiedName(),
-                                       memberType = testType("CumulativeQty")),
-                                    operator = FormulaOperator.Subtract
-                                 )
-                              )
-                           )
-                        )
-                     )
-                  )
-               )
-            )
-         )
+         val leavesQtyFieldWhen = (leavesQtyField.accessor as ConditionalAccessor).expression as WhenFieldSetCondition
+         ((leavesQtyFieldWhen.cases.first().matchExpression as OperatorExpression)
+            .lhs as ModelAttributeReferenceSelector)
+            .memberType.should.equal(testType("RequestedQuantity"))
+         ((leavesQtyFieldWhen.cases.first().matchExpression as OperatorExpression)
+            .lhs as ModelAttributeReferenceSelector)
+            .memberSource.should.equal(orderSentType.toQualifiedName())
+         ((leavesQtyFieldWhen.cases.first().assignments.first() as InlineAssignmentExpression)
+            .assignment as LiteralExpression).value.should.equal(0)
+         leavesQtyFieldWhen.cases[1].matchExpression.should.instanceof(ElseMatchExpression::class.java)
+         (((leavesQtyFieldWhen.cases[1].assignments.first() as InlineAssignmentExpression)
+            .assignment as OperatorExpression)
+            .lhs as ModelAttributeReferenceSelector)
+            .memberSource.should.equal(orderSentType.toQualifiedName())
+         (((leavesQtyFieldWhen.cases[1].assignments.first() as InlineAssignmentExpression)
+            .assignment as OperatorExpression)
+            .lhs as ModelAttributeReferenceSelector)
+            .memberType.should.equal(testType("RequestedQuantity"))
+         (((leavesQtyFieldWhen.cases[1].assignments.first() as InlineAssignmentExpression)
+            .assignment as OperatorExpression)
+            .rhs as ModelAttributeReferenceSelector)
+            .memberType.should.equal(testType("CumulativeQty"))
+         (((leavesQtyFieldWhen.cases[1].assignments.first() as InlineAssignmentExpression)
+            .assignment as OperatorExpression)
+            .rhs as ModelAttributeReferenceSelector)
+            .memberSource.should.equal(orderView.toQualifiedName())
 
          val displayQuantity = bodyType.field("displayQuantity")
          val displayQuantityFieldConditionalAccessor = displayQuantity.accessor as ConditionalAccessor
-         displayQuantityFieldConditionalAccessor.expression.should.equal(
-            WhenFieldSetCondition(
-               selectorExpression = EmptyReferenceSelector,
-               cases = listOf(
-                  WhenCaseBlock(
-                     matchExpression = ComparisonExpression(
-                        operator = ComparisonOperator.EQ,
-                        left = ModelAttributeFieldReferenceEntity(
-                           source = orderSentType.toQualifiedName(),
-                           fieldType = testType("RequestedQuantity")),
-                        right = ModelAttributeFieldReferenceEntity(
-                           source = orderSentType.toQualifiedName(),
-                           fieldType = testType("ExecutedQuantity"))
-                     ),
-                     assignments = listOf(InlineAssignmentExpression(assignment = LiteralAssignment(0)))),
-                  WhenCaseBlock(
-                     matchExpression = ElseMatchExpression,
-                     assignments = listOf(
-                        InlineAssignmentExpression(
-                           ModelAttributeTypeReferenceAssignment(
-                              source = orderView.toQualifiedName(),
-                              type = testType("RemainingQuantity")
-                           )
-                        )
-                     )
-                  )
-               )
-            )
-         )
+         val fieldSetExpression = displayQuantityFieldConditionalAccessor.expression as WhenFieldSetCondition
+         (fieldSetExpression.selectorExpression as LiteralExpression).value.should.equal(true)
+         val firstCase = fieldSetExpression.cases.first()
+         ((firstCase.matchExpression as OperatorExpression)
+            .lhs as ModelAttributeReferenceSelector)
+            .memberType.should.equal(testType("RequestedQuantity"))
+         ((firstCase.matchExpression as OperatorExpression)
+            .lhs as ModelAttributeReferenceSelector)
+            .memberSource.should.equal(orderSentType.toQualifiedName())
+         ((firstCase.assignments.first() as InlineAssignmentExpression)
+            .assignment as LiteralExpression).value.should.equal(0)
+
+         val secondCase = fieldSetExpression.cases[1]
+         secondCase.matchExpression.should.instanceof(ElseMatchExpression::class.java)
+         val elseAssignment =  ((secondCase.assignments.first() as InlineAssignmentExpression)
+            .assignment as ModelAttributeReferenceSelector)
+         elseAssignment.memberType.should.equal(testType("RemainingQuantity"))
+         elseAssignment.memberSource.should.equal(orderView.toQualifiedName())
       }
 
       it("A view one join statement and aggregate field definition") {
@@ -302,7 +271,7 @@ class ViewAggregationSpec : Spek({
          }
            """.trimIndent()
          val (errors, _) = Compiler(src).compileWithMessages()
-         errors.last().detailMessage.should.equal("Only Model Attribute References are  allowed within Views")
+         errors.last().detailMessage.should.equal("Invalid View Definition. Functions, only vyne.aggregations.sumOver and taxi.stdlib.coalesce are allowed.")
       }
 
       it("should detect references to types that are not part of the view definition") {
@@ -313,7 +282,7 @@ class ViewAggregationSpec : Spek({
          type OrderEventDateTime inherits Instant
          type OrderType inherits String
          type SecurityDescription inherits String
-         type RequestedQuantity inherits String
+         type RequestedQuantity inherits Decimal
          type OrderStatus inherits String
          type DecimalFieldOrderFilled inherits Decimal
          type AggregatedCumulativeQty inherits Decimal
@@ -372,21 +341,21 @@ class ViewAggregationSpec : Spek({
               subSecurityType: SecurityDescription by coalesce(OrderFill::SecurityDescription, OrderSent::SecurityDescription)
               requestedQuantity: OrderSent::RequestedQuantity
               orderEntry: OrderStatus by when {
-                 OrderSent::RequestedQuantity = OrderFill::DecimalFieldOrderFilled -> OrderFill::OrderStatus
+                 OrderSent::RequestedQuantity == OrderFill::DecimalFieldOrderFilled -> OrderFill::OrderStatus
                  else -> "PartiallyFilled"
               }
               leavesQuantity: RemainingQuantity by when {
-                    OrderSent::RequestedQuantity = OrderFilled::DecimalFieldOrderFilled -> 0
+                    OrderSent::RequestedQuantity == OrderFilled::DecimalFieldOrderFilled -> 0
                     else -> (OrderSent::RequestedQuantity - OrderView::CumulativeQuantity)
               }
               displayQuantity: DisplayedQuantity by when {
-                  OrderSent::RequestedQuantity = OrderFilled::DecimalFieldOrderFilled -> 0
+                  OrderSent::RequestedQuantity == OrderFilled::DecimalFieldOrderFilled -> 0
                   else -> OrderView::RemainingQuantity
               }
               tradeNo: OrderFill::TradeNo
               executedQuantity: OrderFill::DecimalFieldOrderFilled
               cumulativeQty: CumulativeQuantity by when {
-                  OrderFill::TradeNo = null -> OrderFill::DecimalFieldOrderFilled
+                  OrderFill::TradeNo == null -> OrderFill::DecimalFieldOrderFilled
                   else -> sumOver(OrderFill::DecimalFieldOrderFilled, OrderFill::FillOrderId, OrderFill::TradeNo)
                 }
             }
@@ -467,18 +436,18 @@ class ViewAggregationSpec : Spek({
                   else -> (OrderView::OrderCumulativeSum - OrderView::SellCumulativeSumOrdered)
                }
               cumulativeQuantity: CumulativeQuantity by when {
-                OrderSent::OrderBankDirection = "BankBuys" -> (OrderView::BuyCumulativeQuantity - OrderView::SellCumulativeQuantity)
+                OrderSent::OrderBankDirection == "BankBuys" -> (OrderView::BuyCumulativeQuantity - OrderView::SellCumulativeQuantity)
                 else -> (OrderView::SellCumulativeQuantity - OrderView::BuyCumulativeQuantity)
                 }
               status: OrderStatus by when {
-                OrderSent::RequestedQuantity = OrderView::CumulativeQuantity -> OrderFill::OrderStatus
+                OrderSent::RequestedQuantity == OrderView::CumulativeQuantity -> OrderFill::OrderStatus
                 else -> "PartiallyFilled"
               }
             }
          }
    """.trimIndent()
          val (errors, _) = Compiler(src).compileWithMessages()
-        errors.should.be.empty
+         errors.should.be.empty
       }
 
       it("should allow view field references on the left hand side of when statements if the referenced field has a function accessor only") {
@@ -516,12 +485,12 @@ class ViewAggregationSpec : Spek({
             find { OrderSent[] (joinTo OrderFill[]) } as {
               orderId: OrderFill::FillOrderId
               executedQuantity: DecimalFieldOrderFilled by when {
-                 OrderView::CumulativeQuantity = null -> 0
+                 OrderView::CumulativeQuantity == null -> 0
                  else -> OrderView::CumulativeQuantity
               }
               cumulativeQty: CumulativeQuantity by sumOver(OrderFill::DecimalFieldOrderFilled, OrderFill::FillOrderId)
               LeavesQty:LeavesQty by when {
-                 OrderSent::SentOrderId = OrderFill::FillOrderId -> null
+                 OrderSent::SentOrderId == OrderFill::FillOrderId -> null
                  else -> null
               }
             }

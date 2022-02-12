@@ -1,6 +1,7 @@
 package lang.taxi.compiler
 
 import arrow.core.Either
+import arrow.core.extensions.list.monad.map
 import arrow.core.flatMap
 import arrow.core.getOrElse
 import arrow.core.getOrHandle
@@ -18,7 +19,9 @@ import lang.taxi.TaxiDocument
 import lang.taxi.TaxiParser
 import lang.taxi.Tokens
 import lang.taxi.TypeSystem
-import lang.taxi.compiler.CalculatedFieldSetProcessor.Companion.validate
+import lang.taxi.accessors.ConditionalAccessor
+import lang.taxi.expressions.Expression
+import lang.taxi.expressions.toExpressionGroup
 import lang.taxi.findNamespace
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionDefinition
@@ -65,11 +68,8 @@ import lang.taxi.types.ArrayType
 import lang.taxi.types.ComparisonExpression
 import lang.taxi.types.ComparisonOperator
 import lang.taxi.types.CompilationUnit
-import lang.taxi.types.ConditionalAccessor
 import lang.taxi.types.ConstantEntity
 import lang.taxi.types.DefinableToken
-import lang.taxi.types.ElseMatchExpression
-import lang.taxi.types.EmptyReferenceSelector
 import lang.taxi.types.EnumDefinition
 import lang.taxi.types.EnumExtension
 import lang.taxi.types.EnumMember
@@ -81,9 +81,9 @@ import lang.taxi.types.Enums
 import lang.taxi.types.Field
 import lang.taxi.types.FieldExtension
 import lang.taxi.types.FieldReferenceEntity
-import lang.taxi.types.Formula
 import lang.taxi.types.GenericType
 import lang.taxi.types.ImportableToken
+import lang.taxi.types.LambdaExpressionType
 import lang.taxi.types.LogicalExpression
 import lang.taxi.types.Modifier
 import lang.taxi.types.ObjectType
@@ -98,6 +98,7 @@ import lang.taxi.types.Type
 import lang.taxi.types.TypeAlias
 import lang.taxi.types.TypeAliasDefinition
 import lang.taxi.types.TypeAliasExtension
+import lang.taxi.types.TypeArgument
 import lang.taxi.types.TypeChecker
 import lang.taxi.types.TypeKind
 import lang.taxi.types.UserType
@@ -156,7 +157,7 @@ class TokenProcessor(
    private val views = mutableListOf<View>()
    private val constraintValidator = ConstraintValidator()
 
-   private val errors = mutableListOf<CompilationError>()
+   val errors = mutableListOf<CompilationError>()
 
 //   private val conditionalFieldSetProcessor = ConditionalFieldSetProcessor(this)
 //   private val calculatedFieldSetProcessor = CalculatedFieldSetProcessor(this)
@@ -211,6 +212,12 @@ class TokenProcessor(
       return attemptToLookupTypeByName(namespace, text, contextRule).wrapErrorsInList()
    }
 
+   fun findDeclaredServiceNames(): List<QualifiedName> {
+      return tokens.unparsedServices.map { (name, _) ->
+         QualifiedName.from(name)
+      }
+   }
+
    fun findDeclaredTypeNames(): List<QualifiedName> {
       createEmptyTypes()
 
@@ -246,17 +253,6 @@ class TokenProcessor(
       return declaredTypeNames + inlineTypeAliases
    }
 
-   internal fun isInViewContext(ruleContext: RuleContext?): Boolean {
-      if (ruleContext == null) {
-         return false
-      }
-
-      if (ruleContext is TaxiParser.ViewDeclarationContext) {
-         return true
-      }
-
-      return isInViewContext(ruleContext.parent)
-   }
 
    internal fun fieldCompiler(typeName: String, namespace: String) =
       FieldCompiler(this, TypeBodyContext(null, namespace), typeName, this.errors)
@@ -268,7 +264,6 @@ class TokenProcessor(
          lookupTypeByName(namespace, type.classOrInterfaceType().text, importsInSource(type))
       }
    }
-
 
    internal fun attemptToLookupTypeByName(
       namespace: Namespace,
@@ -320,7 +315,7 @@ class TokenProcessor(
       // Some validations can't be performed at the time, because
       // they rely on a fully parsed document structure
       validateConstraints()
-      validateFormulas()
+//      validateFormulas()
       validaCaseWhenLogicalExpressions()
 
       // Queries
@@ -464,18 +459,18 @@ class TokenProcessor(
       errors.addAll(constraintValidator.validateAll(typeSystem, services))
    }
 
-   private fun validateFormulas() {
-      errors.addAll(typeSystem.typeList().filterIsInstance<ObjectType>()
-         .flatMap { type ->
-            type
-               .allFields
-               .filter { it.formula != null }
-               .flatMap { field ->
-                  validate(field, typeSystem, type)
-               }
-         }
-      )
-   }
+//   private fun validateFormulas() {
+//      errors.addAll(typeSystem.typeList().filterIsInstance<ObjectType>()
+//         .flatMap { type ->
+//            type
+//               .allFields
+//               .filter { it.formula != null }
+//               .flatMap { field ->
+//                  validate(field, typeSystem, type)
+//               }
+//         }
+//      )
+//   }
 
    private fun validaCaseWhenLogicalExpressions() {
       typeSystem.typeList().filterIsInstance<ObjectType>()
@@ -492,24 +487,24 @@ class TokenProcessor(
                      .cases.map { aCase -> aCase.matchExpression }
                      .filterIsInstance<LogicalExpression>()
                   when {
-                     logicalExpressions.isNotEmpty() && whenFieldSetCondition.selectorExpression !is EmptyReferenceSelector -> {
-                        errors.add(
-                           CompilationError(
-                              type,
-                              "when case for ${it.name} in ${type.qualifiedName} cannot have reference selector use when { .. } syntax"
-                           )
-                        )
-                     }
-                     whenFieldSetCondition.selectorExpression is EmptyReferenceSelector &&
-                        whenFieldSetCondition.cases.map { it.matchExpression }.filter { it !is ElseMatchExpression }
-                           .any { it !is LogicalExpression } -> {
-                        errors.add(
-                           CompilationError(
-                              type,
-                              "when case for ${it.name} in ${type.qualifiedName} can only logical expression when cases"
-                           )
-                        )
-                     }
+//                     logicalExpressions.isNotEmpty() && whenFieldSetCondition.selectorExpression !is EmptyReferenceSelector -> {
+//                        errors.add(
+//                           CompilationError(
+//                              type,
+//                              "when case for ${it.name} in ${type.qualifiedName} cannot have reference selector use when { .. } syntax"
+//                           )
+//                        )
+//                     }
+//                     whenFieldSetCondition.selectorExpression is EmptyReferenceSelector &&
+//                        whenFieldSetCondition.cases.map { it.matchExpression }.filter { it !is ElseMatchExpression }
+//                           .any { it !is LogicalExpression } -> {
+//                        errors.add(
+//                           CompilationError(
+//                              type,
+//                              "when case for ${it.name} in ${type.qualifiedName} can only logical expression when cases"
+//                           )
+//                        )
+//                     }
                      else -> validateLogicalExpression(type, typeSystem, it, logicalExpressions)
                   }
                }
@@ -620,11 +615,11 @@ class TokenProcessor(
             is TaxiParser.TypeAliasDeclarationContext -> typeSystem.register(TypeAlias.undefined(tokenName))
          }
       }
-      val serviceDefinitions =  tokens.unparsedServices.map { entry ->
+      val serviceDefinitions = tokens.unparsedServices.map { entry ->
          val qualifiedName = entry.key
          val serviceBody = entry.value.second.serviceBody()
          val operations = serviceBody?.serviceBodyMember()
-            ?.mapNotNull { it.serviceOperationDeclaration()  }
+            ?.mapNotNull { it.serviceOperationDeclaration() }
             ?.map { operationDeclaration -> operationDeclaration.operationSignature().Identifier().text }
             ?: emptyList()
          ServiceDefinition(qualifiedName, operations)
@@ -665,7 +660,11 @@ class TokenProcessor(
       try {
          when (tokenRule) {
             is TaxiParser.TypeDeclarationContext -> compileType(namespace, tokenName, tokenRule).collectErrors(errors)
-            is TaxiParser.AnnotationTypeDeclarationContext -> compileAnnotationType(tokenName, namespace, tokenRule)
+            is TaxiParser.AnnotationTypeDeclarationContext -> compileAnnotationType(
+               tokenName,
+               namespace,
+               tokenRule
+            ).collectErrors(errors)
             is TaxiParser.EnumDeclarationContext -> compileEnum(namespace, tokenName, tokenRule).collectErrors(errors)
             is TaxiParser.TypeAliasDeclarationContext -> compileTypeAlias(
                namespace,
@@ -855,7 +854,7 @@ class TokenProcessor(
          name,
          this.errors
       )
-      val fields = fieldCompiler
+      val fieldsOrErrors = fieldCompiler
          .compileAllFields()
          .map { field ->
             if (!field.type.inheritsFromPrimitive) {
@@ -867,22 +866,25 @@ class TokenProcessor(
             } else {
                field.right()
             }
-         }.reportAndRemoveErrors(errors)
+         }.invertEitherList()
 
-      val annotations = collateAnnotations(token.annotation())
-      val typeDoc = parseTypeDoc(token.typeDoc())
-      val definition = AnnotationTypeDefinition(
-         fields,
-         annotations,
-         typeDoc,
-         token.toCompilationUnit()
-      )
-      return typeSystem.register(
-         AnnotationType(
-            name,
-            definition
+      return fieldsOrErrors.map { fields ->
+         val annotations = collateAnnotations(token.annotation())
+         val typeDoc = parseTypeDoc(token.typeDoc())
+         val definition = AnnotationTypeDefinition(
+            fields,
+            annotations,
+            typeDoc,
+            token.toCompilationUnit()
          )
-      ).right()
+         typeSystem.register(
+            AnnotationType(
+               name,
+               definition
+            )
+         )
+      }
+
    }
 
    private fun compileType(
@@ -899,7 +901,25 @@ class TokenProcessor(
 
       val annotations = collateAnnotations(ctx.annotation())
       val modifiers = parseModifiers(ctx.typeModifier())
-      val inherits = parseTypeInheritance(namespace, ctx.listOfInheritedTypes())
+      val expression = ctx.expressionTypeDeclaration()?.let {
+         it.expressionGroup().map { expressionGroup -> parseTypeExpression(expressionGroup) }
+      }?.invertEitherList()
+         ?.flattenErrors()
+         ?.map { it.toExpressionGroup() }
+         ?.getOrHandle { errors ->
+            this.errors.addAll(errors)
+            null
+         }
+
+      val inherits = parseTypeInheritance(namespace, ctx.listOfInheritedTypes()).let { explicitInheritence ->
+         // If we have an expression, then the return type is inferrable from that
+         if (explicitInheritence.isEmpty() && expression != null) {
+            setOf(expression.returnType)
+         } else {
+            explicitInheritence
+         }
+
+      }
 
       checkForCircularTypeInheritance(typeName, ctx, inherits)?.let { compilationError ->
          return listOf(compilationError).left()
@@ -908,7 +928,14 @@ class TokenProcessor(
       val typeDoc = parseTypeDoc(ctx.typeDoc()?.source()?.content)
       val dependantTypeNames = fields.map { it.type.toQualifiedName() } +
          annotations.mapNotNull { it.type?.toQualifiedName() } +
-         inherits.map { it.toQualifiedName() }
+         inherits
+            // Exclude imports of formatted types.
+            // This happens in cases like:
+            // import lang.taxi.FormattedInstant_428af4 <-- We want to exclude this import, it's not useful
+            // type FooDate inherits Instant( @format = 'mm/dd/yyThh:nn:ss.mmmmZ' )
+            .filterNot { it.declaresFormat && it.toQualifiedName().typeName.startsWith("Formatted")  }
+            .map { it.toQualifiedName() }
+
       return this.typeSystem.register(
          ObjectType(
             typeName, ObjectTypeDefinition(
@@ -919,10 +946,20 @@ class TokenProcessor(
                format = null,
                typeDoc = typeDoc,
                typeKind = typeKind,
+               expression = expression,
                compilationUnit = ctx.toCompilationUnit(dependantTypeNames)
             )
          )
       ).right()
+   }
+
+   fun expressionCompiler(): ExpressionCompiler {
+      // TODO : Can we avoid creating a new one each time?
+      return ExpressionCompiler(this, typeChecker, errors)
+   }
+
+   private fun parseTypeExpression(expressionGroup: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, Expression> {
+      return expressionCompiler().compile(expressionGroup)
    }
 
    private fun checkForCircularTypeInheritance(
@@ -968,13 +1005,39 @@ class TokenProcessor(
    private fun compileAnonymousType(
       namespace: Namespace,
       typeName: String,
-      ctx: TaxiParser.TypeBodyContext,
-      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext()
-   ) {
-      val fields = ctx.let { typeBody ->
+      anonymousTypeDefinition: TaxiParser.AnonymousTypeDefinitionContext,
+      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext(),
+   ): Either<List<CompilationError>, ObjectType> {
+      val annotations = collateAnnotations(anonymousTypeDefinition.annotation())
+      val (fields, expression) = anonymousTypeDefinition.typeBody().let { typeBody ->
          val typeBodyContext = TypeBodyContext(typeBody, namespace)
-         FieldCompiler(this, typeBodyContext, typeName, this.errors, anonymousTypeResolutionContext)
-            .compileAllFields()
+         val fieldCompiler = FieldCompiler(this, typeBodyContext, typeName, this.errors, anonymousTypeResolutionContext)
+         val compiledFields = fieldCompiler.compileAllFields()
+
+         // Expressions on AnonymousTypes are to support top-level declarations
+         // of things like projection scope
+         // eg find { ... } as { ... }[] by [SomeCollectionToIterate]
+         val expression = if (anonymousTypeDefinition.accessor()?.scalarAccessorExpression() != null) {
+            ExpressionCompiler(
+               this,
+               typeChecker,
+               errors,
+               fieldCompiler
+            ).compileScalarAccessor(anonymousTypeDefinition.accessor().scalarAccessorExpression())
+               .collectErrors(errors)
+               .map { accessor ->
+                  if (accessor is Expression) {
+                     accessor as Expression
+                  } else {
+                     // Not supporting Accessor expressons here, as we're trying
+                     // to capture top-level response object expressions.
+                     // However, can enrich this in future if required.
+                     null
+                  }
+               }
+               .getOrElse { null }
+         } else null
+         compiledFields to expression
       }
 
       val fieldsFromConcreteProjectedToType = anonymousTypeResolutionContext.concreteProjectionTypeContext?.let {
@@ -983,6 +1046,7 @@ class TokenProcessor(
          }
       }
 
+
       val anonymousTypeFields = if (fieldsFromConcreteProjectedToType is Either.Right) {
          fieldsFromConcreteProjectedToType.b?.let { fields.plus(it) } ?: fields
       } else {
@@ -990,7 +1054,7 @@ class TokenProcessor(
       }
 
 
-      this.typeSystem.register(
+      return this.typeSystem.register(
          ObjectType(
             QualifiedName(namespace, typeName).fullyQualifiedName,
             ObjectTypeDefinition(
@@ -999,11 +1063,12 @@ class TokenProcessor(
                modifiers = listOf(),
                inheritsFrom = emptySet(),
                format = null,
-               compilationUnit = ctx.toCompilationUnit(),
+               expression = expression,
+               compilationUnit = anonymousTypeDefinition.toCompilationUnit(),
                isAnonymous = true
             )
          )
-      )
+      ).right()
 
    }
 
@@ -1198,16 +1263,20 @@ class TokenProcessor(
 
    internal fun parseType(
       namespace: Namespace,
-      typeType: TaxiParser.TypeTypeContext
+      typeType: TaxiParser.TypeTypeContext,
+      typeArgumentsInScope: List<TypeArgument> = emptyList()
    ): Either<List<CompilationError>, Type> {
-      return typeOrError(namespace, typeType).flatMap { type ->
+      return typeOrError(namespace, typeType, typeArgumentsInScope).flatMap { type ->
          parseTypeFormat(typeType).flatMap { (formats, zoneOffset) ->
             if (typeType.listType() != null) {
                if (formats.isNotEmpty() || zoneOffset != null) {
                   CompilationError(typeType.start, "It is invalid to declare a format / offset on an array").asList()
                      .left()
                } else {
-                  Either.right(ArrayType(type, typeType.toCompilationUnit()))
+//                  Old approach - now simplified with this logic encapsulated in a single place in typeOrError()_
+//                  Either.right(ArrayType(type, typeType.toCompilationUnit()))
+                  require(type is ArrayType) { "Expected that typeOrError() should return an ArrayType when using [] operator" }
+                  Either.right(type)
                }
             } else {
                if (formats.isNotEmpty() || zoneOffset != null) {
@@ -1244,41 +1313,23 @@ class TokenProcessor(
 
    fun parseAnonymousType(
       namespace: String,
-      anonymousTypeCtx: TaxiParser.TypeBodyContext,
+      anonymousTypeDefinition: TaxiParser.AnonymousTypeDefinitionContext,
       anonymousTypeName: String = AnonymousTypeNameGenerator.generate(),
-      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext()
+      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext(),
    ): Either<List<CompilationError>, Type> {
-      compileAnonymousType(namespace, anonymousTypeName, anonymousTypeCtx, anonymousTypeResolutionContext)
-      return attemptToLookupTypeByName(namespace, anonymousTypeName, anonymousTypeCtx, SymbolKind.TYPE_OR_MODEL)
-         .wrapErrorsInList()
-         .flatMap { qualifiedName ->
-            typeSystem
-               .getTypeOrError(qualifiedName, anonymousTypeCtx)
-               .wrapErrorsInList()
-         }
-
-   }
-
-   internal fun parseType(
-      namespace: Namespace,
-      formula: Formula,
-      typeType: TaxiParser.TypeTypeContext
-   ): Either<List<CompilationError>, Type> {
-      val typeOrError = typeOrError(namespace, typeType)
-      return typeOrError.flatMap { type ->
-         if (typeType.listType() != null) {
-            CompilationError(typeType.start, "It is invalid to declare calculated type on an array").asList().left()
-         } else {
-            generateCalculatedFieldType(type, formula).wrapErrorsInList()
-         }
-      }
+      return compileAnonymousType(namespace, anonymousTypeName, anonymousTypeDefinition, anonymousTypeResolutionContext)
    }
 
    internal fun typeOrError(
       namespace: Namespace,
-      typeType: TaxiParser.TypeTypeContext
+      typeType: TaxiParser.TypeTypeContext,
+      typeArgumentsInScope: List<TypeArgument> = emptyList()
    ): Either<List<CompilationError>, Type> {
+      val referencedGenericTypeArgument = typeArgumentsInScope.firstOrNull {
+         it.declaredName == typeType.classOrInterfaceType().Identifier().text()
+      }
       return when {
+         referencedGenericTypeArgument != null -> referencedGenericTypeArgument.right()
          typeType.inlineInheritedType() != null -> compileInlineInheritedType(namespace, typeType)
          typeType.aliasedType() != null -> compileInlineTypeAlias(namespace, typeType)
          typeType.classOrInterfaceType() != null -> resolveUserType(
@@ -1287,8 +1338,33 @@ class TokenProcessor(
             typeType.typeArguments()
          )
 //         typeType.primitiveType() != null -> PrimitiveType.fromDeclaration(typeType.getChild(0).text).right()
-         else -> throw IllegalArgumentException()
+         else -> TODO("Unhandled when branch in typeOrError for typeContext with text ${typeType.text}")
+      }.map { type ->
+         // MP 28-Sept This is a recent bugfix, where previously all callers
+         // had to check and wrap the T[] into an array type.
+         // However, that's inconsistent with the return type Of Array<T> and T[].
+         // So, fixing it here.
+         // It's possible that leads to failing tests where we're ending up with T[][].
+         // If so, fix the call site.  I've tried to find them all, but may have missed one.
+         if (typeType.listType() != null) {
+            ArrayType(type, typeType.toCompilationUnit())
+         } else {
+            type
+         }
       }
+   }
+
+   private fun resolveGenericTypeArgument(
+      declaringTypeOrFunctionName: String,
+      referencedGenericTypeArgument: TaxiParser.TypeTypeContext
+   ): TypeArgument {
+      val typeName = listOf(declaringTypeOrFunctionName, "$", referencedGenericTypeArgument.text).joinToString("")
+      return TypeArgument(
+         qualifiedName = typeName,
+         declaredName = referencedGenericTypeArgument.text,
+         compilationUnits = referencedGenericTypeArgument.toCompilationUnits()
+      )
+
    }
 
 
@@ -1341,33 +1417,6 @@ class TokenProcessor(
       }
 
 
-   }
-
-   private fun generateCalculatedFieldType(type: Type, formula: Formula): Either<CompilationError, Type> {
-      val operands = formula.operandFields
-      val calculatedTypeName = QualifiedName.from(type.qualifiedName).let { originalTypeName ->
-         val hash = Hashing.sha256()
-            .hashString(operands.sortedBy { it.fullyQualifiedName }.joinToString("_"), Charset.defaultCharset())
-            .toString().takeLast(6)
-         originalTypeName.copy(typeName = "Calculated${originalTypeName.typeName}_$hash")
-      }
-
-      return if (typeSystem.contains(calculatedTypeName.fullyQualifiedName)) {
-         Either.right(typeSystem.getType(calculatedTypeName.fullyQualifiedName))
-      } else {
-         val formattedType = ObjectType(
-            calculatedTypeName.fullyQualifiedName,
-            ObjectTypeDefinition(
-               emptySet(),
-               inheritsFrom = setOf(type),
-               calculatedInstanceOfType = type,
-               calculation = formula,
-               compilationUnit = CompilationUnit.generatedFor(type)
-            )
-         )
-         typeSystem.register(formattedType)
-         Either.right(formattedType)
-      }
    }
 
    private fun parseTypeFormat(typeType: TaxiParser.TypeTypeContext): Either<List<CompilationError>, FormatsAndZoneoffset> {
@@ -1483,7 +1532,7 @@ class TokenProcessor(
             // ccmpile if so
             val compilationResult = unparsedCheckAndCompile(qualifiedTypeName)
             if (compilationResult != null) {
-               return@flatMap compilationResult!!
+               return@flatMap compilationResult
             }
 
             // Note: Use requestedTypeName, as qualifying it to the local namespace didn't help
@@ -1554,6 +1603,24 @@ class TokenProcessor(
    ): Either<List<CompilationError>, Type> {
       return resolveUserType(namespace, requestedTypeName, importsInSource(context), context, symbolKind)
    }
+//
+//   internal fun resolveTypeOrFunction(
+//      requestedName: String,
+//      context: ParserRuleContext
+//   ): Either<List<CompilationError>, ImportableToken> {
+//      val type = resolveUserType(
+//         context.findNamespace(),
+//         requestedName,
+//         context
+//      )
+//      return if (type.isRight()) {
+//         type
+//      } else {
+//         resolveFunction(requestedName, context).mapLeft {
+//            listOf(CompilationError(context.toCompilationUnit(), "$requestedName was not resolved as either a type or a function"))
+//         }
+//      }
+//   }
 
    internal fun resolveFunction(
       requestedFunctionName: String,
@@ -1713,19 +1780,29 @@ class TokenProcessor(
     * Use resolveEnumValueName if you need to handle circular references, where the enum may not
     * have already been compiled.
     */
-   private fun resolveEnumMember(enumQualifiedNameReference: TaxiParser.QualifiedNameContext): Either<List<CompilationError>, EnumMember> {
-      return resolveEnumReference(enumQualifiedNameReference) { enumType, enumValueName ->
+   fun resolveEnumMember(enumQualifiedNameReference: TaxiParser.QualifiedNameContext): Either<List<CompilationError>, EnumMember> {
+      return resolveEnumMember(enumQualifiedNameReference.Identifier().text(), enumQualifiedNameReference)
+   }
+
+   /**
+    * Returns an enum member - requires that the enum has already been compiled.
+    * This asserts that both the enum exists, and that it contains the requested member.
+    * Use resolveEnumValueName if you need to handle circular references, where the enum may not
+    * have already been compiled.
+    */
+   fun resolveEnumMember(enumMemberName: String, token: ParserRuleContext): Either<List<CompilationError>, EnumMember> {
+      return resolveEnumReference(enumMemberName, token) { enumType, enumValueName ->
          when {
             !enumType.isDefined -> {
                // This happens if there's an enum with a circular reference.
                // That's supported, but we defer
                CompilationError(
-                  enumQualifiedNameReference.start,
+                  token.start,
                   "An internal error occurred processing ${enumType.qualifiedName}, attempting to resolve an EnumMember on a non-compiled enum - use resolveEnumValueName, or compile the enum first."
                ).asList().left()
             }
             !enumType.has(enumValueName) -> CompilationError(
-               enumQualifiedNameReference.start,
+               token.start,
                "${enumType.qualifiedName} does not have a member $enumValueName"
             ).asList().left()
             else -> Either.right(enumType.member(enumValueName))
@@ -1746,24 +1823,36 @@ class TokenProcessor(
    }
 
    private fun <T> resolveEnumReference(
-      enumQualifiedNameReference: TaxiParser.QualifiedNameContext,
+      name: String,
+      parserRuleContext: ParserRuleContext,
       enumSelector: (EnumType, String) -> Either<List<CompilationError>, T>
    ): Either<List<CompilationError>, T> {
-      val (enumName, enumValueName) = Enums.splitEnumValueQualifiedName(enumQualifiedNameReference.Identifier().text())
+      val (enumName, enumValueName) = Enums.splitEnumValueQualifiedName(name)
 
       return resolveUserType(
-         enumQualifiedNameReference.findNamespace(),
+         parserRuleContext.findNamespace(),
          enumName.parameterizedName,
-         enumQualifiedNameReference
+         parserRuleContext
       )
          .flatMap { enumType ->
             if (enumType is EnumType) {
                enumSelector(enumType, enumValueName)
             } else {
-               CompilationError(enumQualifiedNameReference.start, "${enumType.qualifiedName} is not an Enum").asList()
+               CompilationError(parserRuleContext.start, "${enumType.qualifiedName} is not an Enum").asList()
                   .left()
             }
          }
+   }
+
+   private fun <T> resolveEnumReference(
+      enumQualifiedNameReference: TaxiParser.QualifiedNameContext,
+      enumSelector: (EnumType, String) -> Either<List<CompilationError>, T>
+   ): Either<List<CompilationError>, T> {
+      return resolveEnumReference(
+         enumQualifiedNameReference.Identifier().text(),
+         enumQualifiedNameReference,
+         enumSelector
+      )
    }
 
 
@@ -1806,10 +1895,15 @@ class TokenProcessor(
          return Either.right(typeSystem.getFunction(qualifiedName))
       }
       val (namespace, functionToken) = namespaceAndParserContext
-      return parseType(namespace, functionToken.typeType()).flatMap { returnType ->
-         val parameters = functionToken.operationParameterList()?.operationParameter()?.map { parameterDefinition ->
-            parseParameter(namespace, parameterDefinition)
-         }?.reportAndRemoveErrorList(errors) ?: emptyList()
+      val typeArguments = (functionToken.typeArguments()?.typeType() ?: emptyList()).map { typeType ->
+         resolveGenericTypeArgument(qualifiedName, typeType)
+      }
+      return parseType(namespace, functionToken.typeType(), typeArguments).flatMap { returnType ->
+         val parameters =
+            functionToken.operationParameterList()?.operationParameter()?.mapIndexed { index, parameterDefinition ->
+               val anonymousParameterTypeName = "$qualifiedName\$Param$index"
+               parseParameter(namespace, parameterDefinition, typeArguments, anonymousParameterTypeName)
+            }?.reportAndRemoveErrorList(errors) ?: emptyList()
 
          if (functionToken.functionModifiers() != null && functionToken.functionModifiers().text != "query") {
             return@flatMap CompilationError(
@@ -1826,7 +1920,7 @@ class TokenProcessor(
          val function = Function(
             qualifiedName,
             FunctionDefinition(
-               parameters, returnType, functionAttributes, functionToken.toCompilationUnit()
+               parameters, returnType, functionAttributes, typeArguments, functionToken.toCompilationUnit()
             )
          )
          this.functions.add(function)
@@ -1836,7 +1930,10 @@ class TokenProcessor(
       }
    }
 
-   private fun compileService(qualifiedName: String, serviceTokenPair: Pair<Namespace, TaxiParser.ServiceDeclarationContext> ):
+   private fun compileService(
+      qualifiedName: String,
+      serviceTokenPair: Pair<Namespace, TaxiParser.ServiceDeclarationContext>
+   ):
       Either<List<CompilationError>, Service> {
       val (_, serviceToken) = serviceTokenPair
       val serviceDoc = parseTypeDoc(serviceToken.typeDoc())
@@ -1844,7 +1941,7 @@ class TokenProcessor(
          val lineageDeclaration = serviceToken.serviceBody().lineageDeclaration()
          val consumes = mutableListOf<ConsumedOperation>()
          val stores = mutableListOf<QualifiedName>()
-         lineageDeclaration.lineageBody().lineageBodyMember().map { lineageBodyMemberContext ->
+         lineageDeclaration.lineageBody().lineageBodyMember().forEach { lineageBodyMemberContext ->
             when {
                lineageBodyMemberContext.consumesBody() != null -> {
                   val consumeQualifiedName = lineageBodyMemberContext.consumesBody().qualifiedName().text
@@ -1877,8 +1974,11 @@ class TokenProcessor(
             stores.toList(),
             lineageAnnotations,
             lineageDeclaration.toCompilationUnits(),
-            parseTypeDoc(lineageDoc))
-      } else { null }
+            parseTypeDoc(lineageDoc)
+         )
+      } else {
+         null
+      }
       val members = serviceToken.serviceBody().serviceBodyMember().map { serviceBodyMember ->
          when {
             serviceBodyMember.serviceOperationDeclaration() != null -> compileOperation(serviceBodyMember.serviceOperationDeclaration())
@@ -1995,20 +2095,62 @@ class TokenProcessor(
 
    private fun parseParameter(
       namespace: Namespace,
-      operationParameterContext: TaxiParser.OperationParameterContext
+      operationParameterContext: TaxiParser.OperationParameterContext,
+      typeArgumentsInScope: List<TypeArgument> = emptyList(),
+      // When parsing paraeters that are lambdas we need a useful name
+      anonymousParameterTypeName: String? = null
    ): Either<List<CompilationError>, Parameter> {
-      return parseType(namespace, operationParameterContext.typeType())
-         .flatMap { paramType ->
-            mapConstraints(operationParameterContext.typeType(), paramType, namespace).map { constraints ->
-               val isVarargs = operationParameterContext.varargMarker() != null
-               Parameter(
-                  collateAnnotations(operationParameterContext.annotation()), paramType,
-                  name = operationParameterContext.parameterName()?.Identifier()?.text,
-                  constraints = constraints,
-                  isVarArg = isVarargs
-               )
-            }
+      val paramTypeOrError: Either<List<CompilationError>, Type> = if (operationParameterContext.typeType() != null) {
+         parseType(namespace, operationParameterContext.typeType(), typeArgumentsInScope)
+      } else if (operationParameterContext.lambdaSignature() != null) {
+         parseLambdaTypeParameter(
+            operationParameterContext.lambdaSignature(),
+            typeArgumentsInScope,
+            anonymousParameterTypeName
+         )
+      } else {
+         error("Unhandled branch in parameter parsing")
+      }
+
+      return paramTypeOrError.flatMap { paramType ->
+         mapConstraints(operationParameterContext.typeType(), paramType, namespace).map { constraints ->
+            val isVarargs = operationParameterContext.varargMarker() != null
+            Parameter(
+               annotations = collateAnnotations(operationParameterContext.annotation()),
+               type = paramType,
+               name = operationParameterContext.parameterName()?.Identifier()?.text,
+               constraints = constraints,
+               isVarArg = isVarargs
+            )
          }
+      }
+   }
+
+   private fun parseLambdaTypeParameter(
+      lambdaSignature: TaxiParser.LambdaSignatureContext,
+      typeArgumentsInScope: List<TypeArgument>,
+      anonymousParameterTypeName: String?
+   ): Either<List<CompilationError>, Type> {
+      return lambdaSignature.expressionInputs().expressionInput().map { inputType ->
+         parseType(
+            lambdaSignature.findNamespace(),
+            inputType.typeType(),
+            typeArgumentsInScope
+         )
+      }.invertEitherList().flattenErrors().flatMap { inputTypes ->
+         parseType(
+            lambdaSignature.findNamespace(),
+            lambdaSignature.typeType(),
+            typeArgumentsInScope
+         ).map { returnType ->
+            LambdaExpressionType(
+               qualifiedName = anonymousParameterTypeName!!,
+               inputTypes,
+               returnType,
+               lambdaSignature.toCompilationUnits()
+            )
+         }
+      }
    }
 
    private fun parseOperationContract(
@@ -2033,11 +2175,11 @@ class TokenProcessor(
    }
 
    internal fun mapConstraints(
-      typeType: TaxiParser.TypeTypeContext,
+      typeType: TaxiParser.TypeTypeContext?,
       paramType: Type,
       namespace: Namespace
    ): Either<List<CompilationError>, List<Constraint>> {
-      if (typeType.parameterConstraint() == null) {
+      if (typeType?.parameterConstraint() == null) {
          return Either.right(emptyList())
       }
       return OperationConstraintConverter(
@@ -2141,6 +2283,10 @@ class TokenProcessor(
 
 }
 
+fun List<Either<List<CompilationError>, *>>.allValid(): Boolean {
+   return this.all { it.isRight() }
+}
+
 fun <T> Either<List<CompilationError>, T>.collectErrors(errorCollection: MutableList<CompilationError>): Either<List<ReportedError>, T> {
    return this.mapLeft { errors ->
       errors.map { error ->
@@ -2236,3 +2382,14 @@ object AnonymousTypeNameGenerator {
    }
 }
 
+fun RuleContext?.isInViewContext(): Boolean {
+   if (this == null) {
+      return false
+   }
+
+   if (this is TaxiParser.ViewDeclarationContext) {
+      return true
+   }
+
+   return ruleContext.parent.isInViewContext()
+}

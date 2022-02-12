@@ -16,8 +16,8 @@ import io.swagger.oas.models.media.PasswordSchema
 import io.swagger.oas.models.media.Schema
 import io.swagger.oas.models.media.StringSchema
 import io.swagger.oas.models.media.UUIDSchema
-import lang.taxi.generators.openApi.Utils
-import lang.taxi.generators.openApi.Utils.replaceIllegalCharacters
+import lang.taxi.generators.NamingUtils
+import lang.taxi.generators.NamingUtils.replaceIllegalCharacters
 import lang.taxi.types.ArrayType
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Field
@@ -238,7 +238,7 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
    }
 
    private fun qualify(name: String) =
-      Utils.qualifyTypeNameIfRaw(name, defaultNamespace)
+      NamingUtils.qualifyTypeNameIfRaw(name, defaultNamespace)
 }
 
 fun Schema<*>.isModel() = (this is ComposedSchema && oneOf == null && anyOf == null) || !properties.isNullOrEmpty()

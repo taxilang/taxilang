@@ -2,12 +2,12 @@ package lang.taxi.types
 
 import arrow.core.Either
 import lang.taxi.ImmutableEquality
-import lang.taxi.services.FieldName
+import lang.taxi.accessors.Accessor
+import lang.taxi.accessors.AccessorWithDefault
+import lang.taxi.expressions.Expression
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
-import lang.taxi.utils.quoted
 import lang.taxi.utils.quotedIfNecessary
-import lang.taxi.utils.quotedIfNotAlready
 import kotlin.reflect.KProperty1
 
 data class FieldExtension(
@@ -37,10 +37,12 @@ data class ObjectTypeDefinition(
    val pattern: String? = null,
    val formattedInstanceOfType: Type? = null,
    val calculatedInstanceOfType: Type? = null,
-   val calculation: Formula? = null,
+//   @Deprecated("Formulas are replaced by functions and expressions")
+//   val calculation: Formula? = null,
    val offset: Int? = null,
    val isAnonymous: Boolean = false,
    val typeKind: TypeKind = TypeKind.Type,
+   val expression: Expression? = null,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
@@ -119,6 +121,23 @@ data class ObjectType(
          return if (isDefined) wrapper.definitionHash else null
       }
 
+   val expression: Expression?
+      get() {
+         return definition?.expression
+      }
+
+   /**
+    * Indicates if this type (excluding any inherited types)
+    * declares a format.
+    *
+    * Note that the format property will return formats
+    * from inherited types.
+    */
+   override val declaresFormat: Boolean
+      get() {
+         return this.definition?.format != null
+      }
+
    override val format: List<String>?
       get() {
          return if (this.definition?.format != null) {
@@ -157,8 +176,8 @@ data class ObjectType(
       return Either.right(extension)
    }
 
-   override val calculation: Formula?
-      get() = definition?.calculation
+//   override val calculation: Formula?
+//      get() = definition?.calculation
 
    private fun verifyMaxOneTypeRefinementPerField(fieldExtensions: List<FieldExtension>): ErrorMessage? {
       fieldExtensions.filter { it.refinedType != null }
@@ -408,7 +427,7 @@ data class Field(
    // These default values are set by field extensions.
    // Need to standardise.
    val defaultValue: Any? = null,
-   val formula: Formula? = null,
+//   val formula: Formula? = null,
    // populated for Anonymous field definitions used in views. Example:
    // orderId: Order::SentOrderId
    // For above, field name is 'orderId', field type is 'SentOrderId' and memberSource is 'Order'
@@ -423,7 +442,7 @@ data class Field(
    //                  size : ProductSize
    //               }[]
    //            }[]
-   val projectionScopeTypes: List<Type> = emptyList(),
+//   val projectionScopeTypes: List<Type> = emptyList(),
    override val compilationUnit: CompilationUnit
 ) : Annotatable, ConstraintTarget, Documented, NameTypePair, TokenDefinition {
 
@@ -446,111 +465,3 @@ data class Field(
 }
 
 
-interface Accessor {
-   val returnType: Type
-      get() = PrimitiveType.ANY
-}
-
-interface AccessorWithDefault {
-   val defaultValue: Any?
-}
-
-interface ExpressionAccessor : Accessor {
-   val expression: String
-}
-
-data class LiteralAccessor(val value: Any) : Accessor, TaxiStatementGenerator {
-   override val returnType: Type
-      get() {
-         return when (value) {
-            is String -> PrimitiveType.STRING
-            is Int -> PrimitiveType.INTEGER
-            is Double -> PrimitiveType.DECIMAL
-            is Boolean -> PrimitiveType.BOOLEAN
-            else -> {
-               PrimitiveType.ANY
-            }
-         }
-
-      }
-
-   override fun asTaxi(): String {
-      return when (value) {
-         is String -> value.quoted()
-         else -> value.toString()
-      }
-   }
-
-}
-
-data class XpathAccessor(override val expression: String, override val returnType: Type) : ExpressionAccessor,
-   TaxiStatementGenerator {
-   override fun asTaxi(): String = """by xpath("$expression")"""
-}
-
-data class JsonPathAccessor(override val expression: String, override val returnType: Type) : ExpressionAccessor,
-   TaxiStatementGenerator {
-   override fun asTaxi(): String = """by jsonPath("$expression")"""
-}
-
-// TODO : This is duplicating concepts in ColumnMapping, one should die.
-data class ColumnAccessor(val index: Any?, override val defaultValue: Any?, override val returnType: Type) :
-   ExpressionAccessor, TaxiStatementGenerator, AccessorWithDefault {
-   override fun toString(): String {
-      return "ColumnAccessor(index=$index, defaultValue=$defaultValue, returnType=${returnType.qualifiedName})"
-   }
-
-   override val expression: String = index.toString()
-   override fun asTaxi(): String {
-      return when {
-         index is String -> """by column(${index.quotedIfNotAlready()})"""
-         index is Int -> """by column(${index.toString()})"""
-         defaultValue is String -> """by default(${defaultValue.quoted()})"""
-         else -> """by default($defaultValue)"""
-      }
-   }
-}
-
-// This is for scenarios where a scalar field has been assigned a when block.
-// Ideally, we'd use the same approach for both destructured when blocks (ie., when blocks that
-// assign multiple fields), and scalar when blocks (a when block that assigns a single field).
-data class ConditionalAccessor(val expression: FieldSetExpression) : Accessor, TaxiStatementGenerator {
-   override fun asTaxi(): String {
-      return "by ${expression.asTaxi()}"
-   }
-}
-
-data class FieldSourceAccessor(
-   val sourceAttributeName: FieldName,
-   val attributeType: QualifiedName,
-   val sourceType: QualifiedName
-) : Accessor, TaxiStatementGenerator {
-   override fun asTaxi(): String {
-      return "by (this.$sourceAttributeName)"
-   }
-}
-
-data class DestructuredAccessor(val fields: Map<String, Accessor>) : Accessor
-
-@Deprecated("Use lang.taxi.functions.Function instead")
-data class ReadFunctionFieldAccessor(val readFunction: ReadFunction, val arguments: List<ReadFunctionArgument>) :
-   Accessor
-
-@Deprecated("Use lang.taxi.functions.Function instead")
-data class ReadFunctionArgument(val columnAccessor: ColumnAccessor?, val value: Any?)
-
-@Deprecated("Use lang.taxi.functions.Function instead")
-enum class ReadFunction(val symbol: String) {
-   CONCAT("concat");
-
-   //   LEFTUPPERCASE("leftAndUpperCase"),
-//   MIDUPPERCASE("midAndUpperCase");
-   companion object {
-      private val bySymbol = ReadFunction.values().associateBy { it.symbol }
-      fun forSymbol(symbol: String): ReadFunction {
-         return bySymbol[symbol] ?: error("No operator defined for symbol $symbol")
-      }
-
-      fun forSymbolOrNull(symbol: String) = bySymbol[symbol]
-   }
-}

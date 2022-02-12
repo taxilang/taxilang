@@ -58,45 +58,94 @@ typeKind : 'type' | 'model';
 
 typeDeclaration
     :  typeDoc? annotation* typeModifier* typeKind Identifier
-
+         typeArguments?
         ('inherits' listOfInheritedTypes)?
-        typeBody?
+        (typeBody | expressionTypeDeclaration)?
     ;
 
 listOfInheritedTypes
     : typeType (',' typeType)*
     ;
 typeBody
-    :   '{' (typeMemberDeclaration | conditionalTypeStructureDeclaration | calculatedMemberDeclaration)* '}'
+    :   '{' (typeMemberDeclaration | conditionalTypeStructureDeclaration )* '}'
     ;
 
 typeMemberDeclaration
      :   typeDoc? annotation* fieldDeclaration
      ;
 
+expressionTypeDeclaration : 'by' expressionGroup*;
+
+// (A,B) -> C
+// Used in functions:
+// declare function <T,A> sum(T[], (T) -> A):A
+// Note - this is used when the lambda is declared, not when
+// it's used in a function as an expression.
+// eg:
+// given the sum example above, it's usage would be:
+// model Output {
+// total : Int by sum(this.transactions, (Transaction) -> Cost)
+//}
+// In that example, the sum(this.transactions, (Transaction) -> Cost) is
+// an exmpression, not a lambdaSignature
+lambdaSignature: expressionInputs typeType;
+
+
+expressionInputs: '(' expressionInput (',' expressionInput)* ')' '->';
+expressionInput: (Identifier ':')? typeType;
+
+
+// Added for expression types.
+// However, I suspect with a few modifications e can simplify
+// all expressions to
+// this group (fields, queries, etc.).
+// This definition is based off of this:
+// https://github.com/antlr/grammars-v4/blob/master/arithmetic/arithmetic.g4
+// which ensures order-of-precedence and supports grouped / parenthesis
+// expressions
+expressionGroup:
+   expressionGroup POW expressionGroup
+   | expressionGroup (MULT | DIV) expressionGroup
+   | expressionGroup (PLUS | MINUS) expressionGroup
+   | LPAREN expressionGroup RPAREN
+   | (PLUS | MINUS)* expressionAtom
+   // The below is added for lambdas, but not sure order of precedence
+   // is correct. TBD.
+   | expressionGroup comp_operator expressionGroup
+   | expressionGroup LOGICAL_AND expressionGroup
+   | expressionGroup LOGICAL_OR expressionGroup
+   // Inputs go last, so that when parsing lambdas, the inputs are the LHS and everything remainin goes RHS.
+   // Might not work for nested lambdas, if that's a thing.
+   | expressionInputs expressionGroup;
+
+// readFunction before typeType to avoid functons being identified
+// as types
+// 1-Oct: Tried collapsing scalarAccessorExpression into this, but it caused errors.
+// Would like to simplify...
+expressionAtom: readFunction | typeType | fieldReferenceSelector | modelAttributeTypeReference | literal | anonymousTypeDefinition;
+
+//scalarAccessorExpression
+  //    : xpathAccessorDeclaration
+  //    | jsonPathAccessorDeclaration
+  //    | columnDefinition
+  //    | defaultDefinition
+  //    | readFunction
+  //    | readExpression
+  //    | byFieldSourceExpression
+  //    | collectionProjectionExpression
+  //   | conditionalTypeConditionDeclaration
+
 annotationTypeDeclaration
    : typeDoc? annotation* 'annotation' Identifier annotationTypeBody?;
 
 annotationTypeBody: '{' typeMemberDeclaration* '}';
 
-calculatedMemberDeclaration
-   : typeMemberDeclaration  'as'
-   (operatorExpression)
-   ;
 
 
-
-calculatedExpressionBody:
-         typeType (',' typeType)*
-         ;
-
-operatorExpression
-   : '(' typeType arithmaticOperator typeType ')'
-   ;
-
-fieldExpression
-   : '(' propertyToParameterConstraintLhs arithmaticOperator propertyToParameterConstraintLhs ')'
-   ;
+// Deprecated - use expressionGroups instead
+//fieldExpression
+//   : '(' propertyToParameterConstraintLhs arithmaticOperator propertyToParameterConstraintLhs ')'
+//   ;
 
 conditionalTypeStructureDeclaration
     :
@@ -104,20 +153,14 @@ conditionalTypeStructureDeclaration
    ;
 
 conditionalTypeConditionDeclaration:
-   (fieldExpression |
-   conditionalTypeWhenDeclaration);
+//   (fieldExpression |
+   conditionalTypeWhenDeclaration;
+//   );
 
 conditionalTypeWhenDeclaration:
-   'when' ('(' conditionalTypeWhenSelector ')')? '{'
+   'when' ('(' expressionGroup ')')? '{'
    conditionalTypeWhenCaseDeclaration*
    '}';
-
-conditionalTypeWhenSelector:
-   mappedExpressionSelector |  // when( xpath('/foo/bar') : SomeType ) ...
-   fieldReferenceSelector; // when( someField ) ...
-
-mappedExpressionSelector: // xpath('/foo/bar') : SomeType
-   scalarAccessorExpression ':' typeType;
 
 // field references must be prefixed by this. -- ie., this.firstName
 // this is to disambiguoate lookups by type -- ie., Name
@@ -125,21 +168,21 @@ mappedExpressionSelector: // xpath('/foo/bar') : SomeType
 // Note: Have had to relax the requirement for propertyFieldNameQualifier
 // to be mandatory, as this created bacwards comapatbility issues
 // in when() clauses
-fieldReferenceSelector: propertyFieldNameQualifier? Identifier;
+//
+// Update: In the type expressions feature branch
+// I've remove the relaxed requirement, re-enforcing that
+// field refereces must be prefixed.
+// Otherwise, these no lexer difference between
+// a fieldReferenceSelector (not permitted in expression types)
+// and a typeReferenceSelector (which is permitted)
+fieldReferenceSelector: propertyFieldNameQualifier Identifier;
 typeReferenceSelector: typeType;
 
 conditionalTypeWhenCaseDeclaration:
-   caseDeclarationMatchExpression '->' ( caseFieldAssignmentBlock |  caseScalarAssigningDeclaration | modelAttributeTypeReference);
-
-caseFieldAssignmentBlock:
-'{' caseFieldAssigningDeclaration*'}' ;
-
+   caseDeclarationMatchExpression '->' (  /*caseFieldAssignmentBlock |  */  expressionGroup | scalarAccessorExpression | modelAttributeTypeReference);
 
 caseDeclarationMatchExpression: // when( ... ) {
-   Identifier  | //  someField -> ...
-   literal | //  'foo' -> ...
-   enumSynonymSingleDeclaration | // some.Enum.EnumValue -> ...
-   condition |
+   expressionGroup |
    caseElseMatchExpression;
 
 caseElseMatchExpression: 'else';
@@ -147,34 +190,33 @@ caseElseMatchExpression: 'else';
 caseFieldAssigningDeclaration :  // dealtAmount ...  (could be either a destructirng block, or an assignment)
    Identifier (
       caseFieldDestructuredAssignment | // dealtAmount ( ...
-      ( '=' caseScalarAssigningDeclaration ) | // dealtAmount = ccy1Amount | dealtAmount = 'foo'
+      ( EQ caseScalarAssigningDeclaration ) | // dealtAmount = ccy1Amount | dealtAmount = 'foo'
       // TODO : How do we model Enum assignments here?
       // .. some enum assignment ..
-      scalarAccessor
+      accessor
    );
 
 caseScalarAssigningDeclaration:
-   caseFieldReferenceAssignment | literal | scalarAccessorExpression;
+   expressionGroup | scalarAccessorExpression;
 
 caseFieldDestructuredAssignment :  // dealtAmount ( ... )
      '(' caseFieldAssigningDeclaration* ')';
-
-caseFieldReferenceAssignment : Identifier ('.' Identifier)*;
 
 fieldModifier
    : 'closed'
    ;
 fieldDeclaration
-  :   fieldModifier? Identifier (':' collectionProjectionScope? (simpleFieldDeclaration | anonymousTypeDefinition | modelAttributeTypeReference))?
+  :   fieldModifier? Identifier (':' (simpleFieldDeclaration | anonymousTypeDefinition | modelAttributeTypeReference))?
   ;
 
 // Used in queries to scope projection of collections.
 // eg:
 //findAll { OrderTransaction[] } as {
-//   items: OrderItem -> { sku: ProductSku size: ProductSize }[]
+//   items: Thing[] by [OrderItem[]]
 // }[]
-collectionProjectionScope: typeType '->';
+collectionProjectionExpression: '[' typeType projectionScopeDefinition? ']' ;
 
+projectionScopeDefinition: 'with' '(' scalarAccessorExpression (',' scalarAccessorExpression)*  ')';
 
 // A type reference that refers to the attribute on a model.
 // eg:  firstName : Person::FirstName.
@@ -187,9 +229,7 @@ typeType
     :   classOrInterfaceType typeArguments? listType? optionalType? parameterConstraint? (aliasedType? | inlineInheritedType?)?
     ;
 
-accessor : scalarAccessor | objectAccessor;
-
-scalarAccessor
+accessor
     : 'by' scalarAccessorExpression
     ;
 
@@ -197,11 +237,12 @@ scalarAccessorExpression
     : xpathAccessorDeclaration
     | jsonPathAccessorDeclaration
     | columnDefinition
-    | conditionalTypeConditionDeclaration
     | defaultDefinition
     | readFunction
     | readExpression
     | byFieldSourceExpression
+    | collectionProjectionExpression
+    | conditionalTypeConditionDeclaration
     ;
 
 // Required for Query based Anonymous type definitions like:
@@ -209,19 +250,22 @@ scalarAccessorExpression
 //               traderEmail: UserEmail (by this.traderId)
 // }
 //
-byFieldSourceExpression:  '(' fieldReferenceSelector ')';
-xpathAccessorDeclaration : 'xpath' '(' accessorExpression ')';
-jsonPathAccessorDeclaration : 'jsonPath' '(' accessorExpression ')';
+byFieldSourceExpression:  typeType '['  StringLiteral  ']';
+xpathAccessorDeclaration : 'xpath' '(' StringLiteral ')';
+jsonPathAccessorDeclaration : 'jsonPath' '(' StringLiteral ')';
 
 
-objectAccessor
-    : '{' destructuredFieldDeclaration* '}'
-    ;
+// Deprecating and removing this.
+// It was never used, and is confusing
+//objectAccessor
+//    : '{' destructuredFieldDeclaration* '}'
+//    ;
+//
+//destructuredFieldDeclaration
+//    : Identifier accessor
+//    ;
 
-destructuredFieldDeclaration
-    : Identifier accessor
-    ;
-accessorExpression : StringLiteral;
+//accessorExpression : StringLiteral;
 
 classOrInterfaceType
     :   Identifier /* typeArguments? */ ('.' Identifier /* typeArguments? */ )*
@@ -358,10 +402,11 @@ operationParameterList
     :   operationParameter (',' operationParameter)*
     ;
 
+
 operationParameter
 // Note that only one operationParameterConstraint can exist per parameter, but it can contain
 // multiple expressions
-     :   annotation* (parameterName)? typeType varargMarker?
+     :   annotation* (parameterName)? ((typeType varargMarker?) | lambdaSignature)
      ;
 
 varargMarker: '...';
@@ -420,21 +465,6 @@ propertyToParameterConstraintRhs : (literal | qualifiedName);
 
 propertyFieldNameQualifier : 'this' '.';
 
-condition : logical_expr ;
-logical_expr
- : logical_expr '&&' logical_expr # LogicalExpressionAnd
- | logical_expr '||' logical_expr  # LogicalExpressionOr
- | comparison_expr               # ComparisonExpression
- | logical_entity                # LogicalEntity
- ;
-
-comparison_expr : comparison_operand comp_operator comparison_operand
-                    # ComparisonExpressionWithOperator
-                ;
-
-comparison_operand : arithmetic_expr
-                   ;
-
 comp_operator : GT
               | GE
               | LT
@@ -443,35 +473,14 @@ comp_operator : GT
               | NQ
               ;
 
-arithmetic_expr
- :  numeric_entity                        # ArithmeticExpressionNumericEntity
- ;
-
-logical_entity : (TRUE | FALSE) # LogicalConst
-               | propertyToParameterConstraintLhs     # LogicalVariable
-               ;
-
-numeric_entity : literal              # LiteralConst
-               | propertyToParameterConstraintLhs           # NumericVariable
-               ;
-
 comparisonOperator
-   : '='
+   : '=='
    | '>'
    | '>='
    | '<='
    | '<'
    | '!='
    ;
-
-arithmaticOperator
-   : '+'
-   | '-'
-   | '*'
-   | '/'
-   ;
-
-
 
 policyDeclaration
     :  annotation* 'policy' policyIdentifier 'against' typeType '{' policyRuleSet* '}';
@@ -566,18 +575,17 @@ defaultDefinition: 'default' '(' (literal | qualifiedName) ')';
 // rather than permitting void return types.
 // This is because in a mapping declaration, functions really only have purpose if
 // they return things.
-functionDeclaration: typeDoc? 'declare' (functionModifiers)? 'function' functionName '(' operationParameterList? ')' ':' typeType;
+functionDeclaration: typeDoc? 'declare' (functionModifiers)? 'function' typeArguments? functionName '(' operationParameterList? ')' ':' typeType;
 
 functionModifiers: 'query';
 
 
-// Deprecated, use functionDeclaration
 readFunction: functionName '(' formalParameterList? ')';
 //         'concat' |
 //         'leftAndUpperCase' |
 //         'midAndUpperCase'
 //         ;
-readExpression: readFunction arithmaticOperator literal;
+readExpression: expressionGroup; //  readFunction arithmaticOperator literal;
 functionName: qualifiedName;
 formalParameterList
     : parameter  (',' parameter)*
@@ -590,7 +598,7 @@ formalParameterList
       //    | defaultDefinition
       //    | readFunction
       //    ;
-parameter: literal |  scalarAccessorExpression | fieldReferenceSelector | typeReferenceSelector | modelAttributeTypeReference;
+parameter: literal |  scalarAccessorExpression | fieldReferenceSelector | typeReferenceSelector | modelAttributeTypeReference | expressionGroup;
 
 columnIndex : IntegerLiteral | StringLiteral;
 
@@ -706,7 +714,7 @@ queryParam: Identifier ':' typeType;
 // findAllDirective: 'findAll';
 // findOneDirective: 'findAll';
 
-queryDirective: FindAll | FindOne | Stream | Find;
+   queryDirective: FindAll | FindOne | Stream | Find;
 findDirective: Find;
 
 givenBlock : 'given' '{' factList '}';
@@ -719,7 +727,7 @@ fact : variableName typeType '=' literal;
 variableName: Identifier ':';
 queryBody:
    givenBlock?
-	queryDirective '{' queryTypeList '}' queryProjection?
+	queryDirective ( ('{' queryTypeList  '}') | anonymousTypeDefinition ) queryProjection?
 	;
 
 queryTypeList: typeType (',' typeType)*;
@@ -734,20 +742,7 @@ queryProjection: 'as' typeType? anonymousTypeDefinition?;
 //        lastName : LastName
 //    }(by this.salesUtCode)
 //}
-anonymousTypeDefinition: typeBody listType? accessor?;
-anonymousFieldDeclaration: Identifier ':' typeType;
-anonymousFieldDeclarationWithSelfReference: Identifier ':' typeType '(' 'by' propertyFieldNameQualifier Identifier ')';
-anonymousComplexFieldDeclaration: Identifier ':' '{' (Identifier ':' typeType)*  '}'  '(' 'by' propertyFieldNameQualifier Identifier ')';
-
-anonymousField:
-   Identifier  // e.g. orderId
-   | anonymousFieldDeclaration // productId: ProductId
-   | anonymousFieldDeclarationWithSelfReference // traderEmail : EmailAddress(by this.traderUtCode)
-   | anonymousComplexFieldDeclaration //    salesPerson {
-                                    //        firstName : FirstName
-                                    //        lastName : LastName
-                                    //    } (by this.salesUtCode)
-   ;
+anonymousTypeDefinition: annotation* typeBody listType? accessor? parameterConstraint?;
 
 viewDeclaration
     :  typeDoc? annotation* typeModifier* 'view' Identifier
@@ -772,10 +767,6 @@ in_exprs: qualifiedName IN literalArray;
 like_exprs: qualifiedName LIKE literal;
 not_in_exprs: qualifiedName NOT_IN literalArray;
 
-modelAttributeTypeReferenceComparison: modelAttributeTypeReference comparison_operand modelAttributeTypeReference;
-modelAttributeTypeReferenceLiteralComparison: modelAttributeTypeReferenceComparison comparison_operand literal;
-modelAttributeTypeReferenceFunctionComparison: modelAttributeTypeReference filterCapability modelAttributeTypeReferenceFunctionComparisonExpression;
-modelAttributeTypeReferenceFunctionComparisonExpression: literalArray | literal;
 NOT_IN: 'not in';
 IN: 'in';
 LIKE: 'like';
@@ -950,8 +941,11 @@ GT : '>' ;
 GE : '>=' ;
 LT : '<' ;
 LE : '<=' ;
-EQ : '=' ;
+EQ : '==' ;
 NQ : '!=';
+
+LOGICAL_OR : '||';
+LOGICAL_AND : '&&';
 
 TRUE  : 'true' ;
 FALSE : 'false' ;
@@ -960,6 +954,7 @@ MULT  : '*' ;
 DIV   : '/' ;
 PLUS  : '+' ;
 MINUS : '-' ;
+POW: '^';
 
 LPAREN : '(' ;
 RPAREN : ')' ;

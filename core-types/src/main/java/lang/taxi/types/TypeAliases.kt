@@ -63,8 +63,8 @@ data class TypeAlias(
          return if (isDefined) listOf(this.aliasType!!) else emptyList()
       }
 
-   override val calculation: Formula?
-      get() = definition?.aliasType?.calculation
+//   override val calculation: Formula?
+//      get() = definition?.aliasType?.calculation
 
    override fun addExtension(extension: TypeAliasExtension): Either<ErrorMessage, TypeAliasExtension> {
       this.extensions.add(extension)

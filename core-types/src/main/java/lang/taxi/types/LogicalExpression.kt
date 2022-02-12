@@ -1,9 +1,10 @@
 package lang.taxi.types
 
 import lang.taxi.utils.quoted
-import java.util.*
+import java.util.EnumSet
 
 // TODO : Using PrimtiiveType.ANY to disable type checking on expressions, because we haven't implemented it yet.
+@Deprecated("use expressions instead")
 abstract class LogicalExpression protected constructor(val keyword: String, override val type:Type = PrimitiveType.ANY): WhenCaseMatchExpression
 interface ComparisonOperand: WhenCaseMatchExpression
 data class OrExpression(val left: LogicalExpression, val right: LogicalExpression): LogicalExpression("or") {
@@ -66,12 +67,13 @@ data class ModelAttributeFieldReferenceEntity(val source: QualifiedName, val fie
    }
 }
 
+@Deprecated("use FormulaOperator instead")
 enum class ComparisonOperator(val symbol: String, val applicablePrimitives: EnumSet<PrimitiveType>) {
    GT(">", EnumSet.of(PrimitiveType.INTEGER, PrimitiveType.DECIMAL, PrimitiveType.DOUBLE)),
    GE (">=", EnumSet.of(PrimitiveType.INTEGER, PrimitiveType.DECIMAL, PrimitiveType.DOUBLE)),
    LT ("<", EnumSet.of(PrimitiveType.INTEGER, PrimitiveType.DECIMAL, PrimitiveType.DOUBLE)),
    LE ("<=", EnumSet.of(PrimitiveType.INTEGER, PrimitiveType.DECIMAL, PrimitiveType.DOUBLE)),
-   EQ ("=", EnumSet.of(PrimitiveType.INTEGER, PrimitiveType.DECIMAL, PrimitiveType.DOUBLE, PrimitiveType.STRING)),
+   EQ ("==", EnumSet.of(PrimitiveType.INTEGER, PrimitiveType.DECIMAL, PrimitiveType.DOUBLE, PrimitiveType.STRING)),
    NQ ("!=", EnumSet.of(PrimitiveType.INTEGER, PrimitiveType.DECIMAL, PrimitiveType.DOUBLE, PrimitiveType.STRING));
    companion object {
       private val bySymbol = ComparisonOperator.values().associateBy { it.symbol }

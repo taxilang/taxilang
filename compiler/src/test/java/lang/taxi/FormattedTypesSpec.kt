@@ -34,8 +34,14 @@ object FormattedTypesSpec : Spek({
       it("should parse formatted types") {
          val src = """
             type TradeDate inherits Instant( @format = 'mm/dd/yyThh:nn:ss.mmmmZ' )
-         """.compiled().type("TradeDate").format?.first().should.equal("mm/dd/yyThh:nn:ss.mmmmZ")
-
+         """.compiled()
+         src.type("TradeDate").format?.first().should.equal("mm/dd/yyThh:nn:ss.mmmmZ")
+      }
+      it("should not include import for generated formatted type when type inherits from formatted type") {
+         val src = """
+            type TradeDate inherits Instant( @format = 'mm/dd/yyThh:nn:ss.mmmmZ' )
+         """.compiled()
+         src.type("TradeDate").compilationUnits.single().source.content.should.equal("type TradeDate inherits Instant( @format = 'mm/dd/yyThh:nn:ss.mmmmZ' )")
       }
 
       it("should parse formatted types with single quotes within double quotes") {
@@ -47,7 +53,8 @@ object FormattedTypesSpec : Spek({
          """.trimMargin()
             .compiled()
 
-         doc.objectType("Order").field("orderDateTime").type.format?.first().should.equal("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
+         doc.objectType("Order")
+            .field("orderDateTime").type.format?.first().should.equal("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
          doc.objectType("Order").field("orderDateTime").type.format?.get(1).should.equal("yyyy-MM-dd'T'HH:mm:ss.SSS")
       }
 
@@ -79,8 +86,10 @@ object FormattedTypesSpec : Spek({
          """.trimMargin()
             .compiled()
 
-         doc.objectType("Order").field("orderDateTimeQuote").type.format?.first().should.equal("yyyy-MM-dd HH:mm:ss.SSSSSSS")
-         doc.objectType("Order").field("orderDateTimeDoubleQuote").type.format?.first().should.equal("yyyy/MM/dd HH:mm:ss")
+         doc.objectType("Order")
+            .field("orderDateTimeQuote").type.format?.first().should.equal("yyyy-MM-dd HH:mm:ss.SSSSSSS")
+         doc.objectType("Order")
+            .field("orderDateTimeDoubleQuote").type.format?.first().should.equal("yyyy/MM/dd HH:mm:ss")
          doc.objectType("Order").field("orderDateQuote").type.format?.first().should.equal("yyyyMMdd")
          doc.objectType("Order").field("orderDateDoubleQuote").type.format?.first().should.equal("yyyy/MM/dd")
       }

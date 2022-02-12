@@ -30,5 +30,8 @@ data class CompilationUnit(val ruleContext: Any?,
       fun generatedFor(type: Type): CompilationUnit {
          return CompilationUnit(null, SourceCode("Generated for ${type.qualifiedName}", ""))
       }
+      fun generatedFor(name: String): CompilationUnit {
+         return CompilationUnit(null, SourceCode("Generated for $name", ""))
+      }
    }
 }

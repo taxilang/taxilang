@@ -9,7 +9,7 @@
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
         <file>.taxi/debug.log</file>
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level [%file:%line] %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level) [%file:%line] %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 

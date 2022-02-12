@@ -3,6 +3,7 @@ package lang.taxi.generators
 import com.winterbe.expekt.should
 import lang.taxi.Compiler
 import lang.taxi.messages.Severity
+import lang.taxi.testing.shouldCompileTheSameAs
 import org.junit.jupiter.api.Test
 import kotlin.test.fail
 
@@ -60,9 +61,9 @@ type Person
          model Person {
             birthDate : DateOfBirth( @format = "dd-mm-yyyy" )
             timeOfBirth : TimeOfBirth( @format = "hh:mm:ss" )
-            startupTime : BirthTimestamp by (this.birthDate + this.timeOfBirth)
+            startupTime : BirthTimestamp by this.birthDate + this.timeOfBirth
             weightInGrams : WeightInGrams by xpath("/foo")
-            weightInOunces : WeightInOunces as (WeightInGrams * OuncesToGramsMultiplier)
+            weightInOunces : WeightInOunces by WeightInGrams * OuncesToGramsMultiplier
          }
       """.trimIndent()
       ).compile()
@@ -77,13 +78,12 @@ type OuncesToGramsMultiplier inherits Decimal
 model Person {
    birthDate : DateOfBirth( @format = "dd-mm-yyyy" )
    timeOfBirth : TimeOfBirth( @format = "hh:mm:ss" )
-   startupTime : BirthTimestamp  by (this.birthDate + this.timeOfBirth)
+   startupTime : BirthTimestamp  by this.birthDate + this.timeOfBirth
    weightInGrams : WeightInGrams  by xpath("/foo")
-   weightInOunces : WeightInOunces as (WeightInGrams * OuncesToGramsMultiplier )
+   weightInOunces : WeightInOunces  by WeightInGrams * OuncesToGramsMultiplier
 }
 """
-      generated.trimNewLines().should.equal(expected.trimNewLines())
-      generated.shouldCompile()
+      generated.shouldCompileTheSameAs(expected)
    }
 
    @Test
@@ -129,8 +129,7 @@ model Person {
             orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", @format = "yyyy-MM-dd'T'HH:mm:ss.SSS" )
          }
       """.trimIndent()
-      generated.trimNewLines().should.equal(expected.trimNewLines())
-      generated.shouldCompile()
+      generated.shouldCompileTheSameAs(expected)
    }
 
    @Test
@@ -145,8 +144,7 @@ model Person {
       model Order {
          orderDateTime : TransactionEventDateTime( @format = ["yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "yyyy-MM-dd'T'HH:mm:ss.SSS"] @offset = 60 )
       }""".trimIndent()
-      generated.trimNewLines().should.equal(expected.trimNewLines())
-      generated.shouldCompile()
+      generated.shouldCompileTheSameAs(expected)
    }
 
    @Test
@@ -199,11 +197,11 @@ model Foo {
             initialQuantity: Decimal
             leavesQuantity: Decimal
             quantityStatus: String by when {
-                this.initialQuantity = this.leavesQuantity -> "ZeroFill"
-                this.trader = "Marty" || this.status = "Pending" -> "ZeroFill"
+                this.initialQuantity == this.leavesQuantity -> "ZeroFill"
+                this.trader == "Marty" || this.status == "Pending" -> "ZeroFill"
                 this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity -> "PartialFill"
-                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.trader = "Marty" || this.status = "Pending"  -> "FullyFilled"
-                this.leavesQuantity = null && this.initialQuantity != null -> trader
+                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.trader == "Marty" || this.status == "Pending"  -> "FullyFilled"
+                this.leavesQuantity == null && this.initialQuantity != null -> this.trader
                 else -> "CompleteFill"
             }
          }
@@ -217,11 +215,11 @@ model Foo {
             initialQuantity : Decimal
             leavesQuantity : Decimal
             quantityStatus : String  by when {
-                this.initialQuantity = this.leavesQuantity -> "ZeroFill"
-                this.trader = "Marty" || this.status = "Pending" -> "ZeroFill"
+                this.initialQuantity == this.leavesQuantity -> "ZeroFill"
+                this.trader == "Marty" || this.status == "Pending" -> "ZeroFill"
                 this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity -> "PartialFill"
-                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.trader = "Marty" || this.status = "Pending" -> "FullyFilled"
-                this.leavesQuantity = null && this.initialQuantity != null -> trader
+                this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.trader == "Marty" || this.status == "Pending" -> "FullyFilled"
+                this.leavesQuantity == null && this.initialQuantity != null -> this.trader
                 else -> "CompleteFill"
             }
          }
@@ -245,7 +243,7 @@ model Foo {
             timeOfBirth : TimeOfBirth?( @format = "hh:mm:ss" )
             startupTime : BirthTimestamp? by (this.birthDate + this.timeOfBirth)
             weightInGrams : WeightInGrams? by xpath("/foo")
-            weightInOunces : WeightInOunces? as (WeightInGrams * OuncesToGramsMultiplier)
+            weightInOunces : WeightInOunces? by (WeightInGrams * OuncesToGramsMultiplier)
          }
       """.trimIndent()
       ).compile()
@@ -260,13 +258,14 @@ type OuncesToGramsMultiplier inherits Decimal
 model Person {
    birthDate : DateOfBirth?( @format = "dd-mm-yyyy" )
    timeOfBirth : TimeOfBirth?( @format = "hh:mm:ss" )
-   startupTime : BirthTimestamp?  by (this.birthDate + this.timeOfBirth)
+   startupTime : BirthTimestamp?  by this.birthDate + this.timeOfBirth
    weightInGrams : WeightInGrams?  by xpath("/foo")
-   weightInOunces : WeightInOunces? as (WeightInGrams * OuncesToGramsMultiplier )
+   weightInOunces : WeightInOunces?  by WeightInGrams * OuncesToGramsMultiplier
 }
 """
-      generated.trimNewLines().should.equal(expected.trimNewLines())
-      generated.shouldCompile()
+      generated.shouldCompileTheSameAs(expected)
+//      generated.trimNewLines().should.equal(expected.trimNewLines())
+//      generated.shouldCompile()
    }
 
    @Test
@@ -294,8 +293,7 @@ model Person {
    firstName : String
 }
 """
-      generated.trimNewLines().should.equal(expected.trimNewLines())
-      generated.shouldCompile()
+      generated.shouldCompileTheSameAs(expected)
    }
 
    @Test
@@ -319,6 +317,49 @@ annotation GeneratedSource {
 }
 """.trimIndent()
       generated.trimNewLines().should.equal(expected.trimNewLines())
+   }
+
+   @Test
+   fun `outputs complex when statements statements under a namespace`() {
+      val generated = """
+            namespace test {
+               model ComplexWhen {
+               trader: String
+               status: String
+               initialQuantity: Decimal
+               leavesQuantity: Decimal
+               quantityStatus: String by when {
+                   this.initialQuantity == this.leavesQuantity -> "ZeroFill"
+                   this.trader == "Marty" || this.status == "Pending" -> "ZeroFill"
+                   this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity -> "PartialFill"
+                   this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.trader == "Marty" || this.status == "Pending"  -> "FullyFilled"
+                   this.leavesQuantity == null && this.initialQuantity != null -> this.trader
+                   else -> "CompleteFill"
+               }
+            }
+         }
+            """.trimIndent()
+         .compileAndRegenerateSource()
+
+      val expected = """
+         namespace test {
+           model ComplexWhen {
+               trader : String
+               status : String
+               initialQuantity : Decimal
+               leavesQuantity : Decimal
+               quantityStatus : String  by when {
+                   this.initialQuantity == this.leavesQuantity -> "ZeroFill"
+                   this.trader == "Marty" || this.status == "Pending" -> "ZeroFill"
+                   this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity -> "PartialFill"
+                   this.leavesQuantity > 0 && this.leavesQuantity < this.initialQuantity || this.trader == "Marty" || this.status == "Pending" -> "FullyFilled"
+                   this.leavesQuantity == null && this.initialQuantity != null -> this.trader
+                   else -> "CompleteFill"
+               }
+            }
+         }
+      """.trimIndent()
+      generated.shouldCompileTheSameAs(expected)
    }
 
 }

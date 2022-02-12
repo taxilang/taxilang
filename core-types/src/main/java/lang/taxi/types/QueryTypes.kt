@@ -10,7 +10,11 @@ data class DiscoveryType(
     * constraint the output type.  However, they do inform query strategies,
     * so we pop them here for query operations to consider.
     */
-   val startingFacts: Map<String, TypedValue>
+   val startingFacts: Map<String, TypedValue>,
+   /**
+    * If the query body is an anonymoust type store the definition here,
+    */
+   val anonymousType: Type? = null
 )
 
 
@@ -33,8 +37,9 @@ data class ProjectedType(val concreteType: Type?, val anonymousTypeDefinition: T
 data class AnonymousTypeDefinition(
    val isList: Boolean = false,
    val fields: List<AnonymousFieldDefinition>,
-   override val compilationUnit: CompilationUnit
-) : TypeDefinition {
+   override val annotations: List<Annotation>,
+   override val compilationUnit: CompilationUnit,
+) : TypeDefinition, Annotatable {
 
 }
 

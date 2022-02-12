@@ -13,6 +13,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import kotlin.Any
 import kotlin.Boolean
 import kotlin.Char
 import kotlin.Int
@@ -47,6 +48,7 @@ object PrimitiveTypes {
          Double::class.java,
          Float::class.java
       ),
+      PrimitiveType.ANY to listOf(Any::class.java),
       PrimitiveType.LOCAL_DATE to listOf(LocalDate::class.java),
       PrimitiveType.TIME to listOf(LocalTime::class.java),
       PrimitiveType.DATE_TIME to listOf(LocalDateTime::class.java),
@@ -83,7 +85,8 @@ object PrimitiveTypes {
 
 
    fun getJavaType(type: PrimitiveType): Class<*> {
-      return this.taxiPrimitiveToJavaTypes[type]?.first() ?: error("Type ${type.name} is not mapped to a Java type")
+      return this.taxiPrimitiveToJavaTypes[type]?.first() ?:
+         error("Type ${type.name} is not mapped to a Java type")
    }
 }
 

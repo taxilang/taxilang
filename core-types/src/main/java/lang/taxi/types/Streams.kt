@@ -21,6 +21,9 @@ data class StreamType(val type: Type, val source: CompilationUnit, override val 
          // the parameters will affect the name
          return isStreamTypeName(requestedTypeName.fullyQualifiedName)
       }
+      fun isStream(parameterizedName:String): Boolean {
+         return parameterizedName.startsWith(NAME)
+      }
       fun isStreamTypeName(requestedTypeName: String): Boolean {
          // Resolve either lang.taxi.Stream, or implicitly just Stream
          return requestedTypeName == qualifiedName.fullyQualifiedName || requestedTypeName == qualifiedName.typeName
@@ -59,8 +62,8 @@ data class StreamType(val type: Type, val source: CompilationUnit, override val 
 
    override val format: List<String>? = null
    override val formattedInstanceOfType: Type? = null
-   override val calculation: Formula?
-      get() = null
+//   override val calculation: Formula?
+//      get() = null
    override val offset: Int? = null
    override val typeKind: TypeKind = TypeKind.Type
 }

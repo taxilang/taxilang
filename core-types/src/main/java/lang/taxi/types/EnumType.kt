@@ -9,6 +9,11 @@ object Enums {
       return "${enum.parameterizedName}.$enumValueName"
    }
 
+   fun isPotentialEnumMemberReference(value:String):Boolean {
+      // WOuld be nice to have a smarter check here
+      return value.contains(".")
+   }
+
    fun splitEnumValueQualifiedName(name: EnumValueQualifiedName): Pair<QualifiedName, String> {
       val parts = name.split(".")
       val enumName = parts.dropLast(1).joinToString(".")
@@ -126,8 +131,8 @@ data class EnumType(override val qualifiedName: String,
    override val format: List<String>? = null
    override val offset: Int? = null
    override val formattedInstanceOfType: Type? = null
-   override val calculation: Formula?
-      get() = null
+//   override val calculation: Formula?
+//      get() = null
 
    override val basePrimitive: PrimitiveType?
       get() = definition?.basePrimitive

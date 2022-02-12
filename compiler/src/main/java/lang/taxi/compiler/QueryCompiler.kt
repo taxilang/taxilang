@@ -4,12 +4,23 @@ import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
-import lang.taxi.*
+import lang.taxi.CompilationError
+import lang.taxi.TaxiParser
+import lang.taxi.findNamespace
 import lang.taxi.query.ConstraintBuilder
 import lang.taxi.query.TaxiQlQuery
-import lang.taxi.types.*
+import lang.taxi.toCompilationUnit
+import lang.taxi.types.ArrayType
+import lang.taxi.types.DiscoveryType
+import lang.taxi.types.ProjectedType
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.QueryMode
+import lang.taxi.types.StreamType
+import lang.taxi.types.Type
+import lang.taxi.types.TypedValue
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
+import lang.taxi.value
 
 internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
    fun parseQueryBody(
@@ -28,12 +39,11 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
 
       val factsOrErrors = ctx.givenBlock()?.let { parseFacts(it) } ?: Either.right(emptyMap())
       val queryOrErrors = factsOrErrors.flatMap { facts ->
-         parseQueryTypeList(ctx.queryTypeList(), facts, queryDirective)
+
+         parseQueryBody(ctx, facts, queryDirective)
             .flatMap { typesToDiscover ->
                parseTypeToProject(ctx.queryProjection(), typesToDiscover)
                   .map { typeToProject ->
-
-
                      TaxiQlQuery(
                         name = name,
                         facts = facts,
@@ -48,34 +58,61 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
       return queryOrErrors
    }
 
-   private fun parseQueryTypeList(
-      queryTypeList: TaxiParser.QueryTypeListContext,
+   private fun parseQueryBody(
+      queryBodyContext: TaxiParser.QueryBodyContext,
       facts: Map<String, TypedValue>,
       queryDirective: QueryMode
    ): Either<List<CompilationError>, List<DiscoveryType>> {
-      val namespace = queryTypeList.findNamespace()
+      val namespace = queryBodyContext.findNamespace()
       val constraintBuilder = ConstraintBuilder(tokenProcessor.typeResolver(namespace))
+      /**
+       * A query body can either be a concrete type:
+       * findAll { foo.bar.Order[] }
+       *
+       * or an anonymous type
+       *
+       * findAll {
+       *    field1: Type1
+       *    field2: Type2
+       * }
+       */
+      val queryTypeList = queryBodyContext.queryTypeList()
+      val anonymousTypeDefinition = queryBodyContext.anonymousTypeDefinition()
+     return queryTypeList?.typeType()?.map { queryType ->
+        tokenProcessor.parseType(namespace, queryType)
+           .flatMap { type -> toDiscoveryType(type, queryType.parameterConstraint(), queryDirective, constraintBuilder, facts) }
+     }?.invertEitherList()?.flattenErrors()
+             ?: listOf(tokenProcessor
+                .parseAnonymousType(namespace, anonymousTypeDefinition)
+                .flatMap { anonymousType -> toDiscoveryType(
+                   anonymousType,
+                   anonymousTypeDefinition.parameterConstraint(),
+                   queryDirective,
+                   constraintBuilder,
+                   facts) }
+             ).invertEitherList().flattenErrors()
+   }
 
-      return queryTypeList.typeType().map { queryType ->
-         tokenProcessor.parseType(namespace, queryType)
-            .flatMap { type ->
-               val constraintsOrErrors = queryType.parameterConstraint()?.parameterConstraintExpressionList()
-                  ?.let { constraintExpressionList ->
-                     constraintBuilder.build(constraintExpressionList, type)
-                  } ?: Either.right(emptyList())
-               constraintsOrErrors.map { constraints ->
-                  // If we're building a streaming query, then wrap the requested type
-                  // in a stream
-                  val typeToDiscover = if (queryDirective == QueryMode.STREAM) {
-                     StreamType.of(type)
-                  } else {
-                     type
-                  }
-
-                  DiscoveryType(typeToDiscover.toQualifiedName(), constraints, facts)
-               }
-            }
-      }.invertEitherList().flattenErrors()
+   private fun toDiscoveryType(
+      type: Type,
+      parameterConstraint: TaxiParser.ParameterConstraintContext?,
+      queryDirective: QueryMode,
+      constraintBuilder: ConstraintBuilder,
+      facts: Map<String, TypedValue>): Either<List<CompilationError>, DiscoveryType> {
+      val constraintsOrErrors = parameterConstraint?.parameterConstraintExpressionList()
+         ?.let { constraintExpressionList ->
+            constraintBuilder.build(constraintExpressionList, type)
+         } ?: Either.right(emptyList())
+      return constraintsOrErrors.map { constraints ->
+         // If we're building a streaming query, then wrap the requested type
+         // in a stream
+         val typeToDiscover = if (queryDirective == QueryMode.STREAM) {
+            StreamType.of(type)
+         } else {
+            type
+         }
+         DiscoveryType(typeToDiscover.toQualifiedName(), constraints, facts, if (type.anonymous) type else null)
+      }
    }
 
    private fun parseFacts(givenBlock: TaxiParser.GivenBlockContext): Either<List<CompilationError>, Map<String, TypedValue>> {
@@ -150,17 +187,16 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
 
       return when {
          concreteProjectionTypeType == null && anonymousProjectionType != null -> {
-            val typeBodyContext = anonymousProjectionType.typeBody()
             val isList = anonymousProjectionType.listType() != null
             this
                .tokenProcessor
                .parseAnonymousType(
-                  namespace = typeBodyContext.findNamespace(),
-                  anonymousTypeCtx = typeBodyContext,
+                  namespace = anonymousProjectionType.findNamespace(),
                   anonymousTypeResolutionContext = AnonymousTypeResolutionContext(
                      typesToDiscover,
                      concreteProjectionTypeType
-                  )
+                  ),
+                  anonymousTypeDefinition = anonymousProjectionType
                )
                .map { createdType ->
                   val compiledType =
@@ -172,17 +208,16 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
          concreteProjectionTypeType != null && anonymousProjectionType != null -> {
             val concreteProjectionType =
                this.tokenProcessor.parseType(queryProjection.findNamespace(), concreteProjectionTypeType)
-            val typeBodyContext = anonymousProjectionType.typeBody()
             val isList = anonymousProjectionType.listType() != null
             val anonymousType = this
                .tokenProcessor
                .parseAnonymousType(
-                  namespace = typeBodyContext.findNamespace(),
-                  anonymousTypeCtx = typeBodyContext,
+                  namespace = anonymousProjectionType.findNamespace(),
                   anonymousTypeResolutionContext = AnonymousTypeResolutionContext(
                      typesToDiscover,
                      concreteProjectionTypeType
-                  )
+                  ),
+                  anonymousTypeDefinition = anonymousProjectionType
                )
 
 
@@ -217,60 +252,11 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
 
       }
 
-      /*return when {
-         projectionType == null && anonymousProjectionType != null -> {
-            anonymousProjectionType.typeDeclaration()
-            val compilationErrorOrFields = anonymousProjectionType.anonymousField().map { toAnonymousFieldDefinition(it, queryProjection, typesToDiscover) }
-            val fieldDefinitions = mutableListOf<AnonymousFieldDefinition>()
-            compilationErrorOrFields.forEach { compilationErrorOrField ->
-               when (compilationErrorOrField) {
-                  is Either.Left -> {
-                     return compilationErrorOrField.a.left()
-                  }
-                  is Either.Right -> fieldDefinitions.add(compilationErrorOrField.b)
-               }
-            }
-
-            return ProjectedType.fomAnonymousTypeOnly(
-               AnonymousTypeDefinition(anonymousProjectionType.listType() != null, fieldDefinitions.toList(), queryProjection.toCompilationUnit())).right()
-         }
-
-         projectionType != null && anonymousProjectionType == null -> {
-            lookupType(projectionType).map { qualifiedName -> ProjectedType.fromConcreteTypeOnly(qualifiedName) }
-
-         }
-
-         projectionType != null && anonymousProjectionType != null -> {
-            val concreteProjectionType = lookupType(projectionType)
-            val compilationErrorOrFields = anonymousProjectionType.anonymousField().map { toAnonymousFieldDefinition(it, queryProjection, typesToDiscover) }
-            val fieldDefinitions = mutableListOf<AnonymousFieldDefinition>()
-            compilationErrorOrFields.forEach { compilationErrorOrField ->
-               when (compilationErrorOrField) {
-                  is Either.Left -> {
-                     return compilationErrorOrField.a.left()
-                  }
-                  is Either.Right -> fieldDefinitions.add(compilationErrorOrField.b)
-               }
-            }
-
-            if (concreteProjectionType is Either.Left) {
-               return concreteProjectionType.a.left()
-            }
-
-            return concreteProjectionType.map {
-               ProjectedType(it,
-                  AnonymousTypeDefinition(anonymousProjectionType.listType() != null, fieldDefinitions.toList(), projectionType.toCompilationUnit()))
-            }
-         }
-
-         else -> Either.left(CompilationError(queryProjection.start,
-            "Unexpected as definition"))
-      }*/
    }
-
 }
 
 data class AnonymousTypeResolutionContext(
    val typesToDiscover: List<DiscoveryType> = emptyList(),
    val concreteProjectionTypeContext: TaxiParser.TypeTypeContext? = null
 )
+

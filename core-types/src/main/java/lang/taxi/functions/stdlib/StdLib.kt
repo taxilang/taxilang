@@ -7,7 +7,11 @@ object StdLib  {
    // Note: because of a bug in the antlr definition,
    // we can't put these in lang.taxi.stdlib. :(
    const val namespace = "taxi.stdlib"
-   val functions = Strings.functions + Aggregations.functions + listOf(Coalesce)
+   val functions = Strings.functions +
+      Aggregations.functions +
+      Functional.functions +
+      Collections.functions +
+      listOf(Coalesce)
    val taxi = functions.namespacedTaxi()
 
    fun stdLibName(name:String):QualifiedName = QualifiedName.from("$namespace.$name")

@@ -26,7 +26,7 @@ class ViewFilterSpec : Spek({
            Sample View
           ]]
          view PersonView with query {
-            find { Person[] ( FirstName = 'foo' and LastName like '%bar%' ) } as {
+            find { Person[] ( FirstName == 'foo' and LastName like '%bar%' ) } as {
                personName: Person::FirstName
             }
          }
@@ -89,7 +89,7 @@ class ViewFilterSpec : Spek({
            Sample View
           ]]
          view PersonView with query {
-            find { Person[] ( (FirstName = 'foo' or LastName like '%bar%') and (Age in [20, 21, 22]) ) } as {
+            find { Person[] ( (FirstName == 'foo' or LastName like '%bar%') and (Age in [20, 21, 22]) ) } as {
                personName: Person::FirstName
             }
          }
@@ -132,7 +132,7 @@ class ViewFilterSpec : Spek({
            Sample View
           ]]
          view PersonView with query {
-            find { Person[] ( (FirstName = 'foo' or LastName like '%bar%') ) } as {
+            find { Person[] ( (FirstName == 'foo' or LastName like '%bar%') ) } as {
                personName: Person::FirstName
             }
          }
@@ -205,7 +205,7 @@ class ViewFilterSpec : Spek({
          type OrderEventDateTime inherits Instant
          type OrderType inherits String
          type SecurityDescription inherits String
-         type RequestedQuantity inherits String
+         type RequestedQuantity inherits Decimal
          type OrderStatus inherits String
          type DecimalFieldOrderFilled inherits Decimal
 
@@ -236,7 +236,7 @@ class ViewFilterSpec : Spek({
            Sample View
           ]]
          view OrderView inherits OrderEvent with query {
-            find { OrderSent[] ( (SecurityDescription = 'Floating' or SecurityDescription = 'Fixed') and OrderType in ['Limit', 'Market']) } as {
+            find { OrderSent[] ( (SecurityDescription == 'Floating' or SecurityDescription =='Fixed') and OrderType in ['Limit', 'Market']) } as {
               orderId: OrderSent::SentOrderId
               orderDateTime: OrderSent::OrderEventDateTime
               orderType: OrderSent::OrderType
@@ -244,14 +244,14 @@ class ViewFilterSpec : Spek({
               requestedQuantity: OrderSent::RequestedQuantity
               orderEntry: OrderSent::OrderStatus
             },
-            find { OrderSent[] ( (SecurityDescription = 'Floating') ) (joinTo OrderFill[] ( OrderStatus = 'Filled' or OrderStatus = 'Partially Filled' )) } as {
+            find { OrderSent[] ( (SecurityDescription == 'Floating') ) (joinTo OrderFill[] ( OrderStatus == 'Filled' or OrderStatus == 'Partially Filled' )) } as {
               orderId: OrderFill::FillOrderId
               orderDateTime: OrderEventDateTime
               orderType: OrderFill::OrderType
               subSecurityType: OrderFill::SecurityDescription
               requestedQuantity: OrderSent::RequestedQuantity
               orderEntry: OrderStatus by when {
-                 OrderSent::RequestedQuantity = OrderFill::DecimalFieldOrderFilled -> OrderFill::OrderStatus
+                 OrderSent::RequestedQuantity == OrderFill::DecimalFieldOrderFilled -> OrderFill::OrderStatus
                  else -> "PartiallyFilled"
               }
             }
@@ -345,7 +345,7 @@ class ViewFilterSpec : Spek({
            Sample View
           ]]
          view MaleView with query {
-            find { Person[] ( (Sex = 'Male') )} as {
+            find { Person[] ( (Sex == 'Male') )} as {
                sex: Person::Sex
             }
          }

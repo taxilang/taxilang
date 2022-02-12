@@ -1,6 +1,11 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import lang.taxi.accessors.ConditionalAccessor
+import lang.taxi.accessors.NullValue
+import lang.taxi.expressions.LiteralExpression
+import lang.taxi.types.EnumValue
+import lang.taxi.types.WhenFieldSetCondition
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -43,15 +48,14 @@ object WhenBlockSpec : Spek({
          model Foo {
             assetClass : AssetClass by column("assetClass")
             identifierValue : Identifier by when (this.assetClass) {
-               "foo" -> assetClass // <-- This is an error, as this.assetClass is a String, which isn't assignable to Identifier, which is a number
+               "foo" -> this.assetClass // <-- This is an error, as this.assetClass is a String, which isn't assignable to Identifier, which is a number
                else -> column("ISIN")
             }
          }""".validated()
-         errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("Type mismatch.  Type of AssetClass is not assignable to type Identifier")
+            .shouldContainMessage("Type mismatch.  Type of AssetClass is not assignable to type Identifier")
       }
 
-      it("should now allow assignment of fields where the types are different but share a common primitive base type") {
+      it("should not allow assignment of fields where the types are different but share a common primitive base type") {
          val errors = """
          type Identifier inherits String
          type AssetClass inherits String
@@ -60,12 +64,11 @@ object WhenBlockSpec : Spek({
             name : Name
             assetClass : AssetClass by column("assetClass")
             identifierValue : Identifier by when (this.assetClass) {
-               "foo" -> name // <- name is a string, and Identifier are a string, but they aren't compatible.
+               "foo" -> this.name // <- name is a string, and Identifier are a string, but they aren't compatible.
                else -> column("ISIN")
             }
          }""".validated()
-         errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("Type mismatch.  Type of Name is not assignable to type Identifier")
+            .shouldContainMessage("Type mismatch.  Type of Name is not assignable to type Identifier")
       }
 
       it("should detect type mismatch of value in when case selector") {
@@ -81,9 +84,28 @@ object WhenBlockSpec : Spek({
          errors.should.have.size(1)
          errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.Int is not assignable to type Identifier")
       }
+      it("should allow assignment of null in when clause") {
+         val whenBlock = """
+            enum Country {
+               NZ("New Zealand"),
+               AUS("Australia")
+            }
+            model Person {
+               identifiesAs : String
+               country : Country by when (this.identifiesAs) {
+                  "Kiwi" -> null
+                  else -> Country.AUS
+               }
+            }
+         """.compiled()
+            .model("Person")
+            .field("country").accessor!!.asA<ConditionalAccessor>().expression as WhenFieldSetCondition
+         whenBlock.cases[0].getSingleAssignment().assignment.asA<LiteralExpression>()
+            .value.should.equal(NullValue)
+      }
 
       it("should allow enums to be assigned in when clause") {
-         """
+         val whenBlock = """
             enum Country {
                NZ("New Zealand"),
                AUS("Australia")
@@ -95,8 +117,14 @@ object WhenBlockSpec : Spek({
                   "Ozzie" -> Country.AUS
                }
             }
-         """.validated().errors().should.be.empty
+         """.compiled()
+            .model("Person")
+            .field("country").accessor!!.asA<ConditionalAccessor>().expression as WhenFieldSetCondition
+         val enumLiteral = whenBlock.cases[0].getSingleAssignment().assignment.asA<LiteralExpression>().literal
+         val enumValue = enumLiteral.value.asA<EnumValue>()
+         enumValue.qualifiedName.should.equal("Country.NZ")
       }
+
       it("should not allow strings in when clause against enum") {
          val errors = """
             enum Country {

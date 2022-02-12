@@ -1,0 +1,40 @@
+Breaking change:
+## Comparison operator has changed from `=` to `==` to align with standard conventions
+This is big, it impacts things like query predciates:
+
+```
+type SomeServiceRequest {
+// This now needs == not =
+   amount : Money(this.currency == 'GBP')
+   clientId : ClientId as String
+}
+```
+
+
+ * `as` on model types has been removed, and is now consistently using `by`
+```
+model Person {
+// Old
+   fullName : FullName as (FirstName + LastName)
+// new
+   fullName : FullName by (FirstName + LastName)
+}
+```
+ * Order of evaluation in `by` expressions is now standard and consistent
+
+# When clauses must prefix field references with 'this'
+Referencing of fields now consistently must be prefixed with `this.`.
+
+eg:
+
+```
+model Movie {
+   name : Name
+   rating : MovieRating
+   whenClauseField : Thing by when (this.rating) {
+      "foo" -> name // <- This is now an error, field names must be referenced as `this.name`
+      "foo" -> this.name // <- This is correct
+      else -> ...
+   }
+}
+```

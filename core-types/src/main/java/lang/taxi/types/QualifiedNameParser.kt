@@ -1,7 +1,6 @@
 package lang.taxi.types
 
 import com.google.common.cache.CacheBuilder
-import java.io.IOException
 import java.io.StreamTokenizer
 import java.io.StringReader
 
@@ -25,6 +24,8 @@ object QualifiedNameParser {
          // If there's a # reference (like for a field reference), we strip it
          // out before parsing
          val sanitized = s.split("#")[0]
+         // If the name included escape characters, remove them
+            .replace("`","")
          val expandedName = convertArrayShorthand(sanitized)
          val tokenizer = StreamTokenizer(StringReader(expandedName))
          tokenizer.wordChars('_'.toInt(), '_'.toInt())
@@ -34,8 +35,8 @@ object QualifiedNameParser {
          try {
             val genericName = parse(tokenizer, listOf(StreamTokenizer.TT_EOF)) // Parse until the end
             genericName.toQualifiedName()
-         } catch (e: IOException) {
-            throw RuntimeException(e)
+         } catch (e: Exception) {
+            throw RuntimeException("Failed to parse $s to a QualifiedName: ${e::class.simpleName} - ${e.message}")
          }
       }
 
