@@ -279,6 +279,27 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>io.sdkman</groupId>
+            <artifactId>sdkman-maven-plugin</artifactId>
+            <version>2.0.0</version>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>release</goal>
+                     <goal>default</goal>
+                  </goals>
+                  <phase>deploy</phase>
+                  <configuration>
+                     <consumerKey>${env.SDKMAN_CONSUMER_KEY}</consumerKey>
+                     <consumerToken>${env.SDKMAN_CONSUMER_TOKEN}</consumerToken>
+                     <candidate>taxi</candidate>
+                     <version>${project.version}</version>
+                     <url>https://repo.vyne.co/release/org/taxilang/taxi-cli/${project.version}/taxi-cli-${project.version}.zip</url>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
 </project>
