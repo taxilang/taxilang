@@ -12,8 +12,10 @@ release:
    gitlab:
       owner: taxi-lang
       name: taxi-lang
-      username: taxi-lang
+      username: martypitt
       branch: master
+      identifier: 3493030
+      update: true
 
 distributions:
    taxi-cli:
@@ -37,26 +39,6 @@ packagers:
       #
       continueOnError: true
 
-      # Custom download URL.
-      #
-      #      downloadUrl: https://my.server.com/{{projectName}}/{{tagName}}/{{artifactFile}}
-
-      # Additional properties used when evaluating templates.
-      #
-#      extraProperties:
-      # Key will be capitalized and prefixed with `sdkman`, i.e, `sdkmanFoo`.
-      #         foo: bar
-
-      # Defines the connection timeout in seconds.
-      # Defaults to `20`.
-      #
-      connectTimeout: 20
-
-      # Defines the read timeout in seconds.
-      # Defaults to `60`.
-      #
-      readTimeout: 60
-
       # The name of the candidate registered in the Sdkman database.
       # If unspecified, will use `${distribution.name}`.
       #
@@ -64,23 +46,4 @@ packagers:
 
       # Sdkman command to use.
       # Valid values are [`MAJOR`, `MINOR`]
-      # Defaults to `MAJOR`.
-      #
       command: MINOR
-
-      # The release notes URL to use.
-      # Defaults to `${release.${git}.releaseNotesUrl}`.
-      #
-#      releaseNotesUrl: https://host.com/{{projectName}}/{{tagName}}
-
-      # The consumer key for publishing to Sdkman.
-      # If left unspecified, the `JRELEASER_SDKMAN_CONSUMER_KEY`
-      # environment variable must be defined.
-      #
-      #      consumerKey: __DO_NOT_SET_HERE__
-
-      # The consumer token for publishing to Sdkman.
-      # If left unspecified, the `JRELEASER_SDKMAN_CONSUMER_TOKEN`
-      # environment variable must be defined.
-      #
-#      consumerToken: __DO_NOT_SET_HERE__
