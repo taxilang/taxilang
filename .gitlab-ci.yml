@@ -149,6 +149,14 @@ publish-release:
          - "taxi-cli/target/*.zip"
          - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
 
+publish-sdkman:
+   stage: deploy
+   only:
+      - master
+   script:
+      - 'cd taxi-cli '
+      - 'mvn $MAVEN_CLI_OPTS -e io.sdkman:sdkman-maven-plugin:2.0.0:release -Dsdkman.consumer.key=${SDKMAN_CONSUMER_KEY} -Dsdkman.consumer.token=${SDKMAN_CONSUMER_TOKEN}'
+
 publish-plugin:
    stage: deploy-plugin
    script:
