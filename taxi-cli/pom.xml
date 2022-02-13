@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <parent>
       <artifactId>parent</artifactId>
       <groupId>org.taxilang</groupId>
@@ -288,7 +289,9 @@
                   <configuration>
                      <candidate>taxi</candidate>
                      <version>${project.version}</version>
-                     <url>https://repo.vyne.co/release/org/taxilang/taxi-cli/${project.version}/taxi-cli-${project.version}.zip</url>
+                     <url>
+                        https://repo.vyne.co/release/org/taxilang/taxi-cli/${project.version}/taxi-cli-${project.version}.zip
+                     </url>
                   </configuration>
                </execution>
             </executions>
