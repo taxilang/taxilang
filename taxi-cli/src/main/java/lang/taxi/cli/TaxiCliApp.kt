@@ -18,7 +18,6 @@ import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation.Bean
 import java.nio.file.Paths
-import java.util.*
 
 @SpringBootApplication()
 class TaxiCli {
@@ -96,7 +95,7 @@ class TaxiCli {
    }
 
    @Bean
-   fun environment(project: TaxiPackageProject?): TaxiEnvironment {
+   fun taxiEnvironment(project: TaxiPackageProject?): TaxiEnvironment {
       return CliTaxiEnvironment.forRoot(Paths.get(TaxiCli.bootOptions.projectHome), project)
    }
 
