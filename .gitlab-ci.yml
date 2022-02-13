@@ -142,6 +142,8 @@ publish-release:
       # Don't run tests on master, as already passed on develop
       # Use -DskipTests, but not -Dmaven.test.skip=true as we need to compile the tests (as other projects have test dependencies), but not run them.
       - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P release'
+      - 'cd taxi-cli '
+      - 'mvn $MAVEN_CLI_OPTS -e io.sdkman:sdkman-maven-plugin:2.0.0:release io.sdkman:sdkman-maven-plugin:2.0.0:default -Dsdkman.consumer.key=${SDKMAN_CONSUMER_KEY} -Dsdkman.consumer.token=${SDKMAN_CONSUMER_TOKEN}'
    only:
       - master
    artifacts:
