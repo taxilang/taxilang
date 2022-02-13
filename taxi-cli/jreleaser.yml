@@ -16,14 +16,15 @@ release:
       branch: master
       identifier: 3493030
       update: true
+      # Uploading files to gitlab is failing.
+      # Grab them from the s3 repo instead
+      files: false
 
 distributions:
    taxi-cli:
       java:
          mainClass: lang.taxi.cli.TaxiCli
       executable: taxi/bin/taxi
-      artifacts:
-         -  path: target/taxi.zip
 
 packagers:
    #
