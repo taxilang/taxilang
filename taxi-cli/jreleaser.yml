@@ -6,7 +6,8 @@ project:
       - Marty Pitt
       - Serhat Tuncay
       - The Vyne Team (https://vyne.co)
-   license: Apache-2
+   license: Apache-2.0
+   licenseUrl: https://gitlab.com/taxi-lang/taxi-lang/-/raw/master/LICENSE
 
 release:
    gitlab:
@@ -15,7 +16,7 @@ release:
       username: martypitt
       branch: master
       identifier: 3493030
-      update: true
+      overwrite: true
       # Uploading files to gitlab is failing.
       # Grab them from the s3 repo instead
       files: false
@@ -27,7 +28,8 @@ distributions:
    taxi:
       java:
          mainClass: lang.taxi.cli.TaxiCli
-      executable: taxi/bin/taxi
+      executable:
+         name: taxi/bin/taxi
       artifacts:
          - path: target/taxi.zip
 
@@ -48,20 +50,9 @@ packagers:
       # Defaults to `NEVER`.
       #
       active: ALWAYS
-
-      # Let the release continue if the packager fails.
-      # Defaults to `false`.
-      #
       continueOnError: false
-
-      # The name of the candidate registered in the Sdkman database.
-      # If unspecified, will use `${distribution.name}`.
-      #
       candidate: taxi
-
-      # Sdkman command to use.
-      # Valid values are [`MAJOR`, `MINOR`]
       command: MINOR
 
-      downloadUrl: https://repo.vyne.co/release/org/taxilang/taxi-cli/{{projectVersion}}/taxi.zip
+      downloadUrl: https://repo.vyne.co/release/org/taxilang/taxi-cli/{{projectVersion}}/{{artifactFile}}
 

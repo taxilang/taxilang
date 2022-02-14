@@ -285,25 +285,9 @@
             </executions>
          </plugin>
          <plugin>
-            <groupId>io.sdkman</groupId>
-            <artifactId>sdkman-maven-plugin</artifactId>
-            <version>2.0.0</version>
-            <executions>
-               <execution>
-                  <configuration>
-                     <candidate>taxi</candidate>
-                     <version>${project.version}</version>
-                     <url>
-                        https://repo.vyne.co/release/org/taxilang/taxi-cli/${project.version}/taxi-cli-${project.version}.zip
-                     </url>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
             <groupId>org.jreleaser</groupId>
             <artifactId>jreleaser-maven-plugin</artifactId>
-            <version>1.0.0-M1</version>
+            <version>1.0.0-M2</version>
             <configuration>
                <!-- SEE ALSO: jreleaser.yml, defined above -->
                <jreleaser>
