@@ -142,6 +142,7 @@ publish-release:
       # Don't run tests on master, as already passed on develop
       # Use -DskipTests, but not -Dmaven.test.skip=true as we need to compile the tests (as other projects have test dependencies), but not run them.
       - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P release'
+      # Use jreleaser to publish to sdkman, and others
       - 'cd taxi-cli'
       - 'mvn $MAVEN_CLI_OPTS jreleaser:full-release'
    only:
