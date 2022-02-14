@@ -82,3 +82,10 @@ local.properties
 node_modules
 
 .taxi/
+
+### jreleaser
+trace.log
+taxi-cli/trace.log
+out/
+taxi-cli/out/
+

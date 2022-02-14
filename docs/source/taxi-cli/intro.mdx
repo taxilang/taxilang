@@ -8,27 +8,14 @@ import { Link } from "gatsby"
 
 The `taxi` command line tool provides access to the compiler - which validates the syntax of taxi projects  - and allows plugins of generators to create models and services in different languages and frameworks.
 
-## Download
+## Install
 
-[ ![Download latest stable](https://img.shields.io/badge/dynamic/xml.svg?label=Stable&url=http%3A%2F%2Frepo.vyne.co%2Frelease%2Forg%2Ftaxilang%2Fparent%2Fmaven-metadata.xml&query=%2F%2Frelease&colorB=green&prefix=v&style=for-the-badge&logoColor=white) ](https://gitlab.com/taxi-lang/taxi-lang/-/jobs/artifacts/master/raw/taxi-cli/target/taxi.zip?job=publish-release)
+Taxi is distributed by [SDKMAN](https://sdkman.io/).  If you haven't installed this yet, follow the instructions at [SDKMAN's installation page](https://sdkman.io/install).
 
-[ ![Download development version](https://img.shields.io/badge/dynamic/xml.svg?label=Development&url=http%3A%2F%2Frepo.vyne.co%2Fsnapshot%2Forg%2Ftaxilang%2Fparent%2Fmaven-metadata.xml&query=%2F%2Fversion[last()]&colorB=green&prefix=v&style=for-the-badge&logoColor=white) ](https://gitlab.com/taxi-lang/taxi-lang/-/jobs/artifacts/develop/raw/taxi-cli/target/taxi.zip?job=publish-snapshot-jars)
+Then simply run:
 
-## Getting started
-
-Download one of the above versions, and extract the zip file.
-
-The zip contains the files needed to run taxi, along with some scripts to make launching easier.
-
-Once the file is downloaded and extracted, you need to add it to your path. It will look something like this:
-
-```bash
-/install-location/taxi/bin
 ```
-
-Once the install location has been added to your path, test everything is up and running by invoking:
-
-```bash
+sdk i taxi
 taxi
 ```
 

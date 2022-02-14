@@ -12,6 +12,10 @@
 
    <properties>
       <pf4j.version>2.4.0</pf4j.version>
+      <jreleaser.config.file>jreleaser.yml</jreleaser.config.file>
+      <jreleaser.git.root.search>true</jreleaser.git.root.search>
+      <app.main.class>lang.taxi.cli.TaxiCli</app.main.class>
+      <app.distribution.directory>${project.build.directory}/distributions/app</app.distribution.directory>
    </properties>
    <dependencies>
       <dependency>
@@ -250,7 +254,7 @@
                      <showConsoleWindow>true</showConsoleWindow>
                      <programs>
                         <program>
-                           <mainClass>lang.taxi.cli.TaxiCli</mainClass>
+                           <mainClass>${app.main.class}</mainClass>
                            <id>taxi</id>
                         </program>
                      </programs>
@@ -281,20 +285,14 @@
             </executions>
          </plugin>
          <plugin>
-            <groupId>io.sdkman</groupId>
-            <artifactId>sdkman-maven-plugin</artifactId>
-            <version>2.0.0</version>
-            <executions>
-               <execution>
-                  <configuration>
-                     <candidate>taxi</candidate>
-                     <version>${project.version}</version>
-                     <url>
-                        https://repo.vyne.co/release/org/taxilang/taxi-cli/${project.version}/taxi-cli-${project.version}.zip
-                     </url>
-                  </configuration>
-               </execution>
-            </executions>
+            <groupId>org.jreleaser</groupId>
+            <artifactId>jreleaser-maven-plugin</artifactId>
+            <version>1.0.0-M2</version>
+            <configuration>
+               <!-- SEE ALSO: jreleaser.yml, defined above -->
+               <jreleaser>
+               </jreleaser>
+            </configuration>
          </plugin>
       </plugins>
    </build>
