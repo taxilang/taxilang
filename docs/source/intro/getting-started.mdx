@@ -4,31 +4,22 @@ title: 'Getting started' description: Get up and running with Taxi
 
 import { Link } from 'gatsby';
 
-To get started you need to download and install Taxi. Download
-the [taxi.zip](https://gitlab.com/taxi-lang/taxi-lang/-/jobs/artifacts/master/raw/taxi-cli/target/taxi.zip?job=publish-release)
-file and extract it.
+Taxi is distributed by [SDKMAN](https://sdkman.io/).  If you haven't installed this yet, follow the instructions at [SDKMAN's installation page](https://sdkman.io/install).
 
-The zip contains the files needed to run taxi, along with some scripts to make launching easier.
+Then simply run:
 
-Once the file is downloaded and extracted, you need to add it to your path. It will look something like this:
-
-```text
-/install-location/taxi/bin
 ```
-
-Once the install location has been added to your path, test everything is up and running by invoking:
-
-```bash
+sdk i taxi
 taxi
 ```
 
-For more information about `taxi-cli`, including typical project setup, and available commands, head <Link to="/taxi-cli/intro/">here.</Link>
+For more information about `taxi`, including typical project setup, and available commands, head <Link to="/taxi-cli/intro/">here.</Link>
 You should see some the current version, along with some help text.
 
 
 ## Creating a taxi project from the command line
 
-`taxi-cli` has a helpful tool for creating a new project in an empty directory - `taxi init`.
+`taxi` has a helpful tool for creating a new project in an empty directory - `taxi init`.
 
 ```bash
 mkdir hello-world

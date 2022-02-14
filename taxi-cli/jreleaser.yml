@@ -1,0 +1,58 @@
+project:
+   description: Taxi Cli
+   longDescription: Taxi is a language for data.  Build enterprise taxonomies, tag data & services, or enrich existing schemas.
+   website: https://taxilang.org
+   authors:
+      - Marty Pitt
+      - Serhat Tuncay
+      - The Vyne Team (https://vyne.co)
+   license: Apache-2.0
+   licenseUrl: https://gitlab.com/taxi-lang/taxi-lang/-/raw/master/LICENSE
+
+release:
+   gitlab:
+      owner: taxi-lang
+      name: taxi-lang
+      username: martypitt
+      branch: master
+      identifier: 3493030
+      overwrite: true
+      # Uploading files to gitlab is failing.
+      # Grab them from the s3 repo instead
+      files: false
+      artifacts: false
+      uploadLinks:
+         s3: taxi
+
+distributions:
+   taxi:
+      java:
+         mainClass: lang.taxi.cli.TaxiCli
+      executable:
+         name: taxi/bin/taxi
+      artifacts:
+         - path: target/taxi.zip
+
+upload:
+   s3:
+      taxi:
+         active: ALWAYS
+         region: eu-west-1
+         bucket: repo.vyne.co
+         path: release/org/taxilang/taxi-cli/{{projectVersion}}/{{artifactFile}}
+         downloadUrl: https://repo.vyne.co/release/org/taxilang/taxi-cli/{{projectVersion}}/{{artifactFile}}
+
+packagers:
+   #
+   sdkman:
+      # Enables or disables Sdkman.
+      # Valid values are [`NEVER`, `ALWAYS`, `RELEASE`, `SNAPSHOT`].
+      # Defaults to `NEVER`.
+      #
+      active: ALWAYS
+      continueOnError: false
+      candidate: taxi
+      command: MINOR
+
+      downloadUrl: https://repo.vyne.co/release/org/taxilang/taxi-cli/{{projectVersion}}/{{artifactFile}}
+
