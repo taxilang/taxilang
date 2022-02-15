@@ -144,7 +144,7 @@ publish-release:
       - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P release'
       # Use jreleaser to publish to sdkman, and others
       - 'cd taxi-cli'
-      - 'mvn $MAVEN_CLI_OPTS jreleaser:full-release'
+      - 'mvn jreleaser:full-release'
    only:
       - master
    artifacts:
