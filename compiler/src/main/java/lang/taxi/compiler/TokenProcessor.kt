@@ -236,14 +236,12 @@ class TokenProcessor(
                   && memberDeclaration.fieldDeclaration() != null
             }
             ?.mapNotNull { memberDeclaration ->
-               val fieldDeclaration = memberDeclaration.fieldDeclaration()
-               if (fieldDeclaration.simpleFieldDeclaration()
-                     ?.typeType() != null && fieldDeclaration.simpleFieldDeclaration().typeType().aliasedType() != null
-               ) {
-                  // This is an inline type alias
-                  lookupTypeByName(namespace, memberDeclaration.fieldDeclaration().simpleFieldDeclaration().typeType())
-               } else {
-                  null
+               val fieldTypeDeclaration = memberDeclaration.fieldDeclaration().simpleFieldDeclaration()?.typeType()
+               when {
+                  fieldTypeDeclaration == null -> null
+                  fieldTypeDeclaration.aliasedType() != null -> lookupTypeByName(namespace, memberDeclaration.fieldDeclaration().simpleFieldDeclaration().typeType())
+                  fieldTypeDeclaration.inlineInheritedType() != null -> lookupTypeByName(namespace, memberDeclaration.fieldDeclaration().simpleFieldDeclaration().typeType())
+                  else -> null
                }
             } ?: emptyList()
          typeAliasNames.map { QualifiedName.from(it) }

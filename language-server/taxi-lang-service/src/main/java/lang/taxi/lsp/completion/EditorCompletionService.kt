@@ -1,40 +1,48 @@
 package lang.taxi.lsp.completion
 
-import lang.taxi.Compiler
 import lang.taxi.TaxiParser
 import lang.taxi.lsp.CompilationResult
-import lang.taxi.types.QualifiedName
 import lang.taxi.types.SourceNames
-import lang.taxi.types.Type
 import org.antlr.v4.runtime.ParserRuleContext
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import java.net.URI
 import java.util.concurrent.CompletableFuture
 
-class CompletionService(private val typeProvider: TypeProvider) {
-   fun computeCompletions(
+/**
+ * A completion service which aims to give hints when editing models and types.
+ * Not focussed on querying
+ */
+class EditorCompletionService(private val typeProvider: TypeProvider) : CompletionProvider, CompletionService {
+   override fun computeCompletions(
       compilationResult: CompilationResult,
       params: CompletionParams
    ): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
-      val normalizedUriPath = params.textDocument.normalizedUriPath()
-      val importDecorator = ImportCompletionDecorator(compilationResult.compiler, normalizedUriPath)
+      val (importDecorator, context) = CompletionService.buildCompletionParams(params, compilationResult)
 
-      val zeroBasedLineIndex = params.position.line
-      val char = params.position.character
-      // contextAt() is the most specific.  If we match an exact token, it'll be returned.
-      val context = compilationResult.compiler.contextAt(zeroBasedLineIndex, char, normalizedUriPath)
-         ?:
-         // getNearestToken() returns the token if we're not on an exact match location, but could find a nearby one.
-         compilationResult.compiler.getNearestToken(
-            zeroBasedLineIndex,
-            char,
-            normalizedUriPath
-         ) as? ParserRuleContext
-         ?: return bestGuessCompletionsWithoutContext(compilationResult, params, importDecorator)
+      val completionItems = getCompletionsForContext(
+         compilationResult,
+         params,
+         importDecorator,
+         context
+      )
+      return completionItems.thenApply {
+         Either.forLeft(it.toMutableList())
+      }
+   }
 
-      val completionItems = getCompletionsForContext(context, importDecorator)
-      return completions(completionItems)
+   override fun getCompletionsForContext(
+      compilationResult: CompilationResult,
+      params: CompletionParams,
+      importDecorator: ImportCompletionDecorator,
+      contextAtCursor: ParserRuleContext?
+   ): CompletableFuture<List<CompletionItem>> {
+      if (contextAtCursor == null) {
+         return bestGuessCompletionsWithoutContext(compilationResult, params, importDecorator)
+      }
+
+      val completionItems = getCompletionsForContext(contextAtCursor, importDecorator)
+      return completed(completionItems)
    }
 
    private fun getCompletionsForContext(
@@ -93,15 +101,15 @@ class CompletionService(private val typeProvider: TypeProvider) {
       compilationResult: CompilationResult,
       params: CompletionParams,
       importDecorator: ImportCompletionDecorator
-   ): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
+   ): CompletableFuture<List<CompletionItem>> {
       val lookupResult = compilationResult.compiler.getNearestToken(
          params.position.line,
          params.position.character,
          params.textDocument.normalizedUriPath()
       )
       return when {
-         isIncompleteFieldDefinition(lookupResult) -> completions(typeProvider.getTypes(listOf(importDecorator)))
-         else -> completions(TopLevelCompletions.topLevelCompletionItems)
+         isIncompleteFieldDefinition(lookupResult) -> completed(typeProvider.getTypes(listOf(importDecorator)))
+         else -> completed(TopLevelCompletions.topLevelCompletionItems)
       }
    }
 
@@ -168,32 +176,7 @@ class CompletionService(private val typeProvider: TypeProvider) {
    }
 }
 
-private class ImportCompletionDecorator(compiler: Compiler, sourceUri: String) : CompletionDecorator {
-   val typesDeclaredInFile = compiler.typeNamesForSource(sourceUri)
-   val importsDeclaredInFile = compiler.importedTypesInSource(sourceUri)
-
-   override fun decorate(typeName: QualifiedName, type: Type?, completionItem: CompletionItem): CompletionItem {
-      // TODO : Insert after other imports
-      val insertPosition = Range(
-         Position(0, 0),
-         Position(0, 0)
-      )
-      if (completionItem.additionalTextEdits == null) {
-         completionItem.additionalTextEdits = mutableListOf()
-      }
-      if (!typesDeclaredInFile.contains(typeName) && !importsDeclaredInFile.contains(typeName)) {
-         completionItem.additionalTextEdits.add(
-            TextEdit(
-               insertPosition,
-               "import $typeName\n"
-            )
-         )
-      }
-      return completionItem
-   }
-
-}
-
+fun completed(list: List<CompletionItem> = emptyList()) = CompletableFuture.completedFuture(list)
 fun completions(list: List<CompletionItem> = emptyList()): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
    return CompletableFuture.completedFuture(Either.forLeft(list.toMutableList()))
 }

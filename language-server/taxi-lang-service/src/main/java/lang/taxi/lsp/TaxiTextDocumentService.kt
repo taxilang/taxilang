@@ -3,6 +3,7 @@ package lang.taxi.lsp
 import lang.taxi.*
 import lang.taxi.lsp.actions.CodeActionService
 import lang.taxi.lsp.completion.CompletionService
+import lang.taxi.lsp.completion.EditorCompletionService
 import lang.taxi.lsp.formatter.FormatterService
 import lang.taxi.lsp.gotoDefinition.GotoDefinitionService
 import lang.taxi.lsp.hover.HoverService
@@ -54,8 +55,23 @@ data class CompilationResult(
  */
 data class CompilationTrigger(val changedPath: URI?)
 
-class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) : TextDocumentService,
+/**
+ * A set of all the services required by the Taxi language service.
+ * Where possible, reasonable defaults are provided.
+ */
+data class LspServicesConfig(
+   val compilerService: TaxiCompilerService,
+   val completionService: CompletionService = EditorCompletionService(compilerService.typeProvider),
+   val formattingService: FormatterService = FormatterService(),
+   val gotoDefinitionService: GotoDefinitionService = GotoDefinitionService(compilerService.typeProvider),
+   val hoverService: HoverService = HoverService(),
+   val codeActionService: CodeActionService = CodeActionService(),
+   val lintingService: LintingService = LintingService()
+)
+
+class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService,
    LanguageClientAware {
+   constructor(compilerService: TaxiCompilerService) : this(LspServicesConfig(compilerService))
 
    val lastCompilationResult: CompilationResult
       get() {
@@ -65,15 +81,13 @@ class TaxiTextDocumentService(private val compilerService: TaxiCompilerService) 
    private lateinit var initializeParams: InitializeParams
    private val tokenCache: CompilerTokenCache = CompilerTokenCache()
 
-   // TODO : We can probably use the unparsedTypes from the tokens for this, rather than the
-   // types themselves, as it'll give better results sooner
-
-   private val completionService = CompletionService(compilerService.typeProvider)
-   private val formattingService = FormatterService()
-   private val gotoDefinitionService = GotoDefinitionService(compilerService.typeProvider)
-   private val hoverService = HoverService()
-   private val codeActionService = CodeActionService()
-   private val lintingService = LintingService()
+   private val compilerService = services.compilerService
+   private val completionService = services.completionService
+   private val formattingService = services.formattingService
+   private val gotoDefinitionService = services.gotoDefinitionService
+   private val hoverService = services.hoverService
+   private val codeActionService = services.codeActionService
+   private val lintingService = services.lintingService
 
    private lateinit var client: LanguageClient
    private var rootUri: String? = null
