@@ -22,6 +22,17 @@ enum class QueryMode(val directive: String) {
    FIND_ONE("findOne"),
    FIND_ALL("findAll"),
    STREAM("stream");
+
+   companion object {
+      fun forToken(token:String): QueryMode {
+         // Legacy support - findOne and findAll are deprcated in favour of find
+         return if (token == "find") {
+            FIND_ALL
+         } else {
+            values().first { it.directive == token }
+         }
+      }
+   }
 }
 
 typealias TaxiQLQueryString = String

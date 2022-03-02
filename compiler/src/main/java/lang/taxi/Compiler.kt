@@ -396,7 +396,28 @@ class Compiler(
       }
       val tokenStartIndices = row.keys as SortedSet
       val nearestStartIndex = tokenStartIndices.takeWhile { startIndex -> startIndex <= char }.lastOrNull()
-      return nearestStartIndex?.let { index -> row.get(index) }
+      val nearestToken = nearestStartIndex?.let { index -> row.get(index) }
+         ?.let { token -> searchWithinTokenChildren(token, zeroBasedLineIndex, char) }
+      return nearestToken
+   }
+
+   private fun searchWithinTokenChildren(token: ParserRuleContext, zeroBasedLineIndex: Int, char: Int):ParserRuleContext {
+      val tokens = generateSequence(token.children) { token ->
+         val next = token
+            .filterIsInstance<ParserRuleContext>()
+            .flatMap { it.children ?: emptyList() }
+            .filterIsInstance<ParserRuleContext>()
+            // Line indexes are 1 based when coming from the compiler
+            .filter { (it.start.line - 1) <= zeroBasedLineIndex && it.start.charPositionInLine <= char }
+         if (next.isNotEmpty()) {
+            next
+         } else {
+            null
+         }
+      }.toList().flatten()
+      return tokens
+         .filterIsInstance<ParserRuleContext>()
+         .lastOrNull() ?: token
    }
 
 
@@ -541,6 +562,7 @@ fun RuleContext.importsInFile(): List<QualifiedName> {
    return imports
 }
 
+tailrec fun RuleContext.searchUpForRule(ruleType: Class<out RuleContext>): RuleContext? = searchUpForRule(listOf(ruleType))
 tailrec fun RuleContext.searchUpForRule(ruleTypes: List<Class<out RuleContext>>): RuleContext? {
    fun matches(instance: RuleContext): Boolean {
       return ruleTypes.any { ruleType -> instance::class.java == ruleType }
