@@ -66,7 +66,7 @@ class TypeProvider(
       val completionItem = CompletionItem(typeName).apply {
          kind = CompletionItemKind.Class
          insertText = typeName
-         detail = listOfNotNull(name, doc).joinToString("\n")
+         detail = listOfNotNull(typeName, doc).joinToString("\n")
       }
 
       return decorators.fold(completionItem) { itemToDecorate, decorator ->
