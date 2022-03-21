@@ -50,6 +50,67 @@ class TaxiGeneratorTest {
    }
 
    @Test
+   fun `when protobuf includes type hints then correct types are used`() {
+      val protoSchema = RepoBuilder()
+         .add(
+            "org/taxilang/dataType.proto", """
+            import "google/protobuf/descriptor.proto";
+
+            package taxi;
+
+            extend google.protobuf.FieldOptions {
+              optional string dataType = 50002;
+            }
+         """.trimIndent()
+         )
+         .add(
+            "coffee.proto",
+            """
+          |import "org/taxilang/dataType.proto";
+          |
+          |message CafeDrink {
+          |  optional string customer_name = 1 [(taxi.dataType)="foo.CustomerName"];
+          |  optional int32 customer_id = 2 [(taxi.dataType)="foo.CustomerId"];
+          |
+          |  enum Foam {
+          |    NOT_FOAMY_AND_QUITE_BORING = 1;
+          |    ZOMG_SO_FOAMY = 3;
+          |  }
+          |}
+          |
+          """.trimMargin()
+         )
+         .schema()
+
+      val generated = TaxiGenerator()
+         .generate(protobufSchema = protoSchema)
+      val existingSchema = """namespace foo
+            |type CustomerName inherits String
+            |type CustomerId inherits Int
+            |
+         """.trimMargin()
+      generated
+         .with(existingSchema)
+         .shouldCompileTheSameAs(
+            listOf(
+               existingSchema,
+               """@lang.taxi.formats.ProtobufMessage(packageName = "" , messageName = "CafeDrink")
+model CafeDrink {
+   @lang.taxi.formats.ProtobufField(tag = 1 , protoType = "string") customer_name : foo.CustomerName?
+   @lang.taxi.formats.ProtobufField(tag = 2 , protoType = "int32") customer_id : foo.CustomerId?
+}
+""",
+               """namespace CafeDrink {
+   @lang.taxi.formats.ProtobufMessage enum Foam {
+      NOT_FOAMY_AND_QUITE_BORING(1),
+      ZOMG_SO_FOAMY(3)
+   }
+}"""
+            )
+         )
+   }
+
+   @Test
    fun `generates with nested enum type`() {
       val coffeeSchema = RepoBuilder()
          .add(
@@ -99,4 +160,8 @@ fun GeneratedTaxiCode.shouldCompileTheSameAs(expected: String): TaxiDocument {
 
 fun GeneratedTaxiCode.shouldCompileTheSameAs(expected: List<String>): TaxiDocument {
    return TestHelpers.expectToCompileTheSame(this.taxi, expected)
+}
+
+fun GeneratedTaxiCode.with(additionalSchema: String): GeneratedTaxiCode {
+   return this.copy(this.taxi + additionalSchema, this.messages)
 }

@@ -5,19 +5,8 @@ import com.squareup.wire.schema.MessageType
 import com.squareup.wire.schema.ProtoType
 import com.squareup.wire.schema.Schema
 import lang.taxi.generators.Logger
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.ArrayType
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.EnumDefinition
-import lang.taxi.types.EnumValue
-import lang.taxi.types.Field
-import lang.taxi.types.ObjectType
-import lang.taxi.types.ObjectTypeDefinition
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.Type
-import lang.taxi.types.TypeKind
-import lang.taxi.types.toQualifiedName
 
 class ProtobufTypeMapper(
    private val protoSchema: Schema,
@@ -129,14 +118,11 @@ class ProtobufTypeMapper(
 
    private fun createModel(type: MessageType): Type {
       val fields = type.fields.map { protoField ->
-         val fieldTypeOrCollectionMemberType = protoField.type?.let { getOrCreateType(it) } ?: run {
-            logger.error("Field ${protoField.name} on $type did not expose a type.  This suggests a problem with loading the schema")
-            PrimitiveType.ANY
-         }
+
+         val fieldTypeOrCollectionMemberType = getFieldTypeOrCollectionMemberType(protoField, type)
          val fieldType = if (protoField.isRepeated) {
             ArrayType.of(fieldTypeOrCollectionMemberType)
          } else fieldTypeOrCollectionMemberType
-         val protoTag = protoField.tag
          Field(
             protoField.name,
             fieldType,
@@ -158,14 +144,46 @@ class ProtobufTypeMapper(
          ObjectTypeDefinition(
             fields.toSet(),
             annotations = setOf(
-               ProtobufMessageAnnotation.annotation(type.type.enclosingTypeOrPackage,
-               type.type.simpleName)
+               ProtobufMessageAnnotation.annotation(
+                  type.type.enclosingTypeOrPackage,
+                  type.type.simpleName
+               )
             ),
             typeKind = TypeKind.Model,
             typeDoc = type.documentation,
             compilationUnit = CompilationUnit.unspecified()
          )
       )
+   }
+
+   private fun getFieldTypeOrCollectionMemberType(
+      protoField: com.squareup.wire.schema.Field,
+      type: MessageType
+   ): Type {
+      // Look for the type declared in our proto option, if available.
+      // eg:
+      // message CafeDrink {
+      //   optional string customer_name = 1 [(taxi.dataType)="foo.CustomerName"];
+      val declaredTypeName = protoField.options.map
+         .filterKeys { it.member == "taxi.dataType" }
+         .values
+         .filterNotNull()
+         .firstOrNull() as? String
+      return when {
+         declaredTypeName != null -> {
+            // If a declared type was provided, we assume
+            // that it exists in another schema, so just import it
+            // here.
+            _generatedTypes.getOrPut(QualifiedName.from(declaredTypeName)) {
+               UnresolvedImportedType(declaredTypeName)
+            }
+         }
+         protoField.type != null -> getOrCreateType(protoField.type!!)
+         else -> {
+            logger.error("Field ${protoField.name} on $type did not expose a type.  This suggests a problem with loading the schema")
+            PrimitiveType.ANY
+         }
+      }
    }
 
 }
