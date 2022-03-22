@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture
 import kotlin.system.exitProcess
 
 
+
 class TaxiLanguageServer(
     private val compilerConfig: CompilerConfig = CompilerConfig(),
     private val compilerService: TaxiCompilerService = TaxiCompilerService(compilerConfig),

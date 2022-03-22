@@ -986,6 +986,17 @@ namespace foo {
    }
 
    @Test
+   fun `types declared inline are reported as declared type names`() {
+      val compiler = lang.taxi.Compiler("""model Person {
+         | personId : PersonId inherits String
+         |}
+      """.trimMargin())
+      val declaredTypeNames  = compiler.declaredTypeNames()
+      declaredTypeNames.should.have.size(2)
+      declaredTypeNames.map { it.typeName }.should.contain.elements("Person", "PersonId")
+   }
+
+   @Test
    fun `a type that inherits normally does not trigger an inheritance loop error`() {
       val (messages,_) = Compiler("""
       type Name inherits String

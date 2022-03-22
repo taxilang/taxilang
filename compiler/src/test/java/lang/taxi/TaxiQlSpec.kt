@@ -134,7 +134,7 @@ object TaxiQlSpec : Spek({
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
          query.facts.should.have.size(1)
-         val (name, fact) = query.facts.entries.first()
+         val (name, fact) = query.facts.first()
          name.should.equal("email")
          fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
          fact.value.should.equal("jimmy@demo.com")
@@ -144,6 +144,21 @@ object TaxiQlSpec : Spek({
          discoveryType.type.fullyQualifiedName.should.equal("foo.Trade")
          discoveryType.startingFacts.should.have.size(1)
          discoveryType.startingFacts.should.equal(query.facts)
+      }
+
+      it("is possible to express facts without specifying a variable name") {
+         val (schema, query) = schema.compiledWithQuery(
+            """
+            given { CustomerEmailAddress = "jimmy@demo.com" }
+            find { Trade }
+         """.trimIndent()
+         )
+         query.facts.should.have.size(1)
+         val (name, fact) = query.facts.first()
+         name.should.be.`null`
+         fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
+         fact.value.should.equal("jimmy@demo.com")
+
       }
 
       it("should compile an unnamed query") {
@@ -187,7 +202,7 @@ object TaxiQlSpec : Spek({
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
          query.facts.should.have.size(1)
-         val (name, fact) = query.facts.entries.first()
+         val (name, fact) = query.facts.first()
          name.should.equal("email")
          fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
          fact.value.should.equal("jimmy@demo.com")
@@ -210,7 +225,7 @@ object TaxiQlSpec : Spek({
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
          query.facts.should.have.size(1)
-         val (name, fact) = query.facts.entries.first()
+         val (name, fact) = query.facts.first()
          name.should.equal("email")
          fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
          fact.value.should.equal("jimmy@demo.com")

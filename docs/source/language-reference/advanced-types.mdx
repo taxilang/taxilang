@@ -3,15 +3,26 @@ title: Advanced type mapping
 description: Techniques for mapping messy, real-world data
 ---
 
+import {Discourage, Hint} from "../components/hint";
+
 These features describe techniques used when mapping data to semantic values when things don't neatly line up, or when enriching another representation of a model.
 
-These are often useful when mapping data provided by a system outside of your control, but can be used anywhere.
-Additionally, these techniques can be applied to incrementally expose exisitng data to the semantics of your type system.
+These are often useful when mapping data provided by a system outside your control, but can be used anywhere.
+Additionally, these techniques can be applied to incrementally expose existing data to the semantics of your type system.
 
 ## Field accessors
-Field accessors describe a way of reading data into a field from somehwere within a document.
+Field accessors describe a way of reading data into a field from somewhere within a document.
 
 By default, taxi assumes that the content that is being described read matches the structure of the content.  However, for some content (such as CSV), or for external content, this isn't always possible.
+
+<Discourage>
+
+   Accessors are being replaced by [expressions](#expressions).
+
+   They still provide access for `jsonPath()`, `column()` and `xpath()`,
+   but are deprecated for all other usages.
+
+</Discourage>
 
 ### Describing CSV data - `column()`
 CSV data can be described in taxi using `by column()` syntax, passing either the header name or the column index.
@@ -32,7 +43,7 @@ The value passed can either be:
 
 ### Describing Json data - `jsonPath()`
 By default, json data can be parsed by Taxi without any special markup.
-However, if you wish to expose a value from elsewhere in a doucment, you can use a jsonPath expression:
+However, if you wish to expose a value from elsewhere in a document, you can use a jsonPath expression:
 
 ```
 model Person {
@@ -94,7 +105,7 @@ This line: `oscars: Oscar by jsonPath("oscars[0]")` would flatten out the oscars
 
 ### Describing Xml data - `xpath()`
 By default, xml data can be described by Taxi and parsed by parsers without any special markup.
-However, if you wish to expose a value from elsewhere in a doucment, you can use an xpath expression:
+However, if you wish to expose a value from elsewhere in a document, you can use an xpath expression:
 
 ```
 model Person {
@@ -105,7 +116,7 @@ model Person {
 Parsers will read the `firstName` attribute from the specified xpath.
 
 
-## Conditional fields on types
+## Conditional logic - when blocks
 Conditional fields let you expose semantic data based on values from other fields within the model.
 This is useful when parsing semi-structured data into a semantic model.
 
@@ -122,7 +133,6 @@ model Person {
 }
 ```
 
-### `when` blocks
 When blocks are very flexible, and analogous to a series of `if...then...else` statements .  They support matching either on a specific value:
 
 ```
@@ -150,14 +160,16 @@ model Person {
 
 ```
 
-The conditions in a when block may make reference to other fields, and peform the following comparisons:
+The conditions in a when block may make reference to other fields, and perform the following comparisons:
 
 | Symbol | Meaning      |
 |--------|--------------|
-| `=`    | Equal to     |
+| `==`    | Equal to     |
 | `!=`   | Not equal to |
 | `>`    | Greater than |
+| `>=`    | Greater than or equal to |
 | `<`    | Less than    |
+| `<=`    | Less than or equal to   |
 | `&&`     | And          |
 | \|\| | Or           |
 
@@ -185,13 +197,59 @@ model PurchaseOrder {
 }
 ```
 
-## Calculated fields
-Fields may be defined as the output of a calcualted expression from other fields.
-Calculations are defined after the type, in the form of `... by (A operator B)`
+## Expressions
+
+<Hint>
+
+   As with everything in Taxi, evaluation of expressions is left to a parser / runtime,
+   like [Vyne](https://vyne.co).
+
+   This document outlines the expected spec of expressions, but Taxi itself does not ship
+   with an evaluation engine.
+</Hint>
+
+Expressions can be declared either on a type directly, or on a field.  They can be simple
+statements, or include [function calls](#functions).
+
+As statements, expression can use the following operators:
+
+| Symbol | Meaning  |
+|--------|----------|
+| +      | Add      |
+| -      | Subtract |
+| *      | Multiply |
+| /      | Divide   |
+
+
+Expressions can also perform comparisons, using the same operators described in [conditional logic](#conditional-logic---when-blocks).
+
+
+### Expression types
+
+```
+type Height inherits Int
+type Width inherits Int
+
+// A simple expression, multiplying two fields
+type Area inherits Int by Width * Height
+
+// Expressions may mix references to other types, and constants
+type WhackyArea inherits Int by (Width * Height) / 2
+
+// Expressions can call functions
+type FullName inherits String by concat(FirstName, ' ', LastName)
+```
+
+### Expression on fields
+
+Fields in a model may declare expressions inline.
+
+In addition to standard syntax used in expression types, fields may also
+make reference to other fields, using `this.fieldName` syntax
 
 eg:
 
-```
+```taxi
 model Purchase {
     price : PerItemPrice
     quantity : Quantity
@@ -201,14 +259,6 @@ model Purchase {
 }
 ```
 
-The following operations are supported:
-
-| Symbol | Meaning      |
-|--------|--------------|
-| +      | Add     |
-| -      | Subtract |
-| *      | Multiply |
-| /      | Divide    |
 
 
 ### Special calculation operations
@@ -217,10 +267,15 @@ Calcuation operations aren't limited to just numeric types.  The following speci
 
 | Operation       | Result type | Effect        | Example                                                      |
 |-----------------|-------------|---------------|--------------------------------------------------------------|
-| String + String | String      | Concatenation | `fullName : FullName by (this.firstName + this.lastName)`    |
+| `String + String` (Deprecated) | `String`      | Concatenation | `fullName : FullName by (this.firstName + this.lastName)`    |
 | Date + Time     | Instant     | Combines      | `timestamp : Instant by (this.recordDate + this.recordTime)` |
 |                 |             |               |                                                              |
 
+<Discourage>
+
+   Concatenating strings using the `+` operator is deprecated. Consider using the `concat` function instead.
+
+</Discourage>
 Note: Taxi does not perform the evaluations.  This is left to parsers to handle.
 
 As such, other parsers may provide additional operations.  The above outlines the capabilities supported by Vyne.
@@ -243,7 +298,7 @@ It's possible to extend a type by adding either annotations, or type refinements
 
 Type extensions can be defined either in the same file, or \(more typically\), in a different file from the original defining type.
 
-```text
+```taxi
 // As defined in one file.
 type Person {
     personId : Int
@@ -279,7 +334,7 @@ Type extensions allow this, by adding taxidoc to the types
 
 Not all languages and spec tools are created equal - and some don't have great support for
 semantic types.  Extensions allow for the narrowing \(but not redefinition\) of the type,
-through specifiying more narrow types.
+through specifying more narrow types.
 
 The compiler will prevent type extensions from introducing incompatible type changes.
 
@@ -292,3 +347,49 @@ persisting an entity into a database.
 
 Type extensions allow providing tooling specific metadata that's only useful to the
 consumer - not the producer.
+
+## Functions
+
+Taxi allows for the declaration of functions, which can be used within a type spec.
+
+As with everything in Taxi, evaluation of functions is left to a parser / runtime,
+like [Vyne](https://vyne.co).
+
+As Taxi doesn't support evaluation, functions are declared simply by declaring their
+interface.  There is no ability to express the implementation of a function within Taxi.
+
+### Declaring functions
+
+Functions are declared with a name, a list of inputs, and a return type:
+
+```taxi
+declare function uppercase(String):String
+```
+
+These can then be used within expressions:
+
+```taxi
+model Person {
+   title : Title by uppercase(Salutation)
+}
+```
+
+### Vararg parameters
+A function may declare it's final parameter as `vararg`, which means that
+multiple arguments may be provided.
+
+Vararg is only permitted in the final argument.
+
+```taxi
+declare function concat(String...):String
+```
+
+### Generics
+A function may declare a generic type signature.
+The Taxi compiler will infer types, and ensure that passed parameters
+in usages adhere to contracts.
+
+```
+declare function <T,A> reduce(T[], (T,A) -> A): A
+```
+
