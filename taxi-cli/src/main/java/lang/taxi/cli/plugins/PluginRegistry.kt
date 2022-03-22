@@ -14,11 +14,11 @@ import java.io.File
 import kotlin.reflect.KClass
 
 /**
- * This is the Shipman registry of plugins.
+ * This is the Taxi registry of plugins.
  * Responsible for importing and providing the requested plugins at launch time.
  *
  * Note - not to be confused with a PluginManager, which is an external tool, and used
- * as part of Shipman's plugin infrastructure.
+ * as part of Taxi's plugin infrastructure.
  *
  * You should interact with this class, not the plugin manager.
  *

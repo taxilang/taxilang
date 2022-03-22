@@ -155,6 +155,26 @@ namespace foo {
    }
 
    @Test
+   fun `given operation takes parameter type then generated input model is declared as a parameter`() {
+      @ParameterType
+      data class InputParam(
+         val name: PersonName
+      )
+
+      @Service("TestService")
+      class TestService {
+         @Operation
+         fun findEmail(input: InputParam): FirstName {
+            TODO("Not a real service")
+         }
+      }
+
+      val taxiDef = TaxiGenerator(typeMapper).forClasses(TestService::class.java).generateAsStrings()
+      // when the model for InputParam was defined, it should be annotated as a parameter model
+      taxiDef[1].should.contain("parameter model InputParam")
+   }
+
+   @Test
    fun given_typeUsesTypeFromAnotherLibrary_then_itIsImported() {
       @Service("TestService")
       @Namespace("taxi.example")
