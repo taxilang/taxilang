@@ -113,8 +113,8 @@ class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGener
 
 data class KotlinPluginConfig(
    val outputPath: String = "kotlin",
-   val kotlinVersion: String = "1.3.50",
-   val kotlinLanguageVersion: String = "1.3",
+   val kotlinVersion: String = "1.5.32",
+   val kotlinLanguageVersion: String = "1.5",
    val jvmTarget: String = "1.8",
    val maven: MavenGeneratorPluginConfig?,
    val guavaVersion: String = "28.2-jre",
