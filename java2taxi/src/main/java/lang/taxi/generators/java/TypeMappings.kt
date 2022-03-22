@@ -337,7 +337,13 @@ class DefaultTypeMapper(
       if (element.getAnnotation(DataType::class.java)?.closed == true) {
          modifiers.add(Modifier.CLOSED)
       }
-      return modifiers
+
+      val parentModifiers = if (element is Parameter) {
+         getTypeLevelModifiers(element.type)
+      } else {
+         emptyList()
+      }
+      return modifiers + parentModifiers
    }
 
    private fun getInheritedTypes(
