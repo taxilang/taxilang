@@ -6,6 +6,7 @@ import arrow.core.right
 import lang.taxi.compiler.SymbolKind
 import lang.taxi.functions.Function
 import lang.taxi.functions.stdlib.StdLib
+import lang.taxi.functions.stdlib.stdLibName
 import lang.taxi.services.ConsumedOperation
 import lang.taxi.services.ServiceDefinition
 import lang.taxi.stdlib.StdLibSchema
@@ -270,8 +271,8 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       }
 
       // Check to see if it's present in the stdlib
-      if (StdLibSchema.taxiDocument.containsImportable(StdLib.stdLibName(name).fullyQualifiedName)) {
-         return StdLib.stdLibName(name).fullyQualifiedName
+      if (StdLibSchema.taxiDocument.containsImportable(stdLibName(name).fullyQualifiedName)) {
+         return stdLibName(name).fullyQualifiedName
       }
 
       if (namespace.isEmpty()) {

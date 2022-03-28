@@ -1,6 +1,5 @@
 package lang.taxi.functions.stdlib
 
-import lang.taxi.functions.stdlib.StdLib.stdLibName
 import lang.taxi.types.QualifiedName
 
 /**
