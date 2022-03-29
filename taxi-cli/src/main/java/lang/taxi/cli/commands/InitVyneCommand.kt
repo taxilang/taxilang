@@ -7,6 +7,8 @@ import lang.taxi.cli.utils.log
 import lang.taxi.generators.TaxiEnvironment
 import org.beryx.textio.TextIO
 import org.springframework.stereotype.Component
+import java.net.URI
+import java.net.URL
 import java.nio.file.Files
 
 
@@ -29,13 +31,20 @@ class InitVyneCommand(private val prompt: TextIO) : ProjectlessShellCommand {
    )
    var force: Boolean = false
 
+   @Parameter(
+      names = ["-u", "--url"],
+      required = false,
+      description = "Specifies the url to download the config file from.  Defaults to start.vyne.co"
+   )
+   var url: String = "https://start.vyne.co"
 
    override fun execute(environment: TaxiEnvironment) {
       val dockerComposePath = environment.projectRoot.resolve("docker-compose.yml")
       if (Files.exists(dockerComposePath) && !force) {
          log().info("docker-compose.yml already exists, not recreating.  If you'd like to change the version used, use -f (or --force)")
       } else {
-         val dockerComposeSource = Resources.getResource("taxi-cli-files/docker-compose.yml")
+         log().info("Downloading docker-compose.yml from $url")
+         val dockerComposeSource = URI.create(url).toURL()
             .readText().let { dockerCompose ->
                if (vyneVersion != "latest") {
                   dockerCompose.replace(":latest", ":$vyneVersion")
