@@ -52,7 +52,7 @@
 
    <properties>
       <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
-      <kotlin.version>1.4.30</kotlin.version>
+      <kotlin.version>1.6.10</kotlin.version>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <arrow.version>0.10.4</arrow.version>
       <guava.version>28.2-jre</guava.version>
