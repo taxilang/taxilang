@@ -5,7 +5,7 @@ description: Types and Models are the foundation of describing data within Taxi
 
 import { Hint, Discourage } from '../components/hint'
 
-Types and Models form the core building blocks of data and API's.  These describe the contracts of data that float about
+Types and Models form the core building blocks of data and APIs.  These describe the contracts of data that float about
 in our ecosystems - published by services, exposed via processes, and sent from 3rd party suppliers.
 
 In Taxi, as part of building out an robust composable type system, we differentiate between xxxx
@@ -23,9 +23,9 @@ type Name inherits String
 type FirstName inherits Name
 ```
 
-### Using inheritence to describe specificitiy
-It's strongly recommended to [inherit](#inheritence) a type from another type - either one of Taxi's [built-in primitives](#built-in-types), or one of your own, to narrow the specificity of the type.
-This is discussed more in [inheritence](#inheritence).
+### Using inheritance to describe specificity
+It's strongly recommended to [inherit](#inheritance) a type from another type - either one of Taxi's [built-in primitives](#built-in-types), or one of your own, to narrow the specificity of the type.
+This is discussed more in [inheritance](#inheritance).
 
 ### Fields on types
 It is possible, (but discouraged) for types to contain fields:
@@ -55,7 +55,7 @@ Taxi encourages using lots of small, descriptive and narrowly focussed types as 
 
 This is one of the key features of Taxi, and allows tooling to make intelligent choices about the information our systems are exposing.
 
-For example, consider two pieces of information - a customers name, and their email address.  Both are represented as Strings when being sent between systems - but both are very differnet pieces of information.
+For example, consider two pieces of information - a customers name, and their email address.  Both are represented as Strings when being sent between systems - but both are very different pieces of information.
 Semantic typing aims to describe the information within a field, not just it's representation.
 
 ```
@@ -78,13 +78,13 @@ operation getCustomerName(EmailAddress):Name
 
 ```
 
-Through the use of inheritence, we can further refine these concepts, to add richer semantic descriptions about the information.  This allows
+Through the use of inheritance, we can further refine these concepts, to add richer semantic descriptions about the information.  This allows
 operations to add extra levels of specificity to their contracts, and for models to be descriptive about the data they are producing:
 
 ```
 
 type FirstName inherits Name
-type PersonalEmaillAddress inherits EmailAddress
+type PersonalEmailAddress inherits EmailAddress
 type WorkEmailAddress inherits EmailAddress
 
 // This operation can work against any type of `EmailAddress`:
@@ -104,17 +104,17 @@ Models describe the contract of data either produced or consumed by a system.  M
 type PersonId inherits Int
 type FirstName inherits String
 model Person {
-   id : PersonId // refernece to another custom type
+   id : PersonId // reference to another custom type
    firstName : FirstName
    lastName : String // You don't have to use microtypes if they don't add value
    friends : Person[] // Lists are supported
    spouse : Person? // '?' indicates nullable types
 }
 ```
-Models can use inheritence, but this is less common and generally less useful than with Types.
+Models can use inheritance, but this is less common and generally less useful than with Types.
 
 <Hint>
-    Models should be produced and owned by a single system, rather than shared widely across mutliple systems in an enterprise.
+    Models should be produced and owned by a single system, rather than shared widely across multiple systems in an enterprise.
 
     When models start getting shared too widely, it becomes difficult for them to change and evolve.
 
@@ -146,7 +146,7 @@ parameter model CreatePersonRequest {
 
 ### Types
 Use Types to describe a single specific piece of information.  Try to form agreement on the definition of Types across an organisation.
-Generally, Types should match the shared business terms used across an organsiation to describe the business.  Because types are small (only describing a single attribute),
+Generally, Types should match the shared business terms used across an organization to describe the business.  Because types are small (only describing a single attribute),
 and specific, it's generally easier to form consensus around the definition of a Type.
 
 Types are owned globally across an organisation, so there should be a curation process surrounding their definition.
@@ -317,11 +317,11 @@ model Person {
 }
 ```
 
-Note that Taxi does not enforce nullabillity constraints - that's left to the systems which interpret the data.
+Note that Taxi does not enforce nullability constraints - that's left to the systems which interpret the data.
 
-## Inheritence
+## Inheritance
 
-Taxi provides inheritence across both Types and Models.  It's recommended that inheritence is used heavily in Types to increase
+Taxi provides inheritance across both Types and Models.  It's recommended that inheritance is used heavily in Types to increase
 the specificity of a concept, and sparingly in Models.
 
 ```
@@ -334,7 +334,7 @@ type LastName inherits PersonName
 
 type CompanyName inherits Name
 ```
-As with most languages, inheritence is one-way -- ie., in the above example, all Names are Strings, but not all Strings are names.
+As with most languages, inheritance is one-way -- ie., in the above example, all Names are Strings, but not all Strings are names.
 
 Likewise, all FirstNames are Names, but not all Names are FirstNames.
 
@@ -462,12 +462,12 @@ type alias GivenName as FirstName
 ```
 This states that *anywhere* `FirstName` is used, `GivenName` may also be used.
 
-Unlike [Inheritence](#inheritence), aliases are bi-directional.  That is all `FirstName`s are `GivenName`s, and all `GivenName`s are `FirstName`s.
+Unlike [Inheritance](#inheritance), aliases are bi-directional.  That is all `FirstName`s are `GivenName`s, and all `GivenName`s are `FirstName`s.
 
-### Inheritence vs Type Aliases - Which to use?
-Type aliases were an early language feature in Taxi, and have since been replaced by inheritence, which has stricter rules and is more expressive.
+### Inheritance vs Type Aliases - Which to use?
+Type aliases were an early language feature in Taxi, and have since been replaced by inheritance, which has stricter rules and is more expressive.
 
-Generally speaking, we encouarge the use of Inheritence where a relationship is one-way.
+Generally speaking, we encouarge the use of Inheritance where a relationship is one-way.
 Type aliases are really only useful when mapping between two different taxonomies, which both expose the same concept with different terminology.
 
 ## Enums

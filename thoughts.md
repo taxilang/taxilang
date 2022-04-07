@@ -15,7 +15,7 @@ Eventually, the RAML step should be removed.
 Steal ideas from Kotlin & GraphQL for expressiveness
 
 ### Extensible
-API's are composable -- publishers define the contract, but consumers
+APIs are composable -- publishers define the contract, but consumers
 inject metadata around how they are used.
 
 Eg: Annotations for defining persistence, mappings, etc.
@@ -28,8 +28,8 @@ These are consumer extensions to the publishers contract.
 
 ## Method contracts
 
-In order to be able to programatically discover what purpose a 
-function provides, we need to be able to describe it's output programatically.
+In order to be able to programmatically discover what purpose a 
+function provides, we need to be able to describe it's output programmatically.
 
 I'm thinking something like:
 

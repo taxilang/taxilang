@@ -58,7 +58,7 @@ service ActorService {
 Names of operation parameters are optional.  This is to encourage developers to leverage a richer type system where possible:
 
 ```taxi
-// These two declarations are both valid, and desribe the same operation
+// These two declarations are both valid, and describe the same operation
 operation convertUnits(source:Weight, targetUnit:Unit):Weight
 operation convertUnits(Weight,Unit):Weight
 ```
@@ -110,7 +110,7 @@ This is an area of taxi that we expect to see significant development in, to imp
 </Hint>
 
 ## Query operations
-RESTful style API's are great for discovering resources that have fairly predictable resource paths - such as `/Author/jkrowling/Books`, returns all the books that `jkrowling` has authored.
+RESTful style APIs are great for discovering resources that have fairly predictable resource paths - such as `/Author/jkrowling/Books`, returns all the books that `jkrowling` has authored.
 
 However, once you get beyond simple resource lookup, and into more bespoke query-style operations, services tend to expose their own query APIs.
 Taxi supports this with a rich, extensible syntax for exposing query contracts.
@@ -135,7 +135,7 @@ This describes:
 ### Grammar names
 In the above example, we saw a query endpoint that understands a query language called `taxiQl`.
 
-From taxi's perspective, the name of the grammar being used is entirely arbitary.  The query server that is
+From taxi's perspective, the name of the grammar being used is entirely arbitrary.  The query server that is
 invoking endpoints must understand how to construct queries in the described language.
 
 The Vyne query server understands how to construct <Link to="../querying-with-taxiql">taxiQl</Link> queries, with support for additional grammars (such as `SQL`, and `GraphQL`) planned.

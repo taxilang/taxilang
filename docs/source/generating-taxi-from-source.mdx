@@ -56,6 +56,7 @@ namespace isic.uk {
 ```
 
 <Hint>
+
 If you're working in Kotlin, using `typealias` with the `@DataType` annotation is recommended over annotating fields directly, as it leads to more readable & maintainable code.
 </Hint>
 
@@ -208,7 +209,7 @@ service MoneyService {
 
 ### Taxi Generator customisation & extensions
 
-Taxi's generator can be customized, adding additional annotations or modfiying the tree structure before source is output.
+Taxi's generator can be customized, adding additional annotations or modifying the tree structure before source is output.
 
 The most common scenario here is to provide extensions to modify how services are generated.  However, you can inject an entirely separate `TypeMapper` and `ServiceMapper` for complete control over the generation process.  Take a look at [TaxiGenerator](https://gitlab.com/taxi-lang/taxi-lang/blob/master/java2taxi/src/main/java/lang/taxi/generators/java/TaxiGenerator.kt) to get started.
 

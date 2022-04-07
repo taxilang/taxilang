@@ -24,7 +24,7 @@ find { Person( FirstName = 'Jim' ) }
 // Find all the people named Jim
 find { Person[]( FirstName = 'Jim' ) }
 
-// Find a stream of person events from somehwer
+// Find a stream of person events from somewhere
 stream { PersonEvents }
 ```
 
@@ -59,7 +59,7 @@ eg:
 given { emailAddress : EmailAddress = 'jimmy@demo.com' }
 find { Customer }
 
-// The varaible name is optional
+// The variable name is optional
 given { EmailAddress = 'jimmy@demo.com' }
 ```
 
@@ -76,7 +76,8 @@ find { Person( FirstName = 'Jim' ) }
 This finds a `Person` model, with a `FirstName` value of Jim.
 
 <Hint>
-   **Important** Throughout taxi, we favour using Types, rather than field names, to describe attributes of data - it's
+
+   **Important:** Throughout taxi, we favour using Types, rather than field names, to describe attributes of data - it's
    the same here for querying.
 
    Referencing criteria using a type means that the criteria can be applied against a model regardless of the name of
