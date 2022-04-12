@@ -20,7 +20,7 @@ version: 0.3.0
 sourceRoot: src/
 
 dependencies: {
-//   Depends on a project in the "acme" organisation called "sample", verion 0.3.0
+//   Depends on a project in the "acme" organisation called "sample", version 0.3.0
    acme/sample: 0.3.0
 }
 ```
@@ -43,7 +43,7 @@ repositories: [
       // Settings specific to the repository provider.
       // Below settings shown are applicable to a nexus repository
       settings: {
-         // The name of the respository as defined within nexus
+         // The name of the repository as defined within nexus
          repositoryName : taxi
       }
    }
@@ -53,6 +53,7 @@ repositories: [
 For more details on how to define dependencies, and configure repositories to download them from, see <Link to="/taxi-cli/taxi-conf-file">here</Link>
 
 <Hint>
+
 If you're editing your `taxi.conf` file in VSCode using our plugin, saving changes to your `taxi.conf` will trigger the download of any dependencies.
 
 However, be aware that where most other changes in VS Code take place as you type, downloading of dependencies requires you to save the file first.

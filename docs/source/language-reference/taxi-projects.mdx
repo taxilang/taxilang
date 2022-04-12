@@ -67,7 +67,7 @@ which provides the complete documentation of how projects can be configured.
 
 ### Dependencies
 
-Projects may declare dependenices on other taxi projects.  This provides a powerful mechanism for creating modular, re-usable taxonomies across organisations.
+Projects may declare dependencies on other taxi projects.  This provides a powerful mechanism for creating modular, re-usable taxonomies across organisations.
 
 The format for declaring dependencies is:
 
@@ -108,7 +108,7 @@ repositories: [
       // Settings specific to the repository provider.
       // Below settings shown are applicable to a nexus repository
       settings: {
-         // The name of the respository as defined within nexus
+         // The name of the repository as defined within nexus
          repositoryName : taxi
       }
    }
@@ -127,7 +127,7 @@ credentials: [
 ]
 ```
 
-Note - credentials don't need to be defined in your projects main `taxi.conf` - in fact, we reccommend you don't.
+Note - credentials don't need to be defined in your projects main `taxi.conf` - in fact, we recommend you don't.
 Instead, define a configuration file at  `~/.taxi.conf` (your home directory) which contains the credentials.  See below for
 more detail on merging configuration files.
 

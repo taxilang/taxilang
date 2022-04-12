@@ -15,7 +15,7 @@ The following sections need authoring:
       * Collection types x
    * Nullability x
    * Annotations on types and fields
-   * Inheritence
+   * Inheritance
    * Typealiases
       * alias vs inherits
    * default values
