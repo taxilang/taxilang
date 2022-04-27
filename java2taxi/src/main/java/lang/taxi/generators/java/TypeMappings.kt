@@ -9,11 +9,11 @@ import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.utils.log
 import org.jetbrains.annotations.NotNull
-import org.springframework.core.ResolvableType
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.Parameter
+import java.lang.reflect.ParameterizedType
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty
@@ -26,8 +26,6 @@ import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.javaGetter
 import kotlin.reflect.jvm.kotlinFunction
 import kotlin.reflect.jvm.kotlinProperty
-
-interface MapperExtension
 
 interface TypeMapper {
    fun getTaxiType(
@@ -208,11 +206,14 @@ class DefaultTypeMapper(
       }
 
 
-      val collectionType = when (element) {
-         is Field -> ResolvableType.forField(element).generics[0] // returns T of List<T> / Set<T>
+      val collectionType: Class<*> = when (element) {
+         is Field -> {
+            // returns T of List<T> / Set<T>
+            (element.genericType as ParameterizedType).actualTypeArguments[0] as Class<*>
+         }
          else -> TODO("Collection types that aren't fields not supported yet - (got $element)")
       }
-      return getTaxiType(collectionType.resolve(), existingTypes, defaultNamespace)
+      return getTaxiType(collectionType, existingTypes, defaultNamespace)
    }
 
    private fun isCollection(element: AnnotatedElement): Boolean {

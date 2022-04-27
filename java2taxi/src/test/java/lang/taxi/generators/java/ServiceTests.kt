@@ -8,7 +8,6 @@ import lang.taxi.generators.kotlin.TypeAliasRegister
 import lang.taxi.testing.TestHelpers
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
-import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal
 
 class ServiceTests {
@@ -24,7 +23,6 @@ class ServiceTests {
    data class Person(@field:DataType("taxi.example.PersonId", documentation = "Defines the id of the person") val personId: String)
 
 
-   @RestController
    @Service("taxi.example.PersonService")
    class MyService {
       @Operation
