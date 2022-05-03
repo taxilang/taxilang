@@ -27,7 +27,7 @@ Taxi describes data semantically, which allows powerful tooling to discover and 
 ![](https://img.shields.io/badge/dynamic/xml.svg?label=Taxi&url=http%3A%2F%2Frepo.vyne.co%2Frelease%2Forg%2Ftaxilang%2Fparent%2Fmaven-metadata.xml&query=%2F%2Frelease&colorB=green&prefix=v&style=for-the-badge&logo=kotlin&logoColor=white)
 
 ## Example
-Taxi allows you to be really expressive about what the meaning is of data returned from an API.  By describing the **meaning**  of our data, we can start to make data interchangable.
+Taxi allows you to be really expressive about what the meaning is of data returned from an API.  By describing the **meaning**  of our data, we can start to make data interchangeable.
 
 For example:
 ```
@@ -45,7 +45,7 @@ model Invoice {
 
 Those `String`s now have a little more meaning.  And look - we now know that `Invoice.customerId` and `Customer.id` describe the same piece of information - a `CustomerId`.
 
-By building out this set of terms - we create a Taxonomy of interchangable types.  This allows us to better document how data is intended to be used.  Tooling such as [Vyne](https://vyne.co)
+By building out this set of terms - we create a Taxonomy of interchangeable types.  This allows us to better document how data is intended to be used.  Tooling such as [Vyne](https://vyne.co)
 can leverage this to link and discover data automatically, and automate API integration.
 
 
@@ -73,4 +73,4 @@ However, Taxi is intended to be a standalone tool, and is not coupled to Vyne.  
 
 It's easy to adopt Taxi incrementally, meaning you can set it up alongside an existing solution (such as Swagger or XML schemas) and migrate functionality at your convenience.
 
-In fact, Taxi is designed to complement those tools, and you can happily use Swagger or Xsds are you base schema, and then overlay semantic data using Taxi.
+In fact, Taxi is designed to complement those tools, and you can happily use Swagger or XSDs are you base schema, and then overlay semantic data using Taxi.

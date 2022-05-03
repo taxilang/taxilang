@@ -13,11 +13,11 @@ object StdLib  {
       Collections.functions +
       listOf(Coalesce)
    val taxi = functions.namespacedTaxi()
-
-   fun stdLibName(name:String):QualifiedName = QualifiedName.from("$namespace.$name")
 }
+
+fun stdLibName(name:String):QualifiedName = QualifiedName.from("${StdLib.namespace}.$name")
 
 object Coalesce: FunctionApi {
    override val taxi: String = "declare function coalesce(Any...):Any"
-   override val name: QualifiedName = StdLib.stdLibName("coalesce")
+   override val name: QualifiedName = stdLibName("coalesce")
 }

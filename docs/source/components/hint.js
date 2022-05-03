@@ -62,14 +62,14 @@ export function Discourage({ children }) {
          </DiscourageDiv>
    );
 }
-export function Hint({ type, ...props }) {
+export function Hint({ children }) {
    return (
       <MDXProvider>
          <HintDiv>
             <FloatingHintDiv>
                <BiInfoCircle />
             </FloatingHintDiv>
-            {props.children}
+            {children}
          </HintDiv>
       </MDXProvider>
    );

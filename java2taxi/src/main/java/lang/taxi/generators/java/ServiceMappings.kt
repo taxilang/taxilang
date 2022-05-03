@@ -21,19 +21,29 @@ import kotlin.reflect.jvm.kotlinFunction
 
 interface ServiceMapper {
    fun getTaxiServices(javaClass: Class<*>, typeMapper: TypeMapper, mappedTypes: MutableSet<Type>): Set<Service>
+   fun addServiceExtensions(serviceExtensions: List<ServiceMapperExtension>): ServiceMapper
+   fun addOperationExtensions(operationExtensions: List<OperationMapperExtension>): ServiceMapper
 }
 
-interface ServiceMapperExtension : MapperExtension {
-   fun update(service: Service, type: Class<*>, typeMapper: TypeMapper, mappedTypes: MutableSet<Type>): Service
-}
 
-interface OperationMapperExtension : MapperExtension {
-   fun update(operation: lang.taxi.services.Operation, type: Class<*>, method: Method, typeMapper: TypeMapper, mappedTypes: MutableSet<Type>): lang.taxi.services.Operation
-}
+data class DefaultServiceMapper(
+   private val constraintAnnotationMapper: ConstraintAnnotationMapper = ConstraintAnnotationMapper(),
+   private val serviceExtensions: List<ServiceMapperExtension> = emptyList(),
+   private val operationExtensions: List<OperationMapperExtension> = emptyList()
+) : ServiceMapper {
 
-class DefaultServiceMapper(private val constraintAnnotationMapper: ConstraintAnnotationMapper = ConstraintAnnotationMapper(),
-                           private val serviceExtensions: List<ServiceMapperExtension> = emptyList(),
-                           private val operationExtensions: List<OperationMapperExtension> = emptyList()) : ServiceMapper {
+   override fun addServiceExtensions(serviceExtensions: List<ServiceMapperExtension>): DefaultServiceMapper {
+      return this.copy(
+         serviceExtensions = this.serviceExtensions + serviceExtensions
+      )
+   }
+
+   override fun addOperationExtensions(operationExtensions: List<OperationMapperExtension>): DefaultServiceMapper {
+      return this.copy(
+         operationExtensions = this.operationExtensions + operationExtensions
+      )
+   }
+
    override fun getTaxiServices(type: Class<*>, typeMapper: TypeMapper, mappedTypes: MutableSet<Type>): Set<Service> {
       val namespace = TypeNames.deriveNamespace(type)
       val serviceName = deriveServiceName(type, namespace)
@@ -49,13 +59,16 @@ class DefaultServiceMapper(private val constraintAnnotationMapper: ConstraintAnn
             val kotlinParameter = func.valueParameters[index]
             val paramType = typeMapper.getTaxiType(param, mappedTypes, namespace, method)
             val paramAnnotation = param.getAnnotation(lang.taxi.annotations.Parameter::class.java)
-            Parameter(annotations = emptyList(), // todo,
+            Parameter(
+               annotations = emptyList(), // todo,
                type = paramType,
                name = paramAnnotation?.name?.orDefaultNullable(kotlinParameter.name) ?: kotlinParameter.name,
-               constraints = parseConstraints(paramAnnotation))
+               constraints = parseConstraints(paramAnnotation)
+            )
          }
          val returnType = typeMapper.getTaxiType(KTypeWrapper(func.returnType), mappedTypes, namespace, method)
-         val operation = lang.taxi.services.Operation(name,
+         val operation = lang.taxi.services.Operation(
+            name,
             parameters = params,
             annotations = emptyList(), // TODO
             returnType = returnType,
@@ -65,8 +78,11 @@ class DefaultServiceMapper(private val constraintAnnotationMapper: ConstraintAnn
                returnTypeConstraints = parseConstraints(method.getAnnotation(ResponseContract::class.java))
             ),
             scope = operationAnnotation.scope,
-            compilationUnits = listOf(CompilationUnit.unspecified()))
-         operationExtensions.fold(operation, { operation, extension -> extension.update(operation, type, method, typeMapper, mappedTypes) })
+            compilationUnits = listOf(CompilationUnit.unspecified())
+         )
+         operationExtensions.fold(
+            operation,
+            { operation, extension -> extension.update(operation, type, method, typeMapper, mappedTypes) })
       }
 
       val service = serviceExtensions.fold(Service(
@@ -97,6 +113,7 @@ class DefaultServiceMapper(private val constraintAnnotationMapper: ConstraintAnn
    fun String.orDefaultNullable(default: String?): String? {
       return if (this.isEmpty()) default else this
    }
+
    fun String.orDefault(default: String): String {
       return if (this.isEmpty()) default else this
    }
