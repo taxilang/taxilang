@@ -1190,7 +1190,8 @@ class TokenProcessor(
       annotationParameters: Map<String, Any>
    ): Either<List<CompilationError>, Annotation> {
       val fieldErrors = type.fields.mapNotNull { field ->
-         if (!annotationParameters.containsKey(field.name)) {
+
+         if (!annotationParameters.containsKey(field.name) && !field.nullable) {
             CompilationError(
                annotation.start,
                "Annotation ${type.qualifiedName} requires member '${field.name}' which was not supplied"

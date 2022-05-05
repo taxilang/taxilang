@@ -3,6 +3,7 @@ package lang.taxi
 import com.winterbe.expekt.should
 import lang.taxi.linter.LinterRules
 import lang.taxi.types.EnumMember
+import org.junit.jupiter.api.Test
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -304,3 +305,22 @@ enum Quality {
       }
    }
 })
+
+class AnnotationTypeTest {
+   @Test
+   fun `annotations can be applied omitting optional properties `() {
+      val annotation = """
+         annotation Foo {
+            firstName : String?
+            lastName: String?
+         }
+
+         @Foo( firstName = 'Jimmy' )
+         model Thing {}
+      """.compiled()
+         .model("Thing")
+         .annotation("Foo")
+      annotation.parameter("firstName").should.equal("Jimmy")
+      annotation.parameter("lastName").should.be.`null`
+   }
+}
