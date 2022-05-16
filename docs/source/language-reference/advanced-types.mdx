@@ -152,8 +152,8 @@ or matching on the first `true` result:
 ```
 model Person {
     preferredPhoneNumber : PreferredPhoneNumber? by when {
-        this.preferredPhone = 'Home' -> column("homePhone")
-        this.preferredPhone = 'Work' -> column("workPhone")
+        this.preferredPhone == 'Home' -> column("homePhone")
+        this.preferredPhone == 'Work' -> column("workPhone")
         else -> null
     }
 }
