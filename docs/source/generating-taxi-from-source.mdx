@@ -120,7 +120,7 @@ data class Money(val amount: BigDecimal, val currency: String)
 @ParameterType
 @DataType("vyne.SomeRequest")
 data class SomeRequest(
-        @Constraint("currency = 'USD'")
+        @Constraint("currency == 'USD'")
         val amount: Money)
 
 TaxiGenerator().forClasses(Money::class.java, SomeRequest::class.java).generateAsStrings()
@@ -128,7 +128,7 @@ TaxiGenerator().forClasses(Money::class.java, SomeRequest::class.java).generateA
 // Generates:
 namespace vyne {
      parameter type SomeRequest {
-        amount : Money(currency = "USD")
+        amount : Money(currency == "USD")
      }
      type Money {
         amount : Decimal
