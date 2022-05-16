@@ -19,10 +19,10 @@ The basic syntax of a TaxiQL query looks like this:
 find { Person[] }
 
 // Find a person named Jim
-find { Person( FirstName = 'Jim' ) }
+find { Person( FirstName == 'Jim' ) }
 
 // Find all the people named Jim
-find { Person[]( FirstName = 'Jim' ) }
+find { Person[]( FirstName == 'Jim' ) }
 
 // Find a stream of person events from somewhere
 stream { PersonEvents }
@@ -70,7 +70,7 @@ For example:
 
 ```taxi
 // Find a person named Jim
-find { Person( FirstName = 'Jim' ) }
+find { Person( FirstName == 'Jim' ) }
 ```
 
 This finds a `Person` model, with a `FirstName` value of Jim.
