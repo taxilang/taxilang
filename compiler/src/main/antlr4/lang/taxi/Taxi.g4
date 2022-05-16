@@ -226,8 +226,17 @@ modelAttributeTypeReference: typeType '::' typeType;
 simpleFieldDeclaration: typeType accessor?;
 
 typeType
-    :   classOrInterfaceType typeArguments? listType? optionalType? parameterConstraint? (aliasedType? | inlineInheritedType?)?
+    :   classOrInterfaceType typeArguments? listType? optionalType? parameterConstraint?
+
+        // JoinClause allows for specifying join syntax in return types.
+        // We may need to restrict where this can be used via the compiler.
+//        joinClause?
+
+        (aliasedType? | inlineInheritedType?)?
     ;
+
+
+
 
 accessor
     : 'by' scalarAccessorExpression
@@ -371,6 +380,9 @@ queryFilterCapability: 'filter'( '(' filterCapability (',' filterCapability)* ')
 
 filterCapability: EQ | NQ | IN | LIKE | GT | GE | LT | LE;
 
+
+
+// Lineage
 lineageDeclaration
       : typeDoc? annotation* 'lineage' lineageBody;
 
@@ -714,14 +726,13 @@ queryParam: Identifier ':' typeType;
 // findAllDirective: 'findAll';
 // findOneDirective: 'findAll';
 
-   queryDirective: FindAll | FindOne | Stream | Find;
+queryDirective: FindAll | FindOne | Stream | Find;
 findDirective: Find;
 
 givenBlock : 'given' '{' factList '}';
 
 factList : fact (',' fact)*;
 
-// TODO :  We could/should make variableName optional
 fact : variableName? typeType '=' literal;
 
 variableName: Identifier ':';
@@ -750,10 +761,17 @@ viewDeclaration
             'with' 'query' '{' findBody (',' findBody)* '}'
     ;
 
+// These need to be migrated out of "special" view operators,
+// and use standard query operators.
 findBody: findDirective '{' findBodyQuery '}' ('as' anonymousTypeDefinition)?;
-findBodyQuery: joinTo;
+findBodyQuery: viewJoinClause;
 filterableTypeType: typeType ('(' filterExpression ')')?;
-joinTo: filterableTypeType ('(' 'joinTo'  filterableTypeType ')')?;
+
+// Deprecated, left around to support legacy views.
+// Use joinClause
+viewJoinClause: filterableTypeType ('(' 'joinTo'  filterableTypeType ')')?;
+
+
 filterExpression
     : LPAREN filterExpression RPAREN           # ParenExp
     | filterExpression AND filterExpression    # AndBlock

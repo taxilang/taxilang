@@ -63,7 +63,7 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
 
    private fun resolveViewBody(namespace: Namespace, bodyCtx: TaxiParser.FindBodyContext):
       Either<List<CompilationError>, ViewBodyDefinition> {
-      val joinTypes = bodyCtx.findBodyQuery().joinTo().filterableTypeType()
+      val joinTypes = bodyCtx.findBodyQuery().viewJoinClause().filterableTypeType()
       val firstFilterableType = joinTypes.first()
       return listTypeTypeOrError(firstFilterableType.typeType()).flatMap { bodyTypeType ->
          tokenProcessor.typeOrError(namespace, bodyTypeType).flatMap { bodyType ->
