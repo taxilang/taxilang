@@ -1,16 +1,15 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
 import lang.taxi.accessors.CollectionProjectionExpressionAccessor
 import lang.taxi.accessors.FieldSourceAccessor
 import lang.taxi.types.ArrayType
 import lang.taxi.types.ObjectType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.QueryMode
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 
-object TaxiQlSpec : Spek({
+class TaxiQlSpec : DescribeSpec({
    describe("Taxi Query Language") {
       val schema = """
          namespace foo
@@ -599,30 +598,33 @@ object TaxiQlSpec : Spek({
       }
 
       it("is possible to define projection specs on a top level return value") {
-         val (schema,query) = """model Musical {
+         val (schema, query) = """model Musical {
             title : MusicalTitle inherits String
             year : YearProduced inherits Int
          }
          model Composer {
             name : ComposerName inherits String
             majorWorks : { musicals : Musical[] }
-         }""".compiledWithQuery("""findAll { Composer } as {
+         }""".compiledWithQuery(
+            """findAll { Composer } as {
                name : ComposerName
                title : MusicalTitle
                year: YearProduced
             }[] by [Musical with ( ComposerName )]"""
          )
          val collectionType = query.projectedType!!.anonymousTypeDefinition!! as ArrayType
-         val expression = (collectionType.typeParameters()[0] as ObjectType).expression!! as CollectionProjectionExpressionAccessor
+         val expression =
+            (collectionType.typeParameters()[0] as ObjectType).expression!! as CollectionProjectionExpressionAccessor
          expression.type.qualifiedName.should.equal("Musical")
          expression.projectionScope!!.accessors.should.have.size(1)
       }
 
       it("should support annotations on anonymous projection types") {
-         val (schema,query) = """
+         val (schema, query) = """
          model Composer {
             name : ComposerName inherits String
-         }""".compiledWithQuery("""findAll { Composer } as @HelloWorld {
+         }""".compiledWithQuery(
+            """findAll { Composer } as @HelloWorld {
                name : ComposerName
             }"""
          )

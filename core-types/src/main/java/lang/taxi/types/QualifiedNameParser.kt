@@ -32,6 +32,7 @@ object QualifiedNameParser {
          tokenizer.wordChars('@'.toInt(), '@'.toInt())
          tokenizer.wordChars('#'.toInt(), '#'.toInt())
          tokenizer.wordChars('$'.toInt(), '$'.toInt())
+         tokenizer.wordChars('|'.toInt(), '|'.toInt())
          try {
             val genericName = parse(tokenizer, listOf(StreamTokenizer.TT_EOF)) // Parse until the end
             genericName.toQualifiedName()

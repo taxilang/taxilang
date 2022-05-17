@@ -74,7 +74,7 @@ typeMemberDeclaration
      :   typeDoc? annotation* fieldDeclaration
      ;
 
-expressionTypeDeclaration : 'by' expressionGroup*;
+expressionTypeDeclaration : ('by' | '=') expressionGroup*;
 
 // (A,B) -> C
 // Used in functions:
@@ -225,14 +225,30 @@ modelAttributeTypeReference: typeType '::' typeType;
 
 simpleFieldDeclaration: typeType accessor?;
 
+//unionType: unionTypeList |
+//            // eg:  ( TypeA | TypeB )[]  ... a collection of the unionType
+//            (LPAREN unionTypeList RPAREN listType);
+//
+//// A list of types in a union type.
+//// eg: TypeA | TypeB | TypeC
+//unionTypeList: typeType ('|' typeType)*;
+
 typeType
-    :   classOrInterfaceType typeArguments? listType? optionalType? parameterConstraint?
+    :   (
+           classOrInterfaceType typeArguments? listType? optionalType? parameterConstraint?
 
-        // JoinClause allows for specifying join syntax in return types.
-        // We may need to restrict where this can be used via the compiler.
-//        joinClause?
+           // JoinClause allows for specifying join syntax in return types.
+           // We may need to restrict where this can be used via the compiler.
+           joinClause?
 
-        (aliasedType? | inlineInheritedType?)?
+           (aliasedType? | inlineInheritedType?)?
+            // Union types
+           ( UNION_TYPE_OR typeType)*
+        )
+
+        // Special case, allow type list inside parenthesis, followed by the list operator:
+        // eg: ( TypeA | TypeB )[]
+        | LPAREN typeType RPAREN listType
     ;
 
 
@@ -368,7 +384,7 @@ serviceBodyMember : serviceOperationDeclaration | queryOperationDeclaration;
 // Querying
 queryOperationDeclaration
    :  typeDoc? annotation* queryGrammarName 'query' Identifier '(' operationParameterList ')' ':' typeType
-      'with' 'capabilities' '{' queryOperationCapabilities '}';
+      ('with' 'capabilities' '{' queryOperationCapabilities '}')?;
 
 queryGrammarName : Identifier;
 queryOperationCapabilities: (queryOperationCapability (',' queryOperationCapability)*);
@@ -755,6 +771,12 @@ queryProjection: 'as' typeType? anonymousTypeDefinition?;
 //}
 anonymousTypeDefinition: annotation* typeBody listType? accessor? parameterConstraint?;
 
+// joins:
+joinClause: JOIN_TO LPAREN typeType (',' typeType)* RPAREN;
+
+
+
+// Views:
 viewDeclaration
     :  typeDoc? annotation* typeModifier* 'view' Identifier
             ('inherits' listOfInheritedTypes)?
@@ -769,7 +791,7 @@ filterableTypeType: typeType ('(' filterExpression ')')?;
 
 // Deprecated, left around to support legacy views.
 // Use joinClause
-viewJoinClause: filterableTypeType ('(' 'joinTo'  filterableTypeType ')')?;
+viewJoinClause: filterableTypeType ('(' JOIN_TO  filterableTypeType ')')?;
 
 
 filterExpression
@@ -784,6 +806,8 @@ filterExpression
 in_exprs: qualifiedName IN literalArray;
 like_exprs: qualifiedName LIKE literal;
 not_in_exprs: qualifiedName NOT_IN literalArray;
+
+JOIN_TO: 'joinTo';
 
 NOT_IN: 'not in';
 IN: 'in';
@@ -961,6 +985,8 @@ LT : '<' ;
 LE : '<=' ;
 EQ : '==' ;
 NQ : '!=';
+
+UNION_TYPE_OR: '|';
 
 LOGICAL_OR : '||';
 LOGICAL_AND : '&&';

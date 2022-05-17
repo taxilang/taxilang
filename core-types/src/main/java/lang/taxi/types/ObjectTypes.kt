@@ -5,6 +5,7 @@ import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.AccessorWithDefault
 import lang.taxi.expressions.Expression
+import lang.taxi.expressions.TypeExpression
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.utils.quotedIfNecessary
@@ -101,6 +102,26 @@ data class ObjectType(
          return ObjectType(name, definition = null)
       }
    }
+
+   val isUnionTypeWrapper: Boolean
+      get() {
+         return if (isDefined && definition!!.expression is TypeExpression) {
+            val typeExpression = definition!!.expression as TypeExpression
+            return typeExpression.type is UnionType
+         } else {
+            false
+         }
+      }
+   val wrappedUnionType: UnionType?
+      get() {
+         return if (isUnionTypeWrapper) {
+            val typeExpression = definition!!.expression as TypeExpression
+            return typeExpression.type as UnionType
+         } else {
+            null
+         }
+
+      }
 
    private val wrapper = LazyLoadingWrapper(this)
    override val allInheritedTypes: Set<Type>

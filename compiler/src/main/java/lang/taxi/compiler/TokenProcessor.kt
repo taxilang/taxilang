@@ -21,6 +21,7 @@ import lang.taxi.Tokens
 import lang.taxi.TypeSystem
 import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.expressions.Expression
+import lang.taxi.expressions.TypeExpression
 import lang.taxi.expressions.toExpressionGroup
 import lang.taxi.findNamespace
 import lang.taxi.functions.Function
@@ -60,51 +61,8 @@ import lang.taxi.stringLiteralValue
 import lang.taxi.toCompilationError
 import lang.taxi.toCompilationUnit
 import lang.taxi.toCompilationUnits
-import lang.taxi.types.AndExpression
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.AnnotationType
-import lang.taxi.types.AnnotationTypeDefinition
-import lang.taxi.types.ArrayType
-import lang.taxi.types.ComparisonExpression
-import lang.taxi.types.ComparisonOperator
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.ConstantEntity
-import lang.taxi.types.DefinableToken
-import lang.taxi.types.EnumDefinition
-import lang.taxi.types.EnumExtension
-import lang.taxi.types.EnumMember
-import lang.taxi.types.EnumType
-import lang.taxi.types.EnumValue
-import lang.taxi.types.EnumValueExtension
-import lang.taxi.types.EnumValueQualifiedName
-import lang.taxi.types.Enums
-import lang.taxi.types.Field
-import lang.taxi.types.FieldExtension
-import lang.taxi.types.FieldReferenceEntity
-import lang.taxi.types.GenericType
-import lang.taxi.types.ImportableToken
-import lang.taxi.types.LambdaExpressionType
-import lang.taxi.types.LogicalExpression
-import lang.taxi.types.Modifier
-import lang.taxi.types.ObjectType
-import lang.taxi.types.ObjectTypeDefinition
-import lang.taxi.types.ObjectTypeExtension
-import lang.taxi.types.OrExpression
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.QualifiedNameParser
-import lang.taxi.types.StreamType
-import lang.taxi.types.Type
-import lang.taxi.types.TypeAlias
-import lang.taxi.types.TypeAliasDefinition
-import lang.taxi.types.TypeAliasExtension
-import lang.taxi.types.TypeArgument
-import lang.taxi.types.TypeChecker
-import lang.taxi.types.TypeKind
-import lang.taxi.types.UserType
-import lang.taxi.types.View
-import lang.taxi.types.VoidType
-import lang.taxi.types.WhenFieldSetCondition
 import lang.taxi.utils.errorOrNull
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
@@ -239,8 +197,14 @@ class TokenProcessor(
                val fieldTypeDeclaration = memberDeclaration.fieldDeclaration().simpleFieldDeclaration()?.typeType()
                when {
                   fieldTypeDeclaration == null -> null
-                  fieldTypeDeclaration.aliasedType() != null -> lookupTypeByName(namespace, memberDeclaration.fieldDeclaration().simpleFieldDeclaration().typeType())
-                  fieldTypeDeclaration.inlineInheritedType() != null -> lookupTypeByName(namespace, memberDeclaration.fieldDeclaration().simpleFieldDeclaration().typeType())
+                  fieldTypeDeclaration.aliasedType() != null -> lookupTypeByName(
+                     namespace,
+                     memberDeclaration.fieldDeclaration().simpleFieldDeclaration().typeType()
+                  )
+                  fieldTypeDeclaration.inlineInheritedType() != null -> lookupTypeByName(
+                     namespace,
+                     memberDeclaration.fieldDeclaration().simpleFieldDeclaration().typeType()
+                  )
                   else -> null
                }
             } ?: emptyList()
@@ -889,7 +853,7 @@ class TokenProcessor(
       namespace: Namespace,
       typeName: String,
       ctx: TaxiParser.TypeDeclarationContext
-   ): Either<List<CompilationError>, ObjectType> {
+   ): Either<List<CompilationError>, Type> {
       val typeKind = TypeKind.fromSymbol(ctx.typeKind().text)
       val fields = ctx.typeBody()?.let { typeBody ->
          val typeBodyContext = TypeBodyContext(typeBody, namespace)
@@ -931,10 +895,29 @@ class TokenProcessor(
             // This happens in cases like:
             // import lang.taxi.FormattedInstant_428af4 <-- We want to exclude this import, it's not useful
             // type FooDate inherits Instant( @format = 'mm/dd/yyThh:nn:ss.mmmmZ' )
-            .filterNot { it.declaresFormat && it.toQualifiedName().typeName.startsWith("Formatted")  }
+            .filterNot { it.declaresFormat && it.toQualifiedName().typeName.startsWith("Formatted") }
             .map { it.toQualifiedName() }
 
-      return this.typeSystem.register(
+
+//      val type: Type = if (expression != null && expression is TypeExpression && expression.type is UnionType) {
+//         // This is a named union type.
+//         // eg:
+//         // type Foo = A | B | C
+//         // So, return the UnionType, rather than the ObjectType wrapper
+//         val unionType = expression.type as UnionType
+//         typeSystem.register(
+//            UnionType(
+//               typeName,
+//               UnionTypeDefinition(
+//                  unionType.types,
+//                  ctx.toCompilationUnit(),
+//                  annotations,
+//                  typeDoc
+//               )
+//            )
+//         )
+//      } else {
+      val type = typeSystem.register(
          ObjectType(
             typeName, ObjectTypeDefinition(
                fields = fields.toSet(),
@@ -948,7 +931,10 @@ class TokenProcessor(
                compilationUnit = ctx.toCompilationUnit(dependantTypeNames)
             )
          )
-      ).right()
+      )
+//      }
+
+      return type.right()
    }
 
    fun expressionCompiler(): ExpressionCompiler {
@@ -1265,6 +1251,7 @@ class TokenProcessor(
       typeType: TaxiParser.TypeTypeContext,
       typeArgumentsInScope: List<TypeArgument> = emptyList()
    ): Either<List<CompilationError>, Type> {
+
       return typeOrError(namespace, typeType, typeArgumentsInScope).flatMap { type ->
          parseTypeFormat(typeType).flatMap { (formats, zoneOffset) ->
             if (typeType.listType() != null) {
@@ -1327,16 +1314,45 @@ class TokenProcessor(
       val referencedGenericTypeArgument = typeArgumentsInScope.firstOrNull {
          it.declaredName == typeType.classOrInterfaceType().Identifier().text()
       }
+      val hasUnionTypeReference = typeType.typeType() != null && typeType.typeType().isNotEmpty()
       return when {
          referencedGenericTypeArgument != null -> referencedGenericTypeArgument.right()
          typeType.inlineInheritedType() != null -> compileInlineInheritedType(namespace, typeType)
          typeType.aliasedType() != null -> compileInlineTypeAlias(namespace, typeType)
+         // Ordering is important here.
+         // We want to check for union types BEFORE we check for the
+         // classOrInterfaceType().
+         // This is because in the grammar, for a non-collection union type
+         // eg: A | B
+         // A is parsed as a classOrInterfaceType, and
+         // subsequent type references are part of the union type.
+         // This means it's BOTH a classAndInterfaceType and a UnionType.
+         // We handle that here.
+         // However, if it's a collection, it's wrapped in parenthesis,
+         // so the union type becomes the first node to hit this code.
+         // eg:  (A | B)[]
+         hasUnionTypeReference -> {
+            // Given how the AST is parsed, when we hit here,
+            // we may have a single classOrInterfaceType node, followed by a collection
+            // other types in the unionType's TypeType collection.
+            // Extract the firstType by parsing, and then wrapping into a list, to make
+            // concatenation easier.
+            val unionType = if (typeType.classOrInterfaceType() != null) {
+               resolveUserType(namespace, typeType.classOrInterfaceType(), typeType.typeArguments())
+                  .map { listOf(it) }
+            } else {
+               // Nothing here, so just return an empty list.
+               emptyList<Type>().right()
+            }.flatMap { alreadyParsedTypes: List<Type> ->
+               parseUnionType(typeType, namespace, typeArgumentsInScope, alreadyParsedTypes)
+            }
+            unionType
+         }
          typeType.classOrInterfaceType() != null -> resolveUserType(
             namespace,
             typeType.classOrInterfaceType(),
             typeType.typeArguments()
          )
-//         typeType.primitiveType() != null -> PrimitiveType.fromDeclaration(typeType.getChild(0).text).right()
          else -> TODO("Unhandled when branch in typeOrError for typeContext with text ${typeType.text}")
       }.map { type ->
          // MP 28-Sept This is a recent bugfix, where previously all callers
@@ -1351,6 +1367,40 @@ class TokenProcessor(
             type
          }
       }
+   }
+
+   private fun parseUnionType(
+      originalTypeContext: TaxiParser.TypeTypeContext,
+      namespace: Namespace,
+      typeArgumentsInScope: List<TypeArgument>,
+      alreadyParsedTypes: List<Type> = emptyList()
+   ): Either<List<CompilationError>, UnionType> {
+      val unionType = originalTypeContext.typeType().map { unionTypeMember ->
+         typeOrError(namespace, unionTypeMember, typeArgumentsInScope)
+      }.invertEitherList().flattenErrors()
+         .map { typesInUnionType ->
+            // Because of the way the AST is parsed, we can
+            // end up here with the parsed unionType list having a
+            // list of other union types.
+            // ie., :  A | B | C gets parsed as A + unionOf( B + unionOf( C ) )
+            // So, unwrap the nested union types.
+            val unnestedUnionTypeList = typesInUnionType.flatMap { type ->
+               when (type) {
+                  is UnionType -> type.types
+                  else -> listOf(type)
+               }
+            }
+
+            val unionTypeList = alreadyParsedTypes + unnestedUnionTypeList
+            UnionType(
+               UnionType.unionTypeName(unionTypeList),
+               UnionTypeDefinition(
+                  unionTypeList,
+                  originalTypeContext.toCompilationUnit()
+               )
+            )
+         }
+      return unionType
    }
 
    private fun resolveGenericTypeArgument(
@@ -2041,6 +2091,9 @@ class TokenProcessor(
    }
 
    private fun parseCapabilities(queryOperation: TaxiParser.QueryOperationDeclarationContext): Either<List<CompilationError>, List<QueryOperationCapability>> {
+      if (queryOperation.queryOperationCapabilities() == null) {
+         return emptyList<QueryOperationCapability>().right()
+      }
       return queryOperation.queryOperationCapabilities().queryOperationCapability().map { capabilityContext ->
          when {
             capabilityContext.queryFilterCapability() != null -> {
