@@ -35,17 +35,26 @@ object Trim : FunctionApi {
 }
 
 object Left : FunctionApi {
-   override val taxi: String = "declare function left(String,Int):String"
+   override val taxi: String = """
+      [[ Returns the left most characters from the source string ]]
+      declare function left(source:String,count:Int):String""".trimIndent()
    override val name: QualifiedName = stdLibName("left")
 }
 
 object Right : FunctionApi {
-   override val taxi: String = "declare function right(String,Int):String"
+   override val taxi: String = "declare function right(source:String,count:Int):String"
    override val name: QualifiedName = stdLibName("right")
 }
 
 object Mid : FunctionApi {
-   override val taxi: String = "declare function mid(String,Int,Int):String"
+   override val taxi: String = """
+      [[
+      Returns the middle of a string, starting at the `startIndex`, and ending right before the `endIndex`.
+
+      * `startIndex` - the start index (inclusive)
+      * `endIndex` - the end index (exclusive)
+      ]]
+      declare function mid(source: String,startIndex: Int,endIndex: Int):String""".trimIndent()
    override val name: QualifiedName = stdLibName("mid")
 }
 
@@ -69,7 +78,9 @@ object Length: FunctionApi {
 
 object Find: FunctionApi {
    override val taxi: String
-      get() = "declare function indexOf(String, String):Int"
+      get() = """
+         [[ Returns the index of `valueToSearchFor` within `source` ]]
+         declare function indexOf(source:String, valueToSearchFor:String):Int""".trimIndent()
    override val name: QualifiedName
       get() = stdLibName("indexOf")
 
@@ -79,11 +90,11 @@ object Replace : FunctionApi {
    override val taxi: String = """[[
       Replaces the contents of the provided String, returning a new String
       Accepts three args:
-       * String: The string to search
-       * String: The string to search for
-       * String: The string to use as a replacement
+       * `source: String`: The string to search
+       * `searchValue: String`: The string to search for
+       * `replacement: String`: The string to use as a replacement
       ]]
-      declare function replace(String, String, String):String""".trimIndent()
+      declare function replace(source: String, searchValue:String, replacement: String):String""".trimIndent()
    override val name: QualifiedName = stdLibName("replace")
 
 }
