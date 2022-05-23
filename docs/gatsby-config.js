@@ -36,6 +36,8 @@ module.exports = {
                   "language-reference/types-and-models",
                   "language-reference/advanced-types",
                   "language-reference/describing-services",
+                  "language-reference/functions",
+                  "language-reference/stdlib",
                   "language-reference/querying-with-taxiql",
                   "language-reference/taxi-projects",
                ],

@@ -1916,10 +1916,11 @@ class TokenProcessor(
          }
             ?: EnumSet.noneOf(FunctionModifiers::class.java)
 
+         val typeDoc = parseTypeDoc(functionToken.typeDoc())
          val function = Function(
             qualifiedName,
             FunctionDefinition(
-               parameters, returnType, functionAttributes, typeArguments, functionToken.toCompilationUnit()
+               parameters, returnType, functionAttributes, typeArguments, typeDoc, functionToken.toCompilationUnit()
             )
          )
          this.functions.add(function)

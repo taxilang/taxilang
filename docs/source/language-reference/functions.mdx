@@ -1,0 +1,117 @@
+---
+title: Functions in Taxi
+description: Declaring functions in Taxi
+---
+
+## Overview
+
+Taxi provides support for declaring functions that can manipulate data.
+
+Taxi itself does not provide implementations of these functions - it's down to individual runtimes, such
+as [Vyne](https://vyne.co).
+
+## Declaring functions
+Functions are declared as follows:
+
+```taxi
+namespace com.foo {
+   declare function concat(String,String):String
+}
+```
+
+This declares a function named `com.foo.concat`, which accepts two `String` arguments, and returns a String.
+
+### Parameter names
+Parameters may be optionally declared with parameter names:
+
+```
+namespace com.foo {
+   declare function concat(first: String,second: String):String
+}
+```
+
+### Vararg parameters
+The final parameter in a function may be declared as vararg by providing a trailing `...`
+
+```
+namespace com.foo {
+   // values is vararg, and can accept multiple values
+   declare function concat(something: Int, values:String...):String
+}
+```
+
+
+## Using functions
+As with all other references, functions must be imported to be used,
+or referred to using their fully qualified name
+
+### Functions in fields
+Functions can be used in expressions on models by declaring using a `by` operator:
+
+```taxi
+import com.foo.concat
+
+model Person {
+   firstName : FirstName inherits String
+   lastName : LastName inherits String
+   fullName : FullName inherits String by concat(FirstName, ' ', LastName)
+}
+```
+
+As with all expressions, parameters are passed either by Type reference, or Field reference:
+
+```taxi
+import com.foo.concat
+
+model Person {
+   firstName : FirstName inherits String
+   lastName : LastName inherits String
+   // By default references are assessed as lookups by type.
+   fullName : FullName inherits String by concat(FirstName, ' ', LastName)
+   // When prefixed by 'this.', lookups are assessed against field names
+   formalName : String by concat(this.lastName, ', ', this.firstName)
+}
+```
+
+
+### Functions in expression types
+Functions may also be used in expression types.
+When functions are referenced as a type, the underlying base type
+is optional, and can be inferred by the compiler
+
+```
+declare function concat(String...):String
+
+// FullName inherits String, as that's
+// the return type of `concat`
+type FullName by concat(FirstName, ' ', LastName)
+
+model Person {
+   firstName : FirstName inherits String
+   lastName : LastName inherits String
+   fullName : FullName
+}
+```
+
+### Lambda functions
+Taxi has support for declaring lambda functions - i.e.,
+functions as parameters to another function.
+
+```
+declare function stringify(Int[], callback:(Int,String) -> String):String
+```
+
+### Generic types
+Taxi has limited support for generic types in functions.
+
+Type arguments may be before the function name:
+
+```
+declare function <T,A> reduce(T[], (T,A) -> A):A
+```
+
+## Taxi Stdlib
+Taxi ships with a StdLib which contains a number of functions declared to assist
+with manipulating data.
+
+Read the docs of the Taxi StdLib [here](stdlib)
