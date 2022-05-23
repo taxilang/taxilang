@@ -234,7 +234,8 @@ simpleFieldDeclaration: typeType accessor?;
 //unionTypeList: typeType ('|' typeType)*;
 
 typeType
-    :   (
+    :
+    (
            classOrInterfaceType typeArguments? listType? optionalType? parameterConstraint?
 
            // JoinClause allows for specifying join syntax in return types.
@@ -243,7 +244,7 @@ typeType
 
            (aliasedType? | inlineInheritedType?)?
             // Union types
-           ( UNION_TYPE_OR typeType)*
+           ( unionTypeOr typeType)*
         )
 
         // Special case, allow type list inside parenthesis, followed by the list operator:
@@ -251,8 +252,7 @@ typeType
         | LPAREN typeType RPAREN listType
     ;
 
-
-
+unionTypeOr: UNION_TYPE_OR;
 
 accessor
     : 'by' scalarAccessorExpression

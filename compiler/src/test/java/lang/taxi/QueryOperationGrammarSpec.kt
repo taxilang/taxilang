@@ -2,16 +2,14 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.collections.shouldExist
-import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.*
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import lang.taxi.expressions.TypeExpression
 import lang.taxi.services.FilterCapability
 import lang.taxi.services.SimpleQueryCapability
-import lang.taxi.types.ArrayType
-import lang.taxi.types.ObjectType
-import lang.taxi.types.UnionType
+import lang.taxi.types.*
 
 class QueryOperationGrammarSpec : DescribeSpec({
    describe("Grammar for query operations") {
@@ -32,7 +30,7 @@ class QueryOperationGrammarSpec : DescribeSpec({
 
          queryOperation.grammar.should.equal("vyneQl")
          queryOperation.parameters.should.have.size(1)
-         queryOperation.parameters[0].let {parameter ->
+         queryOperation.parameters[0].let { parameter ->
             parameter.name.should.equal("body")
             parameter.type.qualifiedName.should.equal("VyneQlQuery")
             parameter.annotations.should.have.size(1)
@@ -62,7 +60,8 @@ class QueryOperationGrammarSpec : DescribeSpec({
             .service("PersonService")
             .queryOperation("personQuery")
             .asTaxi()
-         val expected = """vyneQl query personQuery(@RequestBody body: VyneQlQuery):lang.taxi.Array<Person> with capabilities {
+         val expected =
+            """vyneQl query personQuery(@RequestBody body: VyneQlQuery):lang.taxi.Array<Person> with capabilities {
 filter(==,in,like),
 sum,
 count
@@ -220,7 +219,33 @@ count
          type.wrappedUnionType!!.types.should.have.size(3)
       }
 
-      it("should be possible to declare inline joinTo types") {
+      it("can declare single joinTo type") {
+         val type = """
+            type VyneQlQuery inherits String
+            model Movie {}
+            model Actor {}
+            model Review {}
+            model MovieActor {}
+
+            service Movies {
+                vyneQl query movieQuery(body:VyneQlQuery):Movie joinTo( MovieActor[] , Review )
+            }
+
+         """.compiled()
+            .service("Movies")
+            .queryOperation("movieQuery")
+            .returnType
+         type.shouldNotBeNull()
+         val joinType = type.shouldBeInstanceOf<JoinType>()
+         joinType.leftType.qualifiedName.should.equal("Movie")
+         joinType.rightTypes.map { it.toQualifiedName().parameterizedName }.shouldContainAll(
+            "lang.taxi.Array<MovieActor>",
+            "Review"
+         )
+
+      }
+
+      it("should be possible to declare inline union joinTo types") {
          val type = """
             type VyneQlQuery inherits String
             model Movie {}
@@ -243,9 +268,95 @@ count
 
 
          type.shouldNotBeNull()
+         val arrayType = type.shouldBeInstanceOf<ArrayType>()
+         val unionType = arrayType.type.shouldBeInstanceOf<UnionType>()
+         val firstJoinType = unionType.types[0].shouldBeInstanceOf<JoinType>()
+         firstJoinType.leftType.qualifiedName.shouldBe("Movie")
+         firstJoinType.rightTypes.map { it.toQualifiedName().parameterizedName }
+            .shouldContainInOrder(
+               "lang.taxi.Array<MovieActor>",
+               "Review"
+            )
+         val secondJoinType = unionType.types[1].shouldBeInstanceOf<JoinType>()
+         secondJoinType.leftType.qualifiedName.shouldBe("MovieActor")
+         secondJoinType.rightTypes.map { it.toQualifiedName().parameterizedName }
+            .shouldContainInOrder(
+               "lang.taxi.Array<Actor>"
+            )
+         val thirdType = unionType.types[2]
+         thirdType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<Review>")
       }
-
-
    }
 
+   it("is possible to declare union type A | B | C") {
+      val type = """
+         type A
+         type B
+         type C
+         type All = A | B | C
+      """.compiled()
+         .type("All")
+         .typeExpression().type
+         .shouldBeInstanceOf<UnionType>()
+      type.types.shouldHaveSize(3)
+      type.types.map { it.qualifiedName }
+         .shouldContainInOrder("A", "B", "C")
+   }
+
+   it("is possible to declare join on rhs of union type") {
+      val unionType = """
+         type A
+         type B
+         type C
+         type All = A | B joinTo ( C )
+      """.compiled()
+         .type("All")
+         .typeExpression().type
+         .shouldBeInstanceOf<UnionType>()
+      unionType.types.shouldHaveSize(2)
+      unionType.types[0].qualifiedName.shouldBe("A")
+      val joinType = unionType.types[1].shouldBeInstanceOf<JoinType>()
+      joinType.leftType.qualifiedName.shouldBe("B")
+      joinType.rightTypes.map { it.qualifiedName }.shouldContainExactly("C")
+   }
+   it("is possible to declare a union on the rhs of a join type") {
+      val unionType = """
+         type A
+         type B
+         type C
+         type All = A joinTo ( B ) | C
+      """.compiled()
+         .type("All")
+         .typeExpression().type
+         .shouldBeInstanceOf<UnionType>()
+      unionType.types.shouldHaveSize(2)
+      val joinType = unionType.types[0].shouldBeInstanceOf<JoinType>()
+      joinType.leftType.qualifiedName.shouldBe("A")
+      joinType.rightTypes.map { it.qualifiedName }.shouldContainExactly("B")
+
+      unionType.types[1].qualifiedName.shouldBe("C")
+   }
+
+   it("is possible to dcelare a union type inside a join type" ) {
+      val joinType = """
+         type A
+         type B
+         type C
+         type All = A joinTo ( B | C )
+      """.compiled()
+         .type("All")
+         .typeExpression().type
+         .shouldBeInstanceOf<JoinType>()
+      joinType.leftType.qualifiedName.shouldBe("A")
+      joinType.rightTypes.shouldHaveSize(1)
+      val unionType = joinType.rightTypes.single().shouldBeInstanceOf<UnionType>()
+      unionType.types.map { it.qualifiedName }
+         .shouldContainInOrder("B", "C")
+   }
+
+
+
 })
+fun Type.typeExpression(): TypeExpression {
+   return (this as ObjectType).expression as TypeExpression
+}

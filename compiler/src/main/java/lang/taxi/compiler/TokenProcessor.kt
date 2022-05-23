@@ -17,11 +17,15 @@ import lang.taxi.NamespaceQualifiedTypeResolver
 import lang.taxi.Operator
 import lang.taxi.TaxiDocument
 import lang.taxi.TaxiParser
+import lang.taxi.TaxiParser.ClassOrInterfaceTypeContext
+import lang.taxi.TaxiParser.JoinClauseContext
+import lang.taxi.TaxiParser.ListTypeContext
+import lang.taxi.TaxiParser.TypeTypeContext
+import lang.taxi.TaxiParser.UnionTypeOrContext
 import lang.taxi.Tokens
 import lang.taxi.TypeSystem
 import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.expressions.Expression
-import lang.taxi.expressions.TypeExpression
 import lang.taxi.expressions.toExpressionGroup
 import lang.taxi.findNamespace
 import lang.taxi.functions.Function
@@ -899,24 +903,6 @@ class TokenProcessor(
             .map { it.toQualifiedName() }
 
 
-//      val type: Type = if (expression != null && expression is TypeExpression && expression.type is UnionType) {
-//         // This is a named union type.
-//         // eg:
-//         // type Foo = A | B | C
-//         // So, return the UnionType, rather than the ObjectType wrapper
-//         val unionType = expression.type as UnionType
-//         typeSystem.register(
-//            UnionType(
-//               typeName,
-//               UnionTypeDefinition(
-//                  unionType.types,
-//                  ctx.toCompilationUnit(),
-//                  annotations,
-//                  typeDoc
-//               )
-//            )
-//         )
-//      } else {
       val type = typeSystem.register(
          ObjectType(
             typeName, ObjectTypeDefinition(
@@ -932,7 +918,6 @@ class TokenProcessor(
             )
          )
       )
-//      }
 
       return type.right()
    }
@@ -1314,11 +1299,21 @@ class TokenProcessor(
       val referencedGenericTypeArgument = typeArgumentsInScope.firstOrNull {
          it.declaredName == typeType.classOrInterfaceType().Identifier().text()
       }
+      val u = typeType.unionTypeOr().isNotEmpty()
       val hasUnionTypeReference = typeType.typeType() != null && typeType.typeType().isNotEmpty()
+      val hasJoinTypeReference = typeType.joinClause() != null
       return when {
          referencedGenericTypeArgument != null -> referencedGenericTypeArgument.right()
          typeType.inlineInheritedType() != null -> compileInlineInheritedType(namespace, typeType)
          typeType.aliasedType() != null -> compileInlineTypeAlias(namespace, typeType)
+         typeType.typeType() != null && typeType.typeType().isNotEmpty() -> compileCompositeType(
+            namespace,
+            typeType,
+            typeArgumentsInScope
+         )
+         hasJoinTypeReference -> {
+            parseJoinType(namespace, typeType, typeArgumentsInScope)
+         }
          // Ordering is important here.
          // We want to check for union types BEFORE we check for the
          // classOrInterfaceType().
@@ -1348,6 +1343,8 @@ class TokenProcessor(
             }
             unionType
          }
+
+
          typeType.classOrInterfaceType() != null -> resolveUserType(
             namespace,
             typeType.classOrInterfaceType(),
@@ -1367,6 +1364,129 @@ class TokenProcessor(
             type
          }
       }
+   }
+
+   // A composite type can be one of:
+   // - a union type -- eg: A | B
+   // - a join type -- eg: A joinTo B
+   // - a combination -- eg: A | (B joinTo C)
+   // - a combination -- eg: A joinTo B | C
+   private fun compileCompositeType(
+      namespace: Namespace,
+      typeType: TaxiParser.TypeTypeContext,
+      typeArgumentsInScope: List<TypeArgument>
+   ): Either<List<CompilationError>, Type> {
+      val parsedChildren = mutableListOf<Type>()
+      val errors = mutableListOf<CompilationError>()
+      var nextNodeIsUnionType = false
+      typeType.children.mapNotNullTo(parsedChildren) { childNode ->
+         if (errors.isNotEmpty()) {
+            null
+         } else {
+            val appendThisNodeToUnionType = nextNodeIsUnionType
+            val childNodeParseResult = when (childNode) {
+               is TerminalNode -> null// We can igore these.  Things like parenthesis, etc.
+               is TypeTypeContext -> typeOrError(namespace, childNode, typeArgumentsInScope)
+               is JoinClauseContext -> {
+                  // We have a joinClause.
+                  // Therefore, the preceeding node should be a thing that we can joinTo, and should become
+                  // the left hand side.
+                  require(parsedChildren.isNotEmpty()) { "A joinClause node must be preceeded by a left hand node." } // This would be a parser error, and shouldn't happen
+                  val leftHandNode = parsedChildren.removeLast()
+                  parseJoinType(leftHandNode, namespace, childNode, typeArgumentsInScope, childNode.toCompilationUnit())
+               }
+               is ClassOrInterfaceTypeContext -> resolveUserType(
+                  namespace,
+                  childNode,
+                  typeType.typeArguments()
+               )
+               is UnionTypeOrContext -> {
+                  // We shouldn't see multiple | symbols within the same list.
+                  // The grammar collapses them into pairs (LHS | RHS) - even if the RHS is a subsequent list of Union Types.
+                  // Therefore, if we hit this while we're already processing a union type, something has gone wrong.
+                  require(!nextNodeIsUnionType) { "Encontered a UnionTypeOr symbol while already processing a UnionType." }
+                  nextNodeIsUnionType = true
+                  null
+               }
+               is ListTypeContext -> null
+//               {
+//                  require(parsedChildren.size == 1) { "Received an ArrayToken.  However, the parseTree has yieleded multiple types, which haven't been collapsed." }
+//                  val listMemberType = parsedChildren.removeLast()
+//                  ArrayType(listMemberType, typeType.toCompilationUnit()).right()
+//               }
+
+               else -> error("Unexpected child node type inside compound type: ${childNode::class.simpleName}")
+            }?.getOrHandle {
+               // Capture the errors.  This will stop parsing of any subsequent children nodes, and we'll exit
+               errors.addAll(it)
+               null
+            }
+            if (appendThisNodeToUnionType && childNodeParseResult != null) {
+               require(parsedChildren.isNotEmpty()) { "When parsing a secondary (or subsequent) node in a union type, expected to have already parsed a type, but parsedChildren was empty" }
+               val mostRecentlyParsedType = parsedChildren.removeLast()
+               val unionType = UnionType.combine(
+                  mostRecentlyParsedType,
+                  childNodeParseResult,
+                  childNodeParseResult.compilationUnits.single()
+               )
+               nextNodeIsUnionType = false
+               unionType
+            } else {
+               childNodeParseResult
+            }
+
+         }
+      }
+      val result = when {
+         errors.isNotEmpty() -> errors.left()
+         parsedChildren.size == 1 -> parsedChildren.single().right()
+         parsedChildren.isEmpty() -> error("Expected more than one parsed child")
+         else -> error("After parsing all the children of a compound type, the result should be a single type.")
+      }
+      return result
+   }
+
+   private fun parseJoinType(
+      namespace: Namespace,
+      typeType: TaxiParser.TypeTypeContext,
+      typeArgumentsInScope: List<TypeArgument>
+   ): Either<List<CompilationError>, JoinType> {
+      return resolveUserType(
+         namespace,
+         typeType.classOrInterfaceType(),
+         typeType.typeArguments()
+      ).flatMap { leftHandJoinType ->
+         parseJoinType(
+            leftHandJoinType,
+            namespace,
+            typeType.joinClause(),
+            typeArgumentsInScope,
+            typeType.toCompilationUnit()
+         )
+      }
+   }
+
+   private fun parseJoinType(
+      leftHandJoinType: Type,
+      namespace: Namespace,
+      joinClause: JoinClauseContext,
+      typeArgumentsInScope: List<TypeArgument>,
+      compilationUnit: CompilationUnit
+   ): Either<List<CompilationError>, JoinType> {
+      return joinClause.typeType().map { joinClauseTypeReference ->
+         typeOrError(namespace, joinClauseTypeReference, typeArgumentsInScope)
+      }.invertEitherList().flattenErrors()
+         .map { rightHandTypes ->
+            JoinType(
+               JoinType.joinTypeName(leftHandJoinType, rightHandTypes),
+               JoinTypeDefinition(
+                  leftHandJoinType,
+                  rightHandTypes,
+                  null,
+                  compilationUnit
+               )
+            )
+         }
    }
 
    private fun parseUnionType(
