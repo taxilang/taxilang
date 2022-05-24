@@ -36,6 +36,8 @@ module.exports = {
                   "language-reference/types-and-models",
                   "language-reference/advanced-types",
                   "language-reference/describing-services",
+                  "language-reference/functions",
+                  "language-reference/stdlib",
                   "language-reference/querying-with-taxiql",
                   "language-reference/taxi-projects",
                ],
@@ -63,6 +65,8 @@ module.exports = {
                   "best-practices-for-taxonomy-development/conventions"
                ],
                "Release notes": [
+                  "release-notes/1.31.2",
+                  "release-notes/1.31.1",
                   "release-notes/1.31.0",
                   "release-notes/1.30.7",
                   "release-notes/1.30.6",

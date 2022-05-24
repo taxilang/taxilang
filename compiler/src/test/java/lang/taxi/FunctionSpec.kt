@@ -1,27 +1,25 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.accessors.ColumnAccessor
 import lang.taxi.accessors.LiteralAccessor
-import lang.taxi.expressions.FieldReferenceExpression
-import lang.taxi.expressions.FunctionExpression
-import lang.taxi.expressions.LambdaExpression
-import lang.taxi.expressions.LiteralExpression
-import lang.taxi.expressions.OperatorExpression
-import lang.taxi.expressions.TypeExpression
+import lang.taxi.expressions.*
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionModifiers
 import lang.taxi.functions.stdlib.Left
 import lang.taxi.linter.LinterRules
 import lang.taxi.types.FormulaOperator
+import lang.taxi.types.LambdaExpressionType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TypeReferenceSelector
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
-import java.util.EnumSet
+import java.util.*
 import kotlin.test.assertFailsWith
 
-object FunctionSpec : Spek({
+class FunctionSpec : DescribeSpec({
 
    describe("declaring functions") {
       it("should allow declaration of functions") {
@@ -430,6 +428,16 @@ namespace pkgB {
          accessor.operator.should.equal(FormulaOperator.Multiply)
          accessor.rhs.asA<LiteralExpression>().value.should.equal(5)
       }
+
+      it("is possible to declare docs on functions") {
+         """
+            [[ Is a foo ]]
+            declare function foo(String):String
+         """.compiled()
+            .function("foo")
+            .typeDoc.should.equal("Is a foo")
+      }
+
       it("query functions can't be referenced from model fields") {
          val compilationMessages = """
             import vyne.aggregations.sumOver
@@ -441,6 +449,33 @@ namespace pkgB {
             .errors().shouldContainMessage("Query functions may only be used within view definitions")
       }
 
+
+
+      it("is possible to declare functions in expression types") {
+         val expression = """
+            type FirstName inherits String
+            type LastName inherits String
+            type FullName by concat(FirstName, ' ', LastName)
+         """.compiled()
+            .objectType("FullName")
+            .expression.shouldNotBeNull()
+         expression.shouldBeInstanceOf<FunctionExpression>()
+         expression.returnType.qualifiedName.shouldBe(PrimitiveType.STRING.qualifiedName)
+      }
+
+      describe("lambdas") {
+         it("is possible to declare a typed lambda function") {
+            val function = """
+               declare function reduce(Int[], matcher:(Int,String) -> String):Int
+            """.compiled()
+               .function("reduce")
+            val lambda = function.parameters[1].type as LambdaExpressionType
+            lambda.parameterTypes.should.have.size(2)
+            lambda.parameterTypes[0].should.equal(PrimitiveType.INTEGER)
+            lambda.parameterTypes[1].should.equal(PrimitiveType.STRING)
+            lambda.returnType.should.equal(PrimitiveType.STRING)
+         }
+      }
 
       describe("generic type params") {
          it("is valid to declare a function with generic type params") {

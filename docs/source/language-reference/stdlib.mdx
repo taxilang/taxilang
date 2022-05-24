@@ -1,0 +1,172 @@
+---
+IMPORTANT: This file is generated.  Do not edit manually.  For the preamble, edit stdlib.mdx in compiler/src/test/resource. All other content is generated directly from classes
+
+title: Taxi StdLib
+description: Reference documentation on functions provided in Taxi's StdLib packages
+---
+
+Taxi ships with a collections of functions for basic operations on data.
+
+Taxi does not provide implementations of these functions, that's left to
+runtimes, such as Vyne.
+
+
+## Strings
+
+A collection of functions for manipulating strings
+
+### left
+`taxi.stdlib.left`
+
+```taxi
+declare function left(source:String,count:Int):String
+```
+
+Returns the left most characters from the source string
+
+### right
+`taxi.stdlib.right`
+
+```taxi
+declare function right(source:String,count:Int):String
+```
+
+### mid
+`taxi.stdlib.mid`
+
+```taxi
+declare function mid(source: String,startIndex: Int,endIndex: Int):String
+```
+
+Returns the middle of a string, starting at the `startIndex`, and ending right before the `endIndex`.
+
+* `startIndex` - the start index (inclusive)
+* `endIndex` - the end index (exclusive)
+
+### concat
+`taxi.stdlib.concat`
+
+```taxi
+declare function concat(String...):String
+```
+
+### upperCase
+`taxi.stdlib.upperCase`
+
+```taxi
+declare function upperCase(String):String
+```
+
+### lowerCase
+`taxi.stdlib.lowerCase`
+
+```taxi
+declare function lowerCase(String):String
+```
+
+### trim
+`taxi.stdlib.trim`
+
+```taxi
+declare function trim(String):String
+```
+
+### length
+`taxi.stdlib.length`
+
+```taxi
+declare function length(String):Int
+```
+
+### indexOf
+`taxi.stdlib.indexOf`
+
+```taxi
+declare function indexOf(source:String, valueToSearchFor:String):Int
+```
+
+Returns the index of `valueToSearchFor` within `source`
+
+### replace
+`taxi.stdlib.replace`
+
+```taxi
+declare function replace(source: String, searchValue:String, replacement: String):String
+```
+
+Replaces the contents of the provided String, returning a new String
+Accepts three args:
+ * `source: String`: The string to search
+ * `searchValue: String`: The string to search for
+ * `replacement: String`: The string to use as a replacement
+
+## Collections
+
+A collection of functions for operating on collections
+
+### contains
+`taxi.stdlib.contains`
+
+```taxi
+declare function <T> contains(collection: T[], searchTarget:T): Boolean
+```
+
+### allOf
+`taxi.stdlib.allOf`
+
+```taxi
+declare function allOf(values:Boolean...): Boolean
+```
+
+### anyOf
+`taxi.stdlib.anyOf`
+
+```taxi
+declare function anyOf(values:Boolean...): Boolean
+```
+
+### noneOf
+`taxi.stdlib.noneOf`
+
+```taxi
+declare function noneOf(values:Boolean...): Boolean
+```
+
+## Functional
+
+Functions that are functionally functions. Funky
+
+### reduce
+`taxi.stdlib.reduce`
+
+```taxi
+declare function <T,A> reduce(collection: T[], callback: (T,A) -> A):A
+```
+
+### fold
+`taxi.stdlib.fold`
+
+```taxi
+declare function <T,A> fold(collection: T[], initial: A, callback: (T,A) -> A):A
+```
+
+### sum
+`taxi.stdlib.sum`
+
+```taxi
+declare function <T,A> sum(collection: T[], callback: (T) -> A):A
+```
+
+### max
+`taxi.stdlib.max`
+
+```taxi
+declare function <T,A> max(collection: T[], callback: (T) -> A):A
+```
+
+### min
+`taxi.stdlib.min`
+
+```taxi
+declare function <T,A> min(collection: T[], callback: (T) -> A):A
+```
