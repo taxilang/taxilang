@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.google.common.collect.Multimaps
+import lang.taxi.expressions.Expression
 import lang.taxi.functions.Function
 import lang.taxi.policies.Policy
 import lang.taxi.services.Service
@@ -20,6 +21,7 @@ import lang.taxi.types.StreamType
 import lang.taxi.types.Type
 import lang.taxi.types.TypeAlias
 import lang.taxi.types.View
+import lang.taxi.utils.Ids
 import lang.taxi.utils.log
 
 
@@ -244,4 +246,27 @@ open class TaxiDocument(
       return duplicateTypes.filter { it != other.type(it.qualifiedName) }
 
    }
+}
+
+
+fun TaxiDocument.compileExpression(
+   expression: String,
+   returnType: Type,
+   expressionTypeName: String = Ids.id("InlineExpression")
+): Pair<TaxiDocument, Expression> {
+   val additionalSchema = "type $expressionTypeName inherits ${returnType.qualifiedName} by $expression"
+   val currentSchema = this
+   val newSchemaWithType = lang.taxi.Compiler(additionalSchema, importSources = listOf(this))
+      .compile()
+   val expression = newSchemaWithType.objectType(expressionTypeName).expression!!
+   return newSchemaWithType to expression
+}
+
+fun TaxiDocument.compileExpression(
+   expression: String,
+   returnTypeName: String = PrimitiveType.BOOLEAN.qualifiedName,
+   expressionTypeName: String = Ids.id("InlineExpression")
+): Pair<TaxiDocument, Expression> {
+   val returnType = this.type(returnTypeName)
+   return this.compileExpression(expression, returnType, expressionTypeName)
 }

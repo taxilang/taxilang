@@ -24,7 +24,10 @@ data class FunctionAccessor private constructor(
       }
    }
 
+
    override val returnType: Type = function.returnType ?: PrimitiveType.ANY
+   override val allReferencedTypes: Set<Type> = (inputs.flatMap { it.allReferencedTypes } + this.returnType).toSet()
+
    override fun asTaxi(): String {
       val parametersAsTaxi = inputs.joinToString(",") { inputAccessor ->
          when (inputAccessor) {

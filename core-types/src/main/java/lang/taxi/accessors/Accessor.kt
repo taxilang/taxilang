@@ -17,6 +17,11 @@ interface Accessor {
     */
    val strictReturnType: Either<String, Type>
       get() = returnType.right()
+
+   val allReferencedTypes: Set<Type>
+      get() {
+         return setOf(returnType)
+      }
 }
 
 interface AccessorWithDefault {

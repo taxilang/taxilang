@@ -1,18 +1,16 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
-import lang.taxi.expressions.FunctionExpression
-import lang.taxi.expressions.LambdaExpression
-import lang.taxi.expressions.LiteralExpression
-import lang.taxi.expressions.OperatorExpression
-import lang.taxi.expressions.TypeExpression
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
+import lang.taxi.expressions.*
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.PrimitiveType
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object ExpressionTypesSpec : Spek({
+class ExpressionTypesSpec : DescribeSpec({
    describe("Expression types") {
       it("should compile an expression type") {
          val doc = """
@@ -160,6 +158,29 @@ object ExpressionTypesSpec : Spek({
          input.rhs.asA<TypeExpression>().type.qualifiedName.should.equal("RequestedStock")
          input.operator.should.equal(FormulaOperator.GreaterThan)
       }
+
+      val schema = """
+            type FirstName inherits String
+            type LastName inherits String
+            type FavouriteColour inherits String
+            type Age inherits Int
+         """.compiled()
+
+      fun expressionOf(expression: String): Expression {
+         return schema.compileExpression(expression).second
+      }
+
+      fun operatorExpressionOf(expression: String): OperatorExpression {
+         return expressionOf(expression) as OperatorExpression
+      }
+
+      it("two expressions are equal if their syntax is the same") {
+         expressionOf("FirstName == LastName").should.equal(expressionOf("FirstName == LastName"))
+         expressionOf("FirstName == LastName").should.not.equal(expressionOf("FirstName != LastName"))
+         expressionOf("FirstName == 'A'").should.equal(expressionOf("FirstName == 'A'"))
+      }
+
+
    }
    describe("Lambda types") {
       it("should compile simple lambda type") {

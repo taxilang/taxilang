@@ -27,6 +27,12 @@ data class CollectionProjectionExpressionAccessor(val type: Type,
    override fun asTaxi(): String {
       return "[${type.toQualifiedName().parameterizedName}]"
    }
+
+   override val allReferencedTypes: Set<Type>
+      get() {
+         return (listOf(this.returnType) + (projectionScope?.accessors?.flatMap { it.allReferencedTypes }
+            ?: emptyList())).toSet()
+      }
 }
 
 /**

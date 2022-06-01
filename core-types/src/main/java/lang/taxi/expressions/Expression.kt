@@ -4,17 +4,11 @@ import arrow.core.Either
 import arrow.core.getOrElse
 import arrow.core.left
 import arrow.core.right
+import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.functions.FunctionAccessor
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.Compiled
-import lang.taxi.types.FieldReferenceSelector
-import lang.taxi.types.FormulaOperator
-import lang.taxi.types.NumberTypes
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.TaxiStatementGenerator
-import lang.taxi.types.Type
+import lang.taxi.types.*
 
 // Note: Expression inheriting Accessor is tech debt,
 // and really around the wrong way.
@@ -27,11 +21,13 @@ abstract class Expression : Compiled, TaxiStatementGenerator, Accessor {
       // sanitize, stripping namespace declarations
       val raw = this.compilationUnits.first().source.content
       val taxi = if (raw.startsWith("namespace")) {
-         raw.substring(raw.indexOf("{")).removeSurrounding("{","}").trim()
+         raw.substring(raw.indexOf("{")).removeSurrounding("{", "}").trim()
       } else raw
       // TODO: Check this... probably not right
       return taxi
    }
+
+
 }
 
 data class LambdaExpression(
@@ -40,6 +36,7 @@ data class LambdaExpression(
    override val compilationUnits: List<CompilationUnit>
 ) : Expression() {
    override val returnType: Type = expression.returnType
+   override val allReferencedTypes: Set<Type> = (inputs + this.returnType + expression.allReferencedTypes).toSet()
 }
 
 
@@ -48,28 +45,51 @@ data class LambdaExpression(
 data class LiteralExpression(val literal: LiteralAccessor, override val compilationUnits: List<CompilationUnit>) :
    Expression() {
    companion object {
-      fun isNullExpression(expression: Expression):Boolean {
+      fun isNullExpression(expression: Expression): Boolean {
          return expression is LiteralExpression && LiteralAccessor.isNullLiteral(expression.literal)
       }
    }
+
    override val returnType: Type = literal.returnType
 
    val value = literal.value
+
+   private val equality = ImmutableEquality(
+      this,
+      LiteralExpression::returnType,
+      LiteralExpression::value
+   )
+
+   override fun equals(other: Any?) = equality.isEqualTo(other)
+   override fun hashCode(): Int = equality.hash()
 }
 
 // Pure tech-debt, resulting in how Accessors and Expressions have evolved.
-data class FieldReferenceExpression(val selector:FieldReferenceSelector, override val compilationUnits: List<CompilationUnit>) : Expression() {
+data class FieldReferenceExpression(
+   val selector: FieldReferenceSelector,
+   override val compilationUnits: List<CompilationUnit>
+) : Expression() {
    override val returnType: Type = selector.returnType
    val fieldName = selector.fieldName
 }
 
 data class TypeExpression(val type: Type, override val compilationUnits: List<CompilationUnit>) : Expression() {
    override val returnType: Type = type
+   private val returnTypeName: QualifiedName = type.toQualifiedName()
+   private val equality = ImmutableEquality(
+      this,
+      TypeExpression::returnTypeName
+   )
+
+   override fun equals(other: Any?) = equality.isEqualTo(other)
+   override fun hashCode(): Int = equality.hash()
+
 }
 
 data class FunctionExpression(val function: FunctionAccessor, override val compilationUnits: List<CompilationUnit>) :
    Expression() {
    override val returnType: Type = function.returnType
+   override val allReferencedTypes: Set<Type> = function.allReferencedTypes
 }
 
 /**
@@ -85,6 +105,17 @@ data class OperatorExpression(
    val rhs: Expression,
    override val compilationUnits: List<CompilationUnit>
 ) : Expression() {
+   private val equality = ImmutableEquality(
+      this,
+      OperatorExpression::lhs,
+      OperatorExpression::operator,
+      OperatorExpression::rhs,
+   )
+
+   override fun equals(other: Any?) = equality.isEqualTo(other)
+   override fun hashCode(): Int = equality.hash()
+
+
    companion object {
       fun getReturnType(lhsType: PrimitiveType, operator: FormulaOperator, rhsType: PrimitiveType): Type? {
          if (operator.isLogicalOrComparisonOperator()) {
@@ -112,7 +143,7 @@ data class OperatorExpression(
             return types.distinct().single()
          }
          // special cases
-         if (types == setOf(PrimitiveType.TIME,PrimitiveType.LOCAL_DATE)) {
+         if (types == setOf(PrimitiveType.TIME, PrimitiveType.LOCAL_DATE)) {
             return PrimitiveType.INSTANT
          }
 
@@ -121,17 +152,22 @@ data class OperatorExpression(
       }
    }
 
-   override val strictReturnType: Either<String,Type>
-   get() {
-      val lhsType = lhs.returnType.basePrimitive ?: PrimitiveType.ANY
-      val rhsType = rhs.returnType.basePrimitive ?: PrimitiveType.ANY
-      return getReturnType(
-         lhsType = lhsType,
-         operator = operator,
-         rhsType = rhsType
-      )?.right() ?: "Unable to determine the return type resulting from ${lhsType.name} ${operator.symbol} ${rhsType.name}" .left()
-   }
+   override val strictReturnType: Either<String, Type>
+      get() {
+         val lhsType = lhs.returnType.basePrimitive ?: PrimitiveType.ANY
+         val rhsType = rhs.returnType.basePrimitive ?: PrimitiveType.ANY
+         return getReturnType(
+            lhsType = lhsType,
+            operator = operator,
+            rhsType = rhsType
+         )?.right()
+            ?: "Unable to determine the return type resulting from ${lhsType.name} ${operator.symbol} ${rhsType.name}".left()
+      }
    override val returnType: Type = strictReturnType.getOrElse { PrimitiveType.ANY }
+
+   override val allReferencedTypes: Set<Type> =
+      ((this.lhs.allReferencedTypes + this.rhs.allReferencedTypes) + this.returnType).toSet()
+
 
 }
 
@@ -145,4 +181,8 @@ fun List<Expression>.toExpressionGroup(): Expression {
    } else {
       ExpressionGroup(this)
    }
+}
+
+inline fun <reified R> Iterable<*>.containsInstance(): Boolean {
+   return this.filterIsInstance<R>().isNotEmpty()
 }
