@@ -180,7 +180,15 @@ class ExpressionTypesSpec : DescribeSpec({
          expressionOf("FirstName == 'A'").should.equal(expressionOf("FirstName == 'A'"))
       }
 
+      it("checks for mutually exclusive expressions") {
+//         operatorExpressionOf("FirstName == LastName").isMutuallyExclusive(operatorExpressionOf("FirstName != LastName")).shouldBe(true)
+//         operatorExpressionOf("FirstName == LastName").isMutuallyExclusive(operatorExpressionOf("FirstName != FavouriteColour")).shouldBe(false)
+//         operatorExpressionOf("FirstName == 'Foo'").isMutuallyExclusive(operatorExpressionOf("FirstName == 'Bar'")).shouldBe(true)
+//         operatorExpressionOf("FirstName == 'Foo'").isMutuallyExclusive(operatorExpressionOf("LastName == 'Foo'")).shouldBe(false)
 
+//         operatorExpressionOf("FirstName == 'Foo' && Age > 10").isMutuallyExclusive(operatorExpressionOf("LastName =='Bar' && FirstName == 'Baz'")).shouldBe(true)
+         operatorExpressionOf("FirstName == 'Foo' && Age > 10").isMutuallyExclusive(operatorExpressionOf("LastName =='Bar' && FirstName == 'Foo'")).shouldBe(false)
+      }
    }
    describe("Lambda types") {
       it("should compile simple lambda type") {

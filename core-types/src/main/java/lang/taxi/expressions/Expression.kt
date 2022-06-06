@@ -116,6 +116,51 @@ data class OperatorExpression(
    override fun hashCode(): Int = equality.hash()
 
 
+   fun isMutuallyExclusive(other: OperatorExpression): Boolean {
+      val myTypes = this.allReferencedTypes
+      val theirTypes = other.allReferencedTypes
+
+      // Short circut: If there is no overlap in types, they're not mutually exclusive
+      if (myTypes.none { theirTypes.contains(it) }) {
+         return false
+      }
+      // Short circut: If this is an or, then bail.  (This doesn't feel right - prove me wrong with tests)
+      if (this.operator == FormulaOperator.LogicalOr || !this.operator.isLogicalOrComparisonOperator()) {
+         return false
+      }
+
+      // Check for nested expressions:
+      when {
+         lhs is OperatorExpression && lhs.isMutuallyExclusive(other) -> return true
+         rhs is OperatorExpression && rhs.isMutuallyExclusive(other) -> return true
+         other.lhs is OperatorExpression && other.lhs.isMutuallyExclusive(this) -> return true
+         other.rhs is OperatorExpression && other.rhs.isMutuallyExclusive(this) -> return true
+      }
+
+
+      val myOperator = this.operator
+      val theirOperator = other.operator
+      val allOperators = setOf(myOperator, theirOperator)
+      val operatorsAreMutuallyExclusive = when {
+         allOperators.containsAll(listOf(FormulaOperator.Equal, FormulaOperator.NotEqual)) -> true
+         else -> false
+      }
+      val myExpressions = listOf(lhs,rhs)
+      val theirExpressions = listOf(other.lhs,other.rhs)
+      return when {
+         myTypes == theirTypes && operatorsAreMutuallyExclusive -> true
+         myExpressions.containsInstance<LiteralExpression>() && theirExpressions.containsInstance<LiteralExpression>() && allOperators == setOf(FormulaOperator.Equal) -> {
+            // Here, these are two literal expressions (A == 'Foo') and (A == 'Foo')
+            val myLiterals = myExpressions.filterIsInstance<LiteralExpression>().map { it.value }.toSet()
+            val theirLiterals = theirExpressions.filterIsInstance<LiteralExpression>().map { it.value }.toSet()
+            // These two statements cannot both be true if their expressions are for different values
+            myLiterals != theirLiterals
+         }
+         // TODO : There are other conditions when these are mutually exclusive.  Need to work those out
+         else -> false
+      }
+   }
+
    companion object {
       fun getReturnType(lhsType: PrimitiveType, operator: FormulaOperator, rhsType: PrimitiveType): Type? {
          if (operator.isLogicalOrComparisonOperator()) {
