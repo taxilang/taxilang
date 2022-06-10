@@ -4,14 +4,7 @@ import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Accessor
 import lang.taxi.generics.TypeArgumentResolver
 import lang.taxi.services.Parameter
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.Compiled
-import lang.taxi.types.DefinableToken
-import lang.taxi.types.ImportableToken
-import lang.taxi.types.Named
-import lang.taxi.types.TokenDefinition
-import lang.taxi.types.Type
-import lang.taxi.types.TypeArgument
+import lang.taxi.types.*
 import java.util.EnumSet
 
 
@@ -24,8 +17,9 @@ class FunctionDefinition(
    val returnType: Type,
    val modifiers: EnumSet<FunctionModifiers>,
    val typeArguments: List<TypeArgument>,
+   override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
-) : TokenDefinition {
+) : TokenDefinition, Documented {
    private val equality = ImmutableEquality(this, FunctionDefinition::parameters, FunctionDefinition::returnType)
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
@@ -39,7 +33,7 @@ class FunctionDefinition(
       return FunctionDefinition(
          resolvedParameters,
          resolvedReturnType,
-         modifiers, typeArguments, compilationUnit
+         modifiers, typeArguments, typeDoc, compilationUnit
       )
    }
 }
@@ -47,8 +41,8 @@ class FunctionDefinition(
 data class Function(
    override val qualifiedName: String,
    override var definition: FunctionDefinition?
-) : Named, Compiled, ImportableToken, DefinableToken<FunctionDefinition> {
-   val typeArguments:List<TypeArgument>? = definition?.typeArguments
+) : Named, Compiled, ImportableToken, DefinableToken<FunctionDefinition>, Documented {
+   val typeArguments: List<TypeArgument>? = definition?.typeArguments
    fun getParameterType(parameterIndex: Int): Type {
       return when {
          parameterIndex < this.parameters.size -> {
@@ -75,6 +69,11 @@ data class Function(
          return Function(name, definition = null)
       }
    }
+
+   override val typeDoc: String?
+      get() {
+         return if (isDefined) this.definition!!.typeDoc else null;
+      }
 
    val parameters: List<Parameter>
       get() {
