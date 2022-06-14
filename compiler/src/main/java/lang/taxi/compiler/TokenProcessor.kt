@@ -1059,7 +1059,7 @@ class TokenProcessor(
                fields = anonymousTypeFields.toSet(),
                annotations = annotations.toSet(),
                modifiers = listOf(),
-               inheritsFrom = emptySet(),
+               inheritsFrom = setOfNotNull(anonymousTypeResolutionContext.baseType),
                format = null,
                expression = expression,
                compilationUnit = anonymousTypeDefinition.toCompilationUnit(),

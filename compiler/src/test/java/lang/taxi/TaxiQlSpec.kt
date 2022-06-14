@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
 import lang.taxi.accessors.CollectionProjectionExpressionAccessor
 import lang.taxi.accessors.FieldSourceAccessor
 import lang.taxi.types.ArrayType
@@ -10,7 +11,7 @@ import lang.taxi.types.QueryMode
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object TaxiQlSpec : Spek({
+class TaxiQlSpec : DescribeSpec({
    describe("Taxi Query Language") {
       val schema = """
          namespace foo
@@ -56,9 +57,9 @@ object TaxiQlSpec : Spek({
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
          query.projectedType.should.not.be.`null`
-         query.projectedType!!.anonymousTypeDefinition!!.anonymous.should.be.`true`
-         query.projectedType!!.anonymousTypeDefinition!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousProjectedType")
-         val anonymousType = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
+         query.projectedType!!.anonymous.should.be.`true`
+         query.projectedType!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousProjectedType")
+         val anonymousType = query.projectedType!!.typeParameters().first() as ObjectType
          anonymousType.hasField("tradeTimestamp").should.be.`true`
       }
 
@@ -88,7 +89,7 @@ object TaxiQlSpec : Spek({
                "endDate" to QualifiedName.from("lang.taxi.Instant")
             )
          )
-         query.projectedType?.concreteType?.toQualifiedName()?.parameterizedName.should.equal("lang.taxi.Array<foo.OutputOrder>")
+         query.projectedType?.toQualifiedName()?.parameterizedName.should.equal("lang.taxi.Array<foo.OutputOrder>")
          query.typesToFind.should.have.size(1)
          query.typesToFind.first().type.parameterizedName.should.equal("lang.taxi.Array<foo.Order>")
       }
@@ -116,7 +117,7 @@ object TaxiQlSpec : Spek({
                "endDate" to QualifiedName.from("lang.taxi.Instant")
             )
          )
-         query.projectedType?.concreteType?.toQualifiedName()?.parameterizedName.should.equal("lang.taxi.Array<foo.OutputOrder>")
+         query.projectedType?.toQualifiedName()?.parameterizedName.should.equal("lang.taxi.Array<foo.OutputOrder>")
          query.typesToFind.should.have.size(1)
 
          val typeToFind = query.typesToFind.first()
@@ -252,10 +253,9 @@ object TaxiQlSpec : Spek({
            """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
-         query.projectedType?.anonymousTypeDefinition.should.not.be.`null`
-         query.projectedType!!.anonymousTypeDefinition!!.anonymous.should.be.`true`
-         query.projectedType!!.anonymousTypeDefinition!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousProjectedType")
-         val anonymousType = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
+         query.projectedType!!.anonymous.should.be.`true`
+         query.projectedType!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousProjectedType")
+         val anonymousType = query.projectedType!!.typeParameters().first() as ObjectType
          anonymousType.hasField("tradeTimestamp").should.be.`true`
          anonymousType.hasField("outputId").should.be.`true`
       }
@@ -289,11 +289,13 @@ object TaxiQlSpec : Spek({
            """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
-         query.projectedType!!.concreteType!!.qualifiedName.should.equal("foo.OutputOrder")
-         query.projectedType!!.anonymousTypeDefinition!!.anonymous.should.be.`true`
-         query.projectedType!!.anonymousTypeDefinition!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousProjectedType")
-         val anonymousType = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
+         query.projectedType!!.anonymous.should.be.`true`
+         query.projectedType!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousProjectedType")
+         val anonymousType = query.projectedType!!.typeParameters().first() as ObjectType
          anonymousType.hasField("insertedAt").should.be.`true`
+         anonymousType.inheritsFrom.should.have.size(1)
+         anonymousType.fields.should.have.size(2)
+         anonymousType.inheritedFields.should.have.size(1)
       }
 
       it("Should Allow anonymous type with field definitions") {
@@ -309,10 +311,9 @@ object TaxiQlSpec : Spek({
            """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
-         query.projectedType!!.concreteType.should.be.`null`
-         query.projectedType!!.anonymousTypeDefinition!!.anonymous.should.be.`true`
-         query.projectedType!!.anonymousTypeDefinition!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousProjectedType")
-         val anonymousType = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
+         query.projectedType!!.anonymous.should.be.`true`
+         query.projectedType!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousProjectedType")
+         val anonymousType = query.projectedType!!.typeParameters().first() as ObjectType
          anonymousType.hasField("insertedAt").should.be.`true`
       }
 
@@ -330,10 +331,9 @@ object TaxiQlSpec : Spek({
            """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
-         query.projectedType!!.concreteType.should.be.`null`
-         query.projectedType!!.anonymousTypeDefinition!!.anonymous.should.be.`true`
-         query.projectedType!!.anonymousTypeDefinition!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousProjectedType")
-         val anonymousType = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
+         query.projectedType!!.anonymous.should.be.`true`
+         query.projectedType!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousProjectedType")
+         val anonymousType = query.projectedType!!.typeParameters().first() as ObjectType
          anonymousType.hasField("traderEmail").should.be.`true`
          anonymousType.field("traderEmail").accessor.should.not.be.`null`
          val fieldSourceAccessor = anonymousType.field("traderEmail").accessor as FieldSourceAccessor
@@ -356,10 +356,9 @@ object TaxiQlSpec : Spek({
            """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
-         query.projectedType!!.concreteType!!.qualifiedName.should.equal("foo.Trade")
-         query.projectedType!!.anonymousTypeDefinition!!.qualifiedName.should.startWith("lang.taxi.Array")
-         query.projectedType!!.anonymousTypeDefinition!!.anonymous.should.be.`true`
-         val anonType = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
+         query.projectedType!!.qualifiedName.should.startWith("lang.taxi.Array")
+         query.projectedType!!.anonymous.should.be.`true`
+         val anonType = query.projectedType!!.typeParameters().first() as ObjectType
          anonType.fields.size.should.equal(2)
          val fieldSourceAccessor = anonType.field("traderEmail").accessor as FieldSourceAccessor
          fieldSourceAccessor.sourceType.should.equal(anonType.toQualifiedName())
@@ -380,10 +379,9 @@ object TaxiQlSpec : Spek({
            """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
-         query.projectedType!!.concreteType!!.qualifiedName.should.equal("foo.Trade")
-         query.projectedType!!.anonymousTypeDefinition!!.qualifiedName.should.startWith("lang.taxi.Array")
-         query.projectedType!!.anonymousTypeDefinition!!.anonymous.should.be.`true`
-         val anonType = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
+         query.projectedType!!.qualifiedName.should.startWith("lang.taxi.Array")
+         query.projectedType!!.anonymous.should.be.`true`
+         val anonType = query.projectedType!!.typeParameters().first() as ObjectType
          anonType.fields.size.should.equal(2)
          val fieldSourceAccessor = anonType.field("traderEmail").accessor as FieldSourceAccessor
          fieldSourceAccessor.sourceType.should.equal(QualifiedName.from("foo.Order"))
@@ -425,9 +423,8 @@ object TaxiQlSpec : Spek({
            """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
-         query.projectedType!!.concreteType.should.be.`null`
-         query.projectedType!!.anonymousTypeDefinition!!.anonymous.should.be.`true`
-         val anonymousType = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
+         query.projectedType!!.anonymous.should.be.`true`
+         val anonymousType = query.projectedType!!.typeParameters().first() as ObjectType
          anonymousType.hasField("salesPerson").should.be.`true`
          val nestedAnonymousType = anonymousType.field("salesPerson").type as ObjectType
          nestedAnonymousType.anonymous.should.be.`true`
@@ -480,9 +477,8 @@ object TaxiQlSpec : Spek({
                 """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
-         query.projectedType!!.concreteType.should.not.be.`null`
-         query.projectedType!!.anonymousTypeDefinition!!.anonymous.should.be.`true`
-         val anonymousType = query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
+         query.projectedType!!.anonymous.should.be.`true`
+         val anonymousType = query.projectedType!!.typeParameters().first() as ObjectType
          anonymousType.hasField("salesPerson").should.be.`true`
          anonymousType.hasField("traderId").should.be.`true`
          val nestedAnonymousType = anonymousType.field("salesPerson").type as ObjectType
@@ -563,7 +559,7 @@ object TaxiQlSpec : Spek({
             }[]
          """
          )
-         val resultCollectionType = query.projectedType!!.anonymousTypeDefinition!! as ArrayType
+         val resultCollectionType = query.projectedType!! as ArrayType
          val resultMemberType = resultCollectionType.type as ObjectType
          val itemsFieldType = resultMemberType.field("items").type as ArrayType
          val itemsFieldMemberType = itemsFieldType.type as ObjectType
@@ -592,7 +588,7 @@ object TaxiQlSpec : Spek({
             }[]
          """
          )
-         val resultCollectionType = query.projectedType!!.anonymousTypeDefinition!! as ArrayType
+         val resultCollectionType = query.projectedType!! as ArrayType
          val resultMemberType = resultCollectionType.type as ObjectType
          val itemsField = resultMemberType.field("items")
          itemsField.accessor!!.asA<CollectionProjectionExpressionAccessor>().type.qualifiedName.should.equal("TransactionItem")
@@ -612,7 +608,7 @@ object TaxiQlSpec : Spek({
                year: YearProduced
             }[] by [Musical with ( ComposerName )]"""
          )
-         val collectionType = query.projectedType!!.anonymousTypeDefinition!! as ArrayType
+         val collectionType = query.projectedType!! as ArrayType
          val expression = (collectionType.typeParameters()[0] as ObjectType).expression!! as CollectionProjectionExpressionAccessor
          expression.type.qualifiedName.should.equal("Musical")
          expression.projectionScope!!.accessors.should.have.size(1)
@@ -626,7 +622,7 @@ object TaxiQlSpec : Spek({
                name : ComposerName
             }"""
          )
-         query.projectedType!!.anonymousTypeDefinition!!.asA<ObjectType>().annotations.should.have.size(1)
+         query.projectedType!!.asA<ObjectType>().annotations.should.have.size(1)
       }
 
       it("should parse collection projection identifiers with additional scopes in queries") {
@@ -651,7 +647,7 @@ object TaxiQlSpec : Spek({
             }[]
          """
          )
-         val resultCollectionType = query.projectedType!!.anonymousTypeDefinition!! as ArrayType
+         val resultCollectionType = query.projectedType!! as ArrayType
          val resultMemberType = resultCollectionType.type as ObjectType
          val itemsField = resultMemberType.field("items")
          val projectionAccessor = itemsField.accessor!!.asA<CollectionProjectionExpressionAccessor>()
@@ -715,9 +711,8 @@ object TaxiQlSpec : Spek({
             """.trimIndent()
          val queries = Compiler(source = queryString, importSources = listOf(taxiDoc)).queries()
          val query = queries.first()
-         query.projectedType?.anonymousTypeDefinition.should.not.be.`null`
          val anonymousTypeDefinition =
-            query.projectedType!!.anonymousTypeDefinition!!.typeParameters().first() as ObjectType
+            query.projectedType!!.typeParameters().first() as ObjectType
          anonymousTypeDefinition.hasField("trader").should.be.`true`
          val traderField = anonymousTypeDefinition.field("trader")
          traderField.accessor.should.not.be.`null`
