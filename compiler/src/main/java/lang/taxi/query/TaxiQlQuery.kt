@@ -9,5 +9,5 @@ data class TaxiQlQuery(
    val queryMode: QueryMode,
    val parameters: Map<String, QualifiedName>,
    val typesToFind: List<DiscoveryType>,
-   val projectedType: ProjectedType?
+   val projectedType: Type?
 )
