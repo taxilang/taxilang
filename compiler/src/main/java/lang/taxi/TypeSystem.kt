@@ -262,7 +262,8 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       // However, I'm not sure it makes good sense, as compilation in a file can break
       // just by adding another type with a similar name elsewhere.
       // Keeping it for now, but should decide if this is a bad idea.
-      val matchedImplicitImports = importedTokenMap.values.map { it.toQualifiedName() }.filter { it.typeName == name }
+      val matchedImplicitImports =
+         (importedTokenMap + compiledTokens).values.map { it.toQualifiedName() }.filter { it.typeName == name }
       if (matchedImplicitImports.size == 1) {
          return matchedImplicitImports.first().toString()
       } else if (matchedImplicitImports.size > 1) {

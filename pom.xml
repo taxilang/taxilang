@@ -10,6 +10,11 @@
    <description>taxi is a language for defining API contracts. A Dsl that sits atop RAML for resource definition. Taxi
       (short for Taxonomy)
    </description>
+   <licenses>
+      <license>
+         <name>Apache-2.0</name>
+      </license>
+   </licenses>
 
 
    <scm>

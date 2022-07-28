@@ -655,6 +655,28 @@ class TaxiQlSpec : DescribeSpec({
          projectionAccessor.projectionScope!!.accessors.should.have.size(3)
       }
 
+      it("correctly resolves short names in queries") {
+         val (schema, query) = """
+            namespace io.films {
+               model Film {
+                 id : FilmId inherits String
+                 name : FilmTitle inherits String
+               }
+            }
+         """.compiledWithQuery(
+            // In the below query, we don't import or use the fully qualified names,
+            // however because the names are unambiguous, we expect the compiler to resolve them
+            """
+            find { Film } as {
+              foo : FilmId
+              name : FilmTitle
+             }
+         """
+         )
+         query.typesToFind.single().type.parameterizedName.should.equal("io.films.Film")
+         query.projectedType!!.asA<ObjectType>().field("foo").type.qualifiedName.should.equal("io.films.FilmId")
+      }
+
       // This feature has been disabled for now.
       xit("by should be supported with an anonymously typed field") {
          val taxiDoc = Compiler(
