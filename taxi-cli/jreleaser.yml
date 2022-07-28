@@ -52,7 +52,10 @@ packagers:
       active: ALWAYS
       continueOnError: false
       candidate: taxi
-      command: MINOR
+      # Use MAJOR so that SDKMan bumps to this version as the default.
+      # Does not have to be a major release.
+      # https://github.com/jreleaser/jreleaser/discussions/875#discussioncomment-3267934
+      command: MAJOR
 
       downloadUrl: https://repo.vyne.co/release/org/taxilang/taxi-cli/{{projectVersion}}/{{artifactFile}}
 
