@@ -6,16 +6,17 @@
    <groupId>org.taxilang</groupId>
    <artifactId>parent</artifactId>
    <packaging>pom</packaging>
-   <version>1.33.3</version>
+   <version>1.33.4</version>
    <description>taxi is a language for defining API contracts. A Dsl that sits atop RAML for resource definition. Taxi
       (short for Taxonomy)
    </description>
    <licenses>
       <license>
-         <name>Apache-2.0</name>
+         <name>The Apache Software License, Version 2.0</name>
+         <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
       </license>
    </licenses>
-
+   <url>https://taxilang.org</url>
 
    <scm>
       <url>https://gitlab.com/taxi-lang/taxi-lang</url>
