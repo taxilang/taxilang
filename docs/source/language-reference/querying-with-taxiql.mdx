@@ -126,11 +126,65 @@ model BookAndAuthor {
 // Find books, and project to BookAndAuthor - a named type.
 find { Book[] } as BookAndAuthor
 
+```
+
+## Anonymous projected types
+When writing a query, it's very common to define a custom result type, rather than using an existing type defined elsewhere in the schema.
+These custom types are called Anonymous types, and allow for structuring the result exactly as you need it, along with mixing and matching content from multiple different sources.  (It's up to the query engine to determine how to resolve these relationships.)
+
+
+An example of a simple anonymous type is as follows:
+
+```taxiql
 
 // Find books, and project to an anonymous type.
 find { Book[] } as {
    title : BookTitle
    authorName : FirstName + ' ' + LastName
+}[]
+```
+
+Note that the cardinality must match between the source type and the query result type.  i.e.,:
+
+ * If the query returns a single result, the projected result must also be single
+ * If the query returns a collection, the projected result must also be a collection
+
+### Returning a subset of fields from the source type
+If you only want to return a subset of fields from the queried type, a shorthand exists for this:
+
+Fields in a projected type which only have a name (ie., do not declare a type) are considered to be selected from the source type.
+
+Example:
+
+```
+model Book {
+   title : BookTitle inherits String
+   pageCount : PageCount inherits Int
+   rating : Rating
+}
+
+// Find all the books, and only return the title and page count
+find { Book[] } as {
+  title
+  pageCount
+}[]
+```
+
+### Restructuring results to look like another type
+Often, you're querying to feed data to another system which has a predefined schema (and a corresponding Taxi definition).
+
+```
+// Find all the books, and restructure them to the BookDatabaseRecord model
+find { Book[] } as BookDatabaseRecord[]
+```
+
+### Returning a superset of fields from another type
+If you want to change the output to look like another type, and add some additional information, this is possible too:
+
+```
+find { Book[] }
+as BookDatabaseRecord { // Create an anonymous type which inherits from BookDatabaseRecord
+   rottenTomatoesReview : RottenTomatoesReview // And add some new data, which will be discovered at query time.
 }
 ```
 

@@ -27,6 +27,7 @@ cache:
    - 'export NVM_DIR="$HOME/.nvm"'
    - 'unset NPM_CONFIG_PREFIX'
    - '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm'
+   - 'nvm install stable'
    - 'nvm use stable'
 
 .prepare-vscode-plugin-build: &prepare-vscode-plugin-build

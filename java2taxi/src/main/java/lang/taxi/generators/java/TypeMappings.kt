@@ -43,7 +43,6 @@ interface TypeMapper {
       defaultNamespace: String,
       containingMember: AnnotatedElement? = null
    ): Type
-
 }
 
 class DefaultTypeMapper(
@@ -405,11 +404,16 @@ class DefaultTypeMapper(
             val constraints = listOf(property.findAnnotation<Constraint>()).filterNotNull() +
                annotatedElement.getAnnotationsByType(Constraint::class.java).distinct().toList()
 
+
             val mappedConstraints = constraintAnnotationMapper.convert(constraints)
             lang.taxi.types.Field(
                name = property.name,
                typeDoc = annotatedElement.findTypeDoc(),
-               type = getTaxiType(annotatedElement, existingTypes, defaultNamespace),
+               type = getTaxiType(
+                  KTypeWrapper(property.returnType, delegate = annotatedElement),
+                  existingTypes,
+                  defaultNamespace
+               ),
                nullable = property.returnType.isMarkedNullable,
                annotations = mapAnnotations(property),
                constraints = mappedConstraints,
