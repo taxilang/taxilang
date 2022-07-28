@@ -135,16 +135,20 @@ data class DefaultServiceMapper(
 }
 
 
-/*
+/**
 This is a wrapper for times when we need to use KType's for discoverying Taxi types
 In most scenarios, Kotlin provides a way to get from the Java type to a Kotlin type.
 However, some cases this isn't possible (eeg., return types from functions),
-so we need to use this special class
+so we need to use this special class.
+
+@Parameter delegate allows for passing a  delegate to use for annotation detection, which is seperate from
+the underlying KType, (which is used for type alias detection)
  */
-class KTypeWrapper(val ktype: KType) : AnnotatedElement, AnnotatedElementWrapper {
+class KTypeWrapper(val ktype: KType, override val delegate: AnnotatedElement = (ktype.classifier!! as KClass<*>).java) :
+   AnnotatedElement, AnnotatedElementWrapper {
    val arguments = ktype.arguments
    private val klass = ktype.classifier!! as KClass<*>
-   override val delegate: AnnotatedElement = klass.java
+//   override val delegate: AnnotatedElement = klass.java
 
    override fun getAnnotations(): Array<Annotation> {
       return delegate.annotations

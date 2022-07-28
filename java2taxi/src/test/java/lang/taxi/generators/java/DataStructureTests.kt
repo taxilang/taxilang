@@ -383,6 +383,33 @@ namespace namespaceA {
    }
 
    @Test
+   fun `generates correct taxi for a list of scalar type`() {
+      @DataType("foo.Bus")
+      data class FriendRequest(val names: List<PersonName>)
+
+      val taxiDef = TaxiGenerator(typeMapper).forClasses(FriendRequest::class.java).generateAsStrings()
+      val expected = """
+            namespace foo {
+
+            model Bus {
+                passengers : Person[] // was Passengers, See below
+            }
+
+             model Person {
+                name : PersonName
+            }
+
+            type PersonName inherits String
+
+            // Type aliases for arrays are not currently generating correctly.
+            // Not fixing this right now, as I'm not sure if they should, given the move
+            // away from aliases.
+            // type alias Passengers as Person[]
+        }
+        """
+   }
+
+   @Test
    fun given_fieldNameIsReservedWord_then_itIsEscaped() {
       @DataType("foo.Example")
       data class Example(val type: String)
