@@ -24,8 +24,11 @@ import lang.taxi.utils.takeTail
 import org.everit.json.schema.ArraySchema
 import org.everit.json.schema.BooleanSchema
 import org.everit.json.schema.CombinedSchema
+import org.everit.json.schema.EmptySchema
 import org.everit.json.schema.EnumSchema
+import org.everit.json.schema.FalseSchema
 import org.everit.json.schema.FormatValidator
+import org.everit.json.schema.NullSchema
 import org.everit.json.schema.NumberSchema
 import org.everit.json.schema.ObjectSchema
 import org.everit.json.schema.ReferenceSchema
@@ -37,7 +40,7 @@ import java.net.URI
 
 class JsonSchemaTypeMapper(
    private val jsonSchema: Schema,
-   val logger: Logger = Logger(),
+   val logger: Logger = Logger(JsonSchemaTypeMapper::class.java),
    val defaultNamespace: String = getDefaultNamespace(
       jsonSchema,
       logger
@@ -45,9 +48,11 @@ class JsonSchemaTypeMapper(
 
    ) {
 
-   private val _generatedTypes = mutableMapOf<QualifiedName, Type>()
+   data class GeneratedType(val source: Schema, val type: Type)
 
-   val generatedTypes: Set<Type> get() = _generatedTypes.values.toSet()
+   private val _generatedTypes = mutableMapOf<QualifiedName, GeneratedType>()
+
+   val generatedTypes: Set<Type> get() = _generatedTypes.values.map { it.type }.toSet()
 
    companion object {
       fun getSchemaId(schema: Schema, logger: Logger): Either<String, SchemaLocation> {
@@ -117,21 +122,69 @@ class JsonSchemaTypeMapper(
     * Can problably be simplified away
     */
    private fun getTypeFromSchema(schema: Schema, fallbackTypeName: QualifiedName? = null): Type {
-      return if (schema is ReferenceSchema) {
-         getTypeFromSchema(schema.referredSchema)
-      } else {
-         val typeName = getTypeNameFromSchema(schema, fallback = fallbackTypeName)
-         getOrCreateType(typeName, schema)
-      }
-
+      val resolvedSchema = schema.resolve()
+      val typeName = getTypeNameFromSchema(resolvedSchema, fallback = fallbackTypeName)
+      return getOrCreateType(typeName, resolvedSchema)
    }
 
    private fun getOrCreateType(name: QualifiedName, schema: Schema): Type {
-      return _generatedTypes.getOrPut(name) {
-         // This allows us to support recursion - the undefined type will prevent us getting into an endless loop
-         _generatedTypes[name] = ObjectType.undefined(name.fullyQualifiedName)
-         createType(schema, name)
+      val resolvedSchema = schema.resolve()
+      if (resolvedSchema is ArraySchema) {
+         // createType will not create / cache an array type (for good reason, or all
+         // future requests for type Foo will result in a Foo[]
+         // So, if this was asked for as an array, wrap it into an ArrayType
+         val type = getOrCreateType(name, resolvedSchema.allItemSchema)
+         return ArrayType.of(type)
       }
+
+
+      val generatedType = _generatedTypes.getOrPut(name) {
+         // This allows us to support recursion - the undefined type will prevent us getting into an endless loop
+         _generatedTypes[name] = GeneratedType(resolvedSchema, ObjectType.undefined(name.fullyQualifiedName))
+         createType(resolvedSchema, name)
+      }
+      val generatedSourceSchema = generatedType.source
+      if (!schema.resolvesEqualTo(generatedSourceSchema)) {
+         fun logTypeNeedsInvestigationWarning(typeName: QualifiedName, cause: String) {
+            logger.warn("Type needs investigation: $typeName - Cause: $cause")
+         }
+
+         logTypeNeedsInvestigationWarning(
+            name,
+            "Was found resolving to multiple JsonSchema definitions.  All usages should be checked"
+         )
+
+         // Were any types generated from this schema?
+         val generatedFromThisSource = _generatedTypes.values.singleOrNull { it.source == resolvedSchema }
+         if (generatedFromThisSource != null) {
+            logTypeNeedsInvestigationWarning(
+               generatedFromThisSource.type.toQualifiedName(),
+               "This type was also resolved to name $name.  All usages of both types should be checked"
+            )
+            return generatedFromThisSource.type
+         }
+
+         val newName = findNextUnusedQualifiedName(name)
+         logTypeNeedsInvestigationWarning(
+            newName,
+            "Was originally requested with name $name but a conflicting schema definition was detected"
+         )
+         return getOrCreateType(newName, schema)
+      }
+
+      return generatedType.type
+   }
+
+   private fun findNextUnusedQualifiedName(name: QualifiedName): QualifiedName {
+      val originalName = name.fullyQualifiedName.substringBefore("\$Duplicate")
+      var suffixToAttempt = 0;
+      var proposedName = "";
+      do {
+         suffixToAttempt++
+         proposedName = "$originalName\$Duplicate$suffixToAttempt"
+      } while (_generatedTypes.containsKey(QualifiedName.from(proposedName)))
+
+      return QualifiedName.from(proposedName)
    }
 
    private fun replaceType(name: QualifiedName, schema: Schema): Type {
@@ -142,8 +195,8 @@ class JsonSchemaTypeMapper(
    private fun createType(
       schema: Schema,
       name: QualifiedName
-   ): Type {
-      val generated = when (schema) {
+   ): GeneratedType {
+      val createdType = when (schema) {
          is StringSchema -> {
             val scalarType = selectScalarTypeFromFormattedStringType(schema.formatValidator)
             generateScalarType(name, scalarType, schema.description)
@@ -152,13 +205,13 @@ class JsonSchemaTypeMapper(
          is BooleanSchema -> generateScalarType(name, PrimitiveType.BOOLEAN, schema.description)
          is NumberSchema -> generateScalarType(name, getNumberType(schema), schema.description)
          is ObjectSchema -> generateModel(name, schema)
-         is ArraySchema -> generateArray(name, schema)
+         is ArraySchema -> generateArrayMemberType(name, schema)
          is ReferenceSchema -> getTypeFromReferenceSchema(name, schema)
          is CombinedSchema -> generateCombinedSchema(name, schema)
          is EnumSchema -> generateEnum(name, schema)
          else -> TODO("Add support for schema type ${schema::class.simpleName}")
       }
-      return generated
+      return GeneratedType(schema, createdType)
    }
 
    private fun selectScalarTypeFromFormattedStringType(formatValidator: FormatValidator?): PrimitiveType {
@@ -169,6 +222,7 @@ class JsonSchemaTypeMapper(
          "date" -> PrimitiveType.LOCAL_DATE
          "date-time" -> PrimitiveType.INSTANT
          "time" -> PrimitiveType.TIME
+         "unnamed-format" -> PrimitiveType.STRING
          else -> {
             logger.warn("Format of type ${formatValidator.formatName()} is not supported - defaulting to String")
             PrimitiveType.STRING
@@ -238,13 +292,31 @@ class JsonSchemaTypeMapper(
 
    }
 
-   private fun generateArray(name: QualifiedName, schema: ArraySchema): Type {
-      val memberTypeName = QualifiedName(name.namespace, name.typeName + "Member")
-      val memberType = getOrCreateType(memberTypeName, schema.allItemSchema)
-      return ArrayType(memberType, CompilationUnit.unspecified())
+   /**
+    * Just generates a type that the array will contain.
+    * Does not return an ArrayType - it's left to the caller to do this mapping.
+    *
+    * Otherwise, when we get a request for an array of type Foo, then
+    * the request is registered with an Foo[],
+    * meaning next time we ask for just a Foo, we incorrectly get an Foo[].
+    *
+    * See also: getOrCreateType() where we then wrap the type back into the array, after the
+    * inner type has been cached.
+    */
+   private fun generateArrayMemberType(name: QualifiedName, schema: ArraySchema): Type {
+      return getOrCreateType(name, schema.allItemSchema)
    }
 
    private fun generateModel(name: QualifiedName, schema: ObjectSchema): Model {
+      var doc = """${schema.description?.orEmpty()}
+         |
+         |This model has been generated.  The original source is shown below.
+         |
+         |```json
+         |${schema.toString()}
+         |```
+      """.trimMargin().trim()
+
       val fields = schema.propertySchemas.map { (propertyName, propertySchema) ->
          val qualifiedName = getTypeNameFromSchema(propertySchema, propertyName)
          val type = getOrCreateType(qualifiedName, propertySchema)
@@ -258,15 +330,34 @@ class JsonSchemaTypeMapper(
             compilationUnit = CompilationUnit.unspecified()
          )
       }
-      return ObjectType(
-         name.fullyQualifiedName,
-         ObjectTypeDefinition(
-            fields = fields.toSet(),
-            typeKind = TypeKind.Model,
-            compilationUnit = CompilationUnit.unspecified(),
-            typeDoc = schema.description
+
+      return if (fields.isEmpty()) {
+         val warning =
+            "Type $name is defined as an object, but defined no attributes.  Will type this as an Any, however there may be challenges in reading this type.  Consider improving the source schema"
+         logger.warn(warning)
+         doc += "\n$warning"
+
+         ObjectType(
+            name.fullyQualifiedName,
+            ObjectTypeDefinition(
+               fields = fields.toSet(),
+               typeKind = TypeKind.Type,
+               inheritsFrom = setOf(PrimitiveType.ANY),
+               compilationUnit = CompilationUnit.unspecified(),
+               typeDoc = doc
+            )
          )
-      )
+      } else {
+         ObjectType(
+            name.fullyQualifiedName,
+            ObjectTypeDefinition(
+               fields = fields.toSet(),
+               typeKind = TypeKind.Model,
+               compilationUnit = CompilationUnit.unspecified(),
+               typeDoc = doc
+            )
+         )
+      }
    }
 
    private fun getNumberType(schema: NumberSchema): Type {
@@ -318,6 +409,40 @@ class JsonSchemaTypeMapper(
    }
 }
 
-private fun List<String>.removeEmpties():List<String> {
-   return this.filter { it.isNotBlank() && it.isNotEmpty()  }
+private fun Schema.resolvesEqualTo(other: Schema): Boolean {
+   if (this == other) {
+      return true
+   }
+   val resolvedThis = this.resolve()
+   val resolvedThat = other.resolve()
+
+   // If both schemas are StringSchema (for example), but only
+   // differ in validation rules (for example), then for now,
+   // we consider them resolving equal.
+   // IN future, we may wish to be more strict about this.
+   val schemaTypesThatAreEqualByTypeOnly = listOf(
+      BooleanSchema::class,
+      EmptySchema::class,
+      FalseSchema::class,
+      NullSchema::class,
+      NumberSchema::class,
+      StringSchema::class
+   )
+   return when {
+      resolvedThis == resolvedThat -> true
+      resolvedThis::class == resolvedThat::class && schemaTypesThatAreEqualByTypeOnly.contains(resolvedThis::class) -> true
+      else -> false
+   }
+}
+
+private fun Schema.resolve(): Schema {
+   return if (this is ReferenceSchema) {
+      this.referredSchema
+   } else {
+      this
+   }
+}
+
+private fun List<String>.removeEmpties(): List<String> {
+   return this.filter { it.isNotBlank() && it.isNotEmpty() }
 }

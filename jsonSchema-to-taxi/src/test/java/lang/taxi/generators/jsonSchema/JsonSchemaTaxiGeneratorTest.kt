@@ -9,6 +9,7 @@ import lang.taxi.testing.TestHelpers
 import org.everit.json.schema.loader.SchemaLoader
 import org.junit.jupiter.api.Test
 import java.net.URI
+import java.net.URL
 
 class JsonSchemaTaxiGeneratorTest {
 
@@ -75,7 +76,9 @@ namespace net.pwall {
    @Test
    fun `can parse a typed array`() {
       val schemaJson = Resources.getResource("samples/typed-array.json")
-      TaxiGenerator(schemaLoader = SchemaLoader.builder().draftV6Support()).generateAsStrings(schemaJson)
+      val generated =
+         TaxiGenerator(schemaLoader = SchemaLoader.builder().draftV6Support()).generateAsStrings(schemaJson)
+      generated
          .shouldCompileTheSameAs(
             """namespace com.example {
    [[ A representation of a person, company, organization, or place ]]
@@ -101,17 +104,18 @@ namespace net.pwall {
    }
 
 
-//   @Test
-//   fun `can load from url`() {
-//      val url = URL("https://api.ultumus.com/VYNE/apps/v1/docs/schemas/index-edge-api-doc.json")
-//      val generated = TaxiGenerator(
-//         schemaLoader = SchemaLoader
-//            .builder()
-//            .resolutionScope("https://api.ultumus.com/VYNE/apps/v1/docs/schemas/")
-//      )
-//         .generateAsStrings(url)
-//      TestHelpers.compile(generated.taxi)
-//   }
+   @Test
+   fun `can load from url`() {
+      val url = URL("https://uatapi.ultumus.com/VYNE/apps/v1/docs/schemas/index-edge-api-doc.json")
+      val generated = TaxiGenerator(
+         schemaLoader = SchemaLoader
+            .builder()
+            .resolutionScope("https://uatapi.ultumus.com/VYNE/apps/v1/docs/schemas/")
+      )
+         .generateAsStrings(url)
+      val compiled = TestHelpers.compile(generated.taxi)
+      compiled.type("com.ultumus.uatapi.PricingAnalytics")
+   }
 }
 
 
