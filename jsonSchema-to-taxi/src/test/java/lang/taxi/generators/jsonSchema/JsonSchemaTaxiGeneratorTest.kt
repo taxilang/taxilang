@@ -9,6 +9,7 @@ import lang.taxi.testing.TestHelpers
 import org.everit.json.schema.loader.SchemaLoader
 import org.junit.jupiter.api.Test
 import java.net.URI
+import java.net.URL
 
 class JsonSchemaTaxiGeneratorTest {
 
@@ -123,8 +124,6 @@ class JsonSchemaTaxiGeneratorTest {
 
    [[ Do I like this vegetable? ]]
    type VeggieLike inherits Boolean
-
-
 }"""
          )
    }
