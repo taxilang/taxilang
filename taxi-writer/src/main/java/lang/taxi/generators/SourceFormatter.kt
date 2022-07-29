@@ -1,5 +1,7 @@
 package lang.taxi.generators
 
+import lang.taxi.utils.log
+
 
 /**
  * Source formatter and modifier.
@@ -11,64 +13,81 @@ package lang.taxi.generators
  * and will be implemented at a later date.
  */
 class SourceFormatter(private val spaceCount: Int = 3, private val inlineTypeAliases: Boolean = false) {
-    companion object {
-        private const val REMOVED_TOKEN = "REMOVED_TOKEN"
-    }
+   companion object {
+      private const val REMOVED_TOKEN = "REMOVED_TOKEN"
+   }
 
-    fun format(raw: String): String {
-        val unindented = raw.split("\n")
-                .map { it.trim() }
+   fun format(raw: String): String {
+      val unindented = raw.split("\n")
+         .map { it.trim() }
 
-        var indentationDepth = 0
-        val indented = unindented.joinToString("\n") { line ->
-            if (line.endsWith("}")) indentationDepth--
+      var indentationDepth = 0
+      var isInsideDocumentationBlock = false
+      val indented = unindented.joinToString("\n") { line ->
+         val lineStartsDocumentationBlock = line.startsWith("[[")
+         val lineEndsDocumentationBlock = line.endsWith("]]")
+         val lineIsLineComment = line.startsWith("//")
 
-            val indented = line.prependIndent(" ".repeat(indentationDepth * spaceCount))
+         if (lineStartsDocumentationBlock) {
+            isInsideDocumentationBlock = true
+         }
+         if (lineEndsDocumentationBlock) {
+            isInsideDocumentationBlock = false
+         }
 
-            if (line.endsWith("{")) indentationDepth++
-            indented
-        }
+         if (!isInsideDocumentationBlock && line.endsWith("}")) indentationDepth--
 
-        return if (inlineTypeAliases) {
-            inlineTypeAliases(indented)
-        } else {
-            indented
-        }
-    }
+         if (indentationDepth < 0) {
+            log().warn("Source formatter has generated an incorrect indentationDepth when formatting: $raw")
+            indentationDepth = 0
+         }
 
-    private fun stripNamespaces(raw: String): String {
-        TODO();
-    }
+         val indented = line.prependIndent(" ".repeat(indentationDepth * spaceCount))
 
-    private fun inlineTypeAliases(raw: String): String {
+         if (!isInsideDocumentationBlock && line.endsWith("{")) indentationDepth++
+         indented
+      }
 
-        val lines = raw.split("\n").toMutableList()
-        lines.forEachIndexed { index, line ->
-            if (line.trim().startsWith("type alias")) {
-                if (inlineTypeAliasLine(line, lines)) {
-                    lines[index] = REMOVED_TOKEN
-                }
+      return if (inlineTypeAliases) {
+         inlineTypeAliases(indented)
+      } else {
+         indented
+      }
+   }
+
+   private fun stripNamespaces(raw: String): String {
+      TODO();
+   }
+
+   private fun inlineTypeAliases(raw: String): String {
+
+      val lines = raw.split("\n").toMutableList()
+      lines.forEachIndexed { index, line ->
+         if (line.trim().startsWith("type alias")) {
+            if (inlineTypeAliasLine(line, lines)) {
+               lines[index] = REMOVED_TOKEN
             }
-        }
-        return lines.filter { it != REMOVED_TOKEN }.joinToString("\n")
-    }
+         }
+      }
+      return lines.filter { it != REMOVED_TOKEN }.joinToString("\n")
+   }
 
-    fun inlineTypeAliasLine(line: String, lines: MutableList<String>): Boolean {
-        val (aliasName, aliasLine) = extractAlias(line)
-        var successful = false
-        lines.forEachIndexed { index, content ->
-            if (content.replace(" ", "").endsWith(":$aliasName")) {
-                lines[index] = "$content $aliasLine"
-                successful = true
-                return@forEachIndexed
-            }
-        }
-        return successful
-    }
+   fun inlineTypeAliasLine(line: String, lines: MutableList<String>): Boolean {
+      val (aliasName, aliasLine) = extractAlias(line)
+      var successful = false
+      lines.forEachIndexed { index, content ->
+         if (content.replace(" ", "").endsWith(":$aliasName")) {
+            lines[index] = "$content $aliasLine"
+            successful = true
+            return@forEachIndexed
+         }
+      }
+      return successful
+   }
 
-    private fun extractAlias(line: String): Pair<String, String> {
-        val aliasDeclaration = line.trim().removePrefix("type alias ").trim()
-        val aliasName = aliasDeclaration.split(" ").first()
-        return aliasName to aliasDeclaration.removePrefix(aliasName).trim()
-    }
+   private fun extractAlias(line: String): Pair<String, String> {
+      val aliasDeclaration = line.trim().removePrefix("type alias ").trim()
+      val aliasName = aliasDeclaration.split(" ").first()
+      return aliasName to aliasDeclaration.removePrefix(aliasName).trim()
+   }
 }
