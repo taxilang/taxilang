@@ -24,7 +24,9 @@ enum class Level {
    ERROR;
 }
 
-class Logger {
+class Logger(val logName: String = "lang.taxi.CodeGenerationLogger") {
+   constructor(logClass: Class<*>) : this(logClass.simpleName)
+
    private val _messages: MutableList<Message> = mutableListOf()
 
    val messages: List<Message>
