@@ -8,7 +8,7 @@ services:
             --eureka.uri=http://eureka
             --eureka.instance.preferIpAddress=true
             --server.port=80
-            --management.endpoints.web.exposure.include=elastic,prometheus,metrics,info,health,logfile,loggers
+            --management.endpoints.web.exposure.include=metrics,info,health,logfile,loggers
             --vyne.analytics.mode=InProcess
             --vyne.analytics.persistRemoteCallResponses=true
             --vyne.analytics.persistResults=true
