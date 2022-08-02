@@ -40,7 +40,7 @@ namespace net.pwall {
       name : Name
       id : Id
       stock : Stock?
-      tags : TagsMember[]?
+      tags : Tags[]?
       someTime : SomeTime?
       someDate : SomeDate?
       someDateTime : SomeDateTime?
@@ -66,7 +66,7 @@ namespace net.pwall {
 
    type Retail inherits Decimal
 
-   type TagsMember inherits String
+   type Tags inherits String
 }
 
          """.trimIndent()
@@ -83,13 +83,13 @@ namespace net.pwall {
             """namespace com.example {
    [[ A representation of a person, company, organization, or place ]]
    model Arrays {
-      fruits : FruitsMember[]?
-      vegetables : VegetablesMember[]?
+      fruits : Fruits[]?
+      vegetables : Vegetables[]?
    }
 
-   type FruitsMember inherits String
+   type Fruits inherits String
 
-   model VegetablesMember {
+   model Vegetables {
       veggieName : VeggieName
       veggieLike : VeggieLike
    }
