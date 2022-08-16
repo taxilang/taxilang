@@ -31,4 +31,9 @@ class SwaggerTaxiGenerator(private val schemaWriter: SchemaWriter) {
 
       return GeneratedTaxiCode(taxi, logger.messages)
    }
+
+   fun parseVersion(source: String): String? {
+      val swagger: Swagger = SwaggerParser().parse(source)
+      return swagger.info.version
+   }
 }
