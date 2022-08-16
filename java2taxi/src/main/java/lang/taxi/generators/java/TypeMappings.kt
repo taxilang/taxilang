@@ -79,7 +79,7 @@ class DefaultTypeMapper(
 
       if (declaresTypeAlias) {
 
-         val typeAliasName = getDeclaredTypeAliasName(element, defaultNamespace)!!
+         val typeAliasName = getTypeNameOnTypeResolvedToNamespace(element, defaultNamespace)!!
          if (declaredAsImport(element)) {
             return getOrCreateImport(typeAliasName, existingTypes)
          }
@@ -110,7 +110,7 @@ class DefaultTypeMapper(
       }
 
       if (containingMember != null && declaresTypeAlias(containingMember)) {
-         val typeAliasName = getDeclaredTypeAliasName(containingMember, defaultNamespace)!!
+         val typeAliasName = getTypeNameOnTypeResolvedToNamespace(containingMember, defaultNamespace)!!
          return getOrCreateScalarType(containingMember, typeAliasName, existingTypes)
       }
 
@@ -210,6 +210,7 @@ class DefaultTypeMapper(
             // returns T of List<T> / Set<T>
             (element.genericType as ParameterizedType).actualTypeArguments[0] as Class<*>
          }
+
          else -> TODO("Collection types that aren't fields not supported yet - (got $element)")
       }
       return getTaxiType(collectionType, existingTypes, defaultNamespace)
@@ -273,10 +274,15 @@ class DefaultTypeMapper(
    }
 
    private fun declaresTypeAlias(element: AnnotatedElement): Boolean {
-      return getDeclaredTypeAliasName(element, "") != null
+      return getTypeNameOnTypeResolvedToNamespace(element, "") != null
    }
 
-   private fun getDeclaredTypeAliasName(element: AnnotatedElement, defaultNamespace: String): String? {
+   fun getDataTypeAnnotation(element: AnnotatedElement): DataType? {
+      return getDataTypeFromKotlinTypeAlias(element)
+         ?: element.getAnnotation(DataType::class.java) ?: return null
+   }
+
+   private fun getTypeNameOnTypeResolvedToNamespace(element: AnnotatedElement, defaultNamespace: String): String? {
       val dataType = getDataTypeFromKotlinTypeAlias(element)
          ?: element.getAnnotation(DataType::class.java) ?: return null
       // Not sure why we need this, but without it, a stack overflow is caused...
@@ -380,7 +386,7 @@ class DefaultTypeMapper(
    }
 
 
-   private fun mapTaxiFields(
+   fun mapTaxiFields(
       javaClass: Class<*>,
       defaultNamespace: String,
       existingTypes: MutableSet<Type>
