@@ -1,6 +1,7 @@
 package lang.taxi.generators.kotlin
 
 import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import lang.taxi.types.Annotatable
@@ -19,7 +20,7 @@ object AnnotationFactories {
     }
 }
 
-open class BaseAnnotationInjector(private val annotationName: String, private val annotationFactory: AnnotationFactory) {
+open class BaseAnnotationInjector(protected val annotationName: String, protected val annotationFactory: AnnotationFactory) {
     protected fun getAnnotations(target: Annotatable): Sequence<AnnotationSpec> {
         return target.annotations
                 .asSequence()
@@ -30,11 +31,21 @@ open class BaseAnnotationInjector(private val annotationName: String, private va
 
 class FieldAnnotationInjector(annotationName: String, annotationFactory: AnnotationFactory) : FieldProcessor<PropertySpec.Builder>, BaseAnnotationInjector(annotationName, annotationFactory) {
     override fun process(builder: PropertySpec.Builder, field: Field): PropertySpec.Builder {
-
         return builder.addAnnotations(getAnnotations(field).asIterable())
     }
 }
 
+class JpaEnumFieldInjector(annotationName: String, annotationFactory: AnnotationFactory, val enumeratedValue: Any) :
+   FieldProcessor<PropertySpec.Builder>, BaseAnnotationInjector(annotationName, annotationFactory) {
+   override fun process(builder: PropertySpec.Builder, field: Field): PropertySpec.Builder {
+      val annotationSpecs = field.annotations
+         .asSequence()
+         .filter { it.qualifiedName == annotationName }
+         .map(annotationFactory)
+         .map { it.toBuilder().addMember("%T.%N", ClassName("javax.persistence","EnumType"), "STRING" ).build() }
+      return builder.addAnnotations(annotationSpecs.asIterable())
+   }
+}
 class TypeAnnotationInjector(annotationName: String, annotationFactory: AnnotationFactory) : TypeProcessor<TypeSpec.Builder>, BaseAnnotationInjector(annotationName, annotationFactory) {
     override fun process(builder: TypeSpec.Builder, type: Type): TypeSpec.Builder {
         return when (type) {

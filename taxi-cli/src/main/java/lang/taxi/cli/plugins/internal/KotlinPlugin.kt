@@ -11,6 +11,7 @@ import lang.taxi.generators.kotlin.KotlinGenerator
 import lang.taxi.plugins.Artifact
 import lang.taxi.plugins.PluginWithConfig
 import org.apache.maven.model.Build
+import org.apache.maven.model.Dependency
 import org.apache.maven.model.Model
 import org.apache.maven.model.Plugin
 import org.apache.maven.model.PluginExecution
@@ -41,10 +42,9 @@ class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGener
    override fun generate(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiProjectEnvironment): List<WritableSource> {
       val outputPathRoot = if (config.maven == null) Paths.get(config.outputPath) else environment.outputPath.resolve("src/main/java")
       val defaultPackageName =
-         config.generatedTypeNamesPackageName ?:
-         environment.project.identifier.name.organisation
-         .replace("/",".")
-         .replace("@","")
+         config.generatedTypeNamesPackageName ?: environment.project.identifier.name.organisation
+            .replace("/", ".")
+            .replace("@", "")
 
       val generator: KotlinGenerator = KotlinGenerator(typeNamesTopLevelPackageName = defaultPackageName)
       val sources = generator.generate(taxi, processors, environment)
@@ -66,6 +66,11 @@ class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGener
             version = config.kotlinVersion
          })
          model.dependencies.add(org.apache.maven.model.Dependency().apply {
+            groupId = "org.jetbrains.kotlin"
+            artifactId = "kotlin-reflect"
+            version = config.kotlinVersion
+         })
+         model.dependencies.add(org.apache.maven.model.Dependency().apply {
             groupId = "org.taxilang"
             artifactId = "taxi-annotations"
             version = taxiVersion
@@ -74,6 +79,12 @@ class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGener
             groupId = "com.google.guava"
             artifactId = "guava"
             version = config.guavaVersion
+         })
+
+         model.dependencies.add(org.apache.maven.model.Dependency().apply {
+            groupId = "jakarta.persistence"
+            artifactId = "jakarta.persistence-api"
+            version = "2.2.3"
          })
 
          if (model.properties == null) {
@@ -92,6 +103,29 @@ class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGener
             groupId = "org.jetbrains.kotlin"
             artifactId = "kotlin-maven-plugin"
             version = config.kotlinVersion
+
+            configuration = Xpp3Dom("configuration").apply {
+               addChild(Xpp3Dom("compilerPlugins").apply {
+                  addChild(Xpp3Dom("plugin").apply {
+                     value = "spring"
+                  })
+                  addChild(Xpp3Dom("plugin").apply {
+                     value = "jpa"
+                  })
+               })
+            }
+
+            dependencies.add(Dependency().apply {
+               groupId = "org.jetbrains.kotlin"
+               artifactId = "kotlin-maven-allopen"
+               version = config.kotlinVersion
+            })
+
+            dependencies.add(Dependency().apply {
+               groupId = "org.jetbrains.kotlin"
+               artifactId = "kotlin-maven-noarg"
+               version = config.kotlinVersion
+            })
 
             executions.add(PluginExecution().apply {
                id = "compile"

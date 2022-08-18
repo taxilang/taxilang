@@ -24,6 +24,7 @@ import lang.taxi.jvm.common.PrimitiveTypes
 import lang.taxi.types.ArrayType
 import lang.taxi.types.EnumType
 import lang.taxi.types.Field
+import lang.taxi.types.Modifier
 import lang.taxi.types.Named
 import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
@@ -105,7 +106,10 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
       return FileSpecWritableSource.from(type.toQualifiedName(), builder.build())
    }
 
-   private fun generateType(type: ObjectType, typeNamesAsConstantsGenerator: TypeNamesAsConstantsGenerator): WritableSource {
+   private fun generateType(type: ObjectType, typeNamesAsConstantsGenerator: TypeNamesAsConstantsGenerator): WritableSource? {
+      if (type.annotations.firstOrNull { it.name == "KotlinIgnore" } != null) {
+         return null
+      }
       val qualifiedName = type.toQualifiedName()
 
 
@@ -115,8 +119,9 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
 
       val properties = mutableListOf<PropertySpec>()
       val superclassProperties = mutableListOf<Field>()
-      val specBuilder = TypeSpec.classBuilder(type.className())
-         .addModifiers(KModifier.OPEN)
+
+      var specBuilder = TypeSpec.classBuilder(type.className())
+
          .addAnnotation(AnnotationSpec.builder(DataType::class)
             .addMember("value = %M", typeNamesAsConstantsGenerator.asConstant(type.toQualifiedName()))
             .addMember("imported = %L", true)
@@ -151,6 +156,10 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
             }.build()
          )
          .addProperties(properties)
+
+      if (type.annotations.firstOrNull { it.name == "Entity" } == null) {
+         specBuilder = specBuilder.addModifiers(KModifier.OPEN)
+      }
       if (type.inheritsFrom.size == 1) {
          val superType = type.inheritsFrom.first()
          if (willGenerateAsInterface(superType)) {

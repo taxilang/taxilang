@@ -12,6 +12,7 @@ import lang.taxi.generators.TaxiProjectEnvironment
 import lang.taxi.generators.WritableSource
 import lang.taxi.messages.Severity
 import lang.taxi.packages.TaxiSourcesLoader
+import lang.taxi.plugins.ComponentProviderPlugin
 import lang.taxi.plugins.Plugin
 import org.apache.commons.io.FileUtils
 import org.springframework.stereotype.Component
@@ -34,7 +35,9 @@ class BuildCommand(private val pluginManager: PluginRegistry) : ProjectShellComm
             Severity.ERROR -> log().error(message.toString())
          }
       }
-      val processorsFromPlugins = collectProcessorsFromPlugins()
+      //val processorsFromPlugins = collectProcessorsFromPlugins()
+      val processorsFromPlugins = pluginManager.declaredPlugins.filterIsInstance< ComponentProviderPlugin>().flatMap { it.comoponents }
+         .filterIsInstance<Processor>()
 
       val sourcesToOutput = pluginManager.declaredPlugins
          .filterIsInstance<ModelGenerator>()
