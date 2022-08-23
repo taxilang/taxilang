@@ -12,21 +12,30 @@ import lang.taxi.services.Service
 import lang.taxi.types.Type
 
 class OpenApiTaxiGenerator(private val schemaWriter: SchemaWriter) {
-    fun generateAsStrings(source: String, defaultNamespace: String, options: GeneratorOptions = GeneratorOptions()): GeneratedTaxiCode {
-        val logger = Logger()
-        val spec = OpenAPIV3Parser().readContents(source, emptyList(), ParseOptions())
+   fun generateAsStrings(
+      source: String,
+      defaultNamespace: String,
+      options: GeneratorOptions = GeneratorOptions()
+   ): GeneratedTaxiCode {
+      val logger = Logger()
+      val spec = OpenAPIV3Parser().readContents(source, emptyList(), ParseOptions())
 
-       val (services, types) = generateTaxiObjects(
-          spec.openAPI,
-          defaultNamespace,
-          logger,
-          options,
-       )
-       val taxi = schemaWriter.generateSchemas(
-                listOf(TaxiDocument(types, services, emptySet()))
-        )
-        return GeneratedTaxiCode(taxi, logger.messages)
-    }
+      val (services, types) = generateTaxiObjects(
+         spec.openAPI,
+         defaultNamespace,
+         logger,
+         options,
+      )
+      val taxi = schemaWriter.generateSchemas(
+         listOf(TaxiDocument(types, services, emptySet()))
+      )
+      return GeneratedTaxiCode(taxi, logger.messages)
+   }
+
+   fun parseVersion(source: String): String? {
+      val spec = OpenAPIV3Parser().readContents(source, emptyList(), ParseOptions())
+      return spec.openAPI.info.version
+   }
 
    companion object {
       fun generateTaxiObjects(

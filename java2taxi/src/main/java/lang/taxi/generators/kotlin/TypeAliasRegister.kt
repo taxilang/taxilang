@@ -18,7 +18,55 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.primaryConstructor
 
-class TypeAliasRegister private constructor(classes: Collection<Class<*>>) {
+class TypeAliasRegister private constructor(classes: List<Class<*>> = emptyList()) {
+
+   private val typesWithMeta: MutableMap<String, AnnotatedTypeAlias> = mutableMapOf()
+   private val registeredPackages: MutableSet<String> = mutableSetOf()
+
+   init {
+      registerClasses(classes)
+   }
+
+
+   private fun registerPackage(packageName: String) {
+      val urls = ClasspathHelper.forPackage(packageName)
+         .toTypedArray()
+      val reflections = Reflections(
+         ConfigurationBuilder()
+            .setUrls(*urls)
+            .setScanners(TypeAnnotationsScanner(), SubTypesScanner())
+      )
+      val types = reflections.getTypesAnnotatedWith(Metadata::class.java)
+      registerClasses(types)
+      registeredPackages.add(packageName)
+   }
+
+   private fun registerClasses(classes: Collection<Class<*>>) {
+      val classesAndAliases = classes
+         .map { clazz -> clazz to KotlinClassMetadata.read(clazz.readMetadata()) }
+         .filter { (_, value) -> value is KotlinClassMetadata.FileFacade }
+         .flatMap { (clazz, metadata) ->
+            val typeAliasesWithDataType = (metadata as KotlinClassMetadata.FileFacade).toKmPackage()
+               .typeAliases
+               .mapNotNull { typeAlias ->
+                  val annotation = typeAlias.annotations.dataTypeAnnotation()
+                  if (annotation != null) {
+                     Triple(clazz, typeAlias, annotation)
+                  } else {
+                     null
+                  }
+               }
+               .map { (clazz, typeAlias, dataType) ->
+                  // Compiler is being weird, and clazz.packageName is throwing an error
+                  val packageName = clazz.`package`.name
+                  AnnotatedTypeAlias(packageName + "." + typeAlias.name, dataType)
+               }
+            typeAliasesWithDataType
+         }
+         .associateBy { it.qualifiedName }
+      this.typesWithMeta.putAll(classesAndAliases)
+   }
+
    fun findDataType(parameter: KParameter?): DataType? {
       if (parameter == null) {
          return null
@@ -29,7 +77,22 @@ class TypeAliasRegister private constructor(classes: Collection<Class<*>>) {
    }
 
    fun findDataType(type: KType): DataType? {
-      return TypeAliasNameFinder.findTypeAliasName(type)?.let { typeAliasName -> findDataType(typeAliasName) }
+
+      return TypeAliasNameFinder.findTypeAliasName(type)?.let { typeAliasName ->
+         val nameParts = typeAliasName.split(".")
+
+         // Don't try to register types in the root package.
+         if (nameParts.size > 1) {
+            val packageName = nameParts.take(nameParts.size - 1).joinToString(".")
+            if (!registeredPackages.contains(packageName)) {
+               // Register the package now
+               registerPackage(packageName)
+            }
+
+         }
+
+         findDataType(typeAliasName)
+      }
    }
 
    fun findDataType(kotlinProperty: KCallable<*>?): DataType? {
@@ -46,28 +109,6 @@ class TypeAliasRegister private constructor(classes: Collection<Class<*>>) {
       return annotatedType?.annotation
    }
 
-   private val typesWithMeta = classes
-      .map { clazz -> clazz to KotlinClassMetadata.read(clazz.readMetadata()) }
-      .filter { (_, value) -> value is KotlinClassMetadata.FileFacade }
-      .flatMap { (clazz, metadata) ->
-         val typeAliasesWithDataType = (metadata as KotlinClassMetadata.FileFacade).toKmPackage()
-            .typeAliases
-            .mapNotNull { typeAlias ->
-               val annotation = typeAlias.annotations.dataTypeAnnotation()
-               if (annotation != null) {
-                  Triple(clazz, typeAlias, annotation)
-               } else {
-                  null
-               }
-            }
-            .map { (clazz, typeAlias, dataType) ->
-               // Compiler is being weird, and clazz.packageName is throwing an error
-               val packageName = clazz.`package`.name
-               AnnotatedTypeAlias(packageName + "." + typeAlias.name, dataType)
-            }
-         typeAliasesWithDataType
-      }
-      .associateBy { it.qualifiedName }
 
    companion object {
       private val registeredPackageNames = mutableListOf<String>()
@@ -107,7 +148,7 @@ class TypeAliasRegister private constructor(classes: Collection<Class<*>>) {
                .setScanners(TypeAnnotationsScanner(), SubTypesScanner())
          )
          val types = reflections.getTypesAnnotatedWith(Metadata::class.java)
-         return TypeAliasRegister(types)
+         return TypeAliasRegister(types.toList())
       }
    }
 }

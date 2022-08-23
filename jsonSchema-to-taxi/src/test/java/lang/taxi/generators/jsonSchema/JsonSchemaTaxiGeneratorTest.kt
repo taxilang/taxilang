@@ -32,23 +32,27 @@ class JsonSchemaTaxiGeneratorTest {
       val schemaJson = Resources.getResource("samples/simple-json-schema.json")
       val generated = TaxiGenerator().generateAsStrings(schemaJson)
       generated.shouldCompileTheSameAs(
-         """
-namespace net.pwall {
+         """namespace net.pwall {
+   [[ This model has been generated.  The original source is shown below.
+   ```json
+   {"type":"object","title":"Product","$id":"http://pwall.net/test","$schema":"http://json-schema.org/draft-07/schema","required":["id","name","price"],"properties":{"someTime":{"type":"string","format":"time"},"price":{"type":"number","minimum":0},"someDate":{"type":"string","format":"date"},"name":{"type":"string","description":"Name of the product"},"id":{"type":"number","description":"Product identifier"},"stock":{"type":"object","properties":{"warehouse":{"type":"number"},"retail":{"type":"number"}}},"someDateTime":{"type":"string","format":"date-time"},"tags":{"type":"array","items":{"type":"string"}}}}
+   ``` ]]
    model Product {
+      someTime : SomeTime?
       price : Price
+      someDate : SomeDate?
       name : Name
       id : Id
       stock : Stock?
-      tags : TagsMember[]?
-      someTime : SomeTime?
-      someDate : SomeDate?
       someDateTime : SomeDateTime?
+      tags : Tags[]?
    }
-   type SomeDate inherits Date
+
    type SomeTime inherits Time
-   type SomeDateTime inherits Instant
 
    type Price inherits Decimal
+
+   type SomeDate inherits Date
 
    [[ Name of the product ]]
    type Name inherits String
@@ -56,6 +60,10 @@ namespace net.pwall {
    [[ Product identifier ]]
    type Id inherits Decimal
 
+   [[ This model has been generated.  The original source is shown below.
+   ```json
+   {"type":"object","properties":{"warehouse":{"type":"number"},"retail":{"type":"number"}}}
+   ``` ]]
    model Stock {
       warehouse : Warehouse?
       retail : Retail?
@@ -65,28 +73,47 @@ namespace net.pwall {
 
    type Retail inherits Decimal
 
-   type TagsMember inherits String
-}
+   type SomeDateTime inherits Instant
 
-         """.trimIndent()
+   type Tags inherits String
+
+
+}"""
       )
    }
+
+   // Strings that Kotlin will try and interpolate
+   private val defs = "\$defs"
+   private val schema = "\$schema"
+   private val ref = "\$ref"
+   private val id = "\$id"
 
    @Test
    fun `can parse a typed array`() {
       val schemaJson = Resources.getResource("samples/typed-array.json")
-      TaxiGenerator(schemaLoader = SchemaLoader.builder().draftV6Support()).generateAsStrings(schemaJson)
+      val generated =
+         TaxiGenerator(schemaLoader = SchemaLoader.builder().draftV6Support()).generateAsStrings(schemaJson)
+      generated
          .shouldCompileTheSameAs(
             """namespace com.example {
-   [[ A representation of a person, company, organization, or place ]]
+   [[ A representation of a person, company, organization, or place
+   This model has been generated.  The original source is shown below.
+   ```json
+   {"type":"object","description":"A representation of a person, company, organization, or place","id":"https://example.com/arrays.schema.json","$defs"}:{"veggie":{"type":"object","required":["veggieName","veggieLike"],"properties":{"veggieName":{"type":"string","description":"The name of the vegetable."},"veggieLike":{"type":"boolean","description":"Do I like this vegetable?"}}}},"$schema":"https://json-schema.org/draft/2020-12/schema","properties":{"fruits":{"type":"array","items":{"type":"string"}},"vegetables":{"type":"array","items":{"$ref":"#/$defs/veggie"}}}}
+   ``` ]]
    model Arrays {
-      fruits : FruitsMember[]?
-      vegetables : VegetablesMember[]?
+      fruits : Fruits[]?
+      vegetables : Vegetables[]?
    }
 
-   type FruitsMember inherits String
+   type Fruits inherits String
 
-   model VegetablesMember {
+   [[ null
+   This model has been generated.  The original source is shown below.
+   ```json
+   {"type":"object","required":["veggieName","veggieLike"],"properties":{"veggieName":{"type":"string","description":"The name of the vegetable."},"veggieLike":{"description":"Do I like this vegetable?","type":"boolean"}}}
+   ``` ]]
+   model Vegetables {
       veggieName : VeggieName
       veggieLike : VeggieLike
    }
@@ -96,6 +123,8 @@ namespace net.pwall {
 
    [[ Do I like this vegetable? ]]
    type VeggieLike inherits Boolean
+
+
 }"""
          )
    }
@@ -103,14 +132,15 @@ namespace net.pwall {
 
 //   @Test
 //   fun `can load from url`() {
-//      val url = URL("https://api.ultumus.com/VYNE/apps/v1/docs/schemas/index-edge-api-doc.json")
+//      val url = URL("https://uatapi.ultumus.com/VYNE/apps/v1/docs/schemas/index-edge-api-doc.json")
 //      val generated = TaxiGenerator(
 //         schemaLoader = SchemaLoader
 //            .builder()
-//            .resolutionScope("https://api.ultumus.com/VYNE/apps/v1/docs/schemas/")
+//            .resolutionScope("https://uatapi.ultumus.com/VYNE/apps/v1/docs/schemas/")
 //      )
 //         .generateAsStrings(url)
-//      TestHelpers.compile(generated.taxi)
+//      val compiled = TestHelpers.compile(generated.taxi)
+//      compiled.type("com.ultumus.uatapi.PricingAnalytics")
 //   }
 }
 

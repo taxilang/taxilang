@@ -17,7 +17,7 @@ object Namespaces {
     }
 
     fun qualifiedName(name: String, defaultNamespace: String): String {
-        return if (hasNamespace(name)) name else "$defaultNamespace.$name"
+        return if (hasNamespace(name)) name else "$defaultNamespace.$name".removePrefix(".")
     }
 }
 
