@@ -15,10 +15,26 @@ data class GeneratorOptions(
 class TaxiGenerator(
    private val schemaWriter: SchemaWriter = SchemaWriter()
 ) {
-   fun generateAsStrings(source: String, defaultNamespace: String, generatorOptions: GeneratorOptions = GeneratorOptions()): GeneratedTaxiCode {
+
+   fun readSchemaVersion(source: String): String? {
+      return when (detectVersion(source)) {
+         SwaggerVersion.SWAGGER_2 -> SwaggerTaxiGenerator(schemaWriter).parseVersion(source)
+         SwaggerVersion.OPEN_API -> OpenApiTaxiGenerator(schemaWriter).parseVersion(source)
+      }
+   }
+
+   fun generateAsStrings(
+      source: String,
+      defaultNamespace: String,
+      generatorOptions: GeneratorOptions = GeneratorOptions()
+   ): GeneratedTaxiCode {
       return when (detectVersion(source)) {
          SwaggerVersion.SWAGGER_2 -> SwaggerTaxiGenerator(schemaWriter).parseSwaggerV2(source, defaultNamespace)
-         SwaggerVersion.OPEN_API -> OpenApiTaxiGenerator(schemaWriter).generateAsStrings(source, defaultNamespace, generatorOptions)
+         SwaggerVersion.OPEN_API -> OpenApiTaxiGenerator(schemaWriter).generateAsStrings(
+            source,
+            defaultNamespace,
+            generatorOptions
+         )
       }
    }
 

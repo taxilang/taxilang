@@ -8,6 +8,8 @@ import lang.taxi.packages.utils.log
 import org.apache.commons.lang3.SystemUtils
 import java.nio.file.Path
 
+// You probably want to use TaxiSourcesLoader,
+// which will return the project, and the sources.
 class TaxiProjectLoader {
 
    private val pathsToSearch = mutableListOf(
