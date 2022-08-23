@@ -6,7 +6,7 @@
    <parent>
       <groupId>org.taxilang</groupId>
       <artifactId>taxi-lang-server</artifactId>
-      <version>1.33.5-SNAPSHOT</version>
+      <version>1.33.5</version>
    </parent>
 
    <!-- This pom doesn't do anything except provide a convenient way
