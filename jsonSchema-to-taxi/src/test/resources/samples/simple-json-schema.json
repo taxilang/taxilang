@@ -37,7 +37,11 @@
       },
       "stock": {
          "type": "object",
+         "required": ["id"],
          "properties": {
+            "id": {
+               "type": "number"
+            },
             "warehouse": {
                "type": "number"
             },

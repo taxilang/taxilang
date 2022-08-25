@@ -37,6 +37,13 @@ import org.everit.json.schema.SchemaLocation
 import org.everit.json.schema.StringSchema
 import java.net.URI
 
+fun MutableMap<QualifiedName, JsonSchemaTypeMapper.GeneratedType>.containsCaseInsensitiveType(typeName: String): Boolean {
+   return this.filter { it.key.typeName.lowercase() == typeName.lowercase() }.isNotEmpty()
+}
+
+fun MutableMap<QualifiedName, JsonSchemaTypeMapper.GeneratedType>.countCaseInsensitiveDuplicatesOf(typeName: String): Int {
+   return this.count { entry -> entry.key.typeName.lowercase() == typeName.lowercase() }
+}
 
 class JsonSchemaTypeMapper(
    private val jsonSchema: Schema,
@@ -44,9 +51,8 @@ class JsonSchemaTypeMapper(
    val defaultNamespace: String = getDefaultNamespace(
       jsonSchema,
       logger
-   ),
-
-   ) {
+   )
+) {
 
    data class GeneratedType(val source: Schema, val type: Type)
 
@@ -127,22 +133,32 @@ class JsonSchemaTypeMapper(
       return getOrCreateType(typeName, resolvedSchema)
    }
 
-   private fun getOrCreateType(name: QualifiedName, schema: Schema): Type {
+   private fun getOrCreateType(name: QualifiedName, schema: Schema, parentTypeName: QualifiedName? = null): Type {
       val resolvedSchema = schema.resolve()
       if (resolvedSchema is ArraySchema) {
          // createType will not create / cache an array type (for good reason, or all
          // future requests for type Foo will result in a Foo[]
          // So, if this was asked for as an array, wrap it into an ArrayType
-         val type = getOrCreateType(name, resolvedSchema.allItemSchema)
+         val type = getOrCreateType(name, resolvedSchema.allItemSchema, parentTypeName)
          return ArrayType.of(type)
       }
 
+      // This now always creates a new type. We can't know that a field is semantically equivalent
+      // to another field and reuse the same type.
+      val generatedType =
+         if (_generatedTypes.containsCaseInsensitiveType(name.typeName)) {
+            val updatedQualifiedName = resolveTypeNameForDuplicate(name, parentTypeName)
+            val createdType = createType(resolvedSchema, updatedQualifiedName)
+            _generatedTypes[updatedQualifiedName] = createdType
+            createdType
+         } else {
+            // This allows us to support recursion - the undefined type will prevent us getting into an endless loop
+            _generatedTypes[name] = GeneratedType(resolvedSchema, ObjectType.undefined(name.fullyQualifiedName))
+            val createdType = createType(resolvedSchema, name)
+            _generatedTypes[name] = createdType
+            createdType
+         }
 
-      val generatedType = _generatedTypes.getOrPut(name) {
-         // This allows us to support recursion - the undefined type will prevent us getting into an endless loop
-         _generatedTypes[name] = GeneratedType(resolvedSchema, ObjectType.undefined(name.fullyQualifiedName))
-         createType(resolvedSchema, name)
-      }
       val generatedSourceSchema = generatedType.source
       if (!schema.resolvesEqualTo(generatedSourceSchema)) {
          fun logTypeNeedsInvestigationWarning(typeName: QualifiedName, cause: String) {
@@ -173,6 +189,25 @@ class JsonSchemaTypeMapper(
       }
 
       return generatedType.type
+   }
+
+   private fun resolveTypeNameForDuplicate(duplicateQualifiedName: QualifiedName, parentTypeName: QualifiedName?): QualifiedName {
+      // this is for when we don't have a parent type name to add as a prefix to the type. Instead we'll add
+      // a number to the end.
+      val numberOfSameNamedFields = _generatedTypes.countCaseInsensitiveDuplicatesOf(duplicateQualifiedName.typeName)
+      return duplicateQualifiedName.copy(
+         typeName = if (parentTypeName?.typeName != null) {
+            val newQualifiedName = parentTypeName.typeName + duplicateQualifiedName.typeName
+            if (_generatedTypes.containsCaseInsensitiveType(newQualifiedName)) {
+               val numberOfSameNamedFields = _generatedTypes.countCaseInsensitiveDuplicatesOf(newQualifiedName)
+               newQualifiedName + numberOfSameNamedFields.toString()
+            } else {
+               newQualifiedName
+            }
+         } else {
+            duplicateQualifiedName.typeName + numberOfSameNamedFields.toString()
+         }
+      )
    }
 
    private fun findNextUnusedQualifiedName(name: QualifiedName): QualifiedName {
@@ -319,7 +354,7 @@ class JsonSchemaTypeMapper(
 
       val fields = schema.propertySchemas.map { (propertyName, propertySchema) ->
          val qualifiedName = getTypeNameFromSchema(propertySchema, propertyName)
-         val type = getOrCreateType(qualifiedName, propertySchema)
+         val type = getOrCreateType(qualifiedName, propertySchema, name)
          val isRequired = schema.requiredProperties.contains(propertyName)
          val nullable = !isRequired
          Field(

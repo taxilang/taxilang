@@ -66,9 +66,12 @@ class JsonSchemaTaxiGeneratorTest {
    {"type":"object","properties":{"warehouse":{"type":"number"},"retail":{"type":"number"}}}
    ``` ]]
    model Stock {
+      id: StockId
       warehouse : Warehouse?
       retail : Retail?
    }
+
+   type StockId inherits Decimal
 
    type Warehouse inherits Decimal
 
@@ -77,8 +80,6 @@ class JsonSchemaTaxiGeneratorTest {
    type SomeDateTime inherits Instant
 
    type Tags inherits String
-
-
 }"""
       )
    }
@@ -128,7 +129,6 @@ class JsonSchemaTaxiGeneratorTest {
          )
    }
 
-
 //   @Test
 //   fun `can load from url`() {
 //      val url = URL("https://uatapi.ultumus.com/VYNE/apps/v1/docs/schemas/index-edge-api-doc.json")
@@ -141,6 +141,99 @@ class JsonSchemaTaxiGeneratorTest {
 //      val compiled = TestHelpers.compile(generated.taxi)
 //      compiled.type("com.ultumus.uatapi.PricingAnalytics")
 //   }
+
+   @Test
+   fun `when multiple properties with the same name exist in different places in the same document`() {
+      val testJsonSchema =
+         """
+            {
+               "${"$"}schema": "http://json-schema.org/draft-07/schema",
+               "${"$"}id": "http://taxilang.org/test",
+               "title": "Test",
+               "type": "object",
+               "properties": {
+                  "id": {
+                     "type": "string",
+                     "description": "Identifier"
+                  },
+                  "item": {
+                     "type": "object",
+                     "required": ["id"],
+                     "properties": {
+                        "id": {
+                           "type": "string"
+                        }
+                     }
+                  }
+               }
+            }
+         """.trimIndent()
+      val generated = TaxiGenerator().generateAsStrings(testJsonSchema)
+      generated.shouldCompileTheSameAs(
+         """
+            namespace org.taxilang {
+               model Test {
+                  item : Item?
+                  id : TestId?
+               }
+
+               model Item {
+                  id : Id
+               }
+
+               type Id inherits String
+
+               [[ Identifier ]]
+               type TestId inherits String
+            }
+         """.trimIndent()
+      )
+   }
+
+   @Test
+   fun `when multiple properties with the same name exist as sibling elements in the schema`() {
+      val testJsonSchema =
+         """
+            {
+               "${"$"}schema": "http://json-schema.org/draft-07/schema",
+               "${"$"}id": "http://taxilang.org/test",
+               "title": "Test",
+               "type": "object",
+               "properties": {
+                  "name": {
+                     "type": "string",
+                     "description": "Identifier"
+                  },
+                  "Name": {
+                     "type": "string",
+                     "description": "Identifier"
+                  },
+                  "NAME": {
+                     "type": "string",
+                     "description": "Identifier"
+                  },
+               }
+            }
+         """.trimIndent()
+      val generated = TaxiGenerator().generateAsStrings(testJsonSchema)
+      generated.shouldCompileTheSameAs(
+         """
+            namespace org.taxilang {
+               model Test {
+                  name : Name?
+                  Name : TestName?
+                  NAME : TestNAME1?
+               }
+
+               type Name inherits String
+
+               type TestName inherits String
+
+               type TestNAME1 inherits String
+            }
+         """.trimIndent()
+      )
+   }
 }
 
 
