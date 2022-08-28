@@ -1,6 +1,8 @@
 package lang.taxi.types
 
 import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.AccessorWithDefault
@@ -170,10 +172,10 @@ data class ObjectType(
 
    override fun addExtension(extension: ObjectTypeExtension): Either<ErrorMessage, ObjectTypeExtension> {
       val error = verifyMaxOneTypeRefinementPerField(extension.fieldExtensions)
-      if (error != null) return Either.left(error)
+      if (error != null) return error.left()
       this.extensions.add(extension)
 
-      return Either.right(extension)
+      return extension.right()
    }
 
 //   override val calculation: Formula?
