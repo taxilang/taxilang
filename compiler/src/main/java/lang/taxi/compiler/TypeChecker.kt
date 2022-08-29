@@ -1,6 +1,8 @@
 package lang.taxi.compiler
 
 import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.messages.Severity
 import lang.taxi.toggles.FeatureToggle
@@ -45,9 +47,5 @@ fun <A> TypeChecker.ifAssignable(
 ): Either<CompilationError, A> {
    val error = assertIsAssignable(valueType, receiverType, token)
 
-   return if (error == null) {
-      Either.right(valueProvider())
-   } else {
-      Either.left(error)
-   }
+   return error?.left() ?: valueProvider().right()
 }

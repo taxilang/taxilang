@@ -1,6 +1,7 @@
 package lang.taxi.services.operations.constraints
 
 import arrow.core.Either
+import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.NamespaceQualifiedTypeResolver
 import lang.taxi.TaxiParser
@@ -14,7 +15,7 @@ class ReturnValueDerivedFromInputConstraintProvider : ConstraintProvider {
    }
 
    override fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<List<CompilationError>, Constraint> {
-      return Either.right(ReturnValueDerivedFromParameterConstraint(constraint.operationReturnValueOriginExpression().qualifiedName().toAttributePath(), constraint.toCompilationUnits()))
+      return ReturnValueDerivedFromParameterConstraint(constraint.operationReturnValueOriginExpression().qualifiedName().toAttributePath(), constraint.toCompilationUnits()).right()
    }
 
 }

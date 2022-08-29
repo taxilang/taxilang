@@ -9,6 +9,7 @@ import lang.taxi.TaxiParser
 import lang.taxi.findNamespace
 import lang.taxi.query.ConstraintBuilder
 import lang.taxi.query.TaxiQlQuery
+import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.toCompilationUnit
 import lang.taxi.types.*
 import lang.taxi.utils.flattenErrors
@@ -28,7 +29,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
          else -> error("Unhandled Query Directive")
       }
 
-      val factsOrErrors = ctx.givenBlock()?.let { parseFacts(it) } ?: Either.right(emptyList())
+      val factsOrErrors = ctx.givenBlock()?.let { parseFacts(it) } ?: emptyList<Variable>().right()
       val queryOrErrors = factsOrErrors.flatMap { facts ->
 
          parseQueryBody(ctx, facts, queryDirective).flatMap { typesToDiscover ->
@@ -93,7 +94,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
       val constraintsOrErrors =
          parameterConstraint?.parameterConstraintExpressionList()?.let { constraintExpressionList ->
                constraintBuilder.build(constraintExpressionList, type)
-            } ?: Either.right(emptyList())
+            } ?: emptyList<Constraint>().right()
       return constraintsOrErrors.map { constraints ->
          // If we're building a streaming query, then wrap the requested type
          // in a stream
@@ -119,9 +120,9 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
 
       return tokenProcessor.typeOrError(namespace, factCtx.typeType()).flatMap { factType ->
             try {
-               Either.right(Variable(variableName, TypedValue(factType.toQualifiedName(), factCtx.literal().value())))
+               Variable(variableName, TypedValue(factType.toQualifiedName(), factCtx.literal().value())).right()
             } catch (e: Exception) {
-               Either.left(listOf(CompilationError(factCtx.start, "Failed to create TypedInstance - ${e.message}")))
+               listOf(CompilationError(factCtx.start, "Failed to create TypedInstance - ${e.message}")).left()
             }
 
          }
@@ -131,7 +132,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
       queryProjection: TaxiParser.QueryProjectionContext?, typesToDiscover: List<DiscoveryType>
    ): Either<List<CompilationError>, Type?> {
       if (queryProjection == null) {
-         return Either.right(null)
+         return null.right()
       }
 
       val concreteProjectionTypeType = queryProjection.typeType()
@@ -168,7 +169,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
       val baseTypeOrErrors =
          if (concreteProjectionTypeType != null) {
             this.tokenProcessor.parseType(queryProjection.findNamespace(), concreteProjectionTypeType)
-         } else Either.right<Type?>(null)
+         } else null.right()
 
       val projectionType = baseTypeOrErrors.flatMap { possibleBaseType: Type? ->
          if (possibleBaseType != null && anonymousProjectionType == null) {
