@@ -67,7 +67,7 @@
       <kotest.version>4.6.4</kotest.version>
       <junit.jupiter.version>5.6.2</junit.jupiter.version>
       <junit.vintage.version>5.6.2</junit.vintage.version>
-      <zip4j.version>2.7.0</zip4j.version>
+      <zip4j.version>2.11.1</zip4j.version>
 
       <taxi.version>${project.version}</taxi.version>
       <testcontainers.version>1.15.2</testcontainers.version>
