@@ -131,11 +131,11 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
 
    fun getTokenOrError(qualifiedName: String, context: ParserRuleContext, symbolKind: SymbolKind = SymbolKind.TYPE_OR_MODEL): Either<CompilationError, ImportableToken> {
       if (PrimitiveType.isPrimitiveType(qualifiedName)) {
-         return Either.right(PrimitiveType.fromDeclaration(qualifiedName))
+         return PrimitiveType.fromDeclaration(qualifiedName).right()
       }
 
       if (isImported(qualifiedName, symbolKind)) {
-         return Either.right(getImportedToken(qualifiedName))
+         return getImportedToken(qualifiedName).right()
       }
 
 

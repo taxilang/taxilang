@@ -1,6 +1,7 @@
 package lang.taxi.types
 
 import arrow.core.Either
+import arrow.core.right
 import lang.taxi.ImmutableEquality
 
 data class TypeAliasExtension(val annotations: List<Annotation>, override val compilationUnit: CompilationUnit, override val typeDoc: String? = null) : TypeDefinition, Documented {
@@ -68,7 +69,7 @@ data class TypeAlias(
 
    override fun addExtension(extension: TypeAliasExtension): Either<ErrorMessage, TypeAliasExtension> {
       this.extensions.add(extension)
-      return Either.right(extension)
+      return extension.right()
    }
 
    companion object {

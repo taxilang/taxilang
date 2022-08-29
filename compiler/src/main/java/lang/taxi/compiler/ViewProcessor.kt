@@ -137,28 +137,28 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
                   if (bodyCtx.anonymousTypeDefinition() != null) {
                      parseViewBodyDefinition(namespace, bodyCtx).flatMap { viewBodyTypeDefinition ->
                         when {
-                           firstFilterExpression != null && firstFilterExpression is Either.Left -> firstFilterExpression.a.left()
-                           secondFilterExpression != null && secondFilterExpression is Either.Left -> secondFilterExpression.a.left()
+                           firstFilterExpression != null && firstFilterExpression is Either.Left -> firstFilterExpression.value.left()
+                           secondFilterExpression != null && secondFilterExpression is Either.Left -> secondFilterExpression.value.left()
                            firstFilterExpression != null && secondFilterExpression != null && firstFilterExpression is Either.Right && secondFilterExpression is Either.Right ->
-                              validViewDefinition.copy(viewBodyType = viewBodyTypeDefinition, bodyTypeFilter = firstFilterExpression.b, joinTypeFilter = secondFilterExpression.b)
+                              validViewDefinition.copy(viewBodyType = viewBodyTypeDefinition, bodyTypeFilter = firstFilterExpression.value, joinTypeFilter = secondFilterExpression.value)
                                  .right()
                            firstFilterExpression != null && secondFilterExpression == null && firstFilterExpression is Either.Right ->
-                              validViewDefinition.copy(viewBodyType = viewBodyTypeDefinition, bodyTypeFilter = firstFilterExpression.b).right()
+                              validViewDefinition.copy(viewBodyType = viewBodyTypeDefinition, bodyTypeFilter = firstFilterExpression.value).right()
                            firstFilterExpression == null && secondFilterExpression != null && secondFilterExpression is Either.Right ->
-                              validViewDefinition.copy(viewBodyType = viewBodyTypeDefinition, joinTypeFilter = secondFilterExpression.b).right()
+                              validViewDefinition.copy(viewBodyType = viewBodyTypeDefinition, joinTypeFilter = secondFilterExpression.value).right()
                            else ->  validViewDefinition.copy(viewBodyType = viewBodyTypeDefinition).right()
                         }
                      }.mapLeft { it }
                   } else {
                      when {
-                        firstFilterExpression != null && firstFilterExpression is Either.Left -> firstFilterExpression.a.left()
-                        secondFilterExpression != null && secondFilterExpression is Either.Left -> secondFilterExpression.a.left()
+                        firstFilterExpression != null && firstFilterExpression is Either.Left -> firstFilterExpression.value.left()
+                        secondFilterExpression != null && secondFilterExpression is Either.Left -> secondFilterExpression.value.left()
                         firstFilterExpression != null && secondFilterExpression != null && firstFilterExpression is Either.Right && secondFilterExpression is Either.Right ->
-                           validViewDefinition.copy(bodyTypeFilter = firstFilterExpression.b, joinTypeFilter = secondFilterExpression.b).right()
+                           validViewDefinition.copy(bodyTypeFilter = firstFilterExpression.value, joinTypeFilter = secondFilterExpression.value).right()
                         firstFilterExpression != null && secondFilterExpression == null && firstFilterExpression is Either.Right ->
-                           validViewDefinition.copy(bodyTypeFilter = firstFilterExpression.b).right()
+                           validViewDefinition.copy(bodyTypeFilter = firstFilterExpression.value).right()
                         firstFilterExpression == null && secondFilterExpression != null && secondFilterExpression is Either.Right ->
-                           validViewDefinition.copy(joinTypeFilter = secondFilterExpression.b).right()
+                           validViewDefinition.copy(joinTypeFilter = secondFilterExpression.value).right()
                         else ->  validViewDefinition.right()
                      }
                   }

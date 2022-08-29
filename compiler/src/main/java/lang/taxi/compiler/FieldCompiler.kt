@@ -132,6 +132,7 @@ class FieldCompiler(
       val allFields = fields + fieldsInFieldBlocks
       val duplicateDefinitionErrors = allFields.groupBy({ it.first }) { it.second }
          .filter { (_, declarationSites) -> declarationSites.size > 1 }
+         .toList()
          .flatMap { (fieldName, declarationSites) ->
             declarationSites.map { fieldDeclarationSite ->
                CompilationError(fieldDeclarationSite.start, "Field $fieldName is declared multiple times")
@@ -247,35 +248,34 @@ class FieldCompiler(
             val fieldName = member.fieldDeclaration().Identifier().text
             val discoveryTypes = anonymousTypeResolutionContext.typesToDiscover
             if (discoveryTypes.isEmpty()) {
-               Either.left(
-                  listOf(
-                     CompilationError(
-                        member.start,
-                        "The type for $fieldName can not be resolved without a query context"
-                     )
+
+               listOf(
+                  CompilationError(
+                     member.start,
+                     "The type for $fieldName can not be resolved without a query context"
                   )
-               )
+               ).left()
             } else {
                val typeOrError =
                   this.tokenProcessor.getType(namespace, discoveryTypes.first().type.firstTypeParameterOrSelf, member)
                typeOrError.flatMap { type ->
                   when {
-                     type !is ObjectType -> Either.left(
+                     type !is ObjectType ->
                         listOf(
                            CompilationError(
                               member.start,
                               "$typeName should be an object type containing field $fieldName"
                            )
-                        )
-                     )
-                     !type.hasField(fieldName) -> Either.left(
+                        ).left()
+
+                     !type.hasField(fieldName) ->
                         listOf(
                            CompilationError(
                               member.start,
                               "$typeName should be an object type containing field $fieldName"
                            )
-                        )
-                     )
+                        ).left()
+
                      else -> type.field(fieldName).right()
                   }
                }
@@ -423,6 +423,7 @@ class FieldCompiler(
                }
                .wrapErrorsInList()
          }
+
          else -> null
       }
    }
@@ -476,10 +477,12 @@ class FieldCompiler(
             path = expression.jsonPathAccessorDeclaration().StringLiteral().text.removeSurrounding("\""),
             returnType = targetType
          ).right()
+
          expression.xpathAccessorDeclaration() != null -> XpathAccessor(
             expression.xpathAccessorDeclaration().StringLiteral().text.removeSurrounding("\""),
             returnType = targetType
          ).right()
+
          expression.columnDefinition() != null -> {
             ColumnAccessor(
                index =
@@ -489,6 +492,7 @@ class FieldCompiler(
                returnType = targetType
             ).right()
          }
+
          expression.conditionalTypeConditionDeclaration() != null -> {
             val namespace = expression.conditionalTypeConditionDeclaration().findNamespace()
             conditionalFieldSetProcessor.compileCondition(
@@ -498,6 +502,7 @@ class FieldCompiler(
             )
                .map { condition -> ConditionalAccessor(condition) }
          }
+
          expression.defaultDefinition() != null -> {
             val defaultValue = defaultValueParser.parseDefaultValue(expression.defaultDefinition(), targetType)
                .collectError(errors).getOrElse { null }
@@ -512,10 +517,12 @@ class FieldCompiler(
             val functionContext = expression.readFunction()
             buildReadFunctionAccessor(functionContext, targetType)
          }
+
          expression.readExpression() != null -> buildReadFunctionExpressionAccessor(
             expression.readExpression(),
             targetType
          )
+
          expression.byFieldSourceExpression() != null -> buildReadFieldAccessor(expression.byFieldSourceExpression())
          expression.collectionProjectionExpression() != null -> buildCollectionProjectionExpression(expression.collectionProjectionExpression())
          else -> error("Unhandled type of accessor expression at ${expression.source().content}")
@@ -531,8 +538,14 @@ class FieldCompiler(
             val scopeOrError: Either<List<CompilationError>, ProjectionScopeDefinition?> =
                if (collectionProjectionExpression.projectionScopeDefinition() != null) {
                   compileProjectionScope(collectionProjectionExpression.projectionScopeDefinition())
-               } else Either.right(null)
-            scopeOrError.map { scope -> CollectionProjectionExpressionAccessor(type, scope, collectionProjectionExpression.toCompilationUnits()) }
+               } else null.right()
+            scopeOrError.map { scope ->
+               CollectionProjectionExpressionAccessor(
+                  type,
+                  scope,
+                  collectionProjectionExpression.toCompilationUnits()
+               )
+            }
          }
    }
 
@@ -611,24 +624,24 @@ class FieldCompiler(
       sourceTypeName: QualifiedName? = null
    ): Either<List<CompilationError>, Accessor> {
       return when (sourceType) {
-         is Either.Left -> return sourceType.a.left()
+         is Either.Left -> return sourceType.value.left()
          is Either.Right -> {
-            if (sourceType.b !is ObjectType) {
+            if (sourceType.value !is ObjectType) {
                listOf(
                   CompilationError(
                      byFieldSourceExpression.start,
-                     "${sourceType.b.qualifiedName} must be an ObjectType",
+                     "${sourceType.value.qualifiedName} must be an ObjectType",
                      byFieldSourceExpression.source().sourceName
                   )
                ).left()
             }
 
-            val objectType = sourceType.b as ObjectType
+            val objectType = sourceType.value as ObjectType
             if (!objectType.hasField(referencedFieldName)) {
                listOf(
                   CompilationError(
                      byFieldSourceExpression.start,
-                     "${sourceType.b.qualifiedName} should have a field called $referencedFieldName",
+                     "${sourceType.value.qualifiedName} should have a field called $referencedFieldName",
                      byFieldSourceExpression.source().sourceName
                   )
                ).left()
@@ -723,7 +736,7 @@ class FieldCompiler(
                         ExpressionCompiler(this.tokenProcessor, this.typeChecker, this.errors, this)
                            .compile(parameterContext.scalarAccessorExpression().readExpression().expressionGroup())
                      if (errorOrExpression is Either.Left) {
-                        return@flatMap errorOrExpression.a.left()
+                        return@flatMap errorOrExpression.value.left()
 
                      }
                   }
@@ -731,6 +744,7 @@ class FieldCompiler(
                      parameterContext.literal() != null -> LiteralAccessor(
                         parameterContext.literal().value()
                      ).right()
+
                      parameterContext.scalarAccessorExpression() != null -> compileScalarAccessor(
                         parameterContext.scalarAccessorExpression(),
                         parameterType
@@ -741,10 +755,12 @@ class FieldCompiler(
                         function,
                         parameterContext
                      ).right()
+
                      parameterContext.typeReferenceSelector() != null -> compileTypeReferenceAccessor(
                         namespace,
                         parameterContext
                      )
+
                      parameterContext.modelAttributeTypeReference() != null -> {
                         if (this.typeBody.parent.isInViewContext()) {
                            this.parseModelAttributeTypeReference(
@@ -766,6 +782,7 @@ class FieldCompiler(
 
                         }
                      }
+
                      else -> TODO("readFunction parameter accessor not defined for code ${functionContext.source().content}")
 
                   }.flatMap { parameterAccessor ->

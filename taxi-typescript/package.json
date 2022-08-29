@@ -15,7 +15,7 @@
    "author": "Marty Pitt",
    "license": "Apache-2.0",
    "devDependencies": {
-      "@types/aws-lambda": "^8.10.18",
+      "@types/aws-lambda": "8.10.102",
       "@types/chai": "^4.1.7",
       "@types/chai-string": "^1.4.1",
       "@types/mocha": "^5.2.5",

@@ -70,8 +70,8 @@ class JsonSchemaTypeMapper(
       fun getSchemaIdAsUri(schema: Schema, logger: Logger): URI? {
          return try {
             when (val schemaId = getSchemaId(schema, logger)) {
-               is Either.Left -> URI.create(schemaId.a)
-               is Either.Right -> URI.create(schemaId.b.toString())
+               is Either.Left -> URI.create(schemaId.value)
+               is Either.Right -> URI.create(schemaId.value.toString())
             }
 
          } catch (e: Exception) {
