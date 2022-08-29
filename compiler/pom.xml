@@ -11,7 +11,7 @@
    <artifactId>compiler</artifactId>
 
    <properties>
-      <antlr.version>4.7</antlr.version>
+      <antlr.version>4.10.1</antlr.version>
    </properties>
 
    <dependencies>
