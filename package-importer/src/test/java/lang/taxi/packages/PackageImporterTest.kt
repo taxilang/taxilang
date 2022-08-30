@@ -15,12 +15,12 @@ class PackageImporterTest {
 
    @TempDir
    @JvmField
-   val folder: File? = null
+   var folder: File? = null
 
 
    @TempDir
    @JvmField
-   val mockRepoRoot: File? = null
+   var mockRepoRoot: File? = null
 
    @BeforeEach
    fun deployTestRepo() {
