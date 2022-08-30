@@ -31,7 +31,7 @@ stages:
 # For merge requests do .bitlnot `deploy` but only run `verify`.
 # See https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
 build-jar:
-  image: maven:3.3.9-jdk-8
+  image: maven:3.8.6-jdk-8
   stage: build
   script:
     - 'mvn $MAVEN_CLI_OPTS verify'
@@ -40,7 +40,7 @@ build-jar:
     - develop
 
 package-jar:
-  image: maven:3.3.9-jdk-8
+  image: maven:3.8.6-jdk-8
   stage: build
   script:
     - 'mvn $MAVEN_CLI_OPTS clean install'
@@ -51,7 +51,7 @@ package-jar:
       - 'taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
 
 build-publish-snapshot:
-  image: maven:3.3.9-jdk-8
+  image: maven:3.8.6-jdk-8
   stage: build
   script:
     - *git_setup
@@ -93,7 +93,7 @@ package-plugin:
 release-major:
   variables:
     GIT_STRATEGY: clone
-  image: maven:3.3.9-jdk-8
+  image: maven:3.8.6-jdk-8
   stage: release
   script:
     - *git_setup
@@ -105,7 +105,7 @@ release-major:
 release-minor:
   variables:
     GIT_STRATEGY: clone
-  image: maven:3.3.9-jdk-8
+  image: maven:3.8.6-jdk-8
   stage: release
   script:
     - *git_setup
@@ -117,7 +117,7 @@ release-minor:
 release-patch:
   variables:
     GIT_STRATEGY: clone
-  image: maven:3.3.9-jdk-8
+  image: maven:3.8.6-jdk-8
   stage: release
   script:
     - *git_setup
