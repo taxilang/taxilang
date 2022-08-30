@@ -82,11 +82,11 @@
    },
    "devDependencies": {
       "sync-pom-version-to-package": "^1.6.1",
-      "semantic-release": "^17.0.7",
+      "semantic-release": "17.4.7",
       "semantic-release-vsce": "^3.0.1",
       "@semantic-release/changelog": "^5.0.1",
       "@semantic-release/exec": "^5.0.0",
-      "@semantic-release/git": "^9.0.0",
+      "@semantic-release/git": "9.0.1",
       "@semantic-release/gitlab-config": "^8.0.0",
       "@types/glob": "^7.1.1",
       "@types/mocha": "^7.0.2",

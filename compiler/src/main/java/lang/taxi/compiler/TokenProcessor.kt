@@ -1,7 +1,6 @@
 package lang.taxi.compiler
 
 import arrow.core.Either
-import arrow.core.extensions.list.monad.map
 import arrow.core.flatMap
 import arrow.core.getOrElse
 import arrow.core.getOrHandle
@@ -222,7 +221,7 @@ class TokenProcessor(
       createEmptyTypes()
 
       // We need to check all the ObjectTypes, to see if they declare any inline type aliases
-      val inlineTypeAliases = tokens.unparsedTypes.filter { (_, tokenPair) ->
+      val inlineTypeAliases = tokens.unparsedTypes.toList().filter { (_, tokenPair) ->
          val (_, ctx) = tokenPair
          ctx is TaxiParser.TypeDeclarationContext
       }.flatMap { (_, tokenPair) ->
@@ -270,9 +269,9 @@ class TokenProcessor(
       symbolKind: SymbolKind = SymbolKind.TYPE_OR_MODEL
    ): Either<CompilationError, String> {
       return try {
-         Either.right(lookupTypeByName(namespace, name, importsInSource(context), symbolKind))
+         lookupTypeByName(namespace, name, importsInSource(context), symbolKind).right()
       } catch (e: AmbiguousNameException) {
-         Either.left(CompilationError(context.start, e.message!!, context.source().normalizedSourceName))
+         CompilationError(context.start, e.message!!, context.source().normalizedSourceName).left()
       }
    }
 
@@ -374,7 +373,7 @@ class TokenProcessor(
                      parameterName to parameterType.toQualifiedName()
                   }
                queryParameter
-            }?.invertEitherList() ?: Either.right(emptyList())
+            }?.invertEitherList() ?: emptyList<Pair<String, QualifiedName>>().right()
          parametersOrErrors
             .mapLeft { compilationErrors -> errors.addAll(compilationErrors.flatten()) }
             .map { parameters ->
@@ -718,8 +717,8 @@ class TokenProcessor(
    ): CompilationError? {
       val typeName =
          when (val typeNameEither = attemptToLookupTypeByName(namespace, typeRule.Identifier().text, typeRule)) {
-            is Either.Left -> return typeNameEither.a // return the compilation error now and stop
-            is Either.Right -> typeNameEither.b
+            is Either.Left -> return typeNameEither.value // return the compilation error now and stop
+            is Either.Right -> typeNameEither.value
          }
       val type = typeSystem.getType(typeName) as ObjectType
       val annotations = collateAnnotations(typeRule.annotation())
@@ -1046,7 +1045,7 @@ class TokenProcessor(
 
 
       val anonymousTypeFields = if (fieldsFromConcreteProjectedToType is Either.Right) {
-         fieldsFromConcreteProjectedToType.b?.let { fields.plus(it) } ?: fields
+         fieldsFromConcreteProjectedToType.value?.let { fields.plus(it) } ?: fields
       } else {
          fields
       }
@@ -1094,7 +1093,7 @@ class TokenProcessor(
             when (it) {
                is EnumType -> CompilationError(typeTypeContext.start, "A Type cannot inherit from an Enum").asList()
                   .left()
-               else -> Either.right(it)
+               else -> it.right()
             }
          }
 
@@ -1112,7 +1111,7 @@ class TokenProcessor(
          when (it) {
             !is EnumType -> CompilationError(typeTypeContext.start, "An Enum can only inherit from an Enum").asList()
                .left()
-            else -> Either.right(it)
+            else -> it.right()
          }
       }
 
@@ -1275,13 +1274,13 @@ class TokenProcessor(
 //                  Old approach - now simplified with this logic encapsulated in a single place in typeOrError()_
 //                  Either.right(ArrayType(type, typeType.toCompilationUnit()))
                   require(type is ArrayType) { "Expected that typeOrError() should return an ArrayType when using [] operator" }
-                  Either.right(type)
+                  type.right()
                }
             } else {
                if (formats.isNotEmpty() || zoneOffset != null) {
                   generateFormattedSubtype(type, FormatsAndZoneoffset(formats, zoneOffset), typeType)
                } else {
-                  Either.right(type)
+                  type.right()
                }
             }
          }
@@ -1398,7 +1397,7 @@ class TokenProcessor(
       }
 
       return if (typeSystem.contains(formattedTypeName.fullyQualifiedName)) {
-         Either.right(typeSystem.getType(formattedTypeName.fullyQualifiedName))
+         typeSystem.getType(formattedTypeName.fullyQualifiedName).right()
       } else {
          val formattedType = ObjectType(
             formattedTypeName.fullyQualifiedName,
@@ -1412,7 +1411,7 @@ class TokenProcessor(
             )
          )
          typeSystem.register(formattedType)
-         Either.right(formattedType)
+         formattedType.right()
       }
 
 
@@ -1436,7 +1435,7 @@ class TokenProcessor(
 
       val offsetValue = typeType
          .parameterConstraint()?.temporalFormatList()?.instantOffsetExpression()?.intValue()
-      return Either.right(FormatsAndZoneoffset(formatExpressions, offsetValue))
+      return FormatsAndZoneoffset(formatExpressions, offsetValue).right()
    }
 
    private fun compileInlineInheritedType(
@@ -1520,9 +1519,9 @@ class TokenProcessor(
                   .wrapErrorsInList()
                   .flatMap { importableToken ->
                      if (importableToken is DefinableToken<*> && !importableToken.isDefined) {
-                        unparsedCheckAndCompile(qualifiedTypeName) ?: Either.right(importableToken)
+                        unparsedCheckAndCompile(qualifiedTypeName) ?: importableToken.right()
                      } else {
-                        Either.right(importableToken)
+                        importableToken.right()
                      }
                   }
             }
@@ -1557,10 +1556,10 @@ class TokenProcessor(
                if (importedTypeName != null) {
                   typeSystem.getTokenOrError(importedTypeName.parameterizedName, context).wrapErrorsInList()
                } else {
-                  Either.left(error())
+                  error().left()
                }
             } else {
-               Either.left(error())
+               error().left()
             }
          }
    }
@@ -1710,7 +1709,7 @@ class TokenProcessor(
    ): Either<List<CompilationError>, List<EnumValue>> {
       @Suppress("IfThenToElvis")
       return if (enumConstants == null) {
-         Either.right(emptyList())
+         emptyList<EnumValue>().right()
       } else {
          enumConstants.enumConstant().map { enumConstant ->
             val annotations = collateAnnotations(enumConstant.annotation())
@@ -1743,16 +1742,14 @@ class TokenProcessor(
    ): Either<List<CompilationError>, List<EnumValue>> {
       val defaults = enumValues.filter { it.isDefault }
       if (defaults.size > 1) {
-         return Either.left(
-            listOf(
+         return listOf(
                CompilationError(
                   token.start,
                   "Cannot declare multiple default values - found ${defaults.joinToString { it.name }}"
                )
-            )
-         )
+            ).left()
       } else {
-         return Either.right(enumValues)
+         return enumValues.right()
       }
    }
 
@@ -1804,7 +1801,7 @@ class TokenProcessor(
                token.start,
                "${enumType.qualifiedName} does not have a member $enumValueName"
             ).asList().left()
-            else -> Either.right(enumType.member(enumValueName))
+            else -> enumType.member(enumValueName).right()
          }
       }
    }
@@ -1817,7 +1814,7 @@ class TokenProcessor(
     */
    private fun resolveEnumValueName(enumQualifiedNameReference: TaxiParser.QualifiedNameContext): Either<List<CompilationError>, EnumValueQualifiedName> {
       return resolveEnumReference(enumQualifiedNameReference) { enumType, enumValueName ->
-         Either.right(EnumValue.enumValueQualifiedName(enumType, enumValueName))
+         EnumValue.enumValueQualifiedName(enumType, enumValueName).right()
       }
    }
 
@@ -1891,7 +1888,7 @@ class TokenProcessor(
          // The function may have already been compiled
          // if it's been used inline.
          // That's ok, we can just return it out of the type system
-         return Either.right(typeSystem.getFunction(qualifiedName))
+         return typeSystem.getFunction(qualifiedName).right()
       }
       val (namespace, functionToken) = namespaceAndParserContext
       val typeArguments = (functionToken.typeArguments()?.typeType() ?: emptyList()).map { typeType ->
@@ -1948,8 +1945,8 @@ class TokenProcessor(
                   val operationOrError =
                      typeSystem.getOperationOrError(consumeQualifiedName, lineageBodyMemberContext.consumesBody())
                   when (operationOrError) {
-                     is Either.Left -> return operationOrError.a.asList().left()
-                     is Either.Right -> consumes.add(operationOrError.b)
+                     is Either.Left -> return operationOrError.value.asList().left()
+                     is Either.Right -> consumes.add(operationOrError.value)
                   }
                }
                lineageBodyMemberContext.storesBody() != null -> {
@@ -2163,7 +2160,7 @@ class TokenProcessor(
          ?.typeType()
          ?.parameterConstraint()
          ?.parameterConstraintExpressionList()
-         ?: return Either.right(null)
+         ?: return null.right()
 
       return OperationConstraintConverter(
          constraintList,
@@ -2180,7 +2177,7 @@ class TokenProcessor(
       namespace: Namespace
    ): Either<List<CompilationError>, List<Constraint>> {
       if (typeType?.parameterConstraint() == null) {
-         return Either.right(emptyList())
+         return emptyList<Constraint>().right()
       }
       return OperationConstraintConverter(
          typeType.parameterConstraint()

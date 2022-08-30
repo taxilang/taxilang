@@ -73,14 +73,14 @@
       <dependency>
          <groupId>org.mockito.kotlin</groupId>
          <artifactId>mockito-kotlin</artifactId>
-         <version>3.1.0</version>
+         <version>3.2.0</version>
          <scope>test</scope>
       </dependency>
       <!-- https://mvnrepository.com/artifact/org.assertj/assertj-core -->
       <dependency>
          <groupId>org.assertj</groupId>
          <artifactId>assertj-core</artifactId>
-         <version>3.14.0</version>
+         <version>3.23.1</version>
          <scope>test</scope>
       </dependency>
 
@@ -122,7 +122,7 @@
       <plugins>
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.22.0</version>
+            <version>2.22.2</version>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -164,7 +164,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.8.0</version>
+            <version>3.10.1</version>
             <configuration>
                <!--<proc>none</proc>-->
                <source>1.8</source>
@@ -200,7 +200,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
-            <version>3.0.1</version>
+            <version>3.2.1</version>
             <executions>
                <execution>
                   <id>attach-sources</id>
@@ -213,7 +213,7 @@
          <plugin>
             <groupId>com.amashchenko.maven.plugin</groupId>
             <artifactId>gitflow-maven-plugin</artifactId>
-            <version>1.14.0</version>
+            <version>1.18.0</version>
             <configuration>
                <!-- whether to push to the git remote. Very useful for testing locally -->
                <pushRemote>true</pushRemote>

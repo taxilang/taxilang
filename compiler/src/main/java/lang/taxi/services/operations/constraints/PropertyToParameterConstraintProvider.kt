@@ -2,6 +2,8 @@ package lang.taxi.services.operations.constraints
 
 import arrow.core.Either
 import arrow.core.flatMap
+import arrow.core.left
+import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.NamespaceQualifiedTypeResolver
 import lang.taxi.Operator
@@ -51,9 +53,9 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
 
             val errors = listOfNotNull(lhsValidationError, rhsValidationError)
             if (errors.isEmpty()) {
-               Either.right(constraint)
+               constraint.right()
             } else {
-               Either.left(errors)
+               errors.left()
             }
          }
 
@@ -104,8 +106,8 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
          is TypeAlias -> getUnderlyingType(type.aliasType!!, constraint, target)
          is ArrayType -> getUnderlyingType(type.type, constraint, target)
          is StreamType -> getUnderlyingType(type.type, constraint, target)
-         is ObjectType -> Either.right(type)
-         else -> Either.left(MalformedConstraint.from("Constraint for ${constraint.propertyIdentifier.description} type ${type} on ${target.description} is malformed - constraints are only supported on Object types.", constraint))
+         is ObjectType -> type.right()
+         else -> MalformedConstraint.from("Constraint for ${constraint.propertyIdentifier.description} type ${type} on ${target.description} is malformed - constraints are only supported on Object types.", constraint).left()
       }
    }
 
@@ -145,7 +147,7 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       val propertyFieldNameQualifier = context.propertyToParameterConstraintLhs().propertyFieldNameQualifier()?.text
       return when {
          propertyFieldNameQualifier != null -> {
-            Either.right(PropertyFieldNameIdentifier(AttributePath.from(typeOrFieldQualifiedName.removePrefix("this."))))
+            PropertyFieldNameIdentifier(AttributePath.from(typeOrFieldQualifiedName.removePrefix("this."))).right()
          }
          else -> typeResolver.resolve(typeOrFieldQualifiedName, context).map { propertyType -> PropertyTypeIdentifier(propertyType.toQualifiedName()) }
       }
@@ -156,8 +158,8 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
       val literal = rhs.literal()?.value()
       val attributePath = rhs.qualifiedName()?.asDotJoinedPath()?.let { AttributePath.from(it) }
       return when {
-         literal != null -> Either.right(ConstantValueExpression(literal))
-         attributePath != null -> Either.right(RelativeValueExpression(attributePath))
+         literal != null -> ConstantValueExpression(literal).right()
+         attributePath != null -> RelativeValueExpression(attributePath).right()
          else -> error("Unhandled scenario parsing rhs of constraint")
       }
    }

@@ -2,6 +2,7 @@ package lang.taxi.services.operations.constraints
 
 
 import arrow.core.Either
+import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.NamespaceQualifiedTypeResolver
 import lang.taxi.TaxiParser
@@ -82,7 +83,7 @@ class OperationConstraintConverter(
          // to handle this.
          ?.filter { it.propertyFormatExpression() == null }
          ?.map { buildConstraint(it, paramType, namespaceQualifiedTypeResolver) }
-         ?.invertEitherList()?.flattenErrors() ?: Either.right(listOf())
+         ?.invertEitherList()?.flattenErrors() ?: emptyList<Constraint>().right()
    }
 
    private fun buildConstraint(constraint: TaxiParser.ParameterConstraintExpressionContext, paramType: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<List<CompilationError>, Constraint> {
