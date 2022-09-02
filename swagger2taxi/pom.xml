@@ -74,6 +74,6 @@
 
    </dependencies>
    <properties>
-      <jackson.version>2.12.4</jackson.version>
+      <jackson.version>2.13.3</jackson.version>
    </properties>
 </project>
