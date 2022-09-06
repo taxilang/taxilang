@@ -41,11 +41,6 @@
       <module>plugins</module>
       <module>kotlin</module>
       <module>lang-to-taxi-api</module>
-      <!-- kotlin-to-ts-emitter is commented out,
-      as the ts-generator dependency is locked to Kotlin 1.2.60 and not maintained.
-      This breaks when upgrading to kotlin 1.4, so leaving commented out for now
-      <module>taxi-typescript/kotlin-to-ts-emitter</module>
-      -->
       <module>core-types</module>
       <module>package-importer</module>
       <module>package-repository-api</module>
