@@ -1,3 +1,0 @@
-function DataType(name: string = "") {
-
-}
