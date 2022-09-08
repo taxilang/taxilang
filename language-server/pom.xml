@@ -73,7 +73,7 @@
       <dependency>
          <groupId>org.mockito.kotlin</groupId>
          <artifactId>mockito-kotlin</artifactId>
-         <version>3.2.0</version>
+         <version>4.0.0</version>
          <scope>test</scope>
       </dependency>
       <!-- https://mvnrepository.com/artifact/org.assertj/assertj-core -->
