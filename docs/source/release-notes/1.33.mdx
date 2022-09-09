@@ -56,3 +56,37 @@ This has been improved, and now packages are scanned on-demand.
  * (jsonschema-importer): If a type is used in an Array and then as a non-array type, all references were getting treated as array types
  * (jsonschema-importer): Types with different schemas but same field names were using incorrect types on second (and subsequent) usages.  We're now generating placeholder types Foo$Duplicate1, but these need furhter investigation.
  * (annotations): fix bug where to-level types get a preceeding `.` in their name
+
+## 1.33.6
+
+### Updated dependencies
+A number of internal dependencies have been updated:
+
+* **deps:** update dependency com.github.everit-org.json-schema:org.everit.json.schema to v1.14.1 ([6343f9b](https://gitlab.com/taxi-lang/taxi-lang/commit/6343f9b79f6581887a463a961ced0c1f236ac0f7))
+* **deps:** update dependency com.github.ntrrgc:ts-generator to v1.1.2 ([67406b2](https://gitlab.com/taxi-lang/taxi-lang/commit/67406b2d975a20a3c7a58bd6e6aea0e3da34876b))
+* **deps:** update dependency com.github.xmlet:xsdparser to v1.2.4 ([9b88b6a](https://gitlab.com/taxi-lang/taxi-lang/commit/9b88b6a15987e5c9a7c3343fb85a4e845c2d570f))
+* **deps:** update dependency com.google.guava:guava to v31 ([c2e2be0](https://gitlab.com/taxi-lang/taxi-lang/commit/c2e2be05e6db48d6e78905fc1a6c82a1a17cb508))
+* **deps:** update dependency com.typesafe:config to v1.4.2 ([00a418d](https://gitlab.com/taxi-lang/taxi-lang/commit/00a418d4bfe9e40afe76ae89cd3f2a734e2fd227))
+* **deps:** update dependency commons-io:commons-io to v2.11.0 ([5bc3db2](https://gitlab.com/taxi-lang/taxi-lang/commit/5bc3db2b82030f76c8ea6db80fb6cc949e4053e9))
+* **deps:** update dependency io.arrow-kt:arrow-core to v1 ([a0e4384](https://gitlab.com/taxi-lang/taxi-lang/commit/a0e43844c638169ff505d35f700fda2524a46abc))
+* **deps:** update dependency io.github.config4k:config4k to v0.5.0 ([7765aca](https://gitlab.com/taxi-lang/taxi-lang/commit/7765aca4d736331536db6ba3f0ed6f93b6ad30b1))
+* **deps:** update dependency io.projectreactor:reactor-core to v3.4.22 ([fc48fca](https://gitlab.com/taxi-lang/taxi-lang/commit/fc48fca94a5c1f38d75fcd90e1ac7eb8f58d18a9))
+* **deps:** update dependency net.lingala.zip4j:zip4j to v2.11.1 ([5088020](https://gitlab.com/taxi-lang/taxi-lang/commit/5088020143e61a0fa27d0b664a796eefad13ab7c))
+* **deps:** update dependency net.oneandone.reflections8:reflections8 to v0.11.7 ([4c08a7a](https://gitlab.com/taxi-lang/taxi-lang/commit/4c08a7acd50b6cef3540707feea3fab84190c6b9))
+* **deps:** update dependency org.apache.commons:commons-lang3 to v3.12.0 ([91534c4](https://gitlab.com/taxi-lang/taxi-lang/commit/91534c4947cc1a1fa3ec876e3be43eb5a476eabc))
+* **deps:** update dependency org.apache.maven:maven-model to v3.8.6 ([e5ba4fc](https://gitlab.com/taxi-lang/taxi-lang/commit/e5ba4fc402b81f156e382666f4feaad277c3d31b))
+* **deps:** update dependency org.glassfish.jaxb:xsom to v3.0.2 ([f09b746](https://gitlab.com/taxi-lang/taxi-lang/commit/f09b74660f9e111c0bceb454e3c2136c52c32be6))
+* **deps:** update dependency org.pf4j:pf4j to v2.6.0 ([d705050](https://gitlab.com/taxi-lang/taxi-lang/commit/d705050e92311d820db81f4d8b781c2187e14902))
+* **deps:** update dependency org.pf4j:pf4j to v3 ([703aefb](https://gitlab.com/taxi-lang/taxi-lang/commit/703aefbbfbe8ab9d3e716289d458b2821bc6d9c9))
+* **deps:** update dependency org.slf4j:slf4j-api to v1.7.36 ([47c378d](https://gitlab.com/taxi-lang/taxi-lang/commit/47c378d627324b5169a6f6b85ddfb1267ae5b48e))
+* **deps:** update dependency org.slf4j:slf4j-api to v2 ([aa7690e](https://gitlab.com/taxi-lang/taxi-lang/commit/aa7690e4a164a0fbda52cc02e97316dc25f3d856))
+* **deps:** update dependency org.slf4j:slf4j-log4j12 to v1.7.36 ([5f8ac4e](https://gitlab.com/taxi-lang/taxi-lang/commit/5f8ac4e41aa1cc100328a3c1cc5d41a7a90ca0ac))
+* **deps:** update dependency org.slf4j:slf4j-log4j12 to v2 ([3b91011](https://gitlab.com/taxi-lang/taxi-lang/commit/3b910117beecc58d694e4161ddac82a5521c3c62))
+* **deps:** update dependency org.springframework.boot:spring-boot-dependencies to v2.7.3 ([f178b27](https://gitlab.com/taxi-lang/taxi-lang/commit/f178b27f618f4ec1565aadfa5697afec39817bce))
+* **deps:** update dependency org.taxilang:compiler to v1.33.5 ([f3be629](https://gitlab.com/taxi-lang/taxi-lang/commit/f3be6299889c02792d8310c97f1828235062a2c7))
+* **deps:** update dependency pl.project13.maven:git-commit-id-plugin to the latest version with a new artifact name ([eb70d6e](https://gitlab.com/taxi-lang/taxi-lang/commit/eb70d6e560533fc801011324c6747de14235087c))
+* **deps:** update http4k.version to v4.30.3.0 ([0d58290](https://gitlab.com/taxi-lang/taxi-lang/commit/0d582907ba9d636224c86c908817e11639ac66a8))
+* **deps:** update http4k.version to v4.30.4.0 ([8770b12](https://gitlab.com/taxi-lang/taxi-lang/commit/8770b12a8eb71a19943bc8c7d967586604da3acd))
+* **deps:** update jackson.version to v2.13.3 ([14ae4ad](https://gitlab.com/taxi-lang/taxi-lang/commit/14ae4add84d98b29da7928213c975bbd8f7fbb91))
+* **deps:** update jackson.version to v2.13.4 ([34b8da8](https://gitlab.com/taxi-lang/taxi-lang/commit/34b8da8f77b3770333ec802e1b8f452faed8cc4e))
+* **deps:** update wire.version to v4.4.1 ([510ae77](https://gitlab.com/taxi-lang/taxi-lang/commit/510ae77a782d1ac3877d287f541adf4384b73906))
