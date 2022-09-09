@@ -1,0 +1,46 @@
+---
+title: 1.31.x releases
+---
+
+import {Link} from "gatsby";
+
+This page contains details of releases in the 1.31.xx set of releases.
+
+## 1.31.0
+
+
+This is a minor feature release, introducing a new experimental api for describing dependencies between services
+
+### Lineage API (feature)
+A new experimental API for describing dependencies between services, and data that is persisted by services
+has been introduced.
+
+```taxi
+service PersonService {
+   lineage {
+       consumes operation NameService.findPersonId
+       stores Person
+   }
+   operation findPerson(PersonId):Person
+}
+```
+
+See <Link to="/language-reference/describing-services/#documenting-service-lineage-experimental">documentation</Link> for more details.
+
+### Internal tooling
+
+ * A new API exists in the taxi schema for finding all annotations - both those backed by annotation types, and dynamic annotations
+
+## 1.31.1
+This is a patch release, containing a single bugfix to the internal tooling
+
+### Bug fixes
+ * Annotations API: Fixed compiler error thrown when Annotation Type usage sites don't provide nullable properties
+
+## 1.31.2
+
+This is a minor feature release, containing a single bugfix to the internal tooling
+
+### Bug fixes
+ * Function compiler: Fixed a bug where Taxi Docs for functions weren't being correctly compiled
+ * Added docs around StdLib and functions api

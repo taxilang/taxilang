@@ -1,0 +1,74 @@
+---
+title: 1.30.x releases
+---
+
+import {Link} from "gatsby";
+
+This page contains details of releases in the 1.30.xx set of releases.
+
+## 1.30.5
+
+This is a feature release, which introduces the following language changes
+
+### Specifying projections on nested collections (Feature)
+
+A TaxiQL projection can now include specific projections for nested collections.
+
+```taxi
+findAll { Transaction[] } as {
+   items : TransactionItem -> {
+      sku : ProductSku
+      size : ProductSize
+   }[]
+}[]
+```
+
+See <Link to="/language-reference/querying-with-taxiql/#projecting-nested-collections">projecting nested collections</Link>
+for more details
+
+### String replace function (Feature)
+
+The String 'replace' function has been added to Taxi lang
+
+```taxi
+replace(String, String, String)
+Replaces the contents of the provided String, returning a new String
+      Accepts three args:
+       * String: The string to search
+       * String: The string to search for
+       * String: The string to use as a replacement
+      ]]
+```
+
+Example usage
+
+```taxi
+model Trade {
+    symbol : String
+    ccy1 : String by replace(this.symbol, "TEXT_TO_REPLACE", "REPLACEMENT_TEXT")
+}
+```
+
+## 1.30.6
+
+This is a minor internal release, which contains changes to internal tooling
+
+### Mapping of java Boolean type to Taxi Boolean types (bug)
+Code generators were unable to map the java Boolean type to Taxi when declared from Kotlin code.
+
+### OpenApi fields are non-null by default (change)
+When generating taxi schemas from OpenApi specs, the generated types have non-nullable fields, unless explicitly
+defined using the OpenApi nullable attribute.
+
+## 1.30.7
+This is a minor internal release, which contains changes to internal tooling
+
+### Bug fixes
+
+#### Annotation types now have their code correctly generated when they contain fields or other annotations (bug)
+
+#### Internal sourceCode attributes of taxi types now try to generate valid self-contained source (bug)
+Previously, we just emitted the source as it was declared in the original file.
+We now try to make this source self-contained, adding missing namespace declarations and
+imports for dependent types.
+

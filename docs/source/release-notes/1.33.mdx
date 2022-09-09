@@ -1,0 +1,58 @@
+---
+title: 1.33.x releases
+---
+
+import {Link} from "gatsby";
+
+This page contains details of releases in the 1.33.xx set of releases.
+
+## 1.33.0
+
+### Updated to Kotlin 1.6
+The codebase is now compiled against Kotlin 1.6
+
+### New collection functions in stdlib
+
+stdlib now includes the following collection functions:
+
+ * `noneOf()` - Testing if a collection contains none of the provided values
+ * `anyOf()` - Testing if a collection contains any of the provided values
+ * `allOf()` - Testing if a collection contains all of the provided values
+
+## 1.33.1
+
+### Bug fixes
+ * fix error thrown when annotation types don't specify nullable properties
+
+## 1.33.2
+
+### Documentation fixes
+ * fix outdated docs with reference to equality (`=` vs `==`)
+ * Added docs on functions
+
+## 1.33.3
+
+### Internal fixes
+ * Special taxiQL projection type has been removed, and replaced with a standard type reference
+ * Compiler doesn't report errors in queries if the token can be unambiguously resolved
+ * Updated license information in pom
+
+## 1.33.4
+
+### Internal fixes
+ * Updated license information in pom (again)
+
+## 1.33.5
+
+### Improved kotlin type detection
+Previously when generating taxi from kotlin code, it was required to pre-register packages, in order to correctly extract
+type information from type alises.
+
+This has been improved, and now packages are scanned on-demand.
+
+### Bug fixes
+
+ * Braces inside of comments or markdown blocks were causing errors in taxi formatter
+ * (jsonschema-importer): If a type is used in an Array and then as a non-array type, all references were getting treated as array types
+ * (jsonschema-importer): Types with different schemas but same field names were using incorrect types on second (and subsequent) usages.  We're now generating placeholder types Foo$Duplicate1, but these need furhter investigation.
+ * (annotations): fix bug where to-level types get a preceeding `.` in their name
