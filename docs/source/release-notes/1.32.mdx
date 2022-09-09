@@ -1,0 +1,65 @@
+---
+title: 1.32.x releases
+---
+
+import {Link} from "gatsby";
+
+This page contains details of releases in the 1.32.xx set of releases.
+
+## 1.32.0
+
+### Json schema converter (feature)
+We added the JsonSchema importer project, which can convert
+a Json Schema to taxi.
+
+It's currently used programmatically.  See the unit tests for examples.
+
+
+### Protobuf schema converter (feature)
+We added the Protobuf importer project, which can convert
+a Protobuf to taxi.
+
+It's currently used programmatically.  See the unit tests for examples.
+
+
+### Standardisation of operators (breaking change)
+Usage of operators has been standardized.
+
+ * `==` is used consistently for equality checks (eg., in queries)
+ * `=` is used consistently for assignment (eg., in given clauses)
+ * Expression syntax has now been made consistent throughout.
+
+### Lambda types (feature)
+Types can now be declared which are the result of a computed expression.
+
+For example:
+
+```
+type WeightedAverage by (Entry[]) -> reduce(Entry[], (Entry, Int) -> Int + (Weight*Score))
+```
+
+### Lambdas in functions (feature)
+
+Function declarations can now include generics and lambdas
+
+For example:
+
+```
+declare function <T,A> reduce(T[], (T,A) -> A):A
+```
+
+
+### Anonymous types in query body (feature)
+
+TaxiQL queries can now support projecting to an anonymous type, rather than a predefined one.
+
+For example:
+
+```
+find { Movie[] } as {
+  // The type is defined inline within the query body
+  id : MovieId
+  title : MovieTitle
+  description : Description
+}
+```

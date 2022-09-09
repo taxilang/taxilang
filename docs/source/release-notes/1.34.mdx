@@ -1,0 +1,27 @@
+---
+title: 1.34.x releases
+---
+
+import {Link} from "gatsby";
+
+This page contains details of releases in the 1.34.xx set of releases.
+
+# 1.34.0
+
+## Add `table` and `stream` declarations in services (feature)
+Added first-class support for `table` and `stream` declarations in services, for describing database tables and streaming message sources respectively.
+
+Eg:
+
+```
+service MyDatabase {
+   table movies : Movie[]
+   table actors : Actor[]
+}
+
+service MyKafkaBroker {
+   stream prices : Stream<StockPrice>
+}
+```
+
+See the <Link to="/language-reference/describing-services/#database-tables">documentation</Link> for more details.
