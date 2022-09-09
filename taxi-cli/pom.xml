@@ -4,14 +4,14 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>org.taxilang</groupId>
-      <version>1.33.5</version>
+      <version>1.33.6-SNAPSHOT</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
    <artifactId>taxi-cli</artifactId>
 
    <properties>
-      <pf4j.version>2.4.0</pf4j.version>
+      <pf4j.version>3.7.0</pf4j.version>
       <jreleaser.config.file>jreleaser.yml</jreleaser.config.file>
       <jreleaser.git.root.search>true</jreleaser.git.root.search>
       <app.main.class>lang.taxi.cli.TaxiCli</app.main.class>
@@ -56,7 +56,7 @@
       <dependency>
          <groupId>commons-io</groupId>
          <artifactId>commons-io</artifactId>
-         <version>2.6</version>
+         <version>2.11.0</version>
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
@@ -113,7 +113,7 @@
       <dependency>
          <groupId>org.apache.maven</groupId>
          <artifactId>maven-model</artifactId>
-         <version>3.3.9</version>
+         <version>3.8.6</version>
       </dependency>
 
       <!-- TODO : Move this out so that Kotlin plugin isn't bundled -->
@@ -130,7 +130,7 @@
             <!-- Import dependency management from Spring Boot -->
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-dependencies</artifactId>
-            <version>2.4.0</version>
+            <version>2.7.3</version>
             <type>pom</type>
             <scope>import</scope>
          </dependency>
@@ -141,9 +141,9 @@
       <finalName>taxi-cli</finalName>
       <plugins>
          <plugin>
-            <groupId>pl.project13.maven</groupId>
-            <artifactId>git-commit-id-plugin</artifactId>
-            <version>2.2.4</version>
+            <groupId>io.github.git-commit-id</groupId>
+            <artifactId>git-commit-id-maven-plugin</artifactId>
+            <version>5.0.0</version>
             <executions>
                <execution>
                   <id>get-the-git-infos</id>
@@ -202,7 +202,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.3</version>
+            <version>3.10.1</version>
             <configuration>
                <source>1.8</source>
                <target>1.8</target>
@@ -242,7 +242,7 @@
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>appassembler-maven-plugin</artifactId>
-            <version>1.10</version>
+            <version>2.1.0</version>
             <executions>
                <execution>
                   <id>assemble-script</id>
@@ -266,7 +266,7 @@
          </plugin>
          <plugin>
             <artifactId>maven-assembly-plugin</artifactId>
-            <version>3.3.0</version>
+            <version>3.4.2</version>
             <configuration>
                <descriptors>
                   <descriptor>src/main/assembly/assembly.xml</descriptor>
@@ -287,7 +287,7 @@
          <plugin>
             <groupId>org.jreleaser</groupId>
             <artifactId>jreleaser-maven-plugin</artifactId>
-            <version>1.0.0-M2</version>
+            <version>1.2.0</version>
             <configuration>
                <!-- SEE ALSO: jreleaser.yml, defined above -->
                <jreleaser>

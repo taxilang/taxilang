@@ -1,0 +1,19 @@
+{
+   "extends": [
+      "config:base"
+   ],
+   "packageRules": [
+      {
+         "updateTypes": [
+            "patch",
+            "pin",
+            "digest"
+         ],
+         "automerge": true
+      }
+   ],
+   "prConcurrentLimit": 2,
+   "reviewers": [
+      "RoopeHakulinen"
+   ]
+}

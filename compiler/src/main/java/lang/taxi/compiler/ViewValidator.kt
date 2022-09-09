@@ -472,10 +472,10 @@ class ViewValidator(private val viewName: String) {
       return fields.mapNotNull { viewBodyFieldDefinition ->
          when (val res = validateViewBodyFieldDefinition(viewBodyFieldDefinition, bodyDefinition, bodyCtx)) {
             is Either.Left -> {
-               compilationErrors.add(res.a)
+               compilationErrors.add(res.value)
                null
             }
-            is Either.Right -> res.b
+            is Either.Right -> res.value
          }
       }
    }

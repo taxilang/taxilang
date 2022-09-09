@@ -1,6 +1,8 @@
 package lang.taxi.types
 
 import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import com.google.common.cache.CacheBuilder
 import lang.taxi.ImmutableEquality
 
@@ -162,10 +164,10 @@ data class EnumType(override val qualifiedName: String,
       val illegalValueDefinitions = extension.values.filter { value -> !definedValueNames.contains(value.name) }
       return if (illegalValueDefinitions.isNotEmpty()) {
          val illegalValueNames = illegalValueDefinitions.joinToString(", ") { it.name }
-         Either.left("Cannot modify the members in an enum.  An extension attempted to add a new members $illegalValueNames")
+         "Cannot modify the members in an enum.  An extension attempted to add a new members $illegalValueNames".left()
       } else {
          this.extensions.add(extension)
-         Either.right(extension)
+         extension.right()
       }
    }
 
