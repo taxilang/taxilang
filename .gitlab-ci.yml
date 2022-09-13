@@ -25,6 +25,7 @@ cache:
 default:
    tags:
       - docker
+   image: maven:3.6.3-jdk-8
 
 .setup-nvm: &setup-nvm
    - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash'
@@ -79,7 +80,6 @@ validate:
 release-major:
    variables:
       GIT_STRATEGY: none
-   image: maven:3.8.6-jdk-8
    stage: trigger-release
    script:
       - *git_setup
@@ -91,7 +91,6 @@ release-major:
 release-minor:
    variables:
       GIT_STRATEGY: none
-   image: maven:3.8.6-jdk-8
    stage: trigger-release
    script:
       - *git_setup
@@ -103,7 +102,6 @@ release-minor:
 release-patch:
    variables:
       GIT_STRATEGY: none
-   image: maven:3.8.6-jdk-8
    stage: trigger-release
    script:
       - *git_setup
@@ -140,7 +138,6 @@ build-plugin-beta:
          - 'language-server/vscode-extension/*.vsix'
 
 publish-release:
-   #image: maven:3.6.3-jdk-8
    stage: deploy
    script:
       - docker login -u vynecd -p $DOCKER_HUB_PASSWORD
