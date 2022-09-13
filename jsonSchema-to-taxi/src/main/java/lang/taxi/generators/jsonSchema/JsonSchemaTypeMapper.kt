@@ -37,12 +37,16 @@ import org.everit.json.schema.SchemaLocation
 import org.everit.json.schema.StringSchema
 import java.net.URI
 
-fun MutableMap<QualifiedName, JsonSchemaTypeMapper.GeneratedType>.containsCaseInsensitiveType(typeName: String): Boolean {
-   return this.filter { it.key.typeName.lowercase() == typeName.lowercase() }.isNotEmpty()
+fun MutableMap<QualifiedName, JsonSchemaTypeMapper.GeneratedType>.containsCaseInsensitiveType(qualifiedName: QualifiedName): Boolean {
+   return this.filter { it.key.equalsCaseInsensitive(qualifiedName) }.isNotEmpty()
 }
 
-fun MutableMap<QualifiedName, JsonSchemaTypeMapper.GeneratedType>.countCaseInsensitiveDuplicatesOf(typeName: String): Int {
-   return this.count { entry -> entry.key.typeName.lowercase() == typeName.lowercase() }
+fun MutableMap<QualifiedName, JsonSchemaTypeMapper.GeneratedType>.countCaseInsensitiveDuplicatesOf(qualifiedName: QualifiedName): Int {
+   return this.count { it.key.typeName.lowercase().startsWith(qualifiedName.typeName.lowercase()) && it.key.namespace == qualifiedName.namespace }
+}
+
+fun QualifiedName.equalsCaseInsensitive(other: QualifiedName): Boolean {
+   return this.typeName.lowercase() == other.typeName.lowercase() && this.namespace == other.namespace
 }
 
 class JsonSchemaTypeMapper(
@@ -133,21 +137,21 @@ class JsonSchemaTypeMapper(
       return getOrCreateType(typeName, resolvedSchema)
    }
 
-   private fun getOrCreateType(name: QualifiedName, schema: Schema, parentTypeName: QualifiedName? = null): Type {
+   private fun getOrCreateType(name: QualifiedName, schema: Schema): Type {
       val resolvedSchema = schema.resolve()
       if (resolvedSchema is ArraySchema) {
          // createType will not create / cache an array type (for good reason, or all
          // future requests for type Foo will result in a Foo[]
          // So, if this was asked for as an array, wrap it into an ArrayType
-         val type = getOrCreateType(name, resolvedSchema.allItemSchema, parentTypeName)
+         val type = getOrCreateType(name, resolvedSchema.allItemSchema)
          return ArrayType.of(type)
       }
 
       // This now always creates a new type. We can't know that a field is semantically equivalent
       // to another field and reuse the same type.
       val generatedType =
-         if (_generatedTypes.containsCaseInsensitiveType(name.typeName)) {
-            val updatedQualifiedName = resolveTypeNameForDuplicate(name, parentTypeName)
+         if (_generatedTypes.containsCaseInsensitiveType(name)) {
+            val updatedQualifiedName = resolveTypeNameForDuplicate(name)
             val createdType = createType(resolvedSchema, updatedQualifiedName)
             _generatedTypes[updatedQualifiedName] = createdType
             createdType
@@ -191,23 +195,19 @@ class JsonSchemaTypeMapper(
       return generatedType.type
    }
 
-   private fun resolveTypeNameForDuplicate(duplicateQualifiedName: QualifiedName, parentTypeName: QualifiedName?): QualifiedName {
-      // this is for when we don't have a parent type name to add as a prefix to the type. Instead we'll add
-      // a number to the end.
-      val numberOfSameNamedFields = _generatedTypes.countCaseInsensitiveDuplicatesOf(duplicateQualifiedName.typeName)
+   private fun resolveTypeNameForDuplicate(duplicateQualifiedName: QualifiedName): QualifiedName {
+      val numberOfSameNamedFields = _generatedTypes.countCaseInsensitiveDuplicatesOf(duplicateQualifiedName)
       return duplicateQualifiedName.copy(
-         typeName = if (parentTypeName?.typeName != null) {
-            val newQualifiedName = parentTypeName.typeName + duplicateQualifiedName.typeName
-            if (_generatedTypes.containsCaseInsensitiveType(newQualifiedName)) {
-               val numberOfSameNamedFields = _generatedTypes.countCaseInsensitiveDuplicatesOf(newQualifiedName)
-               newQualifiedName + numberOfSameNamedFields.toString()
-            } else {
-               newQualifiedName
-            }
-         } else {
-            duplicateQualifiedName.typeName + numberOfSameNamedFields.toString()
-         }
+         typeName = duplicateQualifiedName.typeName + numberOfSameNamedFields.toString()
       )
+   }
+
+   private fun createSubNamespace(parent: QualifiedName?): String {
+      return if (parent != null) {
+         "$defaultNamespace.${parent.typeName.lowercase()}"
+      } else {
+         defaultNamespace
+      }
    }
 
    private fun findNextUnusedQualifiedName(name: QualifiedName): QualifiedName {
@@ -353,8 +353,8 @@ class JsonSchemaTypeMapper(
       """.trimMargin().trim()
 
       val fields = schema.propertySchemas.map { (propertyName, propertySchema) ->
-         val qualifiedName = getTypeNameFromSchema(propertySchema, propertyName)
-         val type = getOrCreateType(qualifiedName, propertySchema, name)
+         val qualifiedName = getTypeNameFromSchema(propertySchema, propertyName, parent = name)
+         val type = getOrCreateType(qualifiedName, propertySchema)
          val isRequired = schema.requiredProperties.contains(propertyName)
          val nullable = !isRequired
          Field(
@@ -418,9 +418,10 @@ class JsonSchemaTypeMapper(
    private fun getTypeNameFromSchema(
       schema: Schema,
       propertyName: String? = null,
-      fallback: QualifiedName? = null
+      fallback: QualifiedName? = null,
+      parent: QualifiedName? = null
    ): QualifiedName {
-      if (propertyName != null) return QualifiedName(defaultNamespace, propertyName.capitalize())
+      if (propertyName != null) return QualifiedName(createSubNamespace(parent), propertyName.capitalize())
       // We can fall through here with simple types from CombinedSchema
       when (schema) {
          is StringSchema -> return PrimitiveType.STRING.toQualifiedName()
@@ -429,7 +430,7 @@ class JsonSchemaTypeMapper(
 
       val qualifiedName = when {
 
-         schema.title != null -> QualifiedName(defaultNamespace, schema.title.replace(" ", "_").toCapitalizedWords())
+         schema.title != null -> QualifiedName(createSubNamespace(parent), schema.title.replace(" ", "_").toCapitalizedWords())
          else -> {
             try {
                val uri = getSchemaIdAsUri(schema, logger) ?: error("Could not parse schema to URI")

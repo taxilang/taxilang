@@ -173,18 +173,21 @@ class JsonSchemaTaxiGeneratorTest {
          """
             namespace org.taxilang {
                model Test {
-                  item : Item?
-                  id : TestId?
+                  item : org.taxilang.test.Item?
+                  id : org.taxilang.test.Id?
                }
+            }
 
+            namespace org.taxilang.test {
                model Item {
-                  id : Id
+                  id : org.taxilang.item.Id
                }
 
                type Id inherits String
+            }
 
-               [[ Identifier ]]
-               type TestId inherits String
+            namespace org.taxilang.item {
+               type Id inherits String
             }
          """.trimIndent()
       )
@@ -220,16 +223,16 @@ class JsonSchemaTaxiGeneratorTest {
          """
             namespace org.taxilang {
                model Test {
-                  name : Name?
-                  Name : TestName?
-                  NAME : TestNAME1?
+                  name : org.taxilang.test.Name?
+                  Name : org.taxilang.test.Name1?
+                  NAME : org.taxilang.test.NAME2?
                }
+            }
 
+            namespace org.taxilang.test {
                type Name inherits String
-
-               type TestName inherits String
-
-               type TestNAME1 inherits String
+               type Name1 inherits String
+               type NAME2 inherits String
             }
          """.trimIndent()
       )
