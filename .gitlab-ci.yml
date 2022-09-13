@@ -116,6 +116,9 @@ publish-snapshot-jars:
    script:
       - docker login -u vynecd -p $DOCKER_HUB_PASSWORD
       - 'mvn $MAVEN_CLI_OPTS deploy -P snapshot-release'
+   services:
+      -  name: docker:20.10.17-dind
+         command: ["--tls=false"]
    only:
       - develop
    artifacts:
@@ -147,6 +150,9 @@ publish-release:
       # Use jreleaser to publish to sdkman, and others
       - 'cd taxi-cli'
       - 'mvn jreleaser:full-release'
+   services:
+      -  name: docker:20.10.17-dind
+         command: ["--tls=false"]
    only:
       - master
    artifacts:
