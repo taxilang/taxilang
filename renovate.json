@@ -15,5 +15,8 @@
    "prConcurrentLimit": 2,
    "reviewers": [
       "RoopeHakulinen"
-   ]
+   ],
+   "npm": {
+      "enabled": false
+   }
 }
