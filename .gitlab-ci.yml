@@ -67,7 +67,7 @@ validate:
    script:
       - 'mvn $MAVEN_CLI_OPTS clean deploy'
    services:
-      -  name: docker:20.10.17-dind
+      -  name: docker:20.10.18-dind
          command: [ "--tls=false" ]
    variables:
       # Instruct Testcontainers to use the daemon of DinD.
@@ -125,7 +125,7 @@ publish-snapshot-jars:
    script:
       - 'mvn $MAVEN_CLI_OPTS deploy -P snapshot-release'
    services:
-      -  name: docker:20.10.17-dind
+      -  name: docker:20.10.18-dind
          command: [ "--tls=false" ]
    variables:
       # Instruct Testcontainers to use the daemon of DinD.
