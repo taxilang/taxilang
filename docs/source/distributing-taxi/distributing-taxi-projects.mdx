@@ -98,10 +98,10 @@ Artifact uploaded successfully
 ```
 
 ## Sharing taxonomies with Nexus
-Currently, [Sonatype Nexus](https://www.sonatype.com/nexus/repository-oss) is the best way to publish and share taxi repositories.
+Currently, [Sonatype Nexus](https://www.sonatype.com/nexus/repository-oss) is the best way to publish and share Taxi repositories.
 
-This guide does not cover the basics of installing and getting Nexus running, and assumes you've already got a nexus running somewhere.
-However, for a quick getting started, you can always use the [nexus docker image](https://hub.docker.com/r/sonatype/nexus3), as follows:
+This guide does not cover the basics of installing and getting Nexus running, and assumes you've already got a Nexus instance running somewhere.
+However, for a quick getting started, you can always use the [Nexus Docker image](https://hub.docker.com/r/sonatype/nexus3), as follows:
 
 ```bash
 $ mkdir /some/dir/nexus-data && chown -R 200 /some/dir/nexus-data
@@ -110,8 +110,8 @@ $ docker run -d -p 8081:8081 --name nexus -v /some/dir/nexus-data:/nexus-data so
 
 This will give you a local running nexus at `https://localhost:8081`.
 
-### Creating a taxi repository
-In nexus, taxi repositories are defined as Raw repositories.
+### Creating a Taxi repository
+In Nexus, Taxi repositories are defined as Raw repositories.
 
  * Log in to Nexus with admin credentials, and create a new repository.  From the list of repository types, select "raw (hosted)"
  * Give the repository a name.  This is the name that will be used in your repository config section in your taxi.conf file.
@@ -149,7 +149,7 @@ credentials: [
 
 
 ## Other links
-Publishing and sharing taxonomies is maturing within taxi.  We currently only support a single repository (nexus), but can add support
+Publishing and sharing taxonomies is maturing within Taxi.  We currently only support a single repository (nexus), but can add support
 as required for other repositories.
 
 PR's are welcomed in this regard too.
