@@ -1,6 +1,7 @@
 {
    "extends": [
-      "config:base"
+      "config:base",
+      ":prConcurrentLimitNone"
    ],
    "packageRules": [
       {
@@ -12,7 +13,6 @@
          "automerge": true
       }
    ],
-   "prConcurrentLimit": 2,
    "reviewers": [
       "RoopeHakulinen"
    ],
