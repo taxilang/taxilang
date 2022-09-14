@@ -45,8 +45,6 @@ import java.time.Duration
  *  - Log in as admin, and change the password to "password"
  *  - Create a repository of type RAW, called taxi
  */
-// Requires that nexus is running
-// @Disabled
 @Testcontainers
 class NexusPackageServiceTest {
    @TempDir
@@ -83,7 +81,6 @@ class NexusPackageServiceTest {
          adminPassword = IOUtils.toString(stream, Charset.defaultCharset())
          log().info("Fetched nexus admin password from container")
       }
-
    }
 
    //   @BeforeEach
@@ -117,7 +114,7 @@ class NexusPackageServiceTest {
       val localPort = nexusContainer.getMappedPort(8081)
 
       val client = ApacheClient()
-      val request = Request(Method.POST, "http://localhost:$localPort/service/rest/v1/repositories/raw/hosted")
+      val request = Request(Method.POST, "http://${nexusContainer.host}:$localPort/service/rest/v1/repositories/raw/hosted")
          .header("Content-Type", "application/json")
          .basicAuth("admin", adminPassword)
          .body(
@@ -135,7 +132,7 @@ class NexusPackageServiceTest {
       response.status.code.should.equal(201)
       log().info("Successfully created nexus repository $repositoryName")
       return NexusPackageService(
-         nexusUrl = "http://localhost:$localPort",
+         nexusUrl = "http://${nexusContainer.host}:$localPort",
          repositoryName = repositoryName,
          credentials = Credentials("nexus", "admin", adminPassword)
       )
@@ -148,7 +145,7 @@ class NexusPackageServiceTest {
       val resource = Resources.getResource("testRepo/taxi/lang.taxi.Dummy/0.2.0").toURI()
       PackagePublisher(SingleServiceFactory(nexus)).publish(Paths.get(resource))
       val nexusRepository = Repository(
-         nexus.nexusUrl, "Local nexus", type = "nexus",
+         nexus.nexusUrl, "Local Nexus", type = "nexus",
          settings = mapOf(
             NexusPackageService.Companion.Settings.REPOSITORY_NAME to nexus.repositoryName
          )
@@ -169,7 +166,7 @@ class NexusPackageServiceTest {
 class NexusContainer : GenericContainer<NexusContainer>(DockerImageName.parse("sonatype/nexus3")) {
    fun withNexusDataDirectory(temporaryFolder: Path): NexusContainer {
 
-      log().info("Using nexus temp directory at ${temporaryFolder.toFile().canonicalPath}")
+      log().info("Using Nexus temp directory at ${temporaryFolder.toFile().canonicalPath}")
       val user200 = temporaryFolder.fileSystem.userPrincipalLookupService.lookupPrincipalByName("200");
       Files.setOwner(temporaryFolder, user200)
       return withNexusDataDirectory(temporaryFolder)

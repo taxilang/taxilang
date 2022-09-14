@@ -1,15 +1,15 @@
 variables:
-  # This will supress any download for dependencies and plugins or upload messages which would clutter the console log.
-  # `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
-  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
-  # As of Maven 3.3.0 instead of this you may define these options in `.mvn/maven.config` so the same config is used
-  # when running from the command line.
-  # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
-  MAVEN_CLI_OPTS: "-s mvn-settings.xml --batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true -P shade"
-  # Used during gitflow interaction.
-  MAJOR_RELEASE_DIGIT: 0
-  MINOR_RELEASE_DIGIT: 1
-  PATCH_RELEASE_DIGIT: 2
+   # This will supress any download for dependencies and plugins or upload messages which would clutter the console log.
+   # `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
+   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+   # As of Maven 3.3.0 instead of this you may define these options in `.mvn/maven.config` so the same config is used
+   # when running from the command line.
+   # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
+   MAVEN_CLI_OPTS: "-s mvn-settings.xml --batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true -P shade"
+   # Used during gitflow interaction.
+   MAJOR_RELEASE_DIGIT: 0
+   MINOR_RELEASE_DIGIT: 1
+   PATCH_RELEASE_DIGIT: 2
 
 .git_template: &git_setup |
    git remote set-url --push origin "https://oauth2:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
@@ -19,13 +19,13 @@ variables:
 # Cache downloaded dependencies and plugins between builds.
 # To keep cache across branches add 'key: "$CI_JOB_REF_NAME"'
 cache:
-  paths:
-    - .m2/repository
+   paths:
+      - .m2/repository
 
 default:
    tags:
       - docker
-   image: maven:3.6.3-jdk-8
+   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/maven:3.8.6-eclipse-temurin-11
 
 .setup-nvm: &setup-nvm
    - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash'
@@ -42,8 +42,8 @@ default:
    - 'npm run sync-pom-version'
 
 .cleanup-after-vscode-plugin-build: &cleanup-after-vscode-plugin-build
-#   These files are modified during the build process, as we update their versions dynamically.
-#   Currently, we don't commit the changes, although we could add that at a later date
+   #   These files are modified during the build process, as we update their versions dynamically.
+   #   Currently, we don't commit the changes, although we could add that at a later date
    - 'cd language-server/vscode-extension'
    - 'git restore package.json package-lock.json'
 
@@ -59,22 +59,31 @@ stages:
 # Because some enforcer rules might check dependency convergence and class duplications
 # we use `test-compile` here instead of `validate`, so the correct classpath is picked up.
 validate:
-  image: maven:3.8.6-jdk-8
-  stage: build
-  except:
-     - tags
-     - master
-     - develop
-  script:
-    - 'mvn $MAVEN_CLI_OPTS clean deploy'
-  artifacts:
-    paths:
-       - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
-    reports:
-      junit:
-      # Note:This won't actually work, b/c of https://gitlab.com/gitlab-org/gitlab-runner/issues/2620
-      # However, leaving this here to pick up later
-        - "*/target/surefire-reports/TEST-*.xml"
+   stage: build
+   except:
+      - tags
+      - master
+      - develop
+   script:
+      - 'mvn $MAVEN_CLI_OPTS clean deploy'
+   services:
+      -  name: docker:20.10.17-dind
+         command: [ "--tls=false" ]
+   variables:
+      # Instruct Testcontainers to use the daemon of DinD.
+      DOCKER_HOST: "tcp://docker:2375"
+      # Instruct Docker not to start over TLS.
+      DOCKER_TLS_CERTDIR: ""
+      # Improve performance with overlayfs.
+      DOCKER_DRIVER: overlay2
+   artifacts:
+      paths:
+         - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
+      reports:
+         junit:
+            # Note:This won't actually work, b/c of https://gitlab.com/gitlab-org/gitlab-runner/issues/2620
+            # However, leaving this here to pick up later
+            - "*/target/surefire-reports/TEST-*.xml"
 
 ## Manual jobs to trigger a release and increment the version (major,minor,patch)
 release-major:
@@ -114,11 +123,17 @@ release-patch:
 publish-snapshot-jars:
    stage: build
    script:
-      - docker login -u vynecd -p $DOCKER_HUB_PASSWORD
       - 'mvn $MAVEN_CLI_OPTS deploy -P snapshot-release'
    services:
       -  name: docker:20.10.17-dind
-         command: ["--tls=false"]
+         command: [ "--tls=false" ]
+   variables:
+      # Instruct Testcontainers to use the daemon of DinD.
+      DOCKER_HOST: "tcp://docker:2375"
+      # Instruct Docker not to start over TLS.
+      DOCKER_TLS_CERTDIR: ""
+      # Improve performance with overlayfs.
+      DOCKER_DRIVER: overlay2
    only:
       - develop
    artifacts:
@@ -143,16 +158,12 @@ build-plugin-beta:
 publish-release:
    stage: deploy
    script:
-      - docker login -u vynecd -p $DOCKER_HUB_PASSWORD
       # Don't run tests on master, as already passed on develop
       # Use -DskipTests, but not -Dmaven.test.skip=true as we need to compile the tests (as other projects have test dependencies), but not run them.
       - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P release'
       # Use jreleaser to publish to sdkman, and others
       - 'cd taxi-cli'
       - 'mvn jreleaser:full-release'
-   services:
-      -  name: docker:20.10.17-dind
-         command: ["--tls=false"]
    only:
       - master
    artifacts:
