@@ -28,12 +28,12 @@ default:
    image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/maven:3.8.6-eclipse-temurin-11
 
 .setup-nvm: &setup-nvm
-   - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash'
+   - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash'
    - 'export NVM_DIR="$HOME/.nvm"'
    - 'unset NPM_CONFIG_PREFIX'
    - '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm'
-   - 'nvm install stable'
-   - 'nvm use stable'
+   - 'nvm install 16'
+   - 'nvm use 16'
 
 .prepare-vscode-plugin-build: &prepare-vscode-plugin-build
    - 'cd language-server/vscode-extension'
