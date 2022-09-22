@@ -43,7 +43,7 @@ class JpaAdaptorIntegrationTest {
          )
       )
 
-      queryAdaptor.execute("findAll { Person[] }")
+      queryAdaptor.execute("find { Person[] }")
          .should.have.size(2)
    }
 
@@ -56,7 +56,7 @@ class JpaAdaptorIntegrationTest {
          )
       )
 
-      queryAdaptor.execute("findAll { Person[]( DateOfBirth > '1980-01-01', DateOfBirth < '1990-01-01') }")
+      queryAdaptor.execute("find { Person[]( DateOfBirth > '1980-01-01', DateOfBirth < '1990-01-01') }")
          .should.have.size(1)
    }
    @Test
@@ -68,7 +68,7 @@ class JpaAdaptorIntegrationTest {
          )
       )
 
-      queryAdaptor.execute("findAll { Person[]( PersonLastUpdated >= '2021-03-01T00:00:00', PersonLastUpdated <= '2021-04-01T00:00:00') }")
+      queryAdaptor.execute("find { Person[]( PersonLastUpdated >= '2021-03-01T00:00:00', PersonLastUpdated <= '2021-04-01T00:00:00') }")
          .should.have.size(1)
    }
 }

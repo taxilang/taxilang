@@ -118,7 +118,7 @@ class ExpressionCompiler(
 
    private fun parseFieldReferenceSelector(fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext): Either<List<CompilationError>, Expression> {
       return requireFieldCompilerIsPresent(fieldReferenceSelector).flatMap {
-         val fieldName = fieldReferenceSelector.Identifier().text
+         val fieldName = fieldReferenceSelector.identifier().text
          fieldCompiler!!.provideField(fieldName, fieldReferenceSelector)
             .map { field ->
                FieldReferenceExpression(
@@ -211,8 +211,8 @@ class ExpressionCompiler(
       return tokenProcessor.parseType(typeType.findNamespace(), typeType)
          .map { type -> TypeExpression(type, typeType.toCompilationUnits()) }
          .handleErrorWith { errors ->
-            if (Enums.isPotentialEnumMemberReference(typeType.classOrInterfaceType().Identifier().text())) {
-               tokenProcessor.resolveEnumMember(typeType.classOrInterfaceType().Identifier().text(), typeType)
+            if (Enums.isPotentialEnumMemberReference(typeType.classOrInterfaceType().identifier().text())) {
+               tokenProcessor.resolveEnumMember(typeType.classOrInterfaceType().identifier().text(), typeType)
                   .map { enumMember ->
                      LiteralExpression(
                         LiteralAccessor(enumMember.value, enumMember.enum),
@@ -279,7 +279,7 @@ class ExpressionCompiler(
       parameterContext: TaxiParser.ParameterContext
    ): Either<List<CompilationError>, FieldReferenceSelector> {
       return requireFieldCompilerIsPresent(parameterContext).flatMap {
-         fieldCompiler!!.provideField(parameterContext.fieldReferenceSelector().Identifier().text, parameterContext)
+         fieldCompiler!!.provideField(parameterContext.fieldReferenceSelector().identifier().text, parameterContext)
             .map { field -> FieldReferenceSelector.fromField(field) }
       }
    }

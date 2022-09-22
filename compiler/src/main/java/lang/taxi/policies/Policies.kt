@@ -10,7 +10,7 @@ object Instructions {
             PermitInstruction
          }
          instruction.policyFilterDeclaration() != null -> {
-            val fieldIdentifiers = instruction.policyFilterDeclaration().filterAttributeNameList()?.Identifier()
+            val fieldIdentifiers = instruction.policyFilterDeclaration().filterAttributeNameList()?.identifier()
                ?: emptyList()
             val fieldNames = fieldIdentifiers.map { it.text }
             FilterInstruction(fieldNames)

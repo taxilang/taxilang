@@ -299,7 +299,7 @@ namespace pkgB {
          """.compiled()
 
          val src = """
-            findAll {
+            find {
                Record[]
             } as {
               upperPrimaryKey: String by upper(Record['primaryKey'])

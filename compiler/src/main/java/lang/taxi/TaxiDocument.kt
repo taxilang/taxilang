@@ -24,7 +24,7 @@ import lang.taxi.utils.log
 
 
 fun TaxiParser.QualifiedNameContext.toAttributePath(): AttributePath {
-   return AttributePath(this.Identifier().map { it.text })
+   return AttributePath(this.identifier().map { it.text })
 }
 
 class NamespacedTaxiDocument(

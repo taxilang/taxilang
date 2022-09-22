@@ -12,7 +12,7 @@ class JpqlQueryBuilderTest {
    @Test
    fun `simple find all on type`() {
       val (taxi, query) = schemaForClasses(Person::class.java)
-         .query("findAll { Person[] }")
+         .query("find { Person[] }")
       val jpql = JpqlQueryBuilder().convert(taxi, query.first(), JpaQueryType.from(query.first(), listOf(Person::class.java)))
       jpql.withoutWhitespace().should.equal("select t0 from Person t0".withoutWhitespace())
 
@@ -20,7 +20,7 @@ class JpqlQueryBuilderTest {
    @Test
    fun `find in date range`() {
       val (taxi, query) = schemaForClasses(Person::class.java)
-         .query("findAll { Person[]( DateOfBirth > '1980-01-01', DateOfBirth < '1990-01-01') }")
+         .query("find { Person[]( DateOfBirth > '1980-01-01', DateOfBirth < '1990-01-01') }")
       val jpql = JpqlQueryBuilder().convert(taxi, query.first(), JpaQueryType.from(query.first(), listOf(Person::class.java)))
       jpql.withoutWhitespace().should.equal("""select t0 from
 Person t0

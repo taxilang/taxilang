@@ -57,7 +57,7 @@ class FunctionAccessorCompiler(
       val namespace = functionContext.findNamespace()
       return tokenProcessor.attemptToLookupTypeByName(
          namespace,
-         functionContext.functionName().qualifiedName().Identifier().text(),
+         functionContext.functionName().qualifiedName().identifier().text(),
          functionContext,
          symbolKind = SymbolKind.FUNCTION
       )

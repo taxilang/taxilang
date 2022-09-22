@@ -25,6 +25,6 @@ class ConstraintBuilder(private val typeResolver: NamespaceQualifiedTypeResolver
 }
 
 fun TaxiParser.QualifiedNameContext.asDotJoinedPath(): String {
-   return this.Identifier().joinToString(".") { it.text }
+   return this.identifier().joinToString(".") { it.text }
 }
 

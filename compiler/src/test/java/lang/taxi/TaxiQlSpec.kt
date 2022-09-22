@@ -48,7 +48,7 @@ class TaxiQlSpec : DescribeSpec({
             import foo.Order
             import foo.OutputOrder
 
-            findAll {
+            find {
                Order[]( TradeDate  >= startDate , TradeDate < endDate )
             } as {
                tradeTimestamp
@@ -65,7 +65,7 @@ class TaxiQlSpec : DescribeSpec({
 
       it("should compile a simple query") {
          val src = """
-            findAll { Order }
+            find { Order }
          """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
@@ -75,7 +75,7 @@ class TaxiQlSpec : DescribeSpec({
       it("should resolve unambiguous types without imports") {
          val src = """
                  query RecentOrdersQuery( startDate:Instant, endDate:Instant ) {
-                    findAll {
+                    find {
                        Order[]( TradeDate >= startDate , TradeDate < endDate )
                     } as OutputOrder[]
                  }
@@ -102,7 +102,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.TradeDate
 
                  query RecentOrdersQuery( startDate:Instant, endDate:Instant ) {
-                    findAll {
+                    find {
                        Order[]( TradeDate >= startDate , TradeDate < endDate )
                     } as OutputOrder[]
                  }
@@ -130,7 +130,7 @@ class TaxiQlSpec : DescribeSpec({
                  given {
                     email : CustomerEmailAddress = "jimmy@demo.com"
                  }
-                 findAll { Trade }
+                 find { Trade }
               """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
@@ -167,7 +167,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.Order
                  import foo.OutputOrder
 
-                 findAll {
+                 find {
                     Order[]( TradeDate  >= startDate , TradeDate < endDate )
                  }
            """.trimIndent()
@@ -182,7 +182,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.Order
                  import foo.OutputOrder
 
-                 findAll {
+                 find {
                     Order[]( TradeDate  >= startDate , TradeDate < endDate )
                  } as {
                     invalidField
@@ -245,7 +245,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.Order
                  import foo.OutputOrder
 
-                 findAll {
+                 find {
                     Order[]( TradeDate  >= startDate , TradeDate < endDate )
                  } as OutputOrder {
                     tradeTimestamp
@@ -265,7 +265,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.Order
                  import foo.OutputOrder
 
-                 findAll {
+                 find {
                     Order[]( TradeDate  >= startDate , TradeDate < endDate )
                  } as OutputOrder {
                     invalidField
@@ -281,7 +281,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.Order
                  import foo.OutputOrder
 
-                 findAll {
+                 find {
                     Order[]( TradeDate  >= startDate , TradeDate < endDate )
                  } as OutputOrder {
                     insertedAt: foo.InsertedAt
@@ -303,7 +303,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.Order
                  import foo.OutputOrder
 
-                 findAll {
+                 find {
                     Order[]( TradeDate  >= startDate , TradeDate < endDate )
                  } as {
                     insertedAt: foo.InsertedAt
@@ -323,7 +323,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.Order
                  import foo.OutputOrder
 
-                 findAll {
+                 find {
                     Order[]( TradeDate  >= startDate , TradeDate < endDate )
                  } as {
                     traderEmail: UserEmail by Order['traderId']
@@ -348,7 +348,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.Order
                  import foo.OutputOrder
 
-                 findAll {
+                 find {
                     Order[]( TradeDate  >= startDate , TradeDate < endDate )
                  } as foo.Trade {
                     traderEmail: UserEmail by Trade['traderId']
@@ -371,7 +371,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.Order
                  import foo.OutputOrder
 
-                 findAll {
+                 find {
                     Order[]( TradeDate  >= startDate , TradeDate < endDate )
                  } as foo.Trade {
                     traderEmail: UserEmail by Order['traderId']
@@ -395,7 +395,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.Order
                  import foo.OutputOrder
 
-                 findAll {
+                 find {
                     Order[]( TradeDate  >= startDate , TradeDate < endDate )
                  } as foo.Trade {
                     traderEmail: InvalidType by (this.traderId)
@@ -412,7 +412,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.Order
                  import foo.OutputOrder
 
-                 findAll {
+                 find {
                     Order[]( TradeDate  >= startDate , TradeDate < endDate )
                  } as {
                         salesPerson: {
@@ -436,7 +436,7 @@ class TaxiQlSpec : DescribeSpec({
          val src = """
                  import foo.Order
 
-                 findAll { lang.taxi.Array<Order> }
+                 find { lang.taxi.Array<Order> }
               """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
@@ -448,7 +448,7 @@ class TaxiQlSpec : DescribeSpec({
          val src = """
                  import foo.Order
 
-                 findAll { Order[] }
+                 find { Order[] }
               """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
@@ -462,7 +462,7 @@ class TaxiQlSpec : DescribeSpec({
                       import foo.Order
                       import foo.OutputOrder
 
-                      findAll {
+                      find {
                          Order[]( TradeDate  >= startDate , TradeDate < endDate )
                       } as foo.Trade {
                              salesPerson: {
@@ -495,7 +495,7 @@ class TaxiQlSpec : DescribeSpec({
                      import foo.Order
                      import foo.OutputOrder
 
-                     findAll {
+                     find {
                         Order[]( TradeDate  >= startDate , TradeDate < endDate )
                      } as foo.Trade {
                             salesPerson: {
@@ -512,7 +512,7 @@ class TaxiQlSpec : DescribeSpec({
       it("when discovery type is a collection then the type that we project into should also be a collection") {
          val src = """
                          query RecentOrdersQuery( startDate:Instant, endDate:Instant ) {
-                            findAll {
+                            find {
                                Order[]( TradeDate >= startDate , TradeDate < endDate )
                             } as OutputOrder
                          }
@@ -525,7 +525,7 @@ class TaxiQlSpec : DescribeSpec({
       it("discovery type and anonymous projected type should either be list or be single entity II") {
          val src = """
                              query RecentOrdersQuery( startDate:Instant, endDate:Instant ) {
-                                findAll {
+                                find {
                                    Order[]( TradeDate >= startDate , TradeDate < endDate )
                                 } as {
                                    insertedAt: foo.InsertedAt
@@ -551,7 +551,7 @@ class TaxiQlSpec : DescribeSpec({
             }
          """.compiledWithQuery(
             """
-            findAll { Transaction[] } as {
+            find { Transaction[] } as {
                items : {
                   sku : ProductSku
                   size : ProductSize
@@ -580,7 +580,7 @@ class TaxiQlSpec : DescribeSpec({
             }
          """.compiledWithQuery(
             """
-            findAll { Transaction[] } as {
+            find { Transaction[] } as {
                items : {
                   sku : ProductSku
                   size : ProductSize
@@ -602,7 +602,8 @@ class TaxiQlSpec : DescribeSpec({
          model Composer {
             name : ComposerName inherits String
             majorWorks : { musicals : Musical[] }
-         }""".compiledWithQuery("""findAll { Composer } as {
+         }""".compiledWithQuery(
+            """find { Composer } as {
                name : ComposerName
                title : MusicalTitle
                year: YearProduced
@@ -618,7 +619,8 @@ class TaxiQlSpec : DescribeSpec({
          val (schema,query) = """
          model Composer {
             name : ComposerName inherits String
-         }""".compiledWithQuery("""findAll { Composer } as @HelloWorld {
+         }""".compiledWithQuery(
+            """find { Composer } as @HelloWorld {
                name : ComposerName
             }"""
          )
@@ -639,7 +641,7 @@ class TaxiQlSpec : DescribeSpec({
             }
          """.compiledWithQuery(
             """
-            findAll { Transaction[] } as {
+            find { Transaction[] } as {
                items : {
                   sku : ProductSku
                   size : ProductSize
@@ -721,7 +723,7 @@ class TaxiQlSpec : DescribeSpec({
          ).compile()
 
          val queryString = """
-            findAll {
+            find {
                 InputModel[]
               } as OutputModel {
                  inputId: InputId

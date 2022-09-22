@@ -1,13 +1,15 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 import lang.taxi.linter.LinterRules
 import lang.taxi.types.EnumMember
 import org.junit.jupiter.api.Test
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object AnnotationSpec : Spek({
+class AnnotationSpec : DescribeSpec({
    describe("annotations") {
       it("should compile annotation with no fields") {
          """
@@ -88,6 +90,16 @@ object AnnotationSpec : Spek({
             .objectType("Foo")
             .annotation("DataQuality")
             .should.not.be.`null`
+      }
+
+      it("is possible to declare parameters of annotations using reserved words") {
+         val annotation = """
+            @Table( table = "foo" )
+            model Foo{}
+         """.compiled()
+            .model("Foo")
+            .annotation("Table")
+         annotation.parameter("table")!!.shouldBe("foo")
       }
       it("lists undeclared annotations") {
          """

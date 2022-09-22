@@ -166,6 +166,13 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    override fun didOpen(params: DidOpenTextDocumentParams) {
       computeLinterMessages(params.textDocument.uri)
       publishDiagnosticMessages()
+
+      // The user has just opened a new file in a browser.  Create it as an empty file
+      // This prevents errors later, when attempts to complete are made.
+      if (params.textDocument.uri.startsWith("inmemory://")) {
+         compilerService.updateSource(params.textDocument.uri, params.textDocument.text)
+      }
+
    }
 
    private fun computeLinterMessages(documentUri: String) {

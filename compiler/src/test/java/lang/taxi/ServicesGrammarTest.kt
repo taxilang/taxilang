@@ -2,6 +2,8 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
 import lang.taxi.services.ConsumedOperation
 import lang.taxi.services.operations.constraints.ConstantValueExpression
 import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
@@ -46,6 +48,7 @@ service PersonService {
       expect(getPersonMethod.typeDoc).to.be.equal("Your favorite persons")
       expect(getPersonMethod.returnType).to.equal(doc.type("Person"))
    }
+
 
    @Test
    fun canDeclareNamesParameters() {
@@ -195,7 +198,8 @@ service MyService {
       expect(contract.returnTypeConstraints).to.have.size(2)
 
       expect(contract.returnTypeConstraints[0]).to.be.instanceof(ReturnValueDerivedFromParameterConstraint::class.java)
-      val returnValueDerivedFromParameterConstraint = contract.returnTypeConstraints[0] as ReturnValueDerivedFromParameterConstraint
+      val returnValueDerivedFromParameterConstraint =
+         contract.returnTypeConstraints[0] as ReturnValueDerivedFromParameterConstraint
       expect(returnValueDerivedFromParameterConstraint.path).to.equal("request.source")
       expect(returnValueDerivedFromParameterConstraint.attributePath.parts).to.contain.elements("request", "source")
 
@@ -237,17 +241,19 @@ service MyService {
             }
          }
       """.trimIndent()
-      val serviceSource = Compiler.forStrings(listOf(types,services)).compile()
+      val serviceSource = Compiler.forStrings(listOf(types, services)).compile()
          .service("services.PersonService")
          .compilationUnits.single().source
       serviceSource.content.withoutWhitespace()
-         .should.equal("""import people.PersonId
+         .should.equal(
+            """import people.PersonId
 import people.Person
 namespace services {
    service PersonService {
          operation findPerson(PersonId):Person
       }
-}""".withoutWhitespace())
+}""".withoutWhitespace()
+         )
    }
 
    @Test
@@ -320,7 +326,7 @@ namespace services {
             }
       """.trimIndent()
 
-      val personService =  Compiler.forStrings(listOf(schema)).compile()
+      val personService = Compiler.forStrings(listOf(schema)).compile()
          .service("PersonService")
       personService.lineage!!.consumes.should.equal(listOf(ConsumedOperation("NameService", "findPersonId")))
       personService.lineage!!.stores.should.equal(listOf(QualifiedName.from("Person")))
@@ -350,7 +356,7 @@ namespace services {
             }
          }
       """.trimIndent()
-      val personService =  Compiler.forStrings(listOf(types,services)).compile()
+      val personService = Compiler.forStrings(listOf(types, services)).compile()
          .service("services.PersonService")
 
       personService.lineage!!.consumes.should.equal(listOf(ConsumedOperation("people.NameService", "findPersonId")))
@@ -358,7 +364,8 @@ namespace services {
 
       val serviceSource = personService.compilationUnits.single().source
       serviceSource.content.withoutWhitespace()
-         .should.equal("""
+         .should.equal(
+            """
             import people.PersonId
             import people.Person
             namespace services {
@@ -369,7 +376,86 @@ namespace services {
                      operation findPerson(PersonId):Person
                   }
             }
-         """.trimIndent().withoutWhitespace())
+         """.trimIndent().withoutWhitespace()
+         )
+   }
+
+   @Test
+   fun `can declare a table`() {
+      val table = """model Actor
+      service ActorService {
+
+         [[ This is some typedoc ]]
+         @MyAnnotation
+         table actors : Actor[]
+      }
+      """.compiled()
+         .service("ActorService")
+         .table("actors")
+      table.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<Actor>")
+      table.typeDoc!!.trim().shouldBe("This is some typedoc")
+      table.annotations.shouldHaveSize(1)
+      table.annotations.first().name.shouldBe("MyAnnotation")
+   }
+
+   @Test
+   fun `can declare a table with array long-hand`() {
+      val table = """model Actor
+      service ActorService {
+
+         [[ This is some typedoc ]]
+         @MyAnnotation
+         table actors : Array<Actor>
+      }
+      """.compiled()
+         .service("ActorService")
+         .table("actors")
+      table.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<Actor>")
+      table.typeDoc!!.trim().shouldBe("This is some typedoc")
+      table.annotations.shouldHaveSize(1)
+      table.annotations.first().name.shouldBe("MyAnnotation")
+   }
+
+   @Test
+   fun `it is invalid to declare a table that doesnt return an array`() {
+      val errors = """model Actor
+      service ActorService {
+         table actors : Actor
+      }
+      """.validated()
+
+      errors.shouldHaveSize(1)
+      errors.single().detailMessage.shouldBe("A table operation must return an array. Consider returning Actor[]")
+   }
+
+   @Test
+   fun `can declare a stream`() {
+      val stream = """model Actor
+      service ActorService {
+
+         [[ This is some typedoc ]]
+         @MyAnnotation
+         stream actors : Stream<Actor>
+      }
+      """.compiled()
+         .service("ActorService")
+         .stream("actors")
+      stream.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Stream<Actor>")
+      stream.typeDoc!!.trim().shouldBe("This is some typedoc")
+      stream.annotations.shouldHaveSize(1)
+      stream.annotations.first().name.shouldBe("MyAnnotation")
+   }
+
+   @Test
+   fun `it is invalid to declare a stream that doesnt return a stream type`() {
+      val errors = """model Actor
+      service ActorService {
+         stream actors : Actor
+      }
+      """.validated()
+
+      errors.shouldHaveSize(1)
+      errors.single().detailMessage.shouldBe("A stream operation must return a type of Stream<T>. Consider returning Stream<Actor>")
    }
 
 }
