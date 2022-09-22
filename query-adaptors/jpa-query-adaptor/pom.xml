@@ -16,7 +16,7 @@
       <maven.compiler.target>11</maven.compiler.target>
       <!-- Have selected a (relatively) old boot version, to maintain
       compatibility with Vyne.  Let's upgrade when migrating Vyne -->
-      <spring.boot.version>2.7.3</spring.boot.version>
+      <spring.boot.version>2.7.4</spring.boot.version>
    </properties>
 
    <dependencies>
