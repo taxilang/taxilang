@@ -51,7 +51,7 @@ class ConditionalFieldSetProcessor internal constructor(
          PrimitiveType.ANY
       ).flatMap { condition ->
          fieldBlock.typeMemberDeclaration().mapNotNull { fieldDeclaration ->
-            val fieldName = fieldDeclaration.fieldDeclaration().Identifier().text
+            val fieldName = fieldDeclaration.fieldDeclaration().identifier().text
             compiler.provideField(fieldName, fieldDeclaration)
                .map { field -> field.copy(readExpression = condition) }
 
@@ -220,7 +220,7 @@ class ConditionalFieldSetProcessor internal constructor(
    }
 
    private fun compileFieldAssignment(caseFieldAssignment: TaxiParser.CaseFieldAssigningDeclarationContext): Either<List<CompilationError>, FieldAssignmentExpression> {
-      val fieldName = caseFieldAssignment.Identifier().text
+      val fieldName = caseFieldAssignment.identifier().text
       return compiler.provideField(fieldName, caseFieldAssignment).flatMap { field ->
          compileFieldAssignment(caseFieldAssignment, field.type)
       }
@@ -246,7 +246,7 @@ class ConditionalFieldSetProcessor internal constructor(
          else -> error("Unhandled object field value assignment")
       }
          .map { assignment ->
-            FieldAssignmentExpression(caseFieldAssignment.Identifier().text, assignment)
+            FieldAssignmentExpression(caseFieldAssignment.identifier().text, assignment)
          }
    }
 
@@ -278,7 +278,7 @@ class ConditionalFieldSetProcessor internal constructor(
 //   }
 
 //   private fun compileReferenceValueAssignment(caseFieldReferenceAssignment: TaxiParser.CaseFieldReferenceAssignmentContext): Either<List<CompilationError>, ValueAssignment> {
-//      return if (caseFieldReferenceAssignment.Identifier().size > 1) {
+//      return if (caseFieldReferenceAssignment.identifier().size > 1) {
 //         // This is a Foo.Bar -- lets check to see if we can resolve this as an enum
 //         compileReferenceAssignmentAsEnumReference(caseFieldReferenceAssignment)
 //      } else {
@@ -289,18 +289,18 @@ class ConditionalFieldSetProcessor internal constructor(
 //   }
 
 //   private fun compileReferenceAssignmentAsEnumReference(caseFieldReferenceAssignment: TaxiParser.CaseFieldReferenceAssignmentContext): Either<List<CompilationError>, ValueAssignment> {
-//      val enumName = caseFieldReferenceAssignment.Identifier().dropLast(1).joinToString(".")
+//      val enumName = caseFieldReferenceAssignment.identifier().dropLast(1).joinToString(".")
 //      val enumReference = compiler.lookupTypeByName(enumName, caseFieldReferenceAssignment).flatMap { typeName ->
 //         compiler.typeResolver(caseFieldReferenceAssignment.findNamespace())
 //            .resolve(typeName, caseFieldReferenceAssignment)
 //            .flatMap { type ->
 //               require(type is EnumType) { "Expected $typeName to be an enum" }
 //               val enumType = type // for readability
-//               val enumReference = caseFieldReferenceAssignment.Identifier().last()
+//               val enumReference = caseFieldReferenceAssignment.identifier().last()
 //               if (enumType.has(enumReference.text)) {
 //                  EnumValueAssignment(enumType, type.of(enumReference.text)).right()
 //               } else {
-//                  listOf(CompilationError(caseFieldReferenceAssignment.start, "Cannot resolve EnumValue of ${caseFieldReferenceAssignment.Identifier().text()}")).left()
+//                  listOf(CompilationError(caseFieldReferenceAssignment.start, "Cannot resolve EnumValue of ${caseFieldReferenceAssignment.identifier().text()}")).left()
 //               }
 //            }
 //      }
@@ -309,7 +309,7 @@ class ConditionalFieldSetProcessor internal constructor(
 
 //   private fun compileDestructuredValueAssignment(caseFieldDestructuredAssignment: TaxiParser.CaseFieldDestructuredAssignmentContext, destructuredFieldType: ObjectType): Either<List<CompilationError>, ValueAssignment> {
 //      return caseFieldDestructuredAssignment.caseFieldAssigningDeclaration().map { caseFieldAssigningContext ->
-//         val fieldName = caseFieldAssigningContext.Identifier().text
+//         val fieldName = caseFieldAssigningContext.identifier().text
 //         if (destructuredFieldType.hasField(fieldName)) {
 //            val field = destructuredFieldType.field(fieldName)
 //            compileFieldAssignment(caseFieldAssigningContext, field.type)
@@ -329,8 +329,8 @@ class ConditionalFieldSetProcessor internal constructor(
          caseDeclarationMatchExpression.expressionGroup() != null -> expressionCompiler.compile(
             caseDeclarationMatchExpression.expressionGroup()
          )
-//         caseDeclarationMatchExpression.Identifier() != null -> {
-//            val fieldName = caseDeclarationMatchExpression.Identifier().text
+//         caseDeclarationMatchExpression.identifier() != null -> {
+//            val fieldName = caseDeclarationMatchExpression.identifier().text
 //            compiler.provideField(fieldName, caseDeclarationMatchExpression).map { field ->
 //               ReferenceCaseMatchExpression.fromField(field)
 //            }
@@ -338,7 +338,7 @@ class ConditionalFieldSetProcessor internal constructor(
 //         caseDeclarationMatchExpression.literal() != null -> LiteralCaseMatchExpression(caseDeclarationMatchExpression.literal().value()).right()
          caseDeclarationMatchExpression.caseElseMatchExpression() != null -> ElseMatchExpression.right()
 //         caseDeclarationMatchExpression.enumSynonymSingleDeclaration() != null -> {
-//            val enumValueQualifiedName = caseDeclarationMatchExpression.enumSynonymSingleDeclaration().qualifiedName().Identifier().text()
+//            val enumValueQualifiedName = caseDeclarationMatchExpression.enumSynonymSingleDeclaration().qualifiedName().identifier().text()
 //            val (enumTypeName, enumValue) = EnumValue.splitEnumValueName(enumValueQualifiedName)
 //            compiler.typeResolver(caseDeclarationMatchExpression.findNamespace())
 //               .resolve(enumTypeName.fullyQualifiedName, caseDeclarationMatchExpression)
@@ -385,7 +385,7 @@ class ConditionalFieldSetProcessor internal constructor(
       fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext,
       targetType: Type
    ): Either<List<CompilationError>, WhenSelectorExpression> {
-      val fieldName = fieldReferenceSelector.Identifier().text
+      val fieldName = fieldReferenceSelector.identifier().text
       val field = compiler.provideField(fieldName, fieldReferenceSelector).map { field ->
          // This is the selector in a when condition.
          // eg:

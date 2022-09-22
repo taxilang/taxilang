@@ -59,7 +59,7 @@ interface TypeWithFieldsContext {
       requestingToken: ParserRuleContext
    ): Either<List<CompilationError>, TaxiParser.TypeMemberDeclarationContext> {
       val memberDeclaration = this.memberDeclarations
-         .firstOrNull { TokenProcessor.unescape(it.fieldDeclaration().Identifier().text) == fieldName }
+         .firstOrNull { TokenProcessor.unescape(it.fieldDeclaration().identifier().text) == fieldName }
 
       return memberDeclaration.rightIfNotNull {
          listOf(CompilationError(requestingToken.start, "Field $fieldName does not exist on type $compilingTypeName"))
@@ -115,7 +115,7 @@ class FieldCompiler(
 
    private val fieldNamesToDefinitions: Map<String, TaxiParser.TypeMemberDeclarationContext> by lazy {
       fun getFieldNameAndDeclarationContext(memberDeclaration: TaxiParser.TypeMemberDeclarationContext): Pair<String, TaxiParser.TypeMemberDeclarationContext> {
-         return TokenProcessor.unescape(memberDeclaration.fieldDeclaration().Identifier().text) to memberDeclaration
+         return TokenProcessor.unescape(memberDeclaration.fieldDeclaration().identifier().text) to memberDeclaration
       }
 
       val fields = typeBody.memberDeclarations
@@ -169,7 +169,7 @@ class FieldCompiler(
       val fieldsWithConditions = conditionalFieldStructures.flatMap { it.fields }
 
       val fields = typeBody.memberDeclarations.map { member ->
-         provideField(TokenProcessor.unescape(member.fieldDeclaration().Identifier().text), member)
+         provideField(TokenProcessor.unescape(member.fieldDeclaration().identifier().text), member)
       }.mapNotNull { either -> either.collectErrors(errors).getOrElse { null } }
       return fields + fieldsWithConditions
    }
@@ -215,7 +215,7 @@ class FieldCompiler(
          anonymousTypeDefinition != null -> {
             val anonymousTypeBody = anonymousTypeDefinition.typeBody()
 
-            val anonymousTypeName = "$typeName$${member.fieldDeclaration().Identifier().text.capitalize()}"
+            val anonymousTypeName = "$typeName$${member.fieldDeclaration().identifier().text.capitalize()}"
             val fieldType = tokenProcessor.parseAnonymousType(namespace, anonymousTypeDefinition, anonymousTypeName)
                .map { type ->
                   val isDeclaredAsCollection = anonymousTypeDefinition.listType() != null
@@ -245,7 +245,7 @@ class FieldCompiler(
             // {
             //   tradeId
             // }[]
-            val fieldName = member.fieldDeclaration().Identifier().text
+            val fieldName = member.fieldDeclaration().identifier().text
             val discoveryTypes = anonymousTypeResolutionContext.typesToDiscover
             if (discoveryTypes.isEmpty()) {
 
@@ -297,7 +297,7 @@ class FieldCompiler(
          // orderId:  Order::OrderSentId
          memberSource != null -> {
             Field(
-               name = TokenProcessor.unescape(member.fieldDeclaration().Identifier().text),
+               name = TokenProcessor.unescape(member.fieldDeclaration().identifier().text),
                type = type,
                nullable = false,
                modifiers = emptyList(),
@@ -319,7 +319,7 @@ class FieldCompiler(
                   null
                }
             Field(
-               name = TokenProcessor.unescape(member.fieldDeclaration().Identifier().text),
+               name = TokenProcessor.unescape(member.fieldDeclaration().identifier().text),
                type = type,
                nullable = false,
                modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
@@ -346,7 +346,7 @@ class FieldCompiler(
             val simpleType = fieldDeclaration.typeType()
             tokenProcessor.mapConstraints(simpleType, type, namespace).map { constraints ->
                Field(
-                  name = TokenProcessor.unescape(member.fieldDeclaration().Identifier().text),
+                  name = TokenProcessor.unescape(member.fieldDeclaration().identifier().text),
                   type = type,
                   nullable = simpleType.optionalType() != null,
                   modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
@@ -436,7 +436,7 @@ class FieldCompiler(
 //
 //      val accessorErrors = mutableListOf<CompilationError>()
 //      val fields = block.destructuredFieldDeclaration().mapNotNull { fieldDeclaration ->
-//         val fieldName = fieldDeclaration.Identifier().text
+//         val fieldName = fieldDeclaration.identifier().text
 //         if (!targetType.hasField(fieldName)) {
 //            accessorErrors.add(CompilationError(fieldDeclaration.start, "${targetType.qualifiedName} has no field called $fieldName"))
 //            return@mapNotNull null
@@ -714,7 +714,7 @@ class FieldCompiler(
       val namespace = functionContext.findNamespace()
       return tokenProcessor.attemptToLookupTypeByName(
          namespace,
-         functionContext.functionName().qualifiedName().Identifier().text(),
+         functionContext.functionName().qualifiedName().identifier().text(),
          functionContext,
          symbolKind = SymbolKind.FUNCTION
       )
@@ -824,7 +824,7 @@ class FieldCompiler(
       function: Function,
       parameterContext: TaxiParser.ParameterContext
    ): FieldReferenceSelector {
-      val fieldName = parameterContext.fieldReferenceSelector().Identifier().text
+      val fieldName = parameterContext.fieldReferenceSelector().identifier().text
       // MP - 30-Sep: This used to be the implementation - where it looks like anonymous types are resolving field lookups differently,
       // resolving against the declaring type - which is inconsistent and wrong.
       // Leaving this here, as making this change will no doubt break something, but I'm not sure what.

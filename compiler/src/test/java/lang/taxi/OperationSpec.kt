@@ -1,12 +1,15 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.booleans.shouldBeTrue
 import lang.taxi.services.FilterCapability
 import lang.taxi.services.SimpleQueryCapability
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object OperationSpec : Spek({
+class OperationSpec : DescribeSpec({
    describe("Grammar for operations") {
       val taxi = """
          type TradeId inherits String
@@ -203,16 +206,17 @@ count
       }
 
       it("should accept function names with findAll keyword") {
-         val errors = """
+         val service = """
             model Person {}
             service PersonService {
-               operation `findAll`(): Person[]
+               operation findAll(): Person[]
+               operation find(): Person[]
             }
-         """.validated()
-         errors.should.have.size(0)
+         """.compiled()
+            .service("PersonService")
+         service.containsOperation("findAll").shouldBeTrue()
+         service.containsOperation("find").shouldBeTrue()
       }
-
-
    }
 
 })

@@ -57,7 +57,7 @@ typeModifier
 typeKind : 'type' | 'model';
 
 typeDeclaration
-    :  typeDoc? annotation* typeModifier* typeKind Identifier
+    :  typeDoc? annotation* typeModifier* typeKind identifier
          typeArguments?
         ('inherits' listOfInheritedTypes)?
         (typeBody | expressionTypeDeclaration)?
@@ -92,7 +92,7 @@ lambdaSignature: expressionInputs typeType;
 
 
 expressionInputs: '(' expressionInput (',' expressionInput)* ')' '->';
-expressionInput: (Identifier ':')? typeType;
+expressionInput: (identifier ':')? typeType;
 
 
 // Added for expression types.
@@ -136,7 +136,7 @@ expressionAtom: readFunction | typeType | fieldReferenceSelector | modelAttribut
   //   | conditionalTypeConditionDeclaration
 
 annotationTypeDeclaration
-   : typeDoc? annotation* 'annotation' Identifier annotationTypeBody?;
+   : typeDoc? annotation* 'annotation' identifier annotationTypeBody?;
 
 annotationTypeBody: '{' typeMemberDeclaration* '}';
 
@@ -175,7 +175,7 @@ conditionalTypeWhenDeclaration:
 // Otherwise, these no lexer difference between
 // a fieldReferenceSelector (not permitted in expression types)
 // and a typeReferenceSelector (which is permitted)
-fieldReferenceSelector: propertyFieldNameQualifier Identifier;
+fieldReferenceSelector: propertyFieldNameQualifier identifier;
 typeReferenceSelector: typeType;
 
 conditionalTypeWhenCaseDeclaration:
@@ -188,7 +188,7 @@ caseDeclarationMatchExpression: // when( ... ) {
 caseElseMatchExpression: 'else';
 
 caseFieldAssigningDeclaration :  // dealtAmount ...  (could be either a destructirng block, or an assignment)
-   Identifier (
+   identifier (
       caseFieldDestructuredAssignment | // dealtAmount ( ...
       ( EQ caseScalarAssigningDeclaration ) | // dealtAmount = ccy1Amount | dealtAmount = 'foo'
       // TODO : How do we model Enum assignments here?
@@ -206,7 +206,7 @@ fieldModifier
    : 'closed'
    ;
 fieldDeclaration
-  :   fieldModifier? Identifier (':' (simpleFieldDeclaration | anonymousTypeDefinition | modelAttributeTypeReference))?
+  :   fieldModifier? identifier (':' (simpleFieldDeclaration | anonymousTypeDefinition | modelAttributeTypeReference))?
   ;
 
 // Used in queries to scope projection of collections.
@@ -262,13 +262,13 @@ jsonPathAccessorDeclaration : 'jsonPath' '(' StringLiteral ')';
 //    ;
 //
 //destructuredFieldDeclaration
-//    : Identifier accessor
+//    : identifier accessor
 //    ;
 
 //accessorExpression : StringLiteral;
 
 classOrInterfaceType
-    :   Identifier /* typeArguments? */ ('.' Identifier /* typeArguments? */ )*
+    :   identifier /* typeArguments? */ ('.' identifier /* typeArguments? */ )*
     ;
 
 typeArguments: '<' typeType (',' typeType)* '>';
@@ -288,7 +288,7 @@ enumConstants
     ;
 
 enumConstant
-    :   typeDoc? annotation*  defaultKeyword? Identifier enumValue? enumSynonymDeclaration?
+    :   typeDoc? annotation*  defaultKeyword? identifier enumValue? enumSynonymDeclaration?
     ;
 
 enumValue
@@ -302,7 +302,7 @@ enumSynonymSingleDeclaration : qualifiedName ;
 enumSynonymDeclarationList : '[' qualifiedName (',' qualifiedName)* ']'
    ;
  enumExtensionDeclaration
-    : typeDoc? annotation* 'enum extension' Identifier  ('{' enumConstantExtensions? '}')?
+    : typeDoc? annotation* 'enum extension' identifier  ('{' enumConstantExtensions? '}')?
     ;
 
 enumConstantExtensions
@@ -310,12 +310,12 @@ enumConstantExtensions
     ;
 
 enumConstantExtension
-   : typeDoc? annotation* Identifier enumSynonymDeclaration?
+   : typeDoc? annotation* identifier enumSynonymDeclaration?
    ;
 
 // type aliases
 typeAliasDeclaration
-    : typeDoc? annotation* 'type alias' Identifier aliasedType
+    : typeDoc? annotation* 'type alias' identifier aliasedType
     ;
 
 aliasedType
@@ -327,7 +327,7 @@ inlineInheritedType
    ;
 
 typeAliasExtensionDeclaration
-   : typeDoc? annotation* 'type alias extension' Identifier
+   : typeDoc? annotation* 'type alias extension' identifier
    ;
 // Annotations
 annotation
@@ -339,7 +339,7 @@ elementValuePairs
     ;
 
 elementValuePair
-    :   Identifier '=' elementValue
+    :  identifier '=' elementValue
     ;
 
 elementValue
@@ -349,27 +349,30 @@ elementValue
     ;
 
 serviceDeclaration
-    : typeDoc? annotation* 'service' Identifier serviceBody
+    : typeDoc? annotation* 'service' identifier serviceBody
     ;
 
 serviceBody
     :   '{' lineageDeclaration? serviceBodyMember* '}'
     ;
-serviceBodyMember : serviceOperationDeclaration | queryOperationDeclaration;
+serviceBodyMember : serviceOperationDeclaration | queryOperationDeclaration | tableDeclaration | streamDeclaration;
 // Querying
 queryOperationDeclaration
-   :  typeDoc? annotation* queryGrammarName 'query' Identifier '(' operationParameterList ')' ':' typeType
+   :  typeDoc? annotation* queryGrammarName 'query' identifier '(' operationParameterList ')' ':' typeType
       'with' 'capabilities' '{' queryOperationCapabilities '}';
 
-queryGrammarName : Identifier;
+queryGrammarName : identifier;
 queryOperationCapabilities: (queryOperationCapability (',' queryOperationCapability)*);
 
 queryOperationCapability:
-   queryFilterCapability | Identifier;
+   queryFilterCapability | identifier;
 
 queryFilterCapability: 'filter'( '(' filterCapability (',' filterCapability)* ')');
 
 filterCapability: EQ | NQ | IN | LIKE | GT | GE | LT | LE;
+
+tableDeclaration: typeDoc? annotation* K_Table identifier ':' typeType;
+streamDeclaration: typeDoc? annotation* K_Stream identifier ':' typeType;
 
 lineageDeclaration
       : typeDoc? annotation* 'lineage' lineageBody;
@@ -390,10 +393,10 @@ serviceOperationDeclaration
      ;
 
 operationSignature
-     :   annotation* Identifier  '(' operationParameterList? ')' operationReturnType?
+     :   annotation* identifier  '(' operationParameterList? ')' operationReturnType?
      ;
 
-operationScope : Identifier;
+operationScope : identifier;
 
 operationReturnType
     : ':' typeType
@@ -413,7 +416,7 @@ varargMarker: '...';
 // Parameter names are optional.
 // But, they must be used to be referenced in return contracts
 parameterName
-    :   Identifier ':'
+    :   identifier ':'
     ;
 
 parameterConstraint
@@ -456,7 +459,7 @@ operationReturnValueOriginExpression
 // - it's name -- using this.fieldName
 // - it's type (preferred) using TheTypeName
 // The qualifiedName here is used to represent a path to the attribute (this.currency)
-// We could've just used Identifier here, but we'd like to support nested paths
+// We could've just used identifier here, but we'd like to support nested paths
 propertyToParameterConstraintExpression
    : propertyToParameterConstraintLhs comparisonOperator propertyToParameterConstraintRhs;
 
@@ -486,7 +489,7 @@ policyDeclaration
     :  annotation* 'policy' policyIdentifier 'against' typeType '{' policyRuleSet* '}';
 
 policyOperationType
-    : Identifier;
+    : identifier;
 
 policyRuleSet : policyOperationType policyScope? '{' (policyBody | policyInstruction) '}';
 
@@ -497,7 +500,7 @@ policyBody
     :   policyStatement*
     ;
 
-policyIdentifier : Identifier;
+policyIdentifier : identifier;
 
 policyStatement
     : policyCase | policyElse;
@@ -546,7 +549,7 @@ policyFilterDeclaration
     ;
 
 filterAttributeNameList
-    : '(' Identifier (',' Identifier)* ')'
+    : '(' identifier (',' identifier)* ')'
     ;
 
 // processors currently disabled
@@ -611,14 +614,14 @@ primary
 //    |   'this'
 //    |   'super'
     |   literal
-    |   Identifier
+    |   identifier
 //    |   typeType '.' 'class'
 //    |   'void' '.' 'class'
 //    |   nonWildcardTypeArguments (explicitGenericInvocationSuffix | 'this' arguments)
     ;
 
 qualifiedName
-    :   Identifier ('.' Identifier)*
+    :   identifier ('.' identifier)*
     ;
 
 listType
@@ -661,7 +664,7 @@ literal
     ;
 
 typeExtensionDeclaration
-   :  typeDoc? annotation* 'type extension' Identifier typeExtensionBody
+   :  typeDoc? annotation* 'type extension' identifier typeExtensionBody
    ;
 
 typeExtensionBody
@@ -673,7 +676,7 @@ typeExtensionMemberDeclaration
     ;
 
 typeExtensionFieldDeclaration
-    :   Identifier typeExtensionFieldTypeRefinement?
+    :   identifier typeExtensionFieldTypeRefinement?
     ;
 
 typeExtensionFieldTypeRefinement
@@ -703,19 +706,16 @@ query: namedQuery | anonymousQuery;
 namedQuery: queryName '{' queryBody '}';
 anonymousQuery: queryBody;
 
-queryName: 'query' Identifier queryParameters?;
+queryName: 'query' identifier queryParameters?;
 
 queryParameters: '(' queryParamList ')';
 
 queryParamList: queryParam (',' queryParam)*;
 
-queryParam: Identifier ':' typeType;
+queryParam: identifier ':' typeType;
 
-// findAllDirective: 'findAll';
-// findOneDirective: 'findAll';
-
-   queryDirective: FindAll | FindOne | Stream | Find;
-findDirective: Find;
+queryDirective: K_Stream | K_Find;
+findDirective: K_Find;
 
 givenBlock : 'given' '{' factList '}';
 
@@ -724,7 +724,7 @@ factList : fact (',' fact)*;
 // TODO :  We could/should make variableName optional
 fact : variableName? typeType '=' literal;
 
-variableName: Identifier ':';
+variableName: identifier ':';
 queryBody:
    givenBlock?
 	queryDirective ( ('{' queryTypeList  '}') | anonymousTypeDefinition ) queryProjection?
@@ -745,7 +745,7 @@ queryProjection: 'as' typeType? anonymousTypeDefinition?;
 anonymousTypeDefinition: annotation* typeBody listType? accessor? parameterConstraint?;
 
 viewDeclaration
-    :  typeDoc? annotation* typeModifier* 'view' Identifier
+    :  typeDoc? annotation* typeModifier* 'view' identifier
             ('inherits' listOfInheritedTypes)?
             'with' 'query' '{' findBody (',' findBody)* '}'
     ;
@@ -773,27 +773,29 @@ LIKE: 'like';
 AND : 'and' ;
 OR  : 'or' ;
 
-FindAll: 'findAll';
-FindOne: 'findOne';
-Find: 'find';
-Stream: 'stream';
-
 // Must come before Identifier, to capture booleans correctly
 BooleanLiteral
     :   TRUE | FALSE
     ;
 
-Identifier
+
+identifier:
+   K_Table | K_Stream | K_Find | IdentifierToken;
+
+K_Find: 'find';
+K_Table: 'table';
+K_Stream: 'stream';
+
+IdentifierToken
     :   Letter LetterOrDigit*
     | '`' ~('`')+ '`'
     ;
+
 
 StringLiteral
     :   '"' DoubleQuoteStringCharacter* '"'
     |   '\'' SingleQuoteStringCharacter* '\''
     ;
-
-
 
 
 fragment

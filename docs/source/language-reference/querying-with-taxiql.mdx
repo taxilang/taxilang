@@ -31,8 +31,7 @@ stream { PersonEvents }
 ### Finding one thing, versus finding many
 <Discourage>
    Heads up! Historically, TaxiQL used to support two verbs - `findAll` and `findOne`. These have been replaced with
-   just `find`. While the old
-   verbs are supported for backwards compatability, they will be removed in a future release.
+   just `find`, and the old verbs are no longer supported.
 </Discourage>
 
 The type being queried for determines if a single result is discovered, or multiple.  To search for multiple entries, search for an array, using the `[]` symbol.
@@ -213,7 +212,7 @@ model TransactionItem {
    sku : ProductSku
 }
 
-findAll { Transaction[] } as {
+find { Transaction[] } as {
    id: TransactionId
    items : TransactionItem -> { // Project and enrich the TransactionItems to a different, richer model...
       sku : ProductSku // Provide the productSku
@@ -372,7 +371,7 @@ service CRMPlatform {
 Here, we see two different systems in an organisation that contain information about people.
 
 ```
-findAll { Person[] } as {
+find { Person[] } as {
    personName : PersonName
    emailAddress : EmailAddress
 }
@@ -384,7 +383,7 @@ Any null values present in the `CustomerStore` would be left as-is.
 However, if we want to enrich from other sources, we can instruct query servers to try to discover missing values:
 
 ```
-findAll { Person[] } as {
+find { Person[] } as {
    personName : PersonName
    @FirstNotEmpty
    emailAddress : EmailAddress

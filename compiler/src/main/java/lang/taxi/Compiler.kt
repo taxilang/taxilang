@@ -558,9 +558,10 @@ fun RuleContext.importsInFile(): List<QualifiedName> {
       return emptyList()
    }
    val imports = topLevel.children.filterIsInstance<TaxiParser.ImportDeclarationContext>()
-      .map { QualifiedName.from(it.qualifiedName().Identifier().text()) }
+      .map { QualifiedName.from(it.qualifiedName().identifier().text()) }
    return imports
 }
+
 
 tailrec fun RuleContext.searchUpForRule(ruleType: Class<out RuleContext>): RuleContext? = searchUpForRule(listOf(ruleType))
 tailrec fun RuleContext.searchUpForRule(ruleTypes: List<Class<out RuleContext>>): RuleContext? {
@@ -601,16 +602,16 @@ fun RuleContext.findNamespace(): String {
       )
    )
    return when (namespaceRule) {
-      is TaxiParser.NamespaceDeclarationContext -> return namespaceRule.qualifiedName().Identifier().text()
+      is TaxiParser.NamespaceDeclarationContext -> return namespaceRule.qualifiedName().identifier().text()
       is TaxiParser.NamespaceBlockContext -> return namespaceRule.children.filterIsInstance<TaxiParser.QualifiedNameContext>()
-         .first().Identifier().text()
+         .first().identifier().text()
       is TaxiParser.SingleNamespaceDocumentContext -> namespaceRule.children.filterIsInstance<TaxiParser.NamespaceDeclarationContext>()
-         .firstOrNull()?.qualifiedName()?.Identifier()?.text()
+         .firstOrNull()?.qualifiedName()?.identifier()?.text()
          ?: Namespaces.DEFAULT_NAMESPACE
       else -> Namespaces.DEFAULT_NAMESPACE
    }
 }
 
 fun TaxiParser.NamespaceDeclarationContext.namespace(): String {
-   return this.qualifiedName().Identifier().text()
+   return this.qualifiedName().identifier().text()
 }
