@@ -24,8 +24,9 @@ data class DiscoveryType(
 
 
 enum class QueryMode(val directive: String) {
+   @Deprecated("FIND_ONE is no longer supported")
    FIND_ONE("findOne"),
-   FIND_ALL("findAll"),
+   FIND_ALL("find"),
    STREAM("stream");
 
    companion object {
