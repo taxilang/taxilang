@@ -27,14 +27,14 @@ object Namespaces {
    const val DEFAULT_NAMESPACE = ""
 }
 
-fun ParserRuleContext?.toCompilationUnit(dependantTypeNames:List<QualifiedName> = emptyList()): lang.taxi.types.CompilationUnit {
+fun ParserRuleContext?.toCompilationUnit(dependantTypeNames: List<QualifiedName> = emptyList()): lang.taxi.types.CompilationUnit {
    return if (this == null) {
       CompilationUnit.unspecified()
    } else {
       val rawSource = this.source()
       return CompilationUnit(
          this,
-         rawSource.makeStandalone(this.findNamespace(),dependantTypeNames),
+         rawSource.makeStandalone(this.findNamespace(), dependantTypeNames),
          SourceLocation(this.start.line, this.start.charPositionInLine)
       )
 
@@ -281,6 +281,7 @@ class Compiler(
    fun declaredTypeNames(): List<QualifiedName> {
       return tokenprocessorWithoutImports.findDeclaredTypeNames()
    }
+
    fun declaredServiceNames(): List<QualifiedName> {
       return tokenprocessorWithoutImports.findDeclaredServiceNames()
    }
@@ -401,7 +402,11 @@ class Compiler(
       return nearestToken
    }
 
-   private fun searchWithinTokenChildren(token: ParserRuleContext, zeroBasedLineIndex: Int, char: Int):ParserRuleContext {
+   private fun searchWithinTokenChildren(
+      token: ParserRuleContext,
+      zeroBasedLineIndex: Int,
+      char: Int
+   ): ParserRuleContext {
       val tokens = generateSequence(token.children) { token ->
          val next = token
             .filterIsInstance<ParserRuleContext>()
@@ -516,7 +521,14 @@ internal fun TaxiParser.OperationSignatureContext.parameters(): List<TaxiParser.
 }
 
 fun ParserRuleContext.source(): SourceCode {
-   val text = this.start.inputStream.getText(Interval(this.start.startIndex, this.stop.stopIndex))
+
+   val text = if (this.start.startIndex > this.stop.stopIndex) {
+      // This shouldn't really happen, unless there's a parse error in the source we were given,
+      // However, since we don't have anything to work off, return the whole text
+      this.start.inputStream.toString()
+   } else {
+      this.start.inputStream.getText(Interval(this.start.startIndex, this.stop.stopIndex))
+   }
    val origin = this.start.inputStream.sourceName
    return SourceCode(origin, text)
 }
@@ -563,7 +575,9 @@ fun RuleContext.importsInFile(): List<QualifiedName> {
 }
 
 
-tailrec fun RuleContext.searchUpForRule(ruleType: Class<out RuleContext>): RuleContext? = searchUpForRule(listOf(ruleType))
+tailrec fun RuleContext.searchUpForRule(ruleType: Class<out RuleContext>): RuleContext? =
+   searchUpForRule(listOf(ruleType))
+
 tailrec fun RuleContext.searchUpForRule(ruleTypes: List<Class<out RuleContext>>): RuleContext? {
    fun matches(instance: RuleContext): Boolean {
       return ruleTypes.any { ruleType -> instance::class.java == ruleType }
@@ -605,9 +619,11 @@ fun RuleContext.findNamespace(): String {
       is TaxiParser.NamespaceDeclarationContext -> return namespaceRule.qualifiedName().identifier().text()
       is TaxiParser.NamespaceBlockContext -> return namespaceRule.children.filterIsInstance<TaxiParser.QualifiedNameContext>()
          .first().identifier().text()
+
       is TaxiParser.SingleNamespaceDocumentContext -> namespaceRule.children.filterIsInstance<TaxiParser.NamespaceDeclarationContext>()
          .firstOrNull()?.qualifiedName()?.identifier()?.text()
          ?: Namespaces.DEFAULT_NAMESPACE
+
       else -> Namespaces.DEFAULT_NAMESPACE
    }
 }
