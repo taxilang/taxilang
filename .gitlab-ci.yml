@@ -38,7 +38,6 @@ default:
 .prepare-vscode-plugin-build: &prepare-vscode-plugin-build
    - 'cd language-server/vscode-extension'
    - 'npm install'
-   - 'npm install -g vsce'
    - 'npm run sync-pom-version'
 
 .cleanup-after-vscode-plugin-build: &cleanup-after-vscode-plugin-build
@@ -146,7 +145,7 @@ build-plugin-beta:
    script:
       - *setup-nvm
       - *prepare-vscode-plugin-build
-      - 'vsce package'
+      - 'npm run vsce:package'
    only:
       - develop
    after_script:
@@ -176,7 +175,7 @@ publish-plugin:
    script:
       - *setup-nvm
       - *prepare-vscode-plugin-build
-      - 'vsce publish'
+      - 'npm run vsce:publish'
    only:
       - master
    artifacts:
