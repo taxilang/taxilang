@@ -65,7 +65,7 @@
       <zip4j.version>2.11.2</zip4j.version>
 
       <taxi.version>${project.version}</taxi.version>
-      <testcontainers.version>1.17.3</testcontainers.version>
+      <testcontainers.version>1.17.4</testcontainers.version>
    </properties>
 
    <dependencies>
