@@ -704,7 +704,25 @@ class TokenProcessor(
             is Either.Left -> return typeNameEither.value // return the compilation error now and stop
             is Either.Right -> typeNameEither.value
          }
-      val type = typeSystem.getType(typeName) as ObjectType
+      val type = typeSystem.getType(typeName)
+
+      return when (type) {
+         is ObjectType -> compileObjectTypeExtension(namespace, typeName, type, typeRule)
+         else -> CompilationError(
+            typeRule.toCompilationUnit(),
+            "Defining type extensions for token type ${type::class.simpleName} is not supported"
+         )
+      }
+
+   }
+
+
+   private fun compileObjectTypeExtension(
+      namespace: Namespace,
+      typeName: String,
+      type: ObjectType,
+      typeRule: TaxiParser.TypeExtensionDeclarationContext
+   ): CompilationError? {
       val annotations = collateAnnotations(typeRule.annotation())
       val typeDoc = parseTypeDoc(typeRule.typeDoc()?.source()?.content)
       val fieldExtensions = typeRule.typeExtensionBody().typeExtensionMemberDeclaration().map { member ->

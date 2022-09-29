@@ -170,7 +170,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       // The user has just opened a new file in a browser.  Create it as an empty file
       // This prevents errors later, when attempts to complete are made.
       if (params.textDocument.uri.startsWith("inmemory://")) {
-         compilerService.updateSource(params.textDocument.uri, params.textDocument.text)
+         triggerCompilation(params.textDocument.uri, params.textDocument.text)
       }
 
    }
@@ -223,14 +223,22 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       if (sourceName.endsWith("taxi.conf")) {
          // SKip it, we'll wait for a save.
       } else {
-         val compilationTrigger = CompilationTrigger(
-            URI.create(SourceNames.normalize(params.textDocument.uri))
-         )
-         compilerService.updateSource(params.textDocument, content)
-         this.compilerService.triggerAsyncCompilation(compilationTrigger)
-//           this.compileTriggerSink.tryEmitNext(compilationTrigger)
+         triggerCompilation(params.textDocument, content)
       }
    }
+
+   private fun triggerCompilation(textDocument: TextDocumentIdentifier, content: String) {
+      triggerCompilation(textDocument.uri, content)
+   }
+
+   private fun triggerCompilation(textDocumentUri: String, content: String) {
+      val compilationTrigger = CompilationTrigger(
+         URI.create(SourceNames.normalize(textDocumentUri))
+      )
+      compilerService.updateSource(textDocumentUri, content)
+      this.compilerService.triggerAsyncCompilation(compilationTrigger)
+   }
+
 
    // This is a very non-performant first pass.
    // We're compiling the entire workspace every time we get a request, which is
