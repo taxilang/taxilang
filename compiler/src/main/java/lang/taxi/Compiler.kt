@@ -575,8 +575,11 @@ fun RuleContext.importsInFile(): List<QualifiedName> {
 }
 
 
-tailrec fun RuleContext.searchUpForRule(ruleType: Class<out RuleContext>): RuleContext? =
+fun RuleContext.searchUpForRule(ruleType: Class<out RuleContext>): RuleContext? =
    searchUpForRule(listOf(ruleType))
+
+inline fun <reified T : RuleContext> RuleContext.searchUpForRule(): T? =
+   searchUpForRule(listOf(T::class.java)) as T?
 
 tailrec fun RuleContext.searchUpForRule(ruleTypes: List<Class<out RuleContext>>): RuleContext? {
    fun matches(instance: RuleContext): Boolean {

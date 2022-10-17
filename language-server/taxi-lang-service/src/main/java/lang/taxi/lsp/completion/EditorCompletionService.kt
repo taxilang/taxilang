@@ -1,6 +1,22 @@
 package lang.taxi.lsp.completion
 
 import lang.taxi.TaxiParser
+import lang.taxi.TaxiParser.CaseScalarAssigningDeclarationContext
+import lang.taxi.TaxiParser.ColumnIndexContext
+import lang.taxi.TaxiParser.EnumConstantContext
+import lang.taxi.TaxiParser.EnumSynonymDeclarationContext
+import lang.taxi.TaxiParser.EnumSynonymSingleDeclarationContext
+import lang.taxi.TaxiParser.ExpressionAtomContext
+import lang.taxi.TaxiParser.FieldDeclarationContext
+import lang.taxi.TaxiParser.IdentifierContext
+import lang.taxi.TaxiParser.ListOfInheritedTypesContext
+import lang.taxi.TaxiParser.ListTypeContext
+import lang.taxi.TaxiParser.ParameterConstraintContext
+import lang.taxi.TaxiParser.ParameterConstraintExpressionContext
+import lang.taxi.TaxiParser.QueryTypeListContext
+import lang.taxi.TaxiParser.SimpleFieldDeclarationContext
+import lang.taxi.TaxiParser.TypeMemberDeclarationContext
+import lang.taxi.TaxiParser.TypeTypeContext
 import lang.taxi.lsp.CompilationResult
 import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.ParserRuleContext
@@ -16,7 +32,8 @@ import java.util.concurrent.CompletableFuture
 class EditorCompletionService(private val typeProvider: TypeProvider) : CompletionProvider, CompletionService {
    override fun computeCompletions(
       compilationResult: CompilationResult,
-      params: CompletionParams
+      params: CompletionParams,
+      lastSuccessfulCompilation: CompilationResult?
    ): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
       val (importDecorator, context) = CompletionService.buildCompletionParams(params, compilationResult)
 
@@ -24,7 +41,8 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
          compilationResult,
          params,
          importDecorator,
-         context
+         context,
+         lastSuccessfulCompilation
       )
       return completionItems.thenApply {
          Either.forLeft(it.toMutableList())
@@ -35,45 +53,65 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
       compilationResult: CompilationResult,
       params: CompletionParams,
       importDecorator: ImportCompletionDecorator,
-      contextAtCursor: ParserRuleContext?
+      contextAtCursor: ParserRuleContext?,
+      lastSuccessfulCompilation: CompilationResult?,
    ): CompletableFuture<List<CompletionItem>> {
       if (contextAtCursor == null) {
          return bestGuessCompletionsWithoutContext(compilationResult, params, importDecorator)
       }
 
-      val completionItems = getCompletionsForContext(contextAtCursor, importDecorator)
+      val completionItems =
+         getCompletionsForContext(contextAtCursor, importDecorator, compilationResult, lastSuccessfulCompilation)
       return completed(completionItems)
    }
 
    private fun getCompletionsForContext(
       context: ParserRuleContext,
-      importDecorator: ImportCompletionDecorator
+      importDecorator: ImportCompletionDecorator,
+      compilationResult: CompilationResult,
+      lastSuccessfulCompilation: CompilationResult?,
    ): List<CompletionItem> {
-      val completionItems = when (context.ruleIndex) {
-         TaxiParser.RULE_columnIndex -> buildColumnIndexSuggestions()
-         TaxiParser.RULE_simpleFieldDeclaration -> typeProvider.getTypes(listOf(importDecorator))
-         TaxiParser.RULE_fieldDeclaration -> typeProvider.getTypes(listOf(importDecorator))
-         TaxiParser.RULE_typeMemberDeclaration -> typeProvider.getTypes(listOf(importDecorator))
-         TaxiParser.RULE_listOfInheritedTypes -> typeProvider.getTypes(listOf(importDecorator))
+
+
+      val completionContext = when {
+         // IdentifierContext is generally too general purpose to offer any insights.
+         // Go higher.
+         context is IdentifierContext -> context.parent as ParserRuleContext
+         else -> context
+      }
+      val completionItems = when (completionContext) {
+         is ColumnIndexContext -> buildColumnIndexSuggestions()
+         is SimpleFieldDeclarationContext -> typeProvider.getTypes(listOf(importDecorator))
+         is FieldDeclarationContext -> typeProvider.getTypes(listOf(importDecorator))
+         is TypeMemberDeclarationContext -> typeProvider.getTypes(listOf(importDecorator))
+         is ListOfInheritedTypesContext -> typeProvider.getTypes(listOf(importDecorator))
+         is ExpressionAtomContext -> calculateExpressionSuggestions(
+            context as ExpressionAtomContext,
+            importDecorator,
+            compilationResult,
+            lastSuccessfulCompilation
+         )
          // This next one feels wrong, but it's what I'm seeing debugging.
          // suspect our matching of token to cursor position might be off
-         TaxiParser.RULE_typeType -> typeProvider.getTypes(listOf(importDecorator))
-         TaxiParser.RULE_caseScalarAssigningDeclaration -> typeProvider.getEnumValues(
+         is TypeTypeContext -> typeProvider.getTypes(listOf(importDecorator))
+         is CaseScalarAssigningDeclarationContext -> typeProvider.getEnumValues(
             listOf(importDecorator),
             context.start.text
          )
-         TaxiParser.RULE_enumSynonymSingleDeclaration -> provideEnumCompletions(
+
+         is EnumSynonymSingleDeclarationContext -> provideEnumCompletions(
             context.start.text,
             listOf(importDecorator)
          )
-         TaxiParser.RULE_enumSynonymDeclaration -> provideEnumCompletions(context.start.text, listOf(importDecorator))
-         TaxiParser.RULE_enumConstants -> listOf(CompletionItem("synonym of"))
+
+         is EnumSynonymDeclarationContext -> provideEnumCompletions(context.start.text, listOf(importDecorator))
+         is EnumConstantContext -> listOf(CompletionItem("synonym of"))
 
          // Query completions
-         TaxiParser.RULE_parameterConstraintExpression -> typeProvider.getTypes(listOf(importDecorator))
-         TaxiParser.RULE_queryTypeList -> typeProvider.getTypes(listOf(importDecorator))
-         TaxiParser.RULE_listType -> typeProvider.getTypes(listOf(importDecorator))
-         TaxiParser.RULE_parameterConstraint -> typeProvider.getTypes(listOf(importDecorator))
+         is ParameterConstraintExpressionContext -> typeProvider.getTypes(listOf(importDecorator))
+         is QueryTypeListContext -> typeProvider.getTypes(listOf(importDecorator))
+         is ListTypeContext -> typeProvider.getTypes(listOf(importDecorator))
+         is ParameterConstraintContext -> typeProvider.getTypes(listOf(importDecorator))
          else -> {
             when {
                context is TaxiParser.TemporalFormatListContext && context.text.isEmpty() -> {
@@ -82,14 +120,61 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
                   // The grammar will match as a TemportalFormatList, but it could equally
                   // be a place for defining constraint types.
                   // If there's no text yet, then hop up to the parent node, and try again.
-                  getCompletionsForContext(context.parent as ParserRuleContext, importDecorator)
+                  getCompletionsForContext(
+                     context.parent as ParserRuleContext,
+                     importDecorator,
+                     compilationResult,
+                     lastSuccessfulCompilation
+                  )
                }
+
                else -> emptyList()
             }
 
          }
       }
       return completionItems
+   }
+
+   /**
+    * Provides completions when the user is generating an expression.
+    * Often, just a standard list of types, but in some cases (eg., enums),
+    * we can offer better
+    */
+   private fun calculateExpressionSuggestions(
+      context: ExpressionAtomContext,
+      importDecorator: ImportCompletionDecorator,
+      thisCompilationResult: CompilationResult,
+      lastSuccessfulCompilation: CompilationResult?
+   ): List<CompletionItem> {
+      if (lastSuccessfulCompilation == null) {
+         return emptyList()
+      }
+      // This should be easy, but it turns out, it isn't.
+      // If the user is typing out a schema, we don't have complete tokens, so
+      // we don't know that they're at an enum.
+      // This used to be easier, because the expression grammar was more specific
+      // (and actually buggier).
+      // However, now that expressions are made up of general purpose atoms,
+      // we don't get a specific AST until the block is complete. :(
+      //
+      // This blog post has some interested ideas about auto-genning suggestions
+      // from the grammar:
+      //
+      // https://tomassetti.me/autocompletion-editor-antlr/
+      //
+      // It works by taking a look at the token at the cursor, and then working out
+      // what possible tokens could follow.
+      // It's a good idea, but the implementation has lots of corner cases that
+      // need to be considered.
+      //
+      // I tried the linked implementation (not very hard), and didn't get great results - it simply
+      // returned all the possible tokens, non those specific to our location.
+      // Could still be worth investigation though, as it seems a better approach
+      // than lots of hard-coded scenario specific suggestions.
+      //
+      // For now, we don't have a working solution, so just return an empty list.
+      return emptyList()
    }
 
    /**
