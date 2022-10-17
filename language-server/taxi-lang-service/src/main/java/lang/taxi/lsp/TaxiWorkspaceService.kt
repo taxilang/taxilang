@@ -16,17 +16,18 @@ class TaxiWorkspaceService(private val compilerService: TaxiCompilerService) : W
     val receivedEvents = mutableListOf<Any>()
 
     override fun symbol(params: WorkspaceSymbolParams): CompletableFuture<MutableList<out SymbolInformation>> {
-        val compiler = this.compilerService.lastCompilationResult.get().compiler
-        val typeNames = compiler.declaredTypeNames()
-        val symbols = typeNames.filter { it.fullyQualifiedName.contains(params.query, ignoreCase = true) }
-                .mapNotNull { qualifiedName ->
-                    val compilationUnit = compiler.getDeclarationSource(qualifiedName)
-                    compilationUnit?.let { compilationUnit ->
-                        SymbolInformation(
-                                qualifiedName.fullyQualifiedName,
-                                SymbolKind.Class,
-                                compilationUnit.toLocation()
-                        )
+       val compiler = this.compilerService.lastCompilation()?.compiler
+          ?: return CompletableFuture.completedFuture(mutableListOf())
+       val typeNames = compiler.declaredTypeNames()
+       val symbols = typeNames.filter { it.fullyQualifiedName.contains(params.query, ignoreCase = true) }
+          .mapNotNull { qualifiedName ->
+             val compilationUnit = compiler.getDeclarationSource(qualifiedName)
+             compilationUnit?.let { compilationUnit ->
+                SymbolInformation(
+                   qualifiedName.fullyQualifiedName,
+                   SymbolKind.Class,
+                   compilationUnit.toLocation()
+                )
                     }
                 }
         return CompletableFuture.completedFuture(symbols.toMutableList())

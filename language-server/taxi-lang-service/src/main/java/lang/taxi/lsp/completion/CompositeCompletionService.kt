@@ -14,7 +14,8 @@ import java.util.concurrent.CompletableFuture
 interface CompletionService {
    fun computeCompletions(
       compilationResult: CompilationResult,
-      params: CompletionParams
+      params: CompletionParams,
+      lastSuccessfulCompilation: CompilationResult?
    ): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>>
 
    companion object {
@@ -53,19 +54,29 @@ interface CompletionProvider {
        * Will be null if compilation / parsing failed to detect
        * a current parser rule
        */
-      contextAtCursor: ParserRuleContext?
+      contextAtCursor: ParserRuleContext?,
+      lastSuccessfulCompilation: CompilationResult?
    ): CompletableFuture<List<CompletionItem>>
 }
 
 class CompositeCompletionService(private val completionProviders: List<CompletionProvider>) : CompletionService {
    override fun computeCompletions(
       compilationResult: CompilationResult,
-      params: CompletionParams
+      params: CompletionParams,
+      lastSuccessfulCompilation: CompilationResult?
    ): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
       val (importDecorator, context) = CompletionService.buildCompletionParams(params, compilationResult)
 
       val futures =
-         completionProviders.map { it.getCompletionsForContext(compilationResult, params, importDecorator, context) }
+         completionProviders.map {
+            it.getCompletionsForContext(
+               compilationResult,
+               params,
+               importDecorator,
+               context,
+               lastSuccessfulCompilation
+            )
+         }
       return CompletableFuture.allOf(*futures.toTypedArray())
          .thenApply { _ ->
             val completionItems = futures.flatMap { it.get() }
