@@ -337,7 +337,7 @@ class TokenProcessor(
 
    private fun compileQueries() {
       this.tokens.anonymousQueries.forEach { (qualifiedName, anonymousQueryContex) ->
-         QueryCompiler(this)
+         QueryCompiler(this, expressionCompiler() )
             .parseQueryBody(qualifiedName, mapOf(), anonymousQueryContex.queryBody())
             .mapLeft { compilationErrors -> errors.addAll(compilationErrors) }
             .map { taxiQlQuery ->
@@ -359,7 +359,7 @@ class TokenProcessor(
          parametersOrErrors
             .mapLeft { compilationErrors -> errors.addAll(compilationErrors.flatten()) }
             .map { parameters ->
-               QueryCompiler(this)
+               QueryCompiler(this, expressionCompiler())
                   .parseQueryBody(queryName, parameters.toMap(), namedQueryContext.queryBody())
                   .mapLeft { compilationErrors -> errors.addAll(compilationErrors) }
                   .map { taxiQlQuery -> queries.add(taxiQlQuery) }

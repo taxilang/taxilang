@@ -679,6 +679,25 @@ class TaxiQlSpec : DescribeSpec({
          query.projectedType!!.asA<ObjectType>().field("foo").type.qualifiedName.should.equal("io.films.FilmId")
       }
 
+      it("is valid to declare projections on fields in projected types") {
+         val (schema,query) = """model Person {
+            | name : PersonName inherits String
+            |}
+         """.compiledWithQuery("""find { Person } as {
+            | name : PersonName
+            | // Projection on a field type
+            | other : Person as {
+            |   nickName : PersonName
+            |}
+         """.trimMargin())
+         val field = query.projectedType!!.asA<ObjectType>()
+            .field("other")
+         TODO()
+
+      }
+
+
+
       // This feature has been disabled for now.
       xit("by should be supported with an anonymously typed field") {
          val taxiDoc = Compiler(

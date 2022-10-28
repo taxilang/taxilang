@@ -16,7 +16,7 @@ import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.value
 
-internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
+internal class QueryCompiler(private val tokenProcessor: TokenProcessor, private val expressionCompiler: ExpressionCompiler) {
    fun parseQueryBody(
       name: String, parameters: Map<String, QualifiedName>, ctx: TaxiParser.QueryBodyContext
    ): Either<List<CompilationError>, TaxiQlQuery> {
@@ -33,7 +33,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
       val queryOrErrors = factsOrErrors.flatMap { facts ->
 
          parseQueryBody(ctx, facts, queryDirective).flatMap { typesToDiscover ->
-            parseTypeToProject(ctx.queryProjection(), typesToDiscover).map { typeToProject ->
+            parseTypeToProject(ctx.typeProjection(), typesToDiscover).map { typeToProject ->
                TaxiQlQuery(
                   name = name,
                   facts = facts,
@@ -52,7 +52,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
       queryBodyContext: TaxiParser.QueryBodyContext, facts: List<Variable>, queryDirective: QueryMode
    ): Either<List<CompilationError>, List<DiscoveryType>> {
       val namespace = queryBodyContext.findNamespace()
-      val constraintBuilder = ConstraintBuilder(tokenProcessor.typeResolver(namespace))
+      val constraintBuilder = ConstraintBuilder(tokenProcessor.typeResolver(namespace), expressionCompiler)
 
       /**
        * A query body can either be a concrete type:
@@ -92,7 +92,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
       facts: List<Variable>
    ): Either<List<CompilationError>, DiscoveryType> {
       val constraintsOrErrors =
-         parameterConstraint?.parameterConstraintExpressionList()?.let { constraintExpressionList ->
+         parameterConstraint?.let { constraintExpressionList ->
             constraintBuilder.build(constraintExpressionList, type)
          } ?: emptyList<Constraint>().right()
       return constraintsOrErrors.map { constraints ->
@@ -129,7 +129,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
    }
 
    private fun parseTypeToProject(
-      queryProjection: TaxiParser.QueryProjectionContext?, typesToDiscover: List<DiscoveryType>
+      queryProjection: TaxiParser.TypeProjectionContext?, typesToDiscover: List<DiscoveryType>
    ): Either<List<CompilationError>, Type?> {
       if (queryProjection == null) {
          return null.right()

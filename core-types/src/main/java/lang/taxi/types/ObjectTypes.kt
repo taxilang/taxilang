@@ -429,12 +429,15 @@ data class Field(
    // These default values are set by field extensions.
    // Need to standardise.
    val defaultValue: Any? = null,
-//   val formula: Formula? = null,
+
    // populated for Anonymous field definitions used in views. Example:
    // orderId: Order::SentOrderId
    // For above, field name is 'orderId', field type is 'SentOrderId' and memberSource is 'Order'
    // it is set to null for all other cases.
    val memberSource: QualifiedName? = null,
+
+
+
    // Defines types that should be used to limit the scope when
    // projecting this field in a query.
    // eg:

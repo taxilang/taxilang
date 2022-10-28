@@ -122,7 +122,7 @@ expressionGroup:
 // as types
 // 1-Oct: Tried collapsing scalarAccessorExpression into this, but it caused errors.
 // Would like to simplify...
-expressionAtom: readFunction | typeType | fieldReferenceSelector | modelAttributeTypeReference | literal | anonymousTypeDefinition;
+expressionAtom: typeOrFunctionReference | typeType | fieldReferenceSelector | modelAttributeTypeReference | literal | anonymousTypeDefinition;
 
 //scalarAccessorExpression
   //    : xpathAccessorDeclaration
@@ -206,7 +206,7 @@ fieldModifier
    : 'closed'
    ;
 fieldDeclaration
-  :   fieldModifier? identifier (':' (simpleFieldDeclaration | anonymousTypeDefinition | modelAttributeTypeReference))?
+  :   fieldModifier? identifier (':' (expressionGroup |  anonymousTypeDefinition | modelAttributeTypeReference))? typeProjection?
   ;
 
 // Used in queries to scope projection of collections.
@@ -238,8 +238,8 @@ scalarAccessorExpression
     | jsonPathAccessorDeclaration
     | columnDefinition
     | defaultDefinition
-    | readFunction
-    | readExpression
+//    | readFunction
+    | expressionGroup
     | byFieldSourceExpression
     | collectionProjectionExpression
     | conditionalTypeConditionDeclaration
@@ -420,11 +420,13 @@ parameterName
     ;
 
 parameterConstraint
-    :   '(' parameterConstraintExpressionList ')'
+    :   '('expressionGroup ')'
+    |   '(' parameterConstraintExpressionList ')'
     |   '(' temporalFormatList ')'
     ;
 
 
+// We're deprecating this... use expression groups where possible.
 parameterConstraintExpressionList
     :  parameterConstraintExpression (',' parameterConstraintExpression)*
     ;
@@ -452,6 +454,8 @@ operationReturnValueOriginExpression
     :  'from' qualifiedName
     ;
 
+// Deprecation warning: We're gonna deprecate this and find a way to just use normal expressions.
+//
 // A parameter will a value that matches a specified expression
 // operation convertCurrency(request : ConversionRequest) : Money( this.currency = request.target )
 // Models a constraint against an attribute on the type (generally return type).
@@ -460,6 +464,8 @@ operationReturnValueOriginExpression
 // - it's type (preferred) using TheTypeName
 // The qualifiedName here is used to represent a path to the attribute (this.currency)
 // We could've just used identifier here, but we'd like to support nested paths
+//
+// We're deprecating this... use expression groups where possible.
 propertyToParameterConstraintExpression
    : propertyToParameterConstraintLhs comparisonOperator propertyToParameterConstraintRhs;
 
@@ -583,14 +589,13 @@ functionDeclaration: typeDoc? 'declare' (functionModifiers)? 'function' typeArgu
 functionModifiers: 'query';
 
 
-readFunction: functionName '(' formalParameterList? ')';
+typeOrFunctionReference: qualifiedName ( ('(' parameterList? ')')? | accessor?)
 //         'concat' |
 //         'leftAndUpperCase' |
 //         'midAndUpperCase'
 //         ;
-readExpression: expressionGroup; //  readFunction arithmaticOperator literal;
 functionName: qualifiedName;
-formalParameterList
+parameterList
     : parameter  (',' parameter)*
     ;
 //    scalarAccessorExpression
@@ -727,12 +732,12 @@ fact : variableName? typeType '=' literal;
 variableName: identifier ':';
 queryBody:
    givenBlock?
-	queryDirective ( ('{' queryTypeList  '}') | anonymousTypeDefinition ) queryProjection?
+	queryDirective ( ('{' queryTypeList  '}') | anonymousTypeDefinition ) typeProjection?
 	;
 
 queryTypeList: typeType (',' typeType)*;
 
-queryProjection: 'as' typeType? anonymousTypeDefinition?;
+typeProjection: 'as' (typeType | anonymousTypeDefinition);
 //as {
 //    orderId // if orderId is defined on the Order type, then the type is inferrable
 //    productId: ProductId // Discovered, using something in the query context, it's up to Vyne to decide how.

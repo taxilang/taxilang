@@ -10,4 +10,11 @@ data class TaxiQlQuery(
    val parameters: Map<String, QualifiedName>,
    val typesToFind: List<DiscoveryType>,
    val projectedType: Type?
-)
+) {
+   val projectedObjectType : ObjectType
+      get() {
+         return projectedType as ObjectType
+      }
+
+
+}

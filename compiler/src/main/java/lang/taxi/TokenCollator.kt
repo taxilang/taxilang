@@ -4,6 +4,7 @@ import lang.taxi.TaxiParser.ServiceDeclarationContext
 import lang.taxi.compiler.SymbolKind
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.SourceNames
+import lang.taxi.utils.log
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.io.File
@@ -42,7 +43,8 @@ data class Tokens(
       // Duplicate checking is disabled, as it doesn't consider imports, which causes false compilation errors
       val errorsFromDuplicates = collectDuplicateTypes(others) + collectDuplicateServices(others)
       if (errorsFromDuplicates.isNotEmpty()) {
-         throw CompilationException(errorsFromDuplicates)
+         log().error("Duplicate definitions detected.  This should be an error")
+//         throw CompilationException(errorsFromDuplicates)
       }
       return Tokens(
          this.imports + others.imports,

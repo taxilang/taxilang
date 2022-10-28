@@ -61,4 +61,5 @@ class ExpressionsTest {
       val firstInput = rhs.function.inputs.first() as TypeExpression
       firstInput.type.qualifiedName.should.equal("Height")
    }
+
 }
