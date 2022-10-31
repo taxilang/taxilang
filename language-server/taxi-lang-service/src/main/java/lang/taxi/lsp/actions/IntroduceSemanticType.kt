@@ -50,7 +50,7 @@ class IntroduceSemanticType : CodeActionProvider {
          "type $newTypeName inherits ${fieldType.typeName}\n\n"
       )
       val setTypeEdit = TextEdit(
-         Ranges.replaceToken(fieldContext.simpleFieldDeclaration()),
+         Ranges.replaceToken(fieldContext.fieldTypeDeclaration()),
          newTypeName
       )
       return Either.forRight(CodeAction(TITLE).apply {

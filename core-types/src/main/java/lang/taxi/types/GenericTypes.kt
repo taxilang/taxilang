@@ -22,4 +22,7 @@ data class TypeArgument(
    override val offset: Int? = null
    override val typeKind: TypeKind? = TypeKind.Type
    override val typeDoc: String? = null
+
+   // Not currently implemented, but could be in the future
+   override val annotations: List<Annotation> = emptyList()
 }

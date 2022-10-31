@@ -70,6 +70,8 @@ data class TypeExpression(val type: Type, override val compilationUnits: List<Co
 data class FunctionExpression(val function: FunctionAccessor, override val compilationUnits: List<CompilationUnit>) :
    Expression() {
    override val returnType: Type = function.returnType
+
+   val inputs = function.inputs
 }
 
 /**

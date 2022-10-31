@@ -9,6 +9,7 @@ import lang.taxi.CompilationError
 import lang.taxi.TaxiParser
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
+import lang.taxi.compiler.fields.FieldCompiler
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.FieldReferenceExpression
 import lang.taxi.expressions.FunctionExpression
@@ -78,7 +79,7 @@ class ExpressionCompiler(
       require(lambdaExpression.expressionGroup().size == 1) { "expected exactly 1 expression group on the rhs of the lambda" }
       return lambdaExpression.expressionInputs()
          .expressionInput().map { expressionInput ->
-            tokenProcessor.parseType(expressionInput.findNamespace(), expressionInput.typeType())
+            tokenProcessor.parseType(expressionInput.findNamespace(), expressionInput.typeReference())
          }.invertEitherList().flattenErrors()
          .flatMap { inputs ->
             compile(lambdaExpression.expressionGroup(0)).map { expression ->
@@ -97,18 +98,18 @@ class ExpressionCompiler(
 
    private fun compileExpressionAtom(expressionAtom: TaxiParser.ExpressionAtomContext): Either<List<CompilationError>, Expression> {
       return when {
-         expressionAtom.typeType() != null -> parseTypeExpression(expressionAtom.typeType()) /*{
+         expressionAtom.typeReference() != null -> parseTypeExpression(expressionAtom.typeReference()) /*{
             // At this point the grammar isn't sufficiently strong to know if
             // we've been given a type or a function reference
-            val typeType = expressionAtom.typeType()
+            val typeType = expressionAtom.typeReference()
             tokenProcessor.resolveTypeOrFunction(
-               typeType.classOrInterfaceType().text,
+               typeType.qualifiedName().text,
                expressionAtom
             )
             TODO()
 
          } */
-         expressionAtom.readFunction() != null -> parseFunctionExpression(expressionAtom.readFunction())
+         expressionAtom.functionCall() != null -> parseFunctionExpression(expressionAtom.functionCall())
          expressionAtom.literal() != null -> parseLiteralExpression(expressionAtom.literal())
          expressionAtom.fieldReferenceSelector() != null -> parseFieldReferenceSelector(expressionAtom.fieldReferenceSelector())
          expressionAtom.modelAttributeTypeReference() != null -> parseModelAttributeTypeReference(expressionAtom.modelAttributeTypeReference())
@@ -196,7 +197,7 @@ class ExpressionCompiler(
    }
 
 
-   private fun parseFunctionExpression(readFunction: TaxiParser.ReadFunctionContext): Either<List<CompilationError>, FunctionExpression> {
+   private fun parseFunctionExpression(readFunction: TaxiParser.FunctionCallContext): Either<List<CompilationError>, FunctionExpression> {
 // Note: Using ANY as the target type for the function's return type, which effectively disables type checking here.
       // We can improve this later.
       return tokenProcessor.getType(readFunction.findNamespace(), PrimitiveType.ANY.qualifiedName, readFunction)
@@ -207,12 +208,12 @@ class ExpressionCompiler(
          }
    }
 
-   private fun parseTypeExpression(typeType: TaxiParser.TypeTypeContext): Either<List<CompilationError>, Expression> {
+   private fun parseTypeExpression(typeType: TaxiParser.TypeReferenceContext): Either<List<CompilationError>, Expression> {
       return tokenProcessor.parseType(typeType.findNamespace(), typeType)
          .map { type -> TypeExpression(type, typeType.toCompilationUnits()) }
          .handleErrorWith { errors ->
-            if (Enums.isPotentialEnumMemberReference(typeType.classOrInterfaceType().identifier().text())) {
-               tokenProcessor.resolveEnumMember(typeType.classOrInterfaceType().identifier().text(), typeType)
+            if (Enums.isPotentialEnumMemberReference(typeType.qualifiedName().identifier().text())) {
+               tokenProcessor.resolveEnumMember(typeType.qualifiedName().identifier().text(), typeType)
                   .map { enumMember ->
                      LiteralExpression(
                         LiteralAccessor(enumMember.value, enumMember.enum),
@@ -249,14 +250,14 @@ class ExpressionCompiler(
                fieldCompiler.compileScalarAccessor(expression, targetType)
             }
          }
-         expression.readExpression() != null -> {
-            val compiled = compile(expression.readExpression().expressionGroup())
+         expression.expressionGroup() != null -> {
+            val compiled = compile(expression.expressionGroup())
             compiled
          }
-         expression.readFunction() != null -> {
-            val functionContext = expression.readFunction()
-            functionCompiler.buildFunctionAccessor(functionContext, targetType)
-         }
+//         expression.functionCall() != null -> {
+//            val functionContext = expression.functionCall()
+//            functionCompiler.buildFunctionAccessor(functionContext, targetType)
+//         }
          else -> error("Unhandled type of accessor expression at ${expression.source().content}")
       }
    }
@@ -288,8 +289,8 @@ class ExpressionCompiler(
       modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext
    ): Either<List<CompilationError>, ModelAttributeReferenceSelector> {
 
-      val memberSourceTypeType = modelAttributeReferenceCtx.typeType().first()
-      val memberTypeType = modelAttributeReferenceCtx.typeType()[1]
+      val memberSourceTypeType = modelAttributeReferenceCtx.typeReference().first()
+      val memberTypeType = modelAttributeReferenceCtx.typeReference()[1]
       val sourceTypeName = try {
          QualifiedName.from(fieldCompiler!!.lookupTypeByName(memberSourceTypeType)).right()
       } catch (e: Exception) {

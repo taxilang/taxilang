@@ -436,6 +436,8 @@ data class Field(
    // it is set to null for all other cases.
    val memberSource: QualifiedName? = null,
 
+   val projection: FieldProjection? = null,
+
 
 
    // Defines types that should be used to limit the scope when

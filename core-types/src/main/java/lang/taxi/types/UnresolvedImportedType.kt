@@ -37,4 +37,8 @@ class UnresolvedImportedType(override val qualifiedName: String) : Type {
    override val typeKind: TypeKind?
       get() = TODO("Not yet implemented")
 
+   // Not currently implemented, but could be in the future
+   override val annotations: List<lang.taxi.types.Annotation> = emptyList()
+
+
 }

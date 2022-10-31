@@ -38,7 +38,7 @@ class ExpressionsTest {
       val expression = expressionType.expression as FunctionExpression
       expression.function.function.qualifiedName.should.equal("squared")
       expression.function.inputs.should.have.size(1)
-      val firstInput = expression.function.inputs.first() as FunctionAccessor
+      val firstInput = expression.function.inputs.first() as FunctionExpression
       firstInput.inputs.should.have.size(1)
       val firstNestedInput = firstInput.inputs.first() as TypeExpression
       firstNestedInput.type.qualifiedName.should.equal("Height")

@@ -36,10 +36,10 @@ fun TaxiParser.LiteralArrayContext.value(): List<Any> {
    return this.literal().map { it.value() }
 }
 
-fun TaxiParser.InstantOffsetExpressionContext?.intValue(): Int? {
-   return when {
-      this == null  -> null
-      this.IntegerLiteral() != null -> this.IntegerLiteral().text.toInt()
-      else -> null
-   }
-}
+//fun TaxiParser.InstantOffsetExpressionContext?.intValue(): Int? {
+//   return when {
+//      this == null  -> null
+//      this.IntegerLiteral() != null -> this.IntegerLiteral().text.toInt()
+//      else -> null
+//   }
+//}

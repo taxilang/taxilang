@@ -1,5 +1,7 @@
 package lang.taxi.types
 
+import kotlin.Annotation
+
 /**
  * A type in parameters which is a function.
  * eg:
@@ -26,4 +28,8 @@ data class LambdaExpressionType(
    override val offset: Int? = null
    override val typeKind: TypeKind? = TypeKind.Type
    override val typeDoc: String? = null
+
+   // Not currently implemented, but could be in the future
+   override val annotations: List<lang.taxi.types.Annotation> = emptyList()
+
 }

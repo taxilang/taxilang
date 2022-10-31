@@ -9,6 +9,7 @@ import lang.taxi.Namespace
 import lang.taxi.TaxiParser
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.accessors.NullValue
+import lang.taxi.compiler.fields.FieldCompiler
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.toCompilationUnits

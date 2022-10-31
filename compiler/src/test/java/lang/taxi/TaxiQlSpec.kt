@@ -681,19 +681,45 @@ class TaxiQlSpec : DescribeSpec({
 
       it("is valid to declare projections on fields in projected types") {
          val (schema,query) = """model Person {
-            | name : PersonName inherits String
-            |}
+            name : PersonName inherits String
+            }
          """.compiledWithQuery("""find { Person } as {
-            | name : PersonName
-            | // Projection on a field type
-            | other : Person as {
-            |   nickName : PersonName
-            |}
-         """.trimMargin())
+             name : PersonName
+             // Projection on a field type
+             other : Person as {
+               nickName : PersonName
+            }
+         }
+         """.trimIndent())
          val field = query.projectedType!!.asA<ObjectType>()
             .field("other")
-         TODO()
+         field.type.qualifiedName.should.not.equal("Person")
+         field.type.qualifiedName.should.startWith("Anonymous")
+         val type = field.type.asA<ObjectType>()
+         type.field("nickName").type.qualifiedName.should.equal("PersonName")
+      }
 
+      it("is possible to select a subset of fields in an inline projection") {
+         val (schema,query) = """
+            model Person {
+               firstName : FirstName inherits String
+               lastName : LastName inherits String
+               age : Age inherits Int
+               city : CityName inherits String
+            }
+            model Film {
+               title : FilmTitle inherits String
+               actors : Person[]
+            }
+         """.compiledWithQuery("""find { Film } as {
+            | title : FilmTitle
+            | actors : Person[] as {
+            |    firstName,
+            |    lastName
+            |}[]
+         """.trimMargin())
+         val actors = query.projectedObjectType.field("actors")
+         actors.type.asA<ObjectType>()
       }
 
 

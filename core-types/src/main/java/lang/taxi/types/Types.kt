@@ -143,7 +143,7 @@ enum class TypeKind {
    }
 }
 
-interface Type : Named, Compiled, ImportableToken, Documented {
+interface Type : Named, Compiled, ImportableToken, Documented, Annotatable {
    val inheritsFrom: Set<Type>
 
    val allInheritedTypes: Set<Type>

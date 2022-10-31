@@ -22,6 +22,9 @@ enum class VoidType : Type {
 //      get() = null
    override val offset: Int? = null
    override val typeKind: TypeKind = TypeKind.Type
+   // Not currently implemented, but could be in the future
+   override val annotations: List<lang.taxi.types.Annotation> = emptyList()
+
 }
 
 object NumberTypes {
@@ -67,6 +70,10 @@ enum class PrimitiveType(
    override val basePrimitive: PrimitiveType? by lazy { wrapper.basePrimitive }
    override val definitionHash: String? by lazy { wrapper.definitionHash }
 
+   // Not currently implemented, but could be in the future
+   override val annotations: List<lang.taxi.types.Annotation> = emptyList()
+
+
    override val qualifiedName: String
       get() = "$NAMESPACE.$declaration"
 
@@ -89,7 +96,7 @@ enum class PrimitiveType(
          return typesByLookup[value] ?: throw IllegalArgumentException("$value is not a valid primative")
       }
 
-//        fun fromToken(typeToken: TaxiParser.TypeTypeContext): PrimitiveType {
+//        fun fromToken(typeToken: TaxiParser.TypeReferenceContext): PrimitiveType {
 //            return fromDeclaration(typeToken.primitiveType()!!.text)
 //        }
 

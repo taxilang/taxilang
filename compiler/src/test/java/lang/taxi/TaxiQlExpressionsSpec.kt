@@ -3,6 +3,11 @@ package lang.taxi
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
+import lang.taxi.accessors.LiteralAccessor
+import lang.taxi.expressions.FunctionExpression
+import lang.taxi.functions.FunctionAccessor
 import lang.taxi.types.ObjectType
 
 class TaxiQlExpressionsSpec : DescribeSpec({
@@ -16,7 +21,7 @@ class TaxiQlExpressionsSpec : DescribeSpec({
                }
             """
 
-      it("is possible to define a field with an expression") {
+      it("is possible to define a field with a no-arg function expression") {
          val schemaSrc = src + """declare function buyPet():Pet"""
          val querySrc = """find { Person } as {
                | name : PersonName
@@ -24,23 +29,40 @@ class TaxiQlExpressionsSpec : DescribeSpec({
                |}
             """.trimMargin()
          val (schema, query) = (schemaSrc).compiledWithQuery(querySrc)
-         query.projectedObjectType.field("pet").type.qualifiedName.should.equal("Pet")
+         val field = query.projectedObjectType.field("pet")
+         field.type.qualifiedName.should.equal("Pet")
+         val accessor = field.accessor!!.shouldBeInstanceOf<FunctionAccessor>()
+         accessor.function.qualifiedName.shouldBe("buyPet")
+      }
+      it("is possible to define a field with a function expression") {
+         val schemaSrc = src + """declare function calculatePetAge(Int,Int):Int"""
+         val querySrc = """find { Person } as {
+               | name : PersonName
+               | pet : calculatePetAge(2,3)
+               |}
+            """.trimMargin()
+         val (schema, query) = (schemaSrc).compiledWithQuery(querySrc)
+         val field = query.projectedObjectType.field("pet")
+         field.type.qualifiedName.should.equal("lang.taxi.Int")
+         val accessor = field.accessor!!.shouldBeInstanceOf<FunctionExpression>()
+         accessor.inputs.should.have.size(2)
+         accessor.inputs[0].asA<LiteralAccessor>().value.shouldBe(2)
+         accessor.inputs[1].asA<LiteralAccessor>().value.shouldBe(3)
+      }
+      it("is possible to declare an expression and infer the type") {
+         val schemaSrc = src + """declare function petName():String"""
+         val querySrc = """find { Person } as {
+               | petName : "" + petName()
+               |}
+            """.trimMargin()
+         val (schema, query) = (schemaSrc).compiledWithQuery(querySrc)
+         query.projectedObjectType.field("petName").type.qualifiedName.should.equal("lang.taxi.String")
       }
       it("is possible to declare an expression on a discovery type") {
          val (schema, query) = src.compiledWithQuery("find { Person(PersonName == 'Jimmy') }")
          query.typesToFind.single().constraints.shouldHaveSize(1)
       }
-      it("is possible to declare an expression on a field of an anonymous projection") {
-         val (schema, query) = src.compiledWithQuery(
-            """find { Person } as {
-            |  name: PersonName
-            |  spouse: Person = 1 + 2
-            |}
-         """.trimMargin()
-         )
-         query.projectedType!!.asA<ObjectType>()
-            .field("spouse").type
-      }
+
       it("is possible to declare an expression on a projected return type") {
          val (schema, query) = src.compiledWithQuery("find { Person(true == true) }")
       }

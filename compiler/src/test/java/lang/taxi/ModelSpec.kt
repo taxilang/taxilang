@@ -1,16 +1,28 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 import lang.taxi.expressions.FieldReferenceExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.types.FormulaOperator
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 import kotlin.test.assertFailsWith
 
-class ModelSpec : Spek({
+class ModelSpec : DescribeSpec({
    describe("model syntax") {
+      it("is possible to define inline inheritance") {
+         val type = """
+                  model Person {
+                     name : Name inherits String
+                  }
+               """.compiled()
+            .model("Person")
+            .field("name")
+            .type
+         type.qualifiedName.shouldBe("Name")
+         type.inheritsFrom.single().qualifiedName.shouldBe("lang.taxi.String")
+      }
       describe("simple grammar") {
          it("should allow declaration of a model") {
             val src = """
@@ -284,6 +296,7 @@ namespace foo.bar {
                   )
                }
             }
+
             it("can find deeply nested fields with type") {
                val taxi = """
                $baseSchema

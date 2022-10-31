@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
 import lang.taxi.linter.LinterRuleConfiguration
 import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
@@ -13,7 +14,7 @@ import lang.taxi.types.QualifiedName
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object OperationContextSpec : Spek({
+class OperationContextSpec : DescribeSpec({
    describe("declaring context to operations") {
       val taxi = """
          type TransactionEventDateTime inherits Instant

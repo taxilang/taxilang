@@ -198,9 +198,9 @@ class TokenCollator : TaxiBaseListener() {
       collateExceptions(ctx)
       // Check to see if an inline type alias is declared
       // If so, mark it for processing later
-      val typeType = ctx.simpleFieldDeclaration()?.typeType()
+      val typeType = ctx.fieldTypeDeclaration()
       if (typeType?.aliasedType() != null) {
-         val classOrInterfaceType = typeType.classOrInterfaceType()
+         val classOrInterfaceType = typeType.optionalTypeReference().typeReference().qualifiedName()
          unparsedTypes.put(qualify(classOrInterfaceType.identifier().text()), namespace to typeType)
       }
       super.exitFieldDeclaration(ctx)
@@ -208,7 +208,7 @@ class TokenCollator : TaxiBaseListener() {
 
    override fun exitEnumDeclaration(ctx: TaxiParser.EnumDeclarationContext) {
       if (collateExceptions(ctx)) {
-         val name = qualify(ctx.classOrInterfaceType().identifier().text())
+         val name = qualify(ctx.qualifiedName().identifier().text())
          unparsedTypes.put(name, namespace to ctx)
       }
       super.exitEnumDeclaration(ctx)
@@ -247,7 +247,7 @@ class TokenCollator : TaxiBaseListener() {
 
    override fun exitFunctionDeclaration(ctx: TaxiParser.FunctionDeclarationContext) {
       if (collateExceptions(ctx)) {
-         val qualifiedName = qualify(ctx.functionName().qualifiedName().identifier().text())
+         val qualifiedName = qualify(ctx.qualifiedName().identifier().text())
          unparsedFunctions[qualifiedName] = namespace to ctx
       }
    }

@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import lang.taxi.ImmutableEquality
+import kotlin.Annotation
 
 data class StreamType(val type: Type, val source: CompilationUnit, override val inheritsFrom: Set<Type> = emptySet()) : GenericType {
    companion object {
@@ -42,6 +43,9 @@ data class StreamType(val type: Type, val source: CompilationUnit, override val 
    override val inheritsFromPrimitive: Boolean by lazy { wrapper.inheritsFromPrimitive }
    override val basePrimitive: PrimitiveType? by lazy { wrapper.basePrimitive }
    override val definitionHash: String? by lazy { wrapper.definitionHash }
+
+   // Not currently implemented, but could be in the future
+   override val annotations: List<lang.taxi.types.Annotation> = emptyList()
 
    private val equality = ImmutableEquality(this, StreamType::type)
    override fun equals(other: Any?) = equality.isEqualTo(other)

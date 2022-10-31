@@ -1,7 +1,8 @@
 package lang.taxi.lsp.actions
 
 import lang.taxi.TaxiParser
-import lang.taxi.TaxiParser.TypeTypeContext
+import lang.taxi.TaxiParser.FieldDeclarationContext
+import lang.taxi.TaxiParser.TypeReferenceContext
 import lang.taxi.lsp.CompilationResult
 import lang.taxi.lsp.utils.Ranges
 import lang.taxi.lsp.utils.asRange
@@ -26,7 +27,8 @@ class ExtractInlineType : CodeActionProvider {
    }
 
    private fun hasInlineTypeDefinition(context: ParserRuleContext): Boolean {
-      return context.searchUpForRule<TypeTypeContext>()
+      return context.searchUpForRule<FieldDeclarationContext>()
+         ?.fieldTypeDeclaration()
          ?.inlineInheritedType() != null
    }
 
@@ -35,8 +37,8 @@ class ExtractInlineType : CodeActionProvider {
       val context = compiler
          .contextAt(params.range.start, params.textDocument)!!
 
-      val inlineTypeDefContext = context.searchUpForRule<TaxiParser.TypeTypeContext>()!!
-      val inlineTypeName = inlineTypeDefContext.classOrInterfaceType().identifier().text()
+      val inlineTypeDefContext = context.searchUpForRule<TaxiParser.TypeReferenceContext>()!!
+      val inlineTypeName = inlineTypeDefContext.qualifiedName().identifier().text()
       val typeDeclarationSource = inlineTypeDefContext.source().content
 
       // Find a place to put the new type def.

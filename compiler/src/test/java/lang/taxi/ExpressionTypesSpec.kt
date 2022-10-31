@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.LambdaExpression
 import lang.taxi.expressions.LiteralExpression
@@ -12,7 +13,7 @@ import lang.taxi.types.PrimitiveType
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object ExpressionTypesSpec : Spek({
+class ExpressionTypesSpec : DescribeSpec({
    describe("Expression types") {
       it("should compile an expression type") {
          val doc = """
@@ -121,9 +122,9 @@ object ExpressionTypesSpec : Spek({
          val expression = expressionType.expression as FunctionExpression
          expression.function.function.qualifiedName.should.equal("squared")
          expression.function.inputs.should.have.size(1)
-         val firstInput = expression.function.inputs.first() as FunctionAccessor
+         val firstInput = expression.function.inputs.first() as FunctionExpression
          firstInput.inputs.should.have.size(1)
-         val firstNestedInput = firstInput.inputs.first() as TypeExpression
+         val firstNestedInput = firstInput.function.inputs.first() as TypeExpression
          firstNestedInput.type.qualifiedName.should.equal("Height")
       }
 

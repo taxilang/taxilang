@@ -50,14 +50,14 @@ class FunctionAccessorCompiler(
    private val parentContext: RuleContext?
 ) {
    internal fun buildFunctionAccessor(
-      functionContext: TaxiParser.ReadFunctionContext,
+      functionContext: TaxiParser.FunctionCallContext,
       targetType: Type,
 
       ): Either<List<CompilationError>, FunctionAccessor> {
       val namespace = functionContext.findNamespace()
       return tokenProcessor.attemptToLookupTypeByName(
          namespace,
-         functionContext.functionName().qualifiedName().identifier().text(),
+         functionContext.qualifiedName().identifier().text(),
          functionContext,
          symbolKind = SymbolKind.FUNCTION
       )
@@ -70,8 +70,9 @@ class FunctionAccessorCompiler(
                      errors.add(compilationError)
                   }
 
+               val unparsedParameters = functionContext.parameterList()?.parameter() ?: emptyList()
                val parametersOrErrors: Either<List<CompilationError>, List<Accessor>> =
-                  functionContext.formalParameterList().parameter().mapIndexed { parameterIndex, parameterContext ->
+                  unparsedParameters.mapIndexed { parameterIndex, parameterContext ->
                      val parameterType = function.getParameterType(parameterIndex)
                      if (parameterContext.modelAttributeTypeReference() == null && parentContext.isInViewContext()) {
                         return@flatMap CompilationError(
@@ -149,7 +150,7 @@ class FunctionAccessorCompiler(
       namespace: String,
       parameterContext: TaxiParser.ParameterContext
    ): Either<List<CompilationError>, TypeReferenceSelector> {
-      return tokenProcessor.typeOrError(namespace, parameterContext.typeReferenceSelector().typeType()).map { type ->
+      return tokenProcessor.typeOrError(namespace, parameterContext.typeReferenceSelector().typeReference()).map { type ->
          TypeReferenceSelector(type)
       }
    }
