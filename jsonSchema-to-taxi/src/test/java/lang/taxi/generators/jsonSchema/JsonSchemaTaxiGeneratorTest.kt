@@ -39,21 +39,24 @@ class JsonSchemaTaxiGeneratorTest {
    {"type":"object","title":"Product","$id":"http://pwall.net/test","$schema":"http://json-schema.org/draft-07/schema","required":["id","name","price"],"properties":{"someTime":{"type":"string","format":"time"},"price":{"type":"number","minimum":0},"someDate":{"type":"string","format":"date"},"name":{"type":"string","description":"Name of the product"},"id":{"type":"number","description":"Product identifier"},"stock":{"type":"object","properties":{"warehouse":{"type":"number"},"retail":{"type":"number"}}},"someDateTime":{"type":"string","format":"date-time"},"tags":{"type":"array","items":{"type":"string"}}}}
    ``` ]]
    model Product {
-      someTime : SomeTime?
       price : Price
-      someDate : SomeDate?
       name : Name
-      id : Id
-      stock : Stock?
+      id : net.pwall.product.Id
+      stock : net.pwall.product.Stock?
+      tags : Tags[]?
+      someTime : SomeTime?
+      someDate : SomeDate?
       someDateTime : SomeDateTime?
       tags : Tags[]?
    }
+}
 
+namespace net.pwall.product {
+   type SomeDate inherits Date
    type SomeTime inherits Time
+   type SomeDateTime inherits Instant
 
    type Price inherits Decimal
-
-   type SomeDate inherits Date
 
    [[ Name of the product ]]
    type Name inherits String
@@ -61,26 +64,23 @@ class JsonSchemaTaxiGeneratorTest {
    [[ Product identifier ]]
    type Id inherits Decimal
 
-   [[ This model has been generated.  The original source is shown below.
-   ```json
-   {"type":"object","properties":{"warehouse":{"type":"number"},"retail":{"type":"number"}}}
-   ``` ]]
+   type Tags inherits String
+
    model Stock {
-      id: StockId
+      id: net.pwall.stock.Id
       warehouse : Warehouse?
       retail : Retail?
    }
+}
 
-   type StockId inherits Decimal
+namespace net.pwall.stock {
+   type Id inherits Decimal
 
    type Warehouse inherits Decimal
 
    type Retail inherits Decimal
-
-   type SomeDateTime inherits Instant
-
-   type Tags inherits String
-}"""
+}
+         """.trimIndent()
       )
    }
 
@@ -107,7 +107,8 @@ class JsonSchemaTaxiGeneratorTest {
       fruits : Fruits[]?
       vegetables : Vegetables[]?
    }
-
+}
+namespace com.example.arrays {
    type Fruits inherits String
 
    [[ null
@@ -119,13 +120,16 @@ class JsonSchemaTaxiGeneratorTest {
       veggieName : VeggieName
       veggieLike : VeggieLike
    }
+}
 
+namespace com.example.vegetables {
    [[ The name of the vegetable. ]]
    type VeggieName inherits String
 
    [[ Do I like this vegetable? ]]
    type VeggieLike inherits Boolean
-}"""
+}
+"""
          )
    }
 
