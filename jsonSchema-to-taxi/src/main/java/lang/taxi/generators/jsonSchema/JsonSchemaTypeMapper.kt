@@ -46,7 +46,7 @@ fun MutableMap<QualifiedName, JsonSchemaTypeMapper.GeneratedType>.countCaseInsen
 }
 
 fun QualifiedName.equalsCaseInsensitive(other: QualifiedName): Boolean {
-   return this.typeName.lowercase() == other.typeName.lowercase() && this.namespace == other.namespace
+   return this.fullyQualifiedName.lowercase() == other.fullyQualifiedName.lowercase()
 }
 
 class JsonSchemaTypeMapper(
@@ -202,12 +202,8 @@ class JsonSchemaTypeMapper(
       )
    }
 
-   private fun createSubNamespace(parent: QualifiedName?): String {
-      return if (parent != null) {
-         "$defaultNamespace.${parent.typeName.lowercase()}"
-      } else {
-         defaultNamespace
-      }
+   private fun getNamespace(parent: QualifiedName?): String {
+      return parent?.fullyQualifiedName?.lowercase() ?: defaultNamespace
    }
 
    private fun findNextUnusedQualifiedName(name: QualifiedName): QualifiedName {
@@ -421,7 +417,7 @@ class JsonSchemaTypeMapper(
       fallback: QualifiedName? = null,
       parent: QualifiedName? = null
    ): QualifiedName {
-      if (propertyName != null) return QualifiedName(createSubNamespace(parent), propertyName.capitalize())
+      if (propertyName != null) return QualifiedName(getNamespace(parent), propertyName.capitalize())
       // We can fall through here with simple types from CombinedSchema
       when (schema) {
          is StringSchema -> return PrimitiveType.STRING.toQualifiedName()
@@ -430,7 +426,7 @@ class JsonSchemaTypeMapper(
 
       val qualifiedName = when {
 
-         schema.title != null -> QualifiedName(createSubNamespace(parent), schema.title.replace(" ", "_").toCapitalizedWords())
+         schema.title != null -> QualifiedName(getNamespace(parent), schema.title.replace(" ", "_").toCapitalizedWords())
          else -> {
             try {
                val uri = getSchemaIdAsUri(schema, logger) ?: error("Could not parse schema to URI")

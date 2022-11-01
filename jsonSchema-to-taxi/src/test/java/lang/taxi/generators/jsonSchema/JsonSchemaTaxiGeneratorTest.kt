@@ -43,7 +43,6 @@ class JsonSchemaTaxiGeneratorTest {
       name : Name
       id : net.pwall.product.Id
       stock : net.pwall.product.Stock?
-      tags : Tags[]?
       someTime : SomeTime?
       someDate : SomeDate?
       someDateTime : SomeDateTime?
@@ -67,13 +66,13 @@ namespace net.pwall.product {
    type Tags inherits String
 
    model Stock {
-      id: net.pwall.stock.Id
-      warehouse : Warehouse?
-      retail : Retail?
+      id: net.pwall.product.stock.Id
+      warehouse : net.pwall.product.stock.Warehouse?
+      retail : net.pwall.product.stock.Retail?
    }
 }
 
-namespace net.pwall.stock {
+namespace net.pwall.product.stock {
    type Id inherits Decimal
 
    type Warehouse inherits Decimal
@@ -122,7 +121,7 @@ namespace com.example.arrays {
    }
 }
 
-namespace com.example.vegetables {
+namespace com.example.arrays.vegetables {
    [[ The name of the vegetable. ]]
    type VeggieName inherits String
 
@@ -184,13 +183,13 @@ namespace com.example.vegetables {
 
             namespace org.taxilang.test {
                model Item {
-                  id : org.taxilang.item.Id
+                  id : org.taxilang.test.item.Id
                }
 
                type Id inherits String
             }
 
-            namespace org.taxilang.item {
+            namespace org.taxilang.test.item {
                type Id inherits String
             }
          """.trimIndent()
@@ -237,6 +236,73 @@ namespace com.example.vegetables {
                type Name inherits String
                type Name1 inherits String
                type NAME2 inherits String
+            }
+         """.trimIndent()
+      )
+   }
+
+   @Test
+   fun `when nested objects exist then the namespace structure reflects that`() {
+      val testJsonSchema =
+         """
+            {
+               "${"$"}schema": "http://json-schema.org/draft-07/schema",
+               "${"$"}id": "http://taxilang.org/test",
+               "title": "Test",
+               "type": "object",
+               "properties": {
+                  "name": {
+                     "type": "string",
+                     "description": "Identifier"
+                  },
+                  "nest1": {
+                     "type": "object",
+                     "properties": {
+                        "id": {
+                           "type": "string"
+                        },
+                        "nest2": {
+                           "type": "object",
+                           "properties": {
+                              "id": {
+                                 "type": "string"
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         """.trimIndent()
+      val generated = TaxiGenerator().generateAsStrings(testJsonSchema)
+      generated.shouldCompileTheSameAs(
+         """
+            namespace org.taxilang {
+               model Test {
+                  name : org.taxilang.test.Name?
+                  nest1 : org.taxilang.test.Nest1?
+               }
+            }
+
+            namespace org.taxilang.test {
+               type Name inherits String
+
+               model Nest1 {
+                  id : org.taxilang.test.nest1.Id?
+                  nest2: org.taxilang.test.nest1.Nest2?
+               }
+            }
+
+            namespace org.taxilang.test.nest1 {
+               type Id inherits String
+
+               model Nest2 {
+                  id: org.taxilang.test.nest1.nest2.Id?
+               }
+            }
+
+            namespace org.taxilang.test.nest1.nest2 {
+               type Id inherits String
             }
          """.trimIndent()
       )
