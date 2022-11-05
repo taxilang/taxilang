@@ -256,7 +256,7 @@
          <plugin>
             <groupId>org.jreleaser</groupId>
             <artifactId>jreleaser-maven-plugin</artifactId>
-            <version>1.3.0</version>
+            <version>1.3.1</version>
             <configuration>
                <!-- SEE ALSO: jreleaser.yml, defined above -->
                <jreleaser>
