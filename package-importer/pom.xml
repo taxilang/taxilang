@@ -89,7 +89,7 @@
    </dependencies>
    <properties>
       <httpclient.version>4.5.12</httpclient.version>
-      <http4k.version>4.33.2.1</http4k.version>
+      <http4k.version>4.33.3.0</http4k.version>
    </properties>
    <build>
       <plugins>
