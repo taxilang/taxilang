@@ -2,6 +2,7 @@ package lang.taxi.compiler.fields
 
 import arrow.core.*
 import lang.taxi.*
+import lang.taxi.TaxiParser.TypeReferenceContext
 import lang.taxi.accessors.*
 import lang.taxi.compiler.*
 import lang.taxi.types.*
@@ -87,6 +88,7 @@ class FieldCompiler(
       val fields = typeBody.memberDeclarations.map { member ->
          provideField(TokenProcessor.unescape(member.fieldDeclaration().identifier().text), member)
       }.mapNotNull { either -> either.collectErrors(errors).getOrElse { null } }
+
       return fields + fieldsWithConditions
    }
 
@@ -176,7 +178,7 @@ class FieldCompiler(
          }
 
          expressionGroup != null -> {
-            tokenProcessor.expressionCompiler().compile(expressionGroup)
+            tokenProcessor.expressionCompiler(fieldCompiler =  this).compile(expressionGroup)
                .flatMap { expression ->
                   fieldProjectionType.flatMap { fieldProjectionType ->
                      toField(
@@ -623,7 +625,7 @@ class FieldCompiler(
 
    fun typeResolver(namespace: Namespace) = tokenProcessor.typeResolver(namespace)
 
-   fun lookupTypeByName(typeContext: TaxiParser.TypeReferenceContext) = tokenProcessor.lookupTypeByName(typeContext)
+   fun typeOrError(context: TypeReferenceContext) = tokenProcessor.typeOrError(context)
    fun parseType(namespace: Namespace, typeType: TaxiParser.TypeReferenceContext) =
       tokenProcessor.parseType(namespace, typeType)
 

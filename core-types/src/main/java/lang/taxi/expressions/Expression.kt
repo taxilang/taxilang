@@ -27,7 +27,7 @@ abstract class Expression : Compiled, TaxiStatementGenerator, Accessor {
       // sanitize, stripping namespace declarations
       val raw = this.compilationUnits.first().source.content
       val taxi = if (raw.startsWith("namespace")) {
-         raw.substring(raw.indexOf("{")).removeSurrounding("{","}").trim()
+         raw.substring(raw.indexOf("{")).removeSurrounding("{", "}").trim()
       } else raw
       // TODO: Check this... probably not right
       return taxi
@@ -48,19 +48,33 @@ data class LambdaExpression(
 data class LiteralExpression(val literal: LiteralAccessor, override val compilationUnits: List<CompilationUnit>) :
    Expression() {
    companion object {
-      fun isNullExpression(expression: Expression):Boolean {
+      fun isNullExpression(expression: Expression): Boolean {
          return expression is LiteralExpression && LiteralAccessor.isNullLiteral(expression.literal)
       }
    }
+
    override val returnType: Type = literal.returnType
 
    val value = literal.value
 }
 
 // Pure tech-debt, resulting in how Accessors and Expressions have evolved.
-data class FieldReferenceExpression(val selector:FieldReferenceSelector, override val compilationUnits: List<CompilationUnit>) : Expression() {
-   override val returnType: Type = selector.returnType
-   val fieldName = selector.fieldName
+data class FieldReferenceExpression(
+   val selectors: List<FieldReferenceSelector>,
+   override val compilationUnits: List<CompilationUnit>
+) : Expression() {
+   override val returnType: Type = selectors.last().returnType
+
+   val fieldNames: List<String>
+      get() {
+         return selectors.map { it.fieldName }
+      }
+
+   val path: String
+      get() {
+         return selectors.joinToString(".") { it.fieldName }
+      }
+
 }
 
 data class TypeExpression(val type: Type, override val compilationUnits: List<CompilationUnit>) : Expression() {
@@ -114,7 +128,7 @@ data class OperatorExpression(
             return types.distinct().single()
          }
          // special cases
-         if (types == setOf(PrimitiveType.TIME,PrimitiveType.LOCAL_DATE)) {
+         if (types == setOf(PrimitiveType.TIME, PrimitiveType.LOCAL_DATE)) {
             return PrimitiveType.INSTANT
          }
 
@@ -123,16 +137,17 @@ data class OperatorExpression(
       }
    }
 
-   override val strictReturnType: Either<String,Type>
-   get() {
-      val lhsType = lhs.returnType.basePrimitive ?: PrimitiveType.ANY
-      val rhsType = rhs.returnType.basePrimitive ?: PrimitiveType.ANY
-      return getReturnType(
-         lhsType = lhsType,
-         operator = operator,
-         rhsType = rhsType
-      )?.right() ?: "Unable to determine the return type resulting from ${lhsType.name} ${operator.symbol} ${rhsType.name}" .left()
-   }
+   override val strictReturnType: Either<String, Type>
+      get() {
+         val lhsType = lhs.returnType.basePrimitive ?: PrimitiveType.ANY
+         val rhsType = rhs.returnType.basePrimitive ?: PrimitiveType.ANY
+         return getReturnType(
+            lhsType = lhsType,
+            operator = operator,
+            rhsType = rhsType
+         )?.right()
+            ?: "Unable to determine the return type resulting from ${lhsType.name} ${operator.symbol} ${rhsType.name}".left()
+      }
    override val returnType: Type = strictReturnType.getOrElse { PrimitiveType.ANY }
 
 }

@@ -113,8 +113,8 @@ class ViewValidator(private val viewName: String) {
             accessor is OperatorExpression && accessor.lhs is ModelAttributeReferenceSelector && accessor.rhs is ModelAttributeReferenceSelector-> {
                val op1 = accessor.lhs as ModelAttributeReferenceSelector
                val op2 = accessor.rhs as ModelAttributeReferenceSelector
-               validateValidateSourceAndField(op1.memberSource, op1.memberType, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
-               validateValidateSourceAndField(op2.memberSource, op2.memberType, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
+               validateValidateSourceAndField(op1.memberSource, op1.targetType, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
+               validateValidateSourceAndField(op2.memberSource, op2.targetType, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
             }
             accessor is ConditionalAccessor -> {
                when (val accessorExpression = accessor.expression) {
@@ -126,8 +126,8 @@ class ViewValidator(private val viewName: String) {
                   is CalculatedModelAttributeFieldSetExpression -> {
                      val op1 = accessorExpression.operand1
                      val op2 = accessorExpression.operand2
-                     validateValidateSourceAndField(op1.memberSource, op1.memberType, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
-                     validateValidateSourceAndField(op2.memberSource, op2.memberType, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
+                     validateValidateSourceAndField(op1.memberSource, op1.targetType, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
+                     validateValidateSourceAndField(op2.memberSource, op2.targetType, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
                   }
                   else -> compilationErrors.add(
                      CompilationError(
@@ -270,7 +270,7 @@ class ViewValidator(private val viewName: String) {
       typesInViewFindDefinitions: Set<Type>,
       viewBodyType: Type?) {
       when (operand) {
-         is ModelAttributeReferenceSelector -> validateValidateSourceAndField(operand.memberSource, operand.memberType, ctx, errors, typesInViewFindDefinitions, viewBodyType,false)
+         is ModelAttributeReferenceSelector -> validateValidateSourceAndField(operand.memberSource, operand.targetType, ctx, errors, typesInViewFindDefinitions, viewBodyType,false)
          is LiteralExpression -> {
          }
          else -> errors.add(
@@ -309,7 +309,7 @@ class ViewValidator(private val viewName: String) {
            }
          is ModelAttributeReferenceSelector -> validateValidateSourceAndField(
             expression.memberSource,
-            expression.memberType,
+            expression.targetType,
             ctx,
             errors,
             typesInViewFindDefinitions,
@@ -432,7 +432,7 @@ class ViewValidator(private val viewName: String) {
                ctx.start,
                "Function input must in SourceType::FieldType format."))
          } else {
-            validateValidateSourceAndField(input.memberSource, input.memberType, ctx, errors, typesInViewFindDefinitions, viewBodyType)
+            validateValidateSourceAndField(input.memberSource, input.targetType, ctx, errors, typesInViewFindDefinitions, viewBodyType)
          }
       }
 
@@ -443,8 +443,8 @@ class ViewValidator(private val viewName: String) {
                "${Coalesce.name.typeName} requires at least two arguments"))
             return
          }
-         val firstCoalesceArgumentType = (inputs.first() as ModelAttributeReferenceSelector).memberType
-         if(!inputs.all {(it as ModelAttributeReferenceSelector).memberType == firstCoalesceArgumentType}) {
+         val firstCoalesceArgumentType = (inputs.first() as ModelAttributeReferenceSelector).targetType
+         if(!inputs.all {(it as ModelAttributeReferenceSelector).targetType == firstCoalesceArgumentType}) {
             errors.add(CompilationError(
                ctx.start,
                "${Coalesce.name.typeName} arguments must be of same type"))

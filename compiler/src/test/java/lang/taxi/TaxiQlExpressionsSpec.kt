@@ -4,11 +4,17 @@ import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.accessors.LiteralAccessor
+import lang.taxi.expressions.FieldReferenceExpression
 import lang.taxi.expressions.FunctionExpression
+import lang.taxi.expressions.TypeExpression
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.types.ObjectType
+import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
 
 class TaxiQlExpressionsSpec : DescribeSpec({
    describe("expressions constraints on types in queries") {
@@ -65,6 +71,76 @@ class TaxiQlExpressionsSpec : DescribeSpec({
 
       it("is possible to declare an expression on a projected return type") {
          val (schema, query) = src.compiledWithQuery("find { Person(true == true) }")
+      }
+   }
+   describe("filtering using functions") {
+      val src = """model Person {
+           id : PersonId inherits Int
+          }
+          model Movie {
+            title : MovieTitle inherits String
+            cast : Person[]
+         }
+          service PersonService {
+            operation getAll():Movie[]
+         }"""
+      it("should be possible to query filtering on a field by name ") {
+         val (_, query) = src.compiledWithQuery(
+            """find { Movie[] } as {
+            |cast : Person[]
+            |name : filterSingle(this.cast, (Person) -> PersonId == 1 )
+            |}[]
+         """.trimMargin()
+         )
+         val accessor = query.projectedObjectType
+            .field("name")
+            .accessor!! as FunctionExpression
+         val input = accessor.inputs[0].asA<FieldReferenceExpression>()
+         input.path.shouldBe("cast")
+      }
+      it("should be possible to query filtering on a field by type") {
+         val (_, query) = src.compiledWithQuery(
+            """find { Movie[] } as {
+            |cast : Person[]
+            |name : filterSingle(Person[], (Person) -> PersonId == 1 )
+            |}[]
+         """.trimMargin()
+         )
+         val accessor = query.projectedObjectType
+            .field("name")
+            .accessor!! as FunctionExpression
+         val input = accessor.inputs[0].asA<TypeExpression>()
+         input.type.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<Person>")
+      }
+
+      it("generates an error when filtering on a field that doesn't exist") {
+         val error = assertFailsWith<CompilationException> {
+            val (_, query) = src.compiledWithQuery(
+               """find { Movie[] } as {
+            |cast : Person[]
+            |// Below: this.actors is not a real field
+            |name : filterSingle(this.actors, (Person) -> PersonId == 1 )
+            |}[]
+         """.trimMargin()
+            )
+         }
+         error.message!!.shouldContain("Field actors does not exist")
+      }
+
+
+      it("is possible to use nested dot-syntax to navigate fields") {
+         val (_, query) = src.compiledWithQuery(
+            """find { Movie[] } as {
+            |cast : Person[]
+            |movie : Movie
+            |// This is the test:  using multiple dots -- this.movie.title
+            |movieTitle : this.movie.title
+            |}[]
+         """.trimMargin()
+         )
+         val field = query.projectedObjectType.field("movieTitle")
+         val expression = field.accessor as FieldReferenceExpression
+         expression.fieldNames.should.have.elements("movie", "title")
       }
    }
 })

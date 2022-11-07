@@ -1,12 +1,7 @@
 package lang.taxi.compiler
 
-import arrow.core.Either
-import arrow.core.flatMap
-import arrow.core.handleErrorWith
-import arrow.core.left
-import arrow.core.right
-import lang.taxi.CompilationError
-import lang.taxi.TaxiParser
+import arrow.core.*
+import lang.taxi.*
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.compiler.fields.FieldCompiler
@@ -17,25 +12,9 @@ import lang.taxi.expressions.LambdaExpression
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
-import lang.taxi.findNamespace
 import lang.taxi.functions.Function
-import lang.taxi.source
-import lang.taxi.text
-import lang.taxi.toCompilationUnit
-import lang.taxi.toCompilationUnits
-import lang.taxi.types.Enums
-import lang.taxi.types.FieldReferenceSelector
-import lang.taxi.types.FormulaOperator
-import lang.taxi.types.ModelAttributeReferenceSelector
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.Type
-import lang.taxi.types.TypeChecker
-import lang.taxi.utils.flattenErrors
-import lang.taxi.utils.getOrThrow
-import lang.taxi.utils.invertEitherList
-import lang.taxi.utils.leftOr
-import lang.taxi.valueOrNullValue
+import lang.taxi.types.*
+import lang.taxi.utils.*
 import org.antlr.v4.runtime.ParserRuleContext
 
 class ExpressionCompiler(
@@ -65,9 +44,11 @@ class ExpressionCompiler(
             require(expressionGroup.expressionGroup().size == 1) { "Expected only a single ExpressionGroup inside parenthesis" }
             compile(expressionGroup.expressionGroup(0))
          }
+
          expressionGroup.children.size == 2 && expressionGroup.expressionInputs() != null -> parseLambdaExpression(
             expressionGroup
          )
+
          expressionGroup.children.size == 3 -> parseOperatorExpression(expressionGroup)          // lhs operator rhs
          expressionGroup.expressionGroup().isEmpty() -> compileSingleExpression(expressionGroup)
          else -> error("Unhandled expression group scenario: ${expressionGroup.text}")
@@ -119,13 +100,51 @@ class ExpressionCompiler(
 
    private fun parseFieldReferenceSelector(fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext): Either<List<CompilationError>, Expression> {
       return requireFieldCompilerIsPresent(fieldReferenceSelector).flatMap {
-         val fieldName = fieldReferenceSelector.identifier().text
-         fieldCompiler!!.provideField(fieldName, fieldReferenceSelector)
-            .map { field ->
-               FieldReferenceExpression(
-                  FieldReferenceSelector.fromField(field),
-                  fieldReferenceSelector.toCompilationUnits()
-               )
+         val fieldPath = fieldReferenceSelector.qualifiedName().identifier()
+
+         val (firstPathElement, remainingPathElements) = fieldPath.takeHead()
+
+         var error: CompilationMessage? = null
+         return fieldCompiler!!.provideField(firstPathElement.text, fieldReferenceSelector)
+            .flatMap { field ->
+               val fieldSelectors = remainingPathElements
+                  .asSequence()
+                  .takeWhile { error == null }
+                  // Cast to nullable type, as it allows us to return null when an error is thrown
+                  .runningFold(FieldReferenceSelector.fromField(field) as FieldReferenceSelector?) { lastField, pathElement ->
+                     val lastFieldReturnType = lastField!!.returnType
+
+                     // Check that the type has properties
+                     if (lastFieldReturnType !is ObjectType) {
+                        error = CompilationError(
+                           pathElement.toCompilationUnit(),
+                           "${lastFieldReturnType.toQualifiedName().parameterizedName} does not expose properties"
+                        )
+                        null
+
+                        // Check that the field exists on the type
+                     } else if (!lastFieldReturnType.hasField(pathElement.text)) {
+                        error = CompilationError(
+                           pathElement.toCompilationUnit(),
+                           "${lastFieldReturnType.toQualifiedName().parameterizedName} does not have a property ${pathElement.text}"
+                        )
+                        null
+                     } else {
+                        FieldReferenceSelector.fromField(lastFieldReturnType.field(pathElement.text))
+                     }
+                  }
+                  .filterNotNull()
+                  .toList()
+
+               if (error != null) {
+                  listOfNotNull(error).left()
+               } else {
+                  FieldReferenceExpression(
+                     fieldSelectors,
+                     fieldReferenceSelector.toCompilationUnits()
+                  ).right()
+               }
+
             }
       }
    }
@@ -170,6 +189,7 @@ class ExpressionCompiler(
                   )
                ).left()
             }
+
             !isNullCheck && !operator.supports(lhsType, rhsType) -> {
                listOf(
                   CompilationError(
@@ -178,6 +198,7 @@ class ExpressionCompiler(
                   )
                ).left()
             }
+
             else -> {
                OperatorExpression(
                   lhs = lhs,
@@ -250,6 +271,7 @@ class ExpressionCompiler(
                fieldCompiler.compileScalarAccessor(expression, targetType)
             }
          }
+
          expression.expressionGroup() != null -> {
             val compiled = compile(expression.expressionGroup())
             compiled
@@ -280,7 +302,10 @@ class ExpressionCompiler(
       parameterContext: TaxiParser.ParameterContext
    ): Either<List<CompilationError>, FieldReferenceSelector> {
       return requireFieldCompilerIsPresent(parameterContext).flatMap {
-         fieldCompiler!!.provideField(parameterContext.fieldReferenceSelector().identifier().text, parameterContext)
+         fieldCompiler!!.provideField(
+            parameterContext.fieldReferenceSelector().qualifiedName().identifier().text(),
+            parameterContext
+         )
             .map { field -> FieldReferenceSelector.fromField(field) }
       }
    }
@@ -289,26 +314,23 @@ class ExpressionCompiler(
       modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext
    ): Either<List<CompilationError>, ModelAttributeReferenceSelector> {
 
-      val memberSourceTypeType = modelAttributeReferenceCtx.typeReference().first()
-      val memberTypeType = modelAttributeReferenceCtx.typeReference()[1]
-      val sourceTypeName = try {
-         QualifiedName.from(fieldCompiler!!.lookupTypeByName(memberSourceTypeType)).right()
-      } catch (e: Exception) {
-         CompilationError(
-            modelAttributeReferenceCtx.start,
-            "Only Model AttributeReference expressions (SourceType::FieldType) are allowed for views"
-         ).asList().left()
-      }
-      return sourceTypeName.flatMap { memberSourceType ->
-         fieldCompiler!!.parseType(modelAttributeReferenceCtx.findNamespace(), memberTypeType).flatMap { memberType ->
-            ModelAttributeReferenceSelector(memberSourceType, memberType, modelAttributeReferenceCtx.toCompilationUnits()).right()
+      val sourceTypeReference = modelAttributeReferenceCtx.typeReference().first()
+      val targetTypeReference = modelAttributeReferenceCtx.typeReference()[1]
+
+      return fieldCompiler!!.typeOrError(sourceTypeReference).flatMap { sourceType ->
+         fieldCompiler.typeOrError(targetTypeReference).map { targetType ->
+            val returnType = if (modelAttributeReferenceCtx.arrayMarker() != null) {
+               ArrayType.of(targetType, targetTypeReference.toCompilationUnit())
+            } else {
+               targetType
+            }
+            ModelAttributeReferenceSelector(
+               sourceType.toQualifiedName(),
+               targetType,
+               returnType,
+               modelAttributeReferenceCtx.toCompilationUnit()
+            )
          }
       }
-      // TODO - This isn't implemented, need to find the original implementation
-      return listOf(
-         CompilationError(
-            modelAttributeReferenceCtx.start, "SourceType::FieldType notation is not permitted here"
-         )
-      ).left()
    }
 }

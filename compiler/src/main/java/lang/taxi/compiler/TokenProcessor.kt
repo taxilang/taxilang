@@ -961,9 +961,9 @@ class TokenProcessor(
       ).right()
    }
 
-   fun expressionCompiler(): ExpressionCompiler {
+   fun expressionCompiler(fieldCompiler: FieldCompiler? = null): ExpressionCompiler {
       // TODO : Can we avoid creating a new one each time?
-      return ExpressionCompiler(this, typeChecker, errors)
+      return ExpressionCompiler(this, typeChecker, errors, fieldCompiler)
    }
 
    private fun parseTypeExpression(expressionGroup: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, Expression> {
@@ -1417,6 +1417,12 @@ class TokenProcessor(
          }
       }
    }
+
+   internal fun typeOrError(
+      typeType: TaxiParser.TypeReferenceContext,
+      typeArgumentsInScope: List<TypeArgument> = emptyList()
+   ): Either<List<CompilationError>, Type> = typeOrError(typeType.findNamespace(), typeType, typeArgumentsInScope)
+
 
    internal fun typeOrError(
       namespace: Namespace,

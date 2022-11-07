@@ -116,7 +116,7 @@ object TypeArgumentResolver {
             val providedInput = providedInputTypes[index]
             if (declaredInput.typeParameters().isNotEmpty()) {
                require(declaredInput.typeParameters().size == providedInput.typeParameters().size) {
-                  "The declared input of ${declaredInput.toQualifiedName().parameterizedName} is incompatible (as the number of type parameters differs) with the provided input of ${providedInput.toQualifiedName().parameterizedName}"
+                  "Could not resolve type argument ${typeArgument.declaredName} (of ${declaredInput.toQualifiedName().parameterizedName}) as expected ${declaredInput.typeParameters().size} type parameters, but found ${providedInput.typeParameters().size}"
                }
                resolveTypeArgumentFromInputTypes(
                   typeArgument,

@@ -175,7 +175,7 @@ conditionalTypeWhenDeclaration:
 // Otherwise, these no lexer difference between
 // a fieldReferenceSelector (not permitted in expression types)
 // and a typeReferenceSelector (which is permitted)
-fieldReferenceSelector: propertyFieldNameQualifier identifier;
+fieldReferenceSelector: propertyFieldNameQualifier qualifiedName;
 typeReferenceSelector: typeReference;
 
 conditionalTypeWhenCaseDeclaration:
@@ -221,7 +221,8 @@ projectionScopeDefinition: 'with' '(' scalarAccessorExpression (',' scalarAccess
 // A type reference that refers to the attribute on a model.
 // eg:  firstName : Person::FirstName.
 // Only meaningful within views.
-modelAttributeTypeReference: typeReference '::' typeReference;
+modelAttributeTypeReference: typeReference '::' typeReference |
+   LPAREN typeReference '::' typeReference RPAREN arrayMarker;
 
 
 // fieldType usages allow richer syntax with additional features like
@@ -240,7 +241,7 @@ typeReference
 optionalTypeReference : typeReference optionalType?;
 
 accessor
-    : 'by' scalarAccessorExpression
+    : ('by' | '=') scalarAccessorExpression
     ;
 
 scalarAccessorExpression

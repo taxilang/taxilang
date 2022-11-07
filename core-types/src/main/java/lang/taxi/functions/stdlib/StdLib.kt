@@ -11,6 +11,7 @@ object StdLib  {
       Aggregations.functions +
       Functional.functions +
       Collections.functions +
+      ObjectFunctions.functions +
       listOf(Coalesce)
    val taxi = functions.namespacedTaxi()
 }

@@ -383,8 +383,8 @@ class ConditionalDataTypesTest {
       val whenCondition = (field.accessor as ConditionalAccessor).expression as WhenFieldSetCondition
       whenCondition.cases.size.should.equal(6)
       val case1 = whenCondition.cases[0].matchExpression as OperatorExpression
-      case1.lhs.asA<FieldReferenceExpression>().selector.fieldName.should.equal("initialQuantity")
-      case1.rhs.asA<FieldReferenceExpression>().selector.fieldName.should.equal("leavesQuantity")
+      case1.lhs.asA<FieldReferenceExpression>().path.should.equal("initialQuantity")
+      case1.rhs.asA<FieldReferenceExpression>().path.should.equal("leavesQuantity")
       case1.operator.should.equal(FormulaOperator.Equal)
 
       // The below is bascially operator parsing, which is tested elsewhere.

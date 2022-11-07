@@ -7,7 +7,6 @@ import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.types.ElseMatchExpression
 import lang.taxi.types.FormulaOperator
-import lang.taxi.types.InlineAssignmentExpression
 import lang.taxi.types.ModelAttributeReferenceSelector
 import lang.taxi.types.ObjectType
 import lang.taxi.types.WhenFieldSetCondition
@@ -309,16 +308,16 @@ class ViewSpec : Spek({
          )
          val firstCase = whenFieldSetCondition.cases.first()
          ((firstCase.matchExpression as OperatorExpression)
-            .lhs as ModelAttributeReferenceSelector).memberType.should.equal(requestedQuantityType)
+            .lhs as ModelAttributeReferenceSelector).targetType.should.equal(requestedQuantityType)
          ((firstCase.matchExpression as OperatorExpression)
             .lhs as ModelAttributeReferenceSelector).memberSource.should.equal(orderSentType.toQualifiedName())
          ((firstCase.matchExpression as OperatorExpression)
-            .rhs as ModelAttributeReferenceSelector).memberType.should.equal(decimalFieldOrderFilled)
+            .rhs as ModelAttributeReferenceSelector).targetType.should.equal(decimalFieldOrderFilled)
          ((firstCase.matchExpression as OperatorExpression)
             .rhs as ModelAttributeReferenceSelector).memberSource.should.equal(orderFillType.toQualifiedName())
          (firstCase.matchExpression as OperatorExpression).operator.should.equal(FormulaOperator.Equal)
          (firstCase.assignments.first().assignment as ModelAttributeReferenceSelector)
-            .memberType.should.equal(orderStatusType)
+            .targetType.should.equal(orderStatusType)
          (firstCase.assignments.first().assignment as ModelAttributeReferenceSelector)
             .memberSource.should.equal(orderFillType.toQualifiedName())
          whenFieldSetCondition.cases[1].matchExpression.should.equal(ElseMatchExpression)
@@ -403,7 +402,7 @@ class ViewSpec : Spek({
          )
          val firstCase = whenFieldSetCondition.cases.first()
          ((firstCase.matchExpression as OperatorExpression)
-            .lhs as ModelAttributeReferenceSelector).memberType.should.equal(requestedQtyType)
+            .lhs as ModelAttributeReferenceSelector).targetType.should.equal(requestedQtyType)
          ((firstCase.matchExpression as OperatorExpression)
             .lhs as ModelAttributeReferenceSelector).memberSource.should.equal(orderSentType.toQualifiedName())
          ((firstCase.matchExpression as OperatorExpression)
@@ -418,7 +417,7 @@ class ViewSpec : Spek({
          (((secondCase.matchExpression as OperatorExpression)
             .lhs as OperatorExpression)
             .lhs as ModelAttributeReferenceSelector)
-            .memberType.should.equal(requestedQtyType)
+            .targetType.should.equal(requestedQtyType)
          (((secondCase.matchExpression as OperatorExpression)
             .lhs as OperatorExpression)
             .rhs as LiteralExpression)
@@ -426,7 +425,7 @@ class ViewSpec : Spek({
          (((secondCase.matchExpression as OperatorExpression)
             .rhs as OperatorExpression)
             .lhs as ModelAttributeReferenceSelector)
-            .memberType.should.equal(requestedQtyType)
+            .targetType.should.equal(requestedQtyType)
          (((secondCase.matchExpression as OperatorExpression)
             .rhs as OperatorExpression)
             .rhs as LiteralExpression)

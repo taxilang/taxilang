@@ -3,16 +3,13 @@ package lang.taxi.compiler
 import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.right
-import lang.taxi.CompilationError
-import lang.taxi.CompilationMessage
+import lang.taxi.*
 import lang.taxi.Namespace
-import lang.taxi.TaxiParser
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.accessors.NullValue
 import lang.taxi.compiler.fields.FieldCompiler
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.LiteralExpression
-import lang.taxi.toCompilationUnits
 import lang.taxi.types.AssignmentExpression
 import lang.taxi.types.ConditionalFieldSet
 import lang.taxi.types.ElseMatchExpression
@@ -386,7 +383,7 @@ class ConditionalFieldSetProcessor internal constructor(
       fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext,
       targetType: Type
    ): Either<List<CompilationError>, WhenSelectorExpression> {
-      val fieldName = fieldReferenceSelector.identifier().text
+      val fieldName = fieldReferenceSelector.qualifiedName().identifier().text()
       val field = compiler.provideField(fieldName, fieldReferenceSelector).map { field ->
          // This is the selector in a when condition.
          // eg:

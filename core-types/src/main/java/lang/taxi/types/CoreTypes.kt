@@ -56,6 +56,9 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
          // Resolve either lang.taxi.Array, or implicitly just Array
          return requestedTypeName == qualifiedName.fullyQualifiedName || requestedTypeName == qualifiedName.typeName
       }
+      fun arrayTypeName(memberTypeName:String):String {
+         return "$NAME<$memberTypeName>"
+      }
    }
 
    override val anonymous: Boolean

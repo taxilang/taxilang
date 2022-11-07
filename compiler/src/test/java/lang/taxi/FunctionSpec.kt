@@ -19,6 +19,7 @@ import lang.taxi.types.TypeReferenceSelector
 import java.util.*
 import kotlin.test.assertFailsWith
 
+
 class FunctionSpec : DescribeSpec({
 
    describe("declaring functions") {
@@ -188,7 +189,7 @@ namespace pkgB {
             .objectType("Person")
             .field("leftName")
             .accessor as FunctionExpression
-         accessor.inputs[0].asA<FieldReferenceExpression>().fieldName.should.equal("firstName")
+         accessor.inputs[0].asA<FieldReferenceExpression>().path.should.equal("firstName")
          accessor.inputs[0].asA<FieldReferenceExpression>().returnType.qualifiedName.should.equal("FirstName")
       }
 

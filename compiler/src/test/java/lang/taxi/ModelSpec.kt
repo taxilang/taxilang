@@ -203,9 +203,9 @@ namespace foo.bar {
             """.trimIndent()
             val transaction = Compiler(src).compile().model("Person")
             val accessor = transaction.field("fullName").accessor as OperatorExpression
-            accessor.lhs.asA<FieldReferenceExpression>().fieldName.should.equal("firstName")
+            accessor.lhs.asA<FieldReferenceExpression>().path.should.equal("firstName")
             accessor.lhs.asA<FieldReferenceExpression>().returnType.qualifiedName.should.equal("FirstName")
-            accessor.rhs.asA<FieldReferenceExpression>().fieldName.should.equal("lastName")
+            accessor.rhs.asA<FieldReferenceExpression>().path.should.equal("lastName")
             accessor.rhs.asA<FieldReferenceExpression>().returnType.qualifiedName.should.equal("LastName")
          }
 
@@ -223,6 +223,46 @@ namespace foo.bar {
 
             """.validated()
                   .shouldContainMessage("Field invalidField does not exist on type Person")
+         }
+
+         it("is possible to define an expression with a nested field") {
+            val field = """
+            model Address {
+               city : CityName inherits String
+            }
+            model Location {
+               address : Address
+            }
+            model Person {
+               location : Location
+               cityName : this.location.address.city
+            }
+
+            """.compiled()
+               .model("Person")
+               .field("cityName")
+            field.type.qualifiedName.should.equal("CityName")
+            val accessor = field.accessor!!.asA<FieldReferenceExpression>()
+            accessor.fieldNames.should.contain.elements("location","address","city")
+            accessor.path.should.equal("location.address.city")
+            accessor.returnType.qualifiedName.should.equal("CityName")
+         }
+
+         it("should detect an invalid field name in the middle of a path") {
+            """
+            model Address {
+               city : CityName inherits String
+            }
+            model Location {
+               address : Address
+            }
+            model Person {
+               location : Location
+               cityName : this.location.invalid.city
+            }
+
+            """.validated()
+               .shouldContainMessage("Location does not have a property invalid")
          }
 
          describe("finding fields") {

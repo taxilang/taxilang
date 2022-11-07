@@ -13,7 +13,12 @@ data class TaxiQlQuery(
 ) {
    val projectedObjectType : ObjectType
       get() {
-         return projectedType as ObjectType
+         return when (projectedType) {
+            null -> error("ProjectType is null")
+            is ArrayType -> projectedType.type as ObjectType
+            is ObjectType -> projectedType
+            else -> error("Cannot cast ${projectedType::class.simpleName} to ObjectType")
+         }
       }
 
 
