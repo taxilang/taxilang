@@ -2,6 +2,7 @@ package lang.taxi
 
 import arrow.core.Either
 import arrow.core.getOrHandle
+import com.google.common.base.Stopwatch
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import lang.taxi.compiler.TokenProcessor
@@ -16,6 +17,7 @@ import lang.taxi.sources.SourceCode
 import lang.taxi.sources.SourceLocation
 import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.*
+import lang.taxi.utils.log
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.ParseTree
@@ -351,6 +353,7 @@ class Compiler(
 
 
    fun compileWithMessages(): Pair<List<CompilationError>, TaxiDocument> {
+      val stopwatch = Stopwatch.createStarted()
       // Note - leaving this approach for backwards compatiability
       // We could try to continue compiling, with the tokens we do have
       if (syntaxErrors.isNotEmpty()) {
@@ -359,6 +362,7 @@ class Compiler(
       val builder = tokenProcessrWithImports
       // Similarly to above, we could do somethign with these errors now.
       val (errors, document) = builder.buildTaxiDocument()
+      log().debug("Taxi schema compilation took ${stopwatch.elapsed().toMillis()}ms")
       return errors to document
    }
 
