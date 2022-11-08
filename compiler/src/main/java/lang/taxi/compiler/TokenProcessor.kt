@@ -9,6 +9,7 @@ import arrow.core.right
 import com.google.common.hash.Hashing
 import lang.taxi.*
 import lang.taxi.Namespace
+import lang.taxi.TaxiParser.FieldTypeDeclarationContext
 import lang.taxi.TaxiParser.QualifiedNameContext
 import lang.taxi.TaxiParser.TypeArgumentsContext
 import lang.taxi.accessors.ConditionalAccessor
@@ -2567,8 +2568,9 @@ enum class SymbolKind {
                is TaxiParser.EnumDeclarationContext -> true
                is TaxiParser.TypeAliasDeclarationContext -> true
                is TaxiParser.TypeReferenceContext -> true
+               is FieldTypeDeclarationContext -> true
                else -> {
-                  TODO()
+                  TODO("matches implementation not defined for token type ${token::class.simpleName}")
                }
             }
          }
