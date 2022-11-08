@@ -10,8 +10,10 @@ import lang.taxi.expressions.Expression
  */
 data class ConditionalFieldSet(val fields: List<Field>, val expression: FieldSetExpression)
 
+@Deprecated("Use expressions instead")
 interface FieldSetExpression : TaxiStatementGenerator
 
+@Deprecated("Use expressions instead")
 data class CalculatedModelAttributeFieldSetExpression(
    val operand1: ModelAttributeReferenceSelector,
    val operand2: ModelAttributeReferenceSelector,
@@ -20,6 +22,7 @@ data class CalculatedModelAttributeFieldSetExpression(
    override fun asTaxi(): String = "(${operand1.asTaxi()} ${operator.symbol} ${operand2.asTaxi()})"
 }
 
+@Deprecated("Use expressions instead")
 data class CalculatedFieldSetExpression(
    val operand1: FieldReferenceSelector,
    val operand2: FieldReferenceSelector,
