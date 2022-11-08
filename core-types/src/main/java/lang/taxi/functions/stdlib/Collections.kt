@@ -3,7 +3,7 @@ package lang.taxi.functions.stdlib
 import lang.taxi.types.QualifiedName
 
 object Collections {
-   val functions: List<FunctionApi> = listOf(Contains, AllOf, AnyOf, NoneOf, Single, FilterAll, ArrayEquals)
+   val functions: List<FunctionApi> = listOf(Contains, AllOf, AnyOf, NoneOf, Single, FilterAll, SingleBy)
 }
 
 object NoneOf : FunctionApi {
@@ -32,6 +32,16 @@ object Single : FunctionApi {
    override val name: QualifiedName = stdLibName("single")
 }
 
+object SingleBy : FunctionApi {
+   override val taxi: String =
+      """
+         [[ Similar to Single, where the collection is searched for a single matching value.
+         However, results are first grouped by selector.  The results of this are cached to improve future performance
+         ]]
+         declare function <T,A> singleBy(collection:T[], groupingFunction: (T) -> A, searchValue: A):T""".trimIndent()
+   override val name: QualifiedName = stdLibName("singleBy")
+}
+
 object FilterAll : FunctionApi {
    // This naming sucks, but we use filter as a reserved word in the grammar :(
    override val taxi: String =
@@ -39,8 +49,3 @@ object FilterAll : FunctionApi {
    override val name: QualifiedName = stdLibName("filterAll")
 }
 
-object ArrayEquals : FunctionApi {
-   override val taxi: String
-      get() = "declare function <T>  arrayEquals(a:T[], b:T[]):Boolean"
-   override val name: QualifiedName = stdLibName("arrayEquals")
-}
