@@ -67,7 +67,7 @@ listOfInheritedTypes
     : typeReference (',' typeReference)*
     ;
 typeBody
-    :   '{' (typeMemberDeclaration | conditionalTypeStructureDeclaration )* '}'
+    :   '{' (typeMemberDeclaration | conditionalTypeStructureDeclaration )* SPREAD_OPERATOR? '}'
     ;
 
 typeMemberDeclaration
@@ -974,3 +974,5 @@ POW: '^';
 
 LPAREN : '(' ;
 RPAREN : ')' ;
+
+SPREAD_OPERATOR : '...' ;

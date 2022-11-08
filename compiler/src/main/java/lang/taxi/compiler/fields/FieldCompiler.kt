@@ -1,17 +1,51 @@
 package lang.taxi.compiler.fields
 
-import arrow.core.*
-import lang.taxi.*
+import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.getOrElse
+import arrow.core.getOrHandle
+import arrow.core.left
+import arrow.core.right
+import lang.taxi.CompilationError
+import lang.taxi.Namespace
+import lang.taxi.TaxiParser
 import lang.taxi.TaxiParser.TypeReferenceContext
-import lang.taxi.accessors.*
-import lang.taxi.compiler.*
-import lang.taxi.types.*
+import lang.taxi.accessors.Accessor
+import lang.taxi.accessors.CollectionProjectionExpressionAccessor
+import lang.taxi.accessors.ColumnAccessor
+import lang.taxi.accessors.ConditionalAccessor
+import lang.taxi.accessors.FieldSourceAccessor
+import lang.taxi.accessors.JsonPathAccessor
+import lang.taxi.accessors.ProjectionScopeDefinition
+import lang.taxi.accessors.XpathAccessor
+import lang.taxi.compiler.AnonymousTypeResolutionContext
+import lang.taxi.compiler.ConditionalFieldSetProcessor
+import lang.taxi.compiler.DefaultValueParser
+import lang.taxi.compiler.ExpressionCompiler
+import lang.taxi.compiler.TokenProcessor
+import lang.taxi.compiler.assertIsAssignable
+import lang.taxi.compiler.collectError
+import lang.taxi.compiler.collectErrors
+import lang.taxi.findNamespace
+import lang.taxi.source
+import lang.taxi.stringLiteralValue
+import lang.taxi.toCompilationUnit
+import lang.taxi.toCompilationUnits
 import lang.taxi.types.Annotation
+import lang.taxi.types.ArrayType
+import lang.taxi.types.Field
+import lang.taxi.types.FieldModifier
+import lang.taxi.types.FieldProjection
+import lang.taxi.types.ObjectType
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.Type
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.log
 import lang.taxi.utils.wrapErrorsInList
 import org.antlr.v4.runtime.ParserRuleContext
+import java.util.*
 
 class FieldCompiler(
    internal val tokenProcessor: TokenProcessor,
@@ -85,11 +119,26 @@ class FieldCompiler(
 
       val fieldsWithConditions = conditionalFieldStructures.flatMap { it.fields }
 
-      val fields = typeBody.memberDeclarations.map { member ->
+      val fields = buildObjectFields(typeBody.memberDeclarations)
+
+      val spreadFields = buildSpreadFieldsIfEnabled()
+
+      return (fields + fieldsWithConditions + spreadFields).distinctBy { it.name }
+   }
+
+   private fun buildObjectFields(memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>): List<Field> {
+      val fields = memberDeclarations.map { member ->
          provideField(TokenProcessor.unescape(member.fieldDeclaration().identifier().text), member)
       }.mapNotNull { either -> either.collectErrors(errors).getOrElse { null } }
+      return fields
+   }
 
-      return fields + fieldsWithConditions
+   private fun buildSpreadFieldsIfEnabled(): List<Field> {
+      if (!typeBody.hasSpreadOperator) {
+         return emptyList()
+      }
+
+      return typeBody.objectType?.fields ?: emptyList()
    }
 
    private fun compileField(
@@ -107,18 +156,16 @@ class FieldCompiler(
       return compileField(memberDeclaration)
    }
 
-//   internal fun compiledField(member: TaxiParser.TypeMemberDeclarationContext): Field? {
-//      return compileField(member)
-//         .collectErrors()
-//         .orNull()
-//   }
-
    private fun compileField(member: TaxiParser.TypeMemberDeclarationContext): Either<List<CompilationError>, Field> {
       val fieldAnnotations = tokenProcessor.collateAnnotations(member.annotation())
 
       val typeDoc = tokenProcessor.parseTypeDoc(member.typeDoc())
       val namespace = member.findNamespace()
       val fieldType = member.fieldDeclaration().fieldTypeDeclaration()
+      val isChildOfProjection = typeBody.objectType?.qualifiedName != null
+      if (fieldType == null && isChildOfProjection) {
+         return resolveImplicitTypeFromToBeProjectedType(member)
+      }
       // orderId: {  foo: String }
       val anonymousTypeDefinition = member.fieldDeclaration().anonymousTypeDefinition()
       // orderId: Order::OrderId
@@ -178,7 +225,7 @@ class FieldCompiler(
          }
 
          expressionGroup != null -> {
-            tokenProcessor.expressionCompiler(fieldCompiler =  this).compile(expressionGroup)
+            tokenProcessor.expressionCompiler(fieldCompiler = this).compile(expressionGroup)
                .flatMap { expression ->
                   fieldProjectionType.flatMap { fieldProjectionType ->
                      toField(
@@ -217,15 +264,7 @@ class FieldCompiler(
                   this.tokenProcessor.getType(namespace, discoveryTypes.first().type.firstTypeParameterOrSelf, member)
                typeOrError.flatMap { type ->
                   when {
-                     type !is ObjectType ->
-                        listOf(
-                           CompilationError(
-                              member.start,
-                              "$typeName should be an object type containing field $fieldName"
-                           )
-                        ).left()
-
-                     !type.hasField(fieldName) ->
+                     type !is ObjectType || !type.hasField(fieldName) ->
                         listOf(
                            CompilationError(
                               member.start,
@@ -241,11 +280,33 @@ class FieldCompiler(
       }
    }
 
+   private fun resolveImplicitTypeFromToBeProjectedType(
+      member: TaxiParser.TypeMemberDeclarationContext
+   ): Either<List<CompilationError>, Field> {
+      val fieldName = member.fieldDeclaration().identifier().text
+      return if (typeBody.objectType?.hasField(fieldName) == true) {
+         typeBody.objectType!!.field(fieldName).right()
+      } else {
+         listOf(
+            CompilationError(
+               member.start,
+               "Field ${
+                  member.fieldDeclaration().identifier().text
+               } does not have a type and cannot be found on the type being projected (${typeBody.objectType?.qualifiedName})."
+            )
+         ).left()
+      }
+   }
+
    private fun parseAnonymousTypeBody(
       member: TaxiParser.TypeMemberDeclarationContext,
       anonymousTypeDefinition: TaxiParser.AnonymousTypeDefinitionContext,
    ): Either<List<CompilationError>, Type> {
-      val anonymousTypeName = "$typeName$${member.fieldDeclaration().identifier().text.capitalize()}"
+      val anonymousTypeName = "$typeName$${member.fieldDeclaration().identifier().text.replaceFirstChar {
+         if (it.isLowerCase()) it.titlecase(
+            Locale.getDefault()
+         ) else it.toString()
+      }}"
       val fieldType = tokenProcessor.parseAnonymousType(
          anonymousTypeDefinition.findNamespace(),
          anonymousTypeDefinition,
@@ -282,7 +343,8 @@ class FieldCompiler(
       memberSource: QualifiedName? = null,
       fieldProjectionType: Type? = null
    ): Either<List<CompilationError>, Field> {
-      val fieldProjection = fieldProjectionType?.let { projectionType ->  FieldProjection(fieldType.type, projectionType) }
+      val fieldProjection =
+         fieldProjectionType?.let { projectionType -> FieldProjection(fieldType.type, projectionType) }
       return when {
          // orderId:  Order::OrderSentId
          memberSource != null -> {
@@ -626,7 +688,7 @@ class FieldCompiler(
    fun typeResolver(namespace: Namespace) = tokenProcessor.typeResolver(namespace)
 
    fun typeOrError(context: TypeReferenceContext) = tokenProcessor.typeOrError(context)
-   fun parseType(namespace: Namespace, typeType: TaxiParser.TypeReferenceContext) =
+   fun parseType(namespace: Namespace, typeType: TypeReferenceContext) =
       tokenProcessor.parseType(namespace, typeType)
 
    fun parseModelAttributeTypeReference(
