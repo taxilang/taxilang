@@ -2,13 +2,12 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 import lang.taxi.messages.Severity
 import lang.taxi.types.PrimitiveType
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 
 class FormattedTypesSpec : DescribeSpec({
-   xdescribe("formatted types") {
+   describe("formatted types") {
       it("should expose default formats for date types") {
          val doc = Compiler("").compile()
          doc.type(PrimitiveType.INSTANT.toQualifiedName()).format?.first().should.equal("yyyy-MM-dd'T'HH:mm:ss[.SSS]X")
@@ -21,16 +20,18 @@ class FormattedTypesSpec : DescribeSpec({
             .format.should.equal(PrimitiveType.INSTANT.format)
       }
 
-      it("should expose underlying unformatted type") {
-         """type TransactionEventDateTime inherits Instant
+      it("should expose format on field") {
+         val format = """
+            type TransactionEventDateTime inherits Instant
             type Order {
                 @Format("yyyy-MM-dd HH:mm:ss.SSSSSSS")
                 orderDateTime : TransactionEventDateTime
             }
          """.trimMargin()
             .compiled()
-            .objectType("Order").field("orderDateTime").type
-            .formattedInstanceOfType?.qualifiedName.should.equal("TransactionEventDateTime")
+            .objectType("Order").field("orderDateTime")
+            .formatAndOffset
+         format!!.formats.shouldBe(listOf("yyyy-MM-dd HH:mm:ss.SSSSSSS"))
       }
 
       it("should parse formatted types") {
@@ -40,27 +41,22 @@ class FormattedTypesSpec : DescribeSpec({
          """.compiled()
          src.type("TradeDate").format?.first().should.equal("mm/dd/yyThh:nn:ss.mmmmZ")
       }
-      it("should not include import for generated formatted type when type inherits from formatted type") {
-         val src = """
-            @Format( 'mm/dd/yyThh:nn:ss.mmmmZ' )
-            type TradeDate inherits Instant
-         """.compiled()
-         src.type("TradeDate").compilationUnits.single().source.content.should.equal("@Format( 'mm/dd/yyThh:nn:ss.mmmmZ' ) type TradeDate inherits Instant")
-      }
 
       it("should parse formatted types with single quotes within double quotes") {
          val doc = """
             type TransactionEventDateTime inherits Instant
             type Order {
-               @Format(patterns = ["yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "yyyy-MM-dd'T'HH:mm:ss.SSS"])
+               @Format("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
+               @Format("yyyy-MM-dd'T'HH:mm:ss.SSS")
                orderDateTime : TransactionEventDateTime
             }
          """.trimMargin()
             .compiled()
 
-         doc.objectType("Order")
-            .field("orderDateTime").type.format?.first().should.equal("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
-         doc.objectType("Order").field("orderDateTime").type.format?.get(1).should.equal("yyyy-MM-dd'T'HH:mm:ss.SSS")
+         val format = doc.objectType("Order")
+            .field("orderDateTime").format!!
+         format.first().should.equal("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
+         format[1].should.equal("yyyy-MM-dd'T'HH:mm:ss.SSS")
       }
 
       it("should parse multiple formatted types with single quotes") {
@@ -76,8 +72,8 @@ class FormattedTypesSpec : DescribeSpec({
          """.trimMargin()
             .compiled()
 
-         doc.objectType("Order").field("orderDateTime").type.format?.first().should.equal("yyyy-MM-dd HH:mm:ss.SSSSSSS")
-         doc.objectType("Order").field("orderDate").type.format?.first().should.equal("yyyyMMdd")
+         doc.objectType("Order").field("orderDateTime").format?.first().should.equal("yyyy-MM-dd HH:mm:ss.SSSSSSS")
+         doc.objectType("Order").field("orderDate").format?.first().should.equal("yyyyMMdd")
       }
 
       it("should parse multiple formatted types with different quotes") {
@@ -98,11 +94,11 @@ class FormattedTypesSpec : DescribeSpec({
             .compiled()
 
          doc.objectType("Order")
-            .field("orderDateTimeQuote").type.format?.first().should.equal("yyyy-MM-dd HH:mm:ss.SSSSSSS")
+            .field("orderDateTimeQuote").format?.first().should.equal("yyyy-MM-dd HH:mm:ss.SSSSSSS")
          doc.objectType("Order")
-            .field("orderDateTimeDoubleQuote").type.format?.first().should.equal("yyyy/MM/dd HH:mm:ss")
-         doc.objectType("Order").field("orderDateQuote").type.format?.first().should.equal("yyyyMMdd")
-         doc.objectType("Order").field("orderDateDoubleQuote").type.format?.first().should.equal("yyyy/MM/dd")
+            .field("orderDateTimeDoubleQuote").format?.first().should.equal("yyyy/MM/dd HH:mm:ss")
+         doc.objectType("Order").field("orderDateQuote").format?.first().should.equal("yyyyMMdd")
+         doc.objectType("Order").field("orderDateDoubleQuote").format?.first().should.equal("yyyy/MM/dd")
       }
 
       it("should allow modifying formats inline") {
@@ -115,7 +111,7 @@ class FormattedTypesSpec : DescribeSpec({
                tradeDate : TradeDate
             }
          """.compiled()
-            .objectType("Trade").field("tradeDate").type.format?.first().should.equal("dd/yy/mm")
+            .objectType("Trade").field("tradeDate").format?.first().should.equal("dd/yy/mm")
       }
 
       it("should allow a subtype to inherit the format of its base type") {
@@ -127,7 +123,7 @@ class FormattedTypesSpec : DescribeSpec({
                tradeDate : SettlementDate
             }
          """.compiled()
-            .objectType("Trade").field("tradeDate").type.format?.first().should.equal("dd/yy/mm")
+            .objectType("Trade").field("tradeDate").format?.first().should.equal("dd/yy/mm")
 
       }
 
@@ -141,14 +137,14 @@ class FormattedTypesSpec : DescribeSpec({
                tradeDate : SettlementDate
             }
          """.compiled()
-            .objectType("Trade").field("tradeDate").type.format?.first().should.equal("mm/yy/dd")
+            .objectType("Trade").field("tradeDate").format?.first().should.equal("mm/yy/dd")
 
 
       }
 
       it("should allow positive offset specification for Instant based types") {
          val tradeDateType = """
-            @Format( patterns = ['mm/dd/yyThh:nn:ss.mmmmZ'], offset = 60)
+            @Format(value = 'mm/dd/yyThh:nn:ss.mmmmZ', offset = 60)
             type TradeDate inherits Instant
          """.compiled().type("TradeDate")
 
@@ -158,7 +154,7 @@ class FormattedTypesSpec : DescribeSpec({
 
       it("should allow negative offset specification for Instant based types") {
          val tradeDateType = """
-            @Format( patterns = ['mm/dd/yyThh:nn:ss.mmmmZ'], offset = -300)
+            @Format(value = 'mm/dd/yyThh:nn:ss.mmmmZ', offset = -300)
             type TradeDate inherits Instant
          """.compiled().type("TradeDate")
 
@@ -170,31 +166,32 @@ class FormattedTypesSpec : DescribeSpec({
          val errors = """
             type TransactionEventDate inherits Date
             model Order {
-                @Format(patterns = ['yyyyMMdd'], offset = -300 )
+                @Format(value = 'yyyyMMdd', offset = -300 )
                 orderDateQuote : TransactionEventDate
             }
          """.trimMargin()
             .validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("@offset is only applicable to Instant based types")
+         errors.first().detailMessage.should.equal("Offset is only applicable to Instant based types")
       }
 
       it("should not allowed offset definition for time based types") {
          val errors = """
             type TransactionEventTime inherits Time
             model Order {
-                @Format(patterns = ['HH:mm:ss'], offset = -300 )
+                @Format(value = 'HH:mm:ss', offset = -300 )
                 orderTimeQuote : TransactionEventTime
             }
          """.trimMargin()
             .validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("@offset is only applicable to Instant based types")
+         errors.first().detailMessage.should.equal("Offset is only applicable to Instant based types")
       }
 
       it("should allow multiple formats with or without offset values for Instant based fields") {
          val orderEventDateTimeType = """
-            @Format( patterns =  ["yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", "yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss.S'Z'"], offset = 240 )
+            @Format("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'")
+            @Format(value = "yyyy-MM-dd'T'HH:mm:ss'Z'", offset = 240 )
             type OrderEventDateTime inherits Instant
          """.trimIndent()
             .compiled().type("OrderEventDateTime")
@@ -204,15 +201,15 @@ class FormattedTypesSpec : DescribeSpec({
       it("should not allow invalid offset specification for Instant based types") {
          //// https://en.wikipedia.org/wiki/List_of_UTC_time_offsets - time offsets range [UTC-12, UTC+14]
          val errors = """
-            @Format(patterns = ['mm/dd/yyThh:nn:ss.mmmmZ'], offset = 900 )
+            @Format(value = 'mm/dd/yyThh:nn:ss.mmmmZ', offset = 900 )
             type TradeDate inherits Instant
          """.validated()
             .filter { it.severity == Severity.ERROR }
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("""@offset value can't be larger than 840 (UTC+14) or smaller than -720 (UTC-12)""")
+         errors.first().detailMessage.should.equal("""Offset value can't be larger than 840 (UTC+14) or smaller than -720 (UTC-12)""")
       }
 
-      it("should  allow  offset only specification for Instant based types") {
+      xit("should  allow  offset only specification for Instant based types") {
          //// https://en.wikipedia.org/wiki/List_of_UTC_time_offsets - time offsets range [UTC-12, UTC+14]
          val tradeDateType = """
             @Format( offset = 30 )

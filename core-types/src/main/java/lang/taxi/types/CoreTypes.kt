@@ -92,7 +92,6 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
    }
 
    override val format: List<String>? = null
-   override val formattedInstanceOfType: Type? = null
 //   override val calculation: Formula?
 //      get() = null
    override val offset: Int? = null

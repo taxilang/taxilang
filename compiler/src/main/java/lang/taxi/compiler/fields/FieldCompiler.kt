@@ -178,7 +178,7 @@ class FieldCompiler(
          }
 
          expressionGroup != null -> {
-            tokenProcessor.expressionCompiler(fieldCompiler =  this).compile(expressionGroup)
+            tokenProcessor.expressionCompiler(fieldCompiler = this).compile(expressionGroup)
                .flatMap { expression ->
                   fieldProjectionType.flatMap { fieldProjectionType ->
                      toField(
@@ -282,7 +282,13 @@ class FieldCompiler(
       memberSource: QualifiedName? = null,
       fieldProjectionType: Type? = null
    ): Either<List<CompilationError>, Field> {
-      val fieldProjection = fieldProjectionType?.let { projectionType ->  FieldProjection(fieldType.type, projectionType) }
+      val format = tokenProcessor.parseTypeFormat(fieldAnnotations, fieldType.type, member)
+         .getOrHandle {
+            errors.addAll(it)
+            null
+         }
+      val fieldProjection =
+         fieldProjectionType?.let { projectionType -> FieldProjection(fieldType.type, projectionType) }
       return when {
          // orderId:  Order::OrderSentId
          memberSource != null -> {
@@ -297,6 +303,7 @@ class FieldCompiler(
                accessor = null,
                typeDoc = typeDoc,
                memberSource = memberSource,
+               formatAndOffset = format,
 
 //               projectionScopeTypes = projectionScopeTypes,
                compilationUnit = member.fieldDeclaration().toCompilationUnit()
@@ -323,6 +330,7 @@ class FieldCompiler(
                typeDoc = typeDoc,
                compilationUnit = member.fieldDeclaration().toCompilationUnit(),
                memberSource = memberSource,
+               formatAndOffset = format,
 //               projectionScopeTypes = projectionScopeTypes,
             ).right()
 
@@ -357,6 +365,7 @@ class FieldCompiler(
                   constraints = constraints,
                   accessor = accessor ?: fieldType.accessor,
                   typeDoc = typeDoc,
+                  formatAndOffset = format,
 //                  projectionScopeTypes = projectionScopeTypes,
                   compilationUnit = member.fieldDeclaration().toCompilationUnit()
                )

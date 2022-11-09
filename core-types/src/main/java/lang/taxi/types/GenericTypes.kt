@@ -16,7 +16,6 @@ data class TypeArgument(
    override val format: List<String>? = null
    override val inheritsFromPrimitive: Boolean = wrapper.inheritsFromPrimitive
    override val basePrimitive: PrimitiveType? = wrapper.basePrimitive
-   override val formattedInstanceOfType: Type? = null
    override val definitionHash: String? = wrapper.definitionHash
 //   override val calculation: Formula? = null
    override val offset: Int? = null

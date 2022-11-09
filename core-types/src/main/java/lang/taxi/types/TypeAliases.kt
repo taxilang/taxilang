@@ -51,9 +51,6 @@ data class TypeAlias(
    override val offset: Int?
       get() = definition?.aliasType?.offset
 
-   override val formattedInstanceOfType: Type?
-      get() = definition?.aliasType?.formattedInstanceOfType
-
    override val inheritsFrom: Set<Type> = definition?.aliasType?.inheritsFrom ?: emptySet()
 
    override val typeDoc: String?
@@ -78,12 +75,10 @@ data class TypeAlias(
       }
 
       fun underlyingType(type: Type): Type {
-         val unaliasedType =  when (type) {
+         return  when (type) {
             is TypeAlias -> underlyingType(type.aliasType!!)
             else -> type
          }
-         return unaliasedType.formattedInstanceOfType?.let { underlyingType(it) }
-            ?: unaliasedType
       }
    }
 

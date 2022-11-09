@@ -35,13 +35,10 @@ data class ObjectTypeDefinition(
    val annotations: Set<Annotation> = emptySet(),
    val modifiers: List<Modifier> = emptyList(),
    val inheritsFrom: Set<Type> = emptySet(),
-   val format: List<String>? = null,
-   val pattern: String? = null,
-   val formattedInstanceOfType: Type? = null,
-   val calculatedInstanceOfType: Type? = null,
+   val formatAndOffset: FormatsAndZoneOffset? = null,
 //   @Deprecated("Formulas are replaced by functions and expressions")
 //   val calculation: Formula? = null,
-   val offset: Int? = null,
+//   val offset: Int? = null,
    val isAnonymous: Boolean = false,
    val typeKind: TypeKind = TypeKind.Type,
    val expression: Expression? = null,
@@ -58,6 +55,15 @@ data class ObjectTypeDefinition(
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
+
+   val format: List<String>?
+      get() {
+         return formatAndOffset?.formats
+      }
+   val offset: Int?
+      get() {
+         return formatAndOffset?.utcZoneoffsetInMinutes
+      }
 }
 
 internal fun <T, R> KProperty1<T, Collection<R>>.toSet(): T.() -> Set<R>? {
@@ -156,12 +162,6 @@ data class ObjectType(
 
    override val anonymous: Boolean
       get() = this.definition?.isAnonymous ?: false
-
-   override val formattedInstanceOfType: Type?
-      get() = this.definition?.formattedInstanceOfType
-
-   val calculatedInstanceOfType: Type?
-      get() = this.definition?.calculatedInstanceOfType
 
    override val referencedTypes: List<Type>
       get() {
@@ -437,6 +437,7 @@ data class Field(
    val memberSource: QualifiedName? = null,
 
    val projection: FieldProjection? = null,
+   val formatAndOffset: FormatsAndZoneOffset? = null,
 
 
 
@@ -455,11 +456,24 @@ data class Field(
 
    override val description: String = "field $name"
 
+
+   val format: List<String>? = formatAndOffset?.formats ?: type.format
+   val offset:Int? = formatAndOffset?.utcZoneoffsetInMinutes ?: type.offset
+
    // This needs to be stanrdardised with the defaultValue above, which comes from
    // extensions
    val accessorDefault = if (accessor is AccessorWithDefault) accessor.defaultValue else null
 
-
+   /**
+    * Returns EITHER the accessor default (declared
+    * using 'by default(...)', or the
+    * default value declared using an extension.
+    * This is a workaround - we should remove one of those approaches.
+    */
+   val default: Any?
+      get() {
+         return accessorDefault ?: defaultValue
+      }
    // For equality - don't compare on the type (as this can cause stackOverflow when the type is an Object type)
    private val typeName = type.qualifiedName
    private val equality =
@@ -468,6 +482,9 @@ data class Field(
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
 
+   fun annotation(name: String): Annotation {
+      return annotations.single { it.qualifiedName == name }
+   }
 
 }
 

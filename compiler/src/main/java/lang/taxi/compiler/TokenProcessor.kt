@@ -6,15 +6,13 @@ import arrow.core.getOrElse
 import arrow.core.getOrHandle
 import arrow.core.left
 import arrow.core.right
-import com.google.common.hash.Hashing
 import lang.taxi.*
-import lang.taxi.Namespace
-import lang.taxi.TaxiParser.FieldTypeDeclarationContext
-import lang.taxi.TaxiParser.QualifiedNameContext
-import lang.taxi.TaxiParser.TypeArgumentsContext
+import lang.taxi.TaxiParser.*
 import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.compiler.annotations.AnnotationTypeBodyContent
-import lang.taxi.compiler.fields.*
+import lang.taxi.compiler.fields.FieldCompiler
+import lang.taxi.compiler.fields.FieldTypeSpec
+import lang.taxi.compiler.fields.TypeBodyContext
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.toExpressionGroup
 import lang.taxi.functions.Function
@@ -22,81 +20,64 @@ import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionDefinition
 import lang.taxi.functions.FunctionModifiers
 import lang.taxi.linter.Linter
-import lang.taxi.parameters
-import lang.taxi.policies.CaseCondition
-import lang.taxi.policies.Condition
-import lang.taxi.policies.ElseCondition
-import lang.taxi.policies.Instruction
-import lang.taxi.policies.Instructions
-import lang.taxi.policies.OperationScope
-import lang.taxi.policies.Policy
-import lang.taxi.policies.PolicyScope
-import lang.taxi.policies.PolicyStatement
-import lang.taxi.policies.RuleSet
-import lang.taxi.policies.Subjects
+import lang.taxi.policies.*
 import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.*
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintValidator
 import lang.taxi.services.operations.constraints.OperationConstraintConverter
-import lang.taxi.toCompilationError
-import lang.taxi.types.AndExpression
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.AnnotationType
-import lang.taxi.types.AnnotationTypeDefinition
-import lang.taxi.types.ArrayType
-import lang.taxi.types.ComparisonExpression
-import lang.taxi.types.ComparisonOperator
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.ConstantEntity
-import lang.taxi.types.DefinableToken
-import lang.taxi.types.EnumDefinition
-import lang.taxi.types.EnumExtension
-import lang.taxi.types.EnumMember
-import lang.taxi.types.EnumType
-import lang.taxi.types.EnumValue
-import lang.taxi.types.EnumValueExtension
-import lang.taxi.types.EnumValueQualifiedName
-import lang.taxi.types.Enums
-import lang.taxi.types.Field
-import lang.taxi.types.FieldExtension
-import lang.taxi.types.FieldReferenceEntity
-import lang.taxi.types.GenericType
-import lang.taxi.types.ImportableToken
-import lang.taxi.types.LambdaExpressionType
-import lang.taxi.types.LogicalExpression
-import lang.taxi.types.Modifier
-import lang.taxi.types.ObjectType
-import lang.taxi.types.ObjectTypeDefinition
-import lang.taxi.types.ObjectTypeExtension
-import lang.taxi.types.OrExpression
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.QualifiedNameParser
-import lang.taxi.types.StreamType
-import lang.taxi.types.Type
-import lang.taxi.types.TypeAlias
-import lang.taxi.types.TypeAliasDefinition
-import lang.taxi.types.TypeAliasExtension
-import lang.taxi.types.TypeArgument
-import lang.taxi.types.TypeChecker
-import lang.taxi.types.TypeKind
-import lang.taxi.types.UserType
-import lang.taxi.types.View
-import lang.taxi.types.VoidType
-import lang.taxi.types.WhenFieldSetCondition
-import lang.taxi.utils.errorOrNull
-import lang.taxi.utils.flattenErrors
-import lang.taxi.utils.invertEitherList
-import lang.taxi.utils.log
-import lang.taxi.utils.wrapErrorsInList
+import lang.taxi.utils.*
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
-import java.nio.charset.Charset
 import java.security.SecureRandom
-import java.util.Base64
-import java.util.EnumSet
+import java.util.*
+import kotlin.collections.Collection
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.MutableList
+import kotlin.collections.MutableSet
+import kotlin.collections.Set
+import kotlin.collections.all
+import kotlin.collections.asSequence
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.contains
+import kotlin.collections.distinct
+import kotlin.collections.distinctBy
+import kotlin.collections.emptyList
+import kotlin.collections.emptyMap
+import kotlin.collections.emptySet
+import kotlin.collections.filter
+import kotlin.collections.filterIsInstance
+import kotlin.collections.filterNot
+import kotlin.collections.first
+import kotlin.collections.firstOrNull
+import kotlin.collections.flatMap
+import kotlin.collections.flatten
+import kotlin.collections.forEach
+import kotlin.collections.getValue
+import kotlin.collections.isNotEmpty
+import kotlin.collections.joinToString
+import kotlin.collections.listOf
+import kotlin.collections.map
+import kotlin.collections.mapIndexed
+import kotlin.collections.mapNotNull
+import kotlin.collections.mapOf
+import kotlin.collections.mutableListOf
+import kotlin.collections.mutableSetOf
+import kotlin.collections.none
+import kotlin.collections.plus
+import kotlin.collections.set
+import kotlin.collections.setOf
+import kotlin.collections.setOfNotNull
+import kotlin.collections.single
+import kotlin.collections.toList
+import kotlin.collections.toMap
+import kotlin.collections.toMutableMap
+import kotlin.collections.toSet
 
 class TokenProcessor(
    val tokens: Tokens,
@@ -444,18 +425,6 @@ class TokenProcessor(
       errors.addAll(constraintValidator.validateAll(typeSystem, services))
    }
 
-//   private fun validateFormulas() {
-//      errors.addAll(typeSystem.typeList().filterIsInstance<ObjectType>()
-//         .flatMap { type ->
-//            type
-//               .allFields
-//               .filter { it.formula != null }
-//               .flatMap { field ->
-//                  validate(field, typeSystem, type)
-//               }
-//         }
-//      )
-//   }
 
    private fun validaCaseWhenLogicalExpressions() {
       typeSystem.typeList().filterIsInstance<ObjectType>()
@@ -945,20 +914,34 @@ class TokenProcessor(
             .filterNot { it.declaresFormat && it.toQualifiedName().typeName.startsWith("Formatted") }
             .map { it.toQualifiedName() }
 
-      return this.typeSystem.register(
+
+      val definition = ObjectTypeDefinition(
+         fields = fields.toSet(),
+         annotations = annotations.toSet(),
+         modifiers = modifiers,
+         inheritsFrom = inherits,
+         formatAndOffset = null,
+         typeDoc = typeDoc,
+         typeKind = typeKind,
+         expression = expression,
+         compilationUnit = ctx.toCompilationUnit(dependantTypeNames)
+      )
+      val type = ObjectType(
+         typeName, definition
+      ).let { typeWithoutFormat ->
+         val format = parseTypeFormat(annotations, typeWithoutFormat, ctx)
+            .getOrHandle {
+               this.errors.addAll(it)
+               null
+            }
          ObjectType(
-            typeName, ObjectTypeDefinition(
-               fields = fields.toSet(),
-               annotations = annotations.toSet(),
-               modifiers = modifiers,
-               inheritsFrom = inherits,
-               format = null,
-               typeDoc = typeDoc,
-               typeKind = typeKind,
-               expression = expression,
-               compilationUnit = ctx.toCompilationUnit(dependantTypeNames)
-            )
+            typeName,
+            definition.copy(formatAndOffset = format)
          )
+      }
+
+      return this.typeSystem.register(
+         type
       ).right()
    }
 
@@ -1070,8 +1053,8 @@ class TokenProcessor(
                fields = anonymousTypeFields.toSet(),
                annotations = annotations.toSet(),
                modifiers = listOf(),
+               formatAndOffset = null,
                inheritsFrom = setOfNotNull(anonymousTypeResolutionContext.baseType),
-               format = null,
                expression = expression,
                compilationUnit = anonymousTypeDefinition.toCompilationUnit(),
                isAnonymous = true
@@ -1157,14 +1140,17 @@ class TokenProcessor(
    internal fun collateAnnotations(annotations: List<TaxiParser.AnnotationContext>): List<Annotation> {
       val result = annotations.map { annotation ->
          val annotationName = annotation.qualifiedName().text
-         mapAnnotationParams(annotation).flatMap { annotationParameters ->
-            val annotationType = resolveUserType(
-               annotation.findNamespace(),
-               annotationName,
-               annotation,
-               symbolKind = SymbolKind.ANNOTATION
-            )
-               .wrapErrorsInList()
+         val annotationType = resolveUserType(
+            annotation.findNamespace(),
+            annotationName,
+            annotation,
+            symbolKind = SymbolKind.ANNOTATION
+         )
+            .wrapErrorsInList()
+            .flattenErrors()
+
+         mapAnnotationParams(annotation, annotationType.orNull() as? AnnotationType).flatMap { annotationParameters ->
+
             val constructedAnonymousAnnotation = Annotation(annotationName, annotationParameters)
             val resolvedAnnotation = when (annotationType) {
                is Either.Left -> constructedAnonymousAnnotation.right()
@@ -1202,13 +1188,48 @@ class TokenProcessor(
       annotation: TaxiParser.AnnotationContext,
       annotationParameters: Map<String, Any>
    ): Either<List<CompilationError>, Annotation> {
-      val fieldErrors = type.fields.mapNotNull { field ->
+      return Annotation(type, annotationParameters).right()
+   }
 
+   private fun mapAnnotationParams(
+      annotation: TaxiParser.AnnotationContext,
+      annotationType: AnnotationType?
+   ): Either<List<CompilationError>, Map<String, Any>> {
+      return when {
+         annotation.elementValue() != null -> {
+            parseElementValue(annotation.elementValue()).map { mapOf("value" to it) }
+         }
+
+         annotation.elementValuePairs() != null -> mapElementValuePairs(annotation.elementValuePairs())
+         else -> emptyMap<String, Any>().right()// No params specified
+      }.flatMap { annotationParams ->
+         if (annotationType != null) {
+            mapTypedAnnotationParams(annotation, annotationType, annotationParams)
+         } else {
+            annotationParams.right()
+         }
+      }
+   }
+
+   private fun mapTypedAnnotationParams(
+      annotation: TaxiParser.AnnotationContext,
+      type: AnnotationType,
+      annotationParameters: Map<String, Any>
+   ): Either<List<CompilationError>, Map<String, Any>> {
+      val mutableParams = annotationParameters.toMutableMap()
+      val fieldErrors = type.fields.mapNotNull { field ->
          if (!annotationParameters.containsKey(field.name) && !field.nullable) {
-            CompilationError(
-               annotation.start,
-               "Annotation ${type.qualifiedName} requires member '${field.name}' which was not supplied"
-            )
+
+            // Set the annotation field to the default value
+            if (field.default != null) {
+               mutableParams[field.name] = field.default!!
+               null
+            } else {
+               CompilationError(
+                  annotation.start,
+                  "Annotation ${type.qualifiedName} requires member '${field.name}' which was not supplied"
+               )
+            }
          } else {
             // TODO: validate types match.
             // Waiting until the existing branch on type safety is merged, and then will revisit
@@ -1227,21 +1248,9 @@ class TokenProcessor(
             }
       val allErrors = unexpectedParamErrors + fieldErrors
       return if (allErrors.isEmpty()) {
-         Annotation(type, annotationParameters).right()
+         mutableParams.right()
       } else {
          allErrors.left()
-      }
-   }
-
-   private fun mapAnnotationParams(annotation: TaxiParser.AnnotationContext): Either<List<CompilationError>, Map<String, Any>> {
-      return when {
-         annotation.elementValue() != null -> {
-            parseElementValue(annotation.elementValue()).map { mapOf("value" to it) }
-         }
-
-         annotation.elementValuePairs() != null -> mapElementValuePairs(annotation.elementValuePairs())
-         else -> emptyMap<String, Any>().right()// No params specified
-
       }
    }
 
@@ -1470,82 +1479,50 @@ class TokenProcessor(
 
    }
 
+   fun parseTypeFormat(
+      annotations: List<Annotation>,
+      declaredType: Type,
+      ctx: ParserRuleContext
+   ): Either<List<CompilationError>, FormatsAndZoneOffset?> {
 
-   private fun generateFormattedSubtype(
-      type: Type,
-      formatOffsetPair: FormatsAndZoneoffset,
-      typeType: TaxiParser.FieldTypeDeclarationContext
-   ): Either<List<CompilationError>, Type> {
-      val (format, offset) = formatOffsetPair
-      if (offset != null && type.basePrimitive != PrimitiveType.INSTANT) {
-         return CompilationError(typeType.start, "@offset is only applicable to Instant based types").asList().left()
+      val formatAnnotations =
+         annotations.filter { it.type?.qualifiedName == BuiltIns.FormatAnnotation.NAME.fullyQualifiedName }
+      if (formatAnnotations.isEmpty()) {
+         return (null as? FormatsAndZoneOffset?).right()
       }
-
-      //// https://en.wikipedia.org/wiki/List_of_UTC_time_offsets - time offsets range [UTC-12, UTC+14]
-      if (offset != null && (offset < -720 || offset > 840)) {
-         return CompilationError(
-            typeType.start,
-            "@offset value can't be larger than 840 (UTC+14) or smaller than -720 (UTC-12)"
-         )
-            .asList().left()
-      }
-
-      val formattedTypeName = QualifiedName.from(type.qualifiedName).let { originalTypeName ->
-         val hash = if (offset == null) {
-            // just to avoid too many hash changes in existing taxonomies.
-            Hashing.sha256().hashString(format.joinToString { it }, Charset.defaultCharset()).toString().takeLast(6)
-         } else {
-            Hashing.sha256().hashString(format.joinToString { it }.plus(offset.toString()), Charset.defaultCharset())
-               .toString().takeLast(6)
-         }
-         originalTypeName.copy(typeName = "Formatted${originalTypeName.typeName}_$hash")
-      }
-
-      return if (typeSystem.contains(formattedTypeName.fullyQualifiedName)) {
-         typeSystem.getType(formattedTypeName.fullyQualifiedName).right()
-      } else {
-         val formattedType = ObjectType(
-            formattedTypeName.fullyQualifiedName,
-            ObjectTypeDefinition(
-               emptySet(),
-               inheritsFrom = setOf(type),
-               format = if (format.isNotEmpty()) format else null,
-               offset = offset,
-               formattedInstanceOfType = type,
-               compilationUnit = CompilationUnit.generatedFor(type)
+      val offsets = formatAnnotations.map { it.parameter("offset") as Int }
+         .filter { it != 0 }
+         .distinct()
+      val formats = formatAnnotations.map { it.parameter("value") as String }
+      if (offsets.size > 1) {
+         return listOf(
+            CompilationError(
+               ctx.toCompilationUnit(),
+               "It is invalid to declare multiple offsets for a format."
             )
-         )
-         typeSystem.register(formattedType)
-         formattedType.right()
+         ).left()
       }
-
-
-   }
-
-   private fun parseTypeFormat(type: Type): Either<List<CompilationError>, FormatsAndZoneoffset> {
-      val annotations = type.annotations.filter { it.qualifiedName == "Format" }
-      if (annotations.isNotEmpty()) {
-         TODO("re-implement formatted types")
+      val offset = offsets.singleOrNull()
+      if (offset != null) {
+         if (offset != 0 && !declaredType.inheritsFrom(PrimitiveType.INSTANT)) {
+            return listOf(
+               CompilationError(
+                  ctx.toCompilationUnit(),
+                  "Offset is only applicable to Instant based types"
+               )
+            ).left()
+         }
+         //// https://en.wikipedia.org/wiki/List_of_UTC_time_offsets
+         if (offset > 840 || offset < -720) {
+            return listOf(
+               CompilationError(
+                  ctx.toCompilationUnit(),
+                  "Offset value can't be larger than 840 (UTC+14) or smaller than -720 (UTC-12)"
+               )
+            ).left()
+         }
       }
-      return FormatsAndZoneoffset.empty().right()
-//      val formatExpressions = typeType
-//         .parameterConstraint()
-//         ?.parameterConstraintExpressionList()
-//         ?.parameterConstraintExpression()
-//         ?.filter { it.propertyFormatExpression() != null }
-//         ?.map { it.propertyFormatExpression().StringLiteral() }
-//         ?.map { stringLiteralValue(it) }
-//         ?: typeType
-//            .parameterConstraint()
-//            ?.temporalFormatList()
-//            ?.StringLiteral()
-//            ?.filterNotNull()
-//            ?.map { stringLiteralValue(it) }
-//         ?: emptyList()
-//
-//      val offsetValue = typeType
-//         .parameterConstraint()?.temporalFormatList()?.instantOffsetExpression()?.intValue()
-//      return FormatsAndZoneoffset(formatExpressions, offsetValue).right()
+      return FormatsAndZoneOffset(formats, offset).right()
    }
 
    private fun compileInlineInheritedType(
@@ -2532,11 +2509,6 @@ private fun <T : Any> Either<CompilationError, T>.reportIfCompilationError(error
 // This is primarily to stop us processing errors multiple times as they make their way
 // up the stack
 data class ReportedError(val error: CompilationError)
-data class FormatsAndZoneoffset(val formats: List<String>, val utcZoneoffsetInMinutes: Int?) {
-   companion object {
-      fun empty() = FormatsAndZoneoffset(emptyList(), null)
-   }
-}
 
 fun CompilationError.asList(): List<CompilationError> = listOf(this)
 

@@ -166,8 +166,6 @@ interface Type : Named, Compiled, ImportableToken, Documented, Annotatable {
 
    val basePrimitive: PrimitiveType?
 
-   val formattedInstanceOfType: Type?
-
    val definitionHash: String?
 // Formulas are replaced by expressions / accessors
 //   val calculation: Formula?

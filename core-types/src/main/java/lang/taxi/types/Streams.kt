@@ -65,7 +65,6 @@ data class StreamType(val type: Type, val source: CompilationUnit, override val 
    }
 
    override val format: List<String>? = null
-   override val formattedInstanceOfType: Type? = null
 //   override val calculation: Formula?
 //      get() = null
    override val offset: Int? = null

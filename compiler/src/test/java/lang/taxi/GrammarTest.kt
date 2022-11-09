@@ -437,25 +437,6 @@ type alias InvoiceValue as Decimal
       expect(typeAlias.aliasType).to.equal(PrimitiveType.STRING)
    }
 
-   @Test
-   fun canDeclareConstraintsOnTypes() {
-      val source = """
-type Money {
-   amount : Amount as Decimal
-   currency : Currency as String
-}
-type SomeServiceRequest {
-   amount : Money(this.currency == 'GBP')
-   clientId : ClientId as String
-}
-"""
-      val doc = Compiler(source).compile()
-      val request = doc.objectType("SomeServiceRequest")
-
-      val amountField = request.field("amount")
-      expect(amountField.constraints).to.have.size(1)
-      expect(amountField.constraints[0]).to.be.instanceof(PropertyToParameterConstraint::class.java)
-   }
 
    @Test
    fun canDetectParameterTypes() {

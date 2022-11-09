@@ -362,7 +362,7 @@ class Compiler(
       val builder = tokenProcessrWithImports
       // Similarly to above, we could do somethign with these errors now.
       val (errors, document) = builder.buildTaxiDocument()
-      log().debug("Taxi schema compilation took ${stopwatch.elapsed().toMillis()}ms")
+//      log().debug("Taxi schema compilation took ${stopwatch.elapsed().toMillis()}ms")
       return errors to document
    }
 
