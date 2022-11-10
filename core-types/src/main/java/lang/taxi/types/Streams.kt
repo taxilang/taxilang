@@ -6,25 +6,32 @@ import arrow.core.right
 import lang.taxi.ImmutableEquality
 import kotlin.Annotation
 
-data class StreamType(val type: Type, val source: CompilationUnit, override val inheritsFrom: Set<Type> = emptySet()) : GenericType {
+data class StreamType(val type: Type, val source: CompilationUnit, override val inheritsFrom: Set<Type> = emptySet()) :
+   GenericType {
    companion object {
       const val NAME = "lang.taxi.Stream"
       val qualifiedName = QualifiedName.from(NAME)
 
-      fun of(type: Type, source: CompilationUnit = CompilationUnit.unspecified(), inheritsFrom: Set<Type> = emptySet()): StreamType {
+      fun of(
+         type: Type,
+         source: CompilationUnit = CompilationUnit.unspecified(),
+         inheritsFrom: Set<Type> = emptySet()
+      ): StreamType {
          return StreamType(type, source, inheritsFrom)
       }
 
       fun untyped(source: CompilationUnit = CompilationUnit.unspecified()) = StreamType.of(PrimitiveType.ANY, source)
 
-      fun isStreamTypeName(requestedTypeName: QualifiedName) : Boolean {
+      fun isStreamTypeName(requestedTypeName: QualifiedName): Boolean {
          // Note: Intentionally using fullyQualifiedName, not parameterized name here, since
          // the parameters will affect the name
          return isStreamTypeName(requestedTypeName.fullyQualifiedName)
       }
-      fun isStream(parameterizedName:String): Boolean {
+
+      fun isStream(parameterizedName: String): Boolean {
          return parameterizedName.startsWith(NAME)
       }
+
       fun isStreamTypeName(requestedTypeName: String): Boolean {
          // Resolve either lang.taxi.Stream, or implicitly just Stream
          return requestedTypeName == qualifiedName.fullyQualifiedName || requestedTypeName == qualifiedName.typeName
@@ -65,8 +72,8 @@ data class StreamType(val type: Type, val source: CompilationUnit, override val 
    }
 
    override val format: List<String>? = null
-//   override val calculation: Formula?
-//      get() = null
+
+   override val formatAndZoneOffset: FormatsAndZoneOffset? = null
    override val offset: Int? = null
    override val typeKind: TypeKind = TypeKind.Type
 }

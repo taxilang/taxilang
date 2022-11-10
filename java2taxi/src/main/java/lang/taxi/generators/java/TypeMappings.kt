@@ -321,7 +321,7 @@ class DefaultTypeMapper(
          annotations = emptySet(),
          modifiers = modifiers,
          inheritsFrom = inheritance,
-         format = null,
+         formatAndOffset = null,
          typeDoc = element.findTypeDoc(),
          compilationUnit = exportedCompilationUnit(element)
       )

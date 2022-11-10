@@ -303,7 +303,7 @@ class FieldCompiler(
                accessor = null,
                typeDoc = typeDoc,
                memberSource = memberSource,
-               formatAndOffset = format,
+               fieldFormat = format,
 
 //               projectionScopeTypes = projectionScopeTypes,
                compilationUnit = member.fieldDeclaration().toCompilationUnit()
@@ -330,7 +330,7 @@ class FieldCompiler(
                typeDoc = typeDoc,
                compilationUnit = member.fieldDeclaration().toCompilationUnit(),
                memberSource = memberSource,
-               formatAndOffset = format,
+               fieldFormat = format,
 //               projectionScopeTypes = projectionScopeTypes,
             ).right()
 
@@ -368,7 +368,7 @@ class FieldCompiler(
                   constraints = constraints,
                   accessor = accessor ?: fieldType.accessor,
                   typeDoc = typeDoc,
-                  formatAndOffset = format,
+                  fieldFormat = format,
 //                  projectionScopeTypes = projectionScopeTypes,
                   compilationUnit = member.fieldDeclaration().toCompilationUnit()
                )

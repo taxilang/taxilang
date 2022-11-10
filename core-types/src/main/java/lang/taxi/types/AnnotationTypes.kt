@@ -56,6 +56,7 @@ data class AnnotationType(
          return definition?.fields ?: emptyList()
       }
 
+   override val formatAndZoneOffset: FormatsAndZoneOffset? = null
    override val inheritsFrom: Set<Type> = emptySet()
    override val allInheritedTypes: Set<Type> = emptySet()
    override val format: List<String> = emptyList()

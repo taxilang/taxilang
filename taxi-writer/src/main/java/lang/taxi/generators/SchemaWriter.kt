@@ -154,8 +154,6 @@ $taxiBlock
          //
          .filterNot { it is ObjectType && it.declaresFormat }
          .filterNot { it is PrimitiveType }
-         // Exclude calculated types - these are declared inline at the field reference
-         .filterNot { it is ObjectType && it.calculatedInstanceOfType != null }
          .filter { typeFilter(it) }
          .map { generateTypeDeclaration(it, currentNamespace) }
       return typeDeclarations
@@ -364,7 +362,7 @@ $enumValueDeclarations
       val nullableString = if (nullability) "?" else ""
       fun nestedArray(type: ArrayType) = "Array<" + typeAsTaxi(type.type, currentNamespace) + ">"
       fun simpleArray(type: ArrayType) = typeAsTaxi(type.type, currentNamespace) + "[]"
-      val typeHasFormat = if (type.formattedInstanceOfType != null) {
+      val typeHasFormat = if (type.format != null) {
          val inheritedFormats = type.inheritsFrom.flatMap { it.format ?: emptyList() }.filterNotNull()
          val formatsNotInherited = (type.format ?: emptyList()).filter { !inheritedFormats.contains(it) }
          formatsNotInherited.isNotEmpty()
@@ -374,14 +372,10 @@ $enumValueDeclarations
          type is UnresolvedImportedType -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace) + nullableString
          typeHasFormat -> {
             typeAsTaxi(
-               type.formattedInstanceOfType!!,
+               type,
                currentNamespace
             ) + nullableString + """( ${writeFormat(type.format, type.offset)} )"""
          }
-         type is ObjectType && type.calculatedInstanceOfType != null -> typeAsTaxi(
-            type.calculatedInstanceOfType!!,
-            currentNamespace
-         ) + nullableString //+ " " + type.calculation!!.asTaxi()
          else -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace) + nullableString
       }
    }

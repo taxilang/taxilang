@@ -48,6 +48,7 @@ data class TypeAlias(
    override val format: List<String>?
       get() = definition?.aliasType?.format
 
+   override val formatAndZoneOffset: FormatsAndZoneOffset?= definition?.aliasType?.formatAndZoneOffset
    override val offset: Int?
       get() = definition?.aliasType?.offset
 

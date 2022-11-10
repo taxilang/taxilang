@@ -2,6 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import lang.taxi.messages.Severity
 import lang.taxi.types.PrimitiveType
@@ -20,6 +21,22 @@ class FormattedTypesSpec : DescribeSpec({
             .format.should.equal(PrimitiveType.INSTANT.format)
       }
 
+      it("should inherit default formats on fields") {
+         val doc = """
+         type BirthDate inherits Date
+
+         model Person {
+            birthDate : BirthDate
+         }
+         """.compiled()
+
+         doc.type("BirthDate").format.shouldNotBeNull()
+         doc.model("Person")
+            .field("birthDate")
+            .format.shouldNotBeNull()
+
+      }
+
       it("should expose format on field") {
          val format = """
             type TransactionEventDateTime inherits Instant
@@ -30,8 +47,8 @@ class FormattedTypesSpec : DescribeSpec({
          """.trimMargin()
             .compiled()
             .objectType("Order").field("orderDateTime")
-            .formatAndOffset
-         format!!.formats.shouldBe(listOf("yyyy-MM-dd HH:mm:ss.SSSSSSS"))
+            .formatAndZoneOffset
+         format!!.patterns.shouldBe(listOf("yyyy-MM-dd HH:mm:ss.SSSSSSS"))
       }
 
       it("should parse formatted types") {
