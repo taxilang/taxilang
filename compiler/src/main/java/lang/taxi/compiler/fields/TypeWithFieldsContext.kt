@@ -5,6 +5,7 @@ import arrow.core.rightIfNotNull
 import lang.taxi.CompilationError
 import lang.taxi.TaxiParser
 import lang.taxi.compiler.TokenProcessor
+import lang.taxi.types.ObjectType
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RuleContext
 
@@ -30,4 +31,6 @@ interface TypeWithFieldsContext {
    val conditionalTypeDeclarations: List<TaxiParser.ConditionalTypeStructureDeclarationContext>
    val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
    val parent: RuleContext?
+   val hasSpreadOperator: Boolean
+   val objectType: ObjectType?
 }
