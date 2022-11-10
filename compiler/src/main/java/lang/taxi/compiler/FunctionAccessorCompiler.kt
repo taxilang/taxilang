@@ -131,7 +131,7 @@ class FunctionAccessorCompiler(
                   if (function.modifiers.contains(FunctionModifiers.Query) && !functionContext.isInViewContext()) {
                      CompilationError(
                         functionContext.start,
-                        "a query function can only referenced from view definitions!"
+                        "Query functions may only be used within view definitions"
                      ).asList().left()
                   } else {
                      FunctionAccessor.buildAndResolveTypeArguments(function, parameters).right()

@@ -353,12 +353,9 @@ class ConditionalDataTypesTest {
             }
          }
       """.trimIndent()
-      val errors = Compiler(src).validate()
-      errors.should.satisfy {
-         it.any { error ->
-            error.detailMessage == "FixedOrFloatLeg is not defined"
-         }
-      }
+      Compiler(src).validate()
+         .shouldContainMessage("FixedOrFloatLeg is not defined")
+
    }
 
    @Test

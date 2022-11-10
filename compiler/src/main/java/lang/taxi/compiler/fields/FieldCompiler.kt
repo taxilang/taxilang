@@ -350,10 +350,13 @@ class FieldCompiler(
             if (fieldType.accessor != null && accessor != null) {
                error("It is invalid for both the field to define an inferred accessor and an explict accessor.  Shouldn't happen")
             }
+            if (fieldDeclaration?.parameterConstraint()?.parameterConstraintExpressionList() != null) {
+               error("parameterConstraintExpressionList on a field has been replaced, and shouldn't be possible anymore.  Understand how we got here.  Syntax in question: ${fieldDeclaration.source().content}")
+            }
             tokenProcessor.mapConstraints(
-               fieldDeclaration?.parameterConstraint()?.parameterConstraintExpressionList(),
+               fieldDeclaration?.parameterConstraint()?.expressionGroup(),
                fieldType.type,
-               namespace
+               this
             ).map { constraints ->
                Field(
                   name = TokenProcessor.unescape(member.fieldDeclaration().identifier().text),

@@ -282,6 +282,7 @@ class Compiler(
     */
    fun declaredTypeNames(): List<QualifiedName> {
       return tokenprocessorWithoutImports.findDeclaredTypeNames()
+         .filterNot { BuiltIns.isBuiltIn(it) }
    }
 
    fun declaredServiceNames(): List<QualifiedName> {

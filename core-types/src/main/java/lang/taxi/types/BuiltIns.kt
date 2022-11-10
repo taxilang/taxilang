@@ -2,6 +2,8 @@ package lang.taxi.types
 
 import lang.taxi.functions.stdlib.stdLibName
 
+interface BuiltIn : TaxiStatementGenerator, HasQualifiedName
+
 /**
  * These are inbuilt core aspects of the language.
  *
@@ -9,12 +11,17 @@ import lang.taxi.functions.stdlib.stdLibName
  * merge here at some point.
  */
 object BuiltIns {
-   val taxi = listOf(
-      FormatAnnotation
-   ).joinToString("\n") { it.asTaxi() }
 
-   object FormatAnnotation : TaxiStatementGenerator {
-      val NAME = stdLibName("Format")
+   val builtIns = listOf<BuiltIn>(
+      FormatAnnotation
+   )
+   fun isBuiltIn(name: QualifiedName): Boolean = names.contains(name)
+
+   val names = builtIns.map { it.name }
+   val taxi = builtIns.joinToString("\n") { it.asTaxi() }
+
+   object FormatAnnotation : BuiltIn {
+      override val name = stdLibName("Format")
       override fun asTaxi(): String = """
          namespace taxi.stdlib {
             [[ Declares a format (and optionally an offset)

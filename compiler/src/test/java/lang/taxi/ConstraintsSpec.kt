@@ -2,6 +2,11 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
+import lang.taxi.expressions.LiteralExpression
+import lang.taxi.expressions.OperatorExpression
+import lang.taxi.expressions.TypeExpression
+import lang.taxi.services.operations.constraints.ExpressionConstraint
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import org.junit.jupiter.api.Test
 
@@ -14,7 +19,7 @@ type Money {
    currency : Currency as String
 }
 type SomeServiceRequest {
-   amount : Money(this.currency == 'GBP')
+   amount : Money(Currency == 'GBP')
    clientId : ClientId as String
 }
 """
@@ -23,8 +28,11 @@ type SomeServiceRequest {
 
          val amountField = request.field("amount")
          expect(amountField.constraints).to.have.size(1)
-         expect(amountField.constraints[0]).to.be.instanceof(PropertyToParameterConstraint::class.java)
+         val constraint = amountField.constraints.single() as ExpressionConstraint
+         val expression = constraint.expression as OperatorExpression
 
+         expression.lhs.asA<TypeExpression>().type.qualifiedName.shouldBe("Currency")
+         expression.rhs.asA<LiteralExpression>().value.shouldBe("GBP")
       }
    }
 })

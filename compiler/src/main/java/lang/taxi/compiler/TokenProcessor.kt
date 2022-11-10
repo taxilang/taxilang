@@ -25,6 +25,7 @@ import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.*
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintValidator
+import lang.taxi.services.operations.constraints.ExpressionConstraint
 import lang.taxi.services.operations.constraints.OperationConstraintConverter
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
@@ -73,7 +74,6 @@ import kotlin.collections.plus
 import kotlin.collections.set
 import kotlin.collections.setOf
 import kotlin.collections.setOfNotNull
-import kotlin.collections.single
 import kotlin.collections.toList
 import kotlin.collections.toMap
 import kotlin.collections.toMutableMap
@@ -1486,7 +1486,7 @@ class TokenProcessor(
    ): Either<List<CompilationError>, FormatsAndZoneOffset?> {
 
       val formatAnnotations =
-         annotations.filter { it.type?.qualifiedName == BuiltIns.FormatAnnotation.NAME.fullyQualifiedName }
+         annotations.filter { it.type?.qualifiedName == BuiltIns.FormatAnnotation.name.fullyQualifiedName }
       if (formatAnnotations.isEmpty()) {
          return (null as? FormatsAndZoneOffset?).right()
       }
@@ -1708,7 +1708,7 @@ class TokenProcessor(
             listOf(
                CompilationError(
                   context.toCompilationUnit(),
-                  "${tokenName.identifier().text()} was not resolved as either a type or a function"
+                  ErrorMessages.unresolvedType(tokenName.identifier().text())
                )
             )
          }
@@ -2357,6 +2357,20 @@ class TokenProcessor(
       }
    }
 
+   internal fun mapConstraints(
+      constraintList: TaxiParser.ExpressionGroupContext?,
+      paramType: Type,
+      fieldCompiler: FieldCompiler?
+   ): Either<List<CompilationError>, List<Constraint>> {
+      if (constraintList == null) {
+         return emptyList<Constraint>().right()
+      }
+      return expressionCompiler(fieldCompiler).compile(constraintList).map { expression ->
+         listOf(ExpressionConstraint(expression))
+      }
+   }
+
+   @Deprecated("Pass an ExpressionGroupContext instead")
    internal fun mapConstraints(
       constraintList: TaxiParser.ParameterConstraintExpressionListContext?,
       paramType: Type,
