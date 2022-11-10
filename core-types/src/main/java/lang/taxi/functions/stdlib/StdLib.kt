@@ -1,6 +1,7 @@
 package lang.taxi.functions.stdlib
 
 import lang.taxi.functions.vyne.aggregations.Aggregations
+import lang.taxi.types.BuiltIns
 import lang.taxi.types.QualifiedName
 
 object StdLib  {
@@ -13,7 +14,7 @@ object StdLib  {
       Collections.functions +
       ObjectFunctions.functions +
       listOf(Coalesce)
-   val taxi = functions.namespacedTaxi()
+   val taxi = functions.namespacedTaxi() + BuiltIns.taxi
 }
 
 fun stdLibName(name:String):QualifiedName = QualifiedName.from("${StdLib.namespace}.$name")

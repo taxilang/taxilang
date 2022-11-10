@@ -88,7 +88,7 @@ class TaxiQlExpressionsSpec : DescribeSpec({
          val (_, query) = src.compiledWithQuery(
             """find { Movie[] } as {
             |cast : Person[]
-            |name : filterSingle(this.cast, (Person) -> PersonId == 1 )
+            |name : single(this.cast, (Person) -> PersonId == 1 )
             |}[]
          """.trimMargin()
          )
@@ -102,7 +102,7 @@ class TaxiQlExpressionsSpec : DescribeSpec({
          val (_, query) = src.compiledWithQuery(
             """find { Movie[] } as {
             |cast : Person[]
-            |name : filterSingle(Person[], (Person) -> PersonId == 1 )
+            |name : single(Person[], (Person) -> PersonId == 1 )
             |}[]
          """.trimMargin()
          )
@@ -119,7 +119,7 @@ class TaxiQlExpressionsSpec : DescribeSpec({
                """find { Movie[] } as {
             |cast : Person[]
             |// Below: this.actors is not a real field
-            |name : filterSingle(this.actors, (Person) -> PersonId == 1 )
+            |name : single(this.actors, (Person) -> PersonId == 1 )
             |}[]
          """.trimMargin()
             )

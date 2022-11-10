@@ -35,13 +35,10 @@ data class ObjectTypeDefinition(
    val annotations: Set<Annotation> = emptySet(),
    val modifiers: List<Modifier> = emptyList(),
    val inheritsFrom: Set<Type> = emptySet(),
-   val format: List<String>? = null,
-   val pattern: String? = null,
-   val formattedInstanceOfType: Type? = null,
-   val calculatedInstanceOfType: Type? = null,
+   val formatAndOffset: FormatsAndZoneOffset? = null,
 //   @Deprecated("Formulas are replaced by functions and expressions")
 //   val calculation: Formula? = null,
-   val offset: Int? = null,
+//   val offset: Int? = null,
    val isAnonymous: Boolean = false,
    val typeKind: TypeKind = TypeKind.Type,
    val expression: Expression? = null,
@@ -58,6 +55,15 @@ data class ObjectTypeDefinition(
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
+
+   val format: List<String>?
+      get() {
+         return formatAndOffset?.patterns
+      }
+   val offset: Int?
+      get() {
+         return formatAndOffset?.utcZoneOffsetInMinutes
+      }
 }
 
 internal fun <T, R> KProperty1<T, Collection<R>>.toSet(): T.() -> Set<R>? {
@@ -128,6 +134,9 @@ data class ObjectType(
          return definition?.expression
       }
 
+   override val formatAndZoneOffset: FormatsAndZoneOffset?
+      get() = formatAndOffsetFromTypeHierarchy
+
    /**
     * Indicates if this type (excluding any inherited types)
     * declares a format.
@@ -137,31 +146,34 @@ data class ObjectType(
     */
    override val declaresFormat: Boolean
       get() {
-         return this.definition?.format != null
+         return formatAndOffsetFromTypeHierarchy != null
       }
 
    override val format: List<String>?
       get() {
-         return if (this.definition?.format != null) {
-            this.definition?.format
+         return formatAndOffsetFromTypeHierarchy?.patterns
+      }
+
+   override val offset: Int?
+      get() {
+         return formatAndOffsetFromTypeHierarchy?.utcZoneOffsetInMinutes
+      }
+
+   private val formatAndOffsetFromTypeHierarchy: FormatsAndZoneOffset?
+      get() {
+         return if (this.definition?.formatAndOffset != null) {
+            this.definition?.formatAndOffset
          } else {
-            val inheritedFormats = this.inheritsFrom.filter { it.format != null }
+            val inheritedFormats = this.inheritsFrom.filter { it.formatAndZoneOffset != null }
             when {
                inheritedFormats.isEmpty() -> null
-               inheritedFormats.size == 1 -> inheritedFormats.first().format
+               inheritedFormats.size == 1 -> inheritedFormats.first().formatAndZoneOffset
                else -> error("Multiple formats found in inheritence - this is an error")
             }
          }
       }
-
    override val anonymous: Boolean
       get() = this.definition?.isAnonymous ?: false
-
-   override val formattedInstanceOfType: Type?
-      get() = this.definition?.formattedInstanceOfType
-
-   val calculatedInstanceOfType: Type?
-      get() = this.definition?.calculatedInstanceOfType
 
    override val referencedTypes: List<Type>
       get() {
@@ -310,6 +322,7 @@ data class ObjectType(
                      parentFields + field
                   )
                )
+
                field.type is ObjectType -> {
                   field.type.fieldReferencesAssignableTo(
                      type,
@@ -320,6 +333,7 @@ data class ObjectType(
                      includePrimitives = includePrimitives
                   )
                }
+
                else -> emptyList()
             }
          }
@@ -334,20 +348,6 @@ data class ObjectType(
    fun applicableQualifiedNames(type: Type): List<QualifiedName> {
       return type.inheritsFrom.map { it.toQualifiedName() }.plus(type.toQualifiedName())
    }
-
-   override val offset: Int?
-      get() {
-         return if (this.definition?.offset != null) {
-            this.definition?.offset
-         } else {
-            val inheritedOffsets = this.inheritsFrom.filter { it.offset != null }
-            when {
-               inheritedOffsets.isEmpty() -> null
-               inheritedOffsets.size == 1 -> inheritedOffsets.first().offset
-               else -> error("Multiple formats found in inheritence - this is an error")
-            }
-         }
-      }
 
    override val typeKind: TypeKind?
       get() = definition?.typeKind
@@ -437,7 +437,11 @@ data class Field(
    val memberSource: QualifiedName? = null,
 
    val projection: FieldProjection? = null,
-
+   /**
+    * The format explicitly defined on a field.
+    * Can be null (in which case formatting cascades up to the type)
+    */
+   val fieldFormat: FormatsAndZoneOffset? = null,
 
 
    // Defines types that should be used to limit the scope when
@@ -451,14 +455,29 @@ data class Field(
    //            }[]
 //   val projectionScopeTypes: List<Type> = emptyList(),
    override val compilationUnit: CompilationUnit
-) : Annotatable, ConstraintTarget, Documented, NameTypePair, TokenDefinition {
+) : Annotatable, Formattable, ConstraintTarget, Documented, NameTypePair, TokenDefinition {
 
    override val description: String = "field $name"
+
+
+   override val formatAndZoneOffset: FormatsAndZoneOffset? = fieldFormat ?: type.formatAndZoneOffset
+   override val format: List<String>? = formatAndZoneOffset?.patterns ?: type.format
+   override val offset: Int? = formatAndZoneOffset?.utcZoneOffsetInMinutes ?: type.offset
 
    // This needs to be stanrdardised with the defaultValue above, which comes from
    // extensions
    val accessorDefault = if (accessor is AccessorWithDefault) accessor.defaultValue else null
 
+   /**
+    * Returns EITHER the accessor default (declared
+    * using 'by default(...)', or the
+    * default value declared using an extension.
+    * This is a workaround - we should remove one of those approaches.
+    */
+   val default: Any?
+      get() {
+         return accessorDefault ?: defaultValue
+      }
 
    // For equality - don't compare on the type (as this can cause stackOverflow when the type is an Object type)
    private val typeName = type.qualifiedName
@@ -468,6 +487,9 @@ data class Field(
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
 
+   fun annotation(name: String): Annotation {
+      return annotations.single { it.qualifiedName == name }
+   }
 
 }
 

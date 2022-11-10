@@ -13,6 +13,7 @@ package lang.taxi.types
  *
  */
 class UnresolvedImportedType(override val qualifiedName: String) : Type {
+   override val formatAndZoneOffset: FormatsAndZoneOffset?= null
    override val compilationUnits: List<CompilationUnit>
       get() = TODO("Not yet implemented")
    override val inheritsFrom: kotlin.collections.Set<lang.taxi.types.Type>
@@ -25,7 +26,6 @@ class UnresolvedImportedType(override val qualifiedName: String) : Type {
       get() = TODO("Not yet implemented")
    override val basePrimitive: lang.taxi.types.PrimitiveType?
       get() = TODO("Not yet implemented")
-   override val formattedInstanceOfType: lang.taxi.types.Type? = null
    override val definitionHash: kotlin.String?
       get() = TODO("Not yet implemented")
 //   override val calculation: lang.taxi.types.Formula?

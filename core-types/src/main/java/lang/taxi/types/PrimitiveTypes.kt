@@ -17,9 +17,7 @@ enum class VoidType : Type {
    override val compilationUnits: List<CompilationUnit> = listOf(CompilationUnit.ofSource(SourceCode("Built in", "// Built-in type")))
    override val inheritsFrom: Set<Type> = emptySet()
    override val format: List<String>? = null
-   override val formattedInstanceOfType: Type? = null
-//   override val calculation: Formula?
-//      get() = null
+   override val formatAndZoneOffset: FormatsAndZoneOffset?= null
    override val offset: Int? = null
    override val typeKind: TypeKind = TypeKind.Type
    // Not currently implemented, but could be in the future
@@ -44,18 +42,15 @@ object NumberTypes {
 enum class PrimitiveType(
    val declaration: String,
    override val typeDoc: String,
-   override val format: List<String>? = null,
-   override val formattedInstanceOfType: Type? = null,
-//   override val calculation: Formula? = null,
-   override val offset: Int? = null) : Type {
+   override val formatAndZoneOffset: FormatsAndZoneOffset? = null) : Type {
    BOOLEAN("Boolean", "Represents a value which is either `true` or `false`."),
    STRING("String", "A collection of characters."),
    INTEGER("Int", "A signed integer - ie. a whole number (positive or negative), with no decimal places"),
    DECIMAL("Decimal", "A signed decimal number - ie., a whole number with decimal places."),
-   LOCAL_DATE("Date", "A date, without a time or timezone.", format = listOf("yyyy-MM-dd" )),
-   TIME("Time", "Time only, excluding the date part", format = listOf("HH:mm:ss" )),
-   DATE_TIME("DateTime", "A date and time, without a timezone.  Generally, favour using Instant which represents a point-in-time, as it has a timezone attached", format = listOf("yyyy-MM-dd'T'HH:mm:ss.SSS" )),
-   INSTANT("Instant", "A point in time, with date, time and timezone.  Follows ISO standard convention of yyyy-MM-dd'T'HH:mm:ss.SSSZ", format = listOf("yyyy-MM-dd'T'HH:mm:ss[.SSS]X" )),
+   LOCAL_DATE("Date", "A date, without a time or timezone.", formatAndZoneOffset = FormatsAndZoneOffset.forFormat("yyyy-MM-dd" )),
+   TIME("Time", "Time only, excluding the date part",  formatAndZoneOffset = FormatsAndZoneOffset.forFormat("HH:mm:ss" )),
+   DATE_TIME("DateTime", "A date and time, without a timezone.  Generally, favour using Instant which represents a point-in-time, as it has a timezone attached",  formatAndZoneOffset = FormatsAndZoneOffset.forFormat("yyyy-MM-dd'T'HH:mm:ss.SSS" )),
+   INSTANT("Instant", "A point in time, with date, time and timezone.  Follows ISO standard convention of yyyy-MM-dd'T'HH:mm:ss.SSSZ",  formatAndZoneOffset = FormatsAndZoneOffset.forFormat("yyyy-MM-dd'T'HH:mm:ss[.SSS]X" )),
 //   ARRAY("Array", "A collection of things"),
    ANY("Any", "Can be anything.  Try to avoid using 'Any' as it's not descriptive - favour using a strongly typed approach instead"),
    DOUBLE("Double", "Represents a double-precision 64-bit IEEE 754 floating point number."),
@@ -70,6 +65,8 @@ enum class PrimitiveType(
    override val basePrimitive: PrimitiveType? by lazy { wrapper.basePrimitive }
    override val definitionHash: String? by lazy { wrapper.definitionHash }
 
+   override val format: List<String>? = formatAndZoneOffset?.patterns
+   override val offset: Int? = formatAndZoneOffset?.utcZoneOffsetInMinutes
    // Not currently implemented, but could be in the future
    override val annotations: List<lang.taxi.types.Annotation> = emptyList()
 

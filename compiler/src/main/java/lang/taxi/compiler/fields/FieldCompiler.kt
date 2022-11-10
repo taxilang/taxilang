@@ -343,6 +343,11 @@ class FieldCompiler(
       memberSource: QualifiedName? = null,
       fieldProjectionType: Type? = null
    ): Either<List<CompilationError>, Field> {
+      val format = tokenProcessor.parseTypeFormat(fieldAnnotations, fieldType.type, member)
+         .getOrHandle {
+            errors.addAll(it)
+            null
+         }
       val fieldProjection =
          fieldProjectionType?.let { projectionType -> FieldProjection(fieldType.type, projectionType) }
       return when {
@@ -359,6 +364,7 @@ class FieldCompiler(
                accessor = null,
                typeDoc = typeDoc,
                memberSource = memberSource,
+               fieldFormat = format,
 
 //               projectionScopeTypes = projectionScopeTypes,
                compilationUnit = member.fieldDeclaration().toCompilationUnit()
@@ -385,6 +391,7 @@ class FieldCompiler(
                typeDoc = typeDoc,
                compilationUnit = member.fieldDeclaration().toCompilationUnit(),
                memberSource = memberSource,
+               fieldFormat = format,
 //               projectionScopeTypes = projectionScopeTypes,
             ).right()
 
@@ -404,10 +411,13 @@ class FieldCompiler(
             if (fieldType.accessor != null && accessor != null) {
                error("It is invalid for both the field to define an inferred accessor and an explict accessor.  Shouldn't happen")
             }
+            if (fieldDeclaration?.parameterConstraint()?.parameterConstraintExpressionList() != null) {
+               error("parameterConstraintExpressionList on a field has been replaced, and shouldn't be possible anymore.  Understand how we got here.  Syntax in question: ${fieldDeclaration.source().content}")
+            }
             tokenProcessor.mapConstraints(
-               fieldDeclaration?.parameterConstraint()?.parameterConstraintExpressionList(),
+               fieldDeclaration?.parameterConstraint()?.expressionGroup(),
                fieldType.type,
-               namespace
+               this
             ).map { constraints ->
                Field(
                   name = TokenProcessor.unescape(member.fieldDeclaration().identifier().text),
@@ -419,6 +429,7 @@ class FieldCompiler(
                   constraints = constraints,
                   accessor = accessor ?: fieldType.accessor,
                   typeDoc = typeDoc,
+                  fieldFormat = format,
 //                  projectionScopeTypes = projectionScopeTypes,
                   compilationUnit = member.fieldDeclaration().toCompilationUnit()
                )
