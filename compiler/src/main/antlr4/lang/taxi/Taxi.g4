@@ -746,7 +746,7 @@ queryBody:
 
 queryTypeList: fieldTypeDeclaration (',' fieldTypeDeclaration)*;
 
-typeProjection: 'as' (typeReference | anonymousTypeDefinition);
+typeProjection: 'as' (typeReference | expressionInputs? anonymousTypeDefinition);
 //as {
 //    orderId // if orderId is defined on the Order type, then the type is inferrable
 //    productId: ProductId // Discovered, using something in the query context, it's up to Vyne to decide how.
