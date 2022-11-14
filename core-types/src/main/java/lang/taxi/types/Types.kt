@@ -160,6 +160,7 @@ interface Type : Formattable, Named, Compiled, ImportableToken, Documented, Anno
 
 
 
+
    val anonymous: Boolean
       get() = false
 

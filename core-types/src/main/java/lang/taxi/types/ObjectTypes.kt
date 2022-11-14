@@ -10,6 +10,7 @@ import lang.taxi.expressions.Expression
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.utils.quotedIfNecessary
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KProperty1
 
 data class FieldExtension(
@@ -347,6 +348,53 @@ data class ObjectType(
    @Deprecated("Use fieldReferencesAssignableTo instead", replaceWith = ReplaceWith("fieldReferencesAssignableTo"))
    fun applicableQualifiedNames(type: Type): List<QualifiedName> {
       return type.inheritsFrom.map { it.toQualifiedName() }.plus(type.toQualifiedName())
+   }
+
+   private fun doRecursiveLookupOfDescendantPathsOfType(searchType: Type, typesBeingChecked: MutableSet<Type>): List<String> {
+      if (typesBeingChecked.contains(this)) {
+         return emptyList()
+      }
+      typesBeingChecked.add(this)
+      val matches = this.fields
+         .flatMap { field ->
+            val path = when {
+               field.type.isAssignableTo(searchType) -> listOf(field.name)
+               field.type is ObjectType -> field.type.doRecursiveLookupOfDescendantPathsOfType(searchType, typesBeingChecked)
+                  .map { "${field.name}.$it" }
+
+               field.type is ArrayType -> {
+                  val memberType = field.type.memberType
+                  when {
+                     memberType.isAssignableTo(searchType) -> listOf(field.name)
+                     memberType is ObjectType -> memberType.doRecursiveLookupOfDescendantPathsOfType(
+                        searchType,
+                        typesBeingChecked
+                     )
+
+                     else -> emptyList()
+                  }
+               }
+
+               else -> emptyList()
+            }
+            path
+         }
+      return matches
+   }
+
+
+   private val descendantLookupCache = ConcurrentHashMap<Type, List<String>>()
+   fun getDescendantPathsOfType(type: Type): List<String> {
+      return descendantLookupCache.getOrPut(type) {
+         val assignable = if (this.isAssignableTo(type)) {
+            listOf("this")
+         } else emptyList()
+         assignable + doRecursiveLookupOfDescendantPathsOfType(type, mutableSetOf())
+      }
+   }
+
+   fun hasDescendantWithType(type: Type): Boolean {
+      return getDescendantPathsOfType(type).isNotEmpty()
    }
 
    override val typeKind: TypeKind?

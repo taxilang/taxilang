@@ -36,6 +36,9 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
          println("found Array<Array<>> -- this code was recently refactored -- is this a bug?")
       }
    }
+   // For readability.
+   // Should really rename type property
+   val memberType = type
 
    // Not currently implemented, but could be in the future
    override val annotations: List<Annotation> = emptyList()
