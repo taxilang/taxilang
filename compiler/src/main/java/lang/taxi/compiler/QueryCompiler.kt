@@ -6,6 +6,8 @@ import arrow.core.left
 import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.TaxiParser
+import lang.taxi.accessors.ProjectionFunctionScope
+import lang.taxi.compiler.fields.FieldTypeSpec
 import lang.taxi.findNamespace
 import lang.taxi.query.ConstraintBuilder
 import lang.taxi.query.TaxiQlQuery
@@ -16,7 +18,10 @@ import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.value
 
-internal class QueryCompiler(private val tokenProcessor: TokenProcessor, private val expressionCompiler: ExpressionCompiler) {
+internal class QueryCompiler(
+   private val tokenProcessor: TokenProcessor,
+   private val expressionCompiler: ExpressionCompiler
+) {
    fun parseQueryBody(
       name: String, parameters: Map<String, QualifiedName>, ctx: TaxiParser.QueryBodyContext
    ): Either<List<CompilationError>, TaxiQlQuery> {
@@ -34,13 +39,15 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor, private
 
          parseQueryBody(ctx, facts, queryDirective).flatMap { typesToDiscover ->
             parseTypeToProject(ctx.typeProjection(), typesToDiscover).map { typeToProject ->
+
                TaxiQlQuery(
                   name = name,
                   facts = facts,
                   queryMode = queryDirective,
                   parameters = parameters,
                   typesToFind = typesToDiscover,
-                  projectedType = typeToProject
+                  projectedType = typeToProject?.first,
+                  projectionScope = typeToProject?.second
                )
             }
          }
@@ -103,7 +110,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor, private
          } else {
             type
          }
-         DiscoveryType(typeToDiscover.toQualifiedName(), constraints, facts, if (type.anonymous) type else null)
+         DiscoveryType(typeToDiscover, constraints, facts, if (type.anonymous) type else null)
       }
    }
 
@@ -129,8 +136,9 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor, private
    }
 
    private fun parseTypeToProject(
-      queryProjection: TaxiParser.TypeProjectionContext?, typesToDiscover: List<DiscoveryType>
-   ): Either<List<CompilationError>, Type?> {
+      queryProjection: TaxiParser.TypeProjectionContext?,
+      typesToDiscover: List<DiscoveryType>
+   ): Either<List<CompilationError>, Pair<Type,ProjectionFunctionScope?>?> {
       if (queryProjection == null) {
          return null.right()
       }
@@ -147,7 +155,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor, private
          ).left()
       }
 
-      if (concreteProjectionTypeType != null && concreteProjectionTypeType.arrayMarker() == null && anonymousProjectionType == null && typesToDiscover.size == 1 && typesToDiscover.first().type.parameters.isNotEmpty()) {
+      if (concreteProjectionTypeType != null && concreteProjectionTypeType.arrayMarker() == null && anonymousProjectionType == null && typesToDiscover.size == 1 && typesToDiscover.first().typeName.parameters.isNotEmpty()) {
          return listOf(
             CompilationError(
                queryProjection.start,
@@ -157,7 +165,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor, private
       }
 
 
-      if (anonymousProjectionType != null && anonymousProjectionType.arrayMarker() == null && typesToDiscover.size == 1 && typesToDiscover.first().type.parameters.isNotEmpty()) {
+      if (anonymousProjectionType != null && anonymousProjectionType.arrayMarker() == null && typesToDiscover.size == 1 && typesToDiscover.first().typeName.parameters.isNotEmpty()) {
          return listOf(
             CompilationError(
                queryProjection.start,
@@ -173,7 +181,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor, private
 
       val projectionType = baseTypeOrErrors.flatMap { possibleBaseType: Type? ->
          if (possibleBaseType != null && anonymousProjectionType == null) {
-            return@flatMap possibleBaseType.right()
+            return@flatMap (possibleBaseType to null).right()
          }
          if (anonymousProjectionType == null) {
             return@flatMap listOf(
@@ -183,22 +191,32 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor, private
                )
             ).left()
          }
-         anonymousProjectionType.let { anonymousTypeDef ->
-            val isList = anonymousTypeDef.arrayMarker() != null
 
-            this
-               .tokenProcessor
-               .parseAnonymousType(
-                  namespace = anonymousProjectionType.findNamespace(),
-                  anonymousTypeResolutionContext = AnonymousTypeResolutionContext(
-                     typesToDiscover, concreteProjectionTypeType, possibleBaseType
-                  ),
-                  anonymousTypeDefinition = anonymousProjectionType
-               ).map { createdType ->
-                  val compiledType =
-                     if (isList) ArrayType(createdType, anonymousProjectionType.toCompilationUnit()) else createdType
-                  compiledType
-               }
+         tokenProcessor.parseProjectionScope(
+            queryProjection.expressionInputs(),
+            FieldTypeSpec.forDiscoveryTypes(typesToDiscover)
+         ).flatMap { projectionFunctionScope ->
+            anonymousProjectionType.let { anonymousTypeDef ->
+               val isList = anonymousTypeDef.arrayMarker() != null
+
+               this
+                  .tokenProcessor
+                  .parseAnonymousType(
+                     namespace = anonymousProjectionType.findNamespace(),
+                     resolutionContext = ResolutionContext(
+                        typesToDiscover,
+                        concreteProjectionTypeType,
+                        possibleBaseType,
+                        listOf(projectionFunctionScope)
+                     ),
+                     anonymousTypeDefinition = anonymousProjectionType
+                  ).map { createdType ->
+                     val compiledType =
+                        if (isList) ArrayType(createdType, anonymousProjectionType.toCompilationUnit()) else createdType
+                     compiledType to projectionFunctionScope
+                  }
+            }
+
          }
       }
 
@@ -206,9 +224,18 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor, private
    }
 }
 
-data class AnonymousTypeResolutionContext(
+// Was called AnonymousTypesResolutionContext.
+// Basically, things that will help us resolve tokens
+// that are contextual (eg., "this" or similar in a function scope).
+data class ResolutionContext(
    val typesToDiscover: List<DiscoveryType> = emptyList(),
    val concreteProjectionTypeContext: TaxiParser.TypeReferenceContext? = null,
    val baseType: Type? = null,
-)
+   val activeScopes:List<ProjectionFunctionScope> = emptyList()
+) {
+   fun appendScope(projectionScope: ProjectionFunctionScope): ResolutionContext {
+      return this.copy(activeScopes = activeScopes + projectionScope)
+   }
+
+}
 

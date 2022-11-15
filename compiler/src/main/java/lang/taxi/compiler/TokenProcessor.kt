@@ -9,6 +9,7 @@ import arrow.core.right
 import lang.taxi.*
 import lang.taxi.TaxiParser.*
 import lang.taxi.accessors.ConditionalAccessor
+import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.annotations.AnnotationTypeBodyContent
 import lang.taxi.compiler.fields.FieldCompiler
 import lang.taxi.compiler.fields.FieldTypeSpec
@@ -20,7 +21,6 @@ import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionDefinition
 import lang.taxi.functions.FunctionModifiers
 import lang.taxi.linter.Linter
-import lang.taxi.policies.*
 import lang.taxi.policies.CaseCondition
 import lang.taxi.policies.Condition
 import lang.taxi.policies.ElseCondition
@@ -833,7 +833,8 @@ class TokenProcessor(
    private fun compileType(
       namespace: Namespace,
       typeName: String,
-      ctx: TypeDeclarationContext
+      ctx: TypeDeclarationContext,
+      activeScopes: List<ProjectionFunctionScope> = emptyList()
    ): Either<List<CompilationError>, ObjectType> {
       val typeKind = TypeKind.fromSymbol(ctx.typeKind().text)
       val fields = ctx.typeBody()?.let { typeBody ->
@@ -845,7 +846,7 @@ class TokenProcessor(
       val annotations = collateAnnotations(ctx.annotation())
       val modifiers = parseModifiers(ctx.typeModifier())
       val expression = ctx.expressionTypeDeclaration()?.let {
-         it.expressionGroup().map { expressionGroup -> parseTypeExpression(expressionGroup) }
+         it.expressionGroup().map { expressionGroup -> parseTypeExpression(expressionGroup, activeScopes) }
       }?.invertEitherList()
          ?.flattenErrors()
          ?.map { it.toExpressionGroup() }
@@ -910,13 +911,12 @@ class TokenProcessor(
       ).right()
    }
 
-   fun expressionCompiler(fieldCompiler: FieldCompiler? = null): ExpressionCompiler {
-      // TODO : Can we avoid creating a new one each time?
-      return ExpressionCompiler(this, typeChecker, errors, fieldCompiler)
+   fun expressionCompiler(fieldCompiler: FieldCompiler? = null, activeScopes:List<ProjectionFunctionScope> = emptyList()): ExpressionCompiler {
+      return ExpressionCompiler(this, typeChecker, errors, fieldCompiler, activeScopes)
    }
 
-   private fun parseTypeExpression(expressionGroup: ExpressionGroupContext): Either<List<CompilationError>, Expression> {
-      return expressionCompiler().compile(expressionGroup)
+   private fun parseTypeExpression(expressionGroup: ExpressionGroupContext, activeScopes: List<ProjectionFunctionScope>): Either<List<CompilationError>, Expression> {
+      return expressionCompiler(activeScopes = activeScopes).compile(expressionGroup)
    }
 
    private fun checkForCircularTypeInheritance(
@@ -963,7 +963,7 @@ class TokenProcessor(
       namespace: Namespace,
       typeName: String,
       anonymousTypeDefinition: AnonymousTypeDefinitionContext,
-      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext(),
+      resolutionContext: ResolutionContext,
    ): Either<List<CompilationError>, ObjectType> {
       val annotations = collateAnnotations(anonymousTypeDefinition.annotation())
       val (fields, expression) = anonymousTypeDefinition.typeBody().let { typeBody ->
@@ -974,7 +974,7 @@ class TokenProcessor(
                parseType(namespace, it).orNull() as? ObjectType
             }
          val typeBodyContext = TypeBodyContext(typeBody, namespace, typeBodyFieldObjectType)
-         val fieldCompiler = FieldCompiler(this, typeBodyContext, typeName, errors, anonymousTypeResolutionContext)
+         val fieldCompiler = FieldCompiler(this, typeBodyContext, typeName, errors, resolutionContext)
          val compiledFields = fieldCompiler.compileAllFields()
 
          // Expressions on AnonymousTypes are to support top-level declarations
@@ -1003,7 +1003,7 @@ class TokenProcessor(
          compiledFields to expression
       }
 
-      val fieldsFromConcreteProjectedToType = anonymousTypeResolutionContext.concreteProjectionTypeContext?.let {
+      val fieldsFromConcreteProjectedToType = resolutionContext.concreteProjectionTypeContext?.let {
          this.parseType(namespace, it).map { type ->
             (type as ObjectType?)?.fields
          }
@@ -1025,7 +1025,7 @@ class TokenProcessor(
                annotations = annotations.toSet(),
                modifiers = listOf(),
                formatAndOffset = null,
-               inheritsFrom = setOfNotNull(anonymousTypeResolutionContext.baseType),
+               inheritsFrom = setOfNotNull(resolutionContext.baseType),
                expression = expression,
                compilationUnit = anonymousTypeDefinition.toCompilationUnit(),
                isAnonymous = true
@@ -1273,6 +1273,8 @@ class TokenProcessor(
       )
    }
 
+
+   // Can remove this, it used to do more.
    internal fun parseType(
       namespace: Namespace,
       typeType: FieldTypeDeclarationContext,
@@ -1281,32 +1283,6 @@ class TokenProcessor(
 
       val type = typeOrError(namespace, typeType, typeArgumentsInScope)
       return type
-
-      // This is the legacy implementation of formatted types.
-      // It needs to be re-implemented with annotation driven formats.
-      // Which makes this entire method now redundant
-//
-//         .flatMap { type ->
-//         parseTypeFormat(type).flatMap { (formats, zoneOffset) ->
-//            if (typeType.optionalTypeReference().typeReference().arrayMarker() != null) {
-//               if (formats.isNotEmpty() || zoneOffset != null) {
-//                  CompilationError(typeType.start, "It is invalid to declare a format / offset on an array").asList()
-//                     .left()
-//               } else {
-////                  Old approach - now simplified with this logic encapsulated in a single place in typeOrError()_
-////                  Either.right(ArrayType(type, typeType.toCompilationUnit()))
-//                  require(type is ArrayType) { "Expected that typeOrError() should return an ArrayType when using [] operator" }
-//                  type.right()
-//               }
-//            } else {
-//               if (formats.isNotEmpty() || zoneOffset != null) {
-//                  generateFormattedSubtype(type, FormatsAndZoneoffset(formats, zoneOffset), typeType)
-//               } else {
-//                  type.right()
-//               }
-//            }
-//         }
-//      }
    }
 
    internal fun parseModelAttributeTypeReference(
@@ -1331,13 +1307,36 @@ class TokenProcessor(
       }
    }
 
+   fun parseProjectionScope(
+      expressionInputs: TaxiParser.ExpressionInputsContext?,
+      projectionSourceType: FieldTypeSpec
+   ):Either<List<CompilationError>, ProjectionFunctionScope> {
+      if (expressionInputs == null || expressionInputs.expressionInput().isEmpty()) {
+         return ProjectionFunctionScope.implicitThis(projectionSourceType.type).right()
+      }
+      return when (expressionInputs.expressionInput().size) {
+          1 -> {
+             val input = expressionInputs.expressionInput().single()
+             val identifier = input.identifier().text ?: ProjectionFunctionScope.THIS
+             resolveTypeOrFunction(input.typeReference().qualifiedName(), null, input.typeReference().qualifiedName()).flatMap { token ->
+                if (token is Type) {
+                   ProjectionFunctionScope(identifier, token).right()
+                } else {
+                   listOf(CompilationError(input.typeReference().qualifiedName().toCompilationUnit(), "Expected a type here")).left()
+                }
+             }
+          }
+          else -> listOf(CompilationError(expressionInputs.expressionInput()[1].toCompilationUnit(), "Expected a single parameter declaration")).left()
+      }
+   }
+
    fun parseAnonymousType(
       namespace: String,
       anonymousTypeDefinition: AnonymousTypeDefinitionContext,
       anonymousTypeName: String = AnonymousTypeNameGenerator.generate(),
-      anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext(),
+      resolutionContext: ResolutionContext = ResolutionContext(),
    ): Either<List<CompilationError>, Type> {
-      return compileAnonymousType(namespace, anonymousTypeName, anonymousTypeDefinition, anonymousTypeResolutionContext)
+      return compileAnonymousType(namespace, anonymousTypeName, anonymousTypeDefinition, resolutionContext)
    }
 
    internal fun typeOrError(
@@ -2331,12 +2330,13 @@ class TokenProcessor(
    internal fun mapConstraints(
       constraintList: TaxiParser.ExpressionGroupContext?,
       paramType: Type,
-      fieldCompiler: FieldCompiler?
+      fieldCompiler: FieldCompiler?,
+      activeScopes: List<ProjectionFunctionScope> = emptyList()
    ): Either<List<CompilationError>, List<Constraint>> {
       if (constraintList == null) {
          return emptyList<Constraint>().right()
       }
-      return expressionCompiler(fieldCompiler).compile(constraintList).map { expression ->
+      return expressionCompiler(fieldCompiler,activeScopes).compile(constraintList).map { expression ->
          listOf(ExpressionConstraint(expression))
       }
    }

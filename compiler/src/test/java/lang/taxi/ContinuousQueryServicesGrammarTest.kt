@@ -49,7 +49,7 @@ object ContinuousQueryServicesGrammarSpec : Spek({
             """.compiledQueries()
             val query = queries.first()
             query.queryMode.should.equal(QueryMode.STREAM)
-            query.typesToFind.first().type.parameterizedName.should.equal("lang.taxi.Stream<Person>")
+            query.typesToFind.first().typeName.parameterizedName.should.equal("lang.taxi.Stream<Person>")
          }
       }
    }

@@ -1,10 +1,13 @@
 package lang.taxi.compiler.fields
 
 import lang.taxi.accessors.Accessor
+import lang.taxi.compiler.TokenProcessor
 import lang.taxi.expressions.Expression
-import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
+import lang.taxi.types.DiscoveryType
+import lang.taxi.types.PrimitiveType
 import lang.taxi.types.Type
+import lang.taxi.utils.log
 
 
 /**
@@ -25,6 +28,16 @@ data class FieldTypeSpec private constructor(
       fun forType(type: Type) = FieldTypeSpec(type, null, null)
       fun forFunction(function: FunctionAccessor) = FieldTypeSpec(function.returnType, function, null)
       fun forExpression(expression: Expression) = FieldTypeSpec(expression.returnType, null, expression)
+      fun forDiscoveryTypes(typesToDiscover: List<DiscoveryType>): FieldTypeSpec {
+         return when {
+            typesToDiscover.isEmpty() -> TODO("How do we derive FieldTypeSpec without any inputs?")
+            typesToDiscover.size == 1 -> forType(typesToDiscover.single().type)
+            else -> {
+               log().warn("Multiple discovery types for projection results are not yet supported - returning Any")
+               forType(PrimitiveType.ANY)
+            }
+         }
+      }
    }
    val accessor:Accessor?
 

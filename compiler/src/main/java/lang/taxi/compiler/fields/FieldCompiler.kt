@@ -10,15 +10,8 @@ import lang.taxi.CompilationError
 import lang.taxi.Namespace
 import lang.taxi.TaxiParser
 import lang.taxi.TaxiParser.TypeReferenceContext
-import lang.taxi.accessors.Accessor
-import lang.taxi.accessors.CollectionProjectionExpressionAccessor
-import lang.taxi.accessors.ColumnAccessor
-import lang.taxi.accessors.ConditionalAccessor
-import lang.taxi.accessors.FieldSourceAccessor
-import lang.taxi.accessors.JsonPathAccessor
-import lang.taxi.accessors.ProjectionScopeDefinition
-import lang.taxi.accessors.XpathAccessor
-import lang.taxi.compiler.AnonymousTypeResolutionContext
+import lang.taxi.accessors.*
+import lang.taxi.compiler.ResolutionContext
 import lang.taxi.compiler.ConditionalFieldSetProcessor
 import lang.taxi.compiler.DefaultValueParser
 import lang.taxi.compiler.ExpressionCompiler
@@ -52,7 +45,7 @@ class FieldCompiler(
    private val typeBody: TypeWithFieldsContext,
    private val typeName: String,
    private val errors: MutableList<CompilationError>,
-   private val anonymousTypeResolutionContext: AnonymousTypeResolutionContext = AnonymousTypeResolutionContext()
+   private val resolutionContext: ResolutionContext = ResolutionContext()
 ) {
    internal val typeChecker = tokenProcessor.typeChecker
    private val conditionalFieldSetProcessor =
@@ -161,49 +154,87 @@ class FieldCompiler(
 
       val typeDoc = tokenProcessor.parseTypeDoc(member.typeDoc())
       val namespace = member.findNamespace()
-      val fieldType = member.fieldDeclaration().fieldTypeDeclaration()
+      val fieldTypeDeclaration: TaxiParser.FieldTypeDeclarationContext? =
+         member.fieldDeclaration().fieldTypeDeclaration()
       val isChildOfProjection = typeBody.objectType?.qualifiedName != null
-      if (fieldType == null && isChildOfProjection) {
+      if (fieldTypeDeclaration == null && isChildOfProjection) {
          return resolveImplicitTypeFromToBeProjectedType(member)
       }
       // orderId: {  foo: String }
       val anonymousTypeDefinition = member.fieldDeclaration().anonymousTypeDefinition()
       // orderId: Order::OrderId
       val modelAttributeType = member.fieldDeclaration().modelAttributeTypeReference()
-      val expressionGroup = member.fieldDeclaration().expressionGroup()
-
-      val fieldProjectionType: Either<List<CompilationError>, Type?> =
-         member.fieldDeclaration().typeProjection()?.let { projection -> parseFieldProjection(member, projection) }
-            ?: (null as Type?).right()
-
+      val expressionGroup: TaxiParser.ExpressionGroupContext? = member.fieldDeclaration().expressionGroup()
+      val expressionCompiler = tokenProcessor.expressionCompiler(
+         fieldCompiler = this,
+         activeScopes = this.resolutionContext.activeScopes
+      )
+      // TODO :
+      // We need to refactor how we're getting type for a field
+      // There's a few different ways - and at the moment we don't verify that they're not conflicting.
+      // A type can be declared:
+      //  - explicitly :                                        foo : Foo
+      //  - by the return type of an expression:                foo : returnFoo()
+      //  - by a model reference:                               foo : Something::Foo
+      //  - by a projection:                                    foo : returnBar() as { something : Foo }
+      //  - A mixutre:                                          foo : Foo = returnFoo()
+      //
+      // This is current partly encapsulated through FieldTypeSpec, but
+      // capturing it is awkward.
+      val qualifiedName = fieldTypeDeclaration?.optionalTypeReference()?.typeReference()?.qualifiedName()
       return when {
-         fieldType != null -> {
-            tokenProcessor.parseType(namespace, fieldType)
+         // Before resolving as a type, first check if we can resolve
+         // through scope.
+         // (eg: this.foo), or a named scope:
+         // find { Foo[] } as (foo:Foo) -> { foo.xxxxx }
+         fieldTypeDeclaration != null && expressionCompiler.canResolveAsScopePath(qualifiedName!!) -> {
+            expressionCompiler.resolveScopePath(qualifiedName).flatMap { scopePathExpression ->
+               val fieldTypeSpec = FieldTypeSpec.forExpression(scopePathExpression)
+               parseFieldProjection(member, fieldTypeSpec).flatMap { fieldProjectionType ->
+                  toField(
+                     member,
+                     namespace,
+                     fieldTypeSpec,
+                     typeDoc,
+                     fieldAnnotations,
+                     null,
+                     FieldProjection.forNullable(fieldTypeSpec.type, fieldProjectionType),
+                  )
+
+               }
+            }
+         }
+         // It wasn't a path, so resolve as a function
+         fieldTypeDeclaration != null -> {
+            tokenProcessor.parseType(namespace, fieldTypeDeclaration)
                .flatMap { fieldTypeSpec ->
-                  fieldProjectionType.flatMap { projectionType ->
+                  parseFieldProjection(member, fieldTypeSpec).flatMap { fieldProjectionType ->
                      toField(
                         member,
                         namespace,
                         fieldTypeSpec,
                         typeDoc,
                         fieldAnnotations,
-                        fieldProjectionType = projectionType
+                        null,
+                        FieldProjection.forNullable(fieldTypeSpec.type, fieldProjectionType),
                      )
                   }
                }
          }
 
          anonymousTypeDefinition != null -> {
-            parseAnonymousTypeBody(member, anonymousTypeDefinition)
+            parseAnonymousTypeBody(member, anonymousTypeDefinition, resolutionContext)
                .flatMap { type ->
-                  fieldProjectionType.flatMap { projectionType ->
+                  val fieldTypeSpec = FieldTypeSpec.forType(type)
+                  parseFieldProjection(member, fieldTypeSpec).flatMap { projectionType ->
                      toField(
                         member,
                         namespace,
-                        FieldTypeSpec.forType(type),
+                        fieldTypeSpec,
                         typeDoc,
                         fieldAnnotations,
-                        fieldProjectionType = projectionType
+                        null,
+                        FieldProjection.forNullable(fieldTypeSpec.type, projectionType)
                      )
                   }
 
@@ -225,17 +256,18 @@ class FieldCompiler(
          }
 
          expressionGroup != null -> {
-            tokenProcessor.expressionCompiler(fieldCompiler = this).compile(expressionGroup)
+            expressionCompiler.compile(expressionGroup)
                .flatMap { expression ->
-                  fieldProjectionType.flatMap { fieldProjectionType ->
+                  val fieldTypeSpec = FieldTypeSpec.forExpression(expression)
+                  parseFieldProjection(member, fieldTypeSpec).flatMap { fieldProjectionType ->
                      toField(
                         member,
                         namespace,
-                        FieldTypeSpec.forExpression(expression),
+                        fieldTypeSpec,
                         typeDoc,
                         fieldAnnotations,
                         null,
-                        fieldProjectionType
+                        FieldProjection.forNullable(fieldTypeSpec.type, fieldProjectionType)
                      )
                   }
 
@@ -250,7 +282,7 @@ class FieldCompiler(
             //   tradeId
             // }[]
             val fieldName = member.fieldDeclaration().identifier().text
-            val discoveryTypes = anonymousTypeResolutionContext.typesToDiscover
+            val discoveryTypes = resolutionContext.typesToDiscover
             if (discoveryTypes.isEmpty()) {
 
                listOf(
@@ -261,7 +293,11 @@ class FieldCompiler(
                ).left()
             } else {
                val typeOrError =
-                  this.tokenProcessor.getType(namespace, discoveryTypes.first().type.firstTypeParameterOrSelf, member)
+                  this.tokenProcessor.getType(
+                     namespace,
+                     discoveryTypes.first().typeName.firstTypeParameterOrSelf,
+                     member
+                  )
                typeOrError.flatMap { type ->
                   when {
                      type !is ObjectType || !type.hasField(fieldName) ->
@@ -301,16 +337,20 @@ class FieldCompiler(
    private fun parseAnonymousTypeBody(
       member: TaxiParser.TypeMemberDeclarationContext,
       anonymousTypeDefinition: TaxiParser.AnonymousTypeDefinitionContext,
+      resolutionContext: ResolutionContext
    ): Either<List<CompilationError>, Type> {
-      val anonymousTypeName = "$typeName$${member.fieldDeclaration().identifier().text.replaceFirstChar {
-         if (it.isLowerCase()) it.titlecase(
-            Locale.getDefault()
-         ) else it.toString()
-      }}"
+      val anonymousTypeName = "$typeName$${
+         member.fieldDeclaration().identifier().text.replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase(
+               Locale.getDefault()
+            ) else it.toString()
+         }
+      }"
       val fieldType = tokenProcessor.parseAnonymousType(
          anonymousTypeDefinition.findNamespace(),
          anonymousTypeDefinition,
-         anonymousTypeName
+         anonymousTypeName,
+         resolutionContext
       )
          .map { type ->
             val isDeclaredAsCollection = anonymousTypeDefinition.arrayMarker() != null
@@ -325,12 +365,22 @@ class FieldCompiler(
 
    private fun parseFieldProjection(
       member: TaxiParser.TypeMemberDeclarationContext,
-      projection: TaxiParser.TypeProjectionContext
-   ): Either<List<CompilationError>, Type> {
-      return parseAnonymousTypeBody(
-         member,
-         projection.anonymousTypeDefinition()
-      )
+      projectionSourceType: FieldTypeSpec,
+   ): Either<List<CompilationError>, Pair<Type, ProjectionFunctionScope>?> {
+      val typeProjection = member.fieldDeclaration().typeProjection() ?: return null.right()
+      return tokenProcessor.parseProjectionScope(typeProjection.expressionInputs(), projectionSourceType)
+         .flatMap { projectionScope ->
+            val projectedType = when {
+               typeProjection.anonymousTypeDefinition() != null ->  parseAnonymousTypeBody(
+                  member,
+                  typeProjection.anonymousTypeDefinition(),
+                  this.resolutionContext.appendScope(projectionScope)
+               )
+               typeProjection.typeReference() != null -> tokenProcessor.typeOrError(typeProjection.typeReference())
+               else -> error("Can't lookup type reference for projection from statement: ${typeProjection.source().content}")
+            }
+            projectedType.map { type -> type to projectionScope }
+         }
    }
 
 
@@ -341,15 +391,13 @@ class FieldCompiler(
       typeDoc: String?,
       fieldAnnotations: List<Annotation>,
       memberSource: QualifiedName? = null,
-      fieldProjectionType: Type? = null
+      fieldProjection: FieldProjection? = null
    ): Either<List<CompilationError>, Field> {
       val format = tokenProcessor.parseTypeFormat(fieldAnnotations, fieldType.type, member)
          .getOrHandle {
             errors.addAll(it)
             null
          }
-      val fieldProjection =
-         fieldProjectionType?.let { projectionType -> FieldProjection(fieldType.type, projectionType) }
       return when {
          // orderId:  Order::OrderSentId
          memberSource != null -> {
@@ -596,7 +644,7 @@ class FieldCompiler(
       //}
 
       val referencedFieldName = stringLiteralValue(byFieldSourceExpression.StringLiteral()) // e.g. traderId
-      return if (this.anonymousTypeResolutionContext.concreteProjectionTypeContext != null) {
+      return if (this.resolutionContext.concreteProjectionTypeContext != null) {
          /**
           * Example: here our anonymous type extends foo.Trade
           * findAll {
@@ -613,7 +661,7 @@ class FieldCompiler(
          sourceTypeOrError.flatMap { sourceType ->
             val baseProjectionTypeOrError = this.tokenProcessor.typeOrError(
                byFieldSourceExpression.findNamespace(),
-               this.anonymousTypeResolutionContext.concreteProjectionTypeContext
+               this.resolutionContext.concreteProjectionTypeContext
             )
 
             baseProjectionTypeOrError.flatMap { baseProjectionType ->

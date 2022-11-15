@@ -2,8 +2,10 @@ package lang.taxi.compiler
 
 import arrow.core.*
 import lang.taxi.*
+import lang.taxi.TaxiParser.QualifiedNameContext
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
+import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.fields.FieldCompiler
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.FieldReferenceExpression
@@ -25,7 +27,8 @@ class ExpressionCompiler(
     * Pass the fieldCompiler when the expression being compiled is within the field of a model / query result.
     * This allows field lookups by name in expressions
     */
-   private val fieldCompiler: FieldCompiler? = null
+   private val fieldCompiler: FieldCompiler? = null,
+   private val scopes: List<ProjectionFunctionScope> = emptyList()
 ) : FunctionParameterReferenceResolver {
    private val functionCompiler = FunctionAccessorCompiler(
       tokenProcessor,
@@ -229,7 +232,12 @@ class ExpressionCompiler(
          }
    }
 
+
    private fun parseTypeExpression(typeType: TaxiParser.TypeReferenceContext): Either<List<CompilationError>, Expression> {
+      if (canResolveAsScopePath(typeType.qualifiedName())) {
+         return resolveScopePath(typeType.qualifiedName())
+      }
+
       return tokenProcessor.parseType(typeType.findNamespace(), typeType)
          .map { type -> TypeExpression(type, typeType.toCompilationUnits()) }
          .handleErrorWith { errors ->
@@ -246,6 +254,73 @@ class ExpressionCompiler(
             }
 
          }
+   }
+
+   fun canResolveAsScopePath(qualifiedName: QualifiedNameContext): Boolean {
+      val identifierTokens = qualifiedName.identifier().map { it.text }
+      return scopes.any { it.matchesReference(identifierTokens) }
+   }
+
+   /**
+    * Resolves a path declared using a scope, against the field name.
+    * for example:
+    *
+    * find{ Foo[] } as (foo : Foo) {
+    *    thing : foo.bar // <---resolves bar property against foo
+    * }
+    */
+   fun resolveScopePath(qualifiedName: QualifiedNameContext): Either<List<CompilationError>, ScopedReferenceSelector> {
+      val identifierTokens = qualifiedName.identifier().map { it.text }
+      // if we can resolve it through a scope, do so.
+      val resolvedScopeReference = scopes.first { it.matchesReference(identifierTokens) }
+      return resolveScopePath(
+         resolvedScopeReference,
+         // The first identifier is the name of the scope, and doesn't
+         // need to be resolved (eg: "this")
+         identifierTokens.drop(1),
+         qualifiedName
+      ).flatMap { fieldSelectors ->
+         ScopedReferenceSelector(
+            resolvedScopeReference,
+            fieldSelectors.drop(1),
+            qualifiedName.toCompilationUnits()
+         ).right()
+      }
+
+   }
+
+   /**
+    * Maps the full scope path.
+    * Callers are responsible for dropping the first path, if
+    * that's already handled (ie., if the initial scope is "special" - "this")
+    */
+   private fun resolveScopePath(
+      scope: ProjectionFunctionScope,
+      path: List<String>,
+      context: ParserRuleContext
+   ): Either<List<CompilationError>, List<FieldReferenceSelector>> {
+      val initial = FieldReferenceSelector(scope.name, scope.type)
+      // We must return the initial scope, so that it can be consistently dropped
+      return if (path.isEmpty()) {
+         listOf(initial).right()
+      } else {
+         return path
+            .runningFold(initial.right() as Either<List<CompilationError>, FieldReferenceSelector>) { resolvedType, fieldName ->
+            resolvedType.flatMap { selector ->
+               val previousType = selector.declaredType
+               if (previousType is ObjectType && previousType.hasField(fieldName)) {
+                  FieldReferenceSelector(fieldName, previousType.field(fieldName).type).right()
+               } else {
+                  listOf(
+                     CompilationError(
+                        context.toCompilationUnit(),
+                        "Cannot resolve reference $fieldName against type ${previousType.toQualifiedName().parameterizedName}"
+                     )
+                  ).left()
+               }
+            }
+         }.invertEitherList().flattenErrors()
+      }
    }
 
    override fun compileScalarAccessor(

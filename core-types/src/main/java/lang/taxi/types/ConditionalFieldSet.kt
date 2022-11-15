@@ -2,6 +2,7 @@ package lang.taxi.types
 
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
+import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.expressions.Expression
 
 /**
@@ -88,6 +89,7 @@ data class TypeReferenceSelector(val type: Type) : Accessor {
 }
 
 // TODO : Can FieldReferenceSelector, ReferenceAssignment and ReferenceCaseMatchExpression all be merged?
+// TODO : This will be replaced by ScopedReferenceSelector, which works for scopes not named "this" as well
 data class FieldReferenceSelector(val fieldName: String, override val returnType: Type) : WhenSelectorExpression,
    Accessor {
    override val declaredType: Type = returnType
@@ -101,13 +103,11 @@ data class FieldReferenceSelector(val fieldName: String, override val returnType
    override fun asTaxi(): String = "this.$fieldName"
 }
 
-object EmptyReferenceSelector : WhenSelectorExpression {
-   override fun asTaxi(): String {
-      return ""
-   }
-
-   // TODO : What type is this?
-   override val declaredType: Type = PrimitiveType.ANY
+data class ScopedReferenceSelector(val scope:ProjectionFunctionScope, val selectors: List<FieldReferenceSelector>, override val compilationUnits:List<CompilationUnit>): Accessor, WhenSelectorExpression, Expression() {
+   override val declaredType: Type = selectors.last().declaredType
+   override val returnType: Type = declaredType
+   val path = selectors.joinToString(".") { it.fieldName }
+   override fun asTaxi(): String = "${scope.name}.$path"
 }
 
 data class WhenCaseBlock(

@@ -1,5 +1,6 @@
 package lang.taxi.query
 
+import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.types.*
 
 
@@ -9,9 +10,10 @@ data class TaxiQlQuery(
    val queryMode: QueryMode,
    val parameters: Map<String, QualifiedName>,
    val typesToFind: List<DiscoveryType>,
-   val projectedType: Type?
+   val projectedType: Type?,
+   val projectionScope:  ProjectionFunctionScope?
 ) {
-   val projectedObjectType : ObjectType
+    val projectedObjectType : ObjectType
       get() {
          return when (projectedType) {
             null -> error("ProjectType is null")

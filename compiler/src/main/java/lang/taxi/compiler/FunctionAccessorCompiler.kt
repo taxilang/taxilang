@@ -8,6 +8,7 @@ import lang.taxi.CompilationError
 import lang.taxi.TaxiParser
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
+import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.expressions.Expression
 import lang.taxi.findNamespace
 import lang.taxi.functions.Function
@@ -47,7 +48,7 @@ class FunctionAccessorCompiler(
    private val typeChecker: TypeChecker,
    private val errors: MutableList<CompilationError>,
    private val referenceResolver: FunctionParameterReferenceResolver,
-   private val parentContext: RuleContext?
+   private val parentContext: RuleContext?,
 ) {
    internal fun buildFunctionAccessor(
       functionContext: TaxiParser.FunctionCallContext,
@@ -86,7 +87,7 @@ class FunctionAccessorCompiler(
                         ).right()
                         parameterContext.scalarAccessorExpression() != null -> referenceResolver.compileScalarAccessor(
                            parameterContext.scalarAccessorExpression(),
-                           parameterType
+                           parameterType,
                         )
                         parameterContext.fieldReferenceSelector() != null -> referenceResolver.compileFieldReferenceAccessor(
                            function,
