@@ -35,5 +35,19 @@ class TypeFieldLookupSpec : DescribeSpec({
             .shouldContainExactlyInAnyOrder("friends")
       }
 
+      it("should return the expected path when it contains an array") {
+         val schema = """
+
+      model Film {
+        imdbScore : ImdbScore inherits Decimal
+      }
+
+      model Catalog {
+         films : Film[]
+      }""".compiled()
+         val path = schema.objectType("Catalog").getDescendantPathsOfType(schema.type("ImdbScore"))
+         path.shouldContainExactlyInAnyOrder("films.imdbScore")
+      }
+
    }
 })

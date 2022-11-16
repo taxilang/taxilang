@@ -369,7 +369,7 @@ data class ObjectType(
                      memberType is ObjectType -> memberType.doRecursiveLookupOfDescendantPathsOfType(
                         searchType,
                         typesBeingChecked
-                     )
+                     ) .map { "${field.name}.$it" }
 
                      else -> emptyList()
                   }
@@ -386,10 +386,11 @@ data class ObjectType(
    private val descendantLookupCache = ConcurrentHashMap<Type, List<String>>()
    fun getDescendantPathsOfType(type: Type): List<String> {
       return descendantLookupCache.getOrPut(type) {
-         val assignable = if (this.isAssignableTo(type)) {
-            listOf("this")
-         } else emptyList()
-         assignable + doRecursiveLookupOfDescendantPathsOfType(type, mutableSetOf())
+//         val assignable = if (this.isAssignableTo(type)) {
+//            listOf("this")
+//         } else emptyList()
+         doRecursiveLookupOfDescendantPathsOfType(type, mutableSetOf())
+//         assignable + recursiveLookup
       }
    }
 
