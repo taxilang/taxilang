@@ -13,7 +13,8 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 
 class DataStructureTests {
-   val typeMapper = DefaultTypeMapper(typeAliasRegister = TypeAliasRegister.forPackageNames(listOf("lang.taxi.generators.java")))
+   val typeMapper =
+      DefaultTypeMapper(typeAliasRegister = TypeAliasRegister.forPackageNames(listOf("lang.taxi.generators.java")))
 
    @Test
    fun `When a java class based schema generated`() {
@@ -199,6 +200,7 @@ namespace namespaceA {
    }
 
    @Test
+   @Disabled("Constraints not currently implemented")
    fun given_typeExpressesConstraint_that_schemaIsGeneratedCorrectly() {
       @DataType("vyne.Money")
       data class Money(val amount: BigDecimal, val currency: String)

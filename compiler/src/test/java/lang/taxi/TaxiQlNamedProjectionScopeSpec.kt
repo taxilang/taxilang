@@ -32,8 +32,9 @@ class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
          val projection = query.projectedObjectType.field("star").projection
          projection!!.projectionFunctionScope.name.should.equal("actor")
          val projectedType = projection.projectedType.asA<ObjectType>()
-         projectedType.field("name").accessor!!.asA<ScopedReferenceSelector>()
-         TODO("implement this test")
+         val accessor = projectedType.field("name").accessor!!.asA<ScopedReferenceSelector>()
+         accessor.scope.name.should.equal("actor")
+         accessor.scope.type.qualifiedName.should.equal("Actor")
 
       }
    }

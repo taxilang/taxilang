@@ -76,7 +76,7 @@ class SpreadOperatorSpec : DescribeSpec({
             }
          """.validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.contain("Address was not resolved as either a type or a function")
+         errors.first().detailMessage.should.contain("Address is not defined")
       }
    }
 })

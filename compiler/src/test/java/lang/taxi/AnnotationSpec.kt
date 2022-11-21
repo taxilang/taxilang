@@ -82,7 +82,7 @@ class AnnotationSpec : DescribeSpec({
             }
          """.validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("Person was not resolved as either a type or a function")
+         errors.first().detailMessage.should.equal("Person is not defined")
       }
 
 

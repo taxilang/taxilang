@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
 import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.expressions.LiteralExpression
@@ -13,8 +14,10 @@ import lang.taxi.types.WhenFieldSetCondition
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class ViewSpec : Spek({
-   describe("view syntax") {
+class ViewSpec : DescribeSpec({
+   // Ignored while views are up for debate as a feature we want to keep.
+   // Lets decide if we want to keep views before fixing this implementation
+   xdescribe("view syntax") {
       it("simple view definition") {
          val src = """
          model Person {

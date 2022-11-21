@@ -152,7 +152,7 @@ $taxiBlock
          // For now, I've worked around it in the xml code gen (the only place that supports this currently)
          // by not setting the formattedInstanceOfType.  It produces the correct output, but it's a bit hacky
          //
-         .filterNot { it is ObjectType && it.declaresFormat }
+//         .filterNot { it is ObjectType && it.declaresFormat }
          .filterNot { it is PrimitiveType }
          .filter { typeFilter(it) }
          .map { generateTypeDeclaration(it, currentNamespace) }
@@ -353,7 +353,7 @@ $enumValueDeclarations
 
    private fun accessorAsString(accessor: Accessor): String {
       return when (accessor) {
-         is TaxiStatementGenerator -> "${accessor.asTaxi()}"
+         is TaxiStatementGenerator -> accessor.asTaxi()
          else -> "/* accessor of type ${accessor::class.simpleName} does not support taxi generation */"
       }
    }
@@ -370,12 +370,12 @@ $enumValueDeclarations
       return when {
          type is ArrayType -> (if (type.type is ArrayType) nestedArray(type) else simpleArray(type)) + nullableString
          type is UnresolvedImportedType -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace) + nullableString
-         typeHasFormat -> {
-            typeAsTaxi(
-               type,
-               currentNamespace
-            ) + nullableString + """( ${writeFormat(type.format, type.offset)} )"""
-         }
+//         typeHasFormat -> {
+//            typeAsTaxi(
+//               type,
+//               currentNamespace
+//            ) + nullableString /*+ """( ${writeFormat(type.format, type.offset)} )"""*/
+//         }
          else -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace) + nullableString
       }
    }

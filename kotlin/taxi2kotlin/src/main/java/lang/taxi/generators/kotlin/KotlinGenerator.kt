@@ -21,20 +21,12 @@ import lang.taxi.generators.TaxiProjectEnvironment
 import lang.taxi.generators.TypeProcessor
 import lang.taxi.generators.WritableSource
 import lang.taxi.jvm.common.PrimitiveTypes
-import lang.taxi.types.ArrayType
-import lang.taxi.types.EnumType
-import lang.taxi.types.Field
-import lang.taxi.types.Named
-import lang.taxi.types.ObjectType
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.Type
-import lang.taxi.types.TypeAlias
+import lang.taxi.types.*
 import java.nio.file.Path
 import java.nio.file.Paths
 
 
-class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.generated") : ModelGenerator {
+class KotlinGenerator(private val typeNamesTopLevelPackageName: String = "taxi.generated") : ModelGenerator {
    // TODO : This really shouldn't be a field.
    private lateinit var processorHelper: ProcessorHelper
 
@@ -45,11 +37,19 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
 
    }
 
-   override fun generate(taxi: TaxiDocument, processors: List<Processor>, environment: TaxiProjectEnvironment): List<WritableSource> {
+   override fun generate(
+      taxi: TaxiDocument,
+      processors: List<Processor>,
+      environment: TaxiProjectEnvironment
+   ): List<WritableSource> {
       // TODO : Shouldn't be assinging a field here - should be passing it through
       this.processorHelper = ProcessorHelper(processors)
       val typeNameConstantsGenerator = TypeNamesAsConstantsGenerator(typeNamesTopLevelPackageName)
-      return taxi.types.mapNotNull { generateType(it, typeNameConstantsGenerator) } +
+      return taxi.types
+         // Hack - exclude taxi.stdlib, to avoid the noise of writing annotation classes right now.
+         // We should implement this propertly
+         .filter { it.toQualifiedName().namespace != "taxi.stdlib" }
+         .mapNotNull { generateType(it, typeNameConstantsGenerator) } +
          typeNameConstantsGenerator.generate()
    }
 
@@ -58,32 +58,53 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
          is ObjectType -> generateType(type, typeNamesAsConstantsGenerator)
          is TypeAlias -> generateType(type, typeNamesAsConstantsGenerator)
          is EnumType -> generateType(type, typeNamesAsConstantsGenerator)
+         is AnnotationType -> generateType(type, typeNamesAsConstantsGenerator)
          else -> TODO("Type ${type.javaClass.name} not yet supported")
       }
    }
 
-   private fun generateType(type: EnumType, typeNamesAsConstantsGenerator: TypeNamesAsConstantsGenerator): WritableSource? {
+   private fun generateType(
+      type: AnnotationType,
+      typeNamesAsConstantsGenerator: TypeNamesAsConstantsGenerator
+   ): WritableSource? {
+      val builder = TypeSpec.annotationBuilder(type.className())
+      type.fields.forEach { field ->
+         builder.addProperty(PropertySpec.builder(field.name, getJavaType(field.type)).build())
+      }
+      return FileSpecWritableSource.from(type.toQualifiedName(), builder.build())
+   }
+
+   private fun generateType(
+      type: EnumType,
+      typeNamesAsConstantsGenerator: TypeNamesAsConstantsGenerator
+   ): WritableSource? {
       // Handle inherited enums as type aliases
       if (type.baseEnum != type) {
          return generateInheritedEnum(type, typeNamesAsConstantsGenerator)
       }
 
       val builder = TypeSpec.enumBuilder(type.className())
-         .addAnnotation(AnnotationSpec.builder(DataType::class)
-            .addMember("value = %M", typeNamesAsConstantsGenerator.asConstant(type.toQualifiedName()))
-            .addMember("imported = %L", true)
-            .build())
+         .addAnnotation(
+            AnnotationSpec.builder(DataType::class)
+               .addMember("value = %M", typeNamesAsConstantsGenerator.asConstant(type.toQualifiedName()))
+               .addMember("imported = %L", true)
+               .build()
+         )
 
       val hasValues = type.values.any { it.value != it.name }
       if (hasValues) {
          val valueType = type.values.first { it.value != it.name }
             .value::class
-         builder.primaryConstructor(FunSpec.constructorBuilder()
-            .addParameter("value", valueType)
-            .build())
-            .addProperty(PropertySpec.builder("value", valueType)
-               .initializer("value")
-               .build())
+         builder.primaryConstructor(
+            FunSpec.constructorBuilder()
+               .addParameter("value", valueType)
+               .build()
+         )
+            .addProperty(
+               PropertySpec.builder("value", valueType)
+                  .initializer("value")
+                  .build()
+            )
       }
 
       type.values.forEach { enumValue ->
@@ -105,7 +126,10 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
       return FileSpecWritableSource.from(type.toQualifiedName(), builder.build())
    }
 
-   private fun generateType(type: ObjectType, typeNamesAsConstantsGenerator: TypeNamesAsConstantsGenerator): WritableSource {
+   private fun generateType(
+      type: ObjectType,
+      typeNamesAsConstantsGenerator: TypeNamesAsConstantsGenerator
+   ): WritableSource {
       val qualifiedName = type.toQualifiedName()
 
 
@@ -117,10 +141,12 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
       val superclassProperties = mutableListOf<Field>()
       val specBuilder = TypeSpec.classBuilder(type.className())
          .addModifiers(KModifier.OPEN)
-         .addAnnotation(AnnotationSpec.builder(DataType::class)
-            .addMember("value = %M", typeNamesAsConstantsGenerator.asConstant(type.toQualifiedName()))
-            .addMember("imported = %L", true)
-            .build())
+         .addAnnotation(
+            AnnotationSpec.builder(DataType::class)
+               .addMember("value = %M", typeNamesAsConstantsGenerator.asConstant(type.toQualifiedName()))
+               .addMember("imported = %L", true)
+               .build()
+         )
          .primaryConstructor(
             FunSpec.constructorBuilder().apply {
                type.allFields.forEach { field ->
@@ -138,9 +164,11 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
 
                   this.addParameter(field.name, javaType)
                   if (type.fields.contains(field)) {
-                     properties.add(processorHelper
-                        .processField(PropertySpec.builder(field.name, javaType).initializer(field.name), field)
-                        .build())
+                     properties.add(
+                        processorHelper
+                           .processField(PropertySpec.builder(field.name, javaType).initializer(field.name), field)
+                           .build()
+                     )
                   } else {
                      // This field is inherited
                      superclassProperties.add(field)
@@ -158,7 +186,11 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
          } else {
             specBuilder.superclass(getJavaType(superType))
             superclassProperties.forEach { superclassProperty ->
-               specBuilder.addSuperclassConstructorParameter("%N = %N", superclassProperty.name, superclassProperty.name)
+               specBuilder.addSuperclassConstructorParameter(
+                  "%N = %N",
+                  superclassProperty.name,
+                  superclassProperty.name
+               )
             }
 
          }
@@ -175,7 +207,10 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
       return type is ObjectType && type.allFields.isEmpty()
    }
 
-   private fun generateScalarType(type: ObjectType, typeNamesAsConstantsGenerator: TypeNamesAsConstantsGenerator): WritableSource {
+   private fun generateScalarType(
+      type: ObjectType,
+      typeNamesAsConstantsGenerator: TypeNamesAsConstantsGenerator
+   ): WritableSource {
       return if (type.inheritsFromPrimitive) {
          require(type.inheritsFrom.size <= 1) { "Don't know how to generate a scalar type that inherits from multiple types" }
          generateScalarAsPrimitiveTypeAlias(type, typeNamesAsConstantsGenerator)
@@ -188,29 +223,36 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
       val name = type.toQualifiedName()
       val spec = TypeSpec
          .interfaceBuilder(name.asClassName())
-         .addAnnotation(AnnotationSpec.builder(DataType::class)
-            .addMember("value = %M", typeNames.asConstant(type.toQualifiedName()))
-            .addMember("imported = %L", true)
-            .build())
+         .addAnnotation(
+            AnnotationSpec.builder(DataType::class)
+               .addMember("value = %M", typeNames.asConstant(type.toQualifiedName()))
+               .addMember("imported = %L", true)
+               .build()
+         )
          .build()
       return FileSpecWritableSource.from(name, spec)
    }
 
-   private fun generateScalarAsPrimitiveTypeAlias(type: ObjectType, typeNames: TypeNamesAsConstantsGenerator): FileSpecWritableSource {
+   private fun generateScalarAsPrimitiveTypeAlias(
+      type: ObjectType,
+      typeNames: TypeNamesAsConstantsGenerator
+   ): FileSpecWritableSource {
       val inheritsFrom = type.inheritsFrom.first()
 
       val typeAliasQualifiedName = type.toQualifiedName()
       val javaType = try {
          getJavaType(inheritsFrom)
-      } catch (e:Exception) {
+      } catch (e: Exception) {
          throw CodeGenerationFailedException("Failed to generate Kotlin code for type ${type.qualifiedName}: ${e.message ?: "A ${e::class.simpleName} error was thrown"}")
       }
       val typeAliasSpec = TypeAliasSpec
          .builder(typeAliasQualifiedName.typeName, javaType)
-         .addAnnotation(AnnotationSpec.builder(DataType::class)
-            .addMember("value = %M", typeNames.asConstant(type.toQualifiedName()))
-            .addMember("imported = %L", true)
-            .build())
+         .addAnnotation(
+            AnnotationSpec.builder(DataType::class)
+               .addMember("value = %M", typeNames.asConstant(type.toQualifiedName()))
+               .addMember("imported = %L", true)
+               .build()
+         )
          .build()
 
       val fileSpec = FileSpec.builder(typeAliasQualifiedName.namespace, typeAliasQualifiedName.typeName)
@@ -219,15 +261,17 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
       return FileSpecWritableSource(typeAliasQualifiedName, fileSpec)
    }
 
-   private fun generateInheritedEnum(type: EnumType,typeNames: TypeNamesAsConstantsGenerator): WritableSource {
+   private fun generateInheritedEnum(type: EnumType, typeNames: TypeNamesAsConstantsGenerator): WritableSource {
       val typeAliasQualifiedName = type.toQualifiedName()
       val baseEnumQualifiedName = type.baseEnum!!
       val typeAliasSpec = TypeAliasSpec
          .builder(typeAliasQualifiedName.typeName, getJavaType(baseEnumQualifiedName))
-         .addAnnotation(AnnotationSpec.builder(DataType::class)
-            .addMember("value = %M", typeNames.asConstant(typeAliasQualifiedName))
-            .addMember("imported = %L", true)
-            .build())
+         .addAnnotation(
+            AnnotationSpec.builder(DataType::class)
+               .addMember("value = %M", typeNames.asConstant(typeAliasQualifiedName))
+               .addMember("imported = %L", true)
+               .build()
+         )
          .build()
 
       val fileSpec = FileSpec.builder(typeAliasQualifiedName.namespace, typeAliasQualifiedName.typeName)
@@ -240,10 +284,12 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
       val typeAliasQualifiedName = typeAlias.toQualifiedName()
       val typeAliasSpec = TypeAliasSpec
          .builder(typeAliasQualifiedName.typeName, getJavaType(typeAlias.aliasType!!))
-         .addAnnotation(AnnotationSpec.builder(DataType::class)
-            .addMember("value = %M", typeNames.asConstant(typeAlias.toQualifiedName()))
-            .addMember("imported = %L", true)
-            .build())
+         .addAnnotation(
+            AnnotationSpec.builder(DataType::class)
+               .addMember("value = %M", typeNames.asConstant(typeAlias.toQualifiedName()))
+               .addMember("imported = %L", true)
+               .build()
+         )
          .build()
 
       val fileSpec = FileSpec.builder(typeAliasQualifiedName.namespace, typeAliasQualifiedName.typeName)
@@ -259,6 +305,7 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName:String = "taxi.ge
             val innerType = getJavaType(type.type)
             List::class.asClassName().plusParameter(innerType)
          }
+
          else -> ClassName.bestGuess(type.qualifiedName)
 //            else -> TODO("getJavaType for type ${type.javaClass.name} not yet supported")
       }
@@ -315,15 +362,25 @@ internal class ProcessorHelper(private val processors: List<Processor>) {
       return this.processors
          .asSequence()
          .filterIsInstance<TypeProcessor<KBuilderType>>()
-         .fold(builder) { acc: KBuilderType, fieldProcessor: TypeProcessor<KBuilderType> -> fieldProcessor.process(acc, type) }
+         .fold(builder) { acc: KBuilderType, fieldProcessor: TypeProcessor<KBuilderType> ->
+            fieldProcessor.process(
+               acc,
+               type
+            )
+         }
    }
 
    inline fun <reified KBuilderType> processField(builder: KBuilderType, field: Field): KBuilderType {
       return this.processors
          .asSequence()
          .filterIsInstance<FieldProcessor<KBuilderType>>()
-         .fold(builder) { acc: KBuilderType, fieldProcessor: FieldProcessor<KBuilderType> -> fieldProcessor.process(acc, field) }
+         .fold(builder) { acc: KBuilderType, fieldProcessor: FieldProcessor<KBuilderType> ->
+            fieldProcessor.process(
+               acc,
+               field
+            )
+         }
    }
 }
 
-class CodeGenerationFailedException(message:String):RuntimeException(message)
+class CodeGenerationFailedException(message: String) : RuntimeException(message)

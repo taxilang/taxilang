@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
 import lang.taxi.services.operations.constraints.ConstantValueExpression
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.services.operations.constraints.PropertyTypeIdentifier
@@ -13,8 +14,10 @@ import lang.taxi.types.QualifiedName
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class ViewFilterSpec : Spek({
-   describe("view syntax with constraints / filters") {
+class ViewFilterSpec : DescribeSpec({
+   // Ignored while views are up for debate as a feature we want to keep.
+   // Lets decide if we want to keep views before fixing this implementation
+   xdescribe("view syntax with constraints / filters") {
       it("simple view definition with constraints") {
          val src = """
          model Person {

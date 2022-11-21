@@ -21,7 +21,8 @@ class OperationContextSpec : DescribeSpec({
          model Trade {
             tradeId : TradeId inherits String
             tradeDate : TradeDate inherits Instant
-            orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd HH:mm:ss.SSSSSSS")
+            @Format( "yyyy-MM-dd HH:mm:ss.SSSSSSS")
+            orderDateTime : TransactionEventDateTime
          }
          type EmployeeCode inherits String
       """.trimIndent()

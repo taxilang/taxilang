@@ -1,11 +1,12 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
 import lang.taxi.types.PrimitiveType
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object AssignmentSpec : Spek({
+class AssignmentSpec : DescribeSpec({
    describe("Type assignment rules") {
       val schema = """
       type EyeColour inherits String
@@ -55,10 +56,13 @@ object AssignmentSpec : Spek({
          val schema = """
          type EventDate inherits Instant
          model Source {
-            eventDate : EventDate( @format = "MM/dd/yy'T'HH:mm:ss.SSSX" )
+
+             @Format("MM/dd/yy'T'HH:mm:ss.SSSX")
+            eventDate : EventDate
          }
          model ThingWithInlineInstant {
-            eventDate : Instant( @format = "yyyy-MM-dd'T'HH:mm:ss.SSSX" )
+            @Format("yyyy-MM-dd'T'HH:mm:ss.SSSX")
+            eventDate : Instant
          }
       """.compiled()
          schema.type("EventDate").resolveAliases().qualifiedName.should.equal("EventDate")
