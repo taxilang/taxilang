@@ -1,25 +1,62 @@
 package lang.taxi.query
 
-import arrow.core.Either
+import arrow.core.*
 import lang.taxi.CompilationError
 import lang.taxi.NamespaceQualifiedTypeResolver
 import lang.taxi.TaxiParser
+import lang.taxi.TaxiParser.ParameterConstraintContext
+import lang.taxi.compiler.ExpressionCompiler
 import lang.taxi.services.operations.constraints.Constraint
+import lang.taxi.services.operations.constraints.ExpressionConstraint
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraintProvider
 import lang.taxi.types.Type
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 
 
-class ConstraintBuilder(private val typeResolver: NamespaceQualifiedTypeResolver) {
+class ConstraintBuilder(
+   private val typeResolver: NamespaceQualifiedTypeResolver,
+   private val expressionCompiler: ExpressionCompiler
+) {
    private val propertyToParameterConstraintProvider = PropertyToParameterConstraintProvider()
 
-   fun build(parameterConstraintExpressionList: TaxiParser.ParameterConstraintExpressionListContext,
-             type: Type
+
+   fun build(
+      parameterConstraint: ParameterConstraintContext?,
+      type: Type
    ): Either<List<CompilationError>, List<Constraint>> {
-      val constraints: Either<List<CompilationError>, List<Constraint>> = parameterConstraintExpressionList.parameterConstraintExpression().map { constraintExpression ->
-         propertyToParameterConstraintProvider.build(type, typeResolver, constraintExpression)
-      }.invertEitherList().flattenErrors()
+      if (parameterConstraint == null) {
+         return emptyList<Constraint>().right()
+      }
+      val legacyConstraints = parameterConstraint.parameterConstraintExpressionList()?.let { build(it, type) }
+         ?: emptyList<Constraint>().right()
+
+
+      return legacyConstraints.flatMap { legacyConstraints ->
+         val expressionConstraints = parameterConstraint.expressionGroup()?.let { buildExpressionConstraint(it, type) }
+            ?: emptyList<Constraint>().right()
+
+         expressionConstraints.map { it + legacyConstraints }
+      }
+   }
+
+   private fun buildExpressionConstraint(
+      expressionGroup: TaxiParser.ExpressionGroupContext,
+      type: Type
+   ): Either<List<CompilationError>, List<Constraint>> {
+      return expressionCompiler.compile(expressionGroup).map { expression ->
+         listOf(ExpressionConstraint(expression))
+      }
+   }
+
+   fun build(
+      parameterConstraintExpressionList: TaxiParser.ParameterConstraintExpressionListContext,
+      type: Type
+   ): Either<List<CompilationError>, List<Constraint>> {
+      val constraints: Either<List<CompilationError>, List<Constraint>> =
+         parameterConstraintExpressionList.parameterConstraintExpression().map { constraintExpression ->
+            propertyToParameterConstraintProvider.build(type, typeResolver, constraintExpression)
+         }.invertEitherList().flattenErrors()
       return constraints
    }
 }

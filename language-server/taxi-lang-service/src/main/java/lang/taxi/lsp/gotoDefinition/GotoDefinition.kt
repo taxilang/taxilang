@@ -3,9 +3,9 @@ package lang.taxi.lsp.gotoDefinition
 import arrow.core.const
 import lang.taxi.Compiler
 import lang.taxi.TaxiParser
-import lang.taxi.TaxiParser.ClassOrInterfaceTypeContext
 import lang.taxi.TaxiParser.IdentifierContext
-import lang.taxi.TaxiParser.TypeTypeContext
+import lang.taxi.TaxiParser.QualifiedNameContext
+import lang.taxi.TaxiParser.TypeReferenceContext
 import lang.taxi.lsp.CompilationResult
 import lang.taxi.lsp.completion.TypeProvider
 import lang.taxi.lsp.completion.normalizedUriPath
@@ -25,17 +25,17 @@ class GotoDefinitionService(private val typeProvider: TypeProvider) {
       val context =
          getRuleContext(compiler, params)
       val compilationUnit = when (context) {
-         is TaxiParser.SimpleFieldDeclarationContext -> compiler.getDeclarationSource(context.typeType())
-         is ClassOrInterfaceTypeContext -> compiler.getDeclarationSource(context.parent as TypeTypeContext)
-         is TaxiParser.TypeTypeContext -> compiler.getDeclarationSource(context)
+         is TaxiParser.FieldTypeDeclarationContext -> compiler.getDeclarationSource(context.optionalTypeReference().typeReference())
+         is QualifiedNameContext -> compiler.getDeclarationSource(context.parent as TypeReferenceContext)
+         is TaxiParser.TypeReferenceContext -> compiler.getDeclarationSource(context)
          is TaxiParser.ListOfInheritedTypesContext -> {
             // TODO  : For now, let's just use the first type. Not sure we support a list of types here.
-            val inheritedType = context.typeType().first()
+            val inheritedType = context.typeReference().first()
             compiler.getDeclarationSource(inheritedType)
          }
 
          is TaxiParser.EnumInheritedTypeContext -> {
-            val inheritedType = context.typeType()
+            val inheritedType = context.typeReference()
             compiler.getDeclarationSource(inheritedType)
          }
          is TaxiParser.EnumSynonymSingleDeclarationContext -> {

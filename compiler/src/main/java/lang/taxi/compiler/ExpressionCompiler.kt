@@ -1,14 +1,12 @@
 package lang.taxi.compiler
 
-import arrow.core.Either
-import arrow.core.flatMap
-import arrow.core.handleErrorWith
-import arrow.core.left
-import arrow.core.right
-import lang.taxi.CompilationError
-import lang.taxi.TaxiParser
+import arrow.core.*
+import lang.taxi.*
+import lang.taxi.TaxiParser.QualifiedNameContext
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
+import lang.taxi.accessors.ProjectionFunctionScope
+import lang.taxi.compiler.fields.FieldCompiler
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.FieldReferenceExpression
 import lang.taxi.expressions.FunctionExpression
@@ -16,25 +14,9 @@ import lang.taxi.expressions.LambdaExpression
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
-import lang.taxi.findNamespace
 import lang.taxi.functions.Function
-import lang.taxi.source
-import lang.taxi.text
-import lang.taxi.toCompilationUnit
-import lang.taxi.toCompilationUnits
-import lang.taxi.types.Enums
-import lang.taxi.types.FieldReferenceSelector
-import lang.taxi.types.FormulaOperator
-import lang.taxi.types.ModelAttributeReferenceSelector
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.Type
-import lang.taxi.types.TypeChecker
-import lang.taxi.utils.flattenErrors
-import lang.taxi.utils.getOrThrow
-import lang.taxi.utils.invertEitherList
-import lang.taxi.utils.leftOr
-import lang.taxi.valueOrNullValue
+import lang.taxi.types.*
+import lang.taxi.utils.*
 import org.antlr.v4.runtime.ParserRuleContext
 
 class ExpressionCompiler(
@@ -45,7 +27,8 @@ class ExpressionCompiler(
     * Pass the fieldCompiler when the expression being compiled is within the field of a model / query result.
     * This allows field lookups by name in expressions
     */
-   private val fieldCompiler: FieldCompiler? = null
+   private val fieldCompiler: FieldCompiler? = null,
+   private val scopes: List<ProjectionFunctionScope> = emptyList()
 ) : FunctionParameterReferenceResolver {
    private val functionCompiler = FunctionAccessorCompiler(
       tokenProcessor,
@@ -64,9 +47,11 @@ class ExpressionCompiler(
             require(expressionGroup.expressionGroup().size == 1) { "Expected only a single ExpressionGroup inside parenthesis" }
             compile(expressionGroup.expressionGroup(0))
          }
+
          expressionGroup.children.size == 2 && expressionGroup.expressionInputs() != null -> parseLambdaExpression(
             expressionGroup
          )
+
          expressionGroup.children.size == 3 -> parseOperatorExpression(expressionGroup)          // lhs operator rhs
          expressionGroup.expressionGroup().isEmpty() -> compileSingleExpression(expressionGroup)
          else -> error("Unhandled expression group scenario: ${expressionGroup.text}")
@@ -78,7 +63,7 @@ class ExpressionCompiler(
       require(lambdaExpression.expressionGroup().size == 1) { "expected exactly 1 expression group on the rhs of the lambda" }
       return lambdaExpression.expressionInputs()
          .expressionInput().map { expressionInput ->
-            tokenProcessor.parseType(expressionInput.findNamespace(), expressionInput.typeType())
+            tokenProcessor.parseType(expressionInput.findNamespace(), expressionInput.typeReference())
          }.invertEitherList().flattenErrors()
          .flatMap { inputs ->
             compile(lambdaExpression.expressionGroup(0)).map { expression ->
@@ -97,18 +82,18 @@ class ExpressionCompiler(
 
    private fun compileExpressionAtom(expressionAtom: TaxiParser.ExpressionAtomContext): Either<List<CompilationError>, Expression> {
       return when {
-         expressionAtom.typeType() != null -> parseTypeExpression(expressionAtom.typeType()) /*{
+         expressionAtom.typeReference() != null -> parseTypeExpression(expressionAtom.typeReference()) /*{
             // At this point the grammar isn't sufficiently strong to know if
             // we've been given a type or a function reference
-            val typeType = expressionAtom.typeType()
+            val typeType = expressionAtom.typeReference()
             tokenProcessor.resolveTypeOrFunction(
-               typeType.classOrInterfaceType().text,
+               typeType.qualifiedName().text,
                expressionAtom
             )
             TODO()
 
          } */
-         expressionAtom.readFunction() != null -> parseFunctionExpression(expressionAtom.readFunction())
+         expressionAtom.functionCall() != null -> parseFunctionExpression(expressionAtom.functionCall())
          expressionAtom.literal() != null -> parseLiteralExpression(expressionAtom.literal())
          expressionAtom.fieldReferenceSelector() != null -> parseFieldReferenceSelector(expressionAtom.fieldReferenceSelector())
          expressionAtom.modelAttributeTypeReference() != null -> parseModelAttributeTypeReference(expressionAtom.modelAttributeTypeReference())
@@ -118,13 +103,51 @@ class ExpressionCompiler(
 
    private fun parseFieldReferenceSelector(fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext): Either<List<CompilationError>, Expression> {
       return requireFieldCompilerIsPresent(fieldReferenceSelector).flatMap {
-         val fieldName = fieldReferenceSelector.identifier().text
-         fieldCompiler!!.provideField(fieldName, fieldReferenceSelector)
-            .map { field ->
-               FieldReferenceExpression(
-                  FieldReferenceSelector.fromField(field),
-                  fieldReferenceSelector.toCompilationUnits()
-               )
+         val fieldPath = fieldReferenceSelector.qualifiedName().identifier()
+
+         val (firstPathElement, remainingPathElements) = fieldPath.takeHead()
+
+         var error: CompilationMessage? = null
+         return fieldCompiler!!.provideField(firstPathElement.text, fieldReferenceSelector)
+            .flatMap { field ->
+               val fieldSelectors = remainingPathElements
+                  .asSequence()
+                  .takeWhile { error == null }
+                  // Cast to nullable type, as it allows us to return null when an error is thrown
+                  .runningFold(FieldReferenceSelector.fromField(field) as FieldReferenceSelector?) { lastField, pathElement ->
+                     val lastFieldReturnType = lastField!!.returnType
+
+                     // Check that the type has properties
+                     if (lastFieldReturnType !is ObjectType) {
+                        error = CompilationError(
+                           pathElement.toCompilationUnit(),
+                           "${lastFieldReturnType.toQualifiedName().parameterizedName} does not expose properties"
+                        )
+                        null
+
+                        // Check that the field exists on the type
+                     } else if (!lastFieldReturnType.hasField(pathElement.text)) {
+                        error = CompilationError(
+                           pathElement.toCompilationUnit(),
+                           "${lastFieldReturnType.toQualifiedName().parameterizedName} does not have a property ${pathElement.text}"
+                        )
+                        null
+                     } else {
+                        FieldReferenceSelector.fromField(lastFieldReturnType.field(pathElement.text))
+                     }
+                  }
+                  .filterNotNull()
+                  .toList()
+
+               if (error != null) {
+                  listOfNotNull(error).left()
+               } else {
+                  FieldReferenceExpression(
+                     fieldSelectors,
+                     fieldReferenceSelector.toCompilationUnits()
+                  ).right()
+               }
+
             }
       }
    }
@@ -169,6 +192,7 @@ class ExpressionCompiler(
                   )
                ).left()
             }
+
             !isNullCheck && !operator.supports(lhsType, rhsType) -> {
                listOf(
                   CompilationError(
@@ -177,6 +201,7 @@ class ExpressionCompiler(
                   )
                ).left()
             }
+
             else -> {
                OperatorExpression(
                   lhs = lhs,
@@ -196,7 +221,7 @@ class ExpressionCompiler(
    }
 
 
-   private fun parseFunctionExpression(readFunction: TaxiParser.ReadFunctionContext): Either<List<CompilationError>, FunctionExpression> {
+   private fun parseFunctionExpression(readFunction: TaxiParser.FunctionCallContext): Either<List<CompilationError>, FunctionExpression> {
 // Note: Using ANY as the target type for the function's return type, which effectively disables type checking here.
       // We can improve this later.
       return tokenProcessor.getType(readFunction.findNamespace(), PrimitiveType.ANY.qualifiedName, readFunction)
@@ -207,12 +232,17 @@ class ExpressionCompiler(
          }
    }
 
-   private fun parseTypeExpression(typeType: TaxiParser.TypeTypeContext): Either<List<CompilationError>, Expression> {
+
+   private fun parseTypeExpression(typeType: TaxiParser.TypeReferenceContext): Either<List<CompilationError>, Expression> {
+      if (canResolveAsScopePath(typeType.qualifiedName())) {
+         return resolveScopePath(typeType.qualifiedName())
+      }
+
       return tokenProcessor.parseType(typeType.findNamespace(), typeType)
          .map { type -> TypeExpression(type, typeType.toCompilationUnits()) }
          .handleErrorWith { errors ->
-            if (Enums.isPotentialEnumMemberReference(typeType.classOrInterfaceType().identifier().text())) {
-               tokenProcessor.resolveEnumMember(typeType.classOrInterfaceType().identifier().text(), typeType)
+            if (Enums.isPotentialEnumMemberReference(typeType.qualifiedName().identifier().text())) {
+               tokenProcessor.resolveEnumMember(typeType.qualifiedName().identifier().text(), typeType)
                   .map { enumMember ->
                      LiteralExpression(
                         LiteralAccessor(enumMember.value, enumMember.enum),
@@ -224,6 +254,73 @@ class ExpressionCompiler(
             }
 
          }
+   }
+
+   fun canResolveAsScopePath(qualifiedName: QualifiedNameContext): Boolean {
+      val identifierTokens = qualifiedName.identifier().map { it.text }
+      return scopes.any { it.matchesReference(identifierTokens) }
+   }
+
+   /**
+    * Resolves a path declared using a scope, against the field name.
+    * for example:
+    *
+    * find{ Foo[] } as (foo : Foo) {
+    *    thing : foo.bar // <---resolves bar property against foo
+    * }
+    */
+   fun resolveScopePath(qualifiedName: QualifiedNameContext): Either<List<CompilationError>, ScopedReferenceSelector> {
+      val identifierTokens = qualifiedName.identifier().map { it.text }
+      // if we can resolve it through a scope, do so.
+      val resolvedScopeReference = scopes.first { it.matchesReference(identifierTokens) }
+      return resolveScopePath(
+         resolvedScopeReference,
+         // The first identifier is the name of the scope, and doesn't
+         // need to be resolved (eg: "this")
+         identifierTokens.drop(1),
+         qualifiedName
+      ).flatMap { fieldSelectors ->
+         ScopedReferenceSelector(
+            resolvedScopeReference,
+            fieldSelectors.drop(1),
+            qualifiedName.toCompilationUnits()
+         ).right()
+      }
+
+   }
+
+   /**
+    * Maps the full scope path.
+    * Callers are responsible for dropping the first path, if
+    * that's already handled (ie., if the initial scope is "special" - "this")
+    */
+   private fun resolveScopePath(
+      scope: ProjectionFunctionScope,
+      path: List<String>,
+      context: ParserRuleContext
+   ): Either<List<CompilationError>, List<FieldReferenceSelector>> {
+      val initial = FieldReferenceSelector(scope.name, scope.type)
+      // We must return the initial scope, so that it can be consistently dropped
+      return if (path.isEmpty()) {
+         listOf(initial).right()
+      } else {
+         return path
+            .runningFold(initial.right() as Either<List<CompilationError>, FieldReferenceSelector>) { resolvedType, fieldName ->
+            resolvedType.flatMap { selector ->
+               val previousType = selector.declaredType
+               if (previousType is ObjectType && previousType.hasField(fieldName)) {
+                  FieldReferenceSelector(fieldName, previousType.field(fieldName).type).right()
+               } else {
+                  listOf(
+                     CompilationError(
+                        context.toCompilationUnit(),
+                        "Cannot resolve reference $fieldName against type ${previousType.toQualifiedName().parameterizedName}"
+                     )
+                  ).left()
+               }
+            }
+         }.invertEitherList().flattenErrors()
+      }
    }
 
    override fun compileScalarAccessor(
@@ -249,14 +346,15 @@ class ExpressionCompiler(
                fieldCompiler.compileScalarAccessor(expression, targetType)
             }
          }
-         expression.readExpression() != null -> {
-            val compiled = compile(expression.readExpression().expressionGroup())
+
+         expression.expressionGroup() != null -> {
+            val compiled = compile(expression.expressionGroup())
             compiled
          }
-         expression.readFunction() != null -> {
-            val functionContext = expression.readFunction()
-            functionCompiler.buildFunctionAccessor(functionContext, targetType)
-         }
+//         expression.functionCall() != null -> {
+//            val functionContext = expression.functionCall()
+//            functionCompiler.buildFunctionAccessor(functionContext, targetType)
+//         }
          else -> error("Unhandled type of accessor expression at ${expression.source().content}")
       }
    }
@@ -279,7 +377,10 @@ class ExpressionCompiler(
       parameterContext: TaxiParser.ParameterContext
    ): Either<List<CompilationError>, FieldReferenceSelector> {
       return requireFieldCompilerIsPresent(parameterContext).flatMap {
-         fieldCompiler!!.provideField(parameterContext.fieldReferenceSelector().identifier().text, parameterContext)
+         fieldCompiler!!.provideField(
+            parameterContext.fieldReferenceSelector().qualifiedName().identifier().text(),
+            parameterContext
+         )
             .map { field -> FieldReferenceSelector.fromField(field) }
       }
    }
@@ -288,26 +389,23 @@ class ExpressionCompiler(
       modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext
    ): Either<List<CompilationError>, ModelAttributeReferenceSelector> {
 
-      val memberSourceTypeType = modelAttributeReferenceCtx.typeType().first()
-      val memberTypeType = modelAttributeReferenceCtx.typeType()[1]
-      val sourceTypeName = try {
-         QualifiedName.from(fieldCompiler!!.lookupTypeByName(memberSourceTypeType)).right()
-      } catch (e: Exception) {
-         CompilationError(
-            modelAttributeReferenceCtx.start,
-            "Only Model AttributeReference expressions (SourceType::FieldType) are allowed for views"
-         ).asList().left()
-      }
-      return sourceTypeName.flatMap { memberSourceType ->
-         fieldCompiler!!.parseType(modelAttributeReferenceCtx.findNamespace(), memberTypeType).flatMap { memberType ->
-            ModelAttributeReferenceSelector(memberSourceType, memberType, modelAttributeReferenceCtx.toCompilationUnits()).right()
+      val sourceTypeReference = modelAttributeReferenceCtx.typeReference().first()
+      val targetTypeReference = modelAttributeReferenceCtx.typeReference()[1]
+
+      return fieldCompiler!!.typeOrError(sourceTypeReference).flatMap { sourceType ->
+         fieldCompiler.typeOrError(targetTypeReference).map { targetType ->
+            val returnType = if (modelAttributeReferenceCtx.arrayMarker() != null) {
+               ArrayType.of(targetType, targetTypeReference.toCompilationUnit())
+            } else {
+               targetType
+            }
+            ModelAttributeReferenceSelector(
+               sourceType.toQualifiedName(),
+               targetType,
+               returnType,
+               modelAttributeReferenceCtx.toCompilationUnit()
+            )
          }
       }
-      // TODO - This isn't implemented, need to find the original implementation
-      return listOf(
-         CompilationError(
-            modelAttributeReferenceCtx.start, "SourceType::FieldType notation is not permitted here"
-         )
-      ).left()
    }
 }

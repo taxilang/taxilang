@@ -23,8 +23,8 @@ object Instructions {
 object Subjects {
    fun parse(expression: TaxiParser.PolicyExpressionContext, typeResolver: NamespaceQualifiedTypeResolver): Subject {
       return when {
-         expression.callerIdentifer() != null -> RelativeSubject(RelativeSubject.RelativeSubjectSource.CALLER, typeResolver.resolve(expression.callerIdentifer().typeType()).orThrowCompilationException())
-         expression.thisIdentifier() != null -> RelativeSubject(RelativeSubject.RelativeSubjectSource.THIS, typeResolver.resolve(expression.thisIdentifier().typeType()).orThrowCompilationException())
+         expression.callerIdentifer() != null -> RelativeSubject(RelativeSubject.RelativeSubjectSource.CALLER, typeResolver.resolve(expression.callerIdentifer().typeReference()).orThrowCompilationException())
+         expression.thisIdentifier() != null -> RelativeSubject(RelativeSubject.RelativeSubjectSource.THIS, typeResolver.resolve(expression.thisIdentifier().typeReference()).orThrowCompilationException())
          expression.literalArray() != null -> LiteralArraySubject(expression.literalArray().literal().map { it.value() })
          expression.literal() != null -> LiteralSubject(expression.literal().valueOrNull())
          else -> error("Unhandled subject : ${expression.text}")

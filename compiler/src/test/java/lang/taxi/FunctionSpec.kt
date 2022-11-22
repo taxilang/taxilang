@@ -19,6 +19,7 @@ import lang.taxi.types.TypeReferenceSelector
 import java.util.*
 import kotlin.test.assertFailsWith
 
+
 class FunctionSpec : DescribeSpec({
 
    describe("declaring functions") {
@@ -116,8 +117,8 @@ namespace pkgB {
          """.compiled()
             .objectType("pkgB.Record")
             .field("primaryKey")
-            .accessor as FunctionAccessor
-         accessor.function.qualifiedName.should.equal("pkgA.upperCase")
+            .accessor as FunctionExpression
+         accessor.function.function.qualifiedName.should.equal("pkgA.upperCase")
       }
       it("should allow string literal parameters") {
          val field = """
@@ -129,7 +130,7 @@ namespace pkgB {
             .objectType("Record")
             .field("primaryKey")
 
-         val accessor = field.accessor as FunctionAccessor
+         val accessor = field.accessor as FunctionExpression
          accessor.function.qualifiedName.should.equal("upper")
          accessor.inputs.should.have.size(1)
          val input = accessor.inputs[0] as LiteralAccessor
@@ -143,7 +144,7 @@ namespace pkgB {
             }
          """.compiled()
             .objectType("Record")
-            .field("max").accessor as FunctionAccessor
+            .field("max").accessor as FunctionExpression
 
          accessor.inputs.should.have.size(2)
          val param1 = accessor.inputs[0] as LiteralAccessor
@@ -160,10 +161,10 @@ namespace pkgB {
                primaryKey: String by concat(left(column(0), 3), "-", column(1))
             }
          """.compiled()
-         val accessor = taxi.objectType("Record").field("primaryKey").accessor as FunctionAccessor
+         val accessor = taxi.objectType("Record").field("primaryKey").accessor as FunctionExpression
          accessor.function.qualifiedName.should.equal("concat")
          accessor.inputs.should.have.size(3)
-         (accessor.inputs[0] as FunctionAccessor).let { input ->
+         (accessor.inputs[0] as FunctionExpression).let { input ->
             input.function.qualifiedName.should.equal("left")
             input.function.parameters.should.have.size(2)
             input.inputs[0].should.equal(ColumnAccessor(0, defaultValue = null, returnType = PrimitiveType.STRING))
@@ -187,8 +188,8 @@ namespace pkgB {
          val accessor = schema
             .objectType("Person")
             .field("leftName")
-            .accessor as FunctionAccessor
-         accessor.inputs[0].asA<FieldReferenceExpression>().fieldName.should.equal("firstName")
+            .accessor as FunctionExpression
+         accessor.inputs[0].asA<FieldReferenceExpression>().path.should.equal("firstName")
          accessor.inputs[0].asA<FieldReferenceExpression>().returnType.qualifiedName.should.equal("FirstName")
       }
 
@@ -204,7 +205,7 @@ namespace pkgB {
                }""".compiled()
             .objectType("Person")
             .field("leftName")
-            .accessor as FunctionAccessor
+            .accessor as FunctionExpression
          accessor.function.qualifiedName.should.equal("left")
          accessor.function.qualifiedName.should.not.equal(Left.name.fullyQualifiedName)
       }
@@ -220,7 +221,7 @@ namespace pkgB {
                }""".compiled()
                .objectType("Person")
                .field("leftName")
-               .accessor as FunctionAccessor
+               .accessor as FunctionExpression
             accessor.function.qualifiedName.should.equal(Left.name.fullyQualifiedName)
          }
       }
@@ -262,7 +263,7 @@ namespace pkgB {
                }
 
             """.compiled()
-            .model("Person").field("field1").accessor as FunctionAccessor
+            .model("Person").field("field1").accessor as FunctionExpression
          (accessor.inputs[0] as TypeReferenceSelector).type.qualifiedName.should.equal("FirstName")
          (accessor.inputs[1] as TypeReferenceSelector).type.qualifiedName.should.equal("LastName")
          (accessor.inputs[2] as TypeReferenceSelector).type.qualifiedName.should.equal("FullName")

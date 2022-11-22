@@ -1,22 +1,7 @@
 package lang.taxi.lsp.completion
 
 import lang.taxi.TaxiParser
-import lang.taxi.TaxiParser.CaseScalarAssigningDeclarationContext
-import lang.taxi.TaxiParser.ColumnIndexContext
-import lang.taxi.TaxiParser.EnumConstantContext
-import lang.taxi.TaxiParser.EnumSynonymDeclarationContext
-import lang.taxi.TaxiParser.EnumSynonymSingleDeclarationContext
-import lang.taxi.TaxiParser.ExpressionAtomContext
-import lang.taxi.TaxiParser.FieldDeclarationContext
-import lang.taxi.TaxiParser.IdentifierContext
-import lang.taxi.TaxiParser.ListOfInheritedTypesContext
-import lang.taxi.TaxiParser.ListTypeContext
-import lang.taxi.TaxiParser.ParameterConstraintContext
-import lang.taxi.TaxiParser.ParameterConstraintExpressionContext
-import lang.taxi.TaxiParser.QueryTypeListContext
-import lang.taxi.TaxiParser.SimpleFieldDeclarationContext
-import lang.taxi.TaxiParser.TypeMemberDeclarationContext
-import lang.taxi.TaxiParser.TypeTypeContext
+import lang.taxi.TaxiParser.*
 import lang.taxi.lsp.CompilationResult
 import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.ParserRuleContext
@@ -81,7 +66,7 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
       }
       val completionItems = when (completionContext) {
          is ColumnIndexContext -> buildColumnIndexSuggestions()
-         is SimpleFieldDeclarationContext -> typeProvider.getTypes(listOf(importDecorator))
+         is FieldTypeDeclarationContext -> typeProvider.getTypes(listOf(importDecorator))
          is FieldDeclarationContext -> typeProvider.getTypes(listOf(importDecorator))
          is TypeMemberDeclarationContext -> typeProvider.getTypes(listOf(importDecorator))
          is ListOfInheritedTypesContext -> typeProvider.getTypes(listOf(importDecorator))
@@ -93,7 +78,7 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
          )
          // This next one feels wrong, but it's what I'm seeing debugging.
          // suspect our matching of token to cursor position might be off
-         is TypeTypeContext -> typeProvider.getTypes(listOf(importDecorator))
+         is TypeReferenceContext -> typeProvider.getTypes(listOf(importDecorator))
          is CaseScalarAssigningDeclarationContext -> typeProvider.getEnumValues(
             listOf(importDecorator),
             context.start.text
@@ -110,28 +95,9 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
          // Query completions
          is ParameterConstraintExpressionContext -> typeProvider.getTypes(listOf(importDecorator))
          is QueryTypeListContext -> typeProvider.getTypes(listOf(importDecorator))
-         is ListTypeContext -> typeProvider.getTypes(listOf(importDecorator))
+         is ArrayMarkerContext -> typeProvider.getTypes(listOf(importDecorator))
          is ParameterConstraintContext -> typeProvider.getTypes(listOf(importDecorator))
-         else -> {
-            when {
-               context is TaxiParser.TemporalFormatListContext && context.text.isEmpty() -> {
-                  // We can hit this when doing completions in a query:
-                  // findAll { Person( <--- here.
-                  // The grammar will match as a TemportalFormatList, but it could equally
-                  // be a place for defining constraint types.
-                  // If there's no text yet, then hop up to the parent node, and try again.
-                  getCompletionsForContext(
-                     context.parent as ParserRuleContext,
-                     importDecorator,
-                     compilationResult,
-                     lastSuccessfulCompilation
-                  )
-               }
-
-               else -> emptyList()
-            }
-
-         }
+         else -> emptyList()
       }
       return completionItems
    }

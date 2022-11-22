@@ -8,7 +8,7 @@ data class Variable(
 )
 
 data class DiscoveryType(
-   val type: QualifiedName,
+   val type: Type,
    val constraints: List<Constraint>,
    /**
     * Starting facts aren't the same as a constraint, in that they don't
@@ -20,7 +20,9 @@ data class DiscoveryType(
     * If the query body is an anonymoust type store the definition here,
     */
    val anonymousType: Type? = null
-)
+) {
+   val typeName: QualifiedName = type.toQualifiedName()
+}
 
 
 enum class QueryMode(val directive: String) {

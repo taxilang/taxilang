@@ -13,7 +13,7 @@ package lang.taxi.compiler
 //      val typeMemberDeclaration = calculatedExpressionContext.typeMemberDeclaration()
 //      val operatorExpression = calculatedExpressionContext.operatorExpression()
 //      if (operatorExpression != null) {
-//         val operands = operatorExpression.typeType().map {
+//         val operands = operatorExpression.typeReference().map {
 //            QualifiedName.from(compiler.lookupTypeByName(it))
 //         }
 //         val operator = FormulaOperator.forSymbol(operatorExpression.arithmaticOperator().text)

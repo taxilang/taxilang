@@ -1,0 +1,20 @@
+---
+title: 1.35.x releases
+---
+
+import {Link} from "gatsby";
+
+This page contains details of releases in the 1.34.xx set of releases.
+
+# 1.35.0
+
+ * Removed `Type(@format = 'xxxx')` syntax, replaced with `@Format()` annotation directly on types
+   * TODO : Document this
+ * Model types can now be inferred from the return type of functions in query results
+   * TODO : Give examples, document this
+ * New stdlib functions: `singleBy()` and `filterAll()`
+ * Support for inline proejction of fields in a query model
+ * Named projection scopes to allow multiple nested projection scopes
+   * TODO : Document this
+ * Spread operator
+ * SDK: Helper function for determining if a model contains a path to a specific type

@@ -15,7 +15,7 @@ fun isFieldDeclaration(context: ParserRuleContext?): Boolean {
    return getFieldDeclaration(context) != null
 }
 
-fun getFieldDeclaration(context: ParserRuleContext?): TaxiParser.SimpleFieldDeclarationContext? {
+fun getFieldDeclaration(context: ParserRuleContext?): TaxiParser.FieldTypeDeclarationContext? {
    return context?.searchUpForRule()
 }
 
@@ -23,7 +23,7 @@ fun getFieldType(context: ParserRuleContext, compiler: Compiler): QualifiedName 
    val typeContext = when (context) {
       // The cursor is on the field name
       is TaxiParser.IdentifierContext -> context.searchUpForRule<TaxiParser.FieldDeclarationContext>()!!
-         .simpleFieldDeclaration().typeType()
+         .fieldTypeDeclaration().optionalTypeReference().typeReference()
 
       else -> error("Unexpected token type: ${context::class.simpleName}")
    }

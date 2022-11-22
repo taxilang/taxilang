@@ -175,7 +175,7 @@ type ListOfPerson inherits Person[]
       """.trimIndent()
 
       val (error, _) = Compiler(src).compileWithMessages()
-      error.first().detailMessage.should.equal("Syntax error at '{'.  That's all we know.")
+      error.should.have.size(1)
    }
 
    @Test
@@ -191,7 +191,7 @@ type ListOfPerson inherits Person[]
       """.trimIndent()
 
       val (error, _) = Compiler(src).compileWithMessages()
-      error.first().detailMessage.should.equal("Syntax error at ','.  That's all we know.")
+      error.should.have.size(1)
    }
 
    @Test

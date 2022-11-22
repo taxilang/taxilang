@@ -12,6 +12,8 @@ data class FunctionAccessor private constructor(
    val inputs: List<Accessor>,
    private val rawFunction: Function = function
 ) : Accessor, TaxiStatementGenerator {
+   val qualifiedName = function.qualifiedName
+   val parameters = function.parameters
    companion object {
       /**
        * Constructs a FunctionAccessor where any typeArguments present in the function contract

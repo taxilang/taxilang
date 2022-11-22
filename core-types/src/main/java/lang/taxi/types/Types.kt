@@ -143,36 +143,23 @@ enum class TypeKind {
    }
 }
 
-interface Type : Named, Compiled, ImportableToken, Documented {
+interface Type : Formattable, Named, Compiled, ImportableToken, Documented, Annotatable {
    val inheritsFrom: Set<Type>
 
    val allInheritedTypes: Set<Type>
 
-   val format: List<String>?
 
-   /**
-    * Indicates if this type (excluding any inherited types)
-    * declares a format.
-    *
-    * Note that the format property will return formats
-    * from inherited types.
-    */
-   val declaresFormat: Boolean
-      get() {
-         return this.format?.isNotEmpty() ?: false
-      }
 
    val inheritsFromPrimitive: Boolean
 
    val basePrimitive: PrimitiveType?
 
-   val formattedInstanceOfType: Type?
-
    val definitionHash: String?
 // Formulas are replaced by expressions / accessors
 //   val calculation: Formula?
 
-   val offset: Int?
+
+
 
    val anonymous: Boolean
       get() = false

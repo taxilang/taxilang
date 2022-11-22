@@ -59,8 +59,10 @@ type Person
          type WeightInOunces inherits Decimal
          type OuncesToGramsMultiplier inherits Decimal
          model Person {
-            birthDate : DateOfBirth( @format = "dd-mm-yyyy" )
-            timeOfBirth : TimeOfBirth( @format = "hh:mm:ss" )
+            @Format( "dd-mm-yyyy" )
+            birthDate : DateOfBirth
+            @Format( "hh:mm:ss" )
+            timeOfBirth : TimeOfBirth
             startupTime : BirthTimestamp by this.birthDate + this.timeOfBirth
             weightInGrams : WeightInGrams by xpath("/foo")
             weightInOunces : WeightInOunces by WeightInGrams * OuncesToGramsMultiplier
@@ -76,8 +78,10 @@ type WeightInOunces inherits Decimal
 type OuncesToGramsMultiplier inherits Decimal
 
 model Person {
-   birthDate : DateOfBirth( @format = "dd-mm-yyyy" )
-   timeOfBirth : TimeOfBirth( @format = "hh:mm:ss" )
+   @Format( "dd-mm-yyyy" )
+   birthDate : DateOfBirth
+   @Format( "hh:mm:ss" )
+   timeOfBirth : TimeOfBirth
    startupTime : BirthTimestamp  by this.birthDate + this.timeOfBirth
    weightInGrams : WeightInGrams  by xpath("/foo")
    weightInOunces : WeightInOunces  by WeightInGrams * OuncesToGramsMultiplier
@@ -118,7 +122,9 @@ model Person {
    fun `outputs multiple formats`() {
       val src = """type TransactionEventDateTime inherits Instant
             model Order {
-                orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", @format = "yyyy-MM-dd'T'HH:mm:ss.SSS")
+                @Format( "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
+                @Format("yyyy-MM-dd'T'HH:mm:ss.SSS")
+                orderDateTime : TransactionEventDateTime
             }"""
       val schema = Compiler(src).compile()
       val generated = SchemaWriter().generateSchemas(listOf(schema))[0]
@@ -126,7 +132,9 @@ model Person {
          type TransactionEventDateTime inherits Instant
 
          model Order {
-            orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", @format = "yyyy-MM-dd'T'HH:mm:ss.SSS" )
+            @Format( "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
+            @Format( "yyyy-MM-dd'T'HH:mm:ss.SSS" )
+            orderDateTime : TransactionEventDateTime
          }
       """.trimIndent()
       generated.shouldCompileTheSameAs(expected)
@@ -136,13 +144,17 @@ model Person {
    fun `outputs multiple formats with offset`() {
       val src = """type TransactionEventDateTime inherits Instant
             model Order {
-                orderDateTime : TransactionEventDateTime( @format = ["yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "yyyy-MM-dd'T'HH:mm:ss.SSS"] @offset = 60)
+                @Format("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
+                 @Format( value = "yyyy-MM-dd'T'HH:mm:ss.SSS", offset = 60)
+                orderDateTime : TransactionEventDateTime
             }"""
       val schema = Compiler(src).compile()
       val generated = SchemaWriter().generateSchemas(listOf(schema))[0]
       val expected = """type TransactionEventDateTime inherits Instant
       model Order {
-         orderDateTime : TransactionEventDateTime( @format = ["yyyy-MM-dd'T'HH:mm:ss.SSSSSSS", "yyyy-MM-dd'T'HH:mm:ss.SSS"] @offset = 60 )
+         @Format( "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
+          @Format(value = "yyyy-MM-dd'T'HH:mm:ss.SSS", offset = 60 )
+         orderDateTime : TransactionEventDateTime
       }""".trimIndent()
       generated.shouldCompileTheSameAs(expected)
    }
@@ -180,7 +192,7 @@ type SomeAnotherQty inherits SomeQty
 model Foo {
    qty1 : Qty
    qty2 : QtyHit
-   field1 : SomeAnotherQty  by taxi.stdlib.coalesce( this.qty1,this.qty2 )
+   field1 : SomeAnotherQty  by coalesce(this.qty1, this.qty2)
 }
 
       """.trimIndent()
@@ -239,8 +251,12 @@ model Foo {
          type WeightInOunces inherits Decimal
          type OuncesToGramsMultiplier inherits Decimal
          model Person {
-            birthDate : DateOfBirth?( @format = "dd-mm-yyyy" )
-            timeOfBirth : TimeOfBirth?( @format = "hh:mm:ss" )
+            @Format ("dd-mm-yyyy")
+            birthDate : DateOfBirth?
+
+            @Format("hh:mm:ss" )
+            timeOfBirth : TimeOfBirth?
+
             startupTime : BirthTimestamp? by (this.birthDate + this.timeOfBirth)
             weightInGrams : WeightInGrams? by xpath("/foo")
             weightInOunces : WeightInOunces? by (WeightInGrams * OuncesToGramsMultiplier)
@@ -256,8 +272,11 @@ type WeightInOunces inherits Decimal
 type OuncesToGramsMultiplier inherits Decimal
 
 model Person {
-   birthDate : DateOfBirth?( @format = "dd-mm-yyyy" )
-   timeOfBirth : TimeOfBirth?( @format = "hh:mm:ss" )
+   @taxi.stdlib.Format(value = "dd-mm-yyyy" )
+   birthDate : DateOfBirth?
+
+   @taxi.stdlib.Format(value = "hh:mm:ss" )
+   timeOfBirth : TimeOfBirth?
    startupTime : BirthTimestamp?  by this.birthDate + this.timeOfBirth
    weightInGrams : WeightInGrams?  by xpath("/foo")
    weightInOunces : WeightInOunces?  by WeightInGrams * OuncesToGramsMultiplier

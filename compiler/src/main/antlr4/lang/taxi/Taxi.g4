@@ -64,10 +64,10 @@ typeDeclaration
     ;
 
 listOfInheritedTypes
-    : typeType (',' typeType)*
+    : typeReference (',' typeReference)*
     ;
 typeBody
-    :   '{' (typeMemberDeclaration | conditionalTypeStructureDeclaration )* '}'
+    :   '{' (typeMemberDeclaration | conditionalTypeStructureDeclaration )* SPREAD_OPERATOR? '}'
     ;
 
 typeMemberDeclaration
@@ -88,11 +88,11 @@ expressionTypeDeclaration : 'by' expressionGroup*;
 //}
 // In that example, the sum(this.transactions, (Transaction) -> Cost) is
 // an exmpression, not a lambdaSignature
-lambdaSignature: expressionInputs typeType;
+lambdaSignature: expressionInputs typeReference;
 
 
 expressionInputs: '(' expressionInput (',' expressionInput)* ')' '->';
-expressionInput: (identifier ':')? typeType;
+expressionInput: (identifier ':')? typeReference;
 
 
 // Added for expression types.
@@ -122,7 +122,7 @@ expressionGroup:
 // as types
 // 1-Oct: Tried collapsing scalarAccessorExpression into this, but it caused errors.
 // Would like to simplify...
-expressionAtom: readFunction | typeType | fieldReferenceSelector | modelAttributeTypeReference | literal | anonymousTypeDefinition;
+expressionAtom: functionCall | typeReference | fieldReferenceSelector | modelAttributeTypeReference | literal | anonymousTypeDefinition;
 
 //scalarAccessorExpression
   //    : xpathAccessorDeclaration
@@ -175,8 +175,8 @@ conditionalTypeWhenDeclaration:
 // Otherwise, these no lexer difference between
 // a fieldReferenceSelector (not permitted in expression types)
 // and a typeReferenceSelector (which is permitted)
-fieldReferenceSelector: propertyFieldNameQualifier identifier;
-typeReferenceSelector: typeType;
+fieldReferenceSelector: propertyFieldNameQualifier qualifiedName;
+typeReferenceSelector: typeReference;
 
 conditionalTypeWhenCaseDeclaration:
    caseDeclarationMatchExpression '->' (  /*caseFieldAssignmentBlock |  */  expressionGroup | scalarAccessorExpression | modelAttributeTypeReference);
@@ -206,7 +206,7 @@ fieldModifier
    : 'closed'
    ;
 fieldDeclaration
-  :   fieldModifier? identifier (':' (simpleFieldDeclaration | anonymousTypeDefinition | modelAttributeTypeReference))?
+  :   fieldModifier? identifier (':' (anonymousTypeDefinition | fieldTypeDeclaration | expressionGroup |  modelAttributeTypeReference))? typeProjection?
   ;
 
 // Used in queries to scope projection of collections.
@@ -214,23 +214,34 @@ fieldDeclaration
 //findAll { OrderTransaction[] } as {
 //   items: Thing[] by [OrderItem[]]
 // }[]
-collectionProjectionExpression: '[' typeType projectionScopeDefinition? ']' ;
+collectionProjectionExpression: '[' typeReference projectionScopeDefinition? ']' ;
 
 projectionScopeDefinition: 'with' '(' scalarAccessorExpression (',' scalarAccessorExpression)*  ')';
 
 // A type reference that refers to the attribute on a model.
 // eg:  firstName : Person::FirstName.
 // Only meaningful within views.
-modelAttributeTypeReference: typeType '::' typeType;
+modelAttributeTypeReference: typeReference '::' typeReference |
+   LPAREN typeReference '::' typeReference RPAREN arrayMarker;
 
-simpleFieldDeclaration: typeType accessor?;
 
-typeType
-    :   classOrInterfaceType typeArguments? listType? optionalType? parameterConstraint? (aliasedType? | inlineInheritedType?)?
-    ;
+// fieldType usages allow richer syntax with additional features like
+// inline type definitions, optionality, aliases and accessors.
+// Other type usage sites are not as flexible (eg., return type of an operation)
+fieldTypeDeclaration: optionalTypeReference parameterConstraint? (aliasedType? | inlineInheritedType?)? accessor?;
+
+//typeReference : qualifiedName typeArguments? arrayMarker? optionalType?;
+
+
+typeReference
+    :   qualifiedName typeArguments? arrayMarker?;
+    //
+
+// Use in call sites where optional types are permitted
+optionalTypeReference : typeReference optionalType?;
 
 accessor
-    : 'by' scalarAccessorExpression
+    : ('by' | '=') scalarAccessorExpression
     ;
 
 scalarAccessorExpression
@@ -238,8 +249,8 @@ scalarAccessorExpression
     | jsonPathAccessorDeclaration
     | columnDefinition
     | defaultDefinition
-    | readFunction
-    | readExpression
+//    | readFunction
+    | expressionGroup
     | byFieldSourceExpression
     | collectionProjectionExpression
     | conditionalTypeConditionDeclaration
@@ -250,7 +261,7 @@ scalarAccessorExpression
 //               traderEmail: UserEmail (by this.traderId)
 // }
 //
-byFieldSourceExpression:  typeType '['  StringLiteral  ']';
+byFieldSourceExpression:  typeReference '['  StringLiteral  ']';
 xpathAccessorDeclaration : 'xpath' '(' StringLiteral ')';
 jsonPathAccessorDeclaration : 'jsonPath' '(' StringLiteral ')';
 
@@ -267,20 +278,16 @@ jsonPathAccessorDeclaration : 'jsonPath' '(' StringLiteral ')';
 
 //accessorExpression : StringLiteral;
 
-classOrInterfaceType
-    :   identifier /* typeArguments? */ ('.' identifier /* typeArguments? */ )*
-    ;
-
-typeArguments: '<' typeType (',' typeType)* '>';
+typeArguments: '<' typeReference (',' typeReference)* '>';
 
 // A "lenient" enum will match on case insensitive values
 enumDeclaration
-    :    typeDoc? annotation* lenientKeyword? 'enum' classOrInterfaceType
+    :    typeDoc? annotation* lenientKeyword? 'enum' qualifiedName
          (('inherits' enumInheritedType) | ('{' enumConstants? '}'))
     ;
 
 enumInheritedType
-    : typeType
+    : typeReference
     ;
 
 enumConstants
@@ -319,11 +326,11 @@ typeAliasDeclaration
     ;
 
 aliasedType
-   : 'as' typeType
+   : 'as' typeReference
    ;
 
 inlineInheritedType
-   : 'inherits' typeType
+   : 'inherits' typeReference
    ;
 
 typeAliasExtensionDeclaration
@@ -358,7 +365,7 @@ serviceBody
 serviceBodyMember : serviceOperationDeclaration | queryOperationDeclaration | tableDeclaration | streamDeclaration;
 // Querying
 queryOperationDeclaration
-   :  typeDoc? annotation* queryGrammarName 'query' identifier '(' operationParameterList ')' ':' typeType
+   :  typeDoc? annotation* queryGrammarName 'query' identifier '(' operationParameterList ')' ':' typeReference
       'with' 'capabilities' '{' queryOperationCapabilities '}';
 
 queryGrammarName : identifier;
@@ -371,8 +378,8 @@ queryFilterCapability: 'filter'( '(' filterCapability (',' filterCapability)* ')
 
 filterCapability: EQ | NQ | IN | LIKE | GT | GE | LT | LE;
 
-tableDeclaration: typeDoc? annotation* K_Table identifier ':' typeType;
-streamDeclaration: typeDoc? annotation* K_Stream identifier ':' typeType;
+tableDeclaration: typeDoc? annotation* K_Table identifier ':' typeReference;
+streamDeclaration: typeDoc? annotation* K_Stream identifier ':' typeReference;
 
 lineageDeclaration
       : typeDoc? annotation* 'lineage' lineageBody;
@@ -399,8 +406,12 @@ operationSignature
 operationScope : identifier;
 
 operationReturnType
-    : ':' typeType
+    : ':' typeReference ('(' parameterConstraintExpressionList ')')?
     ;
+
+ // typeReference
+     //    :   qualifiedName typeArguments? arrayMarker? optionalType? parameterConstraint? (aliasedType? | inlineInheritedType?)?
+
 operationParameterList
     :   operationParameter (',' operationParameter)*
     ;
@@ -409,7 +420,7 @@ operationParameterList
 operationParameter
 // Note that only one operationParameterConstraint can exist per parameter, but it can contain
 // multiple expressions
-     :   annotation* (parameterName)? ((typeType varargMarker?) | lambdaSignature)
+     :   annotation* (parameterName)? ((optionalTypeReference ( '(' parameterConstraintExpressionList ')')? varargMarker?) | lambdaSignature)
      ;
 
 varargMarker: '...';
@@ -420,15 +431,18 @@ parameterName
     ;
 
 parameterConstraint
-    :   '(' parameterConstraintExpressionList ')'
-    |   '(' temporalFormatList ')'
+    :   '('expressionGroup? ')'
+    |   '(' parameterConstraintExpressionList ')'
+//    |   '(' temporalFormatList ')'
     ;
 
 
+// We're deprecating this... use expression groups where possible.
 parameterConstraintExpressionList
     :  parameterConstraintExpression (',' parameterConstraintExpression)*
     ;
 
+// Deprecated - use expression groups where possible
 parameterConstraintExpression
     :  propertyToParameterConstraintExpression
     |  operationReturnValueOriginExpression
@@ -439,12 +453,12 @@ parameterConstraintExpression
 propertyFormatExpression :
    '@format' '=' StringLiteral;
 
-temporalFormatList :
-   ('@format' '=' '[' StringLiteral (',' StringLiteral)* ']')? ','? (instantOffsetExpression)?
-   ;
+//temporalFormatList :
+//   ('@format' '=' '[' StringLiteral (',' StringLiteral)* ']')? ','? (instantOffsetExpression)?
+//   ;
 
-instantOffsetExpression :
-   '@offset' '=' IntegerLiteral;
+//instantOffsetExpression :
+//   '@offset' '=' IntegerLiteral;
 
 // The return value will have a relationship to a property
 // received in an input (incl. nested properties)
@@ -452,6 +466,8 @@ operationReturnValueOriginExpression
     :  'from' qualifiedName
     ;
 
+// Deprecation warning: We're gonna deprecate this and find a way to just use normal expressions.
+//
 // A parameter will a value that matches a specified expression
 // operation convertCurrency(request : ConversionRequest) : Money( this.currency = request.target )
 // Models a constraint against an attribute on the type (generally return type).
@@ -460,6 +476,8 @@ operationReturnValueOriginExpression
 // - it's type (preferred) using TheTypeName
 // The qualifiedName here is used to represent a path to the attribute (this.currency)
 // We could've just used identifier here, but we'd like to support nested paths
+//
+// We're deprecating this... use expression groups where possible.
 propertyToParameterConstraintExpression
    : propertyToParameterConstraintLhs comparisonOperator propertyToParameterConstraintRhs;
 
@@ -486,7 +504,7 @@ comparisonOperator
    ;
 
 policyDeclaration
-    :  annotation* 'policy' policyIdentifier 'against' typeType '{' policyRuleSet* '}';
+    :  annotation* 'policy' policyIdentifier 'against' typeReference '{' policyRuleSet* '}';
 
 policyOperationType
     : identifier;
@@ -521,8 +539,8 @@ policyExpression
     | literal;
 
 
-callerIdentifer : 'caller' '.' typeType;
-thisIdentifier : 'this' '.' typeType;
+callerIdentifer : 'caller' '.' typeReference;
+thisIdentifier : 'this' '.' typeReference;
 
 // TODO: Should consider revisiting this, so that operators are followed by valid tokens.
 // eg: 'in' must be followed by an array.  We could enforce this at the language, to simplify in Vyne
@@ -578,19 +596,15 @@ defaultDefinition: 'default' '(' (literal | qualifiedName) ')';
 // rather than permitting void return types.
 // This is because in a mapping declaration, functions really only have purpose if
 // they return things.
-functionDeclaration: typeDoc? 'declare' (functionModifiers)? 'function' typeArguments? functionName '(' operationParameterList? ')' ':' typeType;
+functionDeclaration: typeDoc? 'declare' (functionModifiers)? 'function' typeArguments? qualifiedName '(' operationParameterList? ')' ':' typeReference;
 
 functionModifiers: 'query';
 
 
-readFunction: functionName '(' formalParameterList? ')';
-//         'concat' |
-//         'leftAndUpperCase' |
-//         'midAndUpperCase'
-//         ;
-readExpression: expressionGroup; //  readFunction arithmaticOperator literal;
-functionName: qualifiedName;
-formalParameterList
+// Could be MyType( foo == bar ), or myFunction( param1, param1 )
+functionCall: qualifiedName '(' parameterList? ')';
+
+parameterList
     : parameter  (',' parameter)*
     ;
 //    scalarAccessorExpression
@@ -624,7 +638,7 @@ qualifiedName
     :   identifier ('.' identifier)*
     ;
 
-listType
+arrayMarker
    : '[]'
    ;
 
@@ -680,7 +694,7 @@ typeExtensionFieldDeclaration
     ;
 
 typeExtensionFieldTypeRefinement
-    : ':' typeType constantDeclaration?
+    : ':' typeReference constantDeclaration?
     ;
 
 constantDeclaration : 'by'  defaultDefinition;
@@ -712,7 +726,7 @@ queryParameters: '(' queryParamList ')';
 
 queryParamList: queryParam (',' queryParam)*;
 
-queryParam: identifier ':' typeType;
+queryParam: identifier ':' typeReference;
 
 queryDirective: K_Stream | K_Find;
 findDirective: K_Find;
@@ -722,17 +736,17 @@ givenBlock : 'given' '{' factList '}';
 factList : fact (',' fact)*;
 
 // TODO :  We could/should make variableName optional
-fact : variableName? typeType '=' literal;
+fact : variableName? typeReference '=' literal;
 
 variableName: identifier ':';
 queryBody:
    givenBlock?
-	queryDirective ( ('{' queryTypeList  '}') | anonymousTypeDefinition ) queryProjection?
+	queryDirective ( ('{' queryTypeList  '}') | anonymousTypeDefinition ) typeProjection?
 	;
 
-queryTypeList: typeType (',' typeType)*;
+queryTypeList: fieldTypeDeclaration (',' fieldTypeDeclaration)*;
 
-queryProjection: 'as' typeType? anonymousTypeDefinition?;
+typeProjection: 'as' (typeReference | expressionInputs? anonymousTypeDefinition);
 //as {
 //    orderId // if orderId is defined on the Order type, then the type is inferrable
 //    productId: ProductId // Discovered, using something in the query context, it's up to Vyne to decide how.
@@ -742,7 +756,7 @@ queryProjection: 'as' typeType? anonymousTypeDefinition?;
 //        lastName : LastName
 //    }(by this.salesUtCode)
 //}
-anonymousTypeDefinition: annotation* typeBody listType? accessor? parameterConstraint?;
+anonymousTypeDefinition: annotation* typeBody arrayMarker? accessor? parameterConstraint?;
 
 viewDeclaration
     :  typeDoc? annotation* typeModifier* 'view' identifier
@@ -752,7 +766,7 @@ viewDeclaration
 
 findBody: findDirective '{' findBodyQuery '}' ('as' anonymousTypeDefinition)?;
 findBodyQuery: joinTo;
-filterableTypeType: typeType ('(' filterExpression ')')?;
+filterableTypeType: typeReference ('(' filterExpression ')')?;
 joinTo: filterableTypeType ('(' 'joinTo'  filterableTypeType ')')?;
 filterExpression
     : LPAREN filterExpression RPAREN           # ParenExp
@@ -960,3 +974,5 @@ POW: '^';
 
 LPAREN : '(' ;
 RPAREN : ')' ;
+
+SPREAD_OPERATOR : '...' ;

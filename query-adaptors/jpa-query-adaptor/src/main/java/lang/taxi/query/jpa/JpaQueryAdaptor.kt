@@ -99,10 +99,10 @@ data class JpaQueryType(val discoveryType: DiscoveryType, val jpaType: Class<*>)
       }
 
       fun queryTypeName(discoveryType: DiscoveryType): QualifiedName {
-         return if (Arrays.isArray(discoveryType.type)) {
-            discoveryType.type.parameters[0]
+         return if (Arrays.isArray(discoveryType.typeName)) {
+            discoveryType.typeName.parameters[0]
          } else {
-            discoveryType.type
+            discoveryType.typeName
          }
       }
    }

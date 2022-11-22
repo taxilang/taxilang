@@ -36,6 +36,12 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
          println("found Array<Array<>> -- this code was recently refactored -- is this a bug?")
       }
    }
+   // For readability.
+   // Should really rename type property
+   val memberType = type
+
+   // Not currently implemented, but could be in the future
+   override val annotations: List<Annotation> = emptyList()
    companion object {
       const val NAME = "lang.taxi.Array"
       val qualifiedName = QualifiedName.from(NAME)
@@ -52,6 +58,9 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
       fun isArrayTypeName(requestedTypeName: String): Boolean {
          // Resolve either lang.taxi.Array, or implicitly just Array
          return requestedTypeName == qualifiedName.fullyQualifiedName || requestedTypeName == qualifiedName.typeName
+      }
+      fun arrayTypeName(memberTypeName:String):String {
+         return "$NAME<$memberTypeName>"
       }
    }
 
@@ -85,10 +94,8 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
       }
    }
 
+   override val formatAndZoneOffset: FormatsAndZoneOffset? = null
    override val format: List<String>? = null
-   override val formattedInstanceOfType: Type? = null
-//   override val calculation: Formula?
-//      get() = null
    override val offset: Int? = null
    override val typeKind: TypeKind = TypeKind.Type
 }

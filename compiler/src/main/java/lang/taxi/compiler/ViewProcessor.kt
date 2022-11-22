@@ -65,7 +65,7 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
       Either<List<CompilationError>, ViewBodyDefinition> {
       val joinTypes = bodyCtx.findBodyQuery().joinTo().filterableTypeType()
       val firstFilterableType = joinTypes.first()
-      return listTypeTypeOrError(firstFilterableType.typeType()).flatMap { bodyTypeType ->
+      return listTypeTypeOrError(firstFilterableType.typeReference()).flatMap { bodyTypeType ->
          tokenProcessor.typeOrError(namespace, bodyTypeType).flatMap { bodyType ->
             val bodyMemberType = if (Arrays.isArray(bodyType)) {
                (bodyType as ArrayType).type
@@ -121,8 +121,8 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
       bodyCtx: TaxiParser.FindBodyContext,
       bodyType: Type): Either<List<CompilationError>, ViewBodyDefinition> {
       val joinTypeTypeCtx = joinTypes[1]
-      return listTypeTypeOrError(joinTypeTypeCtx.typeType()).flatMap { joinType ->
-         tokenProcessor.typeOrError(namespace, joinTypeTypeCtx.typeType()).flatMap { joinType ->
+      return listTypeTypeOrError(joinTypeTypeCtx.typeReference()).flatMap { joinType ->
+         tokenProcessor.typeOrError(namespace, joinTypeTypeCtx.typeReference()).flatMap { joinType ->
             val joinMemberType = Arrays.unwrapPossibleArrayType(joinType)
             validateJoinBasedViewBodyDefinition(bodyCtx, ViewBodyDefinition(bodyType, joinMemberType))
                .flatMap { validViewDefinition ->
@@ -178,13 +178,13 @@ class ViewProcessor(private val tokenProcessor: TokenProcessor) {
    }
 
 
-   private fun listTypeTypeOrError(typeTypeCtx: TaxiParser.TypeTypeContext): Either<List<CompilationError>, TaxiParser.TypeTypeContext> {
+   private fun listTypeTypeOrError(typeTypeCtx: TaxiParser.TypeReferenceContext): Either<List<CompilationError>, TaxiParser.TypeReferenceContext> {
 
-      return if (typeTypeCtx.listType() == null) {
+      return if (typeTypeCtx.arrayMarker() == null) {
          listOf(CompilationError(typeTypeCtx.start, "Currently, only list types are supported in view definitions. Replace ${typeTypeCtx.text} with ${typeTypeCtx.text}[]")).left()
-      } else if(typeTypeCtx.parameterConstraint() != null) {
+      } /*else if(typeTypeCtx.parameterConstraint() != null) {
          listOf(CompilationError(typeTypeCtx.start, "Replace ${typeTypeCtx.parameterConstraint().text} with (${typeTypeCtx.parameterConstraint().text})")).left()
-      } else {
+      } */ else {
          typeTypeCtx.right()
       }
    }
