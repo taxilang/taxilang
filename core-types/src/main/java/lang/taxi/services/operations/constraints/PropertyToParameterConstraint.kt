@@ -24,6 +24,7 @@ import lang.taxi.utils.quotedIfNecessary
  * as that allows expressions which aren't bound to field name contracts,
  * making them more polymorphic
  */
+@Deprecated("Migrate to using ExpressionConstraint instead, which is the more generic form of this concept.  It's not implemented yet, but it's the direction of travel")
 open class PropertyToParameterConstraint(
    val propertyIdentifier: PropertyIdentifier,
    val operator: Operator = Operator.EQUAL,
