@@ -2,9 +2,36 @@ package lang.taxi.types
 
 import lang.taxi.services.operations.constraints.Constraint
 
+sealed class FactValue {
+   data class Constant(val value: TypedValue) : FactValue()
+   data class Variable(val type: Type, val name: String) : FactValue()
+
+   /**
+    * Convenience method
+    */
+   val typedValue: TypedValue
+      get() {
+         return when (this) {
+            is Constant -> this.value
+            else -> error("This variable does not contain a constant")
+         }
+      }
+
+   val hasValue: Boolean
+      get() {
+         return this is Constant
+      }
+   val variableName: String
+      get() {
+         return when (this) {
+            is Variable -> this.name
+            else -> error("This variable is constant and does not have a variable name")
+         }
+      }
+}
 data class Variable(
    val name: String?,
-   val value: TypedValue
+   val value: FactValue
 )
 
 data class DiscoveryType(
