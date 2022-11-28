@@ -3,11 +3,14 @@ package lang.taxi.query
 import arrow.core.*
 import lang.taxi.CompilationError
 import lang.taxi.NamespaceQualifiedTypeResolver
+import lang.taxi.TaxiDocument
 import lang.taxi.TaxiParser
 import lang.taxi.TaxiParser.ParameterConstraintContext
 import lang.taxi.compiler.ExpressionCompiler
+import lang.taxi.expressions.OperatorExpression
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ExpressionConstraint
+import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraintProvider
 import lang.taxi.types.Type
 import lang.taxi.utils.flattenErrors
