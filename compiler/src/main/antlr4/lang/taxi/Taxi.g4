@@ -736,7 +736,7 @@ givenBlock : 'given' '{' factList '}';
 factList : fact (',' fact)*;
 
 // TODO :  We could/should make variableName optional
-fact : variableName? typeReference '=' literal;
+fact : variableName? typeReference ('=' literal)?;
 
 variableName: identifier ':';
 queryBody:

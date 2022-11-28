@@ -6,9 +6,8 @@ import io.kotest.matchers.shouldBe
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
+import lang.taxi.query.convertToPropertyConstraint
 import lang.taxi.services.operations.constraints.ExpressionConstraint
-import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
-import org.junit.jupiter.api.Test
 
 class ConstraintsSpec : DescribeSpec({
    describe("Constraints") {
@@ -34,5 +33,14 @@ type SomeServiceRequest {
          expression.lhs.asA<TypeExpression>().type.qualifiedName.shouldBe("Currency")
          expression.rhs.asA<LiteralExpression>().value.shouldBe("GBP")
       }
+   }
+
+   it("can downgrade expression constraints") {
+      val (schema,query) = """
+         model Person {
+            name : Name inherits String
+         }""".compiledWithQuery("find { Person[]( Name == 'Jimmy' ) }")
+      val constraint = query.typesToFind.single().constraints.single() as ExpressionConstraint
+      val converted = constraint.convertToPropertyConstraint()
    }
 })

@@ -140,8 +140,8 @@ class TaxiQlSpec : DescribeSpec({
          query.facts.should.have.size(1)
          val (name, fact) = query.facts.first()
          name.should.equal("email")
-         fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
-         fact.value.should.equal("jimmy@demo.com")
+         fact.typedValue.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
+         fact.typedValue.value.should.equal("jimmy@demo.com")
 
          query.typesToFind.should.have.size(1)
          val discoveryType = query.typesToFind.first()
@@ -160,8 +160,8 @@ class TaxiQlSpec : DescribeSpec({
          query.facts.should.have.size(1)
          val (name, fact) = query.facts.first()
          name.should.be.`null`
-         fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
-         fact.value.should.equal("jimmy@demo.com")
+         fact.typedValue.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
+         fact.typedValue.value.should.equal("jimmy@demo.com")
 
       }
 
@@ -211,8 +211,8 @@ class TaxiQlSpec : DescribeSpec({
          query.facts.should.have.size(1)
          val (name, fact) = query.facts.first()
          name.should.equal("email")
-         fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
-         fact.value.should.equal("jimmy@demo.com")
+         fact.typedValue.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
+         fact.typedValue.value.should.equal("jimmy@demo.com")
 
          query.typesToFind.should.have.size(1)
          val discoveryType = query.typesToFind.first()
@@ -234,8 +234,8 @@ class TaxiQlSpec : DescribeSpec({
          query.facts.should.have.size(1)
          val (name, fact) = query.facts.first()
          name.should.equal("email")
-         fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
-         fact.value.should.equal("jimmy@demo.com")
+         fact.typedValue.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
+         fact.typedValue.value.should.equal("jimmy@demo.com")
 
          query.typesToFind.should.have.size(1)
          val discoveryType = query.typesToFind.first()

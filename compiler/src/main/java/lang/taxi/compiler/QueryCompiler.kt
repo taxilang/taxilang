@@ -127,7 +127,7 @@ internal class QueryCompiler(
 
       return tokenProcessor.typeOrError(namespace, factCtx.typeReference()).flatMap { factType ->
          try {
-            Variable(variableName, TypedValue(factType.toQualifiedName(), factCtx.literal().value())).right()
+            Variable(variableName, FactValue.Constant(TypedValue(factType.toQualifiedName(), factCtx.literal().value()))).right()
          } catch (e: Exception) {
             listOf(CompilationError(factCtx.start, "Failed to create TypedInstance - ${e.message}")).left()
          }
