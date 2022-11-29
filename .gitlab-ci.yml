@@ -66,7 +66,8 @@ validate:
    script:
       - 'mvn $MAVEN_CLI_OPTS clean deploy'
    services:
-      -  name: docker:20.10.21-dind
+      -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.21-dind
+         alias: docker
          command: [ "--tls=false" ]
    variables:
       # Instruct Testcontainers to use the daemon of DinD.
@@ -124,7 +125,8 @@ publish-snapshot-jars:
    script:
       - 'mvn $MAVEN_CLI_OPTS deploy -P snapshot-release'
    services:
-      -  name: docker:20.10.21-dind
+      -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.21-dind
+         alias: docker
          command: [ "--tls=false" ]
    variables:
       # Instruct Testcontainers to use the daemon of DinD.
