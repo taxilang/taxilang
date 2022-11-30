@@ -2,6 +2,8 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import lang.taxi.messages.Severity
@@ -205,6 +207,45 @@ class FormattedTypesSpec : DescribeSpec({
             .validated()
          errors.should.have.size(1)
          errors.first().detailMessage.should.equal("Offset is only applicable to Instant based types")
+      }
+
+      it("should allow offset only declaration") {
+         val type = """
+            @Format(offset = 60)
+            type SummerTime inherits Instant
+         """.compiled()
+            .type("SummerTime")
+         type.offset.shouldBe(60)
+         type.format.shouldNotBeEmpty()
+      }
+
+      it("should take an inherited format from a type that defines only an offset") {
+         val type = """
+            @Format(offset = 60)
+            type SummerTime inherits MyFormat
+
+            @Format(value = "dd/MM/yyThh:nn:ssZ")
+            type MyFormat inherits Instant
+         """.compiled()
+            .type("SummerTime")
+         type.offset.shouldBe(60)
+         type.format.shouldContainExactly("dd/MM/yyThh:nn:ssZ")
+      }
+
+      it("should take an inherited format pattern from a field that defined only an offset") {
+         val field = """
+              @Format(value = "dd/MM/yyThh:nn:ssZ")
+            type MyFormat inherits Instant
+
+            model Person {
+               @Format(offset = 60)
+               dateOfBirth: MyFormat
+            }
+         """.compiled()
+            .model("Person")
+            .field("dateOfBirth")
+         field.format.shouldContainExactly("dd/MM/yyThh:nn:ssZ")
+         field.offset.shouldBe(60)
       }
 
       it("should not allowed offset definition for time based types") {

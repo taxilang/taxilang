@@ -160,8 +160,27 @@ data class ObjectType(
          return formatAndOffsetFromTypeHierarchy?.utcZoneOffsetInMinutes
       }
 
+   /**
+    * This method combines the closest defined offset and pattern.
+    * (Closest defined by walking up the inheritance chain)
+    * We take the closest non-null offset, and the closest non-empty set of formats
+    */
    private val formatAndOffsetFromTypeHierarchy: FormatsAndZoneOffset?
       get() {
+         val hierarchy =
+            listOfNotNull(this.definition?.formatAndOffset) + this.inheritsFrom.mapNotNull { it.formatAndZoneOffset }
+         val closestDeclaredOffset = hierarchy
+            .asSequence()
+            .mapNotNull { it.utcZoneOffsetInMinutes }
+            .firstOrNull()
+
+         val closetDeclaredPattern = hierarchy.asSequence()
+            .map { it.patterns }
+            .filter { it.isNotEmpty() }
+            .firstOrNull() ?: emptyList()
+         return FormatsAndZoneOffset(closetDeclaredPattern, closestDeclaredOffset)
+
+
          return if (this.definition?.formatAndOffset != null) {
             this.definition?.formatAndOffset
          } else {
@@ -350,7 +369,10 @@ data class ObjectType(
       return type.inheritsFrom.map { it.toQualifiedName() }.plus(type.toQualifiedName())
    }
 
-   private fun doRecursiveLookupOfDescendantPathsOfType(searchType: Type, typesBeingChecked: MutableSet<Type>): List<String> {
+   private fun doRecursiveLookupOfDescendantPathsOfType(
+      searchType: Type,
+      typesBeingChecked: MutableSet<Type>
+   ): List<String> {
       if (typesBeingChecked.contains(this)) {
          return emptyList()
       }
@@ -359,7 +381,10 @@ data class ObjectType(
          .flatMap { field ->
             val path = when {
                field.type.isAssignableTo(searchType) -> listOf(field.name)
-               field.type is ObjectType -> field.type.doRecursiveLookupOfDescendantPathsOfType(searchType, typesBeingChecked)
+               field.type is ObjectType -> field.type.doRecursiveLookupOfDescendantPathsOfType(
+                  searchType,
+                  typesBeingChecked
+               )
                   .map { "${field.name}.$it" }
 
                field.type is ArrayType -> {
@@ -369,7 +394,7 @@ data class ObjectType(
                      memberType is ObjectType -> memberType.doRecursiveLookupOfDescendantPathsOfType(
                         searchType,
                         typesBeingChecked
-                     ) .map { "${field.name}.$it" }
+                     ).map { "${field.name}.$it" }
 
                      else -> emptyList()
                   }
@@ -509,7 +534,7 @@ data class Field(
    override val description: String = "field $name"
 
 
-   override val formatAndZoneOffset: FormatsAndZoneOffset? = fieldFormat ?: type.formatAndZoneOffset
+   override val formatAndZoneOffset: FormatsAndZoneOffset? = FormatsAndZoneOffset.merged(fieldFormat, type.formatAndZoneOffset)
    override val format: List<String>? = formatAndZoneOffset?.patterns ?: type.format
    override val offset: Int? = formatAndZoneOffset?.utcZoneOffsetInMinutes ?: type.offset
 

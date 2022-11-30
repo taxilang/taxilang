@@ -1463,7 +1463,7 @@ class TokenProcessor(
       val offsets = formatAnnotations.map { it.parameter("offset") as Int }
          .filter { it != 0 }
          .distinct()
-      val formats = formatAnnotations.map { it.parameter("value") as String }
+      val formats = formatAnnotations.mapNotNull { it.parameter("value") as String? }
       if (offsets.size > 1) {
          return listOf(
             CompilationError(
