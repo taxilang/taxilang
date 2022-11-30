@@ -8,6 +8,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import lang.taxi.messages.Severity
 import lang.taxi.types.PrimitiveType
+import org.junit.Test
 
 class FormattedTypesSpec : DescribeSpec({
    describe("formatted types") {
@@ -207,6 +208,28 @@ class FormattedTypesSpec : DescribeSpec({
             .validated()
          errors.should.have.size(1)
          errors.first().detailMessage.should.equal("Offset is only applicable to Instant based types")
+      }
+
+      it("should define formats on fields") {
+         val schema = """
+            @Format("dd/MM/yy'T'HH:mm:ss" )
+            type MyDate inherits Instant
+
+            model Person {
+               fromType : MyDate
+               @Format("yyyy-MM-dd HH:mm:ss")
+               fromTypeWithFormat : MyDate
+
+               @Format(offset = 60)
+               fromTypeWithOffset : MyDate
+            }
+      """.compiled()
+         schema.type("MyDate").format!!.shouldContainExactly("dd/MM/yy'T'HH:mm:ss" )
+         val person = schema.objectType("Person")
+         person.field("fromType").formatAndZoneOffset!!.patterns.shouldContainExactly("dd/MM/yy'T'HH:mm:ss" )
+         person.field("fromTypeWithFormat").formatAndZoneOffset!!.patterns.shouldContainExactly("yyyy-MM-dd HH:mm:ss")
+         person.field("fromTypeWithOffset").formatAndZoneOffset!!.patterns.shouldContainExactly("dd/MM/yy'T'HH:mm:ss" )
+         person.field("fromTypeWithOffset").formatAndZoneOffset!!.utcZoneOffsetInMinutes!!.shouldBe(60)
       }
 
       it("should allow offset only declaration") {

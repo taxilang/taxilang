@@ -2,6 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.booleans.shouldBeFalse
 import lang.taxi.types.PrimitiveType
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -49,6 +50,15 @@ class AssignmentSpec : DescribeSpec({
       it("if types are declared as primitives they are assignable") {
          PrimitiveType.STRING.isAssignableTo(schema.type("FirstName")).should.be.`true`
          PrimitiveType.INTEGER.isAssignableTo(schema.type("FirstName")).should.be.`false`
+      }
+
+      it("is not assignable when types have same base") {
+         val schema = """
+            type Age inherits Int
+            type Id inherits Int
+         """.compiled()
+         schema.type("Age").isAssignableTo(schema.type("Id")).shouldBeFalse()
+         schema.type("Id").isAssignableTo(schema.type("Age")).shouldBeFalse()
       }
 
 

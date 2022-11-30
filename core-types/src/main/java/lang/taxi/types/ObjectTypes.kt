@@ -535,6 +535,7 @@ data class Field(
 
 
    override val formatAndZoneOffset: FormatsAndZoneOffset? = FormatsAndZoneOffset.merged(fieldFormat, type.formatAndZoneOffset)
+
    override val format: List<String>? = formatAndZoneOffset?.patterns ?: type.format
    override val offset: Int? = formatAndZoneOffset?.utcZoneOffsetInMinutes ?: type.offset
 

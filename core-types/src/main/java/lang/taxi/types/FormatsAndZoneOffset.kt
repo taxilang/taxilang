@@ -24,8 +24,13 @@ interface Formattable {
 
 }
 
+fun FormatsAndZoneOffset?.isNullOrEmpty():Boolean {
+   return this == null || this.isEmpty
+}
 data class FormatsAndZoneOffset(val patterns: List<String>, val utcZoneOffsetInMinutes: Int?) {
    val definesPattern = patterns.isNotEmpty()
+
+   val isEmpty = patterns.isEmpty() && utcZoneOffsetInMinutes == null
 
    companion object {
       fun forNullable(formats: List<String>?, offset: Int?): FormatsAndZoneOffset? {
@@ -40,10 +45,15 @@ data class FormatsAndZoneOffset(val patterns: List<String>, val utcZoneOffsetInM
          if (a == null && b == null) {
             return null
          }
-         return FormatsAndZoneOffset(
-            patterns = a?.patterns?.coalesceIfEmpty(b?.patterns) ?: emptyList(),
+         val result = FormatsAndZoneOffset(
+            patterns = a?.patterns.coalesceIfEmpty(b?.patterns) ?: emptyList(),
             utcZoneOffsetInMinutes = a?.utcZoneOffsetInMinutes ?: b?.utcZoneOffsetInMinutes
          )
+         return if (result.isEmpty) {
+            null
+         } else {
+            result
+         }
       }
 
       fun forFormat(vararg format: String): FormatsAndZoneOffset = FormatsAndZoneOffset(format.toList(), null)
