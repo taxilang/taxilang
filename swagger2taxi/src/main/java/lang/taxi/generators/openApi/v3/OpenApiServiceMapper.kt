@@ -44,12 +44,11 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
         val operations = pathOperation.readOperationsMap()
                 .filter { canSupport(it.value) }
                 .map { (method, operation) ->
-                    generateOperation(method, operation, basePathToUse + pathMapping)
+                    generateOperation(method, operation, (basePathToUse.removeSuffix("/") + "/" + pathMapping.removePrefix("/")))
                 }
         val derivedServiceName = pathMapping.split("/")
                 .joinToString(separator = "") { it.removeSurrounding("{", "}").replaceIllegalCharacters().capitalize() } + "Service"
         val qualifiedServiceName = "${typeGenerator.defaultNamespace}.$derivedServiceName"
-//       val serviceDiscoveryClientAnnotation = if (basePathToUse != "/") ServiceDiscoveryClient(basePathToUse).toAnnotation() else null
        return Service(
                 qualifiedServiceName,
                 operations,

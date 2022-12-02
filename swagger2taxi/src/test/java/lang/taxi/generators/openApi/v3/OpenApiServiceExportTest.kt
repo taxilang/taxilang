@@ -137,47 +137,6 @@ class OpenApiServiceExportTest {
       expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
    }
 
-   @Test
-   fun `ServiceDiscoveryClient annotation added for first server defined`() {
-      @Language("yaml")
-      val openApiSpec = """
-         openapi: "3.0.0"
-         info:
-           version: 1.0.0
-           title: Swagger Petstore
-         servers:
-         - url: https://petstore.swagger.io/api
-         paths:
-           /pets/{id}:
-             get:
-               parameters:
-                 - name: id
-                   in: path
-                   required: true
-                   schema:
-                     type: integer
-               responses:
-                 '200':
-                   description: pet response
-      """.trimIndent()
-
-      val expectedTaxi = """
-         namespace vyne.openApi {
-            @ServiceDiscoveryClient(serviceName = "https://petstore.swagger.io/api")
-            service PetsIdService {
-               @HttpOperation(method = "GET" , url = "/pets/{id}")
-               operation GetPetsId(
-                  @PathVariable("id")
-                  id : Int
-               )
-            }
-         }
-      """.trimIndent()
-
-      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
-
-      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
-   }
 
    @Test
    fun `request body is captured as a param`() {
