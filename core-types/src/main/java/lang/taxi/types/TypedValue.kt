@@ -5,4 +5,7 @@ package lang.taxi.types
  * In Vyne World, this will be converted into a TypedInstance and fed into
  * the relevant 'QueryContext'
  */
-data class TypedValue(val fqn: QualifiedName, val value: Any?)
+data class TypedValue(val type: Type, val value: Any?) {
+   // Backwards compatibility after refactor
+   val fqn = type.toQualifiedName()
+}

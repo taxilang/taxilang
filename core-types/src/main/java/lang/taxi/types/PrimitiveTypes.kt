@@ -1,6 +1,13 @@
 package lang.taxi.types
 
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import lang.taxi.sources.SourceCode
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 
 enum class VoidType : Type {
@@ -39,18 +46,49 @@ object NumberTypes {
       return types.maxByOrNull { NUMBER_TYPES.indexOf(it) }!!
    }
 }
+
+object TemporalTypes {
+   val TEMPORAL_TYPES = setOf(PrimitiveType.INSTANT, PrimitiveType.DATE_TIME, PrimitiveType.LOCAL_DATE, PrimitiveType.TIME)
+   fun isTemporalType(type:PrimitiveType) = TEMPORAL_TYPES.contains(type)
+}
+
+interface TypeCoercer {
+   fun canCoerce(value:Any): Boolean
+   fun coerce(value:Any):Either<String,Any>
+}
+private object NoOpCoercer : TypeCoercer {
+   override fun canCoerce(value: Any): Boolean  = false
+   override fun coerce(value: Any) = error("Not supported on NoOp Coercer")
+
+}
+private class TemporalCaster(val stringParser: (String) -> Any) : TypeCoercer {
+   override fun canCoerce(value: Any): Boolean {
+      return value is String
+   }
+
+   override fun coerce(value: Any): Either<String, Any> {
+      require(value is String) { "Temporal coersion only works with strings" }
+      return try {
+         stringParser(value).right()
+      } catch (e:Exception) {
+         e.message!!.left()
+      }
+   }
+
+}
 enum class PrimitiveType(
    val declaration: String,
    override val typeDoc: String,
-   override val formatAndZoneOffset: FormatsAndZoneOffset? = null) : Type {
+   override val formatAndZoneOffset: FormatsAndZoneOffset? = null,
+   private val coercer: TypeCoercer = NoOpCoercer) : Type, TypeCoercer by coercer {
    BOOLEAN("Boolean", "Represents a value which is either `true` or `false`."),
    STRING("String", "A collection of characters."),
    INTEGER("Int", "A signed integer - ie. a whole number (positive or negative), with no decimal places"),
    DECIMAL("Decimal", "A signed decimal number - ie., a whole number with decimal places."),
-   LOCAL_DATE("Date", "A date, without a time or timezone.", formatAndZoneOffset = FormatsAndZoneOffset.forFormat("yyyy-MM-dd" )),
-   TIME("Time", "Time only, excluding the date part",  formatAndZoneOffset = FormatsAndZoneOffset.forFormat("HH:mm:ss" )),
-   DATE_TIME("DateTime", "A date and time, without a timezone.  Generally, favour using Instant which represents a point-in-time, as it has a timezone attached",  formatAndZoneOffset = FormatsAndZoneOffset.forFormat("yyyy-MM-dd'T'HH:mm:ss.SSS" )),
-   INSTANT("Instant", "A point in time, with date, time and timezone.  Follows ISO standard convention of yyyy-MM-dd'T'HH:mm:ss.SSSZ",  formatAndZoneOffset = FormatsAndZoneOffset.forFormat("yyyy-MM-dd'T'HH:mm:ss[.SSS]X" )),
+   LOCAL_DATE("Date", "A date, without a time or timezone.", formatAndZoneOffset = FormatsAndZoneOffset.forFormat("yyyy-MM-dd" ), coercer = TemporalCaster(LocalDate::parse)),
+   TIME("Time", "Time only, excluding the date part",  formatAndZoneOffset = FormatsAndZoneOffset.forFormat("HH:mm:ss" ), coercer = TemporalCaster(LocalTime::parse)),
+   DATE_TIME("DateTime", "A date and time, without a timezone.  Generally, favour using Instant which represents a point-in-time, as it has a timezone attached",  formatAndZoneOffset = FormatsAndZoneOffset.forFormat("yyyy-MM-dd'T'HH:mm:ss.SSS" ), coercer = TemporalCaster(LocalDateTime::parse)),
+   INSTANT("Instant", "A point in time, with date, time and timezone.  Follows ISO standard convention of yyyy-MM-dd'T'HH:mm:ss.SSSZ",  formatAndZoneOffset = FormatsAndZoneOffset.forFormat("yyyy-MM-dd'T'HH:mm:ss[.SSS]X" ), coercer = TemporalCaster(Instant::parse)),
 //   ARRAY("Array", "A collection of things"),
    ANY("Any", "Can be anything.  Try to avoid using 'Any' as it's not descriptive - favour using a strongly typed approach instead"),
    DOUBLE("Double", "Represents a double-precision 64-bit IEEE 754 floating point number."),

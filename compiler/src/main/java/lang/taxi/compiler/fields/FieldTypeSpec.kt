@@ -1,10 +1,9 @@
 package lang.taxi.compiler.fields
 
 import lang.taxi.accessors.Accessor
-import lang.taxi.compiler.TokenProcessor
 import lang.taxi.expressions.Expression
 import lang.taxi.functions.FunctionAccessor
-import lang.taxi.types.DiscoveryType
+import lang.taxi.query.DiscoveryType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.Type
 import lang.taxi.utils.log

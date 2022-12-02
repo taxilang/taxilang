@@ -8,6 +8,7 @@ import arrow.core.left
 import arrow.core.right
 import lang.taxi.*
 import lang.taxi.TaxiParser.*
+import lang.taxi.accessors.Argument
 import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.annotations.AnnotationTypeBodyContent
@@ -32,8 +33,22 @@ import lang.taxi.policies.PolicyScope
 import lang.taxi.policies.PolicyStatement
 import lang.taxi.policies.RuleSet
 import lang.taxi.policies.Subjects
+import lang.taxi.query.FactValue
+import lang.taxi.query.Parameter
 import lang.taxi.query.TaxiQlQuery
-import lang.taxi.services.*
+import lang.taxi.services.ConsumedOperation
+import lang.taxi.services.FilterCapability
+import lang.taxi.services.Operation
+import lang.taxi.services.OperationContract
+import lang.taxi.services.QueryOperation
+import lang.taxi.services.QueryOperationCapability
+import lang.taxi.services.Service
+import lang.taxi.services.ServiceDefinition
+import lang.taxi.services.ServiceLineage
+import lang.taxi.services.ServiceMember
+import lang.taxi.services.SimpleQueryCapability
+import lang.taxi.services.Stream
+import lang.taxi.services.Table
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintValidator
 import lang.taxi.services.operations.constraints.ExpressionConstraint
@@ -45,8 +60,7 @@ import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.security.SecureRandom
-import java.util.Base64
-import java.util.EnumSet
+import java.util.*
 
 class TokenProcessor(
    val tokens: Tokens,
@@ -290,7 +304,7 @@ class TokenProcessor(
    private fun compileQueries() {
       this.tokens.anonymousQueries.forEach { (qualifiedName, anonymousQueryContex) ->
          QueryCompiler(this, expressionCompiler())
-            .parseQueryBody(qualifiedName, mapOf(), anonymousQueryContex.queryBody())
+            .parseQueryBody(qualifiedName, emptyList(), anonymousQueryContex.queryBody())
             .mapLeft { compilationErrors -> errors.addAll(compilationErrors) }
             .map { taxiQlQuery ->
                queries.add(taxiQlQuery)
@@ -300,19 +314,19 @@ class TokenProcessor(
       this.tokens.namedQueries.forEach { (qualifiedName, namedQueryContext) ->
          val queryName = namedQueryContext.queryName().identifier().text
          val parametersOrErrors =
-            namedQueryContext.queryName().queryParameters()?.queryParamList()?.queryParam()?.map { queryParam ->
-               val parameterName = queryParam.identifier().text
-               val queryParameter: Either<List<CompilationError>, Pair<String, QualifiedName>> =
+            namedQueryContext.queryName().queryParameters()?.queryParamList()?.queryParam()?.mapIndexed { idx, queryParam ->
+               val parameterName = queryParam.identifier().text ?: "p$idx"
+               val queryParameter: Either<List<CompilationError>, Parameter> =
                   typeOrError(namedQueryContext.findNamespace(), queryParam.typeReference()).map { parameterType ->
-                     parameterName to parameterType.toQualifiedName()
+                     Parameter(parameterName, FactValue.Variable(parameterType, parameterName))
                   }
                queryParameter
-            }?.invertEitherList() ?: emptyList<Pair<String, QualifiedName>>().right()
+            }?.invertEitherList() ?: emptyList<Parameter>().right()
          parametersOrErrors
             .mapLeft { compilationErrors -> errors.addAll(compilationErrors.flatten()) }
             .map { parameters ->
                QueryCompiler(this, expressionCompiler())
-                  .parseQueryBody(queryName, parameters.toMap(), namedQueryContext.queryBody())
+                  .parseQueryBody(queryName, parameters, namedQueryContext.queryBody())
                   .mapLeft { compilationErrors -> errors.addAll(compilationErrors) }
                   .map { taxiQlQuery -> queries.add(taxiQlQuery) }
             }
@@ -911,12 +925,18 @@ class TokenProcessor(
       ).right()
    }
 
-   fun expressionCompiler(fieldCompiler: FieldCompiler? = null, activeScopes:List<ProjectionFunctionScope> = emptyList()): ExpressionCompiler {
-      return ExpressionCompiler(this, typeChecker, errors, fieldCompiler, activeScopes)
+   fun expressionCompiler(
+      fieldCompiler: FieldCompiler? = null,
+      scopedArguments: List<Argument> = emptyList()
+   ): ExpressionCompiler {
+      return ExpressionCompiler(this, typeChecker, errors, fieldCompiler, scopedArguments)
    }
 
-   private fun parseTypeExpression(expressionGroup: ExpressionGroupContext, activeScopes: List<ProjectionFunctionScope>): Either<List<CompilationError>, Expression> {
-      return expressionCompiler(activeScopes = activeScopes).compile(expressionGroup)
+   private fun parseTypeExpression(
+      expressionGroup: ExpressionGroupContext,
+      activeScopes: List<ProjectionFunctionScope>
+   ): Either<List<CompilationError>, Expression> {
+      return expressionCompiler(scopedArguments = activeScopes).compile(expressionGroup)
    }
 
    private fun checkForCircularTypeInheritance(
@@ -1310,23 +1330,38 @@ class TokenProcessor(
    fun parseProjectionScope(
       expressionInputs: TaxiParser.ExpressionInputsContext?,
       projectionSourceType: FieldTypeSpec
-   ):Either<List<CompilationError>, ProjectionFunctionScope> {
+   ): Either<List<CompilationError>, ProjectionFunctionScope> {
       if (expressionInputs == null || expressionInputs.expressionInput().isEmpty()) {
          return ProjectionFunctionScope.implicitThis(projectionSourceType.type).right()
       }
       return when (expressionInputs.expressionInput().size) {
-          1 -> {
-             val input = expressionInputs.expressionInput().single()
-             val identifier = input.identifier().text ?: ProjectionFunctionScope.THIS
-             resolveTypeOrFunction(input.typeReference().qualifiedName(), null, input.typeReference().qualifiedName()).flatMap { token ->
-                if (token is Type) {
-                   ProjectionFunctionScope(identifier, token).right()
-                } else {
-                   listOf(CompilationError(input.typeReference().qualifiedName().toCompilationUnit(), "Expected a type here")).left()
-                }
-             }
-          }
-          else -> listOf(CompilationError(expressionInputs.expressionInput()[1].toCompilationUnit(), "Expected a single parameter declaration")).left()
+         1 -> {
+            val input = expressionInputs.expressionInput().single()
+            val identifier = input.identifier().text ?: ProjectionFunctionScope.THIS
+            resolveTypeOrFunction(
+               input.typeReference().qualifiedName(),
+               null,
+               input.typeReference().qualifiedName()
+            ).flatMap { token ->
+               if (token is Type) {
+                  ProjectionFunctionScope(identifier, token).right()
+               } else {
+                  listOf(
+                     CompilationError(
+                        input.typeReference().qualifiedName().toCompilationUnit(),
+                        "Expected a type here"
+                     )
+                  ).left()
+               }
+            }
+         }
+
+         else -> listOf(
+            CompilationError(
+               expressionInputs.expressionInput()[1].toCompilationUnit(),
+               "Expected a single parameter declaration"
+            )
+         ).left()
       }
    }
 
@@ -2245,7 +2280,7 @@ class TokenProcessor(
       typeArgumentsInScope: List<TypeArgument> = emptyList(),
       // When parsing paraeters that are lambdas we need a useful name
       anonymousParameterTypeName: String? = null
-   ): Either<List<CompilationError>, Parameter> {
+   ): Either<List<CompilationError>, lang.taxi.services.Parameter> {
       val paramTypeOrError: Either<List<CompilationError>, Type> =
          if (operationParameterContext.optionalTypeReference()?.typeReference() != null) {
             parseType(
@@ -2270,7 +2305,7 @@ class TokenProcessor(
             namespace
          ).map { constraints ->
             val isVarargs = operationParameterContext.varargMarker() != null
-            Parameter(
+            lang.taxi.services.Parameter(
                annotations = collateAnnotations(operationParameterContext.annotation()),
                type = paramType,
                name = operationParameterContext.parameterName()?.identifier()?.text,
@@ -2336,7 +2371,7 @@ class TokenProcessor(
       if (constraintList == null) {
          return emptyList<Constraint>().right()
       }
-      return expressionCompiler(fieldCompiler,activeScopes).compile(constraintList).map { expression ->
+      return expressionCompiler(fieldCompiler, activeScopes).compile(constraintList).map { expression ->
          listOf(ExpressionConstraint(expression))
       }
    }

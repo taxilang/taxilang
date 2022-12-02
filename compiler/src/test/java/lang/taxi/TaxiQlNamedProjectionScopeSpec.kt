@@ -4,7 +4,7 @@ import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import lang.taxi.types.ObjectType
-import lang.taxi.types.ScopedReferenceSelector
+import lang.taxi.types.ArgumentSelector
 
 class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
    describe("named projection scopes") {
@@ -32,7 +32,7 @@ class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
          val projection = query.projectedObjectType.field("star").projection
          projection!!.projectionFunctionScope.name.should.equal("actor")
          val projectedType = projection.projectedType.asA<ObjectType>()
-         val accessor = projectedType.field("name").accessor!!.asA<ScopedReferenceSelector>()
+         val accessor = projectedType.field("name").accessor!!.asA<ArgumentSelector>()
          accessor.scope.name.should.equal("actor")
          accessor.scope.type.qualifiedName.should.equal("Actor")
 

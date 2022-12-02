@@ -1,8 +1,8 @@
 package lang.taxi.types
 
 import lang.taxi.accessors.Accessor
+import lang.taxi.accessors.Argument
 import lang.taxi.accessors.LiteralAccessor
-import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.expressions.Expression
 
 /**
@@ -103,7 +103,7 @@ data class FieldReferenceSelector(val fieldName: String, override val returnType
    override fun asTaxi(): String = "this.$fieldName"
 }
 
-data class ScopedReferenceSelector(val scope:ProjectionFunctionScope, val selectors: List<FieldReferenceSelector>, override val compilationUnits:List<CompilationUnit>): Accessor, WhenSelectorExpression, Expression() {
+data class ArgumentSelector(val scope:Argument, val selectors: List<FieldReferenceSelector>, override val compilationUnits:List<CompilationUnit>): Accessor, WhenSelectorExpression, Expression() {
    override val declaredType: Type = selectors.last().declaredType
    override val returnType: Type = declaredType
    val path = selectors.joinToString(".") { it.fieldName }

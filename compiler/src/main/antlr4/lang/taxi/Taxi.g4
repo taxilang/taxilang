@@ -432,7 +432,7 @@ parameterName
 
 parameterConstraint
     :   '('expressionGroup? ')'
-    |   '(' parameterConstraintExpressionList ')'
+//    |   '(' parameterConstraintExpressionList ')'
 //    |   '(' temporalFormatList ')'
     ;
 
