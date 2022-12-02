@@ -274,6 +274,7 @@ class ViewFilterSpec : DescribeSpec({
          val orFilter = andRight.containedExpression as OrFilterExpression
          ((orFilter.filterLeft as PropertyToParameterConstraint).propertyIdentifier as PropertyTypeIdentifier)
             .type
+            .toQualifiedName()
             .should
             .equal(QualifiedName.from("SecurityDescription"))
          ((orFilter.filterLeft as PropertyToParameterConstraint).expectedValue as ConstantValueExpression)
@@ -282,6 +283,7 @@ class ViewFilterSpec : DescribeSpec({
             .equal("Floating")
          ((orFilter.filterRight as PropertyToParameterConstraint).propertyIdentifier as PropertyTypeIdentifier)
             .type
+            .toQualifiedName()
             .should
             .equal(QualifiedName.from("SecurityDescription"))
          ((orFilter.filterRight as PropertyToParameterConstraint).expectedValue as ConstantValueExpression)
@@ -296,6 +298,7 @@ class ViewFilterSpec : DescribeSpec({
             .containedExpression as PropertyToParameterConstraint)
             .propertyIdentifier as PropertyTypeIdentifier)
             .type
+            .toQualifiedName()
             .should
             .equal(QualifiedName.from("SecurityDescription"))
          // OrderStatus = 'Filled' or OrderStatus = 'Partially Filled'
@@ -303,6 +306,7 @@ class ViewFilterSpec : DescribeSpec({
             .filterLeft as PropertyToParameterConstraint)
             .propertyIdentifier as PropertyTypeIdentifier)
             .type
+            .toQualifiedName()
             .should
             .equal(QualifiedName.from("OrderStatus"))
 
@@ -310,6 +314,7 @@ class ViewFilterSpec : DescribeSpec({
             .filterRight as PropertyToParameterConstraint)
             .propertyIdentifier as PropertyTypeIdentifier)
             .type
+            .toQualifiedName()
             .should
             .equal(QualifiedName.from("OrderStatus"))
 

@@ -39,7 +39,7 @@ class OperationContextSpec : DescribeSpec({
             val constraint = operation.contract!!.returnTypeConstraints.first() as PropertyToParameterConstraint
             constraint.operator.should.equal(Operator.EQUAL)
             val propertyIdentifier = constraint.propertyIdentifier as PropertyTypeIdentifier
-            propertyIdentifier.type.parameterizedName.should.equal("TradeId")
+            propertyIdentifier.type.toQualifiedName().parameterizedName.should.equal("TradeId")
 
             val valueExpression = constraint.expectedValue as RelativeValueExpression
             valueExpression.path.path.should.equal("id")
@@ -126,7 +126,7 @@ class OperationContextSpec : DescribeSpec({
          }
 
          it("compiles return type with multiple property params") {
-            val operation = """
+            val schema =  """
          $taxi
          service TradeService {
             operation getTradesAfter(startDate:Instant, endDate:Instant):Trade[](
@@ -134,11 +134,13 @@ class OperationContextSpec : DescribeSpec({
                TradeDate < endDate
             )
          }
-         """.compiled().service("TradeService").operation("getTradesAfter")
+         """.compiled()
+
+               val operation = schema.service("TradeService").operation("getTradesAfter")
             val constraints = operation.contract!!.returnTypeConstraints
             constraints.should.contain(
                PropertyToParameterConstraint(
-                  PropertyTypeIdentifier(QualifiedName.from("TradeDate")),
+                  PropertyTypeIdentifier(schema.type(QualifiedName.from("TradeDate"))),
                   Operator.GREATER_THAN_OR_EQUAL_TO,
                   RelativeValueExpression(AttributePath.from("startDate")),
                   emptyList()
@@ -146,7 +148,7 @@ class OperationContextSpec : DescribeSpec({
             )
             constraints.should.contain(
                PropertyToParameterConstraint(
-                  PropertyTypeIdentifier(QualifiedName.from("TradeDate")),
+                  PropertyTypeIdentifier(schema.type(QualifiedName.from("TradeDate"))),
                   Operator.LESS_THAN,
                   RelativeValueExpression(AttributePath.from("endDate")),
                   emptyList()

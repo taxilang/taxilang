@@ -18,7 +18,7 @@ fun ExpressionConstraint.convertToPropertyConstraint(): PropertyToParameterConst
    require(this.expression is OperatorExpression) {"Only operator expressions can be downgraded to PropertyToParameterConstraint.  Got ${expression::class.simpleName}"}
    val expression = this.expression as OperatorExpression
    val propertyIdentifier = when (val lhs = expression.lhs) {
-      is TypeExpression -> PropertyTypeIdentifier(lhs.returnType.toQualifiedName())
+      is TypeExpression -> PropertyTypeIdentifier(lhs.returnType)
       else -> TODO("Support for ${lhs::class.simpleName} on LHS is not yet implemented")
    } as PropertyIdentifier
 
