@@ -31,11 +31,6 @@ interface GenericType : Type {
 }
 
 data class ArrayType(val type: Type, val source: CompilationUnit, override val inheritsFrom: Set<Type> = emptySet(), val expression: Expression? = null) : GenericType {
-   init {
-      if (type is ArrayType) {
-         println("found Array<Array<>> -- this code was recently refactored -- is this a bug?")
-      }
-   }
    // For readability.
    // Should really rename type property
    val memberType = type

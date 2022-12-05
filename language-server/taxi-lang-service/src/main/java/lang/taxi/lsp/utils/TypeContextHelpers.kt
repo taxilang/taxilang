@@ -2,6 +2,9 @@ package lang.taxi.lsp.utils
 
 import lang.taxi.Compiler
 import lang.taxi.TaxiParser
+import lang.taxi.TaxiParser.ArrayMarkerContext
+import lang.taxi.TaxiParser.OptionalTypeReferenceContext
+import lang.taxi.TaxiParser.TypeReferenceContext
 import lang.taxi.searchUpForRule
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
@@ -25,6 +28,7 @@ fun getFieldType(context: ParserRuleContext, compiler: Compiler): QualifiedName 
       is TaxiParser.IdentifierContext -> context.searchUpForRule<TaxiParser.FieldDeclarationContext>()!!
          .fieldTypeDeclaration().optionalTypeReference().typeReference()
 
+      is ArrayMarkerContext -> context.searchUpForRule<TypeReferenceContext>()!!
       else -> error("Unexpected token type: ${context::class.simpleName}")
    }
 

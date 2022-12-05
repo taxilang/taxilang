@@ -1,6 +1,6 @@
 package lang.taxi.accessors
 
-import arrow.core.Either
+import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.Type
 
 /**
@@ -15,16 +15,53 @@ import lang.taxi.types.Type
  *        name : actor.name
  *
  */
-data class ProjectionFunctionScope(val name: String, val type: Type) {
-   fun matchesReference(identifiers:List<String>):Boolean {
-      return identifiers.isNotEmpty() && identifiers.first() == name
-   }
-
-
+data class ProjectionFunctionScope(override val name: String, override val type: Type) : Argument{
    companion object {
       const val THIS = "this"
       fun implicitThis(type:Type): ProjectionFunctionScope {
          return ProjectionFunctionScope(THIS, type)
       }
+   }
+
+   override fun pruneFieldPath(path: List<String>): List<String> {
+      // The first identifier is the name of the scope, and doesn't
+      // need to be resolved (eg: "this")
+      return path.drop(1)
+   }
+
+   override fun pruneFieldSelectors(fieldSelectors: List<FieldReferenceSelector>): List<FieldReferenceSelector> {
+      // The first identifier is the name of the scope, and doesn't
+      // need to be resolved (eg: "this")
+      return fieldSelectors.drop(1)
+   }
+}
+
+
+/**
+ * Am argument (who can have a value resolved
+ * at runtime), which is used wihtin expressions.
+ *
+ * Arguments generally come from projection scopes, or
+ * Variables passed into queries.
+ *
+ * TODO : Not sure about the name.
+ */
+interface Argument {
+   val name: String
+   val type: Type
+
+   fun matchesReference(identifiers:List<String>):Boolean {
+      return identifiers.isNotEmpty() && identifiers.first() == name
+   }
+
+   /**
+    * Allows implementations to optionally prune the first few parts of a
+    * path.
+    */
+   fun pruneFieldSelectors(fieldSelectors: List<FieldReferenceSelector>): List<FieldReferenceSelector> {
+      return fieldSelectors
+   }
+   fun pruneFieldPath(path: List<String>):List<String> {
+      return path.drop(1)
    }
 }

@@ -68,7 +68,7 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
 
     }
 
-    fun generateService(fullPath: String, swaggerPath: Path, relativePath: String): TaxiService {
+    private fun generateService(fullPath: String, swaggerPath: Path, relativePath: String): TaxiService {
         val operations = swaggerPath.operationMap
                 .filter { canSupport(it.value) }
                 .map { (method, swaggerOperation) -> generateOperation(method, swaggerOperation, fullPath) }
@@ -101,7 +101,6 @@ class SwaggerServiceGenerator(val swagger: Swagger, val typeMapper: SwaggerTypeM
     }
 
     private fun generateOperation(method: HttpMethod, swaggerOperation: SwaggerOperation, pathMapping: String): TaxiOperation {
-        // TODO : Annotations ... need to do service discvoery and http method.
         val annotations = listOf(
                 HttpOperation(method = method.name, url = pathMapping)
         )

@@ -8,6 +8,12 @@ private fun onlyNumericTypes(): (Set<PrimitiveType>) -> Boolean {
    }
 }
 
+private fun comparableTypes():  (Set<PrimitiveType>) -> Boolean {
+   return { types ->
+      types.all { NumberTypes.isNumberType(it) || TemporalTypes.isTemporalType(it) }
+   }
+}
+
 private fun areAllSameType(): (Set<PrimitiveType>) -> Boolean {
    return { types -> types.size == 1 }
 }
@@ -45,13 +51,13 @@ enum class FormulaOperator(
    Subtract("-", listOf(onlyNumericTypes())),
    Multiply("*", listOf(onlyNumericTypes())),
    Divide("/", listOf(onlyNumericTypes())),
-   GreaterThan(">", listOf(onlyNumericTypes())),
-   LessThan("<", listOf(onlyNumericTypes())),
-   GreaterThanOrEqual(">=", listOf(onlyNumericTypes())),
-   LessThanOrEqual("<=", listOf(onlyNumericTypes())),
+   GreaterThan(">", listOf(comparableTypes())),
+   LessThan("<", listOf(comparableTypes())),
+   GreaterThanOrEqual(">=", listOf(comparableTypes())),
+   LessThanOrEqual("<=", listOf(comparableTypes())),
    LogicalAnd("&&", listOf(areAllBoolean())),
    LogicalOr("||", listOf(areAllBoolean())),
-   Equal("==", listOf(areAllSameType(), onlyNumericTypes())),
+   Equal("==", listOf(areAllSameType(), comparableTypes())),
    NotEqual("!=", listOf(areAllSameType()));
 
 

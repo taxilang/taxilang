@@ -167,7 +167,7 @@ class FieldCompiler(
       val expressionGroup: TaxiParser.ExpressionGroupContext? = member.fieldDeclaration().expressionGroup()
       val expressionCompiler = tokenProcessor.expressionCompiler(
          fieldCompiler = this,
-         activeScopes = this.resolutionContext.activeScopes
+         scopedArguments = this.resolutionContext.activeScopes
       )
       // TODO :
       // We need to refactor how we're getting type for a field
@@ -458,9 +458,6 @@ class FieldCompiler(
             val simpleType = fieldDeclaration?.optionalTypeReference()
             if (fieldType.accessor != null && accessor != null) {
                error("It is invalid for both the field to define an inferred accessor and an explict accessor.  Shouldn't happen")
-            }
-            if (fieldDeclaration?.parameterConstraint()?.parameterConstraintExpressionList() != null) {
-               error("parameterConstraintExpressionList on a field has been replaced, and shouldn't be possible anymore.  Understand how we got here.  Syntax in question: ${fieldDeclaration.source().content}")
             }
             tokenProcessor.mapConstraints(
                fieldDeclaration?.parameterConstraint()?.expressionGroup(),

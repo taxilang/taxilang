@@ -28,7 +28,7 @@ object BuiltIns {
             for date formats
             ]]
             annotation Format {
-                value : String
+                value : String?
                 offset : Int by default(0)
             }
          }

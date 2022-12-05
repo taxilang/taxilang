@@ -1,11 +1,40 @@
-package lang.taxi.types
+package lang.taxi.query
 
 import lang.taxi.services.operations.constraints.Constraint
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.Type
+import lang.taxi.types.TypedValue
 
-data class Variable(
-   val name: String?,
-   val value: TypedValue
-)
+sealed class FactValue() {
+   abstract val type:Type
+   data class Constant(val value: TypedValue) : FactValue() {
+      override val type: Type = value.type
+   }
+   data class Variable(override val type: Type, val name: String) : FactValue()
+
+   /**
+    * Convenience method
+    */
+   val typedValue: TypedValue
+      get() {
+         return when (this) {
+            is Constant -> this.value
+            else -> error("This variable does not contain a constant")
+         }
+      }
+
+   val hasValue: Boolean
+      get() {
+         return this is Constant
+      }
+   val variableName: String
+      get() {
+         return when (this) {
+            is Variable -> this.name
+            else -> error("This variable is constant and does not have a variable name")
+         }
+      }
+}
 
 data class DiscoveryType(
    val type: Type,
@@ -15,7 +44,7 @@ data class DiscoveryType(
     * constraint the output type.  However, they do inform query strategies,
     * so we pop them here for query operations to consider.
     */
-   val startingFacts: List<Variable>,
+   val startingFacts: List<Parameter>,
    /**
     * If the query body is an anonymoust type store the definition here,
     */

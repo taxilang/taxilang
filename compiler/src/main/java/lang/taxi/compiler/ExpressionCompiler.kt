@@ -4,8 +4,8 @@ import arrow.core.*
 import lang.taxi.*
 import lang.taxi.TaxiParser.QualifiedNameContext
 import lang.taxi.accessors.Accessor
+import lang.taxi.accessors.Argument
 import lang.taxi.accessors.LiteralAccessor
-import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.fields.FieldCompiler
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.FieldReferenceExpression
@@ -21,14 +21,14 @@ import org.antlr.v4.runtime.ParserRuleContext
 
 class ExpressionCompiler(
    private val tokenProcessor: TokenProcessor,
-   typeChecker: TypeChecker,
-   errors: MutableList<CompilationError>,
+   private val typeChecker: TypeChecker,
+   private val errors: MutableList<CompilationError>,
    /**
     * Pass the fieldCompiler when the expression being compiled is within the field of a model / query result.
     * This allows field lookups by name in expressions
     */
    private val fieldCompiler: FieldCompiler? = null,
-   private val scopes: List<ProjectionFunctionScope> = emptyList()
+   private val scopes: List<Argument> = emptyList()
 ) : FunctionParameterReferenceResolver {
    private val functionCompiler = FunctionAccessorCompiler(
       tokenProcessor,
@@ -37,6 +37,19 @@ class ExpressionCompiler(
       this,
       null
    )
+
+   fun withParameters(arguments:List<Argument>): ExpressionCompiler {
+      // TODO : In future, does it make sense to "nest" these, so that as we add arguments,
+      // they form scopes / contexts?
+      // For now, everything is flat.
+      return ExpressionCompiler(
+         tokenProcessor,
+         typeChecker,
+         errors,
+         fieldCompiler,
+         scopes + arguments
+      )
+   }
 
    fun compile(expressionGroup: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
       return when {
@@ -173,7 +186,7 @@ class ExpressionCompiler(
          ).left()
       }
       val expressionComponents = listOf(lhsOrError, rhsOrError, operatorOrError)
-      return if (expressionComponents.allValid()) {
+      if (expressionComponents.allValid()) {
          val lhs = lhsOrError.getOrThrow()
          val operator = operatorOrError.getOrThrow()
          val rhs = rhsOrError.getOrThrow()
@@ -181,9 +194,15 @@ class ExpressionCompiler(
          // Thereofre, we basically disable operator support checks for null comparisons.
          // If we fix that problem, we can keep the operator checking here
          val isNullCheck = LiteralExpression.isNullExpression(lhs) || LiteralExpression.isNullExpression(rhs)
-         val lhsType = lhs.returnType.basePrimitive ?: PrimitiveType.ANY
-         val rhsType = rhs.returnType.basePrimitive ?: PrimitiveType.ANY
-         when {
+
+         val (coercedLhs, coercedRhs) = TypeCaster.coerceTypesIfRequired(lhs,rhs).getOrHandle { error ->
+            return listOf(CompilationError(expressionGroup.toCompilationUnit(), error)).left()
+         }
+
+         val lhsType = coercedLhs.returnType.basePrimitive ?: PrimitiveType.ANY
+         val rhsType = coercedRhs.returnType.basePrimitive ?: PrimitiveType.ANY
+
+         return when {
             isNullCheck && !operator.supportsNullComparison() -> {
                listOf(
                   CompilationError(
@@ -204,16 +223,16 @@ class ExpressionCompiler(
 
             else -> {
                OperatorExpression(
-                  lhs = lhs,
+                  lhs = coercedLhs,
                   operator = operator,
-                  rhs = rhs,
+                  rhs = coercedRhs,
                   compilationUnits = expressionGroup.toCompilationUnits()
                ).right()
             }
          }
       } else {
          // Collect all the errors and bail out.
-         expressionComponents.invertEitherList().flattenErrors()
+         return expressionComponents.invertEitherList().flattenErrors()
             .leftOr(emptyList())
             .left()
       }
@@ -269,20 +288,19 @@ class ExpressionCompiler(
     *    thing : foo.bar // <---resolves bar property against foo
     * }
     */
-   fun resolveScopePath(qualifiedName: QualifiedNameContext): Either<List<CompilationError>, ScopedReferenceSelector> {
+   fun resolveScopePath(qualifiedName: QualifiedNameContext): Either<List<CompilationError>, ArgumentSelector> {
       val identifierTokens = qualifiedName.identifier().map { it.text }
       // if we can resolve it through a scope, do so.
       val resolvedScopeReference = scopes.first { it.matchesReference(identifierTokens) }
       return resolveScopePath(
          resolvedScopeReference,
-         // The first identifier is the name of the scope, and doesn't
-         // need to be resolved (eg: "this")
-         identifierTokens.drop(1),
+         resolvedScopeReference.pruneFieldPath(identifierTokens),
          qualifiedName
       ).flatMap { fieldSelectors ->
-         ScopedReferenceSelector(
+
+         ArgumentSelector(
             resolvedScopeReference,
-            fieldSelectors.drop(1),
+            resolvedScopeReference.pruneFieldSelectors(fieldSelectors),
             qualifiedName.toCompilationUnits()
          ).right()
       }
@@ -295,7 +313,7 @@ class ExpressionCompiler(
     * that's already handled (ie., if the initial scope is "special" - "this")
     */
    private fun resolveScopePath(
-      scope: ProjectionFunctionScope,
+      scope: Argument,
       path: List<String>,
       context: ParserRuleContext
    ): Either<List<CompilationError>, List<FieldReferenceSelector>> {

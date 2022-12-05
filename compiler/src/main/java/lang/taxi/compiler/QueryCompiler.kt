@@ -10,6 +10,10 @@ import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.fields.FieldTypeSpec
 import lang.taxi.findNamespace
 import lang.taxi.query.ConstraintBuilder
+import lang.taxi.query.DiscoveryType
+import lang.taxi.query.FactValue
+import lang.taxi.query.Parameter
+import lang.taxi.query.QueryMode
 import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.toCompilationUnit
@@ -17,13 +21,14 @@ import lang.taxi.types.*
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.value
+import lang.taxi.valueOrNull
 
 internal class QueryCompiler(
    private val tokenProcessor: TokenProcessor,
    private val expressionCompiler: ExpressionCompiler
 ) {
    fun parseQueryBody(
-      name: String, parameters: Map<String, QualifiedName>, ctx: TaxiParser.QueryBodyContext
+      name: String, parameters: List<Parameter>, ctx: TaxiParser.QueryBodyContext
    ): Either<List<CompilationError>, TaxiQlQuery> {
       val queryDirective = when {
 //         ctx.queryDirective().FindAll() != null -> QueryMode.FIND_ALL
@@ -33,11 +38,10 @@ internal class QueryCompiler(
          ctx.queryDirective().K_Stream() != null -> QueryMode.STREAM
          else -> error("Unhandled Query Directive")
       }
-
-      val factsOrErrors = ctx.givenBlock()?.let { parseFacts(it) } ?: emptyList<Variable>().right()
+      val factsOrErrors = ctx.givenBlock()?.let { parseFacts(it) } ?: emptyList<Parameter>().right()
       val queryOrErrors = factsOrErrors.flatMap { facts ->
 
-         parseQueryBody(ctx, facts, queryDirective).flatMap { typesToDiscover ->
+         parseQueryBody(ctx, facts + parameters, queryDirective).flatMap { typesToDiscover ->
             parseTypeToProject(ctx.typeProjection(), typesToDiscover).map { typeToProject ->
 
                TaxiQlQuery(
@@ -56,10 +60,11 @@ internal class QueryCompiler(
    }
 
    private fun parseQueryBody(
-      queryBodyContext: TaxiParser.QueryBodyContext, facts: List<Variable>, queryDirective: QueryMode
+      queryBodyContext: TaxiParser.QueryBodyContext,
+      parameters: List<Parameter>, queryDirective: QueryMode
    ): Either<List<CompilationError>, List<DiscoveryType>> {
       val namespace = queryBodyContext.findNamespace()
-      val constraintBuilder = ConstraintBuilder(tokenProcessor.typeResolver(namespace), expressionCompiler)
+      val constraintBuilder = ConstraintBuilder(tokenProcessor.typeResolver(namespace), expressionCompiler.withParameters(parameters))
 
       /**
        * A query body can either be a concrete type:
@@ -77,7 +82,7 @@ internal class QueryCompiler(
       return queryTypeList?.fieldTypeDeclaration()?.map { queryType ->
          tokenProcessor.parseType(namespace, queryType.optionalTypeReference().typeReference()).flatMap { type ->
             toDiscoveryType(
-               type, queryType.parameterConstraint(), queryDirective, constraintBuilder, facts
+               type, queryType.parameterConstraint(), queryDirective, constraintBuilder, parameters
             )
          }
       }?.invertEitherList()?.flattenErrors() ?: listOf(
@@ -86,7 +91,7 @@ internal class QueryCompiler(
             anonymousTypeDefinition
          ).flatMap { anonymousType ->
             toDiscoveryType(
-               anonymousType, anonymousTypeDefinition.parameterConstraint(), queryDirective, constraintBuilder, facts
+               anonymousType, anonymousTypeDefinition.parameterConstraint(), queryDirective, constraintBuilder, parameters
             )
          }).invertEitherList().flattenErrors()
    }
@@ -96,7 +101,7 @@ internal class QueryCompiler(
       parameterConstraint: TaxiParser.ParameterConstraintContext?,
       queryDirective: QueryMode,
       constraintBuilder: ConstraintBuilder,
-      facts: List<Variable>
+      facts: List<Parameter>
    ): Either<List<CompilationError>, DiscoveryType> {
       val constraintsOrErrors =
          parameterConstraint?.let { constraintExpressionList ->
@@ -114,20 +119,25 @@ internal class QueryCompiler(
       }
    }
 
-   private fun parseFacts(givenBlock: TaxiParser.GivenBlockContext): Either<List<CompilationError>, List<Variable>> {
-      return givenBlock.factList().fact().map {
-         parseFact(it)
+   private fun parseFacts(givenBlock: TaxiParser.GivenBlockContext): Either<List<CompilationError>, List<Parameter>> {
+      return givenBlock.factList().fact().mapIndexed { idx,factCtx ->
+         parseFact(idx,factCtx)
       }.invertEitherList().flattenErrors()
 
    }
 
-   private fun parseFact(factCtx: TaxiParser.FactContext): Either<List<CompilationError>, Variable> {
-      val variableName = factCtx.variableName()?.identifier()?.text
+   private fun parseFact(index: Int, factCtx: TaxiParser.FactContext): Either<List<CompilationError>, Parameter> {
+      val variableName = factCtx.variableName()?.identifier()?.text ?: "fact$index"
       val namespace = factCtx.findNamespace()
 
       return tokenProcessor.typeOrError(namespace, factCtx.typeReference()).flatMap { factType ->
          try {
-            Variable(variableName, TypedValue(factType.toQualifiedName(), factCtx.literal().value())).right()
+            val providedValue = factCtx.literal()?.valueOrNull()
+            if (providedValue != null) {
+               Parameter(variableName, FactValue.Constant(TypedValue(factType, factCtx.literal().value()))).right()
+            } else {
+               Parameter(variableName, FactValue.Variable(factType, variableName)).right()
+            }
          } catch (e: Exception) {
             listOf(CompilationError(factCtx.start, "Failed to create TypedInstance - ${e.message}")).left()
          }

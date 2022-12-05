@@ -28,16 +28,9 @@ class ConstraintBuilder(
       if (parameterConstraint == null) {
          return emptyList<Constraint>().right()
       }
-      val legacyConstraints = parameterConstraint.parameterConstraintExpressionList()?.let { build(it, type) }
+
+      return parameterConstraint.expressionGroup()?.let { buildExpressionConstraint(it, type) }
          ?: emptyList<Constraint>().right()
-
-
-      return legacyConstraints.flatMap { legacyConstraints ->
-         val expressionConstraints = parameterConstraint.expressionGroup()?.let { buildExpressionConstraint(it, type) }
-            ?: emptyList<Constraint>().right()
-
-         expressionConstraints.map { it + legacyConstraints }
-      }
    }
 
    private fun buildExpressionConstraint(
