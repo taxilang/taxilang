@@ -212,8 +212,21 @@ class ViewValidator(private val viewName: String) {
 
             }
 
+            accessor is FunctionExpression -> {
+               validateFunction(accessor.function, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
+            }
             accessor is FunctionAccessor -> {
                validateFunction(accessor, ctx, compilationErrors, typesInViewFindDefinitions, viewBodyType)
+            }
+            accessor is ModelAttributeReferenceSelector -> {
+               validateValidateSourceAndField(
+                  accessor.memberSource,
+                  accessor.targetType,
+                  ctx,
+                  compilationErrors,
+                  typesInViewFindDefinitions,
+                  viewBodyType
+               )
             }
 
             else -> {

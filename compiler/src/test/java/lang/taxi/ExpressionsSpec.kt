@@ -2,12 +2,14 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.types.ModelAttributeReferenceSelector
+import lang.taxi.types.toQualifiedName
 
 class ExpressionsSpec : DescribeSpec({
 
@@ -136,6 +138,22 @@ class ExpressionsSpec : DescribeSpec({
             accessor.memberSource.parameterizedName.shouldBe("A")
             accessor.targetType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<B>")
             accessor.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<lang.taxi.Array<B>>")
+         }
+
+         it("can reference itself using a type reference selector") {
+            val field = """
+               model A
+               model B
+               model Foo {
+                  field : Foo::A
+               }
+            """.compiled()
+               .model("Foo")
+               .field("field")
+            field.accessor.shouldNotBeNull()
+            val selector = field.accessor.shouldBeInstanceOf<ModelAttributeReferenceSelector>()
+            selector.memberSource.shouldBe("Foo".toQualifiedName())
+            selector.targetType.qualifiedName.shouldBe("A")
          }
       }
 

@@ -42,5 +42,15 @@
          <artifactId>slf4j-api</artifactId>
          <version>2.0.3</version>
       </dependency>
+      <dependency>
+         <groupId>io.kotest</groupId>
+         <artifactId>kotest-runner-junit5-jvm</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>io.kotest</groupId>
+         <artifactId>kotest-assertions-core-jvm</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 </project>
