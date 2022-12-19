@@ -14,7 +14,7 @@
       <dependency>
          <groupId>ch.qos.logback</groupId>
          <artifactId>logback-classic</artifactId>
-         <version>1.4.4</version>
+         <version>1.4.5</version>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -74,6 +74,6 @@
 
    </dependencies>
    <properties>
-      <jackson.version>2.13.4</jackson.version>
+      <jackson.version>2.14.1</jackson.version>
    </properties>
 </project>
