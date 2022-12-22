@@ -14,23 +14,29 @@ import lang.taxi.types.FormulaOperator
  *
  * While we phase it out, need to provide backwards compatibility.
  */
-fun ExpressionConstraint.convertToPropertyConstraint(): PropertyToParameterConstraint {
+fun ExpressionConstraint.convertToPropertyConstraint(): List<PropertyToParameterConstraint> {
    require(this.expression is OperatorExpression) {"Only operator expressions can be downgraded to PropertyToParameterConstraint.  Got ${expression::class.simpleName}"}
    val expression = this.expression as OperatorExpression
-   val propertyIdentifier = when (val lhs = expression.lhs) {
+   return expression.convertToPropertyConstraint()
+}
+
+private fun OperatorExpression.convertToPropertyConstraint():List<PropertyToParameterConstraint> {
+   if (lhs is OperatorExpression && rhs is OperatorExpression) {
+      return (lhs as OperatorExpression).convertToPropertyConstraint() + (rhs as OperatorExpression).convertToPropertyConstraint()
+   }
+   val propertyIdentifier = when (val lhs = this.lhs) {
       is TypeExpression -> PropertyTypeIdentifier(lhs.returnType)
       else -> TODO("Support for ${lhs::class.simpleName} on LHS is not yet implemented")
    } as PropertyIdentifier
 
-   val valueExpression = when (val rhs = expression.rhs) {
+   val valueExpression = when (val rhs = this.rhs) {
       is LiteralExpression -> ConstantValueExpression(rhs.value)
       else -> TODO("Support for ${rhs::class.simpleName} on RHS is not yet implemented")
    } as ValueExpression
-   return PropertyToParameterConstraint(
+   return listOf(PropertyToParameterConstraint(
       propertyIdentifier,
-      Operator.parse(expression.operator.symbol),
+      Operator.parse(this.operator.symbol),
       valueExpression,
       this.compilationUnits
-   )
+   ))
 }
-
