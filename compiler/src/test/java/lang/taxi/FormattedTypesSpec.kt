@@ -8,7 +8,6 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import lang.taxi.messages.Severity
 import lang.taxi.types.PrimitiveType
-import org.junit.Test
 
 class FormattedTypesSpec : DescribeSpec({
    describe("formatted types") {

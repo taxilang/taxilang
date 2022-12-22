@@ -41,6 +41,30 @@ class ViewSpec : DescribeSpec({
          personView?.typeDoc.should.equal("Sample View")
       }
 
+      it("is possible to reference a field from a view using a type reference selector") {
+         val src = """
+         model Person {
+            firstName : FirstName inherits String
+            lastName : LastName inherits String
+         }
+
+          [[
+           Sample View
+          ]]
+         view PersonView with query {
+            find { Person[] } as {
+               firstName: FirstName
+               moreNames : PersonView::FirstName
+            }
+         }
+           """.trimIndent()
+         val taxiDocument = Compiler(src).compile()
+         taxiDocument.model("Person").should.not.be.`null`
+         val personView = taxiDocument.view("PersonView")
+         personView.should.not.be.`null`
+         personView?.typeDoc.should.equal("Sample View")
+      }
+
       it("view with a namespace") {
          val src = """
             namespace notional
@@ -224,7 +248,8 @@ class ViewSpec : DescribeSpec({
             @Id
             sentOrderId : SentOrderId
             @Between
-		      orderDateTime: OrderEventDateTime( @format = "MM/dd/yy HH:mm:ss") by column("Time Submitted")
+            @Format( "MM/dd/yy HH:mm:ss")
+		      orderDateTime: OrderEventDateTime by column("Time Submitted")
             orderType: OrderType by default("Market")
             subSecurityType: SecurityDescription? by column("Instrument Desc")
             requestedQuantity: RequestedQuantity? by column("Size")
@@ -346,7 +371,8 @@ class ViewSpec : DescribeSpec({
             @Id
             sentOrderId : SentOrderId
             @Between
-		      orderDateTime: OrderEventDateTime( @format = "MM/dd/yy HH:mm:ss") by column("Time Submitted")
+            @Format( "MM/dd/yy HH:mm:ss")
+		      orderDateTime: OrderEventDateTime by column("Time Submitted")
             orderType: OrderType by default("Market")
             subSecurityType: SecurityDescription? by column("Instrument Desc")
             requestedQuantity: RequestedQuantity? by column("Size")
@@ -655,7 +681,7 @@ class ViewSpec : DescribeSpec({
                        sellCumulativeQty: SellCumulativeQty by sumOver(OrderFilled::ExecutedQuantity, OrderFilled::OrderSell, OrderFilled::MarketTradeId)
                        buyCumulativeQuantity: BuyCumulativeQuantity by when {
                         OrderFilled::OrderBuy != null  -> sumOver(OrderFilled::ExecutedQuantity, OrderFilled::OrderBuy, OrderFilled::MarketTradeId)
-                        else -> (ReportView::CumulativeQty - ReportView::SellCumulativeQty)
+                        else -> (this.cumQty - this.sellCumulativeQty)
                       }
                   }
                }
@@ -687,7 +713,7 @@ class ViewSpec : DescribeSpec({
                find {Order[]} as {
                      sellCumulativeQuantity:  CumulativeQty by sumOver(Order:: ExecutedQuantity, Order:: OrderId, Order:: OrderEventDateTime)
                      buyCumulativeQuantity: RequestedQuantity by sumOver(Order:: RequestedQuantity, Order:: OrderId, Order:: OrderEventDateTime)
-                     remainingQuantity: RemainingQuantity by (Report:: RequestedQuantity - Report:: CumulativeQty)
+                     remainingQuantity: RemainingQuantity by (this.buyCumulativeQuantity - this.sellCumulativeQuantity)
                }
             }
          """.trimIndent()
