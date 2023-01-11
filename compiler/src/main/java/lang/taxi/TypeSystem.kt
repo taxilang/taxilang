@@ -213,16 +213,6 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
          .map { it.qualifiedName }.toSet()
    }
 
-   fun assertAllTypesResolved() {
-      if (containsUnresolvedTypes()) {
-         val errors = unresolvedTypes().map { typeName ->
-            CompilationError(referencesToUnresolvedTypes[typeName]!!, ErrorMessages.unresolvedType(typeName))
-         }
-         throw CompilationException(errors)
-      }
-   }
-
-
    // THe whole additionalImports thing is for when we're
    // accessing prior to compiling (ie., in the language server).
    // During normal compilation, don't need to pass anything

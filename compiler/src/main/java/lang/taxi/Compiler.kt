@@ -71,40 +71,45 @@ data class CompilationError(
    val char: Int,
    val detailMessage: String,
    val sourceName: String? = null,
-   val severity: Severity = Severity.ERROR
+   val severity: Severity = Severity.ERROR,
+   val errorCode: Int? = null
 ) : Serializable {
    constructor(
       compiled: Compiled,
       detailMessage: String,
       sourceName: String = compiled.compilationUnits.first().source.sourceName,
-      severity: Severity = Severity.ERROR
+      severity: Severity = Severity.ERROR,
+      errorCode: Int? = null
    ) : this(
       compiled.compilationUnits.firstOrNull()?.location
-         ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity
+         ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity, errorCode
    )
 
    constructor(
       compilationUnit: CompilationUnit,
       detailMessage: String,
       sourceName: String = compilationUnit.source.sourceName,
-      severity: Severity = Severity.ERROR
+      severity: Severity = Severity.ERROR,
+      errorCode: Int? = null
    ) : this(
-      compilationUnit.location, detailMessage, sourceName, severity
+      compilationUnit.location, detailMessage, sourceName, severity, errorCode
    )
 
    constructor(
       position: SourceLocation,
       detailMessage: String,
       sourceName: String? = null,
-      severity: Severity = Severity.ERROR
-   ) : this(position.line, position.char, detailMessage, sourceName, severity)
+      severity: Severity = Severity.ERROR,
+      errorCode: Int? = null
+   ) : this(position.line, position.char, detailMessage, sourceName, severity, errorCode)
 
    constructor(
       offendingToken: Token,
       detailMessage: String,
       sourceName: String = offendingToken.tokenSource.sourceName,
-      severity: Severity = Severity.ERROR
-   ) : this(offendingToken.line, offendingToken.charPositionInLine, detailMessage, sourceName, severity)
+      severity: Severity = Severity.ERROR,
+      errorCode: Int? = null
+   ) : this(offendingToken.line, offendingToken.charPositionInLine, detailMessage, sourceName, severity, errorCode)
 
 
    override fun toString(): String = "[${severity.label}]: ${sourceName.orEmpty()}($line,$char) $detailMessage"

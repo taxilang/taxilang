@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.getOrElse
 import arrow.core.getOrHandle
+import arrow.core.handleErrorWith
 import arrow.core.left
 import arrow.core.right
 import lang.taxi.*
@@ -1628,11 +1629,7 @@ class TokenProcessor(
 
             // Note: Use requestedTypeName, as qualifying it to the local namespace didn't help
             val error = {
-               CompilationError(
-                  context.start,
-                  ErrorMessages.unresolvedType(requestedTypeName),
-                  context.source().sourceName
-               ).asList()
+               Errors.unresolvedType(requestedTypeName, context.toCompilationUnit()).asList()
             }
 
             if (ArrayType.isArrayTypeName(requestedTypeName)) {
@@ -1641,6 +1638,9 @@ class TokenProcessor(
 
             if (StreamType.isStreamTypeName(requestedTypeName)) {
                return@flatMap StreamType.untyped().right()
+            }
+            if (MapType.isMapTypeName(requestedTypeName)) {
+               return@flatMap  MapType.untyped().right()
             }
 
             val requestedNameIsQualified = requestedTypeName.contains(".")
@@ -1706,16 +1706,14 @@ class TokenProcessor(
          tokenName,
          typeArgumentCtx
       )
-      return if (type.isRight()) {
-         type
-      } else {
-         resolveFunction(tokenName, context).mapLeft {
-            listOf(
-               CompilationError(
-                  context.toCompilationUnit(),
-                  ErrorMessages.unresolvedType(tokenName.identifier().text())
-               )
-            )
+      return type.handleErrorWith { errors ->
+         when {
+            // If the only issue is that we couldn't find the type, check to see if it's a function
+            errors.all { it.errorCode == ErrorCodes.UNRESOLVED_TYPE.errorCode } -> {
+               resolveFunction(tokenName, context).mapLeft { listOf(Errors.unresolvedType(tokenName.identifier().text(), context.toCompilationUnit())) }
+            }
+            // Otherwise, return the errors
+            else ->  errors.left()
          }
       }
    }

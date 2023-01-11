@@ -1,11 +1,25 @@
 package lang.taxi
 
+import lang.taxi.types.CompilationUnit
 import lang.taxi.utils.log
 import org.antlr.v4.runtime.*
 
 
 object ErrorMessages {
+   @Deprecated("Use Errors.unresolvedType()")
    fun unresolvedType(type: String) = "$type is not defined"
+}
+enum class ErrorCodes(val errorCode: Int) {
+   UNRESOLVED_TYPE(1)
+}
+object Errors {
+   fun unresolvedType(type: String, compilationUnit: CompilationUnit):CompilationError {
+      return CompilationError(
+         compilationUnit,
+         "$type is not defined",
+         errorCode = ErrorCodes.UNRESOLVED_TYPE.errorCode
+      )
+   }
 }
 
 class CollectingErrorListener(private val sourceName: String) : BaseErrorListener() {
