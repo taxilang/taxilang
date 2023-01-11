@@ -11,7 +11,7 @@ in our ecosystems - published by services, exposed via processes, and sent from 
 In Taxi, as part of building out an robust composable type system, we differentiate between xxxx
 
 ## Types
-Types declare a simple, resuable concept.
+Types declare a simple, reusable concept.
 
 **Basic syntax:**
 ```
@@ -45,10 +45,10 @@ We encourage widely shared types, and narrowly shared models.
 ### Semantic typing
 Semantic typing simply means defining types that describe the actual information being shared.  It differs from most type systems, which focus purely on the representation of the data.
 
-| Term           | Meaning                                            | Example                  |
-|----------------|----------------------------------------------------|--------------------------|
-| Representation | How data is transmitted or encoded within a system | `String`,`Number`,`Date` |
-| Information | The actual facts sitting inside the data | `CustomerName`,`Age`,`DateOfBirth`    |
+| Term           | Meaning                                            | Example                            |
+|----------------|----------------------------------------------------|------------------------------------|
+| Representation | How data is transmitted or encoded within a system | `String`,`Number`,`Date`           |
+| Information    | The actual facts sitting inside the data           | `CustomerName`,`Age`,`DateOfBirth` |
 
 The **information** is the most useful part of any data, and so Taxi is intended to build type systems that describe this.
 Taxi encourages using lots of small, descriptive and narrowly focussed types as the building blocks of a shared enterprise taxonomy.
@@ -166,18 +166,18 @@ Taxi is a strongly typed language, that is, a discrete attribute will ultimately
 
 Taxi currently supports the following primitive types.  \(See the [Language Spec](https://gitlab.com/taxi-lang/taxi-lang/blob/master/compiler/src/main/antlr4/lang/taxi/Taxi.g4#L207)\)
 
-| Taxi Type | Comments | Default format |
-| :--- | :--- | :--- |
-| Boolean | `true` or `false` | - |
-| String | A list of characters | - |
-| Int | A numeric type without decimal places | - |
-| Double | A numeric type with decimal places, using floating-point precision | - |
-| Decimal | A numeric type with decimal places | - |
-| Date | Represents a day, without time, or a time zone.  | `yyyy-MM-dd` |
-| Time | A time, in the form of `hh:mm:ss`.  Does not support dates, or time-zones. | `HH:mm:ss` |
-| DateTime | Describes both a date and a time, but without a timezone. | `yyyy-MM-dd'T'HH:mm:ss.SSS` |
-| Instant | A timestamp indicating an absolute point in time.  Includes time-zone. | `yyyy-MM-dd'T'HH:mm:ss[.SSS]X` |
-| Any | Can be anything.  Try to avoid using `Any` as it's not descriptive, favour a more specific type if possible |
+| Taxi Type | Comments                                                                                                    | Default format                 |
+|:----------|:------------------------------------------------------------------------------------------------------------|:-------------------------------|
+| Boolean   | `true` or `false`                                                                                           | -                              |
+| String    | A list of characters                                                                                        | -                              |
+| Int       | A numeric type without decimal places                                                                       | -                              |
+| Double    | A numeric type with decimal places, using floating-point precision                                          | -                              |
+| Decimal   | A numeric type with decimal places                                                                          | -                              |
+| Date      | Represents a day, without time, or a time zone.                                                             | `yyyy-MM-dd`                   |
+| Time      | A time, in the form of `hh:mm:ss`.  Does not support dates, or time-zones.                                  | `HH:mm:ss`                     |
+| DateTime  | Describes both a date and a time, but without a timezone.                                                   | `yyyy-MM-dd'T'HH:mm:ss.SSS`    |
+| Instant   | A timestamp indicating an absolute point in time.  Includes time-zone.                                      | `yyyy-MM-dd'T'HH:mm:ss[.SSS]X` |
+| Any       | Can be anything.  Try to avoid using `Any` as it's not descriptive, favour a more specific type if possible |
 
 ### Array types
 An Array (specifically, `lang.taxi.Array`) is a special type within Taxi, and can be represented in one of two ways - either as `Array<Type>` or `Type`[].
@@ -209,6 +209,29 @@ model Person {
 However, be aware that this has a questionable effect on readability.
 
 See also: [Type aliases](#type-aliases)
+
+
+### Map types
+
+Maps can be defined using `Map<Key,Value>`
+
+```
+type PenCount inherits Int
+type PenColour inherits String
+
+type PenCollection inherits Map<PenColour,PenCount>
+
+model Person {
+   // A Map<PenColour, PenCount>
+   awesomePenCollection : PenCollection
+}
+```
+
+<Hint>
+Maps are great for dynamically generated content.  However, if you know the schema ahead of time, it's encouraged to create an actual type, rather than using a `Map`
+</Hint>
+
+Maps without key and value are also supported, and default to `Map<Any,Any>`.  However, this is discouraged.
 
 ### Date / Time types
 Taxi has four built-in date-time types (`Date`,`Time`,`DateTime` and `Instant`), which can specify additional format rules.
@@ -245,25 +268,25 @@ The actual parsing of dates is left to parser implementations.
 Our reference implementation ([Vyne](https://vyne.co)) uses the Java [SimpleDateFormat rules](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html) for parsing, assuming a [lenient](https://docs.oracle.com/javase/8/docs/api/java/text/DateFormat.html#setLenient-boolean-) parser.
 
 #### Sample patterns
-| Date and Time Pattern              | Will match                                                       |
-|-------------------------------------|--------------------------------------------------------------|
-| `dd/MM/yy`                          | 04/09/19                                                     |
-| `dd MMM yyyy`                       | 04 Sep 2019                                                  |
-| `yyyy-MM-dd`                        | 2019-09-04                                                   |
-| `dd-MM-yyyy h:mm a`                 | 04-09-2019 1:45 AM                                           |
-| `dd-MM-yyyy hh:mm a, zzzz`          | 04-09-2019 01:45 AM, Singapore Time                          |
-| `dd-MM-yyyy HH:mm:ss`               | 04-09-2019 01:45:48                                          |
-| `yyyy-MM-dd HH:mm:ss.SSS`           | 2019-09-04 01:45:48.616                                      |
-| `yyyy-MM-dd HH:mm:ss.SSSZ`          | 2019-09-04 01:45:48.616+0800                                 |
-| `yyyy-MM-dd HH:mm:ss.SSSXXX`          | 2019-09-04 01:45:48.616Z ; 2019-09-04 01:45:48.616554Z ; 2019-09-04 01:45:48.616+01:00                                   |
-| `EEEE, dd MMMM yyyy HH:mm:ss.SSSZ`  | Wednesday, 04 September 2019 01:45:48.616+0800               |
+| Date and Time Pattern               | Will match                                                                             |
+|-------------------------------------|----------------------------------------------------------------------------------------|
+| `dd/MM/yy`                          | 04/09/19                                                                               |
+| `dd MMM yyyy`                       | 04 Sep 2019                                                                            |
+| `yyyy-MM-dd`                        | 2019-09-04                                                                             |
+| `dd-MM-yyyy h:mm a`                 | 04-09-2019 1:45 AM                                                                     |
+| `dd-MM-yyyy hh:mm a, zzzz`          | 04-09-2019 01:45 AM, Singapore Time                                                    |
+| `dd-MM-yyyy HH:mm:ss`               | 04-09-2019 01:45:48                                                                    |
+| `yyyy-MM-dd HH:mm:ss.SSS`           | 2019-09-04 01:45:48.616                                                                |
+| `yyyy-MM-dd HH:mm:ss.SSSZ`          | 2019-09-04 01:45:48.616+0800                                                           |
+| `yyyy-MM-dd HH:mm:ss.SSSXXX`        | 2019-09-04 01:45:48.616Z ; 2019-09-04 01:45:48.616554Z ; 2019-09-04 01:45:48.616+01:00 |
+| `EEEE, dd MMMM yyyy HH:mm:ss.SSSZ`  | Wednesday, 04 September 2019 01:45:48.616+0800                                         |
 
 #### More timezone examples
 
-| Timezone pattern |  Will match           |
-|------------------|----------------------|
-| `XXX` <br /> Timezone offset with a `:`, also accepts `Z` for zero. <br /><br /> eg:`yyyy-MM-dd'T'HH:mm:ss.SSSXXX`               |  `1979-03-02T08:41:04.551Z` ; <br/> `1979-03-02T08:41:04.551+01:00` ;  <br/>`1979-03-02T08:41:04.551-01:00`        |
-| `XXXX` <br/> Timezone offset without a `:`, also accepts `Z` for zero. <br/><br /> eg: `yyyy-MM-dd'T'HH:mm:ss.SSSXXXX`               |  `1979-03-02T08:41:04.551Z` ; <br/> `1979-03-02T08:41:04.551+0100` ; <br/> `1979-03-02T08:41:04.551-0100`         |
+| Timezone pattern                                                                                                       | Will match                                                                                                 |
+|------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| `XXX` <br /> Timezone offset with a `:`, also accepts `Z` for zero. <br /><br /> eg:`yyyy-MM-dd'T'HH:mm:ss.SSSXXX`     | `1979-03-02T08:41:04.551Z` ; <br/> `1979-03-02T08:41:04.551+01:00` ;  <br/>`1979-03-02T08:41:04.551-01:00` |
+| `XXXX` <br/> Timezone offset without a `:`, also accepts `Z` for zero. <br/><br /> eg: `yyyy-MM-dd'T'HH:mm:ss.SSSXXXX` | `1979-03-02T08:41:04.551Z` ; <br/> `1979-03-02T08:41:04.551+0100` ; <br/> `1979-03-02T08:41:04.551-0100`   |
 
 #### Optional and lenient matching.
 Sections of a pattern can be marked optional by using `[]`.
@@ -273,11 +296,11 @@ The reference implementation follows lenient parsing rules, so values like `S` a
 
 For example:
 
-| Date and Time Pattern              | Will match                                                       |
-|-------------------------------------|--------------------------------------------------------------|
-| `yyyy-MM-dd'T'HH:mm:ss[.S]XXX`           | `2021-06-07T08:41:04.551555+01:00` ; <br/> `2021-06-07T08:41:04.551+01:00` ; <br/>`2021-06-07T08:41:04.551Z` ; <br/>`2021-06-07T08:41:04Z`                              |
-| `yyyy-MM-dd HH:mm:ss.SSSZ`          | `2019-09-04 01:45:48.616+0800 `                                |
-| `yyyy-MM-dd HH:mm:ss.SSSXXX`          | `2019-09-04 01:45:48.616Z` ; <br/>`2019-09-04 01:45:48.616554Z` ; <br/>`2019-09-04 01:45:48.616+01:00`                                  |
+| Date and Time Pattern          | Will match                                                                                                                                 |
+|--------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| `yyyy-MM-dd'T'HH:mm:ss[.S]XXX` | `2021-06-07T08:41:04.551555+01:00` ; <br/> `2021-06-07T08:41:04.551+01:00` ; <br/>`2021-06-07T08:41:04.551Z` ; <br/>`2021-06-07T08:41:04Z` |
+| `yyyy-MM-dd HH:mm:ss.SSSZ`     | `2019-09-04 01:45:48.616+0800 `                                                                                                            |
+| `yyyy-MM-dd HH:mm:ss.SSSXXX`   | `2019-09-04 01:45:48.616Z` ; <br/>`2019-09-04 01:45:48.616554Z` ; <br/>`2019-09-04 01:45:48.616+01:00`                                     |
 
 
 
