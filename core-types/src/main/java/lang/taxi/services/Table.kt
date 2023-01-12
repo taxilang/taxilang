@@ -28,8 +28,8 @@ data class Table(
 
    override fun asTaxi(): String {
       val annotations = this.annotations.joinToString { it.asTaxi() }
-      return """$annotations table
-         |${this.name} : ${this.returnType.toQualifiedName().parameterizedName}"""
+      return """$annotations
+         |table ${this.name} : ${this.returnType.toQualifiedName().parameterizedName}"""
          .trimMargin()
    }
 
