@@ -1,8 +1,12 @@
 package lang.taxi.services
 
 import lang.taxi.ImmutableEquality
-import lang.taxi.types.*
+import lang.taxi.types.Annotatable
 import lang.taxi.types.Annotation
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Compiled
+import lang.taxi.types.Documented
+import lang.taxi.types.Type
 
 data class Operation(
    override val name: String,
@@ -25,6 +29,5 @@ data class Operation(
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
-
 }
 
