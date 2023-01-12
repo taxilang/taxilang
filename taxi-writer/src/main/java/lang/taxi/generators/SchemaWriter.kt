@@ -7,6 +7,8 @@ import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract
 import lang.taxi.services.QueryOperation
 import lang.taxi.services.Service
+import lang.taxi.services.Stream
+import lang.taxi.services.Table
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.Annotatable
 import lang.taxi.types.Annotation
@@ -181,6 +183,8 @@ $taxiBlock
          when (it) {
             is QueryOperation -> it.asTaxi()
             is Operation -> generateOperationDeclaration(it, namespace)
+            is Table -> it.asTaxi()
+            is Stream -> it.asTaxi()
             else -> error("Unhandled service member type ${it::class.simpleName}")
          }
       }.prependIndent()

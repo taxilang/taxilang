@@ -122,9 +122,7 @@ class TestHelpersTest {
       }
       assertThat(assertionError).hasMessage("""
          Generated docs did not match expected.  Errors:
-         Annotations on foo.bar differs from expected:
-         Expected: [Annotation(name=SomeAnnotation, parameters={value=2}, type=null)]
-         Actual:   [Annotation(name=SomeAnnotation, parameters={value=1}, type=null)]
+         Parameter value in annotation SomeAnnotation on element foo.bar does not have the expected value:  Expected: 1 Actual: 2
 
          Generated:
          namespace foo
