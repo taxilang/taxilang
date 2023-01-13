@@ -133,7 +133,8 @@ class TokenProcessor(
          policies.toSet(),
          functions.toSet(),
          annotations.toSet(),
-         views.toSet()
+         views.toSet(),
+         queries.toSet()
       )
    }
 
@@ -303,31 +304,49 @@ class TokenProcessor(
    }
 
    private fun compileQueries() {
-      this.tokens.anonymousQueries.forEach { (qualifiedName, anonymousQueryContex) ->
+      this.tokens.anonymousQueries.forEach { (namespace, anonymousQueryContex) ->
+         val queryName = QualifiedName(namespace, AnonymousTypeNameGenerator.generate("AnonymousQuery"))
          QueryCompiler(this, expressionCompiler())
-            .parseQueryBody(qualifiedName, emptyList(), anonymousQueryContex.queryBody())
+            .parseQueryBody(
+               name = queryName,
+               parameters = emptyList(),
+               annotations = emptyList(),
+               docs = null,
+               ctx = anonymousQueryContex.queryBody()
+            )
             .mapLeft { compilationErrors -> errors.addAll(compilationErrors) }
             .map { taxiQlQuery ->
                queries.add(taxiQlQuery)
             }
       }
 
-      this.tokens.namedQueries.forEach { (qualifiedName, namedQueryContext) ->
+      this.tokens.namedQueries.forEach { (namespace, namedQueryContext) ->
          val queryName = namedQueryContext.queryName().identifier().text
+         val queryQualifiedName = QualifiedName(namespace, queryName)
+         val annotations = collateAnnotations(namedQueryContext.annotation())
+         val docs = parseTypeDoc(namedQueryContext.typeDoc())
          val parametersOrErrors =
-            namedQueryContext.queryName().queryParameters()?.queryParamList()?.queryParam()?.mapIndexed { idx, queryParam ->
-               val parameterName = queryParam.identifier().text ?: "p$idx"
-               val queryParameter: Either<List<CompilationError>, Parameter> =
-                  typeOrError(namedQueryContext.findNamespace(), queryParam.typeReference()).map { parameterType ->
-                     Parameter(parameterName, FactValue.Variable(parameterType, parameterName))
-                  }
-               queryParameter
-            }?.invertEitherList() ?: emptyList<Parameter>().right()
+            namedQueryContext.queryName().queryParameters()?.queryParamList()?.queryParam()
+               ?.mapIndexed { idx, queryParam ->
+                  val annotations = collateAnnotations(queryParam.annotation())
+                  val parameterName = queryParam.identifier().text ?: "p$idx"
+                  val queryParameter: Either<List<CompilationError>, Parameter> =
+                     typeOrError(namedQueryContext.findNamespace(), queryParam.typeReference()).map { parameterType ->
+                        Parameter(parameterName, FactValue.Variable(parameterType, parameterName), annotations)
+                     }
+                  queryParameter
+               }?.invertEitherList() ?: emptyList<Parameter>().right()
          parametersOrErrors
             .mapLeft { compilationErrors -> errors.addAll(compilationErrors.flatten()) }
             .map { parameters ->
                QueryCompiler(this, expressionCompiler())
-                  .parseQueryBody(queryName, parameters, namedQueryContext.queryBody())
+                  .parseQueryBody(
+                     name = queryQualifiedName,
+                     parameters = parameters,
+                     annotations = annotations,
+                     docs = docs,
+                     ctx = namedQueryContext.queryBody()
+                  )
                   .mapLeft { compilationErrors -> errors.addAll(compilationErrors) }
                   .map { taxiQlQuery -> queries.add(taxiQlQuery) }
             }
@@ -1640,7 +1659,7 @@ class TokenProcessor(
                return@flatMap StreamType.untyped().right()
             }
             if (MapType.isMapTypeName(requestedTypeName)) {
-               return@flatMap  MapType.untyped().right()
+               return@flatMap MapType.untyped().right()
             }
 
             val requestedNameIsQualified = requestedTypeName.contains(".")
@@ -1710,10 +1729,17 @@ class TokenProcessor(
          when {
             // If the only issue is that we couldn't find the type, check to see if it's a function
             errors.all { it.errorCode == ErrorCodes.UNRESOLVED_TYPE.errorCode } -> {
-               resolveFunction(tokenName, context).mapLeft { listOf(Errors.unresolvedType(tokenName.identifier().text(), context.toCompilationUnit())) }
+               resolveFunction(tokenName, context).mapLeft {
+                  listOf(
+                     Errors.unresolvedType(
+                        tokenName.identifier().text(),
+                        context.toCompilationUnit()
+                     )
+                  )
+               }
             }
             // Otherwise, return the errors
-            else ->  errors.left()
+            else -> errors.left()
          }
       }
    }
@@ -2588,10 +2614,10 @@ object AnonymousTypeNameGenerator {
    private val encoder: Base64.Encoder = Base64.getUrlEncoder().withoutPadding()
 
    // This is both shorter than a UUID (e.g. Xl3S2itovd5CDS7cKSNvml4_ODA)  and also more secure having 160 bits of entropy.
-   fun generate(): String {
+   fun generate(prefix: String = "AnonymousType"): String {
       val buffer = ByteArray(20)
       random.nextBytes(buffer)
-      return "AnonymousProjectedType${encoder.encodeToString(buffer)}"
+      return "$prefix${encoder.encodeToString(buffer)}"
    }
 }
 

@@ -713,11 +713,9 @@ defaultKeyword: 'default';
  * Taxi QL
  */
 
-queryDocument: importDeclaration* query EOF;
-
 query: namedQuery | anonymousQuery;
 
-namedQuery: queryName '{' queryBody '}';
+namedQuery: typeDoc? annotation* queryName '{' queryBody '}';
 anonymousQuery: queryBody;
 
 queryName: 'query' identifier queryParameters?;
@@ -726,7 +724,7 @@ queryParameters: '(' queryParamList ')';
 
 queryParamList: queryParam (',' queryParam)*;
 
-queryParam: identifier ':' typeReference;
+queryParam: annotation* identifier ':' typeReference;
 
 queryDirective: K_Stream | K_Find;
 findDirective: K_Find;
