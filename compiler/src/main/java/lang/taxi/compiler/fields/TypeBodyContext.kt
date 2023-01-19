@@ -19,6 +19,9 @@ class TypeBodyContext(
    override val parent: RuleContext?
       get() = typeBody?.parent
    override val hasSpreadOperator: Boolean
-      get() = typeBody?.SPREAD_OPERATOR() != null
+      get() = typeBody?.spreadOperatorDeclaration() != null
+   override val spreadOperatorExcludedFields: List<String>
+      get() = typeBody?.spreadOperatorDeclaration()?.identifier()
+         ?.map { it.text } ?: emptyList()
 
 }
