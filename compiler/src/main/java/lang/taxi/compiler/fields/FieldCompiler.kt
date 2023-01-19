@@ -3,18 +3,25 @@ package lang.taxi.compiler.fields
 import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.getOrElse
-import arrow.core.getOrHandle
 import arrow.core.left
 import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.Namespace
 import lang.taxi.TaxiParser
 import lang.taxi.TaxiParser.TypeReferenceContext
-import lang.taxi.accessors.*
-import lang.taxi.compiler.ResolutionContext
+import lang.taxi.accessors.Accessor
+import lang.taxi.accessors.CollectionProjectionExpressionAccessor
+import lang.taxi.accessors.ColumnAccessor
+import lang.taxi.accessors.ConditionalAccessor
+import lang.taxi.accessors.FieldSourceAccessor
+import lang.taxi.accessors.JsonPathAccessor
+import lang.taxi.accessors.ProjectionFunctionScope
+import lang.taxi.accessors.ProjectionScopeDefinition
+import lang.taxi.accessors.XpathAccessor
 import lang.taxi.compiler.ConditionalFieldSetProcessor
 import lang.taxi.compiler.DefaultValueParser
 import lang.taxi.compiler.ExpressionCompiler
+import lang.taxi.compiler.ResolutionContext
 import lang.taxi.compiler.TokenProcessor
 import lang.taxi.compiler.assertIsAssignable
 import lang.taxi.compiler.collectError
@@ -131,7 +138,9 @@ class FieldCompiler(
          return emptyList()
       }
 
-      return typeBody.objectType?.fields ?: emptyList()
+      val fields = typeBody.objectType?.fields ?: emptyList()
+      val excludedFields = typeBody.spreadOperatorExcludedFields
+      return fields.filter { !excludedFields.contains(it.name) }
    }
 
    private fun compileField(
@@ -284,7 +293,6 @@ class FieldCompiler(
             val fieldName = member.fieldDeclaration().identifier().text
             val discoveryTypes = resolutionContext.typesToDiscover
             if (discoveryTypes.isEmpty()) {
-
                listOf(
                   CompilationError(
                      member.start,
@@ -394,7 +402,7 @@ class FieldCompiler(
       fieldProjection: FieldProjection? = null
    ): Either<List<CompilationError>, Field> {
       val format = tokenProcessor.parseTypeFormat(fieldAnnotations, fieldType.type, member)
-         .getOrHandle {
+         .getOrElse {
             errors.addAll(it)
             null
          }
@@ -423,7 +431,7 @@ class FieldCompiler(
          member.fieldDeclaration().anonymousTypeDefinition() != null -> {
             val accessor =
                compileAccessor(member.fieldDeclaration().anonymousTypeDefinition().accessor(), fieldType.type)
-                  ?.getOrHandle {
+                  ?.getOrElse {
                      errors.addAll(it)
                      null
                   }
@@ -451,7 +459,7 @@ class FieldCompiler(
                member.fieldDeclaration().fieldTypeDeclaration()
             val accessor = fieldDeclaration?.accessor()?.let { accessorContext ->
                compileAccessor(accessorContext, fieldType.type)
-            }?.getOrHandle {
+            }?.getOrElse {
                errors.addAll(it)
                null
             }

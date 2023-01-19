@@ -66,8 +66,13 @@ typeDeclaration
 listOfInheritedTypes
     : typeReference (',' typeReference)*
     ;
+
+spreadOperatorDeclaration
+    : SPREAD_OPERATOR (K_Except '{' identifier+ '}')?
+    ;
+
 typeBody
-    :   '{' (typeMemberDeclaration | conditionalTypeStructureDeclaration )* SPREAD_OPERATOR? '}'
+:   '{' (typeMemberDeclaration | conditionalTypeStructureDeclaration)* spreadOperatorDeclaration? '}'
     ;
 
 typeMemberDeclaration
@@ -792,13 +797,17 @@ BooleanLiteral
     :   TRUE | FALSE
     ;
 
+// Identifiers define tokens that name things. Listing `K_xxx` keywords here ensures that users can  define field
+// names, operations and so on with words that are reserved in some context.
 
 identifier:
-   K_Table | K_Stream | K_Find | IdentifierToken;
+   K_Table | K_Stream | K_Find | K_Except | IdentifierToken;
 
 K_Find: 'find';
 K_Table: 'table';
 K_Stream: 'stream';
+
+K_Except : 'except';
 
 IdentifierToken
     :   Letter LetterOrDigit*
@@ -975,4 +984,4 @@ POW: '^';
 LPAREN : '(' ;
 RPAREN : ')' ;
 
-SPREAD_OPERATOR : '...' ;
+SPREAD_OPERATOR : '...';

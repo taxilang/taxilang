@@ -15,5 +15,7 @@ class AnnotationTypeBodyContent(private val typeBody: TaxiParser.AnnotationTypeB
    override val parent: RuleContext?
       get() = typeBody?.parent
    override val hasSpreadOperator = false
+   override val spreadOperatorExcludedFields: List<String>
+      get() = emptyList()
    override val objectType: ObjectType? = null
 }
