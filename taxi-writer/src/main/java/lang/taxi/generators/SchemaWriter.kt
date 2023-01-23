@@ -7,6 +7,8 @@ import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract
 import lang.taxi.services.QueryOperation
 import lang.taxi.services.Service
+import lang.taxi.services.Stream
+import lang.taxi.services.Table
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.Annotatable
 import lang.taxi.types.Annotation
@@ -152,10 +154,8 @@ $taxiBlock
          // For now, I've worked around it in the xml code gen (the only place that supports this currently)
          // by not setting the formattedInstanceOfType.  It produces the correct output, but it's a bit hacky
          //
-         .filterNot { it is ObjectType && it.declaresFormat }
+//         .filterNot { it is ObjectType && it.declaresFormat }
          .filterNot { it is PrimitiveType }
-         // Exclude calculated types - these are declared inline at the field reference
-         .filterNot { it is ObjectType && it.calculatedInstanceOfType != null }
          .filter { typeFilter(it) }
          .map { generateTypeDeclaration(it, currentNamespace) }
       return typeDeclarations
@@ -183,6 +183,8 @@ $taxiBlock
          when (it) {
             is QueryOperation -> it.asTaxi()
             is Operation -> generateOperationDeclaration(it, namespace)
+            is Table -> it.asTaxi()
+            is Stream -> it.asTaxi()
             else -> error("Unhandled service member type ${it::class.simpleName}")
          }
       }.prependIndent()
@@ -355,7 +357,7 @@ $enumValueDeclarations
 
    private fun accessorAsString(accessor: Accessor): String {
       return when (accessor) {
-         is TaxiStatementGenerator -> "${accessor.asTaxi()}"
+         is TaxiStatementGenerator -> accessor.asTaxi()
          else -> "/* accessor of type ${accessor::class.simpleName} does not support taxi generation */"
       }
    }
@@ -364,7 +366,7 @@ $enumValueDeclarations
       val nullableString = if (nullability) "?" else ""
       fun nestedArray(type: ArrayType) = "Array<" + typeAsTaxi(type.type, currentNamespace) + ">"
       fun simpleArray(type: ArrayType) = typeAsTaxi(type.type, currentNamespace) + "[]"
-      val typeHasFormat = if (type.formattedInstanceOfType != null) {
+      val typeHasFormat = if (type.format != null) {
          val inheritedFormats = type.inheritsFrom.flatMap { it.format ?: emptyList() }.filterNotNull()
          val formatsNotInherited = (type.format ?: emptyList()).filter { !inheritedFormats.contains(it) }
          formatsNotInherited.isNotEmpty()
@@ -372,16 +374,12 @@ $enumValueDeclarations
       return when {
          type is ArrayType -> (if (type.type is ArrayType) nestedArray(type) else simpleArray(type)) + nullableString
          type is UnresolvedImportedType -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace) + nullableString
-         typeHasFormat -> {
-            typeAsTaxi(
-               type.formattedInstanceOfType!!,
-               currentNamespace
-            ) + nullableString + """( ${writeFormat(type.format, type.offset)} )"""
-         }
-         type is ObjectType && type.calculatedInstanceOfType != null -> typeAsTaxi(
-            type.calculatedInstanceOfType!!,
-            currentNamespace
-         ) + nullableString //+ " " + type.calculation!!.asTaxi()
+//         typeHasFormat -> {
+//            typeAsTaxi(
+//               type,
+//               currentNamespace
+//            ) + nullableString /*+ """( ${writeFormat(type.format, type.offset)} )"""*/
+//         }
          else -> type.toQualifiedName().qualifiedRelativeTo(currentNamespace) + nullableString
       }
    }

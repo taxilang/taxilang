@@ -1,11 +1,12 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
 import lang.taxi.types.ObjectType
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class AnonymousTypesSpec : Spek({
+class AnonymousTypesSpec : DescribeSpec({
    describe("Anonymous Types") {
       it("simple anonymous types") {
          val src = """

@@ -7,7 +7,7 @@
    <parent>
       <groupId>org.taxilang</groupId>
       <artifactId>parent</artifactId>
-      <version>1.34.0-SNAPSHOT</version>
+      <version>1.35.0-SNAPSHOT</version>
    </parent>
 
    <artifactId>taxi-lang-server</artifactId>
@@ -73,14 +73,14 @@
       <dependency>
          <groupId>org.mockito.kotlin</groupId>
          <artifactId>mockito-kotlin</artifactId>
-         <version>4.0.0</version>
+         <version>4.1.0</version>
          <scope>test</scope>
       </dependency>
       <!-- https://mvnrepository.com/artifact/org.assertj/assertj-core -->
       <dependency>
          <groupId>org.assertj</groupId>
          <artifactId>assertj-core</artifactId>
-         <version>3.23.1</version>
+         <version>3.24.2</version>
          <scope>test</scope>
       </dependency>
 
@@ -213,7 +213,7 @@
          <plugin>
             <groupId>com.amashchenko.maven.plugin</groupId>
             <artifactId>gitflow-maven-plugin</artifactId>
-            <version>1.18.0</version>
+            <version>1.19.0</version>
             <configuration>
                <!-- whether to push to the git remote. Very useful for testing locally -->
                <pushRemote>true</pushRemote>

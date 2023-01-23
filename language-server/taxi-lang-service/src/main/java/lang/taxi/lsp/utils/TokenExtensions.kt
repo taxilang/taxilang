@@ -16,9 +16,10 @@ fun ParserRuleContext.asRange(): Range {
     return Range(start,stop)
 }
 
-private fun Token.asPosition(): Position {
-    return Position(this.line -1, this.charPositionInLine)
+fun Token.asPosition(): Position {
+   return Position(this.line - 1, this.charPositionInLine)
 }
-private fun Token.asPositionInclusive():Position {
-    return Position(this.line -1, this.charPositionInLine + this.text.length)
+
+private fun Token.asPositionInclusive(): Position {
+   return Position(this.line - 1, this.charPositionInLine + this.text.length)
 }

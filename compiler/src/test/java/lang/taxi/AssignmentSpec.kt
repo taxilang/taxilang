@@ -1,11 +1,13 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.booleans.shouldBeFalse
 import lang.taxi.types.PrimitiveType
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object AssignmentSpec : Spek({
+class AssignmentSpec : DescribeSpec({
    describe("Type assignment rules") {
       val schema = """
       type EyeColour inherits String
@@ -50,15 +52,27 @@ object AssignmentSpec : Spek({
          PrimitiveType.INTEGER.isAssignableTo(schema.type("FirstName")).should.be.`false`
       }
 
+      it("is not assignable when types have same base") {
+         val schema = """
+            type Age inherits Int
+            type Id inherits Int
+         """.compiled()
+         schema.type("Age").isAssignableTo(schema.type("Id")).shouldBeFalse()
+         schema.type("Id").isAssignableTo(schema.type("Age")).shouldBeFalse()
+      }
+
 
       it("should resolve formatted types to their unformatted underlying type") {
          val schema = """
          type EventDate inherits Instant
          model Source {
-            eventDate : EventDate( @format = "MM/dd/yy'T'HH:mm:ss.SSSX" )
+
+             @Format("MM/dd/yy'T'HH:mm:ss.SSSX")
+            eventDate : EventDate
          }
          model ThingWithInlineInstant {
-            eventDate : Instant( @format = "yyyy-MM-dd'T'HH:mm:ss.SSSX" )
+            @Format("yyyy-MM-dd'T'HH:mm:ss.SSSX")
+            eventDate : Instant
          }
       """.compiled()
          schema.type("EventDate").resolveAliases().qualifiedName.should.equal("EventDate")

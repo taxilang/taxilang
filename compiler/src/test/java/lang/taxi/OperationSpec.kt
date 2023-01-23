@@ -173,7 +173,7 @@ count
             }
          """.validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("BadType is not defined")
+         errors.first().detailMessage.should.equal(ErrorMessages.unresolvedType("BadType"))
       }
       it("should give a compilation error for an unknown capability") {
          val errors = """

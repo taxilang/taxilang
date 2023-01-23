@@ -56,6 +56,9 @@ data class QualifiedName(
       }
 }
 
+interface HasQualifiedName {
+   val name : QualifiedName
+}
 interface Named {
    val qualifiedName: String
 

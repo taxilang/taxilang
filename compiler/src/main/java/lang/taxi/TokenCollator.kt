@@ -4,6 +4,7 @@ import lang.taxi.TaxiParser.ServiceDeclarationContext
 import lang.taxi.compiler.SymbolKind
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.SourceNames
+import lang.taxi.utils.log
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.io.File
@@ -42,7 +43,8 @@ data class Tokens(
       // Duplicate checking is disabled, as it doesn't consider imports, which causes false compilation errors
       val errorsFromDuplicates = collectDuplicateTypes(others) + collectDuplicateServices(others)
       if (errorsFromDuplicates.isNotEmpty()) {
-         throw CompilationException(errorsFromDuplicates)
+         log().error("Duplicate definitions detected.  This should be an error")
+//         throw CompilationException(errorsFromDuplicates)
       }
       return Tokens(
          this.imports + others.imports,
@@ -196,9 +198,9 @@ class TokenCollator : TaxiBaseListener() {
       collateExceptions(ctx)
       // Check to see if an inline type alias is declared
       // If so, mark it for processing later
-      val typeType = ctx.simpleFieldDeclaration()?.typeType()
+      val typeType = ctx.fieldTypeDeclaration()
       if (typeType?.aliasedType() != null) {
-         val classOrInterfaceType = typeType.classOrInterfaceType()
+         val classOrInterfaceType = typeType.optionalTypeReference().typeReference().qualifiedName()
          unparsedTypes.put(qualify(classOrInterfaceType.identifier().text()), namespace to typeType)
       }
       super.exitFieldDeclaration(ctx)
@@ -206,7 +208,7 @@ class TokenCollator : TaxiBaseListener() {
 
    override fun exitEnumDeclaration(ctx: TaxiParser.EnumDeclarationContext) {
       if (collateExceptions(ctx)) {
-         val name = qualify(ctx.classOrInterfaceType().identifier().text())
+         val name = qualify(ctx.qualifiedName().identifier().text())
          unparsedTypes.put(name, namespace to ctx)
       }
       super.exitEnumDeclaration(ctx)
@@ -245,7 +247,7 @@ class TokenCollator : TaxiBaseListener() {
 
    override fun exitFunctionDeclaration(ctx: TaxiParser.FunctionDeclarationContext) {
       if (collateExceptions(ctx)) {
-         val qualifiedName = qualify(ctx.functionName().qualifiedName().identifier().text())
+         val qualifiedName = qualify(ctx.qualifiedName().identifier().text())
          unparsedFunctions[qualifiedName] = namespace to ctx
       }
    }

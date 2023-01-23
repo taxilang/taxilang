@@ -374,11 +374,14 @@ class TypeDefinitionHashTest {
 
    @Test
    fun `hash changes when format changes`() {
-      generateHash("""type Person { birthDate : Date( @format = 'dd-mmm-yyyy' ) }""").should.equal("2a4ce9")
-      generateHash("""type Person { birthDate : Date( @format = 'dd/mmm/yyyy' ) }""").should.equal("542af9")
+      val formatHash1 = generateHash("""type Person { birthDate : @Format( 'dd-mmm-yyyy' ) Date  }""")
+      val formatHash2 = generateHash("""type Person { birthDate : @Format( 'dd/mmm/yyyy' ) Date }""")
+      formatHash1.should.not.equal(formatHash2)
+
       val birthDate = "type BirthDate inherits Date \n"
-      generateHash("""$birthDate type Person { birthDate : BirthDate( @format = 'dd/mmm/yyyy' ) }""").should.equal("6bab06")
-      generateHash("""$birthDate type Person { birthDate : BirthDate( @format = 'dd-mmm-yyyy' ) }""").should.equal("730624")
+      val formatHash3 = generateHash("""$birthDate type Person { birthDate : @Format( 'dd/mmm/yyyy' ) BirthDate  }""")
+      val formatHash4 = generateHash("""$birthDate type Person { birthDate : @Format( 'dd-mmm-yyyy' ) BirthDate  }""")
+      formatHash3.should.not.equal(formatHash4)
    }
 
    private fun generateHash(input: String): String {
@@ -482,10 +485,14 @@ class TypeDefinitionHashTest {
          namespace broker1
          model Order {
             @Between
-            broker1OrderDateTime1 : EventDateTime( @format ="yyyy-MM-dd HH:mm:ss.SSSSSSS")
-            broker1OrderDateTime2 : EventDateTime( @format ="yyyy-MM-dd HH:mm:ss.SSS")
-            broker1OrderDateTime3 : EventDateTime( @format ="yyyy-MM-dd HH:mm:ss")
-            broker1OrderDateTime4 : EventDateTime( @format ="yyyy-MM-dd HH:mm:ss.SSSSSSS")
+            @Format("yyyy-MM-dd HH:mm:ss.SSSSSSS")
+            broker1OrderDateTime1 : EventDateTime
+            @Format("yyyy-MM-dd HH:mm:ss.SSS")
+            broker1OrderDateTime2 : EventDateTime
+            @Format("yyyy-MM-dd HH:mm:ss")
+            broker1OrderDateTime3 : EventDateTime
+            @Format("yyyy-MM-dd HH:mm:ss.SSSSSSS")
+            broker1OrderDateTime4 : EventDateTime
          }
       """.trimIndent()
       val broker2File = "/broker2/Order.taxi"
@@ -493,11 +500,15 @@ class TypeDefinitionHashTest {
          import common.EventDateTime
          namespace broker2
          model Order {
-            broker2OrderDateTime1 : EventDateTime( @format = "yyyy-MM-dd HH:mm:ss.SSSSSSS")
-            broker2OrderDateTime2 : EventDateTime( @format = "yyyy-MM-dd HH:mm:ss.SSS")
-            broker2OrderDateTime3 : EventDateTime( @format = "yyyy-MM-dd HH:mm:ss")
+            @Format("yyyy-MM-dd HH:mm:ss.SSSSSSS")
+            broker2OrderDateTime1 : EventDateTime
+             @Format( "yyyy-MM-dd HH:mm:ss.SSS")
+            broker2OrderDateTime2 : EventDateTime
+            @Format( "yyyy-MM-dd HH:mm:ss")
+            broker2OrderDateTime3 : EventDateTime
             @Between
-            broker2OrderDateTime4 : EventDateTime( @format = "yyyy-MM-dd HH:mm:ss.SSSSSSS")
+            @Format( "yyyy-MM-dd HH:mm:ss.SSSSSSS")
+            broker2OrderDateTime4 : EventDateTime
          }
       """.trimIndent()
 

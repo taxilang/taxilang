@@ -1,16 +1,28 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 import lang.taxi.expressions.FieldReferenceExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.types.FormulaOperator
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 import kotlin.test.assertFailsWith
 
-class ModelSpec : Spek({
+class ModelSpec : DescribeSpec({
    describe("model syntax") {
+      it("is possible to define inline inheritance") {
+         val type = """
+                  model Person {
+                     name : Name inherits String
+                  }
+               """.compiled()
+            .model("Person")
+            .field("name")
+            .type
+         type.qualifiedName.shouldBe("Name")
+         type.inheritsFrom.single().qualifiedName.shouldBe("lang.taxi.String")
+      }
       describe("simple grammar") {
          it("should allow declaration of a model") {
             val src = """
@@ -191,9 +203,9 @@ namespace foo.bar {
             """.trimIndent()
             val transaction = Compiler(src).compile().model("Person")
             val accessor = transaction.field("fullName").accessor as OperatorExpression
-            accessor.lhs.asA<FieldReferenceExpression>().fieldName.should.equal("firstName")
+            accessor.lhs.asA<FieldReferenceExpression>().path.should.equal("firstName")
             accessor.lhs.asA<FieldReferenceExpression>().returnType.qualifiedName.should.equal("FirstName")
-            accessor.rhs.asA<FieldReferenceExpression>().fieldName.should.equal("lastName")
+            accessor.rhs.asA<FieldReferenceExpression>().path.should.equal("lastName")
             accessor.rhs.asA<FieldReferenceExpression>().returnType.qualifiedName.should.equal("LastName")
          }
 
@@ -211,6 +223,46 @@ namespace foo.bar {
 
             """.validated()
                   .shouldContainMessage("Field invalidField does not exist on type Person")
+         }
+
+         it("is possible to define an expression with a nested field") {
+            val field = """
+            model Address {
+               city : CityName inherits String
+            }
+            model Location {
+               address : Address
+            }
+            model Person {
+               location : Location
+               cityName : this.location.address.city
+            }
+
+            """.compiled()
+               .model("Person")
+               .field("cityName")
+            field.type.qualifiedName.should.equal("CityName")
+            val accessor = field.accessor!!.asA<FieldReferenceExpression>()
+            accessor.fieldNames.should.contain.elements("location","address","city")
+            accessor.path.should.equal("location.address.city")
+            accessor.returnType.qualifiedName.should.equal("CityName")
+         }
+
+         it("should detect an invalid field name in the middle of a path") {
+            """
+            model Address {
+               city : CityName inherits String
+            }
+            model Location {
+               address : Address
+            }
+            model Person {
+               location : Location
+               cityName : this.location.invalid.city
+            }
+
+            """.validated()
+               .shouldContainMessage("Location does not have a property invalid")
          }
 
          describe("finding fields") {
@@ -284,6 +336,7 @@ namespace foo.bar {
                   )
                }
             }
+
             it("can find deeply nested fields with type") {
                val taxi = """
                $baseSchema

@@ -56,12 +56,12 @@ data class AnnotationType(
          return definition?.fields ?: emptyList()
       }
 
+   override val formatAndZoneOffset: FormatsAndZoneOffset? = null
    override val inheritsFrom: Set<Type> = emptySet()
    override val allInheritedTypes: Set<Type> = emptySet()
    override val format: List<String> = emptyList()
    override val inheritsFromPrimitive: Boolean = false
    override val basePrimitive: PrimitiveType? = null
-   override val formattedInstanceOfType: Type? = null
    override val definitionHash: String?
       get() {
          return if (isDefined) wrapper.definitionHash else null

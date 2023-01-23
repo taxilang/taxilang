@@ -6,8 +6,14 @@ import arrow.core.left
 import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.TaxiParser
+import lang.taxi.accessors.ProjectionFunctionScope
+import lang.taxi.compiler.fields.FieldTypeSpec
 import lang.taxi.findNamespace
 import lang.taxi.query.ConstraintBuilder
+import lang.taxi.query.DiscoveryType
+import lang.taxi.query.FactValue
+import lang.taxi.query.Parameter
+import lang.taxi.query.QueryMode
 import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.toCompilationUnit
@@ -15,10 +21,14 @@ import lang.taxi.types.*
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.value
+import lang.taxi.valueOrNull
 
-internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
+internal class QueryCompiler(
+   private val tokenProcessor: TokenProcessor,
+   private val expressionCompiler: ExpressionCompiler
+) {
    fun parseQueryBody(
-      name: String, parameters: Map<String, QualifiedName>, ctx: TaxiParser.QueryBodyContext
+      name: String, parameters: List<Parameter>, ctx: TaxiParser.QueryBodyContext
    ): Either<List<CompilationError>, TaxiQlQuery> {
       val queryDirective = when {
 //         ctx.queryDirective().FindAll() != null -> QueryMode.FIND_ALL
@@ -28,19 +38,20 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
          ctx.queryDirective().K_Stream() != null -> QueryMode.STREAM
          else -> error("Unhandled Query Directive")
       }
-
-      val factsOrErrors = ctx.givenBlock()?.let { parseFacts(it) } ?: emptyList<Variable>().right()
+      val factsOrErrors = ctx.givenBlock()?.let { parseFacts(it) } ?: emptyList<Parameter>().right()
       val queryOrErrors = factsOrErrors.flatMap { facts ->
 
-         parseQueryBody(ctx, facts, queryDirective).flatMap { typesToDiscover ->
-            parseTypeToProject(ctx.queryProjection(), typesToDiscover).map { typeToProject ->
+         parseQueryBody(ctx, facts + parameters, queryDirective).flatMap { typesToDiscover ->
+            parseTypeToProject(ctx.typeProjection(), typesToDiscover).map { typeToProject ->
+
                TaxiQlQuery(
                   name = name,
                   facts = facts,
                   queryMode = queryDirective,
                   parameters = parameters,
                   typesToFind = typesToDiscover,
-                  projectedType = typeToProject
+                  projectedType = typeToProject?.first,
+                  projectionScope = typeToProject?.second
                )
             }
          }
@@ -49,10 +60,11 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
    }
 
    private fun parseQueryBody(
-      queryBodyContext: TaxiParser.QueryBodyContext, facts: List<Variable>, queryDirective: QueryMode
+      queryBodyContext: TaxiParser.QueryBodyContext,
+      parameters: List<Parameter>, queryDirective: QueryMode
    ): Either<List<CompilationError>, List<DiscoveryType>> {
       val namespace = queryBodyContext.findNamespace()
-      val constraintBuilder = ConstraintBuilder(tokenProcessor.typeResolver(namespace))
+      val constraintBuilder = ConstraintBuilder(tokenProcessor.typeResolver(namespace), expressionCompiler.withParameters(parameters))
 
       /**
        * A query body can either be a concrete type:
@@ -67,10 +79,10 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
        */
       val queryTypeList = queryBodyContext.queryTypeList()
       val anonymousTypeDefinition = queryBodyContext.anonymousTypeDefinition()
-      return queryTypeList?.typeType()?.map { queryType ->
-         tokenProcessor.parseType(namespace, queryType).flatMap { type ->
+      return queryTypeList?.fieldTypeDeclaration()?.map { queryType ->
+         tokenProcessor.parseType(namespace, queryType.optionalTypeReference().typeReference()).flatMap { type ->
             toDiscoveryType(
-               type, queryType.parameterConstraint(), queryDirective, constraintBuilder, facts
+               type, queryType.parameterConstraint(), queryDirective, constraintBuilder, parameters
             )
          }
       }?.invertEitherList()?.flattenErrors() ?: listOf(
@@ -79,7 +91,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
             anonymousTypeDefinition
          ).flatMap { anonymousType ->
             toDiscoveryType(
-               anonymousType, anonymousTypeDefinition.parameterConstraint(), queryDirective, constraintBuilder, facts
+               anonymousType, anonymousTypeDefinition.parameterConstraint(), queryDirective, constraintBuilder, parameters
             )
          }).invertEitherList().flattenErrors()
    }
@@ -89,10 +101,10 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
       parameterConstraint: TaxiParser.ParameterConstraintContext?,
       queryDirective: QueryMode,
       constraintBuilder: ConstraintBuilder,
-      facts: List<Variable>
+      facts: List<Parameter>
    ): Either<List<CompilationError>, DiscoveryType> {
       val constraintsOrErrors =
-         parameterConstraint?.parameterConstraintExpressionList()?.let { constraintExpressionList ->
+         parameterConstraint?.let { constraintExpressionList ->
             constraintBuilder.build(constraintExpressionList, type)
          } ?: emptyList<Constraint>().right()
       return constraintsOrErrors.map { constraints ->
@@ -103,24 +115,29 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
          } else {
             type
          }
-         DiscoveryType(typeToDiscover.toQualifiedName(), constraints, facts, if (type.anonymous) type else null)
+         DiscoveryType(typeToDiscover, constraints, facts, if (type.anonymous) type else null)
       }
    }
 
-   private fun parseFacts(givenBlock: TaxiParser.GivenBlockContext): Either<List<CompilationError>, List<Variable>> {
-      return givenBlock.factList().fact().map {
-         parseFact(it)
+   private fun parseFacts(givenBlock: TaxiParser.GivenBlockContext): Either<List<CompilationError>, List<Parameter>> {
+      return givenBlock.factList().fact().mapIndexed { idx,factCtx ->
+         parseFact(idx,factCtx)
       }.invertEitherList().flattenErrors()
 
    }
 
-   private fun parseFact(factCtx: TaxiParser.FactContext): Either<List<CompilationError>, Variable> {
-      val variableName = factCtx.variableName()?.identifier()?.text
+   private fun parseFact(index: Int, factCtx: TaxiParser.FactContext): Either<List<CompilationError>, Parameter> {
+      val variableName = factCtx.variableName()?.identifier()?.text ?: "fact$index"
       val namespace = factCtx.findNamespace()
 
-      return tokenProcessor.typeOrError(namespace, factCtx.typeType()).flatMap { factType ->
+      return tokenProcessor.typeOrError(namespace, factCtx.typeReference()).flatMap { factType ->
          try {
-            Variable(variableName, TypedValue(factType.toQualifiedName(), factCtx.literal().value())).right()
+            val providedValue = factCtx.literal()?.valueOrNull()
+            if (providedValue != null) {
+               Parameter(variableName, FactValue.Constant(TypedValue(factType, factCtx.literal().value()))).right()
+            } else {
+               Parameter(variableName, FactValue.Variable(factType, variableName)).right()
+            }
          } catch (e: Exception) {
             listOf(CompilationError(factCtx.start, "Failed to create TypedInstance - ${e.message}")).left()
          }
@@ -129,13 +146,14 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
    }
 
    private fun parseTypeToProject(
-      queryProjection: TaxiParser.QueryProjectionContext?, typesToDiscover: List<DiscoveryType>
-   ): Either<List<CompilationError>, Type?> {
+      queryProjection: TaxiParser.TypeProjectionContext?,
+      typesToDiscover: List<DiscoveryType>
+   ): Either<List<CompilationError>, Pair<Type,ProjectionFunctionScope?>?> {
       if (queryProjection == null) {
          return null.right()
       }
 
-      val concreteProjectionTypeType = queryProjection.typeType()
+      val concreteProjectionTypeType = queryProjection.typeReference()
       val anonymousProjectionType = queryProjection.anonymousTypeDefinition()
 
       if (anonymousProjectionType != null && concreteProjectionTypeType == null && typesToDiscover.size > 1) {
@@ -147,7 +165,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
          ).left()
       }
 
-      if (concreteProjectionTypeType != null && concreteProjectionTypeType.listType() == null && anonymousProjectionType == null && typesToDiscover.size == 1 && typesToDiscover.first().type.parameters.isNotEmpty()) {
+      if (concreteProjectionTypeType != null && concreteProjectionTypeType.arrayMarker() == null && anonymousProjectionType == null && typesToDiscover.size == 1 && typesToDiscover.first().typeName.parameters.isNotEmpty()) {
          return listOf(
             CompilationError(
                queryProjection.start,
@@ -157,7 +175,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
       }
 
 
-      if (anonymousProjectionType != null && anonymousProjectionType.listType() == null && typesToDiscover.size == 1 && typesToDiscover.first().type.parameters.isNotEmpty()) {
+      if (anonymousProjectionType != null && anonymousProjectionType.arrayMarker() == null && typesToDiscover.size == 1 && typesToDiscover.first().typeName.parameters.isNotEmpty()) {
          return listOf(
             CompilationError(
                queryProjection.start,
@@ -173,7 +191,7 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
 
       val projectionType = baseTypeOrErrors.flatMap { possibleBaseType: Type? ->
          if (possibleBaseType != null && anonymousProjectionType == null) {
-            return@flatMap possibleBaseType.right()
+            return@flatMap (possibleBaseType to null).right()
          }
          if (anonymousProjectionType == null) {
             return@flatMap listOf(
@@ -183,22 +201,32 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
                )
             ).left()
          }
-         anonymousProjectionType.let { anonymousTypeDef ->
-            val isList = anonymousTypeDef.listType() != null
 
-            this
-               .tokenProcessor
-               .parseAnonymousType(
-                  namespace = anonymousProjectionType.findNamespace(),
-                  anonymousTypeResolutionContext = AnonymousTypeResolutionContext(
-                     typesToDiscover, concreteProjectionTypeType, possibleBaseType
-                  ),
-                  anonymousTypeDefinition = anonymousProjectionType
-               ).map { createdType ->
-                  val compiledType =
-                     if (isList) ArrayType(createdType, anonymousProjectionType.toCompilationUnit()) else createdType
-                  compiledType
-               }
+         tokenProcessor.parseProjectionScope(
+            queryProjection.expressionInputs(),
+            FieldTypeSpec.forDiscoveryTypes(typesToDiscover)
+         ).flatMap { projectionFunctionScope ->
+            anonymousProjectionType.let { anonymousTypeDef ->
+               val isList = anonymousTypeDef.arrayMarker() != null
+
+               this
+                  .tokenProcessor
+                  .parseAnonymousType(
+                     namespace = anonymousProjectionType.findNamespace(),
+                     resolutionContext = ResolutionContext(
+                        typesToDiscover,
+                        concreteProjectionTypeType,
+                        possibleBaseType,
+                        listOf(projectionFunctionScope)
+                     ),
+                     anonymousTypeDefinition = anonymousProjectionType
+                  ).map { createdType ->
+                     val compiledType =
+                        if (isList) ArrayType(createdType, anonymousProjectionType.toCompilationUnit()) else createdType
+                     compiledType to projectionFunctionScope
+                  }
+            }
+
          }
       }
 
@@ -206,9 +234,18 @@ internal class QueryCompiler(private val tokenProcessor: TokenProcessor) {
    }
 }
 
-data class AnonymousTypeResolutionContext(
+// Was called AnonymousTypesResolutionContext.
+// Basically, things that will help us resolve tokens
+// that are contextual (eg., "this" or similar in a function scope).
+data class ResolutionContext(
    val typesToDiscover: List<DiscoveryType> = emptyList(),
-   val concreteProjectionTypeContext: TaxiParser.TypeTypeContext? = null,
+   val concreteProjectionTypeContext: TaxiParser.TypeReferenceContext? = null,
    val baseType: Type? = null,
-)
+   val activeScopes:List<ProjectionFunctionScope> = emptyList()
+) {
+   fun appendScope(projectionScope: ProjectionFunctionScope): ResolutionContext {
+      return this.copy(activeScopes = activeScopes + projectionScope)
+   }
+
+}
 

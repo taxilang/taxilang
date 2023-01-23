@@ -22,7 +22,7 @@ class UnknownTokenReferenceException(val providedSourcePath: String, val current
 
 class TokenStore {
    private val tables = mutableMapOf<String, TokenTable>()
-   private val typeReferencesBySourceName = ArrayListMultimap.create<String, TaxiParser.TypeTypeContext>()
+   private val typeReferencesBySourceName = ArrayListMultimap.create<String, TaxiParser.TypeReferenceContext>()
    fun tokenTable(sourceName: String): TokenTable {
       val sourcePath = SourceNames.normalize(sourceName)
       if (!tables.containsKey(sourcePath)) {
@@ -36,7 +36,7 @@ class TokenStore {
       return tables.containsKey(sourcePath)
    }
 
-   fun getTypeReferencesForSourceName(sourceName: String): List<TaxiParser.TypeTypeContext> {
+   fun getTypeReferencesForSourceName(sourceName: String): List<TaxiParser.TypeReferenceContext> {
       val normalized = SourceNames.normalize(sourceName)
       return typeReferencesBySourceName[normalized]
    }
@@ -46,7 +46,7 @@ class TokenStore {
       tables.getOrPut(sourcePath, { TreeBasedTable.create() })
          .put(rowNumber, columnIndex, context)
 
-      if (context is TaxiParser.TypeTypeContext) {
+      if (context is TaxiParser.TypeReferenceContext) {
          typeReferencesBySourceName[sourceName].add(context)
       }
    }

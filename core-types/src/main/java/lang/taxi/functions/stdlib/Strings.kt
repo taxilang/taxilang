@@ -18,7 +18,8 @@ object Strings {
       Trim,
       Length,
       Find,
-      Replace
+      Replace,
+      ContainsString
 //      Coalesce
    )
 }
@@ -83,7 +84,15 @@ object Find: FunctionApi {
          declare function indexOf(source:String, valueToSearchFor:String):Int""".trimIndent()
    override val name: QualifiedName
       get() = stdLibName("indexOf")
+}
 
+object ContainsString : FunctionApi {
+   override val taxi: String
+      get() = """
+         [[ Returns true if `valueToSearchFor` within `source` ]]
+         declare function containsString(source:String, valueToSearchFor:String):Boolean""".trimIndent()
+   override val name: QualifiedName
+      get() = stdLibName("containsString")
 }
 
 object Replace : FunctionApi {

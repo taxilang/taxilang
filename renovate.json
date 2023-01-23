@@ -8,6 +8,7 @@
    "packageRules": [
       {
          "updateTypes": [
+            "minor",
             "patch",
             "pin",
             "digest"

@@ -1,8 +1,13 @@
 package lang.taxi.services
 
 import lang.taxi.ImmutableEquality
-import lang.taxi.types.*
+import lang.taxi.types.Annotatable
 import lang.taxi.types.Annotation
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Compiled
+import lang.taxi.types.Documented
+import lang.taxi.types.TaxiStatementGenerator
+import lang.taxi.types.Type
 
 /**
  * A stream of messages from a message broker (or similar).
@@ -15,7 +20,7 @@ class Stream(
    override val returnType: Type,
    override val compilationUnits: List<CompilationUnit>,
    override val typeDoc: String? = null
-) : ServiceMember, Annotatable, Compiled, Documented {
+) : ServiceMember, Annotatable, Compiled, Documented, TaxiStatementGenerator {
 
    override val parameters: List<Parameter> = emptyList()
 
@@ -25,6 +30,13 @@ class Stream(
       Stream::annotations,
       Stream::returnType,
    )
+
+   override fun asTaxi(): String {
+      val annotations = this.annotations.joinToString { it.asTaxi() }
+      return """$annotations stream
+         |${this.name} : ${this.returnType.toQualifiedName().parameterizedName}"""
+         .trimMargin()
+   }
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()

@@ -2,6 +2,7 @@ package lang.taxi
 
 import arrow.core.Either
 import arrow.core.getOrHandle
+import com.google.common.base.Stopwatch
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import lang.taxi.compiler.TokenProcessor
@@ -16,6 +17,7 @@ import lang.taxi.sources.SourceCode
 import lang.taxi.sources.SourceLocation
 import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.*
+import lang.taxi.utils.log
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.ParseTree
@@ -69,40 +71,45 @@ data class CompilationError(
    val char: Int,
    val detailMessage: String,
    val sourceName: String? = null,
-   val severity: Severity = Severity.ERROR
+   val severity: Severity = Severity.ERROR,
+   val errorCode: Int? = null
 ) : Serializable {
    constructor(
       compiled: Compiled,
       detailMessage: String,
       sourceName: String = compiled.compilationUnits.first().source.sourceName,
-      severity: Severity = Severity.ERROR
+      severity: Severity = Severity.ERROR,
+      errorCode: Int? = null
    ) : this(
       compiled.compilationUnits.firstOrNull()?.location
-         ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity
+         ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity, errorCode
    )
 
    constructor(
       compilationUnit: CompilationUnit,
       detailMessage: String,
       sourceName: String = compilationUnit.source.sourceName,
-      severity: Severity = Severity.ERROR
+      severity: Severity = Severity.ERROR,
+      errorCode: Int? = null
    ) : this(
-      compilationUnit.location, detailMessage, sourceName, severity
+      compilationUnit.location, detailMessage, sourceName, severity, errorCode
    )
 
    constructor(
       position: SourceLocation,
       detailMessage: String,
       sourceName: String? = null,
-      severity: Severity = Severity.ERROR
-   ) : this(position.line, position.char, detailMessage, sourceName, severity)
+      severity: Severity = Severity.ERROR,
+      errorCode: Int? = null
+   ) : this(position.line, position.char, detailMessage, sourceName, severity, errorCode)
 
    constructor(
       offendingToken: Token,
       detailMessage: String,
       sourceName: String = offendingToken.tokenSource.sourceName,
-      severity: Severity = Severity.ERROR
-   ) : this(offendingToken.line, offendingToken.charPositionInLine, detailMessage, sourceName, severity)
+      severity: Severity = Severity.ERROR,
+      errorCode: Int? = null
+   ) : this(offendingToken.line, offendingToken.charPositionInLine, detailMessage, sourceName, severity, errorCode)
 
 
    override fun toString(): String = "[${severity.label}]: ${sourceName.orEmpty()}($line,$char) $detailMessage"
@@ -280,13 +287,14 @@ class Compiler(
     */
    fun declaredTypeNames(): List<QualifiedName> {
       return tokenprocessorWithoutImports.findDeclaredTypeNames()
+         .filterNot { BuiltIns.isBuiltIn(it) }
    }
 
    fun declaredServiceNames(): List<QualifiedName> {
       return tokenprocessorWithoutImports.findDeclaredServiceNames()
    }
 
-   fun lookupTypeByName(typeType: TaxiParser.TypeTypeContext): QualifiedName {
+   fun lookupTypeByName(typeType: TaxiParser.TypeReferenceContext): QualifiedName {
       return QualifiedName.from(tokenProcessrWithImports.lookupTypeByName(typeType))
    }
 
@@ -317,7 +325,7 @@ class Compiler(
       return startOfDeclaration.toCompilationUnit()
    }
 
-   fun getDeclarationSource(typeName: TaxiParser.TypeTypeContext): CompilationUnit? {
+   fun getDeclarationSource(typeName: TaxiParser.TypeReferenceContext): CompilationUnit? {
       val qualifiedName = tokenProcessrWithImports.lookupTypeByName(typeName)
       return getCompilationUnit(tokenProcessrWithImports, qualifiedName)
    }
@@ -351,6 +359,7 @@ class Compiler(
 
 
    fun compileWithMessages(): Pair<List<CompilationError>, TaxiDocument> {
+      val stopwatch = Stopwatch.createStarted()
       // Note - leaving this approach for backwards compatiability
       // We could try to continue compiling, with the tokens we do have
       if (syntaxErrors.isNotEmpty()) {
@@ -359,6 +368,7 @@ class Compiler(
       val builder = tokenProcessrWithImports
       // Similarly to above, we could do somethign with these errors now.
       val (errors, document) = builder.buildTaxiDocument()
+//      log().debug("Taxi schema compilation took ${stopwatch.elapsed().toMillis()}ms")
       return errors to document
    }
 
@@ -540,7 +550,7 @@ fun TaxiParser.LiteralContext.isNullValue(): Boolean {
 
 interface NamespaceQualifiedTypeResolver {
    val namespace: String
-   fun resolve(context: TaxiParser.TypeTypeContext): Either<List<CompilationError>, Type>
+   fun resolve(context: TaxiParser.TypeReferenceContext): Either<List<CompilationError>, Type>
 
    /**
     * Resolves a type name that has been requested in a source file.
@@ -575,8 +585,11 @@ fun RuleContext.importsInFile(): List<QualifiedName> {
 }
 
 
-tailrec fun RuleContext.searchUpForRule(ruleType: Class<out RuleContext>): RuleContext? =
+fun RuleContext.searchUpForRule(ruleType: Class<out RuleContext>): RuleContext? =
    searchUpForRule(listOf(ruleType))
+
+inline fun <reified T : RuleContext> RuleContext.searchUpForRule(): T? =
+   searchUpForRule(listOf(T::class.java)) as T?
 
 tailrec fun RuleContext.searchUpForRule(ruleTypes: List<Class<out RuleContext>>): RuleContext? {
    fun matches(instance: RuleContext): Boolean {

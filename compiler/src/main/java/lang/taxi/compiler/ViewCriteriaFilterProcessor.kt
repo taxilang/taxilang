@@ -207,7 +207,7 @@ class ViewCriteriaFilterProcessor(private val tokenProcessor: TokenProcessor) {
          val typeResolver = tokenProcessor.typeResolver(ctx.findNamespace())
          val expectedConstantValueExpression = constraint.expectedValue as ConstantValueExpression
 
-          typeResolver.resolve(propTypeIdentifier.type.fullyQualifiedName, ctx).flatMap { fieldType ->
+          typeResolver.resolve(propTypeIdentifier.type.toQualifiedName().parameterizedName, ctx).flatMap { fieldType ->
             hasFieldWithType(fieldType, targetType, ctx.start).flatMap {
                argumentValueOrError(expectedConstantValueExpression.value, fieldType, ctx.start).flatMap {
                   validateOperator(fieldType, constraint.operator, ctx.start).flatMap {

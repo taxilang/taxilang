@@ -25,7 +25,7 @@ cache:
 default:
    tags:
       - docker
-   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/maven:3.8.6-eclipse-temurin-11
+   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/maven:3.8.7-eclipse-temurin-11
 
 .setup-nvm: &setup-nvm
    - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash'
@@ -66,7 +66,8 @@ validate:
    script:
       - 'mvn $MAVEN_CLI_OPTS clean deploy'
    services:
-      -  name: docker:20.10.18-dind
+      -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
+         alias: docker
          command: [ "--tls=false" ]
    variables:
       # Instruct Testcontainers to use the daemon of DinD.
@@ -124,7 +125,8 @@ publish-snapshot-jars:
    script:
       - 'mvn $MAVEN_CLI_OPTS deploy -P snapshot-release'
    services:
-      -  name: docker:20.10.18-dind
+      -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
+         alias: docker
          command: [ "--tls=false" ]
    variables:
       # Instruct Testcontainers to use the daemon of DinD.

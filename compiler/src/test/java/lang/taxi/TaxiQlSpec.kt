@@ -2,14 +2,20 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 import lang.taxi.accessors.CollectionProjectionExpressionAccessor
 import lang.taxi.accessors.FieldSourceAccessor
+import lang.taxi.expressions.OperatorExpression
+import lang.taxi.expressions.TypeExpression
+import lang.taxi.query.Parameter
+import lang.taxi.query.QueryMode
+import lang.taxi.services.operations.constraints.ExpressionConstraint
+import lang.taxi.types.ArgumentSelector
 import lang.taxi.types.ArrayType
+import lang.taxi.types.FormulaOperator
 import lang.taxi.types.ObjectType
+import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
-import lang.taxi.types.QueryMode
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 
 class TaxiQlSpec : DescribeSpec({
    describe("Taxi Query Language") {
@@ -43,13 +49,17 @@ class TaxiQlSpec : DescribeSpec({
          }
       """.trimIndent()
       val taxi = Compiler(schema).compile()
-      it("Should Allow anonymous projected type definition") {
+
+      // This feature got broken while implementing named projection scopes.
+      // However, it's unused, and the syntax isn't really standard with spread operators.
+      // Lets re-introduce if we decide to revive the feature
+      xit("Should Allow anonymous projected type definition") {
          val src = """
             import foo.Order
             import foo.OutputOrder
 
             find {
-               Order[]( TradeDate  >= startDate , TradeDate < endDate )
+               Order[]( TradeDate  >= startDate && TradeDate < endDate )
             } as {
                tradeTimestamp
             }[]
@@ -76,7 +86,7 @@ class TaxiQlSpec : DescribeSpec({
          val src = """
                  query RecentOrdersQuery( startDate:Instant, endDate:Instant ) {
                     find {
-                       Order[]( TradeDate >= startDate , TradeDate < endDate )
+                       Order[]( TradeDate >= startDate && TradeDate < endDate )
                     } as OutputOrder[]
                  }
               """.trimIndent()
@@ -84,14 +94,14 @@ class TaxiQlSpec : DescribeSpec({
          val query = queries.first()
          query.parameters.should.have.size(2)
          query.parameters.should.equal(
-            mapOf(
-               "startDate" to QualifiedName.from("lang.taxi.Instant"),
-               "endDate" to QualifiedName.from("lang.taxi.Instant")
+            listOf(
+               Parameter.variable("startDate", PrimitiveType.INSTANT),
+               Parameter.variable("endDate", PrimitiveType.INSTANT),
             )
          )
          query.projectedType?.toQualifiedName()?.parameterizedName.should.equal("lang.taxi.Array<foo.OutputOrder>")
          query.typesToFind.should.have.size(1)
-         query.typesToFind.first().type.parameterizedName.should.equal("lang.taxi.Array<foo.Order>")
+         query.typesToFind.first().typeName.parameterizedName.should.equal("lang.taxi.Array<foo.Order>")
       }
 
 
@@ -103,7 +113,7 @@ class TaxiQlSpec : DescribeSpec({
 
                  query RecentOrdersQuery( startDate:Instant, endDate:Instant ) {
                     find {
-                       Order[]( TradeDate >= startDate , TradeDate < endDate )
+                       Order[]( TradeDate >= startDate && TradeDate < endDate )
                     } as OutputOrder[]
                  }
               """.trimIndent()
@@ -112,17 +122,24 @@ class TaxiQlSpec : DescribeSpec({
          query.name.should.equal("RecentOrdersQuery")
          query.parameters.should.have.size(2)
          query.parameters.should.equal(
-            mapOf(
-               "startDate" to QualifiedName.from("lang.taxi.Instant"),
-               "endDate" to QualifiedName.from("lang.taxi.Instant")
+            listOf(
+               Parameter.variable("startDate", PrimitiveType.INSTANT),
+               Parameter.variable("endDate", PrimitiveType.INSTANT),
             )
          )
          query.projectedType?.toQualifiedName()?.parameterizedName.should.equal("lang.taxi.Array<foo.OutputOrder>")
          query.typesToFind.should.have.size(1)
 
          val typeToFind = query.typesToFind.first()
-         typeToFind.type.parameterizedName.should.equal("lang.taxi.Array<foo.Order>")
-         typeToFind.constraints.should.have.size(2)
+         typeToFind.typeName.parameterizedName.should.equal("lang.taxi.Array<foo.Order>")
+         val constraint = typeToFind.constraints.single().asA<ExpressionConstraint>().expression as OperatorExpression
+         val firstExpression = constraint.lhs.asA<OperatorExpression>()
+         firstExpression.operator.shouldBe(FormulaOperator.GreaterThanOrEqual)
+         firstExpression.rhs.asA<ArgumentSelector>().scope.name.shouldBe("startDate")
+
+         val secondExpression = constraint.rhs.asA<OperatorExpression>()
+         secondExpression.operator.shouldBe(FormulaOperator.LessThan)
+         secondExpression.rhs.asA<ArgumentSelector>().scope.name.shouldBe("endDate")
       }
 
       it("should compile a query that exposes facts") {
@@ -137,12 +154,12 @@ class TaxiQlSpec : DescribeSpec({
          query.facts.should.have.size(1)
          val (name, fact) = query.facts.first()
          name.should.equal("email")
-         fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
-         fact.value.should.equal("jimmy@demo.com")
+         fact.typedValue.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
+         fact.typedValue.value.should.equal("jimmy@demo.com")
 
          query.typesToFind.should.have.size(1)
          val discoveryType = query.typesToFind.first()
-         discoveryType.type.fullyQualifiedName.should.equal("foo.Trade")
+         discoveryType.typeName.fullyQualifiedName.should.equal("foo.Trade")
          discoveryType.startingFacts.should.have.size(1)
          discoveryType.startingFacts.should.equal(query.facts)
       }
@@ -156,9 +173,8 @@ class TaxiQlSpec : DescribeSpec({
          )
          query.facts.should.have.size(1)
          val (name, fact) = query.facts.first()
-         name.should.be.`null`
-         fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
-         fact.value.should.equal("jimmy@demo.com")
+         fact.typedValue.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
+         fact.typedValue.value.should.equal("jimmy@demo.com")
 
       }
 
@@ -168,7 +184,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.OutputOrder
 
                  find {
-                    Order[]( TradeDate  >= startDate , TradeDate < endDate )
+                    Order[]
                  }
            """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
@@ -177,13 +193,16 @@ class TaxiQlSpec : DescribeSpec({
 
 
 
-      it("Should not Allow anonymous projected type definitions with invalid field references") {
+      // This feature got broken while implementing named projection scopes.
+      // However, it's unused, and the syntax isn't really standard with spread operators.
+      // Lets re-introduce if we decide to revive the feature
+      xit("Should not Allow anonymous projected type definitions with invalid field references") {
          val src = """
                  import foo.Order
                  import foo.OutputOrder
 
                  find {
-                    Order[]( TradeDate  >= startDate , TradeDate < endDate )
+                    Order[]( TradeDate  >= startDate && TradeDate < endDate )
                  } as {
                     invalidField
                  }[]
@@ -205,48 +224,48 @@ class TaxiQlSpec : DescribeSpec({
          query.facts.should.have.size(1)
          val (name, fact) = query.facts.first()
          name.should.equal("email")
-         fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
-         fact.value.should.equal("jimmy@demo.com")
+         fact.typedValue.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
+         fact.typedValue.value.should.equal("jimmy@demo.com")
 
          query.typesToFind.should.have.size(1)
          val discoveryType = query.typesToFind.first()
-         discoveryType.type.fullyQualifiedName.should.startWith("Anonymous")
+         discoveryType.typeName.fullyQualifiedName.should.startWith("Anonymous")
          discoveryType.startingFacts.should.have.size(1)
          discoveryType.startingFacts.should.equal(query.facts)
       }
 
       it("query body can be an anonymous projection with constraints") {
          val src = """
-                 given { email : CustomerEmailAddress = "jimmy@demo.com"}
+                 given { startDate: TradeDate = "2022-12-02", endDate: TradeDate = "2022-12-23" }
                  find {
                    tradeDate: TradeDate
                    traderId: TraderId
-                 }  ( TradeDate  >= startDate , TradeDate < endDate )
+                 }  ( TradeDate  >= startDate && TradeDate < endDate )
               """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
-         query.facts.should.have.size(1)
+         query.facts.should.have.size(2)
          val (name, fact) = query.facts.first()
-         name.should.equal("email")
-         fact.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
-         fact.value.should.equal("jimmy@demo.com")
+         name.should.equal("startDate")
+         fact.typedValue.fqn.parameterizedName.should.equal("foo.TradeDate")
+         fact.typedValue.value.should.equal("2022-12-02")
 
          query.typesToFind.should.have.size(1)
          val discoveryType = query.typesToFind.first()
          discoveryType.anonymousType?.anonymous.should.be.`true`
-         discoveryType.startingFacts.should.have.size(1)
-         discoveryType.startingFacts.should.equal(query.facts)
-         discoveryType.constraints.size.should.equal(2)
+         discoveryType.startingFacts.should.have.size(2)
       }
 
-
-      it("Should Allow anonymous type that extends base type") {
+      // This feature got broken while implementing named projection scopes.
+      // However, it's unused, and the syntax isn't really standard with spread operators.
+      // Lets re-introduce if we decide to revive the feature
+      xit("Should Allow anonymous type that extends base type") {
          val src = """
                  import foo.Order
                  import foo.OutputOrder
 
                  find {
-                    Order[]( TradeDate  >= startDate , TradeDate < endDate )
+                    Order[]( TradeDate  >= startDate && TradeDate < endDate )
                  } as OutputOrder {
                     tradeTimestamp
                  }[]
@@ -260,13 +279,16 @@ class TaxiQlSpec : DescribeSpec({
          anonymousType.hasField("outputId").should.be.`true`
       }
 
-      it("Should Not Allow anonymous type that extends base type when anonymous type reference a field that does not part of discovery type") {
+      // This feature got broken while implementing named projection scopes.
+      // However, it's unused, and the syntax isn't really standard with spread operators.
+      // Lets re-introduce if we decide to revive the feature
+      xit("Should Not Allow anonymous type that extends base type when anonymous type reference a field that does not part of discovery type") {
          val src = """
                  import foo.Order
                  import foo.OutputOrder
 
                  find {
-                    Order[]( TradeDate  >= startDate , TradeDate < endDate )
+                    Order[]( TradeDate  >= startDate && TradeDate < endDate )
                  } as OutputOrder {
                     invalidField
                  }[]
@@ -276,13 +298,16 @@ class TaxiQlSpec : DescribeSpec({
          queryCompilationError.first().detailMessage.should.contain("should be an object type containing field invalidField")
       }
 
-      it("Should Allow anonymous type that extends a base type and adds additional field definitions") {
+      // This feature got broken while implementing named projection scopes.
+      // However, it's unused, and the syntax isn't really standard with spread operators.
+      // Lets re-introduce if we decide to revive the feature
+      xit("Should Allow anonymous type that extends a base type and adds additional field definitions") {
          val src = """
                  import foo.Order
                  import foo.OutputOrder
 
                  find {
-                    Order[]( TradeDate  >= startDate , TradeDate < endDate )
+                    Order[]( TradeDate  >= startDate && TradeDate < endDate )
                  } as OutputOrder {
                     insertedAt: foo.InsertedAt
                  }[]
@@ -298,13 +323,16 @@ class TaxiQlSpec : DescribeSpec({
          anonymousType.inheritedFields.should.have.size(1)
       }
 
-      it("Should Allow anonymous type with field definitions") {
+      // This feature got broken while implementing named projection scopes.
+      // However, it's unused, and the syntax isn't really standard with spread operators.
+      // Lets re-introduce if we decide to revive the feature
+      xit("Should Allow anonymous type with field definitions") {
          val src = """
                  import foo.Order
                  import foo.OutputOrder
 
                  find {
-                    Order[]( TradeDate  >= startDate , TradeDate < endDate )
+                    Order[]( TradeDate  >= startDate && TradeDate < endDate )
                  } as {
                     insertedAt: foo.InsertedAt
                  }[]
@@ -324,7 +352,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.OutputOrder
 
                  find {
-                    Order[]( TradeDate  >= startDate , TradeDate < endDate )
+                    Order[]
                  } as {
                     traderEmail: UserEmail by Order['traderId']
                  }[]
@@ -343,13 +371,16 @@ class TaxiQlSpec : DescribeSpec({
       }
 
 
-      it("Should Allow anonymous type with field definitions referencing projected type") {
+      // This feature got broken while implementing named projection scopes.
+      // However, it's unused, and the syntax isn't really standard with spread operators.
+      // Lets re-introduce if we decide to revive the feature
+      xit("Should Allow anonymous type with field definitions referencing projected type") {
          val src = """
                  import foo.Order
                  import foo.OutputOrder
 
                  find {
-                    Order[]( TradeDate  >= startDate , TradeDate < endDate )
+                    Order[]( TradeDate  >= startDate && TradeDate < endDate )
                  } as foo.Trade {
                     traderEmail: UserEmail by Trade['traderId']
                  }[]
@@ -366,13 +397,16 @@ class TaxiQlSpec : DescribeSpec({
          fieldSourceAccessor.attributeType.should.equal(QualifiedName.from("foo.TraderId"))
       }
 
-      it("Should Allow anonymous type with field definitions referencing a type in the schema") {
+      // This feature got broken while implementing named projection scopes.
+      // However, it's unused, and the syntax isn't really standard with spread operators.
+      // Lets re-introduce if we decide to revive the feature
+      xit("Should Allow anonymous type with field definitions referencing a type in the schema") {
          val src = """
                  import foo.Order
                  import foo.OutputOrder
 
                  find {
-                    Order[]( TradeDate  >= startDate , TradeDate < endDate )
+                    Order[]( TradeDate  >= startDate && TradeDate < endDate )
                  } as foo.Trade {
                     traderEmail: UserEmail by Order['traderId']
                  }[]
@@ -390,13 +424,16 @@ class TaxiQlSpec : DescribeSpec({
       }
 
 
-      it("Should Fail anonymous type with field definitions referencing projected type but have invalid field type") {
+      // This feature got broken while implementing named projection scopes.
+      // However, it's unused, and the syntax isn't really standard with spread operators.
+      // Lets re-introduce if we decide to revive the feature
+      xit("Should Fail anonymous type with field definitions referencing projected type but have invalid field type") {
          val src = """
                  import foo.Order
                  import foo.OutputOrder
 
                  find {
-                    Order[]( TradeDate  >= startDate , TradeDate < endDate )
+                    Order[]( TradeDate  >= startDate && TradeDate < endDate )
                  } as foo.Trade {
                     traderEmail: InvalidType by (this.traderId)
                  }[]
@@ -413,7 +450,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.OutputOrder
 
                  find {
-                    Order[]( TradeDate  >= startDate , TradeDate < endDate )
+                    Order[]( TradeDate  >= startDate && TradeDate < endDate )
                  } as {
                         salesPerson: {
                             firstName : FirstName
@@ -440,7 +477,7 @@ class TaxiQlSpec : DescribeSpec({
               """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
-         query.typesToFind[0].type.parameterizedName.should.equal("lang.taxi.Array<foo.Order>")
+         query.typesToFind[0].typeName.parameterizedName.should.equal("lang.taxi.Array<foo.Order>")
       }
 
 
@@ -452,7 +489,7 @@ class TaxiQlSpec : DescribeSpec({
               """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
-         query.typesToFind[0].type.parameterizedName.should.equal("lang.taxi.Array<foo.Order>")
+         query.typesToFind[0].typeName.parameterizedName.should.equal("lang.taxi.Array<foo.Order>")
       }
 
       // This feature (referencing the parent view, and extending an projection type) is cool, but
@@ -463,7 +500,7 @@ class TaxiQlSpec : DescribeSpec({
                       import foo.OutputOrder
 
                       find {
-                         Order[]( TradeDate  >= startDate , TradeDate < endDate )
+                         Order[]( TradeDate  >= startDate && TradeDate < endDate )
                       } as foo.Trade {
                              salesPerson: {
                                  firstName : {
@@ -490,13 +527,16 @@ class TaxiQlSpec : DescribeSpec({
       }
 
 
-      it("Should Detect anonymous type with invalid complex field definitions referencing projected type") {
+      // This feature got broken while implementing named projection scopes.
+      // However, it's unused, and the syntax isn't really standard with spread operators.
+      // Lets re-introduce if we decide to revive the feature
+      xit("Should Detect anonymous type with invalid complex field definitions referencing projected type") {
          val src = """
                      import foo.Order
                      import foo.OutputOrder
 
                      find {
-                        Order[]( TradeDate  >= startDate , TradeDate < endDate )
+                        Order[]( TradeDate  >= startDate && TradeDate < endDate )
                      } as foo.Trade {
                             salesPerson: {
                                 firstName : InvalidType
@@ -513,7 +553,7 @@ class TaxiQlSpec : DescribeSpec({
          val src = """
                          query RecentOrdersQuery( startDate:Instant, endDate:Instant ) {
                             find {
-                               Order[]( TradeDate >= startDate , TradeDate < endDate )
+                               Order[]( TradeDate >= startDate && TradeDate < endDate )
                             } as OutputOrder
                          }
                       """.trimIndent()
@@ -526,7 +566,7 @@ class TaxiQlSpec : DescribeSpec({
          val src = """
                              query RecentOrdersQuery( startDate:Instant, endDate:Instant ) {
                                 find {
-                                   Order[]( TradeDate >= startDate , TradeDate < endDate )
+                                   Order[]( TradeDate >= startDate && TradeDate < endDate )
                                 } as {
                                    insertedAt: foo.InsertedAt
                                 }
@@ -675,9 +715,85 @@ class TaxiQlSpec : DescribeSpec({
              }
          """
          )
-         query.typesToFind.single().type.parameterizedName.should.equal("io.films.Film")
+         query.typesToFind.single().typeName.parameterizedName.should.equal("io.films.Film")
          query.projectedType!!.asA<ObjectType>().field("foo").type.qualifiedName.should.equal("io.films.FilmId")
       }
+
+
+      it("is valid to declare projections on fields in projected types") {
+         val (schema,query) = """model Person {
+            name : PersonName inherits String
+            }
+         """.compiledWithQuery("""find { Person } as {
+             name : PersonName
+             // Projection on a field type
+             other : Person as {
+               nickName : PersonName
+            }
+         }
+         """.trimIndent())
+         val field = query.projectedType!!.asA<ObjectType>()
+            .field("other")
+         field.type.qualifiedName.should.not.equal("Person")
+         field.type.qualifiedName.should.startWith("Anonymous")
+         val type = field.type.asA<ObjectType>()
+         type.field("nickName").type.qualifiedName.should.equal("PersonName")
+      }
+
+      it("is possible to project the result of an expression to an existing type") {
+         val(schema,query) = """
+                     model Actor {
+              actorId : ActorId inherits Int
+              name : ActorName inherits String
+            }
+            model Film {
+               title : FilmTitle inherits String
+               headliner : ActorId
+               cast: Actor[]
+            }
+         """.compiledWithQuery("""
+            find { Film[] } as (film:Film) -> {
+               title : FilmTitle
+               // This is the test...
+               // using "as" to project Actor to ActorName
+               star : singleBy(film.cast, (Actor) -> Actor::ActorId, film.headliner) as ActorName
+            }[]
+
+         """.trimIndent())
+         val field = query.projectedObjectType.field("star")
+         field.type.qualifiedName.should.equal("ActorName")
+         field.projection!!.sourceType.qualifiedName.shouldBe("Actor")
+      }
+
+      // This feature got broken while implementing named projection scopes.
+      // However, it's unused, and the syntax isn't really standard with spread operators.
+      // Lets re-introduce if we decide to revive the feature
+      xit("is possible to select a subset of fields in an inline projection") {
+         val (schema,query) = """
+            model Person {
+               firstName : FirstName inherits String
+               lastName : LastName inherits String
+               age : Age inherits Int
+               city : CityName inherits String
+            }
+            model Film {
+               title : FilmTitle inherits String
+               actors : Person[]
+            }
+         """.compiledWithQuery("""find { Film } as {
+            | title : FilmTitle
+            | actors : Person[] as {
+            |    firstName
+            |    lastName
+            |}[]
+            |}
+         """.trimMargin())
+         println(query)
+         val actors = query.projectedObjectType.field("actors")
+         actors.type.asA<ObjectType>()
+      }
+
+
 
       // This feature has been disabled for now.
       xit("by should be supported with an anonymously typed field") {

@@ -5,7 +5,7 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>org.taxilang</groupId>
-      <version>1.34.0-SNAPSHOT</version>
+      <version>1.35.0-SNAPSHOT</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -14,7 +14,7 @@
    <properties>
       <maven.compiler.source>11</maven.compiler.source>
       <maven.compiler.target>11</maven.compiler.target>
-      <spring-boot-dependencies.version>2.7.4</spring-boot-dependencies.version>
+      <spring-boot-dependencies.version>2.7.8</spring-boot-dependencies.version>
    </properties>
 
    <dependencies>

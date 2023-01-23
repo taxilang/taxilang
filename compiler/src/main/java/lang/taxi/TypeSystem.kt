@@ -5,7 +5,6 @@ import arrow.core.left
 import arrow.core.right
 import lang.taxi.compiler.SymbolKind
 import lang.taxi.functions.Function
-import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.functions.stdlib.stdLibName
 import lang.taxi.services.ConsumedOperation
 import lang.taxi.services.ServiceDefinition
@@ -41,7 +40,7 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       return tokenList(includeImportedTypes).filterIsInstance<Type>()
    }
 
-   fun getOrCreate(typeName: String, location: Token, symbolKind: SymbolKind = SymbolKind.TYPE_OR_MODEL): ImportableToken {
+   fun getOrCreate(typeName: String, location: Token, symbolKind: SymbolKind = SymbolKind.TYPE): ImportableToken {
       val type = getOrCreate(typeName, symbolKind)
       if (type is ObjectType && !type.isDefined) {
          referencesToUnresolvedTypes.put(typeName, location)
@@ -49,7 +48,7 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       return type
    }
 
-   fun getOrCreate(typeName: String, symbolKind: SymbolKind = SymbolKind.TYPE_OR_MODEL): ImportableToken {
+   fun getOrCreate(typeName: String, symbolKind: SymbolKind = SymbolKind.TYPE): ImportableToken {
       if (PrimitiveType.isPrimitiveType(typeName)) {
          return PrimitiveType.fromDeclaration(typeName)
       }
@@ -72,7 +71,7 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       return getImportedToken(name) as Function
    }
 
-   fun contains(qualifiedName: String, symbolKind: SymbolKind = SymbolKind.TYPE_OR_MODEL): Boolean {
+   fun contains(qualifiedName: String, symbolKind: SymbolKind = SymbolKind.TYPE): Boolean {
       return isImported(qualifiedName, symbolKind) || containsCompiledToken(qualifiedName, symbolKind) || PrimitiveType.isPrimitiveType(qualifiedName)
    }
 
@@ -129,7 +128,7 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       return this.tokenList(includeImportedTypes).filter(predicate).toList()
    }
 
-   fun getTokenOrError(qualifiedName: String, context: ParserRuleContext, symbolKind: SymbolKind = SymbolKind.TYPE_OR_MODEL): Either<CompilationError, ImportableToken> {
+   fun getTokenOrError(qualifiedName: String, context: ParserRuleContext, symbolKind: SymbolKind = SymbolKind.TYPE): Either<CompilationError, ImportableToken> {
       if (PrimitiveType.isPrimitiveType(qualifiedName)) {
          return PrimitiveType.fromDeclaration(qualifiedName).right()
       }
@@ -178,12 +177,12 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       return getToken(qualifiedName) as Type
    }
 
-   private fun getToken(qualifiedName: String, symbolKind: SymbolKind = SymbolKind.TYPE_OR_MODEL): ImportableToken {
+   private fun getToken(qualifiedName: String, symbolKind: SymbolKind = SymbolKind.TYPE): ImportableToken {
       return getTokenIfPresent(qualifiedName, symbolKind)
          ?: throw IllegalArgumentException("$qualifiedName is not defined")
    }
 
-   private fun getTokenIfPresent(qualifiedName: String, symbolKind: SymbolKind = SymbolKind.TYPE_OR_MODEL): ImportableToken? {
+   private fun getTokenIfPresent(qualifiedName: String, symbolKind: SymbolKind = SymbolKind.TYPE): ImportableToken? {
       if (PrimitiveType.isPrimitiveType(qualifiedName)) {
          return PrimitiveType.fromDeclaration(qualifiedName)
       }
@@ -214,20 +213,10 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
          .map { it.qualifiedName }.toSet()
    }
 
-   fun assertAllTypesResolved() {
-      if (containsUnresolvedTypes()) {
-         val errors = unresolvedTypes().map { typeName ->
-            CompilationError(referencesToUnresolvedTypes[typeName]!!, ErrorMessages.unresolvedType(typeName))
-         }
-         throw CompilationException(errors)
-      }
-   }
-
-
    // THe whole additionalImports thing is for when we're
    // accessing prior to compiling (ie., in the language server).
    // During normal compilation, don't need to pass anything
-   fun qualify(namespace: Namespace, name: String, explicitImports: List<QualifiedName> = emptyList(), symbolKind: SymbolKind = SymbolKind.TYPE_OR_MODEL): String {
+   fun qualify(namespace: Namespace, name: String, explicitImports: List<QualifiedName> = emptyList(), symbolKind: SymbolKind = SymbolKind.TYPE): String {
       if (name.contains(".")) {
          // This is already qualified
          return name

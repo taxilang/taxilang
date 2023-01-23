@@ -12,6 +12,7 @@ import lang.taxi.types.AttributePath
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.EnumType
 import lang.taxi.types.ImportableToken
+import lang.taxi.types.MapType
 import lang.taxi.types.Named
 import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
@@ -123,6 +124,16 @@ open class TaxiDocument(
             }
 
             else -> error("Cannot construct an array with multiple type parameters")
+         }
+      }
+
+      if (MapType.isMapTypeName(qualifiedName)) {
+         return when {
+            qualifiedName.parameters.isEmpty() -> MapType.untyped()
+            qualifiedName.parameters.size == 2 -> {
+               MapType(keyType = type(qualifiedName.parameters[0]), valueType = type(qualifiedName.parameters[1]), source = CompilationUnit.unspecified())
+            }
+            else -> error("A map expects either 0 or 2 parameters")
          }
       }
 

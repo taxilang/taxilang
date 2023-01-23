@@ -3,8 +3,16 @@ package lang.taxi.services
 import lang.taxi.ImmutableEquality
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
-import lang.taxi.types.*
+import lang.taxi.types.Annotatable
 import lang.taxi.types.Annotation
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Compiled
+import lang.taxi.types.Documented
+import lang.taxi.types.ImportableToken
+import lang.taxi.types.NameTypePair
+import lang.taxi.types.Named
+import lang.taxi.types.TaxiStatementGenerator
+import lang.taxi.types.Type
 
 data class Parameter(
    override val annotations: List<Annotation>,
@@ -13,7 +21,7 @@ data class Parameter(
    override val constraints: List<Constraint>,
    val isVarArg: Boolean = false
 ) : Annotatable, ConstraintTarget, NameTypePair, TaxiStatementGenerator {
-   override val description: String = "param $name"
+   override val description: String = "param $name type ${type.qualifiedName}"
    override fun asTaxi(): String {
       val annotationTaxi = annotations.joinToString(" ") { it.asTaxi() }
       val namePrefix = if (name.isNullOrBlank()) "" else "$name:"
@@ -21,10 +29,15 @@ data class Parameter(
    }
 }
 
-interface ServiceMember : Annotatable, Compiled, Documented {
+interface ServiceMember : Annotatable, Compiled, Documented, Named {
    val name: String
    val parameters: List<Parameter>
    val returnType: Type
+
+   override val qualifiedName: String
+      get() {
+         return name
+      }
 
    val referencedTypes: List<Type>
       get() {
@@ -46,7 +59,7 @@ data class Service(
    override val typeDoc: String? = null,
    val lineage: ServiceLineage? = null
 ) : Annotatable, Named, ImportableToken, Compiled, Documented {
-   private val equality = ImmutableEquality(this, Service::qualifiedName, Service::operations, Service::annotations)
+   private val equality = ImmutableEquality(this, Service::qualifiedName, Service::members, Service::annotations)
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()

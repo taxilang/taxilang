@@ -100,6 +100,15 @@ Accepts three args:
  * `searchValue: String`: The string to search for
  * `replacement: String`: The string to use as a replacement
 
+### containsString
+`taxi.stdlib.containsString`
+
+```taxi
+declare function containsString(source:String, valueToSearchFor:String):Boolean
+```
+
+Returns true if `valueToSearchFor` within `source`
+
 ## Collections
 
 A collection of functions for operating on collections
@@ -131,6 +140,30 @@ declare function anyOf(values:Boolean...): Boolean
 ```taxi
 declare function noneOf(values:Boolean...): Boolean
 ```
+
+### single
+`taxi.stdlib.single`
+
+```taxi
+declare function <T> single(collection:T[], callback: (T) -> Boolean):T
+```
+
+### filterAll
+`taxi.stdlib.filterAll`
+
+```taxi
+declare function <T> filterAll(collection:T[], callback: (T) -> Boolean):T[]
+```
+
+### singleBy
+`taxi.stdlib.singleBy`
+
+```taxi
+declare function <T,A> singleBy(collection:T[], groupingFunction: (T) -> A, searchValue: A):T
+```
+
+Similar to Single, where the collection is searched for a single matching value.
+However, results are first grouped by selector.  The results of this are cached to improve future performance
 
 ## Functional
 

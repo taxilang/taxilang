@@ -37,7 +37,10 @@ data class CollectionProjectionExpressionAccessor(val type: Type,
  *   items: Thing[] by [OrderItem[] with { CustomerName }]
  * }[]
  *
- * this class contains the CusotmerName accessor
+ * this class contains the CusotmerName accessor.
+ *
+ *
+ * 14-Nov-22:  I don't think this is used.
  */
 data class ProjectionScopeDefinition(val accessors:List<Accessor>) : TaxiStatementGenerator  {
    override fun asTaxi(): String {
