@@ -49,6 +49,7 @@
       <module>jsonSchema-to-taxi</module>
       <module>protobuf-to-taxi</module>
       <module>java-spring-taxi</module>
+      <module>typescript</module>
    </modules>
 
    <properties>
