@@ -42,7 +42,7 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName: String = "taxi.g
       processors: List<Processor>,
       environment: TaxiProjectEnvironment
    ): List<WritableSource> {
-      // TODO : Shouldn't be assinging a field here - should be passing it through
+      // TODO : Shouldn't be assigning a field here - should be passing it through
       this.processorHelper = ProcessorHelper(processors)
       val typeNameConstantsGenerator = TypeNamesAsConstantsGenerator(typeNamesTopLevelPackageName)
       return taxi.types
