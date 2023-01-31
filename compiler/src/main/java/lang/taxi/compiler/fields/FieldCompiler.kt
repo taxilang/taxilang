@@ -138,32 +138,7 @@ class FieldCompiler(
          return emptyList()
       }
 
-      // Use resolutionContext instead of typeBody for determining
-      // the type that we're spreading across.
-      // This is because in field projections, typeBody is set for simple cases:
-      // find { Person } as {
-      //    address : Address as {
-      //        ... except {streetName, secretCode}
-      //    }
-      //
-      // but not for inline field expressions:
-      // find { Movie[] } as {
-      //    cast : Person[]
-      //    aListers : filterAll(this.cast, (Person) -> containsString(PersonName, 'a')) as  { // Inferred return type is Person
-      //       ...except { id }
-      //    }
-      //}[]
-      val typeBeingSpread = resolutionContext.activeScopes.lastOrNull()?.type?.let { possibleArrayType ->
-         // When we're projecting a collection, (in the above example)
-         // the projection scope is an Array,
-         // but the spread operator should apply to the member
-         ArrayType.memberTypeIfArray(possibleArrayType)
-      }
-      val fields = when (typeBeingSpread) {
-         is ObjectType -> typeBeingSpread.fields
-         else -> emptyList()
-      }
-
+      val fields = typeBody.objectType?.fields ?: emptyList()
       val excludedFields = typeBody.spreadOperatorExcludedFields
       return fields.filter { !excludedFields.contains(it.name) }
    }
