@@ -160,6 +160,31 @@ class SpreadOperatorSpec : DescribeSpec({
          errors.first().detailMessage.should.contain("Spread operator is not allowed for model definitions.")
       }
 
+      it("is possible to use spread operator in an inline projection") {
+         val (schema, query) = """model Person {
+           id : PersonId inherits Int
+           name : PersonName inherits String
+          }
+          model Movie {
+            cast : Person[]
+         }
+         """.compiledWithQuery(
+            """
+find { Movie[] } as {
+    cast : Person[]
+    aListers : filterAll(this.cast, (Person) -> containsString(PersonName, 'a')) as  { // Inferred return type is Person
+       ...except { id }
+    }
+}[]
+         """.trimIndent()
+         )
+
+         val projectedAListers = query.projectedObjectType
+            .field("aListers").type.asA<ObjectType>()
+         projectedAListers.hasField("name").shouldBeTrue()
+         projectedAListers.hasField("id").shouldBeFalse()
+      }
+
       it("allows except as a field name") {
          val errors = """
             model Person {
