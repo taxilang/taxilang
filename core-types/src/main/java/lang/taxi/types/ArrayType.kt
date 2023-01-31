@@ -31,8 +31,20 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
          // Resolve either lang.taxi.Array, or implicitly just Array
          return requestedTypeName == qualifiedName.fullyQualifiedName || requestedTypeName == qualifiedName.typeName
       }
-      fun arrayTypeName(memberTypeName:String):String {
+
+      fun arrayTypeName(memberTypeName: String): String {
          return "$NAME<$memberTypeName>"
+      }
+
+      /**
+       * If the provided type is an array, returns the member type,
+       * otherwise reutrns type
+       */
+      fun memberTypeIfArray(type: Type): Type {
+         return when (type) {
+            is ArrayType -> type.memberType
+            else -> type
+         }
       }
    }
 
