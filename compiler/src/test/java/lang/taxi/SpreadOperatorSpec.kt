@@ -79,6 +79,48 @@ class SpreadOperatorSpec : DescribeSpec({
          projectedAddress.hasField("secretAge").shouldBeFalse()
       }
 
+      it("is possible to exclude multiple fields") {
+         val (_, query) = """
+            type LastPurchasePrice inherits Decimal
+            type Valuation inherits Decimal
+
+            model Address {
+               house : HouseNumber inherits Int
+               streetName : String
+               secretCode : SecretCode inherits String
+               color : HouseColor inherits String
+            }
+            model Person {
+               firstName : FirstName inherits String
+               lastName : LastName inherits String
+               address : Address
+               secretAge : Age inherits Int
+            }
+         """.compiledWithQuery(
+            """
+            find { Person } as {
+               name : FirstName
+               address : Address as {
+                 value : Valuation
+                 lastPurchase : LastPurchasePrice
+                 ... except {streetName, secretCode}
+               }
+            }
+         """.trimIndent()
+         )
+         val projectedAddress = query.projectedObjectType
+            .field("address").type.asA<ObjectType>()
+         projectedAddress.hasField("value").shouldBeTrue()
+         projectedAddress.hasField("lastPurchase").shouldBeTrue()
+         projectedAddress.hasField("color").shouldBeTrue()
+
+         projectedAddress.field("house").type.qualifiedName.shouldBe("HouseNumber")
+
+         projectedAddress.hasField("streetName").shouldBeFalse()
+         projectedAddress.hasField("secretCode").shouldBeFalse()
+         projectedAddress.hasField("secretAge").shouldBeFalse()
+      }
+
       it("is only allowed as the last item in the list") {
          val exception = """
             model Person {

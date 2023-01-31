@@ -68,7 +68,7 @@ listOfInheritedTypes
     ;
 
 spreadOperatorDeclaration
-    : SPREAD_OPERATOR (K_Except '{' identifier+ '}')?
+    : SPREAD_OPERATOR (K_Except '{' identifier ( ',' identifier )* '}')?
     ;
 
 typeBody
