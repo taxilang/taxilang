@@ -185,6 +185,37 @@ find { Movie[] } as {
          projectedAListers.hasField("id").shouldBeFalse()
       }
 
+      it("is possible to use a spread operator in an inline projection, and add fields from another object") {
+         val (schema, query) = """
+         type CreditScore inherits Int
+         type BloodType inherits String
+         model Person {
+           id : PersonId inherits Int
+           name : PersonName inherits String
+          }
+          model Movie {
+            cast : Person[]
+         }
+         """.compiledWithQuery(
+            """
+find { Movie[] } as {
+    cast : Person[]
+    aListers : filterAll(this.cast, (Person) -> containsString(PersonName, 'a')) as  { // Inferred return type is Person
+       bloodType : BloodType
+       creditScore : CreditScore
+       ...except { id }
+    }
+}[]
+         """.trimIndent()
+         )
+         val projectedAListers = query.projectedObjectType
+            .field("aListers").type.asA<ObjectType>()
+         projectedAListers.hasField("name").shouldBeTrue()
+         projectedAListers.hasField("id").shouldBeFalse()
+         projectedAListers.hasField("bloodType").shouldBeTrue()
+         projectedAListers.hasField("creditScore").shouldBeTrue()
+      }
+
       it("allows except as a field name") {
          val errors = """
             model Person {
