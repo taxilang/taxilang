@@ -27,10 +27,8 @@
    </modules>
 
    <properties>
-      <java.version>1.8</java.version>
       <taxi.version>${project.version}</taxi.version>
       <lsp4j.version>0.9.0</lsp4j.version>
-      <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
    </properties>
 
@@ -165,11 +163,6 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
             <version>3.10.1</version>
-            <configuration>
-               <!--<proc>none</proc>-->
-               <source>1.8</source>
-               <target>1.8</target>
-            </configuration>
             <executions>
                <!-- Replacing default-compile as it is treated specially by maven -->
                <execution>
