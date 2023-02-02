@@ -191,11 +191,12 @@ class FieldCompiler(
       val fieldTypeDeclaration: TaxiParser.FieldTypeDeclarationContext? =
          member.fieldDeclaration().fieldTypeDeclaration()
       val isChildOfProjection = typeBody.objectType?.qualifiedName != null
-      if (fieldTypeDeclaration == null && isChildOfProjection) {
-         return resolveImplicitTypeFromToBeProjectedType(member)
-      }
       // orderId: {  foo: String }
       val anonymousTypeDefinition = member.fieldDeclaration().anonymousTypeDefinition()
+
+      if ((fieldTypeDeclaration == null && anonymousTypeDefinition == null) && isChildOfProjection) {
+         return resolveImplicitTypeFromToBeProjectedType(member)
+      }
       // orderId: Order::OrderId
       val modelAttributeType = member.fieldDeclaration().modelAttributeTypeReference()
       val expressionGroup: TaxiParser.ExpressionGroupContext? = member.fieldDeclaration().expressionGroup()
@@ -404,11 +405,12 @@ class FieldCompiler(
       return tokenProcessor.parseProjectionScope(typeProjection.expressionInputs(), projectionSourceType)
          .flatMap { projectionScope ->
             val projectedType = when {
-               typeProjection.anonymousTypeDefinition() != null ->  parseAnonymousTypeBody(
+               typeProjection.anonymousTypeDefinition() != null -> parseAnonymousTypeBody(
                   member,
                   typeProjection.anonymousTypeDefinition(),
                   this.resolutionContext.appendScope(projectionScope)
                )
+
                typeProjection.typeReference() != null -> tokenProcessor.typeOrError(typeProjection.typeReference())
                else -> error("Can't lookup type reference for projection from statement: ${typeProjection.source().content}")
             }

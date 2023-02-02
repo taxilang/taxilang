@@ -4,7 +4,9 @@ import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import lang.taxi.types.Field
 import lang.taxi.types.ObjectType
 
 class SpreadOperatorSpec : DescribeSpec({
@@ -216,6 +218,7 @@ find { Movie[] } as {
          projectedAListers.hasField("creditScore").shouldBeTrue()
       }
 
+
       it("allows except as a field name") {
          val errors = """
             model Person {
@@ -224,6 +227,38 @@ find { Movie[] } as {
             }
          """.validated()
          errors.should.have.size(0)
+      }
+
+      it("can mix nested anonymous types in a spread object") {
+         val (schema, query) = """
+         model Person {
+           id : PersonId inherits Int
+           name : PersonName inherits String
+          }
+          type TwitterHandle inherits String
+          model Movie {
+            star : Person
+         }""".compiledWithQuery(
+            """
+         find { Movie } as {
+            cast : Person as {
+               socials: { // <--- Nested anonymous object
+                 twitter : TwitterHandle
+               }
+               ...
+            }
+         }
+         """.trimIndent()
+         )
+         val castField = query.projectedObjectType
+            .field("cast")
+
+         castField.type.anonymous.shouldBeTrue()
+         val socialsField = castField.type.asA<ObjectType>().field("socials")
+         socialsField.type.anonymous.shouldBeTrue()
+         val socialsType = socialsField.type.asA<ObjectType>()
+         socialsType.anonymous.shouldBeTrue()
+         socialsType.field("twitter").type.qualifiedName.shouldBe("TwitterHandle")
       }
    }
 })
