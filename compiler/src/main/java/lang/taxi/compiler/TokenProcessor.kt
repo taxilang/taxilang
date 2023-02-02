@@ -1342,7 +1342,11 @@ class TokenProcessor(
       projectionSourceType: FieldTypeSpec
    ): Either<List<CompilationError>, ProjectionFunctionScope> {
       if (expressionInputs == null || expressionInputs.expressionInput().isEmpty()) {
-         return ProjectionFunctionScope.implicitThis(projectionSourceType.type).right()
+         // MP: 2-Feb-23 : That was projectionSourceType.type
+         // But have changed it, because in inline projections of entires, we're receiving
+         // the array.
+         // This might break something.
+         return ProjectionFunctionScope.implicitThis(projectionSourceType.projectionType).right()
       }
       return when (expressionInputs.expressionInput().size) {
          1 -> {

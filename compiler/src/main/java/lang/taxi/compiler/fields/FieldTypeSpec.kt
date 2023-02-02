@@ -4,6 +4,7 @@ import lang.taxi.accessors.Accessor
 import lang.taxi.expressions.Expression
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.query.DiscoveryType
+import lang.taxi.types.ArrayType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.Type
 import lang.taxi.utils.log
@@ -38,12 +39,25 @@ data class FieldTypeSpec private constructor(
          }
       }
    }
-   val accessor:Accessor?
+
+   val accessor: Accessor?
+
+   /**
+    * Returns the type that will actually be projected over when
+    * using this field in an inline projection.
+    *
+    * (eg:
+    * find { Movie } as {
+    *   cast : Actor[] as {  //<---- the projected type here is Actor, not Actor[].
+    *      foo : Bar
+    *   }[]
+    */
+   val projectionType: Type = ArrayType.memberTypeIfArray(type)
 
    init {
-       if (function != null && expression != null) {
-          error("It is invalid to pass both a function and expression. Don't see how this could happen")
-       }
+      if (function != null && expression != null) {
+         error("It is invalid to pass both a function and expression. Don't see how this could happen")
+      }
       accessor = when {
          expression != null -> expression
          function != null -> function
