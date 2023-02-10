@@ -371,12 +371,13 @@ data class ObjectType(
 
    private fun doRecursiveLookupOfDescendantPathsOfType(
       searchType: Type,
-      typesBeingChecked: MutableSet<Type>
+      typesBeingChecked: MutableMap<Type, MutableList<String>>
    ): List<String> {
       if (typesBeingChecked.contains(this)) {
-         return emptyList()
+         return typesBeingChecked[this]!!
       }
-      typesBeingChecked.add(this)
+      val matchedPaths = mutableListOf<String>()
+      typesBeingChecked[this] = matchedPaths
       val matches = this.fields
          .flatMap { field ->
             val path = when {
@@ -404,7 +405,8 @@ data class ObjectType(
             }
             path
          }
-      return matches
+      matchedPaths.addAll(matches)
+      return matchedPaths
    }
 
 
@@ -414,7 +416,7 @@ data class ObjectType(
 //         val assignable = if (this.isAssignableTo(type)) {
 //            listOf("this")
 //         } else emptyList()
-         doRecursiveLookupOfDescendantPathsOfType(type, mutableSetOf())
+         doRecursiveLookupOfDescendantPathsOfType(type, mutableMapOf())
 //         assignable + recursiveLookup
       }
    }
