@@ -12,7 +12,7 @@
    <artifactId>taxi-lang-service</artifactId>
    <properties>
       <spek.version>2.0.19</spek.version>
-      <reactor-bom.version>2020.0.27</reactor-bom.version>
+      <reactor-bom.version>2020.0.28</reactor-bom.version>
    </properties>
 
    <dependencies>
