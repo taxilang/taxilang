@@ -11,7 +11,16 @@ import java.nio.file.Path
 // Note : I've made the path mandatory here, but may
 // want to relax that for cli-style projects where there
 // is no package yet.
-class TaxiPackageLoader(path: Path? = null) {
+class TaxiPackageLoader(val path: Path? = null) {
+
+   companion object {
+      fun forDirectoryContainingTaxiFile(path:Path):TaxiPackageLoader {
+         return TaxiPackageLoader(path.resolve("taxi.conf"))
+      }
+      fun forPathToTaxiFile(path:Path):TaxiPackageLoader {
+         return TaxiPackageLoader(path)
+      }
+   }
 
    private val pathsToSearch = listOfNotNull(
       path,
