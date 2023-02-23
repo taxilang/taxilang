@@ -49,11 +49,55 @@ class TypeScriptGenerator : ModelGenerator {
 
    private fun generateTaxonomyObject(keys: Set<String>): String {
       val (global, namespaced) = keys.partition { it == "" }
-      val namespaces = namespaced.joinToString(", ") { "$it: new $it.Taxonomy()" }
+      val namespaces = generateNamespaceMapping(keys)
       val globalDefinitions = global.firstOrNull()?.let {
          "${if (namespaced.isNotEmpty()) ", " else ""}...(new Taxonomy())"
       } ?: ""
       return "export const taxonomy = { $namespaces$globalDefinitions };"
+   }
+
+   private fun generateNamespaceMapping(keys: Set<String>): String {
+      val namespaceMap =
+         keys.map { it.split(".") }
+            .fold(mutableMapOf<String, Any>()) { acc, item -> convertNamespaceKeysToMap(acc, item) }
+
+      return generateSpecificNamespace(namespaceMap.entries)
+   }
+
+   private fun generateSpecificNamespace(entries: Set<Map.Entry<String, Any>>, namespacePrefix: String = ""): String {
+      if (entries.isEmpty()) {
+         return ""
+      }
+
+      return entries.joinToString(", ") {
+         val newNamespacePrefix = if (namespacePrefix.isNotEmpty()) "$namespacePrefix.${it.key}" else it.key
+         val subNamespaces =
+            generateSpecificNamespace((it.value as Map<String, Any>).entries, newNamespacePrefix)
+         val foo = if (subNamespaces.isNotEmpty()) "$subNamespaces, " else ""
+         "${it.key}: { $foo...(new $newNamespacePrefix.Taxonomy()) }"
+      }
+   }
+
+   /**
+    * Transforms the namespace keys (e.g. "animals.pets.dogs") into a nested map of maps
+    * ({ animals: { pets: { dogs: {} } } } to be able to print all of them properly
+    */
+   private fun convertNamespaceKeysToMap(
+      map: MutableMap<String, Any>,
+      namespaceParts: List<String>
+   ): MutableMap<String, Any> {
+      val key = namespaceParts.first()
+      val isKeyAlreadyDefined = map.containsKey(key)
+      if (!isKeyAlreadyDefined) {
+         map[key] = mutableMapOf<String, Any>()
+      }
+      if (namespaceParts.size == 1) {
+         return map
+      }
+      val rest = namespaceParts.slice(1..namespaceParts.lastIndex)
+      convertNamespaceKeysToMap(map[key] as MutableMap<String, Any>, rest)
+
+      return map
    }
 
    private fun generateNamespace(namespace: String, types: List<Type>): String {
@@ -85,7 +129,7 @@ export type $nameInsideNamespace = DatatypeContainer<$typeAlias>;"""
    }
 
    private fun generateModel(model: ObjectType): String {
-      val fields = model.fields.joinToString(separator = "; ") { "readonly ${it.name}: ${deduceTypeName(it.type)}" }
+      val fields = model.fields.joinToString(separator = "; ") { "readonly ${it.name}: ${deduceTypeName(it.type)}Type" }
       return "export type ${model.toQualifiedName().typeName} = DatatypeContainer<{ $fields }>;"
    }
 
@@ -104,30 +148,21 @@ ${models.joinToString(separator = "\n") { generateModelPropertyToTaxonomyClass(i
        * Instead FooBar should possibly be able to point to the Foo
        */
       val emptyValue = getEmptyPrimitiveValue(type.basePrimitive!!)
-      return """@Datatype('${type.qualifiedName}')
-readonly ${type.toQualifiedName().typeName}: ${type.toQualifiedName().typeName} = buildDatatypeContainer('${type.qualifiedName}', $emptyValue);"""
+      return """readonly ${type.toQualifiedName().typeName}: ${type.toQualifiedName().typeName} = buildDatatypeContainer('${type.qualifiedName}', $emptyValue);"""
    }
 
    private fun generateModelPropertyToTaxonomyClass(type: ObjectType): String {
-      return """@Datatype('${type.qualifiedName}')
-readonly ${type.toQualifiedName().typeName}: ${type.toQualifiedName().typeName} = buildDatatypeContainer('${type.qualifiedName}', {
+      return """readonly ${type.toQualifiedName().typeName}: ${type.toQualifiedName().typeName} = buildDatatypeContainer('${type.qualifiedName}', {
 ${generateModelPropertyValueObjectToTaxonomyClass(type).prependIndent("  ")}
 });"""
    }
 
    private fun generateModelPropertyValueObjectToTaxonomyClass(type: ObjectType): String {
-      val typeNamespace = type.toQualifiedName().namespace
       return type.fields.joinToString(separator = ",\n") {
-         val (fieldType, isArray) = if (it.type is ArrayType) {
-            (it.type as ArrayType).memberType.toQualifiedName() to true
-         } else {
-            it.type.toQualifiedName() to false
-         }
-         val namespacedThis = if (fieldType.namespace == typeNamespace) "this" else "${fieldType.namespace}.Taxonomy"
-         val fieldReference = "$namespacedThis.${fieldType.typeName}"
-         val namespacedName = if (isArray) "[$fieldReference]" else fieldReference
+         val isArray = it.type is ArrayType // TODO Handle arrays?
+         val value = getEmptyPrimitiveValue(it.type.basePrimitive!!)
          val nullability = if (it.nullable) "?" else ""
-         "${it.name}${nullability}: $namespacedName"
+         "${it.name}${nullability}: $value"
       }
    }
 
@@ -174,3 +209,5 @@ ${generateModelPropertyValueObjectToTaxonomyClass(type).prependIndent("  ")}
 data class StringWritableSource(override val content: String) : WritableSource {
    override val path: Path = Paths.get("taxonomy.ts")
 }
+
+data class NamespaceFoo(val name: String, val children: MutableList<NamespaceFoo> = mutableListOf())
