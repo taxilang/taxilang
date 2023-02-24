@@ -102,7 +102,7 @@ class TypeScriptGeneratorTest {
              }
          }
       """.trimIndent()
-      val output = compileAndGenerate(taxi).substringAfter(staticHeader).removeWhitespace()
+      val output = compileAndGenerate(taxi)
       val expected = """
          export namespace vyne {
            export type FirstNameType = string;
@@ -129,11 +129,10 @@ class TypeScriptGeneratorTest {
          }
          export const taxonomy = { vyne: { ...(new vyne.Taxonomy()) } };
          """.removeWhitespace()
-      expect(output).to.equal(expected)
+      output.shouldEqualIgnoringHeaderAndWhitespace(expected)
    }
 
    @Test
-   @Disabled("Not working currently - need to consider how this would look like in TS")
    fun generatesArraysAsLists() {
       val taxi = """
          type Person {
@@ -142,6 +141,14 @@ class TypeScriptGeneratorTest {
       """.trimIndent()
       val output = compileAndGenerate(taxi).substringAfter(staticHeader).removeWhitespace()
       val expected = """
+export type Person = DatatypeContainer<{ readonly friends: Person[] }>;
+export class Taxonomy {
+
+  readonly Person: Person = buildDatatypeContainer('Person', {
+    friends: []
+  });
+}
+export const taxonomy = { ...(new Taxonomy()) };
       """.removeWhitespace()
       expect(output).to.equal(expected)
    }
@@ -156,16 +163,16 @@ class TypeScriptGeneratorTest {
       """.trimMargin()
       val output = compileAndGenerate(taxi).substringAfter(staticHeader).removeWhitespace()
       val expected = """
-         export type MiddleNameType = string;
-         export type MiddleName = DatatypeContainer<MiddleNameType>;
-         export type Person = DatatypeContainer<{ readonly middleName: MiddleNameType }>;
-         export class Taxonomy {
-           readonly MiddleName: MiddleName = buildDatatypeContainer('MiddleName', '');
-           readonly Person: Person = buildDatatypeContainer('Person', {
-             middleName?: ''
-           });
-         }
-         export const taxonomy = { : { ...(new .Taxonomy()) }...(new Taxonomy()) };
+export type MiddleNameType = string;
+export type MiddleName = DatatypeContainer<MiddleNameType>;
+export type Person = DatatypeContainer<{ readonly middleName?: MiddleNameType }>;
+export class Taxonomy {
+    readonly MiddleName: MiddleName = buildDatatypeContainer('MiddleName', '');
+    readonly Person: Person = buildDatatypeContainer('Person', {
+        middleName: ''
+    });
+}
+export const taxonomy = { ...(new Taxonomy()) };
          """.removeWhitespace()
       output.should.equal(expected)
    }
@@ -211,22 +218,89 @@ class TypeScriptGeneratorTest {
          type Name inherits String
          type FirstName inherits Name
       """.trimIndent()
-      val output = compileAndGenerate(taxi).substringAfter(staticHeader).removeWhitespace()
+      val output = compileAndGenerate(taxi)
       val expected = """
-         export type NameType = string;
-         export type Name = DatatypeContainer<NameType>;
-         export type FirstNameType = string;
-         export type FirstName = DatatypeContainer<FirstNameType>;
+export type NameType = string;
+export type Name = DatatypeContainer<NameType>;
+export type FirstNameType = string;
+export type FirstName = DatatypeContainer<FirstNameType>;
 
-         export class Taxonomy {
-           readonly Name: Name = buildDatatypeContainer('Name', '');
-           readonly FirstName: FirstName = buildDatatypeContainer('FirstName', '');
+export class Taxonomy {
+  readonly Name: Name = buildDatatypeContainer('Name', '');
+  readonly FirstName: FirstName = buildDatatypeContainer('FirstName', '');
 
+}
+export const taxonomy = {
+...(new Taxonomy())
+};
+         """
+
+      output.shouldEqualIgnoringHeaderAndWhitespace(expected)
+   }
+
+   @Test
+   fun `does not generate taxonomy reference for empty namespaces`() {
+      val taxi = """
+namespace geography {
+  type Foo inherits String
+}
+namespace geography.countries.codes {
+   type Bar inherits String
+}
+      """.trimIndent()
+      val output = compileAndGenerate(taxi)
+      output.shouldEqualIgnoringHeaderAndWhitespace(
+         """
+export namespace geography {
+  export type FooType = string;
+  export type Foo = DatatypeContainer<FooType>;
+
+  export class Taxonomy {
+    readonly Foo: Foo = buildDatatypeContainer('geography.Foo', '');
+
+  }
+}
+
+export namespace geography.countries.codes {
+  export type BarType = string;
+  export type Bar = DatatypeContainer<BarType>;
+
+  export class Taxonomy {
+    readonly Bar: Bar = buildDatatypeContainer('geography.countries.codes.Bar', '');
+
+  }
+}
+export const taxonomy = {
+  geography: {
+      countries: {
+            codes: {
+                   ...(new geography.countries.codes.Taxonomy())
+            },
+      },    ...(new geography.Taxonomy())
+  }
+};""".trimIndent()
+      )
+   }
+
+   @Test
+   fun `handles primitive types`() {
+      val taxi = """
+         model Person {
+            name : String
          }
-         export const taxonomy = { : { ...(new .Taxonomy()) }...(new Taxonomy()) };
-         """.removeWhitespace()
+      """.trimIndent()
+      val output = compileAndGenerate(taxi)
+      val expected = """
+export type Person = DatatypeContainer<{ readonly name: string }>;
+export class Taxonomy {
 
-      output.should.equal(expected)
+  readonly Person: Person = buildDatatypeContainer('Person', {
+    name: ''
+  });
+}
+export const taxonomy = { ...(new Taxonomy()) };
+         """
+      output.shouldEqualIgnoringHeaderAndWhitespace(expected)
    }
 
    @Disabled("Not supported yet")
@@ -290,6 +364,11 @@ class TypeScriptGeneratorTest {
 
       output.should.equal(expected)
    }
+}
+
+private fun String.shouldEqualIgnoringHeaderAndWhitespace(expected: String) {
+   this.substringAfter(staticHeader).removeWhitespace()
+      .should.equal(expected.removeWhitespace())
 }
 
 private fun String.removeWhitespace(): String {
