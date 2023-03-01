@@ -22,7 +22,6 @@ import lang.taxi.types.Type
 import lang.taxi.types.TypeAlias
 import lang.taxi.types.UnresolvedImportedType
 import lang.taxi.types.VoidType
-import lang.taxi.utils.quotedIfNecessary
 import lang.taxi.utils.trimEmptyLines
 
 
@@ -199,8 +198,8 @@ $operations
 }""".trim()
    }
 
-   private fun generateAnnotations(annotatedElement: Annotatable): String {
-      return annotatedElement.annotations
+   private fun generateAnnotations(annotatedElement: Annotatable, declaredFormats: List<String> = emptyList()): String {
+      val annotations = annotatedElement.annotations
          .filter { annotation -> annotationFilter(annotatedElement, annotation) }
          .map { annotation ->
             if (annotation.parameters.isEmpty()) {
@@ -211,6 +210,8 @@ $operations
                "@${annotation.qualifiedName}($annotationParams)"
             }
          }.joinToString("\n")
+      val formats = declaredFormats.joinToString("\n") { "@Format(\"$it\") " }
+      return (annotations + "\n" + formats).trim()
    }
 
    private fun generateOperationDeclaration(operation: Operation, namespace: String): String {
@@ -314,18 +315,14 @@ $enumValueDeclarations
       // When writing formats, we only care about the ones declared on this type, not inherited elsewhere
       val inheritedFormats = type.inheritsFrom.flatMap { it.format ?: emptyList() }
       val declaredFormats = (type.format ?: emptyList()).filter { !inheritedFormats.contains(it) }
-      val typeFormat = when {
-         declaredFormats.isEmpty() -> ""
-         declaredFormats.size == 1 -> "(@format = ${declaredFormats.first().quotedIfNecessary()})"
-         else -> "(@format = [${declaredFormats.joinToString(",") { it.quotedIfNecessary() }}])"
-      }
+
       val typeDoc = type.typeDoc.asTypeDocBlock()
-      val annotations = generateAnnotations(type)
+      val annotations = generateAnnotations(type, declaredFormats)
 
       val typeKind = if (type.fields.isEmpty()) "type" else "model"
       return """$typeDoc
          |$annotations
-         |$modifiers $typeKind ${type.toQualifiedName().typeName.reservedWordEscaped()}$inheritanceString$typeFormat $body"""
+         |$modifiers $typeKind ${type.toQualifiedName().typeName.reservedWordEscaped()}$inheritanceString $body"""
          .trimMargin()
          .trimEmptyLines()
    }
