@@ -1,13 +1,16 @@
 project:
+   copyright: 2023
+   links:
+      homepage: https://taxilang.org
+      license:  https://gitlab.com/taxi-lang/taxi-lang/-/raw/master/LICENSE
    description: Taxi Cli
    longDescription: Taxi is a language for data.  Build enterprise taxonomies, tag data & services, or enrich existing schemas.
-   website: https://taxilang.org
+   website:
    authors:
       - Marty Pitt
       - Serhat Tuncay
-      - The Vyne Team (https://vyne.co)
+      - The Orbital Team (https://orbitalhq.com)
    license: Apache-2.0
-   licenseUrl: https://gitlab.com/taxi-lang/taxi-lang/-/raw/master/LICENSE
 
 release:
    gitlab:
