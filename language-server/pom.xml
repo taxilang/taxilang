@@ -7,7 +7,7 @@
    <parent>
       <groupId>org.taxilang</groupId>
       <artifactId>parent</artifactId>
-      <version>1.33.6</version>
+      <version>1.35.0</version>
    </parent>
 
    <artifactId>taxi-lang-server</artifactId>
@@ -27,10 +27,8 @@
    </modules>
 
    <properties>
-      <java.version>1.8</java.version>
       <taxi.version>${project.version}</taxi.version>
       <lsp4j.version>0.9.0</lsp4j.version>
-      <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
    </properties>
 
@@ -73,14 +71,14 @@
       <dependency>
          <groupId>org.mockito.kotlin</groupId>
          <artifactId>mockito-kotlin</artifactId>
-         <version>4.0.0</version>
+         <version>4.1.0</version>
          <scope>test</scope>
       </dependency>
       <!-- https://mvnrepository.com/artifact/org.assertj/assertj-core -->
       <dependency>
          <groupId>org.assertj</groupId>
          <artifactId>assertj-core</artifactId>
-         <version>3.23.1</version>
+         <version>3.24.2</version>
          <scope>test</scope>
       </dependency>
 
@@ -164,12 +162,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.10.1</version>
-            <configuration>
-               <!--<proc>none</proc>-->
-               <source>1.8</source>
-               <target>1.8</target>
-            </configuration>
+            <version>3.11.0</version>
             <executions>
                <!-- Replacing default-compile as it is treated specially by maven -->
                <execution>
@@ -213,7 +206,7 @@
          <plugin>
             <groupId>com.amashchenko.maven.plugin</groupId>
             <artifactId>gitflow-maven-plugin</artifactId>
-            <version>1.18.0</version>
+            <version>1.19.0</version>
             <configuration>
                <!-- whether to push to the git remote. Very useful for testing locally -->
                <pushRemote>true</pushRemote>

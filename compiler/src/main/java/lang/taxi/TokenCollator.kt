@@ -4,6 +4,7 @@ import lang.taxi.TaxiParser.ServiceDeclarationContext
 import lang.taxi.compiler.SymbolKind
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.SourceNames
+import lang.taxi.utils.log
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.io.File
@@ -42,7 +43,8 @@ data class Tokens(
       // Duplicate checking is disabled, as it doesn't consider imports, which causes false compilation errors
       val errorsFromDuplicates = collectDuplicateTypes(others) + collectDuplicateServices(others)
       if (errorsFromDuplicates.isNotEmpty()) {
-         throw CompilationException(errorsFromDuplicates)
+         log().error("Duplicate definitions detected.  This should be an error")
+//         throw CompilationException(errorsFromDuplicates)
       }
       return Tokens(
          this.imports + others.imports,
@@ -186,7 +188,7 @@ class TokenCollator : TaxiBaseListener() {
 
    override fun exitImportDeclaration(ctx: TaxiParser.ImportDeclarationContext) {
       if (collateExceptions(ctx)) {
-         imports.add(ctx.qualifiedName().Identifier().text() to ctx)
+         imports.add(ctx.qualifiedName().identifier().text() to ctx)
       }
       super.exitImportDeclaration(ctx)
    }
@@ -196,17 +198,17 @@ class TokenCollator : TaxiBaseListener() {
       collateExceptions(ctx)
       // Check to see if an inline type alias is declared
       // If so, mark it for processing later
-      val typeType = ctx.simpleFieldDeclaration()?.typeType()
+      val typeType = ctx.fieldTypeDeclaration()
       if (typeType?.aliasedType() != null) {
-         val classOrInterfaceType = typeType.classOrInterfaceType()
-         unparsedTypes.put(qualify(classOrInterfaceType.Identifier().text()), namespace to typeType)
+         val classOrInterfaceType = typeType.optionalTypeReference().typeReference().qualifiedName()
+         unparsedTypes.put(qualify(classOrInterfaceType.identifier().text()), namespace to typeType)
       }
       super.exitFieldDeclaration(ctx)
    }
 
    override fun exitEnumDeclaration(ctx: TaxiParser.EnumDeclarationContext) {
       if (collateExceptions(ctx)) {
-         val name = qualify(ctx.classOrInterfaceType().Identifier().text())
+         val name = qualify(ctx.qualifiedName().identifier().text())
          unparsedTypes.put(name, namespace to ctx)
       }
       super.exitEnumDeclaration(ctx)
@@ -214,21 +216,21 @@ class TokenCollator : TaxiBaseListener() {
 
    override fun exitNamespaceDeclaration(ctx: TaxiParser.NamespaceDeclarationContext) {
       collateExceptions(ctx)
-      ctx.qualifiedName()?.Identifier()?.text()?.let { namespace -> this.namespace = namespace }
+      ctx.qualifiedName()?.identifier()?.text()?.let { namespace -> this.namespace = namespace }
       super.exitNamespaceDeclaration(ctx)
    }
 
    override fun enterNamespaceBody(ctx: TaxiParser.NamespaceBodyContext) {
       val parent = ctx.parent as ParserRuleContext
       val namespaceNode = parent.getChild(TaxiParser.QualifiedNameContext::class.java, 0)
-      this.namespace = namespaceNode.Identifier().text()
+      this.namespace = namespaceNode.identifier().text()
       super.enterNamespaceBody(ctx)
    }
 
    override fun exitPolicyDeclaration(ctx: TaxiParser.PolicyDeclarationContext) {
       if (collateExceptions(ctx)) {
          // TODO : Why did I have to change this?  Why is Identifier() retuning null now?
-         // Was:  qualify(ctx.policyIdentifier().Identifier().text)
+         // Was:  qualify(ctx.policyIdentifier().identifier().text)
          val qualifiedName = qualify(ctx.policyIdentifier().text)
          unparsedPolicies[qualifiedName] = namespace to ctx
       }
@@ -237,7 +239,7 @@ class TokenCollator : TaxiBaseListener() {
 
    override fun exitServiceDeclaration(ctx: ServiceDeclarationContext) {
       if (collateExceptions(ctx)) {
-         val qualifiedName = qualify(ctx.Identifier().text)
+         val qualifiedName = qualify(ctx.identifier().text)
          unparsedServices[qualifiedName] = namespace to ctx
       }
       super.exitServiceDeclaration(ctx)
@@ -245,14 +247,14 @@ class TokenCollator : TaxiBaseListener() {
 
    override fun exitFunctionDeclaration(ctx: TaxiParser.FunctionDeclarationContext) {
       if (collateExceptions(ctx)) {
-         val qualifiedName = qualify(ctx.functionName().qualifiedName().Identifier().text())
+         val qualifiedName = qualify(ctx.qualifiedName().identifier().text())
          unparsedFunctions[qualifiedName] = namespace to ctx
       }
    }
 
    override fun exitTypeDeclaration(ctx: TaxiParser.TypeDeclarationContext) {
       if (collateExceptions(ctx)) {
-         val typeName = qualify(ctx.Identifier().text)
+         val typeName = qualify(ctx.identifier().text)
          unparsedTypes[typeName] = namespace to ctx
       }
       super.exitTypeDeclaration(ctx)
@@ -260,7 +262,7 @@ class TokenCollator : TaxiBaseListener() {
 
    override fun exitTypeAliasDeclaration(ctx: TaxiParser.TypeAliasDeclarationContext) {
       if (collateExceptions(ctx)) {
-         val typeName = qualify(ctx.Identifier().text)
+         val typeName = qualify(ctx.identifier().text)
          unparsedTypes.put(typeName, namespace to ctx)
       }
       super.exitTypeAliasDeclaration(ctx)
@@ -286,7 +288,7 @@ class TokenCollator : TaxiBaseListener() {
 
    override fun exitAnnotationTypeDeclaration(ctx: TaxiParser.AnnotationTypeDeclarationContext) {
       if (collateExceptions(ctx)) {
-         val typeName = qualify(ctx.Identifier().text)
+         val typeName = qualify(ctx.identifier().text)
          unparsedTypes[typeName] = namespace to ctx
       }
       super.exitAnnotationTypeDeclaration(ctx)
@@ -301,7 +303,7 @@ class TokenCollator : TaxiBaseListener() {
    }
 
    override fun exitViewDeclaration(ctx: TaxiParser.ViewDeclarationContext) {
-      val viewName = ctx.Identifier().text
+      val viewName = ctx.identifier().text
       if (collateExceptions(ctx)) {
          val name = qualify(viewName)
          unparsedViews.put(name, namespace to ctx)

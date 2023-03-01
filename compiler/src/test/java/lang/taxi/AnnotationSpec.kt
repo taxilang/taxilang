@@ -1,13 +1,19 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldNotContain
+import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.linter.LinterRules
+import lang.taxi.types.BuiltIns
 import lang.taxi.types.EnumMember
 import org.junit.jupiter.api.Test
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object AnnotationSpec : Spek({
+class AnnotationSpec : DescribeSpec({
    describe("annotations") {
       it("should compile annotation with no fields") {
          """
@@ -89,6 +95,16 @@ object AnnotationSpec : Spek({
             .annotation("DataQuality")
             .should.not.be.`null`
       }
+
+      it("is possible to declare parameters of annotations using reserved words") {
+         val annotation = """
+            @Table( table = "foo" )
+            model Foo{}
+         """.compiled()
+            .model("Foo")
+            .annotation("Table")
+         annotation.parameter("table")!!.shouldBe("foo")
+      }
       it("lists undeclared annotations") {
          """
              @AnonModelAnnotation
@@ -145,6 +161,34 @@ object AnnotationSpec : Spek({
          field.type.qualifiedName.should.equal("Id")
       }
 
+      describe("default values on annotation attributes") {
+         it("should assign default values if not specified") {
+            val doc="""
+               annotation Hello {
+                  value : String by default("hello")
+               }
+
+               model Person {
+                  @Hello
+                  a : String
+
+                  @Hello("world")
+                  b: String
+               }
+            """.compiled()
+            doc.model("Person")
+               .field("a")
+               .annotation("Hello")
+               .parameter("value").shouldBe("hello")
+
+            doc.model("Person")
+               .field("b")
+               .annotation("Hello")
+               .parameter("value")
+               .shouldBe("world")
+
+         }
+      }
       describe("when a type exists in the same namespace with the same name as an imported annotation type, an annotation is correctly resovled against the annotation type") {
          val schemaA = """
             namespace annotations

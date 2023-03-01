@@ -3,11 +3,11 @@ package lang.taxi.cli.commands
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
 import com.google.common.io.Resources
-import lang.taxi.cli.utils.ConfigWriter
 import lang.taxi.cli.utils.log
 import lang.taxi.generators.TaxiEnvironment
 import lang.taxi.packages.ProjectName
 import lang.taxi.packages.TaxiPackageProject
+import lang.taxi.writers.ConfigWriter
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.beryx.textio.TextIO

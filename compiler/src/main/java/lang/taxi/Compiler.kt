@@ -2,6 +2,7 @@ package lang.taxi
 
 import arrow.core.Either
 import arrow.core.getOrHandle
+import com.google.common.base.Stopwatch
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import lang.taxi.compiler.TokenProcessor
@@ -16,6 +17,7 @@ import lang.taxi.sources.SourceCode
 import lang.taxi.sources.SourceLocation
 import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.*
+import lang.taxi.utils.log
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.ParseTree
@@ -27,14 +29,14 @@ object Namespaces {
    const val DEFAULT_NAMESPACE = ""
 }
 
-fun ParserRuleContext?.toCompilationUnit(dependantTypeNames:List<QualifiedName> = emptyList()): lang.taxi.types.CompilationUnit {
+fun ParserRuleContext?.toCompilationUnit(dependantTypeNames: List<QualifiedName> = emptyList()): lang.taxi.types.CompilationUnit {
    return if (this == null) {
       CompilationUnit.unspecified()
    } else {
       val rawSource = this.source()
       return CompilationUnit(
          this,
-         rawSource.makeStandalone(this.findNamespace(),dependantTypeNames),
+         rawSource.makeStandalone(this.findNamespace(), dependantTypeNames),
          SourceLocation(this.start.line, this.start.charPositionInLine)
       )
 
@@ -69,40 +71,45 @@ data class CompilationError(
    val char: Int,
    val detailMessage: String,
    val sourceName: String? = null,
-   val severity: Severity = Severity.ERROR
+   val severity: Severity = Severity.ERROR,
+   val errorCode: Int? = null
 ) : Serializable {
    constructor(
       compiled: Compiled,
       detailMessage: String,
       sourceName: String = compiled.compilationUnits.first().source.sourceName,
-      severity: Severity = Severity.ERROR
+      severity: Severity = Severity.ERROR,
+      errorCode: Int? = null
    ) : this(
       compiled.compilationUnits.firstOrNull()?.location
-         ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity
+         ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity, errorCode
    )
 
    constructor(
       compilationUnit: CompilationUnit,
       detailMessage: String,
       sourceName: String = compilationUnit.source.sourceName,
-      severity: Severity = Severity.ERROR
+      severity: Severity = Severity.ERROR,
+      errorCode: Int? = null
    ) : this(
-      compilationUnit.location, detailMessage, sourceName, severity
+      compilationUnit.location, detailMessage, sourceName, severity, errorCode
    )
 
    constructor(
       position: SourceLocation,
       detailMessage: String,
       sourceName: String? = null,
-      severity: Severity = Severity.ERROR
-   ) : this(position.line, position.char, detailMessage, sourceName, severity)
+      severity: Severity = Severity.ERROR,
+      errorCode: Int? = null
+   ) : this(position.line, position.char, detailMessage, sourceName, severity, errorCode)
 
    constructor(
       offendingToken: Token,
       detailMessage: String,
       sourceName: String = offendingToken.tokenSource.sourceName,
-      severity: Severity = Severity.ERROR
-   ) : this(offendingToken.line, offendingToken.charPositionInLine, detailMessage, sourceName, severity)
+      severity: Severity = Severity.ERROR,
+      errorCode: Int? = null
+   ) : this(offendingToken.line, offendingToken.charPositionInLine, detailMessage, sourceName, severity, errorCode)
 
 
    override fun toString(): String = "[${severity.label}]: ${sourceName.orEmpty()}($line,$char) $detailMessage"
@@ -280,12 +287,14 @@ class Compiler(
     */
    fun declaredTypeNames(): List<QualifiedName> {
       return tokenprocessorWithoutImports.findDeclaredTypeNames()
+         .filterNot { BuiltIns.isBuiltIn(it) }
    }
+
    fun declaredServiceNames(): List<QualifiedName> {
       return tokenprocessorWithoutImports.findDeclaredServiceNames()
    }
 
-   fun lookupTypeByName(typeType: TaxiParser.TypeTypeContext): QualifiedName {
+   fun lookupTypeByName(typeType: TaxiParser.TypeReferenceContext): QualifiedName {
       return QualifiedName.from(tokenProcessrWithImports.lookupTypeByName(typeType))
    }
 
@@ -316,7 +325,7 @@ class Compiler(
       return startOfDeclaration.toCompilationUnit()
    }
 
-   fun getDeclarationSource(typeName: TaxiParser.TypeTypeContext): CompilationUnit? {
+   fun getDeclarationSource(typeName: TaxiParser.TypeReferenceContext): CompilationUnit? {
       val qualifiedName = tokenProcessrWithImports.lookupTypeByName(typeName)
       return getCompilationUnit(tokenProcessrWithImports, qualifiedName)
    }
@@ -350,6 +359,7 @@ class Compiler(
 
 
    fun compileWithMessages(): Pair<List<CompilationError>, TaxiDocument> {
+      val stopwatch = Stopwatch.createStarted()
       // Note - leaving this approach for backwards compatiability
       // We could try to continue compiling, with the tokens we do have
       if (syntaxErrors.isNotEmpty()) {
@@ -358,6 +368,7 @@ class Compiler(
       val builder = tokenProcessrWithImports
       // Similarly to above, we could do somethign with these errors now.
       val (errors, document) = builder.buildTaxiDocument()
+//      log().debug("Taxi schema compilation took ${stopwatch.elapsed().toMillis()}ms")
       return errors to document
    }
 
@@ -401,7 +412,11 @@ class Compiler(
       return nearestToken
    }
 
-   private fun searchWithinTokenChildren(token: ParserRuleContext, zeroBasedLineIndex: Int, char: Int):ParserRuleContext {
+   private fun searchWithinTokenChildren(
+      token: ParserRuleContext,
+      zeroBasedLineIndex: Int,
+      char: Int
+   ): ParserRuleContext {
       val tokens = generateSequence(token.children) { token ->
          val next = token
             .filterIsInstance<ParserRuleContext>()
@@ -516,7 +531,14 @@ internal fun TaxiParser.OperationSignatureContext.parameters(): List<TaxiParser.
 }
 
 fun ParserRuleContext.source(): SourceCode {
-   val text = this.start.inputStream.getText(Interval(this.start.startIndex, this.stop.stopIndex))
+
+   val text = if (this.start.startIndex > this.stop.stopIndex) {
+      // This shouldn't really happen, unless there's a parse error in the source we were given,
+      // However, since we don't have anything to work off, return the whole text
+      this.start.inputStream.toString()
+   } else {
+      this.start.inputStream.getText(Interval(this.start.startIndex, this.stop.stopIndex))
+   }
    val origin = this.start.inputStream.sourceName
    return SourceCode(origin, text)
 }
@@ -528,7 +550,7 @@ fun TaxiParser.LiteralContext.isNullValue(): Boolean {
 
 interface NamespaceQualifiedTypeResolver {
    val namespace: String
-   fun resolve(context: TaxiParser.TypeTypeContext): Either<List<CompilationError>, Type>
+   fun resolve(context: TaxiParser.TypeReferenceContext): Either<List<CompilationError>, Type>
 
    /**
     * Resolves a type name that has been requested in a source file.
@@ -558,11 +580,17 @@ fun RuleContext.importsInFile(): List<QualifiedName> {
       return emptyList()
    }
    val imports = topLevel.children.filterIsInstance<TaxiParser.ImportDeclarationContext>()
-      .map { QualifiedName.from(it.qualifiedName().Identifier().text()) }
+      .map { QualifiedName.from(it.qualifiedName().identifier().text()) }
    return imports
 }
 
-tailrec fun RuleContext.searchUpForRule(ruleType: Class<out RuleContext>): RuleContext? = searchUpForRule(listOf(ruleType))
+
+fun RuleContext.searchUpForRule(ruleType: Class<out RuleContext>): RuleContext? =
+   searchUpForRule(listOf(ruleType))
+
+inline fun <reified T : RuleContext> RuleContext.searchUpForRule(): T? =
+   searchUpForRule(listOf(T::class.java)) as T?
+
 tailrec fun RuleContext.searchUpForRule(ruleTypes: List<Class<out RuleContext>>): RuleContext? {
    fun matches(instance: RuleContext): Boolean {
       return ruleTypes.any { ruleType -> instance::class.java == ruleType }
@@ -601,16 +629,18 @@ fun RuleContext.findNamespace(): String {
       )
    )
    return when (namespaceRule) {
-      is TaxiParser.NamespaceDeclarationContext -> return namespaceRule.qualifiedName().Identifier().text()
+      is TaxiParser.NamespaceDeclarationContext -> return namespaceRule.qualifiedName().identifier().text()
       is TaxiParser.NamespaceBlockContext -> return namespaceRule.children.filterIsInstance<TaxiParser.QualifiedNameContext>()
-         .first().Identifier().text()
+         .first().identifier().text()
+
       is TaxiParser.SingleNamespaceDocumentContext -> namespaceRule.children.filterIsInstance<TaxiParser.NamespaceDeclarationContext>()
-         .firstOrNull()?.qualifiedName()?.Identifier()?.text()
+         .firstOrNull()?.qualifiedName()?.identifier()?.text()
          ?: Namespaces.DEFAULT_NAMESPACE
+
       else -> Namespaces.DEFAULT_NAMESPACE
    }
 }
 
 fun TaxiParser.NamespaceDeclarationContext.namespace(): String {
-   return this.qualifiedName().Identifier().text()
+   return this.qualifiedName().identifier().text()
 }

@@ -4,6 +4,7 @@ import lang.taxi.*
 import lang.taxi.lsp.actions.CodeActionService
 import lang.taxi.lsp.completion.CompletionService
 import lang.taxi.lsp.completion.EditorCompletionService
+import lang.taxi.lsp.completion.normalizedUriPath
 import lang.taxi.lsp.formatter.FormatterService
 import lang.taxi.lsp.gotoDefinition.GotoDefinitionService
 import lang.taxi.lsp.hover.HoverService
@@ -11,6 +12,7 @@ import lang.taxi.lsp.linter.LintingService
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
 import lang.taxi.messages.Severity
 import lang.taxi.types.SourceNames
+import org.antlr.v4.runtime.CharStream
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.LanguageClient
@@ -45,6 +47,12 @@ data class CompilationResult(
       return compiler.containsTokensForSource(uri)
    }
 
+   fun getSource(textDocument: TextDocumentIdentifier): CharStream? {
+      return compiler.inputs.firstOrNull {
+         it.sourceName == textDocument.normalizedUriPath()
+      }
+   }
+
    val successful = document != null && errors.none { it.severity == Severity.ERROR }
 }
 
@@ -60,7 +68,7 @@ data class CompilationTrigger(val changedPath: URI?)
  * Where possible, reasonable defaults are provided.
  */
 data class LspServicesConfig(
-   val compilerService: TaxiCompilerService,
+   val compilerService: TaxiCompilerService = TaxiCompilerService(),
    val completionService: CompletionService = EditorCompletionService(compilerService.typeProvider),
    val formattingService: FormatterService = FormatterService(),
    val gotoDefinitionService: GotoDefinitionService = GotoDefinitionService(compilerService.typeProvider),
@@ -77,6 +85,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       get() {
          return this.compilerService.getOrComputeLastCompilationResult()
       }
+
    private var displayedMessages: List<PublishDiagnosticsParams> = emptyList()
    private lateinit var initializeParams: InitializeParams
    private val tokenCache: CompilerTokenCache = CompilerTokenCache()
@@ -106,6 +115,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
          }
    }
 
+   val compilationResults = compilerService.compilationResults
    private val ready: Boolean
       get() {
          return initialized && connected
@@ -118,7 +128,10 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    private var linterDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
 
    override fun codeAction(params: CodeActionParams): CompletableFuture<MutableList<Either<Command, CodeAction>>> {
-      return codeActionService.getActions(params)
+      val lastCompilationResult =
+         compilerService.getOrComputeLastCompilationResult(uriToAssertIsPreset = params.textDocument.uri)
+
+      return codeActionService.getActions(lastCompilationResult, params)
    }
 
    override fun completion(position: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
@@ -127,7 +140,11 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       }
       val lastCompilationResult =
          compilerService.getOrComputeLastCompilationResult(uriToAssertIsPreset = position.textDocument.uri)
-      return completionService.computeCompletions(lastCompilationResult, position)
+      return completionService.computeCompletions(
+         lastCompilationResult,
+         position,
+         compilerService.lastSuccessfulCompilation()
+      )
 
    }
 
@@ -145,13 +162,13 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       }
       val lastCompilationResult = compilerService.getOrComputeLastCompilationResult()
       return try {
-         hoverService.hover(lastCompilationResult, compilerService.lastSuccessfulCompilationResult.get(), params)
+         hoverService.hover(lastCompilationResult, compilerService.lastSuccessfulCompilation(), params)
       } catch (unknownTokenException: UnknownTokenReferenceException) {
          // Try to reload just the once, and then re-attempt the hover call.
          // If it fails after that, then just let the exception get thrown to prevent
          // looping forever
          forceReload("Received a reference to an unknown file - ${unknownTokenException.providedSourcePath}")
-         hoverService.hover(lastCompilationResult, compilerService.lastSuccessfulCompilationResult.get(), params)
+         hoverService.hover(lastCompilationResult, compilerService.lastSuccessfulCompilation(), params)
       }
    }
 
@@ -166,6 +183,13 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    override fun didOpen(params: DidOpenTextDocumentParams) {
       computeLinterMessages(params.textDocument.uri)
       publishDiagnosticMessages()
+
+      // The user has just opened a new file in a browser.  Create it as an empty file
+      // This prevents errors later, when attempts to complete are made.
+      if (params.textDocument.uri.startsWith("inmemory://")) {
+         triggerCompilation(params.textDocument.uri, params.textDocument.text)
+      }
+
    }
 
    private fun computeLinterMessages(documentUri: String) {
@@ -216,14 +240,22 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       if (sourceName.endsWith("taxi.conf")) {
          // SKip it, we'll wait for a save.
       } else {
-         val compilationTrigger = CompilationTrigger(
-            URI.create(SourceNames.normalize(params.textDocument.uri))
-         )
-         compilerService.updateSource(params.textDocument, content)
-         this.compilerService.triggerAsyncCompilation(compilationTrigger)
-//           this.compileTriggerSink.tryEmitNext(compilationTrigger)
+         triggerCompilation(params.textDocument, content)
       }
    }
+
+   private fun triggerCompilation(textDocument: TextDocumentIdentifier, content: String) {
+      triggerCompilation(textDocument.uri, content)
+   }
+
+   private fun triggerCompilation(textDocumentUri: String, content: String) {
+      val compilationTrigger = CompilationTrigger(
+         URI.create(SourceNames.normalize(textDocumentUri))
+      )
+      compilerService.updateSource(textDocumentUri, content)
+      this.compilerService.triggerAsyncCompilation(compilationTrigger)
+   }
+
 
    // This is a very non-performant first pass.
    // We're compiling the entire workspace every time we get a request, which is
@@ -313,7 +345,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       connected = true
       if (ready) {
          // Not sure if this is true, but it makes this sequence trickier
-         error("Can't connect after initialze - should be other way around.")
+//         error("Can't connect after initialze - should be other way around.")
 //            initializeCompilerService(workspaceSourceService)
       }
    }
@@ -324,9 +356,9 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
 
       initialized = true
 
-      if (ready) {
-         initializeCompilerService(workspaceSourceService)
-      }
+//      if (ready) {
+      initializeCompilerService(workspaceSourceService)
+//      }
    }
 
    private fun initializeCompilerService(workspaceSourceService: WorkspaceSourceService) {

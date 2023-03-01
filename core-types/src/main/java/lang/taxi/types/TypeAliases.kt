@@ -4,14 +4,23 @@ import arrow.core.Either
 import arrow.core.right
 import lang.taxi.ImmutableEquality
 
-data class TypeAliasExtension(val annotations: List<Annotation>, override val compilationUnit: CompilationUnit, override val typeDoc: String? = null) : TypeDefinition, Documented {
+data class TypeAliasExtension(
+   val annotations: List<Annotation>,
+   override val compilationUnit: CompilationUnit,
+   override val typeDoc: String? = null
+) : TypeDefinition, Documented {
    private val equalty = ImmutableEquality(this, TypeAliasExtension::annotations)
 
    override fun hashCode() = equalty.hash()
    override fun equals(other: Any?) = equalty.isEqualTo(other)
 }
 
-data class TypeAliasDefinition(val aliasType: Type, val annotations: List<Annotation> = emptyList(), override val compilationUnit: CompilationUnit, override val typeDoc: String? = null) : TypeDefinition, Documented {
+data class TypeAliasDefinition(
+   val aliasType: Type,
+   val annotations: List<Annotation> = emptyList(),
+   override val compilationUnit: CompilationUnit,
+   override val typeDoc: String? = null
+) : TypeDefinition, Documented {
    private val equalty = ImmutableEquality(this, TypeAliasDefinition::aliasType, TypeAliasDefinition::annotations)
 
    override fun hashCode() = equalty.hash()
@@ -23,7 +32,10 @@ data class TypeAlias(
    override var definition: TypeAliasDefinition?,
    override val extensions: MutableList<TypeAliasExtension> = mutableListOf()
 ) : UserType<TypeAliasDefinition, TypeAliasExtension>, Annotatable, Documented {
-   constructor(qualifiedName: String, aliasedType: Type, compilationUnit: CompilationUnit) : this(qualifiedName, TypeAliasDefinition(aliasedType, compilationUnit = compilationUnit))
+   constructor(qualifiedName: String, aliasedType: Type, compilationUnit: CompilationUnit) : this(
+      qualifiedName,
+      TypeAliasDefinition(aliasedType, compilationUnit = compilationUnit)
+   )
 
    private val wrapper = LazyLoadingWrapper(this)
    override val allInheritedTypes: Set<Type>
@@ -48,11 +60,10 @@ data class TypeAlias(
    override val format: List<String>?
       get() = definition?.aliasType?.format
 
+   override val formatAndZoneOffset: FormatsAndZoneOffset?
+      get() = definition?.aliasType?.formatAndZoneOffset
    override val offset: Int?
       get() = definition?.aliasType?.offset
-
-   override val formattedInstanceOfType: Type?
-      get() = definition?.aliasType?.formattedInstanceOfType
 
    override val inheritsFrom: Set<Type> = definition?.aliasType?.inheritsFrom ?: emptySet()
 
@@ -78,12 +89,10 @@ data class TypeAlias(
       }
 
       fun underlyingType(type: Type): Type {
-         val unaliasedType =  when (type) {
+         return when (type) {
             is TypeAlias -> underlyingType(type.aliasType!!)
             else -> type
          }
-         return unaliasedType.formattedInstanceOfType?.let { underlyingType(it) }
-            ?: unaliasedType
       }
    }
 

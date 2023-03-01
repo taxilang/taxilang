@@ -1,18 +1,18 @@
 package lang.taxi.xsd
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
 import lang.taxi.Compiler
 import lang.taxi.generators.GeneratedTaxiCode
 import lang.taxi.testing.TestHelpers
 import org.assertj.core.util.Files
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 import java.io.File
 
-object XsdToTaxiSpec : Spek({
+object XsdToTaxiSpec : DescribeSpec({
    describe("converting xsd to taxi") {
       it("should set field docs from attributes") {
-         val schema = xsd("""
+         val schema = xsd(
+            """
           <xsd:element name="PurchaseOrder" type="tns:PurchaseOrderType"/>
           <xsd:complexType name="PurchaseOrderType">
           <xsd:attribute name="OrderDate" type="xsd:date">
@@ -198,7 +198,8 @@ object XsdToTaxiSpec : Spek({
     </xsd:simpleType>""").asTaxi()
          val expected = """namespace org.tempuri
             |
-            |type ActiveCurrencyCode inherits String( @format = "[A-Z]{3,3}" )
+            |@Format("[A-Z]{3,3}")
+            |type ActiveCurrencyCode inherits String
          """.trimMargin()
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
       }
@@ -210,8 +211,8 @@ object XsdToTaxiSpec : Spek({
         </xsd:restriction>
     </xsd:simpleType>""").asTaxi()
          val expected = """namespace org.tempuri
-            |
-            |type PhoneNumber inherits String(@format = '\\+[0-9]{1,3}-[0-9()+\\-]{1,30}')
+            |@Format("\\+[0-9]{1,3}-[0-9()+\\-]{1,30}")
+            |type PhoneNumber inherits String
          """.trimMargin()
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
       }

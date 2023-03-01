@@ -17,18 +17,7 @@ import lang.taxi.TaxiDocument
 import lang.taxi.generators.GeneratedTaxiCode
 import lang.taxi.generators.Logger
 import lang.taxi.generators.SchemaWriter
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.EnumDefinition
-import lang.taxi.types.EnumType
-import lang.taxi.types.EnumValue
-import lang.taxi.types.Field
-import lang.taxi.types.ObjectType
-import lang.taxi.types.ObjectTypeDefinition
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.Type
-import lang.taxi.types.TypeDefinition
-import lang.taxi.types.UserType
+import lang.taxi.types.*
 import lang.taxi.utils.log
 import lang.taxi.xsd.XsdPrimitives.primtiviesTaxiDoc
 import java.io.File
@@ -308,7 +297,7 @@ class TaxiGenerator(
       val builder = {
          ObjectTypeDefinition(
             inheritsFrom = setOf(baseType),
-            format = if (restictions.isNotEmpty()) restictions else null,
+            formatAndOffset = FormatsAndZoneOffset.forNullable(if (restictions.isNotEmpty()) restictions else null, null),
             // Not emitting the formattedInstanceOfType, b/c of the way the SchemaWriter is filtering
             // on classes to output.
             // The output is still generated correctly.

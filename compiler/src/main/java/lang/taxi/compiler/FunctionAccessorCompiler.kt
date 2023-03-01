@@ -8,6 +8,7 @@ import lang.taxi.CompilationError
 import lang.taxi.TaxiParser
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
+import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.expressions.Expression
 import lang.taxi.findNamespace
 import lang.taxi.functions.Function
@@ -47,17 +48,17 @@ class FunctionAccessorCompiler(
    private val typeChecker: TypeChecker,
    private val errors: MutableList<CompilationError>,
    private val referenceResolver: FunctionParameterReferenceResolver,
-   private val parentContext: RuleContext?
+   private val parentContext: RuleContext?,
 ) {
    internal fun buildFunctionAccessor(
-      functionContext: TaxiParser.ReadFunctionContext,
+      functionContext: TaxiParser.FunctionCallContext,
       targetType: Type,
 
       ): Either<List<CompilationError>, FunctionAccessor> {
       val namespace = functionContext.findNamespace()
       return tokenProcessor.attemptToLookupTypeByName(
          namespace,
-         functionContext.functionName().qualifiedName().Identifier().text(),
+         functionContext.qualifiedName().identifier().text(),
          functionContext,
          symbolKind = SymbolKind.FUNCTION
       )
@@ -70,8 +71,9 @@ class FunctionAccessorCompiler(
                      errors.add(compilationError)
                   }
 
+               val unparsedParameters = functionContext.parameterList()?.parameter() ?: emptyList()
                val parametersOrErrors: Either<List<CompilationError>, List<Accessor>> =
-                  functionContext.formalParameterList().parameter().mapIndexed { parameterIndex, parameterContext ->
+                  unparsedParameters.mapIndexed { parameterIndex, parameterContext ->
                      val parameterType = function.getParameterType(parameterIndex)
                      if (parameterContext.modelAttributeTypeReference() == null && parentContext.isInViewContext()) {
                         return@flatMap CompilationError(
@@ -85,7 +87,7 @@ class FunctionAccessorCompiler(
                         ).right()
                         parameterContext.scalarAccessorExpression() != null -> referenceResolver.compileScalarAccessor(
                            parameterContext.scalarAccessorExpression(),
-                           parameterType
+                           parameterType,
                         )
                         parameterContext.fieldReferenceSelector() != null -> referenceResolver.compileFieldReferenceAccessor(
                            function,
@@ -130,7 +132,7 @@ class FunctionAccessorCompiler(
                   if (function.modifiers.contains(FunctionModifiers.Query) && !functionContext.isInViewContext()) {
                      CompilationError(
                         functionContext.start,
-                        "a query function can only referenced from view definitions!"
+                        "Query functions may only be used within view definitions"
                      ).asList().left()
                   } else {
                      FunctionAccessor.buildAndResolveTypeArguments(function, parameters).right()
@@ -149,7 +151,7 @@ class FunctionAccessorCompiler(
       namespace: String,
       parameterContext: TaxiParser.ParameterContext
    ): Either<List<CompilationError>, TypeReferenceSelector> {
-      return tokenProcessor.typeOrError(namespace, parameterContext.typeReferenceSelector().typeType()).map { type ->
+      return tokenProcessor.typeOrError(namespace, parameterContext.typeReferenceSelector().typeReference()).map { type ->
          TypeReferenceSelector(type)
       }
    }

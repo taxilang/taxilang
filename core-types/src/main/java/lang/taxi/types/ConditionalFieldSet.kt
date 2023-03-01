@@ -1,6 +1,7 @@
 package lang.taxi.types
 
 import lang.taxi.accessors.Accessor
+import lang.taxi.accessors.Argument
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.expressions.Expression
 
@@ -10,8 +11,10 @@ import lang.taxi.expressions.Expression
  */
 data class ConditionalFieldSet(val fields: List<Field>, val expression: FieldSetExpression)
 
+@Deprecated("Use expressions instead")
 interface FieldSetExpression : TaxiStatementGenerator
 
+@Deprecated("Use expressions instead")
 data class CalculatedModelAttributeFieldSetExpression(
    val operand1: ModelAttributeReferenceSelector,
    val operand2: ModelAttributeReferenceSelector,
@@ -20,6 +23,7 @@ data class CalculatedModelAttributeFieldSetExpression(
    override fun asTaxi(): String = "(${operand1.asTaxi()} ${operator.symbol} ${operand2.asTaxi()})"
 }
 
+@Deprecated("Use expressions instead")
 data class CalculatedFieldSetExpression(
    val operand1: FieldReferenceSelector,
    val operand2: FieldReferenceSelector,
@@ -61,12 +65,18 @@ data class AccessorExpressionSelector(
 
 data class ModelAttributeReferenceSelector(
    val memberSource: QualifiedName,
-   val memberType: Type,
-   override val compilationUnits: List<CompilationUnit>
+   val targetType: Type,
+   override val returnType: Type = targetType,
+   val compilationUnit: CompilationUnit
 ) : TaxiStatementGenerator, Accessor, Expression() {
-   override fun asTaxi(): String = "$memberSource::${memberType.qualifiedName}"
-   override val returnType: Type
-      get() = this.memberType
+   override fun asTaxi(): String {
+      return compilationUnit.source.content
+   }
+
+   override val compilationUnits: List<CompilationUnit>
+      get() {
+         return listOf(compilationUnit)
+      }
 }
 
 @Deprecated("replaced by TypeExpression")
@@ -79,6 +89,7 @@ data class TypeReferenceSelector(val type: Type) : Accessor {
 }
 
 // TODO : Can FieldReferenceSelector, ReferenceAssignment and ReferenceCaseMatchExpression all be merged?
+// TODO : This will be replaced by ScopedReferenceSelector, which works for scopes not named "this" as well
 data class FieldReferenceSelector(val fieldName: String, override val returnType: Type) : WhenSelectorExpression,
    Accessor {
    override val declaredType: Type = returnType
@@ -92,13 +103,11 @@ data class FieldReferenceSelector(val fieldName: String, override val returnType
    override fun asTaxi(): String = "this.$fieldName"
 }
 
-object EmptyReferenceSelector : WhenSelectorExpression {
-   override fun asTaxi(): String {
-      return ""
-   }
-
-   // TODO : What type is this?
-   override val declaredType: Type = PrimitiveType.ANY
+data class ArgumentSelector(val scope:Argument, val selectors: List<FieldReferenceSelector>, override val compilationUnits:List<CompilationUnit>): Accessor, WhenSelectorExpression, Expression() {
+   override val declaredType: Type = selectors.last().declaredType
+   override val returnType: Type = declaredType
+   val path = selectors.joinToString(".") { it.fieldName }
+   override fun asTaxi(): String = "${scope.name}.$path"
 }
 
 data class WhenCaseBlock(

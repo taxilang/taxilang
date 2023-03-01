@@ -15,7 +15,7 @@ This is a feature release, which introduces the following language changes
 A TaxiQL projection can now include specific projections for nested collections.
 
 ```taxi
-findAll { Transaction[] } as {
+find { Transaction[] } as {
    items : TransactionItem -> {
       sku : ProductSku
       size : ProductSize

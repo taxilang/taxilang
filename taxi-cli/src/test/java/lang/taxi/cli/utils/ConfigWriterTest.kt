@@ -2,6 +2,7 @@ package lang.taxi.cli.utils
 
 import com.winterbe.expekt.should
 import lang.taxi.packages.TaxiPackageProject
+import lang.taxi.writers.ConfigWriter
 import org.junit.jupiter.api.Test
 
 class ConfigWriterTest {

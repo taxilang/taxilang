@@ -5,17 +5,26 @@
    <parent>
       <artifactId>taxi-lang-server</artifactId>
       <groupId>org.taxilang</groupId>
-      <version>1.33.6</version>
+      <version>1.35.0</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
    <artifactId>taxi-lang-service</artifactId>
    <properties>
       <spek.version>2.0.19</spek.version>
-      <reactor.version>3.4.22</reactor.version>
+      <reactor-bom.version>2020.0.28</reactor-bom.version>
    </properties>
 
    <dependencies>
+      <dependency>
+         <groupId>io.projectreactor</groupId>
+         <artifactId>reactor-test</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>io.projectreactor.kotlin</groupId>
+         <artifactId>reactor-kotlin-extensions</artifactId>
+      </dependency>
       <dependency>
          <groupId>org.spekframework.spek2</groupId>
          <artifactId>spek-dsl-jvm</artifactId>
@@ -35,7 +44,30 @@
       <dependency>
          <groupId>io.projectreactor</groupId>
          <artifactId>reactor-core</artifactId>
-         <version>${reactor.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>io.kotest</groupId>
+         <artifactId>kotest-runner-junit5-jvm</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>io.kotest</groupId>
+         <artifactId>kotest-assertions-core-jvm</artifactId>
+         <scope>test</scope>
       </dependency>
    </dependencies>
+
+   <dependencyManagement>
+      <dependencies>
+         <!-- https://mvnrepository.com/artifact/io.projectreactor/reactor-bom -->
+         <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-bom</artifactId>
+            <version>${reactor-bom.version}</version>
+            <scope>import</scope>
+            <type>pom</type>
+         </dependency>
+      </dependencies>
+   </dependencyManagement>
 </project>

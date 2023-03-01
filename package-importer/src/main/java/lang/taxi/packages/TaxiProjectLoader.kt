@@ -17,6 +17,9 @@ class TaxiProjectLoader {
    )
 
 
+   /**
+    * Specify the actual taxi.conf file (not the containing directory)
+    */
    fun withConfigFileAt(path: Path): TaxiProjectLoader {
       pathsToSearch.add(path)
       return this

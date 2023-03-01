@@ -4,14 +4,14 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>org.taxilang</groupId>
-      <version>1.33.6</version>
+      <version>1.35.0</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
    <artifactId>compiler</artifactId>
 
    <properties>
-      <antlr.version>4.11.1</antlr.version>
+      <antlr.version>4.12.0</antlr.version>
    </properties>
 
    <dependencies>
@@ -48,12 +48,12 @@
       <dependency>
          <groupId>org.slf4j</groupId>
          <artifactId>slf4j-api</artifactId>
-         <version>2.0.0</version>
+         <version>2.0.6</version>
       </dependency>
       <dependency>
          <groupId>org.slf4j</groupId>
          <artifactId>slf4j-log4j12</artifactId>
-         <version>2.0.0</version>
+         <version>2.0.6</version>
          <scope>provided</scope>
       </dependency>
       <!-- https://mvnrepository.com/artifact/com.github.pvdberg1998/hashkode -->

@@ -14,7 +14,7 @@ namespace org.fpml {
       [[ The accrual is calculated using the facility total utilized amount as the reference amount. The utilized amount includes both funded and unfunded borrowings. ]]
       Utilized
    }
-   
+
    [[ The type of adjustment applied to any amount. ]]
    enum AmountAdjustmentEnum {
       [[ Denotes an decrease. ]]
@@ -22,7 +22,7 @@ namespace org.fpml {
       [[ Denotes an increase. ]]
       Increase
    }
-   
+
    [[ The type of averaging used in an Asian option. ]]
    enum AveragingInOutEnum {
       [[ The average price is used to derive the strike price. Also known as "Asian strike" style option. ]]
@@ -32,7 +32,7 @@ namespace org.fpml {
       [[ The average price is used to derive both the strike and the expiration price. ]]
       Both
    }
-   
+
    [[ The method of calculation to be used when averaging rates. Per ISDA 2000 Definitions, Section 6.2. Certain Definitions Relating to Floating Amounts. ]]
    enum AveragingMethodEnum {
       [[ The arithmetic mean of the relevant rates for each reset date. ]]
@@ -40,7 +40,7 @@ namespace org.fpml {
       [[ The arithmetic mean of the relevant rates in effect for each day in a calculation period calculated by multiplying each relevant rate by the number of days such relevant rate is in effect, determining the sum of such products and dividing such sum by the number of days in the calculation period. ]]
       Weighted
    }
-   
+
    [[ When breakage cost is applicable, this defines who is calculating it. ]]
    enum BreakageCalculatedByEnum {
       [[ Breakage cost is calculated by the agent bank. ]]
@@ -48,7 +48,7 @@ namespace org.fpml {
       [[ Breakage cost is calculated by the lender. ]]
       Lender
    }
-   
+
    [[ Defines which type of bullion is applicable for a Bullion Transaction. ]]
    enum BullionTypeEnum {
       [[ Gold. Quality as per the Good Delivery Rules issued by the London Bullion Market Association. ]]
@@ -70,7 +70,7 @@ namespace org.fpml {
       [[ Quality as per the Good Delivery Rules for Osmium. ]]
       Osmium
    }
-   
+
    [[ The convention for adjusting any relevant date if it would otherwise fall on a day that is not a valid business day. Note that FRN is included here as a type of business day convention although it does not strictly fall within ISDA's definition of a Business Day Convention and does not conform to the simple definition given above. ]]
    enum BusinessDayConventionEnum {
       [[ The non-business date will be adjusted to the first following day that is a business day ]]
@@ -90,12 +90,12 @@ namespace org.fpml {
       [[ The date adjustments conventions are defined elsewhere, so it is not required to specify them here. ]]
       NotApplicable
    }
-   
+
    enum BuySellEnum {
       Buyer,
       Seller
    }
-   
+
    [[ The specification of how a calculation agent will be determined. ]]
    enum CalculationAgentPartyEnum {
       [[ The party that gives notice of exercise. Per 2000 ISDA Definitions, Section 11.1. Parties, paragraph (d). ]]
@@ -109,7 +109,7 @@ namespace org.fpml {
       [[ Both parties with joined rights to be a calculation agent. ]]
       Both
    }
-   
+
    [[ Describes the date source calendar for a contract whereby the prices are from the underlying commodity price source (e.g. exchange traded futures contract), but the dates are based off another calendar (e.g. the listed option on the futures contract). ]]
    enum CalendarSourceEnum {
       [[ Pricing Dates (based off of listed options dates) in respect of each Calculation Period, the last Commodity Business Day on which the relevant Options Contract is scheduled to trade on the Exchange. ]]
@@ -117,7 +117,7 @@ namespace org.fpml {
       [[ Pricing Dates (based off of futures dates) in respect of each Calculation Period, the last Commodity Business Day on which the relevant Futures Contract is scheduled to trade on the Exchange. ]]
       Future
    }
-   
+
    [[ Denotes the method of collateral value allocation ]]
    enum CollateralValueAllocationEnum {
       [[ The amount that is being allocated from a buffer account. A buffer account is meant to hold funds that the FCM can use to cover the liability of any client. In effect, the FCM has provided funds that are available to meet its customers’ needs and the DCO may use such collateral to meet a default by a customer to the same extent as if the customer provided the collateral. ]]
@@ -129,7 +129,7 @@ namespace org.fpml {
       [[ The allocated amount for margin requirement ]]
       Margin
    }
-   
+
    [[ Identifies a party to the on-demand repo transaction that has a right to demand for termination of the repo transaction. ]]
    enum CallingPartyEnum {
       [[ Initial buyer to the repo transaction. ]]
@@ -141,7 +141,7 @@ namespace org.fpml {
       [[ As defined in Master Agreement. ]]
       AsDefinedInMasterAgreement
    }
-   
+
    [[ The unit in which a commission is denominated. ]]
    enum CommissionDenominationEnum {
       [[ The commission is expressed in basis points, in reference to the price referenced in the document. ]]
@@ -153,7 +153,7 @@ namespace org.fpml {
       [[ The commission is expressed as a absolute amount. ]]
       FixedAmount
    }
-   
+
    [[ The consequences of Bullion Settlement Disruption Events. ]]
    enum CommodityBullionSettlementDisruptionEnum {
       [[ Negotiation will apply in the event of Bullion Settlement Disruption as per Section 10.5.(d) of the 2005 Commodity Definitions. ]]
@@ -161,7 +161,7 @@ namespace org.fpml {
       [[ Cancellation and Payment will apply in the event of Bullion Settlement Disruption as per Section 10.5.(d) of the 2005 Commodity Definitions. ]]
       Cancellation_and_Payment("Cancellation and Payment")
    }
-   
+
    [[ A day type classification used in counting the number of days between two dates. ]]
    enum DayTypeEnum {
       [[ When calculating the number of days between two dates the count includes only business days. ]]
@@ -177,7 +177,7 @@ namespace org.fpml {
       [[ When calculating the number of days between two dates the count includes only scheduled trading days. ]]
       ScheduledTradingDay
    }
-   
+
    [[ A day type classification used in counting the number of days between two dates for a commodity transaction. ]]
    enum CommodityDayTypeEnum {
       [[ When calculating the number of days between two dates the count includes only business days. ]]
@@ -197,7 +197,7 @@ namespace org.fpml {
       [[ The days that are starting from the end of the prior nearby futures/option contract through the nearby futures/option contract as specified in the message. For example: If referring to the Z21 WTI contract, first day of this type will be 21-Oct-21 and the last day of this type will be 19-Nov-21. ]]
       NearbyContractDay
    }
-   
+
    [[ Barrier Knock In or Out. ]]
    enum CommodityKnockEnum {
       [[ Option is exercisable. ]]
@@ -205,7 +205,7 @@ namespace org.fpml {
       [[ Option is not exercisable. ]]
       Out
    }
-   
+
    [[ The specification of whether payments occur relative to the calculation period start or end date, or the reset date. ]]
    enum PayRelativeToEnum {
       [[ Payments will occur relative to the first day of each calculation period. ]]
@@ -219,7 +219,7 @@ namespace org.fpml {
       [[ Payments will occur relative to the valuation date. ]]
       ValuationDate
    }
-   
+
    [[ The Commodity specification of whether payments occur relative e.g. to the Trade Date, or the end of the month, etc. ]]
    enum CommodityPayRelativeToEnum {
       [[ Payments will occur relative to the first day of each calculation period. ]]
@@ -251,7 +251,7 @@ namespace org.fpml {
       [[ Payments will occur relative to the first pricing date of each calculation period. ]]
       FirstPricingDate
    }
-   
+
    [[ Defines the value of the commodity return calculation formula as simple or compound. The simple return formula is: [ [P sub t - P sub (t-1)] / [P sub (t-1)] ] - 1 where: P sub t is the price or index level at time period t and P sub t-1 is the price or index level in time period t-1. The compound return formula is the geometric average return for the period: PI from d=1 to d=n [ [ [ [P sub t - P sub (t-1)] / [P sub (t-1)] ] + 1] sup (1 / n) ] - 1 where: PI is the product operator, p sub t is the price or index level at time period t, p sub t -1 is the price or index level at time period t-1 ]]
    enum CommodityReturnCalculationFormulaEnum {
       [[ The value is when the cash settlement amount is the simple formula: Notional Amount * ((Index Level sub d / Index Level sub d-1) - 1). That is, when the cash settlement amount is the Notional Amount for the calculation period multiplied by the ratio of the index level on the reset date/valuation date divided by the index level on the immediately preceding reset date/valuation date minus one. ]]
@@ -259,7 +259,7 @@ namespace org.fpml {
       [[ The value is when the cash settlement amount is the compound formula: ]]
       CompoundFormula
    }
-   
+
    [[ The compounding calculation method ]]
    enum CompoundingMethodEnum {
       [[ Flat compounding. Compounding excludes the spread. Note that the first compounding period has it's interest calculated including any spread then subsequent periods compound this at a rate excluding the spread. ]]
@@ -271,7 +271,7 @@ namespace org.fpml {
       [[ Spread Exclusive compounding. ]]
       SpreadExclusive
    }
-   
+
    [[ Defines a condition when an event applies. ]]
    enum ConditionEnum {
       [[ The event rate must be greater than or equal to the specified trigger rate. ]]
@@ -283,7 +283,7 @@ namespace org.fpml {
       [[ The event rate must be less than the specified trigger rate. ]]
       Below
    }
-   
+
    [[ Defines whether conditions precedent have been met in a given syndicated loan deal. ]]
    enum ConditionsPrecedentMetEnum {
       [[ Conditions precedent have not been met. ]]
@@ -293,7 +293,7 @@ namespace org.fpml {
       [[ Conditions precedent have been met. ]]
       Yes
    }
-   
+
    [[ A day of the seven-day week. ]]
    enum DayOfWeekEnum {
       [[ Monday ]]
@@ -311,7 +311,7 @@ namespace org.fpml {
       [[ Sunday ]]
       SUN
    }
-   
+
    [[ A day of the seven-day week, plus codes for weekends and weekdays. ]]
    enum DayOfWeekExtEnum {
       [[ Monday ]]
@@ -333,12 +333,12 @@ namespace org.fpml {
       [[ Weekends ]]
       WN
    }
-   
+
    enum DealtCurrencyEnum {
       ExchangedCurrency1,
       ExchangedCurrency2
    }
-   
+
    [[ Deprecated: In respect of a Transaction and a Commodity Reference Price, the relevant date or month for delivery of the underlying Commodity. ]]
    enum DeliveryDatesEnum {
       [[ The Delivery Date of the underlying Commodity shall be the month of expiration of the futures contract that corresponds to the month and year of the Calculation Period. e.g. The JAN 09 contract when pricing in January '09 (In the case of contracts like Brent crude, this will mean that the contract expired in DEC 08.) ]]
@@ -568,7 +568,7 @@ namespace org.fpml {
       [[ The Delivery Date of the underlying Commodity shall be during the Fifty Second Nearby Week. ]]
       FiftySecondNearbyWeek
    }
-   
+
    [[ The type of nearby qualifier, expect to be used in conjunction with a nearby count. ]]
    enum DeliveryNearbyTypeEnum {
       [[ Describes the contract to be the contract that pertains to the month-year of the calculation period. If used, the nearby count is expected to be 0. ]]
@@ -578,18 +578,18 @@ namespace org.fpml {
       [[ The Delivery Date of the underlying Commodity shall be the Week of expiration of the futures contract. ]]
       NearbyWeek
    }
-   
+
    enum DeliveryTypeEnum {
       Firm,
       Interruptible
    }
-   
+
    [[ The ISDA defined value indicating the severity of a difference. ]]
    enum DifferenceSeverityEnum {
       Warning,
       Error
    }
-   
+
    [[ The ISDA defined value indicating the nature of a difference. ]]
    enum DifferenceTypeEnum {
       Value,
@@ -597,7 +597,7 @@ namespace org.fpml {
       Structure,
       Scheme
    }
-   
+
    [[ The method of calculating discounted payment amounts. ]]
    enum DiscountingTypeEnum {
       [[ Per ISDA 2000 Definitions, Section 8.4. Discounting, paragraph (a) ]]
@@ -607,7 +607,7 @@ namespace org.fpml {
       [[ Per ISDA 2000 Definitions, Section 8.4. Discounting, paragraph (e) ]]
       FRAYield
    }
-   
+
    [[ The specification of how disruption fallbacks will be represented. ]]
    enum DisruptionFallbacksEnum {
       [[ The Disruption Fallback(s) are determined by reference to the relevant Master Agreement. ]]
@@ -615,7 +615,7 @@ namespace org.fpml {
       [[ The Disruption Fallback(s) are determined by reference to the relevant Confirmation. ]]
       AsSpecifiedInConfirmation
    }
-   
+
    [[ Refers to one on the 3 Amounts ]]
    enum DividendAmountTypeEnum {
       [[ 100% of the gross cash dividend per Share paid over record date during relevant Dividend Period ]]
@@ -627,7 +627,7 @@ namespace org.fpml {
       [[ The Amount is determined as provided in the relevant Master Confirmation. ]]
       AsSpecifiedInMasterConfirmation
    }
-   
+
    [[ Defines how the composition of dividends is to be determined. ]]
    enum DividendCompositionEnum {
       [[ The Equity Amount Receiver determines the composition of dividends (subject to conditions). ]]
@@ -635,7 +635,7 @@ namespace org.fpml {
       [[ The Calculation Agent determines the composition of dividends (subject to conditions). ]]
       CalculationAgentElection
    }
-   
+
    [[ The reference to a dividend date. ]]
    enum DividendDateReferenceEnum {
       [[ Date on which a holder of the security is entitled to the dividend. ]]
@@ -675,7 +675,7 @@ namespace org.fpml {
       [[ If "Dividend Payment Date(s)" is specified in the Transaction Supplement as "Ex-dividend Payment Date", then the Dividend Payment Date in respect of a Dividend Amount shall be the number of Currency Business Days as provided in the Transaction Supplement following the day on which the Shares commence trading ‘ex’ on the Exchange. ]]
       ExDividendPaymentDate
    }
-   
+
    [[ The date on which the receiver of the equity return is entitled to the dividend. ]]
    enum DividendEntitlementEnum {
       [[ Dividend entitlement is on the dividend ex-date. ]]
@@ -683,7 +683,7 @@ namespace org.fpml {
       [[ Dividend entitlement is on the dividend record date. ]]
       RecordDate
    }
-   
+
    [[ Defines the First Period or the Second Period, as specified in the 2002 ISDA Equity Derivatives Definitions. ]]
    enum DividendPeriodEnum {
       [[ "First Period" per the 2002 ISDA Equity Derivatives Definitions will apply. ]]
@@ -691,13 +691,13 @@ namespace org.fpml {
       [[ "Second Period" per the 2002 ISDA Equity Derivatives Definitions will apply. ]]
       SecondPeriod
    }
-   
+
    [[ A type which permits the Dual Currency strike quote basis to be expressed in terms of the deposit and alternate currencies. ]]
    enum DualCurrencyStrikeQuoteBasisEnum {
       DepositCurrencyPerAlternateCurrency,
       AlternateCurrencyPerDepositCurrency
    }
-   
+
    [[ Symbolic specification of early termination date. ]]
    enum EarlyTerminationDateEnum {
       AnyDay,
@@ -706,12 +706,12 @@ namespace org.fpml {
       AfterFirstResetDate,
       AsSpecifiedInMCA
    }
-   
+
    [[ The type of electricity product. ]]
    enum ElectricityProductTypeEnum {
       Electricity
    }
-   
+
    [[ Upon the occurrence of an Abandonment of Scheme, as defined in clause (h)(iv) of the Emissions Annex, one of the following elections, the specific terms of which are set forth in clause (b)(iii) of the Emissions Annex, will govern the parties’ rights and obligations with respect to this Emissions Transaction. If none of the above options is selected, Option A(1) will apply. ]]
    enum EnvironmentalAbandonmentOfSchemeEnum {
       [[ Abandonment of Scheme constitutes an Additional Termination Event. ]]
@@ -723,7 +723,7 @@ namespace org.fpml {
       [[ The applicability of Abandonment of Scheme does not apply. ]]
       OptionC
    }
-   
+
    [[ Environmental Product (e.g. allowance, certificate or unit). ]]
    enum EnvironmentalProductTypeEnum {
       [[ For EU Emissions Allowance Transactions: An EU Emissions Allowance. ]]
@@ -765,7 +765,7 @@ namespace org.fpml {
       [[ United Kingdom Ofgem Renewable Obligation Certificate. ]]
       UKRenewableObligationCertificate
    }
-   
+
    [[ Specifies whether the option is a call or a put. ]]
    enum PutCallEnum {
       [[ A put option gives the holder the right to sell the underlying asset by a certain date for a certain price. ]]
@@ -773,7 +773,7 @@ namespace org.fpml {
       [[ A call option gives the holder the right to buy the underlying asset by a certain date for a certain price. ]]
       Call
    }
-   
+
    [[ Specifies an additional Forward type. ]]
    enum EquityOptionTypeEnum {
       [[ A put option gives the holder the right to sell the underlying asset by a certain date for a certain price. ]]
@@ -783,7 +783,7 @@ namespace org.fpml {
       [[ DEPRECATED value which will be removed in FpML-5-0 onwards A forward contract is an agreement to buy or sell the underlying asset at a certain future time for a certain price. ]]
       Forward
    }
-   
+
    [[ The specification of whether an OTC option will be exercised. ]]
    enum ExerciseActionEnum {
       [[ The option was or is to be exercised fully. ]]
@@ -793,7 +793,7 @@ namespace org.fpml {
       [[ The option was or is to be allowed to expire without being exercised, i.e. it is being abandoned. ]]
       Abandon
    }
-   
+
    [[ The specification of which of the pay-side or the receive-side should be exercised when a straddle is exercised. ]]
    enum ExerciseSideEnum {
       [[ A put option gives the holder the right to sell the underlying asset by a certain date for a certain price. ]]
@@ -805,13 +805,13 @@ namespace org.fpml {
       [[ A receiver option: If you buy a "receiver" option you have the right but not the obligation to enter into the underlying swap transaction as the "fixed" rate/price receiver and pay float. ]]
       Receiver
    }
-   
+
    enum ExerciseStyleEnum {
       American,
       Bermuda,
       European
    }
-   
+
    [[ When a requested option exercise event is desired to be performed. ]]
    enum ExerciseTimingEnum {
       [[ Perform the requested exercise behavior immediately on receipt of the request. ]]
@@ -819,7 +819,7 @@ namespace org.fpml {
       [[ Perform the requested exercise behavior at the expiration of the option. ]]
       OnExpiration
    }
-   
+
    [[ Defines the fee type. ]]
    enum FeeElectionEnum {
       [[ The product of (i) the Break Fee Rate multiplied by (ii) the Equity Notional Amount corresponding to the Early Termination Portion. ]]
@@ -833,7 +833,7 @@ namespace org.fpml {
       [[ Amortized Fee and Funding Fee are applicable. ]]
       AmortizedFeeAndFundingFee
    }
-   
+
    [[ The method by which the Flat Rate is calculated for a commodity freight transaction. ]]
    enum FlatRateEnum {
       [[ The Flat Rate will be the New Worldwide Tanker Nominal Freight Scale for the Freight Index Route for the Trade Date for the transaction. ]]
@@ -841,7 +841,7 @@ namespace org.fpml {
       [[ The Flat Rate for each Pricing Date will be the New Worldwide Tanker Nominal Freight Scale for the Freight Index Route for the Pricing Date.. ]]
       Floating
    }
-   
+
    [[ Specifies the fallback provisions in respect to the applicable Futures Price Valuation. ]]
    enum FPVFinalPriceElectionFallbackEnum {
       [[ In respect of the Early Final Valuation Date, the provisions for FPV Close shall apply. ]]
@@ -849,7 +849,7 @@ namespace org.fpml {
       [[ In respect of the Early Final Valuation Date, the provisions for FPV Hedge Execution shall apply. ]]
       FPVHedgeExecution
    }
-   
+
    [[ The method of FRA discounting, if any, that will apply. ]]
    enum FraDiscountingEnum {
       [[ "FRA Discounting" per the ISDA Definitions will apply. ]]
@@ -861,7 +861,7 @@ namespace org.fpml {
       [[ Per ISDA 2006 Definitions, Section 8.4. Discounting, paragraph (e) ]]
       ISDAYield
    }
-   
+
    [[ The type of a knockout barrier used in an accrual product (e.g. American or European) ]]
    enum FxAccrualKnockoutBarrierRetentionEnum {
       [[ If the barrier is triggered, the accrual process for that period stops. The parties retain the underlying settlement rights for that period with the currently accrued notional. ]]
@@ -869,7 +869,7 @@ namespace org.fpml {
       [[ If the barrier is triggered, the accrual process for that period stops. No settlement occurs for that period. ]]
       Lose
    }
-   
+
    [[ Average calculation method e.g. Arithmetic, Harmonic) ]]
    enum FxAveragingMethodEnum {
       [[ Arithmetic method of average calculation. ]]
@@ -877,7 +877,7 @@ namespace org.fpml {
       [[ Harmonic method of average calculation. ]]
       Harmonic
    }
-   
+
    [[ The specification of whether the direction of a barrier within an FX OTC option is Down or Up. ]]
    enum FxBarrierDirectionEnum {
       [[ The barrier is triggered if the observed rate is at or below the barrier level during the period of observation, or at the time of observation. ]]
@@ -885,7 +885,7 @@ namespace org.fpml {
       [[ The barrier is triggered if the observed rate is at or above the barrier level during the period of observation, or at the time of observation. ]]
       Up
    }
-   
+
    [[ The specification of whether a barrier has effect for the current expiry period, or globally to the whole product. ]]
    enum FxBarrierScopeEnum {
       [[ The barrier has effect for the expiry period in which it is triggered, and all subsequent periods. ]]
@@ -893,7 +893,7 @@ namespace org.fpml {
       [[ The barrier has effect only for the expiry period in which it is triggered. ]]
       PerExpiry
    }
-   
+
    [[ Defines the barrier observation style i.e. continuous (American) or discrete (Euriopean). ]]
    enum FxBarrierStyleEnum {
       [[ The barrier is observed continuously through the observation period. ]]
@@ -901,7 +901,7 @@ namespace org.fpml {
       [[ The barrier is observed on a discrete expiry date, or (in the case of a multi-phase product) series of expiry dates. ]]
       European
    }
-   
+
    [[ The specification of whether a barrier within an FX OTC option is a knockin or knockout. ]]
    enum FxBarrierTypeEnum {
       [[ The option exists if the spot rate is at or above, or at or below the barrier level according to the specified barrier direction. ]]
@@ -913,7 +913,7 @@ namespace org.fpml {
       [[ DEPRECATE: Option ceases to exist once the barrier is hit. The trigger rate is in-the money in relation to the strike rate. ]]
       ReverseKnockout
    }
-   
+
    [[ Defines the outcome in the event that the barrier is triggered i.e. whether the product becomes active (Knockin) or is extinguished (Knockout). Omitting superseded values ReverseKnock[in|out]. ]]
    enum FxBarrierTypeSimpleEnum {
       [[ The option exists if the spot rate is at or above, or at or below the barrier level according to the specified barrier direction. ]]
@@ -921,31 +921,31 @@ namespace org.fpml {
       [[ The option ceases to exist if the spot rate is at or above, or at or below the barrier level according to the specified barrier direction. ]]
       Knockout
    }
-   
+
    [[ Standard FX Spot and Forward offset conventions. ]]
    enum FxOffsetConventionEnum {
       FxSpot,
       FxForward
    }
-   
+
    [[ The Lower Bound Direction. It only contains the AtOrAbove and Above values. ]]
    enum FxRegionLowerBoundDirectionEnum {
       AtOrAbove,
       Above
    }
-   
+
    [[ The Upper Bound Direction. It only contains the AtOrBelow and Below values. ]]
    enum FxRegionUpperBoundDirectionEnum {
       AtOrBelow,
       Below
    }
-   
+
    [[ Target specific settlement adjustment method. ]]
    enum FxSettlementAdjustmentMethodEnum {
       VariedStrike,
       VariedNotional
    }
-   
+
    [[ Forward Volatility Agreement Straddle Type. ]]
    enum FxStraddleTypeEnum {
       [[ At the money forward straddle. ]]
@@ -953,7 +953,7 @@ namespace org.fpml {
       [[ Delta neutral straddle. ]]
       DeltaNeutral
    }
-   
+
    [[ Defines the method for calculating the gain in the period where the Target Knock-Out event occurs (Exact, Exclusive, Inclusive). ]]
    enum FxTargetStyleEnum {
       [[ The gain for the knockout period is adjusted to yield a final accumulated value equal to the target level. ]]
@@ -963,7 +963,7 @@ namespace org.fpml {
       [[ The gain for the knockout period is equal to the whole benefit of the final fixing over spot i.e. the final accumulated value may exceed the target level. ]]
       Inclusive
    }
-   
+
    [[ The specification of a time period containing values such as Today, Tomorrow etc. ]]
    enum FxTenorPeriodEnum {
       [[ Broken/non conventional Tenor Period. ]]
@@ -979,7 +979,7 @@ namespace org.fpml {
       [[ Day after Spot Tenor period. ]]
       SpotNext
    }
-   
+
    [[ The type of gas product. ]]
    enum GasProductTypeEnum {
       [[ Normal butane (C4H10) ]]
@@ -1014,7 +1014,7 @@ namespace org.fpml {
       [[ Water Vapor (H2O) ]]
       Water
    }
-   
+
    [[ The specification of the consequences of Index Events. ]]
    enum IndexEventConsequenceEnum {
       [[ Calculation Agent Adjustment ]]
@@ -1026,7 +1026,7 @@ namespace org.fpml {
       [[ Related Exchange Adjustment ]]
       RelatedExchange
    }
-   
+
    [[ Defines whether the agent bank is making an interest payment based on the lender pro-rata share at the end of the period (snapshot) or based on the lender position throughout the period. ]]
    enum InterestCalculationMethodEnum {
       [[ Agent bank is making an interest payment based on the lender's contract position throughout the interest payment period. ]]
@@ -1034,13 +1034,13 @@ namespace org.fpml {
       [[ Agent bank is making an interest payment based on the lender pro-rata share snapshot at the time of payment. ]]
       ProRataShareSnapshot
    }
-   
+
    [[ The specification of the interest shortfall cap, applicable to mortgage derivatives. ]]
    enum InterestShortfallCapEnum {
       Fixed,
       Variable
    }
-   
+
    [[ Defines applicable periods for interpolation. ]]
    enum InterpolationPeriodEnum {
       [[ Interpolation is applicable to the initial period only. ]]
@@ -1052,7 +1052,7 @@ namespace org.fpml {
       [[ Interpolation is applicable to any non-standard period. ]]
       AnyPeriod
    }
-   
+
    [[ The type of automatic adjustment that a Letter of Credit can exhibit. ]]
    enum LcAutoAdjustEnum {
       [[ Denotes an automatic decrease. ]]
@@ -1062,13 +1062,13 @@ namespace org.fpml {
       [[ Denotes an automatic increase or decrease. ]]
       AutoIncreaseOrDecrease
    }
-   
+
    [[ Used for indicating the length unit in the Resource type. ]]
    enum LengthUnitEnum {
       Pages,
       TimeUnit
    }
-   
+
    [[ The type of credit approval request. ]]
    enum LimitModelEnum {
       Ping,
@@ -1077,7 +1077,7 @@ namespace org.fpml {
       PushToPing,
       PushToStop
    }
-   
+
    [[ LoadType is a summary of the full description of the settlement periods with respect to the region. Used for describing Electricity delivery schedules. ]]
    enum LoadTypeEnum {
       [[ Base ]]
@@ -1091,7 +1091,7 @@ namespace org.fpml {
       [[ Anything that does not fall under the predefined standard categories ]]
       Custom
    }
-   
+
    [[ A list that defines how the interest accrued during the settlement period is calculated and paid. ]]
    enum LoanTradingAccrualSettlementEnum {
       [[ Trades flat. ]]
@@ -1101,7 +1101,7 @@ namespace org.fpml {
       [[ Settled without Accrued Interest: Interest accrued during for the settlement period is not paid at settlement. ]]
       SettledWithoutAccrued
    }
-   
+
    [[ A list of accruing fee types associated with a facility. ]]
    enum LoanTradingAccruingFeeTypeEnum {
       [[ Calculated as a percentage of the unutilized portion of the facility. ]]
@@ -1115,7 +1115,7 @@ namespace org.fpml {
       [[ Calculated as a percentage of the utilized portion of the facility. This fee type is subject to banding rules – different portions of the utilization amount may be subject to different percentages. ]]
       Utilization
    }
-   
+
    [[ A list that defines the loan trading association responsible for defining the standardized legal framework that governs the trade. ]]
    enum LoanTradingAssocEnum {
       [[ Loan Market Association (UK). ]]
@@ -1123,7 +1123,7 @@ namespace org.fpml {
       [[ The Loan Syndications and Trading Association (US). ]]
       LSTA
    }
-   
+
    [[ A list describing the type of documentation used to settle a secondary market syndicated loan trade. ]]
    enum LoanTradingDocTypeEnum {
       [[ Distressed loan trade documentation. ]]
@@ -1131,7 +1131,7 @@ namespace org.fpml {
       [[ Par loan trade documentation. ]]
       Par
    }
-   
+
    [[ A list describing forms of purchase. ]]
    enum LoanTradingFormOfPurchaseEnum {
       Assignment,
@@ -1145,7 +1145,7 @@ namespace org.fpml {
       LMATransferCertificate,
       Participation
    }
-   
+
    [[ A list of accruing fee types associated with a facility. ]]
    enum LoanTradingNonRecurringFeeTypeEnum {
       [[ Calculated as a percentage of the global commitment amount of a facility. ]]
@@ -1159,7 +1159,7 @@ namespace org.fpml {
       Upfront,
       Waiver
    }
-   
+
    [[ A list that defines the status of a settlement task. ]]
    enum LoanTradingSettlementTaskStatusEnum {
       [[ Loan Market Association (UK). ]]
@@ -1168,7 +1168,7 @@ namespace org.fpml {
       Cleared,
       Cancelled
    }
-   
+
    [[ A list that specifies whether a trade was executed during the syndication period or in the post-syndication market. ]]
    enum LoanTradingTypeEnum {
       [[ Trade is part of a syndication. ]]
@@ -1176,7 +1176,7 @@ namespace org.fpml {
       [[ Trade was performed in the secondary (non-syndication) market. ]]
       Secondary
    }
-   
+
    [[ A list that specifies type of voting rights process, i.e. whether voting rights are passed along to buyer or retained by seller. ]]
    enum LoanTradingVotingRightsEnum {
       [[ Voting rights passed to the buyer ]]
@@ -1184,7 +1184,7 @@ namespace org.fpml {
       [[ Voting rights retained by the seller ]]
       RetainedBySeller
    }
-   
+
    [[ A list of standard market rules for the treatment of split of assignment fees between counterparties. ]]
    enum LoanTransferFeePaidByEnum {
       [[ Buyer is responsible for one half of one allocation's assignment fee (regardless of the number of allocations). ]]
@@ -1202,7 +1202,7 @@ namespace org.fpml {
       [[ Ticket owner is responsible for one allocation's assignment fee (regardless of the number of allocations). ]]
       SplitFull
    }
-   
+
    [[ This indicator defines which type of assets (cash or securities) is specified to apply as margin to the repo transaction. ]]
    enum MarginTypeEnum {
       [[ When the margin type is Cash, the margin factor is applied to the cash value of the transaction. ]]
@@ -1210,7 +1210,7 @@ namespace org.fpml {
       [[ When the margin type is Instrument, the margin factor is applied to the instrument value for the transaction. In the “instrument” case, the haircut would be applied to the securities. ]]
       Instrument
    }
-   
+
    [[ The specification of how market disruption events will be represented. ]]
    enum MarketDisruptionEventsEnum {
       [[ Market Disruption Events are applicable. ]]
@@ -1222,7 +1222,7 @@ namespace org.fpml {
       [[ The Market Disruption Event(s) are determined by reference to the relevant Confirmation. ]]
       AsSpecifiedInConfirmation
    }
-   
+
    [[ Describes how and when title to the commodity transfers. ]]
    enum MetalTitleEnum {
       [[ Transfers with Risk of Loss. ]]
@@ -1230,7 +1230,7 @@ namespace org.fpml {
       [[ Does Not Transfer with Risk of Loss. ]]
       DoesNotTransferWithRiskOfLoss
    }
-   
+
    [[ Defines how adjustments will be made to the contract should one or more of the extraordinary events occur. ]]
    enum MethodOfAdjustmentEnum {
       [[ The Calculation Agent has the right to adjust the terms of the trade following a corporate action. ]]
@@ -1238,7 +1238,7 @@ namespace org.fpml {
       [[ The trade will be adjusted in accordance with any adjustment made by the exchange on which options on the underlying are listed. ]]
       OptionsExchange
    }
-   
+
    [[ Defines the consequences of nationalisation, insolvency and delisting events relating to the underlying. ]]
    enum NationalisationOrInsolvencyOrDelistingEventEnum {
       [[ The parties may, but are not obliged, to terminate the transaction on mutually acceptable terms and if the terms are not agreed then the transaction continues. ]]
@@ -1246,7 +1246,7 @@ namespace org.fpml {
       [[ The trade is terminated. ]]
       CancellationAndPayment
    }
-   
+
    [[ The method of calculating payment obligations when a floating rate is negative (either due to a quoted negative floating rate or by operation of a spread that is subtracted from the floating rate). ]]
    enum NegativeInterestRateTreatmentEnum {
       [[ Negative Interest Rate Method. Per 2000 ISDA Definitions, Section 6.4 Negative Interest Rates, paragraphs (b) and (c). ]]
@@ -1254,7 +1254,7 @@ namespace org.fpml {
       [[ Zero Interest Rate Method. Per 2000 ISDA Definitions, Section 6.4. Negative Interest Rates, paragraphs (d) and (e). ]]
       ZeroInterestRateMethod
    }
-   
+
    [[ Defines treatment of non-cash dividends. ]]
    enum NonCashDividendTreatmentEnum {
       [[ The treatment of any non-cash dividend shall be determined in accordance with the Potential Adjustment Event provisions. ]]
@@ -1262,7 +1262,7 @@ namespace org.fpml {
       [[ Any non-cash dividend shall be treated as a Declared Cash Equivalent Dividend. ]]
       CashEquivalent
    }
-   
+
    [[ The conditions that govern the adjustment to the number of units of the equity swap. ]]
    enum NotionalAdjustmentEnum {
       [[ The adjustments to the number of units are governed by an execution clause. ]]
@@ -1272,7 +1272,7 @@ namespace org.fpml {
       [[ The adjustments to the number of units are not governed by any specific clause. ]]
       Standard
    }
-   
+
    [[ Indicator as to the type of transaction in accordance with Articles 20(3)(a) and 21(5)(a) of Regulation (EU) 600/2014. ]]
    enum NotionalChangeEnum {
       [[ Transaction results in a Increase of Notional value ]]
@@ -1280,7 +1280,7 @@ namespace org.fpml {
       [[ Transaction results in a Decrease of Notional value ]]
       Decrease
    }
-   
+
    [[ Used in both the obligations and deliverable obligations of the credit default swap to represent a class or type of securities which apply. ]]
    enum ObligationCategoryEnum {
       [[ ISDA term "Payment". ]]
@@ -1296,7 +1296,7 @@ namespace org.fpml {
       [[ ISDA term "Bond or Loan". ]]
       BondOrLoan
    }
-   
+
    [[ Specifies the type of the option. ]]
    enum OptionTypeEnum {
       [[ A put option gives the holder the right to sell the underlying asset by a certain date for a certain price. ]]
@@ -1310,7 +1310,7 @@ namespace org.fpml {
       [[ A straddle strategy. ]]
       Straddle
    }
-   
+
    [[ The specification of an interest rate stream payer or receiver party. ]]
    enum PayerReceiverEnum {
       [[ The party identified as the stream payer. ]]
@@ -1318,7 +1318,7 @@ namespace org.fpml {
       [[ The party identified as the stream receiver. ]]
       Receiver
    }
-   
+
    [[ The specification of how an FX OTC option with a trigger payout will be paid if the trigger condition is met. The contract will specify whether the payout will occur immediately or on the original value date of the option. ]]
    enum PayoutEnum {
       [[ If the trigger is hit, the option payout will not be paid now but will be paid on the value date of the original option. ]]
@@ -1326,7 +1326,7 @@ namespace org.fpml {
       [[ If the trigger is hit, the option payout will be paid immediately (i.e., spot from the payout date). ]]
       Immediate
    }
-   
+
    [[ The specification of a time period ]]
    enum PeriodEnum {
       [[ Day. ]]
@@ -1338,7 +1338,7 @@ namespace org.fpml {
       [[ Year. ]]
       Y
    }
-   
+
    [[ The specification of a time period containing additional values such as Term. ]]
    enum PeriodExtendedEnum {
       [[ Day. ]]
@@ -1352,7 +1352,7 @@ namespace org.fpml {
       [[ Term. The period commencing on the effective date and ending on the termination date. The T period always appears in association with periodMultiplier = 1, and the notation is intended for use in contexts where the interval thus qualified (e.g. accrual period, payment period, reset period, ...) spans the entire term of the trade. ]]
       T
    }
-   
+
    [[ The specification of a time period containing additional values such as Term. ]]
    enum PeriodTimeEnum {
       [[ Day. ]]
@@ -1370,7 +1370,7 @@ namespace org.fpml {
       [[ Period measured in seconds. ]]
       Second
    }
-   
+
    [[ The specification of how the premium for an FX OTC option is quoted. ]]
    enum PremiumQuoteBasisEnum {
       [[ Premium is quoted as a percentage of the callCurrencyAmount. ]]
@@ -1384,7 +1384,7 @@ namespace org.fpml {
       [[ Premium is quoted as an explicit amount. ]]
       Explicit
    }
-   
+
    [[ Premium Type for Forward Start Equity Option ]]
    enum PremiumTypeEnum {
       [[ TODO ]]
@@ -1396,7 +1396,7 @@ namespace org.fpml {
       [[ TODO ]]
       Fixed
    }
-   
+
    [[ The mode of expression of a price. ]]
    enum PriceExpressionEnum {
       [[ The price is expressed as an absolute amount.> ]]
@@ -1404,7 +1404,7 @@ namespace org.fpml {
       [[ The price is expressed in percentage of the notional amount. ]]
       PercentageOfNotional
    }
-   
+
    [[ The specification of the type of quotation rate to be obtained from each cash settlement reference bank. ]]
    enum QuotationRateTypeEnum {
       [[ A bid rate. ]]
@@ -1416,7 +1416,7 @@ namespace org.fpml {
       [[ If optional early termination is applicable to a swap transaction, the rate, which may be a bid or ask rate, which would result, if seller is in-the-money, in the higher absolute value of the cash settlement amount, or, is seller is out-of-the-money, in the lower absolute value of the cash settlement amount. ]]
       ExercisingPartyPays
    }
-   
+
    [[ The side from which perspective a value is quoted. ]]
    enum QuotationSideEnum {
       [[ A value "bid" by a buyer for an asset, i.e. the value a buyer is willing to pay. ]]
@@ -1426,7 +1426,7 @@ namespace org.fpml {
       [[ A value midway between the bid and the ask value. ]]
       Mid
    }
-   
+
    [[ Indicates the actual quotation style of of PointsUpFront or TradedSpread that was used to quote this trade. ]]
    enum QuotationStyleEnum {
       [[ When quotation style is "PointsUpFront", the initialPoints element of the feeLeg should be populated. ]]
@@ -1436,7 +1436,7 @@ namespace org.fpml {
       [[ When quotation style is "Price", the marketPrice element of the feeLeg should be populated. ]]
       Price
    }
-   
+
    [[ How an exchange rate is quoted. ]]
    enum QuoteBasisEnum {
       [[ The amount of currency1 for one unit of currency2 ]]
@@ -1444,7 +1444,7 @@ namespace org.fpml {
       [[ The amount of currency2 for one unit of currency1 ]]
       Currency2PerCurrency1
    }
-   
+
    [[ The specification of methods for converting rates from one basis to another. ]]
    enum RateTreatmentEnum {
       [[ Bond Equivalent Yield. Per Annex to the 2000 ISDA Definitions (June 2000 Version), Section 7.3. Certain General Definitions Relating to Floating Rate Options, paragraph (g). ]]
@@ -1452,7 +1452,7 @@ namespace org.fpml {
       [[ Money Market Yield. Per Annex to the 2000 ISDA Definitions (June 2000 Version), Section 7.3. Certain General Definitions Relating to Floating Rate Options, paragraph (h). ]]
       MoneyMarketYield
    }
-   
+
    [[ The contract specifies whether which price must satisfy the boundary condition. ]]
    enum RealisedVarianceMethodEnum {
       [[ For a return on day T, the observed price on T-1 must be in range. ]]
@@ -1462,7 +1462,7 @@ namespace org.fpml {
       [[ For a return on day T, the observed prices on both T and T-1 must be in range ]]
       Both
    }
-   
+
    [[ A duration code for a Repo (or Securities Lending) transaction. There are many business and market rules that are derived from the duration of the transaction. ]]
    enum RepoDurationEnum {
       [[ Indicates that a contract is classified as overnight, meaning that there is one business day difference between the start and end date of the contract. Business rule: When the repo is overnight, the number of business days between the spot and forward value dates must be one. Forward leg must be specified. ]]
@@ -1470,7 +1470,7 @@ namespace org.fpml {
       [[ Indicates that a contract is a regular term contract, with a start date and an end date. Business rule: When the repo is 'Term', both spot and forward legs must be specified. ]]
       Term
    }
-   
+
    [[ The specification of whether resets occur relative to the first or last day of a calculation period. ]]
    enum ResetRelativeToEnum {
       [[ Resets will occur relative to the first day of each calculation period. ]]
@@ -1478,7 +1478,7 @@ namespace org.fpml {
       [[ Resets will occur relative to the last day of each calculation period. ]]
       CalculationPeriodEndDate
    }
-   
+
    [[ The type of return associated with the equity swap. ]]
    enum ReturnTypeEnum {
       [[ Dividend return swap. ]]
@@ -1488,7 +1488,7 @@ namespace org.fpml {
       [[ Total return swap. ]]
       Total
    }
-   
+
    [[ The convention for determining the sequence of calculation period end dates. It is used in conjunction with a specified frequency and the regular period start date of a calculation period, e.g. semi-annual IMM roll dates. ]]
    enum RollConventionEnum {
       [[ Rolls on month end dates irrespective of the length of the month and the previous roll day. ]]
@@ -1584,7 +1584,7 @@ namespace org.fpml {
       [[ Rolling weekly on a Sunday. ]]
       SUN
    }
-   
+
    [[ The method of rounding a fractional number. ]]
    enum RoundingDirectionEnum {
       [[ A fractional number will be rounded up to the specified number of decimal places (the precision). For example, 5.21 and 5.25 rounded up to 1 decimal place are 5.3 and 5.3 respectively. ]]
@@ -1594,7 +1594,7 @@ namespace org.fpml {
       [[ A fractional number will be rounded either up or down to the specified number of decimal places (the precision) depending on its value. For example, 5.24 would be rounded down to 5.2 and 5.25 would be rounded up to 5.3 if a precision of 1 decimal place were specified. ]]
       Nearest
    }
-   
+
    [[ Defines the Settlement Period Duration for an Electricity Transaction. ]]
    enum SettlementPeriodDurationEnum {
       [[ Two-hourly duration applies. ]]
@@ -1606,7 +1606,7 @@ namespace org.fpml {
       [[ Quarter-hourly duration applies. ]]
       $15Minutes("15Minutes")
    }
-   
+
    [[ Shows how the transaction is to be settled when it is exercised. ]]
    enum SettlementTypeEnum {
       [[ The intrinsic value of the option will be delivered by way of a cash settlement amount determined, (i) by reference to the differential between the strike price and the settlement price; or (ii) in accordance with a bilateral agreement between the parties ]]
@@ -1618,7 +1618,7 @@ namespace org.fpml {
       [[ Allow use of either Cash or Physical settlement without prior Election ]]
       CashOrPhysical
    }
-   
+
    [[ Defines the consequences of extraordinary events relating to the underlying. ]]
    enum ShareExtraordinaryEventEnum {
       [[ The trade continues such that the underlying now consists of the New Shares and/or the Other Consideration, if any, and the proceeds of any redemption, if any, that the holder of the underlying Shares would have been entitled to. ]]
@@ -1636,7 +1636,7 @@ namespace org.fpml {
       [[ If this is a Share-for-Combined merger event (Shares are replaced with New Shares and Other Consideration), then different treatment can be applied to each component if the parties have specified this. ]]
       Component
    }
-   
+
    [[ The Specified Price in respect of a Transaction and a Commodity Reference Price. ]]
    enum SpecifiedPriceEnum {
       [[ The Specified Price shall be the Afternoon fixing reported in or by the relevant Price Source as specified in the relevant Confirmation. ]]
@@ -1684,7 +1684,7 @@ namespace org.fpml {
       [[ The Specified Price shall be the Non-volume Weighted Average of prices effective on the Pricing Date reported in or by the relevant Price Source as specified in the relevant Confirmation. ]]
       UnWeightedAverage
    }
-   
+
    [[ The code specification of whether a trade is settling using standard settlement instructions as well as whether it is a candidate for settlement netting. ]]
    enum StandardSettlementStyleEnum {
       [[ This trade will settle using standard pre-determined funds settlement instructions. ]]
@@ -1694,7 +1694,7 @@ namespace org.fpml {
       [[ This trade will settle using standard pre-determined funds settlement instructions and is a candidate for settlement netting. ]]
       StandardAndNet
    }
-   
+
    [[ The specification of whether a percentage rate change, used to calculate a change in notional outstanding, is expressed as a percentage of the initial notional amount or the previously outstanding notional amount. ]]
    enum StepRelativeToEnum {
       [[ Change in notional to be applied is calculated by multiplying the percentage rate by the initial notional amount. ]]
@@ -1702,7 +1702,7 @@ namespace org.fpml {
       [[ Change in notional to be applied is calculated by multiplying the percentage rate by the previously outstanding notional amount. ]]
       Previous
    }
-   
+
    [[ Element to define how to deal with a none standard calculation period within a swap stream. ]]
    enum StubPeriodTypeEnum {
       [[ If there is a non regular period remaining it is left shorter than the streams calculation period frequency and placed at the start of the stream ]]
@@ -1714,7 +1714,7 @@ namespace org.fpml {
       [[ If there is a non regular period remaining it is placed at the end of the stream and combined with the adjacent calculation period to give a long last calculation period ]]
       LongFinal
    }
-   
+
    [[ The specification of how an FX OTC option strike price is quoted. ]]
    enum StrikeQuoteBasisEnum {
       [[ The strike price is an amount of putCurrency per one unit of callCurrency. ]]
@@ -1722,7 +1722,7 @@ namespace org.fpml {
       [[ The strike price is an amount of callCurrency per one unit of putCurrency. ]]
       CallCurrencyPerPutCurrency
    }
-   
+
    [[ The type of telephone number used to reach a contact. ]]
    enum TelephoneTypeEnum {
       [[ A number used primarily for work-related calls. Includes home office numbers used primarily for work purposes. ]]
@@ -1734,7 +1734,7 @@ namespace org.fpml {
       [[ A number used primarily for nonwork-related calls. (Normally this type of number would be used only as an emergency backup number, not as a regular course of business). ]]
       Personal
    }
-   
+
    [[ Defines points in the day when equity option exercise and valuation can occur. ]]
    enum TimeTypeEnum {
       [[ The official closing time of the exchange on the valuation date. ]]
@@ -1752,7 +1752,7 @@ namespace org.fpml {
       [[ The time is determined as provided in the relevant Master Confirmation. ]]
       AsSpecifiedInMasterConfirmation
    }
-   
+
    [[ The specification of whether a payout will occur on an option depending upon whether the spot rate is at or above or at or below the trigger rate. ]]
    enum TriggerConditionEnum {
       [[ The spot rate must be greater than or equal to the trigger rate. ]]
@@ -1764,7 +1764,7 @@ namespace org.fpml {
       [[ DEPRECATE: The spot rate must be less than or equal to the trigger rate. ]]
       Below
    }
-   
+
    [[ The time of day which would be considered for valuing the knock event. ]]
    enum TriggerTimeTypeEnum {
       [[ The close of trading on a day would be considered for valuation. ]]
@@ -1772,7 +1772,7 @@ namespace org.fpml {
       [[ At any time during the Knock Determination period (continuous barrier). ]]
       Anytime
    }
-   
+
    [[ The specification of whether an option will trigger or expire depending upon whether the spot rate is above or below the barrier rate. ]]
    enum TriggerTypeEnum {
       [[ The underlyer price must be equal to or less than the Trigger level. ]]
@@ -1786,7 +1786,7 @@ namespace org.fpml {
       [[ The underlyer price must be greater than the Trigger level. ]]
       Greater
    }
-   
+
    [[ The specification of, for American-style digitals, whether the trigger level must be touched or not touched. ]]
    enum TouchConditionEnum {
       [[ The spot rate must have touched the predetermined trigger rate at any time over the life of the option for the payout to occur. ]]
@@ -1794,7 +1794,7 @@ namespace org.fpml {
       [[ The spot rate has not touched the predetermined trigger rate at any time over the life of the option for the payout to occur. ]]
       Notouch
    }
-   
+
    [[ The ISDA defined methodology for determining the final price of the reference obligation for purposes of cash settlement. ]]
    enum ValuationMethodEnum {
       Market,
@@ -1806,7 +1806,7 @@ namespace org.fpml {
       AverageBlendedMarket,
       AverageBlendedHighest
    }
-   
+
    [[ How a valuation for a trade was determined ]]
    enum ValuationTypeEnum {
       [[ The valuation was calculated based on a pricing model incorporating trade economics and a model of market conditions. ]]
@@ -1814,7 +1814,7 @@ namespace org.fpml {
       [[ The valuation was determined based on values for similar products quoted on the open market. ]]
       Market
    }
-   
+
    enum WeatherSettlementLevelEnum {
       [[ The cumulative number of Weather Index Units for each day in the Calculation Period. ]]
       Cumulative,
@@ -1825,7 +1825,7 @@ namespace org.fpml {
       [[ The minimum number of Weather Index Units for any day in the Calculation Period. ]]
       Minimum
    }
-   
+
    [[ The specification of a weekly roll day. ]]
    enum WeeklyRollConventionEnum {
       [[ Monday ]]
@@ -1845,35 +1845,36 @@ namespace org.fpml {
       [[ 13-week and 26-week U.S. Treasury Bill Auction Dates. Each Monday except for U.S. (New York) holidays when it will occur on a Tuesday. ]]
       TBILL
    }
-   
+
    type CorrelationValue inherits lang.taxi.Decimal
-   
-   type HourMinuteTime inherits lang.taxi.Time(@format = "[0-2][0-9]:[0-5][0-9]:00")
-   
+
+   @Format("[0-2][0-9]:[0-5][0-9]:00")
+   type HourMinuteTime inherits lang.taxi.Time
+
    type Initial inherits org.w3.normalizedString
-   
+
    type NonNegativeDecimal inherits lang.taxi.Decimal
-   
+
    type PositiveDecimal inherits lang.taxi.Decimal
-   
+
    type RestrictedPercentage inherits lang.taxi.Decimal
-   
+
    type NormalizedString inherits org.w3.normalizedString
-   
+
    type Scheme inherits org.fpml.NormalizedString
-   
+
    type NonEmptyScheme inherits org.fpml.NormalizedString
-   
+
    type NonEmptyLongScheme inherits org.fpml.NormalizedString
-   
+
    type NonEmptyURI inherits org.w3.anyURI
-   
+
    type String inherits lang.taxi.String
-   
+
    type Token inherits org.w3.token
-   
+
    type Token60 inherits org.fpml.Token
-   
+
    [[ A generic account that represents any party's account at another party. Parties may be identified by the account at another party. ]]
    type Account {
       [[ An account identifier. For example an Account number. ]]
@@ -1885,44 +1886,44 @@ namespace org.fpml {
       [[ The unique identifier for the account within the document. ]]
       @lang.taxi.xml.XmlAttribute id : org.w3.ID
    }
-   
+
    [[ The data type used for account identifiers. ]]
    type AccountId inherits org.fpml.NonEmptyScheme {
       [[ The identifier scheme used with this accountId. A unique URI to determine the authoritative issuer of these identifiers. ]]
       @lang.taxi.xml.XmlAttribute accountIdScheme : NonEmptyURI?
    }
-   
+
    [[ The data type used for the name of the account. ]]
    type AccountName inherits org.fpml.Scheme {
       [[ The identifier scheme used with this accountName. A unique URI to determine the source of the account name. ]]
       @lang.taxi.xml.XmlAttribute accountNameScheme : NonEmptyURI?
    }
-   
+
    [[ The data type used for account type. ]]
    type AccountType inherits org.fpml.Scheme {
       [[ The identifier scheme used with this accountType. A unique URI to determine the the type of account. ]]
       @lang.taxi.xml.XmlAttribute accountTypeScheme : NonEmptyURI?
    }
-   
+
    [[ Reference to a party. ]]
    type PartyReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ The abstract base class for all types which define intra-document pointers. ]]
    type Reference
-   
+
    [[ Reference to an account. ]]
    type AccountReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ The data type used for ESMA action type. ]]
    type ActionType inherits org.fpml.Scheme {
       [[ The identifier scheme used with this actionType. A unique URI to determine the the type of action. ]]
       @lang.taxi.xml.XmlAttribute actionTypeScheme : org.w3.anyURI?
    }
-   
+
    [[ A type that represents a physical postal address. ]]
    type Address {
       [[ The set of street and building number information that identifies a postal address within a city. ]]
@@ -1936,18 +1937,18 @@ namespace org.fpml {
       [[ The code, required for computerised mail sorting systems, that is allocated to a physical address by a national postal authority. ]]
       postalCode : String?
    }
-   
+
    [[ A type that describes the set of street and building number information that identifies a postal address within a city. ]]
    type StreetAddress {
       [[ An individual line of street and building number information, forming part of a postal address. ]]
       streetLine : String
    }
-   
+
    [[ The code representation of a country or an area of special sovereignty. By default it is a valid 2 character country code as defined by the ISO standard 3166-1 alpha-2 - Codes for representation of countries http://www.niso.org/standards/resources/3166.html. ]]
    type CountryCode inherits org.fpml.Token {
       @lang.taxi.xml.XmlAttribute countryScheme : NonEmptyURI?
    }
-   
+
    [[ A type for defining a date that shall be subject to adjustment if it would otherwise fall on a day that is not a business day in the specified business centers, together with the convention for adjusting the date. ]]
    type AdjustableDate {
       [[ A date subject to adjustment. ]]
@@ -1958,36 +1959,36 @@ namespace org.fpml {
       adjustedDate : IdentifiedDate?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A date which can be referenced elsewhere. ]]
    type IdentifiedDate inherits lang.taxi.Date {
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type defining the business day convention and financial business centers used for adjusting any relevant date if it would otherwise fall on a day that is not a business day in the specified business centers. ]]
    type BusinessDayAdjustments {
       [[ The convention for adjusting a date if it would otherwise fall on a day that is not a business day. ]]
       businessDayConvention : BusinessDayConventionEnum
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A pointer style reference to a set of business day calendar defined elsewhere in the document. ]]
    type BusinessCentersReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type for defining business day calendar used in determining whether a day is a business day or not. A list of business day calendar locations may be ordered in the document alphabetically based on business day calendar location code. An FpML document containing an unordered business day calendar location list is still regarded as a conformant document. ]]
    type BusinessCenters {
       businessCenter : BusinessCenter
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A code identifying a business day calendar location. A business day calendar location is drawn from the list identified by the business day calendar location scheme. ]]
    type BusinessCenter inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute businessCenterScheme : NonEmptyURI?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type that is different from AdjustableDate in two regards. First, date adjustments can be specified with either a dateAdjustments element or a reference to an existing dateAdjustments element. Second, it does not require the specification of date adjustments. ]]
    type AdjustableDate2 {
       [[ A date subject to adjustment. ]]
@@ -1996,12 +1997,12 @@ namespace org.fpml {
       adjustedDate : IdentifiedDate?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ Reference to a business day adjustments structure. ]]
    type BusinessDayAdjustmentsReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type for defining a series of dates that shall be subject to adjustment if they would otherwise fall on a day that is not a business day in the specified business centers, together with the convention for adjusting the dates. ]]
    type AdjustableDates {
       [[ A date subject to adjustment. ]]
@@ -2012,7 +2013,7 @@ namespace org.fpml {
       adjustedDate : IdentifiedDate?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type for defining a series of dates, either as a list of adjustable dates, or a as a repeating sequence from a base date ]]
    type AdjustableDatesOrRelativeDateOffset {
       [[ A series of adjustable dates ]]
@@ -2020,18 +2021,18 @@ namespace org.fpml {
       [[ A series of dates specified as a repeating sequence from a base date. ]]
       relativeDate : RelativeDateOffset?
    }
-   
+
    [[ A type defining a date (referred to as the derived date) as a relative offset from another date (referred to as the anchor date). If the anchor date is itself an adjustable date then the offset is assumed to be calculated from the adjusted anchor date. A number of different scenarios can be supported, namely; 1) the derived date may simply be a number of calendar periods (days, weeks, months or years) preceding or following the anchor date; 2) the unadjusted derived date may be a number of calendar periods (days, weeks, months or years) preceding or following the anchor date with the resulting unadjusted derived date subject to adjustment in accordance with a specified business day convention, i.e. the derived date must fall on a good business day; 3) the derived date may be a number of business days preceding or following the anchor date. Note that the businessDayConvention specifies any required adjustment to the unadjusted derived date. A negative or positive value in the periodMultiplier indicates whether the unadjusted derived precedes or follows the anchor date. The businessDayConvention should contain a value NONE if the day type element contains a value of Business (since specifying a negative or positive business days offset would already guarantee that the derived date would fall on a good business day in the specified business centers). ]]
    type RelativeDateOffset inherits org.fpml.Offset
-   
+
    [[ Reference to an identified date or a complex date structure. ]]
    type DateReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type defining an offset used in calculating a new date relative to a reference date. E.g. calendar days, business days, Commodity Business days, etc.. ]]
    type Offset inherits org.fpml.Period
-   
+
    [[ A type to define recurring periods or time offsets. ]]
    type Period {
       [[ A time period multiplier, e.g. 1, 2 or 3 etc. A negative value can be used when specifying an offset relative to another date, e.g. -2 days. ]]
@@ -2040,14 +2041,14 @@ namespace org.fpml {
       period : PeriodEnum
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type for defining a date that shall be subject to adjustment if it would otherwise fall on a day that is not a business day in the specified business centers, together with the convention for adjusting the date. ]]
    type AdjustableOrAdjustedDate {
       [[ The date once the adjustment has been performed. (Note that this date may change if the business center holidays change). ]]
       adjustedDate : IdentifiedDate?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type giving the choice between defining a date as an explicit date together with applicable adjustments or as relative to some other (anchor) date. ]]
    type AdjustableOrRelativeDate {
       [[ A date that shall be subject to adjustment if it would otherwise fall on a day that is not a business day in the specified business centers, together with the convention for adjusting the date. ]]
@@ -2056,7 +2057,7 @@ namespace org.fpml {
       relativeDate : RelativeDateOffset?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type giving the choice between defining a series of dates as an explicit list of dates together with applicable adjustments or as relative to some other series of (anchor) dates. ]]
    type AdjustableOrRelativeDates {
       [[ A series of dates that shall be subject to adjustment if they would otherwise fall on a day that is not a business day in the specified business centers, together with the convention for adjusting the date. ]]
@@ -2065,10 +2066,10 @@ namespace org.fpml {
       relativeDates : RelativeDates?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type describing a set of dates defined as relative to another set of dates. ]]
    type RelativeDates inherits org.fpml.RelativeDateOffset
-   
+
    [[ A type defining a contiguous series of calendar dates. The date range is defined as all the dates between and including the first and the last date. The first date must fall before the last date. ]]
    type DateRange {
       [[ The first date of a date range. ]]
@@ -2076,7 +2077,7 @@ namespace org.fpml {
       [[ The last date of a date range. ]]
       unadjustedLastDate : Date
    }
-   
+
    type AdjustableRelativeOrPeriodicDates {
       [[ A series of dates that shall be subject to adjustment if they would otherwise fall on a day that is not a business day in the specified business centers, together with the convention for adjusting the date. ]]
       adjustableDates : AdjustableDates?
@@ -2085,17 +2086,17 @@ namespace org.fpml {
       periodicDates : PeriodicDates?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type describing a date when this date is defined in reference to another date through one or several date offsets. ]]
    type RelativeDateSequence {
       [[ Specifies the anchor as an href attribute. The href attribute value is a pointer style reference to the element or component elsewhere in the document where the anchor date is defined. ]]
       dateRelativeTo : DateReference
       dateOffset : DateOffset
    }
-   
+
    [[ A type defining an offset used in calculating a date when this date is defined in reference to another date through a date offset. The type includes the convention for adjusting the date and an optional sequence element to indicate the order in a sequence of multiple date offsets. ]]
    type DateOffset inherits org.fpml.Offset
-   
+
    type PeriodicDates {
       calculationStartDate : AdjustableOrRelativeDate
       calculationEndDate : AdjustableOrRelativeDate?
@@ -2104,10 +2105,10 @@ namespace org.fpml {
       [[ The business day convention to apply to each calculation period end date if it would otherwise fall on a day that is not a business day in the specified financial business centers. ]]
       calculationPeriodDatesAdjustments : BusinessDayAdjustments
    }
-   
+
    [[ A type defining the frequency at which calculation period end dates occur within the regular part of the calculation period schedule and thier roll date convention. In case the calculation frequency is of value T (term), the period is defined by the swap\swapStream\calculationPerioDates\effectiveDate and the swap\swapStream\calculationPerioDates\terminationDate. ]]
    type CalculationPeriodFrequency inherits org.fpml.Frequency
-   
+
    [[ A type defining a time frequency, e.g. one day, three months. Used for specifying payment or calculation frequencies at which the value T (Term) is applicable. ]]
    type Frequency {
       [[ A time period multiplier, e.g. 1, 2 or 3 etc. If the period value is T (Term) then periodMultiplier must contain the value 1. ]]
@@ -2116,7 +2117,7 @@ namespace org.fpml {
       period : PeriodExtendedEnum
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type giving the choice between defining a series of dates as an explicit list of dates together with applicable adjustments, or as relative to some other series of (anchor) dates, or as a set of factors to specify periodic occurences. ]]
    type AdjustableRelativeOrPeriodicDates2 {
       [[ A series of dates that shall be subject to adjustment if they would otherwise fall on a day that is not a business day in the specified business centers, together with the convention for adjusting the date. ]]
@@ -2126,10 +2127,10 @@ namespace org.fpml {
       periodicDates : PeriodicDates?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type defining a date (referred to as the derived date) as a relative offset from another date (referred to as the anchor date) plus optional date adjustments. ]]
    type AdjustedRelativeDateOffset inherits org.fpml.RelativeDateOffset
-   
+
    [[ A type defining the exercise period for an American style option together with any rules governing the notional amount of the underlying which can be exercised on any given exercise date and any associated exercise fees. ]]
    type AmericanExercise inherits org.fpml.Exercise {
       [[ The first day of the exercise period for an American style option. ]]
@@ -2149,22 +2150,22 @@ namespace org.fpml {
       [[ The fees associated with an exercise date. The fees are conditional on the exercise occuring. The fees can be specified as actual currency amounts or as percentages of the notional amount being exercised. ]]
       exerciseFeeSchedule : ExerciseFeeSchedule?
    }
-   
+
    [[ A type for defining a time with respect to a business day calendar location. For example, 11:00am London time. ]]
    type BusinessCenterTime {
       [[ A time specified in hh:mm:ss format where the second component must be '00', e.g. 11am would be represented as 11:00:00. ]]
       hourMinuteTime : HourMinuteTime
       businessCenter : BusinessCenter
    }
-   
+
    [[ A type defining multiple exercises. As defining in the 2000 ISDA Definitions, Section 12.4. Multiple Exercise, the buyer of the option has the right to exercise all or less than all the unexercised notional amount of the underlying swap on one or more days in the exercise period, but on any such day may not exercise less than the minimum notional amount or more than the maximum notional amount, and if an integral multiple amount is specified, the notional exercised must be equal to or, be an integral multiple of, the integral multiple amount. ]]
    type MultipleExercise
-   
+
    [[ A reference to the notional amount. ]]
    type NotionalReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type to define a fee or schedule of fees to be payable on the exercise of an option. This fee may be defined as an amount or a percentage of the notional exercised. ]]
    type ExerciseFeeSchedule {
       [[ A pointer style reference to the associated notional schedule defined elsewhere in the document. ]]
@@ -2172,30 +2173,30 @@ namespace org.fpml {
       [[ The date on which exercise fee(s) will be paid. It is specified as a relative date. ]]
       feePaymentDate : RelativeDateOffset
    }
-   
+
    [[ Reference to a schedule of rates or amounts. ]]
    type ScheduleReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type defining a currency amount or a currency amount schedule. ]]
    type AmountSchedule inherits org.fpml.Schedule
-   
+
    [[ A type defining a step date and step value pair. This step definitions are used to define varying rate or amount schedules, e.g. a notional amortization or a step-up coupon schedule. ]]
    type Step inherits org.fpml.StepBase
-   
+
    [[ A type defining a step date and step value pair. This step definitions are used to define varying rate or amount schedules, e.g. a notional amortization or a step-up coupon schedule. ]]
    type StepBase {
       [[ The date on which the associated stepValue becomes effective. This day may be subject to adjustment in accordance with a business day convention. ]]
       stepDate : Date
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ The code representation of a currency or fund. By default it is a valid currency code as defined by the ISO standard 4217 - Codes for representation of currencies and funds http://www.iso.org/iso/en/prods-services/popstds/currencycodeslist.html. ]]
    type Currency inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute currencyScheme : NonEmptyURI?
    }
-   
+
    [[ A type defining a schedule of rates or amounts in terms of an initial value and then a series of step date and value pairs. On each step date the rate or amount changes to the new step value. The series of step date and value pairs are optional. If not specified, this implies that the initial value remains unchanged over time. ]]
    type Schedule {
       [[ The initial rate or amount, as the case may be. An initial rate of 5% would be represented as 0.05. ]]
@@ -2204,27 +2205,27 @@ namespace org.fpml {
       step : Step?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ The abstract base class for all types which define way in which options may be exercised. ]]
    type Exercise {
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ Specifies a reference to a monetary amount. ]]
    type AmountReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    type AssetClass inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute assetClassScheme : NonEmptyURI?
    }
-   
+
    [[ A type to define automatic exercise of a swaption. With automatic exercise the option is deemed to have exercised if it is in the money by more than the threshold amount on the exercise date. ]]
    type AutomaticExercise {
       [[ A threshold rate. The threshold of 0.10% would be represented as 0.001 ]]
       thresholdRate : Decimal
    }
-   
+
    [[ To indicate the limitation percentage and limitation period. ]]
    type AverageDailyTradingVolumeLimit {
       [[ Specifies the limitation percentage in Average Daily trading volume. ]]
@@ -2232,23 +2233,23 @@ namespace org.fpml {
       [[ Specifies the limitation period for Average Daily trading volume in number of days. ]]
       limitationPeriod : org.w3.nonNegativeInteger
    }
-   
+
    [[ A type defining the beneficiary of the funds. ]]
    type Beneficiary {
       [[ Link to the party acting as beneficiary. This element can only appear within the beneficiary container element. ]]
       beneficiaryPartyReference : PartyReference?
    }
-   
+
    [[ A type that provides for identifying a party involved in the routing of a payment by means of one or more standard identification codes. For example, both a SWIFT BIC code and a national bank identifier may be required. ]]
    type RoutingIds {
       [[ A unique identifier for party that is a participant in a recognized payment system. ]]
       routingId : RoutingId
    }
-   
+
    type RoutingId inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute routingIdCodeScheme : NonEmptyURI?
    }
-   
+
    [[ A type that models name, address and supplementary textual information for the purposes of identifying a party involved in the routing of a payment. ]]
    type RoutingExplicitDetails {
       [[ A real name that is used to identify a party involved in the routing of a payment. ]]
@@ -2260,13 +2261,13 @@ namespace org.fpml {
       [[ A piece of free-format text used to assist the identification of a party involved in the routing of a payment. ]]
       routingReferenceText : String?
    }
-   
+
    [[ A type that provides a combination of payment system identification codes with physical postal address details, for the purposes of identifying a party involved in the routing of a payment. ]]
    type RoutingIdsAndExplicitDetails {
       [[ A set of unique identifiers for a party, eachone identifying the party within a payment system. The assumption is that each party will not have more than one identifier within the same payment system. ]]
       routingIds : RoutingIds
    }
-   
+
    [[ A type defining the Bermuda option exercise dates and the expiration date together with any rules govenerning the notional amount of the underlying which can be exercised on any given exercise date and any associated exercise fee. ]]
    type BermudaExercise inherits org.fpml.Exercise {
       [[ The dates the define the Bermuda option exercise dates and the expiration date. The last specified date is assumed to be the expiration date. The dates can either be specified as a series of explicit dates and associated adjustments or as a series of dates defined relative to another schedule of dates, for example, the calculation period start dates. Where a relative series of dates are defined the first and last possible exercise dates can be separately specified. ]]
@@ -2284,21 +2285,21 @@ namespace org.fpml {
       [[ The fees associated with an exercise date. The fees are conditional on the exercise occuring. The fees can be specified as actual currency amounts or as percentages of the notional amount being exercised. ]]
       exerciseFeeSchedule : ExerciseFeeSchedule?
    }
-   
+
    [[ Identifies the market sector in which the trade has been arranged. ]]
    type BrokerConfirmation {
       [[ The type of broker confirmation executed between the parties. ]]
       brokerConfirmationType : BrokerConfirmationType
    }
-   
+
    [[ Identifies the market sector in which the trade has been arranged. ]]
    type BrokerConfirmationType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute brokerConfirmationTypeScheme : NonEmptyURI?
    }
-   
+
    [[ A type defining a range of contiguous business days by defining an unadjusted first date, an unadjusted last date and a business day convention and business centers for adjusting the first and last dates if they would otherwise fall on a non business day in the specified business centers. The days between the first and last date must also be good business days in the specified centers to be counted in the range. ]]
    type BusinessDateRange inherits org.fpml.DateRange
-   
+
    [[ A type that represents information about a unit within an organization. ]]
    type BusinessUnit {
       [[ A name used to describe the organization unit ]]
@@ -2311,12 +2312,12 @@ namespace org.fpml {
       country : CountryCode?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type used to record information about a unit, subdivision, desk, or other similar business entity. ]]
    type Unit inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute unitScheme : NonEmptyURI?
    }
-   
+
    [[ A type that represents how to contact an individual or organization. ]]
    type ContactInformation {
       [[ A telephonic contact. ]]
@@ -2326,7 +2327,7 @@ namespace org.fpml {
       [[ A postal or street address. ]]
       address : Address?
    }
-   
+
    [[ A type that represents a telephonic contact. ]]
    type TelephoneNumber {
       [[ The type of telephone number (work, personal, mobile). ]]
@@ -2334,17 +2335,17 @@ namespace org.fpml {
       [[ A telephonic contact. ]]
       number : String
    }
-   
+
    [[ Reference to an organizational unit. ]]
    type BusinessUnitReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type describing a role played by a unit in one or more transactions. Examples include roles such as Trader, Collateral, Confirmation, Settlement, etc. This can be extended to provide custom roles. ]]
    type BusinessUnitRole inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute unitRoleScheme : NonEmptyURI?
    }
-   
+
    [[ A type defining the ISDA calculation agent responsible for performing duties as defined in the applicable product definitions. ]]
    type CalculationAgent {
       [[ A pointer style reference to a party identifier defined elsewhere in the document. The party referenced is the ISDA Calculation Agent for the trade. If more than one party is referenced then the parties are assumed to be co-calculation agents, i.e. they have joint responsibility. ]]
@@ -2352,31 +2353,31 @@ namespace org.fpml {
       [[ The ISDA calculation agent responsible for performing duties as defined in the applicable product definitions. For example, the Calculation Agent may be defined as being the Non-exercising Party. ]]
       calculationAgentParty : CalculationAgentPartyEnum?
    }
-   
+
    [[ An identifier used to identify a single component cashflow. ]]
    type CashflowId inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute cashflowIdScheme : NonEmptyURI?
    }
-   
+
    [[ The notional/principal value/quantity/volume used to compute the cashflow. ]]
    type CashflowNotional {
       [[ The quantity of notional (in currency or other units). ]]
       amount : Decimal
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A coding scheme used to describe the type or purpose of a cash flow or cash flow component. ]]
    type CashflowType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute cashflowTypeScheme : NonEmptyURI?
    }
-   
+
    [[ A type defining the list of reference institutions polled for relevant rates or prices when determining the cash settlement amount for a product where cash settlement is applicable. ]]
    type CashSettlementReferenceBanks {
       [[ An institution (party) identified by means of a coding scheme and an optional name. ]]
       referenceBank : ReferenceBank
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type to describe an institution (party) identified by means of a coding scheme and an optional name. ]]
    type ReferenceBank {
       [[ An institution (party) identifier, e.g. a bank identifier code (BIC). ]]
@@ -2384,68 +2385,68 @@ namespace org.fpml {
       [[ The name of the institution (party). A free format string. FpML does not define usage rules for the element. ]]
       referenceBankName : String?
    }
-   
+
    type ReferenceBankId inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute referenceBankIdScheme : NonEmptyURI?
    }
-   
+
    [[ Unless otherwise specified, the principal clearance system customarily used for settling trades in the relevant underlying. ]]
    type ClearanceSystem inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute clearanceSystemScheme : NonEmptyURI?
    }
-   
+
    type SwaptionPhysicalSettlement {
       [[ Specifies whether the swap resulting from physical settlement of the swaption transaction will clear through a clearing house. The meaning of Cleared Physical Settlement is defined in the 2006 ISDA Definitions, Section 15.2 (published in Supplement number 28). ]]
       clearedPhysicalSettlement : Boolean
       [[ A reference to the clearing organization (CCP, DCO) to which the trade should be cleared. ]]
       predeterminedClearingOrganizationPartyReference : PartyReference?
    }
-   
+
    [[ A type for defining the obligations of the counterparty subject to credit support requirements. ]]
    type Collateral {
       [[ Independent Amount is an amount that usually less creditworthy counterparties are asked to provide. It can either be a fixed amount or a percentage of the Transaction's value. The Independent Amount can be: (i) transferred before any trading between the parties occurs (as a deposit at a third party's account or with the counterparty) or (ii) callable after trading has occurred (typically because a downgrade has occurred). In situation (i), the Independent Amount is not included in the calculation of Exposure, but in situation (ii), it is included in the calculation of Exposure. Thus, for situation (ii), the Independent Amount may be transferred along with any collateral call. Independent Amount is a defined term in the ISDA Credit Support Annex. ("with respect to a party, the amount specified as such for that party in Paragraph 13; if no amount is specified, zero"). ]]
       independentAmount : IndependentAmount
    }
-   
+
    type IndependentAmount {
       [[ A container element allowing a schedule of payments associated with the Independent Amount. ]]
       paymentDetail : PaymentDetail
    }
-   
+
    type PaymentDetail inherits org.fpml.PaymentBase {
       [[ Payment date. ]]
       paymentDate : AdjustableOrRelativeDate?
    }
-   
+
    [[ A type defining a currency amount. ]]
    type Money inherits org.fpml.MoneyBase
-   
+
    [[ Abstract base class for all money types. ]]
    type MoneyBase {
       [[ The currency in which an amount is denominated. ]]
       currency : Currency
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ The abstract base type from which all calculation rules of the independent amount must be derived. ]]
    type PaymentRule
-   
+
    [[ An abstract base class for payment types. ]]
    type PaymentBase {
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    type CollateralValueAllocation {
       [[ The type of allocation e.g. Full or ExcessOverMargin ]]
       `type` : CollateralValueAllocationEnum
       value : Money
    }
-   
+
    [[ The definitions, such as those published by ISDA, that will define the terms of the trade. ]]
    type ContractualDefinitions inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute contractualDefinitionsScheme : NonEmptyURI?
    }
-   
+
    type ContractualMatrix {
       [[ Identifies the form of applicable matrix. ]]
       matrixType : MatrixType
@@ -2454,20 +2455,20 @@ namespace org.fpml {
       [[ Defines any applicable key into the relevant matrix. For example, the Transaction Type would be the single term required for the Credit Derivatives Physical Settlement Matrix. This element should be omitted in the case of the 2000 ISDA Definitions Settlement Matrix for Early Termination and Swaptions. ]]
       matrixTerm : MatrixTerm?
    }
-   
+
    type MatrixType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute matrixTypeScheme : NonEmptyURI?
    }
-   
+
    type MatrixTerm inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute matrixTermScheme : NonEmptyURI?
    }
-   
+
    [[ A contractual supplement (such as those published by ISDA) that will apply to the trade. ]]
    type ContractualSupplement inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute contractualSupplementScheme : NonEmptyURI?
    }
-   
+
    [[ A contractual supplement (such as those published by ISDA) and its publication date that will apply to the trade. ]]
    type ContractualTermsSupplement {
       [[ Identifies the form of applicable contractual supplement. ]]
@@ -2475,19 +2476,19 @@ namespace org.fpml {
       [[ Specifies the publication date of the applicable version of the contractual supplement. ]]
       publicationDate : Date?
    }
-   
+
    [[ A type that describes the information to identify a correspondent bank that will make delivery of the funds on the paying bank's behalf in the country where the payment is to be made. ]]
    type CorrespondentInformation {
       [[ Link to the party acting as correspondent. This element can only appear within the correspondentInformation container element. ]]
       correspondentPartyReference : PartyReference?
    }
-   
+
    [[ The repayment precedence of a debt instrument. ]]
    type CreditSeniority inherits org.fpml.Scheme {
       [[ creditSeniorityTradingScheme overrides creditSeniorityScheme when the underlyer defines the reference obligation used in a single name credit default swap trade. ]]
       @lang.taxi.xml.XmlAttribute creditSeniorityScheme : NonEmptyURI?
    }
-   
+
    [[ The agreement executed between the parties and intended to govern collateral arrangement for all OTC derivatives transactions between those parties. ]]
    type CreditSupportAgreement {
       [[ The type of ISDA Credit Support Agreement ]]
@@ -2497,46 +2498,46 @@ namespace org.fpml {
       [[ An identifier used to uniquely identify the CSA ]]
       identifier : CreditSupportAgreementIdentifier?
    }
-   
+
    type CreditSupportAgreementType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute creditSupportAgreementTypeScheme : NonEmptyURI?
    }
-   
+
    type CreditSupportAgreementIdentifier inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute creditSupportAgreementIdScheme : NonEmptyURI?
    }
-   
+
    [[ A party's credit rating. ]]
    type CreditRating inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute creditRatingScheme : NonEmptyURI?
    }
-   
+
    [[ List of Dates ]]
    type DateList {
       date : Date
    }
-   
+
    [[ List of DateTimes ]]
    type DateTimeList {
       dateTime : DateTime
    }
-   
+
    [[ The specification for how the number of days between two dates is calculated for purposes of calculation of a fixed or floating payment amount and the basis for how many days are assumed to be in a year. Day Count Fraction is an ISDA term. The equivalent AFB (Association Francaise de Banques) term is Calculation Basis. ]]
    type DayCountFraction inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute dayCountFractionScheme : NonEmptyURI?
    }
-   
+
    [[ Coding scheme that specifies the method according to which an amount or a date is determined. ]]
    type DeterminationMethod inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute determinationMethodScheme : NonEmptyURI?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A reference to the return swap notional determination method. ]]
    type DeterminationMethodReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ An abstract base class for all directional leg types with effective date, termination date, where a payer makes a stream of payments of greater than zero value to a receiver. ]]
    type DirectionalLeg inherits org.fpml.Leg {
       [[ Version aware identification of this leg. ]]
@@ -2546,23 +2547,23 @@ namespace org.fpml {
       [[ Specifies the termination date of this leg of the swap. When defined in relation to a date specified somewhere else in the document (through the relativeDate component), this element will typically point to the termination date of the other leg of the swap. ]]
       terminationDate : AdjustableOrRelativeDate?
    }
-   
+
    [[ Version aware identification of a leg. ]]
    type LegIdentifier {
       [[ Identity of this leg. ]]
       legId : LegId
    }
-   
+
    [[ Leg identity. ]]
    type LegId inherits org.fpml.Token60 {
       @lang.taxi.xml.XmlAttribute legIdScheme : NonEmptyURI
    }
-   
+
    [[ A supertype of leg. All swap legs extend this type. ]]
    type Leg {
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ An entity for defining the definitions that govern the document and should include the year and type of definitions referenced, along with any relevant documentation (such as master agreement) and the date it was signed. ]]
    type Documentation {
       [[ The agreement executed between the parties and intended to govern all OTC derivatives transactions between those parties. ]]
@@ -2580,7 +2581,7 @@ namespace org.fpml {
       [[ A human readable document related to this transaction, for example a confirmation. ]]
       attachment : Resource?
    }
-   
+
    [[ An entity for defining the agreement executed between the parties and intended to govern all OTC derivatives transactions between those parties. ]]
    type MasterAgreement {
       [[ An identifier that has been created to identify the master agreement. ]]
@@ -2592,20 +2593,20 @@ namespace org.fpml {
       [[ The date on which the master agreement was signed. ]]
       masterAgreementDate : Date?
    }
-   
+
    [[ A master agreement identifier allocated by a party. FpML does not define the domain values associated with this element. Note that the domain values for this element are not strictly an enumerated list. ]]
    type MasterAgreementId inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute masterAgreementIdScheme : NonEmptyURI?
    }
-   
+
    type MasterAgreementType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute masterAgreementTypeScheme : NonEmptyURI?
    }
-   
+
    type MasterAgreementVersion inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute masterAgreementVersionScheme : NonEmptyURI?
    }
-   
+
    [[ An entity for defining the master confirmation agreement executed between the parties. ]]
    type MasterConfirmation {
       [[ The type of master confirmation executed between the parties. ]]
@@ -2617,15 +2618,15 @@ namespace org.fpml {
       [[ The type of master confirmation annex executed between the parties. ]]
       masterConfirmationAnnexType : MasterConfirmationAnnexType?
    }
-   
+
    type MasterConfirmationType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute masterConfirmationTypeScheme : NonEmptyURI?
    }
-   
+
    type MasterConfirmationAnnexType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute masterConfirmationAnnexTypeScheme : NonEmptyURI?
    }
-   
+
    [[ An entity for defining the an agreement executed between parties. ]]
    type OtherAgreement {
       [[ An identifier that has been created to identify the agreement. ]]
@@ -2637,20 +2638,20 @@ namespace org.fpml {
       [[ The date on which the agreement was signed. ]]
       date : Date?
    }
-   
+
    [[ A agreement identifier allocated by a party. FpML does not define the domain values associated with this element. Note that the domain values for this element are not strictly an enumerated list. ]]
    type OtherAgreementId inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute agreementIdScheme : NonEmptyURI?
    }
-   
+
    type OtherAgreementType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute agreementTypeScheme : NonEmptyURI?
    }
-   
+
    type OtherAgreementVersion inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute agreementVersionScheme : NonEmptyURI?
    }
-   
+
    [[ Describes the resource that contains the media representation of a business event (i.e used for stating the Publicly Available Information). For example, can describe a file or a URL that represents the event. This type is an extended version of a type defined by RIXML (www.rixml.org). ]]
    type Resource {
       [[ The unique identifier of the resource within the event. ]]
@@ -2670,22 +2671,22 @@ namespace org.fpml {
       [[ Any additional comments that are deemed necessary. For example, which software version is required to open the document? Or, how does this resource relate to the others for this event? ]]
       comments : String?
    }
-   
+
    [[ The data type used for resource identifiers. ]]
    type ResourceId inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute resourceIdScheme : NonEmptyURI?
    }
-   
+
    [[ The data type used for describing the type or purpose of a resource, e.g. "Confirmation". ]]
    type ResourceType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute resourceTypeScheme : NonEmptyURI?
    }
-   
+
    [[ The data type used for indicating the language of the resource, described using the ISO 639-2/T Code. ]]
    type Language inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute languageScheme : NonEmptyURI?
    }
-   
+
    [[ The type that indicates the length of the resource. ]]
    type ResourceLength {
       [[ The length unit of the resource. For example, pages (pdf, text documents) or time (audio, video files). ]]
@@ -2693,25 +2694,25 @@ namespace org.fpml {
       [[ The length value of the resource. ]]
       lengthValue : Decimal
    }
-   
+
    [[ The type that indicates the type of media used to store the content. MimeType is used to determine the software product(s) that can read the content. MIME types are described in RFC 2046. ]]
    type MimeType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute mimeTypeScheme : NonEmptyURI?
    }
-   
+
    [[ A special type meant to be used for elements with no content and no attributes. ]]
    type Empty
-   
+
    [[ A legal entity identifier (e.g. RED entity code). ]]
    type EntityId inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute entityIdScheme : NonEmptyURI?
    }
-   
+
    [[ The name of the reference entity. A free format string. FpML does not define usage rules for this element. ]]
    type EntityName inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute entityNameScheme : NonEmptyURI?
    }
-   
+
    [[ A type defining the exercise period for a European style option together with any rules governing the notional amount of the underlying which can be exercised on any given exercise date and any associated exercise fees. ]]
    type EuropeanExercise inherits org.fpml.Exercise {
       [[ The last day within an exercise period for an American style option. For a European style option it is the only day within the exercise period. ]]
@@ -2727,10 +2728,10 @@ namespace org.fpml {
       [[ A fee to be paid on exercise. This could be represented as an amount or a rate and notional reference on which to apply the rate. ]]
       exerciseFee : ExerciseFee?
    }
-   
+
    [[ A type defining partial exercise. As defined in the 2000 ISDA Definitions, Section 12.3 Partial Exercise, the buyer of the option may exercise all or less than all the notional amount of the underlying swap but may not be less than the minimum notional amount (if specified) and must be an integral multiple of the integral multiple amount if specified. ]]
    type PartialExercise
-   
+
    [[ A type defining the fee payable on exercise of an option. This fee may be defined as an amount or a percentage of the notional exercised. ]]
    type ExerciseFee {
       [[ A pointer style reference to the associated notional schedule defined elsewhere in the document. ]]
@@ -2738,12 +2739,12 @@ namespace org.fpml {
       [[ The date on which exercise fee(s) will be paid. It is specified as a relative date. ]]
       feePaymentDate : RelativeDateOffset
    }
-   
+
    [[ A short form unique identifier for an exchange. If the element is not present then the exchange shall be the primary exchange on which the underlying is listed. The term "Exchange" is assumed to have the meaning as defined in the ISDA 2002 Equity Derivatives Definitions. ]]
    type ExchangeId inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute exchangeIdScheme : NonEmptyURI?
    }
-   
+
    [[ A type defining to whom and where notice of execution should be given. The partyReference refers to one of the principal parties of the trade. If present the exerciseNoticePartyReference refers to a party, other than the principal party, to whome notice should be given. ]]
    type ExerciseNotice {
       [[ The party referenced has allocated the trade identifier. ]]
@@ -2752,7 +2753,7 @@ namespace org.fpml {
       exerciseNoticePartyReference : PartyReference?
       businessCenter : BusinessCenter
    }
-   
+
    [[ A type describing how notice of exercise should be given. This can be either manual or automatic. ]]
    type ExerciseProcedure {
       [[ A flag to indicate whether follow-up confirmation of exercise (written or electronic) is required following telephonic notice by the buyer to the seller or seller's agent. ]]
@@ -2762,7 +2763,7 @@ namespace org.fpml {
       [[ Typically applicable to the physical settlement of bond and convertible bond options. If present, means that the Party required to deliver the bonds will divide those to be delivered as notifying party desires to facilitate delivery obligations. ]]
       splitTicket : Boolean?
    }
-   
+
    [[ A type defining manual exercise, i.e. that the option buyer counterparty must give notice to the option seller of exercise. ]]
    type ManualExercise {
       [[ Definition of the party to whom notice of exercise should be given. ]]
@@ -2770,7 +2771,7 @@ namespace org.fpml {
       [[ If fallback exercise is specified then the notional amount of the underlying swap, not previously exercised under the swaption, will be automatically exercised at the expiration time on the expiration date if at such time the buyer is in-the-money, provided that the difference between the settlement rate and the fixed rate under the relevant underlying swap is not less than one tenth of a percentage point (0.10% or 0.001). The term in-the-money is assumed to have the meaning defined in the 2000 ISDA Definitions, Section 17.4. In-the-money. ]]
       fallbackExercise : Boolean?
    }
-   
+
    [[ A type describing how notice of exercise should be given. This can be either manual or automatic. ]]
    type ExerciseProcedureOption {
       [[ Specifies that the notice of exercise must be given by the buyer to the seller or seller's agent. ]]
@@ -2778,7 +2779,7 @@ namespace org.fpml {
       [[ If automatic is specified then the notional amount of the underlying swap, not previously exercised under the swaption will be automatically exercised at the expriration time on the expiration date if at such time the buyer is in-the-money, provided that the difference between the settlement rate and the fixed rate under the relevant underlying swap is not less than the specified threshold rate. The term in-the-money is assumed to have the meaning defining in the 2000 ISDA Definitions, Section 17.4 In-the-money. ]]
       automaticExercise : Empty?
    }
-   
+
    [[ A type defining a floating rate. ]]
    type FloatingRate inherits org.fpml.Rate {
       [[ A rate multiplier or multiplier schedule to apply to the floating rate. A multiplier schedule is expressed as explicit multipliers and dates. In the case of a schedule, the step dates may be subject to adjustment in accordance with any adjustments specified in the calculationPeriodDatesAdjustments. The multiplier can be a positive or negative decimal. This element should only be included if the multiplier is not equal to 1 (one) for the term of the stream. ]]
@@ -2792,37 +2793,37 @@ namespace org.fpml {
       [[ The floor rate or floor rate schedule, if any, which applies to the floating rate. The floor rate (strike) is only required where the floating rate on a swap stream is floored at a certain strike level. A floor rate schedule is expressed as explicit floor rates and dates and the step dates may be subject to adjustment in accordance with any adjustments specified in calculationPeriodDatesAdjustments. The floor rate is assumed to be exclusive of any spread and is a per annum rate, expressed as a decimal. A floor rate of 5% would be represented as 0.05. ]]
       floorRateSchedule : StrikeSchedule?
    }
-   
+
    [[ The ISDA Floating Rate Option, i.e. the floating rate index. ]]
    type FloatingRateIndex inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute floatingRateIndexScheme : NonEmptyURI?
    }
-   
+
    [[ Adds an optional spread type element to the Schedule to identify a long or short spread value. ]]
    type SpreadSchedule inherits org.fpml.Schedule
-   
+
    [[ Defines a Spread Type Scheme to identify a long or short spread value. ]]
    type SpreadScheduleType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute spreadScheduleTypeScheme : NonEmptyURI?
    }
-   
+
    [[ A type describing a schedule of cap or floor rates. ]]
    type StrikeSchedule inherits org.fpml.Schedule
-   
+
    [[ A type extending the PayerReceiverEnum type wih an id attribute. ]]
    type IdentifiedPayerReceiver {
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
       @lang.taxi.xml.XmlBody payerReceiverEnum : PayerReceiverEnum
    }
-   
+
    [[ The abstract base class for all types which define interest rate streams. ]]
    type Rate {
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type defining the floating rate and definitions relating to the calculation of floating rate amounts. ]]
    type FloatingRateCalculation inherits org.fpml.FloatingRate
-   
+
    [[ A type defining a rounding direction and precision to be used in the rounding of a rate. ]]
    type Rounding {
       [[ Specifies the rounding direction. ]]
@@ -2830,7 +2831,7 @@ namespace org.fpml {
       [[ Specifies the rounding precision in terms of a number of decimal places. Note how a percentage rate rounding of 5 decimal places is expressed as a rounding precision of 7 in the FpML document since the percentage is expressed as a decimal, e.g. 9.876543% (or 0.09876543) being rounded to the nearest 5 decimal places is 9.87654% (or 0.0987654). ]]
       precision : org.w3.nonNegativeInteger
    }
-   
+
    [[ A type defining a rate index. ]]
    type ForecastRateIndex {
       [[ The ISDA Floating Rate Option, i.e. the floating rate index. ]]
@@ -2838,7 +2839,7 @@ namespace org.fpml {
       [[ The ISDA Designated Maturity, i.e. the tenor of the floating rate. ]]
       indexTenor : Period
    }
-   
+
    [[ A type describing a financial formula, with its description and components. ]]
    type Formula {
       [[ Text description of the formula ]]
@@ -2848,10 +2849,10 @@ namespace org.fpml {
       [[ Elements describing the components of the formula. The name attribute points to a value used in the math element. The href attribute points to a value elsewhere in the document ]]
       formulaComponent : FormulaComponent?
    }
-   
+
    [[ A type defining a mathematical expression. ]]
    type Math inherits lang.taxi.Any
-   
+
    [[ Elements describing the components of the formula. The name attribute points to a value used in the math element. The href attribute points to a numeric value defined elsewhere in the document that is used by the formula component. ]]
    type FormulaComponent {
       [[ Text description of the component ]]
@@ -2860,13 +2861,13 @@ namespace org.fpml {
       formula : Formula?
       @lang.taxi.xml.XmlAttribute name : NormalizedString?
    }
-   
+
    [[ A type defining a currency amount as at a future value date. ]]
    type FutureValueAmount inherits org.fpml.NonNegativeMoney
-   
+
    [[ A type defining a non negative money amount. ]]
    type NonNegativeMoney inherits org.fpml.MoneyBase
-   
+
    [[ A type that is used for describing cash settlement of an option / non deliverable forward. It includes the currency to settle into together with the fixings required to calculate the currency amount. ]]
    type FxCashSettlement {
       [[ The currency in which cash settlement occurs for non-deliverable forwards and cash-settled options (non-deliverable or otherwise). ]]
@@ -2877,10 +2878,10 @@ namespace org.fpml {
       [[ The date on which settlement is scheduled to occur ]]
       settlementDate : AdjustableDate?
    }
-   
+
    [[ A type defining a positive money amount ]]
    type PositiveMoney inherits org.fpml.MoneyBase
-   
+
    [[ A type that specifies the source for and timing of a fixing of an exchange rate. This is used in the agreement of non-deliverable forward trades as well as various types of FX OTC options that require observations against a particular rate. ]]
    type FxFixing {
       [[ Defines the two currencies for an FX trade and the quotation relationship between the two currencies. ]]
@@ -2890,7 +2891,7 @@ namespace org.fpml {
       [[ Specifies the methodology (reference source and, optionally, fixing time) to be used for determining a currency conversion rate. ]]
       fxSpotRateSource : FxSpotRateSource?
    }
-   
+
    [[ A type that describes the composition of a rate that has been quoted or is to be quoted. This includes the two currencies and the quotation relationship between the two currencies and is used as a building block throughout the FX specification. ]]
    type QuotedCurrencyPair {
       [[ The first currency specified when a pair of currencies is to be evaluated. ]]
@@ -2900,7 +2901,7 @@ namespace org.fpml {
       [[ The method by which the exchange rate is quoted. ]]
       quoteBasis : QuoteBasisEnum
    }
-   
+
    [[ A type defining the rate source and fixing time for an fx rate. ]]
    type FxSpotRateSource {
       [[ The primary source for where the rate observation will occur. Will typically be either a page or a reference bank published rate. ]]
@@ -2910,7 +2911,7 @@ namespace org.fpml {
       [[ The time at which the spot currency exchange rate will be observed. It is specified as a time in a business day calendar location, e.g. 11:00am London time. ]]
       fixingTime : BusinessCenterTime?
    }
-   
+
    [[ A type defining the source for a piece of information (e.g. a rate refix or an fx fixing). ]]
    type InformationSource {
       [[ An information source for obtaining a market rate. For example Bloomberg, Reuters, Telerate etc. ]]
@@ -2920,36 +2921,36 @@ namespace org.fpml {
       [[ The heading for the rate source on a given rate source page. ]]
       rateSourcePageHeading : String?
    }
-   
+
    type InformationProvider inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute informationProviderScheme : NonEmptyURI?
    }
-   
+
    type RateSourcePage inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute rateSourcePageScheme : NonEmptyURI?
    }
-   
+
    [[ Describes a rate source to be fixed and the date the fixing occurs ]]
    type FxRateSourceFixing {
       settlementRateSource : FxSettlementRateSource
       [[ The date on which the fixing is scheduled to occur. ]]
       fixingDate : AdjustableDate
    }
-   
+
    type FxSettlementRateSource {
       [[ Indicates that an officially defined rate settlement rate option will be the used for the fixing. ]]
       settlementRateOption : SettlementRateOption?
       [[ Indicates that a non-standard rate source will be used for the fixing. ]]
       nonstandardSettlementRate : FxInformationSource?
    }
-   
+
    [[ A type defining the settlement rate options through a scheme reflecting the terms of the Annex A to the 1998 FX and Currency Option Definitions. ]]
    type SettlementRateOption inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute settlementRateOptionScheme : NonEmptyURI?
    }
-   
+
    type FxInformationSource inherits org.fpml.InformationSource
-   
+
    [[ A type that is used for describing cash settlement of a variance or volatility swap option. It includes the settlement currency together with the spot currency exchange required to calculate the settlement currency amount. ]]
    type FxCashSettlementSimple {
       [[ The currency in which cash settlement occurs. ]]
@@ -2957,7 +2958,7 @@ namespace org.fpml {
       [[ Reference Currency. ]]
       referenceCurrency : Currency?
    }
-   
+
    [[ A type describing the rate of a currency conversion: pair of currency, quotation mode and exchange rate. ]]
    type FxRate {
       [[ Defines the two currencies for an FX trade and the quotation relationship between the two currencies. ]]
@@ -2965,51 +2966,51 @@ namespace org.fpml {
       [[ The rate of exchange between the two currencies of the leg of a deal. Must be specified with a quote basis. ]]
       rate : Decimal
    }
-   
+
    [[ Identification of the law governing the transaction. ]]
    type GoverningLaw inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute governingLawScheme : NonEmptyURI?
    }
-   
+
    [[ A payment component owed from one party to the other for the cash flow date. This payment component should by of only a single type, e.g. a fee or a cashflow from a cashflow stream. ]]
    type GrossCashflow {
       [[ Defines the type of cash flow. For instance, a type of fee, premium, principal exchange, leg fee. ]]
       cashflowType : CashflowType?
    }
-   
+
    [[ A reference to a partyTradeIdentifier object. ]]
    type PartyTradeIdentifierReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ Specifies Currency with ID attribute. ]]
    type IdentifiedCurrency inherits org.fpml.Currency {
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ Reference to a currency with ID attribute ]]
    type IdentifiedCurrencyReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A rate which can be referenced elsewhere. ]]
    type IdentifiedRate inherits lang.taxi.Decimal {
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A party's industry sector classification. ]]
    type IndustryClassification inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute industryClassificationScheme : NonEmptyURI?
    }
-   
+
    [[ A short form unique identifier for a security. ]]
    type InstrumentId inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute instrumentIdScheme : NonEmptyURI
    }
-   
+
    [[ A type defining the way in which interests are accrued: the applicable rate (fixed or floating reference) and the compounding method. ]]
    type InterestAccrualsCompoundingMethod inherits org.fpml.InterestAccrualsMethod
-   
+
    [[ A type describing the method for accruing interests on dividends. Can be either a fixed rate reference or a floating rate reference. ]]
    type InterestAccrualsMethod {
       [[ The floating rate calculation definitions ]]
@@ -3017,7 +3018,7 @@ namespace org.fpml {
       [[ The calculation period fixed rate. A per annum rate, expressed as a decimal. A fixed rate of 5% would be represented as 0.05. ]]
       fixedRate : Decimal?
    }
-   
+
    [[ A type that describes the information to identify an intermediary through which payment will be made by the correspondent bank to the ultimate beneficiary of the funds. ]]
    type IntermediaryInformation {
       [[ A sequence number that gives the position of the current intermediary in the chain of payment intermediaries. The assumed domain value set is an ascending sequence of integers starting from 1. ]]
@@ -3025,40 +3026,40 @@ namespace org.fpml {
       [[ Reference to the party acting as intermediary. ]]
       intermediaryPartyReference : PartyReference?
    }
-   
+
    [[ The type of interpolation used. ]]
    type InterpolationMethod inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute interpolationMethodScheme : NonEmptyURI?
    }
-   
+
    [[ A type defining a legal entity. ]]
    type LegalEntity {
       [[ A legal entity identifier (e.g. RED entity code).. ]]
       entityId : EntityId?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ References a credit entity defined elsewhere in the document. ]]
    type LegalEntityReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type to define the main publication source. ]]
    type MainPublication inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute mainPublicationScheme : NonEmptyURI?
    }
-   
+
    [[ An identifier used to identify matched cashflows. ]]
    type MatchId inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute matchIdScheme : NonEmptyURI?
    }
-   
+
    [[ A type defining a currency amount or a currency amount schedule. ]]
    type NonNegativeAmountSchedule inherits org.fpml.NonNegativeSchedule
-   
+
    [[ A type defining a step date and non-negative step value pair. This step definitions are used to define varying rate or amount schedules, e.g. a notional amortization or a step-up coupon schedule. ]]
    type NonNegativeStep inherits org.fpml.StepBase
-   
+
    [[ A type defining a schedule of non-negative rates or amounts in terms of an initial value and then a series of step date and value pairs. On each step date the rate or amount changes to the new step value. The series of step date and value pairs are optional. If not specified, this implies that the initial value remains unchanged over time. ]]
    type NonNegativeSchedule {
       [[ The non-negative initial rate or amount, as the case may be. An initial rate of 5% would be represented as 0.05. ]]
@@ -3067,44 +3068,44 @@ namespace org.fpml {
       step : NonNegativeStep?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A complex type to specify non negative payments. ]]
    type NonNegativePayment inherits org.fpml.PaymentBaseExtended
-   
+
    [[ Base type for payments. ]]
    type PaymentBaseExtended inherits org.fpml.PaymentBase {
       [[ The payment date, which can be expressed as either an adjustable or relative date. ]]
       paymentDate : AdjustableOrRelativeDate
    }
-   
+
    [[ A complex type to specify the notional amount. ]]
    type NotionalAmount inherits org.fpml.NonNegativeMoney
-   
+
    [[ A reference to the notional amount. ]]
    type NotionalAmountReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A reference to the number of options. ]]
    type NumberOfOptionsReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A reference to the number of units. ]]
    type NumberOfUnitsReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type defining the frequency at which calculation period end dates occur within the regular part of the calculation period schedule and thier roll date convention. In case the calculation frequency is of value T (term), the period is defined by the swap\swapStream\calculationPerioDates\effectiveDate and the swap\swapStream\calculationPerioDates\terminationDate. ]]
    type ObservationFrequency inherits org.fpml.Period
-   
+
    [[ Allows the specification of a time that may be on a day prior or subsequent to the day in question. This type is intended for use with a day of the week (i.e. where no actual date is specified) as part of, for example, a period that runs from 23:00-07:00 on a series of days and where holidays on the actual days would affect the entire time period. ]]
    type OffsetPrevailingTime {
       time : PrevailingTime
       [[ Indicates whether time applies to the actual day specified (in which case this element should be omitted) the day prior to that day (in which case periodMultiplier should be -1 and period should be Day) or the day subsequent to that day (in which case periodMultiplier should be 1 and period should be Day). ]]
       offset : Offset?
    }
-   
+
    [[ A type for defining a time with respect to a geographic location, for example 11:00 Phoenix, USA. This type should be used where a wider range of locations than those available as business centres is required. ]]
    type PrevailingTime {
       [[ A time specified in hh:mm:ss format where the second component must be '00', e.g. 11am would be represented as 11:00:00. ]]
@@ -3112,49 +3113,49 @@ namespace org.fpml {
       [[ The geographic location to which the hourMinuteTime applies. The time takes into account any current day light saving changes or other adjustments i.e. it is the prevaling time at the location. ]]
       location : TimezoneLocation
    }
-   
+
    [[ A geophraphic location for the purposes of defining a prevailing time according to the tz database. ]]
    type TimezoneLocation inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute timezoneLocationScheme : NonEmptyURI?
    }
-   
+
    type OnBehalfOf {
       [[ The party for which the message reciever should work. ]]
       partyReference : PartyReference
       [[ Identifies the account(s) related to the party when they cannot be determined from the party alone, for example in a inter-book trade. ]]
       accountReference : AccountReference?
    }
-   
+
    [[ A code that describes what type of role an organization plays, for example a SwapsDealer, a Major Swaps Participant, or Other ]]
    type OrganizationType inherits org.fpml.Token {
       @lang.taxi.xml.XmlAttribute organizationTypeScheme : NonEmptyURI?
    }
-   
+
    type OriginatingEvent inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute originatingEventScheme : NonEmptyURI?
    }
-   
+
    [[ A type defining a legal entity or a subdivision of a legal entity.Parties can perform multiple roles in a trade lifecycle. For example, the principal parties obligated to make payments from time to time during the term of the trade, but may include other parties involved in, or incidental to, the trade, such as parties acting in the role of novation transferor/transferee, broker, calculation agent, etc. In FpML roles are defined in multiple places within a document. ]]
    type Party {
       [[ The id uniquely identifying the Party within the document. ]]
       @lang.taxi.xml.XmlAttribute id : org.w3.ID
    }
-   
+
    [[ The data type used for party identifiers. ]]
    type PartyId inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute partyIdScheme : NonEmptyURI
    }
-   
+
    [[ The data type used for the legal name of an organization. ]]
    type PartyName inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute partyNameScheme : NonEmptyURI?
    }
-   
+
    [[ A code that describes the world region of a counterparty. For example, NorthAmerica, Europe, Asia. ]]
    type Region inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute regionScheme : NonEmptyURI?
    }
-   
+
    [[ A type that represents information about a person connected with a trade or business process. ]]
    type Person {
       [[ An identifier assigned by a system for uniquely identifying the individual ]]
@@ -3169,32 +3170,32 @@ namespace org.fpml {
       country : CountryCode?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ An identifier used to identify an individual person. ]]
    type PersonId inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute personIdScheme : NonEmptyURI?
    }
-   
+
    [[ The data type used for party group classification. ]]
    type PartyGroupType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute partyGroupTypeScheme : NonEmptyURI?
    }
-   
+
    [[ A type describing a role played by a party in one or more transactions. Examples include roles such as guarantor, custodian, confirmation service provider, etc. This can be extended to provide custom roles. ]]
    type PartyRole inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute partyRoleScheme : NonEmptyURI?
    }
-   
+
    [[ A type refining the role a role played by a party in one or more transactions. Examples include "AllPositions" and "SomePositions" for Guarantor. This can be extended to provide custom types. ]]
    type PartyRoleType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute partyRoleTypeScheme : NonEmptyURI?
    }
-   
+
    [[ Reference to an individual. ]]
    type PersonReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type for defining payments. In Transparency view, normally the payer and receiver party references are not used; however they may be provided if necessary for administrative activities such as Reporting Party Determination in FX. ]]
    type Payment inherits org.fpml.PaymentBase {
       [[ The currency amount of the payment. ]]
@@ -3212,11 +3213,11 @@ namespace org.fpml {
       [[ Can be used to reference the yield curve used to estimate the discount factor. ]]
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF?
    }
-   
+
    type PaymentType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute paymentTypeScheme : NonEmptyURI?
    }
-   
+
    [[ A type that represents the choice of methods for settling a potential currency payment resulting from a trade: by means of a standard settlement instruction, by netting it out with other payments, or with an explicit settlement instruction. ]]
    type SettlementInformation {
       [[ An optional element used to describe how a trade will settle. This defines a scheme and is used for identifying trades that are identified as settling standard and/or flagged for settlement netting. ]]
@@ -3224,7 +3225,7 @@ namespace org.fpml {
       [[ An explicit specification of how a currency payment is to be made, when the payment is not netted and the route is other than the recipient's standard settlement instruction. ]]
       settlementInstruction : SettlementInstruction?
    }
-   
+
    [[ A type that models a complete instruction for settling a currency payment, including the settlement method to be used, the correspondent bank, any intermediary banks and the ultimate beneficary. ]]
    type SettlementInstruction {
       [[ The mechanism by which settlement is to be made. The scheme of domain values will include standard mechanisms such as CLS, Fedwire, Chips ABA, Chips UID, SWIFT, CHAPS and DDA. ]]
@@ -3242,11 +3243,11 @@ namespace org.fpml {
       [[ The set of individual payments that are to be made when a currency payment settling a trade needs to be split between a number of ultimate beneficiaries. Each split payment may need to have its own routing information. ]]
       splitSettlement : SplitSettlement?
    }
-   
+
    type SettlementMethod inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute settlementMethodScheme : NonEmptyURI?
    }
-   
+
    [[ A type that supports the division of a gross settlement amount into a number of split settlements, each requiring its own settlement instruction. ]]
    type SplitSettlement {
       [[ One of the monetary amounts in a split settlement payment. ]]
@@ -3256,7 +3257,7 @@ namespace org.fpml {
       [[ The ultimate beneficiary of the funds. The beneficiary can be identified either by an account at the beneficiaryBank (qv) or by explicit routingInformation. This element provides for the latter. ]]
       beneficiary : Routing
    }
-   
+
    [[ A type that provides three alternative ways of identifying a party involved in the routing of a payment. The identification may use payment system identifiers only; actual name, address and other reference information; or a combination of both. ]]
    type Routing {
       [[ A set of unique identifiers for a party, eachone identifying the party within a payment system. The assumption is that each party will not have more than one identifier within the same payment system. ]]
@@ -3266,7 +3267,7 @@ namespace org.fpml {
       [[ A combination of coded payment system identifiers and details for physical addressing for a party involved in the routing of a payment. ]]
       routingIdsAndExplicitDetails : RoutingIdsAndExplicitDetails?
    }
-   
+
    [[ Details on the referenced payment. e.g. Its cashflow components, settlement details. ]]
    type PaymentDetails {
       [[ The reference to the identified payment strucutre. ]]
@@ -3276,17 +3277,17 @@ namespace org.fpml {
       [[ The information required to settle a currency payment. ]]
       settlementInformation : SettlementInformation?
    }
-   
+
    [[ Reference to a payment. ]]
    type PaymentReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type describing a role played by a person in one or more transactions. Examples include roles such as Trader, Broker, MiddleOffice, Legal, etc. This can be extended to provide custom roles. ]]
    type PersonRole inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute personRoleScheme : NonEmptyURI?
    }
-   
+
    [[ An abstract pricing structure base type. Used as a base for structures such as yield curves and volatility matrices. ]]
    type PricingStructure {
       [[ The name of the structure, e.g "USDLIBOR-3M EOD Curve". ]]
@@ -3295,12 +3296,12 @@ namespace org.fpml {
       currency : Currency?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ Reference to a pricing structure or any derived components (i.e. yield curve). ]]
    type PricingStructureReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type defining which principal exchanges occur for the stream. ]]
    type PrincipalExchanges {
       [[ A true/false flag to indicate whether there is an initial exchange of principal on the effective date. ]]
@@ -3311,7 +3312,7 @@ namespace org.fpml {
       intermediateExchange : Boolean
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ The base type which all FpML products extend. ]]
    type Product {
       [[ A classification of the most important risk class of the trade. FpML defines a simple asset class categorization using a coding scheme. ]]
@@ -3322,23 +3323,23 @@ namespace org.fpml {
       assetClass : AssetClass?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    type ProductType inherits org.fpml.NonEmptyLongScheme {
       @lang.taxi.xml.XmlAttribute productTypeScheme : NonEmptyURI?
    }
-   
+
    type ProductId inherits org.fpml.NonEmptyLongScheme {
       @lang.taxi.xml.XmlAttribute productIdScheme : NonEmptyURI?
    }
-   
+
    [[ Reference to a full FpML product. ]]
    type ProductReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ The proposed collateral allocation. ]]
    type ProposedCollateralAllocation
-   
+
    [[ A type defining parameters associated with an individual observation or fixing. This type forms part of the cashflow representation of a stream. ]]
    type RateObservation {
       [[ The reset date. ]]
@@ -3359,70 +3360,70 @@ namespace org.fpml {
       treatedForecastRate : Decimal?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ Reference to any rate (floating, inflation) derived from the abstract Rate component. ]]
    type RateReference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ Specifies the reference amount using a scheme. ]]
    type ReferenceAmount inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute referenceAmountScheme : NonEmptyURI?
    }
-   
+
    type RelatedBusinessUnit {
       [[ The unit that is related to this. ]]
       businessUnitReference : BusinessUnitReference
       [[ The category of the relationship. The related unit performs the role specified in this field for the base party. For example, if the role is "Trader", the related unit acts acts or acted as the base party's trading unit. ]]
       role : BusinessUnitRole
    }
-   
+
    type RelatedParty {
       [[ The category of the relationship. The related party performs the role specified in this field for the base party. For example, if the role is "Guarantor", the related party acts as a guarantor for the base party. ]]
       role : PartyRole
       [[ Additional definition refining the type of relationship. For example, if the "role" is Guarantor, this element may be used to specify whether all positions are guaranteed, or only a subset of them. ]]
       `type` : PartyRoleType?
    }
-   
+
    type RelatedPerson {
       [[ The individual person that is related to this. ]]
       personReference : PersonReference
       [[ The category of the relationship. The related individual performs the role specified in this field for the base party. For example, if the role is "Trader", the related person acts acts or acted as the base party's trader. ]]
       role : PersonRole
    }
-   
+
    [[ An identifier of an reporting regime or format used for regulatory reporting, for example DoddFrankAct, MiFID, HongKongOTCDRepository, etc. ]]
    type ReportingRegimeName inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute reportingRegimeNameScheme : NonEmptyURI?
    }
-   
+
    type RequestedAction inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute requestedActionScheme : NonEmptyURI?
    }
-   
+
    [[ A date with a required identifier which can be referenced elsewhere. ]]
    type RequiredIdentifierDate inherits lang.taxi.Date {
       @lang.taxi.xml.XmlAttribute id : org.w3.ID
    }
-   
+
    [[ A type defining the reset frequency. In the case of a weekly reset, also specifies the day of the week that the reset occurs. If the reset frequency is greater than the calculation period frequency the this implies that more or more reset dates is established for each calculation period and some form of rate averaginhg is applicable. The specific averaging method of calculation is specified in FloatingRateCalculation. In case the reset frequency is of value T (term), the period is defined by the swap\swapStream\calculationPerioDates\effectiveDate and the swap\swapStream\calculationPerioDates\terminationDate. ]]
    type ResetFrequency inherits org.fpml.Frequency
-   
+
    [[ A reference to the return swap notional amount. ]]
    type ReturnSwapNotionalAmountReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ Coding scheme that specifies the settlement price default election. ]]
    type SettlementPriceDefaultElection inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute settlementPriceDefaultElectionScheme : NonEmptyURI?
    }
-   
+
    [[ The source from which the settlement price is to be obtained, e.g. a Reuters page, Prezzo di Riferimento, etc. ]]
    type SettlementPriceSource inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute settlementPriceSourceScheme : NonEmptyURI?
    }
-   
+
    [[ A type describing the method for obtaining a settlement rate. ]]
    type SettlementRateSource {
       [[ The information source where a published or displayed market rate will be obtained, e.g. Telerate Page 3750. ]]
@@ -3430,7 +3431,7 @@ namespace org.fpml {
       [[ A container for a set of reference institutions. These reference institutions may be called upon to provide rate quotations as part of the method to determine the applicable cash settlement amount. If institutions are not specified, it is assumed that reference institutions will be agreed between the parties on the exercise date, or in the case of swap transaction to which mandatory early termination is applicable, the cash settlement valuation date. ]]
       cashSettlementReferenceBanks : CashSettlementReferenceBanks?
    }
-   
+
    [[ TBA ]]
    type SharedAmericanExercise inherits org.fpml.Exercise {
       [[ The first day of the exercise period for an American style option. ]]
@@ -3438,19 +3439,19 @@ namespace org.fpml {
       [[ The last day within an exercise period for an American style option. For a European style option it is the only day within the exercise period. ]]
       expirationDate : AdjustableOrRelativeDate
    }
-   
+
    [[ A complex type to specified payments in a simpler fashion than the Payment type. This construct should be used from the version 4.3 onwards. ]]
    type SimplePayment inherits org.fpml.PaymentBase {
       paymentAmount : NonNegativeMoney
       [[ The payment date. This date is subject to adjustment in accordance with any applicable business day convention. ]]
       paymentDate : AdjustableOrRelativeDate
    }
-   
+
    [[ Provides a reference to a spread schedule. ]]
    type SpreadScheduleReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type describing a single cap or floor rate. ]]
    type Strike {
       [[ The rate for a cap or floor. ]]
@@ -3461,10 +3462,10 @@ namespace org.fpml {
       seller : IdentifiedPayerReceiver?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type defining how a stub calculation period amount is calculated and the start and end date of the stub. A single floating rate tenor different to that used for the regular part of the calculation periods schedule may be specified, or two floating rate tenors many be specified. If two floating rate tenors are specified then Linear Interpolation (in accordance with the 2000 ISDA Definitions, Section 8.3 Interpolation) is assumed to apply. Alternatively, an actual known stub rate or stub amount may be specified. ]]
    type Stub inherits org.fpml.StubValue
-   
+
    [[ A type defining a floating rate. ]]
    type StubFloatingRate inherits org.fpml.Rate {
       [[ A rate multiplier or multiplier schedule to apply to the floating rate. A multiplier schedule is expressed as explicit multipliers and dates. In the case of a schedule, the step dates may be subject to adjustment in accordance with any adjustments specified in the calculationPeriodDatesAdjustments. The multiplier can be a positive or negative decimal. This element should only be included if the multiplier is not equal to 1 (one) for the term of the stream. ]]
@@ -3478,7 +3479,7 @@ namespace org.fpml {
       [[ The floor rate or floor rate schedule, if any, which applies to the floating rate. The floor rate (strike) is only required where the floating rate on a swap stream is floored at a certain strike level. A floor rate schedule is expressed as explicit floor rates and dates and the step dates may be subject to adjustment in accordance with any adjustments specified in calculationPeriodDatesAdjustments. The floor rate is assumed to be exclusive of any spread and is a per annum rate, expressed as a decimal. A floor rate of 5% would be represented as 0.05. ]]
       floorRateSchedule : StrikeSchedule?
    }
-   
+
    [[ A type defining how a stub calculation period amount is calculated. A single floating rate tenor different to that used for the regular part of the calculation periods schedule may be specified, or two floating rate tenors many be specified. If two floating rate tenors are specified then Linear Interpolation (in accordance with the 2000 ISDA Definitions, Section 8.3 Interpolation) is assumed to apply. Alternatively, an actual known stub rate or stub amount may be specified. ]]
    type StubValue {
       [[ The rates to be applied to the initial or final stub may be the linear interpolation of two different rates. While the majority of the time, the rate indices will be the same as that specified in the stream and only the tenor itself will be different, it is possible to specift two different rates. For example, a 2 month stub period may use the linear interpolation of a 1 month and 3 month rate. The different rates would be specified in this component. Note that a maximum of two rates can be specified. If a stub period uses the same floating rate index, including tenor, as the regular calculation periods then this should not be specified again within this component, i.e. the stub calculation period amount component may not need to be specified even if there is an initial or final stub period. If a stub period uses a different floating rate index compared to the regular calculation periods then this should be specified within this component. If specified here, they are likely to have id attributes, allowing them to be referenced from within the cashflows component. ]]
@@ -3488,29 +3489,29 @@ namespace org.fpml {
       [[ An actual amount to apply for the initial or final stub period may have been agreed between th two parties. If an actual stub amount has been agreed then it would be included in this component. ]]
       stubAmount : Money?
    }
-   
+
    [[ An identifier of an organization that supervises or regulates trading activity, e.g. CFTC, SEC, FSA, ODRF, etc. ]]
    type SupervisoryBody inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute supervisoryBodyScheme : NonEmptyURI?
    }
-   
+
    [[ A trade reference identifier allocated by a party. FpML does not define the domain values associated with this element. Note that the domain values for this element are not strictly an enumerated list. ]]
    type TradeId inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute tradeIdScheme : NonEmptyURI
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type describing interest payments associated with and underlyer, such as financing ]]
    type UnderlyerInterestLeg inherits org.fpml.DirectionalLeg
-   
+
    [[ The data type used for issuer identifiers. ]]
    type IssuerId inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute issuerIdScheme : NonEmptyURI?
    }
-   
+
    [[ A complex type for a two part identifier such as a USI. ]]
    type IssuerTradeId
-   
+
    type ActualPrice {
       [[ Specifies the currency associated with the net price. This element is not present if the price is expressed in percentage terms (as specified through the priceExpression element). ]]
       currency : Currency?
@@ -3520,22 +3521,22 @@ namespace org.fpml {
       priceExpression : PriceExpressionEnum
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A reference to an asset, e.g. a portfolio, trade, or reference instrument.. ]]
    type AnyAssetReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ Abstract base class for all underlying assets. ]]
    type Asset {
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A scheme identifying the types of measures that can be used to describe an asset. ]]
    type AssetMeasureType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute assetMeasureScheme : NonEmptyURI?
    }
-   
+
    [[ Characterise the asset pool behind an asset backed bond. ]]
    type AssetPool {
       [[ The part of the mortgage that is outstanding on trade inception, i.e. has not been repaid yet as principal. It is expressed as a multiplier factor to the morgage: 1 means that the whole mortage amount is outstanding, 0.8 means that 20% has been repaid. ]]
@@ -3543,37 +3544,37 @@ namespace org.fpml {
       [[ The part of the mortgage that is currently outstanding. It is expressed similarly to the initial factor, as factor multiplier to the mortgage. This term is formally defined as part of the "ISDA Standard Terms Supplement for use with credit derivatives transactions on mortgage-backed security with pas-as-you-go or physical settlement". ]]
       currentFactor : Decimal?
    }
-   
+
    [[ Reference to an underlying asset. ]]
    type AssetReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ Some kind of numerical measure about an asset, eg. its NPV, together with characteristics of that measure. ]]
    type BasicQuotation {
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ The units in which a price is quoted. ]]
    type PriceQuoteUnits inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute priceQuoteUnitsScheme : NonEmptyURI?
    }
-   
+
    [[ A scheme identifying the type of currency that was used to report the value of an asset. For example, this could contain values like SettlementCurrency, QuoteCurrency, UnitCurrency, etc. ]]
    type ReportingCurrencyType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute reportingCurrencyTypeScheme : NonEmptyURI?
    }
-   
+
    [[ The type of the time of the quote. ]]
    type QuoteTiming inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute quoteTimingScheme : NonEmptyURI?
    }
-   
+
    [[ A scheme identifying the types of pricing model used to evaluate the price of an asset. Examples include Intrinsic, ClosedForm, MonteCarlo, BackwardInduction. ]]
    type PricingModel inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute pricingModelScheme : NonEmptyURI?
    }
-   
+
    [[ A type describing the underlyer features of a basket swap. Each of the basket constituents are described through an embedded component, the basketConstituentsType. ]]
    type Basket inherits org.fpml.Asset {
       [[ The number of units (index or securities) that constitute the underlyer of the swap. In the case of a basket swap, this element is used to reference both the number of basket units, and the number of each asset components of the basket when these are expressed in absolute terms. ]]
@@ -3587,7 +3588,7 @@ namespace org.fpml {
       [[ Specifies the currency for this basket. ]]
       basketCurrency : Currency?
    }
-   
+
    [[ A type describing each of the constituents of a basket. ]]
    type BasketConstituent {
       [[ Define the underlying asset, either a listed security or other instrument. ]]
@@ -3612,7 +3613,7 @@ namespace org.fpml {
       underlyerCollateral : Collateral?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type describing the weight of each of the underlyer constituent within the basket, either in absolute or relative terms. ]]
    type ConstituentWeight {
       [[ The number of units (index or securities) that constitute the underlyer of the swap. In the case of a basket swap, this element is used to reference both the number of basket units, and the number of each asset components of the basket when these are expressed in absolute terms. ]]
@@ -3622,13 +3623,13 @@ namespace org.fpml {
       [[ DEPRECATED. The relative weight of each respective basket constituent, expressed as a monetary amount. ]]
       basketAmount : Money?
    }
-   
+
    [[ A type describing the dividend payout ratio associated with an equity underlyer. In certain cases the actual ratio is not known on trade inception, and only general conditions are then specified. ]]
    type DividendPayout {
       [[ The next upcoming dividend payment or payments. ]]
       dividendPayment : PendingPayment?
    }
-   
+
    [[ A structure representing a pending dividend or coupon payment. ]]
    type PendingPayment inherits org.fpml.PaymentBase {
       [[ The date that the dividend or coupon is due. ]]
@@ -3638,7 +3639,7 @@ namespace org.fpml {
       [[ Accrued interest on the dividend or coupon payment. When the TRS is structured to pay a dividend or coupon on reset after payable date, you may earn interest on these amounts. This field indicates the interest accrued on dividend/coupon from pay date to statement date. This will only apply to a handful of agreements where dividendss are held to the next reset AND you receive/pay interest on unpaid amounts. ]]
       accruedInterest : Money?
    }
-   
+
    [[ A type describing the strike price. ]]
    type Price {
       [[ This optional component specifies the commission to be charged for executing the hedge transactions. ]]
@@ -3648,7 +3649,7 @@ namespace org.fpml {
       [[ Allows information about how the price was quoted to be provided. ]]
       quotationCharacteristics : QuotationCharacteristics?
    }
-   
+
    [[ A type describing the commission that will be charged for each of the hedge transactions. ]]
    type Commission {
       [[ The type of units used to express a commission. ]]
@@ -3662,38 +3663,38 @@ namespace org.fpml {
       [[ FX Rates that have been used to convert commissions to a single currency. ]]
       fxRate : FxRate?
    }
-   
+
    type FxConversion {
       amountRelativeTo : AmountReference?
       [[ Specifies a currency conversion rate. ]]
       fxRate : FxRate?
    }
-   
+
    [[ A type representing a set of characteristics that describe a quotation. ]]
    type QuotationCharacteristics
-   
+
    [[ Defines stock loan information where this is required per underlyer. You must not duplicate infromation within dividend conditions at transaction level ]]
    type UnderlyerLoanRate
-   
+
    type BasketName inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute basketNameScheme : NonEmptyURI?
    }
-   
+
    type BasketId inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute basketIdScheme : NonEmptyURI?
    }
-   
+
    [[ An exchange traded bond. ]]
    type Bond inherits org.fpml.UnderlyingAsset
-   
+
    [[ Defines a scheme of values for specifiying if the bond has a variable coupon, step-up/down coupon or a zero-coupon. ]]
    type CouponType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute couponTypeScheme : NonEmptyURI?
    }
-   
+
    [[ Abstract base class for all underlying assets. ]]
    type UnderlyingAsset inherits org.fpml.IdentifiedAsset
-   
+
    [[ A generic type describing an identified asset. ]]
    type IdentifiedAsset inherits org.fpml.Asset {
       [[ Identification of the underlying asset, using public and/or private identifiers. ]]
@@ -3701,7 +3702,7 @@ namespace org.fpml {
       [[ Long name of the underlying asset. ]]
       description : String?
    }
-   
+
    type Cash inherits org.fpml.Asset {
       [[ Identification of the underlying asset, using public and/or private identifiers. ]]
       instrumentId : InstrumentId?
@@ -3710,22 +3711,22 @@ namespace org.fpml {
       [[ The currency in which an amount is denominated. ]]
       currency : Currency
    }
-   
+
    [[ A type describing a commodity underlying asset. ]]
    type Commodity inherits org.fpml.IdentifiedAsset
-   
+
    type CommodityBase inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute commodityBaseScheme : NonEmptyURI?
    }
-   
+
    type CommodityDetails inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute commodityDetailsScheme : NonEmptyURI?
    }
-   
+
    type QuantityUnit inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute quantityUnitScheme : NonEmptyURI?
    }
-   
+
    [[ A type defining the source of a commodity rate, price or index or of a market rate or of a conversion factor (e.g. a fx conversion factor). ]]
    type CommodityInformationSource {
       [[ The publication in which the rate, price, index or factor is to be found. (e.g Gas Daily, Platts Bloomberg.) ]]
@@ -3735,12 +3736,12 @@ namespace org.fpml {
       [[ The heading for the rate source on a given rate source page or screen. ]]
       rateSourcePageHeading : String?
    }
-   
+
    [[ The publication in which the rate, price, index or factor is to be found. (e.g Gas Daily, Platts Bloomberg.) ]]
    type CommodityInformationProvider inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute informationProviderScheme : NonEmptyURI?
    }
-   
+
    [[ A type defines nearest Delivery Date of the underlying Commodity of expiration of the futures contract. ]]
    type DeliveryNearby {
       [[ A time multiplier, e.g. 1, 2 or 3 etc. used in defining Delivery Nearby date. ]]
@@ -3749,28 +3750,28 @@ namespace org.fpml {
       deliveryNearbyType : DeliveryNearbyTypeEnum
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ Defines a commodity business day calendar. ]]
    type CommodityBusinessCalendar inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute commodityBusinessCalendarScheme : NonEmptyURI?
    }
-   
+
    type ConvertibleBond inherits org.fpml.Bond
-   
+
    [[ An exchange traded equity asset. ]]
    type EquityAsset inherits org.fpml.ExchangeTraded
-   
+
    [[ An abstract base class for all exchange traded financial products. ]]
    type ExchangeTraded inherits org.fpml.UnderlyingAsset
-   
+
    type Deposit inherits org.fpml.UnderlyingAsset
-   
+
    [[ Abstract base class for all exchange traded financial products with a price which is calculated from exchange traded constituents. ]]
    type ExchangeTradedCalculatedPrice inherits org.fpml.ExchangeTraded
-   
+
    [[ An exchange traded derivative contract. ]]
    type ExchangeTradedContract inherits org.fpml.ExchangeTraded
-   
+
    [[ A type describing a single underlyer ]]
    type ExchangeTradedContractUnderlyer {
       [[ Defines the two currencies for an FX trade and the quotation relationship between the two currencies. ]]
@@ -3778,61 +3779,61 @@ namespace org.fpml {
       [[ Define the underlying asset, either a listed security or other instrument. ]]
       underlyingAsset : Asset?
    }
-   
+
    [[ An exchange traded fund whose price depends on exchange traded constituents. ]]
    type ExchangeTradedFund inherits org.fpml.ExchangeTradedCalculatedPrice
-   
+
    [[ An exchange traded option. ]]
    type ExchangeTradedOption inherits org.fpml.ExchangeTradedContract
-   
+
    [[ A type describing the type of loan facility. ]]
    type FacilityType inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute facilityTypeScheme : NonEmptyURI?
    }
-   
+
    [[ An exchange traded future contract. ]]
    type Future inherits org.fpml.ExchangeTraded
-   
+
    [[ A type defining a short form unique identifier for a future contract. ]]
    type FutureId inherits org.fpml.NonEmptyScheme {
       @lang.taxi.xml.XmlAttribute futureIdScheme : NonEmptyURI?
    }
-   
+
    type FxRateAsset inherits org.fpml.UnderlyingAsset
-   
+
    [[ A published index whose price depends on exchange traded constituents. ]]
    type Index inherits org.fpml.ExchangeTradedCalculatedPrice
-   
+
    [[ A type describing the liens associated with a loan facility. ]]
    type Lien inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute lienScheme : NonEmptyURI?
    }
-   
+
    [[ A type describing a loan underlying asset. ]]
    type Loan inherits org.fpml.UnderlyingAsset
-   
+
    type UnderlyingAssetTranche inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute loanTrancheScheme : NonEmptyURI?
    }
-   
+
    [[ A type describing a mortgage asset. ]]
    type Mortgage inherits org.fpml.UnderlyingAsset
-   
+
    [[ A type describing the typology of mortgage obligations. ]]
    type MortgageSector inherits org.fpml.Scheme {
       @lang.taxi.xml.XmlAttribute mortgageSectorScheme : NonEmptyURI?
    }
-   
+
    type MutualFund inherits org.fpml.UnderlyingAsset
-   
+
    type RateIndex inherits org.fpml.UnderlyingAsset
-   
+
    type SimpleCreditDefaultSwap inherits org.fpml.UnderlyingAsset
-   
+
    type SimpleFra inherits org.fpml.UnderlyingAsset
-   
+
    type SimpleIRSwap inherits org.fpml.UnderlyingAsset
-   
+
    [[ A type describing a single underlyer ]]
    type SingleUnderlyer {
       [[ Define the underlying asset, either a listed security or other instrument. ]]
@@ -3848,7 +3849,7 @@ namespace org.fpml {
       [[ A Depository Receipt is a negotiable certificate issued by a trust company or security depository. This element is used to represent whether a Depository Receipt is applicable or not to the underlyer. ]]
       depositoryReceipt : Boolean?
    }
-   
+
    [[ A type describing the whole set of possible underlyers: single underlyers or multiple underlyers, each of these having either security or index components. ]]
    type Underlyer {
       [[ Describes the swap's underlyer when it has only one asset component. ]]
@@ -3856,7 +3857,7 @@ namespace org.fpml {
       [[ Describes the swap's underlyer when it has multiple asset components. ]]
       basket : Basket?
    }
-   
+
    [[ A type including a reference to a bond to support the representation of an asset swap or Condition Precedent Bond. ]]
    type BondReference {
       [[ Identifies the underlying asset when it is a series or a class of bonds. ]]
@@ -3866,10 +3867,10 @@ namespace org.fpml {
       [[ To indicate whether the Discrepancy Clause is applicable. ]]
       discrepancyClause : Boolean?
    }
-   
+
    [[ A product to represent a single cashflow. ]]
    type BulletPayment inherits org.fpml.Product
-   
+
    [[ A type definining the parameters used in the calculation of fixed or floating calculation period amounts. ]]
    type Calculation {
       [[ The day count fraction. ]]
@@ -3879,7 +3880,7 @@ namespace org.fpml {
       [[ If more that one calculation period contributes to a single payment amount this element specifies whether compounding is applicable, and if so, what compounding method is to be used. This element must only be included when more that one calculation period contributes to a single payment amount. ]]
       compoundingMethod : CompoundingMethodEnum?
    }
-   
+
    [[ An type defining the notional amount or notional amount schedule associated with a swap stream. The notional schedule will be captured explicitly, specifying the dates that the notional changes and the outstanding notional amount that applies from that date. A parametric representation of the rules defining the notional step schedule can optionally be included. ]]
    type Notional {
       [[ The notional amount or notional amount schedule expressed as explicit outstanding notional amounts and dates. In the case of a schedule, the step dates may be subject to adjustment in accordance with any adjustments specified in calculationPeriodDatesAdjustments. ]]
@@ -3888,7 +3889,7 @@ namespace org.fpml {
       notionalStepParameters : NotionalStepRule?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type defining a parametric representation of the notional step schedule, i.e. parameters used to generate the notional balance on each step date. The step change in notional can be expressed in terms of either a fixed amount or as a percentage of either the initial notional or previous notional amount. This parametric representation is intended to cover the more common amortizing/accreting. ]]
    type NotionalStepRule {
       [[ A pointer style reference to the associated calculation period dates component defined elsewhere in the document. ]]
@@ -3900,12 +3901,12 @@ namespace org.fpml {
       [[ Effective date of the last change in notional (i.e. a calculation period start date). ]]
       lastNotionalStepDate : Date
    }
-   
+
    [[ Reference to a calculation period dates component. ]]
    type CalculationPeriodDatesReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type to describe a notional schedule where each notional that applies to a calculation period is calculated with reference to a notional amount or notional amount schedule in a different currency by means of a spot currency exchange rate which is normally observed at the beginning of each period. ]]
    type FxLinkedNotionalSchedule {
       [[ A pointer style reference to the associated constant notional schedule defined elsewhere in the document which contains the currency amounts which will be converted into the varying notional currency amounts using the spot currency exchange rate. ]]
@@ -3921,13 +3922,13 @@ namespace org.fpml {
       [[ The dates on which interim exchanges of notional are paid. Interim exchanges will arise as a result of changes in the spot currency exchange amount or changes in the constant notional schedule (e.g. amortization). ]]
       varyingNotionalInterimExchangePaymentDates : RelativeDateOffset
    }
-   
+
    [[ A type defining discounting information. The 2000 ISDA definitions, section 8.4. discounting (related to the calculation of a discounted fixed amount or floating amount) apply. This type must only be included if discounting applies. ]]
    type Discounting {
       [[ The discounting method that is applicable. ]]
       discountingType : DiscountingTypeEnum
    }
-   
+
    [[ A type defining the parameters used in the calculation of a fixed or floating rate calculation period amount. This type forms part of cashflows representation of a swap stream. ]]
    type CalculationPeriod {
       unadjustedStartDate : Date?
@@ -3946,7 +3947,7 @@ namespace org.fpml {
       forecastRate : Decimal?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type to describe the cashflow representation for fx linked notionals. ]]
    type FxLinkedNotionalAmount {
       resetDate : Date?
@@ -3957,7 +3958,7 @@ namespace org.fpml {
       [[ The calculation period notional amount. ]]
       notionalAmount : Decimal?
    }
-   
+
    [[ A type defining parameters associated with a floating rate reset. This type forms part of the cashflows representation of a stream. ]]
    type FloatingRateDefinition {
       [[ The final calculated rate for a calculation period after any required averaging of rates A calculated rate of 5% would be represented as 0.05. ]]
@@ -3973,7 +3974,7 @@ namespace org.fpml {
       [[ The floor rate, if any, which applies to the floating rate for the calculation period. The floor rate (strike) is only required where the floating rate on a swap stream is floored at a certain strike level. The floor rate is assumed to be exclusive of any spread and is a per annum rate, expressed as a decimal. The floor rate of 5% would be represented as 0.05. ]]
       floorRate : Strike?
    }
-   
+
    [[ A type defining the parameters used in the calculation of fixed or floating rate calculation period amounts or for specifying a known calculation period amount or known amount schedule. ]]
    type CalculationPeriodAmount {
       [[ The parameters used in the calculation of fixed or floaring rate calculation period amounts. ]]
@@ -3981,7 +3982,7 @@ namespace org.fpml {
       [[ The known calculation period amount or a known amount schedule expressed as explicit known amounts and dates. In the case of a schedule, the step dates may be subject to adjustment in accordance with any adjustments specified in calculationPeriodDatesAdjustments. ]]
       knownAmountSchedule : AmountSchedule?
    }
-   
+
    [[ A type defining the parameters used to generate the calculation period dates schedule, including the specification of any initial or final stub calculation periods. A calculation perod schedule consists of an optional initial stub calculation period, one or more regular calculation periods and an optional final stub calculation period. In the absence of any initial or final stub calculation periods, the regular part of the calculation period schedule is assumed to be between the effective date and the termination date. No implicit stubs are allowed, i.e. stubs must be explicitly specified using an appropriate combination of firstPeriodStateDate, firstRegularPeriodStartDate and lastRegularPeriodEndDate. ]]
    type CalculationPeriodDates {
       [[ The business day convention to apply to each calculation period end date if it would otherwise fall on a day that is not a business day in the specified financial business centers. ]]
@@ -4000,7 +4001,7 @@ namespace org.fpml {
       calculationPeriodFrequency : CalculationPeriodFrequency
       @lang.taxi.xml.XmlAttribute id : org.w3.ID
    }
-   
+
    [[ A type defining the right of a party to cancel a swap transaction on the specified exercise dates. The provision is for 'walkaway' cancellation (i.e. the fair value of the swap is not paid). A fee payable on exercise can be specified. ]]
    type CancelableProvision {
       [[ An placeholder for the actual option exercise definitions. ]]
@@ -4016,13 +4017,13 @@ namespace org.fpml {
       [[ An initial fee for the cancelable option. ]]
       initialFee : SimplePayment?
    }
-   
+
    [[ A type to define the adjusted dates for a cancelable provision on a swap transaction. ]]
    type CancelableProvisionAdjustedDates {
       [[ The adjusted dates for an individual cancellation date. ]]
       cancellationEvent : CancellationEvent
    }
-   
+
    [[ The adjusted dates for a specific cancellation date, including the adjusted exercise date and adjusted termination date. ]]
    type CancellationEvent {
       [[ The date on which option exercise takes place. This date should already be adjusted for any applicable business day convention. ]]
@@ -4031,7 +4032,7 @@ namespace org.fpml {
       adjustedEarlyTerminationDate : Date
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type to define business date convention adjustment to final payment period per leg. ]]
    type FinalCalculationPeriodDateAdjustment {
       [[ Reference to the unadjusted cancellation effective dates. ]]
@@ -4041,20 +4042,20 @@ namespace org.fpml {
       [[ Override business date convention. This takes precedence over leg level information. ]]
       businessDayConvention : BusinessDayConventionEnum
    }
-   
+
    [[ Reference to relevant underlying date. ]]
    type RelevantUnderlyingDateReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ Reference to an InterestRateStream component. ]]
    type InterestRateStreamReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type defining an interest rate cap, floor, or cap/floor strategy (e.g. collar) product. ]]
    type CapFloor inherits org.fpml.Product
-   
+
    [[ A type defining the components specifiying an interest rate stream, including both a parametric and cashflow representation for the stream of payments. ]]
    type InterestRateStream inherits org.fpml.Leg {
       [[ The calculation periods dates schedule. ]]
@@ -4076,7 +4077,7 @@ namespace org.fpml {
       [[ An interest rate derivative formula. ]]
       formula : Formula?
    }
-   
+
    [[ A type defining parameters used to generate the payment dates schedule, including the specification of early or delayed payments. Payment dates are determined relative to the calculation period dates or the reset dates. ]]
    type PaymentDates {
       [[ The frequency at which regular payment dates occur. If the payment frequency is equal to the frequency defined in the calculation period dates component then one calculation period contributes to each payment amount. If the payment frequency is less frequent than the frequency defined in the calculation period dates component then more than one calculation period will contribute to the payment amount. A payment frequency more frequent than the calculation period frequency or one that is not a multiple of the calculation period frequency is invalid. If the payment frequency is of value T (term), the period is defined by the swap\swapStream\calculationPerioDates\effectiveDate and the swap\swapStream\calculationPerioDates\terminationDate. ]]
@@ -4093,17 +4094,17 @@ namespace org.fpml {
       paymentDatesAdjustments : BusinessDayAdjustments
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ Reference to a reset dates component. ]]
    type ResetDatesReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ Reference to a Valuation dates node. ]]
    type ValuationDatesReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type defining the parameters used to generate the reset dates schedule and associated fixing dates. The reset dates are determined relative to the calculation periods schedules dates. ]]
    type ResetDates {
       [[ A pointer style reference to the associated calculation period dates component defined elsewhere in the document. ]]
@@ -4121,13 +4122,13 @@ namespace org.fpml {
       resetDatesAdjustments : BusinessDayAdjustments
       @lang.taxi.xml.XmlAttribute id : org.w3.ID
    }
-   
+
    [[ A type defining how the initial or final stub calculation period amounts is calculated. For example, the rate to be applied to the initial or final stub calculation period may be the linear interpolation of two different tenors for the floating rate index specified in the calculation period amount component, e.g. A two month stub period may used the linear interpolation of a one month and three month floating rate. The different rate tenors would be specified in this component. Note that a maximum of two rate tenors can be specified. If a stub period uses a single index tenor and this is the same as that specified in the calculation period amount component then the initial stub or final stub component, as the case may be, must not be included. ]]
    type StubCalculationPeriodAmount {
       [[ A pointer style reference to the associated calculation period dates component defined elsewhere in the document. ]]
       calculationPeriodDatesReference : CalculationPeriodDatesReference
    }
-   
+
    [[ A type defining the cashflow representation of a swap trade. ]]
    type Cashflows {
       [[ A true/false flag to indicate whether the cashflows match the parametric definition of the stream, i.e. whether the cashflows could be regenerated from the parameters without loss of information. ]]
@@ -4137,7 +4138,7 @@ namespace org.fpml {
       [[ The adjusted payment date and associated calculation period parameters required to calculate the actual or projected payment amount. A list of payment calculation period elements may be ordered in the document by ascending adjusted payment date. An FpML document containing an unordered list of payment calculation periods is still regarded as a conformant document. ]]
       paymentCalculationPeriod : PaymentCalculationPeriod?
    }
-   
+
    [[ A type defining a principal exchange amount and adjusted exchange date. The type forms part of the cashflow representation of a swap stream. ]]
    type PrincipalExchange {
       unadjustedPrincipalExchangeDate : Date?
@@ -4151,7 +4152,7 @@ namespace org.fpml {
       presentValuePrincipalExchangeAmount : Money?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type defining the adjusted payment date and associated calculation period parameters required to calculate the actual or projected payment amount. This type forms part of the cashflow representation of a swap stream. ]]
    type PaymentCalculationPeriod {
       unadjustedPaymentDate : Date?
@@ -4167,7 +4168,7 @@ namespace org.fpml {
       [[ Attribute that can be used to reference the yield curve used to estimate the discount factor. ]]
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF?
    }
-   
+
    [[ A type defining the specification of settlement terms, occuring when the settlement currency is different to the notional currency of the trade. ]]
    type SettlementProvision {
       [[ The currency that stream settles in (to support swaps that settle in a currency different from the notional currency). ]]
@@ -4175,7 +4176,7 @@ namespace org.fpml {
       [[ The specification of the non-deliverable settlement provision. ]]
       nonDeliverableSettlement : NonDeliverableSettlement?
    }
-   
+
    [[ A type defining the parameters used when the reference currency of the swapStream is non-deliverable. ]]
    type NonDeliverableSettlement {
       [[ The currency in which the swap stream is denominated. ]]
@@ -4185,33 +4186,33 @@ namespace org.fpml {
       [[ A type defining the parameters to get a new quote when a settlement rate option is disrupted. ]]
       priceSourceDisruption : PriceSourceDisruption?
    }
-   
+
    [[ A type that is extending the Offset structure for providing the ability to specify an FX fixing date as an offset to dates specified somewhere else in the document. ]]
    type FxFixingDate inherits org.fpml.Offset
-   
+
    [[ A type to provide the ability to point to multiple payment nodes in the document through the unbounded paymentDatesReference. ]]
    type DateRelativeToPaymentDates {
       [[ A set of href pointers to payment dates defined somewhere else in the document. ]]
       paymentDatesReference : PaymentDatesReference
    }
-   
+
    [[ Reference to a payment dates structure. ]]
    type PaymentDatesReference inherits org.fpml.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
-   
+
    [[ A type to provide the ability to point to multiple payment nodes in the document through the unbounded paymentDatesReference. ]]
    type DateRelativeToCalculationPeriodDates {
       [[ A set of href pointers to calculation period dates defined somewhere else in the document. ]]
       calculationPeriodDatesReference : CalculationPeriodDatesReference
    }
-   
+
    [[ A type defining the parameters used to get a price quote to replace the settlement rate option that is disrupted. ]]
    type PriceSourceDisruption {
       [[ The method, prioritzed by the order it is listed in this element, to get a replacement rate for the disrupted settlement rate option. ]]
       fallbackReferencePrice : FallbackReferencePrice
    }
-   
+
    [[ The method, prioritzed by the order it is listed in this element, to get a replacement rate for the disrupted settlement rate option. ]]
    type FallbackReferencePrice {
       [[ Specifies how long to wait to get a quote from a settlement rate option upon a price source disruption ]]
@@ -4223,18 +4224,18 @@ namespace org.fpml {
       [[ The calculation agent will decide the rate. ]]
       calculationAgentDetermination : CalculationAgent?
    }
-   
+
    [[ Specifies how long to wait to get a quote from a settlement rate option upon a price source disruption. ]]
    type ValuationPostponement {
       [[ The maximum number of days to wait for a quote from the disrupted settlement rate option before proceding to the next method. ]]
       maximumDaysOfPostponement : org.w3.positiveInteger
    }
-   
+
    [[ A type defining an early termination provision for a swap. This early termination is at fair value, i.e. on termination the fair value of the product must be settled between the parties. ]]
    type EarlyTerminationProvision {
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type to define an early termination provision for which exercise is mandatory. ]]
    type MandatoryEarlyTermination {
       [[ The early termination date associated with a mandatory early termination of a swap. ]]
@@ -4247,7 +4248,7 @@ namespace org.fpml {
       mandatoryEarlyTerminationAdjustedDates : MandatoryEarlyTerminationAdjustedDates?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type to define the cash settlement terms for a product where cash settlement is applicable. ]]
    type CashSettlement {
       [[ The time of the cash settlement valuation date when the cash settlement amount will be determined according to the cash settlement method if the parties have not otherwise been able to agree the cash settlement amount. ]]
@@ -4258,7 +4259,7 @@ namespace org.fpml {
       cashSettlementPaymentDate : CashSettlementPaymentDate?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type defining the cash settlement payment date(s) as either a set of explicit dates, together with applicable adjustments, or as a date relative to some other (anchor) date, or as any date in a range of contiguous business days. ]]
    type CashSettlementPaymentDate {
       [[ A series of dates that shall be subject to adjustment if they would otherwise fall on a day that is not a business day in the specified business centers, together with the convention for adjusting the date. ]]
@@ -4269,7 +4270,7 @@ namespace org.fpml {
       businessDateRange : BusinessDateRange?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type defining the parameters necessary for each of the ISDA cash price methods for cash settlement. ]]
    type CashPriceMethod {
       [[ A container for a set of reference institutions. These reference institutions may be called upon to provide rate quotations as part of the method to determine the applicable cash settlement amount. If institutions are not specified, it is assumed that reference institutions will be agreed between the parties on the exercise date, or in the case of swap transaction to which mandatory early termination is applicable, the cash settlement valuation date. ]]
@@ -4279,7 +4280,7 @@ namespace org.fpml {
       [[ Which rate quote is to be observed, either Bid, Mid, Offer or Exercising Party Pays. The meaning of Exercising Party Pays is defined in the 2000 ISDA Definitions, Section 17.2. Certain Definitions Relating to Cash Settlement, paragraph (j) ]]
       quotationRateType : QuotationRateTypeEnum
    }
-   
+
    [[ A type defining the parameters required for each of the ISDA defined yield curve methods for cash settlement. ]]
    type YieldCurveMethod {
       [[ The method for obtaining a settlement rate. This may be from some information source (e.g. Reuters) or from a set of reference banks. ]]
@@ -4287,7 +4288,7 @@ namespace org.fpml {
       [[ Which rate quote is to be observed, either Bid, Mid, Offer or Exercising Party Pays. The meaning of Exercising Party Pays is defined in the 2000 ISDA Definitions, Section 17.2. Certain Definitions Relating to Cash Settlement, paragraph (j) ]]
       quotationRateType : QuotationRateTypeEnum
    }
-   
+
    type CrossCurrencyMethod {
       [[ A container for a set of reference institutions. These reference institutions may be called upon to provide rate quotations as part of the method to determine the applicable cash settlement amount. If institutions are not specified, it is assumed that reference institutions will be agreed between the parties on the exercise date, or in the case of swap transaction to which mandatory early termination is applicable, the cash settlement valuation date. ]]
       cashSettlementReferenceBanks : CashSettlementReferenceBanks?
@@ -4296,7 +4297,7 @@ namespace org.fpml {
       [[ Which rate quote is to be observed, either Bid, Mid, Offer or Exercising Party Pays. The meaning of Exercising Party Pays is defined in the 2000 ISDA Definitions, Section 17.2. Certain Definitions Relating to Cash Settlement, paragraph (j) ]]
       quotationRateType : QuotationRateTypeEnum
    }
-   
+
    [[ A type defining the adjusted dates associated with a mandatory early termination provision. ]]
    type MandatoryEarlyTerminationAdjustedDates {
       [[ The early termination date that is applicable if an early termination provision is exercised. This date should already be adjusted for any applicable business day convention. ]]
@@ -4306,7 +4307,7 @@ namespace org.fpml {
       [[ The date on which the cash settlement amount is paid. This date should already be adjusted for any applicable business dat convention. ]]
       adjustedCashSettlementPaymentDate : Date
    }
-   
+
    [[ A type defining an early termination provision where either or both parties have the right to exercise. ]]
    type OptionalEarlyTermination {
       [[ If optional early termination is not available to both parties then this component specifies the buyer and seller of the option. ]]
@@ -4324,16 +4325,16 @@ namespace org.fpml {
       [[ An early termination provision to terminate the trade at fair value where one or both parties have the right to decide on termination. ]]
       optionalEarlyTerminationAdjustedDates : OptionalEarlyTerminationAdjustedDates?
    }
-   
+
    [[ A type describing the buyer and seller of an option. ]]
    type SinglePartyOption
-   
+
    [[ A type defining the adjusted dates associated with an optional early termination provision. ]]
    type OptionalEarlyTerminationAdjustedDates {
       [[ The adjusted dates associated with an individual earley termination date. ]]
       earlyTerminationEvent : EarlyTerminationEvent
    }
-   
+
    [[ A type to define the adjusted dates associated with an early termination provision. ]]
    type EarlyTerminationEvent {
       [[ The date on which option exercise takes place. This date should already be adjusted for any applicable business day convention. ]]
@@ -4348,7 +4349,7 @@ namespace org.fpml {
       adjustedExerciseFeePaymentDate : Date?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ This defines the time interval to the start of the exercise period, i.e. the earliest exercise date, and the frequency of subsequent exercise dates (if any). ]]
    type ExercisePeriod {
       [[ The time interval to the first (and possibly only) exercise date in the exercise period. ]]
@@ -4357,7 +4358,7 @@ namespace org.fpml {
       exerciseFrequency : Period?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type defining the adjusted dates associated with a particular exercise event. ]]
    type ExerciseEvent {
       [[ The date on which option exercise takes place. This date should already be adjusted for any applicable business day convention. ]]
@@ -4372,7 +4373,7 @@ namespace org.fpml {
       adjustedExerciseFeePaymentDate : Date?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type defining an option to extend an existing swap transaction on the specified exercise dates for a term ending on the specified new termination date. ]]
    type ExtendibleProvision {
       [[ An placeholder for the actual option exercise definitions. ]]
@@ -4384,13 +4385,13 @@ namespace org.fpml {
       [[ The adjusted dates associated with an extendible provision. These dates have been adjusted for any applicable business day convention. ]]
       extendibleProvisionAdjustedDates : ExtendibleProvisionAdjustedDates?
    }
-   
+
    [[ A type defining the adjusted dates associated with a provision to extend a swap. ]]
    type ExtendibleProvisionAdjustedDates {
       [[ The adjusted dates associated with a single extendible exercise date. ]]
       extensionEvent : ExtensionEvent
    }
-   
+
    [[ A type to define the adjusted dates associated with an individual extension event. ]]
    type ExtensionEvent {
       [[ The date on which option exercise takes place. This date should already be adjusted for any applicable business day convention. ]]
@@ -4399,30 +4400,30 @@ namespace org.fpml {
       adjustedExtendedTerminationDate : Date
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
-   
+
    [[ A type defining a Forward Rate Agreement (FRA) product. ]]
    type Fra inherits org.fpml.Product
-   
+
    [[ A type defining the components specifiying an Inflation Rate Calculation ]]
    type InflationRateCalculation inherits org.fpml.FloatingRateCalculation
-   
+
    [[ A type defining swap streams and additional payments between the principal parties involved in the swap. ]]
    type Swap inherits org.fpml.Product
-   
+
    [[ Additional terms to a swap contract. ]]
    type SwapAdditionalTerms {
       [[ Reference to a bond underlyer to represent an asset swap or Condition Precedent Bond. ]]
       bondReference : BondReference?
    }
-   
+
    [[ A type to define an option on a swap. ]]
    type Swaption inherits org.fpml.Product
-   
+
    [[ A type describing the adjusted dates associated with swaption exercise and settlement. ]]
    type SwaptionAdjustedDates {
       [[ The adjusted dates associated with an individual swaption exercise date. ]]
       exerciseEvent : ExerciseEvent
    }
-   
-   
+
+
 }

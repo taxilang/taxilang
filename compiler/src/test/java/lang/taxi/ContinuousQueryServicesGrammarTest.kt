@@ -1,11 +1,12 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
-import lang.taxi.types.QueryMode
+import io.kotest.core.spec.style.DescribeSpec
+import lang.taxi.query.QueryMode
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object ContinuousQueryServicesGrammarSpec : Spek({
+class ContinuousQueryServicesGrammarSpec : DescribeSpec({
    describe("continuous queries") {
       describe("service grammar") {
          it("should not throw a compiler error if Stream is imported") {
@@ -49,7 +50,7 @@ object ContinuousQueryServicesGrammarSpec : Spek({
             """.compiledQueries()
             val query = queries.first()
             query.queryMode.should.equal(QueryMode.STREAM)
-            query.typesToFind.first().type.parameterizedName.should.equal("lang.taxi.Stream<Person>")
+            query.typesToFind.first().typeName.parameterizedName.should.equal("lang.taxi.Stream<Person>")
          }
       }
    }

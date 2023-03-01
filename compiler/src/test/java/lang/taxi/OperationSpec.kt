@@ -1,12 +1,15 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.booleans.shouldBeTrue
 import lang.taxi.services.FilterCapability
 import lang.taxi.services.SimpleQueryCapability
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object OperationSpec : Spek({
+class OperationSpec : DescribeSpec({
    describe("Grammar for operations") {
       val taxi = """
          type TradeId inherits String
@@ -170,7 +173,7 @@ count
             }
          """.validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("BadType is not defined")
+         errors.first().detailMessage.should.equal(ErrorMessages.unresolvedType("BadType"))
       }
       it("should give a compilation error for an unknown capability") {
          val errors = """
@@ -203,16 +206,17 @@ count
       }
 
       it("should accept function names with findAll keyword") {
-         val errors = """
+         val service = """
             model Person {}
             service PersonService {
-               operation `findAll`(): Person[]
+               operation findAll(): Person[]
+               operation find(): Person[]
             }
-         """.validated()
-         errors.should.have.size(0)
+         """.compiled()
+            .service("PersonService")
+         service.containsOperation("findAll").shouldBeTrue()
+         service.containsOperation("find").shouldBeTrue()
       }
-
-
    }
 
 })

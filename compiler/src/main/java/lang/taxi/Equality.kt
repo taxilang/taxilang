@@ -1,6 +1,8 @@
 package lang.taxi
 
 import nl.pvdberg.hashkode.HashKode
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 
 class Equality<T : Any>(val target: T, vararg val properties: T.() -> Any?) {
@@ -11,6 +13,8 @@ class Equality<T : Any>(val target: T, vararg val properties: T.() -> Any?) {
         if (other.javaClass != target.javaClass) return false
         return properties.all { it.invoke(target) == it.invoke(other as T) }
     }
+
+   private val atomicHash = AtomicReference<Int>()
 
     fun hash(): Int {
         val fields = properties

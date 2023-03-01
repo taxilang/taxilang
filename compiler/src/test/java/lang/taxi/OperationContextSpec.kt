@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
 import lang.taxi.linter.LinterRuleConfiguration
 import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
@@ -13,14 +14,15 @@ import lang.taxi.types.QualifiedName
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object OperationContextSpec : Spek({
+class OperationContextSpec : DescribeSpec({
    describe("declaring context to operations") {
       val taxi = """
          type TransactionEventDateTime inherits Instant
          model Trade {
             tradeId : TradeId inherits String
             tradeDate : TradeDate inherits Instant
-            orderDateTime : TransactionEventDateTime( @format = "yyyy-MM-dd HH:mm:ss.SSSSSSS")
+            @Format( "yyyy-MM-dd HH:mm:ss.SSSSSSS")
+            orderDateTime : TransactionEventDateTime
          }
          type EmployeeCode inherits String
       """.trimIndent()
@@ -37,7 +39,7 @@ object OperationContextSpec : Spek({
             val constraint = operation.contract!!.returnTypeConstraints.first() as PropertyToParameterConstraint
             constraint.operator.should.equal(Operator.EQUAL)
             val propertyIdentifier = constraint.propertyIdentifier as PropertyTypeIdentifier
-            propertyIdentifier.type.parameterizedName.should.equal("TradeId")
+            propertyIdentifier.type.toQualifiedName().parameterizedName.should.equal("TradeId")
 
             val valueExpression = constraint.expectedValue as RelativeValueExpression
             valueExpression.path.path.should.equal("id")
@@ -124,7 +126,7 @@ object OperationContextSpec : Spek({
          }
 
          it("compiles return type with multiple property params") {
-            val operation = """
+            val schema =  """
          $taxi
          service TradeService {
             operation getTradesAfter(startDate:Instant, endDate:Instant):Trade[](
@@ -132,11 +134,13 @@ object OperationContextSpec : Spek({
                TradeDate < endDate
             )
          }
-         """.compiled().service("TradeService").operation("getTradesAfter")
+         """.compiled()
+
+               val operation = schema.service("TradeService").operation("getTradesAfter")
             val constraints = operation.contract!!.returnTypeConstraints
             constraints.should.contain(
                PropertyToParameterConstraint(
-                  PropertyTypeIdentifier(QualifiedName.from("TradeDate")),
+                  PropertyTypeIdentifier(schema.type(QualifiedName.from("TradeDate"))),
                   Operator.GREATER_THAN_OR_EQUAL_TO,
                   RelativeValueExpression(AttributePath.from("startDate")),
                   emptyList()
@@ -144,7 +148,7 @@ object OperationContextSpec : Spek({
             )
             constraints.should.contain(
                PropertyToParameterConstraint(
-                  PropertyTypeIdentifier(QualifiedName.from("TradeDate")),
+                  PropertyTypeIdentifier(schema.type(QualifiedName.from("TradeDate"))),
                   Operator.LESS_THAN,
                   RelativeValueExpression(AttributePath.from("endDate")),
                   emptyList()

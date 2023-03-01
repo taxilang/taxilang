@@ -3,14 +3,14 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>org.taxilang</groupId>
-      <version>1.33.6</version>
+      <version>1.35.0</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
    <artifactId>taxi-plugin-api</artifactId>
 
    <properties>
-      <pf4j.version>3.7.0</pf4j.version>
+      <pf4j.version>3.9.0</pf4j.version>
    </properties>
 
    <dependencies>

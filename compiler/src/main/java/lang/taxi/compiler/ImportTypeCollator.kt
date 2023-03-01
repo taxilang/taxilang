@@ -5,6 +5,7 @@ import lang.taxi.TaxiDocument
 import lang.taxi.Tokens
 import lang.taxi.types.ArrayType
 import lang.taxi.types.ImportableToken
+import lang.taxi.types.MapType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.StreamType
 import lang.taxi.types.UserType
@@ -64,6 +65,9 @@ internal class ImportedTypeCollator(
       }
       if (StreamType.isStreamTypeName(name)) {
          return StreamType.untyped()
+      }
+      if (MapType.isMapTypeName(name)) {
+         return MapType.untyped()
       }
 
       val importableToken = this.importSources.firstOrNull { it.containsImportable(name) }?.importableToken(name)

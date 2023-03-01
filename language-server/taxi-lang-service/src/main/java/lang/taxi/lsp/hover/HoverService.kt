@@ -13,8 +13,8 @@ class HoverService {
     fun hover(compilationResult: CompilationResult, lastSuccessfulCompilationResult: CompilationResult?, params: HoverParams): CompletableFuture<Hover> {
         val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.normalizedUriPath())
         val qualifiedName = when (context) {
-            is TaxiParser.TypeTypeContext -> compilationResult.compiler.lookupTypeByName(context)
-            is TaxiParser.ListOfInheritedTypesContext -> compilationResult.compiler.lookupTypeByName(context.typeType(0))
+            is TaxiParser.TypeReferenceContext -> compilationResult.compiler.lookupTypeByName(context)
+            is TaxiParser.ListOfInheritedTypesContext -> compilationResult.compiler.lookupTypeByName(context.typeReference(0))
             else -> null
         }
 

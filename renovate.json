@@ -1,10 +1,14 @@
 {
    "extends": [
-      "config:base"
+      "config:base",
+      ":prConcurrentLimitNone",
+      ":prHourlyLimitNone"
    ],
+   "rebaseWhen": "conflicted",
    "packageRules": [
       {
          "updateTypes": [
+            "minor",
             "patch",
             "pin",
             "digest"
@@ -12,8 +16,10 @@
          "automerge": true
       }
    ],
-   "prConcurrentLimit": 2,
    "reviewers": [
-      "RoopeHakulinen"
-   ]
+      "martypitt"
+   ],
+   "npm": {
+      "enabled": false
+   }
 }
