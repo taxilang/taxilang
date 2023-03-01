@@ -98,8 +98,8 @@ release-major:
    when: manual
 
 release-minor:
-   variables:
-      GIT_STRATEGY: none
+#   variables:
+   #      GIT_STRATEGY: none
    stage: trigger-release
    script:
       - *git_setup
