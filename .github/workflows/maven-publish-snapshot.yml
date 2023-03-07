@@ -26,7 +26,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
-          gpg-private-key: ${{ secrets.GPG_KEY }} # Value of the GPG private key to import
+          gpg-private-key: ${{ secrets.badkey }} # Value of the GPG private key to import
       - name: Build with Maven
         run: mvn -B deploy --file pom.xml
 
