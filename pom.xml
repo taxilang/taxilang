@@ -420,46 +420,13 @@
                </execution>
             </executions>
          </plugin>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.5</version>
-            <executions>
-               <execution>
-                  <id>sign-artifacts</id>
-                  <phase>verify</phase>
-                  <goals>
-                     <goal>sign</goal>
-                  </goals>
-               </execution>
-            </executions>
-         </plugin>
       </plugins>
    </build>
-   <!--   <distributionManagement>-->
-   <!--      <repository>-->
-   <!--         <id>repo.vyne.co</id>-->
-   <!--         <url>s3://repo.vyne.co/release</url>-->
-   <!--      </repository>-->
-   <!--      <snapshotRepository>-->
-   <!--         <id>repo.vyne.co</id>-->
-   <!--         <url>s3://repo.vyne.co/snapshot</url>-->
-   <!--      </snapshotRepository>-->
-   <!--   </distributionManagement>-->
-   <distributionManagement>
-      <snapshotRepository>
-         <id>ossrh</id>
-         <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-      </snapshotRepository>
-   </distributionManagement>
 
-   <!--   <repositories>-->
-   <!--      <repository>-->
-   <!--         <id>vyne-releases</id>-->
-   <!--         <url>https://repo.vyne.co/release</url>-->
-   <!--      </repository>-->
-   <!--   </repositories>-->
-
+   <!-- Publish to either maven central, or orbital repo.
+   Publishing to maven central is preferred, but requires GPG installed in the gitlab docker image,
+   which right now isn't working
+   -->
    <profiles>
       <profile>
          <id>maven-central</id>
@@ -474,6 +441,20 @@
          </distributionManagement>
          <build>
             <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-gpg-plugin</artifactId>
+                  <version>1.5</version>
+                  <executions>
+                     <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                           <goal>sign</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
                <plugin>
                   <groupId>org.sonatype.plugins</groupId>
                   <artifactId>nexus-staging-maven-plugin</artifactId>

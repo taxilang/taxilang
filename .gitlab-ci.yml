@@ -126,7 +126,7 @@ publish-snapshot-jars:
 #      Need gpg for maven signing
       - 'apk add gnupg'
       - gpg -v --import <(echo "$GPG_PRIVATE_KEY")
-      - 'mvn $MAVEN_CLI_OPTS deploy -P snapshot-release'
+      - 'mvn $MAVEN_CLI_OPTS deploy -P snapshot-release,orbital-repo'
    services:
       -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
          alias: docker
@@ -164,7 +164,7 @@ publish-release:
    script:
       # Don't run tests on master, as already passed on develop
       # Use -DskipTests, but not -Dmaven.test.skip=true as we need to compile the tests (as other projects have test dependencies), but not run them.
-      - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P release'
+      - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P release,orbital-repo'
       # Use jreleaser to publish to sdkman, and others
       - 'cd taxi-cli'
       - 'mvn jreleaser:full-release'
