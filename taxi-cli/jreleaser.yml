@@ -41,9 +41,9 @@ upload:
       taxi:
          active: ALWAYS
          region: eu-west-1
-         bucket: repo.orbital.com
+         bucket: repo.orbitalhq.com
          path: release/org/taxilang/taxi-cli/{{projectVersion}}/{{artifactFile}}
-         downloadUrl: https://repo.orbital.com/release/org/taxilang/taxi-cli/{{projectVersion}}/{{artifactFile}}
+         downloadUrl: https://repo.orbitalhq.com/release/org/taxilang/taxi-cli/{{projectVersion}}/{{artifactFile}}
 
 packagers:
    #
@@ -60,5 +60,5 @@ packagers:
       # https://github.com/jreleaser/jreleaser/discussions/875#discussioncomment-3267934
       command: MAJOR
 
-      downloadUrl: https://repo.orbital.com/release/org/taxilang/taxi-cli/{{projectVersion}}/{{artifactFile}}
+      downloadUrl: https://repo.orbitalhq.com/release/org/taxilang/taxi-cli/{{projectVersion}}/{{artifactFile}}
 
