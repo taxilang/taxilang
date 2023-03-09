@@ -167,7 +167,7 @@ publish-release:
       - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P release,orbital-repo'
       # Use jreleaser to publish to sdkman, and others
       - 'cd taxi-cli'
-      - 'mvn jreleaser:full-release'
+      - 'mvn jreleaser:full-release -X'
    only:
       - master
    artifacts:
