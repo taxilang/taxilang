@@ -67,7 +67,7 @@ class TypeAliasRegister private constructor(classes: List<Class<*>> = emptyList(
       this.typesWithMeta.putAll(classesAndAliases)
    }
 
-   fun findDataType(parameter: KParameter?): DataType? {
+   fun findDataType(parameter: KParameter?): AnnotatedTypeAlias? {
       if (parameter == null) {
          return null
       }
@@ -76,7 +76,7 @@ class TypeAliasRegister private constructor(classes: List<Class<*>> = emptyList(
       }
    }
 
-   fun findDataType(type: KType): DataType? {
+   fun findDataType(type: KType): AnnotatedTypeAlias? {
 
       return TypeAliasNameFinder.findTypeAliasName(type)?.let { typeAliasName ->
          val nameParts = typeAliasName.split(".")
@@ -95,7 +95,7 @@ class TypeAliasRegister private constructor(classes: List<Class<*>> = emptyList(
       }
    }
 
-   fun findDataType(kotlinProperty: KCallable<*>?): DataType? {
+   fun findDataType(kotlinProperty: KCallable<*>?): AnnotatedTypeAlias? {
       if (kotlinProperty == null) return null
       val typeAliasName = when (kotlinProperty) {
          is KProperty<*> -> TypeAliasNameFinder.findTypeAliasName(kotlinProperty)
@@ -104,9 +104,9 @@ class TypeAliasRegister private constructor(classes: List<Class<*>> = emptyList(
       return findDataType(typeAliasName)
    }
 
-   private fun findDataType(typeAliasName: String): DataType? {
+   private fun findDataType(typeAliasName: String): AnnotatedTypeAlias? {
       val annotatedType = typesWithMeta[typeAliasName]
-      return annotatedType?.annotation
+      return annotatedType
    }
 
 

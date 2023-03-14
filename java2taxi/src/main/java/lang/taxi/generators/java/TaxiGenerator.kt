@@ -21,7 +21,10 @@ class TaxiGenerator(
    private val generatedTypes = mutableSetOf<Type>()
    private val services = mutableSetOf<lang.taxi.services.Service>()
 
+   private val extensions = mutableListOf<TaxiGeneratorExtension>(DefaultTaxiExtension)
+
    fun addExtension(extension: TaxiGeneratorExtension): TaxiGenerator {
+      this.extensions.add(extension)
       serviceMapper = serviceMapper
          .addServiceExtensions(extension.serviceMapperExtensions)
          .addOperationExtensions(extension.operationMapperExtensions)
@@ -35,11 +38,12 @@ class TaxiGenerator(
          ConfigurationBuilder()
             .forPackages(packageName)
       )
-      val dataTypes = reflections.getTypesAnnotatedWith(DataType::class.java)
-         .filter { it.`package`.name.startsWith(packageName) }
-      val services = reflections.getTypesAnnotatedWith(Service::class.java)
-         .filter { it.`package`.name.startsWith(packageName) }
-      val classes = dataTypes + services
+      val classes = extensions.flatMap {
+         it.getClassesToScan(
+            reflections, packageName
+         )
+      }
+
       return forClasses(classes.toList())
    }
 
@@ -61,17 +65,27 @@ class TaxiGenerator(
    }
 
    private fun generateTaxiServices() {
-      services.addAll(classesWithAnnotation(Service::class.java)
-         .flatMap { javaClass ->
-            serviceMapper.getTaxiServices(javaClass, this.typeMapper, this.generatedTypes)
-         })
+      val serviceClassesToGenerate = extensions.flatMap { extension ->
+         classes.filter { extension.isServiceType(it) }
+      }
+      val generatedServices = serviceClassesToGenerate.flatMap { clazz ->
+         serviceMapper.getTaxiServices(
+            clazz,
+            this.typeMapper,
+            this.generatedTypes
+         )
+      }
+      services.addAll(generatedServices)
    }
 
    private fun generateTaxiTypes() {
-      classesWithAnnotation(DataType::class.java)
-         .forEach { javaClass ->
-            typeMapper.getTaxiType(javaClass, generatedTypes)
-         }
+      val typeClassesToGenerate = extensions.flatMap { extension ->
+         classes.filter { extension.shouldGenerateTaxiType(it) }
+      }
+
+      typeClassesToGenerate.forEach { clazz ->
+         typeMapper.getTaxiType(clazz, generatedTypes)
+      }
    }
 
    private fun classesWithAnnotation(annotation: Class<out Annotation>) = this.classes
@@ -91,6 +105,22 @@ class TaxiGenerator(
          )
       )
    }
+}
 
+object DefaultTaxiExtension : TaxiGeneratorExtension {
+   override fun getClassesToScan(reflections: Reflections, packageName: String): List<Class<*>> {
+      val dataTypes = reflections.getTypesAnnotatedWith(DataType::class.java)
+         .filter { it.`package`.name.startsWith(packageName) }
+      val services = reflections.getTypesAnnotatedWith(Service::class.java)
+         .filter { it.`package`.name.startsWith(packageName) }
+      return (dataTypes + services).distinct()
+   }
 
+   override val isServiceType: (Class<*>) -> Boolean
+      get() {
+         return { clazz -> clazz.isAnnotationPresent(Service::class.java) }
+      }
+
+   override val shouldGenerateTaxiType: (Class<*>) -> Boolean
+      get() = { clazz -> clazz.isAnnotationPresent(DataType::class.java) }
 }

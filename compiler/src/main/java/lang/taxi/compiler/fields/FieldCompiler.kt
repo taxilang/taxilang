@@ -497,7 +497,8 @@ class FieldCompiler(
             tokenProcessor.mapConstraints(
                fieldDeclaration?.parameterConstraint()?.expressionGroup(),
                fieldType.type,
-               this
+               this,
+               this.resolutionContext.activeScopes
             ).map { constraints ->
                Field(
                   name = TokenProcessor.unescape(member.fieldDeclaration().identifier().text),
