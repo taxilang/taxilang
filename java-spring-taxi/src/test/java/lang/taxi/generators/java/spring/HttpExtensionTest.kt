@@ -4,8 +4,6 @@ import lang.taxi.annotations.DataType
 import lang.taxi.annotations.Namespace
 import lang.taxi.annotations.Operation
 import lang.taxi.annotations.Service
-import lang.taxi.generators.java.DefaultServiceMapper
-import lang.taxi.generators.java.TaxiGenerator
 import lang.taxi.testing.TestHelpers
 import org.junit.jupiter.api.Test
 import org.springframework.web.bind.annotation.GetMapping
@@ -48,8 +46,7 @@ class HttpExtensionTest {
 
    @Test
    fun given_getRequestWithPathVariables_then_taxiAnnotationsAreGeneratedCorrectly() {
-      val taxiDef = TaxiGenerator()
-         .addExtension(SpringMvcExtension.forBaseUrl("http://my-app/"))
+      val taxiDef = SpringTaxiGenerator.forBaseUrl("http://my-app/")
          .forClasses(CreditCostService::class.java)
          .generateAsStrings()
 

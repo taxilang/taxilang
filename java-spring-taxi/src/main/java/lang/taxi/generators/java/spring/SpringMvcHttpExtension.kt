@@ -31,7 +31,7 @@ class SpringMvcExtension(private val baseUrl: String) : TaxiGeneratorExtension {
       get() = { clazz -> clazz.isAnnotationPresent(RestController::class.java) }
 
    companion object {
-      fun forBaseUrl(baseUrl: String): TaxiGeneratorExtension {
+      internal fun forBaseUrl(baseUrl: String): TaxiGeneratorExtension {
          return SpringMvcExtension(baseUrl)
       }
 

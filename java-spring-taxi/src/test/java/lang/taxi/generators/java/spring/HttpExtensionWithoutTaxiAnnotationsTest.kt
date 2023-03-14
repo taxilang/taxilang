@@ -19,6 +19,7 @@ class HttpExtensionWithoutTaxiAnnotationsTest {
    @Namespace("vyne.demo")
    data class CreditCostResponse(val stuff: String)
 
+   @Namespace("vyne.demo")
    @RestController
    @RequestMapping("/costs")
    class CreditCostService {
