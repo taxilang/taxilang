@@ -2,8 +2,6 @@ package lang.taxi.generators.java.spring
 
 import lang.taxi.annotations.DataType
 import lang.taxi.annotations.Namespace
-import lang.taxi.annotations.Operation
-import lang.taxi.annotations.Service
 import lang.taxi.testing.TestHelpers
 import org.junit.jupiter.api.Test
 import org.springframework.web.bind.annotation.GetMapping
@@ -14,39 +12,34 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal
 
-class HttpExtensionTest {
-
+class HttpExtensionWithoutTaxiAnnotationsTest {
    @Namespace("vyne.demo")
    data class CreditCostRequest(val deets: String)
 
    @Namespace("vyne.demo")
    data class CreditCostResponse(val stuff: String)
 
+   @Namespace("vyne.demo")
    @RestController
    @RequestMapping("/costs")
-   @Service("vyne.demo.CreditCostService")
    class CreditCostService {
-
-
-      @Operation
       @GetMapping("/interestRates/{clientId}")
       fun getInterestRate(@PathVariable("clientId") @DataType("vyne.demo.ClientId") clientId: String): BigDecimal =
          BigDecimal.ONE
 
       // Back off, REST snobs.  Method names are here for testing.
       @PostMapping("/{clientId}/doCalculate")
-      @Operation
       fun calculateCreditCosts(
          @PathVariable("clientId") @DataType("vyne.demo.ClientId") clientId: String,
          @RequestBody request: CreditCostRequest
       ): CreditCostResponse = CreditCostResponse("TODO")
-
    }
 
 
    @Test
    fun given_getRequestWithPathVariables_then_taxiAnnotationsAreGeneratedCorrectly() {
-      val taxiDef = SpringTaxiGenerator.forBaseUrl("http://my-app/")
+      val taxiDef = SpringTaxiGenerator.forBaseUrl("http://my-app")
+//         .addExtension(SpringMvcExtension.forBaseUrl("http://my-app/"))
          .forClasses(CreditCostService::class.java)
          .generateAsStrings()
 
@@ -72,11 +65,6 @@ namespace vyne.demo {
 }
         """.trimIndent()
       TestHelpers.expectToCompileTheSame(taxiDef, expected)
-   }
-
-   @Test
-   fun given_requestBodyPresentOnParam_then_taxiAnnotationIsPresentInSchema() {
-
    }
 
 }

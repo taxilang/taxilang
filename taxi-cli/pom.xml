@@ -4,7 +4,7 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>org.taxilang</groupId>
-      <version>1.36.0</version>
+      <version>1.36.1-SNAPSHOT</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -257,7 +257,7 @@
          <plugin>
             <groupId>org.jreleaser</groupId>
             <artifactId>jreleaser-maven-plugin</artifactId>
-            <version>1.5.0</version>
+            <version>1.4.0</version>
             <configuration>
                <!-- SEE ALSO: jreleaser.yml, defined above -->
                <jreleaser>
