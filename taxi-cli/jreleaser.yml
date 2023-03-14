@@ -40,7 +40,7 @@ upload:
    s3:
       taxi:
          active: ALWAYS
-         region: eu-west-1
+         region: eu-west-2
          bucket: repo.orbitalhq.com
          path: release/org/taxilang/taxi-cli/{{projectVersion}}/{{artifactFile}}
          downloadUrl: https://repo.orbitalhq.com/release/org/taxilang/taxi-cli/{{projectVersion}}/{{artifactFile}}

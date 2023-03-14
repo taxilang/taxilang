@@ -64,7 +64,7 @@ validate:
       - master
       - develop
    script:
-      - 'mvn $MAVEN_CLI_OPTS clean deploy'
+      - 'mvn $MAVEN_CLI_OPTS clean deploy -P orbital-repo'
    services:
       -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
          alias: docker
@@ -114,7 +114,7 @@ release-patch:
    stage: trigger-release
    script:
       - *git_setup
-      - 'mvn gitflow:release -B -DversionDigitToIncrement=$PATCH_RELEASE_DIGIT  -DskipTestProject=true'
+      - 'mvn gitflow:release -B -DversionDigitToIncrement=$PATCH_RELEASE_DIGIT  -DskipTestProject=true -P orbital-repo'
    only:
       - develop
    when: manual
@@ -123,9 +123,9 @@ release-patch:
 publish-snapshot-jars:
    stage: build
    script:
-#      Need gpg for maven signing
-      - 'apk add gnupg'
-      - gpg -v --import <(echo "$GPG_PRIVATE_KEY")
+      #      Need gpg for maven signing
+      #      - 'apk add gnupg'
+      #      - gpg -v --import <(echo "$GPG_PRIVATE_KEY")
       - 'mvn $MAVEN_CLI_OPTS deploy -P snapshot-release,orbital-repo'
    services:
       -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
@@ -167,7 +167,7 @@ publish-release:
       - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P release,orbital-repo'
       # Use jreleaser to publish to sdkman, and others
       - 'cd taxi-cli'
-      - 'mvn jreleaser:full-release -X'
+      - 'mvn jreleaser:full-release -X -P orbital-repo'
    only:
       - master
    artifacts:

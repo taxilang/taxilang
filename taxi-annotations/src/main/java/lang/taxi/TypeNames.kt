@@ -1,8 +1,17 @@
 package lang.taxi
 
-import lang.taxi.annotations.*
-import java.lang.reflect.*
+import lang.taxi.annotations.Namespace
+import lang.taxi.annotations.declaresName
+import lang.taxi.annotations.hasNamespace
+import lang.taxi.annotations.namespace
+import lang.taxi.annotations.qualifiedName
+import java.lang.reflect.AnnotatedElement
+import java.lang.reflect.Field
+import java.lang.reflect.Method
 import java.lang.reflect.Parameter
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
+import java.lang.reflect.WildcardType
 
 abstract class TypeReference<T> : Comparable<TypeReference<T>> {
     val type: Type =
@@ -56,7 +65,8 @@ object TypeNames {
         return element.isAnnotationPresent(lang.taxi.annotations.DataType::class.java)
     }
 
-    fun deriveTypeName(element: AnnotatedElement, defaultNamespace: String): String {
+
+   fun deriveTypeName(element: AnnotatedElement, defaultNamespace: String): String {
         if (declaresDataType(element)) {
             val typeNameOnElement = detectDeclaredTypeName(element, defaultNamespace)
             if (typeNameOnElement != null) return typeNameOnElement
