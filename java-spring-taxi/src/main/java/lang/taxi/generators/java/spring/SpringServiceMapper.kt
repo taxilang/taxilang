@@ -57,7 +57,8 @@ class SpringServiceMapper(val baseUrl: String) : ServiceMapper {
 
          val params: List<lang.taxi.services.Parameter> = method.parameters.mapIndexed { index, param ->
             val kotlinParameter = func.valueParameters[index]
-            val paramType = typeMapper.getTaxiType(param, mappedTypes, namespace, method)
+            val paramType =
+               typeMapper.getTaxiType(KTypeWrapper(kotlinParameter.type, param), mappedTypes, namespace, null)
             val paramAnnotation = param.getAnnotation(lang.taxi.annotations.Parameter::class.java)
             val annotations = if (index == bodyParamIndex) {
                listOf(HttpRequestBody.toAnnotation())
@@ -84,7 +85,7 @@ class SpringServiceMapper(val baseUrl: String) : ServiceMapper {
             returnType = returnType,
             typeDoc = method.findTypeDoc(),
             scope = null,
-            compilationUnits = listOf(CompilationUnit.Companion.generatedFor("${javaClass.canonicalName}::${method.name}"))
+            compilationUnits = listOf(CompilationUnit.Companion.generatedFor("${javaClass.name}::${method.name}"))
          )
       }
       return setOf(
@@ -93,7 +94,7 @@ class SpringServiceMapper(val baseUrl: String) : ServiceMapper {
             operations,
             annotations = emptyList(),
             typeDoc = javaClass.findTypeDoc(),
-            compilationUnits = listOf(CompilationUnit.generatedFor(javaClass.canonicalName))
+            compilationUnits = listOf(CompilationUnit.generatedFor(javaClass.name))
          )
       )
    }
@@ -109,11 +110,18 @@ class SpringServiceMapper(val baseUrl: String) : ServiceMapper {
       val methodUrl = findMethodUrl(requestMappingInfo)
       var url = baseUrl.joinEnsuringOnlyOneSeperator(methodUrl, "/")
       val pathVariablesAndIndices = findPathVariablesToParams(url, method)
+      val func = method.kotlinFunction!!
+
       pathVariablesAndIndices.map { (name, parameter) ->
          // defaultNamespace was:
          //   typeMapper.getTaxiType(type,mappedTypes).toQualifiedName().namespace
          val defaultNamespace = TypeNames.deriveNamespace(type)
-         val paramTaxiType = typeMapper.getTaxiType(parameter, mappedTypes, defaultNamespace, method)
+         val paramIndex = method.parameters.indexOf(parameter)
+         val kotlinParameter = func.valueParameters[paramIndex]
+         val paramTaxiType =
+            typeMapper.getTaxiType(KTypeWrapper(kotlinParameter.type, parameter), mappedTypes, defaultNamespace, null)
+
+//         val paramTaxiType = typeMapper.getTaxiType(parameter, mappedTypes, defaultNamespace, null)
          url = url.replace("{$name}", "{${paramTaxiType.qualifiedName}}")
       }
       return url
