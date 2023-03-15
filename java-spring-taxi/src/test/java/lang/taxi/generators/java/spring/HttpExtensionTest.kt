@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal
 
+@DataType
+typealias FilmId = Int
 class HttpExtensionTest {
 
    @Namespace("vyne.demo")
@@ -43,6 +45,34 @@ class HttpExtensionTest {
 
    }
 
+   @Test
+   fun `uses type aliases in controller inputs`() {
+      data class Film(val id: FilmId)
+
+      @RestController
+      class FilmApi {
+         @GetMapping("/film/{filmId}")
+         fun lookupFilm(@PathVariable("filmId") filmId: FilmId): Film = TODO()
+      }
+
+      val taxiDef = SpringTaxiGenerator.forBaseUrl("http://my-app/")
+         .forClasses(FilmApi::class.java)
+         .generateAsStrings()
+
+      val expected = """
+         namespace lang.taxi.generators.java.spring {
+            type FilmId inherits Int
+            model Film {
+               id:FilmId
+            }
+            service FilmApi {
+               @HttpOperation(method = "GET", url="http://my-app/film/{lang.taxi.generators.java.spring.FilmId}")
+               operation lookupFilm(filmId : FilmId):Film
+            }
+         }
+      """.trimIndent()
+      TestHelpers.expectToCompileTheSame(taxiDef, expected)
+   }
 
    @Test
    fun given_getRequestWithPathVariables_then_taxiAnnotationsAreGeneratedCorrectly() {

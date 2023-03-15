@@ -56,7 +56,8 @@ data class DefaultServiceMapper(
 
          val params = method.parameters.mapIndexed { index, param ->
             val kotlinParameter = func.valueParameters[index]
-            val paramType = typeMapper.getTaxiType(param, mappedTypes, namespace, null)
+            val paramType =
+               typeMapper.getTaxiType(KTypeWrapper(kotlinParameter.type, param), mappedTypes, namespace, null)
             val paramAnnotation = param.getAnnotation(lang.taxi.annotations.Parameter::class.java)
             Parameter(
                annotations = emptyList(), // todo,
