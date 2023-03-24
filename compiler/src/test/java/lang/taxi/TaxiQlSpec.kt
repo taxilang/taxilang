@@ -611,6 +611,23 @@ class TaxiQlSpec : DescribeSpec({
          query.typeDoc.shouldBe("returns movies and their reviews")
       }
 
+      // Design choice: This is a bad idea.
+      // If we want "top level" annotations, they should
+      // be on the query block. Otherwise, we lose our
+      // ability to specifically annotate the find or given blocks
+      xit("is possible to add annotations to unnamed queries") {
+         val (_,query) = """
+            type MovieId inherits String
+            model Movie {}
+
+         """.compiledWithQuery("""
+             @IgnoreNullsInResponse
+             find { Movie( MovieId == '123' ) }
+         """.trimIndent())
+         query.annotations.shouldHaveSize(1)
+
+      }
+
       it("should set name as null on unnamed queries") {
          val query = """
             type MovieId inherits Int

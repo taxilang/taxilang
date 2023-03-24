@@ -743,6 +743,7 @@ fact : variableName? typeReference ('=' literal)?;
 
 variableName: identifier ':';
 queryBody:
+   typeDoc? annotation*
    givenBlock?
 	queryDirective ( ('{' queryTypeList  '}') | anonymousTypeDefinition ) typeProjection?
 	;
