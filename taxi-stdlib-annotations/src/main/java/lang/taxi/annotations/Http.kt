@@ -4,15 +4,30 @@ import lang.taxi.types.Annotation
 import lang.taxi.types.AnnotationProvider
 
 data class HttpOperation(val method: String, val url: String) : AnnotationProvider {
-   override fun toAnnotation(): Annotation = Annotation("HttpOperation", mapOf("method" to method, "url" to url))
+   companion object {
+      const val NAME = "HttpOperation"
+      fun fromAnnotation(annotation: Annotation): HttpOperation {
+         // TODO : We should just define the bloody annotation in taxi.  Then this would be handled
+         // at the compiler level!!!
+         val parameters = annotation.parameters
+         require(parameters.containsKey("method")) { "@HttpOperation requires a method parameter" }
+         require(parameters.containsKey("url")) { "@HttpOperation requires a url parameter" }
+         return HttpOperation(parameters["method"]!!.toString(), parameters["url"]!!.toString())
+      }
+   }
+
+   override fun toAnnotation(): Annotation = Annotation(NAME, mapOf("method" to method, "url" to url))
 }
 
 object HttpRequestBody : AnnotationProvider {
    override fun toAnnotation(): Annotation {
-      return Annotation("RequestBody")
+      return Annotation(NAME)
    }
+
+   const val NAME = "RequestBody"
 }
 
+@Deprecated("This is no longer required")
 data class ServiceDiscoveryClient(val serviceName: String) : AnnotationProvider {
    override fun toAnnotation(): Annotation {
       return lang.taxi.types.Annotation("ServiceDiscoveryClient", mapOf("serviceName" to serviceName))
@@ -20,5 +35,9 @@ data class ServiceDiscoveryClient(val serviceName: String) : AnnotationProvider 
 }
 
 data class HttpPathVariable(val value: String) : AnnotationProvider {
-   override fun toAnnotation() = Annotation("PathVariable", mapOf("value" to value))
+   companion object {
+      const val NAME = "PathVariable"
+   }
+
+   override fun toAnnotation() = Annotation(NAME, mapOf("value" to value))
 }
