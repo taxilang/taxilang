@@ -3,6 +3,7 @@ package lang.taxi
 import com.google.common.collect.Multimaps
 import lang.taxi.functions.Function
 import lang.taxi.policies.Policy
+import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.Service
 import lang.taxi.types.Annotation
 import lang.taxi.types.AnnotationType
@@ -45,7 +46,8 @@ open class TaxiDocument(
    val policies: Set<Policy> = emptySet(),
    val functions: Set<Function> = emptySet(),
    val annotations: Set<Annotation> = emptySet(),
-   val views: Set<View> = emptySet()
+   val views: Set<View> = emptySet(),
+   val queries: Set<TaxiQlQuery> = emptySet()
 ) {
    private val equality = ImmutableEquality(this, TaxiDocument::types, TaxiDocument::services)
    private val typeMap = types.associateBy { it.qualifiedName }
@@ -91,6 +93,15 @@ open class TaxiDocument(
       }
    }
 
+   fun query(qualifiedName: String): TaxiQlQuery {
+      return query(QualifiedName.from(qualifiedName))
+   }
+
+   fun query(qualifiedName: QualifiedName): TaxiQlQuery {
+      return queries.singleOrNull { it.name == qualifiedName }
+         ?: error("No query named ${qualifiedName.fullyQualifiedName} is present")
+   }
+
    fun type(qualifiedName: String): Type {
       return type(QualifiedName.from(qualifiedName))
    }
@@ -131,8 +142,13 @@ open class TaxiDocument(
          return when {
             qualifiedName.parameters.isEmpty() -> MapType.untyped()
             qualifiedName.parameters.size == 2 -> {
-               MapType(keyType = type(qualifiedName.parameters[0]), valueType = type(qualifiedName.parameters[1]), source = CompilationUnit.unspecified())
+               MapType(
+                  keyType = type(qualifiedName.parameters[0]),
+                  valueType = type(qualifiedName.parameters[1]),
+                  source = CompilationUnit.unspecified()
+               )
             }
+
             else -> error("A map expects either 0 or 2 parameters")
          }
       }
@@ -141,8 +157,7 @@ open class TaxiDocument(
          return PrimitiveType.fromDeclaration(qualifiedName.toString())
       }
 
-      return typeMap[qualifiedName.toString()] ?:
-         throw error("No type named $qualifiedName defined")
+      return typeMap[qualifiedName.toString()] ?: throw error("No type named $qualifiedName defined")
 
    }
 

@@ -457,6 +457,13 @@ data class Annotation(
    // the constructor to be consistent.
    val qualifiedName: String = name
 
+   /**
+    * Returns the "value" parameter (ie.,
+    * the value of a single, unnamed parameter in the annotation, if it exists)
+    */
+   val defaultParameterValue: Any?
+      get() = parameter("value")
+
    fun parameter(name: String): Any? {
       return parameters[name]
    }
@@ -536,7 +543,8 @@ data class Field(
    override val description: String = "field $name"
 
 
-   override val formatAndZoneOffset: FormatsAndZoneOffset? = FormatsAndZoneOffset.merged(fieldFormat, type.formatAndZoneOffset)
+   override val formatAndZoneOffset: FormatsAndZoneOffset? =
+      FormatsAndZoneOffset.merged(fieldFormat, type.formatAndZoneOffset)
 
    override val format: List<String>? = formatAndZoneOffset?.patterns ?: type.format
    override val offset: Int? = formatAndZoneOffset?.utcZoneOffsetInMinutes ?: type.offset

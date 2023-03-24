@@ -2,11 +2,12 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldNotBeEmpty
 import lang.taxi.accessors.CollectionProjectionExpressionAccessor
 import lang.taxi.accessors.FieldSourceAccessor
 import lang.taxi.expressions.OperatorExpression
-import lang.taxi.expressions.TypeExpression
 import lang.taxi.query.Parameter
 import lang.taxi.query.QueryMode
 import lang.taxi.services.operations.constraints.ExpressionConstraint
@@ -68,7 +69,7 @@ class TaxiQlSpec : DescribeSpec({
          val query = queries.first()
          query.projectedType.should.not.be.`null`
          query.projectedType!!.anonymous.should.be.`true`
-         query.projectedType!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousProjectedType")
+         query.projectedType!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousType")
          val anonymousType = query.projectedType!!.typeParameters().first() as ObjectType
          anonymousType.hasField("tradeTimestamp").should.be.`true`
       }
@@ -119,7 +120,7 @@ class TaxiQlSpec : DescribeSpec({
               """.trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
-         query.name.should.equal("RecentOrdersQuery")
+         query.name.should.equal(QualifiedName.from("RecentOrdersQuery"))
          query.parameters.should.have.size(2)
          query.parameters.should.equal(
             listOf(
@@ -273,7 +274,7 @@ class TaxiQlSpec : DescribeSpec({
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
          query.projectedType!!.anonymous.should.be.`true`
-         query.projectedType!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousProjectedType")
+         query.projectedType!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousType")
          val anonymousType = query.projectedType!!.typeParameters().first() as ObjectType
          anonymousType.hasField("tradeTimestamp").should.be.`true`
          anonymousType.hasField("outputId").should.be.`true`
@@ -315,7 +316,7 @@ class TaxiQlSpec : DescribeSpec({
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
          query.projectedType!!.anonymous.should.be.`true`
-         query.projectedType!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousProjectedType")
+         query.projectedType!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousType")
          val anonymousType = query.projectedType!!.typeParameters().first() as ObjectType
          anonymousType.hasField("insertedAt").should.be.`true`
          anonymousType.inheritsFrom.should.have.size(1)
@@ -340,7 +341,7 @@ class TaxiQlSpec : DescribeSpec({
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
          query.projectedType!!.anonymous.should.be.`true`
-         query.projectedType!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousProjectedType")
+         query.projectedType!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousType")
          val anonymousType = query.projectedType!!.typeParameters().first() as ObjectType
          anonymousType.hasField("insertedAt").should.be.`true`
       }
@@ -360,7 +361,7 @@ class TaxiQlSpec : DescribeSpec({
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
          query.projectedType!!.anonymous.should.be.`true`
-         query.projectedType!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousProjectedType")
+         query.projectedType!!.toQualifiedName().parameterizedName.should.contain("lang.taxi.Array<AnonymousType")
          val anonymousType = query.projectedType!!.typeParameters().first() as ObjectType
          anonymousType.hasField("traderEmail").should.be.`true`
          anonymousType.field("traderEmail").accessor.should.not.be.`null`
@@ -575,6 +576,98 @@ class TaxiQlSpec : DescribeSpec({
          val queryCompilationError =
             Compiler(source = src, importSources = listOf(taxi)).queriesWithErrorMessages().first
          queryCompilationError.first().detailMessage.should.contain("projection type is a list but the type to discover is not, both should either be list or single entity.")
+      }
+
+      it("is possible to add annotations to named queries and their params") {
+         val query = """
+            type MovieId inherits String
+            model Movie {}
+
+            @HttpOperation( method = "GET" , url = "/reviews/{movieId}")
+            query MoviesAndReviews( @PathVariable("movieId") movieId : MovieId ) {
+               find { Movie( MovieId == movieId ) }
+            }
+         """.compiled()
+            .query("MoviesAndReviews")
+         query.annotations.shouldHaveSize(1)
+         query.annotations.single().qualifiedName.shouldBe("HttpOperation")
+
+         val queryParam = query.parameters.single()
+         queryParam.annotations.shouldHaveSize(1)
+         queryParam.annotations.single().qualifiedName.shouldBe("PathVariable")
+      }
+
+      it("is possible to add docs to named queries and their params") {
+         val query = """
+            type MovieId inherits String
+            model Movie {}
+
+            [[ returns movies and their reviews ]]
+            query MoviesAndReviews(  movieId : MovieId ) {
+               find { Movie( MovieId == movieId ) }
+            }
+         """.compiled()
+            .query("MoviesAndReviews")
+         query.typeDoc.shouldBe("returns movies and their reviews")
+      }
+
+      // Design choice: This is a bad idea.
+      // If we want "top level" annotations, they should
+      // be on the query block. Otherwise, we lose our
+      // ability to specifically annotate the find or given blocks
+      xit("is possible to add annotations to unnamed queries") {
+         val (_,query) = """
+            type MovieId inherits String
+            model Movie {}
+
+         """.compiledWithQuery("""
+             @IgnoreNullsInResponse
+             find { Movie( MovieId == '123' ) }
+         """.trimIndent())
+         query.annotations.shouldHaveSize(1)
+
+      }
+
+      it("should set name as null on unnamed queries") {
+         val query = """
+            type MovieId inherits Int
+            model Movie {}
+
+            find { Movie( MovieId == 123 ) }
+         """.compiled()
+            .queries.single()
+         query.name.fullyQualifiedName.shouldNotBeEmpty()
+      }
+      it("defines queries within their namespace") {
+         val query = """
+            namespace test {
+
+               type MovieId inherits Int
+               model Movie {}
+
+               query FindMyMovie {
+                  find { Movie( MovieId == 123 ) }
+               }
+
+            }
+         """.compiled()
+            .queries.single()
+         query.name.fullyQualifiedName.shouldBe("test.FindMyMovie")
+      }
+
+      it("assigns random names within namespace for unnamed queries within a namespace") {
+         val query = """
+            namespace test {
+
+               type MovieId inherits Int
+               model Movie {}
+
+               find { Movie( MovieId == 123 ) }
+            }
+         """.compiled()
+            .queries.single()
+         query.name.namespace.shouldBe("test")
+         query.name.typeName.shouldNotBeEmpty()
       }
 
       it("should parse nested collections of anonymous types") {

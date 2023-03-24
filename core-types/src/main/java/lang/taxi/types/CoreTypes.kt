@@ -8,7 +8,8 @@ interface TypeProvider {
 
 data class InvalidNumberOfParametersError(val message: String) {
    companion object {
-      fun forTypeAndCount(type: QualifiedName, expectedCount: Int) = InvalidNumberOfParametersError("Type $type expects $expectedCount arguments")
+      fun forTypeAndCount(type: QualifiedName, expectedCount: Int) =
+         InvalidNumberOfParametersError("Type $type expects $expectedCount arguments")
    }
 }
 
@@ -28,6 +29,10 @@ interface GenericType : Type {
 
 interface Annotatable {
    val annotations: List<Annotation>
+}
+
+fun Annotatable.annotation(name: String): Annotation? {
+   return this.annotations.singleOrNull { it.name == name }
 }
 
 fun List<Annotatable>.annotations(): List<Annotation> {
