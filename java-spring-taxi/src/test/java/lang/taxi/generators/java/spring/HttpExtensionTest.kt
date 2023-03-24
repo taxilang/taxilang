@@ -4,8 +4,6 @@ import lang.taxi.annotations.DataType
 import lang.taxi.annotations.Namespace
 import lang.taxi.annotations.Operation
 import lang.taxi.annotations.Service
-import lang.taxi.generators.java.DefaultServiceMapper
-import lang.taxi.generators.java.TaxiGenerator
 import lang.taxi.testing.TestHelpers
 import org.junit.jupiter.api.Test
 import org.springframework.web.bind.annotation.GetMapping
@@ -16,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal
 
+@DataType
+typealias FilmId = Int
 class HttpExtensionTest {
 
    @Namespace("vyne.demo")
@@ -45,11 +45,38 @@ class HttpExtensionTest {
 
    }
 
+   @Test
+   fun `uses type aliases in controller inputs`() {
+      data class Film(val id: FilmId)
+
+      @RestController
+      class FilmApi {
+         @GetMapping("/film/{filmId}")
+         fun lookupFilm(@PathVariable("filmId") filmId: FilmId): Film = TODO()
+      }
+
+      val taxiDef = SpringTaxiGenerator.forBaseUrl("http://my-app/")
+         .forClasses(FilmApi::class.java)
+         .generateAsStrings()
+
+      val expected = """
+         namespace lang.taxi.generators.java.spring {
+            type FilmId inherits Int
+            model Film {
+               id:FilmId
+            }
+            service FilmApi {
+               @HttpOperation(method = "GET", url="http://my-app/film/{lang.taxi.generators.java.spring.FilmId}")
+               operation lookupFilm(filmId : FilmId):Film
+            }
+         }
+      """.trimIndent()
+      TestHelpers.expectToCompileTheSame(taxiDef, expected)
+   }
 
    @Test
    fun given_getRequestWithPathVariables_then_taxiAnnotationsAreGeneratedCorrectly() {
-      val taxiDef = TaxiGenerator()
-         .addExtension(SpringMvcExtension.forBaseUrl("http://my-app/"))
+      val taxiDef = SpringTaxiGenerator.forBaseUrl("http://my-app/")
          .forClasses(CreditCostService::class.java)
          .generateAsStrings()
 

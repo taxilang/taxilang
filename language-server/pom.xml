@@ -7,7 +7,7 @@
    <parent>
       <groupId>org.taxilang</groupId>
       <artifactId>parent</artifactId>
-      <version>1.35.0-SNAPSHOT</version>
+      <version>1.36.3-SNAPSHOT</version>
    </parent>
 
    <artifactId>taxi-lang-server</artifactId>
@@ -27,10 +27,8 @@
    </modules>
 
    <properties>
-      <java.version>1.8</java.version>
       <taxi.version>${project.version}</taxi.version>
       <lsp4j.version>0.9.0</lsp4j.version>
-      <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
    </properties>
 
@@ -80,7 +78,7 @@
       <dependency>
          <groupId>org.assertj</groupId>
          <artifactId>assertj-core</artifactId>
-         <version>3.24.1</version>
+         <version>3.24.2</version>
          <scope>test</scope>
       </dependency>
 
@@ -112,13 +110,6 @@
       </dependencies>
    </dependencyManagement>
    <build>
-      <extensions>
-         <extension>
-            <groupId>org.springframework.build</groupId>
-            <artifactId>aws-maven</artifactId>
-            <version>5.0.0.RELEASE</version>
-         </extension>
-      </extensions>
       <plugins>
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
@@ -164,12 +155,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.10.1</version>
-            <configuration>
-               <!--<proc>none</proc>-->
-               <source>1.8</source>
-               <target>1.8</target>
-            </configuration>
+            <version>3.11.0</version>
             <executions>
                <!-- Replacing default-compile as it is treated specially by maven -->
                <execution>

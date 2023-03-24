@@ -13,7 +13,6 @@ import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Type
 import java.lang.reflect.AnnotatedElement
-import java.lang.reflect.Method
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.valueParameters
@@ -57,7 +56,8 @@ data class DefaultServiceMapper(
 
          val params = method.parameters.mapIndexed { index, param ->
             val kotlinParameter = func.valueParameters[index]
-            val paramType = typeMapper.getTaxiType(param, mappedTypes, namespace, method)
+            val paramType =
+               typeMapper.getTaxiType(KTypeWrapper(kotlinParameter.type, param), mappedTypes, namespace, null)
             val paramAnnotation = param.getAnnotation(lang.taxi.annotations.Parameter::class.java)
             Parameter(
                annotations = emptyList(), // todo,
@@ -80,9 +80,15 @@ data class DefaultServiceMapper(
             scope = operationAnnotation.scope,
             compilationUnits = listOf(CompilationUnit.unspecified())
          )
-         operationExtensions.fold(
-            operation,
-            { operation, extension -> extension.update(operation, type, method, typeMapper, mappedTypes) })
+         operationExtensions.fold(operation) { operation, extension ->
+            extension.update(
+               operation,
+               type,
+               method,
+               typeMapper,
+               mappedTypes
+            )
+         }
       }
 
       val service = serviceExtensions.fold(Service(
@@ -110,30 +116,30 @@ data class DefaultServiceMapper(
    }
 
 
-   fun String.orDefaultNullable(default: String?): String? {
-      return if (this.isEmpty()) default else this
-   }
-
-   fun String.orDefault(default: String): String {
-      return if (this.isEmpty()) default else this
-   }
-
-   fun deriveServiceName(element: Class<*>, defaultNamespace: String): String {
-      if (element.isAnnotationPresent(lang.taxi.annotations.Service::class.java)) {
-         val annotation = element.getAnnotation(lang.taxi.annotations.Service::class.java)
-         if (annotation.declaresName()) {
-            return annotation.qualifiedName(defaultNamespace)
-         }
-      }
-
-      // If it's an inner class, trim the qualifier
-      // This may cause problems with duplicates, but let's encourage
-      // peeps to solve that via the DataType annotation.
-      val typeName = element.simpleName.split("$").last()
-      return "$defaultNamespace.$typeName"
-   }
 }
 
+fun String.orDefaultNullable(default: String?): String? {
+   return if (this.isEmpty()) default else this
+}
+
+fun String.orDefault(default: String): String {
+   return if (this.isEmpty()) default else this
+}
+
+fun deriveServiceName(element: Class<*>, defaultNamespace: String): String {
+   if (element.isAnnotationPresent(lang.taxi.annotations.Service::class.java)) {
+      val annotation = element.getAnnotation(lang.taxi.annotations.Service::class.java)
+      if (annotation.declaresName()) {
+         return annotation.qualifiedName(defaultNamespace)
+      }
+   }
+
+   // If it's an inner class, trim the qualifier
+   // This may cause problems with duplicates, but let's encourage
+   // peeps to solve that via the DataType annotation.
+   val typeName = element.simpleName.split("$").last()
+   return "$defaultNamespace.$typeName"
+}
 
 /**
 This is a wrapper for times when we need to use KType's for discoverying Taxi types
@@ -147,19 +153,19 @@ the underlying KType, (which is used for type alias detection)
 class KTypeWrapper(val ktype: KType, override val delegate: AnnotatedElement = (ktype.classifier!! as KClass<*>).java) :
    AnnotatedElement, AnnotatedElementWrapper {
    val arguments = ktype.arguments
-   private val klass = ktype.classifier!! as KClass<*>
+   private val klass = ktype.classifier as? KClass<*>
 //   override val delegate: AnnotatedElement = klass.java
 
    override fun getAnnotations(): Array<Annotation> {
-      return delegate.annotations
+      return delegate.annotations + (klass?.annotations ?: emptyList())
    }
 
    override fun <T : Annotation> getAnnotation(p0: Class<T>): T? {
-      return delegate.getAnnotation(p0)
+      return delegate.getAnnotation(p0) ?: klass?.java?.getAnnotation(p0)
    }
 
    override fun getDeclaredAnnotations(): Array<Annotation> {
-      return delegate.declaredAnnotations
+      return delegate.declaredAnnotations + (klass?.annotations ?: emptyList())
    }
 
 

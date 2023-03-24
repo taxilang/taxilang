@@ -3,7 +3,6 @@ package lang.taxi.compiler
 import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.getOrElse
-import arrow.core.getOrHandle
 import arrow.core.handleErrorWith
 import arrow.core.left
 import arrow.core.right
@@ -871,6 +870,16 @@ class TokenProcessor(
       activeScopes: List<ProjectionFunctionScope> = emptyList()
    ): Either<List<CompilationError>, ObjectType> {
       val typeKind = TypeKind.fromSymbol(ctx.typeKind().text)
+      if (ctx.typeBody()?.spreadOperatorDeclaration() != null) {
+         return listOf(
+            CompilationError(
+               ctx.start,
+               "Spread operator is not allowed for model definitions. Found in model ${ctx.typeBody()?.text}",
+               ctx.source().normalizedSourceName
+            )
+         )
+            .left()
+      }
       val fields = ctx.typeBody()?.let { typeBody ->
          val typeBodyContext = TypeBodyContext(typeBody, namespace)
          FieldCompiler(this, typeBodyContext, typeName, this.errors)
@@ -884,7 +893,7 @@ class TokenProcessor(
       }?.invertEitherList()
          ?.flattenErrors()
          ?.map { it.toExpressionGroup() }
-         ?.getOrHandle { errors ->
+         ?.getOrElse { errors ->
             this.errors.addAll(errors)
             null
          }
@@ -930,7 +939,7 @@ class TokenProcessor(
          typeName, definition
       ).let { typeWithoutFormat ->
          val format = parseTypeFormat(annotations, typeWithoutFormat, ctx)
-            .getOrHandle {
+            .getOrElse {
                this.errors.addAll(it)
                null
             }
@@ -1011,7 +1020,7 @@ class TokenProcessor(
             typeBody.parent?.searchUpForRule(FieldDeclarationContext::class.java) as? FieldDeclarationContext
          val typeBodyFieldObjectType =
             typeBodyFieldDeclarationParent?.fieldTypeDeclaration()?.optionalTypeReference()?.typeReference()?.let {
-               parseType(namespace, it).orNull() as? ObjectType
+               parseType(namespace, it).getOrNull() as? ObjectType
             }
          val typeBodyContext = TypeBodyContext(typeBody, namespace, typeBodyFieldObjectType)
          val fieldCompiler = FieldCompiler(this, typeBodyContext, typeName, errors, resolutionContext)
@@ -1137,7 +1146,7 @@ class TokenProcessor(
       } else inheritedTypeOrError
 
       return inheritedEnumTypeOrError
-         .getOrHandle {
+         .getOrElse {
             this.errors.addAll(it)
             null
          }
@@ -1160,7 +1169,7 @@ class TokenProcessor(
             .wrapErrorsInList()
             .flattenErrors()
 
-         mapAnnotationParams(annotation, annotationType.orNull() as? AnnotationType).flatMap { annotationParameters ->
+         mapAnnotationParams(annotation, annotationType.getOrNull() as? AnnotationType).flatMap { annotationParameters ->
 
             val constructedAnonymousAnnotation = Annotation(annotationName, annotationParameters)
             val resolvedAnnotation = when (annotationType) {
@@ -1203,7 +1212,7 @@ class TokenProcessor(
    }
 
    private fun mapAnnotationParams(
-      annotation: TaxiParser.AnnotationContext,
+      annotation: AnnotationContext,
       annotationType: AnnotationType?
    ): Either<List<CompilationError>, Map<String, Any>> {
       return when {
@@ -1223,7 +1232,7 @@ class TokenProcessor(
    }
 
    private fun mapTypedAnnotationParams(
-      annotation: TaxiParser.AnnotationContext,
+      annotation: AnnotationContext,
       type: AnnotationType,
       annotationParameters: Map<String, Any>
    ): Either<List<CompilationError>, Map<String, Any>> {
@@ -1265,7 +1274,7 @@ class TokenProcessor(
       }
    }
 
-   private fun mapElementValuePairs(tokenRule: TaxiParser.ElementValuePairsContext): Either<List<CompilationError>, Map<String, Any>> {
+   private fun mapElementValuePairs(tokenRule: ElementValuePairsContext): Either<List<CompilationError>, Map<String, Any>> {
       val pairs = tokenRule.elementValuePair() ?: return emptyMap<String, Any>().right()
       return pairs.map { keyValuePair ->
          parseElementValue(keyValuePair.elementValue()).map { parsedValue ->
@@ -1348,11 +1357,15 @@ class TokenProcessor(
    }
 
    fun parseProjectionScope(
-      expressionInputs: TaxiParser.ExpressionInputsContext?,
+      expressionInputs: ExpressionInputsContext?,
       projectionSourceType: FieldTypeSpec
    ): Either<List<CompilationError>, ProjectionFunctionScope> {
       if (expressionInputs == null || expressionInputs.expressionInput().isEmpty()) {
-         return ProjectionFunctionScope.implicitThis(projectionSourceType.type).right()
+         // MP: 2-Feb-23 : That was projectionSourceType.type
+         // But have changed it, because in inline projections of entires, we're receiving
+         // the array.
+         // This might break something.
+         return ProjectionFunctionScope.implicitThis(projectionSourceType.projectionType).right()
       }
       return when (expressionInputs.expressionInput().size) {
          1 -> {
@@ -2387,7 +2400,7 @@ class TokenProcessor(
    }
 
    internal fun mapConstraints(
-      constraintList: TaxiParser.ExpressionGroupContext?,
+      constraintList: ExpressionGroupContext?,
       paramType: Type,
       fieldCompiler: FieldCompiler?,
       activeScopes: List<ProjectionFunctionScope> = emptyList()
@@ -2531,7 +2544,7 @@ fun <T> Either<CompilationError, T>.collectError(errors: MutableList<Compilation
 
 fun <T : Any> List<Either<List<CompilationError>, T>>.reportAndRemoveErrorList(errorCollection: MutableList<CompilationError>): List<T> {
    return this.mapNotNull { item ->
-      item.getOrHandle { errors ->
+      item.getOrElse { errors ->
          errorCollection.addAll(errors)
          null
       }
@@ -2543,7 +2556,7 @@ fun <T : Any> List<Either<CompilationError, T>>.reportAndRemoveErrors(errorColle
 }
 
 private fun <T : Any> Either<CompilationError, T>.reportIfCompilationError(errorCollection: MutableList<CompilationError>): T? {
-   return this.getOrHandle { compilationError ->
+   return this.getOrElse { compilationError ->
       errorCollection.add(compilationError)
       null
    }

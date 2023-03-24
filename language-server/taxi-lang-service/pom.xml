@@ -5,14 +5,14 @@
    <parent>
       <artifactId>taxi-lang-server</artifactId>
       <groupId>org.taxilang</groupId>
-      <version>1.35.0-SNAPSHOT</version>
+      <version>1.36.3-SNAPSHOT</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
    <artifactId>taxi-lang-service</artifactId>
    <properties>
       <spek.version>2.0.19</spek.version>
-      <reactor-bom.version>2020.0.27</reactor-bom.version>
+      <reactor-bom.version>2020.0.28</reactor-bom.version>
    </properties>
 
    <dependencies>

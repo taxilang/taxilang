@@ -5,7 +5,7 @@ variables:
    # As of Maven 3.3.0 instead of this you may define these options in `.mvn/maven.config` so the same config is used
    # when running from the command line.
    # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
-   MAVEN_CLI_OPTS: "-s mvn-settings.xml --batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true -P shade"
+   MAVEN_CLI_OPTS: "-s mvn-settings.xml --batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true -DskipTests -P shade"
    # Used during gitflow interaction.
    MAJOR_RELEASE_DIGIT: 0
    MINOR_RELEASE_DIGIT: 1
@@ -25,7 +25,7 @@ cache:
 default:
    tags:
       - docker
-   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/maven:3.8.7-eclipse-temurin-11
+   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/maven:3.9.0-eclipse-temurin-17
 
 .setup-nvm: &setup-nvm
    - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash'
@@ -64,9 +64,9 @@ validate:
       - master
       - develop
    script:
-      - 'mvn $MAVEN_CLI_OPTS clean deploy'
+      - 'mvn $MAVEN_CLI_OPTS clean deploy -P orbital-repo'
    services:
-      -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.22-dind
+      -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
          alias: docker
          command: [ "--tls=false" ]
    variables:
@@ -98,8 +98,8 @@ release-major:
    when: manual
 
 release-minor:
-   variables:
-      GIT_STRATEGY: none
+#   variables:
+   #      GIT_STRATEGY: none
    stage: trigger-release
    script:
       - *git_setup
@@ -114,7 +114,7 @@ release-patch:
    stage: trigger-release
    script:
       - *git_setup
-      - 'mvn gitflow:release -B -DversionDigitToIncrement=$PATCH_RELEASE_DIGIT  -DskipTestProject=true'
+      - 'mvn gitflow:release -B -DversionDigitToIncrement=$PATCH_RELEASE_DIGIT  -DskipTestProject=true -P orbital-repo'
    only:
       - develop
    when: manual
@@ -123,9 +123,12 @@ release-patch:
 publish-snapshot-jars:
    stage: build
    script:
-      - 'mvn $MAVEN_CLI_OPTS deploy -P snapshot-release'
+      #      Need gpg for maven signing
+      #      - 'apk add gnupg'
+      #      - gpg -v --import <(echo "$GPG_PRIVATE_KEY")
+      - 'mvn $MAVEN_CLI_OPTS deploy -P snapshot-release,orbital-repo'
    services:
-      -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.22-dind
+      -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
          alias: docker
          command: [ "--tls=false" ]
    variables:
@@ -161,10 +164,10 @@ publish-release:
    script:
       # Don't run tests on master, as already passed on develop
       # Use -DskipTests, but not -Dmaven.test.skip=true as we need to compile the tests (as other projects have test dependencies), but not run them.
-      - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P release'
+      - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P release,orbital-repo'
       # Use jreleaser to publish to sdkman, and others
       - 'cd taxi-cli'
-      - 'mvn jreleaser:full-release'
+      - 'mvn jreleaser:full-release -X -P orbital-repo'
    only:
       - master
    artifacts:

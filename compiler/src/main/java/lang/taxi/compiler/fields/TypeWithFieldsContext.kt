@@ -1,7 +1,8 @@
 package lang.taxi.compiler.fields
 
 import arrow.core.Either
-import arrow.core.rightIfNotNull
+import arrow.core.left
+import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.TaxiParser
 import lang.taxi.compiler.TokenProcessor
@@ -23,14 +24,18 @@ interface TypeWithFieldsContext {
       val memberDeclaration = this.memberDeclarations
          .firstOrNull { TokenProcessor.unescape(it.fieldDeclaration().identifier().text) == fieldName }
 
-      return memberDeclaration.rightIfNotNull {
-         listOf(CompilationError(requestingToken.start, "Field $fieldName does not exist on type $compilingTypeName"))
-      }
+      return memberDeclaration?.right() ?: listOf(
+         CompilationError(
+            requestingToken.start,
+            "Field $fieldName does not exist on type $compilingTypeName"
+         )
+      ).left()
    }
 
    val conditionalTypeDeclarations: List<TaxiParser.ConditionalTypeStructureDeclarationContext>
    val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
    val parent: RuleContext?
    val hasSpreadOperator: Boolean
+   val spreadOperatorExcludedFields: List<String>
    val objectType: ObjectType?
 }

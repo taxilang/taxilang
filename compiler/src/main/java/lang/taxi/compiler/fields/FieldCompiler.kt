@@ -3,18 +3,25 @@ package lang.taxi.compiler.fields
 import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.getOrElse
-import arrow.core.getOrHandle
 import arrow.core.left
 import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.Namespace
 import lang.taxi.TaxiParser
 import lang.taxi.TaxiParser.TypeReferenceContext
-import lang.taxi.accessors.*
-import lang.taxi.compiler.ResolutionContext
+import lang.taxi.accessors.Accessor
+import lang.taxi.accessors.CollectionProjectionExpressionAccessor
+import lang.taxi.accessors.ColumnAccessor
+import lang.taxi.accessors.ConditionalAccessor
+import lang.taxi.accessors.FieldSourceAccessor
+import lang.taxi.accessors.JsonPathAccessor
+import lang.taxi.accessors.ProjectionFunctionScope
+import lang.taxi.accessors.ProjectionScopeDefinition
+import lang.taxi.accessors.XpathAccessor
 import lang.taxi.compiler.ConditionalFieldSetProcessor
 import lang.taxi.compiler.DefaultValueParser
 import lang.taxi.compiler.ExpressionCompiler
+import lang.taxi.compiler.ResolutionContext
 import lang.taxi.compiler.TokenProcessor
 import lang.taxi.compiler.assertIsAssignable
 import lang.taxi.compiler.collectError
@@ -131,7 +138,34 @@ class FieldCompiler(
          return emptyList()
       }
 
-      return typeBody.objectType?.fields ?: emptyList()
+      // Use resolutionContext instead of typeBody for determining
+      // the type that we're spreading across.
+      // This is because in field projections, typeBody is set for simple cases:
+      // find { Person } as {
+      //    address : Address as {
+      //        ... except {streetName, secretCode}
+      //    }
+      //
+      // but not for inline field expressions:
+      // find { Movie[] } as {
+      //    cast : Person[]
+      //    aListers : filterAll(this.cast, (Person) -> containsString(PersonName, 'a')) as  { // Inferred return type is Person
+      //       ...except { id }
+      //    }
+      //}[]
+      val typeBeingSpread = resolutionContext.activeScopes.lastOrNull()?.type?.let { possibleArrayType ->
+         // When we're projecting a collection, (in the above example)
+         // the projection scope is an Array,
+         // but the spread operator should apply to the member
+         ArrayType.memberTypeIfArray(possibleArrayType)
+      }
+      val fields = when (typeBeingSpread) {
+         is ObjectType -> typeBeingSpread.fields
+         else -> emptyList()
+      }
+
+      val excludedFields = typeBody.spreadOperatorExcludedFields
+      return fields.filter { !excludedFields.contains(it.name) }
    }
 
    private fun compileField(
@@ -157,11 +191,12 @@ class FieldCompiler(
       val fieldTypeDeclaration: TaxiParser.FieldTypeDeclarationContext? =
          member.fieldDeclaration().fieldTypeDeclaration()
       val isChildOfProjection = typeBody.objectType?.qualifiedName != null
-      if (fieldTypeDeclaration == null && isChildOfProjection) {
-         return resolveImplicitTypeFromToBeProjectedType(member)
-      }
       // orderId: {  foo: String }
       val anonymousTypeDefinition = member.fieldDeclaration().anonymousTypeDefinition()
+
+      if ((fieldTypeDeclaration == null && anonymousTypeDefinition == null) && isChildOfProjection) {
+         return resolveImplicitTypeFromToBeProjectedType(member)
+      }
       // orderId: Order::OrderId
       val modelAttributeType = member.fieldDeclaration().modelAttributeTypeReference()
       val expressionGroup: TaxiParser.ExpressionGroupContext? = member.fieldDeclaration().expressionGroup()
@@ -284,7 +319,6 @@ class FieldCompiler(
             val fieldName = member.fieldDeclaration().identifier().text
             val discoveryTypes = resolutionContext.typesToDiscover
             if (discoveryTypes.isEmpty()) {
-
                listOf(
                   CompilationError(
                      member.start,
@@ -371,11 +405,12 @@ class FieldCompiler(
       return tokenProcessor.parseProjectionScope(typeProjection.expressionInputs(), projectionSourceType)
          .flatMap { projectionScope ->
             val projectedType = when {
-               typeProjection.anonymousTypeDefinition() != null ->  parseAnonymousTypeBody(
+               typeProjection.anonymousTypeDefinition() != null -> parseAnonymousTypeBody(
                   member,
                   typeProjection.anonymousTypeDefinition(),
                   this.resolutionContext.appendScope(projectionScope)
                )
+
                typeProjection.typeReference() != null -> tokenProcessor.typeOrError(typeProjection.typeReference())
                else -> error("Can't lookup type reference for projection from statement: ${typeProjection.source().content}")
             }
@@ -394,7 +429,7 @@ class FieldCompiler(
       fieldProjection: FieldProjection? = null
    ): Either<List<CompilationError>, Field> {
       val format = tokenProcessor.parseTypeFormat(fieldAnnotations, fieldType.type, member)
-         .getOrHandle {
+         .getOrElse {
             errors.addAll(it)
             null
          }
@@ -423,7 +458,7 @@ class FieldCompiler(
          member.fieldDeclaration().anonymousTypeDefinition() != null -> {
             val accessor =
                compileAccessor(member.fieldDeclaration().anonymousTypeDefinition().accessor(), fieldType.type)
-                  ?.getOrHandle {
+                  ?.getOrElse {
                      errors.addAll(it)
                      null
                   }
@@ -451,7 +486,7 @@ class FieldCompiler(
                member.fieldDeclaration().fieldTypeDeclaration()
             val accessor = fieldDeclaration?.accessor()?.let { accessorContext ->
                compileAccessor(accessorContext, fieldType.type)
-            }?.getOrHandle {
+            }?.getOrElse {
                errors.addAll(it)
                null
             }
@@ -462,7 +497,8 @@ class FieldCompiler(
             tokenProcessor.mapConstraints(
                fieldDeclaration?.parameterConstraint()?.expressionGroup(),
                fieldType.type,
-               this
+               this,
+               this.resolutionContext.activeScopes
             ).map { constraints ->
                Field(
                   name = TokenProcessor.unescape(member.fieldDeclaration().identifier().text),
