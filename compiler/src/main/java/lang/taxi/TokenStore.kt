@@ -3,6 +3,7 @@ package lang.taxi
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Table
 import com.google.common.collect.TreeBasedTable
+import lang.taxi.TaxiParser.TypeReferenceContext
 import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.ParserRuleContext
 
@@ -20,9 +21,25 @@ class UnknownTokenReferenceException(val providedSourcePath: String, val current
       "$providedSourcePath is not present in the token store.  Current keys are ${currentKeys.joinToString(",")}"
    )
 
-class TokenStore {
-   private val tables = mutableMapOf<String, TokenTable>()
-   private val typeReferencesBySourceName = ArrayListMultimap.create<String, TaxiParser.TypeReferenceContext>()
+class TokenStore(
+   private val tables: MutableMap<String, TokenTable> = mutableMapOf<String, TokenTable>(),
+   private val typeReferencesBySourceName: ArrayListMultimap<String, TypeReferenceContext> = ArrayListMultimap.create<String, TypeReferenceContext>()
+) {
+
+   companion object {
+      fun combine(members: List<TokenStore>): TokenStore {
+         val tables: MutableMap<String, TokenTable> = mutableMapOf()
+         val typeReferencesBySourceName: ArrayListMultimap<String, TypeReferenceContext> =
+            ArrayListMultimap.create<String, TypeReferenceContext>()
+
+         members.forEach { tokenStore ->
+            tables.putAll(tokenStore.tables)
+            typeReferencesBySourceName.putAll(tokenStore.typeReferencesBySourceName)
+         }
+         return TokenStore(tables, typeReferencesBySourceName)
+      }
+   }
+
    fun tokenTable(sourceName: String): TokenTable {
       val sourcePath = SourceNames.normalize(sourceName)
       if (!tables.containsKey(sourcePath)) {
@@ -50,14 +67,4 @@ class TokenStore {
          typeReferencesBySourceName[sourceName].add(context)
       }
    }
-
-   operator fun plus(other: TokenStore): TokenStore {
-      val result = TokenStore()
-      result.tables.putAll(this.tables)
-      result.tables.putAll(other.tables)
-      result.typeReferencesBySourceName.putAll(this.typeReferencesBySourceName)
-      result.typeReferencesBySourceName.putAll(other.typeReferencesBySourceName)
-      return result
-   }
-
 }

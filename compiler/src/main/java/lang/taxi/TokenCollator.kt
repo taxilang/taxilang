@@ -23,6 +23,52 @@ data class Tokens(
    val unparsedViews: Map<String, Pair<Namespace, TaxiParser.ViewDeclarationContext>>,
    val tokenStore: TokenStore
 ) {
+   companion object {
+      /**
+       * Combines multiple sets of tokens to a single Tokens instance.
+       * Replaces a legacy reduce() function, which was very non-performant.
+       *
+       */
+      fun combine(members: List<Tokens>): Tokens {
+         val imports: MutableList<Pair<String, TaxiParser.ImportDeclarationContext>> = mutableListOf()
+         val unparsedTypes: MutableMap<String, Pair<Namespace, ParserRuleContext>> = mutableMapOf()
+         val unparsedExtensions: MutableList<Pair<Namespace, ParserRuleContext>> = mutableListOf()
+         val unparsedServices: MutableMap<String, Pair<Namespace, ServiceDeclarationContext>> = mutableMapOf()
+         val unparsedPolicies: MutableMap<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>> = mutableMapOf()
+         val unparsedFunctions: MutableMap<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>> =
+            mutableMapOf()
+         val namedQueries: MutableList<Pair<Namespace, TaxiParser.NamedQueryContext>> = mutableListOf()
+         val anonymousQueries: MutableList<Pair<Namespace, TaxiParser.AnonymousQueryContext>> = mutableListOf()
+         val unparsedViews: MutableMap<String, Pair<Namespace, TaxiParser.ViewDeclarationContext>> = mutableMapOf()
+
+         members.forEach { tokens ->
+            imports.addAll(tokens.imports)
+            unparsedTypes.putAll(tokens.unparsedTypes)
+            unparsedExtensions.addAll(tokens.unparsedExtensions)
+            unparsedServices.putAll(tokens.unparsedServices)
+            unparsedPolicies.putAll(tokens.unparsedPolicies)
+            unparsedFunctions.putAll(tokens.unparsedFunctions)
+            namedQueries.addAll(tokens.namedQueries)
+            anonymousQueries.addAll(tokens.anonymousQueries)
+            unparsedViews.putAll(tokens.unparsedViews)
+         }
+         val tokenStores = members.map { it.tokenStore }
+         val tokenStore = TokenStore.combine(tokenStores)
+
+         return Tokens(
+            imports,
+            unparsedTypes,
+            unparsedExtensions,
+            unparsedServices,
+            unparsedPolicies,
+            unparsedFunctions,
+            namedQueries,
+            anonymousQueries,
+            unparsedViews,
+            tokenStore
+         )
+      }
+   }
 
    val unparsedTypeNames: Set<QualifiedName> by lazy {
       unparsedTypes.keys.map { QualifiedName.from(it) }.toSet()
@@ -39,27 +85,7 @@ data class Tokens(
       imports.groupBy { it.second.source().normalizedSourceName }
    }
 
-   fun plus(others: Tokens): Tokens {
-      // Duplicate checking is disabled, as it doesn't consider imports, which causes false compilation errors
-      val errorsFromDuplicates = collectDuplicateTypes(others) + collectDuplicateServices(others)
-      if (errorsFromDuplicates.isNotEmpty()) {
-         log().error("Duplicate definitions detected.  This should be an error")
-//         throw CompilationException(errorsFromDuplicates)
-      }
-      return Tokens(
-         this.imports + others.imports,
-         this.unparsedTypes + others.unparsedTypes,
-         this.unparsedExtensions + others.unparsedExtensions,
-         this.unparsedServices + others.unparsedServices,
-         this.unparsedPolicies + others.unparsedPolicies,
-         this.unparsedFunctions + others.unparsedFunctions,
-         this.namedQueries + others.namedQueries,
-         this.anonymousQueries + others.anonymousQueries,
-         this.unparsedViews + others.unparsedViews,
-         this.tokenStore + others.tokenStore
 
-      )
-   }
 
    /**
     * This method is currently stubbed out.
@@ -74,6 +100,10 @@ data class Tokens(
     * For now, this is disabled, but we need to resolve this.
     */
    private fun collectDuplicateTypes(others: Tokens): List<CompilationError> {
+      // TODO : This used to be called as part of a reduce function, that we've now removed.
+      // This menas that checking for ducpliate types (which was disabled anyway)
+      // now isn't called anymore.
+
       // Stubbed for a demo
       // TODO("Revisit duplicate type definition handling")
       return emptyList()
@@ -83,8 +113,11 @@ data class Tokens(
       val duplicateTypeNames = this.unparsedTypes.keys.filter { others.unparsedTypes.containsKey(it) }
       val errors = if (duplicateTypeNames.isNotEmpty()) {
          val compilationErrors = duplicateTypeNames.map {
-            CompilationError((others.unparsedTypes[it]
-               ?: error("")).second.start, "Attempt to redefine type $it. Types may be extended (using an extension), but not redefined")
+            CompilationError(
+               (others.unparsedTypes[it]
+                  ?: error("")).second.start,
+               "Attempt to redefine type $it. Types may be extended (using an extension), but not redefined"
+            )
          }
          compilationErrors
       } else emptyList()
@@ -93,7 +126,12 @@ data class Tokens(
 
    private fun collectDuplicateServices(others: Tokens): List<CompilationError> {
       val duplicateServices = this.unparsedServices.keys.filter { others.unparsedServices.containsKey(it) }
-      val errors = duplicateServices.map { CompilationError(others.unparsedServices[it]!!.second.start, "Attempt to redefine service $it. Services may be extended (using an extension), but not redefined") }
+      val errors = duplicateServices.map {
+         CompilationError(
+            others.unparsedServices[it]!!.second.start,
+            "Attempt to redefine service $it. Services may be extended (using an extension), but not redefined"
+         )
+      }
       return errors
    }
 
@@ -176,7 +214,8 @@ class TokenCollator : TaxiBaseListener() {
          namedQueries,
          anonymousQueries,
          unparsedViews,
-         tokenStore)
+         tokenStore
+      )
    }
 
    override fun exitEveryRule(ctx: ParserRuleContext) {
