@@ -24,6 +24,9 @@ import org.antlr.v4.runtime.tree.ParseTree
 import java.io.File
 import java.io.Serializable
 import java.util.*
+import kotlin.system.measureTimeMillis
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 object Namespaces {
    const val DEFAULT_NAMESPACE = ""
@@ -472,6 +475,7 @@ class Compiler(
     * This is to allow tooling (such as VSCode / LSP) to get as much token / type data
     * as possible
     */
+   @OptIn(ExperimentalTime::class)
    private fun collectTokens(): Pair<Tokens, List<CompilationError>> {
       val builtInSources = CharStreams.fromString(StdLib.taxi, "Native StdLib")
 
@@ -486,8 +490,12 @@ class Compiler(
       }
       val tokensCollection = collectionResult.map { it.tokens }
       val errors = collectionResult.flatMap { it.errors }
-      val tokens = tokensCollection.reduce { acc, tokens -> acc.plus(tokens) }
-      return tokens to errors
+      val timedTokens = measureTimedValue {
+         Tokens.combine(tokensCollection)
+//         tokensCollection.reduce { acc, tokens -> acc.plus(tokens) }
+      }
+      log().info("Reducing parsed tokens took ${timedTokens.duration}")
+      return timedTokens.value to errors
    }
 
    fun typeNamesForSource(sourceName: String): List<QualifiedName> {
