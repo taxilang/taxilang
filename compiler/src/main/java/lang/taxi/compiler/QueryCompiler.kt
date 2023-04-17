@@ -17,12 +17,8 @@ import lang.taxi.query.QueryMode
 import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.toCompilationUnit
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.ArrayType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.StreamType
-import lang.taxi.types.Type
-import lang.taxi.types.TypedValue
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.value
@@ -37,7 +33,8 @@ internal class QueryCompiler(
       parameters: List<Parameter>,
       annotations: List<Annotation>,
       docs: String?,
-      ctx: TaxiParser.QueryBodyContext
+      ctx: TaxiParser.QueryBodyContext,
+      compilationUnit: CompilationUnit
    ): Either<List<CompilationError>, TaxiQlQuery> {
       val queryDirective = when {
 //         ctx.queryDirective().FindAll() != null -> QueryMode.FIND_ALL
@@ -62,7 +59,8 @@ internal class QueryCompiler(
                   projectedType = typeToProject?.first,
                   projectionScope = typeToProject?.second,
                   typeDoc = docs,
-                  annotations = annotations
+                  annotations = annotations,
+                  compilationUnits = listOf(compilationUnit)
                )
             }
          }

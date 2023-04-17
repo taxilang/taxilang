@@ -311,7 +311,8 @@ class TokenProcessor(
                parameters = emptyList(),
                annotations = emptyList(),
                docs = null,
-               ctx = anonymousQueryContex.queryBody()
+               ctx = anonymousQueryContex.queryBody(),
+               compilationUnit = anonymousQueryContex.toCompilationUnit(includeImportsPresentInFile = true)
             )
             .mapLeft { compilationErrors -> errors.addAll(compilationErrors) }
             .map { taxiQlQuery ->
@@ -344,7 +345,8 @@ class TokenProcessor(
                      parameters = parameters,
                      annotations = annotations,
                      docs = docs,
-                     ctx = namedQueryContext.queryBody()
+                     ctx = namedQueryContext.queryBody(),
+                     compilationUnit = namedQueryContext.toCompilationUnit(includeImportsPresentInFile = true)
                   )
                   .mapLeft { compilationErrors -> errors.addAll(compilationErrors) }
                   .map { taxiQlQuery -> queries.add(taxiQlQuery) }

@@ -11,12 +11,7 @@ import lang.taxi.expressions.OperatorExpression
 import lang.taxi.query.Parameter
 import lang.taxi.query.QueryMode
 import lang.taxi.services.operations.constraints.ExpressionConstraint
-import lang.taxi.types.ArgumentSelector
-import lang.taxi.types.ArrayType
-import lang.taxi.types.FormulaOperator
-import lang.taxi.types.ObjectType
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
+import lang.taxi.types.*
 
 class TaxiQlSpec : DescribeSpec({
    describe("Taxi Query Language") {
@@ -186,12 +181,37 @@ class TaxiQlSpec : DescribeSpec({
 
                  find {
                     Order[]
-                 }
-           """.trimIndent()
+                 }""".trimIndent()
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          queries.first()
       }
 
+      it("should return correct source for an unnamed query") {
+         val src = """
+                 import foo.Order
+                 import foo.OutputOrder
+
+                 find {
+                    Order[]
+                 }""".trimIndent()
+         val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
+         queries.single().compilationUnits.single().source.content.withoutWhitespace().shouldBe(src.withoutWhitespace())
+      }
+
+      it("should return correct source for a named query") {
+         val src = """
+                 import foo.Order
+                 import foo.OutputOrder
+
+                 query MyQuery {
+                    find {
+                       Order[]
+                    }
+                 }
+           """.trimIndent()
+         val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
+         queries.single().compilationUnits.single().source.content.withoutWhitespace().shouldBe(src.withoutWhitespace())
+      }
 
 
       // This feature got broken while implementing named projection scopes.

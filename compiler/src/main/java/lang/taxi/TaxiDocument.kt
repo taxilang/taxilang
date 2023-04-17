@@ -5,23 +5,8 @@ import lang.taxi.functions.Function
 import lang.taxi.policies.Policy
 import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.Service
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.AnnotationType
-import lang.taxi.types.ArrayType
-import lang.taxi.types.Arrays
-import lang.taxi.types.AttributePath
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.EnumType
-import lang.taxi.types.ImportableToken
-import lang.taxi.types.MapType
-import lang.taxi.types.Named
-import lang.taxi.types.ObjectType
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.StreamType
-import lang.taxi.types.Type
-import lang.taxi.types.TypeAlias
-import lang.taxi.types.View
 import lang.taxi.utils.log
 
 
@@ -157,7 +142,7 @@ open class TaxiDocument(
          return PrimitiveType.fromDeclaration(qualifiedName.toString())
       }
 
-      return typeMap[qualifiedName.toString()] ?: throw error("No type named $qualifiedName defined")
+      return typeMap[qualifiedName.toString()] ?: error("No type named $qualifiedName defined")
 
    }
 
