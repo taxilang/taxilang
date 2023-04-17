@@ -15,23 +15,24 @@ interface Compiled {
  * It's typed as Any? here, because we want to avoid pulling in the whole
  * Antlr and parser tree dependencies.
  */
-data class CompilationUnit(val ruleContext: Any?,
-                           val source: SourceCode,
-                           val location: SourceLocation = SourceLocation.UNKNOWN_POSITION) {
+data class CompilationUnit(
+   val source: SourceCode,
+   val location: SourceLocation = SourceLocation.UNKNOWN_POSITION
+) {
    companion object {
       fun unspecified(): CompilationUnit {
-         return CompilationUnit(ruleContext = null, source = SourceCode.unspecified())
+         return CompilationUnit(source = SourceCode.unspecified())
       }
 
       fun ofSource(source: SourceCode): CompilationUnit {
-         return CompilationUnit(null, source)
+         return CompilationUnit(source)
       }
 
       fun generatedFor(type: Type): CompilationUnit {
-         return CompilationUnit(null, SourceCode("Generated for ${type.qualifiedName}", ""))
+         return CompilationUnit(SourceCode("Generated for ${type.qualifiedName}", ""))
       }
       fun generatedFor(name: String): CompilationUnit {
-         return CompilationUnit(null, SourceCode("Generated for $name", ""))
+         return CompilationUnit(SourceCode("Generated for $name", ""))
       }
    }
 }

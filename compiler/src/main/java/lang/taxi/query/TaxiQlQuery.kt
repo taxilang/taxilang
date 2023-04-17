@@ -1,13 +1,8 @@
 package lang.taxi.query
 
 import lang.taxi.accessors.ProjectionFunctionScope
-import lang.taxi.types.Annotatable
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.ArrayType
-import lang.taxi.types.Documented
-import lang.taxi.types.ObjectType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.Type
 
 
 data class TaxiQlQuery(
@@ -19,8 +14,9 @@ data class TaxiQlQuery(
    val projectedType: Type?,
    val projectionScope: ProjectionFunctionScope?,
    override val typeDoc: String?,
-   override val annotations: List<Annotation>
-) : Documented, Annotatable {
+   override val annotations: List<Annotation>,
+   override val compilationUnits: List<CompilationUnit>
+) : Documented, Annotatable, Compiled {
    val projectedObjectType: ObjectType
       get() {
          return when (projectedType) {
