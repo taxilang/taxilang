@@ -4,27 +4,13 @@ import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
-import lang.taxi.CompilationError
-import lang.taxi.NamespaceQualifiedTypeResolver
-import lang.taxi.Operator
-import lang.taxi.TaxiParser
-import lang.taxi.TypeSystem
+import lang.taxi.*
 import lang.taxi.query.asDotJoinedPath
 import lang.taxi.services.Operation
 import lang.taxi.services.OperationContract
 import lang.taxi.services.Parameter
-import lang.taxi.toCompilationUnits
-import lang.taxi.types.ArrayType
-import lang.taxi.types.AttributePath
-import lang.taxi.types.Compiled
-import lang.taxi.types.Field
-import lang.taxi.types.ObjectType
-import lang.taxi.types.StreamType
-import lang.taxi.types.Type
-import lang.taxi.types.TypeAlias
+import lang.taxi.types.*
 import lang.taxi.utils.leftOr
-import lang.taxi.utils.log
-import lang.taxi.value
 
 class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
    override fun applies(constraint: Constraint): Boolean {
@@ -48,7 +34,14 @@ class PropertyToParameterConstraintProvider : ValidatingConstraintProvider {
 
             val rhsValidationError = when (attributeConstraint.expectedValue) {
                is ConstantValueExpression -> null // Not sure that to validate here?
-               is RelativeValueExpression -> validate(constraint.expectedValue as RelativeValueExpression, target, constraint, constraintDeclarationSite)
+               is RelativeValueExpression -> validate(
+                  constraint.expectedValue as RelativeValueExpression,
+                  target,
+                  constraint,
+                  constraintDeclarationSite
+               )
+
+               is ArgumentExpression -> null // Not sure what to validate here?
             }
 
             val errors = listOfNotNull(lhsValidationError, rhsValidationError)

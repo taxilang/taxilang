@@ -1,12 +1,11 @@
 package lang.taxi.query
 
 import lang.taxi.Operator
-import lang.taxi.TaxiDocument
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.services.operations.constraints.*
-import lang.taxi.types.FormulaOperator
+import lang.taxi.types.ArgumentSelector
 
 /**
  * ExpressionConstraints are the preferred model for describing constraints.
@@ -31,6 +30,7 @@ private fun OperatorExpression.convertToPropertyConstraint():List<PropertyToPara
 
    val valueExpression = when (val rhs = this.rhs) {
       is LiteralExpression -> ConstantValueExpression(rhs.value)
+      is ArgumentSelector -> ArgumentExpression(rhs)
       else -> TODO("Support for ${rhs::class.simpleName} on RHS is not yet implemented")
    } as ValueExpression
    return listOf(PropertyToParameterConstraint(
