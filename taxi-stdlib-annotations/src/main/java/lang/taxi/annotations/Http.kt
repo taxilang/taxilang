@@ -3,6 +3,28 @@ package lang.taxi.annotations
 import lang.taxi.types.Annotation
 import lang.taxi.types.AnnotationProvider
 
+data class HttpService(val baseUrl: String) : AnnotationProvider {
+   companion object {
+      const val NAME = "HttpService"
+
+      fun fromAnnotation(annotation: Annotation): HttpService {
+         val parameters = annotation.parameters
+         return fromParams(annotation.parameters)
+      }
+
+      fun fromParams(parameters: Map<String, Any?>): HttpService {
+         require(parameters.containsKey("baseUrl")) { "@$NAME requires a baseUrl parameter" }
+         return HttpService(parameters["baseUrl"]!!.toString())
+      }
+   }
+
+   override fun toAnnotation(): Annotation {
+      return Annotation(NAME, mapOf("baseUrl" to baseUrl))
+   }
+
+
+}
+
 data class HttpOperation(val method: String, val url: String) : AnnotationProvider {
    companion object {
       const val NAME = "HttpOperation"
