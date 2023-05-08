@@ -24,18 +24,35 @@ import org.antlr.v4.runtime.tree.ParseTree
 import java.io.File
 import java.io.Serializable
 import java.util.*
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 object Namespaces {
    const val DEFAULT_NAMESPACE = ""
 }
 
-fun ParserRuleContext?.toCompilationUnit(dependantTypeNames: List<QualifiedName> = emptyList()): lang.taxi.types.CompilationUnit {
+fun ParserRuleContext?.toCompilationUnit(
+   /**
+    * Creates a standalone source file, containing the source and namespaces for the
+    * dependent types.
+    */
+   dependantTypeNames: List<QualifiedName> = emptyList(),
+
+   /**
+    * Looks in the source file declaring this context, and grabs all the imports
+    */
+   includeImportsPresentInFile: Boolean = false
+): lang.taxi.types.CompilationUnit {
    return if (this == null) {
       CompilationUnit.unspecified()
    } else {
-      val rawSource = this.source()
+      val rawSource = this.source().let { src ->
+         if (includeImportsPresentInFile) {
+            val imports = this.importsInFile().joinToString("\n") { "import ${it.fullyQualifiedName}" }
+            return@let src.copy(content = listOf(imports, src.content).joinToString(""))
+         } else src
+      }
       return CompilationUnit(
-         this,
          rawSource.makeStandalone(this.findNamespace(), dependantTypeNames),
          SourceLocation(this.start.line, this.start.charPositionInLine)
       )
@@ -59,6 +76,7 @@ fun ParserRuleContext?.toCompilationUnit(dependantTypeNames: List<QualifiedName>
 //      }
    }
 }
+
 
 fun ParserRuleContext?.toCompilationUnits(): List<CompilationUnit> {
    return listOf(this.toCompilationUnit())
@@ -136,10 +154,6 @@ class DocumentMalformedException(val errors: List<DocumentStrucutreError>) :
    RuntimeException(errors.joinToString { it.detailMessage })
 
 class CompilerTokenCache {
-   init {
-      val f = ""
-      f.toString()
-   }
 
    private val streamNameToStream = mutableMapOf<String, CharStream>()
    private val cache: Cache<CharStream, TokenStreamParseResult> = CacheBuilder.newBuilder()
@@ -249,21 +263,21 @@ class Compiler(
 
    private val typeChecker: TypeChecker = TypeChecker(config.typeCheckerEnabled)
 
-   private val parseResult: Pair<Tokens, List<CompilationError>> by lazy {
+   val parseResult: Pair<Tokens, List<CompilationError>> by lazy {
       collectTokens()
    }
 
-   private val tokens: Tokens by lazy {
+   val tokens: Tokens by lazy {
       parseResult.first
    }
 
    private val syntaxErrors: List<CompilationError> by lazy {
       parseResult.second
    }
-   private val tokenProcessrWithImports: TokenProcessor by lazy {
+   private val tokenProcessorWithImports: TokenProcessor by lazy {
       TokenProcessor(tokens, importSources, typeChecker = typeChecker, linter = config.linter)
    }
-   private val tokenprocessorWithoutImports: TokenProcessor by lazy {
+   private val tokenProcessorWithoutImports: TokenProcessor by lazy {
       TokenProcessor(tokens, collectImports = false, typeChecker = typeChecker, linter = config.linter)
    }
 
@@ -286,26 +300,26 @@ class Compiler(
     * and the file may not be valid source.
     */
    fun declaredTypeNames(): List<QualifiedName> {
-      return tokenprocessorWithoutImports.findDeclaredTypeNames()
+      return tokenProcessorWithoutImports.findDeclaredTypeNames()
          .filterNot { BuiltIns.isBuiltIn(it) }
    }
 
    fun declaredServiceNames(): List<QualifiedName> {
-      return tokenprocessorWithoutImports.findDeclaredServiceNames()
+      return tokenProcessorWithoutImports.findDeclaredServiceNames()
    }
 
    fun lookupTypeByName(typeType: TaxiParser.TypeReferenceContext): QualifiedName {
-      return QualifiedName.from(tokenProcessrWithImports.lookupTypeByName(typeType))
+      return QualifiedName.from(tokenProcessorWithImports.lookupTypeByName(typeType))
    }
 
    fun getDeclarationSource(text: String, context: ParserRuleContext): CompilationUnit? {
-      val qualifiedName = tokenProcessrWithImports.lookupTypeByName(text, context)
+      val qualifiedName = tokenProcessorWithImports.lookupTypeByName(text, context)
          .getOrHandle { errors -> throw CompilationException(errors) }
-      return getCompilationUnit(tokenProcessrWithImports, qualifiedName)
+      return getCompilationUnit(tokenProcessorWithImports, qualifiedName)
    }
 
    fun getDeclarationSource(name: QualifiedName): CompilationUnit? {
-      return getCompilationUnit(tokenProcessrWithImports, name.fullyQualifiedName)
+      return getCompilationUnit(tokenProcessorWithImports, name.fullyQualifiedName)
    }
 
    private fun getCompilationUnit(processor: TokenProcessor, qualifiedName: String): CompilationUnit? {
@@ -326,8 +340,8 @@ class Compiler(
    }
 
    fun getDeclarationSource(typeName: TaxiParser.TypeReferenceContext): CompilationUnit? {
-      val qualifiedName = tokenProcessrWithImports.lookupTypeByName(typeName)
-      return getCompilationUnit(tokenProcessrWithImports, qualifiedName)
+      val qualifiedName = tokenProcessorWithImports.lookupTypeByName(typeName)
+      return getCompilationUnit(tokenProcessorWithImports, qualifiedName)
    }
 
    /**
@@ -352,7 +366,7 @@ class Compiler(
       if (syntaxErrors.isNotEmpty()) {
          return syntaxErrors to listOf()
       }
-      val builder = tokenProcessrWithImports
+      val builder = tokenProcessorWithImports
       val (errors, queries) = builder.buildQueries()
       return errors to queries
    }
@@ -365,7 +379,7 @@ class Compiler(
       if (syntaxErrors.isNotEmpty()) {
          return syntaxErrors to TaxiDocument.empty()
       }
-      val builder = tokenProcessrWithImports
+      val builder = tokenProcessorWithImports
       // Similarly to above, we could do somethign with these errors now.
       val (errors, document) = builder.buildTaxiDocument()
 //      log().debug("Taxi schema compilation took ${stopwatch.elapsed().toMillis()}ms")
@@ -472,6 +486,7 @@ class Compiler(
     * This is to allow tooling (such as VSCode / LSP) to get as much token / type data
     * as possible
     */
+   @OptIn(ExperimentalTime::class)
    private fun collectTokens(): Pair<Tokens, List<CompilationError>> {
       val builtInSources = CharStreams.fromString(StdLib.taxi, "Native StdLib")
 
@@ -486,8 +501,12 @@ class Compiler(
       }
       val tokensCollection = collectionResult.map { it.tokens }
       val errors = collectionResult.flatMap { it.errors }
-      val tokens = tokensCollection.reduce { acc, tokens -> acc.plus(tokens) }
-      return tokens to errors
+      val timedTokens = measureTimedValue {
+         Tokens.combine(tokensCollection)
+//         tokensCollection.reduce { acc, tokens -> acc.plus(tokens) }
+      }
+      log().info("Reducing parsed tokens took ${timedTokens.duration}")
+      return timedTokens.value to errors
    }
 
    fun typeNamesForSource(sourceName: String): List<QualifiedName> {
@@ -503,9 +522,9 @@ class Compiler(
    }
 
    fun usedTypedNamesInSource(sourceName: String): Set<QualifiedName> {
-      return tokenProcessrWithImports.tokens.tokenStore.getTypeReferencesForSourceName(sourceName).mapNotNull {
+      return tokenProcessorWithImports.tokens.tokenStore.getTypeReferencesForSourceName(sourceName).mapNotNull {
          try {
-            tokenProcessrWithImports.lookupTypeByName(it)
+            tokenProcessorWithImports.lookupTypeByName(it)
          } catch (error: CompilationException) {
             null
          }

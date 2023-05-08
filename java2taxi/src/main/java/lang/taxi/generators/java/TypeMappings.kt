@@ -282,15 +282,13 @@ class DefaultTypeMapper(
    }
 
 
-   private fun getTypeDeclaredOnClass(element: AnnotatedElement, existingTypes: MutableSet<Type>): Type {
-      val rawType = TypeNames.typeFromElement(element)
-      return getTaxiType(rawType, existingTypes, element)
-   }
-
    private fun declaresTypeAlias(element: AnnotatedElement): Boolean {
       return getTypeNameOnTypeResolvedToNamespace(element, "") != null
    }
 
+   fun getDeclaredTypeName(element: AnnotatedElement): AnnotatedTypeAlias? {
+      return getDataTypeFromKotlinTypeAlias(element)
+   }
 //   fun getDataTypeAnnotation(element: AnnotatedElement): DataType? {
 //      return getDataTypeFromKotlinTypeAlias(element)
 //         ?: element.getAnnotation(DataType::class.java) ?: return null
@@ -328,6 +326,12 @@ class DefaultTypeMapper(
          is Field -> typeAliasRegister.findDataType(element.kotlinProperty)
          is Method -> typeAliasRegister.findDataType(element.kotlinFunction)
          is Parameter -> typeAliasRegister.findDataType(element.kotlinParam)
+         is Class<*> -> {
+            element.getAnnotation(DataType::class.java)?.let { dataType ->
+               AnnotatedTypeAlias(dataType.qualifiedName(element.packageName), dataType)
+            }
+         }
+
          else -> null
       }
       return dataType

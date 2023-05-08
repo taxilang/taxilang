@@ -18,6 +18,7 @@ import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.toCompilationUnit
 import lang.taxi.types.*
+import lang.taxi.types.Annotation
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.value
@@ -28,7 +29,12 @@ internal class QueryCompiler(
    private val expressionCompiler: ExpressionCompiler
 ) {
    fun parseQueryBody(
-      name: String, parameters: List<Parameter>, ctx: TaxiParser.QueryBodyContext
+      name: QualifiedName,
+      parameters: List<Parameter>,
+      annotations: List<Annotation>,
+      docs: String?,
+      ctx: TaxiParser.QueryBodyContext,
+      compilationUnit: CompilationUnit
    ): Either<List<CompilationError>, TaxiQlQuery> {
       val queryDirective = when {
 //         ctx.queryDirective().FindAll() != null -> QueryMode.FIND_ALL
@@ -51,7 +57,10 @@ internal class QueryCompiler(
                   parameters = parameters,
                   typesToFind = typesToDiscover,
                   projectedType = typeToProject?.first,
-                  projectionScope = typeToProject?.second
+                  projectionScope = typeToProject?.second,
+                  typeDoc = docs,
+                  annotations = annotations,
+                  compilationUnits = listOf(compilationUnit)
                )
             }
          }
@@ -134,9 +143,17 @@ internal class QueryCompiler(
          try {
             val providedValue = factCtx.literal()?.valueOrNull()
             if (providedValue != null) {
-               Parameter(variableName, FactValue.Constant(TypedValue(factType, factCtx.literal().value()))).right()
+               Parameter(
+                  name = variableName,
+                  value = FactValue.Constant(TypedValue(factType, factCtx.literal().value())),
+                  annotations = emptyList()
+               ).right()
             } else {
-               Parameter(variableName, FactValue.Variable(factType, variableName)).right()
+               Parameter(
+                  name = variableName,
+                  value = FactValue.Variable(factType, variableName),
+                  annotations = emptyList()
+               ).right()
             }
          } catch (e: Exception) {
             listOf(CompilationError(factCtx.start, "Failed to create TypedInstance - ${e.message}")).left()

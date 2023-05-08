@@ -67,7 +67,7 @@ class TaxiGenerator(
    private fun generateTaxiServices() {
       val serviceClassesToGenerate = extensions.flatMap { extension ->
          classes.filter { extension.isServiceType(it) }
-      }
+      }.distinct()
       val generatedServices = serviceClassesToGenerate.flatMap { clazz ->
          serviceMapper.getTaxiServices(
             clazz,

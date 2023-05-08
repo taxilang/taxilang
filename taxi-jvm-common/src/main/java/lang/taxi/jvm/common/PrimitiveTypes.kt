@@ -27,12 +27,12 @@ object PrimitiveTypes {
       PrimitiveType.BOOLEAN to listOf(Boolean::class.java),
       PrimitiveType.STRING to listOf(String::class.java, Char::class.java),
       PrimitiveType.INTEGER to listOf(
+         Integer::class.java,
          Int::class.java,
          BigInteger::class.java,
          kotlin.Short::class.java,
          kotlin.Long::class.java,
          Long::class.java,
-         Integer::class.java,
          Short::class.java
       ),
       PrimitiveType.DECIMAL to listOf(

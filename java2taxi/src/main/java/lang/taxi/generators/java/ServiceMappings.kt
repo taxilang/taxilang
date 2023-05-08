@@ -153,19 +153,19 @@ the underlying KType, (which is used for type alias detection)
 class KTypeWrapper(val ktype: KType, override val delegate: AnnotatedElement = (ktype.classifier!! as KClass<*>).java) :
    AnnotatedElement, AnnotatedElementWrapper {
    val arguments = ktype.arguments
-   private val klass = ktype.classifier!! as KClass<*>
+   private val klass = ktype.classifier as? KClass<*>
 //   override val delegate: AnnotatedElement = klass.java
 
    override fun getAnnotations(): Array<Annotation> {
-      return delegate.annotations
+      return delegate.annotations + (klass?.annotations ?: emptyList())
    }
 
    override fun <T : Annotation> getAnnotation(p0: Class<T>): T? {
-      return delegate.getAnnotation(p0)
+      return delegate.getAnnotation(p0) ?: klass?.java?.getAnnotation(p0)
    }
 
    override fun getDeclaredAnnotations(): Array<Annotation> {
-      return delegate.declaredAnnotations
+      return delegate.declaredAnnotations + (klass?.annotations ?: emptyList())
    }
 
 

@@ -3,7 +3,8 @@ title: Querying with TaxiQL
 description: The TaxiQL language is used to execute queries against taxi-aware sources
 ---
 
-import {Hint, Discourage} from '../components/hint'
+
+import {Discourage, Hint} from '../components/hint'
 import {Link} from 'gatsby';
 
 ## Overview
@@ -70,13 +71,14 @@ For example:
 ```taxi
 // Find a person named Jim
 find { Person( FirstName == 'Jim' ) }
-```
 
-This finds a `Person` model, with a `FirstName` value of Jim.
+// Find all the people with a Last Name of Smith
+find { Person[]( LastName == 'Smith' ) }
+```
 
 <Hint>
 
-   **Important:** Throughout taxi, we favour using Types, rather than field names, to describe attributes of data - it's
+   Throughout taxi, we favour using Types, rather than field names, to describe attributes of data - it's
    the same here for querying.
 
    Referencing criteria using a type means that the criteria can be applied against a model regardless of the name of
@@ -85,10 +87,11 @@ This finds a `Person` model, with a `FirstName` value of Jim.
 </Hint>
 
 ### Combining multiple criteria
-Multiple criteria are listed within the parentheses, and are always applied as an AND operation.
+Criteria can be combined using either AND (`&&`) or OR (`||`):
+
 ```taxi
 // Find all people born in the year 2010.
-find { Person( DateOfBirth > '2010-01-01', DateOfBirth <= '2010-12-31' ) }
+find { Person[]( DateOfBirth > '2010-01-01' && DateOfBirth <= '2010-12-31' ) }
 ```
 
 The following operators are supported in a query - although support is determined by the actual services running.
@@ -102,8 +105,42 @@ The following operators are supported in a query - although support is determine
 | `<`    | Less than                |
 | `<`    | Less than or equal to    |
 
-## Projecting
-When querying the result model can be specified using the `as` operator:
+## Returning data from multiple sources, using Projections
+The data returned from a query can be linked across multiple data sources.
+
+Queries always need a "start" point (defined in the `find { ... }` block), but can project this data
+mixing and matching from mutliple sources.
+
+
+```taxiql
+
+// Find books, and project wiht a mixture of data:
+find { Book[] } as {
+   title : BookTitle
+   authorName : FirstName + ' ' + LastName
+   review: ReviewScore // This likely comes from a different service.
+}[]
+```
+
+Note that the cardinality must match between the source type and the query result type.  i.e.,:
+
+ * If the query returns a single result, the projected result must also be single
+ * If the query returns a collection, the projected result must also be a collection
+
+<Hint>
+   Note that queries are declarative - they don't talk about which data source to connect to,
+   or how to link data between data sources.
+
+   That information is defined using the Types declared in models and services.
+
+   This allows queries to be decoupled from their execution, so as services change, queries remain unaffected
+</Hint>
+
+
+### Projecting to a named type
+In the previous example, we defined a type inline within the query.  These are called "anonymous types".
+
+You can also project data to a previously defined type:
 
 ```
 model Author {
@@ -123,30 +160,9 @@ model BookAndAuthor {
 }
 
 // Find books, and project to BookAndAuthor - a named type.
-find { Book[] } as BookAndAuthor
+find { Book[] } as BookAndAuthor[]
 
 ```
-
-## Anonymous projected types
-When writing a query, it's very common to define a custom result type, rather than using an existing type defined elsewhere in the schema.
-These custom types are called Anonymous types, and allow for structuring the result exactly as you need it, along with mixing and matching content from multiple different sources.  (It's up to the query engine to determine how to resolve these relationships.)
-
-
-An example of a simple anonymous type is as follows:
-
-```taxiql
-
-// Find books, and project to an anonymous type.
-find { Book[] } as {
-   title : BookTitle
-   authorName : FirstName + ' ' + LastName
-}[]
-```
-
-Note that the cardinality must match between the source type and the query result type.  i.e.,:
-
- * If the query returns a single result, the projected result must also be single
- * If the query returns a collection, the projected result must also be a collection
 
 ### Returning a subset of fields from the source type
 If you only want to return a subset of fields from the queried type, a shorthand exists for this:
@@ -168,6 +184,33 @@ find { Book[] } as {
   pageCount
 }[]
 ```
+
+### Nested objects
+Projected types are just like any type, so you can nest objects within them:
+
+```
+find { Book[] } as {
+  title : Title,
+  pageCount : PageCount
+  reviews: { // <--- nested object
+    score: ReviewScore
+    text: ReviewText
+  }
+}
+```
+
+### Using a spread operator
+The spread operator (`...`) is a short hand for "And everything else from that type".
+
+For example:
+
+```taxi
+model Person {
+   firstName : FirstName
+   lastName : LastName
+}
+```
+### Excluding from a spread operator
 
 ### Restructuring results to look like another type
 Often, you're querying to feed data to another system which has a predefined schema (and a corresponding Taxi definition).
@@ -331,6 +374,23 @@ find {
      }
   ]( by ActorId )
 }[]
+```
+## Named queries
+Queries can be named, and saved in a taxi project, just like any other type:
+
+```taxi
+query PeopleNamedJim {
+   find { Person( FirstName == 'Jim' ) }
+}
+```
+
+## Parameterized queries
+Named queries can also have parameters:
+
+```
+query PeopleWithName( name : FirstName ) {
+   find { Person( FirstName == name ) }
+}
 ```
 
 ## Enriching from multiple sources with `@FirstNotEmpty`

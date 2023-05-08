@@ -112,3 +112,5 @@ data class ConstantValueExpression(val value: Any) : ValueExpression(value.quote
 data class RelativeValueExpression(val path: AttributePath) : ValueExpression(path.path) {
    constructor(attributeName: String) : this(AttributePath.from(attributeName))
 }
+
+data class ArgumentExpression(val argument: ArgumentSelector) : ValueExpression(argument.asTaxi())

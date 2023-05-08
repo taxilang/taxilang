@@ -123,7 +123,11 @@ class EnumTypeTest {
    }
 
    private fun enumType(values: List<EnumValue>): EnumType {
-      val definition = EnumDefinition(values = values, compilationUnit = CompilationUnit(null, SourceCode("", "")), basePrimitive = PrimitiveType.STRING)
+      val definition = EnumDefinition(
+         values = values,
+         compilationUnit = CompilationUnit(SourceCode("", "")),
+         basePrimitive = PrimitiveType.STRING
+      )
       return EnumType("Currency", definition)
    }
 
