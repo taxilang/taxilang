@@ -22,33 +22,11 @@ import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionDefinition
 import lang.taxi.functions.FunctionModifiers
 import lang.taxi.linter.Linter
-import lang.taxi.policies.CaseCondition
-import lang.taxi.policies.Condition
-import lang.taxi.policies.ElseCondition
-import lang.taxi.policies.Instruction
-import lang.taxi.policies.Instructions
-import lang.taxi.policies.OperationScope
-import lang.taxi.policies.Policy
-import lang.taxi.policies.PolicyScope
-import lang.taxi.policies.PolicyStatement
-import lang.taxi.policies.RuleSet
-import lang.taxi.policies.Subjects
+import lang.taxi.policies.*
 import lang.taxi.query.FactValue
 import lang.taxi.query.Parameter
 import lang.taxi.query.TaxiQlQuery
-import lang.taxi.services.ConsumedOperation
-import lang.taxi.services.FilterCapability
-import lang.taxi.services.Operation
-import lang.taxi.services.OperationContract
-import lang.taxi.services.QueryOperation
-import lang.taxi.services.QueryOperationCapability
-import lang.taxi.services.Service
-import lang.taxi.services.ServiceDefinition
-import lang.taxi.services.ServiceLineage
-import lang.taxi.services.ServiceMember
-import lang.taxi.services.SimpleQueryCapability
-import lang.taxi.services.Stream
-import lang.taxi.services.Table
+import lang.taxi.services.*
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintValidator
 import lang.taxi.services.operations.constraints.ExpressionConstraint
@@ -61,6 +39,51 @@ import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.security.SecureRandom
 import java.util.*
+import kotlin.collections.Collection
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.MutableList
+import kotlin.collections.MutableSet
+import kotlin.collections.Set
+import kotlin.collections.all
+import kotlin.collections.asSequence
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.contains
+import kotlin.collections.distinct
+import kotlin.collections.distinctBy
+import kotlin.collections.emptyList
+import kotlin.collections.emptyMap
+import kotlin.collections.emptySet
+import kotlin.collections.filter
+import kotlin.collections.filterIsInstance
+import kotlin.collections.filterNot
+import kotlin.collections.first
+import kotlin.collections.firstOrNull
+import kotlin.collections.flatMap
+import kotlin.collections.flatten
+import kotlin.collections.forEach
+import kotlin.collections.getValue
+import kotlin.collections.isNotEmpty
+import kotlin.collections.joinToString
+import kotlin.collections.listOf
+import kotlin.collections.map
+import kotlin.collections.mapIndexed
+import kotlin.collections.mapNotNull
+import kotlin.collections.mapOf
+import kotlin.collections.mutableListOf
+import kotlin.collections.mutableSetOf
+import kotlin.collections.none
+import kotlin.collections.plus
+import kotlin.collections.set
+import kotlin.collections.setOf
+import kotlin.collections.setOfNotNull
+import kotlin.collections.single
+import kotlin.collections.singleOrNull
+import kotlin.collections.toList
+import kotlin.collections.toMap
+import kotlin.collections.toMutableMap
+import kotlin.collections.toSet
 
 class TokenProcessor(
    val tokens: Tokens,
@@ -890,6 +913,32 @@ class TokenProcessor(
 
       val annotations = collateAnnotations(ctx.annotation())
       val modifiers = parseModifiers(ctx.typeModifier())
+      val declaredInheritence = parseTypeInheritance(namespace, ctx.listOfInheritedTypes())
+
+      val interimDefinition = ObjectTypeDefinition(
+         fields = fields.toSet(),
+         annotations = annotations.toSet(),
+         modifiers = modifiers,
+         inheritsFrom = declaredInheritence,
+         formatAndOffset = null,
+         typeDoc = "This type is currently under construction",
+         typeKind = typeKind,
+         expression = null, // We'll parse the expression in a bit...
+         compilationUnit = ctx.toCompilationUnit()
+      )
+      val interimType = ObjectType(
+         typeName, interimDefinition
+      )
+      // Before we can parse the expression, we need to register an interim version of this type,
+      // to handle things like circular references within the expression.
+      // TODO : Passing overwrite here, as otherwsie we're getting redefinition exceptions.
+      // However, that shouldn't happen, as this should be the first time we register a type.
+      // Need to investigate.
+      if (!this.typeSystem.isDefined(typeName)) {
+         this.typeSystem.register(interimType)
+      }
+
+
       val expression = ctx.expressionTypeDeclaration()?.let {
          it.expressionGroup().map { expressionGroup -> parseTypeExpression(expressionGroup, activeScopes) }
       }?.invertEitherList()
@@ -900,7 +949,7 @@ class TokenProcessor(
             null
          }
 
-      val inherits = parseTypeInheritance(namespace, ctx.listOfInheritedTypes()).let { explicitInheritence ->
+      val inherits = declaredInheritence.let { explicitInheritence ->
          // If we have an expression, then the return type is inferrable from that
          if (explicitInheritence.isEmpty() && expression != null) {
             setOf(expression.returnType)
@@ -952,7 +1001,7 @@ class TokenProcessor(
       }
 
       return this.typeSystem.register(
-         type
+         type, overwrite = true
       ).right()
    }
 
@@ -1171,7 +1220,10 @@ class TokenProcessor(
             .wrapErrorsInList()
             .flattenErrors()
 
-         mapAnnotationParams(annotation, annotationType.getOrNull() as? AnnotationType).flatMap { annotationParameters ->
+         mapAnnotationParams(
+            annotation,
+            annotationType.getOrNull() as? AnnotationType
+         ).flatMap { annotationParameters ->
 
             val constructedAnonymousAnnotation = Annotation(annotationName, annotationParameters)
             val resolvedAnnotation = when (annotationType) {

@@ -6,6 +6,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import lang.taxi.expressions.OperatorExpression
+import lang.taxi.services.operations.constraints.ExpressionConstraint
 import lang.taxi.types.ArgumentSelector
 import lang.taxi.types.ObjectType
 
@@ -62,8 +63,9 @@ class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
          query.shouldNotBeNull()
          val reviewConstraints = query.projectedObjectType.field("review").constraints
          reviewConstraints.shouldHaveSize(1)
-         val constraint = reviewConstraints.single() as OperatorExpression
-         val selector = constraint.rhs.asA<ArgumentSelector>()
+         val constraint = reviewConstraints.single() as ExpressionConstraint
+         val expression = constraint.expression as OperatorExpression
+         val selector = expression.rhs.asA<ArgumentSelector>()
          selector.scope.name.shouldBe("src")
          selector.scope.type.qualifiedName.shouldBe("Film")
       }

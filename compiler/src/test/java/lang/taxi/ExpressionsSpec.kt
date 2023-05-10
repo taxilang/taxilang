@@ -9,6 +9,7 @@ import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.types.ModelAttributeReferenceSelector
+import lang.taxi.types.PrimitiveType
 import lang.taxi.types.toQualifiedName
 
 class ExpressionsSpec : DescribeSpec({
@@ -138,6 +139,33 @@ class ExpressionsSpec : DescribeSpec({
             accessor.memberSource.parameterizedName.shouldBe("A")
             accessor.targetType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<B>")
             accessor.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<lang.taxi.Array<B>>")
+         }
+
+         it("can define expressions against types that reference each other") {
+            // These types create a circular reference, which could be bad.
+            // However, it's not a compilation error.
+            // This test ensures that we're handling expression type resolution partway through compilation of
+            // a dependent type.
+            // Sepcifically this works by in the TokenProcessor.compileType()
+            // we register an interim definition of the type, before compiling expressions
+            val schema = """
+               type OriginalQuantity inherits Decimal by SoldQuantity + RemainingQuantity
+               type RemainingQuantity inherits Decimal by OriginalQuantity - SoldQuantity
+               type SoldQuantity inherits Decimal by OriginalQuantity - RemainingQuantity
+            """.compiled()
+            val originalQty = schema.objectType("OriginalQuantity")
+            originalQty.basePrimitive!!.shouldBe(PrimitiveType.DECIMAL)
+            originalQty.expression.shouldNotBeNull()
+
+            val remainingQty = schema.objectType("RemainingQuantity")
+            remainingQty.basePrimitive!!.shouldBe(PrimitiveType.DECIMAL)
+            remainingQty.expression.shouldNotBeNull()
+
+            val soldQuantity = schema.objectType("SoldQuantity")
+            soldQuantity.basePrimitive!!.shouldBe(PrimitiveType.DECIMAL)
+            soldQuantity.expression.shouldNotBeNull()
+
+
          }
 
          it("can reference itself using a type reference selector") {

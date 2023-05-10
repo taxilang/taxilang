@@ -9,16 +9,7 @@ import lang.taxi.functions.stdlib.stdLibName
 import lang.taxi.services.ConsumedOperation
 import lang.taxi.services.ServiceDefinition
 import lang.taxi.stdlib.StdLibSchema
-import lang.taxi.types.DefinableToken
-import lang.taxi.types.ImportableToken
-import lang.taxi.types.ObjectType
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.TokenDefinition
-import lang.taxi.types.Type
-import lang.taxi.types.TypeDefinition
-import lang.taxi.types.TypeProvider
-import lang.taxi.types.UserType
+import lang.taxi.types.*
 import lang.taxi.utils.toEither
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.Token
@@ -72,7 +63,10 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
    }
 
    fun contains(qualifiedName: String, symbolKind: SymbolKind = SymbolKind.TYPE): Boolean {
-      return isImported(qualifiedName, symbolKind) || containsCompiledToken(qualifiedName, symbolKind) || PrimitiveType.isPrimitiveType(qualifiedName)
+      return isImported(qualifiedName, symbolKind) || containsCompiledToken(
+         qualifiedName,
+         symbolKind
+      ) || PrimitiveType.isPrimitiveType(qualifiedName)
    }
 
    private fun containsCompiledToken(qualifiedName: String, symbolKind: SymbolKind): Boolean {
@@ -93,6 +87,7 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
                val registeredType = importableToken as DefinableToken<*>
                registeredType.definition != null
             }
+
             else -> error("unhandled token type ${importableToken::class.simpleName}")
          }
       }
@@ -103,19 +98,20 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
     * Registers the token with the typesystem.
     * The token is returned for convenient chaining
     */
-   fun <TDef : TokenDefinition, TToken:DefinableToken<TDef>> register(type: TToken):TToken {
+   fun <TDef : TokenDefinition, TToken : DefinableToken<TDef>> register(
+      type: TToken,
+      overwrite: Boolean = false
+   ): TToken {
       if (compiledTokens.containsKey(type.qualifiedName)) {
          val registeredType = compiledTokens[type.qualifiedName]!! as DefinableToken<TDef>
-         if (registeredType.definition != null && type.definition != null && registeredType.definition != type.definition) {
+         if (registeredType.definition != null && type.definition != null && registeredType.definition != type.definition && !overwrite) {
             throw IllegalArgumentException("Attempting to redefine type ${type.qualifiedName}")
          }
-         if (registeredType.definition != type.definition) {
-            registeredType.definition = type.definition
-            if (registeredType is UserType<*, *> && type is UserType<*, *>) {
-               // Nasty for-each stuff here because of generic oddness
-               (type as UserType<TypeDefinition, TypeDefinition>).extensions.forEach {
-                  (registeredType as UserType<TypeDefinition, TypeDefinition>).addExtension(it)
-               }
+         registeredType.definition = type.definition
+         if (registeredType is UserType<*, *> && type is UserType<*, *>) {
+            // Nasty for-each stuff here because of generic oddness
+            (type as UserType<TypeDefinition, TypeDefinition>).extensions.forEach {
+               (registeredType as UserType<TypeDefinition, TypeDefinition>).addExtension(it)
             }
          }
       } else {
@@ -124,11 +120,18 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       return type
    }
 
-   fun getTokens(includeImportedTypes: Boolean = false, predicate: (ImportableToken) -> Boolean): List<ImportableToken> {
+   fun getTokens(
+      includeImportedTypes: Boolean = false,
+      predicate: (ImportableToken) -> Boolean
+   ): List<ImportableToken> {
       return this.tokenList(includeImportedTypes).filter(predicate).toList()
    }
 
-   fun getTokenOrError(qualifiedName: String, context: ParserRuleContext, symbolKind: SymbolKind = SymbolKind.TYPE): Either<CompilationError, ImportableToken> {
+   fun getTokenOrError(
+      qualifiedName: String,
+      context: ParserRuleContext,
+      symbolKind: SymbolKind = SymbolKind.TYPE
+   ): Either<CompilationError, ImportableToken> {
       if (PrimitiveType.isPrimitiveType(qualifiedName)) {
          return PrimitiveType.fromDeclaration(qualifiedName).right()
       }
@@ -155,7 +158,10 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       return getToken(qualifiedName) as Function
    }
 
-   fun getOperationOrError(qualifiedName: String, context: ParserRuleContext): Either<CompilationError, ConsumedOperation> {
+   fun getOperationOrError(
+      qualifiedName: String,
+      context: ParserRuleContext
+   ): Either<CompilationError, ConsumedOperation> {
       return try {
          val serviceQualifiedName = qualifiedName.split(".").dropLast(1).joinToString(".")
          val operationName = qualifiedName.split(".").last()
@@ -164,8 +170,11 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
             ?.operations
             ?.firstOrNull { opName -> opName == operationName }
             ?.let { ConsumedOperation(serviceQualifiedName, it) }
-            ?.right() ?:
-         CompilationError(context.start, "$qualifiedName is not defined", context.source().normalizedSourceName)
+            ?.right() ?: CompilationError(
+            context.start,
+            "$qualifiedName is not defined",
+            context.source().normalizedSourceName
+         )
             .left()
       } catch (e: Exception) {
          CompilationError(context.start, "$qualifiedName is not defined", context.source().normalizedSourceName)
@@ -192,10 +201,17 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
          // TODO Handle case where SymbolKind is an annotation
          return if (symbolKind == SymbolKind.FUNCTION) {
             getImportedFunction(qualifiedName)
-         } else { return getImportedType(qualifiedName) }
+         } else {
+            return getImportedType(qualifiedName)
+         }
       }
 
-      if (this.compiledTokens.containsKey(qualifiedName) && symbolKind.matches(this.compiledTokens.getValue(qualifiedName))) {
+      if (this.compiledTokens.containsKey(qualifiedName) && symbolKind.matches(
+            this.compiledTokens.getValue(
+               qualifiedName
+            )
+         )
+      ) {
          return this.compiledTokens[qualifiedName]
       }
 
@@ -216,7 +232,12 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
    // THe whole additionalImports thing is for when we're
    // accessing prior to compiling (ie., in the language server).
    // During normal compilation, don't need to pass anything
-   fun qualify(namespace: Namespace, name: String, explicitImports: List<QualifiedName> = emptyList(), symbolKind: SymbolKind = SymbolKind.TYPE): String {
+   fun qualify(
+      namespace: Namespace,
+      name: String,
+      explicitImports: List<QualifiedName> = emptyList(),
+      symbolKind: SymbolKind = SymbolKind.TYPE
+   ): String {
       if (name.contains(".")) {
          // This is already qualified
          return name
@@ -238,7 +259,8 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       // If the type wasn't explicitly imported, but exists in the same namespace, then resolve to that.
       val matchesInNamespace = this.getTokens(includeImportedTypes = true) { token ->
          val qualifiedName = token.toQualifiedName()
-         val matchesOnName = qualifiedName.namespace == namespace && qualifiedName.typeName == name && symbolKind.matches(token)
+         val matchesOnName =
+            qualifiedName.namespace == namespace && qualifiedName.typeName == name && symbolKind.matches(token)
          matchesOnName
       }
       if (matchesInNamespace.size == 1) {

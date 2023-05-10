@@ -51,8 +51,21 @@ data class ObjectTypeDefinition(
       ObjectTypeDefinition::fields,
       ObjectTypeDefinition::annotations,
       ObjectTypeDefinition::modifiers,
-      ObjectTypeDefinition::inheritsFrom,
+
+      ObjectTypeDefinition::formatAndOffset,
+      // We can't use the expression and inheritsFrom for hash/equals,
+      // as it can contain a reference to types, which creates a stack overflow.
+      // So, compare the source
+      ObjectTypeDefinition::expressionSource,
+      ObjectTypeDefinition::inheritedFromTypeNames,
    )
+
+   private val inheritedFromTypeNames = inheritsFrom.map { it.qualifiedName }
+
+   private val expressionSource: String?
+      get() {
+         return expression?.asTaxi()
+      }
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
