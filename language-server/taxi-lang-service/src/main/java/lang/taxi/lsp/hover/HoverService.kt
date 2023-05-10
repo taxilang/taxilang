@@ -1,8 +1,10 @@
 package lang.taxi.lsp.hover
 
 import lang.taxi.TaxiParser
+import lang.taxi.TaxiParser.TypeReferenceContext
 import lang.taxi.lsp.CompilationResult
 import lang.taxi.lsp.completion.normalizedUriPath
+import lang.taxi.searchUpForRule
 import lang.taxi.types.*
 import org.eclipse.lsp4j.Hover
 import org.eclipse.lsp4j.HoverParams
@@ -14,8 +16,14 @@ class HoverService {
         val context = compilationResult.compiler.contextAt(params.position.line, params.position.character, params.textDocument.normalizedUriPath())
         val qualifiedName = when (context) {
             is TaxiParser.TypeReferenceContext -> compilationResult.compiler.lookupTypeByName(context)
-            is TaxiParser.ListOfInheritedTypesContext -> compilationResult.compiler.lookupTypeByName(context.typeReference(0))
-            else -> null
+           is TaxiParser.ListOfInheritedTypesContext -> compilationResult.compiler.lookupTypeByName(
+              context.typeReference(
+                 0
+              )
+           )
+
+           is TaxiParser.IdentifierContext -> compilationResult.compiler.lookupTypeByName(context.searchUpForRule<TypeReferenceContext>()!!)
+           else -> null
         }
 
         val content = getTypeDoc(qualifiedName, lastSuccessfulCompilationResult, compilationResult)
@@ -52,12 +60,12 @@ class HoverService {
             else -> "type"
         }
         val typeDoc = if (type is Documented) {
-            type.typeDoc  + "\n---\n\n"
+           type.typeDoc?.trim() + "\n\n---\n\n"
         } else {
             ""
         }
         val docs = """
-### $typeLabel ${type.toQualifiedName().typeName}
+## $typeLabel ${type.toQualifiedName().typeName}
 
 `${type.qualifiedName}`
 ${getInheritenceDocs(type)}
@@ -72,26 +80,39 @@ ${getSource(type)}
     }
 
     private fun getSource(type: Type): String {
-        return type.compilationUnits.joinToString("\n---\n") {
-            """```
+       val src = type.compilationUnits.joinToString("\n---\n") {
+          """```
 // Defined at ${it.source.sourceName}:
 
 ${it.source.content}
 ```            """.trim()
-        }
+       }
+       return """### Source
+
+$src
+       """.trimMargin()
     }
 
     private fun getInheritenceDocs(type: Type): String {
-        return if (type.inheritsFromPrimitive) {
-            type.basePrimitive!!.toQualifiedName().typeName
-        } else if (type is EnumType && type.baseEnum != null) {
-            "inherits ${type.baseEnum!!.qualifiedName}"
-        } else if (type.inheritsFrom.isNotEmpty()) {
-            "inherits ${type.inheritsFrom.joinToString { it.qualifiedName }}"
-        } else {
-            ""
-        }
+       val inheritenceDeclaration = if (type.inheritsFromPrimitive) {
+          type.getInheritanceGraph().joinToString(separator = "->") { it.qualifiedName }
+//            type.basePrimitive!!.toQualifiedName().typeName
+       } else if (type is EnumType && type.baseEnum != null) {
+          "inherits ${type.baseEnum!!.qualifiedName}"
+       } else if (type.inheritsFrom.isNotEmpty()) {
+          "inherits ${type.inheritsFrom.joinToString { it.qualifiedName }}"
+       } else {
+          ""
+       }
+       return if (!type.inheritsFromPrimitive && type.inheritsFrom.isEmpty()) {
+          ""
+       } else {
+          """### Inheritance
 
+${type.getInheritanceGraph().joinToString("\n") { " * ${it.qualifiedName}" }}
+          """
+
+       }
     }
 
 }
