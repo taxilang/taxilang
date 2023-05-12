@@ -4,13 +4,14 @@ description: The TaxiQL language is used to execute queries against taxi-aware s
 ---
 
 
+
 import {Discourage, Hint} from '../components/hint'
 import {Link} from 'gatsby';
 
 ## Overview
 TaxiQL allows writing queries using your Taxi taxonomy -  allowing queries to be expressed independent of the services and models that are providing data.
 
-When paired with a TaxiQL server such as [Vyne](https://vyne.co), this allows dynamic discovery of data, decoupled from the upstream services.
+When paired with a TaxiQL server such as [Orbital](https://orbitalhq.com), this allows dynamic discovery of data, decoupled from the upstream services.
 
 ## Basic syntax
 The basic syntax of a TaxiQL query looks like this:
@@ -266,7 +267,7 @@ find { Transaction[] } as {
 ```
 
 ## Linking data and `@Id`
-<Hint>This behaviour is down to server engines. What's documented is the reference behaviour as implemented by Vyne.
+<Hint>This behaviour is down to server engines. What's documented is the reference behaviour as implemented by Orbital.
    However, other service implementations may vary.</Hint>
 
 When querying across multiple models, data is automatically discovered by calling services that return the requested data.

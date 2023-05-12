@@ -37,6 +37,7 @@ module.exports = {
                   "language-reference/advanced-types",
                   "language-reference/describing-services",
                   "language-reference/functions",
+                  "language-reference/taxi-and-openapi",
                   "language-reference/stdlib",
                   "language-reference/querying-with-taxiql",
                   "language-reference/taxi-projects",
@@ -71,8 +72,7 @@ module.exports = {
                   "release-notes/1.33",
                ],
                Resources: [
-                  "[Vyne](https://vyne.co)",
-                  "[Princpled Data](https://vyne.co)",
+                  "[Orbital](https://orbitalhq.com)",
                   "resources/faq"
                ]
             }

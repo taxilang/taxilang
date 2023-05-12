@@ -3,8 +3,8 @@ title: The Taxi CLI
 description: An overview of the `taxi` command line tool, and it's config
 ---
 
-import { Hint } from "../components/hint"
-import { Link } from "gatsby"
+
+import {Hint} from "../components/hint"
 
 The `taxi` command line tool provides access to the compiler - which validates the syntax of taxi projects  - and allows plugins of generators to create models and services in different languages and frameworks.
 
@@ -157,17 +157,17 @@ Will attempt to publish to http://localhost:8081/repository/taxi/taxi/sample/0.3
 Artifact uploaded successfully
 ```
 
-### vyne
+### orbital
 
 ```bash
 taxi vyne
 ```
 
-This command launches a local version of Vyne, configured to read the taxi project with live updates.
+This command launches a local version of Orbital, configured to read the taxi project with live updates.
 
-Vyne is automatically configured as described in [Building a standalone taxonomy](https://docs.vyne.co/developers-guide/setting-up-vyne-locally#building-a-standalone-taxonomy), with the following components:
+Orbital is automatically configured as described in [Building a standalone taxonomy](https://docs.vyne.co/developers-guide/setting-up-vyne-locally#building-a-standalone-taxonomy), with the following components:
 
- * The [Vyne UI](https://vyne.co), which allows you to browse and search the taxonomy as you author
+ * The [Orbital UI](https://orbitalhq.com), which allows you to browse and search the taxonomy as you author
  * A local [schema server](https://docs.vyne.co/developers-guide/setting-up-vyne-locally#building-a-standalone-taxonomy), which will live-sync changes as you make them in your local filesystem.
  * A local [Cask](https://docs.vyne.co/casks/cask-server-1) (Vyne's lightweight persistence layer), in case you want to make some data queryable quickly
 

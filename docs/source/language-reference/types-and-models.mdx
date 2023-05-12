@@ -3,7 +3,8 @@ title: Types and models
 description: Types and Models are the foundation of describing data within Taxi
 ---
 
-import { Hint, Discourage } from '../components/hint'
+
+import {Discourage, Hint} from '../components/hint'
 
 Types and Models form the core building blocks of data and APIs.  These describe the contracts of data that float about
 in our ecosystems - published by services, exposed via processes, and sent from 3rd party suppliers.
@@ -123,7 +124,7 @@ Models can use inheritance, but this is less common and generally less useful th
 
 ### Parameter models
 Parameter models are special models that indicate to tooling that it's safe to construct these at runtime.
-Declaring something as a Parameter type has no other impact within Taxi on the type's definition, but is used in other tooling.  \(Eg., Vyne\).
+Declaring something as a Parameter type has no other impact within Taxi on the type's definition, but is used in other tooling.  \(Eg., Orbital\).
 
 ```taxi
 service PeopleService {
@@ -265,7 +266,7 @@ type Timestamp inherits Instant(@format = 'yyyy-MM-dd HH:mm:ss.SSSZ')
 | x      | Timezone offset                                                                                                                                 | text         | +0000; -08; -0830; -08:30; -083015; -08:30:15; |
 
 The actual parsing of dates is left to parser implementations.
-Our reference implementation ([Vyne](https://vyne.co)) uses the Java [SimpleDateFormat rules](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html) for parsing, assuming a [lenient](https://docs.oracle.com/javase/8/docs/api/java/text/DateFormat.html#setLenient-boolean-) parser.
+Our reference implementation ([Orbital](https://orbitalhq.com)) uses the Java [SimpleDateFormat rules](https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html) for parsing, assuming a [lenient](https://docs.oracle.com/javase/8/docs/api/java/text/DateFormat.html#setLenient-boolean-) parser.
 
 #### Sample patterns
 | Date and Time Pattern               | Will match                                                                             |

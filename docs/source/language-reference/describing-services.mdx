@@ -3,8 +3,8 @@ title: Describing services
 description: Using our taxonomy to describe rich semantic services
 ---
 
-import { Link } from "gatsby"
-import { Hint } from "../components/hint"
+
+import {Hint} from "../components/hint"
 
 ## Services
 
@@ -149,7 +149,7 @@ Taxi supports this with a rich, extensible syntax for exposing query contracts.
 Here's an example:
 
 ```
-taxiQl query personQuery(@RequestBody body:VyneQlQuery):Person[] with capabilities {
+taxiQl query personQuery(@RequestBody body:TaxiQlQuery):Person[] with capabilities {
    filter(=,in,like),
    sum,
    count
@@ -159,7 +159,7 @@ taxiQl query personQuery(@RequestBody body:VyneQlQuery):Person[] with capabiliti
 This describes:
 
  * A `query` endpoint that understands a query language called `taxiQl`
- * An operation named `personQuery`, which accepts a `VyneQlQuery`
+ * An operation named `personQuery`, which accepts a `TaxiQlQuery`
  * The operation understands how to perform filtering using `=`, `in` and `like` semantics
  * And supports custom aggregation functions called `sum` and `count`.
 
@@ -169,7 +169,7 @@ In the above example, we saw a query endpoint that understands a query language 
 From taxi's perspective, the name of the grammar being used is entirely arbitrary.  The query server that is
 invoking endpoints must understand how to construct queries in the described language.
 
-The Vyne query server understands how to construct <Link to="../querying-with-taxiql">taxiQl</Link> queries, with support for additional grammars (such as `SQL`, and `GraphQL`) planned.
+The Orbital query server understands how to construct <Link to="../querying-with-taxiql">taxiQl</Link> queries, with support for additional grammars (such as `SQL`, and `GraphQL`) planned.
 However, query servers may implement their own grammar support.
 
 

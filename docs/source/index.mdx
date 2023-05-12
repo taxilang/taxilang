@@ -3,28 +3,14 @@ title: Overview
 description: Explore the Taxi language and ecosystem
 ---
 
-import DocsetMenu from './components/docset-menu';
-import { MenuWrapper } from './components/menu';
-import WorkoutMenuItem from './components/workout-menu-item';
-import { Button } from '@apollo/space-kit/Button';
-import { IconRobot1 } from '@apollo/space-kit/icons/IconRobot1';
-import { Link } from 'gatsby';
-import { colors } from 'gatsby-theme-apollo-core';
-import {
-  ExpansionPanel,
-} from 'gatsby-theme-apollo-docs/src/components/expansion-panel';
-
-<!--import { ReactComponent as BadmintonPlayer } from './assets/badminton-player.svg';-->
-<!--import { ReactComponent as Paragliding } from './assets/paragliding.svg';-->
-<!--import { ReactComponent as Weightlift } from './assets/weightlift.svg';-->
-<!--import { ReactComponent as Diving } from './assets/diving.svg';-->
-<!--import { ReactComponent as HeadLight } from './assets/head-light.svg';-->
-
 Welcome! 👋 Taxi is a language for documenting data - such as data models - and the contracts of APIs.
 
-Taxi describes data semantically, which allows powerful tooling to discover and map data based on it's meaning, rather than the name of a field.
+Specifically, Taxi aims to describe how data & APIs across an ecosystem relate with one another, and to allow consumers to
+compose services together, without being coupled to underlying APIs.
 
-![](https://img.shields.io/badge/dynamic/xml.svg?label=Taxi&url=http%3A%2F%2Frepo.vyne.co%2Frelease%2Forg%2Ftaxilang%2Fparent%2Fmaven-metadata.xml&query=%2F%2Frelease&colorB=green&prefix=v&style=for-the-badge&logo=kotlin&logoColor=white)
+Taxi describes data *semantically* - using rich semantic types - ie., types that, which allows powerful tooling to discover and map data based on it's meaning, rather than the name of a field.
+
+![](https://img.shields.io/badge/dynamic/xml.svg?label=Taxi&url=http%3A%2F%2Frepo.orbitalhq.com%2Frelease%2Forg%2Ftaxilang%2Fparent%2Fmaven-metadata.xml&query=%2F%2Frelease&colorB=green&prefix=v&style=for-the-badge&logo=kotlin&logoColor=white)
 
 ## Example
 Taxi allows you to be really expressive about what the meaning is of data returned from an API.  By describing the **meaning**  of our data, we can start to make data interchangeable.
@@ -45,7 +31,7 @@ model Invoice {
 
 Those `String`s now have a little more meaning.  And look - we now know that `Invoice.customerId` and `Customer.id` describe the same piece of information - a `CustomerId`.
 
-By building out this set of terms - we create a Taxonomy of interchangeable types.  This allows us to better document how data is intended to be used.  Tooling such as [Vyne](https://vyne.co)
+By building out this set of terms - we create a Taxonomy of interchangeable types.  This allows us to better document how data is intended to be used.  Tooling such as [Orbital](https://orbitalhq.com)
 can leverage this to link and discover data automatically, and automate API integration.
 
 
@@ -53,6 +39,93 @@ can leverage this to link and discover data automatically, and automate API inte
 @HttpOperation(method = "GET", url = "http://myApp/customers/{id}")
 operation getPerson(id: CustomerId):Customer
 ```
+
+## Getting started
+
+### Playground - Voyager
+[Voyager](https://voyager.vyne.co) is a playground for quickly writing Taxi, and generating diagrams.  Read more about why we built Voyager, and where it's going, [here](https://blog.vyne.co/introducing-voyager/)
+
+## FAQ's
+
+### Why do we need another schema language?
+Schema languages today focus inwards - they're often great at describing what *this* API does.
+However, they're not great at describing how this API relates to other APIs in the ecosystem - such as:
+
+ * How does the data returned relate to other data in the organisation?
+ * How do the inputs relate to other data available in the organisation.
+
+Taxi aims to bridge this gap, by using Semantics to model how data relates between systems.
+Taxi generally works *with* your other schema languages by polyfilling them with semantic metdata.
+
+This difference boils down to Structural vs Semantic contracts.
+
+#### Structural contracts:
+ * Where is this API accessible (port, transport mechanism, path, HTTP verbs, etc)
+ * How are requests / responses encoded? (JSON / Protobuf, etc)
+ * What keys are present in the maps & arrays returned?
+ * What inputs are expected?
+
+#### Semantic contracts:
+ * What does the data mean?
+ * How do the inputs and output from this system relate to other systems?
+ * What are the side effects of calling this method?
+
+The concept of Semantic vs Structural contracts are discussed in detail in this talk:
+
+[![Semantic vs Structural contracts](https://img.youtube.com/vi/ScneH_uel78/0.jpg)](https://www.youtube.com/watch?v=ScneH_uel78)
+
+### How does Taxi relate to OpenAPI / RAML / AsyncApi etc.
+Taxi has [strong interoperability with OpenApi](/language-reference/taxi-and-openapi/).  While you can use
+Taxi to fully describe REST-ish APIs in the same way you can use OpenAPI, most people prefer to combine the two.
+
+It's more common to embed Taxi metadata inside your existing OpenAPI specs, to get the best of both worlds.  This lets you use
+OpenAPI to describe the capabilities of an API, and Taxi metadata describes how the inputs and data returned relate to other systems
+in your ecosystem.
+
+In comparing Taxi and OpenAPI, there's some areas where Taxi is stronger:
+ * Readability & Writability - you can easily sketch a Taxi spec by hand, because it's a dedicated DSL, rather than YAML
+ * Taxi's type system is much richer and more expressive.  It has a full semantic type system, and compiler to validate that API contracts are correct.
+ * Taxi is better at describing how data relates **between** APIs - OpenAPI's goal is to describe a single API, not the relationship between multiple APIs
+ * Taxi's documentation goals are broader than just HTTP APIs, it includes Message queues, Serverless functions, Databases, etc.
+
+But, in most other areas other OpenAPI is stronger:
+ * It's the defacto standard - pretty much everyone understands what OpenAPI is.
+ * The tooling ecosystem is awesome.
+ * It's more mature, having had the benefit of thousands of developers collaborating for years.
+
+
+### Taxi vs Protobuf / Avro
+In addition to the differences with OpenAPI / RAML, Protobuf and Avro are also an encoding specification - they
+document how payloads are serialized to bytes.
+
+Taxi does not attempt to be a serialization protocol.
+
+### Taxi vs GraphQL
+Taxi (and espeically the query language - TaxiQL) and GraphQL share similar goals - providing a single entrypoint for
+composing multiple APIs together.
+
+However, there are subtle, but key differences in their approach:
+
+#### TaxiQL doesn't need resolvers
+One of the goals of Taxi is to allow software to automate integration between systems, without engineers having
+to write glue code.  It's semantic types become the links between data sources.
+
+In comparison, GraphQL relies on resolvers to code how to stitch together APIs.  These resolvers need to be maintained,
+such that breaking changes in upstream systems need to be propagated into resolver code.
+
+#### TaxiQL is protocol agnostic
+GraphQL federation requires "GraphQL everywhere".  Taxi aims to work with the API specs you already have, and can bridge
+between OpenAPI, RAML, JsonSchema and Protobuf without requiring exisitng schemas to be replaced.
+
+Taxi can also bridge between Databases, but - like GraphQL - that *does* require a Taxi schema in addition to the DDL.  (We haven't figured
+out a neat way to embed taxi metadata in DDL scripts.  If you have ideas, we'd love to hear them).
+
+#### TaxiQL allows consumers to define their data contracts
+GraphQL has a single schema, that consumers can cherry-pick fields from.  This single schema can become difficult to refactor it,
+as all the consumers also need to change.
+
+TaxiQL is designed to allow consumers to define the contract of data they want, and it's up to the query engine to satisfy this
+contract.  This means that as publisher contracts change, consumers remain decoupled, keeping cost-of-change low.
 
 ## Language Goals
 
@@ -64,12 +137,12 @@ As a language, Taxi focuses on:
 * **Tooling** - Taxi is intended to allow next-generation tooling integration - the syntax allows rich expression of what services can do \(rather than just where to find them\).
 * **Extensibility** - Taxi allows you to refine and compose API schemas, adding context, annotations, and improving type signatures.
 
-Taxi is used heavily to power [Vyne](https://vyne.co) - and the projects have influenced each other & evolved together.    The expressiveness of Taxi allows Vyne to automate integration between services.
+Taxi is used heavily to power [Orbital](https://orbitalhq.com) - and the projects have influenced each other & evolved together.    The expressiveness of Taxi allows Orbital to automate integration between services.
 
-However, Taxi is intended to be a standalone tool, and is not coupled to Vyne.  There's lots of amazing things you can do with Taxi on it's own.
+However, Taxi is intended to be a standalone tool, and is not coupled to Orbital.  There's lots of amazing things you can do with Taxi on it's own.
 
 
-## New to Taxi or Vyne?
+## New to Taxi or Orbital?
 
 It's easy to adopt Taxi incrementally, meaning you can set it up alongside an existing solution (such as Swagger or XML schemas) and migrate functionality at your convenience.
 
