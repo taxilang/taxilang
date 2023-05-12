@@ -1,0 +1,384 @@
+---
+title: OpenAPI and Taxi
+description: Working with OpenAPI and Taxi
+---
+
+While you can use Taxi to describe full HTTP services, it's more common to define
+a series of types in a standalone taxi project, then embed metadata in existing OpenAPI specs.
+
+## Embedding Taxi metadata in OpenApi
+You can embed Taxi metadata inside OpenApi docs, using the `x-taxi-type` extension.
+
+### Describing models
+
+You can embed references to Taxi metadata using the `x-taxi-type` extension in schema declarations within an OpenAPI spec.
+
+Here's a simple example adding a reference to a Taxi model in a response object:
+
+```yaml
+components:
+  schemas:
+   Person:
+     x-taxi-type:
+       name: org.people.Person #  <-- This model is of type org.example.Person
+   type: object
+   properties:
+     # ... declaration continues ...
+```
+
+The above OpenAPI spec is the equivalent of this taxi snippet:
+
+```taxi
+namespace org.people
+
+model Person
+```
+
+Model attributes can also be annotated with their corresponding taxi types:
+
+
+```yaml
+components:
+  schemas:
+    Person:
+      type: object
+      x-taxi-type:
+        name: org.people.Person #  <-- This model is of type org.example.Person
+      properties:
+        id:
+          type: string
+          x-taxi-type:
+            name: org.people.PersonId # <-- Declares that this attribute is of type org.people.Name
+```
+
+This is the equivalent of the following taxi snippet:
+
+```taxi
+namespace org.people {
+   // Typically defined elsewhere.
+   type PersonId inherits Strings
+
+   model Person {
+      id : PersonId
+   }
+}
+```
+
+By default, Taxi's OpenAPI parser expects that types declared on model declarations (such as `org.people.PersonId` in this example) are references to an already defined types.
+If the parser doesn't find the type, a compilation error is thrown.
+
+Alternatively, you can instruct the parser that a type is being declared as a new type, as follows:
+
+```yaml
+components:
+  schemas:
+    Person:
+      type: object
+      properties:
+        id:
+          type: string
+          x-taxi-type:
+            name: org.people.PersonId
+            create: true # <-- This type is being created by this schema for the first time.
+```
+
+#### The `create` attribute
+As shown above, adding `create: true | false` to an `x-taxi-type` block instructs the parser whether a new
+type is being declared.  If `false`, then it's expected that the type already exists, and the parser will
+validate it's existence.
+
+The default behaviour of create differs between models and their attributes.
+
+**Models _are not_ expected to already exist in the schema.**
+
+Adding `x-taxi-type` to a schema type in OpenAPI will create a new model type by default.
+Add `create: false` to indicate that this model already should already exist, and to validate it's existence.
+
+**Model attributes _are_ expected to already exist in the schema**
+
+Adding `x-taxi-type` to a schema attribute in OpenAPI will expect a reference to an existing type.
+Add `create: true` to indicate that this model doesn't already should already exist, and should be created
+
+
+Here's a more complete example:
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Swagger Petstore
+components:
+  schemas:
+    Person:
+      type: object
+      x-taxi-type:
+        name: org.people.Person #  <-- This model is of type org.example.Person
+      properties:
+        name:
+          x-taxi-type:
+            name: org.other.Name
+          type: string
+        dob:
+          x-taxi-type:
+            name: org.people.DateOfBirth
+            create: true
+          type: string
+          format: date
+        address:
+          x-taxi-type:
+            name: org.other.Address
+          properties:
+            street:
+              type: string
+        job:
+          x-taxi-type:
+            name: org.people.Career
+          properties:
+            title:
+              type: string
+paths: {}
+```
+generates
+```
+namespace org.people {
+
+   type DateOfBirth inherits Date
+
+   model Career {
+      title : String?
+   }
+
+   model Person {
+      name : org.other.Name?
+      dob : DateOfBirth?
+      address : org.other.Address?
+      job : Career?
+   }
+}
+```
+
+
+
+
+### Describing services
+
+#### Annotating an http method
+```yaml
+/people:
+  get:
+    responses:
+      '200':
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                x-taxi-type:
+                  name: org.other.Person # <-- The name of a return type declared inline
+                type: object
+                properties:
+                  name:
+                    x-taxi-type:
+                      name: Name
+                    type: string
+```
+
+Is the equivalent of:
+
+```taxi
+model Person {
+   name: Name inherits String  // Name type declared inline.
+}
+
+service PeopleService {
+   @HttpOperation(method = "GET" , url = "/people")
+   operation GetPeople(  ) : Person[]
+}
+```
+
+#### Annotating inputs
+
+```yaml
+/people/{id}:
+  get:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          x-taxi-type:
+            name: PersonId # <-- The path variable of id is of type PersonId
+          type: string
+```
+
+This is the equivalent of the following snippet:
+
+```taxi
+type PersonId inherits String
+
+service PeopleIdService {
+   @HttpOperation(method = "GET" , url = "/people/{id}")
+   operation GetPeopleId( @PathVariable id : PersonId )
+}
+```
+
+### More examples and reading
+The `x-taxi-type` extension can be applied in both `json` and `yaml` OpenAPI
+specification documents. For example:
+[OpenAPI JSON specification with `x-taxi-type`](https://gitlab.com/taxi-lang/taxi-lang/-/raw/master/swagger2taxi/src/test/resources/openApiSpec/v3.0/petstore-expanded-x-taxi-types.json)
+[OpenAPI YAML specification with `x-taxi-type`](https://gitlab.com/taxi-lang/taxi-lang/-/raw/master/swagger2taxi/src/test/resources/openApiSpec/v3.0/petstore-expanded-x-taxi-types.yaml)
+[Resulting generated taxi](https://gitlab.com/taxi-lang/taxi-lang/-/raw/master/swagger2taxi/src/test/resources/openApiSpec/v3.0/petstore-expanded-x-taxi-types.taxi)
+
+
+#### Specification
+
+
+
+* Any OpenAPI schema object *may* contain an `x-taxi-type` object at the top
+level
+* An `x-taxi-type` object *must* contain a `name` property of type `string`
+* If the value of the name is unqualified, the generator considers it to be in
+the default namespace provided as an argument to `generateAsStrings`
+* The generator will use that name as the name of the type in preference to the
+name the generator would otherwise have generated.
+* An `x-taxi-type` object *may* contain a `create` property of type `boolean`
+* The `create` property defaults to true if the schema would generate a `model`
+(i.e., it either has properties or is composed via an `allOf`)
+* The `create` property defaults to false if the schema would generate a `type`
+(i.e., it neither has properties nor is composed via an `allOf`)
+
+#### Examples
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Swagger Petstore
+components:
+  schemas:
+    Person:
+      type: object
+      properties:
+        name:
+          x-taxi-type:
+            name: org.other.Name
+          type: string
+        dob:
+          x-taxi-type:
+            name: DateOfBirth
+            create: true
+          type: string
+          format: date
+        address:
+          x-taxi-type:
+            name: org.other.Address
+            create: false
+          properties:
+            street:
+              type: string
+        job:
+          x-taxi-type:
+            name: Career
+          properties:
+            title:
+              type: string
+paths: {}
+```
+generates
+```
+namespace orbital.openApi {
+
+   type DateOfBirth inherits Date
+
+   model Career {
+      title : String?
+   }
+
+   model Person {
+      name : org.other.Name?
+      dob : DateOfBirth?
+      address : org.other.Address?
+      job : Career?
+   }
+}
+```
+
+
+## Converting an OpenAPI spec to Taxi, using code
+
+It's possible to convert a swagger document to Taxi, using the `TaxiGenerator` from the `openApi` package.
+
+This is especially useful if you want to take advantage of Taxi's type extensions, to mix in annotations.  (eg., persistence or validation).
+
+Grab the taxi generator from maven:
+
+```text
+<dependency>
+  <groupId>lang.taxi</groupId>
+  <artifactId>swagger2taxi</artifactId>
+  <version>0.1.0</version>
+</dependency>
+```
+
+Then run the converter as follows:
+
+This example loads source from [this reference example](https://gitlab.com/taxi-lang/taxi-lang/raw/master/swagger2taxi/src/test/resources/openApiSpec/v2.0/yaml/petstore-simple.yaml) from the OpenApi project.
+
+```kotlin
+// The actual swagger source is omitted for brevity
+val source = IOUtils.toString(URI.create("https://gitlab.com/taxi-lang/taxi-lang/raw/master/swagger2taxi/src/test/resources/openApiSpec/v2.0/yaml/petstore-simple.yaml"))
+TaxiGenerator().generateAsStrings(source, "orbital.openApi")
+```
+
+```taxi
+// generated:
+namespace orbital.openApi  {
+
+   model NewPet {
+      name : String
+      tag : String?
+   }
+
+   model Pet inherits NewPet {
+      id : Int
+   }
+
+   model ErrorModel {
+      code : Int
+      message : String
+   }
+
+   service PetsService {
+      [[ Returns all pets from the system that the user has access to ]]
+      @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets")
+      operation findPets(  tags : String,  limit : Int ) : Pet[]
+      [[ Creates a new pet in the store.  Duplicates are allowed ]]
+      @HttpOperation(method = "POST" , url = "http://petstore.swagger.io/api/pets")
+      operation addPet( @RequestBody pet : NewPet ) : Pet
+   }
+   service PetsIdService {
+      [[ Returns a user based on a single ID, if the user does not have access to the pet ]]
+      @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets/{id}")
+      operation findPetById( @PathVariable(value = "id") id : Int ) : Pet
+      [[ deletes a single pet based on the ID supplied ]]
+      @HttpOperation(method = "DELETE" , url = "http://petstore.swagger.io/api/pets/{id}")
+      operation deletePet( @PathVariable(value = "id") id : Int )
+   }
+}
+```
+
+## Considerations around nullability
+OpenApi has different ways of expressing nullability on attributes
+
+ * required attributes present on a model
+ * the nullable attribute of a field definition (where nullable is false by default)
+
+The Taxi processor applies the following order of precedence to determine nullability:
+
+ * Does the model specify required attributes?
+* If so, is this field declared as required?
+* Yes -> field is not nullable
+* No -> field is nullable
+ * Is the attribute defined as nullable?
+* Yes -> field is nullable
+* No -> field is not nullable
+

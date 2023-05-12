@@ -3,6 +3,7 @@ title: Advanced type mapping
 description: Techniques for mapping messy, real-world data
 ---
 
+
 import {Discourage, Hint} from "../components/hint";
 
 These features describe techniques used when mapping data to semantic values when things don't neatly line up, or when enriching another representation of a model.
@@ -202,7 +203,7 @@ model PurchaseOrder {
 <Hint>
 
    As with everything in Taxi, evaluation of expressions is left to a parser / runtime,
-   like [Vyne](https://vyne.co).
+   like [Orbital](https://orbitalhq.com).
 
    This document outlines the expected spec of expressions, but Taxi itself does not ship
    with an evaluation engine.
@@ -278,7 +279,7 @@ Calculation operations aren't limited to just numeric types.  The following spec
 </Discourage>
 Note: Taxi does not perform the evaluations.  This is left to parsers to handle.
 
-As such, other parsers may provide additional operations.  The above outlines the capabilities supported by Vyne.
+As such, other parsers may provide additional operations.  The above outlines the capabilities supported by Orbital.
 
 
 ## Referencing other fields
@@ -353,7 +354,7 @@ consumer - not the producer.
 Taxi allows for the declaration of functions, which can be used within a type spec.
 
 As with everything in Taxi, evaluation of functions is left to a parser / runtime,
-like [Vyne](https://vyne.co).
+like [Orbital](https://orbitalhq.com).
 
 As Taxi doesn't support evaluation, functions are declared simply by declaring their
 interface.  There is no ability to express the implementation of a function within Taxi.

@@ -214,7 +214,7 @@ and
 ```requestedQuantity: OrderSent::RequestedQuantity```
 
 Also, ‘when’ based field definitions can refer to both OrderSent and OrderFill types.
-When a view definition contains multiple ‘find’ statements, each ‘find’ statement body must be compatible with each other so that Vyne can perform ‘union’ operation to combine the result of each ‘find’ statement. If two ‘field’ statements are compatible, then:
+When a view definition contains multiple ‘find’ statements, each ‘find’ statement body must be compatible with each other so that Orbital can perform ‘union’ operation to combine the result of each ‘find’ statement. If two ‘field’ statements are compatible, then:
 
     • Both field bodies have equal number of fields.
     • Both field body fields are compatible with each other. As an example, here is the definition of the second field in the first ‘find’ body:
