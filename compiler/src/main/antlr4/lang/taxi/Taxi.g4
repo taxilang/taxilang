@@ -425,7 +425,7 @@ operationParameterList
 operationParameter
 // Note that only one operationParameterConstraint can exist per parameter, but it can contain
 // multiple expressions
-     :   annotation* (parameterName)? ((optionalTypeReference ( '(' parameterConstraintExpressionList ')')? varargMarker?) | lambdaSignature)
+     :   typeDoc? annotation* (parameterName)? ((optionalTypeReference ( '(' parameterConstraintExpressionList ')')?  varargMarker?) | lambdaSignature)
      ;
 
 varargMarker: '...';

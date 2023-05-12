@@ -39,51 +39,10 @@ import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.security.SecureRandom
 import java.util.*
-import kotlin.collections.Collection
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.MutableList
-import kotlin.collections.MutableSet
-import kotlin.collections.Set
-import kotlin.collections.all
-import kotlin.collections.asSequence
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.collections.contains
-import kotlin.collections.distinct
-import kotlin.collections.distinctBy
-import kotlin.collections.emptyList
-import kotlin.collections.emptyMap
-import kotlin.collections.emptySet
-import kotlin.collections.filter
-import kotlin.collections.filterIsInstance
-import kotlin.collections.filterNot
-import kotlin.collections.first
-import kotlin.collections.firstOrNull
-import kotlin.collections.flatMap
 import kotlin.collections.flatten
-import kotlin.collections.forEach
-import kotlin.collections.getValue
-import kotlin.collections.isNotEmpty
-import kotlin.collections.joinToString
-import kotlin.collections.listOf
-import kotlin.collections.map
-import kotlin.collections.mapIndexed
-import kotlin.collections.mapNotNull
-import kotlin.collections.mapOf
-import kotlin.collections.mutableListOf
-import kotlin.collections.mutableSetOf
-import kotlin.collections.none
-import kotlin.collections.plus
 import kotlin.collections.set
-import kotlin.collections.setOf
-import kotlin.collections.setOfNotNull
-import kotlin.collections.single
-import kotlin.collections.singleOrNull
-import kotlin.collections.toList
-import kotlin.collections.toMap
-import kotlin.collections.toMutableMap
-import kotlin.collections.toSet
 
 class TokenProcessor(
    val tokens: Tokens,
@@ -2395,13 +2354,17 @@ class TokenProcessor(
             paramType,
             namespace
          ).map { constraints ->
+            val isNullable = operationParameterContext.optionalTypeReference()?.optionalType() != null
+            val typeDoc = parseTypeDoc(operationParameterContext.typeDoc())
             val isVarargs = operationParameterContext.varargMarker() != null
             lang.taxi.services.Parameter(
                annotations = collateAnnotations(operationParameterContext.annotation()),
                type = paramType,
                name = operationParameterContext.parameterName()?.identifier()?.text,
                constraints = constraints,
-               isVarArg = isVarargs
+               isVarArg = isVarargs,
+               typeDoc = typeDoc,
+               nullable = isNullable
             )
          }
       }

@@ -2,12 +2,11 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.shouldBe
 import lang.taxi.services.FilterCapability
 import lang.taxi.services.SimpleQueryCapability
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 
 class OperationSpec : DescribeSpec({
    describe("Grammar for operations") {
@@ -151,7 +150,8 @@ class OperationSpec : DescribeSpec({
             .service("PersonService")
             .queryOperation("personQuery")
             .asTaxi()
-         val expected = """vyneQl query personQuery(@RequestBody body: VyneQlQuery):lang.taxi.Array<Person> with capabilities {
+         val expected =
+            """vyneQl query personQuery(@RequestBody body: VyneQlQuery):lang.taxi.Array<Person> with capabilities {
 filter(==,in,like),
 sum,
 count
@@ -160,6 +160,52 @@ count
             .withoutWhitespace()
             .should.equal(expected.withoutWhitespace())
       }
+
+      it("can declare parameters as nullable") {
+         val operation = """type PersonId inherits Int
+
+            service PersonService {
+               operation getPerson(PersonId?)
+            }
+         """.compiled()
+            .service("PersonService")
+            .operation("getPerson")
+
+
+         operation.parameters[0].nullable.shouldBeTrue()
+      }
+
+      it("parameters are not nullable unless defined as such") {
+         val operation = """type PersonId inherits Int
+
+            service PersonService {
+               operation getPerson(PersonId)
+            }
+         """.compiled()
+            .service("PersonService")
+            .operation("getPerson")
+
+
+         operation.parameters[0].nullable.shouldBeFalse()
+      }
+
+      it("can add docs to parameters") {
+         val operation = """type PersonId inherits Int
+
+            service PersonService {
+               operation getPerson(
+               [[ The id of the person ]]
+               id: PersonId
+               )
+            }
+         """.compiled()
+            .service("PersonService")
+            .operation("getPerson")
+
+
+         operation.parameters[0].typeDoc.shouldBe("The id of the person")
+      }
+
 
       it("should give a compilation error for an unknown return type") {
          val errors = """
