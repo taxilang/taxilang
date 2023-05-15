@@ -11,22 +11,6 @@ import lang.taxi.generators.WritableSource
 class OpenApiGeneratorTest : DescribeSpec({
 
    describe("generating OpenAPI specs from Taxi") {
-      it("should foo") {
-         val taxi = """
-service ReviewsApi {
-    @HttpOperation(method = "GET", url = "https://reviews/{id}")
-    operation getReviews(@PathVariable id: FilmId): FilmReview[]
-}
-model FilmReview {
-    id: ReviewId inherits String
-    filmId: FilmId inherits String
-    score: ReviewScore inherits Int
-}
-
-         """.compiled()
-         val openApi = OpenApiGeneratorPlugin().generateOpenApiSpecAsYaml(taxi)
-         openApi.single().shouldGenerateSameAs("yaml/expected-person-service.yaml")
-      }
       // Kitchen sink
       it("should generate an actual spec") {
          val taxi = """model Person {
