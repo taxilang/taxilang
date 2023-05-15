@@ -67,6 +67,7 @@
       <module>protobuf-to-taxi</module>
       <module>java-spring-taxi</module>
       <module>typescript</module>
+      <module>taxi-to-openapi-plugin</module>
    </modules>
 
    <properties>
