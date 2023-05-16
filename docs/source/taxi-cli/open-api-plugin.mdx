@@ -1,0 +1,103 @@
+---
+title: OpenAPI Plugin
+description: Generates OpenAPI specs from your Taxi project
+---
+
+
+
+## Overview
+
+The OpenAPI Plugin generates OpenAPI specs from your Taxi code.
+
+## What's generated
+OpenAPI specs describe a single API.  In Taxi parlance, that's the equivalent of a single `service`.
+
+By default, all services that contain an operation with `@HttpOperation` annotations are generated.
+
+```taxi
+// No OpenApi spec is generated, as none of the operations
+// include the @HttpOperation annotation
+service NotGenerated {
+   operation listAllPeople():Person[]
+}
+
+// Written to movies-service.yaml
+service MoviesService {
+   @HttpOperation
+   operation listAllMovies():Movie[]
+
+   // Not included in the generated OpenApi spec,
+   // as it doesn't include an @HttpOperation spec
+   operation doSomethingElse():Movie[]
+}
+```
+
+The generated specs are named after the service - ie `MoviesService` generates `MoviesService.yaml`
+
+### Controlling which services are generated
+By default, all services that contain `@HttpOperation` annotated operation are generated.
+
+This can be reduced down by passing a set of names or namespaces in the config:
+
+```hocon
+//taxi.conf
+name: org.taxilang/demo
+
+plugins: {
+   taxi/open-api: {
+      services: [
+        "com.foo", // matches com.foo.MyService and com.foo.bar.MyService, etc
+        "org.acme.PersonService" // matches only org.acme.PersonService
+      ]
+   }
+}
+```
+
+### How paths are resolved
+To ensure consistent generation of URLs, and compliant OpenAPI specs, you should decorate services
+with an `@HttpService()` with a `baseUrl` property:
+
+```taxi
+@HttpService(baseUrl = "https://myMovies") // Generates a servers/url entry of https://myMovies in the OpenAPI spec
+service MoviesService {
+   @HttpOperation(method = "GET" , url = "/movies")
+   operation findAllMovies() : Movie[]
+}
+```
+
+Results in:
+
+```yaml
+openapi: 3.0.1
+info:
+   title: MoviesService
+   version: 1.0.0
+servers:
+   - url: https://myMovies
+```
+
+If the `baseUrl` (or `@HttpService` annotation) is not present, the generator will attempt to detect a common baseUrl for the contained services.  This is a best-effort guess though.
+
+## Configuration
+
+| Name       | Usage                                                                                                                                     | Default  |
+|:-----------|:------------------------------------------------------------------------------------------------------------------------------------------|:---------|
+| outputPath | Defines where the generated OpenApi specs are written.  This is relative to the output parameter in the main project config               | open-api |
+| services   | A list of services to generate OpenAPI specs for.  If left empty, all services with operations containing `@HttpOperation` are generated. | kotlin   |
+
+
+### Example:
+
+```hocon
+name: org.taxilang/demo
+version: 0.1.0
+sourceRoot: src/
+
+plugins: {
+   taxi/open-api: {
+      outputPath: "open-api" // Optional
+      services: ["PersonService"] // Optional
+   }
+}
+
+```

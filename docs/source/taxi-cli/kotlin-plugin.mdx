@@ -3,40 +3,41 @@ title: Kotlin Plugin
 description: Generates Kotlin code from your Taxi project
 ---
 
-import { Hint } from "../components/hint"
 
-### Overview
+import {Hint} from "../components/hint"
+
+## Overview
 
 The Kotlin Plugin generates Kotlin classes, annotated with `@DataType`.  This makes referencing taxi types in services more typesafe and robust.
 
-### What's generated
+## What's generated
 
-#### Scalar & Primitive types
+### Scalar & Primitive types
 
 Primitive and Scalar \(types without properties\) are output as kotlin `type alias` types, with a corresponding `@DataType` annotation
 
-#### Model types
+### Model types
 
 `model` types in Taxi \(or types that contain properties\) will generate a kotlin `data class`. with a corresponding `@DataType` annotation
 
-#### Enums
+### Enums
 
 Enums in Taxi are output as kotlin `enum`classes
 
-### Configuration
+## Configuration
 
-| Name | Usage | Default |
-| :--- | :--- | :--- |
-| outputPath | Defines where the generated kotlin code is written.  This is relative to the output parameter in the main project config | kotlin |
-| kotlinVersion | The version of kotlin to use.  Defines the Maven dependencies that are generated | 1.3.50 |
-| kotlinLanguageVersion | The kotlin language version.  Corresponds to the [languageVersion](https://kotlinlang.org/docs/reference/using-maven.html#attributes-common-for-jvm-and-js) property in Kotlin's configuration. | 1.3 |
-| jvmTarget | Which version of the JVM to target.  Defaults t | 1.8 |
-| maven | Defines the properties used for Maven configuration.  If omitted, a `pom.xml` file is not generated. | - |
-| taxiVersion | The version of the taxi to depend on | The same version as the compiler being used. |
+| Name                  | Usage                                                                                                                                                                                           | Default                                      |
+|:----------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------|
+| outputPath            | Defines where the generated kotlin code is written.  This is relative to the output parameter in the main project config                                                                        | kotlin                                       |
+| kotlinVersion         | The version of kotlin to use.  Defines the Maven dependencies that are generated                                                                                                                | 1.3.50                                       |
+| kotlinLanguageVersion | The kotlin language version.  Corresponds to the [languageVersion](https://kotlinlang.org/docs/reference/using-maven.html#attributes-common-for-jvm-and-js) property in Kotlin's configuration. | 1.3                                          |
+| jvmTarget             | Which version of the JVM to target.  Defaults t                                                                                                                                                 | 1.8                                          |
+| maven                 | Defines the properties used for Maven configuration.  If omitted, a `pom.xml` file is not generated.                                                                                            | -                                            |
+| taxiVersion           | The version of the taxi to depend on                                                                                                                                                            | The same version as the compiler being used. |
 
 For more details see the [KotlinPluginConfig](https://gitlab.com/taxi-lang/taxi-lang/-/blob/develop/taxi-cli/src/main/java/lang/taxi/cli/plugins/internal/KotlinPlugin.kt#L123) class.
 
-### Generating a Maven pom.xml
+## Generating a Maven pom.xml
 
 The plugin will optionally generate a Maven `pom.xml` file, to allow you to then compile and publish a jar file containing the generated artifacts.
 
@@ -61,7 +62,7 @@ The following properties can be configured, which relate to the same concepts in
 | repositories | Configures additional repositories to download dependencies from.  Use this if you have an internal maven repository server that operates as a corporate proxy to Maven central | Omitted |
 | distributionManagement | Defines where generated jar files are published using mavens deploy command | Omitted |
 
-#### Sample Configuration
+### Sample Configuration
 
 ```text
 name: taxi/maven-sample

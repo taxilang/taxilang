@@ -4,7 +4,6 @@ import lang.taxi.TaxiDocument
 import lang.taxi.cli.plugins.InternalPlugin
 import lang.taxi.generators.ModelGenerator
 import lang.taxi.generators.Processor
-import lang.taxi.generators.TaxiEnvironment
 import lang.taxi.generators.TaxiProjectEnvironment
 import lang.taxi.generators.WritableSource
 import lang.taxi.generators.kotlin.KotlinGenerator
@@ -14,13 +13,8 @@ import org.apache.maven.model.Build
 import org.apache.maven.model.Model
 import org.apache.maven.model.Plugin
 import org.apache.maven.model.PluginExecution
-import org.codehaus.plexus.util.xml.Xpp3Dom
-import org.codehaus.plexus.util.xml.Xpp3DomBuilder
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.info.BuildProperties
 import org.springframework.stereotype.Component
-import java.io.StringReader
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 
@@ -123,7 +117,3 @@ data class KotlinPluginConfig(
    val generatedTypeNamesPackageName: String? = null
 )
 
-data class RelativeWriteableSource(val relativePath: Path, val source: WritableSource) : WritableSource by source {
-   override val path: Path
-      get() = relativePath.resolve(source.path)
-}

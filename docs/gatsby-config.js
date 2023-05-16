@@ -11,11 +11,10 @@ module.exports = {
             gaTrackingId: "UA-74643563-13",
             algoliaApiKey: "2bbaa3f0c47dccb0c461c65c02943ca6",
             algoliaIndexName: "taxidocs",
-            githubHost: "gitlab.com",
-            githubRepo: "taxi-lang/taxi-lang",
+            githubHost: "github.com",
+            githubRepo: "taxilang/taxilang",
             baseUrl: "https://docs.taxilang.org",
-            twitterHandle: "apollographql",
-            spectrumHandle: "vyne-dec",
+            twitterHandle: "orbitalhq",
             youtubeUrl:
                "https://www.youtube.com/channel/UC0pEW_GOrMJ23l8QcrGdKSw",
             logoLink: "https://docs.taxilang.org/",
@@ -45,6 +44,11 @@ module.exports = {
                "The Taxi CLI": [
                   "taxi-cli/intro",
                   "taxi-cli/linter",
+                  "taxi-cli/plugins-intro",
+                  "taxi-cli/kotlin-plugin",
+                  "taxi-cli/open-api-plugin",
+                  "taxi-cli/writing-your-own-plugins"
+
                ],
                "Publishing and sharing taxonomies": [
                   "distributing-taxi/distributing-taxi-projects",
@@ -52,9 +56,6 @@ module.exports = {
                   "distributing-taxi/taxi-hub",
                ],
                Plugins: [
-                  "plugins/README",
-                  "plugins/kotlin-plugin",
-                  "plugins/writing-your-own-plugins"
                ],
                "Visual Studio Code": ["taxi-vs-code/editor-plugins"],
                Testing: [

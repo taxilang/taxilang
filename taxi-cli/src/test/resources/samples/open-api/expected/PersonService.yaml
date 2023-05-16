@@ -1,0 +1,102 @@
+openapi: 3.0.1
+info:
+   title: PersonService
+   version: 1.0.0
+servers:
+   -  url: https://foo.com
+paths:
+   /people:
+      get:
+         summary: Finds all the people.
+         parameters: [ ]
+         responses:
+            "200":
+               description: Finds all the people.
+               content:
+                  application/json:
+                     schema:
+                        type: array
+                        items:
+                           $ref: '#/components/schemas/Person'
+   /people/{id}:
+      get:
+         summary: "Finds just one person.  Sometimes, that's all you need, y'know?  Just\
+        \ one person."
+         parameters:
+            -  name: id
+               in: path
+               required: true
+               schema:
+                  type: integer
+                  format: int32
+                  x-taxi-type:
+                     name: PersonId
+                     create: false
+         responses:
+            "200":
+               description: "Finds just one person.  Sometimes, that's all you need, y'know?\
+            \  Just one person."
+               content:
+                  application/json:
+                     schema:
+                        $ref: '#/components/schemas/Person'
+      post:
+         summary: Updates a person.
+         parameters:
+            -  name: id
+               in: path
+               required: true
+               schema:
+                  type: integer
+                  format: int32
+                  x-taxi-type:
+                     name: PersonId
+                     create: false
+         requestBody:
+            content:
+               application/json:
+                  schema:
+                     $ref: '#/components/schemas/Person'
+         responses:
+            "200":
+               description: Updates a person.
+               content:
+                  application/json:
+                     schema:
+                        $ref: '#/components/schemas/Person'
+      delete:
+         summary: Deletes the person.  BOOM! They're gone.
+         parameters:
+            -  name: id
+               in: path
+               description: The id of the person to kill. Choose wisely
+               required: true
+               schema:
+                  type: integer
+                  format: int32
+                  x-taxi-type:
+                     name: PersonId
+                     create: false
+         responses:
+            "200":
+               description: Deletes the person.  BOOM! They're gone.
+               content:
+                  application/json:
+                     schema:
+                        $ref: '#/components/schemas/Person'
+components:
+   schemas:
+      Person:
+         type: object
+         properties:
+            firstName:
+               type: string
+               x-taxi-type:
+                  name: FirstName
+                  create: false
+            id:
+               type: integer
+               format: int32
+               x-taxi-type:
+                  name: PersonId
+                  create: false

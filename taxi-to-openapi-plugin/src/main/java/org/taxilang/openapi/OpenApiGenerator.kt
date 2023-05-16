@@ -18,34 +18,46 @@ import io.swagger.v3.oas.models.servers.Server
 import lang.taxi.TaxiDocument
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpService
-import lang.taxi.generators.*
+import lang.taxi.generators.SimpleWriteableSource
+import lang.taxi.generators.WritableSource
 import lang.taxi.generators.openApi.v3.TaxiExtension
-import lang.taxi.plugins.Artifact
-import lang.taxi.plugins.ArtifactId
-import lang.taxi.plugins.PluginWithConfig
 import lang.taxi.services.Operation
 import lang.taxi.services.Service
 import lang.taxi.types.*
 import java.nio.file.Path
 
-data class OpenApiPluginConfig(
-   val foo: String = ""
-)
-
-class OpenApiGeneratorPlugin : PluginWithConfig<OpenApiPluginConfig>, ModelGenerator {
-   private lateinit var config: OpenApiPluginConfig
-   override fun setConfig(config: OpenApiPluginConfig) {
-      this.config = config
+class OpenApiGenerator {
+   companion object {
+      fun matchesNamesFilter(name: String, serviceNamesOrNamespaces: List<String>): Boolean {
+         return if (serviceNamesOrNamespaces.isEmpty()) {
+            true
+         } else {
+            serviceNamesOrNamespaces.any { serviceNameOrNamespace -> name.startsWith(serviceNameOrNamespace) }
+         }
+      }
    }
 
-   override val id: ArtifactId = ArtifactId(Artifact.DEFAULT_GROUP, "open-api")
-
-   override fun generate(
+   fun generateOpenApiSpec(
       taxi: TaxiDocument,
-      processors: List<Processor>,
-      environment: TaxiProjectEnvironment
+      serviceNamesOrNamespaces: List<String> = emptyList()
+   ): List<Pair<Service, OpenAPI>> {
+
+      return taxi.services
+         .filter { service -> service.operations.any { operation -> operation.annotation(HttpOperation.NAME) != null } }
+         .filter { service -> matchesNamesFilter(service.qualifiedName, serviceNamesOrNamespaces) }
+         .map { service -> service to createOpenApiSpec(service) }
+   }
+
+   fun generateOpenApiSpecAsYaml(
+      taxi: TaxiDocument,
+      serviceNamesOrNamespaces: List<String> = emptyList()
    ): List<WritableSource> {
-      TODO("Not yet implemented")
+      return generateOpenApiSpec(taxi, serviceNamesOrNamespaces)
+         .map { (service, openApi) ->
+            val oasSpecName = "${service.toQualifiedName().typeName}.yaml"
+            val yaml = Yaml31.pretty().writeValueAsString(openApi)
+            SimpleWriteableSource(Path.of(oasSpecName), yaml)
+         }
    }
 
    private fun createOpenApiSpec(service: Service, version: String = "1.0.0"): OpenAPI {
@@ -192,22 +204,6 @@ class OpenApiGeneratorPlugin : PluginWithConfig<OpenApiPluginConfig>, ModelGener
       return schema
    }
 
-   fun generateOpenApiSpec(taxi: TaxiDocument): List<Pair<Service, OpenAPI>> {
-
-      return taxi.services
-         .filter { service -> service.operations.any { operation -> operation.annotation(HttpOperation.NAME) != null } }
-         .map { service -> service to createOpenApiSpec(service) }
-
-   }
-
-   fun generateOpenApiSpecAsYaml(taxi: TaxiDocument): List<WritableSource> {
-      return generateOpenApiSpec(taxi)
-         .map { (service, openApi) ->
-            val oasSpecName = "${service.toQualifiedName().typeName}.yaml"
-            val yaml = Yaml31.pretty().writeValueAsString(openApi)
-            SimpleWriteableSource(Path.of(oasSpecName), yaml)
-         }
-   }
 }
 
 typealias SchemaRef = String

@@ -1,0 +1,29 @@
+model Person {
+  firstName : FirstName inherits String
+   id: PersonId inherits Int
+}
+
+@HttpService(baseUrl = "https://foo.com")
+service PersonService {
+   [[ Finds all the people. ]]
+   @HttpOperation(method = "GET", url = "/people")
+   operation findAllPeople():Person[]
+
+   [[ Finds just one person.  Sometimes, that's all you need, y'know?  Just one person. ]]
+   @HttpOperation(method = "GET", url = "/people/{id}")
+   operation findPerson(@PathVariable id: PersonId): Person
+
+   [[ Updates a person. ]]
+   @HttpOperation(method = "POST", url = "/people/{id}")
+   operation updatePerson(@PathVariable id: PersonId, @RequestBody update: Person): Person
+}
+
+@HttpService(baseUrl = "https://foo.com")
+service PersonDeletionService {
+   [[ Deletes the person.  BOOM! They're gone. ]]
+   @HttpOperation(method = "DELETE", url = "/people/{id}")
+   operation killPerson(
+      [[ The id of the person to kill. Choose wisely ]]
+      @PathVariable id: PersonId?
+      ): Person
+}

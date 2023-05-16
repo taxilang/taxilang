@@ -25,6 +25,11 @@
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
+         <artifactId>taxi-to-openapi-plugin</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.taxilang</groupId>
          <artifactId>taxi-writer</artifactId>
          <version>${project.version}</version>
       </dependency>

@@ -4,6 +4,7 @@ description: Using our taxonomy to describe rich semantic services
 ---
 
 
+
 import {Hint} from "../components/hint"
 
 ## Services
@@ -16,7 +17,19 @@ service PeopleService {
 }
 ```
 
-## Operation
+Services that contain HTTP operations may optionally declare an `@HttpService` annotation, which allows it to set a baseUrl for all contained operations.
+
+```taxi
+@HttpService(baseUrl="https://foo.com")
+service PeopleService {
+   // resolves to https://foo.com/people
+   @HttpOperation(method = 'GET', url = '/people')
+   operation listAllPeople():Person[]
+}
+```
+
+
+## Http Operations
 
 An operation defines a function on the API.
 
@@ -33,7 +46,6 @@ Taxi ships with some standard annotations, as part of it's [std-lib](https://git
 |:---------------------------------------|:--------------------------------------------------------------------------------------------------------------------------|
 | `@HttpOperation(method,url)`           | Indicates that the operation should be invoked over HTTP, using the provided `method` and `url`                           |
 | `@HttpRequestBody`                     | Indicates that a parameter will be found on the request body                                                              |
-| `@ServiceDiscoveryClient(serviceName)` | Indicates that the service's absolute url should be discovered from Service Discovery, using the provided name for lookup |
 | `@PathVariable(name)`                  | Indicates a property from the path that should be populated with a variable passed to the operation                       |
 
 ### Examples
@@ -47,9 +59,9 @@ service MovieService {
    operationFindMovie( @PathVariable(name = "id") id : MovieId ) : Movie
 }
 
-// Using a service discovery client, such as Eureka
-@ServiceDiscoveryClient(serviceName = "actors")
+@HttpService(baseUrl = "http://actorService")
 service ActorService {
+   // resolves to http://actorService/actors
    @HttpOperation(method = "GET" , url = "/actors")
    operation findAllActors() : Actor[]
 }

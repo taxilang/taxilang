@@ -2,33 +2,21 @@ package lang.taxi.cli.plugins.internal
 
 import com.google.common.io.Resources
 import com.winterbe.expekt.should
-import lang.taxi.cli.commands.BuildCommand
-import lang.taxi.cli.config.CliTaxiEnvironment
-import lang.taxi.cli.config.TaxiProjectLoader
-import lang.taxi.cli.pluginArtifacts
-import lang.taxi.cli.plugins.PluginRegistry
-import lang.taxi.generators.TaxiProjectEnvironment
 import org.apache.commons.io.FileUtils
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.springframework.boot.info.BuildProperties
 import java.io.File
 import java.io.FileReader
-import java.util.Properties
+import java.util.*
 
 class MavenPomProjectTest {
 
    @TempDir
    @JvmField
    var folder: File? = null
-
-   @BeforeEach
-   fun deployTestRepo() {
-
-   }
 
    private fun copyProject(path: String) {
       val testProject = File(Resources.getResource(path).toURI())
@@ -38,7 +26,7 @@ class MavenPomProjectTest {
    @Test
    fun generateMavenProject() {
       copyProject("samples/maven")
-      executeBuild()
+      executeBuild(folder!!.toPath(), listOf(KotlinPlugin(BuildProperties(Properties()))))
 
       val model = loadMavenModel()
 
@@ -59,26 +47,14 @@ class MavenPomProjectTest {
    }
 
 
-
    @Test
    fun usesFixedTaxiVersion() {
       copyProject("samples/maven-fixed-version")
-      executeBuild()
+      executeBuild(folder!!.toPath(), listOf(KotlinPlugin(BuildProperties(Properties()))))
       val model = loadMavenModel()
 
       val taxiDependency = model.dependencies.first { it.groupId == "org.taxilang" }
       taxiDependency.version.should.equal("0.5.0")
-   }
-
-
-   private fun executeBuild() {
-      val project = TaxiProjectLoader().withConfigFileAt(folder!!.toPath().resolve("taxi.conf")).load()
-      val build = BuildCommand(PluginRegistry(
-         internalPlugins = listOf(KotlinPlugin(BuildProperties(Properties()))),
-         requiredPlugins = project.pluginArtifacts()
-      ))
-      val environment = CliTaxiEnvironment.forRoot(folder!!.toPath(), project) as TaxiProjectEnvironment
-      build.execute(environment)
    }
 
    private fun loadMavenModel(): Model {

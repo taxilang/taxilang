@@ -1,15 +1,15 @@
 import PropTypes from "prop-types";
-import React, { useRef, useState } from "react";
+import React, {useRef, useState} from "react";
 import SectionNav from "./section-nav";
 import cn from "classnames";
 import styled from "@emotion/styled";
 import useMount from "react-use/lib/useMount";
-import { HEADER_HEIGHT } from "../utils";
+import {HEADER_HEIGHT} from "../utils";
 //import { IconGithub } from "@apollo/space-kit/icons/IconGithub";
-import { IconStar } from "@apollo/space-kit/icons/IconStar";
-import { PageNav, breakpoints, colors } from "gatsby-theme-apollo-core";
-import { withPrefix } from "gatsby";
-import { FaGitlab, FaSlack } from "react-icons/fa";
+import {IconStar} from "@apollo/space-kit/icons/IconStar";
+import {breakpoints, colors, PageNav} from "gatsby-theme-apollo-core";
+import {withPrefix} from "gatsby";
+import {FaGithub, FaSlack} from "react-icons/fa";
 
 const Wrapper = styled.div({
    display: "flex",
@@ -227,7 +227,7 @@ export default function PageContent(props) {
 
    const editLink = props.githubUrl && (
       <AsideLink href={props.githubUrl}>
-         <FaGitlab /> Edit on GitLab
+         <FaGithub/> Edit on Github
       </AsideLink>
    );
 

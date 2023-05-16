@@ -2,6 +2,8 @@ package org.taxilang.openapi
 
 import com.google.common.io.Resources
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import io.swagger.v3.core.util.Yaml
 import io.swagger.v3.oas.models.OpenAPI
@@ -11,6 +13,17 @@ import lang.taxi.generators.WritableSource
 class OpenApiGeneratorTest : DescribeSpec({
 
    describe("generating OpenAPI specs from Taxi") {
+
+      it("should filter to only include named services") {
+         OpenApiGenerator.matchesNamesFilter("com.foo.MyService", listOf("com.foo")).shouldBeTrue()
+         OpenApiGenerator.matchesNamesFilter("com.foo.MyService", listOf("com.foo.MyService")).shouldBeTrue()
+         OpenApiGenerator.matchesNamesFilter("com.foo.MyService", listOf("com.bar.MyService")).shouldBeFalse()
+      }
+      it("should include all services if no filter provided") {
+         OpenApiGenerator.matchesNamesFilter("com.foo.MyService", emptyList()).shouldBeTrue()
+
+      }
+
       // Kitchen sink
       it("should generate an actual spec") {
          val taxi = """model Person {
@@ -41,7 +54,7 @@ class OpenApiGeneratorTest : DescribeSpec({
             }
             """.compiled()
 
-         val openApi = OpenApiGeneratorPlugin().generateOpenApiSpecAsYaml(taxi)
+         val openApi = OpenApiGenerator().generateOpenApiSpecAsYaml(taxi)
          openApi.single().shouldGenerateSameAs("yaml/expected-person-service.yaml")
       }
    }
