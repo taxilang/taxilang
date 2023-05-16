@@ -2,27 +2,25 @@ package lang.taxi.cli.commands
 
 import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
-import com.google.common.io.Resources
 import lang.taxi.cli.utils.log
 import lang.taxi.generators.TaxiEnvironment
 import org.beryx.textio.TextIO
 import org.springframework.stereotype.Component
 import java.net.URI
-import java.net.URL
 import java.nio.file.Files
 
 
 @Component
-@Parameters(commandDescription = "Creates a docker-compose file to launch a local developers instance of Vyne")
-class InitVyneCommand(private val prompt: TextIO) : ProjectlessShellCommand {
-   override val name: String = "vyne"
+@Parameters(commandDescription = "Creates a docker-compose file to launch a local developers instance of Orbital")
+class InitOrbitalCommand(private val prompt: TextIO) : ProjectlessShellCommand {
+   override val name: String = "orbital"
 
    @Parameter(
       names = ["-v", "--version"],
       required = false,
-      description = "The version of vyne to use.  Defaults to latest if not provided"
+      description = "The version of Orbital to use.  Defaults to latest if not provided"
    )
-   var vyneVersion: String = "latest"
+   var orbitalVersion: String = "latest"
 
    @Parameter(
       names = ["-f", "--force"],
@@ -34,9 +32,9 @@ class InitVyneCommand(private val prompt: TextIO) : ProjectlessShellCommand {
    @Parameter(
       names = ["-u", "--url"],
       required = false,
-      description = "Specifies the url to download the config file from.  Defaults to start.vyne.co"
+      description = "Specifies the url to download the config file from.  Defaults to start.orbitalhq.com"
    )
-   var url: String = "https://start.vyne.co"
+   var url: String = "https://start.orbitalhq.com"
 
    override fun execute(environment: TaxiEnvironment) {
       val dockerComposePath = environment.projectRoot.resolve("docker-compose.yml")
@@ -46,8 +44,8 @@ class InitVyneCommand(private val prompt: TextIO) : ProjectlessShellCommand {
          log().info("Downloading docker-compose.yml from $url")
          val dockerComposeSource = URI.create(url).toURL()
             .readText().let { dockerCompose ->
-               if (vyneVersion != "latest") {
-                  dockerCompose.replace(":latest", ":$vyneVersion")
+               if (orbitalVersion != "latest") {
+                  dockerCompose.replace(":latest", ":$orbitalVersion")
                } else {
                   dockerCompose
                }
@@ -71,6 +69,6 @@ class InitVyneCommand(private val prompt: TextIO) : ProjectlessShellCommand {
          .start()
          .waitFor()
 
-      log().info("Finished.  Vyne is running, and watching changes in this folder.  Wait about 45 seconds, then head to http://localhost:9022")
+      log().info("Finished.  Orbital is running, and watching changes in this folder.  Wait about 45 seconds, then head to http://localhost:9022")
    }
 }
