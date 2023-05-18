@@ -11,6 +11,15 @@ discover and map data based on it's meaning, rather than the name of a field.
 
 ![](https://img.shields.io/badge/dynamic/xml.svg?label=Taxi&url=http%3A%2F%2Frepo.orbitalhq.com%2Frelease%2Forg%2Ftaxilang%2Fparent%2Fmaven-metadata.xml&query=%2F%2Frelease&colorB=green&prefix=v&style=for-the-badge&logo=kotlin&logoColor=white)
 
+## Quick links
+
+* [Docs](https://taxilang.org)
+* [Installing the CLI](https://taxilang.org/taxi-cli/intro/#install)
+   * [Using a pre-release version of the cli](#trying-a-pre-release-version)
+* [Developer Notes](#developer-notes)
+   * [Releasing](#releasing)
+   * [Maven co-ordinates](#maven-co-ordinates)
+
 ## Example
 
 Taxi allows you to be really expressive about what the meaning is of data returned from an API. By describing the *
@@ -153,3 +162,90 @@ schemas) and migrate functionality at your convenience.
 
 In fact, Taxi is designed to complement those tools, and you can happily use Swagger or XSDs are you base schema, and
 then overlay semantic data using Taxi.
+
+## Developer notes
+
+### Maven Co-ordinates
+
+Currently, we publish to the Orbital maven repo:
+
+```xml
+
+<repositories>
+   <repository>
+      <id>orbital-snapshots</id>
+      <url>https://repo.orbitalhq.com/snapshot</url>
+      <snapshots>
+         <enabled>true</enabled>
+      </snapshots>
+   </repository>
+
+   <repository>
+      <id>orbital</id>
+      <url>https://repo.orbitalhq.com/release</url>
+      <snapshots>
+         <enabled>false</enabled>
+      </snapshots>
+   </repository>
+</repositories>
+```
+
+Generally, tooling will want to make use of the compiler, which is:
+
+```xml
+
+<dependency>
+   <groupId>org.taxilang</groupId>
+   <artifactId>compiler</artifactId>
+   <version>${latest-version}</version>
+</dependency>
+```
+
+Other artifacts are available using their appropriate modules artifactId.
+
+We plan on publishing to maven central too. Track / Vote for [this issue](https://github.com/taxilang/taxilang/issues/3)
+for updates.
+
+### Releasing
+
+To publish a release to the oribtal repo, you must first export your AWS credentials with appropriate access:
+
+```bash
+export AWS_ACCESS_KEY_ID=xxxx
+export AWS_SECRET_ACCESS_KEY=xxxx
+
+# Can use mvn too, but it's slower.
+mvnd clean install
+# deploy doesn't work great with mvnd
+mvn deploy -P orbital-repo
+```
+
+This will publish all the jars, as well as the `taxi-cli` zip to the Orbital repo
+
+### Trying a pre-release version
+
+The easiest way to use a prerelease version is with the `get-taxi-preview.sh` script in this repo.
+
+It will download the latest snapshot of a given version. eg:
+
+```bash
+wget https://raw.githubusercontent.com/taxilang/taxilang/develop/get-taxi-preview.sh
+chmod +x get-taxi-preview.sh
+./get-taxi-preview 1.37.0       
+```
+
+The above example will download the latest prerelease of version `1.37.0`.
+
+It will be downloaded to `.taxi/1.37.0` relative to the current directory.
+
+Example output:
+
+```bash
+./get-taxi-preview 1.37.0
+Latest snapshot version: 1.37.0-20230518.071013-9
+Downloading https://repo.orbitalhq.com/snapshot/org/taxilang/taxi-cli/1.37.0-SNAPSHOT/taxi-cli-1.37.0-20230518.071013-9.zip to .taxi/
+# lots of downloady and unzippy stuff
+Latest taxi 1.37.0 is now available at /home/some/path/.taxi/1.37.0/taxi/bin/taxi
+You can run this version by using the following alias: 
+alias taxip=/home/some/path/.taxi/1.37.0/taxi/bin/taxi
+```

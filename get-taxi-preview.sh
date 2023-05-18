@@ -36,6 +36,6 @@ unzip -o $zipFile -d .taxi/$versionNumber
 cliPath=".taxi/$versionNumber/taxi/bin/taxi"
 chmod +x $cliPath
 
-echo "Latest taxi $versionNumber is now available at $(pwd)$cliPath"
+echo "Latest taxi $versionNumber is now available at $(pwd)/$cliPath"
 echo "You can run this version by using the following alias: "
 echo "alias taxip=$(pwd)/$cliPath"
