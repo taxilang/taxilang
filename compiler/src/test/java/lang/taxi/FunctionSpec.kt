@@ -8,7 +8,6 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.accessors.ColumnAccessor
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.expressions.*
-import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionModifiers
 import lang.taxi.functions.stdlib.Left
 import lang.taxi.linter.LinterRules
@@ -235,7 +234,7 @@ namespace pkgB {
             }
          """.validated(linterRules = LinterRules.allDisabled())
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.Int is not assignable to type lang.taxi.String")
+         errors.first().detailMessage.should.equal("Type mismatch. Type of lang.taxi.Int is not assignable to type lang.taxi.String")
       }
 
       it("should report an error if there is a type mismatch on assigning a return value to a field") {
@@ -246,7 +245,7 @@ namespace pkgB {
                name : String
             }
          """.validated(linterRules = LinterRules.allDisabled())
-            .shouldContainMessage("Type mismatch.  Type of lang.taxi.String is not assignable to type lang.taxi.Int")
+            .shouldContainMessage("Type mismatch. Type of lang.taxi.String is not assignable to type lang.taxi.Int")
       }
 
       // Ignored until coalesce becomes a function

@@ -1,15 +1,14 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
 import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.accessors.NullValue
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.types.EnumValue
 import lang.taxi.types.WhenFieldSetCondition
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 
-object WhenBlockSpec : Spek({
+class WhenBlockSpec : DescribeSpec({
    describe("when block type checking") {
       it("is valid to use a column selector in a when block if the types match") {
          val errors = """
@@ -37,7 +36,7 @@ object WhenBlockSpec : Spek({
             }
          }""".validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.Int is not assignable to type AssetClass")
+         errors.first().detailMessage.should.equal("Type mismatch. Type of lang.taxi.Int is not assignable to type AssetClass")
       }
 
       it("should detect a type mismatch of fields") {
@@ -52,7 +51,7 @@ object WhenBlockSpec : Spek({
                else -> column("ISIN")
             }
          }""".validated()
-            .shouldContainMessage("Type mismatch.  Type of AssetClass is not assignable to type Identifier")
+            .shouldContainMessage("Type mismatch. Type of AssetClass is not assignable to type Identifier")
       }
 
       it("should not allow assignment of fields where the types are different but share a common primitive base type") {
@@ -68,7 +67,7 @@ object WhenBlockSpec : Spek({
                else -> column("ISIN")
             }
          }""".validated()
-            .shouldContainMessage("Type mismatch.  Type of Name is not assignable to type Identifier")
+            .shouldContainMessage("Type mismatch. Type of Name is not assignable to type Identifier")
       }
 
       it("should detect type mismatch of value in when case selector") {
@@ -82,7 +81,7 @@ object WhenBlockSpec : Spek({
             }
          }""".validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.Int is not assignable to type Identifier")
+         errors.first().detailMessage.should.equal("Type mismatch. Type of lang.taxi.Int is not assignable to type Identifier")
       }
       it("should allow assignment of null in when clause") {
          val whenBlock = """
@@ -140,7 +139,7 @@ object WhenBlockSpec : Spek({
             }
          """.validated().errors()
          errors.should.have.size(2)
-         errors.first().detailMessage.should.equal("Type mismatch.  Type of lang.taxi.String is not assignable to type Country")
+         errors.first().detailMessage.should.equal("Type mismatch. Type of lang.taxi.String is not assignable to type Country")
 
       }
    }

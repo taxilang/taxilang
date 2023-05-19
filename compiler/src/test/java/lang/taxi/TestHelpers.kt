@@ -4,15 +4,22 @@ import lang.taxi.query.TaxiQlQuery
 import kotlin.test.assertFailsWith
 import kotlin.test.fail
 
-fun String.compiledWithQuery(query: String): Pair<TaxiDocument, TaxiQlQuery> {
+fun String.compiledWithQuery(
+   query: String,
+   config: CompilerConfig = CompilerConfig()
+): Pair<TaxiDocument, TaxiQlQuery> {
    val schema = this.compiled()
-   val queries = Compiler(source = query, importSources = listOf(schema)).queries()
+   val queries = Compiler(source = query, importSources = listOf(schema), config = config)
+      .queries()
    return schema to queries.single()
 }
 
-fun String.compiledWithQueryProducingCompilationException(query: String): CompilationException {
+fun String.compiledWithQueryProducingCompilationException(
+   query: String,
+   config: CompilerConfig = CompilerConfig()
+): CompilationException {
    return assertFailsWith {
-      this.compiledWithQuery(query)
+      this.compiledWithQuery(query, config)
    }
 }
 

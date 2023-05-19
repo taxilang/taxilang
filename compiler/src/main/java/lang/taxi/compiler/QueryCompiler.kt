@@ -1,28 +1,18 @@
 package lang.taxi.compiler
 
-import arrow.core.Either
-import arrow.core.flatMap
-import arrow.core.left
-import arrow.core.right
-import lang.taxi.CompilationError
-import lang.taxi.TaxiParser
+import arrow.core.*
+import lang.taxi.*
+import lang.taxi.TaxiParser.ValueContext
 import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.fields.FieldTypeSpec
-import lang.taxi.findNamespace
-import lang.taxi.query.ConstraintBuilder
-import lang.taxi.query.DiscoveryType
-import lang.taxi.query.FactValue
-import lang.taxi.query.Parameter
-import lang.taxi.query.QueryMode
-import lang.taxi.query.TaxiQlQuery
+import lang.taxi.query.*
 import lang.taxi.services.operations.constraints.Constraint
-import lang.taxi.toCompilationUnit
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
-import lang.taxi.value
-import lang.taxi.valueOrNull
+import lang.taxi.utils.wrapErrorsInList
+import lang.taxi.values.PrimitiveValues
 
 internal class QueryCompiler(
    private val tokenProcessor: TokenProcessor,
@@ -73,7 +63,8 @@ internal class QueryCompiler(
       parameters: List<Parameter>, queryDirective: QueryMode
    ): Either<List<CompilationError>, List<DiscoveryType>> {
       val namespace = queryBodyContext.findNamespace()
-      val constraintBuilder = ConstraintBuilder(tokenProcessor.typeResolver(namespace), expressionCompiler.withParameters(parameters))
+      val constraintBuilder =
+         ConstraintBuilder(tokenProcessor.typeResolver(namespace), expressionCompiler.withParameters(parameters))
 
       /**
        * A query body can either be a concrete type:
@@ -100,7 +91,11 @@ internal class QueryCompiler(
             anonymousTypeDefinition
          ).flatMap { anonymousType ->
             toDiscoveryType(
-               anonymousType, anonymousTypeDefinition.parameterConstraint(), queryDirective, constraintBuilder, parameters
+               anonymousType,
+               anonymousTypeDefinition.parameterConstraint(),
+               queryDirective,
+               constraintBuilder,
+               parameters
             )
          }).invertEitherList().flattenErrors()
    }
@@ -129,8 +124,8 @@ internal class QueryCompiler(
    }
 
    private fun parseFacts(givenBlock: TaxiParser.GivenBlockContext): Either<List<CompilationError>, List<Parameter>> {
-      return givenBlock.factList().fact().mapIndexed { idx,factCtx ->
-         parseFact(idx,factCtx)
+      return givenBlock.factList().fact().mapIndexed { idx, factCtx ->
+         parseFact(idx, factCtx)
       }.invertEitherList().flattenErrors()
 
    }
@@ -141,20 +136,22 @@ internal class QueryCompiler(
 
       return tokenProcessor.typeOrError(namespace, factCtx.typeReference()).flatMap { factType ->
          try {
-            val providedValue = factCtx.literal()?.valueOrNull()
-            if (providedValue != null) {
-               Parameter(
-                  name = variableName,
-                  value = FactValue.Constant(TypedValue(factType, factCtx.literal().value())),
-                  annotations = emptyList()
-               ).right()
-            } else {
-               Parameter(
-                  name = variableName,
-                  value = FactValue.Variable(factType, variableName),
-                  annotations = emptyList()
-               ).right()
-            }
+            readValue(factCtx.value(), factType)
+               .map { factValue ->
+                  if (factValue != null) {
+                     Parameter(
+                        name = variableName,
+                        value = FactValue.Constant(TypedValue(factType, factValue)),
+                        annotations = emptyList()
+                     )
+                  } else {
+                     Parameter(
+                        name = variableName,
+                        value = FactValue.Variable(factType, variableName),
+                        annotations = emptyList()
+                     )
+                  }
+               }
          } catch (e: Exception) {
             listOf(CompilationError(factCtx.start, "Failed to create TypedInstance - ${e.message}")).left()
          }
@@ -162,10 +159,131 @@ internal class QueryCompiler(
       }
    }
 
+   private fun readValue(valueContext: ValueContext?, factType: Type): Either<List<CompilationError>, Any?> {
+      if (valueContext == null) {
+         return (null as Any?).right()
+      }
+
+      val result: Either<List<CompilationError>, Any?> = when {
+         valueContext.literal() != null -> valueContext.literal().value().right()
+         valueContext.objectValue() != null -> readObjectValue(valueContext.objectValue(), factType)
+         valueContext.valueArray() != null -> readArray(valueContext.valueArray(), factType)
+         else -> null
+      }?.flatMap { value -> verifyIsAssignable(factType, value, valueContext) }
+         ?: (null as Any?).right()
+
+      return result
+   }
+
+   private fun verifyIsAssignable(
+      factType: Type,
+      value: Any?,
+      valueContext: ValueContext
+   ): Either<List<CompilationError>, Any?> {
+      return when (value) {
+         null -> listOf(CompilationError(valueContext.toCompilationUnit(), "Null values are not supported here")).left()
+         is Collection<*> -> {
+            // We don't need to verify that the inner types of the array match,
+            // as that was verified whilst parsing the array.
+            if (factType is ArrayType) {
+               value.right()
+            } else {
+               listOf(
+                  CompilationError(
+                     valueContext.toCompilationUnit(),
+                     "An array is not assignable to type ${factType.qualifiedName}"
+                  )
+               ).left()
+            }
+         }
+
+         is Map<*, *> -> {
+            // TODO : We should be verifying the type contract here.
+            if (factType !is ObjectType) {
+               return listOf(
+                  CompilationError(
+                     valueContext.toCompilationUnit(),
+                     "Map is not assignable to type ${factType.qualifiedName}"
+                  )
+               ).left()
+            }
+            val missingRequiredFields = factType.fields
+               .filter { !it.nullable }
+               .filter { field -> !value.containsKey(field.name) }
+            if (missingRequiredFields.isNotEmpty()) {
+               return listOf(
+                  CompilationError(
+                     valueContext.toCompilationUnit(),
+                     "Map is not assignable to type ${factType.qualifiedName} as mandatory properties ${missingRequiredFields.joinToString { it.name }} are missing"
+                  )
+               ).left()
+            } else {
+               value.right()
+            }
+         }
+
+         else -> {
+            val primitiveType = PrimitiveValues.getTaxiPrimitive(value)
+            tokenProcessor.typeChecker.ifAssignable(primitiveType, factType, valueContext) { value }
+               .wrapErrorsInList()
+         }
+      }
+   }
+
+   private fun readArray(
+      valueArray: TaxiParser.ValueArrayContext,
+      factType: Type
+   ): Either<List<CompilationError>, List<Any?>> {
+      if (factType !is ArrayType) {
+         return listOf(
+            CompilationError(
+               valueArray.toCompilationUnit(),
+               "An array is not assignable to type ${factType.qualifiedName}"
+            )
+         ).left()
+      }
+      val arrayMemberType = factType.memberType
+      val readValue = valueArray.value().map { readValue(it, arrayMemberType) }
+         .invertEitherList()
+         .flattenErrors()
+      return readValue
+   }
+
+   private fun readObjectValue(
+      objectValue: TaxiParser.ObjectValueContext,
+      factType: Type
+   ): Either<List<CompilationError>, Map<String, Any?>> {
+      val errors = mutableListOf<CompilationError>()
+      if (factType !is ObjectType) {
+         return listOf(
+            CompilationError(
+               objectValue.toCompilationUnit(),
+               "Map is not assignable to ${factType.qualifiedName}"
+            )
+         ).left()
+      }
+      val mapResult = objectValue.objectField().map { objectField ->
+         val fieldName = objectField.identifier().IdentifierToken().text
+         val field = factType.field(fieldName)
+         val fieldValue = readValue(objectField.value(), field.type)
+            .getOrElse {
+               errors.addAll(it)
+               null
+            }
+         fieldName to fieldValue
+      }.toMap()
+
+      return if (errors.isEmpty()) {
+         mapResult.right()
+      } else {
+         errors.left()
+      }
+   }
+
    private fun parseTypeToProject(
       queryProjection: TaxiParser.TypeProjectionContext?,
       typesToDiscover: List<DiscoveryType>
-   ): Either<List<CompilationError>, Pair<Type,ProjectionFunctionScope?>?> {
+   ): Either<List<CompilationError>, Pair<Type, ProjectionFunctionScope?>?> {
       if (queryProjection == null) {
          return null.right()
       }
@@ -258,7 +376,7 @@ data class ResolutionContext(
    val typesToDiscover: List<DiscoveryType> = emptyList(),
    val concreteProjectionTypeContext: TaxiParser.TypeReferenceContext? = null,
    val baseType: Type? = null,
-   val activeScopes:List<ProjectionFunctionScope> = emptyList()
+   val activeScopes: List<ProjectionFunctionScope> = emptyList()
 ) {
    fun appendScope(projectionScope: ProjectionFunctionScope): ResolutionContext {
       return this.copy(activeScopes = activeScopes + projectionScope)

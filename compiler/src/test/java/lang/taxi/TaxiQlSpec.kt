@@ -11,6 +11,7 @@ import lang.taxi.expressions.OperatorExpression
 import lang.taxi.query.Parameter
 import lang.taxi.query.QueryMode
 import lang.taxi.services.operations.constraints.ExpressionConstraint
+import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.*
 
 class TaxiQlSpec : DescribeSpec({
@@ -18,6 +19,7 @@ class TaxiQlSpec : DescribeSpec({
       val schema = """
          namespace foo
 
+         type Quantity inherits Int
          type InsertedAt inherits Instant
          type TraderId inherits String
          type UserEmail inherits String
@@ -28,6 +30,11 @@ class TaxiQlSpec : DescribeSpec({
          type CustomerEmailAddress inherits String
          model Customer {
             email : CustomerEmailAddress
+         }
+         model Person {
+            email : CustomerEmailAddress
+            firstName : FirstName
+            lastName : LastName
          }
          model Trade
 
@@ -171,7 +178,85 @@ class TaxiQlSpec : DescribeSpec({
          val (name, fact) = query.facts.first()
          fact.typedValue.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
          fact.typedValue.value.should.equal("jimmy@demo.com")
+      }
 
+      it("is possible to declare a fact that is an object") {
+         val (_, query) = schema.compiledWithQuery(
+            """
+             given { person: Person = { email: "jimmy@demo.com", firstName: "Jimmy", lastName: "Schmitt" } }
+            find { Trade }
+         """.trimIndent()
+         )
+         query.facts.should.have.size(1)
+         val (name, fact) = query.facts.first()
+         fact.typedValue.value.shouldBe(
+            mapOf(
+               "email" to "jimmy@demo.com",
+               "firstName" to "Jimmy",
+               "lastName" to "Schmitt"
+            )
+         )
+      }
+
+      it("is possible to declare a fact that is an array") {
+         val (_, query) = schema.compiledWithQuery(
+            """
+             given { person: Person[] = [
+               { email: "jimmy@demo.com", firstName: "Jimmy", lastName: "Schmitt" },
+               { email: "mary@demo.com", firstName: "Mary", lastName: "Jones" }
+             ] }
+            find { Trade }
+         """.trimIndent()
+         )
+         query.facts.should.have.size(1)
+         val (name, fact) = query.facts.first()
+         fact.typedValue.value.shouldBe(
+            listOf(
+               mapOf(
+                  "email" to "jimmy@demo.com",
+                  "firstName" to "Jimmy",
+                  "lastName" to "Schmitt"
+               ),
+               mapOf(
+                  "email" to "mary@demo.com",
+                  "firstName" to "Mary",
+                  "lastName" to "Jones"
+               )
+            )
+         )
+      }
+
+      it("returns an error assigning a string to a number") {
+         val exception = schema.compiledWithQueryProducingCompilationException(
+            """
+             given { quantity : Quantity = "1" }
+            find { Trade }
+         """.trimIndent(),
+            CompilerConfig(typeCheckerEnabled = FeatureToggle.ENABLED)
+         )
+         exception.errors.shouldContainMessage("Type mismatch. Type of lang.taxi.String is not assignable to type foo.Quantity")
+
+      }
+      it("returns an error assigning an object to an array") {
+         val exception = schema.compiledWithQueryProducingCompilationException(
+            """
+             given { person: Person[] = { email: "jimmy@demo.com", firstName: "Jimmy", lastName: "Schmitt" } }
+            find { Trade }
+         """.trimIndent(),
+            CompilerConfig(typeCheckerEnabled = FeatureToggle.ENABLED)
+         )
+         exception.errors.shouldContainMessage("Map is not assignable to lang.taxi.Array")
+      }
+
+      it("returns an error assigning an object with missing properties") {
+         val exception = schema.compiledWithQueryProducingCompilationException(
+            """
+             given { person: Person = { email: "jimmy@demo.com" /*, firstName: "Jimmy", lastName: "Schmitt" */ } }
+            find { Trade }
+         """.trimIndent(),
+            CompilerConfig(typeCheckerEnabled = FeatureToggle.ENABLED)
+         )
+         exception.errors.shouldContainMessage("Map is not assignable to type foo.Person as mandatory properties firstName, lastName are missing")
       }
 
       it("should compile an unnamed query") {
@@ -636,14 +721,16 @@ class TaxiQlSpec : DescribeSpec({
       // be on the query block. Otherwise, we lose our
       // ability to specifically annotate the find or given blocks
       xit("is possible to add annotations to unnamed queries") {
-         val (_,query) = """
+         val (_, query) = """
             type MovieId inherits String
             model Movie {}
 
-         """.compiledWithQuery("""
+         """.compiledWithQuery(
+            """
              @IgnoreNullsInResponse
              find { Movie( MovieId == '123' ) }
-         """.trimIndent())
+         """.trimIndent()
+         )
          query.annotations.shouldHaveSize(1)
 
       }
@@ -748,7 +835,7 @@ class TaxiQlSpec : DescribeSpec({
       }
 
       it("is possible to define projection specs on a top level return value") {
-         val (schema,query) = """model Musical {
+         val (schema, query) = """model Musical {
             title : MusicalTitle inherits String
             year : YearProduced inherits Int
          }
@@ -763,13 +850,14 @@ class TaxiQlSpec : DescribeSpec({
             }[] by [Musical with ( ComposerName )]"""
          )
          val collectionType = query.projectedType!! as ArrayType
-         val expression = (collectionType.typeParameters()[0] as ObjectType).expression!! as CollectionProjectionExpressionAccessor
+         val expression =
+            (collectionType.typeParameters()[0] as ObjectType).expression!! as CollectionProjectionExpressionAccessor
          expression.type.qualifiedName.should.equal("Musical")
          expression.projectionScope!!.accessors.should.have.size(1)
       }
 
       it("should support annotations on anonymous projection types") {
-         val (schema,query) = """
+         val (schema, query) = """
          model Composer {
             name : ComposerName inherits String
          }""".compiledWithQuery(
@@ -834,17 +922,19 @@ class TaxiQlSpec : DescribeSpec({
 
 
       it("is valid to declare projections on fields in projected types") {
-         val (schema,query) = """model Person {
+         val (schema, query) = """model Person {
             name : PersonName inherits String
             }
-         """.compiledWithQuery("""find { Person } as {
+         """.compiledWithQuery(
+            """find { Person } as {
              name : PersonName
              // Projection on a field type
              other : Person as {
                nickName : PersonName
             }
          }
-         """.trimIndent())
+         """.trimIndent()
+         )
          val field = query.projectedType!!.asA<ObjectType>()
             .field("other")
          field.type.qualifiedName.should.not.equal("Person")
@@ -854,7 +944,7 @@ class TaxiQlSpec : DescribeSpec({
       }
 
       it("is possible to project the result of an expression to an existing type") {
-         val(schema,query) = """
+         val (schema, query) = """
                      model Actor {
               actorId : ActorId inherits Int
               name : ActorName inherits String
@@ -864,7 +954,8 @@ class TaxiQlSpec : DescribeSpec({
                headliner : ActorId
                cast: Actor[]
             }
-         """.compiledWithQuery("""
+         """.compiledWithQuery(
+            """
             find { Film[] } as (film:Film) -> {
                title : FilmTitle
                // This is the test...
@@ -872,7 +963,8 @@ class TaxiQlSpec : DescribeSpec({
                star : singleBy(film.cast, (Actor) -> Actor::ActorId, film.headliner) as ActorName
             }[]
 
-         """.trimIndent())
+         """.trimIndent()
+         )
          val field = query.projectedObjectType.field("star")
          field.type.qualifiedName.should.equal("ActorName")
          field.projection!!.sourceType.qualifiedName.shouldBe("Actor")
@@ -882,7 +974,7 @@ class TaxiQlSpec : DescribeSpec({
       // However, it's unused, and the syntax isn't really standard with spread operators.
       // Lets re-introduce if we decide to revive the feature
       xit("is possible to select a subset of fields in an inline projection") {
-         val (schema,query) = """
+         val (schema, query) = """
             model Person {
                firstName : FirstName inherits String
                lastName : LastName inherits String
@@ -893,19 +985,20 @@ class TaxiQlSpec : DescribeSpec({
                title : FilmTitle inherits String
                actors : Person[]
             }
-         """.compiledWithQuery("""find { Film } as {
+         """.compiledWithQuery(
+            """find { Film } as {
             | title : FilmTitle
             | actors : Person[] as {
             |    firstName
             |    lastName
             |}[]
             |}
-         """.trimMargin())
+         """.trimMargin()
+         )
          println(query)
          val actors = query.projectedObjectType.field("actors")
          actors.type.asA<ObjectType>()
       }
-
 
 
       // This feature has been disabled for now.

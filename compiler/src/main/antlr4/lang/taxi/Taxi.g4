@@ -739,7 +739,13 @@ givenBlock : 'given' '{' factList '}';
 factList : fact (',' fact)*;
 
 // TODO :  We could/should make variableName optional
-fact : variableName? typeReference ('=' literal)?;
+fact : variableName? typeReference ('=' value)?;
+
+value : objectValue | valueArray | literal;
+
+objectValue: '{' objectField (',' objectField)* '}';
+objectField : identifier ':' value;
+valueArray: '[' value? (',' value)* ']';
 
 variableName: identifier ':';
 queryBody:

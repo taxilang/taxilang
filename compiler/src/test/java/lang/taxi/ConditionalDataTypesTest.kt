@@ -8,12 +8,7 @@ import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.functions.FunctionAccessor
-import lang.taxi.types.ElseMatchExpression
-import lang.taxi.types.EnumValue
-import lang.taxi.types.FormulaOperator
-import lang.taxi.types.InlineAssignmentExpression
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.WhenFieldSetCondition
+import lang.taxi.types.*
 import org.junit.jupiter.api.Test
 
 class ConditionalDataTypesTest {
@@ -520,7 +515,7 @@ class ConditionalDataTypesTest {
          }
       """.trimIndent()
          .validated()
-         .shouldContainMessage("Type mismatch.  Type of lang.taxi.Boolean is not assignable to type lang.taxi.String")
+         .shouldContainMessage("Type mismatch. Type of lang.taxi.Boolean is not assignable to type lang.taxi.String")
    }
 
    @Test
@@ -534,7 +529,7 @@ class ConditionalDataTypesTest {
             }
          }
       """.validated()
-         .shouldContainMessage("Type mismatch.  Type of lang.taxi.String is not assignable to type lang.taxi.Boolean")
+         .shouldContainMessage("Type mismatch. Type of lang.taxi.String is not assignable to type lang.taxi.Boolean")
    }
 
    @Test

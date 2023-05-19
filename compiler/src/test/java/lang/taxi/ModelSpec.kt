@@ -93,7 +93,7 @@ namespace foo.bar {
                }
                """
                   .validated()
-                  .shouldContainMessage("Type mismatch.  Type of lang.taxi.Instant is not assignable to type TransactionDateTime")
+                  .shouldContainMessage("Type mismatch. Type of lang.taxi.Instant is not assignable to type TransactionDateTime")
          }
 
          it("should not allow invalid operations on Date Time fields") {
