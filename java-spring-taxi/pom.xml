@@ -35,10 +35,16 @@
          <artifactId>javax.servlet-api</artifactId>
          <scope>provided</scope>
       </dependency>
-      <!-- For SpringMvc to feign support.  Note - once this is split out, spring-webmvc is still required as test scope-->
+
+      <!-- We need to parse metadata from Spring, and the user will either be using webmvc OR webflux -->
       <dependency>
          <groupId>org.springframework</groupId>
          <artifactId>spring-webmvc</artifactId>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-webflux</artifactId>
          <scope>provided</scope>
       </dependency>
    </dependencies>

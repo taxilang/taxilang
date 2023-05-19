@@ -3,15 +3,7 @@ package lang.taxi.generators.java.spring
 import lang.taxi.TypeNames
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpRequestBody
-import lang.taxi.generators.java.KTypeWrapper
-import lang.taxi.generators.java.OperationMapperExtension
-import lang.taxi.generators.java.ServiceMapper
-import lang.taxi.generators.java.ServiceMapperExtension
-import lang.taxi.generators.java.TaxiGenerator
-import lang.taxi.generators.java.TypeMapper
-import lang.taxi.generators.java.deriveServiceName
-import lang.taxi.generators.java.findTypeDoc
-import lang.taxi.generators.java.orDefaultNullable
+import lang.taxi.generators.java.*
 import lang.taxi.services.Operation
 import lang.taxi.services.Service
 import lang.taxi.types.CompilationUnit
@@ -49,7 +41,7 @@ class SpringServiceMapper(val baseUrl: String) : ServiceMapper {
       val operations = javaClass.methods.filter { method ->
          AnnotationUtils.findAnnotation(method, RequestMapping::class.java) != null
       }.map { method ->
-         val requestMappingInfo = MetadataParser().getMappingForMethod(method, javaClass)
+         val requestMappingInfo = SpringMetadataProvider.getSpringMethodMetadata(method, javaClass)
          val url = getUrlForMethod(method, javaClass, typeMapper, mappedTypes, requestMappingInfo)
          val bodyParamIndex = findBodyParamIndex(method)
          val func = method.kotlinFunction
@@ -78,7 +70,7 @@ class SpringServiceMapper(val baseUrl: String) : ServiceMapper {
             parameters = params,
             annotations = listOf(
                HttpOperation(
-                  requestMappingInfo.methodsCondition.methods.first().name,
+                  requestMappingInfo.requestMethod.name,
                   url
                ).toAnnotation()
             ),
@@ -104,11 +96,10 @@ class SpringServiceMapper(val baseUrl: String) : ServiceMapper {
       type: Class<*>,
       typeMapper: TypeMapper,
       mappedTypes: MutableSet<Type>,
-      requestMappingInfo: RequestMappingInfo
+      requestMappingInfo: SpringMethodMetadata
    ): String {
 
-      val methodUrl = findMethodUrl(requestMappingInfo)
-      var url = baseUrl.joinEnsuringOnlyOneSeperator(methodUrl, "/")
+      var url = baseUrl.joinEnsuringOnlyOneSeperator(requestMappingInfo.url, "/")
       val pathVariablesAndIndices = findPathVariablesToParams(url, method)
       val func = method.kotlinFunction!!
 

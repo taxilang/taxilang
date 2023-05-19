@@ -9,3 +9,5 @@ taxi
 ```
 
 For more information, see [our docs](https://docs.taxilang.org/intro/getting-started/)
+
+## Building a release

@@ -43,7 +43,6 @@ fun String.joinEnsuringOnlyOneSeperator(other: String, seperator: String): Strin
    return this.removeSuffix(seperator) + seperator + other.removePrefix(seperator)
 }
 
-
 class MetadataParser : RequestMappingHandlerMapping() {
 
    public override fun getMappingForMethod(method: Method, handlerType: Class<*>): RequestMappingInfo {
