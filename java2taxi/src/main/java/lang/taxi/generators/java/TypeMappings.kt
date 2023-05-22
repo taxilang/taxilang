@@ -1,37 +1,19 @@
 package lang.taxi.generators.java
 
 import lang.taxi.TypeNames
-import lang.taxi.annotations.Constraint
-import lang.taxi.annotations.DataType
-import lang.taxi.annotations.Operation
-import lang.taxi.annotations.ParameterType
-import lang.taxi.annotations.Service
-import lang.taxi.annotations.declaresName
-import lang.taxi.annotations.qualifiedName
+import lang.taxi.annotations.*
 import lang.taxi.generators.kotlin.AnnotatedTypeAlias
 import lang.taxi.generators.kotlin.TypeAliasRegister
 import lang.taxi.jvm.common.PrimitiveTypes
 import lang.taxi.sources.SourceCode
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.ArrayType
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.EnumDefinition
-import lang.taxi.types.EnumType
-import lang.taxi.types.EnumValue
-import lang.taxi.types.Enums
 import lang.taxi.types.Modifier
-import lang.taxi.types.ObjectType
-import lang.taxi.types.ObjectTypeDefinition
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
-import lang.taxi.types.UnresolvedImportedType
 import org.jetbrains.annotations.NotNull
-import java.lang.reflect.AnnotatedElement
+import java.lang.reflect.*
 import java.lang.reflect.Field
-import java.lang.reflect.Method
 import java.lang.reflect.Parameter
-import java.lang.reflect.ParameterizedType
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty
@@ -328,7 +310,14 @@ class DefaultTypeMapper(
          is Parameter -> typeAliasRegister.findDataType(element.kotlinParam)
          is Class<*> -> {
             element.getAnnotation(DataType::class.java)?.let { dataType ->
-               AnnotatedTypeAlias(dataType.qualifiedName(element.packageName), dataType)
+               // Design choice:
+               // Previously, we used to prepend the java package name
+               // to the name declared in the value, if there was no namespace present.
+               // This was an attempt to be convenient for the user and reduce boilerplate.
+               // However, in practice, this seems to violate the "least surprise" principal,
+               // so I'm reverting to "Just use what the annotation told you" until there's a compelling
+               // reason not to.
+               AnnotatedTypeAlias(dataType.value, dataType)
             }
          }
 
