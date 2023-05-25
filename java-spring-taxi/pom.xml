@@ -35,6 +35,11 @@
          <artifactId>javax.servlet-api</artifactId>
          <scope>provided</scope>
       </dependency>
+      <dependency>
+         <groupId>org.jetbrains.kotlinx</groupId>
+         <artifactId>kotlinx-coroutines-core</artifactId>
+         <scope>test</scope>
+      </dependency>
 
       <!-- We need to parse metadata from Spring, and the user will either be using webmvc OR webflux -->
       <dependency>

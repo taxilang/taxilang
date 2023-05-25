@@ -6,18 +6,24 @@ import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.generators.java.*
 import lang.taxi.services.Operation
 import lang.taxi.services.Service
+import lang.taxi.types.Arrays
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Type
 import org.springframework.core.annotation.AnnotatedElementUtils
 import org.springframework.core.annotation.AnnotationUtils
+import org.springframework.http.ResponseEntity
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import java.lang.reflect.Method
 import java.lang.reflect.Parameter
+import kotlin.reflect.KType
 import kotlin.reflect.full.valueParameters
+import kotlin.reflect.javaType
 import kotlin.reflect.jvm.kotlinFunction
 
 
@@ -63,7 +69,16 @@ class SpringServiceMapper(val baseUrl: String) : ServiceMapper {
             )
          }
 
-         val returnType = typeMapper.getTaxiType(KTypeWrapper(func.returnType), mappedTypes, namespace, method)
+         val (methodReturnType, isArrayWrapper) = unwrapSpecialResponseTypeWrappers(func.returnType)
+         val returnType = typeMapper.getTaxiType(KTypeWrapper(methodReturnType), mappedTypes, namespace, method)
+            .let { type ->
+               if (isArrayWrapper) {
+                  Arrays.arrayOf(type)
+               } else {
+                  type
+               }
+            }
+
 
          Operation(
             method.name,
@@ -89,6 +104,30 @@ class SpringServiceMapper(val baseUrl: String) : ServiceMapper {
             compilationUnits = listOf(CompilationUnit.generatedFor(javaClass.name))
          )
       )
+   }
+
+
+   @OptIn(ExperimentalStdlibApi::class)
+   private fun unwrapSpecialResponseTypeWrappers(returnType: KType): Pair<KType, IsWrapperTypeForArray> {
+      when (returnType.classifier) {
+         ResponseEntity::class -> {
+            return returnType.arguments.first().type!! to false
+         }
+
+         Flux::class -> {
+            return returnType.arguments.first().type!! to true
+         }
+
+         Mono::class -> {
+            return returnType.arguments.first().type!! to false
+         }
+      }
+      // Using class name here, to avoid pulling in Coroutines as a compile time dependency
+      if (returnType.javaType.typeName.startsWith("kotlinx.coroutines.flow.Flow")) {
+         return returnType.arguments.first().type!! to true
+      }
+      // Not a known wrapper, just return the provided type
+      return returnType to false
    }
 
    private fun getUrlForMethod(
@@ -148,3 +187,5 @@ class SpringServiceMapper(val baseUrl: String) : ServiceMapper {
       return this
    }
 }
+
+private typealias IsWrapperTypeForArray = Boolean
