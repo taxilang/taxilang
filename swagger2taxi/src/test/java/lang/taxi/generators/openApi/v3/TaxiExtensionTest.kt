@@ -1,7 +1,7 @@
 package lang.taxi.generators.openApi.v3
 
 import com.winterbe.expekt.should
-import io.swagger.oas.models.media.Schema
+import io.swagger.v3.oas.models.media.Schema
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.TestFactory

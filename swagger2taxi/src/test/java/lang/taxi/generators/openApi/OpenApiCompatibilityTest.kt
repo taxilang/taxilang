@@ -1,11 +1,7 @@
 package lang.taxi.generators.openApi
 
 import com.winterbe.expekt.expect
-import lang.taxi.generators.GeneratedTaxiCode
-import lang.taxi.generators.Level
-import lang.taxi.generators.Message
-import lang.taxi.generators.hasErrors
-import lang.taxi.generators.hasWarnings
+import lang.taxi.generators.*
 import lang.taxi.testing.TestHelpers.expectToCompileTheSame
 import lang.taxi.utils.log
 import org.junit.jupiter.api.DynamicTest
@@ -18,27 +14,11 @@ import kotlin.text.Charsets.UTF_8
 
 class OpenApiCompatibilityTest {
     val sources = listOf(
-            testFile("/openApiSpec/v2.0/json/api-with-examples.json"),
-            testFile("/openApiSpec/v2.0/json/pets.json"),
-            testFile("/openApiSpec/v2.0/json/petstore.json"),
-            testFile("/openApiSpec/v2.0/json/petstore-expanded.json"),
-            testFile("/openApiSpec/v2.0/json/petstore-minimal.json"),
-            testFile("/openApiSpec/v2.0/json/petstore-simple.json"),
-            testFile("/openApiSpec/v2.0/json/petstore-with-external-docs.json"),
-            testFile("/openApiSpec/v2.0/json/uber.json"),
-            testFile("/openApiSpec/v2.0/yaml/api-with-examples.yaml"),
-            testFile("/openApiSpec/v2.0/yaml/petstore.yaml"),
-            testFile("/openApiSpec/v2.0/yaml/petstore-expanded.yaml"),
-            testFile("/openApiSpec/v2.0/yaml/petstore-minimal.yaml"),
-            testFile("/openApiSpec/v2.0/yaml/petstore-simple.yaml"),
-            testFile("/openApiSpec/v2.0/yaml/petstore-with-external-docs.yaml"),
-            testFile("/openApiSpec/v2.0/yaml/uber.yaml"),
             testFile("/openApiSpec/v3.0/api-with-examples.yaml"),
             testFile("/openApiSpec/v3.0/callback-example.yaml"),
             testFile("/openApiSpec/v3.0/petstore.yaml"),
             testFile("/openApiSpec/v3.0/petstore-expanded.yaml"),
             testFile("/openApiSpec/v3.0/uspto.yaml"),
-            testFile("/openApiSpec/v2.0/json/magento.json")
        // Need to address "No URL provided in the set of servers" error to get this importing
 //            testFile("/openApiSpec/v3.0/jira-swagger-v3.json")
     )

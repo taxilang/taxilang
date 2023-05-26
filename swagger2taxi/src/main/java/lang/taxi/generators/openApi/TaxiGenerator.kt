@@ -5,7 +5,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
 import com.google.common.annotations.VisibleForTesting
 import lang.taxi.generators.GeneratedTaxiCode
 import lang.taxi.generators.SchemaWriter
-import lang.taxi.generators.openApi.swagger.SwaggerTaxiGenerator
 import lang.taxi.generators.openApi.v3.OpenApiTaxiGenerator
 
 data class GeneratorOptions(
@@ -18,7 +17,7 @@ class TaxiGenerator(
 
    fun readSchemaVersion(source: String): String? {
       return when (detectVersion(source)) {
-         SwaggerVersion.SWAGGER_2 -> SwaggerTaxiGenerator(schemaWriter).parseVersion(source)
+         SwaggerVersion.SWAGGER_2 -> error("OpenAPI versions earlier than 3.0 are no longer supported")
          SwaggerVersion.OPEN_API -> OpenApiTaxiGenerator(schemaWriter).parseVersion(source)
       }
    }
@@ -29,7 +28,7 @@ class TaxiGenerator(
       generatorOptions: GeneratorOptions = GeneratorOptions()
    ): GeneratedTaxiCode {
       return when (detectVersion(source)) {
-         SwaggerVersion.SWAGGER_2 -> SwaggerTaxiGenerator(schemaWriter).parseSwaggerV2(source, defaultNamespace)
+         SwaggerVersion.SWAGGER_2 -> error("OpenAPI versions earlier than 3.0 are no longer supported")
          SwaggerVersion.OPEN_API -> OpenApiTaxiGenerator(schemaWriter).generateAsStrings(
             source,
             defaultNamespace,

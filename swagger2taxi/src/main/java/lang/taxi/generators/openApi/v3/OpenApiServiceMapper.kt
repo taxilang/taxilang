@@ -1,28 +1,23 @@
 package lang.taxi.generators.openApi.v3
 
-import io.swagger.oas.models.OpenAPI
-import io.swagger.oas.models.Operation
-import io.swagger.oas.models.PathItem
-import io.swagger.oas.models.parameters.Parameter
-import io.swagger.oas.models.parameters.PathParameter
-import io.swagger.oas.models.parameters.QueryParameter
-import io.swagger.oas.models.responses.ApiResponse
+
+import io.swagger.v3.oas.models.OpenAPI
+import io.swagger.v3.oas.models.Operation
+import io.swagger.v3.oas.models.PathItem
+import io.swagger.v3.oas.models.parameters.Parameter
+import io.swagger.v3.oas.models.parameters.PathParameter
+import io.swagger.v3.oas.models.parameters.QueryParameter
+import io.swagger.v3.oas.models.responses.ApiResponse
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpPathVariable
 import lang.taxi.annotations.HttpRequestBody
-import lang.taxi.annotations.ServiceDiscoveryClient
 import lang.taxi.generators.Logger
 import lang.taxi.generators.NamingUtils.replaceIllegalCharacters
 import lang.taxi.generators.openApi.OperationIdProvider
 import lang.taxi.services.Service
 import lang.taxi.services.operations.constraints.Constraint
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.Type
-import lang.taxi.types.VoidType
-import lang.taxi.types.toAnnotations
-import v2.io.swagger.models.parameters.BodyParameter
 
 class OpenApiServiceMapper(private val openAPI: OpenAPI,
                            private val typeGenerator: OpenApiTypeMapper,
@@ -130,7 +125,6 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
 
     private fun getParamAnnotations(param: Parameter): List<Annotation> {
         return when (param) {
-            is BodyParameter -> TODO()
             is QueryParameter -> {
                 logger.warn("Param Query parameters are not currently supported", "https://gitlab.com/taxi-lang/taxi-lang/issues/21")
                 emptyList()

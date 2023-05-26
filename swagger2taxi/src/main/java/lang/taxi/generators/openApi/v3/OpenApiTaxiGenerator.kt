@@ -1,8 +1,9 @@
 package lang.taxi.generators.openApi.v3
 
-import io.swagger.oas.models.OpenAPI
-import io.swagger.parser.models.ParseOptions
-import io.swagger.parser.v3.OpenAPIV3Parser
+import io.swagger.v3.core.util.Yaml
+import io.swagger.v3.oas.models.OpenAPI
+import io.swagger.v3.parser.OpenAPIV3Parser
+import io.swagger.v3.parser.core.models.ParseOptions
 import lang.taxi.TaxiDocument
 import lang.taxi.generators.GeneratedTaxiCode
 import lang.taxi.generators.Logger
@@ -18,6 +19,7 @@ class OpenApiTaxiGenerator(private val schemaWriter: SchemaWriter) {
       options: GeneratorOptions = GeneratorOptions()
    ): GeneratedTaxiCode {
       val logger = Logger()
+
       val spec = OpenAPIV3Parser().readContents(source, emptyList(), ParseOptions())
 
       val (services, types) = generateTaxiObjects(
@@ -33,8 +35,8 @@ class OpenApiTaxiGenerator(private val schemaWriter: SchemaWriter) {
    }
 
    fun parseVersion(source: String): String? {
-      val spec = OpenAPIV3Parser().readContents(source, emptyList(), ParseOptions())
-      return spec.openAPI.info.version
+      val openApi = Yaml.mapper().readValue(source, OpenAPI::class.java)
+      return openApi.info.version
    }
 
    companion object {

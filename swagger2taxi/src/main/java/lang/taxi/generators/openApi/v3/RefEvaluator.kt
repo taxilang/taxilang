@@ -1,7 +1,7 @@
 package lang.taxi.generators.openApi.v3
 
-import io.swagger.oas.models.OpenAPI
-import io.swagger.oas.models.media.Schema
+import io.swagger.v3.oas.models.OpenAPI
+import io.swagger.v3.oas.models.media.Schema
 
 object RefEvaluator {
    fun navigate(api: OpenAPI, ref: String): Pair<String, Schema<Any>> {
