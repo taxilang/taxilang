@@ -330,7 +330,67 @@ namespace namespaceA {
         """.trimIndent()
 
       TestHelpers.expectToCompileTheSame(taxiDef, expected)
+   }
 
+   @Test
+   fun `given type alias used for enum declared on a model then each generates a unique enum`() {
+      @DataType("foo.BookMightBeFiction")
+      data class BookMightBeFiction(val title: String, val isFiction: FictionNonFiction)
+
+      @DataType("foo.Book")
+      data class Book(val title: String, val classification: Classification)
+
+      val taxiDef =
+         TaxiGenerator(typeMapper).forClasses(Book::class.java, BookMightBeFiction::class.java).generateAsStrings()
+
+      // Note: It's actually wrong that Classification ends up in the foo namespace.
+      // But, I'll fix that later.
+      val expected = """
+            namespace foo {
+                enum FictionNonFiction {
+                    FICTION,
+                    NON_FICTION
+                }
+                enum Classification {
+                    FICTION,
+                    NON_FICTION
+                }
+                type Book {
+                    title:String
+                    classification:Classification
+                }
+                type BookMightBeFiction {
+                    title:String
+                    isFiction:FictionNonFiction
+                }
+            }
+        """.trimIndent()
+
+      TestHelpers.expectToCompileTheSame(taxiDef, expected)
+   }
+
+   @Test
+   fun `given type alias used for multiple enums then each generates a unique enum`() {
+      @DataType("foo.Book")
+      data class Book(val isFiction: FictionNonFiction)
+
+      val taxiDef = TaxiGenerator(typeMapper).forClasses(Book::class.java).generateAsStrings()
+
+      // Note: It's actually wrong that Classification ends up in the foo namespace.
+      // But, I'll fix that later.
+      val expected = """
+            namespace foo {
+                enum FictionNonFiction {
+                    FICTION,
+                    NON_FICTION
+                }
+                type Book {
+                    isFiction:FictionNonFiction
+                }
+            }
+        """.trimIndent()
+
+      TestHelpers.expectToCompileTheSame(taxiDef, expected)
    }
 
 
@@ -452,6 +512,7 @@ namespace foo {
    }
 
 
+
 }
 
 @DataType("foo.Person")
@@ -475,3 +536,6 @@ typealias Passengers = List<Person>
 interface BaseType {
    val name: String;
 }
+
+@DataType("foo.FictionNonFiction")
+typealias FictionNonFiction = DataStructureTests.Classification

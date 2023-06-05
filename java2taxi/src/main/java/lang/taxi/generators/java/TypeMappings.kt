@@ -118,7 +118,7 @@ class DefaultTypeMapper(
       }
 
       if (isEnum(element)) {
-         val enumType = mapEnumType(element, defaultNamespace)
+         val enumType = mapEnumType(element, targetTypeName)
          // Note: We have to mutate the collection of types within the parent
          // loop, as adding objectTypes needs to be able to pre-emptively add empty types
          // before the definition is encountered.
@@ -149,9 +149,8 @@ class DefaultTypeMapper(
       return dataType.imported
    }
 
-   private fun mapEnumType(element: AnnotatedElement, defaultNamespace: String): EnumType {
+   private fun mapEnumType(element: AnnotatedElement, targetTypeName: String): EnumType {
       val enum = TypeNames.typeFromElement(element)
-      val enumQualifiedName = getTargetTypeName(element, defaultNamespace)
       val enumValues = enum.getDeclaredField("\$VALUES").let {
          // This is a hack, as for some reason in tests enum.enumConstants is returning null.
          it.isAccessible = true
@@ -160,14 +159,14 @@ class DefaultTypeMapper(
          EnumValue(
             name = it.name,
             annotations = emptyList(), // TODO : Support annotations on EnumValues when exporting
-            qualifiedName = Enums.enumValue(QualifiedName.from(enumQualifiedName), it.name),
+            qualifiedName = Enums.enumValue(QualifiedName.from(targetTypeName), it.name),
             synonyms = emptyList()
 
          )
       }
 
       return EnumType(
-         enumQualifiedName,
+         targetTypeName,
          EnumDefinition(
             values = enumValues,
             annotations = emptyList(), // TODO : Support annotations on Enums when exporting
@@ -277,28 +276,24 @@ class DefaultTypeMapper(
 //   }
 
    private fun getTypeNameOnTypeResolvedToNamespace(element: AnnotatedElement, defaultNamespace: String): String? {
-      // First check to see if the element is directly annotated
-      val elementAnnotation = element.getAnnotation(DataType::class.java)
-      if (elementAnnotation != null && elementAnnotation.declaresName()) {
-         return elementAnnotation.qualifiedName(defaultNamespace)
-      }
 
-      return getDataTypeFromKotlinTypeAlias(element)?.let { annotatedTypeAlias ->
-         if (annotatedTypeAlias.annotation.declaresName()) {
-            annotatedTypeAlias.annotation.qualifiedName(defaultNamespace)
+      // MP: 5-Jun-23: Swapped the order of evaluation.
+      // Look to see if there's a type alias before checking for the data type annotation.
+      // Found that on type aliases for enums, we were getting the underlying enum, ignoring
+      // the typealias.
+      val dataTypeFromKotlinTypeAlias = getDataTypeFromKotlinTypeAlias(element)
+      if (dataTypeFromKotlinTypeAlias != null) {
+         return if (dataTypeFromKotlinTypeAlias.annotation.declaresName()) {
+            dataTypeFromKotlinTypeAlias.annotation.qualifiedName(defaultNamespace)
          } else {
-            annotatedTypeAlias.qualifiedName
+            dataTypeFromKotlinTypeAlias.qualifiedName
          }
       }
-//      val dataType = getDataTypeFromKotlinTypeAlias(element)
-//         ?: element.getAnnotation(DataType::class.java) ?: return null
-//      // Not sure why we need this, but without it, a stack overflow is caused...
-//      if (element !is Field && element !is Parameter && element !is Method && element !is KTypeWrapper) return null
-//      return if (dataType.declaresName()) {
-//         dataType.qualifiedName(defaultNamespace)
-//      } else {
-//         null
-//      }
+
+      val elementAnnotation = element.getAnnotation(DataType::class.java)
+      return if (elementAnnotation != null && elementAnnotation.declaresName()) {
+         elementAnnotation.qualifiedName(defaultNamespace)
+      } else null
    }
 
    private fun getDataTypeFromKotlinTypeAlias(element: Any): AnnotatedTypeAlias? {
