@@ -35,7 +35,12 @@ annotation class Operation(
    /**
     * Markdown docs that describe this operation
     */
-   val documentation: String = ""
+   val documentation: String = "",
+
+   /**
+    * Exclude this operation from schema generation
+    */
+   val excluded: Boolean = false
 )
 
 @Retention(AnnotationRetention.RUNTIME)
