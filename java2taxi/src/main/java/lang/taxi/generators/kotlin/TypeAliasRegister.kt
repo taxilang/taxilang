@@ -11,6 +11,8 @@ import org.reflections8.scanners.SubTypesScanner
 import org.reflections8.scanners.TypeAnnotationsScanner
 import org.reflections8.util.ClasspathHelper
 import org.reflections8.util.ConfigurationBuilder
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
@@ -112,6 +114,8 @@ class TypeAliasRegister private constructor(classes: List<Class<*>> = emptyList(
 
    companion object {
       private val registeredPackageNames = mutableListOf<String>()
+      private object MapKey {}
+      private val currentRegister = ConcurrentHashMap<MapKey,TypeAliasRegister>()
 
       /**
        * Main way to register a package for scanning in production apps.
@@ -120,7 +124,10 @@ class TypeAliasRegister private constructor(classes: List<Class<*>> = emptyList(
       @JvmStatic
       fun registerPackage(packageName: String): Boolean {
          log().info("Registering package $packageName for type alias detection")
-         return registeredPackageNames.add(packageName)
+         val result = registeredPackageNames.add(packageName)
+         // Invalidate the cache, so we rebuild next time we're asked.
+         currentRegister.remove(MapKey)
+         return result
       }
 
       @JvmStatic
@@ -131,7 +138,11 @@ class TypeAliasRegister private constructor(classes: List<Class<*>> = emptyList(
       }
 
       @JvmStatic
-      fun forRegisteredPackages(): TypeAliasRegister = forPackageNames(registeredPackageNames)
+      fun forRegisteredPackages(): TypeAliasRegister {
+         return currentRegister.getOrPut(MapKey) {
+            forPackageNames(registeredPackageNames)
+         }
+      }
 
       @JvmStatic
       fun empty(): TypeAliasRegister {

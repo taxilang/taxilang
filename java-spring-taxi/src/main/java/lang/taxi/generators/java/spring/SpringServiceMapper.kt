@@ -46,7 +46,10 @@ class SpringServiceMapper(val baseUrl: String) : ServiceMapper {
 
       val operations = javaClass.methods.filter { method ->
          AnnotationUtils.findAnnotation(method, RequestMapping::class.java) != null
-      }.map { method ->
+      }.filter { method -> !isExcluded(method) }
+
+
+   .map { method ->
          val requestMappingInfo = SpringMetadataProvider.getSpringMethodMetadata(method, javaClass)
          val url = getUrlForMethod(method, javaClass, typeMapper, mappedTypes, requestMappingInfo)
          val bodyParamIndex = findBodyParamIndex(method)
@@ -104,6 +107,13 @@ class SpringServiceMapper(val baseUrl: String) : ServiceMapper {
             compilationUnits = listOf(CompilationUnit.generatedFor(javaClass.name))
          )
       )
+   }
+
+   private fun isExcluded(method: Method?): Boolean {
+      if (method == null) return true
+      val operationAnnotation = method.getAnnotation(lang.taxi.annotations.Operation::class.java)
+         ?: return false
+      return operationAnnotation.excluded
    }
 
 

@@ -103,6 +103,37 @@ namespace vyne.demo {
       TestHelpers.expectToCompileTheSame(taxiDef, expected)
    }
 
+   @Test
+   fun `excluded operations arent generated`() {
+      @RestController
+      class MyService {
+         @GetMapping("/films")
+         fun film1(): Film = TODO()
+
+         @GetMapping("/films-flux")
+         @Operation(excluded = true)
+         fun film2(): Film = TODO()
+      }
+      val taxiDef = SpringTaxiGenerator.forBaseUrl("http://my-app/")
+         .forClasses(MyService::class.java)
+         .generateAsStrings()
+      val expected = """
+namespace lang.taxi.generators.java.spring {
+   model Film {
+      id : FilmId
+   }
+
+   type FilmId inherits Int
+
+   service MyService {
+      @HttpOperation(method = "GET" , url = "http://my-app/films")
+      operation film1(  ) : Film
+   }
+}
+      """
+      TestHelpers.expectToCompileTheSame(taxiDef, expected)
+   }
+
 
    @Test
    fun `unwraps response type wrappers`() {

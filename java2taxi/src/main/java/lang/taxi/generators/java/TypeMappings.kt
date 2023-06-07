@@ -150,6 +150,7 @@ class DefaultTypeMapper(
    }
 
    private fun mapEnumType(element: AnnotatedElement, targetTypeName: String): EnumType {
+      require(targetTypeName.isNotEmpty()) { "Was passed an empty type name, cannot generate an enum" }
       val enum = TypeNames.typeFromElement(element)
       val enumValues = enum.getDeclaredField("\$VALUES").let {
          // This is a hack, as for some reason in tests enum.enumConstants is returning null.
@@ -305,14 +306,18 @@ class DefaultTypeMapper(
          is Parameter -> typeAliasRegister.findDataType(element.kotlinParam)
          is Class<*> -> {
             element.getAnnotation(DataType::class.java)?.let { dataType ->
-               // Design choice:
-               // Previously, we used to prepend the java package name
-               // to the name declared in the value, if there was no namespace present.
-               // This was an attempt to be convenient for the user and reduce boilerplate.
-               // However, in practice, this seems to violate the "least surprise" principal,
-               // so I'm reverting to "Just use what the annotation told you" until there's a compelling
-               // reason not to.
-               AnnotatedTypeAlias(dataType.value, dataType)
+               if (dataType.declaresName()) {
+                  val nameFromAnnotation = dataType.qualifiedName("")
+                  // Design choice:
+                  // Previously, we used to prepend the java package name
+                  // to the name declared in the value, if there was no namespace present.
+                  // This was an attempt to be convenient for the user and reduce boilerplate.
+                  // However, in practice, this seems to violate the "least surprise" principal,
+                  // so I'm reverting to "Just use what the annotation told you" until there's a compelling
+                  // reason not to.
+                  AnnotatedTypeAlias(dataType.value, dataType)
+               } else null
+
             }
          }
 
