@@ -719,8 +719,11 @@ class TaxiQlSpec : DescribeSpec({
       // Design choice: This is a bad idea.
       // If we want "top level" annotations, they should
       // be on the query block. Otherwise, we lose our
-      // ability to specifically annotate the find or given blocks
-      xit("is possible to add annotations to unnamed queries") {
+      // ability to specifically annotate the find or given blocks.
+      // .... time passes ....
+      // Counterpoint:
+      // Sometimes we want to do exactly what this test does.
+      it("is possible to add annotations to unnamed queries") {
          val (_, query) = """
             type MovieId inherits String
             model Movie {}

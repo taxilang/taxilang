@@ -14,7 +14,8 @@ data class SourceLocation(val line: Int, val char: Int) {
    }
 }
 
-data class SourceCode(
+data class SourceCode
+   (
    val sourceName: String,
    val content: String,
    var path: Path? = null

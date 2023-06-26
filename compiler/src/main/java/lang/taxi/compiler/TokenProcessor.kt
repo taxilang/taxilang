@@ -291,7 +291,7 @@ class TokenProcessor(
             .parseQueryBody(
                name = queryName,
                parameters = emptyList(),
-               annotations = emptyList(),
+               annotations = collateAnnotations(anonymousQueryContex.queryBody().annotation()),
                docs = null,
                ctx = anonymousQueryContex.queryBody(),
                compilationUnit = anonymousQueryContex.toCompilationUnit(includeImportsPresentInFile = true)

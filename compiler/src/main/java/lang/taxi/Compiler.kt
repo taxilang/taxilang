@@ -49,7 +49,7 @@ fun ParserRuleContext?.toCompilationUnit(
       val rawSource = this.source().let { src ->
          if (includeImportsPresentInFile) {
             val imports = this.importsInFile().joinToString("\n") { "import ${it.fullyQualifiedName}" }
-            return@let src.copy(content = listOf(imports, src.content).joinToString(""))
+            return@let src.copy(content = listOf(imports, src.content).joinToString("\n\n"))
          } else src
       }
       return CompilationUnit(
