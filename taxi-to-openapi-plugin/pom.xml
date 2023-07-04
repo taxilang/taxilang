@@ -6,7 +6,7 @@
    <parent>
       <groupId>org.taxilang</groupId>
       <artifactId>parent</artifactId>
-      <version>1.39.0</version>
+      <version>1.40.0-SNAPSHOT</version>
    </parent>
 
    <artifactId>taxi-to-openapi-plugin</artifactId>
