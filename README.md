@@ -249,3 +249,21 @@ Latest taxi 1.37.0 is now available at /home/some/path/.taxi/1.37.0/taxi/bin/tax
 You can run this version by using the following alias: 
 alias taxip=/home/some/path/.taxi/1.37.0/taxi/bin/taxi
 ```
+
+#### Release vscode plugin
+
+To get a personal access token, log in at [https://dev.azure.com/taxi-lang/taxi-vscode-plugin](Azure), and 
+follow the instructions [here](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) to create a token.
+
+Then
+
+```bash
+cd language-server/vscode-extension
+
+npm install
+npm run sync-pom-version
+npm run vsce:package
+npm run vsce:publish
+```
+
+

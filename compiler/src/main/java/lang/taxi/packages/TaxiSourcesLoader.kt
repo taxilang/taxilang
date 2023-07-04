@@ -25,7 +25,10 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
          return loadPackageAndDependencies(packageRootPath, taxiPackage, importer)
       }
 
-      fun loadPackageAndDependencies(packageRootPath: Path, userFacingLogger: MessageLogger = LogWritingMessageLogger): TaxiPackageSources {
+      fun loadPackageAndDependencies(
+         packageRootPath: Path,
+         userFacingLogger: MessageLogger = LogWritingMessageLogger
+      ): TaxiPackageSources {
          val taxiConfFile = packageRootPath.resolve("taxi.conf")
          val taxiPackage = TaxiPackageLoader(taxiConfFile).load()
          return loadPackageAndDependencies(
@@ -42,8 +45,24 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
       ): TaxiPackageSources {
          val sourceRoot = packageRootPath.resolve(project.sourceRoot)
          val sources = TaxiSourcesLoader(sourceRoot).load()
-         return TaxiPackageSources(project, sources + dependencySources)
+         val projectWithRoot = project.copy(packageRootPath = packageRootPath)
+
+         return TaxiPackageSources(projectWithRoot, sources + dependencySources)
       }
+
+//      private fun makeAdditionalSourcesAbsolute(
+//         packageRootPath: Path,
+//         project: TaxiPackageProject
+//      ): TaxiPackageProject {
+//         val absoluteSources = project.additionalSources.map { (key, path) ->
+//            require(!path.isAbsolute) { "Path $path must be relative"}
+//
+//            val absolutePath =  path.resolve(packageRootPath).normalize()
+//            require(absolutePath.startsWith(packageRootPath)) { "Path $path must be relative to $packageRootPath" }
+//            key to absolutePath
+//         }.toMap()
+//         return project.copy(additionalSources = absoluteSources)
+//      }
 
       fun loadPackage(packageRootPath: Path): TaxiPackageSources {
          val taxiConfFile = packageRootPath.resolve("taxi.conf")

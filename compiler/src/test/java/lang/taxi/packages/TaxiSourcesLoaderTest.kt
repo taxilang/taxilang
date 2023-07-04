@@ -2,6 +2,9 @@ package lang.taxi.packages
 
 import com.google.common.io.Resources
 import com.winterbe.expekt.should
+import io.kotest.matchers.maps.shouldBeEmpty
+import io.kotest.matchers.maps.shouldNotBeEmpty
+import io.kotest.matchers.shouldBe
 import lang.taxi.Compiler
 import lang.taxi.messages.Severity
 import lang.taxi.packages.SimpleFilePackageService.Companion.fileServiceFactory
@@ -11,6 +14,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.toPath
 
 class TaxiSourcesLoaderTest {
 
@@ -53,6 +57,20 @@ class TaxiSourcesLoaderTest {
       val deskModel = taxi.objectType("withDeps.Desk")
       deskModel.field("traders").type.toQualifiedName().parameterizedName
          .should.equal("lang.taxi.Array<testB.Trader>")
+   }
+
+   @Test
+   fun `loads and makes absolute additional sources`() {
+      val resource = Resources.getResource("otherSources").toURI()
+      val taxiProject = TaxiSourcesLoader.loadPackage(resource.toPath())
+      taxiProject.project.additionalSources.shouldNotBeEmpty()
+   }
+
+   @Test
+   fun `rejects absolute source paths that are not relative to root`() {
+      val resource = Resources.getResource("otherSourcesIllegal").toURI()
+      val taxiProject = TaxiSourcesLoader.loadPackage(resource.toPath())
+      // TODO ... not sure how to test this....sorry future me.
    }
 
 

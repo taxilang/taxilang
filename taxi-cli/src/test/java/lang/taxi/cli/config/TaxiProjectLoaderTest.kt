@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 
 
+// Use a TaxiSourcesLoader instead
 class TaxiProjectLoaderTest {
 
    @Test
@@ -19,5 +20,15 @@ class TaxiProjectLoaderTest {
 
       // Test deserialzation of repository properties
       project.publishToRepository!!.settings["repositoryName"].should.equal("taxi")
+   }
+
+   @Test
+   fun `additional sources are available`() {
+      val project = TaxiProjectLoader.noDefaults()
+         .withConfigFileAt(Paths.get(Resources.getResource("samples/otherSources/taxi.conf").toURI()))
+         .load()
+      project.additionalSources.should.not.be.empty
+
+//      should.be.equal(mapOf("@orbital/pipelines" to Paths.get("pipelines/")))
    }
 }
