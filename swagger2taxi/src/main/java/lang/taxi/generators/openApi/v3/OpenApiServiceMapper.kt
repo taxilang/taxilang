@@ -120,7 +120,13 @@ class OpenApiServiceMapper(private val openAPI: OpenAPI,
     }
 
     private fun getParamType(swaggerParam: Parameter): Type {
-        return typeGenerator.generateUnnamedTypeRecursively(swaggerParam.schema, swaggerParam.name)
+       if (swaggerParam.`$ref` != null) {
+          TODO()
+       } else {
+          return typeGenerator.generateUnnamedTypeRecursively(swaggerParam.schema, swaggerParam.name)
+       }
+
+
     }
 
     private fun getParamAnnotations(param: Parameter): List<Annotation> {

@@ -20,7 +20,9 @@ class OpenApiTaxiGenerator(private val schemaWriter: SchemaWriter) {
    ): GeneratedTaxiCode {
       val logger = Logger()
 
-      val spec = OpenAPIV3Parser().readContents(source, emptyList(), ParseOptions())
+      val parseOptions = ParseOptions()
+      parseOptions.isResolve = true
+      val spec = OpenAPIV3Parser().readContents(source, emptyList(), parseOptions)
 
       val (services, types) = generateTaxiObjects(
          spec.openAPI,

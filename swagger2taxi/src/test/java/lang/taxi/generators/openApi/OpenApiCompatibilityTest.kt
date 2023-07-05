@@ -1,6 +1,7 @@
 package lang.taxi.generators.openApi
 
 import com.winterbe.expekt.expect
+import lang.taxi.Compiler
 import lang.taxi.generators.*
 import lang.taxi.testing.TestHelpers.expectToCompileTheSame
 import lang.taxi.utils.log
@@ -13,22 +14,34 @@ import kotlin.test.fail
 import kotlin.text.Charsets.UTF_8
 
 class OpenApiCompatibilityTest {
-    val sources = listOf(
-            testFile("/openApiSpec/v3.0/api-with-examples.yaml"),
-            testFile("/openApiSpec/v3.0/callback-example.yaml"),
-            testFile("/openApiSpec/v3.0/petstore.yaml"),
-            testFile("/openApiSpec/v3.0/petstore-expanded.yaml"),
-            testFile("/openApiSpec/v3.0/uspto.yaml"),
-       // Need to address "No URL provided in the set of servers" error to get this importing
+   val sources = listOf(
+      testFile("/openApiSpec/v3.0/api-with-examples.yaml"),
+      testFile("/openApiSpec/v3.0/callback-example.yaml"),
+      testFile("/openApiSpec/v3.0/petstore.yaml"),
+      testFile("/openApiSpec/v3.0/petstore-expanded.yaml"),
+      testFile("/openApiSpec/v3.0/uspto.yaml"),
+      // Need to address "No URL provided in the set of servers" error to get this importing
 //            testFile("/openApiSpec/v3.0/jira-swagger-v3.json")
-    )
+   )
+
+   @Test
+   fun canImportSpotifyOpenApiSpec() {
+      // This swagger is interesting because it's big and complex.
+      val (_, jira) = testFile("/openApiSpec/v3.0/spotify-openapi-v3.yaml")
+      val generator = TaxiGenerator()
+      val taxi = generator.generateAsStrings(jira, "vyne.openApi", GeneratorOptions(serviceBasePath = "http://myjira/"))
+      expect(taxi.successful).to.be.`true`
+      val (errors, compiled) = Compiler(taxi.concatenatedSource).compileWithMessages()
+
+      expect(taxi.messages.hasErrors()).to.be.`false`
+   }
 
    @Test
    fun canImportJiraSwagger() {
       // This swagger is interesting because it's big and complex.
       // Also, it's a consumer product, so we had to introduce the ability to generate from swagger
       // without knowing the end url, and supplying that as an extra param.
-      val (_,jira) = testFile("/openApiSpec/v3.0/jira-swagger-v3.json")
+      val (_, jira) = testFile("/openApiSpec/v3.0/jira-swagger-v3.json")
       val generator = TaxiGenerator()
       val taxi = generator.generateAsStrings(jira, "vyne.openApi", GeneratorOptions(serviceBasePath = "http://myjira/"))
       expect(taxi.successful).to.be.`true`

@@ -78,7 +78,7 @@ validate:
       DOCKER_DRIVER: overlay2
    artifacts:
       paths:
-         - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
+         - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-jar-with-dependencies.jar'
       reports:
          junit:
             # Note:This won't actually work, b/c of https://gitlab.com/gitlab-org/gitlab-runner/issues/2620
@@ -143,7 +143,7 @@ publish-snapshot-jars:
    artifacts:
       paths:
          - "taxi-cli/target/*.zip"
-         - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
+         - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-jar-with-dependencies.jar'
 
 build-plugin-beta:
    stage: build-plugin
@@ -173,7 +173,7 @@ publish-release:
    artifacts:
       paths:
          - "taxi-cli/target/*.zip"
-         - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-standalone.jar'
+         - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-jar-with-dependencies.jar'
          - "taxi-cli/target/jreleaser/*.log"
 
 publish-plugin:
