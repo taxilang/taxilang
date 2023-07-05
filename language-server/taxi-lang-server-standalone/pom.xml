@@ -27,70 +27,32 @@ disabled by default locally
    </dependencies>
 
    <build>
-      <finalName>${project.artifactId}</finalName>
+      <finalName>taxi-lang-server</finalName>
       <plugins>
          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>3.5.0</version>
             <configuration>
-               <!--                    <excludeGroupIds>MyGroup</excludeGroupIds>-->
-               <!--                    <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>-->
-               <overWriteReleases>true</overWriteReleases>
-               <overWriteSnapshots>true</overWriteSnapshots>
-               <overWriteIfNewer>true</overWriteIfNewer>
-               <stripVersion>true</stripVersion>
+               <descriptorRefs>
+                  <descriptorRef>jar-with-dependencies</descriptorRef>
+               </descriptorRefs>
+               <archive>
+                  <manifest>
+                     <mainClass>lang.taxi.lsp.Launcher</mainClass>
+                  </manifest>
+               </archive>
             </configuration>
             <executions>
                <execution>
-                  <id>copy-dependencies</id>
-                  <phase>install</phase>
+                  <id>make-assembly</id> <!-- this is used for inheritance merges -->
+                  <phase>package</phase> <!-- bind to the packaging phase -->
                   <goals>
-                     <goal>copy-dependencies</goal>
+                     <goal>single</goal>
                   </goals>
                </execution>
             </executions>
          </plugin>
       </plugins>
    </build>
-   <profiles>
-      <profile>
-         <id>shade</id>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-shade-plugin</artifactId>
-                  <version>3.4.1</version>
-                  <configuration>
-                     <filters>
-                        <filter>
-                           <artifact>*:*</artifact>
-                           <excludes>
-                              <exclude>META-INF/*.SF</exclude>
-                              <exclude>META-INF/*.DSA</exclude>
-                              <exclude>META-INF/*.RSA</exclude>
-                           </excludes>
-                        </filter>
-                     </filters>
-                     <transformers>
-                        <transformer
-                           implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                           <mainClass>lang.taxi.lang.taxi.lsp.Launcher</mainClass>
-                        </transformer>
-                     </transformers>
-                     <finalName>${project.artifactId}</finalName>
-                  </configuration>
-                  <executions>
-                     <execution>
-                        <phase>package</phase>
-                        <goals>
-                           <goal>shade</goal>
-                        </goals>
-                     </execution>
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-   </profiles>
+
 </project>

@@ -1,12 +1,11 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import { commands, OutputChannel, workspace } from 'vscode';
 import * as vscode from 'vscode';
+import {workspace} from 'vscode';
 import * as path from 'path';
-import * as WebSocket from 'ws';
 import * as findJavaHome from 'find-java-home';
 
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient';
+import {LanguageClient, LanguageClientOptions, ServerOptions} from 'vscode-languageclient';
 
 class CompilerConfig {
     typeChecker: FeatureToggle = FeatureToggle.DISABLED;
@@ -37,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
     const taxiConfig = workspace.getConfiguration('taxi');
     const typeCheckerEnabled = (taxiConfig.get('typeChecker') as string).toUpperCase() as FeatureToggle;
     compilerConfig.typeChecker = typeCheckerEnabled;
-    
+
     const definedJavaHome = workspace.getConfiguration('taxi').get('javaHome', '');
     if (definedJavaHome !== '') {
         startPlugin(definedJavaHome, context, compilerConfig);
@@ -76,7 +75,7 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext, config:
                 path.join(__dirname, '..', '..', 'taxi-lang-server-standalone', 'target', 'dependency', '*')
             ].join(classPathSeperator);
         } else {
-            const jarName = 'taxi-lang-server-standalone.jar';
+           const jarName = 'taxi-lang-server-jar-with-dependencies.jar';
             classPath = path.join(__dirname, jarName);
         }
 
