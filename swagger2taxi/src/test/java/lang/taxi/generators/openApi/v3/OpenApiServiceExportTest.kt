@@ -91,7 +91,48 @@ class OpenApiServiceExportTest {
          }
       """.trimIndent()
 
-      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+      val taxiDef = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
+
+   @Test
+   fun `docs on param arguments are copied across`() {
+      @Language("yaml")
+      val openApiSpec = """
+         openapi: "3.0.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         paths:
+           /pets:
+             get:
+               operationId: findPets
+               parameters:
+                 - name: pet limit
+                   in: query
+                   required: false
+                   schema:
+                     type: integer
+                     description: The upper limit to the number of pets you can possibly tolerate
+               responses:
+                 '200':
+                   description: pet response
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            service PetsService {
+               @HttpOperation(method = "GET" , url = "/pets")
+               operation findPets(
+                  [[ The upper limit to the number of pets you can possibly tolerate ]]
+                  pet_limit : Int
+               )
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
 
       expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
    }

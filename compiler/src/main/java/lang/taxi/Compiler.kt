@@ -246,6 +246,12 @@ class Compiler(
    ) : this(CharStreams.fromPath(file.toPath()), importSources, config = config)
 
    constructor(
+      sources: List<SourceCode>,
+      importSources: List<TaxiDocument> = emptyList(),
+      config: CompilerConfig = CompilerConfig()
+   ) : this(sources.map { CharStreams.fromString(it.content, it.sourceName) }, importSources, config = config)
+
+   constructor(
       project: TaxiPackageSources,
       config: CompilerConfig = CompilerConfig(linterRuleConfiguration = project.project.linter.toLinterRules())
    ) : this(project.sources.map { CharStreams.fromString(it.content, it.sourceName) }, config = config)
@@ -505,7 +511,7 @@ class Compiler(
          Tokens.combine(tokensCollection)
 //         tokensCollection.reduce { acc, tokens -> acc.plus(tokens) }
       }
-      log().info("Reducing parsed tokens took ${timedTokens.duration}")
+      log().debug("Reducing parsed tokens took ${timedTokens.duration}")
       return timedTokens.value to errors
    }
 

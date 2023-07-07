@@ -105,7 +105,8 @@ function startPlugin(javaHome: string, context: vscode.ExtensionContext, config:
                 // Notify the server about file changes to .taxi files contained in the workspace
                 fileEvents: workspace.createFileSystemWatcher('**/*.{taxi,conf}')
             },
-            // Hijacks all LSP logs and redirect them to a specific port through WebSocket connection
+
+           // Hijacks all LSP logs and redirect them to a specific port through WebSocket connection
             // outputChannel: websocketOutputChannel
         };
 

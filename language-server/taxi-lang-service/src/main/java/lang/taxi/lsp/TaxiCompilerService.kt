@@ -54,7 +54,7 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
                val errorMessage =
                   "An exception was thrown when compiling.  This is a bug in the compiler, and should be reported. \n${e.message} \n$writer"
                CompilationResult(
-                  Compiler(emptyList()), document = null, errors = listOf(
+                  Compiler(emptyList<CharStream>()), document = null, errors = listOf(
                      CompilationError(
                         0,
                         0,

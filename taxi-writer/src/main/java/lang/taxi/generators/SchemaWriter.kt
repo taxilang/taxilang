@@ -3,25 +3,10 @@ package lang.taxi.generators
 import lang.taxi.TaxiDocument
 import lang.taxi.accessors.Accessor
 import lang.taxi.expressions.Expression
-import lang.taxi.services.Operation
-import lang.taxi.services.OperationContract
-import lang.taxi.services.QueryOperation
-import lang.taxi.services.Service
-import lang.taxi.services.Stream
-import lang.taxi.services.Table
+import lang.taxi.services.*
 import lang.taxi.services.operations.constraints.Constraint
-import lang.taxi.types.Annotatable
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.ArrayType
-import lang.taxi.types.EnumType
-import lang.taxi.types.Field
-import lang.taxi.types.ObjectType
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.TaxiStatementGenerator
-import lang.taxi.types.Type
-import lang.taxi.types.TypeAlias
-import lang.taxi.types.UnresolvedImportedType
-import lang.taxi.types.VoidType
 import lang.taxi.utils.trimEmptyLines
 
 
@@ -215,14 +200,27 @@ $operations
    }
 
    private fun generateOperationDeclaration(operation: Operation, namespace: String): String {
-      val params = operation.parameters.map { param ->
+      var paramsHaveDocs = false
+      val paramsList = operation.parameters.map { param ->
          val constraintString = constraintString(param.constraints)
          val paramAnnotations = generateAnnotations(param) + " "
-
+         val paramDocs = param.typeDoc.asTypeDocBlock()
+         if (param.typeDoc != null) {
+            paramsHaveDocs = true
+         }
          val paramName = if (!param.name.isNullOrEmpty()) param.name?.reservedWordEscaped() + " : " else ""
          val paramDeclaration = typeAsTaxi(param.type, namespace)
-         paramAnnotations + paramName + paramDeclaration + constraintString
-      }.joinToString(", ")
+         paramDocs + paramAnnotations + paramName + paramDeclaration + constraintString
+      }
+
+      val params = if (paramsHaveDocs || paramsList.size > 2) {
+         // Put each param on a seperate line
+         paramsList.joinToString(prefix = "\n    ", separator = ",\n   ")
+      } else {
+         // Bunch params together.
+         paramsList.joinToString(", ")
+      }
+
       val returnDeclaration = if (operation.returnType != VoidType.VOID) {
          val returnType = typeAsTaxi(operation.returnType, namespace)
          val returnContract = if (operation.contract != null) generateReturnContract(operation.contract!!) else ""
@@ -395,7 +393,7 @@ private fun String?.asTypeDocBlock(): String {
    return if (this.isNullOrEmpty()) {
       ""
    } else {
-      "[[ $this ]]\n"
+      "[[ ${this.trim()} ]]\n"
    }
 }
 

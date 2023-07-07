@@ -1,6 +1,10 @@
 package lang.taxi.generators
 
-data class GeneratedTaxiCode(val taxi: List<String>, val messages: List<Message>) {
+data class GeneratedTaxiCode(
+   val taxi: List<String>,
+   val messages: List<Message>,
+   val suggestedFileName: String? = null
+) {
    val successful = taxi.isNotEmpty()
    val hasErrors = messages.hasErrors()
    val hasWarnings = messages.hasWarnings()

@@ -1,0 +1,33 @@
+namespace com.acme.foo {
+
+   @Annotation(foo = "Bar" )
+   type FirstName inherits String
+
+   enum NumberEnum {
+      One(1),
+      Two(2)
+   }
+   enum CharEnum {
+      One("A"),
+      Two("B")
+   }
+
+   type LastName inherits com.people.Names
+
+   [[ These are some docs ]]
+   model Person {
+      id : PersonId inherits Int
+      name : FirstName by column("Foo")
+   }
+
+   service MyService {
+      // This is a line comment
+      operation findPeople(PersonId):Person
+
+      /**
+       * This is a block
+       * comment
+       */
+      operation findPeopleWithName(name : FirstName):Person[]
+   }
+}
