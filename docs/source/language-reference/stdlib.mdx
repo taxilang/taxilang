@@ -165,6 +165,33 @@ declare function <T,A> singleBy(collection:T[], groupingFunction: (T) -> A, sear
 Similar to Single, where the collection is searched for a single matching value.
 However, results are first grouped by selector.  The results of this are cached to improve future performance
 
+### first
+`taxi.stdlib.first`
+
+```taxi
+declare function <T> first(collection: T[]):T
+```
+
+Returns the first item within the collection
+
+### last
+`taxi.stdlib.last`
+
+```taxi
+declare function <T> last(collection: T[]):T
+```
+
+Returns the last item within the collection
+
+### getAtIndex
+`taxi.stdlib.getAtIndex`
+
+```taxi
+declare function <T> getAtIndex(collection: T[], index: Int):T
+```
+
+Returns the item at the provided index
+
 ## Functional
 
 Functions that are functionally functions. Funky
