@@ -391,10 +391,10 @@ data class ObjectType(
       }
       val matchedPaths = mutableListOf<String>()
       typesBeingChecked[this] = matchedPaths
-      val matches = this.fields
+      val matches = this.allFields
          .flatMap { field ->
             val path = when {
-               field.type.isAssignableTo(searchType) -> listOf(field.name)
+               field.type.isAssignableTo(searchType) && field.type !is PrimitiveType -> listOf(field.name)
                field.type is ObjectType -> field.type.doRecursiveLookupOfDescendantPathsOfType(
                   searchType,
                   typesBeingChecked
@@ -404,7 +404,7 @@ data class ObjectType(
                field.type is ArrayType -> {
                   val memberType = field.type.memberType
                   when {
-                     memberType.isAssignableTo(searchType) -> listOf(field.name)
+                     memberType.isAssignableTo(searchType) && memberType !is PrimitiveType -> listOf(field.name)
                      memberType is ObjectType -> memberType.doRecursiveLookupOfDescendantPathsOfType(
                         searchType,
                         typesBeingChecked

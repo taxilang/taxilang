@@ -2,11 +2,41 @@ package lang.taxi
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSingleElement
 
 class TypeFieldLookupSpec : DescribeSpec({
+
    describe("looking up fields within object types") {
+      it("Looks up via nested attributes") {
+         val schema = """
+            model PagingObject {
+               limit: Int
+            }
+
+            model PagingTrackObject inherits PagingObject {
+               items: Track[]
+            }
+
+            model IdList {
+               publicTrackId : PublicTrackId inherits String
+            }
+
+            model SpecialIdList inherits IdList
+
+            model Track {
+               externalIds: SpecialIdList
+            }
+
+            model SearchResult {
+               tracks : PagingTrackObject
+            }
+         """.compiled()
+         val searchResult = schema.objectType("SearchResult")
+            .getDescendantPathsOfType(schema.type("PublicTrackId"))
+         searchResult.shouldContainExactly(listOf("tracks.items.externalIds.publicTrackId"))
+      }
       it("should match if an object type contains a desscendant of a type") {
          val schema = """
          model NamePart inherits String
@@ -33,6 +63,25 @@ class TypeFieldLookupSpec : DescribeSpec({
          schema.objectType("Person")
             .getDescendantPathsOfType(schema.type("Person"))
             .shouldContainExactlyInAnyOrder("friends")
+      }
+
+      it("should not include primitive types when searching for a semantic subtype") {
+         val schema = """
+            type AlbumId inherits String
+            model Track {
+               artist : {
+                  id : String
+                  genres : String[]
+                  releases : {
+                     latestRelease : AlbumId
+                  }
+               }
+               albumId : AlbumId
+            }
+         """.compiled()
+         val matches = schema.objectType("Track")
+            .getDescendantPathsOfType(schema.type("AlbumId"))
+         matches.shouldContainExactlyInAnyOrder(listOf("artist.releases.latestRelease", "albumId"))
       }
 
       it("should return the expected path when it contains an array") {

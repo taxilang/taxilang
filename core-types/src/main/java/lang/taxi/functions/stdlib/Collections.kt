@@ -3,7 +3,18 @@ package lang.taxi.functions.stdlib
 import lang.taxi.types.QualifiedName
 
 object Collections {
-   val functions: List<FunctionApi> = listOf(Contains, AllOf, AnyOf, NoneOf, Single, FilterAll, SingleBy)
+   val functions: List<FunctionApi> = listOf(
+      Contains,
+      AllOf,
+      AnyOf,
+      NoneOf,
+      Single,
+      FilterAll,
+      SingleBy,
+      First,
+      Last,
+      GetAtIndex
+   )
 }
 
 object NoneOf : FunctionApi {
@@ -41,6 +52,28 @@ object SingleBy : FunctionApi {
          declare function <T,A> singleBy(collection:T[], groupingFunction: (T) -> A, searchValue: A):T""".trimIndent()
    override val name: QualifiedName = stdLibName("singleBy")
 }
+
+object First : FunctionApi {
+   override val taxi: String = """
+      [[ Returns the first item within the collection ]]
+      declare function <T> first(collection: T[]):T"""
+   override val name: QualifiedName = stdLibName("first")
+}
+
+object Last : FunctionApi {
+   override val taxi: String = """
+      [[ Returns the last item within the collection ]]
+      declare function <T> last(collection: T[]):T""".trimIndent()
+   override val name: QualifiedName = stdLibName("last")
+}
+
+object GetAtIndex : FunctionApi {
+   override val taxi: String = """
+      [[ Returns the item at the provided index ]]
+      declare function <T> getAtIndex(collection: T[], index: Int):T""".trimIndent()
+   override val name: QualifiedName = stdLibName("getAtIndex")
+}
+
 
 object FilterAll : FunctionApi {
    // This naming sucks, but we use filter as a reserved word in the grammar :(
