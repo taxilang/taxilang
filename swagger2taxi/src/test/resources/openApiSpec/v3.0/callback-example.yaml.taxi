@@ -8,6 +8,9 @@ namespace vyne.openApi {
    service StreamsService {
       [[ subscribes a client to receive out-of-band data ]]
       @HttpOperation(method = "POST" , url = "/streams")
-      operation PostStreams(  callbackUrl : String ) : AnonymousTypePostStreams
+      operation PostStreams(
+      [[ the location where data will be sent.  Must be network accessible
+      by the source server ]]
+      callbackUrl : String ) : AnonymousTypePostStreams
    }
 }
