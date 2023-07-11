@@ -1,45 +1,12 @@
 package lang.taxi.compiler.fields
 
-import arrow.core.Either
-import arrow.core.flatMap
-import arrow.core.getOrElse
-import arrow.core.left
-import arrow.core.right
-import lang.taxi.CompilationError
-import lang.taxi.Namespace
-import lang.taxi.TaxiParser
+import arrow.core.*
+import lang.taxi.*
 import lang.taxi.TaxiParser.TypeReferenceContext
-import lang.taxi.accessors.Accessor
-import lang.taxi.accessors.CollectionProjectionExpressionAccessor
-import lang.taxi.accessors.ColumnAccessor
-import lang.taxi.accessors.ConditionalAccessor
-import lang.taxi.accessors.FieldSourceAccessor
-import lang.taxi.accessors.JsonPathAccessor
-import lang.taxi.accessors.ProjectionFunctionScope
-import lang.taxi.accessors.ProjectionScopeDefinition
-import lang.taxi.accessors.XpathAccessor
-import lang.taxi.compiler.ConditionalFieldSetProcessor
-import lang.taxi.compiler.DefaultValueParser
-import lang.taxi.compiler.ExpressionCompiler
-import lang.taxi.compiler.ResolutionContext
-import lang.taxi.compiler.TokenProcessor
-import lang.taxi.compiler.assertIsAssignable
-import lang.taxi.compiler.collectError
-import lang.taxi.compiler.collectErrors
-import lang.taxi.findNamespace
-import lang.taxi.source
-import lang.taxi.stringLiteralValue
-import lang.taxi.toCompilationUnit
-import lang.taxi.toCompilationUnits
+import lang.taxi.accessors.*
+import lang.taxi.compiler.*
+import lang.taxi.types.*
 import lang.taxi.types.Annotation
-import lang.taxi.types.ArrayType
-import lang.taxi.types.Field
-import lang.taxi.types.FieldModifier
-import lang.taxi.types.FieldProjection
-import lang.taxi.types.ObjectType
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.Type
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.log
@@ -57,9 +24,6 @@ class FieldCompiler(
    internal val typeChecker = tokenProcessor.typeChecker
    private val conditionalFieldSetProcessor =
       ConditionalFieldSetProcessor(this, ExpressionCompiler(tokenProcessor, typeChecker, errors, this))
-
-   //   private val calculatedFieldSetProcessor = CalculatedFieldSetProcessor(this)
-   private val defaultValueParser = DefaultValueParser()
 
    private val fieldsBeingCompiled = mutableSetOf<String>()
    private val compiledFields = mutableMapOf<String, Either<List<CompilationError>, Field>>()
@@ -599,7 +563,6 @@ class FieldCompiler(
                index =
                expression.columnDefinition().columnIndex().StringLiteral()?.text
                   ?: expression.columnDefinition().columnIndex().IntegerLiteral().text.toInt(),
-               defaultValue = null,
                returnType = targetType
             ).right()
          }
@@ -614,15 +577,15 @@ class FieldCompiler(
                .map { condition -> ConditionalAccessor(condition) }
          }
 
-         expression.defaultDefinition() != null -> {
-            val defaultValue = defaultValueParser.parseDefaultValue(expression.defaultDefinition(), targetType)
-               .collectError(errors).getOrElse { null }
-            ColumnAccessor(
-               index = null,
-               defaultValue = defaultValue,
-               returnType = targetType
-            ).right()
-         }
+//         expression.defaultDefinition() != null -> {
+//            val defaultValue = defaultValueParser.parseDefaultValue(expression.defaultDefinition(), targetType)
+//               .collectError(errors).getOrElse { null }
+//            ColumnAccessor(
+//               index = null,
+//               defaultValue = defaultValue,
+//               returnType = targetType
+//            ).right()
+//         }
 
 //         expression.functionCall() != null -> {
 //            val functionContext = expression.functionCall()

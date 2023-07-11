@@ -58,17 +58,19 @@ enum class FormulaOperator(
    LogicalAnd("&&", listOf(areAllBoolean())),
    LogicalOr("||", listOf(areAllBoolean())),
    Equal("==", listOf(areAllSameType(), comparableTypes())),
-   NotEqual("!=", listOf(areAllSameType()));
+   NotEqual("!=", listOf(areAllSameType())),
+   Coalesce("?:", listOf(areAllSameType()))
+   ;
 
 
    fun isLogicalOperator(): Boolean = LOGICAL_OPERATORS.contains(this)
    fun isComparisonOperator(): Boolean = COMPARISON_OPERATORS.contains(this)
    fun isLogicalOrComparisonOperator(): Boolean = isLogicalOperator() || isComparisonOperator()
-   fun supportsNullComparison():Boolean {
+   fun supportsNullComparison(): Boolean {
       return this == Equal || this == NotEqual
    }
 
-   fun supports(lhsType:PrimitiveType, rhsType:PrimitiveType):Boolean {
+   fun supports(lhsType: PrimitiveType, rhsType: PrimitiveType): Boolean {
       val types = setOf(lhsType,rhsType)
       return this.supportedOperandPredicates.any { predicate -> predicate(types) }
    }

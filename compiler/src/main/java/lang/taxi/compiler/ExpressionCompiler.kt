@@ -7,13 +7,7 @@ import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.Argument
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.compiler.fields.FieldCompiler
-import lang.taxi.expressions.Expression
-import lang.taxi.expressions.FieldReferenceExpression
-import lang.taxi.expressions.FunctionExpression
-import lang.taxi.expressions.LambdaExpression
-import lang.taxi.expressions.LiteralExpression
-import lang.taxi.expressions.OperatorExpression
-import lang.taxi.expressions.TypeExpression
+import lang.taxi.expressions.*
 import lang.taxi.functions.Function
 import lang.taxi.types.*
 import lang.taxi.utils.*
@@ -350,7 +344,6 @@ class ExpressionCompiler(
             expression.xpathAccessorDeclaration() != null ||
             expression.byFieldSourceExpression() != null ||
             expression.conditionalTypeConditionDeclaration() != null ||
-            expression.defaultDefinition() != null ||
             expression.collectionProjectionExpression() != null ||
             expression.columnDefinition() != null -> {
             if (this.fieldCompiler == null) {

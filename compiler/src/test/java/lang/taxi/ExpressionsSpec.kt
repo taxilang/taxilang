@@ -6,8 +6,10 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.expressions.FunctionExpression
+import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
+import lang.taxi.types.FormulaOperator
 import lang.taxi.types.ModelAttributeReferenceSelector
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.toQualifiedName
@@ -164,8 +166,19 @@ class ExpressionsSpec : DescribeSpec({
             val soldQuantity = schema.objectType("SoldQuantity")
             soldQuantity.basePrimitive!!.shouldBe(PrimitiveType.DECIMAL)
             soldQuantity.expression.shouldNotBeNull()
+         }
 
-
+         it("parses using a coalesce operator") {
+            val field = """model Person {
+                firstName : String ?: 'Jimmy'
+               }
+            """.compiled()
+               .objectType("Person")
+               .field("firstName")
+            val expression = field.accessor!!.asA<OperatorExpression>()
+            expression.operator.shouldBe(FormulaOperator.Coalesce)
+            expression.lhs.shouldBeInstanceOf<TypeExpression>()
+            expression.rhs.shouldBeInstanceOf<LiteralExpression>()
          }
 
          it("can reference itself using a type reference selector") {

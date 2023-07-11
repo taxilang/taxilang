@@ -128,7 +128,7 @@ class ProtobufTypeMapper(
             fieldType,
             !protoField.isRequired,
             typeDoc = protoField.documentation,
-            defaultValue = protoField.default,
+//            defaultValue = protoField.default,
             compilationUnit = CompilationUnit.unspecified(),
             annotations = listOf(
                ProtobufFieldAnnotation.annotation(

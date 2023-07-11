@@ -2,19 +2,15 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
-import lang.taxi.accessors.ColumnAccessor
-import lang.taxi.accessors.DestructuredAccessor
-import lang.taxi.accessors.JsonPathAccessor
-import lang.taxi.accessors.XpathAccessor
+import lang.taxi.accessors.*
+import lang.taxi.expressions.LiteralExpression
 import lang.taxi.messages.Severity
-import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.types.*
 import org.antlr.v4.runtime.CharStreams
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.File
-import kotlin.test.fail
 
 class GrammarTest {
 
@@ -854,8 +850,8 @@ type alias LastName as String
 type Person {
    firstName : FirstName by column(0)
    lastName : LastName by column(1)
-   title: String by default("Mr.")
-   age: Int by default(18)
+   title: String = "Mr."
+   age: Int  = 18
 }
 
       """.trimIndent()
@@ -865,8 +861,8 @@ type Person {
       val title = person.field("title")
       val age = person.field("age")
       firstName.accessor.should.be.instanceof(ColumnAccessor::class.java)
-      title.accessor.should.be.instanceof(ColumnAccessor::class.java)
-      age.accessor.should.be.instanceof(ColumnAccessor::class.java)
+      title.accessor.should.be.instanceof(LiteralExpression::class.java)
+      age.accessor.should.be.instanceof(LiteralExpression::class.java)
    }
 
    @Test

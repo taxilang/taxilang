@@ -5,7 +5,6 @@ import arrow.core.left
 import arrow.core.right
 import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Accessor
-import lang.taxi.accessors.AccessorWithDefault
 import lang.taxi.expressions.Expression
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
@@ -17,6 +16,7 @@ data class FieldExtension(
    val name: String,
    override val annotations: List<Annotation>,
    val refinedType: Type?,
+   @Deprecated("Will be removed.  Use Expressions instead")
    val defaultValue: Any?
 ) : Annotatable
 
@@ -282,7 +282,7 @@ data class ObjectType(
                .asSequence()
                .mapNotNull { refinement -> refinement.refinedType?.let { refinement.refinedType to refinement.defaultValue } }
                .firstOrNull() ?: field.type to null
-            field.copy(annotations = collatedAnnotations, type = refinedType, defaultValue = defaultValue)
+            field.copy(annotations = collatedAnnotations, type = refinedType)
          } ?: emptyList()
       }
 
@@ -524,7 +524,7 @@ data class Field(
    //  defaults served by accessors?
    // These default values are set by field extensions.
    // Need to standardise.
-   val defaultValue: Any? = null,
+//   val defaultValue: Any? = null,
 
    // populated for Anonymous field definitions used in views. Example:
    // orderId: Order::SentOrderId
@@ -564,7 +564,7 @@ data class Field(
 
    // This needs to be stanrdardised with the defaultValue above, which comes from
    // extensions
-   val accessorDefault = if (accessor is AccessorWithDefault) accessor.defaultValue else null
+//   val accessorDefault = if (accessor is LiteralExpression) accessor.literal.value else null
 
    /**
     * Returns EITHER the accessor default (declared
@@ -572,10 +572,10 @@ data class Field(
     * default value declared using an extension.
     * This is a workaround - we should remove one of those approaches.
     */
-   val default: Any?
-      get() {
-         return accessorDefault ?: defaultValue
-      }
+//   val default: Any?
+//      get() {
+//         return accessorDefault ?: defaultValue
+//      }
 
    // For equality - don't compare on the type (as this can cause stackOverflow when the type is an Object type)
    private val typeName = type.qualifiedName

@@ -6,35 +6,9 @@ import arrow.core.right
 import lang.taxi.generators.Logger
 import lang.taxi.generators.NamingUtils.replaceIllegalCharacters
 import lang.taxi.generators.NamingUtils.toCapitalizedWords
-import lang.taxi.types.ArrayType
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.EnumDefinition
-import lang.taxi.types.EnumType
-import lang.taxi.types.EnumValue
-import lang.taxi.types.Field
-import lang.taxi.types.Model
-import lang.taxi.types.ObjectType
-import lang.taxi.types.ObjectTypeDefinition
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.QualifiedName
-import lang.taxi.types.Type
-import lang.taxi.types.TypeKind
-import lang.taxi.types.UserType
+import lang.taxi.types.*
 import lang.taxi.utils.takeTail
-import org.everit.json.schema.ArraySchema
-import org.everit.json.schema.BooleanSchema
-import org.everit.json.schema.CombinedSchema
-import org.everit.json.schema.EmptySchema
-import org.everit.json.schema.EnumSchema
-import org.everit.json.schema.FalseSchema
-import org.everit.json.schema.FormatValidator
-import org.everit.json.schema.NullSchema
-import org.everit.json.schema.NumberSchema
-import org.everit.json.schema.ObjectSchema
-import org.everit.json.schema.ReferenceSchema
-import org.everit.json.schema.Schema
-import org.everit.json.schema.SchemaLocation
-import org.everit.json.schema.StringSchema
+import org.everit.json.schema.*
 import java.net.URI
 
 
@@ -326,7 +300,7 @@ class JsonSchemaTypeMapper(
             propertyName,
             type,
             nullable,
-            defaultValue = propertySchema.defaultValue,
+//            defaultValue = propertySchema.defaultValue,
             compilationUnit = CompilationUnit.unspecified()
          )
       }

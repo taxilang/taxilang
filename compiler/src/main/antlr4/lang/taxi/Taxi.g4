@@ -117,6 +117,7 @@ expressionGroup:
    // The below is added for lambdas, but not sure order of precedence
    // is correct. TBD.
    | expressionGroup comp_operator expressionGroup
+   | expressionGroup COALESCE expressionGroup
    | expressionGroup LOGICAL_AND expressionGroup
    | expressionGroup LOGICAL_OR expressionGroup
    // Inputs go last, so that when parsing lambdas, the inputs are the LHS and everything remainin goes RHS.
@@ -253,7 +254,7 @@ scalarAccessorExpression
     : xpathAccessorDeclaration
     | jsonPathAccessorDeclaration
     | columnDefinition
-    | defaultDefinition
+//    | defaultDefinition
 //    | readFunction
     | expressionGroup
     | byFieldSourceExpression
@@ -499,6 +500,7 @@ comp_operator : GT
               | NQ
               ;
 
+
 comparisonOperator
    : '=='
    | '>'
@@ -592,7 +594,7 @@ filterAttributeNameList
 columnDefinition : 'column' '(' columnIndex ')' ;
 
 // qualifiedName here is to reference enums
-defaultDefinition: 'default' '(' (literal | qualifiedName) ')';
+//defaultDefinition: 'default' '(' (literal | qualifiedName) ')';
 
 // "declare function" borrowed from typescript.
 // Note that taxi supports declaring a function, but won't provide
@@ -699,10 +701,11 @@ typeExtensionFieldDeclaration
     ;
 
 typeExtensionFieldTypeRefinement
-    : ':' typeReference constantDeclaration?
+    : ':' typeReference
     ;
 
-constantDeclaration : 'by'  defaultDefinition;
+//constantDeclaration : 'by'  defaultDefinition;
+
 // Typedoc is a special documentation block that wraps types.
 // It's treated as plain text, but we'll eventually support doc tools
 // that speak markdown.
@@ -973,6 +976,8 @@ LT : '<' ;
 LE : '<=' ;
 EQ : '==' ;
 NQ : '!=';
+
+COALESCE : '?:';
 
 LOGICAL_OR : '||';
 LOGICAL_AND : '&&';

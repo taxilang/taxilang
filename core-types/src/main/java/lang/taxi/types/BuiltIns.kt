@@ -29,7 +29,7 @@ object BuiltIns {
             ]]
             annotation Format {
                 value : String?
-                offset : Int by default(0)
+                offset : Int = 0
             }
          }
       """.trimIndent()

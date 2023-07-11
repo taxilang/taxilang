@@ -2,16 +2,10 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldNotContain
-import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.linter.LinterRules
-import lang.taxi.types.BuiltIns
 import lang.taxi.types.EnumMember
 import org.junit.jupiter.api.Test
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 
 class AnnotationSpec : DescribeSpec({
    describe("annotations") {
@@ -165,7 +159,7 @@ class AnnotationSpec : DescribeSpec({
          it("should assign default values if not specified") {
             val doc="""
                annotation Hello {
-                  value : String by default("hello")
+                  value : String  = "hello"
                }
 
                model Person {

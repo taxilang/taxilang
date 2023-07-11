@@ -6,8 +6,8 @@ import lang.taxi.types.PrimitiveType
 import lang.taxi.types.Type
 
 interface Accessor {
-   fun suppressForValueType(value: Any): Boolean {
-      return false
+   fun enabledForValueType(value: Any): Boolean {
+      return true
    }
 
    val returnType: Type
@@ -22,11 +22,6 @@ interface Accessor {
    val strictReturnType: Either<String, Type>
       get() = returnType.right()
 }
-
-interface AccessorWithDefault {
-   val defaultValue: Any?
-}
-
 
 interface PathBasedAccessor : Accessor {
    @Deprecated("use Path", replaceWith = ReplaceWith("path"))

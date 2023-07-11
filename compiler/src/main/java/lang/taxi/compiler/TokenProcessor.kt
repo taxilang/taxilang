@@ -16,6 +16,7 @@ import lang.taxi.compiler.fields.FieldCompiler
 import lang.taxi.compiler.fields.FieldTypeSpec
 import lang.taxi.compiler.fields.TypeBodyContext
 import lang.taxi.expressions.Expression
+import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.toExpressionGroup
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
@@ -88,7 +89,6 @@ class TokenProcessor(
 //   private val calculatedFieldSetProcessor = CalculatedFieldSetProcessor(this)
 
    private val tokensCurrentlyCompiling = mutableSetOf<String>()
-   private val defaultValueParser = DefaultValueParser()
    private val queries = mutableListOf<TaxiQlQuery>()
 
    init {
@@ -694,30 +694,30 @@ class TokenProcessor(
                assertTypesCompatible(type.field(fieldName).type, refinedType, fieldName, typeName, typeRule)
             }
 
-         val enumConstantValue = member
-            ?.typeExtensionFieldDeclaration()
-            ?.typeExtensionFieldTypeRefinement()
-            ?.constantDeclaration()
-            ?.defaultDefinition()
-            ?.qualifiedName()?.let { enumDefaultValue ->
-               assertEnumDefaultValueCompatibility(
-                  refinedType!! as EnumType,
-                  enumDefaultValue.text,
-                  fieldName,
-                  typeRule
-               )
-            }
+//         val enumConstantValue = member
+//            ?.typeExtensionFieldDeclaration()
+//            ?.typeExtensionFieldTypeRefinement()
+//            ?.constantDeclaration()
+//            ?.defaultDefinition()
+//            ?.qualifiedName()?.let { enumDefaultValue ->
+//               assertEnumDefaultValueCompatibility(
+//                  refinedType!! as EnumType,
+//                  enumDefaultValue.text,
+//                  fieldName,
+//                  typeRule
+//               )
+//            }
 
-         val constantValue = enumConstantValue ?: member
-            ?.typeExtensionFieldDeclaration()
-            ?.typeExtensionFieldTypeRefinement()
-            ?.constantDeclaration()
-            ?.defaultDefinition()
-            ?.let { defaultDefinitionContext ->
-               defaultValueParser.parseDefaultValue(defaultDefinitionContext, refinedType!!)
-            }?.collectError(errors)?.getOrElse { null }
+//         val constantValue = enumConstantValue ?: member
+//            ?.typeExtensionFieldDeclaration()
+//            ?.typeExtensionFieldTypeRefinement()
+//            ?.constantDeclaration()
+//            ?.defaultDefinition()
+//            ?.let { defaultDefinitionContext ->
+//               defaultValueParser.parseDefaultValue(defaultDefinitionContext, refinedType!!)
+//            }?.collectError(errors)?.getOrElse { null }
 
-         FieldExtension(fieldName, fieldAnnotations, refinedType, constantValue)
+         FieldExtension(fieldName, fieldAnnotations, refinedType, null)
       }
       val errorMessage =
          type.addExtension(ObjectTypeExtension(annotations, fieldExtensions, typeDoc, typeRule.toCompilationUnit()))
@@ -1252,10 +1252,8 @@ class TokenProcessor(
       val mutableParams = annotationParameters.toMutableMap()
       val fieldErrors = type.fields.mapNotNull { field ->
          if (!annotationParameters.containsKey(field.name) && !field.nullable) {
-
-            // Set the annotation field to the default value
-            if (field.default != null) {
-               mutableParams[field.name] = field.default!!
+            if (field.accessor is LiteralExpression) {
+               mutableParams[field.name] = (field.accessor as LiteralExpression).value
                null
             } else {
                CompilationError(

@@ -1,16 +1,6 @@
 package lang.taxi.xsd
 
-import com.sun.xml.xsom.XSComplexType
-import com.sun.xml.xsom.XSComponent
-import com.sun.xml.xsom.XSDeclaration
-import com.sun.xml.xsom.XSElementDecl
-import com.sun.xml.xsom.XSModelGroup
-import com.sun.xml.xsom.XSModelGroupDecl
-import com.sun.xml.xsom.XSParticle
-import com.sun.xml.xsom.XSSimpleType
-import com.sun.xml.xsom.XSType
-import com.sun.xml.xsom.XSUnionSimpleType
-import com.sun.xml.xsom.XSWildcard
+import com.sun.xml.xsom.*
 import com.sun.xml.xsom.impl.Ref
 import com.sun.xml.xsom.parser.XSOMParser
 import lang.taxi.TaxiDocument
@@ -193,7 +183,7 @@ class TaxiGenerator(
             nullable = !attribute.isRequired,
             annotations = listOf(XsdAnnotations.xmlAttribute()),
             typeDoc = typeDoc,
-            defaultValue = attribute.defaultValue?.value ?: attribute.fixedValue?.value,
+//            defaultValue = attribute.defaultValue?.value ?: attribute.fixedValue?.value,
             compilationUnit = CompilationUnit.unspecified()
          )
       }

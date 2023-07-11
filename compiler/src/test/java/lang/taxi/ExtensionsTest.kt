@@ -2,7 +2,6 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
-import lang.taxi.types.EnumType
 import org.antlr.v4.runtime.CharStreams
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
@@ -257,50 +256,6 @@ RED
    }
 
    @Test
-   fun `types can support constants through extensions`() {
-      val source = """
-         enum Foo {
-            One,
-            Two
-         }
-         type alias FirstName as String
-         type Age inherits Int
-         type Height inherits Decimal
-         type Person {
-            name : String
-            age: Age
-            surname: String
-            foo: Foo
-            height: Height
-         }
-         type extension Person {
-            name: FirstName by default ('jimmy')
-            surname : FirstName by default ('doe')
-            age: Age by default (42)
-            foo: Foo by default (Foo.One)
-            height: Height by default (18200000)
-         }
-        """
-      val doc = Compiler(source).compile()
-      val person = doc.objectType("Person")
-      val nameField = person.field("name")
-      expect(nameField.type.qualifiedName).to.equal("FirstName")
-      expect(nameField.defaultValue).to.equal("jimmy")
-      val ageField = person.field("age")
-      expect(ageField.type.qualifiedName).to.equal("Age")
-      expect(ageField.defaultValue).to.equal(42)
-      val surnameField = person.field("surname")
-      expect(surnameField.type.qualifiedName).to.equal("FirstName")
-      expect(surnameField.defaultValue).to.equal("doe")
-      val fooField = person.field("foo")
-      expect(fooField.type.qualifiedName).to.equal("Foo")
-      val expectedEnumValue = (fooField.type as EnumType).values.first { it.qualifiedName == "Foo.One" }
-      expect(fooField.defaultValue).to.equal(expectedEnumValue)
-      val heightField = person.field("height")
-      expect(heightField.defaultValue).to.equal(18200000)
-   }
-
-   @Test
    fun `An Int default value can't be assigned to a String based field`() {
       val source = """
          type alias FirstName as String
@@ -308,7 +263,7 @@ RED
             name : String
          }
          type extension Person {
-            name: FirstName by default (42)
+            name: FirstName = 42
          }
         """
       assertThrows<CompilationException> {

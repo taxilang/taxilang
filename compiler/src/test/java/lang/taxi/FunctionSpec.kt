@@ -166,11 +166,11 @@ namespace pkgB {
          (accessor.inputs[0] as FunctionExpression).let { input ->
             input.function.qualifiedName.should.equal("left")
             input.function.parameters.should.have.size(2)
-            input.inputs[0].should.equal(ColumnAccessor(0, defaultValue = null, returnType = PrimitiveType.STRING))
+            input.inputs[0].should.equal(ColumnAccessor(0, returnType = PrimitiveType.STRING))
             input.inputs[1].should.equal(LiteralAccessor(3))
          }
          accessor.inputs[1].should.equal(LiteralAccessor("-"))
-         accessor.inputs[2].should.equal(ColumnAccessor(1, defaultValue = null, returnType = PrimitiveType.STRING))
+         accessor.inputs[2].should.equal(ColumnAccessor(1, returnType = PrimitiveType.STRING))
       }
 
       it("should allow fields to reference other fields as inputs") {
