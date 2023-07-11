@@ -6,6 +6,10 @@ import lang.taxi.types.PrimitiveType
 import lang.taxi.types.Type
 
 interface Accessor {
+   fun suppressForValueType(value: Any): Boolean {
+      return false
+   }
+
    val returnType: Type
       get() = PrimitiveType.ANY
 

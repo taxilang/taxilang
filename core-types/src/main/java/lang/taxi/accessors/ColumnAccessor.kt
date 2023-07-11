@@ -13,6 +13,14 @@ data class ColumnAccessor(val index: Any?, override val defaultValue: Any?, over
       return "ColumnAccessor(index=$index, defaultValue=$defaultValue, returnType=${returnType.qualifiedName})"
    }
 
+   override fun suppressForValueType(value: Any): Boolean {
+      // Column acessors are a pain, and we need to replace them with something else.
+      // The goal here is that if we've already read the value from CSV to a Map<>,
+      // we don't want to use the accessors again.
+      // This is similar to the preparsed concept from Cask, but a little more fleixble.
+      return value is Map<*,*>
+   }
+
    override val path: String = index.toString()
    override fun asTaxi(): String {
       return when {
