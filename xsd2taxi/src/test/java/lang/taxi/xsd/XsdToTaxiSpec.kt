@@ -8,7 +8,7 @@ import lang.taxi.testing.TestHelpers
 import org.assertj.core.util.Files
 import java.io.File
 
-object XsdToTaxiSpec : DescribeSpec({
+class XsdToTaxiSpec : DescribeSpec({
    describe("converting xsd to taxi") {
       it("should set field docs from attributes") {
          val schema = xsd(
@@ -21,7 +21,8 @@ object XsdToTaxiSpec : DescribeSpec({
             </xsd:annotation>
           </xsd:attribute>
           </xsd:complexType>
-          """).asTaxi()
+          """
+         ).asTaxi()
          val expected = """namespace org.tempuri {
             type PurchaseOrderType {
                [[ The date for an order ]]
@@ -83,24 +84,28 @@ object XsdToTaxiSpec : DescribeSpec({
       }
 
       it("should generated inherited types correctly") {
-         val schema = xsd("""<xsd:simpleType name="ISODate">
+         val schema = xsd(
+            """<xsd:simpleType name="ISODate">
         <xsd:restriction base="xsd:date"/>
-    </xsd:simpleType>""").asTaxi()
+    </xsd:simpleType>"""
+         ).asTaxi()
 
          val expected = """namespace org.tempuri {
    type ISODate inherits lang.taxi.Date(@format = "yyyy-MM-dd")
 }"""
-        // TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         // TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
       }
 
       it("should parse enums") {
-         val schema = xsd("""    <xsd:simpleType name="MandateClassification1Code">
+         val schema = xsd(
+            """    <xsd:simpleType name="MandateClassification1Code">
         <xsd:restriction base="xsd:string">
             <xsd:enumeration value="FIXE"/>
             <xsd:enumeration value="USGB"/>
             <xsd:enumeration value="VARI"/>
         </xsd:restriction>
-    </xsd:simpleType>""").asTaxi()
+    </xsd:simpleType>"""
+         ).asTaxi()
          val expected = """namespace org.tempuri {
    enum MandateClassification1Code {
       FIXE,
@@ -112,13 +117,15 @@ object XsdToTaxiSpec : DescribeSpec({
       }
 
       it("should handle enums with spaces") {
-         val schema = xsd("""    <xsd:simpleType name="MandateClassification1Code">
+         val schema = xsd(
+            """    <xsd:simpleType name="MandateClassification1Code">
         <xsd:restriction base="xsd:string">
             <xsd:enumeration value="FOO BAR"/>
             <xsd:enumeration value="USGB"/>
             <xsd:enumeration value="VARI"/>
         </xsd:restriction>
-    </xsd:simpleType>""").asTaxi()
+    </xsd:simpleType>"""
+         ).asTaxi()
          val expected = """namespace org.tempuri {
    enum MandateClassification1Code {
       FOO_BAR("FOO BAR"),
@@ -130,7 +137,8 @@ object XsdToTaxiSpec : DescribeSpec({
       }
 
       it("should generate a synthetic type for xsd types that inherits enums") {
-         val schema = xsd("""
+         val schema = xsd(
+            """
 <xsd:complexType name="IdentifiedPayerReceiver">
     <xsd:annotation>
       <xsd:documentation xml:lang="en">A type extending the PayerReceiverEnum type wih an id attribute.</xsd:documentation>
@@ -147,7 +155,8 @@ object XsdToTaxiSpec : DescribeSpec({
       <xsd:enumeration value="Receiver"/>
   </xsd:restriction>
 </xsd:simpleType>
-  """).asTaxi()
+  """
+         ).asTaxi()
          val expected = """namespace org.tempuri {
    [[ A type extending the PayerReceiverEnum type wih an id attribute. ]]
    type IdentifiedPayerReceiver {
@@ -164,11 +173,13 @@ object XsdToTaxiSpec : DescribeSpec({
       }
 
       it("should generate mandatory fields as non-nullable") {
-         val schema = xsd("""<xsd:complexType name="USAddress">
+         val schema = xsd(
+            """<xsd:complexType name="USAddress">
   <xsd:sequence>
    <xsd:element name="name" maxOccurs="1" minOccurs="1"  type="xsd:string"/>
   </xsd:sequence>
- </xsd:complexType>""").asTaxi()
+ </xsd:complexType>"""
+         ).asTaxi()
          val expected = """namespace org.tempuri {
    type USAddress {
       name : String
@@ -177,11 +188,13 @@ object XsdToTaxiSpec : DescribeSpec({
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
       }
       it("should generate optional fields as nullable") {
-         val schema = xsd("""<xsd:complexType name="USAddress">
+         val schema = xsd(
+            """<xsd:complexType name="USAddress">
   <xsd:sequence>
    <xsd:element name="name" maxOccurs="1" minOccurs="0"  type="xsd:string"/>
   </xsd:sequence>
- </xsd:complexType>""").asTaxi()
+ </xsd:complexType>"""
+         ).asTaxi()
          val expected = """namespace org.tempuri {
    type USAddress {
       name : String?
@@ -191,11 +204,13 @@ object XsdToTaxiSpec : DescribeSpec({
       }
 
       it("should generate string types with patterns") {
-         val schema = xsd("""<xsd:simpleType name="ActiveCurrencyCode">
+         val schema = xsd(
+            """<xsd:simpleType name="ActiveCurrencyCode">
         <xsd:restriction base="xsd:string">
             <xsd:pattern value="[A-Z]{3,3}"/>
         </xsd:restriction>
-    </xsd:simpleType>""").asTaxi()
+    </xsd:simpleType>"""
+         ).asTaxi()
          val expected = """namespace org.tempuri
             |
             |@Format("[A-Z]{3,3}")
@@ -205,11 +220,13 @@ object XsdToTaxiSpec : DescribeSpec({
       }
 
       it("should escape patterns with slashes") {
-         val schema = xsd("""    <xsd:simpleType name="PhoneNumber">
+         val schema = xsd(
+            """    <xsd:simpleType name="PhoneNumber">
         <xsd:restriction base="xsd:string">
             <xsd:pattern value="\+[0-9]{1,3}-[0-9()+\-]{1,30}"/>
         </xsd:restriction>
-    </xsd:simpleType>""").asTaxi()
+    </xsd:simpleType>"""
+         ).asTaxi()
          val expected = """namespace org.tempuri
             |@Format("\\+[0-9]{1,3}-[0-9()+\\-]{1,30}")
             |type PhoneNumber inherits String
@@ -218,7 +235,8 @@ object XsdToTaxiSpec : DescribeSpec({
       }
 
       it("should generate documented enums correctly") {
-         val schema = xsd("""  <xsd:simpleType name="DayTypeEnum">
+         val schema = xsd(
+            """  <xsd:simpleType name="DayTypeEnum">
     <xsd:annotation>
       <xsd:documentation source="http://www.FpML.org" xml:lang="en">A day type classification used in counting the number of days between two dates.</xsd:documentation>
     </xsd:annotation>
@@ -230,7 +248,8 @@ object XsdToTaxiSpec : DescribeSpec({
       </xsd:enumeration>
        </xsd:restriction>
   </xsd:simpleType>
-   """).asTaxi()
+   """
+         ).asTaxi()
          val expected = """
             namespace org.tempuri
             [[ A day type classification used in counting the number of days between two dates. ]]
@@ -247,7 +266,8 @@ object XsdToTaxiSpec : DescribeSpec({
       }
 
       it("should generate inherited enums") {
-         val schema = xsd("""
+         val schema = xsd(
+            """
  <xsd:simpleType name="PutCallEnum">
  <xsd:annotation>
    <xsd:documentation source="http://www.FpML.org" xml:lang="en">Specifies whether the option is a call or a put.</xsd:documentation>
@@ -281,7 +301,8 @@ object XsdToTaxiSpec : DescribeSpec({
       </xsd:simpleType>
     </xsd:union>
 </xsd:simpleType>
-  """).asTaxi()
+  """
+         ).asTaxi()
 
          // TestHelpers is not working for this test case.
          val enum = Compiler.forStrings(schema.taxi)
@@ -294,12 +315,14 @@ object XsdToTaxiSpec : DescribeSpec({
       }
 
       it("should generate choice elements as a list of fields until we come up with something better") {
-         val schema = xsd("""<xsd:complexType name="MandateClassification1Choice">
+         val schema = xsd(
+            """<xsd:complexType name="MandateClassification1Choice">
         <xsd:choice>
             <xsd:element name="Cd" type="xsd:string"/>
             <xsd:element name="Prtry" type="xsd:string"/>
         </xsd:choice>
-    </xsd:complexType>""").asTaxi()
+    </xsd:complexType>"""
+         ).asTaxi()
          val expected = """namespace org.tempuri
    model MandateClassification1Choice {
       Cd : String?
@@ -311,7 +334,8 @@ object XsdToTaxiSpec : DescribeSpec({
       }
 
       it("should generate types including xsd group elements") {
-         val schema = xsd("""
+         val schema = xsd(
+            """
 <xsd:complexType name="Product" abstract="true">
     <xsd:annotation>
       <xsd:documentation xml:lang="en">The base type which all FpML products extend.</xsd:documentation>
@@ -328,7 +352,8 @@ object XsdToTaxiSpec : DescribeSpec({
       </xsd:element>
    </xsd:sequence>
    </xsd:group>
-  """).asTaxi()
+  """
+         ).asTaxi()
 
          val expected = """namespace org.tempuri {
    [[ The base type which all FpML products extend. ]]
@@ -343,12 +368,14 @@ object XsdToTaxiSpec : DescribeSpec({
       }
 
       it("should mark required attributes as non-nullable") {
-         val schema = xsd("""
+         val schema = xsd(
+            """
           <xsd:complexType name="PurchaseOrderType">
           <xsd:attribute name="OrderDate" type="xsd:date" use="required">
           </xsd:attribute>
           </xsd:complexType>
-""".trimIndent())
+""".trimIndent()
+         )
             .asTaxi()
          val expected = """namespace org.tempuri {
    type PurchaseOrderType {
@@ -361,7 +388,8 @@ object XsdToTaxiSpec : DescribeSpec({
       }
 
       it("should generate inherited types") {
-         val schema = xsd("""
+         val schema = xsd(
+            """
   <xsd:complexType name="ReturnSwapNotionalAmountReference">
     <xsd:annotation>
       <xsd:documentation xml:lang="en">A reference to the return swap notional amount.</xsd:documentation>
@@ -377,7 +405,8 @@ object XsdToTaxiSpec : DescribeSpec({
       <xsd:documentation xml:lang="en">The abstract base class for all types which define intra-document pointers.</xsd:documentation>
     </xsd:annotation>
   </xsd:complexType>
-         """.trimIndent()).asTaxi()
+         """.trimIndent()
+         ).asTaxi()
 
          val expected = """namespace org.tempuri {
    [[ The abstract base class for all types which define intra-document pointers. ]]
@@ -389,6 +418,67 @@ object XsdToTaxiSpec : DescribeSpec({
    }
 }"""
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+      }
+
+      describe("generating semantic types") {
+         it("generates field attributes using declared taxi type") {
+            val schema = xsd(
+               """
+                        <xsd:complexType name="CountryInfo">
+                           <xsd:sequence>
+                              <xsd:element name="ISOCode" type="xsd:string" taxi:type="com.foo.IsoCode" taxi:create="true"/>
+                              <xsd:element name="Name" type="xsd:string" taxi:type="com.foo.CountryName" taxi:create="true"/>
+                              <xsd:element name="CapitalCity" type="xsd:string" taxi:type="com.foo.CapitalCityName" taxi:create="true"/>
+                           </xsd:sequence>
+                        </xsd:complexType>
+            """.trimIndent()
+            ).asTaxi()
+
+            val expected = """
+            namespace com.foo {
+               type IsoCode inherits String
+               type CountryName inherits String
+               type CapitalCityName inherits String
+            }
+            namespace org.tempuri {
+               model CountryInfo {
+                  ISOCode : com.foo.IsoCode
+                  Name : com.foo.CountryName
+                  CapitalCity : com.foo.CapitalCityName
+               }
+            }
+            """.trimIndent()
+            TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         }
+         it("generates field attributes using declared taxi type with createsType shorthande") {
+            val schema = xsd(
+               """
+                        <xsd:complexType name="CountryInfo">
+                           <xsd:sequence>
+                              <xsd:element name="ISOCode" type="xsd:string" taxi:createsType="com.foo.IsoCode" />
+                              <xsd:element name="Name" type="xsd:string" taxi:createsType="com.foo.CountryName" />
+                              <xsd:element name="CapitalCity" type="xsd:string" taxi:createsType="com.foo.CapitalCityName" />
+                           </xsd:sequence>
+                        </xsd:complexType>
+            """.trimIndent()
+            ).asTaxi()
+
+            val expected = """
+            namespace com.foo {
+               type IsoCode inherits String
+               type CountryName inherits String
+               type CapitalCityName inherits String
+            }
+            namespace org.tempuri {
+               closed model CountryInfo {
+                  ISOCode : com.foo.IsoCode
+                  Name : com.foo.CountryName
+                  CapitalCity : com.foo.CapitalCityName
+               }
+            }
+            """.trimIndent()
+            TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         }
       }
    }
 })
@@ -402,6 +492,7 @@ fun xsdTaxiSources(content: String): List<String> {
 fun xsd(content: String): String {
    return """<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
            xmlns:tns="http://tempuri.org/PurchaseOrderSchema.xsd"
+           xmlns:taxi="http://taxilang.org/"
            targetNamespace="http://tempuri.org/PurchaseOrderSchema.xsd"
            elementFormDefault="qualified">
            $content

@@ -4,7 +4,7 @@ import com.google.common.io.Resources
 import com.winterbe.expekt.should
 import lang.taxi.TaxiDocument
 import lang.taxi.generators.GeneratedTaxiCode
-import lang.taxi.generators.Logger
+import lang.taxi.generators.NamingUtils.getTypeName
 import lang.taxi.testing.TestHelpers
 import org.everit.json.schema.loader.SchemaLoader
 import org.junit.jupiter.api.Test
@@ -16,14 +16,14 @@ class JsonSchemaTaxiGeneratorTest {
    fun `parses uri with fragment to type name`() {
       val uri =
          URI.create("https://api.demoStack.com/VYNE/apps/v1/docs/schemas/reference.json#/definitions/holiday/properties/type")
-      val typeName = JsonSchemaTypeMapper.getTypeName(uri, Logger())
+      val typeName = getTypeName(uri)
       typeName.fullyQualifiedName.should.equal("com.demoStack.api.reference.definitions.holiday.properties.Type")
    }
 
    @Test
    fun `parses document style uri to type name`() {
       val uri = URI.create("https://api.demoStack.com/VYNE/apps/v1/docs/schemas/index-edge-api-doc.json")
-      val typeName = JsonSchemaTypeMapper.getTypeName(uri, Logger())
+      val typeName = getTypeName(uri)
       typeName.fullyQualifiedName.should.equal("com.demoStack.api.IndexEdgeApiDoc")
    }
 

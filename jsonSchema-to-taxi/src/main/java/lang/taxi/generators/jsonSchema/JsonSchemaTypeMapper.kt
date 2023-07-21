@@ -4,10 +4,11 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import lang.taxi.generators.Logger
+import lang.taxi.generators.NamingUtils.getNamespace
+import lang.taxi.generators.NamingUtils.getTypeName
 import lang.taxi.generators.NamingUtils.replaceIllegalCharacters
 import lang.taxi.generators.NamingUtils.toCapitalizedWords
 import lang.taxi.types.*
-import lang.taxi.utils.takeTail
 import org.everit.json.schema.*
 import java.net.URI
 
@@ -37,6 +38,7 @@ class JsonSchemaTypeMapper(
             schema.location != null -> {
                schema.location.right()
             }
+
             else -> error("Could not parse a schema id for schema at location ${schema.schemaLocation}")
          }
       }
@@ -56,34 +58,10 @@ class JsonSchemaTypeMapper(
 
       fun getDefaultNamespace(schema: Schema, logger: Logger): String {
          val uri = getSchemaIdAsUri(schema, logger) ?: error("Could not parse schema to URI")
-         return getNamespace(uri, logger)
+         return getNamespace(uri)
       }
 
-      fun getNamespace(uri: URI, logger: Logger): String {
-         val namespace = uri.host.split(".")
-            .reversed()
-            .removeEmpties()
-            .joinToString(".")
-         return namespace
-      }
 
-      fun getTypeName(uri: URI, logger: Logger): QualifiedName {
-         val defaultNamespace = getNamespace(uri, logger)
-         val path = uri.path.removePrefix("/").removeSuffix(".json").removeSuffix(".schema").removeSuffix("/")
-         val nameFromPath = path.split("/").last().toCapitalizedWords()
-         val (additionalNamespaceElements: List<String>, typeName: String) = if (!uri.fragment.isNullOrEmpty()) {
-            val fragmentParts = uri.fragment.split("/")
-               .removeEmpties()
-            val (typeName, remainingFragments) = fragmentParts.takeTail()
-            (listOf(nameFromPath) + remainingFragments).removeEmpties() to typeName.capitalize()
-         } else {
-            emptyList<String>() to nameFromPath
-         }
-
-         val namespace = (listOf(defaultNamespace) + additionalNamespaceElements.map { it.decapitalize() })
-            .joinToString(".")
-         return QualifiedName(namespace, typeName)
-      }
    }
 
    fun generateTypes(): Set<Type> {
@@ -176,6 +154,7 @@ class JsonSchemaTypeMapper(
             generateScalarType(name, scalarType, schema.description)
 
          }
+
          is BooleanSchema -> generateScalarType(name, PrimitiveType.BOOLEAN, schema.description)
          is NumberSchema -> generateScalarType(name, getNumberType(schema), schema.description)
          is ObjectSchema -> generateModel(name, schema)
@@ -372,7 +351,7 @@ class JsonSchemaTypeMapper(
          else -> {
             try {
                val uri = getSchemaIdAsUri(schema, logger) ?: error("Could not parse schema to URI")
-               getTypeName(uri, logger)
+               getTypeName(uri)
             } catch (e: Exception) {
                logger.warn("Schema ${schema.id ?: "without a URI"} is not a valid URI, but according to JsonSchema spec it should be.")
                fallback ?: error("No fallback provided, and unable to generate a typeName for schema $schema")

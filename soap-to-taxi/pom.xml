@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <groupId>org.taxilang</groupId>
+      <artifactId>parent</artifactId>
+      <version>1.40.0-SNAPSHOT</version>
+   </parent>
+
+   <artifactId>soap-to-taxi</artifactId>
+
+   <properties>
+      <maven.compiler.source>17</maven.compiler.source>
+      <maven.compiler.target>17</maven.compiler.target>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <cxf.version>4.0.2</cxf.version>
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.apache.cxf</groupId>
+         <artifactId>cxf-rt-frontend-jaxws</artifactId>
+         <version>${cxf.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.cxf</groupId>
+         <artifactId>cxf-core</artifactId>
+         <version>${cxf.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>com.sun.xml.bind</groupId>
+         <artifactId>jaxb-xjc</artifactId>
+         <!-- TODO : Not sure if this should be the same as the cxf version,
+         or if that's just a coincidence -->
+         <version>${cxf.version}</version>
+      </dependency>
+
+      <!--      <dependency>-->
+      <!--         <groupId>org.apache.cxf</groupId>-->
+      <!--         <artifactId>cxf-rt-transports-http</artifactId>-->
+      <!--         <version>${cxf.version}</version>-->
+      <!--      </dependency>-->
+
+      <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>lang-to-taxi-api</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>xsd2taxi</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>test-utils</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>taxi-annotations</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>compiler</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>taxi-stdlib-annotations</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>taxi-writer</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+   </dependencies>
+
+</project>
