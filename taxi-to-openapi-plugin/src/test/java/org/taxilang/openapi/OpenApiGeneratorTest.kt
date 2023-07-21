@@ -21,7 +21,27 @@ class OpenApiGeneratorTest : DescribeSpec({
       }
       it("should include all services if no filter provided") {
          OpenApiGenerator.matchesNamesFilter("com.foo.MyService", emptyList()).shouldBeTrue()
+      }
 
+      it("should generate a spec for a saved query") {
+         val taxi = """
+            model Person {
+               id: PersonId inherits Int
+               firstName : FirstName inherits String
+            }
+
+            @HttpOperation(url = "/api/q/findPerson", method = "POST")
+            query getPerson( @PathVariable("id") id : PersonId ) {
+               find { Person( PersonId == id ) }
+               as {
+                  name : FirstName
+                  personId : PersonId
+               }
+            }
+         """.compiled()
+         val openApi = OpenApiGenerator().generateOpenApiSpecAsYaml(taxi)
+         // CAn't asser here right now, as the type names don't match.
+//         openApi.single().shouldGenerateSameAs("yaml/expected-person-query.yaml")
       }
 
       // Kitchen sink

@@ -14,11 +14,25 @@ data class SourceLocation(val line: Int, val char: Int) {
    }
 }
 
-data class SourceCode
-   (
+/**
+ * Indicates the language of a source code.
+ * Stringly typed (rather than an enum), as in
+ * theory there can be any type of source stashed here.
+ * Use SourceCodeLanguages for common values
+ */
+typealias SourceCodeLanguage = String
+
+object SourceCodeLanguages {
+   const val TAXI = "taxi"
+   const val WSDL = "wsdl"
+}
+
+
+data class SourceCode(
    val sourceName: String,
    val content: String,
-   var path: Path? = null
+   var path: Path? = null,
+   val language: SourceCodeLanguage = SourceCodeLanguages.TAXI
 ) {
    companion object {
       fun unspecified(): SourceCode = SourceCode("Not specified", "")
@@ -46,7 +60,11 @@ data class SourceCode
       val requiresNamespaceDeclaration = namespace.isNotEmpty() && !sourceContainsNamespaceDeclaration
       val allDependantTypes = dependantTypeNames + dependantTypeNames.flatMap { it.parameters }
       val requiredImports =
-         allDependantTypes.filter { it.namespace != namespace && !PrimitiveType.isPrimitiveType(it.fullyQualifiedName) && !Arrays.isArray(it) }
+         allDependantTypes.filter {
+            it.namespace != namespace && !PrimitiveType.isPrimitiveType(it.fullyQualifiedName) && !Arrays.isArray(
+               it
+            )
+         }
       val presentImports = this.content.lines().filter { it.trim().startsWith("import") }
       val missingImports =
          requiredImports.filter { qualifiedName -> presentImports.none { it == qualifiedName.fullyQualifiedName } }

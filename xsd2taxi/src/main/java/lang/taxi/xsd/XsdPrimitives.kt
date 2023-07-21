@@ -6,7 +6,9 @@ import lang.taxi.TaxiDocument
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
 import lang.taxi.types.TypeAlias
+import org.antlr.v4.runtime.CharStreams
 import java.io.File
+import java.nio.charset.Charset
 
 object XsdPrimitives {
    // TODO: Replace this
@@ -22,9 +24,11 @@ object XsdPrimitives {
    val primitivesTaxiSource:String
 
    init {
-      val file = File(Resources.getResource("XmlDataTypes.taxi").toURI())
-      primitivesTaxiSource = file.readText()
-      primtiviesTaxiDoc = Compiler(file)
+      val filename = "XmlDataTypes.taxi"
+      val file = Resources.getResource(filename)
+      primitivesTaxiSource = Resources.toString(file, Charset.defaultCharset())
+      val charstream = CharStreams.fromString(primitivesTaxiSource, filename)
+      primtiviesTaxiDoc = Compiler(charstream)
          .compile()
       primitives = primtiviesTaxiDoc
          .types

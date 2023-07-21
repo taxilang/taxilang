@@ -35,7 +35,7 @@ class SpreadOperatorSpec : DescribeSpec({
             }
          """.trimIndent()
          )
-         val projectedAddress = query.projectedObjectType
+         val projectedAddress = query.projectedObjectType!!
             .field("address").type.asA<ObjectType>()
          projectedAddress.hasField("isOddNumbered").shouldBeTrue()
          projectedAddress.hasField("house").shouldBeTrue()
@@ -70,7 +70,7 @@ class SpreadOperatorSpec : DescribeSpec({
             }
          """.trimIndent()
          )
-         val projectedAddress = query.projectedObjectType
+         val projectedAddress = query.projectedObjectType!!
             .field("address").type.asA<ObjectType>()
          projectedAddress.hasField("isOddNumbered").shouldBeTrue()
          projectedAddress.hasField("house").shouldBeTrue()
@@ -110,7 +110,7 @@ class SpreadOperatorSpec : DescribeSpec({
             }
          """.trimIndent()
          )
-         val projectedAddress = query.projectedObjectType
+         val projectedAddress = query.projectedObjectType!!
             .field("address").type.asA<ObjectType>()
          projectedAddress.hasField("value").shouldBeTrue()
          projectedAddress.hasField("lastPurchase").shouldBeTrue()
@@ -181,7 +181,7 @@ find { Movie[] } as {
          """.trimIndent()
          )
 
-         val projectedAListers = query.projectedObjectType
+         val projectedAListers = query.projectedObjectType!!
             .field("aListers").type.asA<ObjectType>()
          projectedAListers.hasField("name").shouldBeTrue()
          projectedAListers.hasField("id").shouldBeFalse()
@@ -210,7 +210,7 @@ find { Movie[] } as {
 }[]
          """.trimIndent()
          )
-         val projectedAListers = query.projectedObjectType
+         val projectedAListers = query.projectedObjectType!!
             .field("aListers").type.asA<ObjectType>()
          projectedAListers.hasField("name").shouldBeTrue()
          projectedAListers.hasField("id").shouldBeFalse()
@@ -250,7 +250,7 @@ find { Movie[] } as {
          }
          """.trimIndent()
          )
-         val castField = query.projectedObjectType
+         val castField = query.projectedObjectType!!
             .field("cast")
 
          castField.type.anonymous.shouldBeTrue()

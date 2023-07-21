@@ -1,0 +1,21 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="http://tempuri.org/PurchaseOrderSchema.xsd"
+            targetNamespace="http://tempuri.org/PurchaseOrderSchema.xsd"
+            elementFormDefault="qualified">
+   <xsd:complexType name="ReturnSwapNotionalAmountReference">
+      <xsd:annotation>
+         <xsd:documentation xml:lang="en">A reference to the return swap notional amount.</xsd:documentation>
+      </xsd:annotation>
+      <xsd:complexContent>
+         <xsd:extension base="tns:Reference">
+            <xsd:attribute name="href" type="xsd:IDREF" use="required"/>
+         </xsd:extension>
+      </xsd:complexContent>
+   </xsd:complexType>
+   <xsd:complexType name="Reference" abstract="true">
+      <xsd:annotation>
+         <xsd:documentation xml:lang="en">The abstract base class for all types which define intra-document pointers.
+         </xsd:documentation>
+      </xsd:annotation>
+   </xsd:complexType>
+</xsd:schema>

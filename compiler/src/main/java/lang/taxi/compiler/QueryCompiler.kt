@@ -32,6 +32,7 @@ internal class QueryCompiler(
          //Deprecating FindAll/FindOne in favour of Find which behaves the same as FindAll
          ctx.queryDirective().K_Find() != null -> QueryMode.FIND_ALL
          ctx.queryDirective().K_Stream() != null -> QueryMode.STREAM
+         ctx.queryDirective().K_Map() != null -> QueryMode.MAP
          else -> error("Unhandled Query Directive")
       }
       val factsOrErrors = ctx.givenBlock()?.let { parseFacts(it) } ?: emptyList<Parameter>().right()

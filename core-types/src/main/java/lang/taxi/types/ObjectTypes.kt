@@ -100,8 +100,10 @@ enum class Modifier(val token: String) {
    PARAMETER_TYPE("parameter"),
 
    /**
-    * Closed types can not be decomponsed into their individual parts,
-    * they only make sense as a single, cohesive unit.
+    * Closed types cannot be constructed by composing other values.
+    * They can only be returned by a service.
+    *
+    * This is generally appropriate to describe models exposed by services.
     */
    CLOSED("closed");
 

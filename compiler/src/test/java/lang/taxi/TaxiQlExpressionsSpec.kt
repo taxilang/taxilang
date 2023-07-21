@@ -35,7 +35,7 @@ class TaxiQlExpressionsSpec : DescribeSpec({
                |}
             """.trimMargin()
          val (schema, query) = (schemaSrc).compiledWithQuery(querySrc)
-         val field = query.projectedObjectType.field("pet")
+         val field = query.projectedObjectType!!.field("pet")
          field.type.qualifiedName.should.equal("Pet")
          val accessor = field.accessor!!.shouldBeInstanceOf<FunctionAccessor>()
          accessor.function.qualifiedName.shouldBe("buyPet")
@@ -48,7 +48,7 @@ class TaxiQlExpressionsSpec : DescribeSpec({
                |}
             """.trimMargin()
          val (schema, query) = (schemaSrc).compiledWithQuery(querySrc)
-         val field = query.projectedObjectType.field("pet")
+         val field = query.projectedObjectType!!.field("pet")
          field.type.qualifiedName.should.equal("lang.taxi.Int")
          val accessor = field.accessor!!.shouldBeInstanceOf<FunctionExpression>()
          accessor.inputs.should.have.size(2)
@@ -62,7 +62,7 @@ class TaxiQlExpressionsSpec : DescribeSpec({
                |}
             """.trimMargin()
          val (schema, query) = (schemaSrc).compiledWithQuery(querySrc)
-         query.projectedObjectType.field("petName").type.qualifiedName.should.equal("lang.taxi.String")
+         query.projectedObjectType!!.field("petName").type.qualifiedName.should.equal("lang.taxi.String")
       }
       it("is possible to declare an expression on a discovery type") {
          val (schema, query) = src.compiledWithQuery("find { Person(PersonName == 'Jimmy') }")
@@ -92,7 +92,7 @@ class TaxiQlExpressionsSpec : DescribeSpec({
             |}[]
          """.trimMargin()
          )
-         val accessor = query.projectedObjectType
+         val accessor = query.projectedObjectType!!
             .field("name")
             .accessor!! as FunctionExpression
          val input = accessor.inputs[0].asA<FieldReferenceExpression>()
@@ -106,7 +106,7 @@ class TaxiQlExpressionsSpec : DescribeSpec({
             |}[]
          """.trimMargin()
          )
-         val accessor = query.projectedObjectType
+         val accessor = query.projectedObjectType!!
             .field("name")
             .accessor!! as FunctionExpression
          val input = accessor.inputs[0].asA<TypeExpression>()
@@ -138,7 +138,7 @@ class TaxiQlExpressionsSpec : DescribeSpec({
             |}[]
          """.trimMargin()
          )
-         val field = query.projectedObjectType.field("movieTitle")
+         val field = query.projectedObjectType!!.field("movieTitle")
          val expression = field.accessor as FieldReferenceExpression
          expression.fieldNames.should.have.elements("movie", "title")
       }

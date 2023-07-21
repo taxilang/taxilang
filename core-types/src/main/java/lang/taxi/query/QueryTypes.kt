@@ -58,6 +58,8 @@ enum class QueryMode(val directive: String) {
    @Deprecated("FIND_ONE is no longer supported")
    FIND_ONE("findOne"),
    FIND_ALL("find"),
+   // See the grammar for thoughts around this.
+   MAP("map"),
    STREAM("stream");
 
    companion object {

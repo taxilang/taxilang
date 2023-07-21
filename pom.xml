@@ -68,6 +68,7 @@
       <module>java-spring-taxi</module>
       <module>typescript</module>
       <module>taxi-to-openapi-plugin</module>
+       <module>soap-to-taxi</module>
    </modules>
 
    <properties>

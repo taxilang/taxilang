@@ -30,7 +30,7 @@ class ImplicitAnonymousTypeFieldsSpec : DescribeSpec({
             }
          """.trimIndent()
          )
-         val projectedAddress = query.projectedObjectType
+         val projectedAddress = query.projectedObjectType!!
             .field("address").type.asA<ObjectType>()
          projectedAddress.hasField("isOddNumbered").shouldBeTrue()
          projectedAddress.hasField("house").shouldBeTrue()

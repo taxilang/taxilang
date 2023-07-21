@@ -35,7 +35,7 @@ class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
          )
          query.projectionScope!!.name.shouldBe("film")
          query.projectionScope!!.type.qualifiedName.shouldBe("Film")
-         val projection = query.projectedObjectType.field("star").projection
+         val projection = query.projectedObjectType!!.field("star").projection
          projection!!.projectionFunctionScope.name.should.equal("actor")
          val projectedType = projection.projectedType.asA<ObjectType>()
          val accessor = projectedType.field("name").accessor!!.asA<ArgumentSelector>()
@@ -61,7 +61,7 @@ class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
          """.trimIndent()
          )
          query.shouldNotBeNull()
-         val reviewConstraints = query.projectedObjectType.field("review").constraints
+         val reviewConstraints = query.projectedObjectType!!.field("review").constraints
          reviewConstraints.shouldHaveSize(1)
          val constraint = reviewConstraints.single() as ExpressionConstraint
          val expression = constraint.expression as OperatorExpression
@@ -89,7 +89,7 @@ class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
          """.trimIndent()
          )
          query.shouldNotBeNull()
-         val reviewConstraints = query.projectedObjectType.field("review").constraints
+         val reviewConstraints = query.projectedObjectType!!.field("review").constraints
          reviewConstraints.shouldHaveSize(1)
          val constraint = reviewConstraints.single() as OperatorExpression
          val selector = constraint.rhs.asA<ArgumentSelector>()

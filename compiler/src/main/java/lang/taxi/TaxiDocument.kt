@@ -237,7 +237,10 @@ open class TaxiDocument(
          this.types + other.types.filterNot { duplicateNames.contains(it.qualifiedName) },
          this.services + other.services,
          this.policies + other.policies,
-         this.functions + other.functions
+         this.functions + other.functions,
+         this.annotations + other.annotations,
+         this.views + other.views,
+         this.queries + other.queries
       )
    }
 

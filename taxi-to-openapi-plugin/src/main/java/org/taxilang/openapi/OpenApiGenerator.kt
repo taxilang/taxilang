@@ -21,6 +21,7 @@ import lang.taxi.annotations.HttpService
 import lang.taxi.generators.SimpleWriteableSource
 import lang.taxi.generators.WritableSource
 import lang.taxi.generators.openApi.v3.TaxiExtension
+import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.Operation
 import lang.taxi.services.Service
 import lang.taxi.types.*
@@ -40,34 +41,61 @@ class OpenApiGenerator {
    fun generateOpenApiSpec(
       taxi: TaxiDocument,
       serviceNamesOrNamespaces: List<String> = emptyList()
-   ): List<Pair<Service, OpenAPI>> {
+   ): List<Pair<QualifiedName, OpenAPI>> {
 
-      return taxi.services
+      val generatedServices = taxi.services
          .filter { service -> service.operations.any { operation -> operation.annotation(HttpOperation.NAME) != null } }
          .filter { service -> matchesNamesFilter(service.qualifiedName, serviceNamesOrNamespaces) }
-         .map { service -> service to createOpenApiSpec(service) }
+         .map { service -> service.toQualifiedName() to createOpenApiSpec(service) }
+
+      val generatedQueries = taxi.queries
+         .filter { query -> query.annotation(HttpOperation.NAME) != null }
+         .filter { query -> matchesNamesFilter(query.name.fullyQualifiedName, serviceNamesOrNamespaces) }
+         .map { query -> query.name to createOpenApiSpec(query) }
+
+      return generatedServices + generatedQueries
    }
 
    fun generateOpenApiSpecAsYaml(
       taxi: TaxiDocument,
       serviceNamesOrNamespaces: List<String> = emptyList()
    ): List<WritableSource> {
-      return generateOpenApiSpec(taxi, serviceNamesOrNamespaces)
-         .map { (service, openApi) ->
-            val oasSpecName = "${service.toQualifiedName().typeName}.yaml"
+      val generated: List<Pair<QualifiedName, OpenAPI>> = generateOpenApiSpec(taxi, serviceNamesOrNamespaces)
+      return generateYaml(generated)
+   }
+
+   fun generateYaml(
+     generatedSpecs: List<Pair<QualifiedName, OpenAPI>>
+   ): List<SimpleWriteableSource> {
+      return generatedSpecs
+         .map { (serviceName, openApi) ->
+            val oasSpecName = "${serviceName.typeName}.yaml"
             val yaml = Yaml31.pretty().writeValueAsString(openApi)
             SimpleWriteableSource(Path.of(oasSpecName), yaml)
          }
    }
 
+   private fun createOpenApiSpec(query: TaxiQlQuery, version: String = "1.0.0"): OpenAPI {
+
+      val openApi = openAPI(version, query.name)
+      query.annotation(HttpService.NAME)?.let { annotation ->
+         val httpService = HttpService.fromAnnotation(annotation)
+         openApi.addServersItem(Server().url(httpService.baseUrl))
+      }
+      val components = Components()
+         .schemas(mutableMapOf())
+
+      val paths = Paths()
+      appendPathItem(query, paths, components)
+
+      openApi.paths(paths)
+         .components(components)
+      return openApi
+   }
+
    private fun createOpenApiSpec(service: Service, version: String = "1.0.0"): OpenAPI {
 
-      val openApi = OpenAPI()
-         .info(
-            Info()
-               .version(version)
-               .title(service.qualifiedName.toQualifiedName().typeName)
-         )
+      val openApi = openAPI(version, service.toQualifiedName())
       service.annotation(HttpService.NAME)?.let { annotation ->
          val httpService = HttpService.fromAnnotation(annotation)
          openApi.addServersItem(Server().url(httpService.baseUrl))
@@ -86,6 +114,49 @@ class OpenApiGenerator {
       return openApi
    }
 
+   private fun openAPI(version: String, serviceName: QualifiedName): OpenAPI {
+      return OpenAPI()
+         .info(
+            Info()
+               .version(version)
+               .title(serviceName.typeName)
+         )
+   }
+
+   private fun appendPathItem(
+      query: TaxiQlQuery,
+      paths: Paths,
+      components: Components,
+   ) {
+      val returnType = query.projectedObjectType ?: query.returnType
+      val responseSchema = typeAsSchema(returnType, components)
+      val httpOperation = HttpOperation.fromAnnotation(query.annotation(HttpOperation.NAME)!!)
+
+      val oasOperation = operationBuilder(query.typeDoc, responseSchema)
+         .requestBody(buildRequestBodyForQueryParams(query.parameters, components))
+         .parameters(query.parameters.filter { it.annotation("PathVariable") != null }
+            .map { queryParam ->
+               Parameter()
+                  .name(queryParam.name)
+                  // .description(queryParam.typedoc) // TODO
+                  //.required(!queryParam.nullable) // TODO
+                  .`in`(getParameterSource(queryParam))
+                  .schemaOrRef(typeAsSchema(queryParam.type, components))
+            }
+
+         )
+
+      val url = httpOperation.url
+      val pathItem = paths[url] ?: PathItem()
+      pathItem.operation(PathItem.HttpMethod.valueOf(httpOperation.method.uppercase()), oasOperation)
+      paths[url] = pathItem
+   }
+
+   private fun buildRequestBodyForQueryParams(parameters: List<lang.taxi.query.Parameter>, components: Components): RequestBody? {
+      val parameter = parameters.firstOrNull { it.annotation("RequestBody") != null } ?: return null
+      return buildRequestBody(parameter.type, components)
+   }
+
    private fun appendPathItem(
       operation: Operation,
       paths: Paths,
@@ -94,23 +165,7 @@ class OpenApiGenerator {
       val responseSchema = typeAsSchema(operation.returnType, components)
 
       val httpOperation = HttpOperation.fromAnnotation(operation.annotation(HttpOperation.NAME)!!)
-      val oasOperation = io.swagger.v3.oas.models.Operation()
-         .summary(operation.typeDoc)
-         .responses(
-            ApiResponses()
-               .addApiResponse(
-                  "200", ApiResponse()
-                     .description(operation.typeDoc)
-                     .content(
-                        Content()
-                           .addMediaType(
-                              "application/json", MediaType().schema(
-                                 responseSchema.wrapRefToObjectSchema()
-                              )
-                           )
-                     )
-               )
-         )
+      val oasOperation = operationBuilder(operation.typeDoc, responseSchema)
          .requestBody(buildRequestBody(operation.parameters, components))
          .parameters(operation.parameters
             .filter { it.annotation("PathVariable") != null }
@@ -126,22 +181,48 @@ class OpenApiGenerator {
       val pathItem = paths[url] ?: PathItem()
       pathItem.operation(PathItem.HttpMethod.valueOf(httpOperation.method.uppercase()), oasOperation)
       paths[url] = pathItem
+   }
 
+   private fun operationBuilder(
+      typeDoc: String?,
+      responseSchema: Either<Schema<*>, SchemaRef>
+   ): io.swagger.v3.oas.models.Operation {
+      return io.swagger.v3.oas.models.Operation()
+         .summary(typeDoc)
+         .responses(
+            ApiResponses()
+               .addApiResponse(
+                  "200", ApiResponse()
+                     .description(typeDoc)
+                     .content(
+                        Content()
+                           .addMediaType(
+                              "application/json", MediaType().schema(
+                                 responseSchema.wrapRefToObjectSchema()
+                              )
+                           )
+                     )
+               )
+         );
    }
 
    private fun buildRequestBody(parameters: List<lang.taxi.services.Parameter>, components: Components): RequestBody? {
       val requestBodyParam = parameters.firstOrNull { it.annotation("RequestBody") != null } ?: return null
+      return buildRequestBody(requestBodyParam.type, components)
+   }
+
+   private fun buildRequestBody(type: Type, components: Components): RequestBody? {
       return RequestBody()
          .content(
             Content()
                .addMediaType(
                   "application/json",
-                  MediaType().schema(typeAsSchema(requestBodyParam.type, components).wrapRefToObjectSchema())
+                  MediaType().schema(typeAsSchema(type, components).wrapRefToObjectSchema())
                )
          )
    }
 
-   private fun getParameterSource(parameter: lang.taxi.services.Parameter): String {
+   private fun getParameterSource(parameter: Annotatable): String {
       return when {
          parameter.annotation("PathVariable") != null -> "path"
          // TODO

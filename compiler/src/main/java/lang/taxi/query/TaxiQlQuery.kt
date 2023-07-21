@@ -17,13 +17,22 @@ data class TaxiQlQuery(
    override val annotations: List<Annotation>,
    override val compilationUnits: List<CompilationUnit>
 ) : Documented, Annotatable, Compiled {
-   val projectedObjectType: ObjectType
+   val returnType: ObjectType
+      get() {
+         return projectedObjectType ?: typesToFind.singleOrNull()?.anonymousType as ObjectType?
+         ?: typesToFind.singleOrNull()?.type as ObjectType?
+         ?: error("Could not infer return type of query.")
+      }
+
+   val projectedObjectType: ObjectType?
       get() {
          return when (projectedType) {
-            null -> error("ProjectType is null")
+            null -> null
             is ArrayType -> projectedType.type as ObjectType
             is ObjectType -> projectedType
-            else -> error("Cannot cast ${projectedType::class.simpleName} to ObjectType")
+            else -> {
+               error("Cannot cast ${projectedType::class.simpleName} to ObjectType")
+            }
          }
       }
 

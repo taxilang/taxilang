@@ -3,6 +3,8 @@
 package lang.taxi.generators
 
 import lang.taxi.types.QualifiedName
+import lang.taxi.utils.takeTail
+import java.net.URI
 
 object NamingUtils {
    private val illegalIdentifierCharacters = "[^a-zA-Z0-9\$_]+".toRegex()
@@ -61,4 +63,36 @@ object NamingUtils {
          this.parameters.map { it.replaceIllegalCharacters() }
       )
    }
+
+
+   fun getNamespace(uri: URI, namespaceElementsToOmit: List<String> = emptyList()): String {
+      val namespace = uri.host.split(".")
+         .reversed()
+         .removeEmpties()
+         .filter { !namespaceElementsToOmit.contains(it) }
+         .joinToString(".")
+      return namespace
+   }
+
+   fun getTypeName(uri: URI, namespaceElementsToOmit: List<String> = emptyList()): QualifiedName {
+      val defaultNamespace = getNamespace(uri, namespaceElementsToOmit)
+      val path = uri.path.removePrefix("/").removeSuffix(".json").removeSuffix(".schema").removeSuffix("/")
+      val nameFromPath = path.split("/").last().toCapitalizedWords()
+      val (additionalNamespaceElements: List<String>, typeName: String) = if (!uri.fragment.isNullOrEmpty()) {
+         val fragmentParts = uri.fragment.split("/")
+            .removeEmpties()
+         val (typeName, remainingFragments) = fragmentParts.takeTail()
+         (listOf(nameFromPath) + remainingFragments).removeEmpties() to typeName.capitalize()
+      } else {
+         emptyList<String>() to nameFromPath
+      }
+
+      val namespace = (listOf(defaultNamespace) + additionalNamespaceElements.map { it.decapitalize() })
+         .joinToString(".")
+      return QualifiedName(namespace, typeName)
+   }
+}
+
+private fun List<String>.removeEmpties(): List<String> {
+   return this.filter { it.isNotBlank() && it.isNotEmpty() }
 }

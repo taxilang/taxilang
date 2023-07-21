@@ -734,7 +734,7 @@ queryParamList: queryParam (',' queryParam)*;
 
 queryParam: annotation* identifier ':' typeReference;
 
-queryDirective: K_Stream | K_Find;
+queryDirective: K_Stream | K_Find | K_Map;
 findDirective: K_Find;
 
 givenBlock : 'given' '{' factList '}';
@@ -809,9 +809,45 @@ BooleanLiteral
 // names, operations and so on with words that are reserved in some context.
 
 identifier:
-   K_Table | K_Stream | K_Find | K_Except | IdentifierToken;
+   K_Table | K_Stream | K_Find | K_Map | K_Except | IdentifierToken;
 
 K_Find: 'find';
+
+// map is the same as find, but it expects an array as an input,
+// and then iterates on each member of the array performing a find.
+// This is an experiment.
+// Supported by:
+// - It's currnetly not explict how the query engine is supposed to iterate
+//   collections.
+//      find { Foo[] } as { a : Something }[]
+//   is a mapping operation, but feels valid as it's (A[] -> B[]).
+//   Somehow when we map we want to go via another type.
+//   eg:
+//      given { Film[] } find { Foo[] } as { .... }
+//   This is confusing, and amgiuous in terms of how to resolve
+//   services to call for transformation.
+//   eg:  Should we iterate Film[] to perform ( Film - > Foo )
+//   or should we find a transformation service that goes (Film[] -> Foo[])?
+//   This amgiguiuty isn't good.
+//   Instead it's clearer to say:
+//       given { Film[] } map { Foo } as { ... }[]
+//   This says "for each film, convert to foo, then project to ...".
+//   This is clearer.
+// Concerns:
+//   - This approach works nicely for top-level items,
+//     but quickly falls apart for inner collections, where
+//     we expect expressions, not query directives.
+//     This means we need a different approach for mapping inner collections
+//     Something like:
+//        given { Film[] } map { Foo } as {
+//            thing : map(InnerCollection[], {  targetType: SomeType }) // returns an array.
+//        }[]
+//     This acheives a similar result, and is supported by the grammar,
+//     (although needs an implementation of the map function )
+//     but begs the question why we have two implementation appraoches.
+K_Map : 'map';
+
+
 K_Table: 'table';
 K_Stream: 'stream';
 

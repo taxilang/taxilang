@@ -11,6 +11,8 @@ import lang.taxi.types.*
 import lang.taxi.utils.log
 import lang.taxi.xsd.XsdPrimitives.primtiviesTaxiDoc
 import java.io.File
+import java.io.InputStream
+import javax.xml.parsers.SAXParserFactory
 
 //data class GeneratorOptions(val defaultNamespace: String)
 class TaxiGenerator(
@@ -20,13 +22,10 @@ class TaxiGenerator(
    private val parsedModelGroups: MutableMap<QualifiedName, ParsedList> = mutableMapOf()
    private val parsedTypes: MutableMap<QualifiedName, Type> = mutableMapOf()
    private val logger = Logger()
-   fun generateAsStrings(source: File /* generatorOptions: GeneratorOptions*/): GeneratedTaxiCode {
-      val parser = XSOMParser()
-      parser.setAnnotationParser(XsdDocumentationParserFactory())
-      parser.errorHandler = SaxErrorHandler()
-      parser.parse(source)
-      val parsed = parser.result
-      parsed.schemas
+
+
+   fun generateTaxiDocument(xsSchemaSet: XSSchemaSet): TaxiDocument {
+      xsSchemaSet.schemas
          // Don't parse the root xsd namespace
          .filterNot { it.targetNamespace == XsdPrimitives.XML_NAMESPACE }
          .map { schema ->
@@ -34,7 +33,7 @@ class TaxiGenerator(
                getOrParseType(typeDeclaration)
             }
             schema.elementDecls.map { (name, declaration) ->
-               getOrParseType(declaration.type)
+               getOrParseType(declaration.type, anonymousTypeNamePrefix = name)
             }
          }
 
@@ -42,17 +41,38 @@ class TaxiGenerator(
          .filterNot { (name, _) -> name.namespace == SchemaNames.XML_PACKAGE_NAME }
          .filterNot { (name, _) -> name.namespace == PrimitiveType.NAMESPACE }
          .values
-      val taxi = schemaWriter.generateSchemas(
-         listOf(
-            primtiviesTaxiDoc,
-            XsdAnnotations.annotationsTaxiDoc,
-            TaxiDocument(typesToOutput.toSet(), emptySet())
 
-         )
+      val taxiDoc = listOf(
+         primtiviesTaxiDoc,
+         XsdAnnotations.annotationsTaxiDoc,
+         TaxiDocument(typesToOutput.toSet(), emptySet())
+      ).reduce { acc, taxiDocument -> acc.merge(taxiDocument) }
+
+      return taxiDoc
+   }
+
+   fun generateTaxiDocument(inputStream: InputStream): TaxiDocument {
+      val parser = XSOMParser(SAXParserFactory.newDefaultInstance())
+      parser.setAnnotationParser(XsdDocumentationParserFactory())
+      parser.errorHandler = SaxErrorHandler()
+      parser.parse(inputStream)
+      val parsed = parser.result
+      return generateTaxiDocument(parsed)
+   }
+
+   fun generateAsStrings(inputStream: InputStream): GeneratedTaxiCode {
+      val taxiDoc = generateTaxiDocument(inputStream)
+
+      val taxi = schemaWriter.generateSchemas(
+         listOf(taxiDoc)
       )
       return GeneratedTaxiCode(
          taxi, logger.messages
       )
+   }
+
+   fun generateAsStrings(source: File /* generatorOptions: GeneratorOptions*/): GeneratedTaxiCode {
+      return generateAsStrings(source.inputStream())
    }
 
    private fun parseComplexType(
@@ -89,20 +109,24 @@ class TaxiGenerator(
             baseType.isNotEmpty() && baseType.any { it is EnumType } -> {
                buildObjectDefinitionForTypeInheritingEnumClass(typeName, allFields, baseType, docs)
             }
+
             isWildcard -> {
                ObjectTypeDefinition(
                   allFields.toSet(),
                   compilationUnit = CompilationUnit.unspecified(),
                   inheritsFrom = setOf(PrimitiveType.ANY),
-                  typeDoc = docs
+                  typeDoc = docs,
+                  modifiers = listOf(Modifier.CLOSED)
                )
             }
+
             else -> {
                ObjectTypeDefinition(
                   allFields.toSet(),
                   compilationUnit = CompilationUnit.unspecified(),
                   inheritsFrom = baseType,
-                  typeDoc = docs
+                  typeDoc = docs,
+                  modifiers = listOf(Modifier.CLOSED)
                )
             }
          }
@@ -218,16 +242,22 @@ class TaxiGenerator(
    }
 
    private fun parseElement(particle: XSParticle, term: XSElementDecl): ParsedElement {
-      val type = getOrParseType(term.type, anonymousTypeNamePrefix = term.name)
+      val taxiTypeDeclaration = XsdTaxiTypeDeclarations.getTaxiTypeReference(term.foreignAttributes)
+      val type = getOrParseType(term.type, anonymousTypeNamePrefix = term.name, taxiTypeDeclaration)
       val docs = getDocumentation(term)
       return ParsedElement(term.name, type, particle.minOccurs.toInt(), particle.maxOccurs.toInt(), docs)
    }
 
-   private fun getOrParseType(type: XSType, anonymousTypeNamePrefix: String? = null): Type {
-      val qualifiedName = getQualifiedName(type, anonymousTypeNamePrefix)
+
+   private fun getOrParseType(
+      type: XSType,
+      anonymousTypeNamePrefix: String? = null,
+      taxiTypeReference: TaxiTypeReference? = null
+   ): Type {
+      val qualifiedName = taxiTypeReference?.typeName ?: getQualifiedName(type, anonymousTypeNamePrefix)
       var definitionBuilder: TypeDefinitionBuilder? = null
       val parsedType = parsedTypes.getOrPut(qualifiedName) {
-         val (typeStub, typeBuilder) = parseType(type, qualifiedName)
+         val (typeStub, typeBuilder) = parseType(type, qualifiedName, taxiTypeReference)
          definitionBuilder = typeBuilder
          typeStub
       }
@@ -246,17 +276,21 @@ class TaxiGenerator(
       return if (type.name == null && anonymousTypeNamePrefix == null) {
          error("Type is anonymous in xsd, and no anonymous typeName prefix was provided")
       } else if (type.name == null) {
-         QualifiedName(packageName, "$anonymousTypeNamePrefix#AnonymousType")
+         QualifiedName(packageName, anonymousTypeNamePrefix!!)
+//         QualifiedName(packageName, "$anonymousTypeNamePrefix#AnonymousType")
       } else {
          QualifiedName(packageName, type.name)
       }
    }
 
-   private fun parseType(type: XSType, parsedName: QualifiedName): Pair<Type, TypeDefinitionBuilder?> {
-      System.out.println("Parsing ${type.name}")
+   private fun parseType(
+      type: XSType,
+      parsedName: QualifiedName,
+      taxiTypeReference: TaxiTypeReference? = null
+   ): Pair<Type, TypeDefinitionBuilder?> {
       return when (type) {
          is Ref.ComplexType -> parseComplexType(type.asComplexType(), parsedName)
-         is Ref.SimpleType -> parseSimpleType(type.asSimpleType(), parsedName)
+         is Ref.SimpleType -> parseSimpleType(type.asSimpleType(), parsedName, taxiTypeReference)
          else -> TODO(type.name)
       }
 
@@ -264,7 +298,8 @@ class TaxiGenerator(
 
    private fun parseSimpleType(
       simpleType: XSSimpleType,
-      parsedName: QualifiedName
+      parsedName: QualifiedName,
+      taxiTypeReference: TaxiTypeReference? = null
    ): Pair<Type, TypeDefinitionBuilder?> {
       val qualifiedName = parsedName
       if (XsdPrimitives.isPrimitive(qualifiedName)) {
@@ -277,7 +312,13 @@ class TaxiGenerator(
          return parseEnumUnionExtension(qualifiedName, simpleType as XSUnionSimpleType) to null
       }
 
-      val baseType = getOrParseType(simpleType.baseType)
+      // When we've been provided a type reference, we need to use the underlying simple type
+      // as the inherited type.
+      val baseType = if (taxiTypeReference != null) {
+         parseSimpleType(simpleType, getQualifiedName(simpleType), null).first
+      } else {
+         getOrParseType(simpleType.baseType)
+      }
       val restictions = getRestrictions(simpleType)
 
       val type = ObjectType(
@@ -287,7 +328,10 @@ class TaxiGenerator(
       val builder = {
          ObjectTypeDefinition(
             inheritsFrom = setOf(baseType),
-            formatAndOffset = FormatsAndZoneOffset.forNullable(if (restictions.isNotEmpty()) restictions else null, null),
+            formatAndOffset = FormatsAndZoneOffset.forNullable(
+               if (restictions.isNotEmpty()) restictions else null,
+               null
+            ),
             // Not emitting the formattedInstanceOfType, b/c of the way the SchemaWriter is filtering
             // on classes to output.
             // The output is still generated correctly.

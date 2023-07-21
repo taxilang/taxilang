@@ -2,9 +2,12 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeEmpty
+import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.accessors.CollectionProjectionExpressionAccessor
 import lang.taxi.accessors.FieldSourceAccessor
 import lang.taxi.expressions.OperatorExpression
@@ -968,7 +971,7 @@ class TaxiQlSpec : DescribeSpec({
 
          """.trimIndent()
          )
-         val field = query.projectedObjectType.field("star")
+         val field = query.projectedObjectType!!.field("star")
          field.type.qualifiedName.should.equal("ActorName")
          field.projection!!.sourceType.qualifiedName.shouldBe("Actor")
       }
@@ -999,7 +1002,7 @@ class TaxiQlSpec : DescribeSpec({
          """.trimMargin()
          )
          println(query)
-         val actors = query.projectedObjectType.field("actors")
+         val actors = query.projectedObjectType!!.field("actors")
          actors.type.asA<ObjectType>()
       }
 
@@ -1065,6 +1068,35 @@ class TaxiQlSpec : DescribeSpec({
          anonymousTypeDefinition.hasField("trader").should.be.`true`
          val traderField = anonymousTypeDefinition.field("trader")
          traderField.accessor.should.not.be.`null`
+      }
+
+      it("should support map as a query directive") {
+         val query = """
+            model Film {
+               filmId : FilmId inherits String
+               title : FilmTitle inherits String
+            }
+            model Musical {
+               musicalId : MusicalId inherits String
+            }
+            query convertFilm( @RequestBody input : Film[] ) {
+               // This is saying "First convert each Film to a Musical, then project"
+               map { Musical } as {
+                  id : MusicalId
+                  filmId : FilmId
+                  title : FilmTitle
+               }[] // The result is an array, because the input was a Film[]
+            }
+         """.compiled()
+            .query("convertFilm")
+
+         query.queryMode.shouldBe(QueryMode.MAP)
+         query.projectedType.shouldNotBeNull()
+         query.projectedType.shouldBeInstanceOf<ArrayType>()
+         val projectedFields = query.projectedObjectType!!.fields
+         projectedFields.map { it.name }.shouldContainAll(
+            "id","filmId","title"
+         )
       }
    }
 })
