@@ -36,7 +36,7 @@ interface FunctionParameterReferenceResolver {
    fun compileFieldReferenceAccessor(
       function: Function,
       parameterContext: TaxiParser.ParameterContext
-   ): Either<List<CompilationError>,FieldReferenceSelector>
+   ): Either<List<CompilationError>, FieldReferenceSelector>
 
    fun parseModelAttributeTypeReference(
       modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext
@@ -75,46 +75,30 @@ class FunctionAccessorCompiler(
                val parametersOrErrors: Either<List<CompilationError>, List<Accessor>> =
                   unparsedParameters.mapIndexed { parameterIndex, parameterContext ->
                      val parameterType = function.getParameterType(parameterIndex)
-                     if (parameterContext.modelAttributeTypeReference() == null && parentContext.isInViewContext()) {
-                        return@flatMap CompilationError(
-                           parameterContext.start,
-                           "Only Model Attribute References are  allowed within Views"
-                        ).asList().left()
-                     }
                      val parameterAccessor: Either<List<CompilationError>, Accessor> = when {
                         parameterContext.literal() != null -> LiteralAccessor(
                            parameterContext.literal().value()
                         ).right()
+
                         parameterContext.scalarAccessorExpression() != null -> referenceResolver.compileScalarAccessor(
                            parameterContext.scalarAccessorExpression(),
                            parameterType,
                         )
+
                         parameterContext.fieldReferenceSelector() != null -> referenceResolver.compileFieldReferenceAccessor(
                            function,
                            parameterContext
                         )
+
                         parameterContext.typeReferenceSelector() != null -> compileTypeReferenceAccessor(
                            namespace,
                            parameterContext
                         )
-                        parameterContext.modelAttributeTypeReference() != null -> {
-                           if (parentContext.isInViewContext()) {
-                              referenceResolver.parseModelAttributeTypeReference(
-                                 parameterContext.modelAttributeTypeReference()
-                              )
-//                                 .flatMap { (memberSourceType, memberType) ->
-//                                    ModelAttributeReferenceSelector(memberSourceType, memberType).right()
-//                                 }
-                           } else {
-                              CompilationError(
-                                 parameterContext.start,
-                                 "Model Attribute References are only allowed within Views"
-                              ).asList().left()
-                           }
-                        }
+
                         parameterContext.expressionGroup() != null -> {
                            compileExpressionGroupParameter(parameterContext.expressionGroup())
                         }
+
                         else -> TODO("readFunction parameter accessor not defined for code ${functionContext.source().content}")
 
                      }.flatMap { parameterAccessor ->
@@ -129,15 +113,9 @@ class FunctionAccessorCompiler(
                   }.invertEitherList()
                      .flattenErrors()
                parametersOrErrors.flatMap { parameters: List<Accessor> ->
-                  if (function.modifiers.contains(FunctionModifiers.Query) && !functionContext.isInViewContext()) {
-                     CompilationError(
-                        functionContext.start,
-                        "Query functions may only be used within view definitions"
-                     ).asList().left()
-                  } else {
-                     FunctionAccessor.buildAndResolveTypeArguments(function, parameters).right()
-                  }
-
+                  // There used to be view related stuff here - I suspect now thats
+                  //deleted, this can be simplified
+                  FunctionAccessor.buildAndResolveTypeArguments(function, parameters).right()
                }
             }
          }
@@ -151,8 +129,9 @@ class FunctionAccessorCompiler(
       namespace: String,
       parameterContext: TaxiParser.ParameterContext
    ): Either<List<CompilationError>, TypeReferenceSelector> {
-      return tokenProcessor.typeOrError(namespace, parameterContext.typeReferenceSelector().typeReference()).map { type ->
-         TypeReferenceSelector(type)
-      }
+      return tokenProcessor.typeOrError(namespace, parameterContext.typeReferenceSelector().typeReference())
+         .map { type ->
+            TypeReferenceSelector(type)
+         }
    }
 }

@@ -42,7 +42,6 @@ toplevelObject
     |   functionDeclaration
     |   annotationTypeDeclaration
     |   query
-    |   viewDeclaration
     ;
 
 typeModifier
@@ -770,29 +769,6 @@ typeProjection: 'as' (typeReference | expressionInputs? anonymousTypeDefinition)
 //    }(by this.salesUtCode)
 //}
 anonymousTypeDefinition: annotation* typeBody arrayMarker? accessor? parameterConstraint?;
-
-viewDeclaration
-    :  typeDoc? annotation* typeModifier* 'view' identifier
-            ('inherits' listOfInheritedTypes)?
-            'with' 'query' '{' findBody (',' findBody)* '}'
-    ;
-
-findBody: findDirective '{' findBodyQuery '}' ('as' anonymousTypeDefinition)?;
-findBodyQuery: joinTo;
-filterableTypeType: typeReference ('(' filterExpression ')')?;
-joinTo: filterableTypeType ('(' 'joinTo'  filterableTypeType ')')?;
-filterExpression
-    : LPAREN filterExpression RPAREN           # ParenExp
-    | filterExpression AND filterExpression    # AndBlock
-    | filterExpression OR filterExpression     # OrBlock
-    | propertyToParameterConstraintExpression  # AtomExp
-    | in_exprs                                 # InExpr
-    | like_exprs                               # LikeExpr
-    | not_in_exprs                             # NotInExpr
-    ;
-in_exprs: qualifiedName IN literalArray;
-like_exprs: qualifiedName LIKE literal;
-not_in_exprs: qualifiedName NOT_IN literalArray;
 
 NOT_IN: 'not in';
 IN: 'in';

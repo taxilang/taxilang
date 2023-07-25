@@ -4,7 +4,6 @@ import lang.taxi.TaxiParser.ServiceDeclarationContext
 import lang.taxi.compiler.SymbolKind
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.SourceNames
-import lang.taxi.utils.log
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.io.File
@@ -20,7 +19,6 @@ data class Tokens(
    val unparsedFunctions: Map<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>,
    val namedQueries: List<Pair<Namespace, TaxiParser.NamedQueryContext>>,
    val anonymousQueries: List<Pair<Namespace, TaxiParser.AnonymousQueryContext>>,
-   val unparsedViews: Map<String, Pair<Namespace, TaxiParser.ViewDeclarationContext>>,
    val tokenStore: TokenStore
 ) {
    companion object {
@@ -39,7 +37,6 @@ data class Tokens(
             mutableMapOf()
          val namedQueries: MutableList<Pair<Namespace, TaxiParser.NamedQueryContext>> = mutableListOf()
          val anonymousQueries: MutableList<Pair<Namespace, TaxiParser.AnonymousQueryContext>> = mutableListOf()
-         val unparsedViews: MutableMap<String, Pair<Namespace, TaxiParser.ViewDeclarationContext>> = mutableMapOf()
 
          members.forEach { tokens ->
             imports.addAll(tokens.imports)
@@ -50,7 +47,6 @@ data class Tokens(
             unparsedFunctions.putAll(tokens.unparsedFunctions)
             namedQueries.addAll(tokens.namedQueries)
             anonymousQueries.addAll(tokens.anonymousQueries)
-            unparsedViews.putAll(tokens.unparsedViews)
          }
          val tokenStores = members.map { it.tokenStore }
          val tokenStore = TokenStore.combine(tokenStores)
@@ -64,7 +60,6 @@ data class Tokens(
             unparsedFunctions,
             namedQueries,
             anonymousQueries,
-            unparsedViews,
             tokenStore
          )
       }
@@ -197,7 +192,6 @@ class TokenCollator : TaxiBaseListener() {
    private val unparsedFunctions = mutableMapOf<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>()
    private val namedQueries = mutableListOf<Pair<Namespace, TaxiParser.NamedQueryContext>>()
    private val anonymousQueries = mutableListOf<Pair<Namespace, TaxiParser.AnonymousQueryContext>>()
-   private val unparsedViews = mutableMapOf<String, Pair<Namespace, TaxiParser.ViewDeclarationContext>>()
 
    //    private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
 //    private val unparsedExtensions = mutableListOf<ParserRuleContext>()
@@ -213,7 +207,6 @@ class TokenCollator : TaxiBaseListener() {
          unparsedFunctions,
          namedQueries,
          anonymousQueries,
-         unparsedViews,
          tokenStore
       )
    }
@@ -339,15 +332,6 @@ class TokenCollator : TaxiBaseListener() {
 
    override fun exitAnonymousQuery(ctx: TaxiParser.AnonymousQueryContext) {
       anonymousQueries.add(namespace to ctx)
-   }
-
-   override fun exitViewDeclaration(ctx: TaxiParser.ViewDeclarationContext) {
-      val viewName = ctx.identifier().text
-      if (collateExceptions(ctx)) {
-         val name = qualify(viewName)
-         unparsedViews.put(name, namespace to ctx)
-      }
-      super.exitViewDeclaration(ctx)
    }
 
    /**
