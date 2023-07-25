@@ -315,11 +315,11 @@ class Compiler(
    }
 
    fun lookupTypeByName(typeType: TaxiParser.TypeReferenceContext): QualifiedName {
-      return QualifiedName.from(tokenProcessorWithImports.lookupTypeByName(typeType))
+      return QualifiedName.from(tokenProcessorWithImports.lookupSymbolByName(typeType))
    }
 
    fun getDeclarationSource(text: String, context: ParserRuleContext): CompilationUnit? {
-      val qualifiedName = tokenProcessorWithImports.lookupTypeByName(text, context)
+      val qualifiedName = tokenProcessorWithImports.lookupSymbolByName(text, context)
          .getOrHandle { errors -> throw CompilationException(errors) }
       return getCompilationUnit(tokenProcessorWithImports, qualifiedName)
    }
@@ -346,7 +346,7 @@ class Compiler(
    }
 
    fun getDeclarationSource(typeName: TaxiParser.TypeReferenceContext): CompilationUnit? {
-      val qualifiedName = tokenProcessorWithImports.lookupTypeByName(typeName)
+      val qualifiedName = tokenProcessorWithImports.lookupSymbolByName(typeName)
       return getCompilationUnit(tokenProcessorWithImports, qualifiedName)
    }
 
@@ -530,7 +530,7 @@ class Compiler(
    fun usedTypedNamesInSource(sourceName: String): Set<QualifiedName> {
       return tokenProcessorWithImports.tokens.tokenStore.getTypeReferencesForSourceName(sourceName).mapNotNull {
          try {
-            tokenProcessorWithImports.lookupTypeByName(it)
+            tokenProcessorWithImports.lookupSymbolByName(it)
          } catch (error: CompilationException) {
             null
          }

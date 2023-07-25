@@ -288,7 +288,9 @@ namespace pkgB {
          }
       }
 
-      it("a query function cannot be part of anonymous type definition") {
+      // This used to be because we had views as a concept.
+      // I've killed views, but haven't taken a position on query functions yet.
+      xit("a query function cannot be part of anonymous type definition") {
          val taxiDocument = """
             declare query function upper(String):String
             model Record {
@@ -437,18 +439,6 @@ namespace pkgB {
             .function("foo")
             .typeDoc.should.equal("Is a foo")
       }
-
-      it("query functions can't be referenced from model fields") {
-         val compilationMessages = """
-            import vyne.aggregations.sumOver
-            model Foo {
-                field1: Decimal
-                field2: Decimal by sumOver(this.field1)
-            }
-         """.validated()
-            .errors().shouldContainMessage("Query functions may only be used within view definitions")
-      }
-
 
 
       it("is possible to declare functions in expression types") {

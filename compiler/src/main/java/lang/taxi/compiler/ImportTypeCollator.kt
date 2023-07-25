@@ -48,7 +48,10 @@ internal class ImportedTypeCollator(
       }
 
       return if (importQueue.isEmpty()) {
-         errors to importSources.flatMap { it.types.plus(it.functions) }
+         // TODO : This is pretty brute-force.
+         // No imports were specified, so we return all the types.
+         // Need to reconsider what we actually want here.
+         errors to importSources.flatMap { it.types.plus(it.functions).plus(it.services) }
       } else {
          errors to collected.values.toList()
       }

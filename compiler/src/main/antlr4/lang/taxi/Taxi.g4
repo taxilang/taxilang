@@ -42,7 +42,6 @@ toplevelObject
     |   functionDeclaration
     |   annotationTypeDeclaration
     |   query
-    |   viewDeclaration
     ;
 
 typeModifier
@@ -224,9 +223,15 @@ collectionProjectionExpression: '[' typeReference projectionScopeDefinition? ']'
 
 projectionScopeDefinition: 'with' '(' scalarAccessorExpression (',' scalarAccessorExpression)*  ')';
 
+// Used to describe navigation from one entity to another
+// Eg from Type to Property Type (Person::FirstName)
+// Or from Service to Operation (PersonService::findAllPeople)
+memberReference: typeReference '::' typeReference;
+
 // A type reference that refers to the attribute on a model.
 // eg:  firstName : Person::FirstName.
 // Only meaningful within views.
+// Deprecated, prefer memberReference instead.
 modelAttributeTypeReference: typeReference '::' typeReference |
    LPAREN typeReference '::' typeReference RPAREN arrayMarker;
 
@@ -754,8 +759,16 @@ variableName: identifier ':';
 queryBody:
    typeDoc? annotation*
    givenBlock?
-	queryDirective ( ('{' queryTypeList  '}') | anonymousTypeDefinition ) typeProjection?
-	;
+	queryOrMutation;
+
+// A query body can contain EITHER:
+// - a query followed by an optional mutation
+// - OR a mutation on its own
+// but it must contain one.
+queryOrMutation:
+   (queryDirective ( ('{' queryTypeList  '}') | anonymousTypeDefinition ) typeProjection? mutation?) |
+   mutation;
+
 
 queryTypeList: fieldTypeDeclaration (',' fieldTypeDeclaration)*;
 
@@ -771,28 +784,7 @@ typeProjection: 'as' (typeReference | expressionInputs? anonymousTypeDefinition)
 //}
 anonymousTypeDefinition: annotation* typeBody arrayMarker? accessor? parameterConstraint?;
 
-viewDeclaration
-    :  typeDoc? annotation* typeModifier* 'view' identifier
-            ('inherits' listOfInheritedTypes)?
-            'with' 'query' '{' findBody (',' findBody)* '}'
-    ;
-
-findBody: findDirective '{' findBodyQuery '}' ('as' anonymousTypeDefinition)?;
-findBodyQuery: joinTo;
-filterableTypeType: typeReference ('(' filterExpression ')')?;
-joinTo: filterableTypeType ('(' 'joinTo'  filterableTypeType ')')?;
-filterExpression
-    : LPAREN filterExpression RPAREN           # ParenExp
-    | filterExpression AND filterExpression    # AndBlock
-    | filterExpression OR filterExpression     # OrBlock
-    | propertyToParameterConstraintExpression  # AtomExp
-    | in_exprs                                 # InExpr
-    | like_exprs                               # LikeExpr
-    | not_in_exprs                             # NotInExpr
-    ;
-in_exprs: qualifiedName IN literalArray;
-like_exprs: qualifiedName LIKE literal;
-not_in_exprs: qualifiedName NOT_IN literalArray;
+mutation: K_Call memberReference;
 
 NOT_IN: 'not in';
 IN: 'in';
@@ -809,7 +801,7 @@ BooleanLiteral
 // names, operations and so on with words that are reserved in some context.
 
 identifier:
-   K_Table | K_Stream | K_Find | K_Map | K_Except | IdentifierToken;
+   K_Table | K_Stream | K_Find | K_Map | K_Except | K_Call | IdentifierToken;
 
 K_Find: 'find';
 
@@ -850,6 +842,9 @@ K_Map : 'map';
 
 K_Table: 'table';
 K_Stream: 'stream';
+
+// Identifier for signalling a mutation within a query
+K_Call: 'call';
 
 K_Except : 'except';
 

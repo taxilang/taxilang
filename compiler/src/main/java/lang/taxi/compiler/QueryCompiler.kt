@@ -5,7 +5,9 @@ import lang.taxi.*
 import lang.taxi.TaxiParser.ValueContext
 import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.fields.FieldTypeSpec
+import lang.taxi.mutations.Mutation
 import lang.taxi.query.*
+import lang.taxi.services.Service
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
@@ -27,36 +29,73 @@ internal class QueryCompiler(
       compilationUnit: CompilationUnit
    ): Either<List<CompilationError>, TaxiQlQuery> {
       val queryDirective = when {
+         ctx.queryOrMutation().queryDirective() == null && ctx.queryOrMutation().mutation() != null -> QueryMode.MUTATE
+
 //         ctx.queryDirective().FindAll() != null -> QueryMode.FIND_ALL
 //         ctx.queryDirective().FindOne() != null -> QueryMode.FIND_ONE
          //Deprecating FindAll/FindOne in favour of Find which behaves the same as FindAll
-         ctx.queryDirective().K_Find() != null -> QueryMode.FIND_ALL
-         ctx.queryDirective().K_Stream() != null -> QueryMode.STREAM
-         ctx.queryDirective().K_Map() != null -> QueryMode.MAP
+         ctx.queryOrMutation().queryDirective()?.K_Find() != null -> QueryMode.FIND_ALL
+         ctx.queryOrMutation().queryDirective()?.K_Stream() != null -> QueryMode.STREAM
+         ctx.queryOrMutation().queryDirective()?.K_Map() != null -> QueryMode.MAP
          else -> error("Unhandled Query Directive")
       }
       val factsOrErrors = ctx.givenBlock()?.let { parseFacts(it) } ?: emptyList<Parameter>().right()
       val queryOrErrors = factsOrErrors.flatMap { facts ->
 
          parseQueryBody(ctx, facts + parameters, queryDirective).flatMap { typesToDiscover ->
-            parseTypeToProject(ctx.typeProjection(), typesToDiscover).map { typeToProject ->
+            parseTypeToProject(ctx.queryOrMutation()?.typeProjection(), typesToDiscover).flatMap { typeToProject ->
+               parseMutation(ctx.queryOrMutation().mutation()).map { mutation ->
+                  TaxiQlQuery(
+                     name = name,
+                     facts = facts,
+                     queryMode = queryDirective,
+                     parameters = parameters,
+                     typesToFind = typesToDiscover,
+                     projectedType = typeToProject?.first,
+                     projectionScope = typeToProject?.second,
+                     typeDoc = docs,
+                     annotations = annotations,
+                     mutation = mutation,
+                     compilationUnits = listOf(compilationUnit)
+                  )
+               }
 
-               TaxiQlQuery(
-                  name = name,
-                  facts = facts,
-                  queryMode = queryDirective,
-                  parameters = parameters,
-                  typesToFind = typesToDiscover,
-                  projectedType = typeToProject?.first,
-                  projectionScope = typeToProject?.second,
-                  typeDoc = docs,
-                  annotations = annotations,
-                  compilationUnits = listOf(compilationUnit)
-               )
+
             }
          }
       }
       return queryOrErrors
+   }
+
+   private fun parseMutation(mutationCtx: TaxiParser.MutationContext?): Either<List<CompilationError>, Mutation?> {
+      if (mutationCtx == null) return Either.Right(null)
+      val memberReference = mutationCtx.memberReference()
+
+      return tokenProcessor.resolveImportableToken(
+         memberReference.typeReference(0).qualifiedName(),
+         mutationCtx,
+         SymbolKind.SERVICE
+      )
+         .flatMap { token ->
+            fun compilationError(message: String): Either<List<CompilationError>, Nothing> {
+               return listOf(CompilationError(memberReference.start, message)).left()
+            }
+
+            if (token !is Service) return@flatMap compilationError("Mutations require a reference to services and operations in the form of ServiceName::operationName.  ${token.qualifiedName} is not a service")
+            val operationName = memberReference.typeReference(1)
+               ?: return@flatMap compilationError("Mutations require a reference to services and operations in the form of ServiceName::operationName. No operation name was provided")
+            if (!token.containsOperation(operationName.text)) return@flatMap compilationError("Service ${token.qualifiedName} does not declare an operation ${operationName.text}")
+            val operation = token.operation(operationName.text)
+            if (operation.scope != "write") return@flatMap compilationError("Call statements are only valid with write operations.  Operation ${memberReference.text} is not a write operation")
+            (token to operation).right()
+         }
+         .map { (service, operation) ->
+            Mutation(
+               service,
+               operation,
+               mutationCtx.toCompilationUnits()
+            )
+         }
    }
 
    private fun parseQueryBody(
@@ -78,27 +117,41 @@ internal class QueryCompiler(
        *    field2: Type2
        * }
        */
-      val queryTypeList = queryBodyContext.queryTypeList()
-      val anonymousTypeDefinition = queryBodyContext.anonymousTypeDefinition()
+      val queryTypeList = queryBodyContext.queryOrMutation()?.queryTypeList()
+      val anonymousTypeDefinition = queryBodyContext.queryOrMutation()?.anonymousTypeDefinition()
       return queryTypeList?.fieldTypeDeclaration()?.map { queryType ->
          tokenProcessor.parseType(namespace, queryType.optionalTypeReference().typeReference()).flatMap { type ->
             toDiscoveryType(
                type, queryType.parameterConstraint(), queryDirective, constraintBuilder, parameters
             )
          }
-      }?.invertEitherList()?.flattenErrors() ?: listOf(
-         tokenProcessor.parseAnonymousType(
-            namespace,
-            anonymousTypeDefinition
-         ).flatMap { anonymousType ->
-            toDiscoveryType(
-               anonymousType,
-               anonymousTypeDefinition.parameterConstraint(),
-               queryDirective,
-               constraintBuilder,
-               parameters
-            )
-         }).invertEitherList().flattenErrors()
+      }?.invertEitherList()?.flattenErrors() ?:
+         parseAnonymousTypesIfPresent(namespace, anonymousTypeDefinition, queryDirective, constraintBuilder, parameters)
+
+   }
+
+   private fun parseAnonymousTypesIfPresent(
+      namespace: String,
+      anonymousTypeDefinition: TaxiParser.AnonymousTypeDefinitionContext?,
+      queryDirective: QueryMode,
+      constraintBuilder: ConstraintBuilder,
+      parameters: List<Parameter>
+   ): Either<List<CompilationError>,List<DiscoveryType>> {
+      if (anonymousTypeDefinition == null) {
+         return emptyList<DiscoveryType>().right()
+      }
+      return tokenProcessor.parseAnonymousType(
+         namespace,
+         anonymousTypeDefinition
+      ).flatMap { anonymousType ->
+         toDiscoveryType(
+            anonymousType,
+            anonymousTypeDefinition.parameterConstraint(),
+            queryDirective,
+            constraintBuilder,
+            parameters
+         )
+      }.map { listOf(it) }
    }
 
    private fun toDiscoveryType(

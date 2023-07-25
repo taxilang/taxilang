@@ -7,6 +7,7 @@ import lang.taxi.compiler.SymbolKind
 import lang.taxi.functions.Function
 import lang.taxi.functions.stdlib.stdLibName
 import lang.taxi.services.ConsumedOperation
+import lang.taxi.services.Service
 import lang.taxi.services.ServiceDefinition
 import lang.taxi.stdlib.StdLibSchema
 import lang.taxi.types.*
@@ -31,14 +32,6 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       return tokenList(includeImportedTypes).filterIsInstance<Type>()
    }
 
-   fun getOrCreate(typeName: String, location: Token, symbolKind: SymbolKind = SymbolKind.TYPE): ImportableToken {
-      val type = getOrCreate(typeName, symbolKind)
-      if (type is ObjectType && !type.isDefined) {
-         referencesToUnresolvedTypes.put(typeName, location)
-      }
-      return type
-   }
-
    fun getOrCreate(typeName: String, symbolKind: SymbolKind = SymbolKind.TYPE): ImportableToken {
       if (PrimitiveType.isPrimitiveType(typeName)) {
          return PrimitiveType.fromDeclaration(typeName)
@@ -51,9 +44,12 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
    }
 
    private fun getImportedToken(name: String): ImportableToken {
-      return importedTokenMap[name] ?: error("Token $name not imported")
+      return importedTokenMap[name] ?:  error("Token $name not imported")
    }
 
+   private fun getImportedService(serviceName: String): Service {
+      return getImportedToken(serviceName) as Service
+   }
    private fun getImportedType(typeName: String): Type {
       return getImportedToken(typeName) as Type
    }
@@ -198,11 +194,11 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
 
 
       if (isImported(qualifiedName, symbolKind)) {
-         // TODO Handle case where SymbolKind is an annotation
-         return if (symbolKind == SymbolKind.FUNCTION) {
-            getImportedFunction(qualifiedName)
-         } else {
-            return getImportedType(qualifiedName)
+         return when (symbolKind) {
+            SymbolKind.FUNCTION -> getImportedFunction(qualifiedName)
+            SymbolKind.TYPE -> getImportedType(qualifiedName)
+            SymbolKind.SERVICE -> getImportedService(qualifiedName)
+            else -> error("Handling of imported symbols for kind $symbolKind is not implemented")
          }
       }
 

@@ -36,7 +36,6 @@ import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.utils.*
 import org.antlr.v4.runtime.ParserRuleContext
-import org.antlr.v4.runtime.RuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.security.SecureRandom
 import java.util.*
@@ -126,16 +125,16 @@ class TokenProcessor(
 
    // Primarily for language server tooling, rather than
    // compile time - though it should be safe to use in all scnearios
-   fun lookupTypeByName(contextRule: TypeReferenceContext): String {
+   fun lookupSymbolByName(contextRule: TypeReferenceContext): String {
       createEmptyTypes()
       val namespace = contextRule.findNamespace()
-      return lookupTypeByName(namespace, contextRule)
+      return lookupSymbolByName(namespace, contextRule)
    }
 
-   fun lookupTypeByName(text: String, contextRule: ParserRuleContext): Either<List<CompilationError>, String> {
+   fun lookupSymbolByName(text: String, contextRule: ParserRuleContext): Either<List<CompilationError>, String> {
       createEmptyTypes()
       val namespace = contextRule.findNamespace()
-      return attemptToLookupTypeByName(namespace, text, contextRule).wrapErrorsInList()
+      return attemptToLookupSymbolByName(namespace, text, contextRule).wrapErrorsInList()
    }
 
    fun findDeclaredServiceNames(): List<QualifiedName> {
@@ -165,12 +164,12 @@ class TokenProcessor(
                val fieldTypeDeclaration = memberDeclaration.fieldDeclaration().fieldTypeDeclaration()
                when {
                   fieldTypeDeclaration == null -> null
-                  fieldTypeDeclaration.aliasedType() != null -> lookupTypeByName(
+                  fieldTypeDeclaration.aliasedType() != null -> lookupSymbolByName(
                      namespace,
                      memberDeclaration.fieldDeclaration().fieldTypeDeclaration().optionalTypeReference().typeReference()
                   )
 
-                  fieldTypeDeclaration.inlineInheritedType() != null -> lookupTypeByName(
+                  fieldTypeDeclaration.inlineInheritedType() != null -> lookupSymbolByName(
                      namespace,
                      memberDeclaration.fieldDeclaration().fieldTypeDeclaration().optionalTypeReference().typeReference()
                   )
@@ -185,22 +184,22 @@ class TokenProcessor(
       return declaredTypeNames + inlineTypeAliases
    }
 
-   private fun lookupTypeByName(namespace: Namespace, type: TypeReferenceContext): String {
+   private fun lookupSymbolByName(namespace: Namespace, type: TypeReferenceContext): String {
       return if (PrimitiveType.isPrimitiveType(type.text)) {
          PrimitiveType.fromDeclaration(type.text).qualifiedName
       } else {
-         lookupTypeByName(namespace, type.qualifiedName().text, importsInSource(type))
+         lookupSymbolByName(namespace, type.qualifiedName().text, importsInSource(type))
       }
    }
 
-   internal fun attemptToLookupTypeByName(
+   internal fun attemptToLookupSymbolByName(
       namespace: Namespace,
       name: String,
       context: ParserRuleContext,
       symbolKind: SymbolKind = SymbolKind.TYPE
    ): Either<CompilationError, String> {
       return try {
-         lookupTypeByName(namespace, name, importsInSource(context), symbolKind).right()
+         lookupSymbolByName(namespace, name, importsInSource(context), symbolKind).right()
       } catch (e: AmbiguousNameException) {
          CompilationError(context.start, e.message!!, context.source().normalizedSourceName).left()
       }
@@ -210,7 +209,7 @@ class TokenProcessor(
    // accessing prior to compiling (ie., in the language server).
    // During normal compilation, don't need to pass anything
    @Deprecated("call attemptToQualify, so errors are caught property")
-   private fun lookupTypeByName(
+   private fun lookupSymbolByName(
       namespace: Namespace,
       name: String,
       importsInSource: List<QualifiedName>,
@@ -225,7 +224,7 @@ class TokenProcessor(
       name: String,
       context: ParserRuleContext
    ): Either<List<CompilationError>, Type> {
-      return attemptToLookupTypeByName(namespace, name, context).map { qfn ->
+      return attemptToLookupSymbolByName(namespace, name, context).map { qfn ->
          typeSystem.getType(qfn)
       }.wrapErrorsInList()
    }
@@ -249,39 +248,6 @@ class TokenProcessor(
       // Queries
       compileQueries()
       //
-      compileViews()
-      validateViewNames()
-   }
-
-   private fun compileViews() {
-      val viewProcessor = ViewProcessor(this)
-      this.tokens.unparsedViews.map { entry ->
-         viewProcessor.compileView(entry.key, entry.value.first, entry.value.second)
-      }.invertEitherList()
-         .flattenErrors()
-         .collectErrors(errors)
-         .map { this.views.addAll(it) }
-   }
-
-   /**
-    * Temprorary check on view names as we use view name to create the corresponding Sql view
-    * in Vyne (by ignoring namespace)
-    */
-   private fun validateViewNames() {
-      val uniqueViewNames = mutableSetOf<String>()
-      val nonUniqueViews = this.views.filterNot {
-         uniqueViewNames.add(it.toQualifiedName().typeName)
-      }
-
-      if (nonUniqueViews.isNotEmpty()) {
-         val duplicateView = nonUniqueViews.first()
-         errors.add(
-            CompilationError(
-               duplicateView,
-               "view, name - ${duplicateView.toQualifiedName().typeName} must be unique"
-            )
-         )
-      }
    }
 
    private fun compileQueries() {
@@ -646,7 +612,7 @@ class TokenProcessor(
       namespace: Namespace,
       typeRule: TypeAliasExtensionDeclarationContext
    ): CompilationError? {
-      return attemptToLookupTypeByName(namespace, typeRule.identifier().text, typeRule).flatMap { typeName ->
+      return attemptToLookupSymbolByName(namespace, typeRule.identifier().text, typeRule).flatMap { typeName ->
          val type = typeSystem.getType(typeName) as TypeAlias
          val annotations = collateAnnotations(typeRule.annotation())
          val typeDoc = parseTypeDoc(typeRule.typeDoc())
@@ -660,7 +626,7 @@ class TokenProcessor(
       typeRule: TypeExtensionDeclarationContext
    ): CompilationError? {
       val typeName =
-         when (val typeNameEither = attemptToLookupTypeByName(namespace, typeRule.identifier().text, typeRule)) {
+         when (val typeNameEither = attemptToLookupSymbolByName(namespace, typeRule.identifier().text, typeRule)) {
             is Either.Left -> return typeNameEither.value // return the compilation error now and stop
             is Either.Right -> typeNameEither.value
          }
@@ -690,7 +656,7 @@ class TokenProcessor(
          val fieldAnnotations = collateAnnotations(member.annotation())
          val refinedType =
             member.typeExtensionFieldDeclaration()?.typeExtensionFieldTypeRefinement()?.typeReference()?.let {
-               val refinedType = typeSystem.getType(lookupTypeByName(namespace, it.text, importsInSource(it)))
+               val refinedType = typeSystem.getType(lookupSymbolByName(namespace, it.text, importsInSource(it)))
                assertTypesCompatible(type.field(fieldName).type, refinedType, fieldName, typeName, typeRule)
             }
 
@@ -1353,7 +1319,7 @@ class TokenProcessor(
       val memberSourceTypeType = modelAttributeReferenceCtx.typeReference().first()
       val memberTypeType = modelAttributeReferenceCtx.typeReference()[1]
       val sourceTypeName = try {
-         QualifiedName.from(lookupTypeByName(memberSourceTypeType)).right()
+         QualifiedName.from(lookupSymbolByName(memberSourceTypeType)).right()
       } catch (e: Exception) {
          CompilationError(
             modelAttributeReferenceCtx.start,
@@ -1648,7 +1614,7 @@ class TokenProcessor(
       // If not, then the method should return null.
       unparsedCheckAndCompile: (String) -> Either<List<CompilationError>, ImportableToken>?
    ): Either<List<CompilationError>, ImportableToken> {
-      return attemptToLookupTypeByName(namespace, requestedTypeName, context, symbolKind)
+      return attemptToLookupSymbolByName(namespace, requestedTypeName, context, symbolKind)
          .wrapErrorsInList()
          .flatMap { qualifiedTypeName ->
             if (typeSystem.contains(qualifiedTypeName, symbolKind)) {
@@ -1768,9 +1734,11 @@ class TokenProcessor(
       }
    }
 
+
    internal fun resolveImportableToken(
       tokenName: String,
-      context: ParserRuleContext
+      context: ParserRuleContext,
+      symbolKind: SymbolKind = SymbolKind.TYPE_OR_FUNCTION
    ): Either<List<CompilationError>, ImportableToken> {
       val namespace = context.findNamespace()
       return resolveUserToken(
@@ -1778,7 +1746,7 @@ class TokenProcessor(
          tokenName,
          importsInSource(context),
          context,
-         SymbolKind.TYPE_OR_FUNCTION
+         symbolKind
       ) { qualifiedName ->
          if (tokens.unparsedFunctions.contains(qualifiedName)) {
             compileFunction(tokens.unparsedFunctions[qualifiedName]!!, qualifiedName)
@@ -1786,25 +1754,32 @@ class TokenProcessor(
             compileToken(qualifiedName)
             typeSystem.getTypeOrError(qualifiedName, context).wrapErrorsInList()
                .map { it }
+         } else if (tokens.containsUnparsedService(qualifiedName)) {
+            getOrCompileService(qualifiedName)
          } else {
             null
          }
       }
    }
 
+   private fun getOrCompileService(qualifiedName: String): Either<List<CompilationError>,Service> {
+      return services.firstOrNull { it.qualifiedName == qualifiedName }?.right()
+         ?: compileService(qualifiedName, tokens.unparsedServices[qualifiedName]!!)
+   }
+
    internal fun resolveImportableToken(
       tokenName: QualifiedNameContext,
-      typeArguments: TypeArgumentsContext?,
-      context: ParserRuleContext
+      context: ParserRuleContext,
+      symbolKind: SymbolKind = SymbolKind.TYPE_OR_FUNCTION
    ): Either<List<CompilationError>, ImportableToken> {
-      return resolveImportableToken(tokenName.identifier().text(), context)
+      return resolveImportableToken(tokenName.identifier().text(), context, symbolKind)
    }
 
    internal fun resolveFunction(
       requestedFunctionName: QualifiedNameContext,
       context: ParserRuleContext
    ): Either<List<CompilationError>, Function> {
-      return resolveImportableToken(requestedFunctionName, null, context)
+      return resolveImportableToken(requestedFunctionName,  context)
          .map { it as Function }
    }
 
@@ -2038,7 +2013,7 @@ class TokenProcessor(
       val annotations = collateAnnotations(typeRule.annotation())
       val typeDoc = parseTypeDoc(typeRule.typeDoc())
 
-      return attemptToLookupTypeByName(namespace, typeRule.identifier().text, typeRule)
+      return attemptToLookupSymbolByName(namespace, typeRule.identifier().text, typeRule)
          .flatMap { typeName ->
             val enum = typeSystem.getType(typeName) as EnumType
             enum.addExtension(EnumExtension(enumValues, annotations, typeRule.toCompilationUnit(), typeDoc = typeDoc))
@@ -2187,7 +2162,7 @@ class TokenProcessor(
 
    private fun compileServices() {
       val services = this.tokens.unparsedServices.map { (qualifiedName, serviceTokenPair) ->
-         compileService(qualifiedName, serviceTokenPair)
+         getOrCompileService(qualifiedName)
       }
 
       services.invertEitherList()
@@ -2590,6 +2565,8 @@ enum class SymbolKind {
     */
    TYPE,
 
+   SERVICE,
+
    /**
     * Used where a token could reasonably be either type or function,
     * eg: a field declaration
@@ -2633,6 +2610,7 @@ enum class SymbolKind {
          FUNCTION -> token is Function
          TYPE_OR_FUNCTION -> isType || token is Function
          ANNOTATION -> token is AnnotationType
+         SERVICE -> token is Service
       }
    }
 }
@@ -2649,14 +2627,3 @@ object AnonymousTypeNameGenerator {
    }
 }
 
-fun RuleContext?.isInViewContext(): Boolean {
-   if (this == null) {
-      return false
-   }
-
-   if (this is ViewDeclarationContext) {
-      return true
-   }
-
-   return ruleContext.parent.isInViewContext()
-}
