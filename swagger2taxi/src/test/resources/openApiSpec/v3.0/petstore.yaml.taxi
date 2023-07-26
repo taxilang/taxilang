@@ -14,15 +14,15 @@ namespace vyne.openApi {
    
    service PetsService {
       @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/v1/pets")
-      operation listPets(
+      read operation listPets(
       [[ How many items to return at one time (max 100) ]]
       limit : Int ) : Pets
       @HttpOperation(method = "POST" , url = "http://petstore.swagger.io/v1/pets")
-      operation createPets(  )
+      read operation createPets(  )
    }
    service PetsPetIdService {
       @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/v1/pets/{petId}")
-      operation showPetById(
+      read operation showPetById(
       [[ The id of the pet to retrieve ]]
       @PathVariable(value = "petId") petId : String ) : Pets
    }

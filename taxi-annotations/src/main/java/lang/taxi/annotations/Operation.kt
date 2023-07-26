@@ -15,6 +15,12 @@ fun Service.declaresName(): Boolean {
    return this.value.isNotEmpty()
 }
 
+// This is an intentional duplicateion of lang.taxi.services.OperationScope.
+// So as not to add the dependency into this package
+enum class OperationScope {
+   READ_ONLY,
+   MUTATION
+}
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
@@ -30,7 +36,7 @@ annotation class Operation(
     * When policies are defined against a specific operation type, it must match against the
     * value defined here.
     */
-   val scope: String = "",
+   val scope: OperationScope = OperationScope.READ_ONLY,
 
    /**
     * Markdown docs that describe this operation

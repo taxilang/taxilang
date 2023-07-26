@@ -6,7 +6,7 @@ import lang.taxi.policies.ElseCondition
 import lang.taxi.policies.FilterInstruction
 import lang.taxi.policies.Instruction
 import lang.taxi.policies.LiteralArraySubject
-import lang.taxi.policies.OperationScope
+import lang.taxi.policies.PolicyOperationScope
 import lang.taxi.policies.RelativeSubject
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -76,7 +76,7 @@ namespace test {
         val ruleSet = policy.ruleSets[0]
         expect(ruleSet.statements).to.have.size(4)
         expect(ruleSet.scope.operationType).to.equal("read")
-        expect(ruleSet.scope.operationScope).to.equal(OperationScope.EXTERNAL)
+        expect(ruleSet.scope.policyOperationScope).to.equal(PolicyOperationScope.EXTERNAL)
         expect(policy.ruleSets[0].statements).to.have.size(4)
 
         val statement1 = ruleSet.statements[0]
@@ -99,7 +99,7 @@ namespace test {
     @Test
     fun when_noCaseStatement_then_elseStatementIsDefined() {
         val policy = doc.policy("test.TradeDeskPolicy")
-        val ruleSet = policy.ruleSets.first { it.scope.operationType == "read" && it.scope.operationScope == OperationScope.INTERNAL_AND_EXTERNAL }
+        val ruleSet = policy.ruleSets.first { it.scope.operationType == "read" && it.scope.policyOperationScope == PolicyOperationScope.INTERNAL_AND_EXTERNAL }
         expect(ruleSet.statements).to.have.size(1)
         expect(ruleSet.statements.first().condition).to.be.instanceof(ElseCondition::class.java)
 
@@ -109,13 +109,13 @@ namespace test {
     fun whenScopeIsNotDefined_then_itDefaultsToInternalExternal() {
         val policy = doc.policy("test.TradeDeskPolicy")
         val ruleSet = policy.ruleSets.first { it.scope.operationType == "write" }
-        expect(ruleSet.scope.operationScope).to.equal(OperationScope.INTERNAL_AND_EXTERNAL)
+        expect(ruleSet.scope.policyOperationScope).to.equal(PolicyOperationScope.INTERNAL_AND_EXTERNAL)
     }
 
     @Test
     fun parsesFilterInstructionsCorrectly() {
         val policy = doc.policy("test.TradeDeskPolicy")
-        val ruleSet = policy.ruleSets.first { it.scope.operationType == "read" && it.scope.operationScope == OperationScope.EXTERNAL }
+        val ruleSet = policy.ruleSets.first { it.scope.operationType == "read" && it.scope.policyOperationScope == PolicyOperationScope.EXTERNAL }
         val filterAllStatement = ruleSet.statements[3]
         val filterAllInstruction = filterAllStatement.instruction as FilterInstruction
         expect(filterAllInstruction.isFilterAll).to.be.`true`

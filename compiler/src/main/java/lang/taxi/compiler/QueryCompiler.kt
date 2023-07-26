@@ -7,6 +7,7 @@ import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.fields.FieldTypeSpec
 import lang.taxi.mutations.Mutation
 import lang.taxi.query.*
+import lang.taxi.services.OperationScope
 import lang.taxi.services.Service
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.*
@@ -86,7 +87,7 @@ internal class QueryCompiler(
                ?: return@flatMap compilationError("Mutations require a reference to services and operations in the form of ServiceName::operationName. No operation name was provided")
             if (!token.containsOperation(operationName.text)) return@flatMap compilationError("Service ${token.qualifiedName} does not declare an operation ${operationName.text}")
             val operation = token.operation(operationName.text)
-            if (operation.scope != "write") return@flatMap compilationError("Call statements are only valid with write operations.  Operation ${memberReference.text} is not a write operation")
+            if (operation.scope != OperationScope.MUTATION) return@flatMap compilationError("Call statements are only valid with write operations.  Operation ${memberReference.text} is not a write operation")
             (token to operation).right()
          }
          .map { (service, operation) ->
@@ -190,7 +191,7 @@ internal class QueryCompiler(
 
       return tokenProcessor.typeOrError(namespace, factCtx.typeReference()).flatMap { factType ->
          try {
-            readValue(factCtx.value(), factType)
+            readValue(factCtx.value(), factType, false)
                .map { factValue ->
                   if (factValue != null) {
                      Parameter(
@@ -213,17 +214,17 @@ internal class QueryCompiler(
       }
    }
 
-   private fun readValue(valueContext: ValueContext?, factType: Type): Either<List<CompilationError>, Any?> {
+   private fun readValue(valueContext: ValueContext?, factType: Type, nullable: Boolean): Either<List<CompilationError>, Any?> {
       if (valueContext == null) {
          return (null as Any?).right()
       }
 
       val result: Either<List<CompilationError>, Any?> = when {
-         valueContext.literal() != null -> valueContext.literal().value().right()
+         valueContext.literal() != null -> valueContext.literal().nullableValue().right()
          valueContext.objectValue() != null -> readObjectValue(valueContext.objectValue(), factType)
          valueContext.valueArray() != null -> readArray(valueContext.valueArray(), factType)
          else -> null
-      }?.flatMap { value -> verifyIsAssignable(factType, value, valueContext) }
+      }?.flatMap { value -> verifyIsAssignable(factType, value, valueContext, nullable) }
          ?: (null as Any?).right()
 
       return result
@@ -232,10 +233,17 @@ internal class QueryCompiler(
    private fun verifyIsAssignable(
       factType: Type,
       value: Any?,
-      valueContext: ValueContext
+      valueContext: ValueContext,
+      nullable: Boolean
    ): Either<List<CompilationError>, Any?> {
       return when (value) {
-         null -> listOf(CompilationError(valueContext.toCompilationUnit(), "Null values are not supported here")).left()
+         null -> {
+            if (!nullable) {
+               listOf(CompilationError(valueContext.toCompilationUnit(), "null values are not supported here")).left()
+            } else {
+               Either.Right(null)
+            }
+         }
          is Collection<*> -> {
             // We don't need to verify that the inner types of the array match,
             // as that was verified whilst parsing the array.
@@ -297,7 +305,7 @@ internal class QueryCompiler(
          ).left()
       }
       val arrayMemberType = factType.memberType
-      val readValue = valueArray.value().map { readValue(it, arrayMemberType) }
+      val readValue = valueArray.value().map { readValue(it, arrayMemberType, false) }
          .invertEitherList()
          .flattenErrors()
       return readValue
@@ -319,7 +327,7 @@ internal class QueryCompiler(
       val mapResult = objectValue.objectField().map { objectField ->
          val fieldName = objectField.identifier().IdentifierToken().text
          val field = factType.field(fieldName)
-         val fieldValue = readValue(objectField.value(), field.type)
+         val fieldValue = readValue(objectField.value(), field.type, field.nullable)
             .getOrElse {
                errors.addAll(it)
                null

@@ -28,6 +28,7 @@ import lang.taxi.query.FactValue
 import lang.taxi.query.Parameter
 import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.*
+import lang.taxi.services.OperationScope
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintValidator
 import lang.taxi.services.operations.constraints.ExpressionConstraint
@@ -2285,7 +2286,7 @@ class TokenProcessor(
             parseOperationContract(operationDeclaration, returnType, namespace).map { contract ->
                Operation(
                   name = signature.identifier().text,
-                  scope = scope,
+                  scope = OperationScope.forToken(scope),
                   annotations = collateAnnotations(operationDeclaration.annotation()),
                   parameters = operationParameters,
                   compilationUnits = listOf(operationDeclaration.toCompilationUnit()),
@@ -2463,7 +2464,7 @@ class TokenProcessor(
 
    private fun compilePolicyRuleset(namespace: String, token: PolicyRuleSetContext): RuleSet {
       val operationType = token.policyOperationType().identifier()?.text
-      val operationScope = OperationScope.parse(token.policyScope()?.text)
+      val operationScope = PolicyOperationScope.parse(token.policyScope()?.text)
       val scope = PolicyScope.from(operationType, operationScope)
       val statements = if (token.policyBody() != null) {
          token.policyBody().policyStatement().map { compilePolicyStatement(namespace, it) }

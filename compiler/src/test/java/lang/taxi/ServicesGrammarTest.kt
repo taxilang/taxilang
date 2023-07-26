@@ -5,6 +5,7 @@ import com.winterbe.expekt.should
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import lang.taxi.services.ConsumedOperation
+import lang.taxi.services.OperationScope
 import lang.taxi.services.operations.constraints.ConstantValueExpression
 import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
@@ -149,9 +150,9 @@ service MyService {
 }
         """.trimIndent()
       val doc = Compiler.forStrings(source).compile()
-      expect(doc.service("MyService").operation("readSomething").scope).to.equal("read")
-      expect(doc.service("MyService").operation("writeSomething").scope).to.equal("write")
-      expect(doc.service("MyService").operation("somethingElse").scope).to.be.`null`
+      expect(doc.service("MyService").operation("readSomething").scope).to.equal(OperationScope.READ_ONLY)
+      expect(doc.service("MyService").operation("writeSomething").scope).to.equal(OperationScope.MUTATION)
+      expect(doc.service("MyService").operation("somethingElse").scope).to.equal(OperationScope.READ_ONLY)
    }
 
    @Test

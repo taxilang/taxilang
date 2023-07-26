@@ -10,7 +10,9 @@ import lang.taxi.types.Type
 
 data class Operation(
    override val name: String,
-   val scope: String? = null,
+   // this used to be a string, but not sure what the use
+   // case is for this to be
+   val scope: OperationScope = OperationScope.READ_ONLY,
    override val annotations: List<Annotation>,
    override val parameters: List<Parameter>,
    override val returnType: Type,
@@ -31,3 +33,14 @@ data class Operation(
    override fun hashCode(): Int = equality.hash()
 }
 
+enum class OperationScope(val token: String) {
+   READ_ONLY("read"),
+   MUTATION("write");
+
+   companion object {
+      fun forToken(tokenValue: String?): OperationScope {
+         if (tokenValue == null) return READ_ONLY
+         return values().firstOrNull { it.token == tokenValue } ?: error("Unknown scope $tokenValue")
+      }
+   }
+}

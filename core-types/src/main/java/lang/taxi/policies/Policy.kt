@@ -26,25 +26,25 @@ data class RuleSet(
  * operation
  *
  */
-data class PolicyScope(val operationType: String = WILDCARD_OPERATION_TYPE, val operationScope: OperationScope = DEFAULT_OPERATION_SCOPE) {
-    fun appliesTo(operationType: String?, operationScope: OperationScope): Boolean {
+data class PolicyScope(val operationType: String = WILDCARD_OPERATION_TYPE, val policyOperationScope: PolicyOperationScope = DEFAULT_OPERATION_SCOPE) {
+    fun appliesTo(operationType: String?, policyOperationScope: PolicyOperationScope): Boolean {
         val operationTypeMatches = operationTypeMatches(this.operationType, operationType)
-        val scopeMatches = operationScopeMatches(this.operationScope, operationScope)
+        val scopeMatches = operationScopeMatches(this.policyOperationScope, policyOperationScope)
         return operationTypeMatches && scopeMatches
     }
 
     override fun toString(): String {
-        return "Policy scope $operationType ${operationScope.symbol}"
+        return "Policy scope $operationType ${policyOperationScope.symbol}"
     }
 
-    private fun operationScopeMatches(policyScope: OperationScope, operationScope: OperationScope): Boolean {
+    private fun operationScopeMatches(policyScope: PolicyOperationScope, policyOperationScope: PolicyOperationScope): Boolean {
         // TODO : Haven't given this much thought, so this needs revisiting.
         // In theory, if one of the scopes covers both internal & external, then it's a match,
         // But this is a quick impl, and that thought might be wrong.
         return when {
-            policyScope == operationScope -> true
-            policyScope == OperationScope.INTERNAL_AND_EXTERNAL -> true
-            operationScope == OperationScope.INTERNAL_AND_EXTERNAL -> true
+            policyScope == policyOperationScope -> true
+            policyScope == PolicyOperationScope.INTERNAL_AND_EXTERNAL -> true
+            policyOperationScope == PolicyOperationScope.INTERNAL_AND_EXTERNAL -> true
             else -> false
         }
 
@@ -63,12 +63,12 @@ data class PolicyScope(val operationType: String = WILDCARD_OPERATION_TYPE, val 
 
     companion object {
         const val WILDCARD_OPERATION_TYPE = "*"
-        val DEFAULT_OPERATION_SCOPE = OperationScope.INTERNAL_AND_EXTERNAL
+        val DEFAULT_OPERATION_SCOPE = PolicyOperationScope.INTERNAL_AND_EXTERNAL
 
         val DEFAULT_POLICY_SCOPE = PolicyScope()
 
-        fun from(operationType: String?, operationScope: OperationScope?): PolicyScope {
-            return PolicyScope(operationType ?: WILDCARD_OPERATION_TYPE, operationScope ?: DEFAULT_OPERATION_SCOPE)
+        fun from(operationType: String?, policyOperationScope: PolicyOperationScope?): PolicyScope {
+            return PolicyScope(operationType ?: WILDCARD_OPERATION_TYPE, policyOperationScope ?: DEFAULT_OPERATION_SCOPE)
         }
     }
 }
@@ -80,14 +80,14 @@ data class PolicyScope(val operationType: String = WILDCARD_OPERATION_TYPE, val 
  * and then strict rules about what is actually returned back out to the caller.
  */
 
-enum class OperationScope(val symbol: String) {
+enum class PolicyOperationScope(val symbol: String) {
     INTERNAL_AND_EXTERNAL("internal"),
 
     EXTERNAL("external");
 
     companion object {
-        private val bySymbol = OperationScope.values().associateBy { it.symbol }
-        fun parse(input: String?): OperationScope? {
+        private val bySymbol = PolicyOperationScope.values().associateBy { it.symbol }
+        fun parse(input: String?): PolicyOperationScope? {
             return if (input == null) null else
                 bySymbol[input] ?: error("Unknown scope - $input")
         }

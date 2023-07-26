@@ -4,6 +4,7 @@ import lang.taxi.TaxiDocument
 import lang.taxi.generators.Logger
 import lang.taxi.generators.NamingUtils.getNamespace
 import lang.taxi.services.Operation
+import lang.taxi.services.OperationScope
 import lang.taxi.services.Parameter
 import lang.taxi.services.Service
 import lang.taxi.sources.SourceCode
@@ -45,7 +46,7 @@ class SoapServiceMapper(
       val responseType = unwrapEnvelopeType(responseTypes.single())
       val operation = Operation(
          name = operationName.typeName,
-         scope = null,
+         scope = OperationScope.READ_ONLY, // TODO : How do we detect mutating services?
          annotations = emptyList(),
          parameters = parameters,
          returnType = responseType,

@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import lang.taxi.services.OperationScope
 
 class TaxiQlMutationsSpec : DescribeSpec ({
    describe("declaring mutations") {
@@ -20,7 +21,7 @@ class TaxiQlMutationsSpec : DescribeSpec ({
          src.compiled()
             .service("PersonService")
             .operation("updatePerson")
-            .scope.shouldBe("write")
+            .scope.shouldBe(OperationScope.MUTATION)
       }
       it("a query may declare a mutation following a find statement") {
          val query = """
