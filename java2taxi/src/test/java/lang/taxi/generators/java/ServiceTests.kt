@@ -188,7 +188,7 @@ namespace foo {
 
 
    service JavaService {
-      operation findByEmail(  arg0 : FirstName ) : foo.Person
+      read operation findByEmail(  arg0 : FirstName ) : foo.Person
    }
 }""".trimNewLines())
    }
@@ -224,7 +224,7 @@ namespace taxi.example {
       @Service("TestService")
       @Namespace("taxi.example")
       class TestService {
-         @Operation(scope = "read")
+         @Operation(scope = OperationScope.READ_ONLY)
          fun findEmail(input: String): String {
             TODO("Not a real service")
          }

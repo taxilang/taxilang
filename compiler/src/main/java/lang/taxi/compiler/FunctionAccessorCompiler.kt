@@ -2,18 +2,15 @@ package lang.taxi.compiler
 
 import arrow.core.Either
 import arrow.core.flatMap
-import arrow.core.left
 import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.TaxiParser
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
-import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.expressions.Expression
 import lang.taxi.findNamespace
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
-import lang.taxi.functions.FunctionModifiers
 import lang.taxi.source
 import lang.taxi.text
 import lang.taxi.types.FieldReferenceSelector
@@ -56,7 +53,7 @@ class FunctionAccessorCompiler(
 
       ): Either<List<CompilationError>, FunctionAccessor> {
       val namespace = functionContext.findNamespace()
-      return tokenProcessor.attemptToLookupTypeByName(
+      return tokenProcessor.attemptToLookupSymbolByName(
          namespace,
          functionContext.qualifiedName().identifier().text(),
          functionContext,

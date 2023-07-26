@@ -232,7 +232,7 @@ $operations
       val operationName = operation.name
       val typeDoc = operation.typeDoc.asTypeDocBlock()
       val annotations = generateAnnotations(operation)
-      val scope = if (operation.scope != null) operation.scope + " " else ""
+      val scope = if (operation.scope != null) operation.scope.token + " " else ""
       return """$typeDoc
 $annotations
 ${scope}operation $operationName( $params )$returnDeclaration""".trimIndent()

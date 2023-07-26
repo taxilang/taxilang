@@ -174,6 +174,8 @@ enum class PrimitiveType(
       const val NAMESPACE = "lang.taxi"
 
 
+
+
       val NUMBER_TYPES = NumberTypes.NUMBER_TYPES
       fun fromDeclaration(value: String): PrimitiveType {
          return typesByLookup[value] ?: throw IllegalArgumentException("$value is not a valid primative")
@@ -186,6 +188,10 @@ enum class PrimitiveType(
       @Deprecated(replaceWith = ReplaceWith("ArrayType.isTypedCollection"), message = "Deprecated")
       fun isTypedCollection(qualifiedName: QualifiedName): Boolean {
          return ArrayType.isTypedCollection(qualifiedName)
+      }
+
+      fun isNumberType(type: Type):Boolean {
+         return type.basePrimitive != null && NUMBER_TYPES.contains(type.basePrimitive)
       }
 
       fun isPrimitiveType(qualifiedName: String): Boolean {

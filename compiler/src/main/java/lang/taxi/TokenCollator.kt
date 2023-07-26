@@ -177,6 +177,10 @@ data class Tokens(
       }
    }
 
+   fun containsUnparsedService(qualifiedName: String) : Boolean {
+      return this.unparsedServices.containsKey(qualifiedName)
+   }
+
 }
 
 

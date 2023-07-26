@@ -60,7 +60,8 @@ enum class QueryMode(val directive: String) {
    FIND_ALL("find"),
    // See the grammar for thoughts around this.
    MAP("map"),
-   STREAM("stream");
+   STREAM("stream"),
+   MUTATE("call");
 
    companion object {
       fun forToken(token: String): QueryMode {

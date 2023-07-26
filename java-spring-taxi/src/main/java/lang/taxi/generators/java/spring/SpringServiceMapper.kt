@@ -5,6 +5,7 @@ import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.generators.java.*
 import lang.taxi.services.Operation
+import lang.taxi.services.OperationScope
 import lang.taxi.services.Service
 import lang.taxi.types.Arrays
 import lang.taxi.types.CompilationUnit
@@ -94,7 +95,8 @@ class SpringServiceMapper(val baseUrl: String) : ServiceMapper {
             ),
             returnType = returnType,
             typeDoc = method.findTypeDoc(),
-            scope = null,
+            scope = OperationScope.READ_ONLY, // TODO
+
             compilationUnits = listOf(CompilationUnit.Companion.generatedFor("${javaClass.name}::${method.name}"))
          )
       }

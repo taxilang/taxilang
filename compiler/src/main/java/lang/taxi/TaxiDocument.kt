@@ -74,6 +74,7 @@ open class TaxiDocument(
       return when {
          containsType(qualifiedName) -> type(qualifiedName)
          containsFunction(qualifiedName) -> function(qualifiedName)
+         containsService(qualifiedName) -> service(qualifiedName)
          else -> error("Importable token $qualifiedName is not defined")
       }
    }
@@ -142,7 +143,8 @@ open class TaxiDocument(
          return PrimitiveType.fromDeclaration(qualifiedName.toString())
       }
 
-      return typeMap[qualifiedName.toString()] ?: error("No type named $qualifiedName defined")
+      return typeMap[qualifiedName.toString()] ?:
+         error("No type named $qualifiedName defined")
 
    }
 
@@ -152,7 +154,7 @@ open class TaxiDocument(
    fun view(name: String) = viewMap[name]
 
    fun containsImportable(tokenName: String): Boolean {
-      return typeMap.containsKey(tokenName) || functionsMap.containsKey(tokenName)
+      return typeMap.containsKey(tokenName) || functionsMap.containsKey(tokenName) || servicesMap.containsKey(tokenName)
    }
 
    fun containsType(typeName: String) = typeMap.containsKey(typeName)

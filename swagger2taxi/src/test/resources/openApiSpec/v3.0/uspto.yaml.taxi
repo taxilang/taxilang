@@ -26,12 +26,12 @@ namespace vyne.openApi {
    
    service Service {
       @HttpOperation(method = "GET" , url = "{scheme}://developer.uspto.gov/ds-api/")
-      operation list_data_sets(  ) : dataSetList
+      read operation list_data_sets(  ) : dataSetList
    }
    service DatasetVersionFieldsService {
       [[ This GET API returns the list of all the searchable field names that are in the oa_citations. Please see the 'fields' attribute which returns an array of field names. Each field or a combination of fields can be searched using the syntax options shown below. ]]
       @HttpOperation(method = "GET" , url = "{scheme}://developer.uspto.gov/ds-api/{dataset}/{version}/fields")
-      operation list_searchable_fields(
+      read operation list_searchable_fields(
       [[ Name of the dataset. ]]
       @PathVariable(value = "dataset") dataset : String,
       [[ Version of the dataset. ]]
@@ -40,7 +40,7 @@ namespace vyne.openApi {
    service DatasetVersionRecordsService {
       [[ This API is based on Solr/Lucense Search. The data is indexed using SOLR. This GET API returns the list of all the searchable field names that are in the Solr Index. Please see the 'fields' attribute which returns an array of field names. Each field or a combination of fields can be searched using the Solr/Lucene Syntax. Please refer https://lucene.apache.org/core/3_6_2/queryparsersyntax.html#Overview for the query syntax. List of field names that are searchable can be determined using above GET api. ]]
       @HttpOperation(method = "POST" , url = "{scheme}://developer.uspto.gov/ds-api/{dataset}/{version}/records")
-      operation perform_search(
+      read operation perform_search(
       [[ Version of the dataset. ]]
       @PathVariable(value = "version") version : String,
       [[ Name of the dataset. In this case, the default value is oa_citations ]]

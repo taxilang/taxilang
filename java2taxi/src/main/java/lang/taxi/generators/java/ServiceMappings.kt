@@ -7,6 +7,7 @@ import lang.taxi.annotations.ResponseContract
 import lang.taxi.annotations.declaresName
 import lang.taxi.annotations.qualifiedName
 import lang.taxi.services.OperationContract
+import lang.taxi.services.OperationScope
 import lang.taxi.services.Parameter
 import lang.taxi.services.Service
 import lang.taxi.services.operations.constraints.Constraint
@@ -77,7 +78,7 @@ data class DefaultServiceMapper(
                returnType = returnType,
                returnTypeConstraints = parseConstraints(method.getAnnotation(ResponseContract::class.java))
             ),
-            scope = operationAnnotation.scope,
+            scope = OperationScope.valueOf(operationAnnotation.scope.name),
             compilationUnits = listOf(CompilationUnit.unspecified())
          )
          operationExtensions.fold(operation) { operation, extension ->

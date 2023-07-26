@@ -128,7 +128,7 @@ class OpenApiGenerator {
       paths: Paths,
       components: Components,
    ) {
-      val returnType = query.projectedObjectType ?: query.returnType
+      val returnType = query.returnType
       val responseSchema = typeAsSchema(returnType, components)
       val httpOperation = HttpOperation.fromAnnotation(query.annotation(HttpOperation.NAME)!!)
 

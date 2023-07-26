@@ -16,13 +16,19 @@ fun TaxiParser.LiteralContext.valueOrNull(): Any? {
 fun TaxiParser.LiteralContext.valueOrNullValue():Any {
    return if (this.isNullValue()) NullValue else this.value()
 }
+fun TaxiParser.LiteralContext.nullableValue(): Any? {
+   return when {
+      this.isNullValue() -> null
+      else -> value()
+   }
+}
 fun TaxiParser.LiteralContext.value(): Any {
    return when {
       this.BooleanLiteral() != null -> this.BooleanLiteral().text.toBoolean()
       this.StringLiteral() != null -> stringLiteralValue(this.StringLiteral())
       this.IntegerLiteral() != null -> this.IntegerLiteral().text.toInt()
       this.DecimalLiteral() != null -> BigDecimal(this.DecimalLiteral().text)
-      this.isNullValue() -> error("Null is not permitted here")
+      this.isNullValue() -> error("null is not permitted here")
       else -> TODO()
 //      this.IntegerLiteral() != null -> this.IntegerLiteral()
    }
