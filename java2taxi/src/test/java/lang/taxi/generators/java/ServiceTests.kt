@@ -188,7 +188,7 @@ namespace foo {
 
 
    service JavaService {
-      read operation findByEmail(  arg0 : FirstName ) : foo.Person
+      operation findByEmail(  arg0 : FirstName ) : foo.Person
    }
 }""".trimNewLines())
    }

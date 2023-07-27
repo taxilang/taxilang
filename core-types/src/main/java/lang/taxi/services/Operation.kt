@@ -33,8 +33,8 @@ data class Operation(
    override fun hashCode(): Int = equality.hash()
 }
 
-enum class OperationScope(val token: String) {
-   READ_ONLY("read"),
+enum class OperationScope(val token: String, val isDefault: Boolean = false) {
+   READ_ONLY("read", isDefault = true),
    MUTATION("write");
 
    companion object {
