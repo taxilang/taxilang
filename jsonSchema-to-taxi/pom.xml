@@ -17,6 +17,10 @@
    </properties>
 
    <dependencies>
+      <!-- TODO : We need to migrate this off, as this is no longer supported
+      and introduces transitive dependencies with CVE of HIGH risk.
+      Their suggested replacement is  https://github.com/erosb/json-sKema
+      however, it looks like this isn't really used, so will wait -->
       <dependency>
          <groupId>com.github.everit-org.json-schema</groupId>
          <artifactId>org.everit.json.schema</artifactId>
