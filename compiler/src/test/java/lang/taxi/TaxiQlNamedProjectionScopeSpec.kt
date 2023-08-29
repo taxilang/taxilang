@@ -43,6 +43,48 @@ class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
          accessor.scope.type.qualifiedName.should.equal("Actor")
       }
 
+      it("should not allow narrowing projection scope to a type that is not present") {
+         val complilationError = """
+            type Unrelated inherits String
+            model Actor {
+              actorId : ActorId inherits Int
+              name : ActorName inherits String
+            }
+            model Film {
+               title : FilmTitle inherits String
+               headliner : ActorId
+               cast: Actor[]
+            }
+         """.compiledWithQueryProducingCompilationException(
+            """
+            find { Film[] } as (unrelated:Unrelated) -> {
+               title : FilmTitle
+            }[]
+         """.trimIndent()
+         )
+         TODO()
+      }
+      it("should not allow narrowing a projection to a type that is present within an array") {
+         val complilationError = """
+            type ActorName inherits String
+            model Movie {
+                title : MovieTitle inherits String
+                actors : ActorName[]
+            }
+         """.compiledWithQueryProducingCompilationException(
+            """
+                // This should be illegal, as ActorName is actually present in an Array,
+                // (ActorName[])
+                // so the projection scope is ambiguous.
+                //
+            find { Movie } as (actors:ActorName) -> {
+               actorNames : ActorName
+            }
+         """.trimIndent()
+         )
+         TODO()
+      }
+
       it("should allow referencing a named projection scope in a constraint") {
          val (schema, query) = """
             model Film {
