@@ -265,6 +265,7 @@ class Compiler(
          Compiler(sources.mapIndexed { index, source -> CharStreams.fromPath(source.toPath()) })
 
       fun forStrings(vararg source: String) = forStrings(source.toList())
+
    }
 
    private val typeChecker: TypeChecker = TypeChecker(config.typeCheckerEnabled)

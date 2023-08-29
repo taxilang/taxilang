@@ -4,6 +4,7 @@ import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.Argument
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.expressions.Expression
+import lang.taxi.query.Parameter
 
 /**
  * A set of fields with additional conditional mapping logic
@@ -103,11 +104,40 @@ data class FieldReferenceSelector(val fieldName: String, override val returnType
    override fun asTaxi(): String = "this.$fieldName"
 }
 
-data class ArgumentSelector(val scope:Argument, val selectors: List<FieldReferenceSelector>, override val compilationUnits:List<CompilationUnit>): Accessor, WhenSelectorExpression, Expression() {
+data class ArgumentSelector(
+   val scope: Argument,
+   val selectors: List<FieldReferenceSelector>,
+   override val compilationUnits: List<CompilationUnit>
+) : Accessor, WhenSelectorExpression, Expression() {
    override val declaredType: Type = selectors.last().declaredType
    override val returnType: Type = declaredType
    val path = selectors.joinToString(".") { it.fieldName }
-   override fun asTaxi(): String = "${scope.name}.$path"
+   override fun asTaxi(): String {
+      // TODO : Need tests around this.
+      // Found that with the query of:
+      // ```taxiql
+      // @HttpOperation(url = '/api/q/films-with-reviews/{filmId}', method = 'GET')
+      //query testQuery(@PathVariable("filmId") filmId:FilmId) {
+      //   find { Film(FilmId == filmId) } as {
+      //       ...
+      //   }[]
+      //}
+      // ```
+      // That the resolution of filmId param in the Film() block was generating the wrong taxiQL.
+      // However, not sure what the other scenarios are that need tests, and have a demo in an hour.
+      val variableDeclaration = when (scope) {
+         is Parameter -> scope.name
+         else -> "${scope.name}.$path"
+      }
+      val variableValue = when {
+         scope is Parameter && scope.value.hasValue -> {
+            " = ${scope.value.asTaxi()}"
+         }
+
+         else -> ""
+      }
+      return variableDeclaration + variableValue
+   }
 }
 
 data class WhenCaseBlock(

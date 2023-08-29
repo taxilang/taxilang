@@ -10,11 +10,6 @@ data class Parameter(
    val value: FactValue,
    override val annotations: List<Annotation>
 ) : Argument, Annotatable {
-   companion object {
-      fun variable(name: String, type: Type, annotations: List<Annotation> = emptyList()): Parameter {
-         return Parameter(name, FactValue.Variable(type, name), annotations)
-      }
-   }
 
    override val type: Type
       get() = value.type

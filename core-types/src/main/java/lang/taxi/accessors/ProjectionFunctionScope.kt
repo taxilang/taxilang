@@ -54,6 +54,18 @@ interface Argument {
       return identifiers.isNotEmpty() && identifiers.first() == name
    }
 
+   fun matchesScope(other: Argument): Boolean {
+      return when {
+         this == other -> true
+         // TODO : I'm not sure about this implementation.
+         // eg: Two scopes, both called "THIS", (because of implicit this)
+         // could incorrectly match here.
+         this.name == other.name && this.type == other.type -> true
+         else -> false
+      }
+
+   }
+
    /**
     * Allows implementations to optionally prune the first few parts of a
     * path.

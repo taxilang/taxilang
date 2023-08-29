@@ -2,15 +2,22 @@ package lang.taxi.query
 
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.QualifiedName
+import lang.taxi.types.TaxiStatementGenerator
 import lang.taxi.types.Type
 import lang.taxi.types.TypedValue
 
-sealed class FactValue() {
+sealed class FactValue() : TaxiStatementGenerator {
    abstract val type:Type
-   data class Constant(val value: TypedValue) : FactValue() {
+
+   data class Constant(val value: TypedValue, private val taxi: String) : FactValue(), TaxiStatementGenerator {
       override val type: Type = value.type
+      override fun asTaxi(): String = taxi
    }
-   data class Variable(override val type: Type, val name: String) : FactValue()
+
+   data class Variable(override val type: Type, val name: String, private val taxi: String) : FactValue(),
+      TaxiStatementGenerator {
+      override fun asTaxi(): String = taxi
+   }
 
    /**
     * Convenience method

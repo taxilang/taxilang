@@ -28,7 +28,6 @@ import lang.taxi.query.FactValue
 import lang.taxi.query.Parameter
 import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.*
-import lang.taxi.services.OperationScope
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintValidator
 import lang.taxi.services.operations.constraints.ExpressionConstraint
@@ -281,7 +280,12 @@ class TokenProcessor(
                   val parameterName = queryParam.identifier().text ?: "p$idx"
                   val queryParameter: Either<List<CompilationError>, Parameter> =
                      typeOrError(namedQueryContext.findNamespace(), queryParam.typeReference()).map { parameterType ->
-                        Parameter(parameterName, FactValue.Variable(parameterType, parameterName), annotations)
+                        // Note: Not sure about queryParam.text for the taxi.
+                        Parameter(
+                           parameterName,
+                           FactValue.Variable(parameterType, parameterName, queryParam.text),
+                           annotations
+                        )
                      }
                   queryParameter
                }?.invertEitherList() ?: emptyList<Parameter>().right()

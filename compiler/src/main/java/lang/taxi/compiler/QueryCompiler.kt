@@ -196,13 +196,13 @@ internal class QueryCompiler(
                   if (factValue != null) {
                      Parameter(
                         name = variableName,
-                        value = FactValue.Constant(TypedValue(factType, factValue)),
+                        value = FactValue.Constant(TypedValue(factType, factValue), factCtx.value().text),
                         annotations = emptyList()
                      )
                   } else {
                      Parameter(
                         name = variableName,
-                        value = FactValue.Variable(factType, variableName),
+                        value = FactValue.Variable(factType, variableName, factCtx.variableName().text),
                         annotations = emptyList()
                      )
                   }
