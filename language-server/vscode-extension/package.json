@@ -26,8 +26,7 @@
                "taxi"
             ],
             "extensions": [
-               ".taxi",
-               ".conf"
+               ".taxi"
             ],
             "configuration": "./language-configuration.json"
          }
