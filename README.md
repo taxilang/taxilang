@@ -56,8 +56,8 @@ operation getPerson(id: CustomerId):Customer
 
 ### Playground - Voyager
 
-[Voyager](https://voyager.vyne.co) is a playground for quickly writing Taxi, and generating diagrams. Read more about
-why we built Voyager, and where it's going, [here](https://blog.vyne.co/introducing-voyager/)
+[Voyager](https://voyager.orbitalhq.com) is a playground for quickly writing Taxi, and generating diagrams. Read more about
+why we built Voyager, and where it's going, [here](https://orbitalhq./introducing-voyager/)
 
 ## FAQ's
 
