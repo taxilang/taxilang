@@ -118,6 +118,7 @@ class TaxiQlSpec : DescribeSpec({
                  import foo.TradeDate
 
                  query RecentOrdersQuery( startDate:Instant, endDate:Instant ) {
+                    given { startDate, endDate }
                     find {
                        Order[]( TradeDate >= startDate && TradeDate < endDate )
                     } as OutputOrder[]
