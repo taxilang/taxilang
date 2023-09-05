@@ -40,7 +40,7 @@ internal class QueryCompiler(
          ctx.queryOrMutation().queryDirective()?.K_Map() != null -> QueryMode.MAP
          else -> error("Unhandled Query Directive")
       }
-      val factsOrErrors = ctx.givenBlock()?.let { parseFacts(it) } ?: emptyList<Parameter>().right()
+      val factsOrErrors = ctx.givenBlock()?.let { parseFacts(it, parameters) } ?: emptyList<Parameter>().right()
       val queryOrErrors = factsOrErrors.flatMap { facts ->
 
          parseQueryBody(ctx, facts + parameters, queryDirective).flatMap { typesToDiscover ->
@@ -126,8 +126,13 @@ internal class QueryCompiler(
                type, queryType.parameterConstraint(), queryDirective, constraintBuilder, parameters
             )
          }
-      }?.invertEitherList()?.flattenErrors() ?:
-         parseAnonymousTypesIfPresent(namespace, anonymousTypeDefinition, queryDirective, constraintBuilder, parameters)
+      }?.invertEitherList()?.flattenErrors() ?: parseAnonymousTypesIfPresent(
+         namespace,
+         anonymousTypeDefinition,
+         queryDirective,
+         constraintBuilder,
+         parameters
+      )
 
    }
 
@@ -137,7 +142,7 @@ internal class QueryCompiler(
       queryDirective: QueryMode,
       constraintBuilder: ConstraintBuilder,
       parameters: List<Parameter>
-   ): Either<List<CompilationError>,List<DiscoveryType>> {
+   ): Either<List<CompilationError>, List<DiscoveryType>> {
       if (anonymousTypeDefinition == null) {
          return emptyList<DiscoveryType>().right()
       }
@@ -178,20 +183,50 @@ internal class QueryCompiler(
       }
    }
 
-   private fun parseFacts(givenBlock: TaxiParser.GivenBlockContext): Either<List<CompilationError>, List<Parameter>> {
+   private fun parseFacts(
+      givenBlock: TaxiParser.GivenBlockContext,
+      parameters: List<Parameter>
+   ): Either<List<CompilationError>, List<Parameter>> {
       return givenBlock.factList().fact().mapIndexed { idx, factCtx ->
-         parseFact(idx, factCtx)
+         parseFact(idx, factCtx, parameters)
       }.invertEitherList().flattenErrors()
 
    }
 
-   private fun parseFact(index: Int, factCtx: TaxiParser.FactContext): Either<List<CompilationError>, Parameter> {
+   private fun parseFact(
+      index: Int,
+      factCtx: TaxiParser.FactContext,
+      parameters: List<Parameter>
+   ): Either<List<CompilationError>, Parameter> {
       val variableName = factCtx.variableName()?.identifier()?.text ?: "fact$index"
       val namespace = factCtx.findNamespace()
 
-      return tokenProcessor.typeOrError(namespace, factCtx.typeReference()).flatMap { factType ->
+      return when {
+         factCtx.variableName() != null && factCtx.factDeclaration() == null -> parseFactVariableReference(
+            factCtx.variableName(),
+            parameters
+         )
+
+         factCtx.variableName() == null && factCtx.factDeclaration() != null -> parseFactValueDeclaration(
+            factCtx,
+            namespace,
+            variableName
+         )
+
+         else -> error("Expected either a variable name reference, or a fact declaration with a value, but got both (or neither): ${factCtx.parent.text}")
+      }
+   }
+
+   private fun parseFactValueDeclaration(
+      factCtx: TaxiParser.FactContext,
+      namespace: String,
+      variableName: String
+   ): Either<List<CompilationError>, Parameter> {
+      require(factCtx.factDeclaration() != null) { "Expected the declared fact to have a value" }
+      val factDeclaration = factCtx.factDeclaration()
+      return tokenProcessor.typeOrError(namespace, factDeclaration.typeReference()).flatMap { factType ->
          try {
-            readValue(factCtx.value(), factType, false)
+            readValue(factDeclaration.value(), factType, false)
                .map { factValue ->
                   if (factValue != null) {
                      Parameter(
@@ -200,21 +235,39 @@ internal class QueryCompiler(
                         annotations = emptyList()
                      )
                   } else {
-                     Parameter(
-                        name = variableName,
-                        value = FactValue.Variable(factType, variableName),
-                        annotations = emptyList()
-                     )
+                     error("It is illegal in the grammar to not decalre a factValue. You shouldn't hit this part")
+
                   }
                }
          } catch (e: Exception) {
             listOf(CompilationError(factCtx.start, "Failed to create TypedInstance - ${e.message}")).left()
          }
-
       }
    }
 
-   private fun readValue(valueContext: ValueContext?, factType: Type, nullable: Boolean): Either<List<CompilationError>, Any?> {
+   private fun parseFactVariableReference(
+      variableName: TaxiParser.VariableNameContext,
+      parameters: List<Parameter>
+   ): Either<List<CompilationError>, Parameter> {
+      val resolved = parameters.firstOrNull { it.name == variableName.identifier().text }
+      @Suppress("IfThenToElvis")
+      return if (resolved == null) {
+         listOf(
+            CompilationError(
+               variableName.toCompilationUnit(),
+               "Cannot resolve variable ${variableName.identifier().toString()}"
+            )
+         ).left()
+      } else {
+         resolved.right()
+      }
+   }
+
+   private fun readValue(
+      valueContext: ValueContext?,
+      factType: Type,
+      nullable: Boolean
+   ): Either<List<CompilationError>, Any?> {
       if (valueContext == null) {
          return (null as Any?).right()
       }
@@ -244,6 +297,7 @@ internal class QueryCompiler(
                Either.Right(null)
             }
          }
+
          is Collection<*> -> {
             // We don't need to verify that the inner types of the array match,
             // as that was verified whilst parsing the array.

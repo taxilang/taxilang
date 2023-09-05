@@ -746,16 +746,23 @@ givenBlock : 'given' '{' factList '}';
 
 factList : fact (',' fact)*;
 
-// TODO :  We could/should make variableName optional
-fact : variableName? typeReference ('=' value)?;
 
+// MP: 04-Sep-23: Passing the value used to be optional.
+// What was the use-case for this?
+// Improving strictness around given blocks that refer to variables from queries,
+// by clarifying the syntax. (factDeclaration vs variableName)
+factDeclaration : (variableName ':')? typeReference '=' value;
+fact: factDeclaration | variableName;
+
+// TODO : We really should support expressions here.
 value : objectValue | valueArray | literal;
 
 objectValue: '{' objectField (',' objectField)* '}';
 objectField : identifier ':' value;
 valueArray: '[' value? (',' value)* ']';
 
-variableName: identifier ':';
+variableName: identifier;
+
 queryBody:
    typeDoc? annotation*
    givenBlock?
