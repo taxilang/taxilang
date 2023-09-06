@@ -57,26 +57,23 @@ class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGener
          model.dependencies.add(org.apache.maven.model.Dependency().apply {
             groupId = "org.jetbrains.kotlin"
             artifactId = "kotlin-stdlib"
-            version = config.kotlinVersion
+            version = property("kotlin.version")
          })
          model.dependencies.add(org.apache.maven.model.Dependency().apply {
             groupId = "org.taxilang"
             artifactId = "taxi-annotations"
-            version = taxiVersion
+            version = property("taxi.version")
          })
-         model.dependencies.add(org.apache.maven.model.Dependency().apply {
-            groupId = "com.google.guava"
-            artifactId = "guava"
-            version = config.guavaVersion
-         })
+
 
          if (model.properties == null) {
             model.properties = Properties()
          }
          model.properties.set("maven.compiler.source", config.jvmTarget)
          model.properties.set("maven.compiler.target", config.jvmTarget)
-         model.properties.set("kotlin.compiler.jvmTarget", config.jvmTarget)
-         model.properties.set("kotlin.compiler.languageVersion", config.kotlinLanguageVersion)
+
+         model.properties.set("kotlin.version", config.kotlinVersion)
+         model.properties.set("taxi.version", taxiVersion)
 
          if (model.build == null) {
             model.build = Build()
@@ -85,7 +82,7 @@ class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGener
          model.build.addPlugin(Plugin().apply {
             groupId = "org.jetbrains.kotlin"
             artifactId = "kotlin-maven-plugin"
-            version = config.kotlinVersion
+            version = property("kotlin.version")
 
             executions.add(PluginExecution().apply {
                id = "compile"
@@ -102,16 +99,17 @@ class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGener
       return mavenGenerator.generate(taxi, processors, environment)
    }
 
+   private fun property(s: String) = "\${$s}"
+
    override val artifact = Artifact.parse("kotlin")
 }
 
 data class KotlinPluginConfig(
    val outputPath: String = "kotlin",
-   val kotlinVersion: String = "1.5.32",
-   val kotlinLanguageVersion: String = "1.5",
-   val jvmTarget: String = "1.8",
+   val kotlinVersion: String = "1.8.10",
+   val kotlinLanguageVersion: String = "1.8",
+   val jvmTarget: String = "17",
    val maven: MavenGeneratorPluginConfig?,
-   val guavaVersion: String = "28.2-jre",
    val taxiVersion: String? = null,
    // Will default to the organisation name from the project if not defined
    val generatedTypeNamesPackageName: String? = null

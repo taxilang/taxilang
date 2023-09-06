@@ -54,7 +54,8 @@ class MavenPomProjectTest {
       val model = loadMavenModel()
 
       val taxiDependency = model.dependencies.first { it.groupId == "org.taxilang" }
-      taxiDependency.version.should.equal("0.5.0")
+      taxiDependency.version.should.equal("\${taxi.version}")
+      model.properties.getProperty("taxi.version").should.equal("0.5.0")
    }
 
    private fun loadMavenModel(): Model {
