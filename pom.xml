@@ -262,7 +262,16 @@
       <plugins>
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.22.2</version>
+            <version>3.1.2</version>
+            <configuration>
+               <includes>
+                  <include>Test*</include>
+                  <include>*Tests</include>
+                  <include>*Tests</include>
+                  <include>*Spec</include>
+                  <include>*Spek</include>
+               </includes>
+            </configuration>
          </plugin>
          <plugin>
             <groupId>com.amashchenko.maven.plugin</groupId>
