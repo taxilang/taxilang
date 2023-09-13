@@ -28,7 +28,6 @@ import lang.taxi.query.FactValue
 import lang.taxi.query.Parameter
 import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.*
-import lang.taxi.services.OperationScope
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintValidator
 import lang.taxi.services.operations.constraints.ExpressionConstraint
@@ -38,7 +37,6 @@ import lang.taxi.types.Annotation
 import lang.taxi.utils.*
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
-import java.security.SecureRandom
 import java.util.*
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -253,7 +251,7 @@ class TokenProcessor(
 
    private fun compileQueries() {
       this.tokens.anonymousQueries.forEach { (namespace, anonymousQueryContex) ->
-         val queryName = QualifiedName(namespace, AnonymousTypeNameGenerator.generate("AnonymousQuery"))
+         val queryName = QualifiedName(namespace, NameGenerator.generate("AnonymousQuery"))
          QueryCompiler(this, expressionCompiler())
             .parseQueryBody(
                name = queryName,
@@ -1379,7 +1377,7 @@ class TokenProcessor(
    fun parseAnonymousType(
       namespace: String,
       anonymousTypeDefinition: AnonymousTypeDefinitionContext,
-      anonymousTypeName: String = AnonymousTypeNameGenerator.generate(),
+      anonymousTypeName: String = NameGenerator.generate(),
       resolutionContext: ResolutionContext = ResolutionContext(),
    ): Either<List<CompilationError>, Type> {
       return compileAnonymousType(namespace, anonymousTypeName, anonymousTypeDefinition, resolutionContext)
@@ -1463,7 +1461,8 @@ class TokenProcessor(
          typeType.qualifiedName() != null -> resolveUserType(
             namespace,
             typeType.qualifiedName(),
-            typeType.typeArguments()
+            typeType.typeArguments(),
+            typeArgumentsInScope = typeArgumentsInScope
          )
 //         typeType.primitiveType() != null -> PrimitiveType.fromDeclaration(typeType.getChild(0).text).right()
          else -> TODO("Unhandled when branch in typeOrError for typeContext with text ${typeType.text}")
@@ -1652,6 +1651,9 @@ class TokenProcessor(
             if (MapType.isMapTypeName(requestedTypeName)) {
                return@flatMap MapType.untyped().right()
             }
+            if (TypeReference.isTypeReferenceTypeName(requestedTypeName)) {
+               return@flatMap TypeReference.untyped().right()
+            }
 
             val requestedNameIsQualified = requestedTypeName.contains(".")
             if (!requestedNameIsQualified) {
@@ -1671,10 +1673,11 @@ class TokenProcessor(
       namespace: Namespace,
       className: QualifiedNameContext,
       typeArgumentCtx: TypeArgumentsContext? = null,
-      symbolKind: SymbolKind = SymbolKind.TYPE
+      symbolKind: SymbolKind = SymbolKind.TYPE,
+      typeArgumentsInScope: List<TypeArgument> = emptyList()
    ): Either<List<CompilationError>, Type> {
       val typeArgumentTokens = typeArgumentCtx?.typeReference() ?: emptyList()
-      return typeArgumentTokens.map { typeArgument -> parseType(namespace, typeArgument) }
+      return typeArgumentTokens.map { typeArgument -> parseType(namespace, typeArgument, typeArgumentsInScope) }
          .invertEitherList()
          .flattenErrors()
          .flatMap { typeArguments ->
@@ -2613,18 +2616,6 @@ enum class SymbolKind {
          ANNOTATION -> token is AnnotationType
          SERVICE -> token is Service
       }
-   }
-}
-
-object AnonymousTypeNameGenerator {
-   private val random: SecureRandom = SecureRandom()
-   private val encoder: Base64.Encoder = Base64.getUrlEncoder().withoutPadding()
-
-   // This is both shorter than a UUID (e.g. Xl3S2itovd5CDS7cKSNvml4_ODA)  and also more secure having 160 bits of entropy.
-   fun generate(prefix: String = "AnonymousType"): String {
-      val buffer = ByteArray(20)
-      random.nextBytes(buffer)
-      return "$prefix${encoder.encodeToString(buffer)}"
    }
 }
 
