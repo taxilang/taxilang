@@ -123,6 +123,21 @@ open class TaxiDocument(
             else -> error("Cannot construct an array with multiple type parameters")
          }
       }
+      if (TypeReference.isTypeReferenceTypeName(qualifiedName)) {
+         return when {
+            qualifiedName.parameters.isEmpty() -> {
+               log().warn("Requested raw TypeReference.  This is doesn't really make any sense, but whatevs")
+               TypeReference.untyped()
+            }
+
+            qualifiedName.parameters.size == 1 -> {
+               val innerType = type(qualifiedName.parameters.first())
+               TypeReference(innerType, CompilationUnit.unspecified())
+            }
+
+            else -> error("Cannot construct an array with multiple type parameters")
+         }
+      }
 
       if (MapType.isMapTypeName(qualifiedName)) {
          return when {

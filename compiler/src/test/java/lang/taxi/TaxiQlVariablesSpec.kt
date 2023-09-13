@@ -1,10 +1,9 @@
 package lang.taxi
 
-import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.booleans.shouldBeFalse
-import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.services.operations.constraints.ExpressionConstraint
@@ -17,10 +16,17 @@ class TaxiQlVariablesSpec : DescribeSpec({
          val (schema,query) = """model Person {
             firstName : FirstName inherits String
             }
-         """.compiledWithQuery("given { name : FirstName } find { Person }")
-         val fact = query.facts.single()
-         fact.value.hasValue.shouldBeFalse()
-         fact.value.variableName.shouldBe("name")
+         """.compiledWithQuery("given { name : FirstName = 'Jimmy' } find { Person }")
+         val parameter = query.facts.single()
+         parameter.value.hasValue.shouldBeTrue()
+         parameter.value.typedValue.value.shouldBe("Jimmy")
+      }
+      it("is not permitted to define a variable in a given block without a value") {
+         val compilationException = """model Person {
+            firstName : FirstName inherits String
+            }
+         """.compiledWithQueryProducingCompilationException("given { name : FirstName  } find { Person }")
+         compilationException.errors[0].detailMessage.shouldContain("mismatched input '}'")
       }
 
       it("can query a date variable using a comparison") {

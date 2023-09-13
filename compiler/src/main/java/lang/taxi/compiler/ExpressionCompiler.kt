@@ -2,11 +2,16 @@ package lang.taxi.compiler
 
 import arrow.core.*
 import lang.taxi.*
+import lang.taxi.TaxiParser.ExpressionGroupContext
 import lang.taxi.TaxiParser.QualifiedNameContext
+import lang.taxi.TaxiParser.TypeMemberDeclarationContext
+import lang.taxi.TaxiParser.TypeProjectionContext
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.Argument
 import lang.taxi.accessors.LiteralAccessor
+import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.fields.FieldCompiler
+import lang.taxi.compiler.fields.FieldTypeSpec
 import lang.taxi.expressions.*
 import lang.taxi.functions.Function
 import lang.taxi.types.*
@@ -32,7 +37,7 @@ class ExpressionCompiler(
       null
    )
 
-   fun withParameters(arguments:List<Argument>): ExpressionCompiler {
+   fun withParameters(arguments: List<Argument>): ExpressionCompiler {
       // TODO : In future, does it make sense to "nest" these, so that as we add arguments,
       // they form scopes / contexts?
       // For now, everything is flat.
@@ -47,6 +52,21 @@ class ExpressionCompiler(
 
    fun compile(expressionGroup: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
       return when {
+         expressionGroup.children.size == 2 && expressionGroup.children.last() is TypeProjectionContext && expressionGroup.children.first() is ExpressionGroupContext -> {
+            // This is an expression with a projection.
+            // Compile the expression first...
+            return compile(expressionGroup.expressionGroup(0)).flatMap { expression ->
+               compileExpressionProjection( // ...then compile the projection
+                  expression,
+                  expressionGroup.typeProjection()!!
+               ).map { projectedTypeAndScope ->
+                  // ...and stick it all togetether as a ProjectingExpression
+                  val projection = FieldProjection.forNullable(expression.returnType, projectedTypeAndScope)!!
+                  ProjectingExpression(expression, projection)
+               }
+            }
+         }
+
          expressionGroup.LPAREN() != null && expressionGroup.RPAREN() != null -> {
             require(expressionGroup.children.size == 3) { "When handling an expression ${expressionGroup.text} expected exactly 3 children, including the parenthesis" }
             // There must be only one child not a bracket
@@ -62,6 +82,22 @@ class ExpressionCompiler(
          expressionGroup.children.size == 3 -> parseOperatorExpression(expressionGroup)          // lhs operator rhs
          expressionGroup.expressionGroup().isEmpty() -> compileSingleExpression(expressionGroup)
          else -> error("Unhandled expression group scenario: ${expressionGroup.text}")
+      }
+   }
+
+   private fun compileExpressionProjection(
+      expression: Expression,
+      typeProjection: TypeProjectionContext
+   ): Either<List<CompilationError>, Pair<Type, ProjectionFunctionScope>> {
+      val projectionSourceType = FieldTypeSpec.forExpression(expression)
+      return if (fieldCompiler != null) {
+         // find the current field name
+         val member = typeProjection.searchUpForRule<TypeMemberDeclarationContext>()
+            ?: error("Exptected that we were projecting inside a field declaration.  Can't work out a suggested name for the anonymous type")
+         val typeName = fieldCompiler.anonymousTypeNameForMember(member) + "$${NameGenerator.randomString(length = 5)}"
+         fieldCompiler.parseFieldProjection(typeProjection, projectionSourceType, typeName)
+      } else {
+         error("Expected we were parsing an expression with a projection inside a field.  Understand this usecase")
       }
    }
 
@@ -189,7 +225,7 @@ class ExpressionCompiler(
          // If we fix that problem, we can keep the operator checking here
          val isNullCheck = LiteralExpression.isNullExpression(lhs) || LiteralExpression.isNullExpression(rhs)
 
-         val (coercedLhs, coercedRhs) = TypeCaster.coerceTypesIfRequired(lhs,rhs).getOrHandle { error ->
+         val (coercedLhs, coercedRhs) = TypeCaster.coerceTypesIfRequired(lhs, rhs).getOrHandle { error ->
             return listOf(CompilationError(expressionGroup.toCompilationUnit(), error)).left()
          }
 
@@ -318,20 +354,20 @@ class ExpressionCompiler(
       } else {
          return path
             .runningFold(initial.right() as Either<List<CompilationError>, FieldReferenceSelector>) { resolvedType, fieldName ->
-            resolvedType.flatMap { selector ->
-               val previousType = selector.declaredType
-               if (previousType is ObjectType && previousType.hasField(fieldName)) {
-                  FieldReferenceSelector(fieldName, previousType.field(fieldName).type).right()
-               } else {
-                  listOf(
-                     CompilationError(
-                        context.toCompilationUnit(),
-                        "Cannot resolve reference $fieldName against type ${previousType.toQualifiedName().parameterizedName}"
-                     )
-                  ).left()
+               resolvedType.flatMap { selector ->
+                  val previousType = selector.declaredType
+                  if (previousType is ObjectType && previousType.hasField(fieldName)) {
+                     FieldReferenceSelector(fieldName, previousType.field(fieldName).type).right()
+                  } else {
+                     listOf(
+                        CompilationError(
+                           context.toCompilationUnit(),
+                           "Cannot resolve reference $fieldName against type ${previousType.toQualifiedName().parameterizedName}"
+                        )
+                     ).left()
+                  }
                }
-            }
-         }.invertEitherList().flattenErrors()
+            }.invertEitherList().flattenErrors()
       }
    }
 

@@ -4,10 +4,7 @@ import arrow.core.getOrHandle
 import lang.taxi.accessors.Accessor
 import lang.taxi.expressions.LambdaExpression
 import lang.taxi.services.Parameter
-import lang.taxi.types.GenericType
-import lang.taxi.types.LambdaExpressionType
-import lang.taxi.types.Type
-import lang.taxi.types.TypeArgument
+import lang.taxi.types.*
 
 /**
  * Respnosible for evaluating a generic expression (such as a lambda or function signature)
@@ -115,14 +112,22 @@ object TypeArgumentResolver {
          .mapIndexed { index, declaredInput ->
             val providedInput = providedInputTypes[index]
             if (declaredInput.typeParameters().isNotEmpty()) {
-               require(declaredInput.typeParameters().size == providedInput.typeParameters().size) {
-                  "Could not resolve type argument ${typeArgument.declaredName} (of ${declaredInput.toQualifiedName().parameterizedName}) as expected ${declaredInput.typeParameters().size} type parameters, but found ${providedInput.typeParameters().size}"
+               // Reflection is "Special", as when we're resolving the type, we're not looking into the type parameters
+               // of something else, we're looking at the type itself.
+               if (TypeReference.isTypeReferenceTypeName(declaredInput.qualifiedName)) {
+                  providedInput
+               } else {
+                  // For the "normal" case, look at the type parameters on the input
+                  // we've been given, and resolve from there.
+                  require(declaredInput.typeParameters().size == providedInput.typeParameters().size) {
+                     "Could not resolve type argument ${typeArgument.declaredName} (of ${declaredInput.toQualifiedName().parameterizedName}) as expected ${declaredInput.typeParameters().size} type parameters, but found ${providedInput.typeParameters().size}"
+                  }
+                  resolveTypeArgumentFromInputTypes(
+                     typeArgument,
+                     declaredInput.typeParameters(),
+                     providedInput.typeParameters()
+                  )
                }
-               resolveTypeArgumentFromInputTypes(
-                  typeArgument,
-                  declaredInput.typeParameters(),
-                  providedInput.typeParameters()
-               )
             } else if (typeArgument.qualifiedName == declaredInput.qualifiedName) {
                providedInput
             } else {

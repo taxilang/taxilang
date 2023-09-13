@@ -278,10 +278,16 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
          throw AmbiguousNameException("Name reference $name is ambiguous, and could refer to any of the available types $possibleReferences")
       }
 
+      // MP 13-Sep-23: This was causing stack overflows,
+      // as StdLibSchema.taxiDocument calls the compiler, which then tries to call
+      // StdLibSchema.taxiDocument.
+      // Also, this seems like a hack we introduced - there's no reason that the StdLibSchema
+      // should be "special" in this regard.
+      // Commented, lets remove if nothing breaks, or fix what does.
       // Check to see if it's present in the stdlib
-      if (StdLibSchema.taxiDocument.containsImportable(stdLibName(name).fullyQualifiedName)) {
-         return stdLibName(name).fullyQualifiedName
-      }
+//      if (StdLibSchema.taxiDocument.containsImportable(stdLibName(name).fullyQualifiedName)) {
+//         return stdLibName(name).fullyQualifiedName
+//      }
 
       if (namespace.isEmpty()) {
          return name
