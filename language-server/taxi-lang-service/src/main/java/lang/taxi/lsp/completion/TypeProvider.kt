@@ -1,6 +1,7 @@
 package lang.taxi.lsp.completion
 
 import lang.taxi.lsp.CompilationResult
+import lang.taxi.packages.utils.log
 import lang.taxi.types.*
 import org.eclipse.lsp4j.CompletionItem
 import org.eclipse.lsp4j.CompletionItemKind
@@ -63,8 +64,22 @@ class TypeProvider(
          StreamType.isStreamTypeName(name) -> name.parameters[0].typeName
          else -> name.typeName
       }
+      val completionItemKind = when {
+         type == null -> {
+            CompletionItemKind.Unit
+         } // Not sure what to pass here
+         type.typeKind == null -> {
+            CompletionItemKind.Unit
+         } // Why would this be null?
+         type.typeKind!! == TypeKind.Model -> CompletionItemKind.Class
+         type.typeKind!! == TypeKind.Type -> CompletionItemKind.Field
+         else -> {
+            log().debug("Unhandled switch case in buildCompletionItem")
+            CompletionItemKind.Field
+         }
+      }
       val completionItem = CompletionItem(typeName).apply {
-         kind = CompletionItemKind.Class
+         kind = completionItemKind
          insertText = typeName
          detail = listOfNotNull(typeName, doc).joinToString("\n")
       }
