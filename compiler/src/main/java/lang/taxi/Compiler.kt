@@ -5,6 +5,7 @@ import arrow.core.getOrHandle
 import com.google.common.base.Stopwatch
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
+import com.google.common.collect.Table
 import lang.taxi.compiler.TokenProcessor
 import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.linter.Linter
@@ -408,7 +409,9 @@ class Compiler(
       val sourceUri = SourceNames.normalize(sourceName)
       val tokenTable = tokens.tokenStore.tokenTable(sourceName)
 
-      val row = tokenTable.row(zeroBasedLineIndex).let {
+      val closestLineWithContent = searchBackwardsForClosestLine(tokenTable, zeroBasedLineIndex) ?: return null
+
+      val row = tokenTable.row(closestLineWithContent).let {
          if (it.isEmpty()) {
             // This is a workaround.  I've noticed that sometimes the value the compiler
             // contains in it's token table is different than the independent value within the tokenCache.
@@ -417,7 +420,7 @@ class Compiler(
             // There's...like...no chance this'll come back and bite me, right?
             val tokensFromCache = tokenCache.get(sourceName)
             val tokenTableFromCache = tokensFromCache?.tokens?.tokenStore?.tokenTable(sourceName)
-            tokenTableFromCache?.row(zeroBasedLineIndex) ?: it
+            tokenTableFromCache?.row(closestLineWithContent) ?: it
          } else {
             it
          }
@@ -428,8 +431,23 @@ class Compiler(
       val tokenStartIndices = row.keys as SortedSet
       val nearestStartIndex = tokenStartIndices.takeWhile { startIndex -> startIndex <= char }.lastOrNull()
       val nearestToken = nearestStartIndex?.let { index -> row.get(index) }
-         ?.let { token -> searchWithinTokenChildren(token, zeroBasedLineIndex, char) }
+         ?.let { token -> searchWithinTokenChildren(token, closestLineWithContent, char) }
+
+
+
       return nearestToken
+   }
+
+   private tailrec fun searchBackwardsForClosestLine(
+      tokenTable: Table<RowIndex, ColumnIndex, ParserRuleContext>,
+      zeroBasedLineIndex: Int
+   ): Int? {
+      if (zeroBasedLineIndex < 0) return null
+      if (tokenTable.rowKeySet().contains(zeroBasedLineIndex)) {
+         return zeroBasedLineIndex
+      } else {
+         return searchBackwardsForClosestLine(tokenTable,zeroBasedLineIndex - 1)
+      }
    }
 
    private fun searchWithinTokenChildren(
