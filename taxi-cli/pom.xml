@@ -248,6 +248,7 @@
                </descriptors>
                <appendAssemblyId>false</appendAssemblyId>
                <finalName>taxi</finalName>
+               <attach>true</attach>
             </configuration>
             <executions>
                <execution>
@@ -260,14 +261,25 @@
             </executions>
          </plugin>
          <plugin>
-            <groupId>org.jreleaser</groupId>
-            <artifactId>jreleaser-maven-plugin</artifactId>
-            <version>1.4.0</version>
-            <configuration>
-               <!-- SEE ALSO: jreleaser.yml, defined above -->
-               <jreleaser>
-               </jreleaser>
-            </configuration>
+            <groupId>io.sdkman</groupId>
+            <artifactId>sdkman-maven-plugin</artifactId>
+            <version>2.0.0</version>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>major-release</goal>
+                  </goals>
+                  <phase>deploy</phase>
+                  <configuration>
+                     <apiHost>vendors.sdkman.io</apiHost>
+                     <candidate>taxi</candidate>
+                     <version>${project.version}</version>
+                     <url>
+                        https://repo.orbitalhq.com/release/org/taxilang/taxi-cli/${project.version}/taxi-cli-${project.version}.zip
+                     </url>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
          <plugin>
             <groupId>org.springframework.boot</groupId>

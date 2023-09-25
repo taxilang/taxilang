@@ -213,14 +213,33 @@ To publish a release to the oribtal repo, you must first export your AWS credent
 ```bash
 export AWS_ACCESS_KEY_ID=xxxx
 export AWS_SECRET_ACCESS_KEY=xxxx
+```
 
+And, in your `~/.m2/settings.xml`, have the following:
+
+```xml
+<settings>
+    <profiles>
+        <profile>
+            <id>sdkman</id>
+            <properties>
+                <sdkman.consumer.key>xxx</sdkman.consumer.key>
+                <sdkman.consumer.token>xxx</sdkman.consumer.token>
+            </properties>
+        </profile>
+    </profiles>
+</settings>
+```
+
+```
 # Can use mvn too, but it's slower.
 mvnd clean install
 # deploy doesn't work great with mvnd
-mvn deploy -P orbital-repo
+# 
+mvn deploy -P orbital-repo,sdkman
 ```
 
-This will publish all the jars, as well as the `taxi-cli` zip to the Orbital repo
+This will publish all the jars, as well as the `taxi-cli` zip to the Orbital repo, and release on sdkman.
 
 ### Trying a pre-release version
 
