@@ -20,6 +20,7 @@ import lang.taxi.types.Type
  * }[]
  *
  */
+@Deprecated("Unused, will be removed")
 data class CollectionProjectionExpressionAccessor(val type: Type,
                                                   val projectionScope:ProjectionScopeDefinition?,
                                                   override val compilationUnits: List<CompilationUnit>) : Expression(), TaxiStatementGenerator {
@@ -42,6 +43,7 @@ data class CollectionProjectionExpressionAccessor(val type: Type,
  *
  * 14-Nov-22:  I don't think this is used.
  */
+@Deprecated("Unused")
 data class ProjectionScopeDefinition(val accessors:List<Accessor>) : TaxiStatementGenerator  {
    override fun asTaxi(): String {
       val accessorTaxi = accessors.joinToString(",") { accessor ->

@@ -71,7 +71,7 @@ spreadOperatorDeclaration
     ;
 
 typeBody
-:   '{' (typeMemberDeclaration | conditionalTypeStructureDeclaration)* spreadOperatorDeclaration? '}'
+:   '{' ((typeMemberDeclaration | conditionalTypeStructureDeclaration) (',')? )* spreadOperatorDeclaration? '}'
     ;
 
 typeMemberDeclaration
@@ -121,7 +121,8 @@ expressionGroup:
    | expressionGroup LOGICAL_OR expressionGroup
    // Inputs go last, so that when parsing lambdas, the inputs are the LHS and everything remainin goes RHS.
    // Might not work for nested lambdas, if that's a thing.
-   | expressionInputs expressionGroup;
+   | expressionInputs expressionGroup
+   | expressionGroup typeProjection;
 
 // readFunction before typeType to avoid functons being identified
 // as types

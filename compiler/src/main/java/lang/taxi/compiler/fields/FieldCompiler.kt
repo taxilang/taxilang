@@ -2,6 +2,7 @@ package lang.taxi.compiler.fields
 
 import arrow.core.*
 import lang.taxi.*
+import lang.taxi.TaxiParser.TypeProjectionContext
 import lang.taxi.TaxiParser.TypeReferenceContext
 import lang.taxi.accessors.*
 import lang.taxi.compiler.*
@@ -222,7 +223,8 @@ class FieldCompiler(
          }
 
          anonymousTypeDefinition != null -> {
-            parseAnonymousTypeBody(member, anonymousTypeDefinition, resolutionContext)
+            val typeName = anonymousTypeNameForMember(member)
+            parseAnonymousTypeBody(typeName, anonymousTypeDefinition, resolutionContext)
                .flatMap { type ->
                   val fieldTypeSpec = FieldTypeSpec.forType(type)
                   parseFieldProjection(member, fieldTypeSpec).flatMap { projectionType ->
@@ -332,18 +334,21 @@ class FieldCompiler(
       }
    }
 
-   private fun parseAnonymousTypeBody(
-      member: TaxiParser.TypeMemberDeclarationContext,
-      anonymousTypeDefinition: TaxiParser.AnonymousTypeDefinitionContext,
-      resolutionContext: ResolutionContext
-   ): Either<List<CompilationError>, Type> {
-      val anonymousTypeName = "$typeName$${
+   fun anonymousTypeNameForMember(member: TaxiParser.TypeMemberDeclarationContext): String {
+      return "$typeName$${
          member.fieldDeclaration().identifier().text.replaceFirstChar {
             if (it.isLowerCase()) it.titlecase(
                Locale.getDefault()
             ) else it.toString()
          }
       }"
+   }
+
+   private fun parseAnonymousTypeBody(
+      anonymousTypeName: String,
+      anonymousTypeDefinition: TaxiParser.AnonymousTypeDefinitionContext,
+      resolutionContext: ResolutionContext
+   ): Either<List<CompilationError>, Type> {
       val fieldType = tokenProcessor.parseAnonymousType(
          anonymousTypeDefinition.findNamespace(),
          anonymousTypeDefinition,
@@ -366,11 +371,21 @@ class FieldCompiler(
       projectionSourceType: FieldTypeSpec,
    ): Either<List<CompilationError>, Pair<Type, ProjectionFunctionScope>?> {
       val typeProjection = member.fieldDeclaration().typeProjection() ?: return null.right()
+      val typeName = anonymousTypeNameForMember(member)
+      return parseFieldProjection(typeProjection, projectionSourceType, typeName)
+   }
+
+
+   fun parseFieldProjection(
+      typeProjection: TypeProjectionContext,
+      projectionSourceType: FieldTypeSpec,
+      anonymousTypeName: String
+   ): Either<List<CompilationError>, Pair<Type, ProjectionFunctionScope>> {
       return tokenProcessor.parseProjectionScope(typeProjection.expressionInputs(), projectionSourceType)
          .flatMap { projectionScope ->
             val projectedType = when {
                typeProjection.anonymousTypeDefinition() != null -> parseAnonymousTypeBody(
-                  member,
+                  anonymousTypeName,
                   typeProjection.anonymousTypeDefinition(),
                   this.resolutionContext.appendScope(projectionScope)
                )
@@ -381,7 +396,6 @@ class FieldCompiler(
             projectedType.map { type -> type to projectionScope }
          }
    }
-
 
    private fun toField(
       member: TaxiParser.TypeMemberDeclarationContext,
@@ -403,7 +417,7 @@ class FieldCompiler(
             Field(
                name = TokenProcessor.unescape(member.fieldDeclaration().identifier().text),
                type = fieldProjection?.projectedType ?: fieldType.type,
-               projection = fieldProjection,
+               fieldProjection = fieldProjection,
                nullable = false,
                modifiers = emptyList(),
                annotations = fieldAnnotations,
@@ -429,7 +443,7 @@ class FieldCompiler(
             Field(
                name = TokenProcessor.unescape(member.fieldDeclaration().identifier().text),
                type = fieldProjection?.projectedType ?: fieldType.type,
-               projection = fieldProjection,
+               fieldProjection = fieldProjection,
                nullable = false,
                modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
                annotations = fieldAnnotations,
@@ -467,7 +481,7 @@ class FieldCompiler(
                Field(
                   name = TokenProcessor.unescape(member.fieldDeclaration().identifier().text),
                   type = fieldProjection?.projectedType ?: fieldType.type,
-                  projection = fieldProjection,
+                  fieldProjection = fieldProjection,
                   nullable = simpleType?.optionalType() != null,
                   modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
                   annotations = fieldAnnotations,

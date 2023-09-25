@@ -7,14 +7,7 @@ import arrow.core.right
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.functions.FunctionAccessor
-import lang.taxi.types.CompilationUnit
-import lang.taxi.types.Compiled
-import lang.taxi.types.FieldReferenceSelector
-import lang.taxi.types.FormulaOperator
-import lang.taxi.types.NumberTypes
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.TaxiStatementGenerator
-import lang.taxi.types.Type
+import lang.taxi.types.*
 
 // Note: Expression inheriting Accessor is tech debt,
 // and really around the wrong way.
@@ -154,6 +147,19 @@ data class OperatorExpression(
 
 data class ExpressionGroup(val expressions: List<Expression>) : Expression() {
    override val compilationUnits: List<CompilationUnit> = expressions.flatMap { it.compilationUnits }
+}
+
+/**
+ * A projecting expression is an expression that also contains a projection.
+ * eg:
+ * foo(a,b) as { someField : SomeType }
+ *
+ */
+data class ProjectingExpression(val expression: Expression, val projection: FieldProjection) : Expression() {
+   override val compilationUnits: List<CompilationUnit> = expression.compilationUnits
+
+   override val returnType: Type
+      get() = projection.projectedType
 }
 
 fun List<Expression>.toExpressionGroup(): Expression {

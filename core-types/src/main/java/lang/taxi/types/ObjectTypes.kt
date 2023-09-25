@@ -6,6 +6,7 @@ import arrow.core.right
 import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Accessor
 import lang.taxi.expressions.Expression
+import lang.taxi.expressions.ProjectingExpression
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.utils.quotedIfNecessary
@@ -534,7 +535,19 @@ data class Field(
    // it is set to null for all other cases.
    val memberSource: QualifiedName? = null,
 
-   val projection: FieldProjection? = null,
+   /**
+    * A field projection is defined when there's an explicit projection
+    * without an expression.
+    * eg:
+    * address : Address as { ... }
+    *
+    * Note that projections can also appear in an expression.
+    * Therefore, the fieldProject is private.  To find the projection,
+    * use the projection getter.
+    */
+   private val fieldProjection: FieldProjection? = null,
+
+
    /**
     * The format explicitly defined on a field.
     * Can be null (in which case formatting cascades up to the type)
@@ -556,6 +569,21 @@ data class Field(
 ) : Annotatable, Formattable, ConstraintTarget, Documented, NameTypePair, TokenDefinition {
 
    override val description: String = "field $name"
+
+   // See above - a projection can come from one of two places.
+   // Either explicitly on the field, or within an expression defined on the type
+   val projection: FieldProjection?
+      get() {
+         return when {
+            fieldProjection != null -> {
+               require(accessor !is ProjectingExpression) { "Unexpected - both a fieldProjection and a ProjectionExpression were present. Understand this use case" }
+               fieldProjection
+            }
+
+            accessor is ProjectingExpression -> accessor.projection
+            else -> null
+         }
+      }
 
 
    override val formatAndZoneOffset: FormatsAndZoneOffset? =

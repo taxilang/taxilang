@@ -198,7 +198,7 @@ internal class QueryCompiler(
       factCtx: TaxiParser.FactContext,
       parameters: List<Parameter>
    ): Either<List<CompilationError>, Parameter> {
-      val variableName = factCtx.variableName()?.identifier()?.text ?: "fact$index"
+      val variableName = factCtx.factDeclaration()?.variableName()?.identifier()?.text ?: "fact$index"
       val namespace = factCtx.findNamespace()
 
       return when {
