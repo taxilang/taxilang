@@ -77,23 +77,26 @@ class OpenApiServiceMapper(
          val type = getParamType(swaggerParam)
          val taxiDoc: String? = swaggerParam.description ?: swaggerParam.schema.description
          val constraints = emptyList<Constraint>()
+         val nullable = !swaggerParam.required
          lang.taxi.services.Parameter(
             annotations,
             type,
             swaggerParam.name.replaceIllegalCharacters(),
             constraints,
-            typeDoc = taxiDoc
+            typeDoc = taxiDoc,
+            nullable = nullable
          )
       }
       val operationId = OperationIdProvider.getOperationId(openApiOperation, pathMapping, method)
       val requestBodyParam =
          openApiOperation.requestBody?.content?.values?.firstOrNull()?.schema?.let { requestBodySchema ->
-            val type = typeGenerator.generateUnnamedTypeRecursively(requestBodySchema, operationId + "Body")
+            val type = typeGenerator.generateUnnamedTypeRecursively(requestBodySchema, operationId + "Body", listOf(Modifier.PARAMETER_TYPE))
             lang.taxi.services.Parameter(
                annotations = listOf(HttpRequestBody.toAnnotation()),
                type = type,
                name = type.toQualifiedName().typeName.decapitalize(),
                constraints = emptyList(),
+               nullable = true // default in spec.
             )
          }
       val returnType = getReturnType(openApiOperation, operationId)
@@ -137,14 +140,14 @@ class OpenApiServiceMapper(
             return PrimitiveType.ANY
          }
       }
-      return typeGenerator.generateUnnamedTypeRecursively(mediaType.schema, operationId)
+      return typeGenerator.generateUnnamedTypeRecursively(mediaType.schema, operationId, listOf(Modifier.CLOSED))
    }
 
    private fun getParamType(swaggerParam: Parameter): Type {
       if (swaggerParam.`$ref` != null) {
          TODO()
       } else {
-         return typeGenerator.generateUnnamedTypeRecursively(swaggerParam.schema, swaggerParam.name)
+         return typeGenerator.generateUnnamedTypeRecursively(swaggerParam.schema, swaggerParam.name, listOf(Modifier.PARAMETER_TYPE))
       }
 
 

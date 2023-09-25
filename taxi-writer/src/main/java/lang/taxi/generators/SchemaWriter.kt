@@ -209,7 +209,7 @@ $operations
             paramsHaveDocs = true
          }
          val paramName = if (!param.name.isNullOrEmpty()) param.name?.reservedWordEscaped() + " : " else ""
-         val paramDeclaration = typeAsTaxi(param.type, namespace)
+         val paramDeclaration = typeAsTaxi(param.type, namespace, param.nullable)
          paramDocs + paramAnnotations + paramName + paramDeclaration + constraintString
       }
 

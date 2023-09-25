@@ -8,7 +8,8 @@ import lang.taxi.generators.openApi.v3.TaxiExtension.Companion.extensionKey
 
 data class TaxiExtension(
    val name: String,
-   val create: Boolean?
+   val create: Boolean?,
+   val inherits: List<String> = emptyList()
 ) {
    companion object {
       const val extensionKey = "x-taxi-type"
