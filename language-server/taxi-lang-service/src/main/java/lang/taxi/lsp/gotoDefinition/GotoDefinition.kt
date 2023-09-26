@@ -25,7 +25,7 @@ class GotoDefinitionService(private val typeProvider: TypeProvider) {
       val context =
          getRuleContext(compiler, params)
       val compilationUnit = when (context) {
-         is TaxiParser.FieldTypeDeclarationContext -> compiler.getDeclarationSource(context.optionalTypeReference().typeReference())
+         is TaxiParser.FieldTypeDeclarationContext -> compiler.getDeclarationSource(context.nullableTypeReference().typeReference())
          is QualifiedNameContext -> compiler.getDeclarationSource(context.parent as TypeReferenceContext)
          is TaxiParser.TypeReferenceContext -> compiler.getDeclarationSource(context)
          is TaxiParser.ListOfInheritedTypesContext -> {

@@ -236,7 +236,7 @@ class TokenCollator : TaxiBaseListener() {
       // If so, mark it for processing later
       val typeType = ctx.fieldTypeDeclaration()
       if (typeType?.aliasedType() != null) {
-         val classOrInterfaceType = typeType.optionalTypeReference().typeReference().qualifiedName()
+         val classOrInterfaceType = typeType.nullableTypeReference().typeReference().qualifiedName()
          unparsedTypes.put(qualify(classOrInterfaceType.identifier().text()), namespace to typeType)
       }
       super.exitFieldDeclaration(ctx)

@@ -59,7 +59,7 @@ object TypeArgumentResolver {
       declaredInputs: List<Type>,
       providedInputs: List<Accessor>
    ): Type? {
-      require(declaredInputs.size == providedInputs.size) { "Expected that declaredInputs and providedInputs would have the same number of elements" }
+      require(declaredInputs.size == providedInputs.size) { "Required ${declaredInputs.size} parameters, only ${providedInputs.size} were provided" }
       val resolvedTypeParameter: Type? = declaredInputs
          .asSequence()
          .mapIndexed { index, declaredInput ->

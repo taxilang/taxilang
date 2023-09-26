@@ -195,8 +195,7 @@ class ConditionalDataTypesTest {
       val order = doc.objectType("Order")
       order.fields.should.have.size(2)
       val clientDirection = order.field("clientDirection")
-      val accessor = clientDirection.accessor as ConditionalAccessor
-      val condition = accessor.expression as WhenFieldSetCondition
+      val condition = clientDirection.accessor as WhenExpression
       condition.cases.should.have.size(2)
       // Buy -> Sell
       condition.cases[0].matchExpression.asA<LiteralExpression>().value.should.equal("Buy")
@@ -230,16 +229,15 @@ class ConditionalDataTypesTest {
       val order = doc.objectType("Order")
       order.fields.should.have.size(2)
       val payReceive = order.field("payReceive")
-      val accessor = payReceive.accessor as ConditionalAccessor
-      val condition = accessor.expression as WhenFieldSetCondition
-      condition.cases.should.have.size(3)
+      val whenBlock = payReceive.accessor as WhenExpression
+      whenBlock.cases.should.have.size(3)
       // Buy -> Sell
-      condition.cases[0].matchExpression.asA<LiteralExpression>().value.should.equal("Buy")
-      condition.cases[0].getSingleAssignment().assignment.asA<LiteralExpression>().value.asA<EnumValue>().name.should.equal("Pay")
+      whenBlock.cases[0].matchExpression.asA<LiteralExpression>().value.should.equal("Buy")
+      whenBlock.cases[0].getSingleAssignment().assignment.asA<LiteralExpression>().value.asA<EnumValue>().name.should.equal("Pay")
 
 
-      condition.cases[2].matchExpression.should.be.instanceof(ElseMatchExpression::class.java)
-      condition.cases[2].getSingleAssignment().assignment.asA<LiteralExpression>().value.should.equal(NullValue)
+      whenBlock.cases[2].matchExpression.should.be.instanceof(ElseMatchExpression::class.java)
+      whenBlock.cases[2].getSingleAssignment().assignment.asA<LiteralExpression>().value.should.equal(NullValue)
    }
 
    @Test
@@ -265,9 +263,9 @@ class ConditionalDataTypesTest {
          }
       """.trimIndent()
       val doc = Compiler(src).compile()
-      val accessor = doc.objectType("Trade").field("underlyingIndex").accessor as ConditionalAccessor
-      val fieldSet = accessor.expression as WhenFieldSetCondition
-      val enumExpression = fieldSet.cases[0].matchExpression as LiteralExpression
+      val whenBlock = doc.objectType("Trade")
+         .field("underlyingIndex").accessor as WhenExpression
+      val enumExpression = whenBlock.cases[0].matchExpression as LiteralExpression
       enumExpression.literal.value.asA<EnumValue>().qualifiedName.should.equal("FixedOrFloatLeg.Float")
    }
 
@@ -307,7 +305,7 @@ class ConditionalDataTypesTest {
          }
       """
       ).compile().objectType("Foo").field("identifierValue")
-      val whenCondition = (field.accessor as ConditionalAccessor).expression as WhenFieldSetCondition
+      val whenCondition = (field.accessor as WhenExpression)
       val assignmentExpression = whenCondition.cases[0].assignments[0] as InlineAssignmentExpression
       val assingment = assignmentExpression.assignment as FunctionExpression
       val accessor = assingment.function as FunctionAccessor
@@ -328,8 +326,7 @@ class ConditionalDataTypesTest {
       }
       """
       ).compile().objectType("Order").field("clientDirection")
-         .accessor!!.asA<ConditionalAccessor>()
-         .expression.asA<WhenFieldSetCondition>()
+         .accessor!!.asA<WhenExpression>()
          .selectorExpression.asA<FunctionExpression>()
       functionSelector.function.function.qualifiedName.should.equal("taxi.stdlib.upperCase")
       functionSelector.function.returnType.should.equal(PrimitiveType.STRING)
@@ -372,7 +369,7 @@ class ConditionalDataTypesTest {
          }
       """.trimIndent()
       val field = Compiler(src).compile().objectType("ComplexWhen").field("quantityStatus")
-      val whenCondition = (field.accessor as ConditionalAccessor).expression as WhenFieldSetCondition
+      val whenCondition = field.accessor as WhenExpression
       whenCondition.cases.size.should.equal(6)
       val case1 = whenCondition.cases[0].matchExpression as OperatorExpression
       case1.lhs.asA<FieldReferenceExpression>().path.should.equal("initialQuantity")

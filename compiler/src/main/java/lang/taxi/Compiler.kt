@@ -315,6 +315,9 @@ class Compiler(
       return tokenProcessorWithoutImports.findDeclaredServiceNames()
    }
 
+   fun lookupSymbolByName(text: String, contextRule: ParserRuleContext): Either<List<CompilationError>, String> {
+      return tokenProcessorWithImports.lookupSymbolByName(text, contextRule)
+   }
    fun lookupTypeByName(typeType: TaxiParser.TypeReferenceContext): QualifiedName {
       return QualifiedName.from(tokenProcessorWithImports.lookupSymbolByName(typeType))
    }

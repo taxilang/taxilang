@@ -41,7 +41,7 @@ class IntroduceSemanticType : CodeActionProvider {
 
       // Find a place to put the new type def.
       // We'll stick it just before the current type def.
-      val modelDefinitionContext = context.searchUpForRule<TypeDeclarationContext>()!!
+      val modelDefinitionContext = context.searchUpForRule<TypeDeclarationContext>() ?: return null
       val fieldName = fieldContext.identifier().IdentifierToken().text
 
       val newTypeName = fieldName.replaceFirstChar { it.uppercase() }

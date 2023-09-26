@@ -6,7 +6,7 @@ import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.accessors.NullValue
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.types.EnumValue
-import lang.taxi.types.WhenFieldSetCondition
+import lang.taxi.types.WhenExpression
 
 class WhenBlockSpec : DescribeSpec({
    describe("when block type checking") {
@@ -98,7 +98,7 @@ class WhenBlockSpec : DescribeSpec({
             }
          """.compiled()
             .model("Person")
-            .field("country").accessor!!.asA<ConditionalAccessor>().expression as WhenFieldSetCondition
+            .field("country").accessor!!.asA<WhenExpression>()
          whenBlock.cases[0].getSingleAssignment().assignment.asA<LiteralExpression>()
             .value.should.equal(NullValue)
       }
@@ -118,7 +118,7 @@ class WhenBlockSpec : DescribeSpec({
             }
          """.compiled()
             .model("Person")
-            .field("country").accessor!!.asA<ConditionalAccessor>().expression as WhenFieldSetCondition
+            .field("country").accessor!!.asA<WhenExpression>()
          val enumLiteral = whenBlock.cases[0].getSingleAssignment().assignment.asA<LiteralExpression>().literal
          val enumValue = enumLiteral.value.asA<EnumValue>()
          enumValue.qualifiedName.should.equal("Country.NZ")

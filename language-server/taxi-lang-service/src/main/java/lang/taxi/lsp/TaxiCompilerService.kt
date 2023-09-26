@@ -6,6 +6,7 @@ import lang.taxi.linter.toLinterRules
 import lang.taxi.lsp.completion.TypeProvider
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
 import lang.taxi.packages.TaxiPackageProject
+import lang.taxi.packages.utils.log
 import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
@@ -145,6 +146,7 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
       } catch (e: CompilationException) {
          CompilationResult(compiler, null, charStreams.size, stopwatch.elapsed(), e.errors)
       } catch (e: Exception) {
+         log().error("An exception was thrown by the compiler - ${e.message}", e)
          CompilationResult(
             compiler,
             null,

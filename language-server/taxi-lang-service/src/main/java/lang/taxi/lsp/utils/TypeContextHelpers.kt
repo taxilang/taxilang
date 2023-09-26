@@ -23,9 +23,13 @@ fun getFieldDeclaration(context: ParserRuleContext?): TaxiParser.FieldTypeDeclar
 fun getFieldType(context: ParserRuleContext, compiler: Compiler): QualifiedName {
    val typeContext = when (context) {
       // The cursor is on the field name
-      is TaxiParser.IdentifierContext, is ColumnDefinitionContext, is ColumnIndexContext -> {
+      is TaxiParser.IdentifierContext,
+      is ColumnDefinitionContext,
+      is ParameterConstraintContext, // when we're building an expression on a field
+      is ScalarAccessorExpressionContext, // when we're building an expression on a field
+      is ColumnIndexContext -> {
          // When we're defining types
-         context.searchUpForRule<TaxiParser.FieldDeclarationContext>()?.fieldTypeDeclaration()?.optionalTypeReference()
+         context.searchUpForRule<TaxiParser.FieldDeclarationContext>()?.fieldTypeDeclaration()?.nullableTypeReference()
             ?.typeReference()
          // when we're writing a query in a find<> block
             ?: context.searchUpForRule<TypeReferenceContext>()!!

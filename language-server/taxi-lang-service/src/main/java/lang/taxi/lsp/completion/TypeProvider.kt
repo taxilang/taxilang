@@ -82,6 +82,7 @@ class TypeProvider(
          kind = completionItemKind
          insertText = typeName
          detail = listOfNotNull(typeName, doc).joinToString("\n")
+         documentation = listOfNotNull(typeName, doc).joinToString("\n").toMarkup()
       }
 
       return decorators.fold(completionItem) { itemToDecorate, decorator ->
@@ -140,5 +141,15 @@ class TypeProvider(
 }
 
 interface CompletionDecorator {
-   fun decorate(typeName: QualifiedName, type: Type?, completionItem: CompletionItem): CompletionItem
+   fun decorate(typeName: QualifiedName, token: ImportableToken?, completionItem: CompletionItem): CompletionItem
+}
+
+fun CompletionItem.decorate(decorators: List<CompletionDecorator>, name: QualifiedName, token: ImportableToken):CompletionItem {
+   return decorators.fold(this) { itemToDecorate, decorator ->
+      decorator.decorate(
+         name,
+         token,
+         itemToDecorate
+      )
+   }
 }

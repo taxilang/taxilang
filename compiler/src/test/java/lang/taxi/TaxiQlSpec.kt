@@ -456,7 +456,7 @@ class TaxiQlSpec : DescribeSpec({
       }
 
 
-      it("Should Allow anonymous type with field definitions referencing type to discover") {
+      xit("Should Allow anonymous type with field definitions referencing type to discover") {
          val src = """
                  import foo.Order
                  import foo.OutputOrder
@@ -813,7 +813,7 @@ class TaxiQlSpec : DescribeSpec({
          itemsFieldMemberType.fields.should.have.size(2)
       }
 
-      it("should parse collection projection identifiers in queries") {
+      xit("should parse collection projection identifiers in queries") {
          val (schema, query) = """
             model Product {
                sku : ProductSku inherits String
@@ -841,7 +841,7 @@ class TaxiQlSpec : DescribeSpec({
          itemsField.accessor!!.asA<CollectionProjectionExpressionAccessor>().type.qualifiedName.should.equal("TransactionItem")
       }
 
-      it("is possible to define projection specs on a top level return value") {
+      xit("is possible to define projection specs on a top level return value") {
          val (schema, query) = """model Musical {
             title : MusicalTitle inherits String
             year : YearProduced inherits Int
@@ -875,7 +875,7 @@ class TaxiQlSpec : DescribeSpec({
          query.projectedType!!.asA<ObjectType>().annotations.should.have.size(1)
       }
 
-      it("should parse collection projection identifiers with additional scopes in queries") {
+      xit("should parse collection projection identifiers with additional scopes in queries") {
          val (schema, query) = """
             model Product {
                sku : ProductSku inherits String

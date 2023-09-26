@@ -63,6 +63,7 @@ class TaxiLanguageServer(
       capabilities.workspaceSymbolProvider = true
       capabilities.hoverProvider = true
       capabilities.documentFormattingProvider = true
+      capabilities.signatureHelpProvider = SignatureHelpOptions()
       capabilities.semanticHighlighting = SemanticHighlightingServerCapabilities()
       capabilities.setCodeActionProvider(true)
       capabilities.workspace = WorkspaceServerCapabilities(WorkspaceFoldersOptions().apply {

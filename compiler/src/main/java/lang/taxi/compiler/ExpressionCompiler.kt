@@ -27,7 +27,7 @@ class ExpressionCompiler(
     * This allows field lookups by name in expressions
     */
    private val fieldCompiler: FieldCompiler? = null,
-   private val scopes: List<Argument> = emptyList()
+   private val scopes: List<Argument> = emptyList(),
 ) : FunctionParameterReferenceResolver {
    private val functionCompiler = FunctionAccessorCompiler(
       tokenProcessor,
@@ -36,7 +36,6 @@ class ExpressionCompiler(
       this,
       null
    )
-
    fun withParameters(arguments: List<Argument>): ExpressionCompiler {
       // TODO : In future, does it make sense to "nest" these, so that as we add arguments,
       // they form scopes / contexts?
@@ -50,12 +49,16 @@ class ExpressionCompiler(
       )
    }
 
-   fun compile(expressionGroup: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
+   fun compile(expressionGroup: ExpressionGroupContext,
+               // The type we'll be attempting to assign the result of this expression to.
+               // This is a recent (26-09-23) addition to the signature, and hasn't yet been
+               // updated in all call sites.
+               targetType: Type? = null): Either<List<CompilationError>, out Expression> {
       return when {
          expressionGroup.children.size == 2 && expressionGroup.children.last() is TypeProjectionContext && expressionGroup.children.first() is ExpressionGroupContext -> {
             // This is an expression with a projection.
             // Compile the expression first...
-            return compile(expressionGroup.expressionGroup(0)).flatMap { expression ->
+            return compile(expressionGroup.expressionGroup(0), targetType).flatMap { expression ->
                compileExpressionProjection( // ...then compile the projection
                   expression,
                   expressionGroup.typeProjection()!!
@@ -72,7 +75,7 @@ class ExpressionCompiler(
             // There must be only one child not a bracket
             // ie., ( A + B ) should yeild LPAREN EXPRESSIONGROUP RPAREN
             require(expressionGroup.expressionGroup().size == 1) { "Expected only a single ExpressionGroup inside parenthesis" }
-            compile(expressionGroup.expressionGroup(0))
+            compile(expressionGroup.expressionGroup(0), targetType)
          }
 
          expressionGroup.children.size == 2 && expressionGroup.expressionInputs() != null -> parseLambdaExpression(
@@ -80,7 +83,7 @@ class ExpressionCompiler(
          )
 
          expressionGroup.children.size == 3 -> parseOperatorExpression(expressionGroup)          // lhs operator rhs
-         expressionGroup.expressionGroup().isEmpty() -> compileSingleExpression(expressionGroup)
+         expressionGroup.expressionGroup().isEmpty() -> compileSingleExpression(expressionGroup, targetType)
          else -> error("Unhandled expression group scenario: ${expressionGroup.text}")
       }
    }
@@ -101,7 +104,7 @@ class ExpressionCompiler(
       }
    }
 
-   private fun parseLambdaExpression(lambdaExpression: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
+   private fun parseLambdaExpression(lambdaExpression: ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
       require(lambdaExpression.children.size == 2) { "Expected exactly 2 children in the lambda expression" }
       require(lambdaExpression.expressionGroup().size == 1) { "expected exactly 1 expression group on the rhs of the lambda" }
       return lambdaExpression.expressionInputs()
@@ -116,9 +119,15 @@ class ExpressionCompiler(
 
    }
 
-   private fun compileSingleExpression(expression: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, Expression> {
+   private fun compileSingleExpression(expression: ExpressionGroupContext, assignmentType: Type?): Either<List<CompilationError>, Expression> {
       return when {
          expression.expressionAtom() != null -> compileExpressionAtom(expression.expressionAtom())
+         expression.whenBlock() != null -> {
+            require(fieldCompiler != null) { "Cannot compile a When Block as the expression compiler was initialized without a field compiler"}
+            require(assignmentType != null) { "Cannot compile a When Block as no assignment type has been provided"}
+            val whenCompiler = WhenBlockCompiler(fieldCompiler, this)
+            whenCompiler.compileWhenCondition(expression.whenBlock(), assignmentType)
+         }
          else -> TODO("Unhandled single expression: ${expression.text}")
       }
    }
@@ -199,7 +208,7 @@ class ExpressionCompiler(
       return LiteralExpression(LiteralAccessor(literal.valueOrNullValue()), literal.toCompilationUnits()).right()
    }
 
-   private fun parseOperatorExpression(expressionGroup: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
+   private fun parseOperatorExpression(expressionGroup: ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
 
       val lhsOrError = expressionGroup.expressionGroup(0)?.let { compile(it) }
          ?: error("Expected an expression group at index 0")
@@ -225,7 +234,7 @@ class ExpressionCompiler(
          // If we fix that problem, we can keep the operator checking here
          val isNullCheck = LiteralExpression.isNullExpression(lhs) || LiteralExpression.isNullExpression(rhs)
 
-         val (coercedLhs, coercedRhs) = TypeCaster.coerceTypesIfRequired(lhs, rhs).getOrHandle { error ->
+         val (coercedLhs, coercedRhs) = TypeCaster.coerceTypesIfRequired(lhs, rhs).getOrElse { error ->
             return listOf(CompilationError(expressionGroup.toCompilationUnit(), error)).left()
          }
 
@@ -378,9 +387,9 @@ class ExpressionCompiler(
       return when {
          expression.jsonPathAccessorDeclaration() != null ||
             expression.xpathAccessorDeclaration() != null ||
-            expression.byFieldSourceExpression() != null ||
-            expression.conditionalTypeConditionDeclaration() != null ||
-            expression.collectionProjectionExpression() != null ||
+//            expression.byFieldSourceExpression() != null ||
+//            expression.conditionalTypeConditionDeclaration() != null ||
+//            expression.collectionProjectionExpression() != null ||
             expression.columnDefinition() != null -> {
             if (this.fieldCompiler == null) {
                listOf(
@@ -395,7 +404,7 @@ class ExpressionCompiler(
          }
 
          expression.expressionGroup() != null -> {
-            val compiled = compile(expression.expressionGroup())
+            val compiled = compile(expression.expressionGroup(), targetType)
             compiled
          }
 //         expression.functionCall() != null -> {
@@ -421,7 +430,7 @@ class ExpressionCompiler(
 
    override fun compileFieldReferenceAccessor(
       function: Function,
-      parameterContext: TaxiParser.ParameterContext
+      parameterContext: TaxiParser.ArgumentContext
    ): Either<List<CompilationError>, FieldReferenceSelector> {
       return requireFieldCompilerIsPresent(parameterContext).flatMap {
          fieldCompiler!!.provideField(
