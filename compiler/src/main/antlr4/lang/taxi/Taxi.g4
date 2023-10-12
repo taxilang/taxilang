@@ -244,13 +244,13 @@ fieldTypeDeclaration: optionalTypeReference parameterConstraint? (aliasedType? |
 
 //typeReference : qualifiedName typeArguments? arrayMarker? optionalType?;
 
-
 typeReference
     :   qualifiedName typeArguments? arrayMarker?;
     //
+unionType : typeReference ('|' typeReference)*;
 
 // Use in call sites where optional types are permitted
-optionalTypeReference : typeReference optionalType?;
+optionalTypeReference : (typeReference | unionType) optionalType?;
 
 accessor
     : ('by' | '=') scalarAccessorExpression

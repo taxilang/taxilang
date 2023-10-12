@@ -92,6 +92,21 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
 
    /**
     * Registers the token with the typesystem.
+    *
+    * Use this when registering things that don't extend UserType<T>
+    * The token is returned for convenient chaining
+    */
+   fun registerToken(token: ImportableToken):ImportableToken {
+      if (compiledTokens.containsKey(token.qualifiedName)) {
+         throw IllegalArgumentException("Attempting to redefine type ${token.qualifiedName}")
+      } else {
+         compiledTokens[token.qualifiedName] = token
+      }
+      return token
+   }
+
+   /**
+    * Registers the token with the typesystem.
     * The token is returned for convenient chaining
     */
    fun <TDef : TokenDefinition, TToken : DefinableToken<TDef>> register(

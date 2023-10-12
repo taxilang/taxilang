@@ -121,7 +121,7 @@ internal class QueryCompiler(
       val queryTypeList = queryBodyContext.queryOrMutation()?.queryTypeList()
       val anonymousTypeDefinition = queryBodyContext.queryOrMutation()?.anonymousTypeDefinition()
       return queryTypeList?.fieldTypeDeclaration()?.map { queryType ->
-         tokenProcessor.parseType(namespace, queryType.optionalTypeReference().typeReference()).flatMap { type ->
+         tokenProcessor.parseTypeOrUnionType(queryType.optionalTypeReference()).flatMap { type ->
             toDiscoveryType(
                type, queryType.parameterConstraint(), queryDirective, constraintBuilder, parameters
             )
@@ -407,14 +407,15 @@ internal class QueryCompiler(
       val concreteProjectionTypeType = queryProjection.typeReference()
       val anonymousProjectionType = queryProjection.anonymousTypeDefinition()
 
-      if (anonymousProjectionType != null && concreteProjectionTypeType == null && typesToDiscover.size > 1) {
-         return listOf(
-            CompilationError(
-               queryProjection.start,
-               "When anonymous projected type is defined without an explicit based discoverable type sizes should be 1"
-            )
-         ).left()
-      }
+      // Why did we have this?
+//      if (anonymousProjectionType != null && concreteProjectionTypeType == null && typesToDiscover.size > 1) {
+//         return listOf(
+//            CompilationError(
+//               queryProjection.start,
+//               "When anonymous projected type is defined without an explicit based discoverable type sizes should be 1"
+//            )
+//         ).left()
+//      }
 
       if (concreteProjectionTypeType != null && concreteProjectionTypeType.arrayMarker() == null && anonymousProjectionType == null && typesToDiscover.size == 1 && typesToDiscover.first().typeName.parameters.isNotEmpty()) {
          return listOf(

@@ -2,9 +2,12 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.query.QueryMode
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
+import lang.taxi.types.StreamType
+import lang.taxi.types.UnionType
 
 class ContinuousQueryServicesGrammarSpec : DescribeSpec({
    describe("continuous queries") {
@@ -51,6 +54,31 @@ class ContinuousQueryServicesGrammarSpec : DescribeSpec({
             val query = queries.first()
             query.queryMode.should.equal(QueryMode.STREAM)
             query.typesToFind.first().typeName.parameterizedName.should.equal("lang.taxi.Stream<Person>")
+         }
+
+         it("is possible to request multiple types when writing a stream query") {
+            val schema = """
+               model Tweet {
+                  id : TweetId inherits String
+                  text: TweetText inherits String
+               }
+               model Analytics {
+                  id : TweetId
+                  viewCount : ViewCount inherits Int
+               }
+
+               stream { Tweet | Analytics } as {
+                  tweetId : TweetId
+                  text : TweetText
+                  views : ViewCount
+               }[]
+            """.compiled()
+            val streamingType = schema.queries.single().typesToFind.single().type
+            streamingType.shouldBeInstanceOf<StreamType>()
+            val unionType = streamingType.typeParameters()[0]
+            unionType.shouldBeInstanceOf<UnionType>()
+            unionType.types.shouldHaveSize(2)
+            schema.containsType(unionType.qualifiedName).shouldBeTrue()
          }
       }
    }
