@@ -4,6 +4,7 @@ import lang.taxi.Compiler
 import lang.taxi.TaxiParser.FieldTypeDeclarationContext
 import lang.taxi.TaxiParser.FunctionCallContext
 import lang.taxi.TaxiParser.IdentifierContext
+import lang.taxi.TaxiParser.ParameterConstraintContext
 import lang.taxi.functions.Function
 import lang.taxi.lsp.CompilationResult
 import lang.taxi.lsp.completion.toMarkup
@@ -73,8 +74,16 @@ class SignatureHelpService {
          }
          is IdentifierContext -> foundRule
          is FunctionCallContext -> foundRule.qualifiedName()
-
-         null -> TODO()
+         null -> {
+            if (token is ParameterConstraintContext) {
+               // Depending on the tree, a function call can be interpreted as a constraint on a type.
+               // eg:  left(a) looks a lot like Person(FirstName == 2)
+               // That's why we end up here.
+               (token.parent as FieldTypeDeclarationContext).nullableTypeReference()
+            } else {
+               error("Unhandled node type when searching for function: ${token::class.simpleName}")
+            }
+         }
          else -> error("Unhandled node type when searching for function: ${foundRule::class.simpleName}")
       }
       val lookupResult = compiler.lookupSymbolByName(tokenWithFunctionName.text, tokenWithFunctionName)

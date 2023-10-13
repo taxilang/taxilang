@@ -2,6 +2,8 @@ package lang.taxi.lsp.signatures
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.engine.spec.tempdir
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 import lang.taxi.lsp.LspServicesConfig
 import lang.taxi.lsp.actions.CodeActionService
 import lang.taxi.lsp.actions.ExtractInlineType
@@ -28,19 +30,93 @@ class SignatureHelpServiceSpec : DescribeSpec({
             """.trimMargin()
          )
 
-//         val help = service.signatureHelp(SignatureHelpParams(
-//            workspacePath.document("person.taxi"),
-//            Position(1,17) // Location of open parenthesis of  firstName : left(
-//         ))
+         val help = service.signatureHelp(SignatureHelpParams(
+            workspacePath.document("person.taxi"),
+            Position(1,17) // Location of open parenthesis of  firstName : left(
+         ))
+
+         help.get().toString().shouldBe("""SignatureHelp [
+  signatures = SingletonList (
+    SignatureInformation [
+      label = "left"
+      documentation = Either [
+        left = null
+        right = MarkupContent [
+        kind = "markdown"
+        value = "Returns the left most characters from the source string"
+      ]
+      ]
+      parameters = ArrayList (
+        ParameterInformation [
+          label = Either [
+            left = source (lang.taxi.String)
+            right = null
+          ]
+          documentation = Either [
+            left = null
+            right = MarkupContent [
+            kind = "markdown"
+            value = ""
+          ]
+          ]
+        ],
+        ParameterInformation [
+          label = Either [
+            left = count (lang.taxi.Int)
+            right = null
+          ]
+          documentation = Either [
+            left = null
+            right = MarkupContent [
+            kind = "markdown"
+            value = ""
+          ]
+          ]
+        ]
+      )
+    ]
+  )
+  activeSignature = 0
+  activeParameter = 0
+]""")
 //
-         // TODO assert
 
          val help2 = service.signatureHelp(SignatureHelpParams(
             workspacePath.document("person.taxi"),
             Position(2,17) // Location of open parenthesis of  lastName : left(
-         ))
+         )).get()
 
-         TODO()
+         help2.toString().shouldBe("""SignatureHelp [
+  signatures = SingletonList (
+    SignatureInformation [
+      label = "trim"
+      documentation = Either [
+        left = null
+        right = MarkupContent [
+        kind = "markdown"
+        value = ""
+      ]
+      ]
+      parameters = ArrayList (
+        ParameterInformation [
+          label = Either [
+            left = lang.taxi.String
+            right = null
+          ]
+          documentation = Either [
+            left = null
+            right = MarkupContent [
+            kind = "markdown"
+            value = ""
+          ]
+          ]
+        ]
+      )
+    ]
+  )
+  activeSignature = 0
+  activeParameter = 0
+]""")
 
       }
    }
