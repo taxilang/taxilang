@@ -28,7 +28,7 @@ class IntroduceSemanticType : CodeActionProvider {
       val compiler = compilationResult.compiler
       val context = compiler
          .contextAt(params.range.start, params.textDocument)
-      return isFieldDeclaration(context) && getFieldType(context!!, compiler).isPrimitiveType()
+      return isFieldDeclaration(context) && getFieldType(context!!, compiler)?.isPrimitiveType() ?: false
    }
 
 
@@ -37,7 +37,7 @@ class IntroduceSemanticType : CodeActionProvider {
       val context = compiler
          .contextAt(params.range.start, params.textDocument)!!
       val fieldContext = context.searchUpForRule<FieldDeclarationContext>()!!
-      val fieldType = getFieldType(context, compiler)
+      val fieldType = getFieldType(context, compiler) ?: return null
 
       // Find a place to put the new type def.
       // We'll stick it just before the current type def.

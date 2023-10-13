@@ -38,7 +38,7 @@ class SignatureHelpServiceSpec : DescribeSpec({
          help.get().toString().shouldBe("""SignatureHelp [
   signatures = SingletonList (
     SignatureInformation [
-      label = "left"
+      label = "left(source: String, count: Int)"
       documentation = Either [
         left = null
         right = MarkupContent [
@@ -49,7 +49,7 @@ class SignatureHelpServiceSpec : DescribeSpec({
       parameters = ArrayList (
         ParameterInformation [
           label = Either [
-            left = source (lang.taxi.String)
+            left = source: String
             right = null
           ]
           documentation = Either [
@@ -62,7 +62,7 @@ class SignatureHelpServiceSpec : DescribeSpec({
         ],
         ParameterInformation [
           label = Either [
-            left = count (lang.taxi.Int)
+            left = count: Int
             right = null
           ]
           documentation = Either [
@@ -77,7 +77,7 @@ class SignatureHelpServiceSpec : DescribeSpec({
     ]
   )
   activeSignature = 0
-  activeParameter = 0
+  activeParameter = -1
 ]""")
 //
 
@@ -89,7 +89,7 @@ class SignatureHelpServiceSpec : DescribeSpec({
          help2.toString().shouldBe("""SignatureHelp [
   signatures = SingletonList (
     SignatureInformation [
-      label = "trim"
+      label = "trim(String)"
       documentation = Either [
         left = null
         right = MarkupContent [
@@ -100,7 +100,7 @@ class SignatureHelpServiceSpec : DescribeSpec({
       parameters = ArrayList (
         ParameterInformation [
           label = Either [
-            left = lang.taxi.String
+            left = String
             right = null
           ]
           documentation = Either [
@@ -115,7 +115,7 @@ class SignatureHelpServiceSpec : DescribeSpec({
     ]
   )
   activeSignature = 0
-  activeParameter = 0
+  activeParameter = -1
 ]""")
 
       }

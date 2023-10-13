@@ -1,6 +1,8 @@
 package lang.taxi.lsp.signatures
 
 import lang.taxi.Compiler
+import lang.taxi.TaxiParser.ArgumentContext
+import lang.taxi.TaxiParser.ArgumentListContext
 import lang.taxi.TaxiParser.FieldTypeDeclarationContext
 import lang.taxi.TaxiParser.FunctionCallContext
 import lang.taxi.TaxiParser.IdentifierContext
@@ -36,24 +38,37 @@ class SignatureHelpService {
       } else null
       if (function !is Function) return empty
 
-      val signatureInformation = SignatureInformation(
-         function.toQualifiedName().typeName,
-         function.typeDoc.toMarkupOrEmpty(),
-         function.parameters.map { param ->
-            val paramName = if (param.name != null) {
-               "${param.name} (${param.type.toQualifiedName().fullyQualifiedName})"
-            } else {
-               param.type.toQualifiedName().fullyQualifiedName
-            }
-            ParameterInformation(
-               paramName,
-               param.typeDoc.toMarkupOrEmpty()
-            )
+      val parameters = function.parameters.map { param ->
+         val paramName = if (param.name != null) {
+            "${param.name}: ${param.type.toQualifiedName().typeName}"
+         } else {
+            param.type.toQualifiedName().typeName
          }
+
+         ParameterInformation(
+            paramName,
+            param.typeDoc.toMarkupOrEmpty()
+         )
+      }
+
+      val label = function.toQualifiedName().typeName + "(${parameters.joinToString(", ") { it.label.left } })"
+
+
+      val signatureInformation = SignatureInformation(
+         label,
+         function.typeDoc.toMarkupOrEmpty(),
+         parameters
       )
 
-      val activeParameter = 0 // TODO
+      val activeParameter = calculateActiveParamIndex(token)
       return CompletableFuture.completedFuture(SignatureHelp(listOf(signatureInformation), 0, activeParameter))
+   }
+
+   private fun calculateActiveParamIndex(token: ParserRuleContext): Int {
+      val thisArg = token.searchUpForRule<ArgumentContext>() ?: return  -1
+      val list = token.searchUpForRule<ArgumentListContext>() ?: return  -1
+
+      return list.argument().indexOf(thisArg)
    }
 
    private fun findSymbolText(token: ParserRuleContext, compiler: Compiler): String? {
@@ -75,11 +90,11 @@ class SignatureHelpService {
          is IdentifierContext -> foundRule
          is FunctionCallContext -> foundRule.qualifiedName()
          null -> {
-            if (token is ParameterConstraintContext) {
-               // Depending on the tree, a function call can be interpreted as a constraint on a type.
-               // eg:  left(a) looks a lot like Person(FirstName == 2)
-               // That's why we end up here.
-               (token.parent as FieldTypeDeclarationContext).nullableTypeReference()
+            // Depending on the tree, a function call can be interpreted as a constraint on a type.
+            // eg:  left(a) looks a lot like Person(FirstName == 2)
+            // That's why we end up here.
+            if (token.searchUpForRule<FieldTypeDeclarationContext>() != null) {
+               token.searchUpForRule<FieldTypeDeclarationContext>()!!.nullableTypeReference()
             } else {
                error("Unhandled node type when searching for function: ${token::class.simpleName}")
             }
