@@ -71,6 +71,7 @@ class TypeProvider(
          type.typeKind == null -> {
             CompletionItemKind.Unit
          } // Why would this be null?
+         type is AnnotationType -> CompletionItemKind.Interface // ? There isn't an annotation CompletionItemKind :(
          type.typeKind!! == TypeKind.Model -> CompletionItemKind.Class
          type.typeKind!! == TypeKind.Type -> CompletionItemKind.Field
          else -> {
@@ -78,11 +79,17 @@ class TypeProvider(
             CompletionItemKind.Field
          }
       }
+      val (completionFilterText, completionInsertText) = if (type is AnnotationType) {
+         "@$typeName" to "@$typeName"
+      } else null to "@$typeName"
+
       val completionItem = CompletionItem(typeName).apply {
          kind = completionItemKind
-         insertText = typeName
+         insertText = completionInsertText
          detail = listOfNotNull(typeName, doc).joinToString("\n")
          documentation = listOfNotNull(typeName, doc).joinToString("\n").toMarkup()
+         filterText = completionFilterText
+
       }
 
       return decorators.fold(completionItem) { itemToDecorate, decorator ->
