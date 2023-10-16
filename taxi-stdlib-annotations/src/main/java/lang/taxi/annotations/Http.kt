@@ -8,7 +8,7 @@ import lang.taxi.types.QualifiedName
 
 data class HttpService(val baseUrl: String) : AnnotationProvider {
    companion object : BuiltIn {
-      const val NAME = "HttpService"
+      const val NAME = "taxi.http.HttpService"
       override fun asTaxi(): String = """
          namespace taxi.http {
             annotation HttpService {
@@ -30,7 +30,8 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
             annotation RequestBody {}
             annotation PathVariable { value : String }
          }
-      """.trimIndent()
+
+      """
 
       override val name: QualifiedName = QualifiedName.from("taxi.http.HttpService")
 
@@ -55,7 +56,7 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
 
 data class HttpOperation(val method: String, val url: String) : AnnotationProvider {
    companion object {
-      const val NAME = "HttpOperation"
+      const val NAME = "taxi.http.HttpOperation"
       fun fromAnnotation(annotation: Annotation): HttpOperation {
          // TODO : We should just define the bloody annotation in taxi.  Then this would be handled
          // at the compiler level!!!
