@@ -106,7 +106,6 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
 
    private var displayedMessages: List<PublishDiagnosticsParams> = emptyList()
    private lateinit var initializeParams: InitializeParams
-   private val tokenCache: CompilerTokenCache = CompilerTokenCache()
 
    private val compilerService = services.compilerService
    private val completionService = services.completionService

@@ -4,6 +4,7 @@ import lang.taxi.Compiler
 import lang.taxi.TaxiParser.AnnotationContext
 import lang.taxi.TaxiParser.ArgumentContext
 import lang.taxi.TaxiParser.ArgumentListContext
+import lang.taxi.TaxiParser.ElementValuePairContext
 import lang.taxi.TaxiParser.FieldTypeDeclarationContext
 import lang.taxi.TaxiParser.FunctionCallContext
 import lang.taxi.TaxiParser.IdentifierContext
@@ -11,15 +12,22 @@ import lang.taxi.expressions.Expression
 import lang.taxi.functions.Function
 import lang.taxi.lsp.CompilationResult
 import lang.taxi.lsp.completion.toMarkupOrEmpty
+import lang.taxi.lsp.utils.asRange
+import lang.taxi.lsp.utils.contains
+import lang.taxi.lsp.utils.isBefore
 import lang.taxi.searchUpForRule
 import lang.taxi.types.AnnotationType
 import lang.taxi.types.QualifiedName
 import org.antlr.v4.runtime.ParserRuleContext
 import org.eclipse.lsp4j.ParameterInformation
+import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.SignatureHelp
 import org.eclipse.lsp4j.SignatureHelpParams
 import org.eclipse.lsp4j.SignatureInformation
+import org.eclipse.lsp4j.util.Positions
 import java.util.concurrent.CompletableFuture
+import kotlin.math.max
+import kotlin.math.min
 
 class SignatureHelpService {
    fun getSignatureHelp(
@@ -41,7 +49,7 @@ class SignatureHelpService {
 
       val (signatureInformation, activeParameter) = when (importableToken) {
          is Function -> getFunctionSignatureInformation(importableToken, token)
-         is AnnotationType -> getAnnotationSignatureInformation(importableToken, token)
+         is AnnotationType -> getAnnotationSignatureInformation(importableToken, token, params.position)
          else -> return empty
       }
 
@@ -50,14 +58,15 @@ class SignatureHelpService {
 
    private fun getAnnotationSignatureInformation(
       annotationType: AnnotationType,
-      token: ParserRuleContext
+      token: ParserRuleContext,
+      position: Position
    ): Pair<SignatureInformation, Int> {
       val params = annotationType.fields.map { field ->
          val nullable = if (field.nullable) "?" else ""
          val defaultValue = when (field.accessor) {
             is Expression -> (field.accessor as Expression).asTaxi()
             else -> null
-         }?.let { " = $it" }
+         }?.let { " = $it" } ?: ""
          val label = "${field.name}: ${field.type.toQualifiedName().typeName}$nullable$defaultValue"
 
          ParameterInformation(
@@ -66,16 +75,12 @@ class SignatureHelpService {
          )
       }
       val label = signatureLabel(annotationType.toQualifiedName(), params)
-      val activeParam = calculateAnnotationActiveParamIndex(token)
+      val activeParam = calculateAnnotationActiveParamIndex(token, position)
       return SignatureInformation(
          label,
          annotationType.typeDoc.toMarkupOrEmpty(),
          params
       ) to activeParam
-   }
-
-   private fun calculateAnnotationActiveParamIndex(token: ParserRuleContext): Int {
-      return 0
    }
 
    private fun signatureLabel(name: QualifiedName, params: List<ParameterInformation>): String {
@@ -147,14 +152,33 @@ class SignatureHelpService {
             if (token.searchUpForRule<FieldTypeDeclarationContext>() != null) {
                token.searchUpForRule<FieldTypeDeclarationContext>()!!.nullableTypeReference()
             } else {
-               error("Unhandled node type when searching for function: ${token::class.simpleName}")
+               return null
             }
          }
 
-         else -> error("Unhandled node type when searching for function: ${foundRule::class.simpleName}")
-      }
+         else -> null
+      } ?: return null
+
       val lookupResult = compiler.lookupSymbolByName(tokenWithFunctionName.text, tokenWithFunctionName)
          .getOrNull()
       return lookupResult
+   }
+
+   companion object {
+      fun calculateAnnotationActiveParamIndex(token: ParserRuleContext, position: Position): Int {
+         val annotation = token.searchUpForRule<AnnotationContext>() ?: return -1;
+         val thisParam = token.searchUpForRule<ElementValuePairContext>() ?: return  -1;
+         val index = annotation.elementValuePairs().elementValuePair().indexOf(thisParam)
+
+         val paramRange = thisParam.asRange()
+
+         // If the cursor is just before or after the current param, then use the next one.
+         // This happens if the user hasn't started typing the next param yet
+         return when {
+            paramRange.contains(position) -> index
+            position.isBefore(paramRange.start) -> max(0, index -1)
+            else -> min(annotation.elementValuePairs().elementValuePair().size, index + 1)
+         }
+      }
    }
 }

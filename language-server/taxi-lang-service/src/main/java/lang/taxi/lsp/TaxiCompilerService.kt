@@ -4,6 +4,7 @@ import com.google.common.base.Stopwatch
 import lang.taxi.*
 import lang.taxi.linter.toLinterRules
 import lang.taxi.lsp.completion.TypeProvider
+import lang.taxi.lsp.parser.TokenInjectingErrorStrategy
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.packages.utils.log
@@ -28,7 +29,9 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
    private val lastSuccessfulCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
    private val lastCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
 
-   private val tokenCache: CompilerTokenCache = CompilerTokenCache()
+   private val tokenCache: CompilerTokenCache = CompilerTokenCache(
+      listOf(TokenInjectingErrorStrategy.parserCustomizer)
+   )
    val typeProvider = TypeProvider(lastSuccessfulCompilationResult, lastCompilationResult)
 
    private val compileTriggerSink = Sinks.many().unicast().onBackpressureBuffer<CompilationTrigger>()

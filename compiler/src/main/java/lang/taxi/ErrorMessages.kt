@@ -22,7 +22,8 @@ object Errors {
    }
 }
 
-class CollectingErrorListener(private val sourceName: String) : BaseErrorListener() {
+class CollectingErrorListener(private val sourceName: String, private val listener: TokenCollator) : BaseErrorListener() {
+
 
    val errors: MutableList<CompilationError> = mutableListOf()
    override fun syntaxError(recognizer: Recognizer<*, *>, offendingSymbol: Any,
@@ -34,7 +35,7 @@ class CollectingErrorListener(private val sourceName: String) : BaseErrorListene
 //         sourceName = String.format("%s:%d:%d: ", sourceName, line, charPositionInLine)
 //      }
       when {
-         e is NoViableAltException && offendingSymbol is Token -> errors.add(CompilationError(offendingSymbol, "Syntax error at '${e.offendingToken.text}'.  That's all we know.", sourceName))
+         e is NoViableAltException && offendingSymbol is Token -> errors.add(CompilationError(offendingSymbol, "Syntax error at '${e.offendingToken.text}'.  That's all we know.", sourceName, stack = listener.currentStack()))
          offendingSymbol is Token -> errors.add(CompilationError(offendingSymbol, msg, sourceName))
          else -> log().error("Unhandled error situation - offending symbol was not a token")
       }

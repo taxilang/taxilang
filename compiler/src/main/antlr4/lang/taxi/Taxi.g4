@@ -342,8 +342,9 @@ annotation
     :   '@' qualifiedName ( '(' ( elementValuePairs | elementValue )? ')' )?
     ;
 
+
 elementValuePairs
-    :   elementValuePair (',' elementValuePair)*
+    :   elementValuePair (',' elementValuePair?)* // permitting trailing commas make the grammar easier to parse
     ;
 
 elementValuePair
@@ -613,7 +614,7 @@ functionCall: qualifiedName '(' argumentList? ')';
 // is an argument. Otherwise, we were finding the grammar parsed trailing commas
 // as an addiitonal type member declaration.
 argumentList
-    : argument  (',' argument?)* // allowing trailing zeros helps clarify the grammar
+    : argument  (',' argument?)* // allowing trailing commas helps clarify the grammar
     ;
 
 argument: literal |  scalarAccessorExpression | fieldReferenceSelector | typeReferenceSelector | modelAttributeTypeReference | expressionGroup;

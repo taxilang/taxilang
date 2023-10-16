@@ -91,17 +91,22 @@ data class CompilationError(
    val detailMessage: String,
    val sourceName: String? = null,
    val severity: Severity = Severity.ERROR,
-   val errorCode: Int? = null
+   val errorCode: Int? = null,
+   // The stack from the parser at the time the error was caught.
+   val stack: List<ParserRuleContext>? = null
 ) : Serializable {
    constructor(
       compiled: Compiled,
       detailMessage: String,
       sourceName: String = compiled.compilationUnits.first().source.sourceName,
       severity: Severity = Severity.ERROR,
-      errorCode: Int? = null
+      errorCode: Int? = null,
+      // The stack from the parser at the time the error was caught.
+      stack: List<ParserRuleContext>? = null
+
    ) : this(
       compiled.compilationUnits.firstOrNull()?.location
-         ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity, errorCode
+         ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity, errorCode, stack = stack
    )
 
    constructor(
@@ -109,9 +114,11 @@ data class CompilationError(
       detailMessage: String,
       sourceName: String = compilationUnit.source.sourceName,
       severity: Severity = Severity.ERROR,
-      errorCode: Int? = null
+      errorCode: Int? = null,
+      // The stack from the parser at the time the error was caught.
+      stack: List<ParserRuleContext>? = null
    ) : this(
-      compilationUnit.location, detailMessage, sourceName, severity, errorCode
+      compilationUnit.location, detailMessage, sourceName, severity, errorCode, stack
    )
 
    constructor(
@@ -119,16 +126,28 @@ data class CompilationError(
       detailMessage: String,
       sourceName: String? = null,
       severity: Severity = Severity.ERROR,
-      errorCode: Int? = null
-   ) : this(position.line, position.char, detailMessage, sourceName, severity, errorCode)
+      errorCode: Int? = null,
+      // The stack from the parser at the time the error was caught.
+      stack: List<ParserRuleContext>? = null
+   ) : this(position.line, position.char, detailMessage, sourceName, severity, errorCode, stack = stack)
 
    constructor(
       offendingToken: Token,
       detailMessage: String,
       sourceName: String = offendingToken.tokenSource.sourceName,
       severity: Severity = Severity.ERROR,
-      errorCode: Int? = null
-   ) : this(offendingToken.line, offendingToken.charPositionInLine, detailMessage, sourceName, severity, errorCode)
+      errorCode: Int? = null,
+      // The stack from the parser at the time the error was caught.
+      stack: List<ParserRuleContext>? = null
+   ) : this(
+      offendingToken.line,
+      offendingToken.charPositionInLine,
+      detailMessage,
+      sourceName,
+      severity,
+      errorCode,
+      stack = stack
+   )
 
 
    override fun toString(): String = "[${severity.label}]: ${sourceName.orEmpty()}($line,$char) $detailMessage"
@@ -154,7 +173,10 @@ data class DocumentStrucutreError(val detailMessage: String)
 class DocumentMalformedException(val errors: List<DocumentStrucutreError>) :
    RuntimeException(errors.joinToString { it.detailMessage })
 
-class CompilerTokenCache {
+
+class CompilerTokenCache(
+   private val parserCustomizers: List<ParserCustomizer> = emptyList()
+) {
 
    private val streamNameToStream = mutableMapOf<String, CharStream>()
    private val cache: Cache<CharStream, TokenStreamParseResult> = CacheBuilder.newBuilder()
@@ -170,46 +192,72 @@ class CompilerTokenCache {
 
    fun parse(input: CharStream): TokenStreamParseResult {
       return cache.get(input) {
-         val listener = TokenCollator()
-         val errorListener = CollectingErrorListener(input.sourceName)
-         val lexer = TaxiLexer(input)
-         // We ignore lexer errors, and let the parser handle syntax problems.
-         // Without this, there's just a bunch of noise in the console.
-         lexer.removeErrorListeners()
+         val tokenStreamParser =
+            parserCustomizers.fold(DefaultTaxiTokenStreamParser() as TaxiTokenStreamParser) { acc, parserCustomizer ->
+               parserCustomizer.configure(acc)
+            }
 
-         val parser = TaxiParser(CommonTokenStream(lexer))
-         parser.addParseListener(listener)
-         parser.addErrorListener(errorListener)
+         tokenStreamParser.parse(input)
 
-         // Use CompilerExceptions for runtime exceptions thrown by the compiler
-         // not compilatio errors in the source code being compiled
-         // These exceptions represent bugs in the compiler
-         val compilerExceptions = mutableListOf<CompilationError>()
-         // Calling document triggers the parsing
-         try {
-            parser.document()
-         } catch (e: Exception) {
-            compilerExceptions.add(
-               CompilationError(
-                  parser.currentToken,
-                  "An exception occurred in the compilation process.  This is likely a bug in the Taxi Compiler. \n ${e.message}",
-                  parser.currentToken?.tokenSource?.sourceName
-                     ?: "Unknown"
-               )
-            )
-         }
-
-         val result = TokenStreamParseResult(listener.tokens(), compilerExceptions + errorListener.errors)
-
-         streamNameToStream.put(SourceNames.normalize(input.sourceName), input)?.let { previousVersion ->
-            cache.invalidate(previousVersion)
-         }
-         result
+//         val listener = TokenCollator()
+//         val errorListener = CollectingErrorListener(input.sourceName, listener)
+//         val lexer = TaxiLexer(input)
+//         // We ignore lexer errors, and let the parser handle syntax problems.
+//         // Without this, there's just a bunch of noise in the console.
+//         lexer.removeErrorListeners()
+//
+//         val commonTokenStream = CommonTokenStream(lexer)
+//
+//         // Extension point - allow callers to customize the parser
+//         // (eg., adding in a custom error recovery strategy)
+//         val parser = TaxiParser(commonTokenStream).let {parser ->
+//            parser.addParseListener(listener)
+//            parser.addErrorListener(errorListener)
+//            parserCustomizers.fold(parser) { acc, parserCustomizer -> parserCustomizer.configure(acc) }
+//         }
+//
+//         // Use CompilerExceptions for runtime exceptions thrown by the compiler
+//         // not compilatio errors in the source code being compiled
+//         // These exceptions represent bugs in the compiler
+//         val compilerExceptions = mutableListOf<CompilationError>()
+//
+//         try {
+//            // Calling document triggers the parsing
+//            parser.document()
+//         } catch (e: Exception) {
+//            compilerExceptions.add(
+//               CompilationError(
+//                  parser.currentToken,
+//                  "An exception occurred in the compilation process.  This is likely a bug in the Taxi Compiler. \n ${e.message}",
+//                  parser.currentToken?.tokenSource?.sourceName
+//                     ?: "Unknown"
+//               )
+//            )
+//         }
+//
+//         val result = TokenStreamParseResult(listener.tokens(), compilerExceptions + errorListener.errors)
+//
+//         streamNameToStream.put(SourceNames.normalize(input.sourceName), input)?.let { previousVersion ->
+//            cache.invalidate(previousVersion)
+//         }
+//         result
       }
    }
 }
 
-data class TokenStreamParseResult(val tokens: Tokens, val errors: List<CompilationError>)
+data class TokenStreamParseResult(
+   val tokens: Tokens, val errors: List<CompilationError>,
+
+   /**
+    * Synthetic tokens are things that we created during the
+    * compilation process, which weren't present in the original sources.
+    *
+    * Normally, this is through tooling for things like Autocomplete suggestions,
+    * which will attempt to recover from compilation failures by injecting synthetic tokens
+    */
+   val syntheticTokens: List<Token> = emptyList()
+)
+
 data class CompilerConfig(
    val typeCheckerEnabled: FeatureToggle = FeatureToggle.DISABLED,
    val linterRuleConfiguration: List<LinterRuleConfiguration> = emptyList()
@@ -270,16 +318,20 @@ class Compiler(
 
    private val typeChecker: TypeChecker = TypeChecker(config.typeCheckerEnabled)
 
-   val parseResult: Pair<Tokens, List<CompilationError>> by lazy {
+   val parseResult: CollectedTokens by lazy {
       collectTokens()
    }
 
    val tokens: Tokens by lazy {
-      parseResult.first
+      parseResult.tokens
+   }
+
+   val syntheticTokens: List<Token> by lazy {
+      parseResult.syntheticTokens
    }
 
    private val syntaxErrors: List<CompilationError> by lazy {
-      parseResult.second
+      parseResult.errors
    }
    private val tokenProcessorWithImports: TokenProcessor by lazy {
       TokenProcessor(tokens, importSources, typeChecker = typeChecker, linter = config.linter)
@@ -289,7 +341,7 @@ class Compiler(
    }
 
    fun validate(): List<CompilationError> {
-      val compilationErrors = parseResult.second
+      val compilationErrors = parseResult.errors
       if (compilationErrors.isNotEmpty()) {
          return compilationErrors
       }
@@ -318,6 +370,7 @@ class Compiler(
    fun lookupSymbolByName(text: String, contextRule: ParserRuleContext): Either<List<CompilationError>, String> {
       return tokenProcessorWithImports.lookupSymbolByName(text, contextRule)
    }
+
    fun lookupTypeByName(typeType: TaxiParser.TypeReferenceContext): QualifiedName {
       return QualifiedName.from(tokenProcessorWithImports.lookupSymbolByName(typeType))
    }
@@ -413,7 +466,6 @@ class Compiler(
       val tokenTable = tokens.tokenStore.tokenTable(sourceName)
 
       val closestLineWithContent = searchBackwardsForClosestLine(tokenTable, zeroBasedLineIndex) ?: return null
-
       val row = tokenTable.row(closestLineWithContent).let {
          if (it.isEmpty()) {
             // This is a workaround.  I've noticed that sometimes the value the compiler
@@ -434,7 +486,18 @@ class Compiler(
       val tokenStartIndices = row.keys as SortedSet
       val nearestStartIndex = tokenStartIndices.takeWhile { startIndex -> startIndex <= char }.lastOrNull()
       val nearestToken = nearestStartIndex?.let { index -> row.get(index) }
-         ?.let { token -> searchWithinTokenChildren(token, closestLineWithContent, char) }
+         ?.let { ruleContext -> searchWithinTokenChildren(ruleContext, closestLineWithContent, char) }
+
+         ?.let { ruleContext ->
+            // If the token we hit was synthetic (ie.,
+            // created during the compilation process to recover from errors),
+            // then return the token that came before it.
+            if (syntheticTokens.contains(ruleContext.start)) {
+               ruleContext.parent as ParserRuleContext?
+            } else {
+               ruleContext
+            }
+         }
 
 
 
@@ -449,7 +512,7 @@ class Compiler(
       if (tokenTable.rowKeySet().contains(zeroBasedLineIndex)) {
          return zeroBasedLineIndex
       } else {
-         return searchBackwardsForClosestLine(tokenTable,zeroBasedLineIndex - 1)
+         return searchBackwardsForClosestLine(tokenTable, zeroBasedLineIndex - 1)
       }
    }
 
@@ -464,7 +527,7 @@ class Compiler(
             .flatMap { it.children ?: emptyList() }
             .filterIsInstance<ParserRuleContext>()
             // Line indexes are 1 based when coming from the compiler
-            .filter { (it.start.line - 1) <= zeroBasedLineIndex && it.start.charPositionInLine <= char }
+            .filter { (it.start.line - 1) <= zeroBasedLineIndex && it.start.charPositionInLine < char }
          if (next.isNotEmpty()) {
             next
          } else {
@@ -502,6 +565,12 @@ class Compiler(
       return tokens.tokenStore.containsTokensForSource(sourceName)
    }
 
+   data class CollectedTokens(
+      val tokens: Tokens,
+      val errors: List<CompilationError>,
+      val syntheticTokens: List<Token>
+   )
+
    /**
     * Collect the tokens in the input streams found
     * Here, errors will get thrown for syntax issues, but not for
@@ -514,7 +583,7 @@ class Compiler(
     * as possible
     */
    @OptIn(ExperimentalTime::class)
-   private fun collectTokens(): Pair<Tokens, List<CompilationError>> {
+   private fun collectTokens(): CollectedTokens {
       val builtInSources = CharStreams.fromString(StdLib.taxi, "Native StdLib")
 
       val allInputs = inputs + builtInSources
@@ -528,12 +597,15 @@ class Compiler(
       }
       val tokensCollection = collectionResult.map { it.tokens }
       val errors = collectionResult.flatMap { it.errors }
+      val syntheticTokens = collectionResult.flatMap { it.syntheticTokens }
       val timedTokens = measureTimedValue {
          Tokens.combine(tokensCollection)
-//         tokensCollection.reduce { acc, tokens -> acc.plus(tokens) }
       }
-      log().debug("Reducing parsed tokens took ${timedTokens.duration}")
-      return timedTokens.value to errors
+      return CollectedTokens(
+         timedTokens.value,
+         errors,
+         syntheticTokens
+      )
    }
 
    fun typeNamesForSource(sourceName: String): List<QualifiedName> {
@@ -636,6 +708,15 @@ fun RuleContext.searchUpForRule(ruleType: Class<out RuleContext>): RuleContext? 
 
 inline fun <reified T : RuleContext> RuleContext.searchUpForRule(): T? =
    searchUpForRule(listOf(T::class.java)) as T?
+
+fun RuleContext.searchUpExcluding(vararg ruleTypes: Class<out RuleContext>): ParserRuleContext? {
+   val parent = this.parent ?: return null
+   return if (ruleTypes.contains(parent::class.java)) {
+      parent.searchUpExcluding(*ruleTypes)
+   } else {
+      parent as ParserRuleContext
+   }
+}
 
 tailrec fun RuleContext.searchUpForRule(ruleTypes: List<Class<out RuleContext>>): RuleContext? {
    fun matches(instance: RuleContext): Boolean {
