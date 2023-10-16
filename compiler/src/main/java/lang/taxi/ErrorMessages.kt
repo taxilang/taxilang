@@ -35,7 +35,7 @@ class CollectingErrorListener(private val sourceName: String, private val listen
 //         sourceName = String.format("%s:%d:%d: ", sourceName, line, charPositionInLine)
 //      }
       when {
-         e is NoViableAltException && offendingSymbol is Token -> errors.add(CompilationError(offendingSymbol, "Syntax error at '${e.offendingToken.text}'.  That's all we know.", sourceName, stack = listener.currentStack()))
+         e is NoViableAltException && offendingSymbol is Token -> errors.add(CompilationError(offendingSymbol, "Syntax error at '${e.offendingToken.text}'.  That's all we know.", sourceName))
          offendingSymbol is Token -> errors.add(CompilationError(offendingSymbol, msg, sourceName))
          else -> log().error("Unhandled error situation - offending symbol was not a token")
       }

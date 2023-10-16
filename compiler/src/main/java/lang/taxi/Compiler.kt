@@ -92,8 +92,6 @@ data class CompilationError(
    val sourceName: String? = null,
    val severity: Severity = Severity.ERROR,
    val errorCode: Int? = null,
-   // The stack from the parser at the time the error was caught.
-   val stack: List<ParserRuleContext>? = null
 ) : Serializable {
    constructor(
       compiled: Compiled,
@@ -101,12 +99,9 @@ data class CompilationError(
       sourceName: String = compiled.compilationUnits.first().source.sourceName,
       severity: Severity = Severity.ERROR,
       errorCode: Int? = null,
-      // The stack from the parser at the time the error was caught.
-      stack: List<ParserRuleContext>? = null
-
    ) : this(
       compiled.compilationUnits.firstOrNull()?.location
-         ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity, errorCode, stack = stack
+         ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity, errorCode
    )
 
    constructor(
@@ -115,10 +110,8 @@ data class CompilationError(
       sourceName: String = compilationUnit.source.sourceName,
       severity: Severity = Severity.ERROR,
       errorCode: Int? = null,
-      // The stack from the parser at the time the error was caught.
-      stack: List<ParserRuleContext>? = null
    ) : this(
-      compilationUnit.location, detailMessage, sourceName, severity, errorCode, stack
+      compilationUnit.location, detailMessage, sourceName, severity, errorCode
    )
 
    constructor(
@@ -127,9 +120,7 @@ data class CompilationError(
       sourceName: String? = null,
       severity: Severity = Severity.ERROR,
       errorCode: Int? = null,
-      // The stack from the parser at the time the error was caught.
-      stack: List<ParserRuleContext>? = null
-   ) : this(position.line, position.char, detailMessage, sourceName, severity, errorCode, stack = stack)
+   ) : this(position.line, position.char, detailMessage, sourceName, severity, errorCode)
 
    constructor(
       offendingToken: Token,
@@ -137,16 +128,13 @@ data class CompilationError(
       sourceName: String = offendingToken.tokenSource.sourceName,
       severity: Severity = Severity.ERROR,
       errorCode: Int? = null,
-      // The stack from the parser at the time the error was caught.
-      stack: List<ParserRuleContext>? = null
    ) : this(
       offendingToken.line,
       offendingToken.charPositionInLine,
       detailMessage,
       sourceName,
       severity,
-      errorCode,
-      stack = stack
+      errorCode
    )
 
 

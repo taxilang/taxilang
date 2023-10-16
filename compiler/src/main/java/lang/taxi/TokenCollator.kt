@@ -197,11 +197,6 @@ class TokenCollator : TaxiBaseListener() {
    private val namedQueries = mutableListOf<Pair<Namespace, TaxiParser.NamedQueryContext>>()
    private val anonymousQueries = mutableListOf<Pair<Namespace, TaxiParser.AnonymousQueryContext>>()
 
-   private val stack = mutableListOf<ParserRuleContext>()
-
-   fun currentStack(): List<ParserRuleContext> {
-      return stack.toList()
-   }
 
    //    private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
 //    private val unparsedExtensions = mutableListOf<ParserRuleContext>()
@@ -222,10 +217,6 @@ class TokenCollator : TaxiBaseListener() {
    }
 
 
-   override fun enterEveryRule(ctx: ParserRuleContext) {
-      stack.add(ctx)
-   }
-
    override fun exitEveryRule(ctx: ParserRuleContext) {
       val zeroBasedLineNumber = ctx.start.line - 1
 
@@ -233,7 +224,6 @@ class TokenCollator : TaxiBaseListener() {
       // during error recovery
       val sourceName = ctx.start.tokenSource?.sourceName?.let {         SourceNames.normalize(it)      } ?: "UnknownSource"
       tokenStore.insert(sourceName, zeroBasedLineNumber, ctx.start.charPositionInLine, ctx)
-      stack.removeLast()
    }
 
    override fun exitImportDeclaration(ctx: TaxiParser.ImportDeclarationContext) {
