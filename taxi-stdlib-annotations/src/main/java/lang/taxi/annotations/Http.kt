@@ -2,10 +2,37 @@ package lang.taxi.annotations
 
 import lang.taxi.types.Annotation
 import lang.taxi.types.AnnotationProvider
+import lang.taxi.types.BuiltIn
+import lang.taxi.types.QualifiedName
+
 
 data class HttpService(val baseUrl: String) : AnnotationProvider {
-   companion object {
+   companion object : BuiltIn {
       const val NAME = "HttpService"
+      override fun asTaxi(): String = """
+         namespace taxi.http {
+            annotation HttpService {
+               baseUrl : String
+            }
+            enum HttpMethod {
+               GET,
+               POST,
+               PUT,
+               DELETE,
+               PATCH
+            }
+
+            annotation HttpOperation {
+               method : HttpMethod
+               url : String
+            }
+
+            annotation RequestBody {}
+            annotation PathVariable { value : String }
+         }
+      """.trimIndent()
+
+      override val name: QualifiedName = QualifiedName.from("taxi.http.HttpService")
 
       fun fromAnnotation(annotation: Annotation): HttpService {
          val parameters = annotation.parameters
@@ -17,6 +44,7 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
          return HttpService(parameters["baseUrl"]!!.toString())
       }
    }
+
 
    override fun toAnnotation(): Annotation {
       return Annotation(NAME, mapOf("baseUrl" to baseUrl))
