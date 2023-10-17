@@ -35,6 +35,9 @@ internal class ImportedTypeCollator(
          if (collected.containsKey(name)) continue
          if (PrimitiveType.isPrimitiveType(name)) continue
 
+         // We don't need to import if it's defined elsewhere in these sources.
+         if (tokens.containsUnparsedType(name, SymbolKind.TYPE)) continue
+
          val type = getImportableToken(name, token)
          if (type == null) {
             errors.add(CompilationError(token, "Cannot import $name as it is not defined", token.tokenSource.sourceName))

@@ -3,7 +3,9 @@ package lang.taxi
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 import lang.taxi.messages.Severity
+import lang.taxi.sources.SourceCode
 import lang.taxi.types.ObjectType
 import lang.taxi.types.QualifiedName
 
@@ -151,6 +153,77 @@ namespace car {
          val schemaA = Compiler(sourceA).compile()
          val schemaB = Compiler(sourceB, importSources = listOf(schemaA)).compile()
          schemaB.objectType("car.Person").field("name").type.qualifiedName.should.equal("foo.Name")
+      }
+
+      it("can import a type defined inline") {
+         val sourceA = """
+namespace foo {
+   model Person {
+      firstName : FirstName inherits String
+      lastName : LastName inherits String
+   }
+}
+      """.trimIndent()
+         val sourceB = """
+import foo.FirstName
+namespace bar {
+   model Pet {
+      name : FirstName
+   }
+}
+      """.trimIndent()
+         val schemaA = Compiler(sourceA).compile()
+         val schemaB = Compiler(sourceB, importSources = listOf(schemaA)).compile()
+
+         schemaB.model("bar.Pet").field("name").type.qualifiedName.shouldBe("foo.FirstName")
+      }
+
+      it("can import a type defined inline when compiler created with a list of sources") {
+         val sourceA = """
+namespace foo {
+   model Person {
+      firstName : FirstName inherits String
+      lastName : LastName inherits String
+   }
+}
+      """.trimIndent()
+         val sourceB = """
+import foo.FirstName
+namespace bar {
+   model Pet {
+      name : FirstName
+   }
+}
+      """.trimIndent()
+         // This is the test... rather than declaring import sources,
+         // we're constructing the compiler as a list of sources.
+         // That seems to break imports
+         val sources = listOf(sourceA,sourceB).mapIndexed { index, content ->
+            SourceCode("source$index", content)
+         }
+         val schema = Compiler(sources).compile()
+         schema.model("bar.Pet").field("name").type.qualifiedName.shouldBe("foo.FirstName")
+      }
+
+      it("can import a type defined without a namespace") {
+         val sourceA = """
+   model Person {
+      firstName : FirstName inherits String
+      lastName : LastName inherits String
+   }
+      """.trimIndent()
+         val sourceB = """
+import FirstName
+namespace bar {
+   model Pet {
+      name : FirstName
+   }
+}
+      """.trimIndent()
+         val schemaA = Compiler(sourceA).compile()
+         val schemaB = Compiler(sourceB, importSources = listOf(schemaA)).compile()
+
+         schemaB.model("bar.Pet").field("name").type.qualifiedName.shouldBe("FirstName")
       }
    }
 })
