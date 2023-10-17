@@ -81,7 +81,7 @@ class TypeProvider(
       }
       val (completionFilterText, completionInsertText) = if (type is AnnotationType) {
          "@$typeName" to "@$typeName"
-      } else null to "@$typeName"
+      } else null to typeName
 
       val completionItem = CompletionItem(typeName).apply {
          kind = completionItemKind
