@@ -1,5 +1,6 @@
 package lang.taxi
 
+import lang.taxi.TaxiParser.AnnotationTypeDeclarationContext
 import lang.taxi.TaxiParser.ServiceDeclarationContext
 import lang.taxi.TaxiParser.TypeDeclarationContext
 import lang.taxi.TaxiParser.TypeDocContext
@@ -262,11 +263,20 @@ class TokenCollator : TaxiBaseListener() {
       }
 
       // If there's an inline type declared, mark it so that we can process it later.
-      if (fieldCtx.inlineInheritedType() != null) {
-         val owningType = fieldCtx.searchUpForRule<TypeDeclarationContext>()
+      if (fieldCtx?.inlineInheritedType() != null) {
+         val owningType = fieldCtx.searchUpForRule(
+            listOf(TypeDeclarationContext::class.java, AnnotationTypeDeclarationContext::class.java))
             ?: error("Field ${ctx.identifier()} declares an inline type - expected to find a parent type declaration, but didn't")
+
          val inlineTypeName = qualify(fieldCtx.nullableTypeReference().typeReference().qualifiedName().text)
-         val owningTypeName = qualify(owningType.identifier().text)
+         val owningTypeName = when (owningType) {
+            is TypeDeclarationContext -> qualify(owningType.identifier().text)
+            is AnnotationTypeDeclarationContext -> qualify(owningType.identifier().text)
+            else -> error("Unexpected context in resolving inline field : ${owningType::class.simpleName}")
+         }
+
+
+
          unparsedInlineTypes.put(inlineTypeName, owningTypeName)
       }
       super.exitFieldDeclaration(ctx)
