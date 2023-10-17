@@ -132,6 +132,10 @@ namespace foo {
          expect(errors.first().detailMessage).to.equal("Cannot import test.FirstName as it is not defined")
       }
 
+      it("can declare an inline type on an annotation") {
+
+      }
+
       it("when two types with same name exist but one is explicitly imported then type resolution is unambiguous") {
          val sourceA = """
 namespace foo {
