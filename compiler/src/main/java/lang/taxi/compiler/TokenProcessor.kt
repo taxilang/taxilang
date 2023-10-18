@@ -1346,12 +1346,18 @@ class TokenProcessor(
       return when (expressionInputs.expressionInput().size) {
          1 -> {
             val input = expressionInputs.expressionInput().single()
-            val identifier = input.identifier().text ?: ProjectionFunctionScope.THIS
+            val identifier = input.identifier()?.text ?: ProjectionFunctionScope.THIS
             resolveTypeOrFunction(
                input.typeReference().qualifiedName(),
                null,
                input.typeReference().qualifiedName()
-            ).flatMap { token ->
+            ).map { token ->
+               if (input.typeReference().arrayMarker() != null) {
+                  ArrayType.of(token as Type)
+               } else {
+                  token
+               }
+            }.flatMap { token ->
                if (token is Type) {
                   ProjectionFunctionScope(identifier, token).right()
                } else {
@@ -1766,7 +1772,7 @@ class TokenProcessor(
       }
    }
 
-   private fun getOrCompileService(qualifiedName: String): Either<List<CompilationError>,Service> {
+   private fun getOrCompileService(qualifiedName: String): Either<List<CompilationError>, Service> {
       return services.firstOrNull { it.qualifiedName == qualifiedName }?.right()
          ?: compileService(qualifiedName, tokens.unparsedServices[qualifiedName]!!)
    }
@@ -1783,7 +1789,7 @@ class TokenProcessor(
       requestedFunctionName: QualifiedNameContext,
       context: ParserRuleContext
    ): Either<List<CompilationError>, Function> {
-      return resolveImportableToken(requestedFunctionName,  context)
+      return resolveImportableToken(requestedFunctionName, context)
          .map { it as Function }
    }
 
