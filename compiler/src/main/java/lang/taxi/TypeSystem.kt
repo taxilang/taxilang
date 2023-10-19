@@ -198,6 +198,7 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
             SymbolKind.FUNCTION -> getImportedFunction(qualifiedName)
             SymbolKind.TYPE -> getImportedType(qualifiedName)
             SymbolKind.SERVICE -> getImportedService(qualifiedName)
+            SymbolKind.ANNOTATION -> getImportedType(qualifiedName)
             else -> error("Handling of imported symbols for kind $symbolKind is not implemented")
          }
       }

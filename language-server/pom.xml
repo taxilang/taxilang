@@ -28,7 +28,7 @@
 
    <properties>
       <taxi.version>${project.version}</taxi.version>
-      <lsp4j.version>0.9.0</lsp4j.version>
+      <lsp4j.version>0.21.1</lsp4j.version>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
    </properties>
 

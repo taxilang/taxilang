@@ -37,7 +37,7 @@ fun getFieldType(context: ParserRuleContext, compiler: Compiler): QualifiedName?
       }
 
       is ArrayMarkerContext -> context.searchUpForRule<TypeReferenceContext>()!!
-      else -> error("Unexpected token type: ${context::class.simpleName}")
+      else -> return null
    }
    return typeContext?.let { compiler.lookupTypeByName(it) }
 }

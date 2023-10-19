@@ -1,4 +1,5 @@
-namespace lang.taxi.xml
+namespace lang.taxi.xml {
 
-annotation XmlAttribute
-annotation XmlBody
+   annotation XmlAttribute
+   annotation XmlBody
+}
