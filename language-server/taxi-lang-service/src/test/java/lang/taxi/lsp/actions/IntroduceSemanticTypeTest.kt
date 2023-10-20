@@ -8,6 +8,8 @@ import lang.taxi.lsp.LspServicesConfig
 import lang.taxi.lsp.document
 import lang.taxi.lsp.documentServiceFor
 import lang.taxi.lsp.documentServiceWithFiles
+import lang.taxi.lsp.positionOf
+import lang.taxi.lsp.toPosition
 import org.eclipse.lsp4j.*
 
 class IntroduceSemanticTypeTest : DescribeSpec({
@@ -16,19 +18,22 @@ class IntroduceSemanticTypeTest : DescribeSpec({
          codeActionService = CodeActionService(listOf(IntroduceSemanticType()))
       )
       it("should offer introducing semantic type when on the field name of a primitive") {
-         val (service, workspacePath) = documentServiceWithFiles(
-            tempdir(),
-            languageServiceConfig,
-            "person.taxi" to """model Person {
+         val src = """model Person {
                |firstName : String
                |}
-            """.trimMargin()
+            """
+          val (service, workspacePath) = documentServiceWithFiles(
+            tempdir(),
+            languageServiceConfig,
+            "person.taxi" to src.trimMargin()
          )
 
+          val position = src.positionOf("firstName :").toPosition()
          val actions = service.codeAction(
             CodeActionParams(
                workspacePath.document("person.taxi"),
-               Range(Position(1, 12), Position(1, 12)),
+
+                Range(position,position),
                CodeActionContext(emptyList())
             )
          ).get()

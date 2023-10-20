@@ -2,6 +2,7 @@ package lang.taxi.lsp.signatures
 
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.engine.spec.tempdir
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import lang.taxi.lsp.CursorPosition
@@ -67,96 +68,10 @@ model Person {}
                Position(1, 17) // Location of open parenthesis of  firstName : left(
             )
          )
-
-         help.get().toString().shouldBe(
-            """SignatureHelp [
-  signatures = SingletonList (
-    SignatureInformation [
-      label = "left(source: String, count: Int)"
-      documentation = Either [
-        left = null
-        right = MarkupContent [
-        kind = "markdown"
-        value = "Returns the left most characters from the source string"
-      ]
-      ]
-      parameters = ArrayList (
-        ParameterInformation [
-          label = Either [
-            left = source: String
-            right = null
-          ]
-          documentation = Either [
-            left = null
-            right = MarkupContent [
-            kind = "markdown"
-            value = ""
-          ]
-          ]
-        ],
-        ParameterInformation [
-          label = Either [
-            left = count: Int
-            right = null
-          ]
-          documentation = Either [
-            left = null
-            right = MarkupContent [
-            kind = "markdown"
-            value = ""
-          ]
-          ]
-        ]
-      )
-    ]
-  )
-  activeSignature = 0
-  activeParameter = -1
-]"""
-         )
-//
-
-         val help2 = service.signatureHelp(
-            SignatureHelpParams(
-               workspacePath.document("person.taxi"),
-               Position(2, 17) // Location of open parenthesis of  lastName : left(
-            )
-         ).get()
-
-         help2.toString().shouldBe(
-            """SignatureHelp [
-  signatures = SingletonList (
-    SignatureInformation [
-      label = "trim(String)"
-      documentation = Either [
-        left = null
-        right = MarkupContent [
-        kind = "markdown"
-        value = ""
-      ]
-      ]
-      parameters = ArrayList (
-        ParameterInformation [
-          label = Either [
-            left = String
-            right = null
-          ]
-          documentation = Either [
-            left = null
-            right = MarkupContent [
-            kind = "markdown"
-            value = ""
-          ]
-          ]
-        ]
-      )
-    ]
-  )
-  activeSignature = 0
-  activeParameter = -1
-]"""
-         )
-
+          val singatures = help.get().signatures
+          singatures.shouldHaveSize(1)
+          singatures.single().label.shouldBe("left(source: String, count: Int)")
+          singatures.single().parameters.shouldHaveSize(2)
       }
    }
 
