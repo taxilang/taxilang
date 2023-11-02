@@ -26,17 +26,7 @@ interface CompletionService {
          val normalizedUriPath = params.textDocument.normalizedUriPath()
          val importDecorator = ImportCompletionDecorator(compilationResult.compiler, normalizedUriPath)
 
-         val zeroBasedLineIndex = params.position.line
-         val char = params.position.character
-         // contextAt() is the most specific.  If we match an exact token, it'll be returned.
-         val context = compilationResult.compiler.contextAt(zeroBasedLineIndex, char, normalizedUriPath)
-            ?:
-            // getNearestToken() returns the token if we're not on an exact match location, but could find a nearby one.
-            compilationResult.compiler.getNearestToken(
-               zeroBasedLineIndex,
-               char,
-               normalizedUriPath
-            ) as? ParserRuleContext
+         val context = compilationResult.getNearestToken(params.textDocument, params.position)
          return Pair(importDecorator, context)
       }
    }

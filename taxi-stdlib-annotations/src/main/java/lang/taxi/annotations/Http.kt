@@ -2,10 +2,38 @@ package lang.taxi.annotations
 
 import lang.taxi.types.Annotation
 import lang.taxi.types.AnnotationProvider
+import lang.taxi.types.BuiltIn
+import lang.taxi.types.QualifiedName
+
 
 data class HttpService(val baseUrl: String) : AnnotationProvider {
-   companion object {
-      const val NAME = "HttpService"
+   companion object : BuiltIn {
+      const val NAME = "taxi.http.HttpService"
+      override fun asTaxi(): String = """
+         namespace taxi.http {
+            annotation HttpService {
+               baseUrl : String
+            }
+            enum HttpMethod {
+               GET,
+               POST,
+               PUT,
+               DELETE,
+               PATCH
+            }
+
+            annotation HttpOperation {
+               method : HttpMethod
+               url : String
+            }
+
+            annotation RequestBody {}
+            annotation PathVariable { value : String }
+         }
+
+      """
+
+      override val name: QualifiedName = QualifiedName.from("taxi.http.HttpService")
 
       fun fromAnnotation(annotation: Annotation): HttpService {
          val parameters = annotation.parameters
@@ -18,6 +46,7 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
       }
    }
 
+
    override fun toAnnotation(): Annotation {
       return Annotation(NAME, mapOf("baseUrl" to baseUrl))
    }
@@ -27,7 +56,7 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
 
 data class HttpOperation(val method: String, val url: String) : AnnotationProvider {
    companion object {
-      const val NAME = "HttpOperation"
+      const val NAME = "taxi.http.HttpOperation"
       fun fromAnnotation(annotation: Annotation): HttpOperation {
          // TODO : We should just define the bloody annotation in taxi.  Then this would be handled
          // at the compiler level!!!
@@ -46,7 +75,7 @@ object HttpRequestBody : AnnotationProvider {
       return Annotation(NAME)
    }
 
-   const val NAME = "RequestBody"
+   const val NAME = "taxi.http.RequestBody"
 }
 
 @Deprecated("This is no longer required")

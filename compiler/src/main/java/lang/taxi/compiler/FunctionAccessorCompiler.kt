@@ -2,17 +2,14 @@ package lang.taxi.compiler
 
 import arrow.core.Either
 import arrow.core.flatMap
+import arrow.core.left
 import arrow.core.right
-import lang.taxi.CompilationError
-import lang.taxi.TaxiParser
+import lang.taxi.*
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.expressions.Expression
-import lang.taxi.findNamespace
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
-import lang.taxi.source
-import lang.taxi.text
 import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.Type
@@ -21,7 +18,6 @@ import lang.taxi.types.TypeReferenceSelector
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.wrapErrorsInList
-import lang.taxi.value
 import org.antlr.v4.runtime.RuleContext
 
 interface FunctionParameterReferenceResolver {
@@ -32,7 +28,7 @@ interface FunctionParameterReferenceResolver {
 
    fun compileFieldReferenceAccessor(
       function: Function,
-      parameterContext: TaxiParser.ParameterContext
+      parameterContext: TaxiParser.ArgumentContext
    ): Either<List<CompilationError>, FieldReferenceSelector>
 
    fun parseModelAttributeTypeReference(
@@ -68,7 +64,7 @@ class FunctionAccessorCompiler(
                      errors.add(compilationError)
                   }
 
-               val unparsedParameters = functionContext.parameterList()?.parameter() ?: emptyList()
+               val unparsedParameters = functionContext.argumentList()?.argument() ?: emptyList()
                val parametersOrErrors: Either<List<CompilationError>, List<Accessor>> =
                   unparsedParameters.mapIndexed { parameterIndex, parameterContext ->
                      val parameterType = function.getParameterType(parameterIndex)
@@ -112,7 +108,12 @@ class FunctionAccessorCompiler(
                parametersOrErrors.flatMap { parameters: List<Accessor> ->
                   // There used to be view related stuff here - I suspect now thats
                   //deleted, this can be simplified
-                  FunctionAccessor.buildAndResolveTypeArguments(function, parameters).right()
+                  try {
+                     FunctionAccessor.buildAndResolveTypeArguments(function, parameters).right()
+                  } catch (e: Exception) {
+                     listOf(CompilationError(functionContext.toCompilationUnit(), e.message!!)).left()
+                  }
+
                }
             }
          }
@@ -124,7 +125,7 @@ class FunctionAccessorCompiler(
 
    private fun compileTypeReferenceAccessor(
       namespace: String,
-      parameterContext: TaxiParser.ParameterContext
+      parameterContext: TaxiParser.ArgumentContext
    ): Either<List<CompilationError>, TypeReferenceSelector> {
       return tokenProcessor.typeOrError(namespace, parameterContext.typeReferenceSelector().typeReference())
          .map { type ->

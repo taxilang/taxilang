@@ -9,10 +9,12 @@ import lang.taxi.lsp.formatter.FormatterService
 import lang.taxi.lsp.gotoDefinition.GotoDefinitionService
 import lang.taxi.lsp.hover.HoverService
 import lang.taxi.lsp.linter.LintingService
+import lang.taxi.lsp.signatures.SignatureHelpService
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
 import lang.taxi.messages.Severity
 import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.CharStream
+import org.antlr.v4.runtime.ParserRuleContext
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.LanguageClient
@@ -47,6 +49,21 @@ data class CompilationResult(
       return compiler.containsTokensForSource(uri)
    }
 
+   fun getNearestToken(textDocument: TextDocumentIdentifier, position: Position):ParserRuleContext? {
+      val normalizedUriPath = textDocument.normalizedUriPath()
+      val zeroBasedLineIndex = position.line
+      val char = position.character
+      // contextAt() is the most specific.  If we match an exact token, it'll be returned.
+      return compiler.contextAt(zeroBasedLineIndex, char, normalizedUriPath)
+         ?:
+         // getNearestToken() returns the token if we're not on an exact match location, but could find a nearby one.
+         compiler.getNearestToken(
+            zeroBasedLineIndex,
+            char,
+            normalizedUriPath
+         ) as? ParserRuleContext
+   }
+
    fun getSource(textDocument: TextDocumentIdentifier): CharStream? {
       return compiler.inputs.firstOrNull {
          it.sourceName == textDocument.normalizedUriPath()
@@ -74,6 +91,7 @@ data class LspServicesConfig(
    val gotoDefinitionService: GotoDefinitionService = GotoDefinitionService(compilerService.typeProvider),
    val hoverService: HoverService = HoverService(),
    val codeActionService: CodeActionService = CodeActionService(),
+   val signatureHelpService: SignatureHelpService = SignatureHelpService(),
    val lintingService: LintingService = LintingService()
 )
 
@@ -88,7 +106,6 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
 
    private var displayedMessages: List<PublishDiagnosticsParams> = emptyList()
    private lateinit var initializeParams: InitializeParams
-   private val tokenCache: CompilerTokenCache = CompilerTokenCache()
 
    private val compilerService = services.compilerService
    private val completionService = services.completionService
@@ -97,7 +114,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    private val hoverService = services.hoverService
    private val codeActionService = services.codeActionService
    private val lintingService = services.lintingService
-
+   private val signatureHelpService = services.signatureHelpService
    private lateinit var client: LanguageClient
    private var rootUri: String? = null
 
@@ -170,6 +187,16 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
          forceReload("Received a reference to an unknown file - ${unknownTokenException.providedSourcePath}")
          hoverService.hover(lastCompilationResult, compilerService.lastSuccessfulCompilation(), params)
       }
+   }
+
+   override fun signatureHelp(params: SignatureHelpParams): CompletableFuture<SignatureHelp> {
+      val lastCompilationResult =
+         compilerService.getOrComputeLastCompilationResult(uriToAssertIsPreset = params.textDocument.uri)
+      return signatureHelpService.getSignatureHelp(
+         lastCompilationResult,
+         compilerService.lastSuccessfulCompilation(),
+         params
+      )
    }
 
    override fun formatting(params: DocumentFormattingParams): CompletableFuture<MutableList<out TextEdit>> {
@@ -258,9 +285,9 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
 
 
    // This is a very non-performant first pass.
-   // We're compiling the entire workspace every time we get a request, which is
-   // on every keypress.
-   // We need to find a way to only recompile the document that has changed
+// We're compiling the entire workspace every time we get a request, which is
+// on every keypress.
+// We need to find a way to only recompile the document that has changed
    @Deprecated("Use CompilerService.triggerAsyncCompilation")
    internal fun compile(): CompilationResult {
       val compilationResult = this.compilerService.compile()

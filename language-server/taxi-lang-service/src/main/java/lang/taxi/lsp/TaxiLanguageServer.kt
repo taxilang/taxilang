@@ -5,6 +5,7 @@ import lang.taxi.lsp.sourceService.FileBasedWorkspaceSourceService
 import lang.taxi.lsp.sourceService.WorkspaceSourceServiceFactory
 import lang.taxi.utils.log
 import org.eclipse.lsp4j.*
+import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*
 import java.util.concurrent.CompletableFuture
 import kotlin.system.exitProcess
@@ -57,13 +58,13 @@ class TaxiLanguageServer(
       val capabilities = initializeResult.capabilities
       capabilities.setTextDocumentSync(TextDocumentSyncOptions().apply {
          change = TextDocumentSyncKind.Full
-         save = SaveOptions(false)
+         save = Either.forRight(SaveOptions(false))
       })
-      capabilities.definitionProvider = true
-      capabilities.workspaceSymbolProvider = true
-      capabilities.hoverProvider = true
-      capabilities.documentFormattingProvider = true
-      capabilities.semanticHighlighting = SemanticHighlightingServerCapabilities()
+      capabilities.definitionProvider = Either.forLeft(true)
+      capabilities.workspaceSymbolProvider = Either.forLeft(true)
+      capabilities.hoverProvider = Either.forLeft(true)
+      capabilities.documentFormattingProvider = Either.forLeft(true)
+      capabilities.signatureHelpProvider = SignatureHelpOptions()
       capabilities.setCodeActionProvider(true)
       capabilities.workspace = WorkspaceServerCapabilities(WorkspaceFoldersOptions().apply {
          supported = true
@@ -94,7 +95,7 @@ class TaxiLanguageServer(
 
 interface LanguageServerLifecycleHandler {
    fun terminate(exitCode: Int) {
-      log().warn("Ignoring request to terminate with exit code $exitCode")
+      log().debug("Ignoring request to terminate with exit code $exitCode")
    }
 }
 

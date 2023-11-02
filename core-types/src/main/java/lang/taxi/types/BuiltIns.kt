@@ -13,7 +13,7 @@ interface BuiltIn : TaxiStatementGenerator, HasQualifiedName
 object BuiltIns {
 
    val builtIns = listOf<BuiltIn>(
-      FormatAnnotation
+      FormatAnnotation,
    )
    fun isBuiltIn(name: QualifiedName): Boolean = names.contains(name)
 

@@ -1,9 +1,14 @@
 package lang.taxi.lsp.completion
 
-import lang.taxi.TaxiParser
 import lang.taxi.TaxiParser.*
+import lang.taxi.expressions.Expression
 import lang.taxi.lsp.CompilationResult
+import lang.taxi.searchUpExcluding
+import lang.taxi.searchUpForRule
+import lang.taxi.types.EnumType
+import lang.taxi.types.PrimitiveType
 import lang.taxi.types.SourceNames
+import lang.taxi.types.Type
 import org.antlr.v4.runtime.ParserRuleContext
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
@@ -56,20 +61,19 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
       compilationResult: CompilationResult,
       lastSuccessfulCompilation: CompilationResult?,
    ): List<CompletionItem> {
-
-
       val completionContext = when {
          // IdentifierContext is generally too general purpose to offer any insights.
          // Go higher.
          context is IdentifierContext -> context.parent as ParserRuleContext
          else -> context
       }
+      val decorators = listOf(importDecorator)
       val completionItems = when (completionContext) {
          is ColumnIndexContext -> buildColumnIndexSuggestions()
-         is FieldTypeDeclarationContext -> typeProvider.getTypes(listOf(importDecorator))
-         is FieldDeclarationContext -> typeProvider.getTypes(listOf(importDecorator))
-         is TypeMemberDeclarationContext -> typeProvider.getTypes(listOf(importDecorator))
-         is ListOfInheritedTypesContext -> typeProvider.getTypes(listOf(importDecorator))
+         is FieldTypeDeclarationContext -> typeProvider.getTypes(decorators)
+         is FieldDeclarationContext -> typeProvider.getTypes(decorators)
+         is TypeMemberDeclarationContext -> typeProvider.getTypes(decorators)
+         is ListOfInheritedTypesContext -> typeProvider.getTypes(decorators)
          is ExpressionAtomContext -> calculateExpressionSuggestions(
             context as ExpressionAtomContext,
             importDecorator,
@@ -78,28 +82,121 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
          )
          // This next one feels wrong, but it's what I'm seeing debugging.
          // suspect our matching of token to cursor position might be off
-         is TypeReferenceContext -> typeProvider.getTypes(listOf(importDecorator))
+         is TypeReferenceContext -> typeProvider.getTypes(decorators)
          is CaseScalarAssigningDeclarationContext -> typeProvider.getEnumValues(
-            listOf(importDecorator),
+            decorators,
             context.start.text
          )
 
          is EnumSynonymSingleDeclarationContext -> provideEnumCompletions(
             context.start.text,
-            listOf(importDecorator)
+            decorators
          )
 
-         is EnumSynonymDeclarationContext -> provideEnumCompletions(context.start.text, listOf(importDecorator))
+         is ElementValueContext -> provideAnnotationFieldValueCompletions(
+            completionContext,
+            decorators,
+            compilationResult
+         )
+
+         is EnumSynonymDeclarationContext -> provideEnumCompletions(context.start.text, decorators)
          is EnumConstantContext -> listOf(CompletionItem("synonym of"))
 
          // Query completions
-         is ParameterConstraintExpressionContext -> typeProvider.getTypes(listOf(importDecorator))
-         is QueryTypeListContext -> typeProvider.getTypes(listOf(importDecorator))
-         is ArrayMarkerContext -> typeProvider.getTypes(listOf(importDecorator))
-         is ParameterConstraintContext -> typeProvider.getTypes(listOf(importDecorator))
+         is ParameterConstraintExpressionContext -> typeProvider.getTypes(decorators)
+         is QueryTypeListContext -> typeProvider.getTypes(decorators)
+         is ArrayMarkerContext -> typeProvider.getTypes(decorators)
+         is ParameterConstraintContext -> typeProvider.getTypes(decorators)
          else -> emptyList()
       }
       return completionItems
+   }
+
+   /**
+    * Provides hints for the names of fields/properties
+    * on an annotation
+    *
+    *  eg: @Foo( <---- caret is here
+    */
+   fun provideAnnotationFieldCompletions(
+      contextAtCursor: ParserRuleContext,
+      decorators: List<ImportCompletionDecorator>,
+      compilationResult: CompilationResult
+   ): List<CompletionItem> {
+      val annotationCtx = contextAtCursor.searchUpForRule<AnnotationContext>()!!
+      return compilationResult.compiler.lookupSymbolByName(
+         annotationCtx.qualifiedName().text,
+         annotationCtx.qualifiedName()
+      ).map { annotationName ->
+         val annotationType = compilationResult.document?.annotation(annotationName)
+            ?: return emptyList()
+         val completions = annotationType.fields.map { field ->
+            val completionText = field.name + " = "
+            CompletionItem(
+               completionText
+            ).apply {
+               insertText = when (field.type.basePrimitive) {
+                  PrimitiveType.STRING -> """${field.name} =  "$0" """
+                  else -> completionText
+               }
+               insertTextFormat = InsertTextFormat.Snippet
+               val optionalPrefix = if (field.nullable) {
+                  "(Optional) "
+               } else ""
+               val defaultPrefix = if (field.accessor != null && field.accessor is Expression) {
+                  val default = (field.accessor as Expression).asTaxi()
+                  "Default: $default "
+               } else ""
+               detail = optionalPrefix + defaultPrefix + field.type.toQualifiedName().typeName
+
+            }
+         }
+         completions
+      }.getOrNull() ?: emptyList()
+   }
+
+   /**
+    * Called when providing the values into an annotation field.
+    * eg: @Foo(bar = <---- caret is here
+    */
+   fun provideAnnotationFieldValueCompletions(
+      context: ElementValueContext,
+      decorators: List<ImportCompletionDecorator>,
+      compilationResult: CompilationResult
+   ): List<CompletionItem> {
+      val annotationContext = context.searchUpForRule<AnnotationContext>() ?: return emptyList()
+      val annotationName = compilationResult.compiler.lookupSymbolByName(
+         annotationContext.qualifiedName().text,
+         annotationContext.qualifiedName()
+      )
+         .getOrNull() ?: return emptyList()
+      if (compilationResult.document?.containsType(annotationName) != true) {
+         return emptyList()
+      }
+      val annotation = compilationResult.document!!.annotation(annotationName)
+
+      val fieldBeingDeclared =
+         context.searchUpForRule<ElementValuePairContext>()?.identifier()?.text ?: return emptyList()
+      val field = annotation.fields.firstOrNull { it.name == fieldBeingDeclared } ?: return emptyList()
+
+      return completionsForType(field.type, decorators)
+   }
+
+   private fun completionsForType(type: Type, decorators: List<ImportCompletionDecorator>): List<CompletionItem> {
+      return when (type) {
+         is EnumType -> provideEnumCompletions(type.qualifiedName, decorators)
+         PrimitiveType.BOOLEAN -> {
+            val completions = listOf(true, false).map {
+               CompletionItem(it.toString()).apply {
+                  kind = CompletionItemKind.Value
+                  insertText = it.toString()
+               }
+            }
+            completions
+         }
+
+         else -> emptyList() // TODO
+      }
    }
 
    /**
@@ -224,6 +321,25 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
       } else {
          typeProvider.getEnumValues(decorators, enumTypeName)
       }
+   }
+
+
+   /**
+    * Some cursor locations are misleading, and we need
+    * to look higher to understand what the user is trying to do
+    */
+   fun getSignificantContext(contextAtCursor: ParserRuleContext): ParserRuleContext? {
+      return when {
+         contextAtCursor is LiteralContext -> {
+            contextAtCursor.searchUpExcluding(
+               // The value of in a key-value pair of an annotation,
+               // Ignore this. If we're at a literal, it's the previous value.
+               ElementValueContext::class.java
+            )
+         }
+         else -> contextAtCursor
+      }
+
    }
 }
 

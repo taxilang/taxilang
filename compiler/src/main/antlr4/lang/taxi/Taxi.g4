@@ -71,7 +71,7 @@ spreadOperatorDeclaration
     ;
 
 typeBody
-:   '{' ((typeMemberDeclaration | conditionalTypeStructureDeclaration) (',')? )* spreadOperatorDeclaration? '}'
+:   '{' (typeMemberDeclaration (',')? )* spreadOperatorDeclaration? '}'
     ;
 
 typeMemberDeclaration
@@ -119,6 +119,7 @@ expressionGroup:
    | expressionGroup COALESCE expressionGroup
    | expressionGroup LOGICAL_AND expressionGroup
    | expressionGroup LOGICAL_OR expressionGroup
+   | whenBlock
    // Inputs go last, so that when parsing lambdas, the inputs are the LHS and everything remainin goes RHS.
    // Might not work for nested lambdas, if that's a thing.
    | expressionInputs expressionGroup
@@ -152,20 +153,9 @@ annotationTypeBody: '{' typeMemberDeclaration* '}';
 //fieldExpression
 //   : '(' propertyToParameterConstraintLhs arithmaticOperator propertyToParameterConstraintLhs ')'
 //   ;
-
-conditionalTypeStructureDeclaration
-    :
-   '(' typeMemberDeclaration* ')' 'by' conditionalTypeConditionDeclaration
-   ;
-
-conditionalTypeConditionDeclaration:
-//   (fieldExpression |
-   conditionalTypeWhenDeclaration;
-//   );
-
-conditionalTypeWhenDeclaration:
-   'when' ('(' expressionGroup ')')? '{'
-   conditionalTypeWhenCaseDeclaration*
+whenBlock:
+   K_When ('(' expressionGroup ')')? '{'
+   whenCaseDeclaration*
    '}';
 
 // field references must be prefixed by this. -- ie., this.firstName
@@ -184,14 +174,12 @@ conditionalTypeWhenDeclaration:
 fieldReferenceSelector: propertyFieldNameQualifier qualifiedName;
 typeReferenceSelector: typeReference;
 
-conditionalTypeWhenCaseDeclaration:
+whenCaseDeclaration:
    caseDeclarationMatchExpression '->' (  /*caseFieldAssignmentBlock |  */  expressionGroup | scalarAccessorExpression | modelAttributeTypeReference);
 
 caseDeclarationMatchExpression: // when( ... ) {
    expressionGroup |
-   caseElseMatchExpression;
-
-caseElseMatchExpression: 'else';
+   K_Else;
 
 caseFieldAssigningDeclaration :  // dealtAmount ...  (could be either a destructirng block, or an assignment)
    identifier (
@@ -240,7 +228,7 @@ modelAttributeTypeReference: typeReference '::' typeReference |
 // fieldType usages allow richer syntax with additional features like
 // inline type definitions, optionality, aliases and accessors.
 // Other type usage sites are not as flexible (eg., return type of an operation)
-fieldTypeDeclaration: optionalTypeReference parameterConstraint? (aliasedType? | inlineInheritedType?)? accessor?;
+fieldTypeDeclaration: (nullableTypeReference parameterConstraint?)? (aliasedType? | inlineInheritedType?)? accessor?;
 
 //typeReference : qualifiedName typeArguments? arrayMarker? optionalType?;
 
@@ -250,9 +238,10 @@ typeReference
 unionType : typeReference ('|' typeReference)*;
 
 // Use in call sites where optional types are permitted
-optionalTypeReference : (typeReference | unionType) optionalType?;
+nullableTypeReference : (typeReference | unionType) Nullable?;
 
 accessor
+// by is deprecated, use "="
     : ('by' | '=') scalarAccessorExpression
     ;
 
@@ -264,8 +253,8 @@ scalarAccessorExpression
 //    | readFunction
     | expressionGroup
     | byFieldSourceExpression
-    | collectionProjectionExpression
-    | conditionalTypeConditionDeclaration
+//    | collectionProjectionExpression
+//    | conditionalTypeConditionDeclaration
     ;
 
 // Required for Query based Anonymous type definitions like:
@@ -353,8 +342,9 @@ annotation
     :   '@' qualifiedName ( '(' ( elementValuePairs | elementValue )? ')' )?
     ;
 
+
 elementValuePairs
-    :   elementValuePair (',' elementValuePair)*
+    :   elementValuePair (',' elementValuePair?)* // permitting trailing commas make the grammar easier to parse
     ;
 
 elementValuePair
@@ -432,7 +422,7 @@ operationParameterList
 operationParameter
 // Note that only one operationParameterConstraint can exist per parameter, but it can contain
 // multiple expressions
-     :   typeDoc? annotation* (parameterName)? ((optionalTypeReference ( '(' parameterConstraintExpressionList ')')?  varargMarker?) | lambdaSignature)
+     :   typeDoc? annotation* (parameterName)? ((nullableTypeReference ( '(' parameterConstraintExpressionList ')')?  varargMarker?) | lambdaSignature)
      ;
 
 varargMarker: '...';
@@ -615,37 +605,26 @@ functionModifiers: 'query';
 
 
 // Could be MyType( foo == bar ), or myFunction( param1, param1 )
-functionCall: qualifiedName '(' parameterList? ')';
+functionCall: qualifiedName '(' argumentList? ')';
 
-parameterList
-    : parameter  (',' parameter)*
+
+// A list of arguments passed into a function call
+// Permits trailing commas.  foo(a, )
+// This seems to clarify the grammar, such that everything inside the parenthesis
+// is an argument. Otherwise, we were finding the grammar parsed trailing commas
+// as an addiitonal type member declaration.
+argumentList
+    : argument  (',' argument?)* // allowing trailing commas helps clarify the grammar
     ;
-//    scalarAccessorExpression
-      //    : xpathAccessorDeclaration
-      //    | jsonPathAccessorDeclaration
-      //    | columnDefinition
-      //    | conditionalTypeConditionDeclaration
-      //    | defaultDefinition
-      //    | readFunction
-      //    ;
-parameter: literal |  scalarAccessorExpression | fieldReferenceSelector | typeReferenceSelector | modelAttributeTypeReference | expressionGroup;
+
+argument: literal |  scalarAccessorExpression | fieldReferenceSelector | typeReferenceSelector | modelAttributeTypeReference | expressionGroup;
 
 columnIndex : IntegerLiteral | StringLiteral;
 
 expression
-    :   primary
-    ;
-
-primary
     :   '(' expression ')'
-//    |   'this'
-//    |   'super'
     |   literal
-    |   identifier
-//    |   typeType '.' 'class'
-//    |   'void' '.' 'class'
-//    |   nonWildcardTypeArguments (explicitGenericInvocationSuffix | 'this' arguments)
-    ;
+    |   identifier;
 
 qualifiedName
     :   identifier ('.' identifier)*
@@ -655,9 +634,7 @@ arrayMarker
    : '[]'
    ;
 
-optionalType
-   : '?'
-   ;
+Nullable : '?';
 
 //primitiveType
 //    : primitiveTypeName
@@ -855,6 +832,9 @@ K_Stream: 'stream';
 K_Call: 'call';
 
 K_Except : 'except';
+
+K_When: 'when';
+K_Else: 'else';
 
 IdentifierToken
     :   Letter LetterOrDigit*

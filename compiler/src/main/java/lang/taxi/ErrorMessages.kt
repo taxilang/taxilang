@@ -22,7 +22,8 @@ object Errors {
    }
 }
 
-class CollectingErrorListener(private val sourceName: String) : BaseErrorListener() {
+class CollectingErrorListener(private val sourceName: String, private val listener: TokenCollator) : BaseErrorListener() {
+
 
    val errors: MutableList<CompilationError> = mutableListOf()
    override fun syntaxError(recognizer: Recognizer<*, *>, offendingSymbol: Any,

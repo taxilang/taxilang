@@ -24,7 +24,7 @@ class XsdToTaxiSpec : DescribeSpec({
           """
          ).asTaxi()
          val expected = """namespace org.tempuri {
-            type PurchaseOrderType {
+            closed type PurchaseOrderType {
                [[ The date for an order ]]
                @lang.taxi.xml.XmlAttribute
                OrderDate : Date?
@@ -64,13 +64,13 @@ class XsdToTaxiSpec : DescribeSpec({
          )
          val expected = """
             namespace org.tempuri {
-               type PurchaseOrderType {
+               closed type PurchaseOrderType {
                   ShipTo : USAddress
                   BillTo : USAddress
                   @lang.taxi.xml.XmlAttribute OrderDate : Date?
                }
 
-               type USAddress {
+               closed type USAddress {
                   name : String
                   street : String
                   city : String
@@ -181,7 +181,7 @@ class XsdToTaxiSpec : DescribeSpec({
  </xsd:complexType>"""
          ).asTaxi()
          val expected = """namespace org.tempuri {
-   type USAddress {
+   closed type USAddress {
       name : String
    }
 }"""
@@ -196,7 +196,7 @@ class XsdToTaxiSpec : DescribeSpec({
  </xsd:complexType>"""
          ).asTaxi()
          val expected = """namespace org.tempuri {
-   type USAddress {
+   closed type USAddress {
       name : String?
    }
 }"""
@@ -324,7 +324,7 @@ class XsdToTaxiSpec : DescribeSpec({
     </xsd:complexType>"""
          ).asTaxi()
          val expected = """namespace org.tempuri
-   model MandateClassification1Choice {
+   closed model MandateClassification1Choice {
       Cd : String?
       Prtry : String?
    }
@@ -357,7 +357,7 @@ class XsdToTaxiSpec : DescribeSpec({
 
          val expected = """namespace org.tempuri {
    [[ The base type which all FpML products extend. ]]
-   type Product {
+   closed type Product {
       [[ A classification of the most important risk class of the trade. FpML defines a simple asset class categorization using a coding scheme. ]]
       primaryAssetClass : String?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
@@ -378,7 +378,7 @@ class XsdToTaxiSpec : DescribeSpec({
          )
             .asTaxi()
          val expected = """namespace org.tempuri {
-   type PurchaseOrderType {
+   closed type PurchaseOrderType {
       // Note - not nullable
       @lang.taxi.xml.XmlAttribute OrderDate : Date
    }
@@ -410,10 +410,10 @@ class XsdToTaxiSpec : DescribeSpec({
 
          val expected = """namespace org.tempuri {
    [[ The abstract base class for all types which define intra-document pointers. ]]
-   type Reference
+   closed type Reference
 
    [[ A reference to the return swap notional amount. ]]
-   type ReturnSwapNotionalAmountReference inherits org.tempuri.Reference {
+   closed type ReturnSwapNotionalAmountReference inherits org.tempuri.Reference {
       @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
    }
 }"""
@@ -441,7 +441,7 @@ class XsdToTaxiSpec : DescribeSpec({
                type CapitalCityName inherits String
             }
             namespace org.tempuri {
-               model CountryInfo {
+               closed model CountryInfo {
                   ISOCode : com.foo.IsoCode
                   Name : com.foo.CountryName
                   CapitalCity : com.foo.CapitalCityName

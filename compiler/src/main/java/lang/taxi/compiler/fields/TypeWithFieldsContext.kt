@@ -32,7 +32,7 @@ interface TypeWithFieldsContext {
       ).left()
    }
 
-   val conditionalTypeDeclarations: List<TaxiParser.ConditionalTypeStructureDeclarationContext>
+//   val conditionalTypeDeclarations: List<TaxiParser.ConditionalTypeStructureDeclarationContext>
    val memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>
    val parent: RuleContext?
    val hasSpreadOperator: Boolean

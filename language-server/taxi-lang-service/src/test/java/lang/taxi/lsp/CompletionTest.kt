@@ -2,6 +2,8 @@ package lang.taxi.lsp
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.engine.spec.tempdir
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.services.LanguageClient
 import org.mockito.Mockito.mock
@@ -105,6 +107,30 @@ class CompletionSpec : DescribeSpec({
       // Suggestions for enums aren't working
       // See EditorCompletionService.calculateExpressionSuggestions()
       // for a description of why, and what we've tried.
+      describe("offering enum values") {
+         it("should offer enum values when completing an enum inside an annotation") {
+            val source = """enum CountryCode { US, UK }
+                  annotation LivesIn {
+                     country : CountryCode
+                  }
+                  @LivesIn( country = )
+                  model Person {}
+               """
+            val (service, workspaceRoot) = documentServiceWithFiles(tempdir(), files =
+               arrayOf("test.taxi" to source.trimIndent())
+            )
+            val editPosition: Position = source.positionOf("""@LivesIn( country = """, CursorPosition.EndOfText).toPosition()
+            val completions = service.completion(
+               CompletionParams(
+                  workspaceRoot.document("test.taxi"),
+                  editPosition
+               )
+            ).get().left
+            completions.shouldNotBeEmpty()
+
+         }
+      }
+
       xdescribe("for 'by when(...)'") {
          val (service, workspaceRoot) = documentServiceFor("test-scenarios/case-workspace")
          service.connect(mock(LanguageClient::class.java))
@@ -149,6 +175,8 @@ class CompletionSpec : DescribeSpec({
       }
 
 
+
+
       describe("Synonym Completion") {
 
          describe("enum completion") {
@@ -175,6 +203,8 @@ class CompletionSpec : DescribeSpec({
                ).get().left
                completions.shouldContainLabels("synonym of")
             }
+
+
 
 
             xit("should offer enum types") {
@@ -239,15 +269,6 @@ class CompletionSpec : DescribeSpec({
    }
 })
 
-private typealias LineIndex = Int
-private typealias CharIndex = Int
-
-private fun String.positionOf(match: String): Pair<LineIndex, CharIndex> {
-   val cursorPositionLine = this.lines().indexOfFirst { it.contains(match) }
-   val cursorPositionChar = this.lines()[cursorPositionLine].indexOf(match)
-   return cursorPositionLine to cursorPositionChar
-
-}
 
 private fun TaxiTextDocumentService.applyEdit(fileName: String, updatedSource: String, workspaceRoot: Path) {
    this.didChange(

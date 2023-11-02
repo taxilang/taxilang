@@ -23,29 +23,30 @@ class FieldCompiler(
    private val resolutionContext: ResolutionContext = ResolutionContext()
 ) {
    internal val typeChecker = tokenProcessor.typeChecker
-   private val conditionalFieldSetProcessor =
-      ConditionalFieldSetProcessor(this, ExpressionCompiler(tokenProcessor, typeChecker, errors, this))
+//   private val conditionalFieldSetProcessor =
+//      ConditionalFieldSetProcessor(this, ExpressionCompiler(tokenProcessor, typeChecker, errors, this))
 
    private val fieldsBeingCompiled = mutableSetOf<String>()
    private val compiledFields = mutableMapOf<String, Either<List<CompilationError>, Field>>()
 
    private val fieldNamesToDefinitions: Map<String, TaxiParser.TypeMemberDeclarationContext> by lazy {
       fun getFieldNameAndDeclarationContext(memberDeclaration: TaxiParser.TypeMemberDeclarationContext): Pair<String, TaxiParser.TypeMemberDeclarationContext> {
-         return TokenProcessor.unescape(memberDeclaration.fieldDeclaration().identifier().text) to memberDeclaration
+          return TokenProcessor.unescape(memberDeclaration.fieldDeclaration().identifier().text) to memberDeclaration
       }
 
       val fields = typeBody.memberDeclarations
          .map { getFieldNameAndDeclarationContext(it) }
          .toList()
 
-      val fieldsInFieldBlocks = typeBody.conditionalTypeDeclarations.flatMap { fieldBlock ->
-         fieldBlock.typeMemberDeclaration().map { memberDeclarationContext ->
-            getFieldNameAndDeclarationContext(memberDeclarationContext)
-         }
-      }.toList()
+      // SPIKE: removing "conditional types"
+//      val fieldsInFieldBlocks = typeBody.conditionalTypeDeclarations.flatMap { fieldBlock ->
+//         fieldBlock.typeMemberDeclaration().map { memberDeclarationContext ->
+//            getFieldNameAndDeclarationContext(memberDeclarationContext)
+//         }
+//      }.toList()
 
       // Check for duplicate field declarations
-      val allFields = fields + fieldsInFieldBlocks
+      val allFields = fields //+ fieldsInFieldBlocks
       val duplicateDefinitionErrors = allFields.groupBy({ it.first }) { it.second }
          .filter { (_, declarationSites) -> declarationSites.size > 1 }
          .toList()
@@ -76,19 +77,20 @@ class FieldCompiler(
    }
 
    fun compileAllFields(): List<Field> {
-      val namespace = typeBody.findNamespace()
-      val conditionalFieldStructures = typeBody.conditionalTypeDeclarations.mapNotNull { conditionalFieldBlock ->
-         conditionalFieldSetProcessor.compileConditionalFieldStructure(conditionalFieldBlock, namespace)
-            .collectErrors(errors).getOrElse { null }
-      }
+      // SPIKE: Removing Conditional Fields
+//      val namespace = typeBody.findNamespace()
+//      val conditionalFieldStructures = typeBody.conditionalTypeDeclarations.mapNotNull { conditionalFieldBlock ->
+//         conditionalFieldSetProcessor.compileConditionalFieldStructure(conditionalFieldBlock, namespace)
+//            .collectErrors(errors).getOrElse { null }
+//      }
 
-      val fieldsWithConditions = conditionalFieldStructures.flatMap { it.fields }
+//      val fieldsWithConditions = conditionalFieldStructures.flatMap { it.fields }
 
       val fields = buildObjectFields(typeBody.memberDeclarations)
 
       val spreadFields = buildSpreadFieldsIfEnabled()
 
-      return (fields + fieldsWithConditions + spreadFields).distinctBy { it.name }
+      return (fields /*+ fieldsWithConditions*/ + spreadFields).distinctBy { it.name }
    }
 
    private fun buildObjectFields(memberDeclarations: List<TaxiParser.TypeMemberDeclarationContext>): List<Field> {
@@ -181,7 +183,7 @@ class FieldCompiler(
       //
       // This is current partly encapsulated through FieldTypeSpec, but
       // capturing it is awkward.
-      val qualifiedName = fieldTypeDeclaration?.optionalTypeReference()?.typeReference()?.qualifiedName()
+      val qualifiedName = fieldTypeDeclaration?.nullableTypeReference()?.typeReference()?.qualifiedName()
       return when {
          // Before resolving as a type, first check if we can resolve
          // through scope.
@@ -468,7 +470,7 @@ class FieldCompiler(
                errors.addAll(it)
                null
             }
-            val simpleType = fieldDeclaration?.optionalTypeReference()
+            val simpleType = fieldDeclaration?.nullableTypeReference()
             if (fieldType.accessor != null && accessor != null) {
                error("It is invalid for both the field to define an inferred accessor and an explict accessor.  Shouldn't happen")
             }
@@ -482,7 +484,7 @@ class FieldCompiler(
                   name = TokenProcessor.unescape(member.fieldDeclaration().identifier().text),
                   type = fieldProjection?.projectedType ?: fieldType.type,
                   fieldProjection = fieldProjection,
-                  nullable = simpleType?.optionalType() != null,
+                  nullable = simpleType?.Nullable() != null,
                   modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
                   annotations = fieldAnnotations,
                   constraints = constraints,
@@ -581,15 +583,15 @@ class FieldCompiler(
             ).right()
          }
 
-         expression.conditionalTypeConditionDeclaration() != null -> {
-            val namespace = expression.conditionalTypeConditionDeclaration().findNamespace()
-            conditionalFieldSetProcessor.compileCondition(
-               expression.conditionalTypeConditionDeclaration(),
-               namespace,
-               targetType
-            )
-               .map { condition -> ConditionalAccessor(condition) }
-         }
+//         expression.conditionalTypeConditionDeclaration() != null -> {
+//            val namespace = expression.conditionalTypeConditionDeclaration().findNamespace()
+//            conditionalFieldSetProcessor.compileCondition(
+//               expression.conditionalTypeConditionDeclaration(),
+//               namespace,
+//               targetType
+//            )
+//               .map { condition -> ConditionalAccessor(condition) }
+//         }
 
 //         expression.defaultDefinition() != null -> {
 //            val defaultValue = defaultValueParser.parseDefaultValue(expression.defaultDefinition(), targetType)
@@ -610,9 +612,9 @@ class FieldCompiler(
             expression.expressionGroup(),
             targetType
          )
-
+//          Spike: Removing unused grammar elements
          expression.byFieldSourceExpression() != null -> buildReadFieldAccessor(expression.byFieldSourceExpression())
-         expression.collectionProjectionExpression() != null -> buildCollectionProjectionExpression(expression.collectionProjectionExpression())
+//         expression.collectionProjectionExpression() != null -> buildCollectionProjectionExpression(expression.collectionProjectionExpression())
          else -> error("Unhandled type of accessor expression at ${expression.source().content}")
       }
    }
@@ -749,7 +751,7 @@ class FieldCompiler(
       targetType: Type
    ): Either<List<CompilationError>, out Accessor> {
       val expression = ExpressionCompiler(this.tokenProcessor, this.typeChecker, this.errors, this)
-         .compile(readExpressionContext)
+         .compile(readExpressionContext, targetType)
       return expression
    }
 

@@ -1,6 +1,9 @@
 package lang.taxi
 
+import lang.taxi.TaxiParser.AnnotationTypeDeclarationContext
 import lang.taxi.TaxiParser.ServiceDeclarationContext
+import lang.taxi.TaxiParser.TypeDeclarationContext
+import lang.taxi.TaxiParser.TypeDocContext
 import lang.taxi.compiler.SymbolKind
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.SourceNames
@@ -13,6 +16,8 @@ internal typealias Namespace = String
 data class Tokens(
    val imports: List<Pair<String, TaxiParser.ImportDeclarationContext>>,
    val unparsedTypes: Map<String, Pair<Namespace, ParserRuleContext>>,
+   // Key: QualifiedName of the inline type, Value: QualifiedName of the declaring model
+   val unparsedInlineTypes: Map<String, String>,
    val unparsedExtensions: List<Pair<Namespace, ParserRuleContext>>,
    val unparsedServices: Map<String, Pair<Namespace, ServiceDeclarationContext>>,
    val unparsedPolicies: Map<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>,
@@ -30,6 +35,7 @@ data class Tokens(
       fun combine(members: List<Tokens>): Tokens {
          val imports: MutableList<Pair<String, TaxiParser.ImportDeclarationContext>> = mutableListOf()
          val unparsedTypes: MutableMap<String, Pair<Namespace, ParserRuleContext>> = mutableMapOf()
+         val unparsedInlineTypes = mutableMapOf<String, String>()
          val unparsedExtensions: MutableList<Pair<Namespace, ParserRuleContext>> = mutableListOf()
          val unparsedServices: MutableMap<String, Pair<Namespace, ServiceDeclarationContext>> = mutableMapOf()
          val unparsedPolicies: MutableMap<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>> = mutableMapOf()
@@ -41,6 +47,7 @@ data class Tokens(
          members.forEach { tokens ->
             imports.addAll(tokens.imports)
             unparsedTypes.putAll(tokens.unparsedTypes)
+            unparsedInlineTypes.putAll(tokens.unparsedInlineTypes)
             unparsedExtensions.addAll(tokens.unparsedExtensions)
             unparsedServices.putAll(tokens.unparsedServices)
             unparsedPolicies.putAll(tokens.unparsedPolicies)
@@ -54,6 +61,7 @@ data class Tokens(
          return Tokens(
             imports,
             unparsedTypes,
+            unparsedInlineTypes,
             unparsedExtensions,
             unparsedServices,
             unparsedPolicies,
@@ -79,7 +87,6 @@ data class Tokens(
    private val importsBySourceName: Map<String, List<Pair<String, TaxiParser.ImportDeclarationContext>>> by lazy {
       imports.groupBy { it.second.source().normalizedSourceName }
    }
-
 
 
    /**
@@ -169,15 +176,22 @@ data class Tokens(
    }
 
    fun containsUnparsedType(qualifiedTypeName: String, symbolKind: SymbolKind): Boolean {
-      return if (this.unparsedTypes.containsKey(qualifiedTypeName)) {
-         val (_, unparsedToken) = this.unparsedTypes.getValue(qualifiedTypeName)
-         symbolKind.matches(unparsedToken)
-      } else {
-         false
+      return when {
+         containsUnparsedInlineType(qualifiedTypeName) -> true
+         this.unparsedTypes.containsKey(qualifiedTypeName) -> {
+            val (_, unparsedToken) = this.unparsedTypes.getValue(qualifiedTypeName)
+            symbolKind.matches(unparsedToken)
+         }
+
+         else -> false
       }
    }
 
-   fun containsUnparsedService(qualifiedName: String) : Boolean {
+   private fun containsUnparsedInlineType(qualifiedName: String): Boolean {
+      return this.unparsedInlineTypes.containsKey(qualifiedName)
+   }
+
+   fun containsUnparsedService(qualifiedName: String): Boolean {
       return this.unparsedServices.containsKey(qualifiedName)
    }
 
@@ -190,12 +204,16 @@ class TokenCollator : TaxiBaseListener() {
    private var imports = mutableListOf<Pair<String, TaxiParser.ImportDeclarationContext>>()
 
    private val unparsedTypes = mutableMapOf<String, Pair<Namespace, ParserRuleContext>>()
+
+   // Inline types are a map of the name of the inline type, to the name of the model type that declares it inline
+   private val unparsedInlineTypes = mutableMapOf<String, String>()
    private val unparsedExtensions = mutableListOf<Pair<Namespace, ParserRuleContext>>()
    private val unparsedServices = mutableMapOf<String, Pair<Namespace, ServiceDeclarationContext>>()
    private val unparsedPolicies = mutableMapOf<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>()
    private val unparsedFunctions = mutableMapOf<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>()
    private val namedQueries = mutableListOf<Pair<Namespace, TaxiParser.NamedQueryContext>>()
    private val anonymousQueries = mutableListOf<Pair<Namespace, TaxiParser.AnonymousQueryContext>>()
+
 
    //    private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
 //    private val unparsedExtensions = mutableListOf<ParserRuleContext>()
@@ -205,6 +223,7 @@ class TokenCollator : TaxiBaseListener() {
       return Tokens(
          imports,
          unparsedTypes,
+         unparsedInlineTypes,
          unparsedExtensions,
          unparsedServices,
          unparsedPolicies,
@@ -215,10 +234,13 @@ class TokenCollator : TaxiBaseListener() {
       )
    }
 
+
    override fun exitEveryRule(ctx: ParserRuleContext) {
       val zeroBasedLineNumber = ctx.start.line - 1
 
-      val sourceName = SourceNames.normalize(ctx.start.tokenSource.sourceName)
+      // The source can be unknown if we created a fake token
+      // during error recovery
+      val sourceName = ctx.start.tokenSource?.sourceName?.let { SourceNames.normalize(it) } ?: "UnknownSource"
       tokenStore.insert(sourceName, zeroBasedLineNumber, ctx.start.charPositionInLine, ctx)
    }
 
@@ -234,10 +256,28 @@ class TokenCollator : TaxiBaseListener() {
       collateExceptions(ctx)
       // Check to see if an inline type alias is declared
       // If so, mark it for processing later
-      val typeType = ctx.fieldTypeDeclaration()
-      if (typeType?.aliasedType() != null) {
-         val classOrInterfaceType = typeType.optionalTypeReference().typeReference().qualifiedName()
-         unparsedTypes.put(qualify(classOrInterfaceType.identifier().text()), namespace to typeType)
+      val fieldCtx = ctx.fieldTypeDeclaration()
+      if (fieldCtx?.aliasedType() != null) {
+         val classOrInterfaceType = fieldCtx.nullableTypeReference().typeReference().qualifiedName()
+         unparsedTypes.put(qualify(classOrInterfaceType.identifier().text()), namespace to fieldCtx)
+      }
+
+      // If there's an inline type declared, mark it so that we can process it later.
+      if (fieldCtx?.inlineInheritedType() != null) {
+         val owningType = fieldCtx.searchUpForRule(
+            listOf(TypeDeclarationContext::class.java, AnnotationTypeDeclarationContext::class.java))
+            ?: error("Field ${ctx.identifier()} declares an inline type - expected to find a parent type declaration, but didn't")
+
+         val inlineTypeName = qualify(fieldCtx.nullableTypeReference().typeReference().qualifiedName().text)
+         val owningTypeName = when (owningType) {
+            is TypeDeclarationContext -> qualify(owningType.identifier().text)
+            is AnnotationTypeDeclarationContext -> qualify(owningType.identifier().text)
+            else -> error("Unexpected context in resolving inline field : ${owningType::class.simpleName}")
+         }
+
+
+
+         unparsedInlineTypes.put(inlineTypeName, owningTypeName)
       }
       super.exitFieldDeclaration(ctx)
    }

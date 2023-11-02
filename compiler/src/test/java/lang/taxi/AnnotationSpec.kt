@@ -157,7 +157,7 @@ class AnnotationSpec : DescribeSpec({
 
       describe("default values on annotation attributes") {
          it("should assign default values if not specified") {
-            val doc="""
+            val doc = """
                annotation Hello {
                   value : String  = "hello"
                }
@@ -360,5 +360,30 @@ class AnnotationTypeTest {
          .annotation("Foo")
       annotation.parameter("firstName").should.equal("Jimmy")
       annotation.parameter("lastName").should.be.`null`
+   }
+
+   @Test
+   fun `annotations values can be specified in any order `() {
+      val schema = """
+         annotation Foo {
+            firstName : String?
+            lastName: String?
+         }
+
+         @Foo( firstName = 'Jimmy', lastName = "Spratt" )
+         model ThingOne {}
+
+         @Foo( lastName = "Spratt", firstName = 'Jimmy' )
+         model ThingTwo {}
+      """.compiled()
+      val annotation1 = schema.model("ThingOne")
+         .annotation("Foo")
+      annotation1.parameter("firstName").should.equal("Jimmy")
+      annotation1.parameter("lastName").should.equal("Spratt")
+
+      val annotation2 = schema.model("ThingOne")
+         .annotation("Foo")
+      annotation2.parameter("firstName").should.equal("Jimmy")
+      annotation2.parameter("lastName").should.equal("Spratt")
    }
 }

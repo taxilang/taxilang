@@ -32,23 +32,12 @@ data class CalculatedFieldSetExpression(
    override fun asTaxi(): String = "(${operand1.asTaxi()} ${operator.symbol} ${operand2.asTaxi()})"
 }
 
-data class WhenFieldSetCondition(
+data class WhenExpression(
    val selectorExpression: Expression,
-   val cases: List<WhenCaseBlock>
-) : FieldSetExpression {
-   override fun asTaxi(): String {
-      val whenAsTaxi = if (selectorExpression.asTaxi().isEmpty() || selectorExpression.asTaxi().startsWith("when")) {
-         "when"
+   val cases: List<WhenCaseBlock>,
+   override val compilationUnits: List<CompilationUnit>
+) : Expression()
 
-      } else {
-         "when (${selectorExpression.asTaxi()})"
-      }
-      return """$whenAsTaxi {
-   ${cases.joinToString("\n") { it.asTaxi() }}
-}
-      """.trimMargin()
-   }
-}
 
 interface WhenSelectorExpression : TaxiStatementGenerator {
    val declaredType: Type

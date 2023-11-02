@@ -165,12 +165,12 @@ class TokenProcessor(
                   fieldTypeDeclaration == null -> null
                   fieldTypeDeclaration.aliasedType() != null -> lookupSymbolByName(
                      namespace,
-                     memberDeclaration.fieldDeclaration().fieldTypeDeclaration().optionalTypeReference().typeReference()
+                     memberDeclaration.fieldDeclaration().fieldTypeDeclaration().nullableTypeReference().typeReference()
                   )
 
                   fieldTypeDeclaration.inlineInheritedType() != null -> lookupSymbolByName(
                      namespace,
-                     memberDeclaration.fieldDeclaration().fieldTypeDeclaration().optionalTypeReference().typeReference()
+                     memberDeclaration.fieldDeclaration().fieldTypeDeclaration().nullableTypeReference().typeReference()
                   )
 
                   else -> null
@@ -242,7 +242,7 @@ class TokenProcessor(
       // they rely on a fully parsed document structure
       validateConstraints()
 //      validateFormulas()
-      validaCaseWhenLogicalExpressions()
+//      validaCaseWhenLogicalExpressions()
 
       // Queries
       compileQueries()
@@ -371,135 +371,135 @@ class TokenProcessor(
    private fun validateConstraints() {
       errors.addAll(constraintValidator.validateAll(typeSystem, services))
    }
-
-
-   private fun validaCaseWhenLogicalExpressions() {
-      typeSystem.typeList().filterIsInstance<ObjectType>()
-         .forEach { type ->
-            type
-               .allFields
-               .filter {
-                  it.accessor is ConditionalAccessor &&
-                     (it.accessor as ConditionalAccessor).expression is WhenFieldSetCondition
-               }
-               .forEach {
-                  val whenFieldSetCondition = ((it.accessor as ConditionalAccessor).expression as WhenFieldSetCondition)
-                  val logicalExpressions = whenFieldSetCondition
-                     .cases.map { aCase -> aCase.matchExpression }
-                     .filterIsInstance<LogicalExpression>()
-                  when {
-//                     logicalExpressions.isNotEmpty() && whenFieldSetCondition.selectorExpression !is EmptyReferenceSelector -> {
-//                        errors.add(
-//                           CompilationError(
-//                              type,
-//                              "when case for ${it.name} in ${type.qualifiedName} cannot have reference selector use when { .. } syntax"
-//                           )
-//                        )
-//                     }
-//                     whenFieldSetCondition.selectorExpression is EmptyReferenceSelector &&
-//                        whenFieldSetCondition.cases.map { it.matchExpression }.filter { it !is ElseMatchExpression }
-//                           .any { it !is LogicalExpression } -> {
-//                        errors.add(
-//                           CompilationError(
-//                              type,
-//                              "when case for ${it.name} in ${type.qualifiedName} can only logical expression when cases"
-//                           )
-//                        )
-//                     }
-                     else -> validateLogicalExpression(type, typeSystem, it, logicalExpressions)
-                  }
-               }
-         }
-   }
-
-   private fun validateLogicalExpression(
-      type: ObjectType,
-      typeSystem: TypeSystem,
-      field: Field,
-      logicalExpressions: List<LogicalExpression>
-   ) {
-      logicalExpressions.forEach {
-         when (it) {
-            is ComparisonExpression -> validateComparisonExpression(it, type)
-            is AndExpression -> validateLogicalExpression(type, typeSystem, field, listOf(it.left, it.right))
-            is OrExpression -> validateLogicalExpression(type, typeSystem, field, listOf(it.left, it.right))
-         }
-      }
-   }
-
-   private fun validateComparisonExpression(comparisonExpression: ComparisonExpression, type: ObjectType) {
-      val right = comparisonExpression.right
-      val left = comparisonExpression.left
-      when {
-         right is FieldReferenceEntity && left is FieldReferenceEntity -> {
-            validateFieldReferenceEntity(right, type)
-            validateFieldReferenceEntity(left, type)
-         }
-
-         right is ConstantEntity && left is FieldReferenceEntity -> {
-            val leftField = validateFieldReferenceEntity(left, type)
-            validateConstantEntityAgainstField(leftField, right, type, comparisonExpression.operator)
-         }
-
-         right is FieldReferenceEntity && left is ConstantEntity -> {
-            val rightField = validateFieldReferenceEntity(right, type)
-            validateConstantEntityAgainstField(rightField, left, type, comparisonExpression.operator)
-         }
-      }
-   }
-
-   private fun validateFieldReferenceEntity(fieldReferenceEntity: FieldReferenceEntity, type: ObjectType): Field? {
-      val referencedField = type.allFields.firstOrNull { field -> field.name == fieldReferenceEntity.fieldName }
-      if (referencedField == null) {
-         errors.add(CompilationError(type, "${fieldReferenceEntity.fieldName} is not a field of ${type.qualifiedName}"))
-      } else {
-         if (referencedField.type.basePrimitive == null) {
-            errors.add(
-               CompilationError(
-                  type,
-                  "${fieldReferenceEntity.fieldName} is not a field of ${type.qualifiedName}"
-               )
-            )
-         }
-      }
-      return referencedField
-   }
-
-   private fun validateConstantEntityAgainstField(
-      field: Field?,
-      constantEntity: ConstantEntity,
-      type: ObjectType,
-      operator: ComparisonOperator
-   ) {
-      if (field?.type?.basePrimitive != PrimitiveType.DECIMAL &&
-         field?.type?.basePrimitive != PrimitiveType.INTEGER &&
-         field?.type?.basePrimitive != PrimitiveType.STRING
-      ) {
-         errors.add(
-            CompilationError(
-               type,
-               "${field?.name} should be a String, Int or Decimal based field of ${type.qualifiedName}"
-            )
-         )
-      }
-      if (constantEntity.value is String && field?.type?.basePrimitive != PrimitiveType.STRING) {
-         errors.add(CompilationError(type, "${field?.name} is not a String based field of ${type.qualifiedName}"))
-      }
-
-      if (constantEntity.value is Number && (field?.type?.basePrimitive != PrimitiveType.DECIMAL && field?.type?.basePrimitive != PrimitiveType.INTEGER)) {
-         errors.add(CompilationError(type, "${field?.name} is not a numeric based field of ${type.qualifiedName}"))
-      }
-
-      if (!operator.applicablePrimitives.contains(field?.type?.basePrimitive)) {
-         errors.add(
-            CompilationError(
-               type,
-               "${operator.symbol} is not applicable to ${field?.name} field of ${type.qualifiedName}"
-            )
-         )
-
-      }
-   }
+//
+//
+//   private fun validaCaseWhenLogicalExpressions() {
+//      typeSystem.typeList().filterIsInstance<ObjectType>()
+//         .forEach { type ->
+//            type
+//               .allFields
+//               .filter {
+//                  it.accessor is ConditionalAccessor &&
+//                     (it.accessor as ConditionalAccessor).expression is WhenExpression
+//               }
+//               .forEach {
+//                  val whenExpression = ((it.accessor as ConditionalAccessor).expression as WhenExpression)
+//                  val logicalExpressions = whenExpression
+//                     .cases.map { aCase -> aCase.matchExpression }
+//                     .filterIsInstance<LogicalExpression>()
+//                  when {
+////                     logicalExpressions.isNotEmpty() && whenFieldSetCondition.selectorExpression !is EmptyReferenceSelector -> {
+////                        errors.add(
+////                           CompilationError(
+////                              type,
+////                              "when case for ${it.name} in ${type.qualifiedName} cannot have reference selector use when { .. } syntax"
+////                           )
+////                        )
+////                     }
+////                     whenFieldSetCondition.selectorExpression is EmptyReferenceSelector &&
+////                        whenFieldSetCondition.cases.map { it.matchExpression }.filter { it !is ElseMatchExpression }
+////                           .any { it !is LogicalExpression } -> {
+////                        errors.add(
+////                           CompilationError(
+////                              type,
+////                              "when case for ${it.name} in ${type.qualifiedName} can only logical expression when cases"
+////                           )
+////                        )
+////                     }
+//                     else -> validateLogicalExpression(type, typeSystem, it, logicalExpressions)
+//                  }
+//               }
+//         }
+//   }
+//
+//   private fun validateLogicalExpression(
+//      type: ObjectType,
+//      typeSystem: TypeSystem,
+//      field: Field,
+//      logicalExpressions: List<LogicalExpression>
+//   ) {
+//      logicalExpressions.forEach {
+//         when (it) {
+//            is ComparisonExpression -> validateComparisonExpression(it, type)
+//            is AndExpression -> validateLogicalExpression(type, typeSystem, field, listOf(it.left, it.right))
+//            is OrExpression -> validateLogicalExpression(type, typeSystem, field, listOf(it.left, it.right))
+//         }
+//      }
+//   }
+//
+//   private fun validateComparisonExpression(comparisonExpression: ComparisonExpression, type: ObjectType) {
+//      val right = comparisonExpression.right
+//      val left = comparisonExpression.left
+//      when {
+//         right is FieldReferenceEntity && left is FieldReferenceEntity -> {
+//            validateFieldReferenceEntity(right, type)
+//            validateFieldReferenceEntity(left, type)
+//         }
+//
+//         right is ConstantEntity && left is FieldReferenceEntity -> {
+//            val leftField = validateFieldReferenceEntity(left, type)
+//            validateConstantEntityAgainstField(leftField, right, type, comparisonExpression.operator)
+//         }
+//
+//         right is FieldReferenceEntity && left is ConstantEntity -> {
+//            val rightField = validateFieldReferenceEntity(right, type)
+//            validateConstantEntityAgainstField(rightField, left, type, comparisonExpression.operator)
+//         }
+//      }
+//   }
+//
+//   private fun validateFieldReferenceEntity(fieldReferenceEntity: FieldReferenceEntity, type: ObjectType): Field? {
+//      val referencedField = type.allFields.firstOrNull { field -> field.name == fieldReferenceEntity.fieldName }
+//      if (referencedField == null) {
+//         errors.add(CompilationError(type, "${fieldReferenceEntity.fieldName} is not a field of ${type.qualifiedName}"))
+//      } else {
+//         if (referencedField.type.basePrimitive == null) {
+//            errors.add(
+//               CompilationError(
+//                  type,
+//                  "${fieldReferenceEntity.fieldName} is not a field of ${type.qualifiedName}"
+//               )
+//            )
+//         }
+//      }
+//      return referencedField
+//   }
+//
+//   private fun validateConstantEntityAgainstField(
+//      field: Field?,
+//      constantEntity: ConstantEntity,
+//      type: ObjectType,
+//      operator: ComparisonOperator
+//   ) {
+//      if (field?.type?.basePrimitive != PrimitiveType.DECIMAL &&
+//         field?.type?.basePrimitive != PrimitiveType.INTEGER &&
+//         field?.type?.basePrimitive != PrimitiveType.STRING
+//      ) {
+//         errors.add(
+//            CompilationError(
+//               type,
+//               "${field?.name} should be a String, Int or Decimal based field of ${type.qualifiedName}"
+//            )
+//         )
+//      }
+//      if (constantEntity.value is String && field?.type?.basePrimitive != PrimitiveType.STRING) {
+//         errors.add(CompilationError(type, "${field?.name} is not a String based field of ${type.qualifiedName}"))
+//      }
+//
+//      if (constantEntity.value is Number && (field?.type?.basePrimitive != PrimitiveType.DECIMAL && field?.type?.basePrimitive != PrimitiveType.INTEGER)) {
+//         errors.add(CompilationError(type, "${field?.name} is not a numeric based field of ${type.qualifiedName}"))
+//      }
+//
+//      if (!operator.applicablePrimitives.contains(field?.type?.basePrimitive)) {
+//         errors.add(
+//            CompilationError(
+//               type,
+//               "${operator.symbol} is not applicable to ${field?.name} field of ${type.qualifiedName}"
+//            )
+//         )
+//
+//      }
+//   }
 
 
    private fun createEmptyTypes() {
@@ -994,7 +994,7 @@ class TokenProcessor(
          val typeBodyFieldDeclarationParent =
             typeBody.parent?.searchUpForRule(FieldDeclarationContext::class.java) as? FieldDeclarationContext
          val typeBodyFieldObjectType =
-            typeBodyFieldDeclarationParent?.fieldTypeDeclaration()?.optionalTypeReference()?.typeReference()?.let {
+            typeBodyFieldDeclarationParent?.fieldTypeDeclaration()?.nullableTypeReference()?.typeReference()?.let {
                parseType(namespace, it).getOrNull() as? ObjectType
             }
          val typeBodyContext = TypeBodyContext(typeBody, namespace, typeBodyFieldObjectType)
@@ -1280,14 +1280,14 @@ class TokenProcessor(
    }
 
    internal fun parseTypeOrUnionType(
-      typeReference: OptionalTypeReferenceContext,
+      typeReference: NullableTypeReferenceContext,
       typeArgumentsInScope: List<TypeArgument> = emptyList()
 
    ):Either<List<CompilationError>, Type> {
       return when {
          typeReference.typeReference() != null -> parseType(typeReference.findNamespace(), typeReference.typeReference(), typeArgumentsInScope)
          typeReference.unionType() != null -> parseUnionType(typeReference.unionType(), typeArgumentsInScope)
-         else -> error("Unhandled branch when parsing a type")
+         else -> listOf(CompilationError(typeReference.toCompilationUnit(), "Type expected")).left()
       }
    }
 
@@ -1325,8 +1325,8 @@ class TokenProcessor(
       typeArgumentsInScope: List<TypeArgument> = emptyList()
    ): Either<List<CompilationError>, ImportableToken> {
       return resolveTypeOrFunction(
-         typeType.optionalTypeReference().typeReference().qualifiedName(),
-         typeType.optionalTypeReference().typeReference().typeArguments(),
+         typeType.nullableTypeReference().typeReference().qualifiedName(),
+         typeType.nullableTypeReference().typeReference().typeArguments(),
          typeType
       )
    }
@@ -1379,12 +1379,18 @@ class TokenProcessor(
       return when (expressionInputs.expressionInput().size) {
          1 -> {
             val input = expressionInputs.expressionInput().single()
-            val identifier = input.identifier().text ?: ProjectionFunctionScope.THIS
+            val identifier = input.identifier()?.text ?: ProjectionFunctionScope.THIS
             resolveTypeOrFunction(
                input.typeReference().qualifiedName(),
                null,
                input.typeReference().qualifiedName()
-            ).flatMap { token ->
+            ).map { token ->
+               if (input.typeReference().arrayMarker() != null) {
+                  ArrayType.of(token as Type)
+               } else {
+                  token
+               }
+            }.flatMap { token ->
                if (token is Type) {
                   ProjectionFunctionScope(identifier, token).right()
                } else {
@@ -1430,12 +1436,12 @@ class TokenProcessor(
          typeType.aliasedType() != null -> compileInlineTypeAlias(namespace, typeType).map { FieldTypeSpec.forType(it) }
          else -> {
             resolveTypeOrFunction(
-               typeType.optionalTypeReference().typeReference().qualifiedName(),
-               typeType.optionalTypeReference().typeReference().typeArguments(),
+               typeType.nullableTypeReference().typeReference().qualifiedName(),
+               typeType.nullableTypeReference().typeReference().typeArguments(),
                typeType
             )
                .map { token ->
-                  if (token is Type && typeType.optionalTypeReference().typeReference().arrayMarker() != null) {
+                  if (token is Type && typeType.nullableTypeReference().typeReference().arrayMarker() != null) {
                      ArrayType(token, typeType.toCompilationUnit())
                   } else {
                      token
@@ -1470,7 +1476,7 @@ class TokenProcessor(
                   }
                }
 
-//            typeOrError(namespace, typeType.optionalTypeReference().typeReference(), typeArgumentsInScope)
+//            typeOrError(namespace, typeType.nullableTypeReference().typeReference(), typeArgumentsInScope)
          }
       }
    }
@@ -1578,7 +1584,7 @@ class TokenProcessor(
       typeType: FieldTypeDeclarationContext
    ): Either<List<CompilationError>, Type> {
       return parseType(namespace, typeType.inlineInheritedType().typeReference()).map { inlineInheritedType ->
-         val declaredTypeName = typeType.optionalTypeReference().typeReference().qualifiedName().identifier().text()
+         val declaredTypeName = typeType.nullableTypeReference().typeReference().qualifiedName().identifier().text()
 
          typeSystem.register(
             ObjectType(
@@ -1602,7 +1608,7 @@ class TokenProcessor(
    ): Either<List<CompilationError>, Type> {
       return parseType(namespace, aliasTypeDefinition.aliasedType().typeReference()).map { aliasedType ->
          val declaredTypeName =
-            aliasTypeDefinition.optionalTypeReference().typeReference().qualifiedName().identifier().text()
+            aliasTypeDefinition.nullableTypeReference().typeReference().qualifiedName().identifier().text()
          val typeAliasName = if (declaredTypeName.contains(".")) {
             QualifiedNameParser.parse(declaredTypeName)
          } else {
@@ -1799,7 +1805,7 @@ class TokenProcessor(
       }
    }
 
-   private fun getOrCompileService(qualifiedName: String): Either<List<CompilationError>,Service> {
+   private fun getOrCompileService(qualifiedName: String): Either<List<CompilationError>, Service> {
       return services.firstOrNull { it.qualifiedName == qualifiedName }?.right()
          ?: compileService(qualifiedName, tokens.unparsedServices[qualifiedName]!!)
    }
@@ -1816,7 +1822,7 @@ class TokenProcessor(
       requestedFunctionName: QualifiedNameContext,
       context: ParserRuleContext
    ): Either<List<CompilationError>, Function> {
-      return resolveImportableToken(requestedFunctionName,  context)
+      return resolveImportableToken(requestedFunctionName, context)
          .map { it as Function }
    }
 
@@ -2342,10 +2348,10 @@ class TokenProcessor(
       anonymousParameterTypeName: String? = null
    ): Either<List<CompilationError>, lang.taxi.services.Parameter> {
       val paramTypeOrError: Either<List<CompilationError>, Type> =
-         if (operationParameterContext.optionalTypeReference()?.typeReference() != null) {
+         if (operationParameterContext.nullableTypeReference()?.typeReference() != null) {
             parseType(
                namespace,
-               operationParameterContext.optionalTypeReference().typeReference(),
+               operationParameterContext.nullableTypeReference().typeReference(),
                typeArgumentsInScope
             )
          } else if (operationParameterContext.lambdaSignature() != null) {
@@ -2364,7 +2370,7 @@ class TokenProcessor(
             paramType,
             namespace
          ).map { constraints ->
-            val isNullable = operationParameterContext.optionalTypeReference()?.optionalType() != null
+            val isNullable = operationParameterContext.nullableTypeReference()?.Nullable() != null
             val typeDoc = parseTypeDoc(operationParameterContext.typeDoc())
             val isVarargs = operationParameterContext.varargMarker() != null
             lang.taxi.services.Parameter(
