@@ -75,7 +75,7 @@ object HttpRequestBody : AnnotationProvider {
       return Annotation(NAME)
    }
 
-   const val NAME = "RequestBody"
+   const val NAME = "taxi.http.RequestBody"
 }
 
 @Deprecated("This is no longer required")
