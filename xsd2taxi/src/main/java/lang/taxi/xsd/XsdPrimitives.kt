@@ -11,6 +11,72 @@ import java.io.File
 import java.nio.charset.Charset
 
 object XsdPrimitives {
+   // Declare inline.
+   // Loading resources from classpaths is tricky in native images.
+   val primitivesTaxiSource:String = """
+namespace org.w3
+
+type alias string as String
+type alias anyType as Any
+type alias integer as Int
+type alias date as Date
+type alias boolean as Boolean
+type alias time as Time
+type alias dateTime as DateTime
+type alias float as Decimal
+type alias double as Decimal
+type alias decimal as Decimal
+
+type base64Binary inherits String
+type hexBinary inherits String
+
+type anyURI inherits String
+type ID inherits String
+type IDREF inherits String
+type QName inherits String
+type NOTATION inherits String
+
+type normalizedString inherits String
+type token inherits normalizedString
+type language inherits token
+type Name inherits token
+type NCName inherits Name
+type ID inherits NCName
+type IDREF inherits NCName
+type alias IDREFS as IDREF[]
+
+type NMTOKEN inherits token
+type alias NMTOKENS as NMTOKEN[]
+
+type ENTITY inherits NCName
+type alias ENTITIES as ENTITY[]
+
+type nonPositiveInteger inherits integer
+type long inherits integer
+type nonNegativeInteger inherits integer
+type negativeInteger inherits nonPositiveInteger
+
+// This is to conform with the xsd spec, but it's
+// clearly confusing
+type int inherits long
+type short inherits int
+type byte inherits short
+
+type unsignedLong inherits nonNegativeInteger
+type positiveInteger inherits nonNegativeInteger
+type unsignedInt inherits unsignedLong
+type unsignedShort inherits unsignedInt
+type unsignedByte inherits unsignedShort
+
+type duration inherits String
+type gYearMonth inherits String
+type gYear inherits String
+type gMonthDay inherits String
+type gDay inherits String
+type gMonth inherits String
+
+   """.trimIndent()
+
    // TODO: Replace this
 
    @Deprecated("Use SchemaNames")
@@ -21,13 +87,10 @@ object XsdPrimitives {
    private val primitives: Map<QualifiedName, Type>
 
    val primtiviesTaxiDoc:TaxiDocument
-   val primitivesTaxiSource:String
+
 
    init {
-      val filename = "XmlDataTypes.taxi"
-      val file = Resources.getResource(filename)
-      primitivesTaxiSource = Resources.toString(file, Charset.defaultCharset())
-      val charstream = CharStreams.fromString(primitivesTaxiSource, filename)
+      val charstream = CharStreams.fromString(primitivesTaxiSource)
       primtiviesTaxiDoc = Compiler(charstream)
          .compile()
       primitives = primtiviesTaxiDoc

@@ -1,5 +1,0 @@
-namespace lang.taxi.xml {
-
-   annotation XmlAttribute
-   annotation XmlBody
-}

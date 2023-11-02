@@ -11,17 +11,22 @@ import java.nio.charset.Charset
 object XsdAnnotations {
 
    val annotationsTaxiDoc: TaxiDocument
-   val annotationsTaxiSource : String
+
+   // Declare inline.
+   // Loading resources from classpaths is tricky in native images.
+   val annotationsTaxiSource : String = """
+namespace lang.taxi.xml {
+
+   annotation XmlAttribute
+   annotation XmlBody
+}
+   """.trimIndent()
 
    val XML_BODY_TYPE: AnnotationType
    val XML_ATTRIBUTE_TYPE: AnnotationType
 
    init {
-      val filename = "XmlAnnotations.taxi"
-      val file = Resources.getResource(filename)
-      annotationsTaxiSource =  Resources.toString(file, Charset.defaultCharset())
-      val charstream = CharStreams.fromString(annotationsTaxiSource, filename)
-      annotationsTaxiDoc = Compiler(charstream)
+      annotationsTaxiDoc = Compiler(annotationsTaxiSource)
          .compile()
       XML_BODY_TYPE = annotationsTaxiDoc.annotation("lang.taxi.xml.XmlBody")
       XML_ATTRIBUTE_TYPE = annotationsTaxiDoc.annotation("lang.taxi.xml.XmlAttribute")
