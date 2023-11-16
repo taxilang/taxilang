@@ -547,6 +547,13 @@ class TokenProcessor(
    }
 
    private fun compileToken(tokenName: String) {
+      if (tokens.unparsedInlineTypes.containsKey(tokenName)) {
+         // The requested type is defined inline.
+         // Rather than compile the requested type, compile the type that declares it.
+         val inlineTypeDeclarationType = tokens.unparsedInlineTypes.get(tokenName)!!
+         compileToken(inlineTypeDeclarationType)
+         return
+      }
       val (namespace, tokenRule) = tokens.unparsedTypes[tokenName]!!
       if (typeSystem.isDefined(tokenName) && typeSystem.getType(tokenName) is TypeAlias) {
          // As type aliases can be defined inline, it's perfectly acceptable for
