@@ -87,7 +87,7 @@ data class ServiceDiscoveryClient(val serviceName: String) : AnnotationProvider 
 
 data class HttpPathVariable(val value: String) : AnnotationProvider {
    companion object {
-      const val NAME = "PathVariable"
+      const val NAME = "taxi.http.PathVariable"
    }
 
    override fun toAnnotation() = Annotation(NAME, mapOf("value" to value))

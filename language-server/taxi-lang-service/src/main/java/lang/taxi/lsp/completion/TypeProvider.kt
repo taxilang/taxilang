@@ -64,6 +64,12 @@ class TypeProvider(
          StreamType.isStreamTypeName(name) -> name.parameters[0].typeName
          else -> name.typeName
       }
+      val namespace = name.namespace.let { namespace ->
+         if (namespace.isNotEmpty()) {
+            " ($namespace)"
+         } else ""
+      }
+      val label = "$typeName$namespace"
       val completionItemKind = when {
          type == null -> {
             CompletionItemKind.Unit
@@ -83,7 +89,7 @@ class TypeProvider(
          "@$typeName" to "@$typeName"
       } else null to typeName
 
-      val completionItem = CompletionItem(typeName).apply {
+      val completionItem = CompletionItem(label).apply {
          kind = completionItemKind
          insertText = completionInsertText
          detail = listOfNotNull(typeName, doc).joinToString("\n")
