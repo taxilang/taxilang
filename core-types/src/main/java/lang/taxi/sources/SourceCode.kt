@@ -69,14 +69,19 @@ data class SourceCode(
       val missingImports =
          requiredImports.filter { qualifiedName -> presentImports.none { it == qualifiedName.fullyQualifiedName } }
 
-      val importPrelude = missingImports.joinToString("\n") { "import ${it.fullyQualifiedName}" }
+      val contentWithoutImports = this.content.lines().filter { !it.trim().startsWith("import") }
+         .map { it.trimIndent() }
+         .joinToString("\n")
+      val allImports = presentImports + missingImports.map { "import ${it.fullyQualifiedName}" }
+      val importPrelude =  allImports.joinToString("\n")
+
       val namespacedContent = if (requiresNamespaceDeclaration) {
          """namespace $namespace {
-            |${content.trimIndent().prependIndent("   ")}
+            |${contentWithoutImports.lines().map { it.prependIndent("   ") }.joinToString("\n")}
             |}
          """.trimMargin()
       } else {
-         content
+         contentWithoutImports
       }
       val finalSource = """$importPrelude
          |
