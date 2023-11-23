@@ -1,5 +1,6 @@
 package lang.taxi.annotations
 
+import lang.taxi.query.TaxiQlQuery
 import lang.taxi.types.Annotation
 import lang.taxi.types.AnnotationProvider
 import lang.taxi.types.BuiltIn
@@ -64,6 +65,13 @@ data class HttpOperation(val method: String, val url: String) : AnnotationProvid
          require(parameters.containsKey("method")) { "@HttpOperation requires a method parameter" }
          require(parameters.containsKey("url")) { "@HttpOperation requires a url parameter" }
          return HttpOperation(parameters["method"]!!.toString(), parameters["url"]!!.toString())
+      }
+
+      fun fromQuery(query: TaxiQlQuery): HttpOperation? {
+         val httpAnnotation = query.annotations.singleOrNull { annotation -> annotation.name == HttpOperation.NAME }
+         return if (httpAnnotation != null) {
+            fromAnnotation(httpAnnotation)
+         } else null
       }
    }
 
