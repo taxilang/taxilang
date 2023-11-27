@@ -213,10 +213,14 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
 
       // The user has just opened a new file in a browser.  Create it as an empty file
       // This prevents errors later, when attempts to complete are made.
-      if (params.textDocument.uri.startsWith("inmemory://")) {
+      if (isWebIdeUri(params.textDocument.uri)) {
          triggerCompilation(params.textDocument.uri, params.textDocument.text)
       }
+   }
 
+   private fun isWebIdeUri(uri: String): Boolean {
+      return uri.startsWith("inmemory://") // Older versions of Monaco
+              || uri.startsWith("file:///web/sandbox")
    }
 
    private fun computeLinterMessages(documentUri: String) {
