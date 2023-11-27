@@ -11,6 +11,7 @@ import lang.taxi.lsp.hover.HoverService
 import lang.taxi.lsp.linter.LintingService
 import lang.taxi.lsp.signatures.SignatureHelpService
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
+import lang.taxi.lsp.sourceService.isWebIdeUri
 import lang.taxi.messages.Severity
 import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.CharStream
@@ -216,11 +217,6 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       if (isWebIdeUri(params.textDocument.uri)) {
          triggerCompilation(params.textDocument.uri, params.textDocument.text)
       }
-   }
-
-   private fun isWebIdeUri(uri: String): Boolean {
-      return uri.startsWith("inmemory://") // Older versions of Monaco
-              || uri.startsWith("file:///web/sandbox")
    }
 
    private fun computeLinterMessages(documentUri: String) {
