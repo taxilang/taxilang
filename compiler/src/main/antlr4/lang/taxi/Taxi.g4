@@ -232,13 +232,13 @@ fieldTypeDeclaration: (nullableTypeReference parameterConstraint?)? (aliasedType
 
 //typeReference : qualifiedName typeArguments? arrayMarker? optionalType?;
 
-
 typeReference
     :   qualifiedName typeArguments? arrayMarker?;
     //
+unionType : typeReference ('|' typeReference)*;
 
 // Use in call sites where optional types are permitted
-nullableTypeReference : typeReference Nullable?;
+nullableTypeReference : (typeReference | unionType) Nullable?;
 
 accessor
 // by is deprecated, use "="

@@ -1286,6 +1286,39 @@ class TokenProcessor(
       }
    }
 
+   internal fun parseTypeOrUnionType(
+      typeReference: NullableTypeReferenceContext,
+      typeArgumentsInScope: List<TypeArgument> = emptyList()
+
+   ):Either<List<CompilationError>, Type> {
+      return when {
+         typeReference.typeReference() != null -> parseType(typeReference.findNamespace(), typeReference.typeReference(), typeArgumentsInScope)
+         typeReference.unionType() != null -> parseUnionType(typeReference.unionType(), typeArgumentsInScope)
+         else -> listOf(CompilationError(typeReference.toCompilationUnit(), "Type expected")).left()
+      }
+   }
+
+   private fun parseUnionType(unionType: UnionTypeContext, typeArgumentsInScope: List<TypeArgument>): Either<List<CompilationError>, Type> {
+      return unionType.typeReference()
+         .map { unionTypeMember ->
+            parseType(
+               unionType.findNamespace(),
+               unionTypeMember,
+               typeArgumentsInScope
+               )
+         }.invertEitherList()
+         .flattenErrors()
+         .map { types ->
+            typeSystem.registerToken(UnionType(
+               types,
+               null,
+               emptyList(),
+               unionType.toCompilationUnit()
+            )) as Type
+
+         }
+   }
+
    internal fun parseType(
       namespace: Namespace,
       typeType: TypeReferenceContext,
