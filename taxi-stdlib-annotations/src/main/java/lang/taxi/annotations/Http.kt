@@ -1,5 +1,6 @@
 package lang.taxi.annotations
 
+import lang.taxi.query.TaxiQlQuery
 import lang.taxi.types.Annotation
 import lang.taxi.types.AnnotationProvider
 import lang.taxi.types.BuiltIn
@@ -65,6 +66,13 @@ data class HttpOperation(val method: String, val url: String) : AnnotationProvid
          require(parameters.containsKey("url")) { "@HttpOperation requires a url parameter" }
          return HttpOperation(parameters["method"]!!.toString(), parameters["url"]!!.toString())
       }
+
+      fun fromQuery(query: TaxiQlQuery): HttpOperation? {
+         val httpAnnotation = query.annotations.singleOrNull { annotation -> annotation.name == HttpOperation.NAME }
+         return if (httpAnnotation != null) {
+            fromAnnotation(httpAnnotation)
+         } else null
+      }
    }
 
    override fun toAnnotation(): Annotation = Annotation(NAME, mapOf("method" to method, "url" to url))
@@ -87,7 +95,7 @@ data class ServiceDiscoveryClient(val serviceName: String) : AnnotationProvider 
 
 data class HttpPathVariable(val value: String) : AnnotationProvider {
    companion object {
-      const val NAME = "PathVariable"
+      const val NAME = "taxi.http.PathVariable"
    }
 
    override fun toAnnotation() = Annotation(NAME, mapOf("value" to value))

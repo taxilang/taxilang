@@ -11,6 +11,7 @@ import lang.taxi.lsp.hover.HoverService
 import lang.taxi.lsp.linter.LintingService
 import lang.taxi.lsp.signatures.SignatureHelpService
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
+import lang.taxi.lsp.sourceService.isWebIdeUri
 import lang.taxi.messages.Severity
 import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.CharStream
@@ -213,10 +214,9 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
 
       // The user has just opened a new file in a browser.  Create it as an empty file
       // This prevents errors later, when attempts to complete are made.
-      if (params.textDocument.uri.startsWith("inmemory://")) {
+      if (isWebIdeUri(params.textDocument.uri)) {
          triggerCompilation(params.textDocument.uri, params.textDocument.text)
       }
-
    }
 
    private fun computeLinterMessages(documentUri: String) {

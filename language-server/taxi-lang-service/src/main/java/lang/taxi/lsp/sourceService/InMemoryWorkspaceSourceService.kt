@@ -36,3 +36,8 @@ fun inMemoryVersionedId(modelName: String, version: Int = 1): VersionedTextDocum
    VersionedTextDocumentIdentifier(
       inmemoryUri(modelName), version
    )
+
+fun isWebIdeUri(uri: String): Boolean {
+   return uri.startsWith("inmemory://") // Older versions of Monaco
+           || uri.startsWith("file:///web/sandbox")
+}

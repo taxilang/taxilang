@@ -70,14 +70,14 @@ class CompletionSpec : DescribeSpec({
          it("should contain types from within another file") {
             val expectedLabels = listOf(
                "Trade", "Client", // Types in the current file
-               "CurrencySymbol" // Type in another file
+               "CurrencySymbol (acme.fx)" // Type in another file
             )
 
             completions.shouldContainLabels(expectedLabels)
          }
 
          it("should include imports for types defined in another file") {
-            val completion = completions.first { it.label == "BaseCurrency" }
+            val completion = completions.first { it.label.startsWith("BaseCurrency") }
             completion.additionalTextEdits.should.have.size(1)
             val edit = completion.additionalTextEdits.first()
             edit.newText.should.equal("import acme.fx.BaseCurrency\n")
@@ -91,11 +91,11 @@ class CompletionSpec : DescribeSpec({
             edit.range.start.line.should.equal(1) // 0-based
          }
          it("should not include imports for types already imported") {
-            val completion = completions.first { it.label == "CurrencySymbol" }
+            val completion = completions.first { it.label.startsWith("CurrencySymbol") }
             completion.additionalTextEdits.should.be.empty
          }
          it("should not include imports for types declared in the file") {
-            val completion = completions.first { it.label == "Trade" }
+            val completion = completions.first { it.label.startsWith("Trade") }
             completion.additionalTextEdits.should.be.empty
          }
          it("should not include imports for primitives") {

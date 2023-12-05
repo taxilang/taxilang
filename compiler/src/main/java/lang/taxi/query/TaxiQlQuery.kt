@@ -20,6 +20,7 @@ data class TaxiQlQuery(
    override val compilationUnits: List<CompilationUnit>
 ) : Documented, Annotatable, Compiled {
 
+   val source:TaxiQLQueryString = compilationUnits.joinToString("\n") { it.source.content }
    /**
     * If the return type is a collection, returns
     * the member type.  Otherwise the actual return type is returned.

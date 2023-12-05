@@ -2,6 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
+import io.kotest.matchers.shouldBe
 import lang.taxi.accessors.*
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.messages.Severity
@@ -827,6 +828,30 @@ namespace foo {
       messages.should.be.empty
    }
 
+   @Test
+   fun `compilation units with namespacs and imports are correct`() {
+      val srcA = """
+         import foo.bar.Person
+         namespace baz {
+            model Film {}
+            query MyQuery { find { Person[] } }
+         }
+      """
+      val srcB = """namespace foo.bar
+         |
+         |model Person {}
+      """.trimMargin()
+      val sources = listOf(srcA,srcB).map { CharStreams.fromString(it) }
+      val query = Compiler(sources)
+         .compile()
+         .query("baz.MyQuery")
+
+
+      query.compilationUnits.single().source.content.shouldBe("""import foo.bar.Person
+namespace baz {
+   query MyQuery { find { Person[] } }
+}""")
+   }
 }
 
 
