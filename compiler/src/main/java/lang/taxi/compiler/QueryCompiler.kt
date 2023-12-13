@@ -121,7 +121,10 @@ internal class QueryCompiler(
       val queryTypeList = queryBodyContext.queryOrMutation()?.queryTypeList()
       val anonymousTypeDefinition = queryBodyContext.queryOrMutation()?.anonymousTypeDefinition()
       return queryTypeList?.fieldTypeDeclaration()?.map { queryType ->
-         tokenProcessor.parseTypeOrUnionType(queryType.nullableTypeReference()).flatMap { type ->
+         val typeReference = queryType.nullableTypeReference()
+            ?: return@map listOf(CompilationError(queryType.toCompilationUnit(), "Type expected")).left()
+
+         tokenProcessor.parseTypeOrUnionType(typeReference).flatMap { type ->
             toDiscoveryType(
                type, queryType.parameterConstraint(), queryDirective, constraintBuilder, parameters
             )

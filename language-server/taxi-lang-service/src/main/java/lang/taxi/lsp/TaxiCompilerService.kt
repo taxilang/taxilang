@@ -204,6 +204,14 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
       }
    }
 
+   fun getOrComputeLastCompilationResultIfSourcePresent(uriToAssertIsPreset: String): CompilationResult? {
+      return try {
+         getOrComputeLastCompilationResult(uriToAssertIsPreset)
+      } catch (e:Exception) {
+         null
+      }
+   }
+
    /**
     * Initialize the compiler service, loading sources from the source service.
     * Note: Because of initialization order implicit in the LSP startup sequences,
@@ -215,3 +223,4 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
    }
 
 }
+

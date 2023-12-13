@@ -70,7 +70,7 @@ data class SourceCode(
          requiredImports.filter { qualifiedName -> presentImports.none { it == qualifiedName.fullyQualifiedName } }
 
       val contentWithoutImports = this.content.lines().filter { !it.trim().startsWith("import") }
-         .map { it.trimIndent() }
+//         .map { it.trimIndent() }
          .joinToString("\n")
       val allImports = presentImports + missingImports.map { "import ${it.fullyQualifiedName}" }
       val importPrelude =  allImports.joinToString("\n")

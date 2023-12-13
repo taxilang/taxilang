@@ -146,8 +146,11 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    private var linterDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
 
    override fun codeAction(params: CodeActionParams): CompletableFuture<MutableList<Either<Command, CodeAction>>> {
+      // Sometimes a race condition appears in the UI where we receive codeAction requests before we receve the UserDidOpen notification,
+      // meaning that the uri isn't actually present yet.
       val lastCompilationResult =
-         compilerService.getOrComputeLastCompilationResult(uriToAssertIsPreset = params.textDocument.uri)
+         compilerService.getOrComputeLastCompilationResultIfSourcePresent(uriToAssertIsPreset = params.textDocument.uri)
+            ?: return CompletableFuture.completedFuture(mutableListOf())
 
       return codeActionService.getActions(lastCompilationResult, params)
    }

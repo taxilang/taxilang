@@ -12,10 +12,8 @@
    <artifactId>protobuf-to-taxi</artifactId>
 
    <properties>
-      <maven.compiler.source>11</maven.compiler.source>
-      <maven.compiler.target>11</maven.compiler.target>
       <wire.version>4.5.1</wire.version>
-      <okio.version>3.3.0</okio.version>
+      <okio.version>3.4.0</okio.version>
    </properties>
 
    <dependencies>
