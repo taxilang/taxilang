@@ -92,7 +92,7 @@ class OperationSpec : DescribeSpec({
          }
          namespace test {
             service RewardsBalanceService {
-               operation findByCaskInsertedAtBetween( @PathVariable(name = "start") start : demo.CreatedAt, @PathVariable(name = "end") end : demo.CreatedAt ) : demo.RewardsAccountBalance[]( demo.CreatedAt >= start, demo.CreatedAt < end )
+               operation findByCaskInsertedAtBetween( @PathVariable(name = "start") start : demo.CreatedAt, @PathVariable(name = "end") end : demo.CreatedAt ) : demo.RewardsAccountBalance[]( demo.CreatedAt >= start && demo.CreatedAt < end )
             }
          }
          """.trimIndent()

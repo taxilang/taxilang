@@ -1,5 +1,6 @@
 package lang.taxi.types
 
+import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.Argument
 import lang.taxi.accessors.LiteralAccessor
@@ -97,6 +98,13 @@ data class ArgumentSelector(val scope:Argument, val selectors: List<FieldReferen
    override val returnType: Type = declaredType
    val path = selectors.joinToString(".") { it.fieldName }
    override fun asTaxi(): String = "${scope.name}.$path"
+
+   private val equality = ImmutableEquality(this,
+      ArgumentSelector::scope,
+      ArgumentSelector::selectors)
+
+   override fun hashCode(): Int =equality.hash()
+   override fun equals(other: Any?): Boolean = equality.isEqualTo(other)
 }
 
 data class WhenCaseBlock(

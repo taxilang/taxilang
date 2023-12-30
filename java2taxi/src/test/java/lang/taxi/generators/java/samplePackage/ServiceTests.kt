@@ -6,6 +6,7 @@ import lang.taxi.generators.kotlin.TypeAliasRegister
 import lang.taxi.testing.TestHelpers
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.time.LocalDate
 
 class PackageScannerTests {
    val typeMapper = DefaultTypeMapper(
@@ -20,7 +21,8 @@ class PackageScannerTests {
    @DataType("taxi.example.Money")
    data class Money(
       @field:DataType("taxi.example.Currency", documentation = "Describes the currency") val currency: String,
-      @field:DataType("taxi.example.MoneyAmount") val value: BigDecimal
+      @field:DataType("taxi.example.MoneyAmount") val value: BigDecimal,
+      @field:DataType("taxi.example.EffectiveDate") val effectiveDate: LocalDate,
    )
 
    @DataType(documentation = "Models a person.")
@@ -48,11 +50,22 @@ class PackageScannerTests {
       @Operation(documentation = "Returns a converted rate, where the currency has been updated based on the target")
       @ResponseContract(
          basedOn = "source",
-         constraints = [ResponseConstraint("currency = targetCurrency")]
+         constraints = [ResponseConstraint("this.currency == targetCurrency")]
       )
       fun convertRates(
-         @Parameter(constraints = [Constraint("currency = 'GBP'")]) source: Money,
+         @Parameter(constraints = [Constraint("this.currency == 'GBP'")]) source: Money,
          @Parameter(name = "targetCurrency") targetCurrency: String
+      ): Money {
+         TODO("Not a real service")
+      }
+
+      @Operation(documentation = "Returns historic rates between two dates")
+      @ResponseContract(
+         constraints = [ResponseConstraint("EffectiveDate >= startDate && EffectiveDate < endDate")]
+      )
+      fun getHistoricRates(
+         @Parameter(name = "startDate") startDate: LocalDate,
+         @Parameter(name="endDate") endDate: LocalDate
       ): Money {
          TODO("Not a real service")
       }
@@ -64,28 +77,36 @@ class PackageScannerTests {
       val taxiDef = TaxiGenerator().forPackage(MyService::class.java)
          .generateAsStrings()
       val expected = """
-namespace taxi.example
+namespace taxi.example {
+   model Money {
+      [[ Describes the currency ]]
+      currency : Currency
+      effectiveDate : EffectiveDate
+      value : MoneyAmount
+   }
 
-type PersonId inherits String
-type Currency inherits String
-type MoneyAmount inherits Decimal
-[[ Models a person. ]]
-model Person {
-   [[ Defines the id of the person ]]
-    personId : PersonId
-}
-model Money {
-    currency : Currency
-    value : MoneyAmount
-}
-service PersonService {
-    operation findPerson( personId: PersonId) : Person
+   type Currency inherits String
 
-    [[ Returns a converted rate, where the currency has been updated based on the target ]]
-    operation convertRates( source: Money( this.currency == "GBP" ),
-        targetCurrency : String ) : Money( from source, this.currency == targetCurrency )
-}
+   type EffectiveDate inherits Date
 
+   type MoneyAmount inherits Decimal
+
+   [[ Models a person. ]]
+   model Person {
+      [[ Defines the id of the person ]]
+      personId : PersonId
+   }
+
+   type PersonId inherits String
+
+   service PersonService {
+      operation findPerson(  personId : PersonId ) : Person
+      [[ Returns a converted rate, where the currency has been updated based on the target ]]
+      operation convertRates(  source : Money( this.currency == 'GBP' ),  targetCurrency : String ) : Money( from source, this.currency == targetCurrency )
+      [[ Returns historic rates between two dates ]]
+      operation getHistoricRates(  startDate : Date,  endDate : Date ) : Money( EffectiveDate >= startDate && EffectiveDate < endDate )
+   }
+}
 """
       TestHelpers.expectToCompileTheSame(taxiDef, expected)
    }

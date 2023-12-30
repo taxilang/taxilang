@@ -32,9 +32,9 @@ class ServiceTests {
 
       @Operation(documentation = "Returns a converted rate, where the currency has been updated based on the target")
       @ResponseContract(basedOn = "source",
-         constraints = [ResponseConstraint("currency = targetCurrency")]
+         constraints = [ResponseConstraint("this.currency == targetCurrency")]
       )
-      fun convertRates(@Parameter(constraints = [Constraint("currency = 'GBP'")]) source: Money, @Parameter(name = "targetCurrency") targetCurrency: String): Money {
+      fun convertRates(@Parameter(constraints = [Constraint("this.currency == 'GBP'")]) source: Money, @Parameter(name = "targetCurrency") targetCurrency: String): Money {
          TODO("Not a real service")
       }
 

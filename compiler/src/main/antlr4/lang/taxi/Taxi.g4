@@ -408,8 +408,9 @@ operationSignature
 operationScope : identifier;
 
 operationReturnType
-    : ':' typeReference ('(' parameterConstraintExpressionList ')')?
+    : ':' typeReference ('(' (operationReturnValueOriginExpression ',')? expressionGroup? ')')?
     ;
+
 
  // typeReference
      //    :   qualifiedName typeArguments? arrayMarker? optionalType? parameterConstraint? (aliasedType? | inlineInheritedType?)?
@@ -422,7 +423,7 @@ operationParameterList
 operationParameter
 // Note that only one operationParameterConstraint can exist per parameter, but it can contain
 // multiple expressions
-     :   typeDoc? annotation* (parameterName)? ((nullableTypeReference ( '(' parameterConstraintExpressionList ')')?  varargMarker?) | lambdaSignature)
+     :   typeDoc? annotation* (parameterName)? ((nullableTypeReference ( '(' expressionGroup ')')?  varargMarker?) | lambdaSignature)
      ;
 
 varargMarker: '...';
@@ -434,33 +435,8 @@ parameterName
 
 parameterConstraint
     :   '('expressionGroup? ')'
-//    |   '(' parameterConstraintExpressionList ')'
-//    |   '(' temporalFormatList ')'
     ;
 
-
-// We're deprecating this... use expression groups where possible.
-parameterConstraintExpressionList
-    :  parameterConstraintExpression (',' parameterConstraintExpression)*
-    ;
-
-// Deprecated - use expression groups where possible
-parameterConstraintExpression
-    :  propertyToParameterConstraintExpression
-    |  operationReturnValueOriginExpression
-    |  propertyFormatExpression
-    ;
-
-// First impl.  This will get richer (',' StringLiteral)*
-propertyFormatExpression :
-   '@format' '=' StringLiteral;
-
-//temporalFormatList :
-//   ('@format' '=' '[' StringLiteral (',' StringLiteral)* ']')? ','? (instantOffsetExpression)?
-//   ;
-
-//instantOffsetExpression :
-//   '@offset' '=' IntegerLiteral;
 
 // The return value will have a relationship to a property
 // received in an input (incl. nested properties)
@@ -468,23 +444,6 @@ operationReturnValueOriginExpression
     :  'from' qualifiedName
     ;
 
-// Deprecation warning: We're gonna deprecate this and find a way to just use normal expressions.
-//
-// A parameter will a value that matches a specified expression
-// operation convertCurrency(request : ConversionRequest) : Money( this.currency = request.target )
-// Models a constraint against an attribute on the type (generally return type).
-// The attribute is identified by EITHER
-// - it's name -- using this.fieldName
-// - it's type (preferred) using TheTypeName
-// The qualifiedName here is used to represent a path to the attribute (this.currency)
-// We could've just used identifier here, but we'd like to support nested paths
-//
-// We're deprecating this... use expression groups where possible.
-propertyToParameterConstraintExpression
-   : propertyToParameterConstraintLhs comparisonOperator propertyToParameterConstraintRhs;
-
-propertyToParameterConstraintLhs : (propertyFieldNameQualifier? qualifiedName)? | modelAttributeTypeReference?;
-propertyToParameterConstraintRhs : (literal | qualifiedName);
 
 propertyFieldNameQualifier : 'this' '.';
 
@@ -496,15 +455,6 @@ comp_operator : GT
               | NQ
               ;
 
-
-comparisonOperator
-   : '=='
-   | '>'
-   | '>='
-   | '<='
-   | '<'
-   | '!='
-   ;
 
 policyDeclaration
     :  annotation* 'policy' policyIdentifier 'against' typeReference '{' policyRuleSet* '}';

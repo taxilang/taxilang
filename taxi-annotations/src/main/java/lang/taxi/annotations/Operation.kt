@@ -52,7 +52,7 @@ annotation class Operation(
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
 annotation class ResponseContract(
-   val basedOn: String,
+   val basedOn: String = "",
    vararg val constraints: ResponseConstraint
 )
 

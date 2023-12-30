@@ -17,24 +17,39 @@ private val defaultConverters = listOf(
    AttributeValueFromParameterConstraintConvert()
 )
 
+/**
+ * A placeholder expression for generating from code. Just outputs whatever the expression we
+ * were given.
+ */
+class SimpleExpressionConstraint(val expression: String) : Constraint {
+   override fun asTaxi(): String {
+      return expression
+   }
+
+   override val compilationUnits: List<CompilationUnit> = emptyList()
+
+}
+
 class ConstraintAnnotationMapper(val converters: List<ConstraintAnnotationConverter> = defaultConverters) {
    fun convert(constraints: List<lang.taxi.annotations.Constraint>): List<Constraint> {
       return doConvert(constraints.map { ConstraintAnnotationModel(it) })
    }
 
    private fun doConvert(constraints: List<ConstraintAnnotationModel>): List<Constraint> {
-      return constraints.flatMap { constraint ->
-         converters.filter { it.canProvide(constraint) }
-            .map { it.provide(constraint) }
-      }
+      return constraints.map { SimpleExpressionConstraint(it.value) }
    }
 
    fun convert(contract: ResponseContract): List<Constraint> {
-      val basedOn = ReturnValueDerivedFromParameterConstraint(AttributePath.from(contract.basedOn), listOf(CompilationUnit.unspecified()))
+      val basedOn = if (contract.basedOn.isNotEmpty()) {
+         ReturnValueDerivedFromParameterConstraint(
+            AttributePath.from(contract.basedOn),
+            listOf(CompilationUnit.unspecified())
+         )
+      } else null
       val mappedConstraints = doConvert(contract.constraints
          .map { ConstraintAnnotationModel(it) })
       // Note: basedOn MUST come first to ensure order
-      return listOf(basedOn) + mappedConstraints
+      return listOfNotNull(basedOn) + mappedConstraints
    }
 }
 

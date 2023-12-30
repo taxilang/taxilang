@@ -9,7 +9,6 @@ import arrow.core.right
 import lang.taxi.*
 import lang.taxi.TaxiParser.*
 import lang.taxi.accessors.Argument
-import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.annotations.AnnotationTypeBodyContent
 import lang.taxi.compiler.fields.FieldCompiler
@@ -29,9 +28,9 @@ import lang.taxi.query.Parameter
 import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.*
 import lang.taxi.services.operations.constraints.Constraint
-import lang.taxi.services.operations.constraints.ConstraintValidator
-import lang.taxi.services.operations.constraints.ExpressionConstraint
+import lang.taxi.services.operations.constraints.ExpressionConstraintBuilder
 import lang.taxi.services.operations.constraints.OperationConstraintConverter
+import lang.taxi.services.operations.constraints.InstanceArgument
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.utils.*
@@ -79,7 +78,6 @@ class TokenProcessor(
    private val functions = mutableListOf<Function>()
    private val annotations = mutableListOf<Annotation>()
    private val views = mutableListOf<View>()
-   private val constraintValidator = ConstraintValidator()
 
    val errors = mutableListOf<CompilationError>()
 
@@ -238,12 +236,6 @@ class TokenProcessor(
       compileFunctions()
       applySynonymsToEnums()
 
-      // Some validations can't be performed at the time, because
-      // they rely on a fully parsed document structure
-      validateConstraints()
-//      validateFormulas()
-//      validaCaseWhenLogicalExpressions()
-
       // Queries
       compileQueries()
       //
@@ -367,140 +359,6 @@ class TokenProcessor(
          }
       }
    }
-
-   private fun validateConstraints() {
-      errors.addAll(constraintValidator.validateAll(typeSystem, services))
-   }
-//
-//
-//   private fun validaCaseWhenLogicalExpressions() {
-//      typeSystem.typeList().filterIsInstance<ObjectType>()
-//         .forEach { type ->
-//            type
-//               .allFields
-//               .filter {
-//                  it.accessor is ConditionalAccessor &&
-//                     (it.accessor as ConditionalAccessor).expression is WhenExpression
-//               }
-//               .forEach {
-//                  val whenExpression = ((it.accessor as ConditionalAccessor).expression as WhenExpression)
-//                  val logicalExpressions = whenExpression
-//                     .cases.map { aCase -> aCase.matchExpression }
-//                     .filterIsInstance<LogicalExpression>()
-//                  when {
-////                     logicalExpressions.isNotEmpty() && whenFieldSetCondition.selectorExpression !is EmptyReferenceSelector -> {
-////                        errors.add(
-////                           CompilationError(
-////                              type,
-////                              "when case for ${it.name} in ${type.qualifiedName} cannot have reference selector use when { .. } syntax"
-////                           )
-////                        )
-////                     }
-////                     whenFieldSetCondition.selectorExpression is EmptyReferenceSelector &&
-////                        whenFieldSetCondition.cases.map { it.matchExpression }.filter { it !is ElseMatchExpression }
-////                           .any { it !is LogicalExpression } -> {
-////                        errors.add(
-////                           CompilationError(
-////                              type,
-////                              "when case for ${it.name} in ${type.qualifiedName} can only logical expression when cases"
-////                           )
-////                        )
-////                     }
-//                     else -> validateLogicalExpression(type, typeSystem, it, logicalExpressions)
-//                  }
-//               }
-//         }
-//   }
-//
-//   private fun validateLogicalExpression(
-//      type: ObjectType,
-//      typeSystem: TypeSystem,
-//      field: Field,
-//      logicalExpressions: List<LogicalExpression>
-//   ) {
-//      logicalExpressions.forEach {
-//         when (it) {
-//            is ComparisonExpression -> validateComparisonExpression(it, type)
-//            is AndExpression -> validateLogicalExpression(type, typeSystem, field, listOf(it.left, it.right))
-//            is OrExpression -> validateLogicalExpression(type, typeSystem, field, listOf(it.left, it.right))
-//         }
-//      }
-//   }
-//
-//   private fun validateComparisonExpression(comparisonExpression: ComparisonExpression, type: ObjectType) {
-//      val right = comparisonExpression.right
-//      val left = comparisonExpression.left
-//      when {
-//         right is FieldReferenceEntity && left is FieldReferenceEntity -> {
-//            validateFieldReferenceEntity(right, type)
-//            validateFieldReferenceEntity(left, type)
-//         }
-//
-//         right is ConstantEntity && left is FieldReferenceEntity -> {
-//            val leftField = validateFieldReferenceEntity(left, type)
-//            validateConstantEntityAgainstField(leftField, right, type, comparisonExpression.operator)
-//         }
-//
-//         right is FieldReferenceEntity && left is ConstantEntity -> {
-//            val rightField = validateFieldReferenceEntity(right, type)
-//            validateConstantEntityAgainstField(rightField, left, type, comparisonExpression.operator)
-//         }
-//      }
-//   }
-//
-//   private fun validateFieldReferenceEntity(fieldReferenceEntity: FieldReferenceEntity, type: ObjectType): Field? {
-//      val referencedField = type.allFields.firstOrNull { field -> field.name == fieldReferenceEntity.fieldName }
-//      if (referencedField == null) {
-//         errors.add(CompilationError(type, "${fieldReferenceEntity.fieldName} is not a field of ${type.qualifiedName}"))
-//      } else {
-//         if (referencedField.type.basePrimitive == null) {
-//            errors.add(
-//               CompilationError(
-//                  type,
-//                  "${fieldReferenceEntity.fieldName} is not a field of ${type.qualifiedName}"
-//               )
-//            )
-//         }
-//      }
-//      return referencedField
-//   }
-//
-//   private fun validateConstantEntityAgainstField(
-//      field: Field?,
-//      constantEntity: ConstantEntity,
-//      type: ObjectType,
-//      operator: ComparisonOperator
-//   ) {
-//      if (field?.type?.basePrimitive != PrimitiveType.DECIMAL &&
-//         field?.type?.basePrimitive != PrimitiveType.INTEGER &&
-//         field?.type?.basePrimitive != PrimitiveType.STRING
-//      ) {
-//         errors.add(
-//            CompilationError(
-//               type,
-//               "${field?.name} should be a String, Int or Decimal based field of ${type.qualifiedName}"
-//            )
-//         )
-//      }
-//      if (constantEntity.value is String && field?.type?.basePrimitive != PrimitiveType.STRING) {
-//         errors.add(CompilationError(type, "${field?.name} is not a String based field of ${type.qualifiedName}"))
-//      }
-//
-//      if (constantEntity.value is Number && (field?.type?.basePrimitive != PrimitiveType.DECIMAL && field?.type?.basePrimitive != PrimitiveType.INTEGER)) {
-//         errors.add(CompilationError(type, "${field?.name} is not a numeric based field of ${type.qualifiedName}"))
-//      }
-//
-//      if (!operator.applicablePrimitives.contains(field?.type?.basePrimitive)) {
-//         errors.add(
-//            CompilationError(
-//               type,
-//               "${operator.symbol} is not applicable to ${field?.name} field of ${type.qualifiedName}"
-//            )
-//         )
-//
-//      }
-//   }
-
 
    private fun createEmptyTypes() {
       if (createEmptyTypesPerformed) {
@@ -1290,31 +1148,41 @@ class TokenProcessor(
       typeReference: NullableTypeReferenceContext,
       typeArgumentsInScope: List<TypeArgument> = emptyList()
 
-   ):Either<List<CompilationError>, Type> {
+   ): Either<List<CompilationError>, Type> {
       return when {
-         typeReference.typeReference() != null -> parseType(typeReference.findNamespace(), typeReference.typeReference(), typeArgumentsInScope)
+         typeReference.typeReference() != null -> parseType(
+            typeReference.findNamespace(),
+            typeReference.typeReference(),
+            typeArgumentsInScope
+         )
+
          typeReference.unionType() != null -> parseUnionType(typeReference.unionType(), typeArgumentsInScope)
          else -> listOf(CompilationError(typeReference.toCompilationUnit(), "Type expected")).left()
       }
    }
 
-   private fun parseUnionType(unionType: UnionTypeContext, typeArgumentsInScope: List<TypeArgument>): Either<List<CompilationError>, Type> {
+   private fun parseUnionType(
+      unionType: UnionTypeContext,
+      typeArgumentsInScope: List<TypeArgument>
+   ): Either<List<CompilationError>, Type> {
       return unionType.typeReference()
          .map { unionTypeMember ->
             parseType(
                unionType.findNamespace(),
                unionTypeMember,
                typeArgumentsInScope
-               )
+            )
          }.invertEitherList()
          .flattenErrors()
          .map { types ->
-            typeSystem.registerToken(UnionType(
-               types,
-               null,
-               emptyList(),
-               unionType.toCompilationUnit()
-            )) as Type
+            typeSystem.registerToken(
+               UnionType(
+                  types,
+                  null,
+                  emptyList(),
+                  unionType.toCompilationUnit()
+               )
+            ) as Type
 
          }
    }
@@ -2101,7 +1969,13 @@ class TokenProcessor(
          val parameters =
             functionToken.operationParameterList()?.operationParameter()?.mapIndexed { index, parameterDefinition ->
                val anonymousParameterTypeName = "$qualifiedName\$Param$index"
-               parseParameter(namespace, parameterDefinition, typeArguments, anonymousParameterTypeName)
+               parseParameter(
+                  namespace,
+                  parameterDefinition,
+                  typeArguments,
+                  anonymousParameterTypeName,
+                  paramIndex = index
+               )
             }?.reportAndRemoveErrorList(errors) ?: emptyList()
 
          if (functionToken.functionModifiers() != null && functionToken.functionModifiers().text != "query") {
@@ -2228,9 +2102,10 @@ class TokenProcessor(
                val name = queryOperation.identifier().text
                val grammar = queryOperation.queryGrammarName().identifier().text
                val operationParameters =
-                  queryOperation.operationParameterList().operationParameter().map { operationParameterContext ->
-                     parseParameter(namespace, operationParameterContext)
-                  }.reportAndRemoveErrorList(errors)
+                  queryOperation.operationParameterList().operationParameter()
+                     .mapIndexed { index, operationParameterContext ->
+                        parseParameter(namespace, operationParameterContext, paramIndex = index)
+                     }.reportAndRemoveErrorList(errors)
                QueryOperation(
                   name = name,
                   annotations = collateAnnotations(queryOperation.annotation()),
@@ -2328,11 +2203,11 @@ class TokenProcessor(
       return parseTypeOrVoid(namespace, signature.operationReturnType())
          .flatMap { returnType ->
             val scope = operationDeclaration.operationScope()?.identifier()?.text
-            val operationParameters = signature.parameters().map { operationParameterContext ->
-               parseParameter(namespace, operationParameterContext)
+            val operationParameters = signature.parameters().mapIndexed { index, operationParameterContext ->
+               parseParameter(namespace, operationParameterContext, paramIndex = index)
             }.reportAndRemoveErrorList(errors)
 
-            parseOperationContract(operationDeclaration, returnType, namespace).map { contract ->
+            parseOperationContract(operationDeclaration, operationParameters, returnType).map { contract ->
                Operation(
                   name = signature.identifier().text,
                   scope = OperationScope.forToken(scope),
@@ -2352,7 +2227,9 @@ class TokenProcessor(
       operationParameterContext: OperationParameterContext,
       typeArgumentsInScope: List<TypeArgument> = emptyList(),
       // When parsing paraeters that are lambdas we need a useful name
-      anonymousParameterTypeName: String? = null
+      anonymousParameterTypeName: String? = null,
+      // If the param is unnamed, we assign a name based on index.
+      paramIndex: Int
    ): Either<List<CompilationError>, lang.taxi.services.Parameter> {
       val paramTypeOrError: Either<List<CompilationError>, Type> =
          if (operationParameterContext.nullableTypeReference()?.typeReference() != null) {
@@ -2373,9 +2250,9 @@ class TokenProcessor(
 
       return paramTypeOrError.flatMap { paramType ->
          mapConstraints(
-            operationParameterContext.parameterConstraintExpressionList(),
-            paramType,
-            namespace
+            operationParameterContext.expressionGroup(),
+            null,
+            listOf(InstanceArgument(paramType)) // expose the param as "this" in expressions
          ).map { constraints ->
             val isNullable = operationParameterContext.nullableTypeReference()?.Nullable() != null
             val typeDoc = parseTypeDoc(operationParameterContext.typeDoc())
@@ -2383,7 +2260,7 @@ class TokenProcessor(
             lang.taxi.services.Parameter(
                annotations = collateAnnotations(operationParameterContext.annotation()),
                type = paramType,
-               name = operationParameterContext.parameterName()?.identifier()?.text,
+               name = operationParameterContext.parameterName()?.identifier()?.text ?: "p${paramIndex}",
                constraints = constraints,
                isVarArg = isVarargs,
                typeDoc = typeDoc,
@@ -2422,18 +2299,31 @@ class TokenProcessor(
 
    private fun parseOperationContract(
       operationDeclaration: ServiceOperationDeclarationContext,
+      parameters: List<lang.taxi.services.Parameter>,
       returnType: Type,
-      namespace: Namespace
-   ): Either<List<CompilationError>, OperationContract?> {
+
+      ): Either<List<CompilationError>, OperationContract?> {
       val signature = operationDeclaration.operationSignature()
-      val constraintList = signature.operationReturnType()
-         ?.parameterConstraintExpressionList()
-         ?: return null.right()
+      val expressionGroup = signature.operationReturnType()
+         ?.expressionGroup()
+      val returnValueOriginExpression = signature.operationReturnType()?.operationReturnValueOriginExpression()
+      if (returnValueOriginExpression == null && expressionGroup == null) {
+         return null.right()
+      }
+
+      val arguments: List<Argument> = parameters +
+         InstanceArgument(returnType)
+
+
+      val expressionCompiler = expressionCompiler(
+         null,
+         arguments
+      )
 
       return OperationConstraintConverter(
-         constraintList,
-         returnType,
-         typeResolver(namespace)
+         expressionGroup,
+         returnValueOriginExpression,
+         expressionCompiler,
       ).constraints().map { constraints ->
          OperationContract(returnType, constraints)
       }
@@ -2441,31 +2331,13 @@ class TokenProcessor(
 
    internal fun mapConstraints(
       constraintList: ExpressionGroupContext?,
-      paramType: Type,
       fieldCompiler: FieldCompiler?,
-      activeScopes: List<ProjectionFunctionScope> = emptyList()
+      activeScopes: List<Argument> = emptyList()
    ): Either<List<CompilationError>, List<Constraint>> {
-      if (constraintList == null) {
-         return emptyList<Constraint>().right()
-      }
-      return expressionCompiler(fieldCompiler, activeScopes).compile(constraintList).map { expression ->
-         listOf(ExpressionConstraint(expression))
-      }
-   }
-
-   @Deprecated("Pass an ExpressionGroupContext instead")
-   internal fun mapConstraints(
-      constraintList: ParameterConstraintExpressionListContext?,
-      paramType: Type,
-      namespace: Namespace
-   ): Either<List<CompilationError>, List<Constraint>> {
-      if (constraintList == null) {
-         return emptyList<Constraint>().right()
-      }
-      return OperationConstraintConverter(
-         constraintList,
-         paramType, typeResolver(namespace)
-      ).constraints()
+      val expressionCompiler = expressionCompiler(fieldCompiler, activeScopes)
+      return ExpressionConstraintBuilder.build(
+         constraintList, expressionCompiler
+      )
    }
 
    private fun compilePolicies() {

@@ -40,7 +40,7 @@ class SoapServiceMapper(
       val inputs = messagePartsToTypes(operationInfo.input.messageParts, operationInfo.name, "input")
       markInputsAsParameterTypes(inputs)
       val parameters =
-         inputs.map { Parameter(annotations = emptyList(), type = it, name = null, constraints = emptyList()) }
+         inputs.mapIndexed { index, type ->  Parameter(annotations = emptyList(), type = type, name = "p$index", constraints = emptyList()) }
       val responseTypes = messagePartsToTypes(operationInfo.output.messageParts, operationInfo.name, "output")
       require(responseTypes.size == 1) { "Expected a single response type for operation ${operationName}, but found ${responseTypes.size}" }
       val responseType = unwrapEnvelopeType(responseTypes.single())

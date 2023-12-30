@@ -25,6 +25,9 @@ private fun OperatorExpression.convertToPropertyConstraint():List<PropertyToPara
    }
    val propertyIdentifier = when (val lhs = this.lhs) {
       is TypeExpression -> PropertyTypeIdentifier(lhs.returnType)
+      is ArgumentSelector -> {
+         PropertyFieldNameIdentifier(lhs.path)
+      }
       else -> TODO("Support for ${lhs::class.simpleName} on LHS is not yet implemented")
    } as PropertyIdentifier
 

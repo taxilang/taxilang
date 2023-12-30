@@ -36,6 +36,7 @@ class ExpressionCompiler(
       this,
       null
    )
+
    fun withParameters(arguments: List<Argument>): ExpressionCompiler {
       // TODO : In future, does it make sense to "nest" these, so that as we add arguments,
       // they form scopes / contexts?
@@ -49,11 +50,13 @@ class ExpressionCompiler(
       )
    }
 
-   fun compile(expressionGroup: ExpressionGroupContext,
-               // The type we'll be attempting to assign the result of this expression to.
-               // This is a recent (26-09-23) addition to the signature, and hasn't yet been
-               // updated in all call sites.
-               targetType: Type? = null): Either<List<CompilationError>, out Expression> {
+   fun compile(
+      expressionGroup: ExpressionGroupContext,
+      // The type we'll be attempting to assign the result of this expression to.
+      // This is a recent (26-09-23) addition to the signature, and hasn't yet been
+      // updated in all call sites.
+      targetType: Type? = null
+   ): Either<List<CompilationError>, out Expression> {
       return when {
          expressionGroup.children.size == 2 && expressionGroup.children.last() is TypeProjectionContext && expressionGroup.children.first() is ExpressionGroupContext -> {
             // This is an expression with a projection.
@@ -119,38 +122,64 @@ class ExpressionCompiler(
 
    }
 
-   private fun compileSingleExpression(expression: ExpressionGroupContext, assignmentType: Type?): Either<List<CompilationError>, Expression> {
+   private fun compileSingleExpression(
+      expression: ExpressionGroupContext,
+      assignmentType: Type?
+   ): Either<List<CompilationError>, Expression> {
       return when {
          expression.expressionAtom() != null -> compileExpressionAtom(expression.expressionAtom())
          expression.whenBlock() != null -> {
-            require(fieldCompiler != null) { "Cannot compile a When Block as the expression compiler was initialized without a field compiler"}
-            require(assignmentType != null) { "Cannot compile a When Block as no assignment type has been provided"}
+            require(fieldCompiler != null) { "Cannot compile a When Block as the expression compiler was initialized without a field compiler" }
+            require(assignmentType != null) { "Cannot compile a When Block as no assignment type has been provided" }
             val whenCompiler = WhenBlockCompiler(fieldCompiler, this)
             whenCompiler.compileWhenCondition(expression.whenBlock(), assignmentType)
          }
+
          else -> TODO("Unhandled single expression: ${expression.text}")
       }
    }
 
    private fun compileExpressionAtom(expressionAtom: TaxiParser.ExpressionAtomContext): Either<List<CompilationError>, Expression> {
       return when {
-         expressionAtom.typeReference() != null -> parseTypeExpression(expressionAtom.typeReference()) /*{
-            // At this point the grammar isn't sufficiently strong to know if
-            // we've been given a type or a function reference
-            val typeType = expressionAtom.typeReference()
-            tokenProcessor.resolveTypeOrFunction(
-               typeType.qualifiedName().text,
-               expressionAtom
-            )
-            TODO()
-
-         } */
+         expressionAtom.typeReference() != null -> parseTypeExpression(expressionAtom.typeReference())
          expressionAtom.functionCall() != null -> parseFunctionExpression(expressionAtom.functionCall())
          expressionAtom.literal() != null -> parseLiteralExpression(expressionAtom.literal())
-         expressionAtom.fieldReferenceSelector() != null -> parseFieldReferenceSelector(expressionAtom.fieldReferenceSelector())
+         expressionAtom.fieldReferenceSelector() != null -> parseAttributeSelector(expressionAtom.fieldReferenceSelector())
          expressionAtom.modelAttributeTypeReference() != null -> parseModelAttributeTypeReference(expressionAtom.modelAttributeTypeReference())
          else -> error("Unhandled atom in expression: ${expressionAtom.text}")
       }
+   }
+
+   private fun parseAttributeSelector(fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext): Either<List<CompilationError>, Expression> {
+      return when {
+         fieldCompiler != null -> parseFieldReferenceSelector(fieldReferenceSelector)
+         // This is used when we're parsing expressions on operation contracts
+         // (ie., return contracts)
+         scopes.isNotEmpty() -> parseAttributeFromScope(fieldReferenceSelector)
+         else -> {
+            return listOf(
+               CompilationError(
+                  fieldReferenceSelector.toCompilationUnit(),
+                  "Attribute reference ${fieldReferenceSelector.text} cannot be resolved against anything"
+               )
+            ).left()
+         }
+      }
+   }
+
+   // Used when we're parsing expressions on operation contracts
+   // (ie., return contracts)
+   private fun parseAttributeFromScope(fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext): Either<List<CompilationError>, Expression> {
+
+      // We're trying to build the scope path - eg: this.foo.bar
+      // There's some tech debt here - see comments about "this" in fieldReferenceSelector
+      // in grammar.
+      // Net result is that "this" is treated specially, making building the path awkward,
+      // as we read the "this" from one part, and the rest of the path elsewhere.
+      val attributePath = fieldReferenceSelector.qualifiedName()
+      val scopePath = listOf(fieldReferenceSelector.propertyFieldNameQualifier().text.removeSuffix(".")) +
+         attributePath.identifier().map { it.text }
+      return resolveScopePath(scopePath, context = fieldReferenceSelector)
    }
 
    private fun parseFieldReferenceSelector(fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext): Either<List<CompilationError>, Expression> {
@@ -329,21 +358,27 @@ class ExpressionCompiler(
     */
    fun resolveScopePath(qualifiedName: QualifiedNameContext): Either<List<CompilationError>, ArgumentSelector> {
       val identifierTokens = qualifiedName.identifier().map { it.text }
+      return resolveScopePath(identifierTokens, context = qualifiedName)
+   }
+
+   private fun resolveScopePath(
+      identifierTokens: List<String>,
+      context: ParserRuleContext
+   ): Either<List<CompilationError>, ArgumentSelector> {
       // if we can resolve it through a scope, do so.
       val resolvedScopeReference = scopes.first { it.matchesReference(identifierTokens) }
       return resolveScopePath(
          resolvedScopeReference,
          resolvedScopeReference.pruneFieldPath(identifierTokens),
-         qualifiedName
+         context
       ).flatMap { fieldSelectors ->
 
          ArgumentSelector(
             resolvedScopeReference,
             resolvedScopeReference.pruneFieldSelectors(fieldSelectors),
-            qualifiedName.toCompilationUnits()
+            context.toCompilationUnits()
          ).right()
       }
-
    }
 
    /**
