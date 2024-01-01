@@ -1,5 +1,6 @@
 package lang.taxi.sources
 
+import lang.taxi.formatter.TaxiCodeFormatter
 import lang.taxi.types.Arrays
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
@@ -34,6 +35,9 @@ data class SourceCode(
    var path: Path? = null,
    val language: SourceCodeLanguage = SourceCodeLanguages.TAXI
 ) {
+   fun formattedSource():String {
+      return TaxiCodeFormatter.format(content)
+   }
    companion object {
       fun unspecified(): SourceCode = SourceCode("Not specified", "")
       fun from(file: File): SourceCode {

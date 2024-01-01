@@ -57,24 +57,6 @@ fun ParserRuleContext?.toCompilationUnit(
          rawSource.makeStandalone(this.findNamespace(), dependantTypeNames),
          SourceLocation(this.start.line, this.start.charPositionInLine)
       )
-
-      // MP - 21-Dec-21 : The below was added recently, but unsure why.  Something to do with
-      // regenerating taxi in views.
-      // Serhat to investigate through regression pack
-//      return if (dependantTypeNames.isEmpty()) {
-//         CompilationUnit(
-//            this,
-//            rawSource.makeStandalone(this.findNamespace(),dependantTypeNames),
-//            SourceLocation(this.start.line, this.start.charPositionInLine)
-//         )
-//
-//      } else {
-//         CompilationUnit(
-//            this,
-//            rawSource.makeStandalone(this.findNamespace(),dependantTypeNames),
-//            SourceLocation(this.start.line, this.start.charPositionInLine)
-//         );
-//      }
    }
 }
 
