@@ -68,7 +68,7 @@ class SpringServiceMapper(val baseUrl: String) : ServiceMapper {
             lang.taxi.services.Parameter(
                annotations = annotations,
                type = paramType,
-               name = paramAnnotation?.name?.orDefaultNullable(kotlinParameter.name) ?: kotlinParameter.name,
+               name = paramAnnotation?.name?.orDefaultNullable(kotlinParameter.name) ?: kotlinParameter.name ?: "p$index",
                constraints = emptyList()
             )
          }

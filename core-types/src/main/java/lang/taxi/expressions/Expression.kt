@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.getOrElse
 import arrow.core.left
 import arrow.core.right
+import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.functions.FunctionAccessor
@@ -45,6 +46,10 @@ data class LiteralExpression(val literal: LiteralAccessor, override val compilat
          return expression is LiteralExpression && LiteralAccessor.isNullLiteral(expression.literal)
       }
    }
+
+   private val equality = ImmutableEquality(this, LiteralExpression::literal)
+   override fun hashCode(): Int = equality.hash()
+   override fun equals(other: Any?): Boolean = equality.isEqualTo(other)
 
    override val returnType: Type = literal.returnType
 
@@ -94,6 +99,15 @@ data class OperatorExpression(
    val rhs: Expression,
    override val compilationUnits: List<CompilationUnit>
 ) : Expression() {
+   private val equality = ImmutableEquality(this,
+      OperatorExpression::lhs,
+      OperatorExpression::operator,
+      OperatorExpression::rhs
+      )
+
+   override fun hashCode(): Int  = equality.hash()
+   override fun equals(other: Any?): Boolean = equality.isEqualTo(other)
+
    companion object {
       fun getReturnType(lhsType: PrimitiveType, operator: FormulaOperator, rhsType: PrimitiveType): Type? {
          if (operator.isLogicalOrComparisonOperator()) {

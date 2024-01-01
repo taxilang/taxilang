@@ -63,7 +63,7 @@ data class DefaultServiceMapper(
             Parameter(
                annotations = emptyList(), // todo,
                type = paramType,
-               name = paramAnnotation?.name?.orDefaultNullable(kotlinParameter.name) ?: kotlinParameter.name,
+               name = paramAnnotation?.name?.orDefaultNullable(kotlinParameter.name) ?: kotlinParameter.name ?: "p$index",
                constraints = parseConstraints(paramAnnotation)
             )
          }

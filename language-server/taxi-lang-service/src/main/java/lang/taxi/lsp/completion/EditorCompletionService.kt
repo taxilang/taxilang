@@ -103,7 +103,6 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
          is EnumConstantContext -> listOf(CompletionItem("synonym of"))
 
          // Query completions
-         is ParameterConstraintExpressionContext -> typeProvider.getTypes(decorators)
          is QueryTypeListContext -> typeProvider.getTypes(decorators)
          is ArrayMarkerContext -> typeProvider.getTypes(decorators)
          is ParameterConstraintContext -> typeProvider.getTypes(decorators)

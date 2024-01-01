@@ -2,14 +2,23 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.should
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
+import lang.taxi.expressions.OperatorExpression
+import lang.taxi.expressions.TypeExpression
 import lang.taxi.linter.LinterRuleConfiguration
 import lang.taxi.query.TaxiQlQuery
+import lang.taxi.services.Parameter
+import lang.taxi.services.operations.constraints.ExpressionConstraint
 import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.services.operations.constraints.PropertyTypeIdentifier
 import lang.taxi.services.operations.constraints.RelativeValueExpression
 import lang.taxi.toggles.FeatureToggle
+import lang.taxi.types.ArgumentSelector
 import lang.taxi.types.AttributePath
+import lang.taxi.types.FormulaOperator
 import lang.taxi.types.QualifiedName
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -32,17 +41,24 @@ class OperationContextSpec : DescribeSpec({
             val operation = """
          $taxi
          service TradeService {
-            operation getTrade(id:TradeId):Trade(TradeId == id)
+            operation getTrade(id:TradeId):Trade(this.tradeId == id)
          }
          """.compiled().service("TradeService").operation("getTrade")
             operation.contract!!.returnTypeConstraints.should.have.size(1)
-            val constraint = operation.contract!!.returnTypeConstraints.first() as PropertyToParameterConstraint
-            constraint.operator.should.equal(Operator.EQUAL)
-            val propertyIdentifier = constraint.propertyIdentifier as PropertyTypeIdentifier
-            propertyIdentifier.type.toQualifiedName().parameterizedName.should.equal("TradeId")
-
-            val valueExpression = constraint.expectedValue as RelativeValueExpression
-            valueExpression.path.path.should.equal("id")
+            val constraint = operation.contract!!.returnTypeConstraints.first() as ExpressionConstraint
+            constraint.operatorExpression.operator.shouldBe(FormulaOperator.Equal)
+            constraint.operatorExpression.lhs.asA<ArgumentSelector>().should {
+               it.path.shouldBe("tradeId")
+               it.returnType.qualifiedName.shouldBe("TradeId")
+            }
+            constraint.operatorExpression.rhs.asA<ArgumentSelector>().should {
+               it.path.shouldBe("id")
+               it.scope.should { scope ->
+                  scope.shouldBeInstanceOf<Parameter>()
+                  scope.name.shouldBe("id")
+                  scope.type.qualifiedName.shouldBe("TradeId")
+               }
+            }
          }
 
          // ths is commented, because I can't decide on a syntax that I like.
@@ -81,7 +97,7 @@ class OperationContextSpec : DescribeSpec({
          }
          """.validated()
             errors.should.have.size(1)
-            errors.first().detailMessage.should.equal("Operation getTrade does not declare a parameter with name foo")
+            errors.first().detailMessage.should.equal("foo is not defined")
          }
 
          it("compiles return type with property field equal to param") {
@@ -92,13 +108,20 @@ class OperationContextSpec : DescribeSpec({
          }
          """.compiled().service("TradeService").operation("getTrade")
             operation.contract!!.returnTypeConstraints.should.have.size(1)
-            val constraint = operation.contract!!.returnTypeConstraints.first() as PropertyToParameterConstraint
-            constraint.operator.should.equal(Operator.EQUAL)
-            val propertyIdentifier = constraint.propertyIdentifier as PropertyFieldNameIdentifier
-            propertyIdentifier.name.path.should.equal("tradeId")
-
-            val valueExpression = constraint.expectedValue as RelativeValueExpression
-            valueExpression.path.path.should.equal("tradeId")
+            val constraint = operation.contract!!.returnTypeConstraints.first() as ExpressionConstraint
+            constraint.operatorExpression.operator.shouldBe(FormulaOperator.Equal)
+            constraint.operatorExpression.lhs.asA<ArgumentSelector>().should {
+               it.scope.type.qualifiedName.shouldBe("Trade")
+               it.path.shouldBe("tradeId")
+               it.returnType.qualifiedName.shouldBe("TradeId")
+            }
+            constraint.operatorExpression.rhs.asA<ArgumentSelector>().should {
+               it.scope.should { scope ->
+                  scope.shouldBeInstanceOf<Parameter>()
+                  scope.name.shouldBe("tradeId")
+               }
+               it.returnType.qualifiedName.shouldBe("TradeId")
+            }
          }
 
          it("should fail if referenced property is not present on target type") {
@@ -109,7 +132,7 @@ class OperationContextSpec : DescribeSpec({
          }
          """.validated()
             errors.should.have.size(1)
-            errors.first().detailMessage.should.equal("Type Trade does not contain a property something")
+            errors.first().detailMessage.should.equal("Cannot resolve reference something against type Trade")
          }
 
 
@@ -121,39 +144,33 @@ class OperationContextSpec : DescribeSpec({
          }
          """.compiled().service("TradeService").operation("getTradesAfter")
             operation.contract!!.returnTypeConstraints.should.have.size(1)
-            val constraint = operation.contract!!.returnTypeConstraints.first() as PropertyToParameterConstraint
-            constraint.operator.should.equal(Operator.GREATER_THAN_OR_EQUAL_TO)
+            val constraint = operation.contract!!.returnTypeConstraints.first() as ExpressionConstraint
+            constraint.operatorExpression.operator.shouldBe(FormulaOperator.GreaterThanOrEqual)
          }
 
          it("compiles return type with multiple property params") {
-            val schema =  """
+            val schema = """
          $taxi
          service TradeService {
             operation getTradesAfter(startDate:Instant, endDate:Instant):Trade[](
-               TradeDate >= startDate,
-               TradeDate < endDate
+               TradeDate >= startDate && TradeDate < endDate
             )
          }
          """.compiled()
 
-               val operation = schema.service("TradeService").operation("getTradesAfter")
-            val constraints = operation.contract!!.returnTypeConstraints
-            constraints.should.contain(
-               PropertyToParameterConstraint(
-                  PropertyTypeIdentifier(schema.type(QualifiedName.from("TradeDate"))),
-                  Operator.GREATER_THAN_OR_EQUAL_TO,
-                  RelativeValueExpression(AttributePath.from("startDate")),
-                  emptyList()
-               )
-            )
-            constraints.should.contain(
-               PropertyToParameterConstraint(
-                  PropertyTypeIdentifier(schema.type(QualifiedName.from("TradeDate"))),
-                  Operator.LESS_THAN,
-                  RelativeValueExpression(AttributePath.from("endDate")),
-                  emptyList()
-               )
-            )
+            val operation = schema.service("TradeService").operation("getTradesAfter")
+            val expressionConstraint = operation.contract!!.returnTypeConstraints[0] as ExpressionConstraint
+            expressionConstraint.operatorExpression.operator.shouldBe(FormulaOperator.LogicalAnd)
+            expressionConstraint.operatorExpression.lhs.asA<OperatorExpression>().should { lhs ->
+               lhs.lhs.asA<TypeExpression>().type.qualifiedName.shouldBe("TradeDate")
+               lhs.operator.shouldBe(FormulaOperator.GreaterThanOrEqual)
+               lhs.rhs.asA<ArgumentSelector>().path.shouldBe("startDate")
+            }
+            expressionConstraint.operatorExpression.rhs.asA<OperatorExpression>().should { lhs ->
+               lhs.lhs.asA<TypeExpression>().type.qualifiedName.shouldBe("TradeDate")
+               lhs.operator.shouldBe(FormulaOperator.LessThan)
+               lhs.rhs.asA<ArgumentSelector>().path.shouldBe("endDate")
+            }
          }
 
          it("should compile constraints for base types") {
@@ -200,3 +217,9 @@ object TestCompilerOptions {
       typeCheckerEnabled = FeatureToggle.ENABLED
    )
 }
+
+// Syntax sugar to help testing
+val ExpressionConstraint.operatorExpression: OperatorExpression
+   get() {
+      return if (this.expression is OperatorExpression) this.expression as OperatorExpression else error("Expected an OperatorExpression, but was ${this::class.simpleName}")
+   }

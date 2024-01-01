@@ -40,8 +40,8 @@ class FunctionSpec : DescribeSpec({
          val function = """
             declare function concat(String,String):String
          """.compiled().function("concat")
-         function.parameters[0].name.should.be.`null`
-         function.parameters[1].name.should.be.`null`
+         function.parameters[0].name.should.equal("p0")
+         function.parameters[1].name.should.equal("p1")
          function.parameters[0].type.should.equal(PrimitiveType.STRING)
          function.parameters[1].type.should.equal(PrimitiveType.STRING)
       }

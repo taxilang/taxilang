@@ -3,14 +3,21 @@ package lang.taxi
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
+import lang.taxi.expressions.LiteralExpression
 import lang.taxi.services.ConsumedOperation
 import lang.taxi.services.OperationScope
+import lang.taxi.services.Parameter
 import lang.taxi.services.operations.constraints.ConstantValueExpression
+import lang.taxi.services.operations.constraints.ExpressionConstraint
+import lang.taxi.services.operations.constraints.InstanceArgument
 import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
 import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
-import lang.taxi.services.operations.constraints.RelativeValueExpression
 import lang.taxi.services.operations.constraints.ReturnValueDerivedFromParameterConstraint
+import lang.taxi.types.ArgumentSelector
+import lang.taxi.types.FormulaOperator
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.VoidType
@@ -45,7 +52,7 @@ service PersonService {
       expect(getPersonMethod.parameters).size.equal(2)
       expect(getPersonMethod.parameters.first().type).to.equal(doc.type("PersonId"))
       expect(getPersonMethod.parameters.first().annotations).size(1)
-      expect(getPersonMethod.parameters.first().name).to.be.`null`
+      expect(getPersonMethod.parameters.first().name).to.equal("p0")
       expect(getPersonMethod.typeDoc).to.be.equal("Your favorite persons")
       expect(getPersonMethod.returnType).to.equal(doc.type("Person"))
    }
@@ -82,11 +89,17 @@ service MyService {
       val doc = Compiler.forStrings(moneyType, source).compile()
       val param = doc.service("MyService").operation("calculateCreditRisk").parameters[0]
       expect(param.constraints).to.have.size(1)
-      val constraint = param.constraints[0] as PropertyToParameterConstraint
-      val propertyIdentifier = constraint.propertyIdentifier as PropertyFieldNameIdentifier
-      expect(propertyIdentifier.name.path).to.equal("currency")
-      val value = constraint.expectedValue as ConstantValueExpression
-      value.value.should.equal("GBP")
+      val constraint = param.constraints[0] as ExpressionConstraint
+      constraint.operatorExpression.lhs.asA<ArgumentSelector>().should {
+         it.scope.should { scope ->
+            scope.shouldBeInstanceOf<InstanceArgument>()
+            scope.type.qualifiedName.shouldBe("Money")
+         }
+         it.path.shouldBe("currency")
+         it.returnType.qualifiedName.shouldBe("Currency")
+      }
+      constraint.operatorExpression.operator.shouldBe(FormulaOperator.Equal)
+      constraint.operatorExpression.rhs.asA<LiteralExpression>().value.shouldBe("GBP")
    }
 
    @Test
@@ -167,15 +180,23 @@ service MyService {
       expect(operation.contract).to.not.be.`null`
       val contract = operation.contract!!
       expect(contract.returnTypeConstraints).to.have.size(2)
-      val constraint = contract.returnTypeConstraints[1]
-      expect(constraint).instanceof(PropertyToParameterConstraint::class.java)
-      val valueConstraint = constraint as PropertyToParameterConstraint
-      expect(valueConstraint.propertyIdentifier).to.equal(PropertyFieldNameIdentifier("currency"))
-      expect(valueConstraint.expectedValue).to.equal(RelativeValueExpression("target"))
-
       expect(contract.returnTypeConstraints[0]).instanceof(ReturnValueDerivedFromParameterConstraint::class.java)
       val originConstraint = contract.returnTypeConstraints[0] as ReturnValueDerivedFromParameterConstraint
       expect(originConstraint.attributePath.path).to.equal("source")
+
+      val constraint = contract.returnTypeConstraints[1] as ExpressionConstraint
+      constraint.operatorExpression.lhs.asA<ArgumentSelector>().should {
+         it.scope.shouldBeInstanceOf<InstanceArgument>()
+         it.returnType.qualifiedName.shouldBe("Currency")
+         it.path.shouldBe("currency")
+      }
+      constraint.operatorExpression.operator.shouldBe(FormulaOperator.Equal)
+      constraint.operatorExpression.rhs.asA<ArgumentSelector>().should {
+         it.scope.should {scope ->
+            scope.shouldBeInstanceOf<Parameter>()
+            scope.name.shouldBe("target")
+         }
+      }
    }
 
    @Test
@@ -204,10 +225,11 @@ service MyService {
       expect(returnValueDerivedFromParameterConstraint.path).to.equal("request.source")
       expect(returnValueDerivedFromParameterConstraint.attributePath.parts).to.contain.elements("request", "source")
 
-      expect(contract.returnTypeConstraints[1]).to.be.instanceof(PropertyToParameterConstraint::class.java)
-      val constraint = contract.returnTypeConstraints[1] as PropertyToParameterConstraint
-      constraint.propertyIdentifier.should.equal(PropertyFieldNameIdentifier("currency"))
-      constraint.expectedValue.should.equal(RelativeValueExpression("request.target"))
+      val expressionConstraint = contract.returnTypeConstraints[1] as ExpressionConstraint
+      expressionConstraint.operatorExpression.rhs.asA<ArgumentSelector>().should {
+         it.path.shouldBe("request.target")
+         it.returnType.qualifiedName.shouldBe("Currency")
+      }
    }
 
    @Test

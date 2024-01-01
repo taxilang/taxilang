@@ -476,7 +476,6 @@ class FieldCompiler(
             }
             tokenProcessor.mapConstraints(
                fieldDeclaration?.parameterConstraint()?.expressionGroup(),
-               fieldType.type,
                this,
                this.resolutionContext.activeScopes
             ).map { constraints ->

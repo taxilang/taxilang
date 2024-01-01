@@ -105,7 +105,7 @@ internal class QueryCompiler(
    ): Either<List<CompilationError>, List<DiscoveryType>> {
       val namespace = queryBodyContext.findNamespace()
       val constraintBuilder =
-         ConstraintBuilder(tokenProcessor.typeResolver(namespace), expressionCompiler.withParameters(parameters))
+         ConstraintBuilder(expressionCompiler.withParameters(parameters))
 
       /**
        * A query body can either be a concrete type:

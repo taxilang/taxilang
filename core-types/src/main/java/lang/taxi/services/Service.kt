@@ -1,6 +1,7 @@
 package lang.taxi.services
 
 import lang.taxi.ImmutableEquality
+import lang.taxi.accessors.Argument
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.types.*
@@ -9,12 +10,12 @@ import lang.taxi.types.Annotation
 data class Parameter(
    override val annotations: List<Annotation>,
    override val type: Type,
-   override val name: String?,
+   override val name: String,
    override val constraints: List<Constraint>,
    val isVarArg: Boolean = false,
    override val typeDoc: String? = null,
    val nullable: Boolean = false
-) : Annotatable, ConstraintTarget, NameTypePair, TaxiStatementGenerator, Documented {
+) : Annotatable, ConstraintTarget, NameTypePair, TaxiStatementGenerator, Documented, Argument {
    override val description: String = "param $name type ${type.qualifiedName}"
    override fun asTaxi(): String {
       val annotationTaxi = annotations.joinToString(" ") { it.asTaxi() }

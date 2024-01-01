@@ -9,13 +9,9 @@ import lang.taxi.toAttributePath
 import lang.taxi.toCompilationUnits
 import lang.taxi.types.Type
 
-class ReturnValueDerivedFromInputConstraintProvider : ConstraintProvider {
-   override fun applies(constraint: TaxiParser.ParameterConstraintExpressionContext): Boolean {
-      return constraint.operationReturnValueOriginExpression() != null
-   }
-
-   override fun build(constraint: TaxiParser.ParameterConstraintExpressionContext, type: Type, typeResolver: NamespaceQualifiedTypeResolver): Either<List<CompilationError>, Constraint> {
-      return ReturnValueDerivedFromParameterConstraint(constraint.operationReturnValueOriginExpression().qualifiedName().toAttributePath(), constraint.toCompilationUnits()).right()
+object ReturnValueDerivedFromInputConstraintProvider  {
+   fun build(constraint: TaxiParser.OperationReturnValueOriginExpressionContext): Either<List<CompilationError>, Constraint> {
+      return ReturnValueDerivedFromParameterConstraint(constraint.qualifiedName().toAttributePath(), constraint.toCompilationUnits()).right()
    }
 
 }
