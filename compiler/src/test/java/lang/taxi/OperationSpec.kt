@@ -4,7 +4,11 @@ import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
+import lang.taxi.expressions.FunctionExpression
+import lang.taxi.expressions.LiteralExpression
 import lang.taxi.services.FilterCapability
 import lang.taxi.services.SimpleQueryCapability
 
@@ -262,6 +266,43 @@ count
             .service("PersonService")
          service.containsOperation("findAll").shouldBeTrue()
          service.containsOperation("find").shouldBeTrue()
+      }
+
+      it("is possible to define default literal values for params") {
+         val parameter = """
+            model Person {}
+            service PersonService {
+               operation findPeople(alive : Boolean = true ): Person[]
+            }
+         """.compiled()
+            .service("PersonService")
+            .operation("findPeople")
+            .parameters[0]
+         val expression = parameter.defaultValue.shouldNotBeNull() as LiteralExpression
+         expression.literal.value.shouldBe(true)
+      }
+
+      it("is possible to define default expression values for params") {
+         val parameter = """
+            model Person {}
+            service PersonService {
+               operation findPeople(startsWith : String = upperCase("jim") ): Person[]
+            }
+         """.compiled()
+            .service("PersonService")
+            .operation("findPeople")
+            .parameters[0]
+         parameter.defaultValue.shouldNotBeNull()
+         parameter.defaultValue.shouldBeInstanceOf<FunctionExpression>()
+      }
+      it("is an error to assign an incompatible value as the default value for a param") {
+         val errors = """
+            model Person {}
+            service PersonService {
+               operation findPeople(alive : Boolean = "probably" ): Person[]
+            }
+         """.validated()
+         errors.shouldContainMessage("Type mismatch. Type of lang.taxi.String is not assignable to type lang.taxi.Boolean")
       }
    }
 

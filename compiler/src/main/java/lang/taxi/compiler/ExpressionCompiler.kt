@@ -88,6 +88,18 @@ class ExpressionCompiler(
          expressionGroup.children.size == 3 -> parseOperatorExpression(expressionGroup)          // lhs operator rhs
          expressionGroup.expressionGroup().isEmpty() -> compileSingleExpression(expressionGroup, targetType)
          else -> error("Unhandled expression group scenario: ${expressionGroup.text}")
+      }.flatMap { expression ->
+         when (targetType) {
+            null -> expression.right() // we weren't given a type, so can't do type checking
+            else -> {
+               val error = typeChecker.assertIsAssignable(expression.returnType, targetType, expressionGroup)
+               if (error != null) {
+                  listOf(error).left()
+               } else {
+                  expression.right()
+               }
+            }
+         }
       }
    }
 

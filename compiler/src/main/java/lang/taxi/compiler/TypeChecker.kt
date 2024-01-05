@@ -25,7 +25,7 @@ fun TypeChecker.assertIsAssignable(valueType: Type, receiverType: Type, token: P
 //         receiverType.basePrimitive == valueType.basePrimitive -> null
       else -> {
          val errorMessage =
-            "Type mismatch. Type of ${valueType.qualifiedName} is not assignable to type ${receiverType.qualifiedName}"
+            "Type mismatch. Type of ${valueType.toQualifiedName().parameterizedName} is not assignable to type ${receiverType.toQualifiedName().parameterizedName}"
          when (enabled) {
             FeatureToggle.DISABLED -> null
             FeatureToggle.ENABLED -> CompilationError(token.start, errorMessage)
