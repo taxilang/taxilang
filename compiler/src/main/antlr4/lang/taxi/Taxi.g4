@@ -423,8 +423,10 @@ operationParameterList
 operationParameter
 // Note that only one operationParameterConstraint can exist per parameter, but it can contain
 // multiple expressions
-     :   typeDoc? annotation* (parameterName)? ((nullableTypeReference ( '(' expressionGroup ')')?  varargMarker?) | lambdaSignature)
+     :   typeDoc? annotation* (parameterName)? ((nullableTypeReference ( '(' expressionGroup ')')?  varargMarker? parameterDefaultValue?) | lambdaSignature)
      ;
+
+parameterDefaultValue: '=' expressionGroup;
 
 varargMarker: '...';
 // Parameter names are optional.
@@ -679,6 +681,8 @@ factList : fact (',' fact)*;
 // What was the use-case for this?
 // Improving strictness around given blocks that refer to variables from queries,
 // by clarifying the syntax. (factDeclaration vs variableName)
+// TODO: (5-Jan-24): There are several ideas with high overlap that need clarifying: fact, argument, operationParameter.
+// I suspect facts are invalid.
 factDeclaration : (variableName ':')? typeReference '=' value;
 fact: factDeclaration | variableName;
 

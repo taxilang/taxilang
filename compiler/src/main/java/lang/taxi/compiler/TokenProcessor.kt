@@ -2253,22 +2253,32 @@ class TokenProcessor(
             operationParameterContext.expressionGroup(),
             null,
             listOf(InstanceArgument(paramType)) // expose the param as "this" in expressions
-         ).map { constraints ->
-            val isNullable = operationParameterContext.nullableTypeReference()?.Nullable() != null
-            val typeDoc = parseTypeDoc(operationParameterContext.typeDoc())
-            val isVarargs = operationParameterContext.varargMarker() != null
-            lang.taxi.services.Parameter(
-               annotations = collateAnnotations(operationParameterContext.annotation()),
-               type = paramType,
-               name = operationParameterContext.parameterName()?.identifier()?.text ?: "p${paramIndex}",
-               constraints = constraints,
-               isVarArg = isVarargs,
-               typeDoc = typeDoc,
-               nullable = isNullable
-            )
+         ).flatMap { constraints ->
+            compileNullableExpression(
+               expressionGroup = operationParameterContext.parameterDefaultValue()?.expressionGroup(),
+               fieldCompiler = null,
+               activeScopes = listOf(InstanceArgument(paramType)), // expose the param as "this" in expressions
+               targetType = paramType
+            ).map { defaultValue ->
+               val isNullable = operationParameterContext.nullableTypeReference()?.Nullable() != null
+               val typeDoc = parseTypeDoc(operationParameterContext.typeDoc())
+               val isVarargs = operationParameterContext.varargMarker() != null
+               lang.taxi.services.Parameter(
+                  annotations = collateAnnotations(operationParameterContext.annotation()),
+                  type = paramType,
+                  name = operationParameterContext.parameterName()?.identifier()?.text ?: "p${paramIndex}",
+                  constraints = constraints,
+                  isVarArg = isVarargs,
+                  typeDoc = typeDoc,
+                  nullable = isNullable,
+                  defaultValue = defaultValue
+               )
+            }
+
          }
       }
    }
+
 
    private fun parseLambdaTypeParameter(
       lambdaSignature: LambdaSignatureContext,
@@ -2329,14 +2339,38 @@ class TokenProcessor(
       }
    }
 
+   private fun compileNullableExpression(
+      expressionGroup: ExpressionGroupContext?,
+      fieldCompiler: FieldCompiler?,
+      activeScopes: List<Argument> = emptyList(),
+      targetType: Type? = null
+   ): Either<List<CompilationError>, Expression?> {
+      return if (expressionGroup == null) {
+         null.right()
+      } else {
+         compileExpression(expressionGroup, fieldCompiler, activeScopes, targetType)
+      }
+   }
+
+
+   private fun compileExpression(
+      expressionGroup: ExpressionGroupContext,
+      fieldCompiler: FieldCompiler?,
+      activeScopes: List<Argument> = emptyList(),
+      targetType: Type? = null
+   ): Either<List<CompilationError>, Expression> {
+      val expressionCompiler = expressionCompiler(fieldCompiler, activeScopes)
+      return expressionCompiler.compile(expressionGroup, targetType)
+   }
+
    internal fun mapConstraints(
-      constraintList: ExpressionGroupContext?,
+      expressionGroup: ExpressionGroupContext?,
       fieldCompiler: FieldCompiler?,
       activeScopes: List<Argument> = emptyList()
    ): Either<List<CompilationError>, List<Constraint>> {
       val expressionCompiler = expressionCompiler(fieldCompiler, activeScopes)
       return ExpressionConstraintBuilder.build(
-         constraintList, expressionCompiler
+         expressionGroup, expressionCompiler
       )
    }
 

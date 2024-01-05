@@ -2,6 +2,7 @@ package lang.taxi.services
 
 import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Argument
+import lang.taxi.expressions.Expression
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
 import lang.taxi.types.*
@@ -14,7 +15,8 @@ data class Parameter(
    override val constraints: List<Constraint>,
    val isVarArg: Boolean = false,
    override val typeDoc: String? = null,
-   val nullable: Boolean = false
+   val nullable: Boolean = false,
+   val defaultValue: Expression? = null
 ) : Annotatable, ConstraintTarget, NameTypePair, TaxiStatementGenerator, Documented, Argument {
    override val description: String = "param $name type ${type.qualifiedName}"
    override fun asTaxi(): String {
