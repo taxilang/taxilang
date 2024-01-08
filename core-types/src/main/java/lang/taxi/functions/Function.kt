@@ -23,13 +23,32 @@ class FunctionDefinition(
    private val equality = ImmutableEquality(this, FunctionDefinition::parameters, FunctionDefinition::returnType)
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
-   fun resolveTypeParametersFromInputs(inputs: List<Accessor>): FunctionDefinition {
+   fun resolveTypeParameters(inputs: List<Accessor>, assignmentType: Type): FunctionDefinition {
       if (this.typeArguments.isEmpty()) {
          return this
       }
-      val resolvedTypeArguments = TypeArgumentResolver.resolve(typeArguments, parameters.map { it.type }, inputs)
-      val resolvedParameters = TypeArgumentResolver.replaceTypeArguments(parameters, resolvedTypeArguments)
-      val resolvedReturnType = TypeArgumentResolver.replaceType(returnType, resolvedTypeArguments)
+
+      // Check: Is the return type of the function a type argument?
+      // eg: declare function <T> foo():T
+      // Also, is the assignment type declared? (ie., not ANY)
+      // If so, we can use the assignment type to resolve the
+      // return type, which is stricter (and more explicit) than allowing the
+      // input params to infer the return type
+      val resolveReturnTypeFromAssignment = typeArguments.contains(returnType)
+         && parameters.none { it.type is TypeReference && it.type.type == returnType }
+         && assignmentType != PrimitiveType.ANY
+      val (resolvedReturnTypeArgument, typeArgumentsToResolveFromInputs) = if (resolveReturnTypeFromAssignment) {
+         mapOf(returnType as TypeArgument to assignmentType) to typeArguments.filter { it != returnType }
+      } else (emptyMap<TypeArgument, Type>() to typeArguments)
+
+
+      val resolvedParameterTypeArguments =
+         TypeArgumentResolver.resolve(typeArgumentsToResolveFromInputs, parameters.map { it.type }, inputs)
+      val allResolvedTypeArguments = resolvedReturnTypeArgument + resolvedParameterTypeArguments
+
+      val resolvedParameters = TypeArgumentResolver.replaceTypeArguments(parameters, allResolvedTypeArguments)
+
+      val resolvedReturnType = TypeArgumentResolver.replaceType(returnType, allResolvedTypeArguments)
       return FunctionDefinition(
          resolvedParameters,
          resolvedReturnType,
@@ -48,18 +67,20 @@ data class Function(
          parameterIndex < this.parameters.size -> {
             this.parameters[parameterIndex].type
          }
+
          this.parameters.last().isVarArg -> {
             return this.parameters.last().type
          }
+
          else -> {
             error("Parameter index $parameterIndex is out of bounds - function $qualifiedName only takes ${this.parameters.size} parameters")
          }
       }
    }
 
-   fun resolveTypeParametersFromInputs(inputs: List<Accessor>): FunctionDefinition {
+   fun resolveTypeParametersFromInputs(inputs: List<Accessor>, targetType: Type): FunctionDefinition {
       require(definition != null) { "Function $qualifiedName must be defined before resolveGenericsFromInputs can be called" }
-      return definition!!.resolveTypeParametersFromInputs(inputs)
+      return definition!!.resolveTypeParameters(inputs, targetType)
    }
 
    override val compilationUnits: List<CompilationUnit> = listOfNotNull(definition?.compilationUnit)

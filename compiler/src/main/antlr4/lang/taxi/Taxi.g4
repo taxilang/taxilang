@@ -686,8 +686,7 @@ factList : fact (',' fact)*;
 factDeclaration : (variableName ':')? typeReference '=' value;
 fact: factDeclaration | variableName;
 
-// TODO : We really should support expressions here.
-value : objectValue | valueArray | literal;
+value : objectValue | valueArray | literal | expressionGroup;
 
 objectValue: '{' objectField (',' objectField)* '}';
 objectField : identifier ':' value;

@@ -19,8 +19,8 @@ data class FunctionAccessor private constructor(
        * Constructs a FunctionAccessor where any typeArguments present in the function contract
        * are resolved using the provided inputs
        */
-      fun buildAndResolveTypeArguments(function: Function, inputs: List<Accessor>): FunctionAccessor {
-         val typeArgResolvedDefinition: FunctionDefinition = function.resolveTypeParametersFromInputs(inputs)
+      fun buildAndResolveTypeArguments(function: Function, inputs: List<Accessor>, targetType: Type): FunctionAccessor {
+         val typeArgResolvedDefinition: FunctionDefinition = function.resolveTypeParametersFromInputs(inputs, targetType)
          val typeArgResolvedFunction = function.copy(definition = typeArgResolvedDefinition)
          return FunctionAccessor(typeArgResolvedFunction, inputs, function)
       }

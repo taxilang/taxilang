@@ -139,7 +139,7 @@ class ExpressionCompiler(
       assignmentType: Type?
    ): Either<List<CompilationError>, Expression> {
       return when {
-         expression.expressionAtom() != null -> compileExpressionAtom(expression.expressionAtom())
+         expression.expressionAtom() != null -> compileExpressionAtom(expression.expressionAtom(), assignmentType)
          expression.whenBlock() != null -> {
             require(fieldCompiler != null) { "Cannot compile a When Block as the expression compiler was initialized without a field compiler" }
             require(assignmentType != null) { "Cannot compile a When Block as no assignment type has been provided" }
@@ -151,10 +151,10 @@ class ExpressionCompiler(
       }
    }
 
-   private fun compileExpressionAtom(expressionAtom: TaxiParser.ExpressionAtomContext): Either<List<CompilationError>, Expression> {
+   private fun compileExpressionAtom(expressionAtom: TaxiParser.ExpressionAtomContext, assignmentType: Type?): Either<List<CompilationError>, Expression> {
       return when {
          expressionAtom.typeReference() != null -> parseTypeExpression(expressionAtom.typeReference())
-         expressionAtom.functionCall() != null -> parseFunctionExpression(expressionAtom.functionCall())
+         expressionAtom.functionCall() != null -> parseFunctionExpression(expressionAtom.functionCall(), assignmentType)
          expressionAtom.literal() != null -> parseLiteralExpression(expressionAtom.literal())
          expressionAtom.fieldReferenceSelector() != null -> parseAttributeSelector(expressionAtom.fieldReferenceSelector())
          expressionAtom.modelAttributeTypeReference() != null -> parseModelAttributeTypeReference(expressionAtom.modelAttributeTypeReference())
@@ -320,10 +320,28 @@ class ExpressionCompiler(
    }
 
 
-   private fun parseFunctionExpression(readFunction: TaxiParser.FunctionCallContext): Either<List<CompilationError>, FunctionExpression> {
-// Note: Using ANY as the target type for the function's return type, which effectively disables type checking here.
-      // We can improve this later.
-      return tokenProcessor.getType(readFunction.findNamespace(), PrimitiveType.ANY.qualifiedName, readFunction)
+   private fun parseFunctionExpression(
+      readFunction: TaxiParser.FunctionCallContext,
+      assignmentType: Type?
+   ): Either<List<CompilationError>, FunctionExpression> {
+
+      // It's not always required to declare a type for a variable.
+      // eg :
+      // model Foo {
+      //   d : someFunction() // d is the return type of someFunction
+      // }
+      // However, sometimes, the return type of a function is defined by the call site.
+      // eg:
+      // declare function <T> anotherFunction():T
+      // model Foo {
+      //    d : String = anotherFunction() // anotherFunction should return String
+      // }
+      val declaredFunctionReturnType = assignmentType?.right() ?: tokenProcessor.getType(
+         readFunction.findNamespace(),
+         PrimitiveType.ANY.qualifiedName,
+         readFunction
+      )
+      return declaredFunctionReturnType
          .flatMap { targetType ->
             functionCompiler.buildFunctionAccessor(readFunction, targetType)
          }.map { functionAccessor ->

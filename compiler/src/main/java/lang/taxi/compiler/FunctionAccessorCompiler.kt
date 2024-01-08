@@ -109,7 +109,7 @@ class FunctionAccessorCompiler(
                   // There used to be view related stuff here - I suspect now thats
                   //deleted, this can be simplified
                   try {
-                     FunctionAccessor.buildAndResolveTypeArguments(function, parameters).right()
+                     FunctionAccessor.buildAndResolveTypeArguments(function, parameters, targetType).right()
                   } catch (e: Exception) {
                      listOf(CompilationError(functionContext.toCompilationUnit(), e.message!!)).left()
                   }

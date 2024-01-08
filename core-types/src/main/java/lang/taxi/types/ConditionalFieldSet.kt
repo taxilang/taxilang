@@ -93,8 +93,12 @@ data class FieldReferenceSelector(val fieldName: String, override val returnType
    override fun asTaxi(): String = "this.$fieldName"
 }
 
-data class ArgumentSelector(val scope:Argument, val selectors: List<FieldReferenceSelector>, override val compilationUnits:List<CompilationUnit>): Accessor, WhenSelectorExpression, Expression() {
-   override val declaredType: Type = selectors.last().declaredType
+data class ArgumentSelector(
+   val scope: Argument,
+   val selectors: List<FieldReferenceSelector>,
+   override val compilationUnits: List<CompilationUnit>
+): Accessor, WhenSelectorExpression, Expression() {
+   override val declaredType: Type = selectors.lastOrNull()?.declaredType ?: scope.type
    override val returnType: Type = declaredType
    val path = selectors.joinToString(".") { it.fieldName }
    override fun asTaxi(): String = "${scope.name}.$path"

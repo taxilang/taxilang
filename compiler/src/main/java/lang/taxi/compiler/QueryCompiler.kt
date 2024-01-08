@@ -5,6 +5,7 @@ import lang.taxi.*
 import lang.taxi.TaxiParser.ValueContext
 import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.fields.FieldTypeSpec
+import lang.taxi.expressions.FunctionExpression
 import lang.taxi.mutations.Mutation
 import lang.taxi.query.*
 import lang.taxi.services.OperationScope
@@ -150,7 +151,8 @@ internal class QueryCompiler(
       }
       return tokenProcessor.parseAnonymousType(
          namespace,
-         anonymousTypeDefinition
+         anonymousTypeDefinition,
+         resolutionContext = ResolutionContext(parameters = parameters)
       ).flatMap { anonymousType ->
          toDiscoveryType(
             anonymousType,
@@ -189,9 +191,14 @@ internal class QueryCompiler(
       givenBlock: TaxiParser.GivenBlockContext,
       parameters: List<Parameter>
    ): Either<List<CompilationError>, List<Parameter>> {
-      return givenBlock.factList().fact().mapIndexed { idx, factCtx ->
-         parseFact(idx, factCtx, parameters)
-      }.invertEitherList().flattenErrors()
+      val original: Either<List<CompilationError>, List<Parameter>> = parameters.right()
+      return givenBlock.factList().fact().foldIndexed(original) { idx, paramsOrErrors, factCtx ->
+         paramsOrErrors.flatMap { params ->
+            parseFact(idx, factCtx, params).map {
+               params + it
+            }
+         }
+      }
 
    }
 
@@ -212,7 +219,8 @@ internal class QueryCompiler(
          factCtx.variableName() == null && factCtx.factDeclaration() != null -> parseFactValueDeclaration(
             factCtx,
             namespace,
-            variableName
+            variableName,
+            parameters
          )
 
          else -> error("Expected either a variable name reference, or a fact declaration with a value, but got both (or neither): ${factCtx.parent.text}")
@@ -222,23 +230,32 @@ internal class QueryCompiler(
    private fun parseFactValueDeclaration(
       factCtx: TaxiParser.FactContext,
       namespace: String,
-      variableName: String
+      variableName: String,
+      parameters: List<Parameter>
    ): Either<List<CompilationError>, Parameter> {
       require(factCtx.factDeclaration() != null) { "Expected the declared fact to have a value" }
       val factDeclaration = factCtx.factDeclaration()
       return tokenProcessor.typeOrError(namespace, factDeclaration.typeReference()).flatMap { factType ->
          try {
-            readValue(factDeclaration.value(), factType, false)
+            readValue(factDeclaration.value(), factType, false, parameters)
                .map { factValue ->
-                  if (factValue != null) {
-                     Parameter(
+                  when {
+                     factValue is FunctionExpression -> Parameter(
+                        name = variableName,
+                        value = FactValue.Expression(factType,factValue),
+                        annotations = emptyList()
+                     )
+
+                     factValue != null -> Parameter(
                         name = variableName,
                         value = FactValue.Constant(TypedValue(factType, factValue)),
                         annotations = emptyList()
                      )
-                  } else {
-                     error("It is illegal in the grammar to not decalre a factValue. You shouldn't hit this part")
 
+                     else -> {
+                        error("It is illegal in the grammar to not decalre a factValue. You shouldn't hit this part")
+
+                     }
                   }
                }
          } catch (e: Exception) {
@@ -268,7 +285,8 @@ internal class QueryCompiler(
    private fun readValue(
       valueContext: ValueContext?,
       factType: Type,
-      nullable: Boolean
+      nullable: Boolean,
+      parameters: List<Parameter> = emptyList()
    ): Either<List<CompilationError>, Any?> {
       if (valueContext == null) {
          return (null as Any?).right()
@@ -278,11 +296,22 @@ internal class QueryCompiler(
          valueContext.literal() != null -> valueContext.literal().nullableValue().right()
          valueContext.objectValue() != null -> readObjectValue(valueContext.objectValue(), factType)
          valueContext.valueArray() != null -> readArray(valueContext.valueArray(), factType)
+         valueContext.expressionGroup() != null -> readExpression(valueContext.expressionGroup(), factType, parameters)
          else -> null
       }?.flatMap { value -> verifyIsAssignable(factType, value, valueContext, nullable) }
          ?: (null as Any?).right()
 
       return result
+   }
+
+   private fun readExpression(
+      expressionGroup: TaxiParser.ExpressionGroupContext,
+      factType: Type,
+      parameters: List<Parameter>
+   ): Either<List<CompilationError>, Any?> {
+      return expressionCompiler
+         .withParameters(parameters)
+         .compile(expressionGroup, factType)
    }
 
    private fun verifyIsAssignable(
@@ -338,6 +367,11 @@ internal class QueryCompiler(
             } else {
                value.right()
             }
+         }
+
+         is FunctionExpression -> {
+            tokenProcessor.typeChecker.ifAssignable(value.returnType, factType, valueContext) { value }
+               .wrapErrorsInList()
          }
 
          else -> {
@@ -495,11 +529,14 @@ data class ResolutionContext(
    val typesToDiscover: List<DiscoveryType> = emptyList(),
    val concreteProjectionTypeContext: TaxiParser.TypeReferenceContext? = null,
    val baseType: Type? = null,
-   val activeScopes: List<ProjectionFunctionScope> = emptyList()
+   val activeScopes: List<ProjectionFunctionScope> = emptyList(),
+   val parameters: List<Parameter> = emptyList()
 ) {
    fun appendScope(projectionScope: ProjectionFunctionScope): ResolutionContext {
       return this.copy(activeScopes = activeScopes + projectionScope)
    }
+
+   val argumentsInScope = activeScopes + parameters
 
 }
 

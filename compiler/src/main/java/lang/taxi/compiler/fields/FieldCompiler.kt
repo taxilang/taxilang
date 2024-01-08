@@ -169,7 +169,7 @@ class FieldCompiler(
       val expressionGroup: TaxiParser.ExpressionGroupContext? = member.fieldDeclaration().expressionGroup()
       val expressionCompiler = tokenProcessor.expressionCompiler(
          fieldCompiler = this,
-         scopedArguments = this.resolutionContext.activeScopes
+         scopedArguments = this.resolutionContext.argumentsInScope
       )
       // TODO :
       // We need to refactor how we're getting type for a field
@@ -749,7 +749,7 @@ class FieldCompiler(
       readExpressionContext: TaxiParser.ExpressionGroupContext,
       targetType: Type
    ): Either<List<CompilationError>, out Accessor> {
-      val expression = ExpressionCompiler(this.tokenProcessor, this.typeChecker, this.errors, this)
+      val expression = ExpressionCompiler(this.tokenProcessor, this.typeChecker, this.errors, this, this.resolutionContext.argumentsInScope)
          .compile(readExpressionContext, targetType)
       return expression
    }

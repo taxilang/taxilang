@@ -1333,7 +1333,7 @@ class TokenProcessor(
                         // (Otherwise we'd have ended up in a different part of the parse tree).
                         // So, it's a no-arg function
                         if (token.parameters.isNotEmpty()) {
-                           // So... this should neve happen.
+                           // Therefore, this should only ever happen if there are other compilation errors
                            listOf(
                               CompilationError(
                                  typeType.toCompilationUnit(),
@@ -1342,7 +1342,7 @@ class TokenProcessor(
                            )
                               .left()
                         } else {
-                           val accessor = FunctionAccessor.buildAndResolveTypeArguments(token, emptyList())
+                           val accessor = FunctionAccessor.buildAndResolveTypeArguments(token, emptyList(), targetType = token.returnType!!)
                            FieldTypeSpec.forFunction(accessor).right()
                         }
                      }
