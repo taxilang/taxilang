@@ -35,6 +35,7 @@ model Film {
             .model("Film")
             .field("hit")
          field.accessor.shouldNotBeNull()
+         field.type.qualifiedName.shouldBe("HitFilm")
          val functionAccessor = field.accessor.shouldBeInstanceOf<FunctionExpression>()
          functionAccessor.returnType.qualifiedName.shouldBe("HitFilm")
          functionAccessor.inputs[0].shouldBeInstanceOf<FieldReferenceExpression>()
@@ -43,6 +44,19 @@ model Film {
          // If this becomes a problem later on, it's possible this test was wrong.
          val typeExpression = functionAccessor.inputs[1].shouldBeInstanceOf<TypeExpression>()
          typeExpression.type.qualifiedName.shouldBe("HitFilm")
+      }
+
+      it("should not compile a model using a function that has a type reference where return type is not compatibile") {
+         val messages = """
+${Convert.taxi}
+
+model HitFilm inherits Film
+model Film {
+   title : FilmTitle inherits String
+   hit : String = convert(this.title, HitFilm)
+}
+         """.validated()
+         messages.shouldContainMessage("Type mismatch. Type of HitFilm is not assignable to type lang.taxi.String")
       }
    }
 })

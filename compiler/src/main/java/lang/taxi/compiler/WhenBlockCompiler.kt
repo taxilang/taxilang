@@ -80,7 +80,7 @@ class WhenBlockCompiler internal constructor(
                // by xpath(), column(), jsonPath() etc...
                whenCase.expressionGroup() != null -> expressionCompiler.compile(
                   whenCase.expressionGroup(),
-                  whenClauseSelectorType
+                  assignmentTargetType
                )
                   .map { expression ->
                      if (expression is LiteralExpression && expression.literal.value is NullValue) {

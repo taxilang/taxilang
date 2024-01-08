@@ -28,6 +28,15 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
                url : String
             }
 
+            annotation HttpHeader {
+               name : String
+               [[ Pass a value when using as an annotation on an operation.
+               For parameters, it's valid to allow the value to be populated from the parameter. ]]
+               value : String?
+               prefix : String?
+               suffix : String?
+            }
+
             annotation RequestBody {}
             annotation PathVariable { value : String }
          }
@@ -51,8 +60,26 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
    override fun toAnnotation(): Annotation {
       return Annotation(NAME, mapOf("baseUrl" to baseUrl))
    }
+}
 
+data class HttpHeader(val name: String, val value: String?, val prefix: String? = null, val suffix: String? = null) {
+   companion object {
+      const val NAME = "taxi.http.HttpHeader"
+      fun fromMap(map: Map<String, Any?>): HttpHeader {
+         return HttpHeader(
+            name = map["name"]?.toString() ?: error("Name is required"),
+            value = map["value"]?.toString(),
+            prefix = map["prefix"]?.toString(),
+            suffix = map["suffix"]?.toString(),
 
+            )
+      }
+   }
+
+   fun asValue(value: String = ""):String {
+      val valueToUse = this.value ?: value
+      return "${prefix.orEmpty()}$valueToUse${suffix.orEmpty()}"
+   }
 }
 
 data class HttpOperation(val method: String, val url: String) : AnnotationProvider {
