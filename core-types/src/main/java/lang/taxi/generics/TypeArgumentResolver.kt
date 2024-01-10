@@ -17,21 +17,22 @@ object TypeArgumentResolver {
       providedInputTypes: List<Accessor>
    ): Map<TypeArgument, Type> {
       val resolvedTypes = typeArguments.map { typeArgument ->
-         val resolvedType = resolveTypeArgumentFromInputAccessors(typeArgument, declaredInputs, providedInputTypes) ?:
-         resolveTypeArgumentFromExpressionReturnTypes(typeArgument, declaredInputs, providedInputTypes) ?:
-         // It could be that we need more sophisticated resolution logic here - ie., interference from return types
-         // etc.
-         error("Unable to resolve typeArgument ${typeArgument.declaredName}")
+         val resolvedType = resolveTypeArgumentFromInputAccessors(typeArgument, declaredInputs, providedInputTypes)
+            ?: resolveTypeArgumentFromLambdaExpressionReturnTypes(typeArgument, declaredInputs, providedInputTypes)
+            // It could be that we need more sophisticated resolution logic here - ie., interference from return types
+            // etc.
+            ?: error("Unable to resolve typeArgument ${typeArgument.declaredName}")
          typeArgument to resolvedType
       }
       return resolvedTypes.toMap()
    }
 
    /**
-    * Checks to see if the type argument exists as the return type from an expression,
+    * Checks to see if the type argument exists as the return type from an input
+    * which is an expression (ie., a Lambda as an input),
     * and if so- looks at the expression to resolve the type
     */
-   private fun resolveTypeArgumentFromExpressionReturnTypes(
+   private fun resolveTypeArgumentFromLambdaExpressionReturnTypes(
       typeArgument: TypeArgument,
       declaredInputs: List<Type>,
       providedInputTypes: List<Accessor>
@@ -40,12 +41,12 @@ object TypeArgumentResolver {
          .asSequence()
          .mapIndexed { index, input ->
             if (input is LambdaExpressionType && input.returnType.qualifiedName == typeArgument.qualifiedName) {
-               val inputTypeAtPosition = providedInputTypes[index]
-               inputTypeAtPosition.returnType
+                   val inputTypeAtPosition = providedInputTypes[index]
+                   inputTypeAtPosition.returnType
             } else {
-               null
+                   null
+                }
             }
-         }
          .filterNotNull()
          .firstOrNull()
    }
@@ -142,7 +143,7 @@ object TypeArgumentResolver {
 
    fun replaceTypeArguments(parameters: List<Parameter>, resolvedArguments: Map<TypeArgument, Type>): List<Parameter> {
       return parameters.map { parameter ->
-         val type = replaceType(parameter.type,resolvedArguments)
+         val type = replaceType(parameter.type, resolvedArguments)
          if (type != parameter.type) {
             parameter.copy(type = type)
          } else {
@@ -150,16 +151,16 @@ object TypeArgumentResolver {
          }
       }
    }
-   fun replaceType(type: Type, resolvedArguments: Map<TypeArgument, Type>):Type {
+   fun replaceType(type: Type, resolvedArguments: Map<TypeArgument, Type>): Type {
       return when {
          type is TypeArgument -> resolvedArguments[type] ?: error("No resolution possible for type ${type.declaredName}")
          type is GenericType -> {
-            val replacedTypeParameters = type.typeParameters().map { replaceType(it,resolvedArguments) }
+            val replacedTypeParameters = type.typeParameters().map { replaceType(it, resolvedArguments) }
             type.withParameters(replacedTypeParameters).getOrHandle { throw RuntimeException(it.message) }
          }
          type is LambdaExpressionType -> {
             val replacedReturnType = replaceType(type.returnType, resolvedArguments)
-            val replacedParameterTypes = type.parameterTypes.map { replaceType(it,resolvedArguments) }
+            val replacedParameterTypes = type.parameterTypes.map { replaceType(it, resolvedArguments) }
             val replaced = type.copy(parameterTypes = replacedParameterTypes, returnType = replacedReturnType)
             replaced
          }

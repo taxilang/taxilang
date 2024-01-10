@@ -15,6 +15,7 @@ object StdLib {
          Collections.functions +
          ObjectFunctions.functions +
          Transformations.functions +
+         Dates.functions +
          listOf(Coalesce)
    val taxi = functions.namespacedTaxi() + BuiltIns.taxi
 }

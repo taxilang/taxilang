@@ -1,5 +1,6 @@
 package lang.taxi.query
 
+import lang.taxi.expressions.Expression
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
@@ -9,6 +10,9 @@ sealed class FactValue() {
    abstract val type:Type
    data class Constant(val value: TypedValue) : FactValue() {
       override val type: Type = value.type
+   }
+   data class Expression(val assignmentType: Type, val expression: lang.taxi.expressions.Expression) : FactValue() {
+      override val type: Type = assignmentType
    }
    data class Variable(override val type: Type, val name: String) : FactValue()
 

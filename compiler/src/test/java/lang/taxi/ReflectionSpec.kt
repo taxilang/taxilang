@@ -46,6 +46,36 @@ model Film {
          typeExpression.type.qualifiedName.shouldBe("HitFilm")
       }
 
+      it("should resolve functions that infer type from assignment") {
+         val fieldType = """
+            // Unlike convert, cast (a dummy function) doesn't take a
+            // type as an argument, so should resolve via assignment site
+            declare function <T> cast(input:Any):T
+            model HitFilm inherits Film
+            model Film {
+               title : FilmTitle inherits String
+               hit : HitFilm = cast(this.title)
+            }
+         """.compiled()
+            .model("Film")
+            .field("hit")
+            .type
+         fieldType.qualifiedName.shouldBe("HitFilm")
+      }
+      it("should give compilation error when functions that infer return type from assignment if no assignment type is delared") {
+         """
+            // Unlike convert, cast (a dummy function) doesn't take a
+            // type as an argument, so should resolve via assignment site
+            declare function <T> cast(input:Any):T
+            model HitFilm inherits Film
+            model Film {
+               title : FilmTitle inherits String
+               hit :cast(this.title) // this is an error, as cast requires an assignment type
+            }
+         """.validated()
+            .shouldContainMessage("Function cast expects 1 parameters, but none were provided")
+      }
+
       it("should not compile a model using a function that has a type reference where return type is not compatibile") {
          val messages = """
 ${Convert.taxi}
