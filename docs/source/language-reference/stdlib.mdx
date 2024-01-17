@@ -192,6 +192,70 @@ declare function <T> getAtIndex(collection: T[], index: Int):T
 
 Returns the item at the provided index
 
+## Dates
+
+Mess about with time. Flux capacitor not included
+
+### addMinutes
+`taxi.stdlib.dates.addMinutes`
+
+```taxi
+declare function addMinutes(DateTime, Int):DateTime
+declare function addMinutes(Instant, Int): Instant
+```
+
+### addDays
+`taxi.stdlib.dates.addDays`
+
+```taxi
+declare function addDays(DateTime, Int):DateTime
+declare function addDays(Instant, Int): Instant
+```
+
+### addSeconds
+`taxi.stdlib.dates.addSeconds`
+
+```taxi
+declare function addSeconds(DateTime, Int):DateTime
+declare function addSeconds(Instant, Int): Instant
+```
+
+### now
+`taxi.stdlib.dates.now`
+
+```taxi
+declare function <T> now():T
+```
+
+### parseDate
+`taxi.stdlib.dates.parseDate`
+
+```taxi
+declare function <T> parseDate(String):T
+```
+
+## Objects
+
+Utilities for dealing with equality, etc
+
+### equals
+`taxi.stdlib.equals`
+
+```taxi
+declare function <A,B> equals(a:A, b:B): Boolean
+```
+
+## Aggregations
+
+Functions for aggregating data within transformations.
+
+### sumOver
+`vyne.aggregations.sumOver`
+
+```taxi
+declare query function sumOver(Any...):Decimal
+```
+
 ## Functional
 
 Functions that are functionally functions. Funky
@@ -230,3 +294,25 @@ declare function <T,A> max(collection: T[], callback: (T) -> A):A
 ```taxi
 declare function <T,A> min(collection: T[], callback: (T) -> A):A
 ```
+
+## Transformations
+
+Functions for converting between types
+
+### convert
+`taxi.stdlib.convert`
+
+```taxi
+declare function <T> convert(source: Any, targetType: lang.taxi.Type<T>): T
+```
+
+Converts the provided source into the target type reference.
+ Conversions are performed locally, using only the data provided in source - ie.,
+ no services or graph searches are performed.
+
+ This method is less powerful than using a standard projection (eg., A as B), because:
+
+  - Only the exact facts passed in the source are considered
+  - No graph searches or remote invocations are performed
+
+  As a result, it's also more performant.

@@ -52,10 +52,10 @@ Taxi ships with some standard annotations, as part of it's [std-lib](https://git
 
 ```taxi
 service MovieService {
-   @HttpOperation(method = "GET" , url = "https://myMovices/movies")
+   @HttpOperation(method = "GET" , url = "https://myMovies/movies")
    operation findAllMovies() : Movie[]
 
-   @HttpOperation(method = "GET" , url = "https://myMovices/movies/{id}")
+   @HttpOperation(method = "GET" , url = "https://myMovies/movies/{id}")
    operationFindMovie( @PathVariable(name = "id") id : MovieId ) : Movie
 }
 
