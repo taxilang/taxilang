@@ -1115,6 +1115,13 @@ class TokenProcessor(
                      checkAnnotationParamValue(unwrappedType, item!!, annotation)
                   }
                }
+
+               field.type is AnnotationType -> {
+                  val (parsedParameterAnnotationType, annotationParamValue) = paramValue as Pair<Type, Map<String, Any>>
+                  val error = typeChecker.assertIsAssignable(field.type, parsedParameterAnnotationType, annotation)
+                  mutableParams[field.name] = annotationParamValue
+                 error
+               }
                else -> checkAnnotationParamValue(field.type, paramValue!!, annotation)
             }
             compilationError
@@ -1141,26 +1148,33 @@ class TokenProcessor(
    fun checkAnnotationParamValue(unwrappedFieldType: Type, paramValue: Any, annotationCtx: AnnotationContext): CompilationError? {
      return when (unwrappedFieldType) {
         is EnumType -> {
-           val unwrappedParamValue = if (paramValue is EnumMember) paramValue.value.value else paramValue
-           if (unwrappedFieldType.hasValue(unwrappedParamValue)) {
-              null
-           } else if (paramValue == "FAKE") {
-              // This is a horrible hack, but we expect offering enum values in Editor completion service
-              // and we inject a hard coded token with "FAKE" value! see TokenInjectingErrorStrategy! and CompletionTest.kt - "offering enum values"
-              null
-           } else {
-              val errorMessage =
-                 "Invalid Value. Parameter of Type ${unwrappedFieldType.toQualifiedName().parameterizedName} is not assignable to value $paramValue"
-              CompilationError(annotationCtx.start, errorMessage)
+
+           when {
+             paramValue is EnumMember -> {
+                var  compilationError: CompilationError? = null
+                typeChecker.ifAssignable(
+                unwrappedFieldType,
+                paramValue.enum,
+                annotationCtx
+             ) { paramValue }.onLeft { compilationError = it }
+                compilationError
+          }
+             unwrappedFieldType.hasValue(paramValue) -> null
+              else -> {
+                 val errorMessage =
+                    "Invalid Value. $paramValue is not assignable to a parameter of Type ${unwrappedFieldType.toQualifiedName().parameterizedName}"
+                 CompilationError(annotationCtx.start, errorMessage)
+              }
            }
         }
 
+
         is AnnotationType -> {
-           //TODO Add when annotation param can be another annotation (not supported yet)
+           // an annotation type parameter has already been verified at this point.
            null
         }
 
-        // Assuming t
+        // Assuming
         else -> {
            var  compilationError: CompilationError? = null
            val valueType = PrimitiveValues.getTaxiPrimitive(paramValue)
@@ -1199,6 +1213,7 @@ class TokenProcessor(
                .flattenErrors()
                .flatMap { annotationType ->
                   mapAnnotationParams(annotation, annotationType as? AnnotationType)
+                     .map { Pair(annotationType, it) }
                }.wrapErrorsInList().flattenErrors()
          }
          else -> error("Unhandled element value: ${elementValue.text}")

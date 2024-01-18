@@ -277,7 +277,7 @@ class AnnotationSpec : DescribeSpec({
             errors.should.have.size(1)
             errors.first().detailMessage.should.equal("Quality does not have a member Foo")
          }
-         // Waiting for type checking branch to merge
+
          it("should raise an error if an annotation usage includes incorrect types") {
             val errors = """
             enum Quality {
@@ -290,7 +290,7 @@ class AnnotationSpec : DescribeSpec({
              model Foo {}
          """.validated()
             errors.should.have.size(1)
-            errors.first().detailMessage.should.equal("Invalid Value. Parameter of Type Quality is not assignable to value bar")
+            errors.first().detailMessage.should.equal("Invalid Value. bar is not assignable to a parameter of Type Quality")
          }
       }
 
@@ -444,5 +444,50 @@ class AnnotationTypeTest {
       compilationMessages.should.have.size(1)
       compilationMessages[0].severity.should.equal(Severity.ERROR)
       compilationMessages[0].detailMessage.should.equal("Type mismatch. Type of HttpErrorCode is not assignable to type lang.taxi.String")
+   }
+
+   @Test
+   fun `compiler detects invalid enum assignment`() {
+      val annotation = """
+            enum Quality {
+               HIGH, MEDIUM, BAD
+             }
+
+             enum HttpMethod {
+               POST, GET
+             }
+             annotation DataQuality {
+               quality : Quality
+             }
+
+             @DataQuality(quality = HttpMethod.GET)
+             model Foo {}
+         """.validated()
+      annotation.size.should.equal(1)
+      annotation.first().severity.should.equal(Severity.ERROR)
+      annotation.first().detailMessage.should.equal("Type mismatch. Type of Quality is not assignable to type HttpMethod")
+   }
+
+   @Test
+   fun `when the nested annotation type is invalid compiler detects`() {
+      val errors = """
+         type HttpErrorCode inherits Int
+          annotation Bar {
+            param: Foo
+         }
+
+
+         annotation Baz {}
+         annotation Foo {
+            errorCodes : HttpErrorCode[]
+         }
+         @Bar( param = @Baz() ) // Baz is not assignable to param
+         model ThingOne
+
+      """.validated()
+
+      errors.size.should.equal(1)
+      errors.first().detailMessage.should.equal("Type mismatch. Type of Foo is not assignable to type Baz")
+      errors.first().severity.should.equal(Severity.ERROR)
    }
 }
