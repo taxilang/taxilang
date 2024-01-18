@@ -352,9 +352,10 @@ elementValuePair
     ;
 
 elementValue
-    :   literal
-    |    qualifiedName // Support enum references within annotations
-    |   annotation
+    : literal
+    | qualifiedName // Support enum references within annotations
+    | annotation
+    | literalArray
     ;
 
 serviceDeclaration
