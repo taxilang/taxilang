@@ -229,7 +229,7 @@ data class TokenStreamParseResult(
 )
 
 data class CompilerConfig(
-   val typeCheckerEnabled: FeatureToggle = FeatureToggle.DISABLED,
+   val typeCheckerEnabled: FeatureToggle = FeatureToggle.ENABLED,
    val linterRuleConfiguration: List<LinterRuleConfiguration> = emptyList()
 ) {
    val linter: Linter by lazy { Linter(linterRuleConfiguration) }

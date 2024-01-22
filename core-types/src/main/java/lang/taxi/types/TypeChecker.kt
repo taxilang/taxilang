@@ -34,6 +34,13 @@ class TypeChecker(val enabled:FeatureToggle = FeatureToggle.DISABLED) {
          return true
       }
 
+      // Here, assignmentTargetType is something like (T) -> Boolean
+      // and valueType is something that should return Boolean.
+      // So, check assignment on the return type of assignmentTargetType (ie., the boolean in (T) -> Boolean)
+      if (assignmentTargetTypeWithoutAliases is LambdaExpressionType) {
+         return isAssignableTo(valueType, assignmentTargetTypeWithoutAliases.returnType, considerTypeParameters)
+      }
+
 
       // Bail out early
       if (considerTypeParameters && valueTypeWithoutAliases.typeParameters().size != assignmentTargetTypeWithoutAliases.typeParameters().size) {
