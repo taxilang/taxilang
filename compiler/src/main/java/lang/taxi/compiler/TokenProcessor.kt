@@ -6,6 +6,7 @@ import arrow.core.getOrElse
 import arrow.core.handleErrorWith
 import arrow.core.left
 import arrow.core.right
+import arrow.core.valid
 import lang.taxi.*
 import lang.taxi.TaxiParser.*
 import lang.taxi.accessors.Argument
@@ -33,7 +34,9 @@ import lang.taxi.services.operations.constraints.OperationConstraintConverter
 import lang.taxi.services.operations.constraints.InstanceArgument
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
+import lang.taxi.types.Arrays
 import lang.taxi.utils.*
+import lang.taxi.values.PrimitiveValues
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.util.*
@@ -647,14 +650,16 @@ class TokenProcessor(
       val fieldsOrErrors = fieldCompiler
          .compileAllFields()
          .map { field ->
-            if (!field.type.inheritsFromPrimitive) {
-               // Validate that annotation fields use primitive types.
+            if (Arrays.unwrapPossibleArrayType(field.type).inheritsFromPrimitive || field.type is AnnotationType) {
+               // Validate that annotation fields use primitive types, primitive arrays or another Annotation Type.
+               field.right()
+
+            } else {
                CompilationError(
                   token.start,
                   "Field ${field.name} declares an invalid type (${field.type.qualifiedName}). Only Strings, Numbers, Booleans or Enums are supported for annotation properties"
                ).left()
-            } else {
-               field.right()
+
             }
          }.invertEitherList()
 
@@ -1059,7 +1064,7 @@ class TokenProcessor(
       annotationType: AnnotationType?
    ): Either<List<CompilationError>, Map<String, Any>> {
       return when {
-         annotation.elementValue() != null -> {
+         annotation.elementValue() != null  -> {
             parseElementValue(annotation.elementValue()).map { mapOf("value" to it) }
          }
 
@@ -1092,9 +1097,34 @@ class TokenProcessor(
                )
             }
          } else {
-            // TODO: validate types match.
-            // Waiting until the existing branch on type safety is merged, and then will revisit
-            null
+            val paramValue = mutableParams[field.name]
+            val compilationError: CompilationError? =  when {
+               paramValue == null && field.nullable -> null
+               paramValue == null && !field.nullable ->  CompilationError(
+                  annotation.start,
+                  "Annotation ${type.qualifiedName}  member '${field.name}' is defined as a not nullable but no value is provided!"
+               )
+               Arrays.isArray(field.type) && paramValue !is List<*> -> CompilationError(
+                  annotation.start,
+                  "Annotation ${type.qualifiedName}  member '${field.name}' is defined as a not nullable but no value is provided!"
+               )
+
+               Arrays.isArray(field.type) && paramValue is List<*>  -> {
+                  val unwrappedType = Arrays.unwrapPossibleArrayType(field.type)
+                  paramValue.firstNotNullOfOrNull { item ->
+                     checkAnnotationParamValue(unwrappedType, item!!, annotation)
+                  }
+               }
+
+               field.type is AnnotationType -> {
+                  val (parsedParameterAnnotationType, annotationParamValue) = paramValue as Pair<Type, Map<String, Any>>
+                  val error = typeChecker.assertIsAssignable(field.type, parsedParameterAnnotationType, annotation)
+                  mutableParams[field.name] = annotationParamValue
+                 error
+               }
+               else -> checkAnnotationParamValue(field.type, paramValue!!, annotation)
+            }
+            compilationError
          }
       }
 
@@ -1115,6 +1145,47 @@ class TokenProcessor(
       }
    }
 
+   fun checkAnnotationParamValue(unwrappedFieldType: Type, paramValue: Any, annotationCtx: AnnotationContext): CompilationError? {
+     return when (unwrappedFieldType) {
+        is EnumType -> {
+
+           when {
+             paramValue is EnumMember -> {
+                var  compilationError: CompilationError? = null
+                typeChecker.ifAssignable(
+                unwrappedFieldType,
+                paramValue.enum,
+                annotationCtx
+             ) { paramValue }.onLeft { compilationError = it }
+                compilationError
+          }
+             unwrappedFieldType.hasValue(paramValue) -> null
+              else -> {
+                 val errorMessage =
+                    "Invalid Value. $paramValue is not assignable to a parameter of Type ${unwrappedFieldType.toQualifiedName().parameterizedName}"
+                 CompilationError(annotationCtx.start, errorMessage)
+              }
+           }
+        }
+
+
+        is AnnotationType -> {
+           // an annotation type parameter has already been verified at this point.
+           null
+        }
+
+        // Assuming
+        else -> {
+           var  compilationError: CompilationError? = null
+           val valueType = PrimitiveValues.getTaxiPrimitive(paramValue)
+           val errorOrValidParam = typeChecker.ifAssignable(unwrappedFieldType, valueType, annotationCtx) { paramValue }
+           errorOrValidParam.onLeft { compilationError = it }
+           compilationError
+        }
+     }
+
+   }
+
    private fun mapElementValuePairs(tokenRule: ElementValuePairsContext): Either<List<CompilationError>, Map<String, Any>> {
       val pairs = tokenRule.elementValuePair() ?: return emptyMap<String, Any>().right()
       return pairs.map { keyValuePair ->
@@ -1129,6 +1200,22 @@ class TokenProcessor(
       return when {
          elementValue.literal() != null -> elementValue.literal().value().right()
          elementValue.qualifiedName() != null -> resolveEnumMember(elementValue.qualifiedName())
+         elementValue.literalArray() != null -> elementValue.literalArray().value().right()
+         elementValue.annotation() != null -> {
+            val annotation = elementValue.annotation()
+            resolveUserType(
+               annotation.findNamespace(),
+               annotation.qualifiedName().text,
+               annotation,
+               symbolKind = SymbolKind.ANNOTATION
+            )
+               .wrapErrorsInList()
+               .flattenErrors()
+               .flatMap { annotationType ->
+                  mapAnnotationParams(annotation, annotationType as? AnnotationType)
+                     .map { Pair(annotationType, it) }
+               }.wrapErrorsInList().flattenErrors()
+         }
          else -> error("Unhandled element value: ${elementValue.text}")
       }
    }
@@ -2540,7 +2627,7 @@ enum class SymbolKind {
 
          TYPE -> {
             when (token) {
-               is AnnotationTypeDeclarationContext -> false
+               is AnnotationTypeDeclarationContext -> true
                is TypeDeclarationContext -> true
                is EnumDeclarationContext -> true
                is TypeAliasDeclarationContext -> true
