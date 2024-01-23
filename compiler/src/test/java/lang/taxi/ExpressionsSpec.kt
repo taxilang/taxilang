@@ -337,5 +337,47 @@ class ExpressionsSpec : DescribeSpec({
          errors.shouldContainMessage("Function taxi.stdlib.first expects 1 parameters, but none were provided")
       }
 
+      it("should use a projection statement after an expression to determine type") {
+         val model = """
+         model Person {
+            id: PersonId inherits String
+         }
+         model Movie {
+            // Selecting the first person as the star
+             starring : PersonId = first(Person[]) as PersonId
+         }
+         """.compiled()
+            .model("Movie")
+         model.field("starring")
+            .type.qualifiedName.shouldBe("PersonId")
+      }
+
+      it("should use a projection statement after an expression to infer type") {
+         val model = """
+         model Person {}
+         type PersonId inherits String
+         model Movie {
+             // no explicit type declaration
+             starring: first(Person[]) as PersonId
+         }
+         """.compiled()
+            .model("Movie")
+         val field = model.field("starring")
+         field.type.qualifiedName.shouldBe("PersonId")
+         field.projection.shouldNotBeNull()
+      }
+      it("should raise a compilation error if the projected type is not assignable") {
+         val errors = """
+         type MovieRating inherits Int
+         model Person {
+            id: PersonId inherits String
+         }
+         model Movie {
+             // this should create a compilation error...
+             starring : PersonId = first(Person[]) as MovieRating
+         }
+         """.validated()
+         errors.shouldContainMessage("Type mismatch. Type of MovieRating is not assignable to type PersonId")
+      }
    }
 })
