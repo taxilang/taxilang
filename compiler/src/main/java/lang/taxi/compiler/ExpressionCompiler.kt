@@ -17,6 +17,7 @@ import lang.taxi.functions.Function
 import lang.taxi.types.*
 import lang.taxi.utils.*
 import org.antlr.v4.runtime.ParserRuleContext
+import kotlin.math.exp
 
 class ExpressionCompiler(
    private val tokenProcessor: TokenProcessor,
@@ -57,6 +58,37 @@ class ExpressionCompiler(
       targetType: Type? = null
    ): Either<List<CompilationError>, out Expression> {
       return when {
+         expressionGroup.castExpression() != null -> {
+            if (expressionGroup.expressionGroup() == null || expressionGroup.expressionGroup().size != 1) {
+               listOf(
+                  CompilationError(
+                     expressionGroup.toCompilationUnit(),
+                     "An internal error occurred - expected a single expressionGroup after a cast statement"
+                  )
+               )
+                  .left()
+            } else {
+               // We're about to perform casting, so don't pass the target type
+               compile(expressionGroup.expressionGroup().single(), targetType = null)
+                  .flatMap { uncastExpression ->
+                     tokenProcessor.typeOrError(expressionGroup.castExpression().typeReference())
+                        .flatMap { castType ->
+                           // now validate the type
+                           val castExpression = CastExpression(
+                              castType,
+                              uncastExpression,
+                              expressionGroup.castExpression().toCompilationUnits()
+                           )
+                           typeChecker.ifAssignableOrErrorList(
+                              castExpression.returnType,
+                              targetType,
+                              expressionGroup
+                           ) { castExpression }
+                        }
+                  }
+            }
+         }
+
          expressionGroup.children.size == 2 && expressionGroup.children.last() is TypeProjectionContext && expressionGroup.children.first() is ExpressionGroupContext -> {
             // This is an expression with a projection.
             // Compile the expression first.
@@ -75,6 +107,7 @@ class ExpressionCompiler(
             }
          }
 
+
          expressionGroup.LPAREN() != null && expressionGroup.RPAREN() != null -> {
             require(expressionGroup.children.size == 3) { "When handling an expression ${expressionGroup.text} expected exactly 3 children, including the parenthesis" }
             // There must be only one child not a bracket
@@ -89,6 +122,7 @@ class ExpressionCompiler(
 
          expressionGroup.children.size == 3 -> parseOperatorExpression(expressionGroup)          // lhs operator rhs
          expressionGroup.expressionGroup().isEmpty() -> compileSingleExpression(expressionGroup, targetType)
+
          else -> error("Unhandled expression group scenario: ${expressionGroup.text}")
       }.flatMap { expression ->
          when (targetType) {
@@ -153,7 +187,10 @@ class ExpressionCompiler(
       }
    }
 
-   private fun compileExpressionAtom(expressionAtom: TaxiParser.ExpressionAtomContext, assignmentType: Type?): Either<List<CompilationError>, Expression> {
+   private fun compileExpressionAtom(
+      expressionAtom: TaxiParser.ExpressionAtomContext,
+      assignmentType: Type?
+   ): Either<List<CompilationError>, Expression> {
       return when {
          expressionAtom.typeReference() != null -> parseTypeExpression(expressionAtom.typeReference())
          expressionAtom.functionCall() != null -> parseFunctionExpression(expressionAtom.functionCall(), assignmentType)

@@ -112,6 +112,7 @@ expressionGroup:
    | expressionGroup (MULT | DIV) expressionGroup
    | expressionGroup (PLUS | MINUS) expressionGroup
    | LPAREN expressionGroup RPAREN
+   | castExpression expressionGroup
    | (PLUS | MINUS)* expressionAtom
    // The below is added for lambdas, but not sure order of precedence
    // is correct. TBD.
@@ -147,7 +148,7 @@ annotationTypeDeclaration
 
 annotationTypeBody: '{' typeMemberDeclaration* '}';
 
-
+castExpression: LPAREN typeReference RPAREN;
 
 // Deprecated - use expressionGroups instead
 //fieldExpression

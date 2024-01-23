@@ -77,6 +77,15 @@ class AssignmentSpec : DescribeSpec({
          schema.type("Id").isAssignableTo(schema.type("Age")).shouldBeFalse()
       }
 
+      it("is assignable if value type is raw primitive") {
+         val schema = """
+            type Name inherits String
+            type Age inherits Int
+         """.compiled()
+         PrimitiveType.STRING.isAssignableTo(schema.type("Name")).shouldBeTrue()
+         PrimitiveType.INTEGER.isAssignableTo(schema.type("Age")).shouldBeTrue()
+      }
+
 
       it("should resolve formatted types to their unformatted underlying type") {
          val schema = """
