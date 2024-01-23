@@ -79,6 +79,13 @@ data class TypeExpression(val type: Type, override val compilationUnits: List<Co
    override val returnType: Type = type
 }
 
+/**
+ * Instructs the runtime to cast the provided expression to the type
+ */
+data class CastExpression(val type: Type, val expression: Expression, override val compilationUnits: List<CompilationUnit>) : Expression() {
+   override val returnType: Type = type
+}
+
 data class FunctionExpression(val function: FunctionAccessor, override val compilationUnits: List<CompilationUnit>) :
    Expression() {
    override val returnType: Type = function.returnType

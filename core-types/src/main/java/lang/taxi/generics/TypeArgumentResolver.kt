@@ -121,7 +121,7 @@ object TypeArgumentResolver {
                   // For the "normal" case, look at the type parameters on the input
                   // we've been given, and resolve from there.
                   require(declaredInput.typeParameters().size == providedInput.typeParameters().size) {
-                     "Could not resolve type argument ${typeArgument.declaredName} (of ${declaredInput.toQualifiedName().parameterizedName}) as expected ${declaredInput.typeParameters().size} type parameters, but found ${providedInput.typeParameters().size}"
+                     "Not enough information to infer type argument ${typeArgument.declaredName} (of ${declaredInput.toQualifiedName().parameterizedName}) from the provided inputs"
                   }
                   resolveTypeArgumentFromInputTypes(
                      typeArgument,
@@ -168,4 +168,21 @@ object TypeArgumentResolver {
          else -> type
       }
    }
+
+   fun declarationCanResolveArgument(typeToInspect: Type, typeArgumentToResolve: Type): Boolean {
+      return when {
+         typeArgumentToResolve !is TypeArgument -> false
+         // eg: declare function <T> foo(T):T
+         typeToInspect is TypeReference && typeToInspect.type == typeArgumentToResolve -> true
+         // eg: declare function <T> foo(T[]):T
+         typeToInspect.typeParameters().any { declarationCanResolveArgument(it, typeArgumentToResolve) } -> true
+         // eg: when introspecting the T in Array<T>
+         typeToInspect is TypeArgument && typeToInspect.qualifiedName == typeArgumentToResolve.qualifiedName -> true
+         else -> false
+      }
+
+   }
 }
+
+// We don't have access to CompilationError here, so throw this instead.
+class TypeResolutionFailedException(messages: List<String>) : RuntimeException(messages.joinToString("\n"))

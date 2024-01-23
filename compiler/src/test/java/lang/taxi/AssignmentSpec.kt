@@ -3,6 +3,7 @@ package lang.taxi
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
 import lang.taxi.types.PrimitiveType
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -52,6 +53,21 @@ class AssignmentSpec : DescribeSpec({
          PrimitiveType.INTEGER.isAssignableTo(schema.type("FirstName")).should.be.`false`
       }
 
+      it("is valid to assign a string to an enum") {
+         val schema = """
+            enum Country {
+               NZ, UK
+            }
+            type CountryCode inherits String
+         """.compiled()
+         // Raw strings are ok...
+         PrimitiveType.STRING.isAssignableTo(schema.type("Country")).shouldBeTrue()
+         // ... but semantic strings are not:
+         schema.type("CountryCode").isAssignableTo(schema.type("Country")).shouldBeFalse()
+         // ... and other primitives are not
+         PrimitiveType.INTEGER.isAssignableTo(schema.type("Country")).shouldBeFalse()
+      }
+
       it("is not assignable when types have same base") {
          val schema = """
             type Age inherits Int
@@ -59,6 +75,15 @@ class AssignmentSpec : DescribeSpec({
          """.compiled()
          schema.type("Age").isAssignableTo(schema.type("Id")).shouldBeFalse()
          schema.type("Id").isAssignableTo(schema.type("Age")).shouldBeFalse()
+      }
+
+      it("is assignable if value type is raw primitive") {
+         val schema = """
+            type Name inherits String
+            type Age inherits Int
+         """.compiled()
+         PrimitiveType.STRING.isAssignableTo(schema.type("Name")).shouldBeTrue()
+         PrimitiveType.INTEGER.isAssignableTo(schema.type("Age")).shouldBeTrue()
       }
 
 

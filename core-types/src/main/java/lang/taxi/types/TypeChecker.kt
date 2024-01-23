@@ -17,7 +17,10 @@ class TypeChecker(val enabled:FeatureToggle = FeatureToggle.DISABLED) {
       }
 
       if (assignmentTargetType is EnumType) {
-         return valueType.inheritsFrom(assignmentTargetType)
+         return valueType.inheritsFrom(assignmentTargetType) ||
+            // Allow naked Strings to be assigned to enums.
+            // This allows name matching
+            valueTypeWithoutAliases == PrimitiveType.STRING
       }
 
       // We allow naked primitives to be assigned to compatible
@@ -32,6 +35,13 @@ class TypeChecker(val enabled:FeatureToggle = FeatureToggle.DISABLED) {
       // can't work out how, so assume assignable.
       if (containsTypeArgument(assignmentTargetType) || containsTypeArgument(valueType)) {
          return true
+      }
+
+      // Here, assignmentTargetType is something like (T) -> Boolean
+      // and valueType is something that should return Boolean.
+      // So, check assignment on the return type of assignmentTargetType (ie., the boolean in (T) -> Boolean)
+      if (assignmentTargetTypeWithoutAliases is LambdaExpressionType) {
+         return isAssignableTo(valueType, assignmentTargetTypeWithoutAliases.returnType, considerTypeParameters)
       }
 
 

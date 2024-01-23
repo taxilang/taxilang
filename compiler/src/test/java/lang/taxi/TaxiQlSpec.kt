@@ -346,7 +346,7 @@ class TaxiQlSpec : DescribeSpec({
 
       it("query body can be an anonymous projection with constraints") {
          val src = """
-                 given { startDate: TradeDate = "2022-12-02", endDate: TradeDate = "2022-12-23" }
+                 given { startDate: TradeDate = parseDate("2022-12-02"), endDate: TradeDate = parseDate("2022-12-23") }
                  find {
                    tradeDate: TradeDate
                    traderId: TraderId
@@ -357,8 +357,9 @@ class TaxiQlSpec : DescribeSpec({
          query.facts.should.have.size(2)
          val (name, fact) = query.facts.first()
          name.should.equal("startDate")
-         fact.typedValue.fqn.parameterizedName.should.equal("foo.TradeDate")
-         fact.typedValue.value.should.equal("2022-12-02")
+         fact.type.qualifiedName.should.equal("foo.TradeDate")
+         // Used to be constant:
+//         fact.typedValue.value.should.equal("2022-12-02")
 
          query.typesToFind.should.have.size(1)
          val discoveryType = query.typesToFind.first()

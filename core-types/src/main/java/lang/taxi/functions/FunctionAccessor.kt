@@ -20,7 +20,7 @@ data class FunctionAccessor private constructor(
        * are resolved using the provided inputs
        */
       fun buildAndResolveTypeArguments(function: Function, inputs: List<Accessor>, targetType: Type): FunctionAccessor {
-         val typeArgResolvedDefinition: FunctionDefinition = function.resolveTypeParametersFromInputs(inputs, targetType)
+         val typeArgResolvedDefinition: FunctionDefinition = function.resolveTypeParametersFromInputs(inputs, targetType, requireAllParametersResolved = true)
          val typeArgResolvedFunction = function.copy(definition = typeArgResolvedDefinition)
          return FunctionAccessor(typeArgResolvedFunction, inputs, function)
       }

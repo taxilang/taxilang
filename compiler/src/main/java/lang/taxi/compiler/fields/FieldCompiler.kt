@@ -208,7 +208,7 @@ class FieldCompiler(
          }
          // It wasn't a path, so resolve as a function
          fieldTypeDeclaration != null -> {
-            tokenProcessor.parseType(namespace, fieldTypeDeclaration)
+            tokenProcessor.fieldTypeSpecOrError(fieldTypeDeclaration, this)
                .flatMap { fieldTypeSpec ->
                   parseFieldProjection(member, fieldTypeSpec).flatMap { fieldProjectionType ->
                      toField(

@@ -14,12 +14,12 @@ class ConstraintsSpec : DescribeSpec({
       it("can declare constraints on types") {
          val source = """
 type Money {
-   amount : Amount as Decimal
-   currency : Currency as String
+   amount : Amount inherits Decimal
+   currency : Currency inherits String
 }
 type SomeServiceRequest {
    amount : Money(Currency == 'GBP')
-   clientId : ClientId as String
+   clientId : ClientId inherits String
 }
 """
          val doc = Compiler(source).compile()

@@ -124,7 +124,10 @@ class WhenBlockSpec : DescribeSpec({
          enumValue.qualifiedName.should.equal("Country.NZ")
       }
 
-      it("should not allow strings in when clause against enum") {
+      // Disabling this for now.
+      // Although this seems a good idea, it causes problems with ingesting strings to enums
+      // and isn't particularly ergonimc in practice. Leaving the test here, as we may revisit.
+      xit("should not allow strings in when clause against enum") {
          val errors = """
             enum Country {
                NZ("New Zealand"),

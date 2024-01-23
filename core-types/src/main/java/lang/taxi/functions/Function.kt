@@ -3,6 +3,7 @@ package lang.taxi.functions
 import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Accessor
 import lang.taxi.generics.TypeArgumentResolver
+import lang.taxi.generics.TypeResolutionFailedException
 import lang.taxi.services.Parameter
 import lang.taxi.types.*
 import java.util.EnumSet
@@ -23,7 +24,16 @@ class FunctionDefinition(
    private val equality = ImmutableEquality(this, FunctionDefinition::parameters, FunctionDefinition::returnType)
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
-   fun resolveTypeParameters(inputs: List<Accessor>, assignmentType: Type): FunctionDefinition {
+   fun resolveTypeParameters(
+      inputs: List<Accessor>,
+      assignmentType: Type,
+      /**
+       * Throws an exception if there are unresolved parameters.
+       * opt-in, as this is a new behaviour, but you should enable it.
+       */
+      requireAllParametersResolved: Boolean = false,
+      functionName: String
+   ): FunctionDefinition {
       if (this.typeArguments.isEmpty()) {
          return this
       }
@@ -35,7 +45,7 @@ class FunctionDefinition(
       // return type, which is stricter (and more explicit) than allowing the
       // input params to infer the return type
       val resolveReturnTypeFromAssignment = typeArguments.contains(returnType)
-         && parameters.none { it.type is TypeReference && it.type.type == returnType }
+         && parameters.none { TypeArgumentResolver.declarationCanResolveArgument(it.type, returnType) }
          && assignmentType != PrimitiveType.ANY
       val (resolvedReturnTypeArgument, typeArgumentsToResolveFromInputs) = if (resolveReturnTypeFromAssignment) {
          mapOf(returnType as TypeArgument to assignmentType) to typeArguments.filter { it != returnType }
@@ -45,6 +55,18 @@ class FunctionDefinition(
       val resolvedParameterTypeArguments =
          TypeArgumentResolver.resolve(typeArgumentsToResolveFromInputs, parameters.map { it.type }, inputs)
       val allResolvedTypeArguments = resolvedReturnTypeArgument + resolvedParameterTypeArguments
+      if (requireAllParametersResolved) {
+         val errors = allResolvedTypeArguments.values
+            .filterIsInstance<TypeArgument>()
+            .map { "Insufficient information to resolve type argument ${it.declaredName} in function $functionName" }
+
+         // TODO : There's probably other possibilities for unresolved type expressions.
+         // Enrich and test and we go.
+         if (errors.isNotEmpty()) {
+            throw TypeResolutionFailedException(errors)
+         }
+      }
+
 
       val resolvedParameters = TypeArgumentResolver.replaceTypeArguments(parameters, allResolvedTypeArguments)
 
@@ -78,9 +100,16 @@ data class Function(
       }
    }
 
-   fun resolveTypeParametersFromInputs(inputs: List<Accessor>, targetType: Type): FunctionDefinition {
+   fun resolveTypeParametersFromInputs(
+      inputs: List<Accessor>, targetType: Type,
+      /**
+       * Throws an exception if there are unresolved parameters.
+       * opt-in, as this is a new behaviour, but you should enable it.
+       */
+      requireAllParametersResolved: Boolean = false
+   ): FunctionDefinition {
       require(definition != null) { "Function $qualifiedName must be defined before resolveGenericsFromInputs can be called" }
-      return definition!!.resolveTypeParameters(inputs, targetType)
+      return definition!!.resolveTypeParameters(inputs, targetType, requireAllParametersResolved, this.qualifiedName)
    }
 
    override val compilationUnits: List<CompilationUnit> = listOfNotNull(definition?.compilationUnit)
