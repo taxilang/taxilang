@@ -41,11 +41,28 @@ fun TypeChecker.assertIsAssignable(valueType: Type, receiverType: Type, token: P
  */
 fun <A> TypeChecker.ifAssignable(
    valueType: Type,
-   receiverType: Type,
+   receiverType: Type?,
    token: ParserRuleContext,
    valueProvider: () -> A
 ): Either<CompilationError, A> {
+   if (receiverType == null) {
+      return valueProvider().right()
+   }
    val error = assertIsAssignable(valueType, receiverType, token)
 
    return error?.left() ?: valueProvider().right()
+}
+
+/**
+ * Returns the value from the valueProvider if the valueType is assignable to the receiver type.
+ * Otherwise, generates a Not Assignable compiler error
+ */
+fun <A> TypeChecker.ifAssignableOrErrorList(
+   valueType: Type,
+   receiverType: Type?,
+   token: ParserRuleContext,
+   valueProvider: () -> A
+): Either<List<CompilationError>, A> {
+   return ifAssignable(valueType, receiverType, token, valueProvider)
+      .mapLeft { listOf(it) }
 }

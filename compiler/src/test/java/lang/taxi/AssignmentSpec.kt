@@ -3,6 +3,7 @@ package lang.taxi
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
 import lang.taxi.types.PrimitiveType
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -59,6 +60,15 @@ class AssignmentSpec : DescribeSpec({
          """.compiled()
          schema.type("Age").isAssignableTo(schema.type("Id")).shouldBeFalse()
          schema.type("Id").isAssignableTo(schema.type("Age")).shouldBeFalse()
+      }
+
+      it("is assignable if value type is raw primitive") {
+         val schema = """
+            type Name inherits String
+            type Age inherits Int
+         """.compiled()
+         PrimitiveType.STRING.isAssignableTo(schema.type("Name")).shouldBeTrue()
+         PrimitiveType.INTEGER.isAssignableTo(schema.type("Age")).shouldBeTrue()
       }
 
 
