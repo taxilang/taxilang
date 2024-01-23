@@ -6,7 +6,6 @@ import arrow.core.getOrElse
 import arrow.core.handleErrorWith
 import arrow.core.left
 import arrow.core.right
-import arrow.core.valid
 import lang.taxi.*
 import lang.taxi.TaxiParser.*
 import lang.taxi.accessors.Argument
@@ -164,11 +163,6 @@ class TokenProcessor(
                val fieldTypeDeclaration = memberDeclaration.fieldDeclaration().fieldTypeDeclaration()
                when {
                   fieldTypeDeclaration == null -> null
-                  fieldTypeDeclaration.aliasedType() != null -> lookupSymbolByName(
-                     namespace,
-                     memberDeclaration.fieldDeclaration().fieldTypeDeclaration().nullableTypeReference().typeReference()
-                  )
-
                   fieldTypeDeclaration.inlineInheritedType() != null -> lookupSymbolByName(
                      namespace,
                      memberDeclaration.fieldDeclaration().fieldTypeDeclaration().nullableTypeReference().typeReference()
@@ -442,12 +436,6 @@ class TokenProcessor(
                tokenName,
                tokenRule
             ).collectErrors(errors)
-            // TODO : This is a bit broad - assuming that all typeType's that hit this
-            // line will be a TypeAlias inline.  It could be a normal field declaration.
-            is FieldTypeDeclarationContext -> compileInlineTypeAlias(namespace, tokenRule).collectErrors(
-               errors
-            )
-
             else -> TODO("Not handled: $tokenRule")
          }.map { type ->
             this.errors.addAll(linter.lint(type))
@@ -1294,17 +1282,6 @@ class TokenProcessor(
    }
 
 
-   // Can remove this, it used to do more.
-   internal fun parseType(
-      namespace: Namespace,
-      typeType: FieldTypeDeclarationContext,
-      typeArgumentsInScope: List<TypeArgument> = emptyList()
-   ): Either<List<CompilationError>, FieldTypeSpec> {
-
-      val type = typeOrError(namespace, typeType, typeArgumentsInScope)
-      return type
-   }
-
    internal fun parseModelAttributeTypeReference(
       namespace: Namespace,
       modelAttributeReferenceCtx: ModelAttributeTypeReferenceContext
@@ -1384,27 +1361,30 @@ class TokenProcessor(
       return compileAnonymousType(namespace, anonymousTypeName, anonymousTypeDefinition, resolutionContext)
    }
 
-   internal fun typeOrError(
-      namespace: Namespace,
-      typeType: FieldTypeDeclarationContext,
-      typeArgumentsInScope: List<TypeArgument> = emptyList()
+   /**
+    * Parses a type declaration for a field (if it exists), or
+    * the function / expression declaration if no type is present.
+    */
+   internal fun fieldTypeSpecOrError(
+      fieldTypeContext: FieldTypeDeclarationContext,
+      fieldCompiler: FieldCompiler
    ): Either<List<CompilationError>, FieldTypeSpec> {
+      val namespace = fieldTypeContext.findNamespace()
       return when {
-         typeType.inlineInheritedType() != null -> compileInlineInheritedType(
+         fieldTypeContext.inlineInheritedType() != null -> compileInlineInheritedType(
             namespace,
-            typeType
+            fieldTypeContext
          ).map { FieldTypeSpec.forType(it) }
 
-         typeType.aliasedType() != null -> compileInlineTypeAlias(namespace, typeType).map { FieldTypeSpec.forType(it) }
          else -> {
             resolveTypeOrFunction(
-               typeType.nullableTypeReference().typeReference().qualifiedName(),
-               typeType.nullableTypeReference().typeReference().typeArguments(),
-               typeType
+               fieldTypeContext.nullableTypeReference().typeReference().qualifiedName(),
+               fieldTypeContext.nullableTypeReference().typeReference().typeArguments(),
+               fieldTypeContext
             )
                .map { token ->
-                  if (token is Type && typeType.nullableTypeReference().typeReference().arrayMarker() != null) {
-                     ArrayType(token, typeType.toCompilationUnit())
+                  if (token is Type && fieldTypeContext.nullableTypeReference().typeReference().arrayMarker() != null) {
+                     ArrayType(token, fieldTypeContext.toCompilationUnit())
                   } else {
                      token
                   }
@@ -1416,22 +1396,45 @@ class TokenProcessor(
                      }
 
                      is Function -> {
+                        val inputs: Either<List<CompilationError>, List<Expression>> = when {
+                           // The grammar makes it difficult to distinguish between a single-arg
+                           // function call, and a Type constraint.
+                           // The grammar will parse:
+                           // starring : first(Person[])
+                           // as a parameterContraint with an expression group.
+                           // However, we actually want to resolve Person[] as an input to a function.
+                           fieldTypeContext.parameterConstraint()?.expressionGroup() != null -> {
+                              val expressionGroup = fieldTypeContext.parameterConstraint().expressionGroup()
+                              val expression = expressionCompiler(fieldCompiler).compile(expressionGroup)
+                                 .map { expression -> listOf(expression) }
+                              expression
+                           }
                         // At this point, there were no argument provided.
                         // (Otherwise we'd have ended up in a different part of the parse tree).
                         // So, it's a no-arg function
-                        if (token.parameters.isNotEmpty()) {
                            // Therefore, this should only ever happen if there are other compilation errors
+                           token.parameters.isNotEmpty() -> {
                            listOf(
                               CompilationError(
-                                 typeType.toCompilationUnit(),
+                                    fieldTypeContext.toCompilationUnit(),
                                  "Function ${token.qualifiedName} expects ${token.parameters.size} parameters, but none were provided"
                               )
                            )
                               .left()
-                        } else {
-                           val accessor = FunctionAccessor.buildAndResolveTypeArguments(token, emptyList(), targetType = token.returnType!!)
-                           FieldTypeSpec.forFunction(accessor).right()
+                           }
+
+                           else -> emptyList<Expression>().right()
                         }
+                        inputs.flatMap { inputArguments ->
+                           val accessor = FunctionAccessorCompiler.buildAndResolveTypeArgumentsOrError(
+                              token,
+                              inputArguments,
+                              targetType = token.returnType!!,
+                              fieldTypeContext
+                           ).map { FieldTypeSpec.forFunction(it) }
+                           accessor
+                        }
+
                      }
 
                      else -> error("Was not expecting a ImportableToken of type ${token::class.simpleName}")
@@ -1557,33 +1560,6 @@ class TokenProcessor(
                )
             )
          )
-      }
-   }
-
-   /**
-    * Handles type aliases that are declared inline (firstName : PersonFirstName as String)
-    * rather than those declared explicitly (type alias PersonFirstName as String)
-    */
-   private fun compileInlineTypeAlias(
-      namespace: Namespace,
-      aliasTypeDefinition: FieldTypeDeclarationContext
-   ): Either<List<CompilationError>, Type> {
-      return parseType(namespace, aliasTypeDefinition.aliasedType().typeReference()).map { aliasedType ->
-         val declaredTypeName =
-            aliasTypeDefinition.nullableTypeReference().typeReference().qualifiedName().identifier().text()
-         val typeAliasName = if (declaredTypeName.contains(".")) {
-            QualifiedNameParser.parse(declaredTypeName)
-         } else {
-            QualifiedName(namespace, declaredTypeName)
-         }
-         // Annotations not supported on Inline type aliases
-         val annotations = emptyList<Annotation>()
-         val typeAlias = TypeAlias(
-            typeAliasName.toString(),
-            TypeAliasDefinition(aliasedType, annotations, aliasTypeDefinition.toCompilationUnit())
-         )
-         typeSystem.register(typeAlias)
-         typeAlias
       }
    }
 

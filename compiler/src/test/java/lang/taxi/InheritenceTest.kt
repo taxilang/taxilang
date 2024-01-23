@@ -14,7 +14,7 @@ class InheritenceTest {
    fun canInheritFromCollection() {
       val src = """
 type Person {
-   firstName : FirstName as String
+   firstName : FirstName inherits String
 }
 type ListOfPerson inherits Person[]
       """.trimIndent()

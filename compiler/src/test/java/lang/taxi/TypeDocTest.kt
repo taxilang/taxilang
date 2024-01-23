@@ -209,7 +209,7 @@ enum Color {
       val source = """
          type Person {
             [[ The persons given name ]]
-            firstName : FirstName as String
+            firstName : FirstName inherits String
          }
       """.trimIndent()
       val taxi = Compiler(source).compile()

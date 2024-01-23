@@ -34,7 +34,6 @@ class ExpressionCompiler(
       typeChecker,
       errors,
       this,
-      null
    )
 
    fun withParameters(arguments: List<Argument>): ExpressionCompiler {
@@ -60,15 +59,18 @@ class ExpressionCompiler(
       return when {
          expressionGroup.children.size == 2 && expressionGroup.children.last() is TypeProjectionContext && expressionGroup.children.first() is ExpressionGroupContext -> {
             // This is an expression with a projection.
-            // Compile the expression first...
-            return compile(expressionGroup.expressionGroup(0), targetType).flatMap { expression ->
+            // Compile the expression first.
+            // We don't pass the targetType, since the expressionGroup is an input into the
+            // projection
+            return compile(expressionGroup.expressionGroup(0), targetType = null).flatMap { expression ->
                compileExpressionProjection( // ...then compile the projection
                   expression,
                   expressionGroup.typeProjection()!!
-               ).map { projectedTypeAndScope ->
-                  // ...and stick it all togetether as a ProjectingExpression
+               ).flatMap { projectedTypeAndScope ->
+                  // ...and stick it all together as a ProjectingExpression
                   val projection = FieldProjection.forNullable(expression.returnType, projectedTypeAndScope)!!
-                  ProjectingExpression(expression, projection)
+                  val projectingExpression = ProjectingExpression(expression, projection)
+                  typeChecker.ifAssignableOrErrorList(projectingExpression.returnType, targetType, expressionGroup) { projectingExpression }
                }
             }
          }
