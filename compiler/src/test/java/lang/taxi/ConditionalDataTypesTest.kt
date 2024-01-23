@@ -317,8 +317,8 @@ class ConditionalDataTypesTest {
       val functionSelector = Compiler(
          """
       type Order {
-         bankDirection: BankDirection as String
-         clientDirection: ClientDirection as String by when (upperCase(this.bankDirection)) {
+         bankDirection: BankDirection inherits String
+         clientDirection: ClientDirection inherits String = when (upperCase(this.bankDirection)) {
             "BUY" -> "Sell"
             "SELL" -> "Buy"
             else -> null
@@ -336,9 +336,9 @@ class ConditionalDataTypesTest {
    fun `using an enum in a when block against a type that isn't defined should error`() {
       val src = """
          type Trade {
-            s0_TypeStr : Leg1FixedOrFloat as String
-            s0_Index : Leg1Index as String
-            s1_Index : Leg2Index as String
+            s0_TypeStr : Leg1FixedOrFloat inherits String
+            s0_Index : Leg1Index inherits String
+            s1_Index : Leg2Index inherits String
             underlyingIndex : String by when (this.s0_TypeStr) {
                FixedOrFloatLeg.Float -> this.s0_Index
                else -> this.s1_Index

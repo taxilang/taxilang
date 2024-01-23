@@ -228,7 +228,7 @@ modelAttributeTypeReference: typeReference '::' typeReference |
 // fieldType usages allow richer syntax with additional features like
 // inline type definitions, optionality, aliases and accessors.
 // Other type usage sites are not as flexible (eg., return type of an operation)
-fieldTypeDeclaration: (nullableTypeReference parameterConstraint?)? (aliasedType? | inlineInheritedType?)? accessor?;
+fieldTypeDeclaration: (nullableTypeReference parameterConstraint?)? inlineInheritedType? accessor?;
 
 //typeReference : qualifiedName typeArguments? arrayMarker? optionalType?;
 

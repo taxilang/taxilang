@@ -163,11 +163,6 @@ class TokenProcessor(
                val fieldTypeDeclaration = memberDeclaration.fieldDeclaration().fieldTypeDeclaration()
                when {
                   fieldTypeDeclaration == null -> null
-                  fieldTypeDeclaration.aliasedType() != null -> lookupSymbolByName(
-                     namespace,
-                     memberDeclaration.fieldDeclaration().fieldTypeDeclaration().nullableTypeReference().typeReference()
-                  )
-
                   fieldTypeDeclaration.inlineInheritedType() != null -> lookupSymbolByName(
                      namespace,
                      memberDeclaration.fieldDeclaration().fieldTypeDeclaration().nullableTypeReference().typeReference()
@@ -441,12 +436,6 @@ class TokenProcessor(
                tokenName,
                tokenRule
             ).collectErrors(errors)
-            // TODO : This is a bit broad - assuming that all typeType's that hit this
-            // line will be a TypeAlias inline.  It could be a normal field declaration.
-            is FieldTypeDeclarationContext -> compileInlineTypeAlias(namespace, tokenRule).collectErrors(
-               errors
-            )
-
             else -> TODO("Not handled: $tokenRule")
          }.map { type ->
             this.errors.addAll(linter.lint(type))
@@ -1387,11 +1376,6 @@ class TokenProcessor(
             fieldTypeContext
          ).map { FieldTypeSpec.forType(it) }
 
-         fieldTypeContext.aliasedType() != null -> compileInlineTypeAlias(
-            namespace,
-            fieldTypeContext
-         ).map { FieldTypeSpec.forType(it) }
-
          else -> {
             resolveTypeOrFunction(
                fieldTypeContext.nullableTypeReference().typeReference().qualifiedName(),
@@ -1576,33 +1560,6 @@ class TokenProcessor(
                )
             )
          )
-      }
-   }
-
-   /**
-    * Handles type aliases that are declared inline (firstName : PersonFirstName as String)
-    * rather than those declared explicitly (type alias PersonFirstName as String)
-    */
-   private fun compileInlineTypeAlias(
-      namespace: Namespace,
-      aliasTypeDefinition: FieldTypeDeclarationContext
-   ): Either<List<CompilationError>, Type> {
-      return parseType(namespace, aliasTypeDefinition.aliasedType().typeReference()).map { aliasedType ->
-         val declaredTypeName =
-            aliasTypeDefinition.nullableTypeReference().typeReference().qualifiedName().identifier().text()
-         val typeAliasName = if (declaredTypeName.contains(".")) {
-            QualifiedNameParser.parse(declaredTypeName)
-         } else {
-            QualifiedName(namespace, declaredTypeName)
-         }
-         // Annotations not supported on Inline type aliases
-         val annotations = emptyList<Annotation>()
-         val typeAlias = TypeAlias(
-            typeAliasName.toString(),
-            TypeAliasDefinition(aliasedType, annotations, aliasTypeDefinition.toCompilationUnit())
-         )
-         typeSystem.register(typeAlias)
-         typeAlias
       }
    }
 

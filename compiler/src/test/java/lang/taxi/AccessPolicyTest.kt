@@ -19,10 +19,10 @@ class AccessPolicyTest {
         val taxiDef = """
 namespace test {
     type TradingDesk {
-        deskId : DeskId as String
+        deskId : DeskId inherits String
     }
     type Trader {
-        traderId : TraderId as String
+        traderId : TraderId inherits String
         desk : DeskId
     }
     type Trade {
@@ -32,7 +32,7 @@ namespace test {
     }
     type alias Group as String
     type UserAuthorization {
-        groups : Groups as Group[]
+        groups : Groups inherits Group[]
     }
 
 // Processors disabled: https://gitlab.com/vyne/vyne/issues/52

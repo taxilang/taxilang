@@ -11,7 +11,7 @@ class TypeAliasTest  {
    fun canDeclareTypeAliasOnCollection() {
       val src = """
 type Person {
-   firstName : FirstName as String
+   firstName : FirstName inherits String
 }
 type alias ListOfPerson as Person[]
       """.trimIndent()
@@ -19,22 +19,5 @@ type alias ListOfPerson as Person[]
       val type = doc.typeAlias("ListOfPerson")
       val typeAliasParameterizedName = type.aliasType!!.toQualifiedName().parameterizedName
       typeAliasParameterizedName.should.equal("lang.taxi.Array<Person>")
-   }
-
-   @Test
-   fun inlineTypeAliasesWithFullyQualifiedNamesAreNotNamedInTheirNamespace() {
-      val src = """
-namespace vyne {
-    type Client {
-        id : vyne.ClientId as String
-        name : ClientName as String
-        jurisdiction : foo.ClientJurisdiction as String
-    }
-}
-      """.trimIndent()
-      val schema = Compiler(src).compile()
-      schema.objectType("vyne.Client").field("id").type.qualifiedName.should.equal("vyne.ClientId")
-      schema.objectType("vyne.Client").field("jurisdiction").type.qualifiedName.should.equal("foo.ClientJurisdiction")
-      schema.objectType("vyne.Client").field("name").type.qualifiedName.should.equal("vyne.ClientName")
    }
 }
