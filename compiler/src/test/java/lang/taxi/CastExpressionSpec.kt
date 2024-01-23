@@ -28,7 +28,7 @@ class CastExpressionSpec :DescribeSpec({
          castExpression.expression.shouldBeInstanceOf<FunctionExpression>()
       }
       it("should raise error if cast type is not assignable ") {
-         val field = """
+         """
       type CurrencyCode inherits String
       model Trade {
          symbol: String
