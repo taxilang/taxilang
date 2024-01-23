@@ -17,7 +17,10 @@ class TypeChecker(val enabled:FeatureToggle = FeatureToggle.DISABLED) {
       }
 
       if (assignmentTargetType is EnumType) {
-         return valueType.inheritsFrom(assignmentTargetType)
+         return valueType.inheritsFrom(assignmentTargetType) ||
+            // Allow naked Strings to be assigned to enums.
+            // This allows name matching
+            valueTypeWithoutAliases == PrimitiveType.STRING
       }
 
       // We allow naked primitives to be assigned to compatible
