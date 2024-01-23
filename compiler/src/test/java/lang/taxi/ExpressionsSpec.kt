@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.assertions.fail
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldContainExactly
@@ -288,6 +289,52 @@ class ExpressionsSpec : DescribeSpec({
             nestedProjection.returnType.asA<ObjectType>().fields.map { it.name }.shouldContainExactly("id", "imdb")
             nestedProjection.expression.shouldBeInstanceOf<LambdaExpression>()
          }
+      }
+
+      it("a single arg expression without a type declaration can resolve as a function call") {
+         val schemaWithoutFieldType = """
+   model Person {}
+   model Movie {
+      // This is the test.
+      // There's no type declaration, so it must be inferred from the function.
+      // However, the grammar is ambiguous - this could be either:
+      //   - A type of first with a constraint
+      //   - A function call named first, with a param
+      // So, where the grammar can't differentiate, the parser has to.
+       starring : first(Person[])
+   }
+""".compiled()
+
+         val starringField = schemaWithoutFieldType.model("Movie")
+            .field("starring")
+         starringField
+            .type.qualifiedName
+            .shouldBe("Person")
+      }
+      it("reports type errors on a single arg expression without a type declaration resolved as a function call") {
+         val errors = """
+   model Person {}
+   model Movie {
+       // first expects an array for it's parameter.
+       // This shouldn't compile.
+       // This code goes through a different path because of grammar challenges discussed above
+       starring : first(2)
+   }
+""".validated()
+         errors.shouldContainMessage("Not enough information to infer type argument T (of lang.taxi.Array<taxi.stdlib.first\$T>) from the provided inputs")
+      }
+
+      it("reports invalid number of args on a single arg expression without a type declaration resolved as a function call") {
+         val errors = """
+   model Person {}
+   model Movie {
+       // first expects an array for it's parameter.
+       // This shouldn't compile.
+       // This code goes through a different path because of grammar challenges discussed above
+       starring : first()
+   }
+""".validated()
+         errors.shouldContainMessage("Function taxi.stdlib.first expects 1 parameters, but none were provided")
       }
 
    }

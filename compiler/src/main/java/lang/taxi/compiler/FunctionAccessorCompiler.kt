@@ -18,6 +18,7 @@ import lang.taxi.types.TypeReferenceSelector
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.wrapErrorsInList
+import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.RuleContext
 
 interface FunctionParameterReferenceResolver {
@@ -41,8 +42,23 @@ class FunctionAccessorCompiler(
    private val typeChecker: TypeChecker,
    private val errors: MutableList<CompilationError>,
    private val referenceResolver: FunctionParameterReferenceResolver,
-   private val parentContext: RuleContext?,
 ) {
+   companion object {
+      fun buildAndResolveTypeArgumentsOrError(
+         function: Function,
+         parameters: List<Accessor>,
+         targetType: Type,
+         context: ParserRuleContext
+      ): Either<List<CompilationError>, FunctionAccessor> {
+         return try {
+            FunctionAccessor.buildAndResolveTypeArguments(function, parameters, targetType).right()
+         } catch (e: Exception) {
+            listOf(CompilationError(context.toCompilationUnit(), e.message!!)).left()
+         }
+      }
+
+   }
+
    internal fun buildFunctionAccessor(
       functionContext: TaxiParser.FunctionCallContext,
       targetType: Type,
@@ -108,11 +124,7 @@ class FunctionAccessorCompiler(
                parametersOrErrors.flatMap { parameters: List<Accessor> ->
                   // There used to be view related stuff here - I suspect now thats
                   //deleted, this can be simplified
-                  try {
-                     FunctionAccessor.buildAndResolveTypeArguments(function, parameters, targetType).right()
-                  } catch (e: Exception) {
-                     listOf(CompilationError(functionContext.toCompilationUnit(), e.message!!)).left()
-                  }
+                  buildAndResolveTypeArgumentsOrError(function, parameters, targetType, functionContext)
 
                }
             }
@@ -133,3 +145,4 @@ class FunctionAccessorCompiler(
          }
    }
 }
+
