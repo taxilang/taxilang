@@ -34,7 +34,6 @@ class ExpressionCompiler(
       typeChecker,
       errors,
       this,
-      null
    )
 
    fun withParameters(arguments: List<Argument>): ExpressionCompiler {

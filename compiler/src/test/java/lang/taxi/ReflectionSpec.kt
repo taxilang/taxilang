@@ -63,17 +63,17 @@ model Film {
          fieldType.qualifiedName.shouldBe("HitFilm")
       }
       it("should give compilation error when functions that infer return type from assignment if no assignment type is delared") {
-         """
+         val errors = """
             // Unlike convert, cast (a dummy function) doesn't take a
             // type as an argument, so should resolve via assignment site
             declare function <T> cast(input:Any):T
             model HitFilm inherits Film
             model Film {
                title : FilmTitle inherits String
-               hit :cast(this.title) // this is an error, as cast requires an assignment type
+               hit : cast(this.title) // this is an error, as cast requires an assignment type
             }
          """.validated()
-            .shouldContainMessage("Function cast expects 1 parameters, but none were provided")
+            errors.shouldContainMessage("Insufficient information to resolve type argument T in function cast")
       }
 
       it("should not compile a model using a function that has a type reference where return type is not compatibile") {
