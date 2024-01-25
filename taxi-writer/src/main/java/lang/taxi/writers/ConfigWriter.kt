@@ -8,12 +8,17 @@ import java.nio.file.Path
 
 class ConfigWriter {
    fun serialize(project: TaxiPackageProject): String {
+
       val config = project.toConfig("root")
+         .getConfig("root")
+         .root()
+         .toConfig()
       val root = config.root()
       val configString = root.render(
          ConfigRenderOptions.defaults()
-         .setOriginComments(false)
-         .setJson(false)
+            .setFormatted(true)
+            .setOriginComments(false)
+            .setJson(false)
       )
       return configString
    }
@@ -22,12 +27,13 @@ class ConfigWriter {
 
       // Can't find a decent way of serializing Hocon in a pretty format.
       // Using this approach until it hurts
-      val conf =  listOf(
+      val conf = listOf(
          TaxiPackageProject::name,
          TaxiPackageProject::version,
-         TaxiPackageProject::sourceRoot).map {
+         TaxiPackageProject::sourceRoot
+      ).map {
          it.name to it.get(project)
-      }.joinToString("\n") { (key,value) -> "$key: $value" }
+      }.joinToString("\n") { (key, value) -> "$key: $value" }
       return conf + "\n"
 
    }
@@ -35,8 +41,8 @@ class ConfigWriter {
    private fun render(config: Config): String {
       return config.root().render(
          ConfigRenderOptions.defaults()
-         .setOriginComments(false)
-         .setJson(false)
+            .setOriginComments(false)
+            .setJson(false)
       )
    }
 }

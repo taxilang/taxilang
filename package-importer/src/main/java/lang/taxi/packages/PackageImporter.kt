@@ -5,6 +5,7 @@ import lang.taxi.sources.SourceCode
 import java.nio.file.Files
 import java.nio.file.Path
 
+@Deprecated("Use PackageManager instead")
 class PackageImporter(
    private val importerConfig: ImporterConfig,
    private val downloaderFactory: PackageDownloaderFactory = PackageDownloaderFactory(importerConfig, userFacingLogger = importerConfig.userFacingLogger)

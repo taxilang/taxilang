@@ -10,6 +10,12 @@
 
    <artifactId>package-importer</artifactId>
 
+   <properties>
+      <httpclient.version>4.5.12</httpclient.version>
+      <http4k.version>4.39.0.0</http4k.version>
+      <maven-resolver.version>1.9.18</maven-resolver.version>
+   </properties>
+
 
    <dependencies>
       <dependency>
@@ -87,10 +93,7 @@
          <scope>provided</scope>
       </dependency>
    </dependencies>
-   <properties>
-      <httpclient.version>4.5.12</httpclient.version>
-      <http4k.version>4.39.0.0</http4k.version>
-   </properties>
+
    <build>
       <plugins>
          <plugin>

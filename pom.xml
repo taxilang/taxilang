@@ -69,6 +69,7 @@
       <module>typescript</module>
       <module>taxi-to-openapi-plugin</module>
        <module>soap-to-taxi</module>
+      <module>package-manager</module>
    </modules>
 
    <properties>
@@ -77,7 +78,7 @@
       <kotlin.version>1.8.10</kotlin.version>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <arrow.version>1.1.5</arrow.version>
-      <guava.version>31.1-jre</guava.version>
+      <guava.version>33.0.0-jre</guava.version>
       <spek.version>2.0.19</spek.version>
       <kotest.version>5.5.5</kotest.version>
       <junit.jupiter.version>5.9.1</junit.jupiter.version>
@@ -85,7 +86,8 @@
       <zip4j.version>2.11.5</zip4j.version>
 
       <taxi.version>${project.version}</taxi.version>
-      <testcontainers.version>1.17.6</testcontainers.version>
+      <testcontainers.version>1.19.3</testcontainers.version>
+      <reactor-bom.version>2023.0.0</reactor-bom.version>
    </properties>
 
    <dependencies>
@@ -248,6 +250,13 @@
             <groupId>net.lingala.zip4j</groupId>
             <artifactId>zip4j</artifactId>
             <version>${zip4j.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-bom</artifactId>
+            <version>${reactor-bom.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
          </dependency>
       </dependencies>
    </dependencyManagement>

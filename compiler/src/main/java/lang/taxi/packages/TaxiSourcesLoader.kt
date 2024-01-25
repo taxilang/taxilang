@@ -15,7 +15,7 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
          importer: PackageImporter = PackageImporter(ImporterConfig.forProject(project))
       ): TaxiPackageSources {
          val dependencySources = importer.fetchDependencies(project)
-            .map { it.source }
+            .map { packageSource -> packageSource.source }
          return loadPackage(packageRootPath, project, dependencySources)
       }
 

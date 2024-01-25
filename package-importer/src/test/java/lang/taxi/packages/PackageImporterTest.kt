@@ -40,7 +40,6 @@ class PackageImporterTest {
 
    @Test
    fun given_packageDoesNotExistInLocalRepo_then_itIsDownloaded() {
-
       val importerConfig = importerConfig()
       val (packageService, packageServiceFactory) = fileServiceFactory()
       val downloaderFactory = PackageDownloaderFactory(importerConfig, packageServiceFactory, LogWritingMessageLogger)
@@ -54,6 +53,11 @@ class PackageImporterTest {
 
       val files = importer.fetchDependencies(projectConfig)
       files.should.have.size(2)
+   }
+
+   @Test
+   fun `packages declared with a github http endpoint are downloaded`() {
+      
    }
 
    private fun importerConfig(): ImporterConfig {

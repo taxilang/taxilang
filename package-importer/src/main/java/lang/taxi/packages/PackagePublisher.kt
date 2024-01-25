@@ -24,7 +24,7 @@ class PackagePublisher(
       val publishToRepository = project.publishToRepository
          ?: error("Cannot publish without a publishToRepository defined")
 
-      val zip = createZip(projectHome, project.identifier)
+      val zip = Companion.createZip(projectHome, project.identifier)
 
       log().info("Publishing package ${project.identifier.id} from ${zip.canonicalPath} to ${publishToRepository!!.url}")
       val releaseUrlParam = if (releaseType != null) "?releaseType=$releaseType" else "/${project.identifier.version}"
@@ -45,22 +45,24 @@ class PackagePublisher(
 
    }
 
-   private fun createZip(projectHome: Path, identifier: PackageIdentifier): File {
-      val zipFilePath = FileUtils.getTempDirectory().toPath().resolve("${identifier.fileSafeIdentifier}.zip")
-      val zipFile = ZipFile(zipFilePath.toFile())
-      projectHome.toFile()
-         .walkTopDown()
-         .filter { listOf("conf", "taxi").contains(it.extension) }
-         .forEach {
-            if (it.isFile) {
-               log().info("Adding file ${it.canonicalPath}")
-               val zipParameters = ZipParameters()
-               zipParameters.compressionMethod = CompressionMethod.DEFLATE
-               zipParameters.compressionLevel = CompressionLevel.NORMAL
-               zipFile.addFile(it, zipParameters)
+   companion object {
+      fun createZip(projectHome: Path, identifier: PackageIdentifier): File {
+         val zipFilePath = FileUtils.getTempDirectory().toPath().resolve("${identifier.fileSafeIdentifier}.zip")
+         val zipFile = ZipFile(zipFilePath.toFile())
+         projectHome.toFile()
+            .walkTopDown()
+            .filter { listOf("conf", "taxi").contains(it.extension) }
+            .forEach {
+               if (it.isFile) {
+                  log().info("Adding file ${it.canonicalPath}")
+                  val zipParameters = ZipParameters()
+                  zipParameters.compressionMethod = CompressionMethod.DEFLATE
+                  zipParameters.compressionLevel = CompressionLevel.NORMAL
+                  zipFile.addFile(it, zipParameters)
+               }
             }
-         }
-      return zipFilePath.toFile()
+         return zipFilePath.toFile()
+      }
    }
 
 
