@@ -19,7 +19,7 @@ class TaxiFileBasedPackageBundler(
          val tempDir = createTempDirectory()
          val zip = createZip(projectHome, identifier, tempDir)
          val taxiConf = projectHome.resolve("taxi.conf")
-         require(Files.exists(taxiConf))
+         require(Files.exists(taxiConf)) { "Expected a taxi.conf file at $taxiConf"}
          return TaxiProjectBundle(
             taxiConf,
             zip.toPath()

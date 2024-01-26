@@ -1,13 +1,11 @@
 package org.taxilang.packagemanger
 
-import com.google.common.io.Resources
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
 import lang.taxi.packages.ImporterConfig
 import lang.taxi.packages.PackageIdentifier
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.writers.ConfigWriter
-import org.apache.commons.io.FileUtils
 import org.eclipse.aether.repository.RemoteRepository
 import org.eclipse.aether.repository.RepositoryPolicy
 import org.junit.jupiter.api.Test
@@ -37,7 +35,7 @@ class PackageManagerTest {
    @Test
    fun `can resolve transitive dependencies from file repo`() {
       // Base Project
-      val (packageIdentifier,baseProjectPath) = Companion.createTaxiProject(
+      val (packageIdentifier,baseProjectPath) = createTaxiProject(
          projctFolder.toPath(),
          identifier = "org.test/rootProject/0.1.0",
          dependencies = listOf("org.test/dependencyA/0.1.0"),
@@ -74,6 +72,67 @@ class PackageManagerTest {
       cacheDir.toPath().resolve("org/test/dependencyA1/0.1.0/src/types.taxi").exists().shouldBeTrue()
       cacheDir.toPath().resolve("org/test/dependencyA1/0.1.0/taxi.conf").exists().shouldBeTrue()
    }
+
+
+   @Test
+   fun `can install dev project without deps to local repo`() {
+      val (packageIdentifier,taxiConfPath) = createTaxiProject(
+         projctFolder.toPath(),
+         identifier = "org.test/rootProject/0.1.0",
+         dependencies = emptyList(),
+         typeNames = listOf("Film")
+      )
+      val taxiProject = loadProject(taxiConfPath)
+      val packageManager = buildPackageManager()
+      packageManager.bundleAndInstall(taxiConfPath.parent,taxiProject)
+
+      cacheDir.toPath().resolve("org/test/rootProject/0.1.0/src").exists().shouldBeTrue()
+   }
+
+   @Test
+   fun `when installing dev project with deps to local repo then deps are installed also`() {
+      // Dev project - in the working dir.
+      val (packageIdentifier,taxiConfPath) = createTaxiProject(
+         projctFolder.toPath(),
+         identifier = "org.test/rootProject/0.1.0",
+         dependencies = emptyList(),
+         typeNames = listOf("Film")
+      )
+      // DepA - installed in "remote"
+      createTaxiProject(
+         remoteRepoDir.toPath(),
+         identifier = "org.test/dependencyA/0.1.0",
+         dependencies = listOf("org.test/dependencyA1/0.1.0"),
+         typeNames = listOf("Person")
+      )
+      // DepA-1 - installed in "remote"
+      createTaxiProject(
+         remoteRepoDir.toPath(),
+         identifier = "org.test/dependencyA1/0.1.0",
+         typeNames = listOf("Vehicle")
+      )
+
+
+      val taxiProject = loadProject(taxiConfPath)
+      val packageManager = buildPackageManager()
+
+      // Test:
+      packageManager.bundleAndInstall(taxiConfPath.parent,taxiProject)
+
+      cacheDir.toPath().resolve("org/test/rootProject/0.1.0/src").exists().shouldBeTrue()
+
+      // Also, the dependencies should've been "downloaded" from the remote repositiory, and installed
+      // in our local cache:
+      cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/src").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/src/types.taxi").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/taxi.conf").exists().shouldBeTrue()
+
+      cacheDir.toPath().resolve("org/test/dependencyA1/0.1.0/src").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("org/test/dependencyA1/0.1.0/src/types.taxi").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("org/test/dependencyA1/0.1.0/taxi.conf").exists().shouldBeTrue()
+   }
+
+
 
    private fun buildPackageManager(): PackageManager {
       val (repoSystem, session) = RepositorySystemProvider.build(

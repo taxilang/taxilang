@@ -12,6 +12,7 @@ import org.eclipse.aether.collection.CollectRequest
 import org.eclipse.aether.collection.DependencyCollectionException
 import org.eclipse.aether.graph.Dependency
 import org.eclipse.aether.graph.DependencyNode
+import org.eclipse.aether.installation.InstallRequest
 import org.eclipse.aether.repository.LocalRepository
 import org.eclipse.aether.repository.RemoteRepository
 import org.eclipse.aether.resolution.ArtifactRequest
@@ -47,6 +48,30 @@ class PackageManager(
          val (system, session) = RepositorySystemProvider.build()
          return PackageManager(config, system, session)
       }
+   }
+
+   /**
+    * Installs a project into the local repository.
+    */
+   fun bundleAndInstall(projectLocation: Path, projectConfig: TaxiPackageProject): Path {
+      val bundle = TaxiFileBasedPackageBundler.createBundle(
+         projectLocation,
+         projectConfig.identifier
+      )
+      val dependency = projectConfig.identifier.asDependency(
+         file = bundle.zip,
+         extension = "zip"
+      )
+      val installRequest = InstallRequest()
+      installRequest.addArtifact(dependency.artifact)
+      val result = repositorySystem.install(repositorySystemSession, installRequest)
+      val artifactPath = repositorySystemSession.localRepository.basedir.resolve(
+         repositorySystemSession.localRepositoryManager.getPathForLocalArtifact(dependency.artifact)
+      )
+      unzip(artifactPath)
+
+      fetchDependencies(projectConfig)
+      return artifactPath.toPath().parent
    }
 
    fun fetchDependencies(projectConfig: TaxiPackageProject): List<TaxiPackageProject> {
@@ -131,18 +156,18 @@ class PackageManager(
    }
 }
 
-fun PackageIdentifier.asDependency(): Dependency {
+fun PackageIdentifier.asDependency(file: Path? = null, extension: String? = null): Dependency {
    return Dependency(
       DefaultArtifact(
          this.name.organisation,
          this.name.name,
          null,
-         null,
+         extension,
          this.version,
          mutableMapOf(
             ArtifactExtensions.REQUESTED_VERSION to this.version
          ),
-         null as File?
+         file?.toFile()
 
       ),
       "compile"
