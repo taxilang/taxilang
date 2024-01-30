@@ -13,6 +13,12 @@ import java.nio.file.Path
 // is no package yet.
 class TaxiPackageLoader(val path: Path? = null) {
 
+   init {
+       if (path == null) {
+          log().warn("")
+       }
+   }
+
    companion object {
       fun forDirectoryContainingTaxiFile(path:Path):TaxiPackageLoader {
          return TaxiPackageLoader(path.resolve("taxi.conf"))
@@ -45,8 +51,11 @@ class TaxiPackageLoader(val path: Path? = null) {
          }.toMutableList()
       configs.add(ConfigFactory.load())
       val config = configs.reduceRight(Config::withFallback)
-//      log().debug("Effective config:")
-//      log().debug(config.root().render(ConfigRenderOptions.defaults()))
-      return config.extract()
+      val loaded:TaxiPackageProject =  config.extract()
+      // If we were explicitly given a root path, use that.
+      // The "root path" concept is tricky, as the config is actally composed of many locations
+      return if (path != null) {
+         loaded.copy(packageRootPath = path)
+      } else loaded
    }
 }

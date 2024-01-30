@@ -59,7 +59,7 @@ class TaxiDescriptorReader : ArtifactDescriptorReader, Service {
       )
       return try {
          val resolveResult = artifactResolver.resolveArtifact(session, resolveRequest)
-         val project = TaxiProjectLoader().withConfigFileAt(resolveResult.artifact.file.toPath())
+         val project = TaxiProjectLoader(resolveResult.artifact.file.toPath())
             .load()
 
          project.dependencyPackages.forEach { packageIdentifier ->

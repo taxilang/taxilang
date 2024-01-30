@@ -15,7 +15,7 @@ interface MessageLogger {
 }
 
 object LogWritingMessageLogger : MessageLogger {
-   private val log = LoggerFactory.getLogger("Package manager")
+   private val log = LoggerFactory.getLogger("lang.taxi.PackageManager")
    override fun info(message: String) {
       log.info(message)
    }

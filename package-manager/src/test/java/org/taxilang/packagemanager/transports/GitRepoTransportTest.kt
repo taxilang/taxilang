@@ -61,13 +61,13 @@ class GitRepoTransportTest {
 
       // Also, the dependencies should've been "downloaded" from the remote repositiory, and installed
       // in our local cache:
-      cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/src").exists().shouldBeTrue()
-      cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/src/types.taxi").exists().shouldBeTrue()
-      cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/taxi.conf").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/bundle/src").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/bundle/src/types.taxi").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/bundle/taxi.conf").exists().shouldBeTrue()
 
-      cacheDir.toPath().resolve("org/test/dependencyB/0.1.0/src").exists().shouldBeTrue()
-      cacheDir.toPath().resolve("org/test/dependencyB/0.1.0/src/types.taxi").exists().shouldBeTrue()
-      cacheDir.toPath().resolve("org/test/dependencyB/0.1.0/taxi.conf").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("org/test/dependencyB/0.1.0/bundle/src").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("org/test/dependencyB/0.1.0/bundle/src/types.taxi").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("org/test/dependencyB/0.1.0/bundle/taxi.conf").exists().shouldBeTrue()
    }
 
    private fun buildPackageManager(): PackageManager {

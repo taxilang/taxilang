@@ -6,7 +6,7 @@
    <parent>
       <groupId>org.taxilang</groupId>
       <artifactId>parent</artifactId>
-      <version>1.48.0-SNAPSHOT</version>
+      <version>1.49.0-SNAPSHOT</version>
    </parent>
 
    <artifactId>package-manager</artifactId>
@@ -131,4 +131,19 @@
          <artifactId>zip4j</artifactId>
       </dependency>
    </dependencies>
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>test-jar</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+   </build>
 </project>

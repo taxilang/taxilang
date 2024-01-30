@@ -8,7 +8,9 @@ data class ImporterConfig(val localCache: Path, val userFacingLogger: MessageLog
          project: TaxiPackageProject,
          userFacingLogger: MessageLogger = LogWritingMessageLogger
       ): ImporterConfig {
-         return ImporterConfig(project.taxiHome.resolve("repository"), userFacingLogger)
+         val localCache = project.taxiHome.resolve("repository/")
+         localCache.toFile().mkdirs()
+         return ImporterConfig(localCache, userFacingLogger)
       }
    }
 }

@@ -11,20 +11,18 @@ import java.nio.file.Path
 
 // You probably want to use TaxiSourcesLoader,
 // which will return the project, and the sources.
-class TaxiProjectLoader {
-
-   private val pathsToSearch = mutableListOf(
-      SystemUtils.getUserHome().toPath().resolve(".taxi/taxi.conf")
-   )
-
-
+class TaxiProjectLoader(
    /**
     * Specify the actual taxi.conf file (not the containing directory)
     */
-   fun withConfigFileAt(path: Path): TaxiProjectLoader {
-      pathsToSearch.add(path)
-      return this
-   }
+   private val taxiConfPath: Path
+) {
+
+   private val pathsToSearch = mutableListOf(
+      taxiConfPath,
+      SystemUtils.getUserHome().toPath().resolve(".taxi/taxi.conf")
+   )
+
 
    fun load(): TaxiPackageProject {
 
@@ -38,6 +36,7 @@ class TaxiProjectLoader {
          }.toMutableList()
       configs.add(ConfigFactory.load())
       val config = configs.reduceRight(Config::withFallback)
-      return config.extract()
+      return config.extract<TaxiPackageProject>()
+         .copy(packageRootPath = taxiConfPath.parent)
    }
 }

@@ -19,6 +19,11 @@
    </properties>
    <dependencies>
       <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>package-manager</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      <dependency>
          <groupId>org.beryx</groupId>
          <artifactId>text-io</artifactId>
          <version>3.4.1</version>

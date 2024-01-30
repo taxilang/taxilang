@@ -30,7 +30,9 @@ class ConfigWriter {
       val conf = listOf(
          TaxiPackageProject::name,
          TaxiPackageProject::version,
-         TaxiPackageProject::sourceRoot
+         TaxiPackageProject::sourceRoot,
+         TaxiPackageProject::additionalSources,
+         TaxiPackageProject::dependencies
       ).map {
          it.name to it.get(project)
       }.joinToString("\n") { (key, value) -> "$key: $value" }

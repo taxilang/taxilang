@@ -101,7 +101,7 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
     */
    private fun createBundleZipAt(repoPath: Path): Path {
       val taxiConfPath = repoPath.resolve("taxi.conf")
-      val taxiConf = TaxiProjectLoader().withConfigFileAt(taxiConfPath).load()
+      val taxiConf = TaxiProjectLoader(taxiConfPath).load()
       val bundle = TaxiFileBasedPackageBundler.createBundle(repoPath, taxiConf.identifier)
       return bundle.zip
    }

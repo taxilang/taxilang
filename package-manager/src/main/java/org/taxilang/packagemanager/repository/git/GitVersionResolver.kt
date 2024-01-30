@@ -17,7 +17,7 @@ class GitVersionResolver : VersionResolver {
       val path = GitRepoTransport(session)
          .cloneRepo(URI(request.artifact.version))
       val taxiConf = path.resolve("taxi.conf")
-      val project = TaxiProjectLoader().withConfigFileAt(taxiConf).load()
+      val project = TaxiProjectLoader(taxiConf).load()
       val result = VersionResult(request)
          .setVersion(project.version)
          .setRepository(GitRepositorySupport.GIT_REMOTE_REPOSITORY)

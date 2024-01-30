@@ -22,7 +22,9 @@ import org.taxilang.packagemanager.repository.git.ArtifactExtensions
 import org.taxilang.packagemanager.repository.git.GitRepositorySupport
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 class PackageManager(
    private val importerConfig: ImporterConfig,
@@ -68,9 +70,9 @@ class PackageManager(
       val artifactPath = repositorySystemSession.localRepository.basedir.resolve(
          repositorySystemSession.localRepositoryManager.getPathForLocalArtifact(dependency.artifact)
       )
-      unzip(artifactPath)
+      processArchive(artifactPath)
 
-      fetchDependencies(projectConfig)
+      val fetchedDependencies = fetchDependencies(projectConfig)
       return artifactPath.toPath().parent
    }
 
@@ -95,7 +97,7 @@ class PackageManager(
          return emptyList()
       }
 
-      return resolved.map { unzip(it.artifact.file) }
+      return resolved.map { processArchive(it.artifact.file) }
          .mapNotNull { path ->
             val taxiConf = path.resolve("taxi.conf")
             if (!taxiConf.exists()) {
@@ -103,8 +105,7 @@ class PackageManager(
                null
             } else {
                try {
-                  TaxiProjectLoader()
-                     .withConfigFileAt(taxiConf)
+                  TaxiProjectLoader(taxiConf)
                      .load()
                } catch (e: Exception) {
                   userFacingLogger.error("Failed to read the taxi.conf at $path: ${e::class.java.simpleName} - ${e.message}")
@@ -115,17 +116,31 @@ class PackageManager(
          }
    }
 
-   private fun unzip(file: File): Path {
+   private fun processArchive(file: File): Path {
       // If it's a file, it's a zip.
       return if (file.isFile) {
-         ZipFile(file).extractAll(file.parent)
-         return file.parentFile.toPath()
+         return unzipIfRequired(file)
       } else {
          file.toPath()
       }
    }
 
-   fun collectArtifactRequests(nodes: List<DependencyNode>): List<ArtifactRequest> {
+   private fun unzipIfRequired(file: File): Path {
+      // TODO: It seems silly to always unzip,
+      // however avoiding premature optimization for now.
+      // In future: Consider comparing the hash of the zip now with a previous
+      // hash, and only unzip if things have changed.
+      val unzipDir = file.toPath().resolveSibling("bundle/")
+      return if (unzipDir.exists() && unzipDir.isDirectory()) {
+         unzipDir
+      } else {
+         unzipDir.toFile().mkdirs()
+         ZipFile(file).extractAll(unzipDir.absolutePathString())
+         unzipDir
+      }
+   }
+
+   private fun collectArtifactRequests(nodes: List<DependencyNode>): List<ArtifactRequest> {
       return nodes.flatMap { dependency ->
          val artifactRequest = ArtifactRequest(
             DefaultArtifact(
@@ -155,6 +170,14 @@ class PackageManager(
       return request
    }
 }
+
+/**
+ * Returns a project, along with all its dependencies - including transitive dependencies.
+ */
+data class TaxiPackageGraph(
+   val rootProject: TaxiPackageProject,
+   val dependencies: List<TaxiPackageProject>
+)
 
 fun PackageIdentifier.asDependency(file: Path? = null, extension: String? = null): Dependency {
    return Dependency(
