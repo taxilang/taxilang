@@ -236,8 +236,7 @@ model Foo {
             }
          }
       """.trimIndent()
-      generated.trimNewLines().should.equal(expected.trimNewLines())
-      generated.shouldCompile()
+      generated.shouldCompileTheSameAs(expected)
    }
 
    @Test
