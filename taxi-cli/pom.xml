@@ -35,7 +35,7 @@
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
-         <artifactId>taxi-writer</artifactId>
+         <artifactId>compiler</artifactId>
          <version>${project.version}</version>
       </dependency>
       <dependency>

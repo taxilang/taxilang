@@ -26,9 +26,15 @@
 
       <dependency>
          <groupId>org.taxilang</groupId>
-         <artifactId>test-utils</artifactId>
+         <artifactId>compiler</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>compiler</artifactId>
          <version>${project.version}</version>
          <scope>test</scope>
+         <type>test-jar</type>
       </dependency>
       <dependency>
          <groupId>javax.servlet</groupId>

@@ -7,8 +7,8 @@ import lang.taxi.lsp.completion.TypeProvider
 import lang.taxi.lsp.parser.TokenInjectingErrorStrategy
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
 import lang.taxi.packages.TaxiPackageProject
-import lang.taxi.packages.utils.log
 import lang.taxi.types.SourceNames
+import lang.taxi.utils.log
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.eclipse.lsp4j.TextDocumentIdentifier

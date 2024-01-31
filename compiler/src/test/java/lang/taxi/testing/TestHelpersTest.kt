@@ -12,7 +12,8 @@ class TestHelpersTest {
       val assertionError = assertThrows<AssertionError> {
          TestHelpers.expectToCompileTheSame(
             generated = listOf(""),
-            expected = listOf("""
+            expected = listOf(
+               """
                namespace foo
                type bar
                """.trimIndent()
@@ -32,7 +33,8 @@ class TestHelpersTest {
 
       val assertionError = assertThrows<AssertionError> {
          TestHelpers.expectToCompileTheSame(
-            generated = listOf("""
+            generated = listOf(
+               """
                namespace foo
                type bar
                """.trimIndent()
@@ -55,14 +57,17 @@ class TestHelpersTest {
 
       val assertionError = assertThrows<AssertionError> {
          TestHelpers.expectToCompileTheSame(
-            generated = listOf("""
+            generated = listOf(
+               """
                namespace foo
                type bar
                """.trimIndent()
             ),
-            expected = listOf("""
+            expected = listOf(
+               """
                namespace foo
-            """.trimIndent())
+            """.trimIndent()
+            )
          )
       }
       assertThat(assertionError).hasMessage("""
@@ -80,16 +85,19 @@ class TestHelpersTest {
 
       val assertionError = assertThrows<AssertionError> {
          TestHelpers.expectToCompileTheSame(
-            generated = listOf("""
+            generated = listOf(
+               """
                namespace foo
                type One
                """.trimIndent()
             ),
-            expected = listOf("""
+            expected = listOf(
+               """
                namespace foo
                type One
                type Two
-            """.trimIndent())
+            """.trimIndent()
+            )
          )
       }
       assertThat(assertionError).hasMessage("""
@@ -107,17 +115,20 @@ class TestHelpersTest {
 
       val assertionError = assertThrows<AssertionError> {
          TestHelpers.expectToCompileTheSame(
-            generated = listOf("""
+            generated = listOf(
+               """
                namespace foo
                @SomeAnnotation(1)
                service bar {}
                """.trimIndent()
             ),
-            expected = listOf("""
+            expected = listOf(
+               """
                namespace foo
                @SomeAnnotation(2)
                service bar {}
-            """.trimIndent())
+            """.trimIndent()
+            )
          )
       }
       assertThat(assertionError).hasMessage("""

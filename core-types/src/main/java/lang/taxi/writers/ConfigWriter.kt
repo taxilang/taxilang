@@ -4,7 +4,6 @@ import com.typesafe.config.Config
 import com.typesafe.config.ConfigRenderOptions
 import io.github.config4k.toConfig
 import lang.taxi.packages.TaxiPackageProject
-import java.nio.file.Path
 
 class ConfigWriter {
    fun serialize(project: TaxiPackageProject): String {
