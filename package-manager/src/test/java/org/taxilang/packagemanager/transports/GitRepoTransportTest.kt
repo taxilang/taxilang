@@ -26,6 +26,25 @@ class GitRepoTransportTest {
    lateinit var tempWorkdir: File
 
    @Test
+   fun `will load dependencies from remote git repo`() {
+      // Base Project
+      val (packageIdentifier, baseProjectPath) = PackageManagerTest.createTaxiProject(
+         tempWorkdir.toPath(),
+         identifier = "org.test/rootProject/0.1.0",
+         // This is a real test git project, deployed on gitlab
+         dependencies = listOf("org.test/dependencyA/https://gitlab.com/taxi-lang/test-project-a.git"),
+         typeNames = listOf("Film")
+      )
+      val taxiProject = loadProject(baseProjectPath)
+      val packageManager = buildPackageManager()
+      val loaded = packageManager.fetchDependencies(taxiProject)
+
+      cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/bundle/src").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/bundle/src/types.taxi").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/bundle/taxi.conf").exists().shouldBeTrue()
+
+   }
+   @Test
    fun `will load dependencies from git`() {
       // DepB - installed in "remote"
       val depBGitUrl = PackageManagerTest.createTaxiProject(
@@ -72,7 +91,7 @@ class GitRepoTransportTest {
 
    private fun buildPackageManager(): PackageManager {
       val (repoSystem, session) = RepositorySystemProvider.build(
-         listOf(GitRepoTransportFactory::class.java)
+//         listOf(GitRepoTransportFactory::class.java)
       )
       val packageManager = PackageManager(
          ImporterConfig(cacheDir.toPath()),

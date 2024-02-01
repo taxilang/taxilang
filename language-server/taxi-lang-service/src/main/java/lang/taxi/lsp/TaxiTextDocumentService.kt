@@ -1,9 +1,11 @@
 package lang.taxi.lsp
 
 import lang.taxi.*
+import lang.taxi.logging.CompositeLogger
+import lang.taxi.logging.MessageLogger
 import lang.taxi.lsp.actions.CodeActionService
 import lang.taxi.lsp.completion.CompletionService
-import lang.taxi.lsp.completion.EditorCompletionService
+import lang.taxi.lsp.completion.CompositeCompletionService
 import lang.taxi.lsp.completion.normalizedUriPath
 import lang.taxi.lsp.formatter.FormatterService
 import lang.taxi.lsp.gotoDefinition.GotoDefinitionService
@@ -43,9 +45,9 @@ data class CompilationResult(
    val countOfSources: Int,
    val duration: Duration,
    val errors: List<CompilationError> = emptyList()
-
-
 ) {
+   val documentOrEmpty:TaxiDocument = document ?: TaxiDocument.empty()
+
    fun containsTokensForSource(uri: String): Boolean {
       return compiler.containsTokensForSource(uri)
    }
@@ -86,8 +88,9 @@ data class CompilationTrigger(val changedPath: URI?)
  * Where possible, reasonable defaults are provided.
  */
 data class LspServicesConfig(
-   val compilerService: TaxiCompilerService = TaxiCompilerService(),
-   val completionService: CompletionService = EditorCompletionService(compilerService.typeProvider),
+   val loggingService: MessageLogger = CompositeLogger(),
+   val compilerService: TaxiCompilerService = TaxiCompilerService(logger = loggingService),
+   val completionService: CompletionService = CompositeCompletionService.withDefaults(compilerService.typeProvider),
    val formattingService: FormatterService = FormatterService(),
    val gotoDefinitionService: GotoDefinitionService = GotoDefinitionService(compilerService.typeProvider),
    val hoverService: HoverService = HoverService(),
@@ -98,7 +101,7 @@ data class LspServicesConfig(
 
 class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService,
    LanguageClientAware {
-   constructor(compilerService: TaxiCompilerService) : this(LspServicesConfig(compilerService))
+   constructor(compilerService: TaxiCompilerService) : this(LspServicesConfig(compilerService = compilerService))
 
    val lastCompilationResult: CompilationResult
       get() {
@@ -108,6 +111,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    private var displayedMessages: List<PublishDiagnosticsParams> = emptyList()
    private lateinit var initializeParams: InitializeParams
 
+   private val loggingService = services.loggingService
    private val compilerService = services.compilerService
    private val completionService = services.completionService
    private val formattingService = services.formattingService
@@ -233,18 +237,18 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       // as it's an expensive operation.
       val sourceName = params.textDocument.uri
       if (sourceName.endsWith("taxi.conf")) {
-         forceReload("taxi.conf has changed - reloading")
+         forceReload("taxi.conf has changed - reloading", updateDependencies = true)
       }
    }
 
-   fun forceReload(reason: String) {
+   fun forceReload(reason: String, updateDependencies: Boolean = false) {
       client.logMessage(
          MessageParams(
             MessageType.Info,
             reason
          )
       )
-      compilerService.reloadSourcesAndTriggerCompilation()
+      compilerService.reloadSourcesAndTriggerCompilation(updateDependencies = updateDependencies)
 //        compile()
 //        publishDiagnosticMessages()
    }
@@ -369,6 +373,9 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
 
    override fun connect(client: LanguageClient) {
       this.client = client
+      if (loggingService is CompositeLogger) {
+         loggingService.addLogger(LspClientMessageLogger(client))
+      }
       connected = true
       if (ready) {
          // Not sure if this is true, but it makes this sequence trickier

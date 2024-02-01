@@ -1,11 +1,11 @@
 package lang.taxi.lsp
 
-import lang.taxi.packages.MessageLogger
+import lang.taxi.logging.MessageLogger
 import org.eclipse.lsp4j.MessageParams
 import org.eclipse.lsp4j.MessageType
 import org.eclipse.lsp4j.services.LanguageClient
 
-class LspClientPackageManagerMessageLogger(private val client: LanguageClient) : MessageLogger {
+class LspClientMessageLogger(private val client: LanguageClient) : MessageLogger {
     override fun info(message: String) {
         client.logMessage(
             MessageParams(MessageType.Info, message)

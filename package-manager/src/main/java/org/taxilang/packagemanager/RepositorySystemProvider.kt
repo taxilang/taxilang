@@ -23,7 +23,7 @@ object RepositorySystemProvider {
    fun build(): Pair<RepositorySystem, RepositorySystemSession> {
       return build(
          listOf(
-            TaxiFileSystemTransportFactory::class.java,
+//            TaxiFileSystemTransportFactory::class.java,
             GitRepoTransportFactory::class.java,
          )
       )

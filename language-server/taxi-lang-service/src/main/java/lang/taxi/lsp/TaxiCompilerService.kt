@@ -3,15 +3,18 @@ package lang.taxi.lsp
 import com.google.common.base.Stopwatch
 import lang.taxi.*
 import lang.taxi.linter.toLinterRules
+import lang.taxi.logging.MessageLogger
 import lang.taxi.lsp.completion.TypeProvider
 import lang.taxi.lsp.parser.TokenInjectingErrorStrategy
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
+import lang.taxi.packages.ImporterConfig
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.types.SourceNames
 import lang.taxi.utils.log
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.taxilang.packagemanager.PackageManager
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Sinks
 import java.io.PrintWriter
@@ -20,7 +23,15 @@ import java.net.URI
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicReference
 
-class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig()) {
+class TaxiCompilerService(
+   private val compilerConfig: CompilerConfig = CompilerConfig(),
+
+   /**
+    * Passing a logger here lets us capture logs and send them out to VSCode via the LSP.
+    * Normal logback logs aren't captured
+    */
+   private val logger: MessageLogger
+) {
    private var taxiProjectConfig: TaxiPackageProject? = null
    private lateinit var workspaceSourceService: WorkspaceSourceService
    private val sources: MutableMap<URI, String> = mutableMapOf()
@@ -92,10 +103,13 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
       return source(identifier.uri)
    }
 
-   fun reloadSourcesWithoutCompiling() {
+   private fun reloadSourcesWithoutCompiling(updateDependencies: Boolean) {
       this.sources.clear()
       this.charStreams.clear()
       this.taxiProjectConfig = this.workspaceSourceService.loadProject()
+      if (updateDependencies) {
+         installDependencies()
+      }
       this.workspaceSourceService.loadSources()
          .forEach { sourceCode ->
             // Prefer operating on the path - less chances to screw up
@@ -109,8 +123,24 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
          }
    }
 
-   fun reloadSourcesAndTriggerCompilation(): Sinks.EmitResult {
-      reloadSourcesWithoutCompiling()
+   private fun installDependencies() {
+      if (taxiProjectConfig != null) {
+         installDependencies(taxiProjectConfig!!)
+      } else {
+         logger.info("Not fetching dependencies, as the project isn't ready yet, or doesn't exist")
+      }
+   }
+
+   private fun installDependencies(taxiProject: TaxiPackageProject) {
+      log().info("Loading dependencies for ${taxiProject.identifier.id}")
+      val config = ImporterConfig.forProject(taxiProject)
+         .copy(userFacingLogger = logger)
+      val packageManager = PackageManager.withDefaultRepositorySystem(config)
+      packageManager.fetchDependencies(taxiProject)
+   }
+
+   fun reloadSourcesAndTriggerCompilation(updateDependencies: Boolean = false): Sinks.EmitResult {
+      reloadSourcesWithoutCompiling(updateDependencies)
       return this.triggerAsyncCompilation(CompilationTrigger(null))
    }
 
@@ -121,7 +151,7 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
     */
    @Deprecated("Prefer reloadSourcesAndTriggerCompilation")
    fun reloadSourcesAndCompile(): CompilationResult {
-      reloadSourcesWithoutCompiling()
+      reloadSourcesWithoutCompiling(false)
       return this.compile()
    }
 
@@ -188,20 +218,20 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
     * the requested uri.
     * If the compilation result doesn't contain the uri, a compilation pass
     * is immediately forced.
-    * If after that compilation, the uri still isn't present, an exception is thrown.
+    * If after that compilation, the uri still isn't present, a message is logged
     */
    fun getOrComputeLastCompilationResult(uriToAssertIsPreset: String): CompilationResult {
       val lastResult = getOrComputeLastCompilationResult()
-      if (lastResult.containsTokensForSource(uriToAssertIsPreset)) {
+      val compilerShouldKnowFile = uriToAssertIsPreset.endsWith("taxi")
+      if (lastResult.containsTokensForSource(uriToAssertIsPreset) || !compilerShouldKnowFile) {
          return lastResult
       }
       // The requested uri wasn't present - maybe we're waiting on a compilation.
       val forcedCompilationResult = compile()
-      if (forcedCompilationResult.containsTokensForSource(uriToAssertIsPreset)) {
-         return forcedCompilationResult
-      } else {
-         throw RuntimeException("The requested uri $uriToAssertIsPreset is not known to the compiler")
+      if (!forcedCompilationResult.containsTokensForSource(uriToAssertIsPreset)) {
+         logger.info("The requested uri $uriToAssertIsPreset is not known to the compiler")
       }
+      return forcedCompilationResult
    }
 
    /**
@@ -211,7 +241,7 @@ class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig())
     */
    fun initialize(sourceService: WorkspaceSourceService) {
       this.workspaceSourceService = sourceService
-      reloadSourcesWithoutCompiling()
+      reloadSourcesWithoutCompiling(true)
    }
 
 }

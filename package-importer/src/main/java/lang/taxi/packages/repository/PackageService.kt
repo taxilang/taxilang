@@ -17,7 +17,7 @@ import java.io.InputStream
  */
 interface PackageService {
    fun upload(zip: File, project: TaxiPackageProject): Response
-   fun attemptDownload(identifier: PackageIdentifier, userFacingLogger:MessageLogger = LogWritingMessageLogger): InputStream?
+   fun attemptDownload(identifier: PackageIdentifier, userFacingLogger:MessageLogger = LogWritingMessageLogger()): InputStream?
 
    val repositoryType: String
 }

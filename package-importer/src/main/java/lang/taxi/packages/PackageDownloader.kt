@@ -24,7 +24,7 @@ class PackageDownloader(
    private val repositories: List<Repository>,
    private val credentials: List<Credentials>,
    private val packageServiceFactory: PackageServiceFactory = DefaultPackageServiceFactory,
-   private val userFacingLogger: MessageLogger = LogWritingMessageLogger
+   private val userFacingLogger: MessageLogger = LogWritingMessageLogger()
 ) {
    constructor(
       config: ImporterConfig,

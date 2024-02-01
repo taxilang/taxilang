@@ -1,6 +1,10 @@
 package lang.taxi.lsp
 
+import ch.qos.logback.classic.Level
 import lang.taxi.CompilerConfig
+import lang.taxi.logging.CompositeLogger
+import lang.taxi.logging.MessageLogger
+import lang.taxi.lsp.logging.LspClientLogAppender
 import lang.taxi.lsp.sourceService.FileBasedWorkspaceSourceService
 import lang.taxi.lsp.sourceService.WorkspaceSourceServiceFactory
 import lang.taxi.utils.log
@@ -8,12 +12,14 @@ import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
 
 class TaxiLanguageServer(
+   private val loggingService: MessageLogger = CompositeLogger(),
    private val compilerConfig: CompilerConfig = CompilerConfig(),
-   private val compilerService: TaxiCompilerService = TaxiCompilerService(compilerConfig),
+   private val compilerService: TaxiCompilerService = TaxiCompilerService(compilerConfig, loggingService),
    private val textDocumentService: TaxiTextDocumentService = TaxiTextDocumentService(compilerService),
    private val workspaceService: TaxiWorkspaceService = TaxiWorkspaceService(compilerService),
    private val lifecycleHandler: LanguageServerLifecycleHandler = NoOpLifecycleHandler,
@@ -84,9 +90,29 @@ class TaxiLanguageServer(
       listOf(this.textDocumentService, this.workspaceService)
          .filterIsInstance<LanguageClientAware>()
          .forEach { it.connect(client) }
+
+      configureLoggers(client)
       client.logMessage(
          MessageParams(
             MessageType.Info, "Taxi Language Server Connected"
+         )
+      )
+   }
+
+   private fun configureLoggers(client: LanguageClient) {
+      try {
+         val config = client.configuration(ConfigurationParams(
+            listOf(ConfigurationItem().apply { section = "taxi" })
+         )).get(1, TimeUnit.SECONDS)
+      } catch (e:Exception) {
+         println("Oops.")
+      }
+      // TODO : Can we use a ConfigurationRequest to set loggers and log levels?
+      LspClientLogAppender.installFor(
+         client, loggers = listOf(
+            "lang.taxi.lsp" to Level.DEBUG,
+            "org.taxilang" to Level.DEBUG,
+            "org.eclipse.aether" to Level.DEBUG
          )
       )
    }

@@ -1,5 +1,7 @@
 package org.taxilang.packagemanager.repository.git
 
+import org.apache.http.NameValuePair
+import org.apache.http.client.utils.URIBuilder
 import org.eclipse.aether.RepositorySystemSession
 import org.eclipse.aether.artifact.Artifact
 import org.eclipse.aether.metadata.Metadata
@@ -46,9 +48,14 @@ class GitProjectLayout : RepositoryLayout {
 
    override fun getLocation(artifact: Artifact, upload: Boolean): URI {
       val result = if (GitRepoTransport.isGitUrl(artifact.requestedVersion)) {
-         URI(artifact.requestedVersion)
-            .resolve("?${GitRepoTransport.EXTENSION_QUERY_PARAM}=${artifact.extension}&${GitRepoTransport.ARTIFACT_ID_PARAM}=${artifact.groupId}:${artifact.artifactId}")
-
+         // Create a URI containing the data we want.
+         // This isn't the actual requested URI - it's a scheme that's internal to our layout.
+         // In the GitRepoTransport we'll clone the git repo (the main URI),
+         // and then provide the requested extension.
+         URIBuilder(artifact.requestedVersion)
+            .addParameter(GitRepoTransport.EXTENSION_QUERY_PARAM, artifact.extension)
+            .addParameter(GitRepoTransport.ARTIFACT_ID_PARAM, "${artifact.groupId}:${artifact.artifactId}")
+            .build()
       } else {
         INVALID_REQUEST
       }

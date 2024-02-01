@@ -1,5 +1,7 @@
 package lang.taxi.packages
 
+import lang.taxi.logging.LogWritingMessageLogger
+import lang.taxi.logging.MessageLogger
 import lang.taxi.sources.SourceCode
 import lang.taxi.utils.log
 import org.taxilang.packagemanager.PackageManager
@@ -28,7 +30,7 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
 
       fun loadPackageAndDependencies(
          packageRootPath: Path,
-         userFacingLogger: MessageLogger = LogWritingMessageLogger
+         userFacingLogger: MessageLogger = LogWritingMessageLogger()
       ): TaxiPackageSources {
          val taxiConfFile = packageRootPath.resolve("taxi.conf")
          val taxiPackage = TaxiPackageLoader(taxiConfFile).load()

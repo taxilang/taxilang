@@ -21,7 +21,9 @@ import org.taxilang.packagemanager.layout.TaxiArtifactType
 import org.taxilang.packagemanager.repository.git.ArtifactExtensions
 import org.taxilang.packagemanager.repository.git.GitRepositorySupport
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -136,7 +138,24 @@ class PackageManager(
       } else {
          unzipDir.toFile().mkdirs()
          ZipFile(file).extractAll(unzipDir.absolutePathString())
+         markAllFilesAsReadOnly(unzipDir)
          unzipDir
+      }
+   }
+
+   private fun markAllFilesAsReadOnly(unzipDir: Path) {
+      Files.walk(unzipDir).forEach { path ->
+         if (!Files.isDirectory(path)) {
+            try {
+               // For POSIX systems
+               val permissions = setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ)
+               Files.setPosixFilePermissions(path, permissions)
+            } catch (e: UnsupportedOperationException) {
+               // Fallback for non-POSIX systems
+               val file = path.toFile()
+               file.setReadOnly()
+            }
+         }
       }
    }
 

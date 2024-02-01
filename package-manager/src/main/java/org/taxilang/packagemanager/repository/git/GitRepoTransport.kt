@@ -73,17 +73,22 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
       if (!isGitUrl(task.location)) {
          throw NotGitRepositoryException()
       }
+      // We expect to have received a location from the
+      // GitProjectLayout, which encodes additional information in the queryString.
+      // Strip that out now.
+      val gitRepoUri = task.location.withoutQueryString()
       val queryParams = task.location.queryParams()
       val extension = queryParams[EXTENSION_QUERY_PARAM]
+
       when (extension) {
          TaxiArtifactType.TAXI_CONF_FILE.extension -> {
-            val repoPath = cloneRepo(task.location.withoutQueryString())
+            val repoPath = cloneRepo(gitRepoUri)
             val filePath = repoPath.resolve("taxi.conf")
             task.copyPathToDestination(filePath)
          }
 
          TaxiArtifactType.TAXI_PROJECT_BUNDLE.extension -> {
-            val repoPath = cloneRepo(task.location.withoutQueryString())
+            val repoPath = cloneRepo(gitRepoUri)
             val zipFile = createBundleZipAt(repoPath)
             task.copyPathToDestination(zipFile)
          }
@@ -138,7 +143,7 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
          } else {
             "on branch $branchName"
          }
-         log().info("Cloning git repo $ $branchPart to directory $checkoutDir")
+         log().info("Cloning git repo $gitUri $branchPart to directory $checkoutDir")
 
          Git.cloneRepository()
             .setURI(gitUri.toASCIIString())

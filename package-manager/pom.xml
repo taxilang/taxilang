@@ -115,10 +115,14 @@
          <artifactId>config4k</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.slf4j</groupId>
+         <artifactId>slf4j-api</artifactId>
+         <version>2.0.6</version>
+      </dependency>
+      <dependency>
          <groupId>ch.qos.logback</groupId>
          <artifactId>logback-classic</artifactId>
          <version>1.4.12</version>
-         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>net.lingala.zip4j</groupId>

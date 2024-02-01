@@ -1,7 +1,7 @@
 package lang.taxi.lsp.sourceService
 
-import lang.taxi.lsp.LspClientPackageManagerMessageLogger
-import lang.taxi.packages.MessageLogger
+import lang.taxi.logging.MessageLogger
+import lang.taxi.lsp.LspClientMessageLogger
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.sources.SourceCode
@@ -35,7 +35,7 @@ class FileBasedWorkspaceSourceService(
                 val root = File(URI.create(SourceNames.normalize(rootUri)))
                 require(root.exists()) { "Fatal error - the workspace root location ($rootUri) doesn't appear to exist" }
 
-                return FileBasedWorkspaceSourceService(root.toPath(), LspClientPackageManagerMessageLogger(client))
+                return FileBasedWorkspaceSourceService(root.toPath(), LspClientMessageLogger(client))
             }
 
         }
