@@ -91,7 +91,7 @@ class TaxiLanguageServer(
          .filterIsInstance<LanguageClientAware>()
          .forEach { it.connect(client) }
 
-      configureLoggers(client)
+//      configureLoggers(client)
       client.logMessage(
          MessageParams(
             MessageType.Info, "Taxi Language Server Connected"
@@ -100,13 +100,13 @@ class TaxiLanguageServer(
    }
 
    private fun configureLoggers(client: LanguageClient) {
-      try {
-         val config = client.configuration(ConfigurationParams(
-            listOf(ConfigurationItem().apply { section = "taxi" })
-         )).get(1, TimeUnit.SECONDS)
-      } catch (e:Exception) {
-         println("Oops.")
-      }
+//      try {
+//         val config = client.configuration(ConfigurationParams(
+//            listOf(ConfigurationItem().apply { section = "taxi" })
+//         )).get(1, TimeUnit.SECONDS)
+//      } catch (e:Exception) {
+//         println("Oops.")
+//      }
       // TODO : Can we use a ConfigurationRequest to set loggers and log levels?
       LspClientLogAppender.installFor(
          client, loggers = listOf(

@@ -4,6 +4,8 @@ import * as vscode from "vscode";
 import { workspace } from "vscode";
 import * as path from "path";
 import * as findJavaHome from "find-java-home";
+import * as fs from "fs";
+import { glob } from "glob";
 
 import {
    LanguageClient,
@@ -72,70 +74,44 @@ function startPlugin(
       // Java execution path.
       let excecutable: string = path.join(javaHome, "bin", "java");
 
-      // path to the launcher.jar
-
-      //  /home/marty/dev/taxi-lang-server/taxi-lang-server-standalone/target/dependency/*.jar
-      //   java -classpath "./classes:./dependency/*" lang.taxi.lsp.Launcher
       let classPath: string;
       if (enableDebug) {
          const classPathSeperator = process.platform === "win32" ? ";" : ":";
-         classPath = [
-            path.join(
+         // These are the jars that we load direct from the
+         // project folders, rather than from the dependencies
+         // directory of the language server.
+         // This means that when changesare made in these projects and they're recompiled,
+         // we pick up the changes from their "target" directory,
+         // saving us another maven build cycle.
+         const projectJars = [
+            "../../../../taxi-lang/core-types",
+            "../../../../taxi-lang/compiler",
+            "../../../../vyne/vyne-core-types",
+            "../../taxi-lang-service",
+            "../../taxi-lang-server-standalone",
+         ];
+         const jarClasspathEntries = projectJars.map((projectJar) => {
+            const fullPath = path.join(
                __dirname,
-               "..",
-               "..",
-               "..",
-               "taxi-lang",
-               "core-types",
+               ...projectJar.split("/"),
                "target",
                "classes"
-            ),
-            path.join(
-               __dirname,
-               "..",
-               "..",
-               "..",
-               "taxi-lang",
-               "compiler",
-               "target",
-               "classes"
-            ),
-            path.join(
-               __dirname,
-               "..",
-               "..",
-               "..",
-               "vyne",
-               "vyne-core-types",
-               "target",
-               "classes"
-            ),
-            path.join(
-               __dirname,
-               "..",
-               "..",
-               "taxi-lang-service",
-               "target",
-               "classes"
-            ),
-            path.join(
-               __dirname,
-               "..",
-               "..",
-               "taxi-lang-server-standalone",
-               "target",
-               "classes"
-            ),
-            path.join(
-               __dirname,
-               "..",
-               "..",
-               "taxi-lang-server-standalone",
-               "target",
-               "dependency",
-               "*"
-            ),
-         ].join(classPathSeperator);
+            );
+            // Verify the path exists
+            if (!fs.existsSync(fullPath)) {
+               console.error(`Error: The path does not exist - ${fullPath}`);
+            }
+            return fullPath;
+         });
+         const otherClasspathEntries = [
+            "../../taxi-lang-server-standalone/target/dependency/*",
+         ].map((projectJar) => path.join(__dirname, ...projectJar.split("/")));
+
+         classPath = jarClasspathEntries
+            .concat(otherClasspathEntries)
+            .join(classPathSeperator);
+
+         deleteJarFileFromDependencies(projectJars);
       } else {
          const jarName = "taxi-lang-server-jar-with-dependencies.jar";
          classPath = path.join(__dirname, jarName);
@@ -186,25 +162,25 @@ function startPlugin(
                "{**/*.taxi,**/taxi.conf}"
             ),
          },
-         middleware: {
-            workspace: {
-                // Respond to server-side requests for configuration.
-                // this lets the server ask for how the user has configured things, such as logging
-               configuration: (params) => {
-                  const configSettings = params.items.map((item) => {
-                     if (item.section) {
-                        // Return the specific configuration for "taxi" as requested by the server
-                        const config = vscode.workspace.getConfiguration(
-                           item.section,
-                           null
-                        );
-                        return config.get(item.section);
-                     }
-                  });
-                  return Promise.resolve(configSettings);
-               },
-            },
-         },
+         // middleware: {
+         //    workspace: {
+         //       // Respond to server-side requests for configuration.
+         //       // this lets the server ask for how the user has configured things, such as logging
+         //       configuration: (params) => {
+         //          const configSettings = params.items.map((item) => {
+         //             if (item.section) {
+         //                // Return the specific configuration for "taxi" as requested by the server
+         //                const config = vscode.workspace.getConfiguration(
+         //                   item.section,
+         //                   null
+         //                );
+         //                return config.get(item.section);
+         //             }
+         //          });
+         //          return Promise.resolve(configSettings);
+         //       },
+         //    },
+         // },
       };
 
       // Create the language client and start the client.
@@ -223,4 +199,40 @@ function startPlugin(
 // this method is called when your extension is deactivated
 export function deactivate() {
    console.log("taxi-language-server is deactivated");
+}
+
+/**
+ * Removes a jar file from the dependencies folder of taxi-lang-server-standalone,
+ * forcing the classpath to pick it up from the target folder of it's own project.
+ * @param projectJars
+ */
+function deleteJarFileFromDependencies(dependencies: string[]) {
+   dependencies.forEach((dependency) => {
+      // Extract the last part of the path as filePattern
+      const filePattern = dependency.split("/").pop();
+      // Construct the pattern for matching files to delete
+      const pattern = path.join(
+         __dirname,
+         `../../taxi-lang-server-standalone/target/dependency/${filePattern}*.jar`
+      );
+
+      // Use glob to find matching files
+      glob(pattern, (err, files) => {
+         if (err) {
+            console.error(`Error finding files with pattern ${pattern}:`, err);
+            return;
+         }
+
+         // Delete each matching file
+         files.forEach((file) => {
+            fs.unlink(file, (err) => {
+               if (err) {
+                  console.error(`Error deleting file ${file}:`, err);
+               } else {
+                  console.log(`Deleted file ${file}`);
+               }
+            });
+         });
+      });
+   });
 }
