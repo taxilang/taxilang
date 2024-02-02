@@ -35,7 +35,7 @@ class SimpleFilePackageService(private val repositoryRoot: Path) : PackageServic
       return MemoryResponse(Status.OK)
    }
 
-   override fun attemptDownload(identifier: PackageIdentifier, userFacingLogger: MessageLogger): InputStream? {
+   override fun attemptDownload(identifier: PackageIdentifier): InputStream? {
       val file = repositoryRoot.resolve(identifier.fileSafeIdentifier + ".zip").toFile()
       return if (file.exists()) {
          file.inputStream()

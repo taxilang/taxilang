@@ -13,10 +13,9 @@ import java.nio.file.Path
 class PackageDownloaderFactory(
    private val importerConfig: ImporterConfig,
    private val serviceFactory: PackageServiceFactory = DefaultPackageServiceFactory,
-   private val userFacingLogger: MessageLogger
 ) {
    fun create(projectConfig: TaxiPackageProject): PackageDownloader =
-      PackageDownloader(importerConfig, projectConfig, serviceFactory, userFacingLogger)
+      PackageDownloader(importerConfig, projectConfig, serviceFactory,)
 }
 
 class PackageDownloader(
@@ -24,24 +23,21 @@ class PackageDownloader(
    private val repositories: List<Repository>,
    private val credentials: List<Credentials>,
    private val packageServiceFactory: PackageServiceFactory = DefaultPackageServiceFactory,
-   private val userFacingLogger: MessageLogger = LogWritingMessageLogger()
 ) {
    constructor(
       config: ImporterConfig,
       projectConfig: TaxiPackageProject,
       packageServiceFactory: PackageServiceFactory = DefaultPackageServiceFactory,
-      userFacingLogger: MessageLogger = config.userFacingLogger
    ) : this(
       config.localCache,
       projectConfig.repositories,
       projectConfig.credentials,
       packageServiceFactory,
-      userFacingLogger
    )
 
    fun download(identifier: PackageIdentifier): Boolean {
       if (repositories.isEmpty()) {
-         userFacingLogger.error("Cannot download ${identifier.id} as there are no repositories configured.  Update taxi.conf to add repositories")
+//         userFacingLogger.error("Cannot download ${identifier.id} as there are no repositories configured.  Update taxi.conf to add repositories")
       }
       val repositoryUsedForDownload = repositories
          .asSequence()
@@ -50,15 +46,15 @@ class PackageDownloader(
          }
          .firstOrNull()
       if (repositoryUsedForDownload == null) {
-         userFacingLogger.error("Unable to download ${identifier.id} from any of the provided repositories")
+//         userFacingLogger.error("Unable to download ${identifier.id} from any of the provided repositories")
       }
       return repositoryUsedForDownload != null
    }
 
    private fun attemptDownload(repository: Repository, identifier: PackageIdentifier, localCache: Path): Boolean {
       val packageRepository = packageServiceFactory.get(repository, credentials)
-      userFacingLogger.info("Attempting to download ${identifier.id} from ${repository.name.orEmpty()} ${repository.url}")
-      val response = packageRepository.attemptDownload(identifier, this.userFacingLogger)
+//      userFacingLogger.info(/"Attempting to download ${identifier.id} from ${repository.name.orEmpty()} ${repository.url}")
+      val response = packageRepository.attemptDownload(identifier)
       return if (response != null) {
          saveAndUnzip(response, localCache, identifier)
          true
@@ -74,11 +70,11 @@ class PackageDownloader(
       FileOutputStream(file).use { fileStream ->
          IOUtils.copy(inputStream, fileStream)
       }
-      userFacingLogger.info("Downloaded ${identifier.id} to temp location ${file.canonicalPath}")
+//      userFacingLogger.info("Downloaded ${identifier.id} to temp location ${file.canonicalPath}")
       val path = identifier.localFolder(localCache).toFile()
       FileUtils.forceMkdir(path)
       ZipFile(file).extractAll(path.canonicalPath)
-      userFacingLogger.info("Extracted ${identifier.id} to ${path.canonicalPath}")
+//      userFacingLogger.info("Extracted ${identifier.id} to ${path.canonicalPath}")
    }
 
 }

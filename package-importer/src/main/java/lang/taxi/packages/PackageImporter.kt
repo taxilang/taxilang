@@ -8,7 +8,7 @@ import java.nio.file.Path
 @Deprecated("Use PackageManager instead")
 class PackageImporter(
    private val importerConfig: ImporterConfig,
-   private val downloaderFactory: PackageDownloaderFactory = PackageDownloaderFactory(importerConfig, userFacingLogger = importerConfig.userFacingLogger)
+   private val downloaderFactory: PackageDownloaderFactory = PackageDownloaderFactory(importerConfig)
 ) {
 
    fun fetchDependencies(projectConfig: TaxiPackageProject): Set<PackageSource> {

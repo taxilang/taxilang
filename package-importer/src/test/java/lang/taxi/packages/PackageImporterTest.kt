@@ -42,7 +42,7 @@ class PackageImporterTest {
    fun given_packageDoesNotExistInLocalRepo_then_itIsDownloaded() {
       val importerConfig = importerConfig()
       val (packageService, packageServiceFactory) = fileServiceFactory()
-      val downloaderFactory = PackageDownloaderFactory(importerConfig, packageServiceFactory, LogWritingMessageLogger())
+      val downloaderFactory = PackageDownloaderFactory(importerConfig, packageServiceFactory)
 
       // first, publish the package we're going to depend on:
       val resource = Resources.getResource("testRepo/taxi/lang.taxi.Dummy/0.2.0").toURI()

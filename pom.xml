@@ -57,7 +57,6 @@
       <module>kotlin</module>
       <module>lang-to-taxi-api</module>
       <module>core-types</module>
-      <module>package-importer</module>
       <module>package-repository-api</module>
       <module>sample-compiled-taxonomy</module>
       <module>xsd2taxi</module>

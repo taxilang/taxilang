@@ -229,7 +229,7 @@ function deleteJarFileFromDependencies(dependencies: string[]) {
                if (err) {
                   console.error(`Error deleting file ${file}:`, err);
                } else {
-                  console.log(`Deleted file ${file}`);
+                  console.log(`Deleted dependency jar ${file} to force loading local compiled version`);
                }
             });
          });

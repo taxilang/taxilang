@@ -1,6 +1,5 @@
 package lang.taxi.packages.repository
 
-import lang.taxi.packages.MessageLogger
 import lang.taxi.packages.PackageIdentifier
 import lang.taxi.packages.TaxiPackageProject
 import org.http4k.core.Response
@@ -59,7 +58,7 @@ class TaxiHubService(
       return upload(zip, url)
    }
 
-   override fun attemptDownload(identifier: PackageIdentifier, userFacingLogger:MessageLogger): InputStream? {
+   override fun attemptDownload(identifier: PackageIdentifier): InputStream? {
       TODO("Not yet re-implemented")
 //      val client = HttpClientBuilder.create().build()
 //      val name = identifier.name
