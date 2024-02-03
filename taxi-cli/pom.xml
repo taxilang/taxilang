@@ -11,7 +11,7 @@
    <artifactId>taxi-cli</artifactId>
 
    <properties>
-      <pf4j.version>3.9.0</pf4j.version>
+      <pf4j.version>3.10.0</pf4j.version>
       <jreleaser.config.file>jreleaser.yml</jreleaser.config.file>
       <jreleaser.git.root.search>true</jreleaser.git.root.search>
       <app.main.class>lang.taxi.cli.TaxiCli</app.main.class>
@@ -63,10 +63,6 @@
       <dependency>
          <groupId>com.google.guava</groupId>
          <artifactId>guava</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.apache.httpcomponents</groupId>
-         <artifactId>httpclient</artifactId>
       </dependency>
       <dependency>
          <groupId>commons-io</groupId>
@@ -157,7 +153,7 @@
             <!-- Import dependency management from Spring Boot -->
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-dependencies</artifactId>
-            <version>2.7.9</version>
+            <version>3.1.6</version>
             <type>pom</type>
             <scope>import</scope>
          </dependency>
