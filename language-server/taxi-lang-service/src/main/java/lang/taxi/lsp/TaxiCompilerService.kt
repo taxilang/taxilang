@@ -11,6 +11,7 @@ import lang.taxi.packages.ImporterConfig
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.types.SourceNames
 import lang.taxi.utils.log
+import mu.KotlinLogging
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.eclipse.lsp4j.TextDocumentIdentifier
@@ -25,13 +26,11 @@ import java.util.concurrent.atomic.AtomicReference
 
 class TaxiCompilerService(
    private val compilerConfig: CompilerConfig = CompilerConfig(),
-
-   /**
-    * Passing a logger here lets us capture logs and send them out to VSCode via the LSP.
-    * Normal logback logs aren't captured
-    */
-   private val logger: MessageLogger
 ) {
+   companion object {
+      private val logger = KotlinLogging.logger {}
+   }
+
    private var taxiProjectConfig: TaxiPackageProject? = null
    private lateinit var workspaceSourceService: WorkspaceSourceService
    private val sources: MutableMap<URI, String> = mutableMapOf()
@@ -68,6 +67,7 @@ class TaxiCompilerService(
                e.printStackTrace(printWriter)
                val errorMessage =
                   "An exception was thrown when compiling.  This is a bug in the compiler, and should be reported. \n${e.message} \n$writer"
+               logger.warn { errorMessage }
                CompilationResult(
                   Compiler(emptyList<CharStream>()), document = null, errors = listOf(
                      CompilationError(
@@ -103,13 +103,10 @@ class TaxiCompilerService(
       return source(identifier.uri)
    }
 
-   private fun reloadSourcesWithoutCompiling(updateDependencies: Boolean) {
+   private fun reloadSourcesWithoutCompiling() {
       this.sources.clear()
       this.charStreams.clear()
       this.taxiProjectConfig = this.workspaceSourceService.loadProject()
-      if (updateDependencies) {
-         installDependencies()
-      }
       this.workspaceSourceService.loadSources()
          .forEach { sourceCode ->
             // Prefer operating on the path - less chances to screw up
@@ -123,24 +120,8 @@ class TaxiCompilerService(
          }
    }
 
-   private fun installDependencies() {
-      if (taxiProjectConfig != null) {
-         installDependencies(taxiProjectConfig!!)
-      } else {
-         logger.info("Not fetching dependencies, as the project isn't ready yet, or doesn't exist")
-      }
-   }
-
-   private fun installDependencies(taxiProject: TaxiPackageProject) {
-      log().info("Loading dependencies for ${taxiProject.identifier.id}")
-      val config = ImporterConfig.forProject(taxiProject)
-         .copy(userFacingLogger = logger)
-      val packageManager = PackageManager.withDefaultRepositorySystem(config)
-      packageManager.fetchDependencies(taxiProject)
-   }
-
-   fun reloadSourcesAndTriggerCompilation(updateDependencies: Boolean = false): Sinks.EmitResult {
-      reloadSourcesWithoutCompiling(updateDependencies)
+   fun reloadSourcesAndTriggerCompilation(): Sinks.EmitResult {
+      reloadSourcesWithoutCompiling()
       return this.triggerAsyncCompilation(CompilationTrigger(null))
    }
 
@@ -151,7 +132,7 @@ class TaxiCompilerService(
     */
    @Deprecated("Prefer reloadSourcesAndTriggerCompilation")
    fun reloadSourcesAndCompile(): CompilationResult {
-      reloadSourcesWithoutCompiling(false)
+      reloadSourcesWithoutCompiling()
       return this.compile()
    }
 
@@ -241,7 +222,7 @@ class TaxiCompilerService(
     */
    fun initialize(sourceService: WorkspaceSourceService) {
       this.workspaceSourceService = sourceService
-      reloadSourcesWithoutCompiling(true)
+      reloadSourcesWithoutCompiling()
    }
 
 }

@@ -12,6 +12,9 @@ import java.nio.file.Path
 // which will return the project, and the sources.
 class TaxiProjectLoader {
 
+   companion object {
+      private val logger = mu.KotlinLogging.logger {}
+   }
    private val pathsToSearch = mutableListOf(
       SystemUtils.getUserHome().toPath().resolve(".taxi/taxi.conf")
    )

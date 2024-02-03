@@ -89,8 +89,7 @@ data class CompilationTrigger(val changedPath: URI?)
  * Where possible, reasonable defaults are provided.
  */
 data class LspServicesConfig(
-   val loggingService: MessageLogger = CompositeLogger(),
-   val compilerService: TaxiCompilerService = TaxiCompilerService(logger = loggingService),
+   val compilerService: TaxiCompilerService = TaxiCompilerService(),
    val completionService: CompletionService = CompositeCompletionService.withDefaults(compilerService.typeProvider),
    val formattingService: FormatterService = FormatterService(),
    val gotoDefinitionService: GotoDefinitionService = GotoDefinitionService(compilerService.typeProvider),
@@ -112,7 +111,6 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    private var displayedMessages: List<PublishDiagnosticsParams> = emptyList()
    private lateinit var initializeParams: InitializeParams
 
-   private val loggingService = services.loggingService
    private val compilerService = services.compilerService
    private val completionService = services.completionService
    private val formattingService = services.formattingService
@@ -238,20 +236,18 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       // as it's an expensive operation.
       val sourceName = params.textDocument.uri
       if (sourceName.endsWith("taxi.conf")) {
-         forceReload("taxi.conf has changed - reloading", updateDependencies = true)
+         forceReload("taxi.conf has changed - reloading")
       }
    }
 
-   fun forceReload(reason: String, updateDependencies: Boolean = false) {
+   fun forceReload(reason: String) {
       client.logMessage(
          MessageParams(
             MessageType.Info,
             reason
          )
       )
-      compilerService.reloadSourcesAndTriggerCompilation(updateDependencies = updateDependencies)
-//        compile()
-//        publishDiagnosticMessages()
+      compilerService.reloadSourcesAndTriggerCompilation()
    }
 
    override fun didClose(params: DidCloseTextDocumentParams) {
@@ -374,9 +370,6 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
 
    override fun connect(client: LanguageClient) {
       this.client = client
-      if (loggingService is CompositeLogger) {
-         loggingService.addLogger(LspClientMessageLogger(client))
-      }
       connected = true
       if (ready) {
          // Not sure if this is true, but it makes this sequence trickier
@@ -405,7 +398,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    private fun logCompilationResult(result: CompilationResult) {
       client.logMessage(
          MessageParams(
-            MessageType.Log,
+            MessageType.Info,
             "Compiled ${result.countOfSources} sources in ${result.duration.toMillis()}ms"
          )
       )

@@ -137,6 +137,18 @@
          <artifactId>taxi2kotlin</artifactId>
          <version>${project.version}</version>
       </dependency>
+
+      <!-- not sure why this is required, but we get errors described here without it:
+      https://github.com/oshai/kotlin-logging/issues/83
+       -->
+      <dependency>
+         <groupId>org.slf4j</groupId>
+         <artifactId>slf4j-api</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>ch.qos.logback</groupId>
+         <artifactId>logback-classic</artifactId>
+      </dependency>
    </dependencies>
 
    <dependencyManagement>

@@ -5,6 +5,7 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigRenderOptions
 import io.github.config4k.extract
 import lang.taxi.utils.log
+import mu.KotlinLogging
 import org.apache.commons.lang3.SystemUtils
 import java.nio.file.Path
 
@@ -20,6 +21,7 @@ class TaxiPackageLoader(val path: Path? = null) {
    }
 
    companion object {
+      private val logger = KotlinLogging.logger {}
       fun forDirectoryContainingTaxiFile(path:Path):TaxiPackageLoader {
          return TaxiPackageLoader(path.resolve("taxi.conf"))
       }
@@ -45,7 +47,7 @@ class TaxiPackageLoader(val path: Path? = null) {
 
       val configs: MutableList<Config> = pathsToSearch.filter { path -> path.toFile().exists() }
          .map { path ->
-            log().debug("Reading config at {}", path.toString())
+            logger.debug{"Reading config at $path" }
             val config: Config = ConfigFactory.parseFile(path.toFile())
             config
          }.toMutableList()

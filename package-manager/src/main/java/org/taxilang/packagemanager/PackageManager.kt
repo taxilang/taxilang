@@ -3,6 +3,7 @@ package org.taxilang.packagemanager
 import lang.taxi.packages.ImporterConfig
 import lang.taxi.packages.PackageIdentifier
 import lang.taxi.packages.TaxiPackageProject
+import mu.KotlinLogging
 import net.lingala.zip4j.ZipFile
 import org.eclipse.aether.DefaultRepositorySystemSession
 import org.eclipse.aether.RepositorySystem
@@ -34,8 +35,6 @@ class PackageManager(
    private val repositorySystemSession: RepositorySystemSession,
    private val defaultRepositories: List<RemoteRepository> = listOf(GitRepositorySupport.GIT_REMOTE_REPOSITORY)
 ) {
-   private val userFacingLogger = importerConfig.userFacingLogger
-
    init {
       configureLocalRepository()
    }
@@ -52,12 +51,14 @@ class PackageManager(
          val (system, session) = RepositorySystemProvider.build()
          return PackageManager(config, system, session)
       }
+      private val logger = KotlinLogging.logger {}
    }
 
    /**
     * Installs a project into the local repository.
     */
    fun bundleAndInstall(projectLocation: Path, projectConfig: TaxiPackageProject): Path {
+      logger.info { "Installing ${projectConfig.identifier.id} to $projectLocation" }
       val bundle = TaxiFileBasedPackageBundler.createBundle(
          projectLocation,
          projectConfig.identifier
@@ -79,11 +80,12 @@ class PackageManager(
    }
 
    fun fetchDependencies(projectConfig: TaxiPackageProject): List<TaxiPackageProject> {
+      logger.info { "Fetching dependencies for ${projectConfig.identifier.id}" }
       val request = buildDependencyRequest(projectConfig)
       val result = try {
          repositorySystem.collectDependencies(repositorySystemSession, request)
       } catch (e: DependencyCollectionException) {
-         userFacingLogger.error("Failed to collect dependencies: ${e.message}")
+         logger.error {"Failed to collect dependencies: ${e.message}"}
          return emptyList()
       }
 
@@ -95,7 +97,7 @@ class PackageManager(
             artifactRequests
          )
       } catch (e: ArtifactResolutionException) {
-         userFacingLogger.error("Failed to resolve artifacts: ${e.message}")
+         logger.error { "Failed to resolve artifacts: ${e.message}" }
          return emptyList()
       }
 
@@ -103,14 +105,14 @@ class PackageManager(
          .mapNotNull { path ->
             val taxiConf = path.resolve("taxi.conf")
             if (!taxiConf.exists()) {
-               userFacingLogger.error("No taxi.conf found at $path")
+               logger.error { "No taxi.conf found at $path" }
                null
             } else {
                try {
                   TaxiProjectLoader(taxiConf)
                      .load()
                } catch (e: Exception) {
-                  userFacingLogger.error("Failed to read the taxi.conf at $path: ${e::class.java.simpleName} - ${e.message}")
+                  logger.error { "Failed to read the taxi.conf at $path: ${e::class.java.simpleName} - ${e.message}" }
                   null
                }
             }

@@ -25,27 +25,25 @@ class LspClientLogAppender(val client: LanguageClient) : AppenderBase<ILoggingEv
          else -> null
       } ?: return // Ignore anything that was null
 
-//      val messageParams = MessageParams(messageType, event.message)
-//      client.logMessage(messageParams)
+
+
+      val messageParams = MessageParams(messageType, event.formattedMessage)
+      client.logMessage(messageParams)
    }
 
    companion object {
       fun installFor(client: LanguageClient, loggers: List<Pair<String, Level>>) {
-         client.logMessage(
-            MessageParams(
-               MessageType.Info,
-               "Hello?"
-            )
-         )
-//         val context = LoggerFactory.getILoggerFactory() as LoggerContext
-//         val appender = LspClientLogAppender(client)
-//
-//         loggers.forEach { (loggerName, level) ->
-//            val logger = context.getLogger(loggerName)
-//            logger.level = level
-//            logger.addAppender(appender)
-//            logger.isAdditive = false
-//         }
+         val context = LoggerFactory.getILoggerFactory() as LoggerContext
+         val appender = LspClientLogAppender(client)
+         appender.setContext(context)
+         appender.start()
+
+         loggers.forEach { (loggerName, level) ->
+            val logger = context.getLogger(loggerName)
+            logger.level = level
+            logger.addAppender(appender)
+            logger.isAdditive = false
+         }
 
       }
    }

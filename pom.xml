@@ -85,6 +85,7 @@
       <taxi.version>${project.version}</taxi.version>
       <testcontainers.version>1.19.3</testcontainers.version>
       <reactor-bom.version>2023.0.0</reactor-bom.version>
+      <kotlin-logging.version>3.0.5</kotlin-logging.version>
    </properties>
 
    <dependencies>
@@ -146,6 +147,17 @@
          <artifactId>assertj-core</artifactId>
          <version>3.24.2</version>
          <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <!-- https://mvnrepository.com/artifact/io.github.microutils/kotlin-logging-jvm -->
+         <groupId>io.github.microutils</groupId>
+         <artifactId>kotlin-logging-jvm</artifactId>
+         <version>${kotlin-logging.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>ch.qos.logback</groupId>
+         <artifactId>logback-classic</artifactId>
       </dependency>
 
    </dependencies>
