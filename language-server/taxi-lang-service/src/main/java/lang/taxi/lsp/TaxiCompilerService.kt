@@ -8,6 +8,7 @@ import lang.taxi.lsp.completion.TypeProvider
 import lang.taxi.lsp.parser.TokenInjectingErrorStrategy
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
 import lang.taxi.packages.ImporterConfig
+import lang.taxi.packages.MalformedTaxiConfFileException
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.types.SourceNames
 import lang.taxi.utils.log
@@ -38,6 +39,7 @@ class TaxiCompilerService(
 
    private val lastSuccessfulCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
    private val lastCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
+   private var taxiConfParseError: UnreadableTaxiConfMessage? = null
 
    private val tokenCache: CompilerTokenCache = CompilerTokenCache(
       listOf(TokenInjectingErrorStrategy.parserCustomizer)
@@ -45,7 +47,8 @@ class TaxiCompilerService(
    val typeProvider = TypeProvider(lastSuccessfulCompilationResult, lastCompilationResult)
 
    private val compileTriggerSink = Sinks.many().unicast().onBackpressureBuffer<CompilationTrigger>()
-   val compilationResults: Flux<CompilationResult>
+   private val taxiConfErrorsSink = Sinks.many().unicast().onBackpressureBuffer<DiagnosticMessagesWrapper>()
+   val compilationResults: Flux<DiagnosticMessagesWrapper>
 
    fun lastSuccessfulCompilation(): CompilationResult? {
       return lastCompilationResult.get()
@@ -56,11 +59,15 @@ class TaxiCompilerService(
    }
 
    init {
-      compilationResults = compileTriggerSink.asFlux()
+      val triggeredCompilationResults = compileTriggerSink.asFlux()
          .bufferTimeout(50, Duration.ofMillis(500))
          .map { _ ->
             try {
-               compile()
+               if (taxiConfParseError != null) {
+                  taxiConfParseError!!
+               } else {
+                  compile()
+               }
             } catch (e: Exception) {
                val writer = StringWriter()
                val printWriter = PrintWriter(writer)
@@ -79,16 +86,14 @@ class TaxiCompilerService(
                )
             }
          }
+
+      val taxiConfParseErrors = taxiConfErrorsSink.asFlux()
+      compilationResults = Flux.merge(triggeredCompilationResults, taxiConfParseErrors)
    }
 
    fun triggerAsyncCompilation(trigger: CompilationTrigger): Sinks.EmitResult {
       return this.compileTriggerSink.tryEmitNext(trigger)
    }
-
-   val sourceCount: Int
-      get() {
-         return sources.size
-      }
 
    fun source(uri: URI): String {
       return this.sources[uri] ?: error("Could not find source with url ${uri.toASCIIString()}")
@@ -106,7 +111,17 @@ class TaxiCompilerService(
    private fun reloadSourcesWithoutCompiling() {
       this.sources.clear()
       this.charStreams.clear()
-      this.taxiProjectConfig = this.workspaceSourceService.loadProject()
+      try {
+         this.taxiProjectConfig = this.workspaceSourceService.loadProject()
+         taxiConfParseError = null
+      } catch (e: MalformedTaxiConfFileException) {
+         logger.info { "Cannot read taxi.conf file: ${e.path} - ${e.message}" }
+         taxiConfParseError = UnreadableTaxiConfMessage(e.path, e.message, e.lineNumber)
+         taxiConfErrorsSink.emitNext(taxiConfParseError, Sinks.EmitFailureHandler.FAIL_FAST)
+         throw e
+      }
+
+
       this.workspaceSourceService.loadSources()
          .forEach { sourceCode ->
             // Prefer operating on the path - less chances to screw up

@@ -1,6 +1,7 @@
 package lang.taxi.packages
 
 import com.typesafe.config.Config
+import com.typesafe.config.ConfigException
 import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigRenderOptions
 import io.github.config4k.extract
@@ -48,7 +49,14 @@ class TaxiPackageLoader(val path: Path? = null) {
       val configs: MutableList<Config> = pathsToSearch.filter { path -> path.toFile().exists() }
          .map { path ->
             logger.debug{"Reading config at $path" }
-            val config: Config = ConfigFactory.parseFile(path.toFile())
+            val config = try {
+               ConfigFactory.parseFile(path.toFile())
+            } catch (e:ConfigException.Parse) {
+               throw MalformedTaxiConfFileException(path, e.message ?: e::class.simpleName!!, lineNumber = e.origin()?.lineNumber())
+            } catch (e:Exception) {
+               throw MalformedTaxiConfFileException(path, e.message ?: e::class.simpleName!!)
+            }
+
             config
          }.toMutableList()
       configs.add(ConfigFactory.load())
@@ -61,3 +69,6 @@ class TaxiPackageLoader(val path: Path? = null) {
       } else loaded
    }
 }
+
+
+class MalformedTaxiConfFileException(val path: Path, override val message: String, val lineNumber: Int? = null) : RuntimeException(message)
