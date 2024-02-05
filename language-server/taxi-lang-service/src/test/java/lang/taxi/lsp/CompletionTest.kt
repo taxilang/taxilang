@@ -14,7 +14,7 @@ class CompletionSpec : DescribeSpec({
 
    // Commented out - these tests are failing, but the behaviour is working in the  app.
    // Need to investigate.  Sorry future me, but gots to get this shipped.
-   xdescribe("completions") {
+   describe("completions") {
       it("should offer top-level language items at the start of the line") {
          val (service, workspaceRoot) = documentServiceFor("test-scenarios/simple-workspace")
 

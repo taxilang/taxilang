@@ -16,10 +16,6 @@ import org.eclipse.lsp4j.services.LanguageClient
  * need something more robust, which can handle multiple active editors
  */
 interface WorkspaceSourceService {
-   /**
-    * Returns all the sources for the project in the workspace.
-    * If there are dependencies expressed in the taxi.conf file, these are resolved
-    */
     fun loadSources(): Sequence<SourceCode>
 
     /**

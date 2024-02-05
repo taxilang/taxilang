@@ -2,7 +2,6 @@ package lang.taxi.packages
 
 import lang.taxi.sources.SourceCode
 import lang.taxi.utils.log
-import org.taxilang.packagemanager.PackageManager
 import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -13,14 +12,14 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
       fun loadPackageAndDependencies(
          packageRootPath: Path,
          project: TaxiPackageProject,
-         packageManager: PackageManager = PackageManager.withDefaultRepositorySystem(ImporterConfig.forProject(project))
+         importer: PackageImporter = PackageImporter(ImporterConfig.forProject(project))
       ): TaxiPackageSources {
-         val dependencySources = packageManager.fetchDependencies(project)
-            .flatMap { packageSource ->  TaxiSourcesLoader(packageSource.packageRootPath!!).load() }
+         val dependencySources = importer.fetchDependencies(project)
+            .map { it.source }
          return loadPackage(packageRootPath, project, dependencySources)
       }
 
-      fun loadPackageAndDependencies(packageRootPath: Path, importer: PackageManager): TaxiPackageSources {
+      fun loadPackageAndDependencies(packageRootPath: Path, importer: PackageImporter): TaxiPackageSources {
          val taxiConfFile = packageRootPath.resolve("taxi.conf")
          val taxiPackage = TaxiPackageLoader(taxiConfFile).load()
          return loadPackageAndDependencies(packageRootPath, taxiPackage, importer)
@@ -28,13 +27,14 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
 
       fun loadPackageAndDependencies(
          packageRootPath: Path,
+         userFacingLogger: MessageLogger = LogWritingMessageLogger
       ): TaxiPackageSources {
          val taxiConfFile = packageRootPath.resolve("taxi.conf")
          val taxiPackage = TaxiPackageLoader(taxiConfFile).load()
          return loadPackageAndDependencies(
             packageRootPath,
             taxiPackage,
-            PackageManager.withDefaultRepositorySystem(ImporterConfig.forProject(taxiPackage))
+            PackageImporter(ImporterConfig.forProject(taxiPackage, userFacingLogger))
          )
       }
 
@@ -50,6 +50,20 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
          return TaxiPackageSources(projectWithRoot, sources + dependencySources)
       }
 
+//      private fun makeAdditionalSourcesAbsolute(
+//         packageRootPath: Path,
+//         project: TaxiPackageProject
+//      ): TaxiPackageProject {
+//         val absoluteSources = project.additionalSources.map { (key, path) ->
+//            require(!path.isAbsolute) { "Path $path must be relative"}
+//
+//            val absolutePath =  path.resolve(packageRootPath).normalize()
+//            require(absolutePath.startsWith(packageRootPath)) { "Path $path must be relative to $packageRootPath" }
+//            key to absolutePath
+//         }.toMap()
+//         return project.copy(additionalSources = absoluteSources)
+//      }
+
       fun loadPackage(packageRootPath: Path): TaxiPackageSources {
          val taxiConfFile = packageRootPath.resolve("taxi.conf")
          if (!Files.exists(taxiConfFile)) {
@@ -64,6 +78,9 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
       val sources = sourceRoot.toFile().walkBottomUp()
          .filter { it.isFile && it.extension == "taxi" }
          .map { file ->
+            // TODO : WHy is this relative to the root, and not absolute?
+//            val pathRelativeToSourceRoot = sourceRoot.relativize(file.toPath()).toString()
+//            SourceCode(pathRelativeToSourceRoot, file.readText(), file.toPath())
             SourceCode.from(file)
          }
          .toList()

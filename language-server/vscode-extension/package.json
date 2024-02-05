@@ -44,7 +44,7 @@
          "properties": {
             "taxi.typeChecker": {
                "type": "string",
-               "default": "enabled",
+               "default": "disabled",
                "enum": [
                   "enabled",
                   "disabled",
