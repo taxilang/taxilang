@@ -37,7 +37,6 @@ object TaxiPackageBundler {
          .filter { listOf("conf", "taxi").contains(it.extension) }
          .forEach { file ->
             if (file.isFile) {
-               log().info("Adding file ${file.canonicalPath}")
                val zipParameters = ZipParameters()
                zipParameters.compressionMethod = CompressionMethod.DEFLATE
                zipParameters.compressionLevel = CompressionLevel.NORMAL

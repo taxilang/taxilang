@@ -6,7 +6,6 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigRenderOptions
 import io.github.config4k.extract
 import lang.taxi.utils.log
-import mu.KotlinLogging
 import org.apache.commons.lang3.SystemUtils
 import java.nio.file.Path
 
@@ -16,11 +15,11 @@ import java.nio.file.Path
 class TaxiPackageLoader(val path: Path? = null) {
 
    companion object {
-      private val logger = KotlinLogging.logger {}
-      fun forDirectoryContainingTaxiFile(path:Path):TaxiPackageLoader {
+      fun forDirectoryContainingTaxiFile(path: Path): TaxiPackageLoader {
          return TaxiPackageLoader(path.resolve("taxi.conf"))
       }
-      fun forPathToTaxiFile(path:Path):TaxiPackageLoader {
+
+      fun forPathToTaxiFile(path: Path): TaxiPackageLoader {
          return TaxiPackageLoader(path)
       }
    }
@@ -42,12 +41,16 @@ class TaxiPackageLoader(val path: Path? = null) {
 
       val configs: MutableList<Config> = pathsToSearch.filter { path -> path.toFile().exists() }
          .map { path ->
-            logger.debug{"Reading config at $path" }
+            log().debug("Reading config at $path")
             val config = try {
                ConfigFactory.parseFile(path.toFile())
-            } catch (e:ConfigException.Parse) {
-               throw MalformedTaxiConfFileException(path, e.message ?: e::class.simpleName!!, lineNumber = e.origin()?.lineNumber())
-            } catch (e:Exception) {
+            } catch (e: ConfigException.Parse) {
+               throw MalformedTaxiConfFileException(
+                  path,
+                  e.message ?: e::class.simpleName!!,
+                  lineNumber = e.origin()?.lineNumber()
+               )
+            } catch (e: Exception) {
                throw MalformedTaxiConfFileException(path, e.message ?: e::class.simpleName!!)
             }
 
@@ -55,7 +58,7 @@ class TaxiPackageLoader(val path: Path? = null) {
          }.toMutableList()
       configs.add(ConfigFactory.load())
       val config = configs.reduceRight(Config::withFallback)
-      val loaded:TaxiPackageProject =  config.extract()
+      val loaded: TaxiPackageProject = config.extract()
       // If we were explicitly given a root path, use that.
       // The "root path" concept is tricky, as the config is actally composed of many locations
       return if (path != null) {
@@ -65,4 +68,5 @@ class TaxiPackageLoader(val path: Path? = null) {
 }
 
 
-class MalformedTaxiConfFileException(val path: Path, override val message: String, val lineNumber: Int? = null) : RuntimeException(message)
+class MalformedTaxiConfFileException(val path: Path, override val message: String, val lineNumber: Int? = null) :
+   RuntimeException(message)

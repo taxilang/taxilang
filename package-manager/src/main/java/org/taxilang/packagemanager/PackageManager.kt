@@ -3,7 +3,6 @@ package org.taxilang.packagemanager
 import lang.taxi.packages.ImporterConfig
 import lang.taxi.packages.PackageIdentifier
 import lang.taxi.packages.TaxiPackageProject
-import mu.KotlinLogging
 import net.lingala.zip4j.ZipFile
 import org.eclipse.aether.DefaultRepositorySystemSession
 import org.eclipse.aether.RepositorySystem
@@ -22,6 +21,7 @@ import org.taxilang.packagemanager.layout.TaxiArtifactType
 import org.taxilang.packagemanager.repository.git.ArtifactExtensions
 import org.taxilang.packagemanager.repository.git.GitRepositorySupport
 import org.taxilang.packagemanager.repository.nexus.NexusTransportFactory
+import org.taxilang.packagemanager.utils.log
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -52,15 +52,13 @@ class PackageManager(
          val (system, session) = RepositorySystemProvider.build()
          return PackageManager(config, system, session)
       }
-
-      private val logger = KotlinLogging.logger {}
    }
 
    /**
     * Installs a project into the local repository.
     */
    fun bundleAndInstall(projectLocation: Path, projectConfig: TaxiPackageProject): Path {
-      logger.info { "Installing ${projectConfig.identifier.id} to $projectLocation" }
+      log().info("Installing ${projectConfig.identifier.id} to $projectLocation")
       val bundle = TaxiPackageBundler.createBundle(
          projectLocation,
          projectConfig.identifier
@@ -77,17 +75,16 @@ class PackageManager(
       )
       processArchive(artifactPath)
 
-      val fetchedDependencies = fetchDependencies(projectConfig)
       return artifactPath.toPath().parent
    }
 
    fun fetchDependencies(projectConfig: TaxiPackageProject): List<TaxiPackageProject> {
-      logger.info { "Fetching dependencies for ${projectConfig.identifier.id}" }
+      log().info("Fetching dependencies for ${projectConfig.identifier.id}")
       val request = buildDependencyRequest(projectConfig)
       val result = try {
          repositorySystem.collectDependencies(repositorySystemSession, request)
       } catch (e: DependencyCollectionException) {
-         logger.error { "Failed to collect dependencies: ${e.message}" }
+         log().error("Failed to collect dependencies: ${e.message}")
          return emptyList()
       }
 
@@ -99,7 +96,7 @@ class PackageManager(
             artifactRequests
          )
       } catch (e: ArtifactResolutionException) {
-         logger.error { "Failed to resolve artifacts: ${e.message}" }
+         log().error("Failed to resolve artifacts: ${e.message}")
          return emptyList()
       }
 
@@ -107,14 +104,14 @@ class PackageManager(
          .mapNotNull { path ->
             val taxiConf = path.resolve("taxi.conf")
             if (!taxiConf.exists()) {
-               logger.error { "No taxi.conf found at $path" }
+               log().error("No taxi.conf found at $path")
                null
             } else {
                try {
                   TaxiProjectLoader(taxiConf)
                      .load()
                } catch (e: Exception) {
-                  logger.error { "Failed to read the taxi.conf at $path: ${e::class.java.simpleName} - ${e.message}" }
+                  log().error("Failed to read the taxi.conf at $path: ${e::class.java.simpleName} - ${e.message}")
                   null
                }
             }

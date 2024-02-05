@@ -20,7 +20,8 @@ class InstallCommand (private val buildCommand: BuildCommand) : ProjectShellComm
       buildCommand.execute(environment)
       log().info("Installing ${environment.project.identifier.id}")
       val packageManager = createPackageManager(environment)
-      packageManager.bundleAndInstall(environment.projectRoot, environment.project)
+      val installedPath = packageManager.bundleAndInstall(environment.projectRoot, environment.project)
+      log().info("Installed  ${environment.project.identifier.id} at $installedPath")
    }
 
    private fun createPackageManager(environment: TaxiEnvironment): PackageManager {

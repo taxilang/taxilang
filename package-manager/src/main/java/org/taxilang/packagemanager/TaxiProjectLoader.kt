@@ -30,7 +30,7 @@ class TaxiProjectLoader(
 
       val configs: MutableList<Config> = pathsToSearch.filter { path -> path.toFile().exists() }
          .map { path ->
-            log().info("Reading config at {}", path)
+            log().debug("Reading config at {}", path)
             val config: Config = ConfigFactory.parseFile(path.toFile())
             config
          }.toMutableList()

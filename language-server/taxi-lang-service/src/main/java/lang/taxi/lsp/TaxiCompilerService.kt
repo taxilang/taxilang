@@ -14,7 +14,6 @@ import lang.taxi.packages.MalformedTaxiConfFileException
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.types.SourceNames
 import lang.taxi.utils.log
-import mu.KotlinLogging
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.eclipse.lsp4j.TextDocumentIdentifier
@@ -29,10 +28,6 @@ import java.util.concurrent.atomic.AtomicReference
 class TaxiCompilerService(
    private val compilerConfig: CompilerConfig = CompilerConfig(),
 ) {
-   companion object {
-      private val logger = KotlinLogging.logger {}
-   }
-
    private var taxiProjectConfig: TaxiPackageProject? = null
    private lateinit var workspaceSourceService: WorkspaceSourceService
    private val sources: MutableMap<URI, String> = mutableMapOf()
@@ -75,7 +70,7 @@ class TaxiCompilerService(
                e.printStackTrace(printWriter)
                val errorMessage =
                   "An exception was thrown when compiling.  This is a bug in the compiler, and should be reported. \n${e.message} \n$writer"
-               logger.warn { errorMessage }
+               log().warn(errorMessage)
                CompilationResult(
                   Compiler(emptyList<CharStream>()), document = null, errors = listOf(
                      CompilationError(
@@ -116,7 +111,7 @@ class TaxiCompilerService(
          this.taxiProjectConfig = this.workspaceSourceService.loadProject()
          taxiConfParseError = null
       } catch (e: MalformedTaxiConfFileException) {
-         logger.info { "Cannot read taxi.conf file: ${e.path} - ${e.message}" }
+         log().info("Cannot read taxi.conf file: ${e.path} - ${e.message}")
          taxiConfParseError = UnreadableTaxiConfMessage(e.path, e.message, e.lineNumber)
          taxiConfErrorsSink.emitNext(taxiConfParseError, Sinks.EmitFailureHandler.FAIL_FAST)
          throw e
@@ -226,7 +221,7 @@ class TaxiCompilerService(
       // The requested uri wasn't present - maybe we're waiting on a compilation.
       val forcedCompilationResult = compile()
       if (!forcedCompilationResult.containsTokensForSource(uriToAssertIsPreset)) {
-         logger.info("The requested uri $uriToAssertIsPreset is not known to the compiler")
+         log().info("The requested uri $uriToAssertIsPreset is not known to the compiler")
       }
       return forcedCompilationResult
    }

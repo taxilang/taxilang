@@ -135,7 +135,7 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
       val branchName = uri.fragment
       val gitUri = uri.withoutFragment()
       if (checkoutDir.exists()) {
-         log().info("Using existing git repository at $checkoutDir")
+         log().debug("Using existing git repository at $checkoutDir")
          val git = Git(RepositoryBuilder().setGitDir(checkoutDir.resolve(".git")).build())
          val gitRepo = git.repository
          val requiredBranch = getRequiredBranch(branchName, git)
@@ -143,7 +143,7 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
             log().info("Switching git repo at $checkoutDir to branch $requiredBranch")
             git.checkout().setName(requiredBranch).call()
          }
-         log().info("Pulling repo at $checkoutDir")
+         log().debug("Pulling repo at $checkoutDir")
          git.pull().call()
       } else {
          checkoutDir.mkdirs()

@@ -1,6 +1,5 @@
 package org.taxilang.packagemanager.repository.nexus
 
-import mu.KotlinLogging
 import org.eclipse.aether.RepositorySystemSession
 import org.eclipse.aether.repository.RemoteRepository
 import org.eclipse.aether.spi.connector.transport.GetTask

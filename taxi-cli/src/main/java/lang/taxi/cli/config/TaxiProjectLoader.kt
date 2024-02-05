@@ -5,10 +5,8 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigRenderOptions
 import io.github.config4k.extract
 import lang.taxi.packages.TaxiPackageProject
-import mu.KotlinLogging
+import lang.taxi.utils.log
 import org.apache.commons.lang3.SystemUtils
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
 // Use a TaxiSourcesLoader instead.
@@ -24,7 +22,6 @@ class TaxiProjectLoader(searchPaths: List<Path> = DEFAULT_PATHS) {
       val DEFAULT_PATHS = listOf(
          SystemUtils.getUserHome().toPath().resolve(".taxi/taxi.conf")
       )
-      private val logger = KotlinLogging.logger {}
    }
 
    fun withConfigFileAt(path: Path): TaxiProjectLoader {
@@ -34,18 +31,18 @@ class TaxiProjectLoader(searchPaths: List<Path> = DEFAULT_PATHS) {
 
    fun load(): TaxiPackageProject {
 
-      logger.debug { "Searching for config files at ${pathsToSearch.joinToString(" , ")}" }
+      log().debug("Searching for config files at ${pathsToSearch.joinToString(" , ")}")
 
       val configs: MutableList<Config> = pathsToSearch.filter { path -> path.toFile().exists() }
          .map { path ->
-            logger.debug { "Reading config at $path" }
+            log().debug("Reading config at $path")
             val config: Config = ConfigFactory.parseFile(path.toFile())
             config
          }.toMutableList()
       configs.add(ConfigFactory.load())
       val config = configs.reduceRight(Config::withFallback)
-      logger.debug("Effective config:")
-      logger.debug { config.root().render(ConfigRenderOptions.defaults()) }
+      log().debug("Effective config:")
+      log().debug(config.root().render(ConfigRenderOptions.defaults()))
       return config.extract()
    }
 }
