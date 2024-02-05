@@ -1,19 +1,14 @@
 package lang.taxi.lsp
 
 import com.google.common.base.Stopwatch
-import lang.taxi.CompilationError
-import lang.taxi.CompilationException
-import lang.taxi.Compiler
-import lang.taxi.CompilerConfig
-import lang.taxi.CompilerTokenCache
+import lang.taxi.*
 import lang.taxi.linter.toLinterRules
 import lang.taxi.lsp.completion.TypeProvider
 import lang.taxi.lsp.parser.TokenInjectingErrorStrategy
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
-import lang.taxi.packages.MalformedTaxiConfFileException
 import lang.taxi.packages.TaxiPackageProject
+import lang.taxi.packages.utils.log
 import lang.taxi.types.SourceNames
-import lang.taxi.utils.log
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.eclipse.lsp4j.TextDocumentIdentifier
@@ -25,9 +20,7 @@ import java.net.URI
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicReference
 
-class TaxiCompilerService(
-   private val compilerConfig: CompilerConfig = CompilerConfig(),
-) {
+class TaxiCompilerService(val compilerConfig: CompilerConfig = CompilerConfig()) {
    private var taxiProjectConfig: TaxiPackageProject? = null
    private lateinit var workspaceSourceService: WorkspaceSourceService
    private val sources: MutableMap<URI, String> = mutableMapOf()
@@ -35,7 +28,6 @@ class TaxiCompilerService(
 
    private val lastSuccessfulCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
    private val lastCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
-   private var taxiConfParseError: UnreadableTaxiConfMessage? = null
 
    private val tokenCache: CompilerTokenCache = CompilerTokenCache(
       listOf(TokenInjectingErrorStrategy.parserCustomizer)
@@ -43,8 +35,7 @@ class TaxiCompilerService(
    val typeProvider = TypeProvider(lastSuccessfulCompilationResult, lastCompilationResult)
 
    private val compileTriggerSink = Sinks.many().unicast().onBackpressureBuffer<CompilationTrigger>()
-   private val taxiConfErrorsSink = Sinks.many().unicast().onBackpressureBuffer<DiagnosticMessagesWrapper>()
-   val compilationResults: Flux<DiagnosticMessagesWrapper>
+   val compilationResults: Flux<CompilationResult>
 
    fun lastSuccessfulCompilation(): CompilationResult? {
       return lastCompilationResult.get()
@@ -55,22 +46,17 @@ class TaxiCompilerService(
    }
 
    init {
-      val triggeredCompilationResults = compileTriggerSink.asFlux()
+      compilationResults = compileTriggerSink.asFlux()
          .bufferTimeout(50, Duration.ofMillis(500))
          .map { _ ->
             try {
-               if (taxiConfParseError != null) {
-                  taxiConfParseError!!
-               } else {
-                  compile()
-               }
+               compile()
             } catch (e: Exception) {
                val writer = StringWriter()
                val printWriter = PrintWriter(writer)
                e.printStackTrace(printWriter)
                val errorMessage =
                   "An exception was thrown when compiling.  This is a bug in the compiler, and should be reported. \n${e.message} \n$writer"
-               log().warn(errorMessage)
                CompilationResult(
                   Compiler(emptyList<CharStream>()), document = null, errors = listOf(
                      CompilationError(
@@ -82,14 +68,16 @@ class TaxiCompilerService(
                )
             }
          }
-
-      val taxiConfParseErrors = taxiConfErrorsSink.asFlux()
-      compilationResults = Flux.merge(triggeredCompilationResults, taxiConfParseErrors)
    }
 
    fun triggerAsyncCompilation(trigger: CompilationTrigger): Sinks.EmitResult {
       return this.compileTriggerSink.tryEmitNext(trigger)
    }
+
+   val sourceCount: Int
+      get() {
+         return sources.size
+      }
 
    fun source(uri: URI): String {
       return this.sources[uri] ?: error("Could not find source with url ${uri.toASCIIString()}")
@@ -104,20 +92,10 @@ class TaxiCompilerService(
       return source(identifier.uri)
    }
 
-   private fun reloadSourcesWithoutCompiling() {
+   fun reloadSourcesWithoutCompiling() {
       this.sources.clear()
       this.charStreams.clear()
-      try {
-         this.taxiProjectConfig = this.workspaceSourceService.loadProject()
-         taxiConfParseError = null
-      } catch (e: MalformedTaxiConfFileException) {
-         log().info("Cannot read taxi.conf file: ${e.path} - ${e.message}")
-         taxiConfParseError = UnreadableTaxiConfMessage(e.path, e.message, e.lineNumber)
-         taxiConfErrorsSink.emitNext(taxiConfParseError, Sinks.EmitFailureHandler.FAIL_FAST)
-         throw e
-      }
-
-
+      this.taxiProjectConfig = this.workspaceSourceService.loadProject()
       this.workspaceSourceService.loadSources()
          .forEach { sourceCode ->
             // Prefer operating on the path - less chances to screw up
@@ -210,20 +188,20 @@ class TaxiCompilerService(
     * the requested uri.
     * If the compilation result doesn't contain the uri, a compilation pass
     * is immediately forced.
-    * If after that compilation, the uri still isn't present, a message is logged
+    * If after that compilation, the uri still isn't present, an exception is thrown.
     */
    fun getOrComputeLastCompilationResult(uriToAssertIsPreset: String): CompilationResult {
       val lastResult = getOrComputeLastCompilationResult()
-      val compilerShouldKnowFile = uriToAssertIsPreset.endsWith("taxi")
-      if (lastResult.containsTokensForSource(uriToAssertIsPreset) || !compilerShouldKnowFile) {
+      if (lastResult.containsTokensForSource(uriToAssertIsPreset)) {
          return lastResult
       }
       // The requested uri wasn't present - maybe we're waiting on a compilation.
       val forcedCompilationResult = compile()
-      if (!forcedCompilationResult.containsTokensForSource(uriToAssertIsPreset)) {
-         log().info("The requested uri $uriToAssertIsPreset is not known to the compiler")
+      if (forcedCompilationResult.containsTokensForSource(uriToAssertIsPreset)) {
+         return forcedCompilationResult
+      } else {
+         throw RuntimeException("The requested uri $uriToAssertIsPreset is not known to the compiler")
       }
-      return forcedCompilationResult
    }
 
    /**

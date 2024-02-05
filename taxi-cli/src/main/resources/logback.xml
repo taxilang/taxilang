@@ -19,9 +19,6 @@
     <logger name="lang.taxi" level="INFO">
         <appender-ref ref="STDOUT"/>
     </logger>
-   <logger name="org.taxilang" level="INFO">
-      <appender-ref ref="STDOUT"/>
-   </logger>
     <logger name="org.springframework" level="ERROR">
         <appender-ref ref="STDOUT"/>
     </logger>

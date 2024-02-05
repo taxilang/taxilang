@@ -30,22 +30,6 @@ disabled by default locally
       <finalName>taxi-lang-server</finalName>
       <plugins>
          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>copy-dependencies</id>
-                  <phase>prepare-package</phase>
-                  <goals>
-                     <goal>copy-dependencies</goal>
-                  </goals>
-                  <configuration>
-                     <outputDirectory>${project.build.directory}/dependency</outputDirectory>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
             <artifactId>maven-assembly-plugin</artifactId>
             <version>3.5.0</version>
             <configuration>

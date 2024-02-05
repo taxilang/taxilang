@@ -64,8 +64,8 @@ class TaxiCli {
    }
 
    @Bean
-   fun textIo(): TextIO {
-      return TextIoFactory.getTextIO()
+   fun textIo():TextIO {
+       return TextIoFactory.getTextIO()
    }
 
    @Bean

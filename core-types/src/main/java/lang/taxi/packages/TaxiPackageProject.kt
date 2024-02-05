@@ -5,7 +5,6 @@ import lang.taxi.linter.TaxiConfLinterRuleConfig
 import lang.taxi.sources.SourceCode
 import org.apache.commons.lang3.SystemUtils
 import java.nio.file.Path
-import kotlin.math.log
 
 typealias GlobPattern = String
 /**
@@ -33,6 +32,8 @@ data class TaxiPackageProject(
    val dependencyPackages: List<PackageIdentifier> = dependencies.map { (projectId, version) ->
       PackageIdentifier(ProjectName.fromId(projectId), version)
    }
+
+
 }
 
 // TODO : We also have PackageSource in the packageImporter.

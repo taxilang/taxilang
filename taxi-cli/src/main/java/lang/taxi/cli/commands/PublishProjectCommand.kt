@@ -2,8 +2,8 @@ package lang.taxi.cli.commands
 
 import com.beust.jcommander.Parameters
 import lang.taxi.generators.TaxiProjectEnvironment
+import lang.taxi.packages.PackagePublisher
 import org.springframework.stereotype.Component
-import org.taxilang.packagemanager.repository.nexus.PackagePublisher
 
 @Component
 @Parameters(commandDescription = "Publishes a taxi project to a repository.")
