@@ -162,7 +162,12 @@ function startPlugin(
                "{**/*.taxi,**/taxi.conf}"
             ),
          },
-         // middleware: {
+         middleware: {
+            // This doesn't work, but leaving it here for the next time
+            // we try to implement this.
+            // This supposed to repsond to requests from the server for configuration.
+            // The corresponding request from the server is in TaxiLanguageServer - configureLoggers
+
          //    workspace: {
          //       // Respond to server-side requests for configuration.
          //       // this lets the server ask for how the user has configured things, such as logging
@@ -180,7 +185,7 @@ function startPlugin(
          //          return Promise.resolve(configSettings);
          //       },
          //    },
-         // },
+         },
       };
 
       // Create the language client and start the client.

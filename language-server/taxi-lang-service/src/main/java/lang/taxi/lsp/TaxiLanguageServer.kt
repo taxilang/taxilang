@@ -7,6 +7,8 @@ import lang.taxi.lsp.sourceService.FileBasedWorkspaceSourceService
 import lang.taxi.lsp.sourceService.WorkspaceSourceServiceFactory
 import lang.taxi.utils.log
 import org.eclipse.lsp4j.CompletionOptions
+import org.eclipse.lsp4j.ConfigurationItem
+import org.eclipse.lsp4j.ConfigurationParams
 import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.MessageParams
@@ -26,6 +28,7 @@ import org.eclipse.lsp4j.services.TextDocumentService
 import org.eclipse.lsp4j.services.WorkspaceService
 import reactor.core.publisher.Mono
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
 
@@ -115,13 +118,7 @@ class TaxiLanguageServer(
    }
 
    private fun configureLoggers(client: LanguageClient) {
-//      try {
-//         val config = client.configuration(ConfigurationParams(
-//            listOf(ConfigurationItem().apply { section = "taxi" })
-//         )).get(1, TimeUnit.SECONDS)
-//      } catch (e:Exception) {
-//         println("Oops.")
-//      }
+      requestConfigFromClient(client)
       // TODO : Can we use a ConfigurationRequest to set loggers and log levels?
       LspClientLogAppender.installFor(
          client, loggers = listOf(
@@ -135,6 +132,22 @@ class TaxiLanguageServer(
             "org.eclipse.aether" to Level.DEBUG
          )
       )
+   }
+
+   private fun requestConfigFromClient(client: LanguageClient) {
+      // Couldn't get this working, but leaving this here for next time we try to pick this
+      // up.
+      // The below code should be handled by the "middleware" declared in extension.ts
+//      try {
+//         val config = client.configuration(
+//               ConfigurationParams(
+//                  listOf(ConfigurationItem().apply { section = "taxi" })
+//               )
+//         ).get(1, TimeUnit.SECONDS)
+//         log().info("Got config")
+//      } catch (e: Exception) {
+//         log().info("Failed to get config")
+//      }
    }
 
 }
