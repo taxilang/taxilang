@@ -10,11 +10,11 @@ class TaxiDocumentTest {
     fun when_mergingDocuments_then_typesAndServicesAreCombined() {
         val src1 = """
             type Person {
-               email : Email as String
+               email : Email inherits String
             }""".compile()
         val src2 = """
             type Author {
-               name : Name as String
+               name : Name inherits String
             }""".compile()
         val doc = src1.merge(src2)
         expect(doc.containsType("Person")).to.be.`true`
@@ -25,18 +25,18 @@ class TaxiDocumentTest {
     fun given_documentsContainingDuplicateDefinitions_when_mergingDocuments_then_typesAndServicesAreCombined() {
         val src1 = """
             type Person {
-               email : Email as String
+               email : Email inherits String
             }
             type Animal {
-               species : Species as String
+               species : Species inherits String
             }
             """.compile()
         val src2 = """
             type Person {
-               email : Email as String
+               email : Email inherits String
             }
             type Author {
-               name : Name as String
+               name : Name inherits String
            }
             """.compile()
         val doc = src1.merge(src2)
@@ -49,12 +49,12 @@ class TaxiDocumentTest {
     fun given_documentsContainingConflictingDefinitions_when_mergingDocuments_then_exceptionIsThrown() {
         val src1 = """
             type Person {
-               email : Email as String
+               email : Email inherits String
             }
             """.compile()
         val src2 = """
             type Person {
-               name : Name as String
+               name : Name inherits String
             }
             """.compile()
         assertThrows<DocumentMalformedException> {

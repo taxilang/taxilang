@@ -25,7 +25,7 @@ object Strings {
 }
 
 object Concat : FunctionApi {
-   override val taxi: String = "declare function concat(String...):String"
+   override val taxi: String = "declare function concat(Any...):String"
    override val name: QualifiedName = stdLibName("concat")
 
 }

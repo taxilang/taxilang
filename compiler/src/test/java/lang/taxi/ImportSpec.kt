@@ -99,7 +99,7 @@ namespace foo {
 namespace foo
 
 type Customer {
-    name : FirstName as String
+    name : FirstName inherits String
 }
         """.trimIndent()
          val schemaA = Compiler(srcA).compile()

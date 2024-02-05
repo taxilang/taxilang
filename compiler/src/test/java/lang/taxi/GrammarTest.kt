@@ -311,36 +311,6 @@ type Person {
    }
 
    @Test
-   fun canDeclareInlineTypeAlias() {
-      val source = """
-type Person {
-    // Declaring an inline type alias -- same as 'type alias PersonName as String'
-    name : PersonName as String
-}"""
-      val doc = Compiler(source).compile()
-      expect(doc.type("PersonName")).to.be.instanceof(TypeAlias::class.java)
-      val personName = doc.objectType("Person").field("name").type as TypeAlias
-      expect(personName).to.be.instanceof(TypeAlias::class.java)
-      expect(personName.aliasType).to.equal(PrimitiveType.STRING)
-      expect(personName.annotations).to.have.size(0)
-   }
-
-   @Test
-   fun canReferenceAnInlineTypeAliasBeforeItIsDeclared() {
-      val source = """
-type Friend {
-   friendName : PersonName
-}
-type Person {
-    // Declaring an inline type alias -- same as 'type alias PersonName as String'
-    name : PersonName as String
-}"""
-      val doc = Compiler(source).compile()
-      expect(doc.type("PersonName")).to.be.instanceof(TypeAlias::class.java)
-      expect(doc.objectType("Friend").field("friendName").type).to.be.instanceof(TypeAlias::class.java)
-   }
-
-   @Test
    fun throwsExceptionOnUnresolvedType() {
       val source = """
 type Foo {
@@ -396,7 +366,7 @@ type alias InvoiceValue as Decimal
    fun canDetectParameterTypes() {
       val source = """
 parameter type ClientRiskRequest {
-   amount : Amount as Decimal
+   amount : Amount inherits Decimal
 }"""
       val doc = Compiler(source).compile()
       val money = doc.objectType("ClientRiskRequest")
@@ -495,26 +465,6 @@ type Home {
       doc.objectType("Home").field("owner").type.qualifiedName.should.equal("Person")
    }
 
-
-
-   @Test
-   fun `inline type alias can have same name as type in another package`() {
-      val sourceA = """
-namespace foo {
-   type alias Name as String
-}
-      """.trimIndent()
-      val sourceB = """
-namespace baz {
-   type Person {
-      name : Name as String
-   }
-}
-      """.trimIndent()
-      val schemaA = Compiler(sourceA).compile()
-      val schemaB = Compiler(sourceB, importSources = listOf(schemaA)).compile()
-      schemaB.objectType("baz.Person").field("name").type.qualifiedName.should.equal("baz.Name")
-   }
    @Test
    fun canListDeclaredTypeNamesInSrcFile() {
       val sourceA = """
@@ -522,7 +472,7 @@ namespace test {
     type alias FirstName as String
     type Person {
         firstName : FirstName
-        lastName : LastName as String
+        lastName : LastName inherits String
         nickname : String
     }
 
@@ -588,8 +538,8 @@ type Home {
    fun given_aTypeDoesNotDeclareClosed_then_itDoesNotHaveTheClosedModifier() {
       val src = """
 type Money {
-    amount : MoneyAmount as Decimal
-    currency : Currency as String
+    amount : MoneyAmount inherits Decimal
+    currency : Currency inherits String
 }
         """.trimIndent()
       val taxi = Compiler(src).compile()
@@ -600,8 +550,8 @@ type Money {
    fun canDeclareATypeAsClosed() {
       val src = """
 closed type Money {
-    amount : MoneyAmount as Decimal
-    currency : Currency as String
+    amount : MoneyAmount inherits Decimal
+    currency : Currency inherits String
 }
         """.trimIndent()
       val taxi = Compiler(src).compile()
@@ -630,8 +580,8 @@ closed type Money {
    fun canDeclareAPropertyAsClosed() {
       val src = """
 type Trade {
-   trader : UserId as String
-   closed settlementCurrency : Currency as String
+   trader : UserId inherits String
+   closed settlementCurrency : Currency inherits String
 }
         """.trimIndent()
       val taxi = Compiler(src).compile()

@@ -28,8 +28,8 @@ class ServicesGrammarTest {
    fun canCompileServices() {
       val source = """
 type Person {
-    id : PersonId as Int
-    name : PersonName as String
+    id : PersonId inherits Int
+    name : PersonName inherits String
 }
 
 [[ Use PersonService whenever you need a person. ]]
@@ -74,8 +74,8 @@ service MyService {
 
    val moneyType: String = """
 type Money {
-    currency : Currency as String
-    value : MoneyAmount as Decimal
+    currency : Currency inherits String
+    value : MoneyAmount inherits Decimal
 }
 """
 

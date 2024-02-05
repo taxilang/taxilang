@@ -257,10 +257,6 @@ class TokenCollator : TaxiBaseListener() {
       // Check to see if an inline type alias is declared
       // If so, mark it for processing later
       val fieldCtx = ctx.fieldTypeDeclaration()
-      if (fieldCtx?.aliasedType() != null) {
-         val classOrInterfaceType = fieldCtx.nullableTypeReference().typeReference().qualifiedName()
-         unparsedTypes.put(qualify(classOrInterfaceType.identifier().text()), namespace to fieldCtx)
-      }
 
       // If there's an inline type declared, mark it so that we can process it later.
       if (fieldCtx?.inlineInheritedType() != null) {
