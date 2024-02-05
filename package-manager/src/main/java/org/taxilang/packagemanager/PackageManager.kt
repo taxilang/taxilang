@@ -21,6 +21,7 @@ import org.eclipse.aether.resolution.ArtifactResolutionException
 import org.taxilang.packagemanager.layout.TaxiArtifactType
 import org.taxilang.packagemanager.repository.git.ArtifactExtensions
 import org.taxilang.packagemanager.repository.git.GitRepositorySupport
+import org.taxilang.packagemanager.repository.nexus.NexusTransportFactory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -51,6 +52,7 @@ class PackageManager(
          val (system, session) = RepositorySystemProvider.build()
          return PackageManager(config, system, session)
       }
+
       private val logger = KotlinLogging.logger {}
    }
 
@@ -59,7 +61,7 @@ class PackageManager(
     */
    fun bundleAndInstall(projectLocation: Path, projectConfig: TaxiPackageProject): Path {
       logger.info { "Installing ${projectConfig.identifier.id} to $projectLocation" }
-      val bundle = TaxiFileBasedPackageBundler.createBundle(
+      val bundle = TaxiPackageBundler.createBundle(
          projectLocation,
          projectConfig.identifier
       )
@@ -85,7 +87,7 @@ class PackageManager(
       val result = try {
          repositorySystem.collectDependencies(repositorySystemSession, request)
       } catch (e: DependencyCollectionException) {
-         logger.error {"Failed to collect dependencies: ${e.message}"}
+         logger.error { "Failed to collect dependencies: ${e.message}" }
          return emptyList()
       }
 
@@ -150,7 +152,8 @@ class PackageManager(
          if (!Files.isDirectory(path)) {
             try {
                // For POSIX systems
-               val permissions = setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ)
+               val permissions =
+                  setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ)
                Files.setPosixFilePermissions(path, permissions)
             } catch (e: UnsupportedOperationException) {
                // Fallback for non-POSIX systems
@@ -187,18 +190,16 @@ class PackageManager(
       projectConfig.dependencyPackages.forEach { dependencyIdentifier ->
          request.addDependency(dependencyIdentifier.asDependency())
       }
-      request.repositories = defaultRepositories
+      val configuredRepos = projectConfig.repositories.map { repo ->
+         RemoteRepository.Builder(
+            repo.name, NexusTransportFactory.REPO_TYPE, repo.url
+         )
+            .build()
+      }
+      request.repositories = defaultRepositories + configuredRepos
       return request
    }
 }
-
-/**
- * Returns a project, along with all its dependencies - including transitive dependencies.
- */
-data class TaxiPackageGraph(
-   val rootProject: TaxiPackageProject,
-   val dependencies: List<TaxiPackageProject>
-)
 
 fun PackageIdentifier.asDependency(file: Path? = null, extension: String? = null): Dependency {
    return Dependency(

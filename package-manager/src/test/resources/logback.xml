@@ -10,6 +10,7 @@
    </appender>
 
    <logger level="DEBUG" name="org.taxilang" />
+   <logger level="WARN" name=" org.taxilang.packagemanager.repository.nexus.NexusContainer" />
    <logger level="DEBUG" name="lang.taxi" />
    <logger level="DEBUG" name="org.eclipse.aether" />
 	<root level="INFO">

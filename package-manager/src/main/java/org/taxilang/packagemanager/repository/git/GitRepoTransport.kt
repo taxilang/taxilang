@@ -8,9 +8,10 @@ import org.eclipse.aether.spi.connector.transport.PeekTask
 import org.eclipse.aether.spi.connector.transport.PutTask
 import org.eclipse.aether.spi.connector.transport.Transporter
 import org.eclipse.aether.spi.connector.transport.TransporterFactory
+import org.eclipse.aether.transfer.NoTransporterException
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.RepositoryBuilder
-import org.taxilang.packagemanager.TaxiFileBasedPackageBundler
+import org.taxilang.packagemanager.TaxiPackageBundler
 import org.taxilang.packagemanager.TaxiProjectLoader
 import org.taxilang.packagemanager.layout.TaxiArtifactType
 import org.taxilang.packagemanager.utils.log
@@ -19,7 +20,7 @@ import java.nio.file.Path
 import kotlin.io.path.inputStream
 
 object GitRepositorySupport {
-   val GIT_REMOTE_REPOSITORY = RemoteRepository.Builder("git", "git", "read-from-projects")
+   val GIT_REMOTE_REPOSITORY = RemoteRepository.Builder("git", GitRepoTransportFactory.REPO_TYPE, "read-from-projects")
       .setPolicy(
          RepositoryPolicy(
             true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_IGNORE
@@ -28,8 +29,16 @@ object GitRepositorySupport {
 }
 
 class GitRepoTransportFactory : TransporterFactory {
+   companion object {
+      const val REPO_TYPE = "git"
+   }
    override fun newInstance(session: RepositorySystemSession, remote: RemoteRepository): Transporter {
-      return GitRepoTransport(session)
+      if (remote.contentType == REPO_TYPE) {
+         return GitRepoTransport(session)
+      } else {
+         throw NoTransporterException(remote)
+      }
+
    }
 
    override fun getPriority(): Float = 0F
@@ -107,7 +116,7 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
    private fun createBundleZipAt(repoPath: Path): Path {
       val taxiConfPath = repoPath.resolve("taxi.conf")
       val taxiConf = TaxiProjectLoader(taxiConfPath).load()
-      val bundle = TaxiFileBasedPackageBundler.createBundle(repoPath, taxiConf.identifier)
+      val bundle = TaxiPackageBundler.createBundle(repoPath, taxiConf.identifier)
       return bundle.zip
    }
 

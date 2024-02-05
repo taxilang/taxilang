@@ -4,6 +4,7 @@ import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
 import lang.taxi.packages.ImporterConfig
 import lang.taxi.packages.PackageIdentifier
+import lang.taxi.packages.Repository
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.writers.ConfigWriter
 import org.eclipse.aether.repository.RemoteRepository
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.taxilang.packagemanager.PackageManager
 import org.taxilang.packagemanager.RepositorySystemProvider
-import org.taxilang.packagemanager.TaxiFileBasedPackageBundler
+import org.taxilang.packagemanager.TaxiPackageBundler
 import org.taxilang.packagemanager.TaxiProjectLoader
 import org.taxilang.packagemanager.transports.TaxiFileSystemTransportFactory
 import org.taxilang.packagemanager.transports.TaxiFileSystemUtils
@@ -176,7 +177,9 @@ class PackageManagerTest {
          typeNames: List<String> = emptyList(),
          createBundle: Boolean = true,
          useNestedFolders: Boolean = true,
-         taxiSrc: String = ""
+         taxiSrc: String = "",
+         repositories: List<Repository> = emptyList(),
+         publishTo: Repository? = null
       ): Pair<PackageIdentifier, Path> {
          val packageIdentifier = PackageIdentifier.fromId(identifier)
          val projectHome = if (useNestedFolders) {
@@ -193,7 +196,9 @@ class PackageManagerTest {
                val dependencyIdentifier = PackageIdentifier.withoutVersion(dependencyId)
                val version = PackageIdentifier.versionIsh(dependencyId)
                dependencyIdentifier to version
-            }
+            },
+            repositories = repositories,
+            publishToRepository = publishTo
          )
          val config = ConfigWriter().serialize(taxiConf)
          val taxiConfPath = projectHome.resolve("taxi.conf")
@@ -211,7 +216,7 @@ class PackageManagerTest {
          println("Created taxi project $identifier at $projectHome")
 
          if (createBundle) {
-            val bundle = TaxiFileBasedPackageBundler.createBundle(projectHome, packageIdentifier)
+            val bundle = TaxiPackageBundler.createBundle(projectHome, packageIdentifier)
             bundle.copyTo(projectHome)
          }
          return packageIdentifier to taxiConfPath

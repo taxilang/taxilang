@@ -68,7 +68,6 @@
          <artifactId>http4k-core</artifactId>
          <version>${http4k.version}</version>
       </dependency>
-      <!-- https://mvnrepository.com/artifact/org.http4k/http4k-client-apache -->
       <dependency>
          <groupId>org.http4k</groupId>
          <artifactId>http4k-client-apache</artifactId>

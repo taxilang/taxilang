@@ -1,36 +1,41 @@
 ---
-title: Distributing Taxi projects
+title: Dependency Management
 description: Share or distribute your Taxi projects amongst other teams or the community
 ---
 
 import { Link } from "gatsby"
 import { Hint, Discourage } from '../components/hint'
 
-Once built, Taxi project and plugins can be packaged and published to a repository to allow other projects to depend on them.
+Once built, Taxi projects can be packaged and published to a repository to allow other projects to depend on them.
 
 ## Adding dependencies
 
 Dependencies are defined in the `taxi.conf` project, in the `dependencies` section.
 Here's an example:
 
-```hocon
+```json5
 // Create a project in the acme organisation named "depends-on-sample"
 name: acme/depends-on-sample
 version: 0.3.0
 sourceRoot: src/
 
 dependencies: {
-//   Depends on a project in the "acme" organisation called "sample", version 0.3.0
-   acme/sample: 0.3.0
+    // Depends on a project in the "acme" organisation called "sample", version 0.3.0
+   "org.acme/sample": 0.3.0
+   // Depends on a project from git
+   "org.acme/another-project" : "https://gitlab.com/taxi-lang/another-project.git"
+
+   // Depends on a project from git, at a specific branch / tag
+   "org.acme/project-3" : "https://gitlab.com/taxi-lang/project-3.git#1.2.0"
 }
 ```
 
 When running a `taxi build` command, the taxi-cli will first ensure that all dependent projects have been downloaded, and
 are present in the local cache.
 
-Adding a dependency requires you to specify the repository to download it from:
+Dependencies are either fetched from git, or from a specified artifact registry (like Nexus) you to specify the repository to download it from:
 
-```
+```json5
 repositories: [
    {
       // The name of the repository.  Optional, but used to reference credentials
@@ -60,13 +65,13 @@ However, be aware that where most other changes in VS Code take place as you typ
 </Hint>
 
 
-## Publishing taxonomies
+## Publishing Taxi projects
 
 Projects are published by running the `taxi publish` command, from within the same directory that contains your `taxi.conf` file.
 
 You must first configure a publishToRepository in your `taxi.conf` file:
 
-```hocon
+```json5
 publishToRepository: {
    url: "http://localhost:8081/"
    name : "nexus"
@@ -121,7 +126,7 @@ In Nexus, Taxi repositories are defined as Raw repositories.
 #### Updating your taxi.conf file to publish
 In the taxi.conf file of the project you wish to publish to your new repository, add the following:
 
-```hocon
+```json5
 publishToRepository: {
    // This name is used to look up credentials for auth
    name: "my-corporate-nexus"

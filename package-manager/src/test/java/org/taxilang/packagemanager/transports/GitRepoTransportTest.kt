@@ -36,7 +36,7 @@ class GitRepoTransportTest {
          typeNames = listOf("Film")
       )
       val taxiProject = loadProject(baseProjectPath)
-      val packageManager = buildPackageManager()
+      val packageManager = buildPackageManager(cacheDir.toPath())
       val loaded = packageManager.fetchDependencies(taxiProject)
 
       cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/bundle/src").exists().shouldBeTrue()
@@ -44,6 +44,7 @@ class GitRepoTransportTest {
       cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/bundle/taxi.conf").exists().shouldBeTrue()
 
    }
+
    @Test
    fun `will load dependencies from git`() {
       // DepB - installed in "remote"
@@ -72,7 +73,7 @@ class GitRepoTransportTest {
          typeNames = listOf("Film")
       )
       val taxiProject = loadProject(baseProjectPath)
-      val packageManager = buildPackageManager()
+      val packageManager = buildPackageManager(cacheDir.toPath())
       val loaded = packageManager.fetchDependencies(taxiProject)
 
       // Here's the important bit -- did we load the transitive dependency? (dependencyA1?)
@@ -89,19 +90,6 @@ class GitRepoTransportTest {
       cacheDir.toPath().resolve("org/test/dependencyB/0.1.0/bundle/taxi.conf").exists().shouldBeTrue()
    }
 
-   private fun buildPackageManager(): PackageManager {
-      val (repoSystem, session) = RepositorySystemProvider.build(
-//         listOf(GitRepoTransportFactory::class.java)
-      )
-      val packageManager = PackageManager(
-         ImporterConfig(cacheDir.toPath()),
-         repoSystem,
-         session,
-         listOf(GitRepositorySupport.GIT_REMOTE_REPOSITORY)
-      )
-      return packageManager
-   }
-
    private fun initAsGitRepo(path: Path): URI {
       val git = Git.init().setDirectory(path.toFile()).call()
       git.add().addFilepattern(".").call()
@@ -109,4 +97,15 @@ class GitRepoTransportTest {
       return path.resolve(".git").toUri()
 
    }
+
+}
+
+fun buildPackageManager(cacheDir:Path): PackageManager {
+   val (repoSystem, session) = RepositorySystemProvider.build()
+   val packageManager = PackageManager(
+      ImporterConfig(cacheDir),
+      repoSystem,
+      session,
+   )
+   return packageManager
 }

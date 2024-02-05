@@ -17,6 +17,8 @@ import org.taxilang.packagemanager.layout.TaxiLocalPathComposer
 import org.taxilang.packagemanager.repository.git.GitProjectLayoutFactory
 import org.taxilang.packagemanager.repository.git.GitRepoTransportFactory
 import org.taxilang.packagemanager.repository.git.GitVersionResolver
+import org.taxilang.packagemanager.repository.nexus.NexusLayoutFactory
+import org.taxilang.packagemanager.repository.nexus.NexusTransportFactory
 import org.taxilang.packagemanager.transports.TaxiFileSystemTransportFactory
 
 object RepositorySystemProvider {
@@ -24,6 +26,7 @@ object RepositorySystemProvider {
       return build(
          listOf(
 //            TaxiFileSystemTransportFactory::class.java,
+            NexusTransportFactory::class.java,
             GitRepoTransportFactory::class.java,
          )
       )
@@ -34,6 +37,7 @@ object RepositorySystemProvider {
       transports.forEach { serviceLocator.addService(TransporterFactory::class.java, it) }
       serviceLocator.addService(RepositoryConnectorFactory::class.java, BasicRepositoryConnectorFactory::class.java)
       serviceLocator.addService(RepositoryLayoutFactory::class.java, GitProjectLayoutFactory::class.java)
+      serviceLocator.addService(RepositoryLayoutFactory::class.java, NexusLayoutFactory::class.java)
       serviceLocator.setService(ArtifactDescriptorReader::class.java, TaxiDescriptorReader::class.java)
       serviceLocator.setService(LocalPathComposer::class.java, TaxiLocalPathComposer::class.java)
       serviceLocator.setService(VersionResolver::class.java, GitVersionResolver::class.java)

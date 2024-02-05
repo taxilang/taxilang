@@ -51,16 +51,10 @@ module.exports = {
 
                ],
                "Publishing and sharing taxonomies": [
-                  "distributing-taxi/distributing-taxi-projects",
+                  "distributing-taxi/dependency-management",
                   "distributing-taxi/distributing-taxi-plugins",
-                  "distributing-taxi/taxi-hub",
-               ],
-               Plugins: [
                ],
                "Visual Studio Code": ["taxi-vs-code/editor-plugins"],
-               Testing: [
-                  "testing/running-taxi-in-a-ci-cd-pipeline",
-               ],
                Taxonomy: [
                   "best-practices-for-taxonomy-development/README",
                   "best-practices-for-taxonomy-development/building-your-base-taxonomy",

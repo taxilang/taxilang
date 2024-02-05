@@ -6,22 +6,15 @@ import org.eclipse.aether.spi.connector.transport.AbstractTransporter
 import org.eclipse.aether.spi.connector.transport.GetTask
 import org.eclipse.aether.spi.connector.transport.PeekTask
 import org.eclipse.aether.spi.connector.transport.PutTask
-import org.eclipse.aether.spi.connector.transport.TransportListener
 import org.eclipse.aether.spi.connector.transport.Transporter
 import org.eclipse.aether.spi.connector.transport.TransporterFactory
-import org.eclipse.aether.transfer.TransferEvent
-import org.eclipse.aether.transfer.TransferListener
-import org.eclipse.aether.util.FileUtils
-import org.taxilang.packagemanager.TaxiFileBasedPackageBundler
+import org.taxilang.packagemanager.TaxiPackageBundler
 import org.taxilang.packagemanager.layout.TaxiArtifactType
 import org.taxilang.packagemanager.repository.git.copyPathToDestination
 import org.taxilang.packagemanager.utils.log
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.extension
-import kotlin.io.path.inputStream
-import kotlin.io.path.toPath
-import kotlin.math.log
 
 /**
  * A transport factory that follows a directory based layout on a local file system.
@@ -58,7 +51,7 @@ class TaxiFileSystemTransport(private val session: RepositorySystemSession, priv
       val filePath = when (path.fileName.extension) {
          TaxiArtifactType.TAXI_CONF_FILE.extension -> path.parent.resolve("taxi.conf")
          TaxiArtifactType.TAXI_PROJECT_BUNDLE.extension -> {
-            path.changeExtension(TaxiFileBasedPackageBundler.EXTENSION)
+            path.changeExtension(TaxiPackageBundler.EXTENSION)
          }
          else -> path
       }
