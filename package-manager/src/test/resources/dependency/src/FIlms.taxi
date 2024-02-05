@@ -1,3 +1,0 @@
-namespace com.films
-
-type FilmName inherits String

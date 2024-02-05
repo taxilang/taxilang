@@ -3,7 +3,6 @@ package lang.taxi.lsp.actions
 import lang.taxi.Compiler
 import lang.taxi.TaxiParser.FieldDeclarationContext
 import lang.taxi.TaxiParser.TypeDeclarationContext
-import lang.taxi.UnknownTokenReferenceException
 import lang.taxi.lsp.CompilationResult
 import lang.taxi.lsp.completion.normalizedUriPath
 import lang.taxi.lsp.utils.Ranges
@@ -16,11 +15,7 @@ import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 
 fun Compiler.contextAt(position: Position, identifier: TextDocumentIdentifier): ParserRuleContext? {
-   return try {
-      this.contextAt(position.line, position.character, identifier.normalizedUriPath())
-   } catch (e:UnknownTokenReferenceException) {
-      return null
-   }
+   return this.contextAt(position.line, position.character, identifier.normalizedUriPath())
 
 }
 
@@ -33,7 +28,6 @@ class IntroduceSemanticType : CodeActionProvider {
       val compiler = compilationResult.compiler
       val context = compiler
          .contextAt(params.range.start, params.textDocument)
-         ?: return false
       return isFieldDeclaration(context) && getFieldType(context!!, compiler)?.isPrimitiveType() ?: false
    }
 

@@ -69,12 +69,20 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
       }
       val decorators = listOf(importDecorator)
       val completionItems = when (completionContext) {
+         is ColumnIndexContext -> buildColumnIndexSuggestions()
+         is FieldTypeDeclarationContext -> typeProvider.getTypes(decorators)
+         is FieldDeclarationContext -> typeProvider.getTypes(decorators)
+         is TypeMemberDeclarationContext -> typeProvider.getTypes(decorators)
+         is ListOfInheritedTypesContext -> typeProvider.getTypes(decorators)
          is ExpressionAtomContext -> calculateExpressionSuggestions(
             context as ExpressionAtomContext,
             importDecorator,
             compilationResult,
             lastSuccessfulCompilation
          )
+         // This next one feels wrong, but it's what I'm seeing debugging.
+         // suspect our matching of token to cursor position might be off
+         is TypeReferenceContext -> typeProvider.getTypes(decorators)
          is CaseScalarAssigningDeclarationContext -> typeProvider.getEnumValues(
             decorators,
             context.start.text
@@ -83,6 +91,12 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
          is EnumSynonymSingleDeclarationContext -> provideEnumCompletions(
             context.start.text,
             decorators
+         )
+
+         is ElementValueContext -> provideAnnotationFieldValueCompletions(
+            completionContext,
+            decorators,
+            compilationResult
          )
 
          is EnumSynonymDeclarationContext -> provideEnumCompletions(context.start.text, decorators)

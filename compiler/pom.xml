@@ -30,12 +30,12 @@
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
-         <artifactId>package-manager</artifactId>
+         <artifactId>package-importer</artifactId>
          <version>${project.version}</version>
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
-         <artifactId>package-manager</artifactId>
+         <artifactId>package-importer</artifactId>
          <version>${project.version}</version>
          <scope>test</scope>
          <type>test-jar</type>

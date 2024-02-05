@@ -74,16 +74,5 @@ class CompositeCompletionService(private val completionProviders: List<Completio
          }
    }
 
-   companion object {
-      fun withDefaults(typeProvider: TypeProvider):CompositeCompletionService {
-         return CompositeCompletionService(
-            listOf(
-               EditorCompletionService(typeProvider),
-               DefaultCompletionProvider(typeProvider)
-            )
-         )
-      }
-   }
-
 
 }
