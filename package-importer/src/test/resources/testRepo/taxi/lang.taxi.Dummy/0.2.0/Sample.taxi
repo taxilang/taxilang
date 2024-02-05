@@ -1,5 +1,0 @@
-namespace lang.taxi.sample
-
-type Person {
-   name : PersonName as String
-}
