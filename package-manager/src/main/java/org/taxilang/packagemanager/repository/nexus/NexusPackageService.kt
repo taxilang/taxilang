@@ -11,6 +11,7 @@ import org.http4k.core.Request
 import org.http4k.core.Response
 import org.taxilang.packagemanager.layout.TaxiArtifactType
 import org.taxilang.packagemanager.utils.basicAuth
+import org.taxilang.packagemanager.utils.log
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Path
@@ -56,7 +57,6 @@ class NexusPackageService(
    }
 
    override fun upload(zip: File, taxiConfFilePath: Path, project: TaxiPackageProject): Response {
-//      val entity: HttpEntity = FileEntity(zip)
       require(project.packageRootPath != null) { "Cannot upload project when packageRootPath is not set. This should be set by tooling (not users), so indicates a bug" }
       val taxiConfFile = project.packageRootPath!!.resolve("taxi.conf")
       require(taxiConfFile.exists()) { "Cannot upload project, as not taxi.conf file found at $taxiConfFile" }
@@ -84,14 +84,14 @@ class NexusPackageService(
       val url = "${nexusUrl}/repository/$repositoryName/${name.organisation}/${name.name}/${identifier.version}/${
          filename(identifier, TaxiArtifactType.TAXI_PROJECT_BUNDLE)
       }"
-//      userFacingLogger.info("Attempting to download ${identifier.id} from $url")
+      log().info("Attempting to download ${identifier.id} from $url")
 
       val request = Request(Method.GET, url)
       val response = httpClient(request)
       return if (response.status.code in 200..299) {
          response.body.stream
       } else {
-//         userFacingLogger.info("Couldn't download from $url - got ${response.status}")
+         log().info("Couldn't download from $url - got ${response.status}")
          null
       }
    }
