@@ -85,7 +85,6 @@
       <taxi.version>${project.version}</taxi.version>
       <testcontainers.version>1.19.3</testcontainers.version>
       <reactor-bom.version>2023.0.0</reactor-bom.version>
-      <kotlin-logging.version>3.0.5</kotlin-logging.version>
    </properties>
 
    <dependencies>

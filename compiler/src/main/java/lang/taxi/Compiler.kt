@@ -46,7 +46,7 @@ fun ParserRuleContext?.toCompilationUnit(
     * Looks in the source file declaring this context, and grabs all the imports
     */
    includeImportsPresentInFile: Boolean = false
-): lang.taxi.types.CompilationUnit {
+): CompilationUnit {
    return if (this == null) {
       CompilationUnit.unspecified()
    } else {
