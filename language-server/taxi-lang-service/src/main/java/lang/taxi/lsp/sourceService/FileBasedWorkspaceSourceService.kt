@@ -1,7 +1,5 @@
 package lang.taxi.lsp.sourceService
 
-import lang.taxi.logging.MessageLogger
-import lang.taxi.lsp.LspClientMessageLogger
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.sources.SourceCode
@@ -25,7 +23,6 @@ import java.nio.file.Path
  */
 class FileBasedWorkspaceSourceService(
     private val root: Path,
-    private val messageLogger: MessageLogger
 ) : WorkspaceSourceService {
 
     companion object {
@@ -35,7 +32,7 @@ class FileBasedWorkspaceSourceService(
                 val root = File(URI.create(SourceNames.normalize(rootUri)))
                 require(root.exists()) { "Fatal error - the workspace root location ($rootUri) doesn't appear to exist" }
 
-                return FileBasedWorkspaceSourceService(root.toPath(), LspClientMessageLogger(client))
+                return FileBasedWorkspaceSourceService(root.toPath())
             }
 
         }
@@ -44,7 +41,7 @@ class FileBasedWorkspaceSourceService(
     override fun loadSources(): Sequence<SourceCode> {
         val taxiConfFile = root.resolve("taxi.conf")
         return if (Files.exists(taxiConfFile)) {
-            val packageSources = TaxiSourcesLoader.loadPackageAndDependencies(root, messageLogger)
+            val packageSources = TaxiSourcesLoader.loadPackageAndDependencies(root)
             packageSources.sources.asSequence()
         } else {
             loadAllTaxiFilesUnderRoot()

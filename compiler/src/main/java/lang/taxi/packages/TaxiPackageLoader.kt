@@ -15,12 +15,6 @@ import java.nio.file.Path
 // is no package yet.
 class TaxiPackageLoader(val path: Path? = null) {
 
-   init {
-       if (path == null) {
-          log().warn("")
-       }
-   }
-
    companion object {
       private val logger = KotlinLogging.logger {}
       fun forDirectoryContainingTaxiFile(path:Path):TaxiPackageLoader {

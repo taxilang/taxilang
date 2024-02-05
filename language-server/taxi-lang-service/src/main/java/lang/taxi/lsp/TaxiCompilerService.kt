@@ -1,13 +1,15 @@
 package lang.taxi.lsp
 
 import com.google.common.base.Stopwatch
-import lang.taxi.*
+import lang.taxi.CompilationError
+import lang.taxi.CompilationException
+import lang.taxi.Compiler
+import lang.taxi.CompilerConfig
+import lang.taxi.CompilerTokenCache
 import lang.taxi.linter.toLinterRules
-import lang.taxi.logging.MessageLogger
 import lang.taxi.lsp.completion.TypeProvider
 import lang.taxi.lsp.parser.TokenInjectingErrorStrategy
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
-import lang.taxi.packages.ImporterConfig
 import lang.taxi.packages.MalformedTaxiConfFileException
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.types.SourceNames
@@ -16,7 +18,6 @@ import mu.KotlinLogging
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.eclipse.lsp4j.TextDocumentIdentifier
-import org.taxilang.packagemanager.PackageManager
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Sinks
 import java.io.PrintWriter

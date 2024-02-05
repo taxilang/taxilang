@@ -2,19 +2,30 @@ package lang.taxi.lsp
 
 import ch.qos.logback.classic.Level
 import lang.taxi.CompilerConfig
-import lang.taxi.logging.CompositeLogger
-import lang.taxi.logging.MessageLogger
 import lang.taxi.lsp.logging.LspClientLogAppender
 import lang.taxi.lsp.sourceService.FileBasedWorkspaceSourceService
 import lang.taxi.lsp.sourceService.WorkspaceSourceServiceFactory
 import lang.taxi.utils.log
-import org.eclipse.lsp4j.*
+import org.eclipse.lsp4j.CompletionOptions
+import org.eclipse.lsp4j.InitializeParams
+import org.eclipse.lsp4j.InitializeResult
+import org.eclipse.lsp4j.MessageParams
+import org.eclipse.lsp4j.MessageType
+import org.eclipse.lsp4j.SaveOptions
+import org.eclipse.lsp4j.ServerCapabilities
+import org.eclipse.lsp4j.SignatureHelpOptions
+import org.eclipse.lsp4j.TextDocumentSyncKind
+import org.eclipse.lsp4j.TextDocumentSyncOptions
+import org.eclipse.lsp4j.WorkspaceFoldersOptions
+import org.eclipse.lsp4j.WorkspaceServerCapabilities
 import org.eclipse.lsp4j.jsonrpc.messages.Either
-import org.eclipse.lsp4j.services.*
-import org.slf4j.LoggerFactory
+import org.eclipse.lsp4j.services.LanguageClient
+import org.eclipse.lsp4j.services.LanguageClientAware
+import org.eclipse.lsp4j.services.LanguageServer
+import org.eclipse.lsp4j.services.TextDocumentService
+import org.eclipse.lsp4j.services.WorkspaceService
 import reactor.core.publisher.Mono
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
 
