@@ -112,12 +112,6 @@
          <artifactId>config4k</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.taxilang</groupId>
-         <artifactId>package-importer</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
          <groupId>net.lingala.zip4j</groupId>
          <artifactId>zip4j</artifactId>
       </dependency>
