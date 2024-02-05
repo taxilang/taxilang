@@ -12,18 +12,21 @@ import lang.taxi.linter.Linter
 import lang.taxi.linter.LinterRuleConfiguration
 import lang.taxi.linter.toLinterRules
 import lang.taxi.messages.Severity
+import lang.taxi.packages.ImporterConfig
 import lang.taxi.packages.TaxiPackageSources
+import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.query.TaxiQlQuery
 import lang.taxi.sources.SourceCode
 import lang.taxi.sources.SourceLocation
 import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.*
-import lang.taxi.utils.log
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.ParseTree
+import org.taxilang.packagemanager.PackageManager
 import java.io.File
 import java.io.Serializable
+import java.nio.file.Path
 import java.util.*
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
@@ -284,6 +287,22 @@ class Compiler(
          Compiler(sources.mapIndexed { index, source -> CharStreams.fromPath(source.toPath()) })
 
       fun forStrings(vararg source: String) = forStrings(source.toList())
+
+      fun forPackageWithDependencies(
+         packageRootPath: Path,
+         packageManager: PackageManager? = null
+      ): Compiler {
+
+         val thePackageManager = if (packageManager == null) {
+            val rootProject = TaxiSourcesLoader.loadPackage(packageRootPath)
+            PackageManager.withDefaultRepositorySystem(
+               ImporterConfig.forProject(rootProject.project)
+            )
+         } else packageManager
+         val sources = TaxiSourcesLoader.loadPackageAndDependencies(packageRootPath,thePackageManager)
+         return Compiler(sources)
+      }
+
    }
 
    private val typeChecker: TypeChecker = TypeChecker(config.typeCheckerEnabled)
