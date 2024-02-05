@@ -31,15 +31,15 @@ module.exports = {
                   "generating-taxi-from-source"
                ],
                Language: [
+                  "language-reference/taxi-projects",
                   "language-reference/taxi-language",
                   "language-reference/types-and-models",
                   "language-reference/advanced-types",
                   "language-reference/describing-services",
-                  "language-reference/functions",
-                  "language-reference/taxi-and-openapi",
-                  "language-reference/stdlib",
                   "language-reference/querying-with-taxiql",
-                  "language-reference/taxi-projects",
+                  "language-reference/functions",
+                  "language-reference/stdlib",
+                  "language-reference/taxi-and-openapi"
                ],
                "The Taxi CLI": [
                   "taxi-cli/intro",
