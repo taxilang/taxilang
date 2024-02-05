@@ -15,7 +15,7 @@ import org.eclipse.lsp4j.services.WorkspaceService
 import java.util.concurrent.CompletableFuture
 
 class TaxiWorkspaceService(private val compilerService: TaxiCompilerService) : WorkspaceService {
-   val receivedEvents = mutableListOf<Any>()
+   private val receivedEvents = mutableListOf<Any>()
 
    override fun symbol(params: WorkspaceSymbolParams): CompletableFuture<Either<MutableList<out SymbolInformation>, MutableList<out WorkspaceSymbol>>> {
       val compiler = this.compilerService.lastCompilation()?.compiler

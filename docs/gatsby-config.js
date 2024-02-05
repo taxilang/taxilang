@@ -31,15 +31,15 @@ module.exports = {
                   "generating-taxi-from-source"
                ],
                Language: [
+                  "language-reference/taxi-projects",
                   "language-reference/taxi-language",
                   "language-reference/types-and-models",
                   "language-reference/advanced-types",
                   "language-reference/describing-services",
-                  "language-reference/functions",
-                  "language-reference/taxi-and-openapi",
-                  "language-reference/stdlib",
                   "language-reference/querying-with-taxiql",
-                  "language-reference/taxi-projects",
+                  "language-reference/functions",
+                  "language-reference/stdlib",
+                  "language-reference/taxi-and-openapi"
                ],
                "The Taxi CLI": [
                   "taxi-cli/intro",
@@ -51,16 +51,10 @@ module.exports = {
 
                ],
                "Publishing and sharing taxonomies": [
-                  "distributing-taxi/distributing-taxi-projects",
+                  "distributing-taxi/dependency-management",
                   "distributing-taxi/distributing-taxi-plugins",
-                  "distributing-taxi/taxi-hub",
-               ],
-               Plugins: [
                ],
                "Visual Studio Code": ["taxi-vs-code/editor-plugins"],
-               Testing: [
-                  "testing/running-taxi-in-a-ci-cd-pipeline",
-               ],
                Taxonomy: [
                   "best-practices-for-taxonomy-development/README",
                   "best-practices-for-taxonomy-development/building-your-base-taxonomy",
