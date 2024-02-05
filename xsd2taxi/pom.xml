@@ -34,7 +34,7 @@
       <!--      </dependency>-->
       <dependency>
          <groupId>org.taxilang</groupId>
-         <artifactId>taxi-writer</artifactId>
+         <artifactId>compiler</artifactId>
          <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -64,7 +64,8 @@
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
-         <artifactId>test-utils</artifactId>
+         <artifactId>compiler</artifactId>
+<type>test-jar</type>
          <version>${project.version}</version>
       </dependency>
       <dependency>

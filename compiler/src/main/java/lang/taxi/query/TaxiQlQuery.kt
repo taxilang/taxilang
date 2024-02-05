@@ -2,8 +2,16 @@ package lang.taxi.query
 
 import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.mutations.Mutation
-import lang.taxi.types.*
+import lang.taxi.types.Annotatable
 import lang.taxi.types.Annotation
+import lang.taxi.types.ArrayType
+import lang.taxi.types.Arrays
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Compiled
+import lang.taxi.types.Documented
+import lang.taxi.types.ObjectType
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.Type
 
 
 data class TaxiQlQuery(

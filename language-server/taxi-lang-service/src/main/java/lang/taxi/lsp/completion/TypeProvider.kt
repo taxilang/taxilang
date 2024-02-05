@@ -1,8 +1,17 @@
 package lang.taxi.lsp.completion
 
 import lang.taxi.lsp.CompilationResult
-import lang.taxi.packages.utils.log
-import lang.taxi.types.*
+import lang.taxi.types.AnnotationType
+import lang.taxi.types.Arrays
+import lang.taxi.types.Documented
+import lang.taxi.types.EnumType
+import lang.taxi.types.ImportableToken
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.StreamType
+import lang.taxi.types.Type
+import lang.taxi.types.TypeKind
+import lang.taxi.utils.log
 import org.eclipse.lsp4j.CompletionItem
 import org.eclipse.lsp4j.CompletionItemKind
 import java.util.concurrent.atomic.AtomicReference

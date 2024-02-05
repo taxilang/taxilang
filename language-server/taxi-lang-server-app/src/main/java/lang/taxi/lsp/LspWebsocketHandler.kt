@@ -1,7 +1,7 @@
 package lang.taxi.lsp
 
 import com.google.common.cache.CacheBuilder
-import lang.taxi.packages.utils.log
+import lang.taxi.utils.log
 import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession

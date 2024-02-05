@@ -1,28 +1,47 @@
 package lang.taxi.lsp
 
-import lang.taxi.*
-import lang.taxi.lsp.actions.CodeActionService
-import lang.taxi.lsp.completion.CompletionService
-import lang.taxi.lsp.completion.EditorCompletionService
-import lang.taxi.lsp.completion.normalizedUriPath
-import lang.taxi.lsp.formatter.FormatterService
-import lang.taxi.lsp.gotoDefinition.GotoDefinitionService
-import lang.taxi.lsp.hover.HoverService
-import lang.taxi.lsp.linter.LintingService
-import lang.taxi.lsp.signatures.SignatureHelpService
+import lang.taxi.CompilationError
+import lang.taxi.UnknownTokenReferenceException
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
 import lang.taxi.lsp.sourceService.isWebIdeUri
-import lang.taxi.messages.Severity
+import lang.taxi.packages.MalformedTaxiConfFileException
 import lang.taxi.types.SourceNames
-import org.antlr.v4.runtime.CharStream
-import org.antlr.v4.runtime.ParserRuleContext
-import org.eclipse.lsp4j.*
+import org.eclipse.lsp4j.CodeAction
+import org.eclipse.lsp4j.CodeActionParams
+import org.eclipse.lsp4j.Command
+import org.eclipse.lsp4j.CompletionItem
+import org.eclipse.lsp4j.CompletionList
+import org.eclipse.lsp4j.CompletionParams
+import org.eclipse.lsp4j.DefinitionParams
+import org.eclipse.lsp4j.Diagnostic
+import org.eclipse.lsp4j.DiagnosticSeverity
+import org.eclipse.lsp4j.DidChangeTextDocumentParams
+import org.eclipse.lsp4j.DidCloseTextDocumentParams
+import org.eclipse.lsp4j.DidOpenTextDocumentParams
+import org.eclipse.lsp4j.DidSaveTextDocumentParams
+import org.eclipse.lsp4j.DocumentFormattingParams
+import org.eclipse.lsp4j.Hover
+import org.eclipse.lsp4j.HoverParams
+import org.eclipse.lsp4j.InitializeParams
+import org.eclipse.lsp4j.Location
+import org.eclipse.lsp4j.LocationLink
+import org.eclipse.lsp4j.MarkupContent
+import org.eclipse.lsp4j.MessageParams
+import org.eclipse.lsp4j.MessageType
+import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.PublishDiagnosticsParams
+import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.SignatureHelp
+import org.eclipse.lsp4j.SignatureHelpParams
+import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.eclipse.lsp4j.TextEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.LanguageClient
 import org.eclipse.lsp4j.services.LanguageClientAware
 import org.eclipse.lsp4j.services.TextDocumentService
 import java.io.File
 import java.net.URI
+import java.nio.file.Path
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 
@@ -32,46 +51,34 @@ object UnknownSource {
 }
 
 /**
- * Stores the compiled snapshot for a file
- * Contains both the TaxiDocument - for accessing types, etc,
- * and the compiler, for accessing tokens and compiler context - useful
- * for completion
+ * A wrapper for a group of messages we want to display in the "Problems" panel inside VSCode
  */
-data class CompilationResult(
-   val compiler: Compiler,
-   val document: TaxiDocument?,
-   val countOfSources: Int,
-   val duration: Duration,
-   val errors: List<CompilationError> = emptyList()
+interface DiagnosticMessagesWrapper {
+   val countOfSources: Int
+   val duration: Duration
+   val messages: Map<String, List<Diagnostic>>
+}
 
-
-) {
-   fun containsTokensForSource(uri: String): Boolean {
-      return compiler.containsTokensForSource(uri)
-   }
-
-   fun getNearestToken(textDocument: TextDocumentIdentifier, position: Position):ParserRuleContext? {
-      val normalizedUriPath = textDocument.normalizedUriPath()
-      val zeroBasedLineIndex = position.line
-      val char = position.character
-      // contextAt() is the most specific.  If we match an exact token, it'll be returned.
-      return compiler.contextAt(zeroBasedLineIndex, char, normalizedUriPath)
-         ?:
-         // getNearestToken() returns the token if we're not on an exact match location, but could find a nearby one.
-         compiler.getNearestToken(
-            zeroBasedLineIndex,
-            char,
-            normalizedUriPath
-         ) as? ParserRuleContext
-   }
-
-   fun getSource(textDocument: TextDocumentIdentifier): CharStream? {
-      return compiler.inputs.firstOrNull {
-         it.sourceName == textDocument.normalizedUriPath()
+class UnreadableTaxiConfMessage(private val path: Path, private val message: String, private val lineNumber: Int?) :
+   DiagnosticMessagesWrapper {
+   override val countOfSources: Int = 1
+   override val duration: Duration = Duration.ofSeconds(0)
+   override val messages: Map<String, List<Diagnostic>>
+      get() {
+         val position = Position(lineNumber ?: 1, 1)
+         val sourceName = SourceNames.normalize(path)
+         val messages = listOf(
+            Diagnostic(
+               Range(position, position),
+               message,
+               DiagnosticSeverity.Error,
+               sourceName
+            )
+         )
+         return mapOf(sourceName to messages)
       }
-   }
 
-   val successful = document != null && errors.none { it.severity == Severity.ERROR }
+
 }
 
 /**
@@ -81,24 +88,9 @@ data class CompilationResult(
  */
 data class CompilationTrigger(val changedPath: URI?)
 
-/**
- * A set of all the services required by the Taxi language service.
- * Where possible, reasonable defaults are provided.
- */
-data class LspServicesConfig(
-   val compilerService: TaxiCompilerService = TaxiCompilerService(),
-   val completionService: CompletionService = EditorCompletionService(compilerService.typeProvider),
-   val formattingService: FormatterService = FormatterService(),
-   val gotoDefinitionService: GotoDefinitionService = GotoDefinitionService(compilerService.typeProvider),
-   val hoverService: HoverService = HoverService(),
-   val codeActionService: CodeActionService = CodeActionService(),
-   val signatureHelpService: SignatureHelpService = SignatureHelpService(),
-   val lintingService: LintingService = LintingService()
-)
-
 class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService,
    LanguageClientAware {
-   constructor(compilerService: TaxiCompilerService) : this(LspServicesConfig(compilerService))
+   constructor(compilerService: TaxiCompilerService) : this(LspServicesConfig(compilerService = compilerService))
 
    val lastCompilationResult: CompilationResult
       get() {
@@ -127,13 +119,14 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       compilerService.compilationResults
          .subscribe { compilationResult ->
             logCompilationResult(compilationResult)
-            this.compilerMessages = compilationResult.errors
-            this.compilerErrorDiagnostics = convertCompilerMessagesToDiagnotics(this.compilerMessages)
+            if (compilationResult is CompilationResult) {
+               this.compilerMessages = compilationResult.errors
+            }
+            this.compilerErrorDiagnostics = compilationResult.messages
             publishDiagnosticMessages()
          }
    }
 
-   val compilationResults = compilerService.compilationResults
    private val ready: Boolean
       get() {
          return initialized && connected
@@ -245,8 +238,6 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
          )
       )
       compilerService.reloadSourcesAndTriggerCompilation()
-//        compile()
-//        publishDiagnosticMessages()
    }
 
    override fun didClose(params: DidCloseTextDocumentParams) {
@@ -293,43 +284,19 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       val compilationResult = this.compilerService.compile()
       logCompilationResult(compilationResult)
       this.compilerMessages = compilationResult.errors
-      this.compilerErrorDiagnostics = convertCompilerMessagesToDiagnotics(this.compilerMessages)
+      this.compilerErrorDiagnostics = compilationResult.messages
 
       return compilationResult
    }
 
-   private fun convertCompilerMessagesToDiagnotics(compilerMessages: List<CompilationError>): Map<String, List<Diagnostic>> {
-      val diagnostics = compilerMessages.map { error ->
-         // Note - for VSCode, we can use the same position for start and end, and it
-         // highlights the entire word
-         val position = Position(
-            error.line - 1,
-            error.char
-         )
-         val severity: DiagnosticSeverity = when (error.severity) {
-            Severity.INFO -> DiagnosticSeverity.Information
-            Severity.WARNING -> DiagnosticSeverity.Warning
-            Severity.ERROR -> DiagnosticSeverity.Error
-         }
-         (error.sourceName ?: UnknownSource.UNKNOWN_SOURCE) to Diagnostic(
-            Range(position, position),
-            error.detailMessage,
-            severity,
-            "Compiler"
-         )
-      }
-      return diagnostics.groupBy({ it.first }, { it.second })
-         .mapKeys { (fileUri, _) -> SourceNames.normalize(fileUri) }
-   }
-
-   private fun publishDiagnosticMessages() {
-      val diagnosticMessages = (compilerErrorDiagnostics.keys + linterDiagnostics.keys).map { uri ->
-         val normalisedUrl = SourceNames.normalize(uri)
-         normalisedUrl to (compilerErrorDiagnostics.getOrDefault(
-            normalisedUrl,
-            emptyList()
-         ) + linterDiagnostics.getOrDefault(normalisedUrl, emptyList()))
-      }.map { (uri, diagnostics) ->
+   /**
+    * publishes diagnostic messages (ie., the messages that appear in the "Problems" panel in VSCode)
+    * out to the LanguageClient.
+    *
+    * Note: This is a destructive operation - any existing messages are replaced.
+    */
+   fun publishDiagnosticMessages(messages: List<Pair<String, List<Diagnostic>>>) {
+      val diagnosticMessages = messages.map { (uri, diagnostics) ->
          // When sending diagnostic messages, use the canonical path of the file, rather than
          // the normalized URI.  This means we get an OS specific file.
          // VSCode on windows seems to not like the URI
@@ -350,10 +317,21 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       clearErrors()
       this.displayedMessages = diagnosticMessages
 
-
       diagnosticMessages.forEach {
          client.publishDiagnostics(it)
       }
+   }
+
+   private fun publishDiagnosticMessages() {
+      val diagnosticMessages = (compilerErrorDiagnostics.keys + linterDiagnostics.keys).map { uri ->
+         val normalisedUrl = SourceNames.normalize(uri)
+         normalisedUrl to (compilerErrorDiagnostics.getOrDefault(
+            normalisedUrl,
+            emptyList()
+         ) + linterDiagnostics.getOrDefault(normalisedUrl, emptyList()))
+      };
+      publishDiagnosticMessages(diagnosticMessages)
+
    }
 
    private fun clearErrors() {
@@ -389,15 +367,20 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    private fun initializeCompilerService(workspaceSourceService: WorkspaceSourceService) {
-      this.compilerService.initialize(workspaceSourceService)
+      try {
+         this.compilerService.initialize(workspaceSourceService)
+      } catch (e: MalformedTaxiConfFileException) {
+         // We've already logged the errors to the client, but can't compile.
+         return
+      }
       compile()
       publishDiagnosticMessages()
    }
 
-   private fun logCompilationResult(result: CompilationResult) {
+   private fun logCompilationResult(result: DiagnosticMessagesWrapper) {
       client.logMessage(
          MessageParams(
-            MessageType.Log,
+            MessageType.Info,
             "Compiled ${result.countOfSources} sources in ${result.duration.toMillis()}ms"
          )
       )
