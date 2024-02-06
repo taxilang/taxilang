@@ -5,6 +5,7 @@ import lang.taxi.TaxiParser
 import lang.taxi.lsp.CompilationResult
 import lang.taxi.searchUpForRule
 import lang.taxi.types.ImportableToken
+import lang.taxi.types.PrimitiveType
 import lang.taxi.types.Type
 import lang.taxi.utils.log
 import org.antlr.v4.runtime.ParserRuleContext
@@ -74,7 +75,10 @@ class DefaultCompletionProvider(
     * Returns all types in the schema as CompletionItems
     */
    private fun typeCompletionItems(schema: TaxiDocument, decorators: List<CompletionDecorator>): List<CompletionItem> {
-      return taxiTokensAsCompletionItems(schema.types, decorators) { it is Type && !it.anonymous }
+      // MP 6-Feb-24: This didn't used to include primitive types,
+      // which felt wrong when typing.
+      val typesForCompletion = schema.types + PrimitiveType.values()
+      return taxiTokensAsCompletionItems(typesForCompletion, decorators) { it is Type && !it.anonymous }
    }
 
    private fun taxiTokensAsCompletionItems(
