@@ -4,8 +4,10 @@ import lang.taxi.CompilationError
 import lang.taxi.UnknownTokenReferenceException
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
 import lang.taxi.lsp.sourceService.isWebIdeUri
+import lang.taxi.lsp.utils.Ranges
 import lang.taxi.packages.MalformedTaxiConfFileException
 import lang.taxi.types.SourceNames
+import lang.taxi.utils.log
 import org.eclipse.lsp4j.CodeAction
 import org.eclipse.lsp4j.CodeActionParams
 import org.eclipse.lsp4j.Command
@@ -28,7 +30,6 @@ import org.eclipse.lsp4j.LocationLink
 import org.eclipse.lsp4j.MarkupContent
 import org.eclipse.lsp4j.MessageParams
 import org.eclipse.lsp4j.MessageType
-import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.PublishDiagnosticsParams
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.SignatureHelp
@@ -59,27 +60,60 @@ interface DiagnosticMessagesWrapper {
    val messages: Map<String, List<Diagnostic>>
 }
 
-class UnreadableTaxiConfMessage(private val path: Path, private val message: String, private val lineNumber: Int?) :
+class FileDiagnosticMessageCollection() : DiagnosticMessagesWrapper {
+   private val _messages: MutableMap<String, List<Diagnostic>> = mutableMapOf()
+   override var countOfSources = 0
+      private set
+   override var duration: Duration = Duration.ZERO
+      private set
+
+   override val messages: Map<String, List<Diagnostic>>
+      get() = _messages.toMap()
+
+   /**
+    * Folds the other wrapper into this.
+    *  - The countOfSources is appended.
+    *  - The duration is max()'d
+    */
+   fun fold(wrapper: DiagnosticMessagesWrapper): FileDiagnosticMessageCollection {
+      _messages.putAll(wrapper.messages)
+      this.duration = maxOf(duration, wrapper.duration)
+      this.countOfSources += wrapper.countOfSources
+      return this
+   }
+
+
+}
+
+/**
+ * A diagnostic message (ie., compilation error) on something other than a .taxi source file.
+ * (eg: the taxi.conf file, or possibly a connections.conf etc)
+ */
+class FileDiagnosticMessage(private val path: Path, private val messageAndLineNumber: List<Pair<String, Range>>) :
    DiagnosticMessagesWrapper {
+   constructor(path: Path, message: String, lineNumber: Int?) : this(
+      path,
+      listOf(message to Ranges.fullLine(lineNumber ?: 1))
+   )
+
    override val countOfSources: Int = 1
    override val duration: Duration = Duration.ofSeconds(0)
    override val messages: Map<String, List<Diagnostic>>
       get() {
-         val position = Position(lineNumber ?: 1, 1)
          val sourceName = SourceNames.normalize(path)
-         val messages = listOf(
+         val diagnosticMessages = messageAndLineNumber.map { (message, range) ->
             Diagnostic(
-               Range(position, position),
+               range,
                message,
                DiagnosticSeverity.Error,
                sourceName
             )
-         )
-         return mapOf(sourceName to messages)
+         }
+
+         return mapOf(sourceName to diagnosticMessages)
       }
-
-
 }
+
 
 /**
  * Triggers compilation from a changed path.
@@ -109,6 +143,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    private val lintingService = services.lintingService
    private val signatureHelpService = services.signatureHelpService
    private lateinit var client: LanguageClient
+   private var progressUpdatesService: ProgressUpdatesService? = null
    private var rootUri: String? = null
 
    private var initialized: Boolean = false
@@ -125,6 +160,13 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
             this.compilerErrorDiagnostics = compilationResult.messages
             publishDiagnosticMessages()
          }
+
+      compilerService.compilationProgressEvents.subscribe { event ->
+         progressUpdatesService?.let { progressService ->
+            progressService.handleEvent(event)
+         }
+
+      }
    }
 
    private val ready: Boolean
@@ -295,8 +337,13 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
     *
     * Note: This is a destructive operation - any existing messages are replaced.
     */
-   fun publishDiagnosticMessages(messages: List<Pair<String, List<Diagnostic>>>) {
-      val diagnosticMessages = messages.map { (uri, diagnostics) ->
+   private fun publishDiagnosticMessages(messages: List<Pair<String, List<Diagnostic>>>) {
+      val diagnosticMessages = messages
+         // Only include paths with messages.
+         // Given publishing diagnostics overwrites previous state,
+         // by excluding those without messages, it removes the entry from the UI
+         .filter { it.second.isNotEmpty() }
+         .map { (uri, diagnostics) ->
          // When sending diagnostic messages, use the canonical path of the file, rather than
          // the normalized URI.  This means we get an OS specific file.
          // VSCode on windows seems to not like the URI
@@ -348,11 +395,13 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    override fun connect(client: LanguageClient) {
       this.client = client
       connected = true
+      progressUpdatesService = ProgressUpdatesService(client)
       if (ready) {
          // Not sure if this is true, but it makes this sequence trickier
 //         error("Can't connect after initialze - should be other way around.")
 //            initializeCompilerService(workspaceSourceService)
       }
+
    }
 
    fun initialize(params: InitializeParams, workspaceSourceService: WorkspaceSourceService) {
@@ -373,8 +422,8 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
          // We've already logged the errors to the client, but can't compile.
          return
       }
-      compile()
-      publishDiagnosticMessages()
+
+      compilerService.triggerAsyncCompilation(CompilationTrigger(null))
    }
 
    private fun logCompilationResult(result: DiagnosticMessagesWrapper) {

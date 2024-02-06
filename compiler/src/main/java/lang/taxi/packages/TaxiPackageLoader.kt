@@ -3,7 +3,6 @@ package lang.taxi.packages
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigException
 import com.typesafe.config.ConfigFactory
-import com.typesafe.config.ConfigRenderOptions
 import io.github.config4k.extract
 import lang.taxi.utils.log
 import org.apache.commons.lang3.SystemUtils
@@ -12,7 +11,7 @@ import java.nio.file.Path
 // Note : I've made the path mandatory here, but may
 // want to relax that for cli-style projects where there
 // is no package yet.
-class TaxiPackageLoader(val path: Path? = null) {
+class TaxiPackageLoader(val taxiConfFilePath: Path? = null) {
 
    companion object {
       fun forDirectoryContainingTaxiFile(path: Path): TaxiPackageLoader {
@@ -25,7 +24,7 @@ class TaxiPackageLoader(val path: Path? = null) {
    }
 
    private val pathsToSearch = listOfNotNull(
-      path,
+      taxiConfFilePath,
       SystemUtils.getUserHome().toPath().resolve(".taxi/taxi.conf")
    ).toMutableList()
 
@@ -61,8 +60,8 @@ class TaxiPackageLoader(val path: Path? = null) {
       val loaded: TaxiPackageProject = config.extract()
       // If we were explicitly given a root path, use that.
       // The "root path" concept is tricky, as the config is actally composed of many locations
-      return if (path != null) {
-         loaded.copy(packageRootPath = path)
+      return if (taxiConfFilePath != null) {
+         loaded.copy(taxiConfFile = taxiConfFilePath)
       } else loaded
    }
 }

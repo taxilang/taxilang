@@ -21,7 +21,7 @@ class NoOpWorkspaceSourceService : WorkspaceSourceService {
         }
     }
 
-    override fun loadSources(): Sequence<SourceCode> {
+    override fun loadSources(resolveDependencies: Boolean): Sequence<SourceCode> {
         return emptySequence()
     }
 

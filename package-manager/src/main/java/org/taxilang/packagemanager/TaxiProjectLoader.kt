@@ -37,6 +37,6 @@ class TaxiProjectLoader(
       configs.add(ConfigFactory.load())
       val config = configs.reduceRight(Config::withFallback)
       return config.extract<TaxiPackageProject>()
-         .copy(packageRootPath = taxiConfPath.parent)
+         .copy(taxiConfFile = taxiConfPath)
    }
 }
