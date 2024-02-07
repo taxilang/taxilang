@@ -20,7 +20,7 @@ interface WorkspaceSourceService {
     * Returns all the sources for the project in the workspace.
     * If there are dependencies expressed in the taxi.conf file, these are resolved
     */
-    fun loadSources(resolveDependencies: Boolean = true): Sequence<SourceCode>
+    fun loadSources(): Sequence<SourceCode>
 
     /**
      * Returns a TaxiPackageProject if one exists within the workspace.

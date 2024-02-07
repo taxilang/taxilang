@@ -7,7 +7,7 @@ import lang.taxi.Compiler
 import lang.taxi.CompilerConfig
 import lang.taxi.CompilerTokenCache
 import lang.taxi.linter.toLinterRules
-import lang.taxi.lsp.completion.TypeProvider
+import lang.taxi.lsp.completion.TypeCompletionBuilder
 import lang.taxi.lsp.parser.TokenInjectingErrorStrategy
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
 import lang.taxi.lsp.utils.Ranges
@@ -51,7 +51,7 @@ class TaxiCompilerService(
    private val tokenCache: CompilerTokenCache = CompilerTokenCache(
       listOf(TokenInjectingErrorStrategy.parserCustomizer)
    )
-   val typeProvider = TypeProvider(lastSuccessfulCompilationResult, lastCompilationResult)
+   val typeCompletionBuilder = TypeCompletionBuilder()
 
    private val compileTriggerSink = Sinks.many().unicast().onBackpressureBuffer<CompilationTrigger>()
    private val taxiConfDiagnostics = Sinks.many().unicast().onBackpressureBuffer<DiagnosticMessagesWrapper>()
@@ -164,15 +164,15 @@ class TaxiCompilerService(
       } catch (e: DependencyCollectionException) {
          cancelProgress("Unable to collect requested dependencies: ${e.message}")
          handleTaxiConfException(e)
-         this.workspaceSourceService.loadSources(resolveDependencies = false)
+         this.workspaceSourceService.loadSources()
       } catch (e: ArtifactResolutionException) {
          reportUnresolvableDependencies(e)
          cancelProgress("Unable to resolve requested dependencies: ${e.message}")
-         this.workspaceSourceService.loadSources(resolveDependencies = false)
+         this.workspaceSourceService.loadSources()
       } catch (e: Exception) {
          handleTaxiConfException(e)
          cancelProgress("An error occurred loading the project: ${e.message}")
-         this.workspaceSourceService.loadSources(resolveDependencies = false)
+         this.workspaceSourceService.loadSources()
       }
 
       loadedSources

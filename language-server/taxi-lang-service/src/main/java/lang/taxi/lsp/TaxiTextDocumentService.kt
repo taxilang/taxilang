@@ -396,12 +396,6 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       this.client = client
       connected = true
       progressUpdatesService = ProgressUpdatesService(client)
-      if (ready) {
-         // Not sure if this is true, but it makes this sequence trickier
-//         error("Can't connect after initialze - should be other way around.")
-//            initializeCompilerService(workspaceSourceService)
-      }
-
    }
 
    fun initialize(params: InitializeParams, workspaceSourceService: WorkspaceSourceService) {
@@ -410,9 +404,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
 
       initialized = true
 
-//      if (ready) {
       initializeCompilerService(workspaceSourceService)
-//      }
    }
 
    private fun initializeCompilerService(workspaceSourceService: WorkspaceSourceService) {

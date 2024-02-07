@@ -18,12 +18,12 @@ import java.util.concurrent.CompletableFuture
  * user is editing a query, or designing a model.
  */
 class DefaultCompletionProvider(
-   private val typeProvider: TypeProvider,
+   private val typeCompletionBuilder: TypeCompletionBuilder,
 ) : CompletionProvider {
 
    // We should progressively move the completion code out of the completion service
    // into a provider, to make this more composable
-   private val editorCompletionService = EditorCompletionService(typeProvider)
+   private val editorCompletionService = EditorCompletionService(typeCompletionBuilder)
    private val functionCompletionProvider = FunctionCompletionProvider()
 
    override fun getCompletionsForContext(
@@ -31,7 +31,8 @@ class DefaultCompletionProvider(
       params: CompletionParams,
       importDecorator: ImportCompletionDecorator,
       contextAtCursor: ParserRuleContext?,
-      lastSuccessfulCompilation: CompilationResult?
+      lastSuccessfulCompilation: CompilationResult?,
+      typeRepository: TypeRepository
    ): CompletableFuture<List<CompletionItem>> {
       val decorators = listOf(importDecorator)
       val completions = when (contextAtCursor) {
@@ -58,7 +59,7 @@ class DefaultCompletionProvider(
             ) {
                annotationParameterCompletion(contextAtCursor, decorators, compilationResult)
             } else {
-               val typeCompletions = typeCompletionItems(compilationResult.documentOrEmpty, decorators)
+               val typeCompletions = typeCompletionBuilder.getTypes(typeRepository, decorators)
                val functionCompletions =
                   functionCompletionProvider.buildFunctions(compilationResult.documentOrEmpty, decorators)
                typeCompletions + functionCompletions
@@ -70,34 +71,6 @@ class DefaultCompletionProvider(
       return completed(completions)
    }
 
-
-   /**
-    * Returns all types in the schema as CompletionItems
-    */
-   private fun typeCompletionItems(schema: TaxiDocument, decorators: List<CompletionDecorator>): List<CompletionItem> {
-      // MP 6-Feb-24: This didn't used to include primitive types,
-      // which felt wrong when typing.
-      val typesForCompletion = schema.types + PrimitiveType.values()
-      return taxiTokensAsCompletionItems(typesForCompletion, decorators) { it is Type && !it.anonymous }
-   }
-
-   private fun taxiTokensAsCompletionItems(
-      tokens: Collection<ImportableToken>,
-      decorators: List<CompletionDecorator>,
-      predicate: (ImportableToken) -> Boolean
-   ): List<CompletionItem> {
-      return tokens
-         .filter(predicate)
-         .mapNotNull { token ->
-            when (token) {
-               is Type -> typeProvider.buildCompletionItem(token, decorators)
-               else -> {
-                  log().debug("Don't know how to build completion items for type ${token::class.simpleName}")
-                  null
-               }
-            }
-         }
-   }
 
    private fun annotationParameterCompletion(
       contextAtCursor: ParserRuleContext,

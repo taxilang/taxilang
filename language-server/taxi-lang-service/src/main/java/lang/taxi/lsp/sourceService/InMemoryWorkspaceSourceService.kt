@@ -21,7 +21,7 @@ class InMemoryWorkspaceSourceService(
       }
    }
 
-   override fun loadSources(resolveDependencies: Boolean): Sequence<SourceCode> {
+   override fun loadSources(): Sequence<SourceCode> {
       return sources.asSequence()
    }
 

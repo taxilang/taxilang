@@ -38,16 +38,11 @@ class FileBasedWorkspaceSourceService(
       }
    }
 
-   override fun loadSources(resolveDependencies: Boolean): Sequence<SourceCode> {
+   override fun loadSources(): Sequence<SourceCode> {
       val taxiConfFile = root.resolve("taxi.conf")
       return if (Files.exists(taxiConfFile)) {
-         if (resolveDependencies) {
             val packageSources = TaxiSourcesLoader.loadPackageAndDependencies(root)
             packageSources.sources.asSequence()
-         } else {
-            TaxiSourcesLoader.loadPackage(root)
-               .sources.asSequence()
-         }
       } else {
          loadAllTaxiFilesUnderRoot()
       }

@@ -15,9 +15,9 @@ import lang.taxi.lsp.signatures.SignatureHelpService
  */
 data class LspServicesConfig(
     val compilerService: TaxiCompilerService = TaxiCompilerService(),
-    val completionService: CompletionService = CompositeCompletionService.withDefaults(compilerService.typeProvider),
+    val completionService: CompletionService = CompositeCompletionService.withDefaults(compilerService.typeCompletionBuilder),
     val formattingService: FormatterService = FormatterService(),
-    val gotoDefinitionService: GotoDefinitionService = GotoDefinitionService(compilerService.typeProvider),
+    val gotoDefinitionService: GotoDefinitionService = GotoDefinitionService(compilerService.typeCompletionBuilder),
     val hoverService: HoverService = HoverService(),
     val codeActionService: CodeActionService = CodeActionService(),
     val signatureHelpService: SignatureHelpService = SignatureHelpService(),
