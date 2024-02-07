@@ -16,9 +16,8 @@ import org.eclipse.lsp4j.CompletionItem
 import org.eclipse.lsp4j.CompletionItemKind
 import java.util.concurrent.atomic.AtomicReference
 
-class TypeProvider(
-   private val lastSuccessfulCompilationResult: AtomicReference<CompilationResult>,
-   private val lastCompilationResult: AtomicReference<CompilationResult>
+
+class TypeCompletionBuilder(
 ) {
    private val primitives = PrimitiveType.values()
       .map { type ->
@@ -30,22 +29,11 @@ class TypeProvider(
       }.toMap()
 
    fun getTypes(
+      typeRepository: TypeRepository,
       decorators: List<CompletionDecorator> = emptyList(),
-      filter: (QualifiedName, Type?) -> Boolean
+      filter: (QualifiedName, Type?) -> Boolean,
    ): List<CompletionItem> {
-      val compiledDoc = lastSuccessfulCompilationResult.get()?.document
-      val lastSuccessfulCompilationTypeNames = lastSuccessfulCompilationResult.get()?.compiler?.declaredTypeNames()
-         ?: emptyList()
-      val lastCompilationResultTypeNames = lastCompilationResult.get()?.compiler?.declaredTypeNames() ?: emptyList()
-      val typeNames = (lastCompilationResultTypeNames + lastSuccessfulCompilationTypeNames).distinct()
-
-      val completionItems = typeNames.map { name ->
-         if (compiledDoc?.containsType(name.fullyQualifiedName) == true) { // == true because of nulls
-            name to compiledDoc.type(name.fullyQualifiedName)
-         } else {
-            name to null
-         }
-      }
+      val completionItems = typeRepository.getTypeNames()
          .filter { (name, type) -> filter(name, type) }
          .map { (name, type) -> buildCompletionItem(type, name, decorators) }
       val primitiveCompletions = primitives.filter { (type, _) -> filter(type.toQualifiedName(), type) }
@@ -87,7 +75,7 @@ class TypeProvider(
             CompletionItemKind.Unit
          } // Why would this be null?
          type is AnnotationType -> CompletionItemKind.Interface // ? There isn't an annotation CompletionItemKind :(
-         type.typeKind!! == TypeKind.Model -> CompletionItemKind.Class
+         type.typeKind!! == TypeKind.Model -> CompletionItemKind.Interface
          type.typeKind!! == TypeKind.Type -> CompletionItemKind.Field
          else -> {
             log().debug("Unhandled switch case in buildCompletionItem")
@@ -119,20 +107,16 @@ class TypeProvider(
    /**
     * Returns all types, including Taxi primitives
     */
-   fun getTypes(decorators: List<CompletionDecorator> = emptyList()): List<CompletionItem> {
-      return getTypes(decorators) { _, _ -> true }
+   fun getTypes(typeRepository: TypeRepository, decorators: List<CompletionDecorator> = emptyList()): List<CompletionItem> {
+      return getTypes(typeRepository, decorators) { _, _ -> true }
    }
 
-   fun getTypeName(text: String): QualifiedName? {
-      return lastCompilationResult.get()?.compiler?.declaredTypeNames()?.firstOrNull { it ->
-         it.typeName == text || it.fullyQualifiedName == text
-      }
+   fun getTypeName(typeRepository: TypeRepository, text: String): QualifiedName? {
+      return typeRepository.getTypeName(text)
    }
 
-   fun getEnumValues(decorators: List<CompletionDecorator>, enumTypeName: QualifiedName): List<CompletionItem> {
-      val enumType =
-         lastSuccessfulCompilationResult.get()?.document?.enumType(enumTypeName.fullyQualifiedName)
-
+   fun getEnumValues(typeRepository: TypeRepository, decorators: List<CompletionDecorator>, enumTypeName: QualifiedName): List<CompletionItem> {
+      val enumType = typeRepository.getEnumType(enumTypeName.fullyQualifiedName)
       val completionItems = enumType?.let {
          (it as EnumType).values.map { enumValue ->
             CompletionItem(enumValue.name).apply {
@@ -146,19 +130,19 @@ class TypeProvider(
       return completionItems ?: listOf()
    }
 
-   fun getEnumValues(decorators: List<CompletionDecorator>, enumTypeName: String?): List<CompletionItem> {
+   fun getEnumValues(typeRepository: TypeRepository, decorators: List<CompletionDecorator>, enumTypeName: String?): List<CompletionItem> {
       if (enumTypeName == null) {
          return listOf()
       }
 
 
-      val enumTypeQualifiedName = getTypeName(enumTypeName) ?: return emptyList()
-      return getEnumValues(decorators, enumTypeName)
+      val enumTypeQualifiedName = getTypeName(typeRepository, enumTypeName) ?: return emptyList()
+      return getEnumValues(typeRepository, decorators, enumTypeName)
 
    }
 
-   fun getEnumTypes(decorators: List<CompletionDecorator>): List<CompletionItem> {
-      return getTypes(decorators) { _, type -> type is EnumType }
+   fun getEnumTypes(typeRepository: TypeRepository, decorators: List<CompletionDecorator>): List<CompletionItem> {
+      return getTypes(typeRepository, decorators) { _, type -> type is EnumType }
    }
 }
 
@@ -166,7 +150,11 @@ interface CompletionDecorator {
    fun decorate(typeName: QualifiedName, token: ImportableToken?, completionItem: CompletionItem): CompletionItem
 }
 
-fun CompletionItem.decorate(decorators: List<CompletionDecorator>, name: QualifiedName, token: ImportableToken):CompletionItem {
+fun CompletionItem.decorate(
+   decorators: List<CompletionDecorator>,
+   name: QualifiedName,
+   token: ImportableToken
+): CompletionItem {
    return decorators.fold(this) { itemToDecorate, decorator ->
       decorator.decorate(
          name,

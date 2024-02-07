@@ -167,38 +167,89 @@ function startPlugin(
             // we try to implement this.
             // This supposed to repsond to requests from the server for configuration.
             // The corresponding request from the server is in TaxiLanguageServer - configureLoggers
-
-         //    workspace: {
-         //       // Respond to server-side requests for configuration.
-         //       // this lets the server ask for how the user has configured things, such as logging
-         //       configuration: (params) => {
-         //          const configSettings = params.items.map((item) => {
-         //             if (item.section) {
-         //                // Return the specific configuration for "taxi" as requested by the server
-         //                const config = vscode.workspace.getConfiguration(
-         //                   item.section,
-         //                   null
-         //                );
-         //                return config.get(item.section);
-         //             }
-         //          });
-         //          return Promise.resolve(configSettings);
-         //       },
-         //    },
+            //    workspace: {
+            //       // Respond to server-side requests for configuration.
+            //       // this lets the server ask for how the user has configured things, such as logging
+            //       configuration: (params) => {
+            //          const configSettings = params.items.map((item) => {
+            //             if (item.section) {
+            //                // Return the specific configuration for "taxi" as requested by the server
+            //                const config = vscode.workspace.getConfiguration(
+            //                   item.section,
+            //                   null
+            //                );
+            //                return config.get(item.section);
+            //             }
+            //          });
+            //          return Promise.resolve(configSettings);
+            //       },
+            //    },
          },
       };
 
       // Create the language client and start the client.
-      let disposable = new LanguageClient(
+      const languageClient = new LanguageClient(
          "Taxi",
          "Taxi Language Server",
          serverOptions,
          clientOptions
-      ).start();
+      );
+
+      languageClient.onReady().then(() => {
+         registerProgressNotifications(languageClient);
+      });
+
+      const disposable = languageClient.start();
+
 
       // Disposables to remove on deactivation.
       context.subscriptions.push(disposable);
    }
+}
+
+function registerProgressNotifications(client: LanguageClient) {
+   client.onNotification("$/progress", (params) => {
+      const { token, value } = params;
+
+      // Handle beginning of progress
+      if (value.kind === "begin") {
+         vscode.window.withProgress(
+            {
+               location: vscode.ProgressLocation.Notification,
+               title: value.title,
+               cancellable: value.cancellable,
+            },
+            (progress, cancellationToken) => {
+               progress.report({ increment: -1, message: value.message });
+
+               return new Promise<void>((resolve) => {
+                  const handleEnd = (endParams: { token: any; value: { kind: string; message: any; }; }) => {
+                     if (
+                        endParams.token === token &&
+                        endParams.value.kind === "end"
+                     ) {
+                        progress.report({
+                           increment: 100,
+                           message: endParams.value.message,
+                        });
+                        resolve();
+                     }
+                  };
+
+                  // Here we simply add a temporary listener for the end event
+                  client.onNotification("$/progress", handleEnd);
+
+                  if (value.cancellable) {
+                     cancellationToken.onCancellationRequested(() => {
+                        // Here, handle cancellation if necessary
+                        // You might send a message to the server to cancel the operation
+                     });
+                  }
+               });
+            }
+         );
+      }
+   });
 }
 
 // this method is called when your extension is deactivated
@@ -234,7 +285,9 @@ function deleteJarFileFromDependencies(dependencies: string[]) {
                if (err) {
                   console.error(`Error deleting file ${file}:`, err);
                } else {
-                  console.log(`Deleted dependency jar ${file} to force loading local compiled version`);
+                  console.log(
+                     `Deleted dependency jar ${file} to force loading local compiled version`
+                  );
                }
             });
          });

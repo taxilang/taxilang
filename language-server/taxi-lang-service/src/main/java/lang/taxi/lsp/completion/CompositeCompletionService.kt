@@ -45,7 +45,15 @@ interface CompletionProvider {
        * a current parser rule
        */
       contextAtCursor: ParserRuleContext?,
-      lastSuccessfulCompilation: CompilationResult?
+      lastSuccessfulCompilation: CompilationResult?,
+
+      /**
+       * Provides the ability to override the type repository that will be used
+       * for type lookups etc.
+       * By default, uses a combination of the most recent compilation, and the most recent
+       * successful compilation
+       */
+      typeRepository: TypeRepository = CompilationResultTypeRepository(compilationResult, lastSuccessfulCompilation)
    ): CompletableFuture<List<CompletionItem>>
 }
 
@@ -75,11 +83,11 @@ class CompositeCompletionService(private val completionProviders: List<Completio
    }
 
    companion object {
-      fun withDefaults(typeProvider: TypeProvider):CompositeCompletionService {
+      fun withDefaults(typeCompletionBuilder: TypeCompletionBuilder):CompositeCompletionService {
          return CompositeCompletionService(
             listOf(
-               EditorCompletionService(typeProvider),
-               DefaultCompletionProvider(typeProvider)
+               EditorCompletionService(typeCompletionBuilder),
+               DefaultCompletionProvider(typeCompletionBuilder)
             )
          )
       }

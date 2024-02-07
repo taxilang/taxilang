@@ -7,23 +7,35 @@ import lang.taxi.Compiler
 import lang.taxi.CompilerConfig
 import lang.taxi.CompilerTokenCache
 import lang.taxi.linter.toLinterRules
-import lang.taxi.lsp.completion.TypeProvider
+import lang.taxi.lsp.completion.TypeCompletionBuilder
 import lang.taxi.lsp.parser.TokenInjectingErrorStrategy
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
+import lang.taxi.lsp.utils.Ranges
 import lang.taxi.packages.MalformedTaxiConfFileException
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.types.SourceNames
 import lang.taxi.utils.log
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
+import org.eclipse.aether.collection.DependencyCollectionException
+import org.eclipse.aether.resolution.ArtifactResolutionException
+import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.ProgressParams
+import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.eclipse.lsp4j.WorkDoneProgressBegin
+import org.eclipse.lsp4j.WorkDoneProgressEnd
+import org.eclipse.lsp4j.jsonrpc.messages.Either
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Sinks
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.net.URI
+import java.nio.file.Path
 import java.time.Duration
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.readText
 
 class TaxiCompilerService(
    private val compilerConfig: CompilerConfig = CompilerConfig(),
@@ -35,16 +47,18 @@ class TaxiCompilerService(
 
    private val lastSuccessfulCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
    private val lastCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
-   private var taxiConfParseError: UnreadableTaxiConfMessage? = null
 
    private val tokenCache: CompilerTokenCache = CompilerTokenCache(
       listOf(TokenInjectingErrorStrategy.parserCustomizer)
    )
-   val typeProvider = TypeProvider(lastSuccessfulCompilationResult, lastCompilationResult)
+   val typeCompletionBuilder = TypeCompletionBuilder()
 
    private val compileTriggerSink = Sinks.many().unicast().onBackpressureBuffer<CompilationTrigger>()
-   private val taxiConfErrorsSink = Sinks.many().unicast().onBackpressureBuffer<DiagnosticMessagesWrapper>()
+   private val taxiConfDiagnostics = Sinks.many().unicast().onBackpressureBuffer<DiagnosticMessagesWrapper>()
    val compilationResults: Flux<DiagnosticMessagesWrapper>
+
+   private val compilationProgressSink = Sinks.many().unicast().onBackpressureBuffer<ProgressParams>()
+   val compilationProgressEvents: Flux<ProgressParams> = compilationProgressSink.asFlux()
 
    fun lastSuccessfulCompilation(): CompilationResult? {
       return lastCompilationResult.get()
@@ -59,11 +73,7 @@ class TaxiCompilerService(
          .bufferTimeout(50, Duration.ofMillis(500))
          .map { _ ->
             try {
-               if (taxiConfParseError != null) {
-                  taxiConfParseError!!
-               } else {
-                  compile()
-               }
+               compile()
             } catch (e: Exception) {
                val writer = StringWriter()
                val printWriter = PrintWriter(writer)
@@ -83,8 +93,16 @@ class TaxiCompilerService(
             }
          }
 
-      val taxiConfParseErrors = taxiConfErrorsSink.asFlux()
-      compilationResults = Flux.merge(triggeredCompilationResults, taxiConfParseErrors)
+      val taxiConfMessages = taxiConfDiagnostics.asFlux()
+
+      // Note: Because this is combineLatest, we need both to emit a message
+      // before a result is emitted.
+      // If that becomes problematic, consider emitting empty states on startup
+      compilationResults = Flux.combineLatest(triggeredCompilationResults, taxiConfMessages) { a, b ->
+         FileDiagnosticMessageCollection()
+            .fold(a)
+            .fold(b)
+      }
    }
 
    fun triggerAsyncCompilation(trigger: CompilationTrigger): Sinks.EmitResult {
@@ -105,20 +123,59 @@ class TaxiCompilerService(
    }
 
    private fun reloadSourcesWithoutCompiling() {
+      val token = UUID.randomUUID().toString()
+      fun cancelProgress(reason: String) {
+         compilationProgressSink.tryEmitNext(
+            ProgressParams().apply {
+               value = Either.forLeft(WorkDoneProgressEnd().apply {
+                  message = reason
+               })
+               setToken(token)
+            }
+         )
+      }
+      compilationProgressSink.tryEmitNext(
+         ProgressParams().apply {
+            value = Either.forLeft(WorkDoneProgressBegin().apply {
+               title = "Updating project"
+               cancellable = false
+               message = "Resolving dependencies..."
+            })
+            setToken(token)
+         }
+      )
       this.sources.clear()
       this.charStreams.clear()
       try {
          this.taxiProjectConfig = this.workspaceSourceService.loadProject()
-         taxiConfParseError = null
       } catch (e: MalformedTaxiConfFileException) {
          log().info("Cannot read taxi.conf file: ${e.path} - ${e.message}")
-         taxiConfParseError = UnreadableTaxiConfMessage(e.path, e.message, e.lineNumber)
-         taxiConfErrorsSink.emitNext(taxiConfParseError, Sinks.EmitFailureHandler.FAIL_FAST)
+         cancelProgress("taxi.conf file is invalid")
+         val message = FileDiagnosticMessage(e.path, e.message, e.lineNumber)
+         taxiConfDiagnostics.emitNext(message, Sinks.EmitFailureHandler.FAIL_FAST)
          throw e
       }
 
+      val loadedSources = try {
+         val loadedSources = this.workspaceSourceService.loadSources()
+         // At this point, the taxi.conf is valid, and all deps have been resolved
+         this.taxiProjectConfig?.taxiConfFile?.let { removeTaxiConfErrors(it) }
+         loadedSources
+      } catch (e: DependencyCollectionException) {
+         cancelProgress("Unable to collect requested dependencies: ${e.message}")
+         handleTaxiConfException(e)
+         this.workspaceSourceService.loadSources()
+      } catch (e: ArtifactResolutionException) {
+         reportUnresolvableDependencies(e)
+         cancelProgress("Unable to resolve requested dependencies: ${e.message}")
+         this.workspaceSourceService.loadSources()
+      } catch (e: Exception) {
+         handleTaxiConfException(e)
+         cancelProgress("An error occurred loading the project: ${e.message}")
+         this.workspaceSourceService.loadSources()
+      }
 
-      this.workspaceSourceService.loadSources()
+      loadedSources
          .forEach { sourceCode ->
             // Prefer operating on the path - less chances to screw up
             // the normalization of the URI, which seems to be getting
@@ -129,6 +186,59 @@ class TaxiCompilerService(
                updateSource(sourceCode.normalizedSourceName, sourceCode.content)
             }
          }
+      compilationProgressSink.tryEmitNext(
+         ProgressParams().apply {
+            value = Either.forLeft(WorkDoneProgressEnd().apply {
+               message = "Project updated successfully"
+            })
+            setToken(token)
+         }
+      )
+
+   }
+
+   private fun reportUnresolvableDependencies(e: ArtifactResolutionException) {
+      val taxiConfFile = taxiProjectConfig?.taxiConfFile!!
+      val taxiConfig = taxiConfFile?.readText()
+      val defaultLineNumber = 1;
+      val messages = e.results
+         .filter { it.exceptions.isNotEmpty() }
+         .map { requestedArtifact ->
+            val artifactId =
+               requestedArtifact.request.artifact.groupId + "/" + requestedArtifact.request.artifact.artifactId
+            val range = taxiConfig?.lineSequence()?.indexOfFirst { it.contains(artifactId) }?.let { lineNumber ->
+               val line = taxiConfig.lines()[lineNumber]
+               val startChar = line.indexOfFirst { !it.isWhitespace() }
+               val endChar = line.length - 1
+               Range(Position(lineNumber, startChar), Position(lineNumber, endChar))
+            } ?: Ranges.fullLine(defaultLineNumber)
+            val errorMessage = requestedArtifact.exceptions.joinToString("; ") {
+               it.message
+                  ?: "Could not resolve ${requestedArtifact.artifact} - An unknown error occurred (${it::class.java.simpleName}"
+            }
+            errorMessage to range
+         }
+      reportTaxiConfMessages(FileDiagnosticMessage(taxiConfFile, messages))
+   }
+
+   private fun handleTaxiConfException(e: Exception, lineNumber: Int = 1) {
+      taxiProjectConfig?.let { project ->
+         reportTaxiConfMessages(
+            FileDiagnosticMessage(
+               project.taxiConfFile!!,
+               e.message ?: "An error occurred",
+               lineNumber
+            )
+         )
+      }
+   }
+
+   private fun removeTaxiConfErrors(path: Path) {
+      reportTaxiConfMessages(FileDiagnosticMessage(path, emptyList()))
+   }
+
+   private fun reportTaxiConfMessages(message: FileDiagnosticMessage) {
+      taxiConfDiagnostics.emitNext(message, Sinks.EmitFailureHandler.FAIL_FAST)
    }
 
    fun reloadSourcesAndTriggerCompilation(): Sinks.EmitResult {

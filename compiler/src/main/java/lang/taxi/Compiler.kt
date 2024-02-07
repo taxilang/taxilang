@@ -452,6 +452,9 @@ class Compiler(
     */
    fun contextAt(zeroBasedLineIndex: Int, char: Int, sourceName: String = UNKNOWN_SOURCE): ParserRuleContext? {
       val sourceUri = SourceNames.normalize(sourceName)
+      if (!tokens.tokenStore.containsTokensForSource(sourceName)) {
+         return null
+      }
       val tokenTable = tokens.tokenStore.tokenTable(sourceName)
 
       val closestLineWithContent = searchBackwardsForClosestLine(tokenTable, zeroBasedLineIndex) ?: return null

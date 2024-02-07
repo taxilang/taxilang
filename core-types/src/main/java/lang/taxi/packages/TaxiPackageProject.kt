@@ -27,12 +27,13 @@ data class TaxiPackageProject(
    val taxiHome: Path = SystemUtils.getUserHome().toPath().resolve(".taxi/"),
    val linter: Map<String, TaxiConfLinterRuleConfig> = emptyMap(),
    val additionalSources: Map<SourcesType, GlobPattern> = emptyMap(),
-   val packageRootPath: Path? = null
+   val taxiConfFile: Path? = null
 ) {
    val identifier: PackageIdentifier = PackageIdentifier(ProjectName.fromId(name), version)
    val dependencyPackages: List<PackageIdentifier> = dependencies.map { (projectId, version) ->
       PackageIdentifier(ProjectName.fromId(projectId), version)
    }
+   val packageRootPath:Path? = taxiConfFile?.parent
 }
 
 // TODO : We also have PackageSource in the packageImporter.

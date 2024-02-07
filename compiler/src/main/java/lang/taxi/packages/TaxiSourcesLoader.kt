@@ -16,7 +16,7 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
          packageManager: PackageManager = PackageManager.withDefaultRepositorySystem(ImporterConfig.forProject(project))
       ): TaxiPackageSources {
          val dependencySources = packageManager.fetchDependencies(project)
-            .flatMap { packageSource ->  TaxiSourcesLoader(packageSource.packageRootPath!!).load() }
+            .flatMap { packageSource -> TaxiSourcesLoader(packageSource.packageRootPath!!).load() }
          return loadPackage(packageRootPath, project, dependencySources)
       }
 
@@ -44,10 +44,12 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
          dependencySources: List<SourceCode> = emptyList()
       ): TaxiPackageSources {
          val sourceRoot = packageRootPath.resolve(project.sourceRoot)
+         if (project.taxiConfFile == null) {
+            error("No taxi.conf file - how did this happen?")
+         }
          val sources = TaxiSourcesLoader(sourceRoot).load()
-         val projectWithRoot = project.copy(packageRootPath = packageRootPath)
 
-         return TaxiPackageSources(projectWithRoot, sources + dependencySources)
+         return TaxiPackageSources(project, sources + dependencySources)
       }
 
       fun loadPackage(packageRootPath: Path): TaxiPackageSources {

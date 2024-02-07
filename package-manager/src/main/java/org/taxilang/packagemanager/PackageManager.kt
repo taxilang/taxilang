@@ -85,7 +85,8 @@ class PackageManager(
          repositorySystem.collectDependencies(repositorySystemSession, request)
       } catch (e: DependencyCollectionException) {
          log().error("Failed to collect dependencies: ${e.message}")
-         return emptyList()
+         throw e
+//         return emptyList()
       }
 
       val artifactRequests = collectArtifactRequests(result.root.children)
@@ -97,7 +98,8 @@ class PackageManager(
          )
       } catch (e: ArtifactResolutionException) {
          log().error("Failed to resolve artifacts: ${e.message}")
-         return emptyList()
+         throw e
+//         return emptyList()
       }
 
       return resolved.map { processArchive(it.artifact.file) }
