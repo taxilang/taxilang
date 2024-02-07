@@ -6,6 +6,7 @@ import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import lang.taxi.types.ArrayType
 import lang.taxi.types.Field
 import lang.taxi.types.ObjectType
 
@@ -206,12 +207,12 @@ find { Movie[] } as {
        bloodType : BloodType
        creditScore : CreditScore
        ...except { id }
-    }
+    }[]
 }[]
          """.trimIndent()
          )
          val projectedAListers = query.projectedObjectType!!
-            .field("aListers").type.asA<ObjectType>()
+            .field("aListers").type.asA<ArrayType>().type.asA<ObjectType>()
          projectedAListers.hasField("name").shouldBeTrue()
          projectedAListers.hasField("id").shouldBeFalse()
          projectedAListers.hasField("bloodType").shouldBeTrue()

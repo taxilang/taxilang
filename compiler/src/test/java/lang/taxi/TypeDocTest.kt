@@ -93,7 +93,7 @@ type Puid
    fun canDeclareCommentOnTypeAlias() {
       val source = """
 [[ This is a comment ]]
-type alias Foo as String
+type Foo inherits String
       """.trimIndent()
       val taxi = Compiler(source).compile()
       val thing = taxi.typeAlias("Foo")
@@ -108,7 +108,7 @@ type alias Foo as String
 [[
 $commentText
 ]]
-type alias BaseCurrency as String
+type BaseCurrency inherits String
       """.trimIndent()
       val taxi = Compiler(source).compile()
       val thing = taxi.typeAlias("BaseCurrency")
@@ -127,7 +127,7 @@ called the quote currency or the counter currency.
 [[
 $commentText
 ]]
-type alias BaseCurrency as String
+type BaseCurrency inherits String
       """.trimIndent()
       val taxi = Compiler(source).compile()
       val thing = taxi.typeAlias("BaseCurrency")
@@ -152,7 +152,7 @@ type Foo
    fun canHaveQuotesInTypeDoc() {
       val source = """
 [[ "this is a comment" ]]
-type alias CurrencySymbol as String
+type CurrencySymbol inherits String
 
 [[ Another Comment ]]
 type Foo
