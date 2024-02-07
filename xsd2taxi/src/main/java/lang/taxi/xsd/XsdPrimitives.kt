@@ -16,16 +16,16 @@ object XsdPrimitives {
    val primitivesTaxiSource:String = """
 namespace org.w3
 
-type alias string as String
-type alias anyType as Any
-type alias integer as Int
-type alias date as Date
-type alias boolean as Boolean
-type alias time as Time
-type alias dateTime as DateTime
-type alias float as Decimal
-type alias double as Decimal
-type alias decimal as Decimal
+type string inherits String
+type anyType inherits Any
+type integer inherits Int
+type date inherits Date
+type boolean inherits Boolean
+type time inherits Time
+type dateTime inherits DateTime
+type float inherits Decimal
+type double inherits Decimal
+type decimal inherits Decimal
 
 type base64Binary inherits String
 type hexBinary inherits String

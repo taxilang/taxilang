@@ -27,7 +27,7 @@ class XsdToTaxiSpec : DescribeSpec({
             closed type PurchaseOrderType {
                [[ The date for an order ]]
                @lang.taxi.xml.XmlAttribute
-               OrderDate : Date?
+               OrderDate : org.w3.date?
             }
          }
          """
@@ -67,15 +67,15 @@ class XsdToTaxiSpec : DescribeSpec({
                closed type PurchaseOrderType {
                   ShipTo : USAddress
                   BillTo : USAddress
-                  @lang.taxi.xml.XmlAttribute OrderDate : Date?
+                  @lang.taxi.xml.XmlAttribute OrderDate : org.w3.date?
                }
 
                closed type USAddress {
-                  name : String
-                  street : String
-                  city : String
-                  state : String
-                  zip : Int
+                  name : org.w3.string
+                  street : org.w3.string
+                  city : org.w3.string
+                  state : org.w3.string
+                  zip : org.w3.integer
                   @lang.taxi.xml.XmlAttribute country : org.w3.NMTOKEN?
                }
             }
@@ -182,7 +182,7 @@ class XsdToTaxiSpec : DescribeSpec({
          ).asTaxi()
          val expected = """namespace org.tempuri {
    closed type USAddress {
-      name : String
+      name : org.w3.string
    }
 }"""
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
@@ -197,7 +197,7 @@ class XsdToTaxiSpec : DescribeSpec({
          ).asTaxi()
          val expected = """namespace org.tempuri {
    closed type USAddress {
-      name : String?
+      name : org.w3.string?
    }
 }"""
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
@@ -214,7 +214,7 @@ class XsdToTaxiSpec : DescribeSpec({
          val expected = """namespace org.tempuri
             |
             |@Format("[A-Z]{3,3}")
-            |type ActiveCurrencyCode inherits String
+            |type ActiveCurrencyCode inherits org.w3.string
          """.trimMargin()
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
       }
@@ -229,7 +229,7 @@ class XsdToTaxiSpec : DescribeSpec({
          ).asTaxi()
          val expected = """namespace org.tempuri
             |@Format("\\+[0-9]{1,3}-[0-9()+\\-]{1,30}")
-            |type PhoneNumber inherits String
+            |type PhoneNumber inherits org.w3.string
          """.trimMargin()
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
       }
@@ -325,8 +325,8 @@ class XsdToTaxiSpec : DescribeSpec({
          ).asTaxi()
          val expected = """namespace org.tempuri
    closed model MandateClassification1Choice {
-      Cd : String?
-      Prtry : String?
+      Cd : org.w3.string?
+      Prtry : org.w3.string?
    }
 
 """.trimMargin()
@@ -359,7 +359,7 @@ class XsdToTaxiSpec : DescribeSpec({
    [[ The base type which all FpML products extend. ]]
    closed type Product {
       [[ A classification of the most important risk class of the trade. FpML defines a simple asset class categorization using a coding scheme. ]]
-      primaryAssetClass : String?
+      primaryAssetClass : org.w3.string?
       @lang.taxi.xml.XmlAttribute id : org.w3.ID?
    }
 }"""
@@ -380,7 +380,7 @@ class XsdToTaxiSpec : DescribeSpec({
          val expected = """namespace org.tempuri {
    closed type PurchaseOrderType {
       // Note - not nullable
-      @lang.taxi.xml.XmlAttribute OrderDate : Date
+      @lang.taxi.xml.XmlAttribute OrderDate : org.w3.date
    }
 }"""
 
@@ -436,9 +436,9 @@ class XsdToTaxiSpec : DescribeSpec({
 
             val expected = """
             namespace com.foo {
-               type IsoCode inherits String
-               type CountryName inherits String
-               type CapitalCityName inherits String
+               type IsoCode inherits org.w3.string
+               type CountryName inherits org.w3.string
+               type CapitalCityName inherits org.w3.string
             }
             namespace org.tempuri {
                closed model CountryInfo {
@@ -465,9 +465,9 @@ class XsdToTaxiSpec : DescribeSpec({
 
             val expected = """
             namespace com.foo {
-               type IsoCode inherits String
-               type CountryName inherits String
-               type CapitalCityName inherits String
+               type IsoCode inherits org.w3.string
+               type CountryName inherits org.w3.string
+               type CapitalCityName inherits org.w3.string
             }
             namespace org.tempuri {
                closed model CountryInfo {

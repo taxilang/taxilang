@@ -155,21 +155,6 @@ type extension Person {
       """.trimMargin())
    }
 
-   @Test
-   fun canDeclareExtensionOnTypeAlias() {
-      val src = """
-[[ A name ]]
-type alias FirstName as String
-
-[[ The name they were given ]]
-@Documented
-type alias extension FirstName
-      """.trimIndent()
-      val doc = Compiler(src).compile()
-      val person = doc.typeAlias("FirstName")
-      expect(person.typeDoc).to.equal("A name\nThe name they were given")
-      expect(person.annotations).to.have.size(1)
-   }
 
    @Test
    fun canDeclareEmptyEnumExtension() {

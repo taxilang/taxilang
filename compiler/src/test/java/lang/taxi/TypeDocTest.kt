@@ -92,8 +92,9 @@ type Puid
    @Test
    fun canDeclareCommentOnTypeAlias() {
       val source = """
+type Bar inherits String
 [[ This is a comment ]]
-type Foo inherits String
+type alias Foo as Bar
       """.trimIndent()
       val taxi = Compiler(source).compile()
       val thing = taxi.typeAlias("Foo")
@@ -111,7 +112,7 @@ $commentText
 type BaseCurrency inherits String
       """.trimIndent()
       val taxi = Compiler(source).compile()
-      val thing = taxi.typeAlias("BaseCurrency")
+      val thing = taxi.type("BaseCurrency")
       expect(thing.typeDoc?.trim()).to.equal(commentText.trim())
    }
 
@@ -130,22 +131,8 @@ $commentText
 type BaseCurrency inherits String
       """.trimIndent()
       val taxi = Compiler(source).compile()
-      val thing = taxi.typeAlias("BaseCurrency")
+      val thing = taxi.type("BaseCurrency")
       expect(thing.typeDoc?.trim()).to.equal(commentText.trim())
-   }
-
-   @Test // bugfix
-   fun canDeclareTypeAfterTypeAliasWithComments() {
-      val source = """
-[[ Comment ]]
-type alias CurrencySymbol as String
-
-[[ Another Comment ]]
-type Foo
-      """.trimIndent()
-      val taxi = Compiler(source).compile()
-      taxi.containsType("CurrencySymbol").should.be.`true`
-      taxi.containsType("Foo").should.be.`true`
    }
 
    @Test

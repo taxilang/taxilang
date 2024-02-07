@@ -76,7 +76,7 @@ namespace foo {
       it("includes imported types in the compiled schema") {
          val sourceA = """
 namespace test {
-    type alias FirstName as String
+    type FirstName inherits String
 }
         """.trimIndent()
          val schemaA = Compiler(sourceA).compile()
@@ -139,11 +139,11 @@ namespace foo {
       it("when two types with same name exist but one is explicitly imported then type resolution is unambiguous") {
          val sourceA = """
 namespace foo {
-   type alias Name as String
+   type Name inherits String
 }
 
 namespace bar {
-   type alias Name as String
+   type Name inherits String
 }
       """.trimIndent()
          val sourceB = """
