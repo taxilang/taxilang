@@ -57,7 +57,8 @@ type ListOfPerson inherits Person[]
    @Test
    fun canInheritFromAlias() {
       val src = """
-   type alias CcySymbol as String
+         type CurrencySymbol inherits String
+   type alias CcySymbol as CurrencySymbol
    type BaseCurrency inherits CcySymbol
 """.trimIndent()
       val doc = Compiler(src).compile()
@@ -68,7 +69,7 @@ type ListOfPerson inherits Person[]
    @Test
    fun detectsUnderlyingPrimitivesCorrectly() {
       val src = """
-   type alias CcySymbol as String
+   type CcySymbol inherits String
    type BaseCurrency inherits CcySymbol
 
    type Person {
@@ -197,13 +198,12 @@ type ListOfPerson inherits Person[]
    @Test
    fun cacheAliasTypeProperties() {
       val src = """
-         type alias CcySymbol as String""".trimIndent()
+         type CurrencySymbol inherits String
+         type alias CcySymbol as CurrencySymbol""".trimIndent()
       val doc = Compiler(src).compile()
       doc.type("CcySymbol").basePrimitive.should.be.equal(PrimitiveType.STRING)
-      doc.type("CcySymbol").basePrimitive.should.be.equal(PrimitiveType.STRING)
-      doc.type("CcySymbol").allInheritedTypes.should.be.equal(setOf(PrimitiveType.STRING))
-      doc.type("CcySymbol").allInheritedTypes.should.be.equal(setOf(PrimitiveType.STRING))
-      doc.type("CcySymbol").inheritsFromPrimitive.should.be.`true`
+      doc.type("CcySymbol").allInheritedTypes.should.have.size(2)
+      doc.type("CcySymbol").allInheritedTypes.should.contain(PrimitiveType.STRING)
       doc.type("CcySymbol").inheritsFromPrimitive.should.be.`true`
    }
 

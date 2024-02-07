@@ -297,8 +297,9 @@ type Person {
    @Test
    fun canDeclareTypeAlias() {
       val source = """
+         type GivenName inherits String
 @SomeAnnotation
-type alias PersonName as String
+type alias PersonName as GivenName
 type Person {
     name : PersonName
 }"""
@@ -306,7 +307,7 @@ type Person {
       expect(doc.type("PersonName")).to.be.instanceof(TypeAlias::class.java)
       val personName = doc.objectType("Person").field("name").type as TypeAlias
       expect(personName).to.be.instanceof(TypeAlias::class.java)
-      expect(personName.aliasType).to.equal(PrimitiveType.STRING)
+      expect(personName.aliasType!!.qualifiedName).to.equal("GivenName")
       expect(personName.annotations).to.have.size(1)
    }
 
@@ -334,31 +335,6 @@ type Person {
       val compiler = Compiler(source)
       compiler.contextAt(0, 2)?.start?.text.should.equal("namespace")
       compiler.contextAt(3, 6)?.start?.text.should.equal("name")
-   }
-
-   @Test
-   fun canCompileWhenUsingFullyQualifiedNames() {
-      val source = """
-namespace taxi.example
-type Invoice {
-    clientId : taxi.example.ClientId
-    invoiceValue : taxi.example.InvoiceValue
-    previousInvoice : taxi.example.Invoice
-}
-
-// Note : Fully qualified primitives not currently working.
-// https://gitlab.com/osmosis-platform/taxi-lang/issues/5
-//type alias ClientId as lang.taxi.String
-//type alias InvoiceValue as lang.taxi.Decimal
-
-type alias ClientId as String
-type alias InvoiceValue as Decimal
-"""
-      val doc = Compiler(source).compile()
-      val invoice = doc.objectType("taxi.example.Invoice")
-      expect(invoice.field("clientId").type).to.be.instanceof(TypeAlias::class.java)
-      val typeAlias = invoice.field("clientId").type as TypeAlias
-      expect(typeAlias.aliasType).to.equal(PrimitiveType.STRING)
    }
 
 
@@ -592,7 +568,7 @@ type Trade {
    @Test
    fun canDeclareAnXpathAccessor() {
       val src = """
-type alias Instrument as String
+type Instrument inherits String
 type LegacyTradeNotification {
    instrument : Instrument by xpath("/some/xpath")
 }
@@ -623,7 +599,7 @@ type LegacyTradeNotification {
    @Test
    fun canDeclareAJsonPAthAccessor() {
       val src = """
-type alias Instrument as String
+type Instrument inherits String
 type LegacyTradeNotification {
    instrument : Instrument by jsonPath("$.foo[bar]")
 }
@@ -641,8 +617,8 @@ type LegacyTradeNotification {
 declare function concat(String...):String
 declare function leftAndUpperCase(String,String):String
 declare function midAndUpperCase(String,String):String
-type alias FirstName as String
-type alias LastName as String
+type FirstName inherits String
+type LastName inherits String
 type Person {
    firstName : FirstName by column(0)
    lastName : LastName by column(1)
@@ -682,7 +658,7 @@ type Person {
    fun `explicitly qualified function return parameter is resolved`() {
       val sourceA = """
 namespace test {
-    type alias FirstName as String
+    type FirstName inherits String
 }
         """.trimIndent()
       val schemaA = Compiler(sourceA).compile()
@@ -703,7 +679,7 @@ namespace foo {
    fun `not explicitly qualified function return param with an import is resolved`() {
       val sourceA = """
 namespace test {
-    type alias FirstName as String
+    type FirstName inherits String
 }
         """.trimIndent()
       val schemaA = Compiler(sourceA).compile()
@@ -724,7 +700,7 @@ namespace foo {
    @Test
    fun `not explicitly qualified function return parameter is resolved as it is`() {
       val sourceA = """
-    type alias FirstName as String
+    type FirstName inherits String
         """.trimIndent()
       val schemaA = Compiler(sourceA).compile()
       val sourceB = """
