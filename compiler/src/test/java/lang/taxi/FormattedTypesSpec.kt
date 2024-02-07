@@ -23,20 +23,6 @@ class FormattedTypesSpec : DescribeSpec({
             .format.should.equal(PrimitiveType.INSTANT.format)
       }
 
-      it("should return the formats of aliased types") {
-         val schema = """
-            type alias AliasedDate as Date
-
-            @Format("dd/mm/yyyy")
-            type FormattedDate inherits Date
-
-            type alias AliasedFormattedDate as FormattedDate
-
-         """.compiled()
-         schema.type("AliasedDate").formatAndZoneOffset.shouldNotBeNull()
-      }
-
-
       it("should inherit default formats on fields") {
          val doc = """
          type BirthDate inherits Date

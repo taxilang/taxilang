@@ -50,7 +50,7 @@ namespace Blurg {
       it("can import from another schema") {
          val sourceA = """
 namespace test {
-    type alias FirstName as String
+    type FirstName inherits String
 }
         """.trimIndent()
          val schemaA = Compiler(sourceA).compile()

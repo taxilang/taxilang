@@ -30,7 +30,7 @@ namespace test {
         counterPartyName : String
         rate : Decimal
     }
-    type alias Group as String
+    type Group inherits String
     type UserAuthorization {
         groups : Groups inherits Group[]
     }
