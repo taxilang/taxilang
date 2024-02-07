@@ -22,46 +22,46 @@ import java.nio.file.Path
  * Otherwise, just takes all the sources sitting under the root that end in .taxi
  */
 class FileBasedWorkspaceSourceService(
-    private val root: Path,
+   private val root: Path,
 ) : WorkspaceSourceService {
 
-    companion object {
-        class Factory : WorkspaceSourceServiceFactory {
-            override fun build(params: InitializeParams, client: LanguageClient): WorkspaceSourceService {
-                val rootUri = params.rootUri
-                val root = File(URI.create(SourceNames.normalize(rootUri)))
-                require(root.exists()) { "Fatal error - the workspace root location ($rootUri) doesn't appear to exist" }
+   companion object {
+      class Factory : WorkspaceSourceServiceFactory {
+         override fun build(params: InitializeParams, client: LanguageClient): WorkspaceSourceService {
+            val rootUri = params.rootUri
+            val root = File(URI.create(SourceNames.normalize(rootUri)))
+            require(root.exists()) { "Fatal error - the workspace root location ($rootUri) doesn't appear to exist" }
 
-                return FileBasedWorkspaceSourceService(root.toPath())
-            }
+            return FileBasedWorkspaceSourceService(root.toPath())
+         }
 
-        }
-    }
+      }
+   }
 
-    override fun loadSources(): Sequence<SourceCode> {
-        val taxiConfFile = root.resolve("taxi.conf")
-        return if (Files.exists(taxiConfFile)) {
+   override fun loadSources(): Sequence<SourceCode> {
+      val taxiConfFile = root.resolve("taxi.conf")
+      return if (Files.exists(taxiConfFile)) {
             val packageSources = TaxiSourcesLoader.loadPackageAndDependencies(root)
             packageSources.sources.asSequence()
-        } else {
-            loadAllTaxiFilesUnderRoot()
-        }
-    }
+      } else {
+         loadAllTaxiFilesUnderRoot()
+      }
+   }
 
-    override fun loadProject(): TaxiPackageProject? {
-        val taxiConfFile = root.resolve("taxi.conf")
-        return if (Files.exists(taxiConfFile)) {
-            val packageSources = TaxiSourcesLoader.loadPackage(root)
-            packageSources.project
-        } else {
-            null
-        }
-    }
+   override fun loadProject(): TaxiPackageProject? {
+      val taxiConfFile = root.resolve("taxi.conf")
+      return if (Files.exists(taxiConfFile)) {
+         val packageSources = TaxiSourcesLoader.loadPackage(root)
+         packageSources.project
+      } else {
+         null
+      }
+   }
 
-    private fun loadAllTaxiFilesUnderRoot(): Sequence<SourceCode> {
-        return root.toFile()
-            .walk()
-            .filter { it.extension == "taxi" && !it.isDirectory }
-            .map { file -> SourceCode.from(file) }
-    }
+   private fun loadAllTaxiFilesUnderRoot(): Sequence<SourceCode> {
+      return root.toFile()
+         .walk()
+         .filter { it.extension == "taxi" && !it.isDirectory }
+         .map { file -> SourceCode.from(file) }
+   }
 }

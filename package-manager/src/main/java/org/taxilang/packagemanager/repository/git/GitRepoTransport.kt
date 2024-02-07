@@ -20,7 +20,7 @@ import java.nio.file.Path
 import kotlin.io.path.inputStream
 
 object GitRepositorySupport {
-   val GIT_REMOTE_REPOSITORY = RemoteRepository.Builder("git", GitRepoTransportFactory.REPO_TYPE, "read-from-projects")
+   val GIT_REMOTE_REPOSITORY = RemoteRepository.Builder("git", GitRepoTransportFactory.REPO_TYPE, "git-repos")
       .setPolicy(
          RepositoryPolicy(
             true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_IGNORE

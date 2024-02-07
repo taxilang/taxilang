@@ -19,7 +19,7 @@ import java.util.concurrent.CompletableFuture
  * A completion service which aims to give hints when editing models and types.
  * Not focussed on querying
  */
-class EditorCompletionService(private val typeProvider: TypeProvider) : CompletionProvider, CompletionService {
+class EditorCompletionService(private val typeCompletionBuilder: TypeCompletionBuilder) : CompletionProvider, CompletionService {
    override fun computeCompletions(
       compilationResult: CompilationResult,
       params: CompletionParams,
@@ -45,6 +45,7 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
       importDecorator: ImportCompletionDecorator,
       contextAtCursor: ParserRuleContext?,
       lastSuccessfulCompilation: CompilationResult?,
+      typeRepository: TypeRepository,
    ): CompletableFuture<List<CompletionItem>> {
       if (contextAtCursor == null) {
          return bestGuessCompletionsWithoutContext(compilationResult, params, importDecorator)
@@ -61,6 +62,7 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
       compilationResult: CompilationResult,
       lastSuccessfulCompilation: CompilationResult?,
    ): List<CompletionItem> {
+      val typeRepository = CompilationResultTypeRepository(lastSuccessfulCompilation, compilationResult)
       val completionContext = when {
          // IdentifierContext is generally too general purpose to offer any insights.
          // Go higher.
@@ -75,23 +77,25 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
             compilationResult,
             lastSuccessfulCompilation
          )
-         is CaseScalarAssigningDeclarationContext -> typeProvider.getEnumValues(
+         is CaseScalarAssigningDeclarationContext -> typeCompletionBuilder.getEnumValues(
+            typeRepository,
             decorators,
             context.start.text
          )
 
          is EnumSynonymSingleDeclarationContext -> provideEnumCompletions(
+            typeRepository,
             context.start.text,
             decorators
          )
 
-         is EnumSynonymDeclarationContext -> provideEnumCompletions(context.start.text, decorators)
+         is EnumSynonymDeclarationContext -> provideEnumCompletions(typeRepository, context.start.text, decorators)
          is EnumConstantContext -> listOf(CompletionItem("synonym of"))
 
          // Query completions
-         is QueryTypeListContext -> typeProvider.getTypes(decorators)
-         is ArrayMarkerContext -> typeProvider.getTypes(decorators)
-         is ParameterConstraintContext -> typeProvider.getTypes(decorators)
+         is QueryTypeListContext -> typeCompletionBuilder.getTypes(typeRepository, decorators)
+         is ArrayMarkerContext -> typeCompletionBuilder.getTypes(typeRepository, decorators)
+         is ParameterConstraintContext -> typeCompletionBuilder.getTypes(typeRepository, decorators)
          else -> emptyList()
       }
       return completionItems
@@ -149,6 +153,7 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
       decorators: List<ImportCompletionDecorator>,
       compilationResult: CompilationResult
    ): List<CompletionItem> {
+      val typeRepository = CompilationResultTypeRepository(compilationResult, null)
       val annotationContext = context.searchUpForRule<AnnotationContext>() ?: return emptyList()
       val annotationName = compilationResult.compiler.lookupSymbolByName(
          annotationContext.qualifiedName().text,
@@ -164,12 +169,12 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
          context.searchUpForRule<ElementValuePairContext>()?.identifier()?.text ?: return emptyList()
       val field = annotation.fields.firstOrNull { it.name == fieldBeingDeclared } ?: return emptyList()
 
-      return completionsForType(field.type, decorators)
+      return completionsForType(typeRepository, field.type, decorators)
    }
 
-   private fun completionsForType(type: Type, decorators: List<ImportCompletionDecorator>): List<CompletionItem> {
+   private fun completionsForType(typeRepository: TypeRepository, type: Type, decorators: List<ImportCompletionDecorator>): List<CompletionItem> {
       return when (type) {
-         is EnumType -> provideEnumCompletions(type.qualifiedName, decorators)
+         is EnumType -> provideEnumCompletions(typeRepository, type.qualifiedName, decorators)
          PrimitiveType.BOOLEAN -> {
             val completions = listOf(true, false).map {
                CompletionItem(it.toString()).apply {
@@ -235,13 +240,14 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
       params: CompletionParams,
       importDecorator: ImportCompletionDecorator
    ): CompletableFuture<List<CompletionItem>> {
+      val typeRepository = CompilationResultTypeRepository(compilationResult,compilationResult)
       val lookupResult = compilationResult.compiler.getNearestToken(
          params.position.line,
          params.position.character,
          params.textDocument.normalizedUriPath()
       )
       return when {
-         isIncompleteFieldDefinition(lookupResult) -> completed(typeProvider.getTypes(listOf(importDecorator)))
+         isIncompleteFieldDefinition(lookupResult) -> completed(typeCompletionBuilder.getTypes(typeRepository,listOf(importDecorator)))
          else -> completed(TopLevelCompletions.topLevelCompletionItems)
       }
    }
@@ -294,17 +300,17 @@ class EditorCompletionService(private val typeProvider: TypeProvider) : Completi
     * If the user hasn't typed a full enum name yet, returns a list of enum names.
     * Otherwise, returns values within the enum
     */
-   private fun provideEnumCompletions(text: String?, decorators: List<CompletionDecorator>): List<CompletionItem> {
-      if (text == null || text.isEmpty()) {
+   private fun provideEnumCompletions(typeRepository: TypeRepository, text: String?, decorators: List<CompletionDecorator>): List<CompletionItem> {
+      if (text.isNullOrEmpty()) {
          return emptyList()
       }
 
-      val enumTypeName = typeProvider.getTypeName(text)
+      val enumTypeName = typeCompletionBuilder.getTypeName(typeRepository, text)
       return if (enumTypeName == null) {
          // Haven't picked an enum yet, so lets offer the available enums
-         typeProvider.getEnumTypes(decorators)
+         typeCompletionBuilder.getEnumTypes(typeRepository,decorators)
       } else {
-         typeProvider.getEnumValues(decorators, enumTypeName)
+         typeCompletionBuilder.getEnumValues(typeRepository, decorators, enumTypeName)
       }
    }
 

@@ -7,6 +7,12 @@ import org.eclipse.lsp4j.Range
 
 object Ranges {
 
+   fun fullLine(lineNumber:Int):Range {
+      return Range(
+         Position(lineNumber,0),
+         Position(lineNumber + 1,0)
+      )
+   }
    fun insertAtTokenLocation(token: Token): Range {
       return Range(
          token.asPosition(), token.asPosition()

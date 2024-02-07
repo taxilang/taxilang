@@ -1,13 +1,12 @@
 package lang.taxi.lsp.gotoDefinition
 
-import arrow.core.const
 import lang.taxi.Compiler
 import lang.taxi.TaxiParser
 import lang.taxi.TaxiParser.IdentifierContext
 import lang.taxi.TaxiParser.QualifiedNameContext
 import lang.taxi.TaxiParser.TypeReferenceContext
 import lang.taxi.lsp.CompilationResult
-import lang.taxi.lsp.completion.TypeProvider
+import lang.taxi.lsp.completion.TypeCompletionBuilder
 import lang.taxi.lsp.completion.normalizedUriPath
 import lang.taxi.types.CompilationUnit
 import org.antlr.v4.runtime.ParserRuleContext
@@ -15,7 +14,7 @@ import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import java.util.concurrent.CompletableFuture
 
-class GotoDefinitionService(private val typeProvider: TypeProvider) {
+class GotoDefinitionService(private val typeCompletionBuilder: TypeCompletionBuilder) {
 
    fun definition(
       compilationResult: CompilationResult,
