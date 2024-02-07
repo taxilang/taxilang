@@ -1,10 +1,10 @@
 package org.taxilang.packagemanager.repository.git
 
+import lang.taxi.packages.TaxiProjectLoader
 import org.eclipse.aether.RepositorySystemSession
 import org.eclipse.aether.impl.VersionResolver
 import org.eclipse.aether.resolution.VersionRequest
 import org.eclipse.aether.resolution.VersionResult
-import org.taxilang.packagemanager.TaxiProjectLoader
 import java.net.URI
 
 class GitVersionResolver : VersionResolver {

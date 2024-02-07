@@ -13,28 +13,22 @@ import org.http4k.core.Request
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import org.slf4j.LoggerFactory
 import org.taxilang.packagemanager.transports.buildPackageManager
 import org.taxilang.packagemanager.utils.basicAuth
-import org.taxilang.packagemanager.utils.log
-import org.taxilang.packagemanger.PackageManagerTest
+import lang.taxi.utils.log
 import org.taxilang.packagemanger.PackageManagerTest.Companion.createTaxiProject
 import org.taxilang.packagemanger.loadProject
-import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.GenericContainer
-import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
 import java.io.File
 import java.nio.charset.Charset
-import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
 import java.time.LocalTime
 import kotlin.io.path.exists
-import kotlin.math.truncate
 
 /**
  * This test explores publishing to nexus.
