@@ -397,6 +397,26 @@ class FieldCompiler(
             }
             projectedType.map { type -> type to projectionScope }
          }
+         .flatMap { (projectionReturnType,b) ->
+            // This might not be quite right.
+            // The goal is to present inner projections of arrays to objects - which is an error.
+            // eg:
+            // find { Film } as {
+            //    title : FilmTitle
+            //    cast : Actor[] as {
+            //     personName : PersonName
+            //   } <--- this is an error, as you can't project T[] to {}
+            // }
+            // In the future, I suspect this may be possible, because of functions.
+            // However, I can't think of a scenario to test.
+            if (projectionSourceType.type is ArrayType && projectionReturnType !is ArrayType) {
+               listOf(CompilationError(typeProjection.toCompilationUnit(), "Illegal assignment. Cannot project an array to a non-array. Are you missing a [] after the projection?"))
+                  .left()
+            } else {
+               (projectionReturnType to b).right()
+            }
+
+         }
    }
 
    private fun toField(

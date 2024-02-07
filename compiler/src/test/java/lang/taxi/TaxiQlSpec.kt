@@ -1100,5 +1100,27 @@ class TaxiQlSpec : DescribeSpec({
             "id","filmId","title"
          )
       }
+
+      it("is an error to project a nested array to an object") {
+         val exception = """
+            model Actor {
+               name : PersonName inherits String
+            }
+            model Film {
+               title : FilmTitle inherits String
+               cast : Actor[]
+            }
+         """.compiledWithQueryProducingCompilationException(
+            """find { Film } as {
+               | title : FilmTitle
+               | cast : Actor[] as {
+               |  personName : PersonName
+               | }
+               |}
+            """.trimMargin()
+         )
+         exception.shouldNotBeNull()
+         exception.errors.single().detailMessage.shouldBe("Illegal assignment. Cannot project an array to a non-array. Are you missing a [] after the projection?")
+      }
    }
 })
