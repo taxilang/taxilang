@@ -131,7 +131,7 @@ service PeopleService {
     operation createPerson(CreatePersonRequest):Person
 }
 
-model Person {
+closed model Person {
     id : Id as Int
     firstName : FirstName as String
     lastName : LastName as String
@@ -140,6 +140,25 @@ model Person {
 parameter model CreatePersonRequest {
     firstName : FirstName
     lastName : LastName
+}
+```
+
+### Closed models
+Closed models indicate that TaxiQL engines should not attempt to construct these at runtime.
+
+It is recommended that models which are used as return types from operations are declared as `closed`:
+
+```taxi
+
+service PeopleService {
+    operation getPerson():Person
+}
+
+// Person is closed - cannot be constructed, only returned from operations
+closed model Person {
+    id : Id as Int
+    firstName : FirstName as String
+    lastName : LastName as String
 }
 ```
 

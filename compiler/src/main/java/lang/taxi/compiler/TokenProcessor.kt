@@ -2282,6 +2282,9 @@ class TokenProcessor(
                   typeDoc = parseTypeDoc(operationDeclaration.typeDoc())
                )
             }
+         }.map { operation ->
+            errors.addAll(linter.lint(operation))
+            operation
          }
    }
 
