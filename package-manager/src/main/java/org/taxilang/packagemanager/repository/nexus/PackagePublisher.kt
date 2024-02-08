@@ -2,9 +2,9 @@ package org.taxilang.packagemanager.repository.nexus
 
 import lang.taxi.packages.Credentials
 import lang.taxi.packages.ReleaseType
+import lang.taxi.packages.TaxiProjectLoader
+import lang.taxi.utils.log
 import org.taxilang.packagemanager.TaxiPackageBundler
-import org.taxilang.packagemanager.TaxiProjectLoader
-import org.taxilang.packagemanager.utils.log
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -17,7 +17,8 @@ class PackagePublisher(
       val packageFile = projectBasePath.resolve("taxi.conf")
       require(Files.exists(packageFile)) { "Project file $packageFile doesn't exist" }
 
-      val project = TaxiProjectLoader(packageFile).load()
+      val project =
+         TaxiProjectLoader(packageFile).load()
       val publishToRepository = project.publishToRepository
          ?: error("Cannot publish without a publishToRepository defined")
 

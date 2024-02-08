@@ -1,5 +1,6 @@
 package org.taxilang.packagemanager.repository.git
 
+import lang.taxi.packages.TaxiProjectLoader
 import org.eclipse.aether.RepositorySystemSession
 import org.eclipse.aether.repository.RemoteRepository
 import org.eclipse.aether.repository.RepositoryPolicy
@@ -12,9 +13,8 @@ import org.eclipse.aether.transfer.NoTransporterException
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.RepositoryBuilder
 import org.taxilang.packagemanager.TaxiPackageBundler
-import org.taxilang.packagemanager.TaxiProjectLoader
 import org.taxilang.packagemanager.layout.TaxiArtifactType
-import org.taxilang.packagemanager.utils.log
+import lang.taxi.utils.log
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.inputStream

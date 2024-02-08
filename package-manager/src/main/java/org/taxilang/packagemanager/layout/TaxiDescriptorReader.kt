@@ -1,5 +1,6 @@
 package org.taxilang.packagemanager.layout
 
+import lang.taxi.packages.TaxiProjectLoader
 import org.eclipse.aether.RepositorySystemSession
 import org.eclipse.aether.artifact.Artifact
 import org.eclipse.aether.artifact.DefaultArtifact
@@ -14,7 +15,6 @@ import org.eclipse.aether.resolution.ArtifactRequest
 import org.eclipse.aether.resolution.ArtifactResolutionException
 import org.eclipse.aether.spi.locator.Service
 import org.eclipse.aether.spi.locator.ServiceLocator
-import org.taxilang.packagemanager.TaxiProjectLoader
 import org.taxilang.packagemanager.asDependency
 import javax.tools.Tool
 
