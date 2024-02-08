@@ -300,8 +300,8 @@ namespace services {
       """.trimIndent()
 
       val errors = Compiler(schema).validate()
-      errors.should.have.size(1)
-      errors.first().detailMessage.should.equal("UnknownService.findPersonId is not defined")
+      errors.errors().should.have.size(1)
+      errors.errors().first().detailMessage.should.equal("UnknownService.findPersonId is not defined")
    }
 
    @Test
@@ -325,8 +325,8 @@ namespace services {
       """.trimIndent()
 
       val errors = Compiler(schema).validate()
-      errors.should.have.size(1)
-      errors.first().detailMessage.should.equal("unknown type UnknownType")
+      errors.errors().should.have.size(1)
+      errors.errors().first().detailMessage.should.equal("unknown type UnknownType")
    }
 
    @Test

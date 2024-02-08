@@ -1,6 +1,7 @@
 package lang.taxi.linter
 
 import lang.taxi.CompilationMessage
+import lang.taxi.services.Operation
 import lang.taxi.types.EnumType
 import lang.taxi.types.ObjectType
 import lang.taxi.types.Type
@@ -33,3 +34,5 @@ interface TypeLinterRule : LinterRule<Type> {
 
 interface SourceFileLinterRule : LinterRule<Path> {
 }
+
+interface OperationLinterRule : LinterRule<Operation>
