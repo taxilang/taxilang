@@ -12,7 +12,7 @@ import org.http4k.client.ApacheClient
 import org.http4k.core.Method
 import org.http4k.core.Request
 import org.http4k.core.Response
-import org.taxilang.packagemanager.utils.log
+import lang.taxi.utils.log
 import java.io.FileOutputStream
 
 

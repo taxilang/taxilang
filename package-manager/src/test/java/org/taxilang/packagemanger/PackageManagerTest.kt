@@ -6,6 +6,7 @@ import lang.taxi.packages.ImporterConfig
 import lang.taxi.packages.PackageIdentifier
 import lang.taxi.packages.Repository
 import lang.taxi.packages.TaxiPackageProject
+import lang.taxi.packages.TaxiProjectLoader
 import lang.taxi.writers.ConfigWriter
 import org.eclipse.aether.repository.RemoteRepository
 import org.eclipse.aether.repository.RepositoryPolicy
@@ -14,7 +15,6 @@ import org.junit.jupiter.api.io.TempDir
 import org.taxilang.packagemanager.PackageManager
 import org.taxilang.packagemanager.RepositorySystemProvider
 import org.taxilang.packagemanager.TaxiPackageBundler
-import org.taxilang.packagemanager.TaxiProjectLoader
 import org.taxilang.packagemanager.transports.TaxiFileSystemTransportFactory
 import org.taxilang.packagemanager.transports.TaxiFileSystemUtils
 import java.io.File

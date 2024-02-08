@@ -11,7 +11,7 @@ import org.eclipse.aether.spi.connector.transport.TransporterFactory
 import org.taxilang.packagemanager.TaxiPackageBundler
 import org.taxilang.packagemanager.layout.TaxiArtifactType
 import org.taxilang.packagemanager.repository.git.copyPathToDestination
-import org.taxilang.packagemanager.utils.log
+import lang.taxi.utils.log
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.extension

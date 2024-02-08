@@ -1,11 +1,9 @@
-package org.taxilang.packagemanager
+package lang.taxi.packages
 
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-import com.typesafe.config.ConfigRenderOptions
 import io.github.config4k.extract
-import lang.taxi.packages.TaxiPackageProject
-import org.taxilang.packagemanager.utils.log
+import lang.taxi.utils.log
 import org.apache.commons.lang3.SystemUtils
 import java.nio.file.Path
 
@@ -15,13 +13,17 @@ class TaxiProjectLoader(
    /**
     * Specify the actual taxi.conf file (not the containing directory)
     */
-   private val taxiConfPath: Path
+   private val taxiConfPath: Path,
+   searchPaths: List<Path> = listOf(SystemUtils.getUserHome().toPath().resolve(".taxi/taxi.conf"))
 ) {
 
-   private val pathsToSearch = mutableListOf(
-      taxiConfPath,
-      SystemUtils.getUserHome().toPath().resolve(".taxi/taxi.conf")
-   )
+   private val pathsToSearch = (listOf(taxiConfPath) + searchPaths)
+      .toMutableList()
+
+   fun withConfigFileAt(path: Path):TaxiProjectLoader {
+      pathsToSearch.add(path)
+      return this
+   }
 
 
    fun load(): TaxiPackageProject {

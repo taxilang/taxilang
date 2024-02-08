@@ -2,6 +2,7 @@ package lang.taxi.cli.config
 
 import com.google.common.io.Resources
 import com.winterbe.expekt.should
+import lang.taxi.packages.TaxiProjectLoader
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 
@@ -11,8 +12,10 @@ class TaxiProjectLoaderTest {
 
    @Test
    fun `when merging configs then both sets of settings are merged`() {
-      val project = TaxiProjectLoader.noDefaults()
-         .withConfigFileAt(Paths.get(Resources.getResource("samples/merging/folderA/taxi.conf").toURI()))
+      val project = TaxiProjectLoader(
+         Paths.get(Resources.getResource("samples/merging/folderA/taxi.conf").toURI()),
+         searchPaths = emptyList()
+      )
          .withConfigFileAt(Paths.get(Resources.getResource("samples/merging/folderB/taxi.conf").toURI()))
          .load()
       project.credentials.should.have.size(1)
@@ -24,8 +27,10 @@ class TaxiProjectLoaderTest {
 
    @Test
    fun `additional sources are available`() {
-      val project = TaxiProjectLoader.noDefaults()
-         .withConfigFileAt(Paths.get(Resources.getResource("samples/otherSources/taxi.conf").toURI()))
+      val project = TaxiProjectLoader(
+         Paths.get(Resources.getResource("samples/otherSources/taxi.conf").toURI()),
+         searchPaths = emptyList()
+      )
          .load()
       project.additionalSources.should.not.be.empty
 

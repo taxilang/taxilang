@@ -6,10 +6,10 @@ import com.beust.jcommander.JCommander
 import com.beust.jcommander.Parameter
 import lang.taxi.cli.commands.ShellCommand
 import lang.taxi.cli.config.CliTaxiEnvironment
-import lang.taxi.cli.config.TaxiProjectLoader
 import lang.taxi.cli.utils.log
 import lang.taxi.generators.TaxiEnvironment
 import lang.taxi.packages.TaxiPackageProject
+import lang.taxi.packages.TaxiProjectLoader
 import org.beryx.textio.TextIO
 import org.beryx.textio.TextIoFactory
 import org.slf4j.LoggerFactory
@@ -86,8 +86,7 @@ class TaxiCli {
       // Ensure that Spring loading the logback.xml hasn't overridden debug logging
       enableDebugLoggingIfAppropriate(bootOptions)
       return if (bootOptions.taxiFileExists) {
-         TaxiProjectLoader()
-            .withConfigFileAt(bootOptions.getTaxiFile().toPath())
+         TaxiProjectLoader(bootOptions.getTaxiFile().toPath())
             .load()
       } else {
          null
