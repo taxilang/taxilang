@@ -6,7 +6,10 @@ import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import io.swagger.v3.core.util.Yaml
+import io.swagger.v3.core.util.Yaml31
 import io.swagger.v3.oas.models.OpenAPI
+import lang.taxi.Compiler
+import lang.taxi.annotations.HttpService
 import lang.taxi.compiled
 import lang.taxi.generators.WritableSource
 
@@ -46,7 +49,10 @@ class OpenApiGeneratorTest : DescribeSpec({
 
       // Kitchen sink
       it("should generate an actual spec") {
-         val taxi = """model Person {
+         val taxi = listOf(
+            HttpService.asTaxi(),
+            """
+            model Person {
               firstName : FirstName inherits String
                id: PersonId inherits Int
             }
@@ -59,20 +65,20 @@ class OpenApiGeneratorTest : DescribeSpec({
 
                [[ Finds just one person.  Sometimes, that's all you need, y'know?  Just one person. ]]
                @HttpOperation(method = "GET", url = "/people/{id}")
-               operation findPerson(@PathVariable id: PersonId): Person
+               operation findPerson(@PathVariable("id") id: PersonId): Person
 
                [[ Updates a person. ]]
                @HttpOperation(method = "POST", url = "/people/{id}")
-               operation updatePerson(@PathVariable id: PersonId, @RequestBody update: Person): Person
+               operation updatePerson(@PathVariable("id") id: PersonId, @RequestBody update: Person): Person
 
                [[ Deletes the person.  BOOM! They're gone. ]]
                @HttpOperation(method = "DELETE", url = "/people/{id}")
                operation killPerson(
                   [[ The id of the person to kill. Choose wisely ]]
-                  @PathVariable id: PersonId?
+                  @PathVariable("id") id: PersonId?
                   ): Person
             }
-            """.compiled()
+            """).compiled()
 
          val openApi = OpenApiGenerator().generateOpenApiSpecAsYaml(taxi)
          openApi.single().shouldGenerateSameAs("yaml/expected-person-service.yaml")
@@ -83,9 +89,9 @@ class OpenApiGeneratorTest : DescribeSpec({
 private fun WritableSource.shouldGenerateSameAs(path: String) {
 
    val expected = Resources.getResource(path).readText()
-   val expectedOas = Yaml.mapper().readValue(expected, OpenAPI::class.java)
+   val expectedOas = Yaml31.mapper().readValue(expected, OpenAPI::class.java)
 
-   val actualOas = Yaml.mapper().readValue(this.content, OpenAPI::class.java)
+   val actualOas = Yaml31.mapper().readValue(this.content, OpenAPI::class.java)
 
    actualOas.shouldBe(expectedOas)
 }

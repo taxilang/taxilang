@@ -17,6 +17,8 @@ import io.swagger.v3.oas.models.responses.ApiResponses
 import io.swagger.v3.oas.models.servers.Server
 import lang.taxi.TaxiDocument
 import lang.taxi.annotations.HttpOperation
+import lang.taxi.annotations.HttpPathVariable
+import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.annotations.HttpService
 import lang.taxi.generators.SimpleWriteableSource
 import lang.taxi.generators.WritableSource
@@ -134,7 +136,7 @@ class OpenApiGenerator {
 
       val oasOperation = operationBuilder(query.typeDoc, responseSchema)
          .requestBody(buildRequestBodyForQueryParams(query.parameters, components))
-         .parameters(query.parameters.filter { it.annotation("PathVariable") != null }
+         .parameters(query.parameters.filter { it.annotation(HttpPathVariable.NAME) != null }
             .map { queryParam ->
                Parameter()
                   .name(queryParam.name)
@@ -153,7 +155,7 @@ class OpenApiGenerator {
    }
 
    private fun buildRequestBodyForQueryParams(parameters: List<lang.taxi.query.Parameter>, components: Components): RequestBody? {
-      val parameter = parameters.firstOrNull { it.annotation("RequestBody") != null } ?: return null
+      val parameter = parameters.firstOrNull { it.annotation(HttpRequestBody.NAME) != null } ?: return null
       return buildRequestBody(parameter.type, components)
    }
 
@@ -168,7 +170,7 @@ class OpenApiGenerator {
       val oasOperation = operationBuilder(operation.typeDoc, responseSchema)
          .requestBody(buildRequestBody(operation.parameters, components))
          .parameters(operation.parameters
-            .filter { it.annotation("PathVariable") != null }
+            .filter { it.annotation(HttpPathVariable.NAME) != null }
             .map { parameter ->
                Parameter()
                   .name(parameter.name)
@@ -207,7 +209,7 @@ class OpenApiGenerator {
    }
 
    private fun buildRequestBody(parameters: List<lang.taxi.services.Parameter>, components: Components): RequestBody? {
-      val requestBodyParam = parameters.firstOrNull { it.annotation("RequestBody") != null } ?: return null
+      val requestBodyParam = parameters.firstOrNull { it.annotation(HttpRequestBody.NAME) != null } ?: return null
       return buildRequestBody(requestBodyParam.type, components)
    }
 
@@ -224,7 +226,7 @@ class OpenApiGenerator {
 
    private fun getParameterSource(parameter: Annotatable): String {
       return when {
-         parameter.annotation("PathVariable") != null -> "path"
+         parameter.annotation(HttpPathVariable.NAME) != null -> "path"
          // TODO
          else -> "unknown"
       }
