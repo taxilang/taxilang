@@ -14,6 +14,8 @@ class ConfigWriterTest {
       val expected = """name: foo/bar
 version: 0.1.0
 sourceRoot: src/
+additionalSources: {}
+dependencies: {}
 """
       output.should.equal(expected)
    }

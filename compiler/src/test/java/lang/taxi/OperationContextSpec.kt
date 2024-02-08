@@ -20,6 +20,7 @@ import lang.taxi.types.ArgumentSelector
 import lang.taxi.types.AttributePath
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.QualifiedName
+import org.antlr.v4.runtime.CharStreams
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -197,6 +198,15 @@ fun String.validated(
    return Compiler(this, config = config.copy(linterRuleConfiguration = linterRules)).validate()
 }
 
+fun List<String>.compiled(
+   config: CompilerConfig = TestCompilerOptions.config,
+   linterRules: List<LinterRuleConfiguration> = emptyList()
+): TaxiDocument {
+   return Compiler(
+      this.map { CharStreams.fromString(it) },
+      config = config.copy(linterRuleConfiguration = linterRules)
+   ).compile()
+}
 fun String.compiled(
    config: CompilerConfig = TestCompilerOptions.config,
    linterRules: List<LinterRuleConfiguration> = emptyList()

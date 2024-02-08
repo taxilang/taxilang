@@ -13,13 +13,17 @@ class TaxiProjectLoader(
    /**
     * Specify the actual taxi.conf file (not the containing directory)
     */
-   private val taxiConfPath: Path
+   private val taxiConfPath: Path,
+   searchPaths: List<Path> = listOf(SystemUtils.getUserHome().toPath().resolve(".taxi/taxi.conf"))
 ) {
 
-   private val pathsToSearch = mutableListOf(
-      taxiConfPath,
-      SystemUtils.getUserHome().toPath().resolve(".taxi/taxi.conf")
-   )
+   private val pathsToSearch = (listOf(taxiConfPath) + searchPaths)
+      .toMutableList()
+
+   fun withConfigFileAt(path: Path):TaxiProjectLoader {
+      pathsToSearch.add(path)
+      return this
+   }
 
 
    fun load(): TaxiPackageProject {

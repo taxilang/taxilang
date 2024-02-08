@@ -7,6 +7,7 @@ import lang.taxi.cli.commands.VersionBumpCommand
 import lang.taxi.cli.utils.VersionUpdater
 import lang.taxi.generators.TaxiProjectEnvironment
 import lang.taxi.packages.TaxiPackageProject
+import lang.taxi.packages.TaxiProjectLoader
 import org.apache.commons.io.FileUtils
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -41,12 +42,12 @@ class VersionUpdaterTest {
 
    @Test
    fun canWriteConfigFile() {
-      val project = TaxiProjectLoader().withConfigFileAt(taxiConf.toPath()).load()
+      val project = TaxiProjectLoader(taxiConf.toPath()).load()
       val updated = project.copy(version = "0.4.0")
       VersionUpdater().write(taxiConf.toPath(), updated.version)
 
       // re-read the sources
-      val reloaded = TaxiProjectLoader().withConfigFileAt(taxiConf.toPath()).load()
+      val reloaded = TaxiProjectLoader(taxiConf.toPath()).load()
       reloaded.version.should.equal("0.4.0")
 
    }
@@ -58,19 +59,19 @@ class VersionUpdaterTest {
       }
       versionBumpCommand.execute(taxiEnvironment)
 
-      var reloaded = TaxiProjectLoader().withConfigFileAt(taxiEnvironment.projectRoot.resolve("taxi.conf")).load()
+      var reloaded = TaxiProjectLoader(taxiEnvironment.projectRoot.resolve("taxi.conf")).load()
       reloaded.version.should.equal("2.0.0")
 
       versionBumpCommand.increment = "minor"
       versionBumpCommand.execute(taxiEnvironment)
 
-      reloaded = TaxiProjectLoader().withConfigFileAt(taxiEnvironment.projectRoot.resolve("taxi.conf")).load()
+      reloaded = TaxiProjectLoader(taxiEnvironment.projectRoot.resolve("taxi.conf")).load()
       reloaded.version.should.equal("1.2.0")
 
       versionBumpCommand.increment = "patch"
       versionBumpCommand.execute(taxiEnvironment)
 
-      reloaded = TaxiProjectLoader().withConfigFileAt(taxiEnvironment.projectRoot.resolve("taxi.conf")).load()
+      reloaded = TaxiProjectLoader(taxiEnvironment.projectRoot.resolve("taxi.conf")).load()
       reloaded.version.should.equal("1.1.2")
    }
 
@@ -91,7 +92,7 @@ class VersionUpdaterTest {
       val setVersionCommand = SetVersionCommand(VersionUpdater()).apply { version = newVersion }
       setVersionCommand.execute(taxiEnvironment)
 
-      val reloaded = TaxiProjectLoader().withConfigFileAt(taxiEnvironment.projectRoot.resolve("taxi.conf")).load()
+      val reloaded = TaxiProjectLoader(taxiEnvironment.projectRoot.resolve("taxi.conf")).load()
       reloaded.version.should.equal(newVersion)
    }
 
