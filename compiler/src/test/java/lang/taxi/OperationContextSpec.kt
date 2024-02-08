@@ -87,7 +87,7 @@ class OperationContextSpec : DescribeSpec({
             operation getTrade(id:TradeId):Trade(EmployeeCode == id)
          }
          """.validated()
-            errors.should.be.empty
+            errors.errors().should.be.empty
          }
 
          it("should fail if referenced param is not an input") {

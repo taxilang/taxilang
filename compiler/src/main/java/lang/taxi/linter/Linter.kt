@@ -4,8 +4,10 @@ import lang.taxi.CompilationMessage
 import lang.taxi.linter.rules.NoDuplicateTypesOnModelsRule
 import lang.taxi.linter.rules.NoPrimitiveTypesOnModelsRule
 import lang.taxi.linter.rules.NoTypeAliasOnPrimitivesTypeRule
+import lang.taxi.linter.rules.OperationResponsesShouldBeClosed
 import lang.taxi.linter.rules.TypesShouldInheritRule
 import lang.taxi.linter.rules.TypesShouldNotHaveFieldsRule
+import lang.taxi.services.Operation
 import lang.taxi.types.EnumType
 import lang.taxi.types.ObjectType
 import lang.taxi.types.Type
@@ -30,15 +32,18 @@ class Linter(
          else -> rules.filterKeys { it is TypeLinterRule }.evaluate(type)
       }
    }
+   fun lint(operation: Operation) : List<CompilationMessage> {
+      return rules.filterKeys { it is OperationLinterRule }.evaluate(operation)
+   }
 
    companion object {
       fun empty() = Linter(LinterRules.allDisabled())
    }
 }
 
-private fun Map<LinterRule<out Any>, LinterRuleConfiguration>.evaluate(type: Type): List<CompilationMessage> {
+private fun <T : Any> Map<LinterRule<out Any>, LinterRuleConfiguration>.evaluate(type: T): List<CompilationMessage> {
    return this.flatMap { (rule, config) ->
-      (rule as LinterRule<Type>).evaluate(type).map { message ->
+      (rule as LinterRule<T>).evaluate(type).map { message ->
          val messageWithRuleName = message.detailMessage + " (linter rule ${rule.id})"
          message.copy(severity = config.severity ?: message.severity, detailMessage = messageWithRuleName)
       }
@@ -62,7 +67,8 @@ object LinterRules {
       NoDuplicateTypesOnModelsRule,
       NoTypeAliasOnPrimitivesTypeRule,
       TypesShouldInheritRule,
-      TypesShouldNotHaveFieldsRule
+      TypesShouldNotHaveFieldsRule,
+      OperationResponsesShouldBeClosed
    )
 }
 
