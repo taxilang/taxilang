@@ -1,7 +1,6 @@
 package lang.taxi
 
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -9,9 +8,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.expressions.FieldReferenceExpression
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.TypeExpression
-import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.stdlib.Convert
-import lang.taxi.functions.stdlib.StdLib
 
 class ReflectionSpec : DescribeSpec({
    describe("Using type references") {
@@ -87,6 +84,21 @@ model Film {
 }
          """.validated()
          messages.shouldContainMessage("Type mismatch. Type of HitFilm is not assignable to type lang.taxi.String")
+      }
+
+      it("should allow a cast to infer type expression") {
+         val parameter = """
+declare function <T> nowLike():T
+service PeopleService {
+   operation findPeople(
+      @HttpHeader(name = "If-Modified-Since") ifModifiedSince : Instant = addDays((Instant) nowLike(), -1)
+   ):String
+}
+         """.compiled()
+            .service("PeopleService")
+            .operation("findPeople")
+            .parameters.single()
+       parameter.defaultValue.shouldNotBeNull()
       }
    }
 })

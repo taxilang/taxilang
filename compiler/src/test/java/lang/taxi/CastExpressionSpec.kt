@@ -1,12 +1,11 @@
 package lang.taxi
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.kotest.matchers.types.shouldNotBeInstanceOf
 import lang.taxi.expressions.CastExpression
 import lang.taxi.expressions.FunctionExpression
-import lang.taxi.functions.FunctionAccessor
 
 class CastExpressionSpec :DescribeSpec({
    describe("casting") {
@@ -36,6 +35,35 @@ class CastExpressionSpec :DescribeSpec({
       }
          """.validated()
             .shouldContainMessage("Type mismatch. Type of CurrencyCode is not assignable to type lang.taxi.Int")
+      }
+
+      it("should allow a cast to infer type expression") {
+         val parameter = """
+            service PeopleService {
+            operation findPeople(
+               @HttpHeader(name = "If-Modified-Since") ifModifiedSince : Instant = addDays((Instant) now(), -1)
+            ):String
+         }
+         """.compiled()
+            .service("PeopleService")
+            .operation("findPeople")
+            .parameters.single()
+         parameter.defaultValue.shouldNotBeNull()
+      }
+
+      it("should allow casting between compatible types inline") {
+         """
+         type ReleaseYear inherits Int
+         type PublicDomainYear inherits Int
+         model Movie {
+            released : ReleaseYear
+            isCopyright : Boolean
+            publicDomain : PublicDomainYear = when {
+               this.isCopyright -> this.released + 30
+               else -> (PublicDomainYear) this.released // This is the test -- casting should be possible with compatible base types
+            }
+         }
+      """.compiled()
       }
    }
 })

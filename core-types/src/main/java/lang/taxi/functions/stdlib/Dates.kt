@@ -8,6 +8,9 @@ object Dates {
       AddDays,
       AddSeconds,
       Now,
+      CurrentDate,
+      CurrentDateTime,
+      CurrentTime,
       ParseDate
    )
 }
@@ -47,9 +50,25 @@ object AddDays : FunctionApi {
 }
 
 object Now : FunctionApi {
-   override val taxi: String = """declare function <T> now():T"""
+   override val taxi: String = """declare function now():Instant"""
    override val name: QualifiedName = stdLibName("dates.now")
 }
+
+object CurrentDate : FunctionApi {
+   override val taxi: String = """declare function currentDate():Date"""
+   override val name: QualifiedName = stdLibName("dates.currentDate")
+}
+
+object CurrentTime : FunctionApi {
+   override val taxi: String = """declare function currentTime():Time"""
+   override val name: QualifiedName = stdLibName("dates.currentTime")
+}
+
+object CurrentDateTime : FunctionApi {
+   override val taxi: String = """declare function currentDateTime():DateTime"""
+   override val name: QualifiedName = stdLibName("dates.currentDateTime")
+}
+
 
 object ParseDate : FunctionApi {
    override val taxi: String = """declare function <T> parseDate(String):T"""
