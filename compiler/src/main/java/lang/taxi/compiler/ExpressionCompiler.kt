@@ -55,39 +55,16 @@ class ExpressionCompiler(
       // The type we'll be attempting to assign the result of this expression to.
       // This is a recent (26-09-23) addition to the signature, and hasn't yet been
       // updated in all call sites.
-      targetType: Type? = null
+      targetType: Type? = null,
+
+      /**
+       * This should almost always be true.
+       * false when parsing cast expressions, as the cast overrides
+       */
+      enforceTypeChecks: Boolean = true
    ): Either<List<CompilationError>, out Expression> {
       return when {
-         expressionGroup.castExpression() != null -> {
-            if (expressionGroup.expressionGroup() == null || expressionGroup.expressionGroup().size != 1) {
-               listOf(
-                  CompilationError(
-                     expressionGroup.toCompilationUnit(),
-                     "An internal error occurred - expected a single expressionGroup after a cast statement"
-                  )
-               )
-                  .left()
-            } else {
-               // We're about to perform casting, so don't pass the target type
-               compile(expressionGroup.expressionGroup().single(), targetType = null)
-                  .flatMap { uncastExpression ->
-                     tokenProcessor.typeOrError(expressionGroup.castExpression().typeReference())
-                        .flatMap { castType ->
-                           // now validate the type
-                           val castExpression = CastExpression(
-                              castType,
-                              uncastExpression,
-                              expressionGroup.castExpression().toCompilationUnits()
-                           )
-                           typeChecker.ifAssignableOrErrorList(
-                              castExpression.returnType,
-                              targetType,
-                              expressionGroup
-                           ) { castExpression }
-                        }
-                  }
-            }
-         }
+         expressionGroup.castExpression() != null -> compileCastExpression(expressionGroup, targetType)
 
          expressionGroup.children.size == 2 && expressionGroup.children.last() is TypeProjectionContext && expressionGroup.children.first() is ExpressionGroupContext -> {
             // This is an expression with a projection.
@@ -102,7 +79,14 @@ class ExpressionCompiler(
                   // ...and stick it all together as a ProjectingExpression
                   val projection = FieldProjection.forNullable(expression.returnType, projectedTypeAndScope)!!
                   val projectingExpression = ProjectingExpression(expression, projection)
-                  typeChecker.ifAssignableOrErrorList(projectingExpression.returnType, targetType, expressionGroup) { projectingExpression }
+                  if (enforceTypeChecks) {
+                     typeChecker.ifAssignableOrErrorList(
+                        projectingExpression.returnType,
+                        targetType,
+                        expressionGroup
+                     ) { projectingExpression }
+                  } else projectingExpression.right()
+
                }
             }
          }
@@ -128,7 +112,7 @@ class ExpressionCompiler(
          when (targetType) {
             null -> expression.right() // we weren't given a type, so can't do type checking
             else -> {
-               val error = typeChecker.assertIsAssignable(expression.returnType, targetType, expressionGroup)
+               val error = if (enforceTypeChecks) typeChecker.assertIsAssignable(expression.returnType, targetType, expressionGroup) else null
                if (error != null) {
                   listOf(error).left()
                } else {
@@ -137,6 +121,42 @@ class ExpressionCompiler(
             }
          }
       }
+   }
+
+   private fun compileCastExpression(
+      expressionGroup: ExpressionGroupContext,
+      targetType: Type?
+   ) = if (expressionGroup.expressionGroup() == null || expressionGroup.expressionGroup().size != 1) {
+      listOf(
+         CompilationError(
+            expressionGroup.toCompilationUnit(),
+            "An internal error occurred - expected a single expressionGroup after a cast statement"
+         )
+      )
+         .left()
+   } else {
+      tokenProcessor.typeOrError(expressionGroup.castExpression().typeReference())
+         .flatMap { castType ->
+            // We're about to perform casting, so disable the type check. We catch it below
+            compile(expressionGroup.expressionGroup().single(), targetType = castType, enforceTypeChecks = false)
+               .flatMap { uncastExpression ->
+
+                  // now validate the type
+                  val castExpression = CastExpression(
+                     castType,
+                     uncastExpression,
+                     expressionGroup.castExpression().toCompilationUnits()
+                  )
+                  typeChecker.ifAssignableOrErrorList(
+                     castExpression.returnType,
+                     targetType,
+                     expressionGroup
+                  ) { castExpression }
+               }
+         }
+
+
+
    }
 
    private fun compileExpressionProjection(
