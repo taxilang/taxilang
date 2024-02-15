@@ -194,7 +194,7 @@ publish-plugin:
 
 ## Deploy the ADR to gitlab pages
 ## See https://github.com/thomvaill/log4brains?tab=readme-ov-file#-cicd-configuration-examples
-publish-adr:
+pages:
    stage: deploy
    image: node:14-alpine3.12
    variables:
@@ -202,7 +202,7 @@ publish-adr:
    script:
       - mkdir -p public
       - npm install -g --unsafe-perm log4brains
-      - log4brains build --basePath /$CI_PROJECT_NAME/log4brains --out public/log4brains
+      - log4brains build --basePath /$CI_PROJECT_NAME/language-decisions --out public/language-decisions
    artifacts:
       paths:
          - public
