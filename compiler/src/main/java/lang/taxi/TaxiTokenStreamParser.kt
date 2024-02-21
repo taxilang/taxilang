@@ -2,6 +2,7 @@ package lang.taxi
 
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.ConsoleErrorListener
 import org.antlr.v4.runtime.TokenStream
 
 interface TaxiTokenStreamParser {
@@ -28,6 +29,7 @@ open class DefaultTaxiTokenStreamParser : TaxiTokenStreamParser {
    fun parse(tokenStream: TokenStream, sourceName: String): TokenStreamParseResult {
 
       val parser = buildParser(tokenStream)
+      parser.removeErrorListeners()
 
       val listener = TokenCollator()
       val errorListener = CollectingErrorListener(sourceName, listener)
