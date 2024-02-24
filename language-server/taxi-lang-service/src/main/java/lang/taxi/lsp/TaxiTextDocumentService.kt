@@ -60,6 +60,12 @@ interface DiagnosticMessagesWrapper {
    val messages: Map<String, List<Diagnostic>>
 }
 
+object EmptyDiagnosticWrapper : DiagnosticMessagesWrapper{
+   override val countOfSources: Int = 0
+   override val duration: Duration = Duration.ZERO
+   override val messages: Map<String, List<Diagnostic>> = emptyMap()
+}
+
 class FileDiagnosticMessageCollection() : DiagnosticMessagesWrapper {
    private val _messages: MutableMap<String, List<Diagnostic>> = mutableMapOf()
    override var countOfSources = 0

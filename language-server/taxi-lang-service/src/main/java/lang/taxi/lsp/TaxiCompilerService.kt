@@ -54,7 +54,7 @@ class TaxiCompilerService(
    val typeCompletionBuilder = TypeCompletionBuilder()
 
    private val compileTriggerSink = Sinks.many().unicast().onBackpressureBuffer<CompilationTrigger>()
-   private val taxiConfDiagnostics = Sinks.many().unicast().onBackpressureBuffer<DiagnosticMessagesWrapper>()
+   private val taxiConfDiagnostics = Sinks.many().replay().latest<DiagnosticMessagesWrapper>()
    val compilationResults: Flux<DiagnosticMessagesWrapper>
 
    private val compilationProgressSink = Sinks.many().unicast().onBackpressureBuffer<ProgressParams>()
@@ -69,6 +69,7 @@ class TaxiCompilerService(
    }
 
    init {
+      taxiConfDiagnostics.emitNext(EmptyDiagnosticWrapper, Sinks.EmitFailureHandler.FAIL_FAST)
       val triggeredCompilationResults = compileTriggerSink.asFlux()
          .bufferTimeout(50, Duration.ofMillis(500))
          .map { _ ->
