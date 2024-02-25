@@ -96,7 +96,7 @@ lambdaSignature: expressionInputs typeReference;
 
 
 expressionInputs: '(' expressionInput (',' expressionInput)* ')' '->';
-expressionInput: (identifier ':')? typeReference;
+expressionInput: (identifier ':')? (nullableTypeReference accessor? | expressionGroup);
 
 
 // Added for expression types.

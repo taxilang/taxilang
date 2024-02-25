@@ -162,7 +162,7 @@ class ExpressionCompiler(
    private fun compileExpressionProjection(
       expression: Expression,
       typeProjection: TypeProjectionContext
-   ): Either<List<CompilationError>, Pair<Type, ProjectionFunctionScope>> {
+   ): Either<List<CompilationError>, Pair<Type, List<ProjectionFunctionScope>>> {
       val projectionSourceType = FieldTypeSpec.forExpression(expression)
       return if (fieldCompiler != null) {
          // find the current field name
@@ -180,7 +180,7 @@ class ExpressionCompiler(
       require(lambdaExpression.expressionGroup().size == 1) { "expected exactly 1 expression group on the rhs of the lambda" }
       return lambdaExpression.expressionInputs()
          .expressionInput().map { expressionInput ->
-            tokenProcessor.parseType(expressionInput.findNamespace(), expressionInput.typeReference())
+            tokenProcessor.parseType(expressionInput.findNamespace(), expressionInput.nullableTypeReference().typeReference())
          }.invertEitherList().flattenErrors()
          .flatMap { inputs ->
             compile(lambdaExpression.expressionGroup(0)).map { expression ->

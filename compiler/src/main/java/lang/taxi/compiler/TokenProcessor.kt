@@ -18,7 +18,6 @@ import lang.taxi.expressions.Expression
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.toExpressionGroup
 import lang.taxi.functions.Function
-import lang.taxi.functions.FunctionAccessor
 import lang.taxi.functions.FunctionDefinition
 import lang.taxi.functions.FunctionModifiers
 import lang.taxi.linter.Linter
@@ -436,6 +435,7 @@ class TokenProcessor(
                tokenName,
                tokenRule
             ).collectErrors(errors)
+
             else -> TODO("Not handled: $tokenRule")
          }.map { type ->
             this.errors.addAll(linter.lint(type))
@@ -1052,7 +1052,7 @@ class TokenProcessor(
       annotationType: AnnotationType?
    ): Either<List<CompilationError>, Map<String, Any>> {
       return when {
-         annotation.elementValue() != null  -> {
+         annotation.elementValue() != null -> {
             parseElementValue(annotation.elementValue()).map { mapOf("value" to it) }
          }
 
@@ -1086,18 +1086,19 @@ class TokenProcessor(
             }
          } else {
             val paramValue = mutableParams[field.name]
-            val compilationError: CompilationError? =  when {
+            val compilationError: CompilationError? = when {
                paramValue == null && field.nullable -> null
-               paramValue == null && !field.nullable ->  CompilationError(
+               paramValue == null && !field.nullable -> CompilationError(
                   annotation.start,
                   "Annotation ${type.qualifiedName}  member '${field.name}' is defined as a not nullable but no value is provided!"
                )
+
                Arrays.isArray(field.type) && paramValue !is List<*> -> CompilationError(
                   annotation.start,
                   "Annotation ${type.qualifiedName}  member '${field.name}' is defined as a not nullable but no value is provided!"
                )
 
-               Arrays.isArray(field.type) && paramValue is List<*>  -> {
+               Arrays.isArray(field.type) && paramValue is List<*> -> {
                   val unwrappedType = Arrays.unwrapPossibleArrayType(field.type)
                   paramValue.firstNotNullOfOrNull { item ->
                      checkAnnotationParamValue(unwrappedType, item!!, annotation)
@@ -1108,8 +1109,9 @@ class TokenProcessor(
                   val (parsedParameterAnnotationType, annotationParamValue) = paramValue as Pair<Type, Map<String, Any>>
                   val error = typeChecker.assertIsAssignable(field.type, parsedParameterAnnotationType, annotation)
                   mutableParams[field.name] = annotationParamValue
-                 error
+                  error
                }
+
                else -> checkAnnotationParamValue(field.type, paramValue!!, annotation)
             }
             compilationError
@@ -1133,44 +1135,50 @@ class TokenProcessor(
       }
    }
 
-   fun checkAnnotationParamValue(unwrappedFieldType: Type, paramValue: Any, annotationCtx: AnnotationContext): CompilationError? {
-     return when (unwrappedFieldType) {
-        is EnumType -> {
+   fun checkAnnotationParamValue(
+      unwrappedFieldType: Type,
+      paramValue: Any,
+      annotationCtx: AnnotationContext
+   ): CompilationError? {
+      return when (unwrappedFieldType) {
+         is EnumType -> {
 
-           when {
-             paramValue is EnumMember -> {
-                var  compilationError: CompilationError? = null
-                typeChecker.ifAssignable(
-                unwrappedFieldType,
-                paramValue.enum,
-                annotationCtx
-             ) { paramValue }.onLeft { compilationError = it }
-                compilationError
-          }
-             unwrappedFieldType.hasValue(paramValue) -> null
-              else -> {
-                 val errorMessage =
-                    "Invalid Value. $paramValue is not assignable to a parameter of Type ${unwrappedFieldType.toQualifiedName().parameterizedName}"
-                 CompilationError(annotationCtx.start, errorMessage)
-              }
-           }
-        }
+            when {
+               paramValue is EnumMember -> {
+                  var compilationError: CompilationError? = null
+                  typeChecker.ifAssignable(
+                     unwrappedFieldType,
+                     paramValue.enum,
+                     annotationCtx
+                  ) { paramValue }.onLeft { compilationError = it }
+                  compilationError
+               }
+
+               unwrappedFieldType.hasValue(paramValue) -> null
+               else -> {
+                  val errorMessage =
+                     "Invalid Value. $paramValue is not assignable to a parameter of Type ${unwrappedFieldType.toQualifiedName().parameterizedName}"
+                  CompilationError(annotationCtx.start, errorMessage)
+               }
+            }
+         }
 
 
-        is AnnotationType -> {
-           // an annotation type parameter has already been verified at this point.
-           null
-        }
+         is AnnotationType -> {
+            // an annotation type parameter has already been verified at this point.
+            null
+         }
 
-        // Assuming
-        else -> {
-           var  compilationError: CompilationError? = null
-           val valueType = PrimitiveValues.getTaxiPrimitive(paramValue)
-           val errorOrValidParam = typeChecker.ifAssignable(unwrappedFieldType, valueType, annotationCtx) { paramValue }
-           errorOrValidParam.onLeft { compilationError = it }
-           compilationError
-        }
-     }
+         // Assuming
+         else -> {
+            var compilationError: CompilationError? = null
+            val valueType = PrimitiveValues.getTaxiPrimitive(paramValue)
+            val errorOrValidParam =
+               typeChecker.ifAssignable(unwrappedFieldType, valueType, annotationCtx) { paramValue }
+            errorOrValidParam.onLeft { compilationError = it }
+            compilationError
+         }
+      }
 
    }
 
@@ -1204,6 +1212,7 @@ class TokenProcessor(
                      .map { Pair(annotationType, it) }
                }.wrapErrorsInList().flattenErrors()
          }
+
          else -> error("Unhandled element value: ${elementValue.text}")
       }
    }
@@ -1304,51 +1313,81 @@ class TokenProcessor(
       }
    }
 
+   /**
+    * Parses a projection scope declaration.
+    * eg:
+    *
+    * } as (lead: Actor = first(Actor[])) -> {
+    */
    fun parseProjectionScope(
       expressionInputs: ExpressionInputsContext?,
       projectionSourceType: FieldTypeSpec
-   ): Either<List<CompilationError>, ProjectionFunctionScope> {
+   ): Either<List<CompilationError>, List<ProjectionFunctionScope>> {
       if (expressionInputs == null || expressionInputs.expressionInput().isEmpty()) {
          // MP: 2-Feb-23 : That was projectionSourceType.type
          // But have changed it, because in inline projections of entires, we're receiving
          // the array.
          // This might break something.
-         return ProjectionFunctionScope.implicitThis(projectionSourceType.projectionType).right()
+         return listOf( ProjectionFunctionScope.implicitThis(projectionSourceType.projectionType)).right()
       }
-      return when (expressionInputs.expressionInput().size) {
-         1 -> {
-            val input = expressionInputs.expressionInput().single()
-            val identifier = input.identifier()?.text ?: ProjectionFunctionScope.THIS
-            resolveTypeOrFunction(
-               input.typeReference().qualifiedName(),
-               null,
-               input.typeReference().qualifiedName()
-            ).map { token ->
-               if (input.typeReference().arrayMarker() != null) {
-                  ArrayType.of(token as Type)
-               } else {
-                  token
+      return expressionInputs.expressionInput().map { input ->
+         val identifier = input.identifier()?.text ?: ProjectionFunctionScope.THIS
+         resolveExpressionInputType(input.nullableTypeReference()).flatMap { inputType ->
+            when {
+               // type, and expression as assignment
+               // as (lead: Actor = first(Actor[]))
+               input.accessor() != null -> {
+                  val expression = input.accessor()?.scalarAccessorExpression()?.expressionGroup()
+                  if (expression == null) {
+                     listOf(
+                        CompilationError(
+                           input.accessor().toCompilationUnit(),
+                           "An internal error occurred: Expected an expression group here"
+                        )
+                     ).left()
+                  } else {
+                     resolveProjectionScopeInputExpression(identifier, expression, inputType)
+                  }
                }
-            }.flatMap { token ->
-               if (token is Type) {
-                  ProjectionFunctionScope(identifier, token).right()
-               } else {
+               // Inferred Type from Expression
+               // eg:
+               //  } as (lead: first(Actor[])) -> {
+               input.expressionGroup() != null -> resolveProjectionScopeInputExpression(
+                  identifier,
+                  input.expressionGroup(),
+                  inputType
+               )
+               // Just the type
+               // eg:
+               // } as (src:Film) -> {
+               inputType != null && input.expressionGroup() == null -> {
+                  ProjectionFunctionScope(identifier, inputType, expression = null).right()
+               }
+               else -> {
                   listOf(
-                     CompilationError(
-                        input.typeReference().qualifiedName().toCompilationUnit(),
-                        "Expected a type here"
-                     )
+                     CompilationError(input.toCompilationUnit(), "Expcted either a type or an expression here")
                   ).left()
                }
             }
          }
+      }.invertEitherList().flattenErrors()
+   }
 
-         else -> listOf(
-            CompilationError(
-               expressionInputs.expressionInput()[1].toCompilationUnit(),
-               "Expected a single parameter declaration"
-            )
-         ).left()
+   private fun resolveProjectionScopeInputExpression(
+      identifier: String,
+      expressionGroup: ExpressionGroupContext,
+      targetType: Type?
+   ): Either<List<CompilationError>, ProjectionFunctionScope> {
+      return expressionCompiler().compile(expressionGroup, targetType)
+         .map {  expression ->  ProjectionFunctionScope(identifier, expression.returnType, expression) }
+
+   }
+
+   private fun resolveExpressionInputType(input: NullableTypeReferenceContext?): Either<List<CompilationError>, Type?> {
+      return if (input == null) {
+         (null).right()
+      } else {
+         parseTypeOrUnionType(input)
       }
    }
 
@@ -1409,18 +1448,18 @@ class TokenProcessor(
                                  .map { expression -> listOf(expression) }
                               expression
                            }
-                        // At this point, there were no argument provided.
-                        // (Otherwise we'd have ended up in a different part of the parse tree).
-                        // So, it's a no-arg function
+                           // At this point, there were no argument provided.
+                           // (Otherwise we'd have ended up in a different part of the parse tree).
+                           // So, it's a no-arg function
                            // Therefore, this should only ever happen if there are other compilation errors
                            token.parameters.isNotEmpty() -> {
-                           listOf(
-                              CompilationError(
+                              listOf(
+                                 CompilationError(
                                     fieldTypeContext.toCompilationUnit(),
-                                 "Function ${token.qualifiedName} expects ${token.parameters.size} parameters, but none were provided"
+                                    "Function ${token.qualifiedName} expects ${token.parameters.size} parameters, but none were provided"
+                                 )
                               )
-                           )
-                              .left()
+                                 .left()
                            }
 
                            else -> emptyList<Expression>().right()
@@ -2354,7 +2393,7 @@ class TokenProcessor(
       return lambdaSignature.expressionInputs().expressionInput().map { inputType ->
          parseType(
             lambdaSignature.findNamespace(),
-            inputType.typeReference(),
+            inputType.nullableTypeReference().typeReference(),
             typeArgumentsInScope
          )
       }.invertEitherList().flattenErrors().flatMap { inputTypes ->
