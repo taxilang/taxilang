@@ -5,8 +5,11 @@ import arrow.core.left
 import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.messages.Severity
+import lang.taxi.toCompilationUnit
 import lang.taxi.toggles.FeatureToggle
+import lang.taxi.types.Arrays
 import lang.taxi.types.PrimitiveType
+import lang.taxi.types.StreamType
 import lang.taxi.types.Type
 import lang.taxi.types.TypeChecker
 import org.antlr.v4.runtime.ParserRuleContext
@@ -32,6 +35,19 @@ fun TypeChecker.assertIsAssignable(valueType: Type, receiverType: Type, token: P
             FeatureToggle.SOFT_ENABLED -> CompilationError(token.start, errorMessage, severity = Severity.WARNING)
          }
       }
+   }
+}
+
+fun TypeChecker.assertIsProjectable(sourceType: Type, targetType: Type, token: ParserRuleContext):CompilationError? {
+   return when {
+      Arrays.isArray(sourceType) && !Arrays.isArray(targetType) && targetType.anonymous -> "Cannot project an array to a non-array. Try adding [] after your projection type definition"
+      Arrays.isArray(sourceType) && !Arrays.isArray(targetType) && !targetType.anonymous -> "Cannot project an array to a non-array. Did you mean ${targetType.toQualifiedName().typeName}[] ?"
+      !Arrays.isArray(sourceType) && Arrays.isArray(targetType) -> "Cannot project an object to an array."
+      StreamType.isStream(sourceType) && !Arrays.isArray(targetType) && targetType.anonymous -> "A stream must be projected to an array. Try adding [] after your projection type definition"
+      StreamType.isStream(sourceType) && !Arrays.isArray(targetType) && !targetType.anonymous -> "A stream must be projected to an array. Did you mean ${targetType.toQualifiedName().typeName}[] ?"
+      else -> null
+   }?.let { message ->
+      CompilationError(token.toCompilationUnit(), message)
    }
 }
 
@@ -66,3 +82,22 @@ fun <A> TypeChecker.ifAssignableOrErrorList(
    return ifAssignable(valueType, receiverType, token, valueProvider)
       .mapLeft { listOf(it) }
 }
+
+/**
+ * Returns the value from the valueProvider if the valueType is assignable to the receiver type.
+ * Otherwise, generates a Not Assignable compiler error
+ */
+fun <A> TypeChecker.ifProjectableOrErrorList(
+   sourceType: Type,
+   projectedType: Type,
+   token: ParserRuleContext,
+   valueProvider: () -> A
+): Either<List<CompilationError>, A> {
+   val error = assertIsProjectable(sourceType,projectedType, token)
+   return if(error != null) {
+      listOf(error).left()
+   } else {
+      valueProvider().right()
+   }
+}
+
