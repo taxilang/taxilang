@@ -1,5 +1,6 @@
 package lang.taxi.accessors
 
+import lang.taxi.expressions.Expression
 import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.Type
 
@@ -15,7 +16,7 @@ import lang.taxi.types.Type
  *        name : actor.name
  *
  */
-data class ProjectionFunctionScope(override val name: String, override val type: Type) : Argument{
+data class ProjectionFunctionScope(override val name: String, override val type: Type, val expression: Expression? = null) : Argument{
    companion object {
       const val THIS = "this"
       fun implicitThis(type:Type): ProjectionFunctionScope {

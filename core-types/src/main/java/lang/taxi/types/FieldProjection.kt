@@ -16,23 +16,15 @@ import lang.taxi.accessors.ProjectionFunctionScope
 data class FieldProjection(
    val sourceType: Type,
    val projectedType: Type,
-   val projectionFunctionScope: ProjectionFunctionScope
+   val projectionFunctionScope: List<ProjectionFunctionScope>
 ) {
    companion object {
-      fun forNullable(sourceType: Type, projectedTypeAndScope: Pair<Type, ProjectionFunctionScope>?): FieldProjection? {
+      fun forNullable(sourceType: Type, projectedTypeAndScope: Pair<Type, List<ProjectionFunctionScope>>?): FieldProjection? {
          return if (projectedTypeAndScope == null) {
             null
          } else {
             val (projectedType, scope) = projectedTypeAndScope
             FieldProjection(sourceType, projectedType, scope)
-         }
-      }
-
-      fun forNullable(sourceType: Type, projectedType: Type?, scope: ProjectionFunctionScope?): FieldProjection? {
-         return if (projectedType == null) {
-            null
-         } else {
-            FieldProjection(sourceType, projectedType!!, scope!!)
          }
       }
    }

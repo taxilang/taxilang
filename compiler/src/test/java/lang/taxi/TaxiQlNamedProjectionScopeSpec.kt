@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.services.operations.constraints.ExpressionConstraint
 import lang.taxi.types.ArgumentSelector
@@ -33,10 +34,10 @@ class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
             }[]
          """.trimIndent()
          )
-         query.projectionScope!!.name.shouldBe("film")
-         query.projectionScope!!.type.qualifiedName.shouldBe("Film")
+         query.projectionScopeVars.single().name.shouldBe("film")
+         query.projectionScopeVars.single().type.qualifiedName.shouldBe("Film")
          val projection = query.projectedObjectType!!.field("star").projection
-         projection!!.projectionFunctionScope.name.should.equal("actor")
+         projection!!.projectionFunctionScope.single().name.should.equal("actor")
          val projectedType = projection.projectedType.asA<ObjectType>()
          val accessor = projectedType.field("name").accessor!!.asA<ArgumentSelector>()
          accessor.scope.name.should.equal("actor")
@@ -69,6 +70,100 @@ class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
          selector.scope.name.shouldBe("src")
          selector.scope.type.qualifiedName.shouldBe("Film")
       }
+
+      it("is possible to define an expression as a named input with implied type to a scope") {
+         val (schema, query) = """
+            model Film {
+               id : FilmId inherits Int
+               title : Title inherits String
+            }
+            model Actor {
+               name : ActorName inherits String
+            }
+         """.compiledWithQuery(
+            """
+            find { Film(FilmId == 1) } as (lead: first(Actor[])) -> {
+               title : Title
+               starring : lead.name
+            }
+         """.trimIndent()
+         )
+         query.shouldNotBeNull()
+         query.projectionScopeVars.single().name.shouldBe("lead")
+         query.projectionScopeVars.single().type.qualifiedName.shouldBe("Actor")
+         query.projectionScopeVars.single().expression!!.asA<FunctionExpression>().function.qualifiedName.shouldBe("taxi.stdlib.first")
+      }
+      it("is possible to define an expression as a named input with explicit type to a scope") {
+         val (schema, query) = """
+            model Film {
+               id : FilmId inherits Int
+               title : Title inherits String
+            }
+            model Actor {
+               name : ActorName inherits String
+            }
+         """.compiledWithQuery(
+            """
+            find { Film(FilmId == 1) } as (lead: Actor = first(Actor[])) -> {
+               title : Title
+               starring : lead.name
+            }[]
+         """.trimIndent()
+         )
+         query.shouldNotBeNull()
+         query.projectionScopeVars.single().name.shouldBe("lead")
+         query.projectionScopeVars.single().type.qualifiedName.shouldBe("Actor")
+         query.projectionScopeVars.single().expression!!.asA<FunctionExpression>().function.qualifiedName.shouldBe("taxi.stdlib.first")
+      }
+
+      it("is possible to define an expression as an unnamed input to a scope") {
+         val (schema, query) = """
+            model Film {
+               id : FilmId inherits Int
+               title : Title inherits String
+            }
+            model Actor {
+               name : ActorName inherits String
+            }
+         """.compiledWithQuery(
+            """
+            find { Film(FilmId == 1) } as (first(Actor[])) -> {
+               title : Title
+               starring : ActorName
+            }[]
+         """.trimIndent()
+         )
+         query.shouldNotBeNull()
+         query.projectionScopeVars.single().type.qualifiedName.shouldBe("Actor")
+         query.projectionScopeVars.single().expression!!.asA<FunctionExpression>().function.qualifiedName.shouldBe("taxi.stdlib.first")
+      }
+
+
+      it("is possible to define multiple variables as inputs to scopes") {
+         val (schema, query) = """
+            model Film {
+               id : FilmId inherits Int
+               title : Title inherits String
+            }
+            model Actor {
+               name : ActorName inherits String
+            }
+         """.compiledWithQuery(
+            """
+            find { Film(FilmId == 1) } as (Film, first(Actor[])) -> {
+               title : Title
+               starring : ActorName
+            }[]
+         """.trimIndent()
+         )
+         query.shouldNotBeNull()
+         query.projectionScopeVars.shouldHaveSize(2)
+
+         query.projectionScopeVars[0].type.qualifiedName.shouldBe("Film")
+         query.projectionScopeVars[1].type.qualifiedName.shouldBe("Actor")
+         query.projectionScopeVars[1].expression!!.asA<FunctionExpression>().function.qualifiedName.shouldBe("taxi.stdlib.first")
+      }
+
 
       // This ins't implemented, but it should be.
       xit("should allow referencing a named projection scope in a constraint using a type selector") {
