@@ -6,7 +6,7 @@
    <parent>
       <groupId>org.taxilang</groupId>
       <artifactId>parent</artifactId>
-      <version>1.50.0</version>
+      <version>1.50.1</version>
    </parent>
 
    <artifactId>package-manager</artifactId>
