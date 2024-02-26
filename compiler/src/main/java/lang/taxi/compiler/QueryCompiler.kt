@@ -54,7 +54,7 @@ internal class QueryCompiler(
                      parameters = parameters,
                      typesToFind = typesToDiscover,
                      projectedType = typeToProject?.first,
-                     projectionScope = typeToProject?.second,
+                     projectionScopeVars = typeToProject?.second ?: emptyList(),
                      typeDoc = docs,
                      annotations = annotations,
                      mutation = mutation,
@@ -435,7 +435,7 @@ internal class QueryCompiler(
    private fun parseTypeToProject(
       queryProjection: TaxiParser.TypeProjectionContext?,
       typesToDiscover: List<DiscoveryType>
-   ): Either<List<CompilationError>, Pair<Type, ProjectionFunctionScope?>?> {
+   ): Either<List<CompilationError>, Pair<Type, List<ProjectionFunctionScope>>?> {
       if (queryProjection == null) {
          return null.right()
       }
@@ -479,7 +479,7 @@ internal class QueryCompiler(
 
       val projectionType = baseTypeOrErrors.flatMap { possibleBaseType: Type? ->
          if (possibleBaseType != null && anonymousProjectionType == null) {
-            return@flatMap (possibleBaseType to null).right()
+            return@flatMap (possibleBaseType to emptyList<ProjectionFunctionScope>()).right()
          }
          if (anonymousProjectionType == null) {
             return@flatMap listOf(
@@ -493,7 +493,7 @@ internal class QueryCompiler(
          tokenProcessor.parseProjectionScope(
             queryProjection.expressionInputs(),
             FieldTypeSpec.forDiscoveryTypes(typesToDiscover)
-         ).flatMap { projectionFunctionScope ->
+         ).flatMap { projectionScopedVariables ->
             anonymousProjectionType.let { anonymousTypeDef ->
                val isList = anonymousTypeDef.arrayMarker() != null
 
@@ -505,13 +505,13 @@ internal class QueryCompiler(
                         typesToDiscover,
                         concreteProjectionTypeType,
                         possibleBaseType,
-                        listOf(projectionFunctionScope)
+                        projectionScopedVariables
                      ),
                      anonymousTypeDefinition = anonymousProjectionType
                   ).map { createdType ->
                      val compiledType =
                         if (isList) ArrayType(createdType, anonymousProjectionType.toCompilationUnit()) else createdType
-                     compiledType to projectionFunctionScope
+                     compiledType to projectionScopedVariables
                   }
             }
 
@@ -532,7 +532,7 @@ data class ResolutionContext(
    val activeScopes: List<ProjectionFunctionScope> = emptyList(),
    val parameters: List<Parameter> = emptyList()
 ) {
-   fun appendScope(projectionScope: ProjectionFunctionScope): ResolutionContext {
+   fun appendScope(projectionScope: List<ProjectionFunctionScope>): ResolutionContext {
       return this.copy(activeScopes = activeScopes + projectionScope)
    }
 

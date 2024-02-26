@@ -21,7 +21,7 @@ data class TaxiQlQuery(
    val parameters: List<Parameter>,
    val typesToFind: List<DiscoveryType>,
    val projectedType: Type?,
-   val projectionScope: ProjectionFunctionScope?,
+   val projectionScopeVars: List<ProjectionFunctionScope>,
    val mutation: Mutation?,
    override val typeDoc: String?,
    override val annotations: List<Annotation>,

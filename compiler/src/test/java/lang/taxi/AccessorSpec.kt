@@ -1,10 +1,11 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object AccessorSpec : Spek({
+class AccessorSpec : DescribeSpec({
    fun schemaWithAccessor(accessor:String) = """
        type Name inherits String
             model Foo {
