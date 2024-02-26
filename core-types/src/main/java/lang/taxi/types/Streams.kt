@@ -31,6 +31,9 @@ data class StreamType(val type: Type, val source: CompilationUnit, override val 
       fun isStream(parameterizedName: String): Boolean {
          return parameterizedName.startsWith(NAME)
       }
+      fun isStream(type: Type):Boolean {
+         return isStream(type.toQualifiedName().parameterizedName)
+      }
 
       fun isStreamTypeName(requestedTypeName: String): Boolean {
          // Resolve either lang.taxi.Stream, or implicitly just Stream

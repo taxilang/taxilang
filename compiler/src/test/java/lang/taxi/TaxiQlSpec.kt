@@ -1097,8 +1097,32 @@ class TaxiQlSpec : DescribeSpec({
          query.projectedType.shouldBeInstanceOf<ArrayType>()
          val projectedFields = query.projectedObjectType!!.fields
          projectedFields.map { it.name }.shouldContainAll(
-            "id","filmId","title"
+            "id", "filmId", "title"
          )
+      }
+
+      it("is invalid to project a nested array to a non-array") {
+         val error = """
+            model Film {
+               id : FilmId inherits Int
+               title : Title inherits String
+            }
+            model Cast {
+               actors : Actor[]
+            }
+            model Actor {
+               name : PersonName inherits String
+            }
+         """.compiledWithQueryProducingCompilationException(
+            """
+            find { Film[] } as {
+               cast : Actor[] as {
+                  name : PersonName
+                } // <--- this is an error, should be an array token
+            }[]
+         """.trimIndent()
+         )
+         error.errors.single().detailMessage.shouldBe("Cannot project an array to a non-array. Try adding [] after your projection type definition")
       }
    }
 })

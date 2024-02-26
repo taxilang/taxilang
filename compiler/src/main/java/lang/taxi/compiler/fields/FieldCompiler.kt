@@ -31,7 +31,7 @@ class FieldCompiler(
 
    private val fieldNamesToDefinitions: Map<String, TaxiParser.TypeMemberDeclarationContext> by lazy {
       fun getFieldNameAndDeclarationContext(memberDeclaration: TaxiParser.TypeMemberDeclarationContext): Pair<String, TaxiParser.TypeMemberDeclarationContext> {
-          return TokenProcessor.unescape(memberDeclaration.fieldDeclaration().identifier().text) to memberDeclaration
+         return TokenProcessor.unescape(memberDeclaration.fieldDeclaration().identifier().text) to memberDeclaration
       }
 
       val fields = typeBody.memberDeclarations
@@ -210,17 +210,30 @@ class FieldCompiler(
          fieldTypeDeclaration != null -> {
             tokenProcessor.fieldTypeSpecOrError(fieldTypeDeclaration, this)
                .flatMap { fieldTypeSpec ->
-                  parseFieldProjection(member, fieldTypeSpec).flatMap { fieldProjectionType ->
-                     toField(
-                        member,
-                        namespace,
-                        fieldTypeSpec,
-                        typeDoc,
-                        fieldAnnotations,
-                        null,
-                        FieldProjection.forNullable(fieldTypeSpec.type, fieldProjectionType),
-                     )
-                  }
+                  parseFieldProjection(member, fieldTypeSpec)
+                     .flatMap { fieldProjectionType ->
+                        val projection = FieldProjection.forNullable(fieldTypeSpec.type, fieldProjectionType)
+                           ?.let { projection ->
+                              // Ensure that the source type can be projected to the target type.
+                              typeChecker.ifProjectableOrErrorList(
+                                 projection.sourceType, projection.projectedType, fieldTypeDeclaration
+                              ) { projection }
+                           }
+                           ?: (null).right() // if no projection, then just succeed on null
+                        projection
+                     }
+                     .flatMap { fieldProjection ->
+
+                        toField(
+                           member,
+                           namespace,
+                           fieldTypeSpec,
+                           typeDoc,
+                           fieldAnnotations,
+                           null,
+                           fieldProjection,
+                        )
+                     }
                }
          }
 
@@ -749,7 +762,13 @@ class FieldCompiler(
       readExpressionContext: TaxiParser.ExpressionGroupContext,
       targetType: Type
    ): Either<List<CompilationError>, out Accessor> {
-      val expression = ExpressionCompiler(this.tokenProcessor, this.typeChecker, this.errors, this, this.resolutionContext.argumentsInScope)
+      val expression = ExpressionCompiler(
+         this.tokenProcessor,
+         this.typeChecker,
+         this.errors,
+         this,
+         this.resolutionContext.argumentsInScope
+      )
          .compile(readExpressionContext, targetType)
       return expression
    }
