@@ -6,7 +6,7 @@
    <groupId>org.taxilang</groupId>
    <artifactId>parent</artifactId>
    <packaging>pom</packaging>
-   <version>1.50.0-SNAPSHOT</version>
+   <version>1.50.0</version>
    <name>Taxi</name>
    <description>Taxi is a language for defining semantic API and data contracts, and describing how data relates between
       systems
