@@ -98,15 +98,6 @@ lambdaSignature: expressionInputs typeReference;
 expressionInputs: '(' expressionInput (',' expressionInput)* ')' '->';
 expressionInput: (identifier ':')? (nullableTypeReference accessor? | expressionGroup);
 
-
-// Added for expression types.
-// However, I suspect with a few modifications e can simplify
-// all expressions to
-// this group (fields, queries, etc.).
-// This definition is based off of this:
-// https://github.com/antlr/grammars-v4/blob/master/arithmetic/arithmetic.g4
-// which ensures order-of-precedence and supports grouped / parenthesis
-// expressions
 expressionGroup:
    expressionGroup POW expressionGroup
    | expressionGroup (MULT | DIV) expressionGroup
@@ -658,7 +649,7 @@ queryParamList: queryParam (',' queryParam)*;
 
 queryParam: annotation* identifier ':' typeReference;
 
-queryDirective: K_Stream | K_Find | K_Map;
+readQueryDirective: K_Stream | K_Find | K_Map;
 
 givenBlock : 'given' '{' factList '}';
 
@@ -685,15 +676,18 @@ variableName: identifier;
 queryBody:
    typeDoc? annotation*
    givenBlock?
-	queryOrMutation;
+   commandExpression+; // one-or-many expressions
 
-// A query body can contain EITHER:
-// - a query followed by an optional mutation
-// - OR a mutation on its own
-// but it must contain one.
-queryOrMutation:
-   (queryDirective ( ('{' queryTypeList  '}') | anonymousTypeDefinition | expressionGroup ) typeProjection? mutation?) |
-   mutation;
+// A command expression is a top-level entity within a query,
+// things like find, stream, mutate.
+commandExpression:
+   (readQueryExpression | mutationExpression);
+
+// A readQuery is something that is read-only,
+// such as find {} or stream {}
+readQueryExpression:
+   (readQueryDirective ( ('{' queryTypeList  '}') | anonymousTypeDefinition | expressionGroup ) typeProjection?);
+
 
 
 queryTypeList: fieldTypeDeclaration (',' fieldTypeDeclaration)*;
@@ -710,7 +704,7 @@ typeProjection: 'as' (typeReference | expressionInputs? anonymousTypeDefinition)
 //}
 anonymousTypeDefinition: annotation* typeBody arrayMarker? accessor? parameterConstraint?;
 
-mutation: K_Call memberReference;
+mutationExpression: K_Call memberReference;
 
 NOT_IN: 'not in';
 IN: 'in';

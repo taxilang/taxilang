@@ -34,6 +34,7 @@ class TaxiQlMutationsSpec : DescribeSpec ({
          """.compiled()
             .query("UpdatePeople")
 
+
          query.mutation!!.service.qualifiedName.shouldBe("PersonService")
          query.mutation!!.operation.qualifiedName.shouldBe("updatePerson")
       }

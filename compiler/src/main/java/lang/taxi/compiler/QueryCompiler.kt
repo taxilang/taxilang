@@ -6,9 +6,10 @@ import lang.taxi.TaxiParser.ValueContext
 import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.fields.FieldTypeSpec
 import lang.taxi.expressions.Expression
-import lang.taxi.expressions.FunctionExpression
 import lang.taxi.mutations.Mutation
 import lang.taxi.query.*
+import lang.taxi.query.commands.MutationCommand
+import lang.taxi.query.commands.ReadQueryCommand
 import lang.taxi.services.OperationScope
 import lang.taxi.services.Service
 import lang.taxi.services.operations.constraints.Constraint
@@ -31,47 +32,71 @@ internal class QueryCompiler(
       ctx: TaxiParser.QueryBodyContext,
       compilationUnit: CompilationUnit
    ): Either<List<CompilationError>, TaxiQlQuery> {
-      val queryDirective = when {
-         ctx.queryOrMutation().queryDirective() == null && ctx.queryOrMutation().mutation() != null -> QueryMode.MUTATE
 
-//         ctx.queryDirective().FindAll() != null -> QueryMode.FIND_ALL
-//         ctx.queryDirective().FindOne() != null -> QueryMode.FIND_ONE
-         //Deprecating FindAll/FindOne in favour of Find which behaves the same as FindAll
-         ctx.queryOrMutation().queryDirective()?.K_Find() != null -> QueryMode.FIND_ALL
-         ctx.queryOrMutation().queryDirective()?.K_Stream() != null -> QueryMode.STREAM
-         ctx.queryOrMutation().queryDirective()?.K_Map() != null -> QueryMode.MAP
-         else -> error("Unhandled Query Directive")
-      }
+
       val factsOrErrors = ctx.givenBlock()?.let { parseFacts(it, parameters) } ?: emptyList<Parameter>().right()
       val queryOrErrors = factsOrErrors.flatMap { facts ->
+         val allParameters = facts + parameters
+         val queryCommands = ctx.commandExpression().map { commandExpression ->
+            when {
+               commandExpression.readQueryExpression() != null -> parseReadQueryExpression(
+                  commandExpression.readQueryExpression(),
+                  allParameters
+               )
 
-         parseQueryBody(ctx, facts + parameters, queryDirective).flatMap { typesToDiscover ->
-            parseTypeToProject(ctx.queryOrMutation()?.typeProjection(), typesToDiscover).flatMap { typeToProject ->
-               parseMutation(ctx.queryOrMutation().mutation()).map { mutation ->
-                  TaxiQlQuery(
-                     name = name,
-                     facts = facts,
-                     queryMode = queryDirective,
-                     parameters = parameters,
-                     typesToFind = typesToDiscover,
-                     projectedType = typeToProject?.first,
-                     projectionScopeVars = typeToProject?.second ?: emptyList(),
-                     typeDoc = docs,
-                     annotations = annotations,
-                     mutation = mutation,
-                     compilationUnits = listOf(compilationUnit)
-                  )
-               }
+               commandExpression.mutationExpression() != null -> parseMutation(
+                  commandExpression.mutationExpression(),
+                  allParameters
+               )
 
-
+               else -> error("Unhandled query directive")
             }
+         }.invertEitherList().flattenErrors()
+
+         queryCommands.map { commandExpressions ->
+            TaxiQlQuery(
+               name = name,
+               facts = facts,
+               parameters = parameters,
+               commandExpressions,
+               typeDoc = docs,
+               annotations = annotations,
+               compilationUnits = listOf(compilationUnit)
+            )
          }
       }
       return queryOrErrors
    }
 
-   private fun parseMutation(mutationCtx: TaxiParser.MutationContext?): Either<List<CompilationError>, Mutation?> {
-      if (mutationCtx == null) return Either.Right(null)
+   private fun parseReadQueryExpression(
+      readExpression: TaxiParser.ReadQueryExpressionContext,
+      facts: List<Parameter>
+   ): Either<List<CompilationError>, ReadQueryCommand> {
+      val queryDirective = when {
+         readExpression.readQueryDirective()?.K_Find() != null -> QueryMode.FIND_ALL
+         readExpression.readQueryDirective()?.K_Stream() != null -> QueryMode.STREAM
+         readExpression.readQueryDirective()?.K_Map() != null -> QueryMode.MAP
+         else -> error("Unhandled Query Directive: ${readExpression.readQueryDirective().text}")
+      }
+      return parseQueryBody(readExpression, facts, queryDirective).flatMap { typesToDiscover ->
+         parseTypeToProject(readExpression.typeProjection(), typesToDiscover).map { typeToProject ->
+            ReadQueryCommand(
+               queryDirective,
+               facts,
+               typesToDiscover,
+               typeToProject?.first,
+               typeToProject?.second ?: emptyList(),
+               readExpression.toCompilationUnits()
+            )
+         }
+      }
+
+   }
+
+   private fun parseMutation(
+      mutationCtx: TaxiParser.MutationExpressionContext,
+      facts: List<Parameter>
+   ): Either<List<CompilationError>, MutationCommand> {
       val memberReference = mutationCtx.memberReference()
 
       return tokenProcessor.resolveImportableToken(
@@ -93,16 +118,20 @@ internal class QueryCompiler(
             (token to operation).right()
          }
          .map { (service, operation) ->
-            Mutation(
-               service,
-               operation,
+            MutationCommand(
+               facts,
+               Mutation(
+                  service,
+                  operation,
+                  mutationCtx.toCompilationUnits()
+               ),
                mutationCtx.toCompilationUnits()
             )
          }
    }
 
    private fun parseQueryBody(
-      queryBodyContext: TaxiParser.QueryBodyContext,
+      queryBodyContext: TaxiParser.ReadQueryExpressionContext,
       parameters: List<Parameter>, queryDirective: QueryMode
    ): Either<List<CompilationError>, List<DiscoveryType>> {
       val namespace = queryBodyContext.findNamespace()
@@ -111,17 +140,18 @@ internal class QueryCompiler(
 
       /**
        * A query body can either be a concrete type:
-       * findAll { foo.bar.Order[] }
+       * find { foo.bar.Order[] }
        *
        * or an anonymous type
        *
-       * findAll {
+       * find {
        *    field1: Type1
        *    field2: Type2
        * }
        */
-      val queryTypeList = queryBodyContext.queryOrMutation()?.queryTypeList()
-      val anonymousTypeDefinition = queryBodyContext.queryOrMutation()?.anonymousTypeDefinition()
+      val queryTypeList: TaxiParser.QueryTypeListContext? = queryBodyContext.queryTypeList()
+      val anonymousTypeDefinition: TaxiParser.AnonymousTypeDefinitionContext? =
+         queryBodyContext.anonymousTypeDefinition()
       return queryTypeList?.fieldTypeDeclaration()?.map { queryType ->
          tokenProcessor.parseTypeOrUnionType(queryType.nullableTypeReference()).flatMap { type ->
             toDiscoveryType(
@@ -243,7 +273,7 @@ internal class QueryCompiler(
                   when {
                      factValue is Expression -> Parameter(
                         name = variableName,
-                        value = FactValue.Expression(factType,factValue),
+                        value = FactValue.Expression(factType, factValue),
                         annotations = emptyList()
                      )
 
@@ -260,7 +290,12 @@ internal class QueryCompiler(
                   }
                }
          } catch (e: Exception) {
-            listOf(CompilationError(factCtx.start, "Failed to create TypedInstance - ${e.message ?: e::class.simpleName}")).left()
+            listOf(
+               CompilationError(
+                  factCtx.start,
+                  "Failed to create TypedInstance - ${e.message ?: e::class.simpleName}"
+               )
+            ).left()
          }
       }
    }

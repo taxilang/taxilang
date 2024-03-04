@@ -2,6 +2,8 @@ package lang.taxi.query
 
 import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.mutations.Mutation
+import lang.taxi.query.commands.CommandExpression
+import lang.taxi.query.commands.ReadQueryCommand
 import lang.taxi.types.Annotatable
 import lang.taxi.types.Annotation
 import lang.taxi.types.ArrayType
@@ -17,12 +19,8 @@ import lang.taxi.types.Type
 data class TaxiQlQuery(
    val name: QualifiedName,
    val facts: List<Parameter>,
-   val queryMode: QueryMode,
    val parameters: List<Parameter>,
-   val typesToFind: List<DiscoveryType>,
-   val projectedType: Type?,
-   val projectionScopeVars: List<ProjectionFunctionScope>,
-   val mutation: Mutation?,
+   val commands : List<CommandExpression>,
    override val typeDoc: String?,
    override val annotations: List<Annotation>,
    override val compilationUnits: List<CompilationUnit>
@@ -37,31 +35,36 @@ data class TaxiQlQuery(
       get() {
          return Arrays.unwrapPossibleArrayType(returnType)
       }
+
+
+   internal val finalCommandAsReadOperation: ReadQueryCommand
+      get() {
+         val lastCommand = commands.last()
+         require(lastCommand is ReadQueryCommand) { "Final step of the query is not a read command" }
+         return lastCommand
+      }
+
+   // convenience call for backwards compatibility
    val returnType: Type
       get() {
-         return when {
-            mutation != null -> mutation.operation.returnType
-            projectedObjectType != null -> projectedObjectType!!
-            else -> {
-               typesToFind.singleOrNull()?.anonymousType
-                  ?: typesToFind.singleOrNull()?.type
-                  ?: error("Could not infer return type of query.")
-            }
-         }
+         return commands.last().returnType
       }
 
 
+   // convenience call for backwards compatibility
    val projectedObjectType: ObjectType?
       get() {
-         return when (projectedType) {
-            null -> null
-            is ArrayType -> projectedType.type as ObjectType
-            is ObjectType -> projectedType
-            else -> {
-               error("Cannot cast ${projectedType::class.simpleName} to ObjectType")
-            }
+         val finalCommand = commands.last()
+         return if (finalCommand is ReadQueryCommand) {
+            finalCommand.projectedObjectType
+         } else {
+            null
          }
       }
 
+   val typesToFind:List<DiscoveryType>
+      get() {
+         return finalCommandAsReadOperation.typesToFind
+      }
 
 }
