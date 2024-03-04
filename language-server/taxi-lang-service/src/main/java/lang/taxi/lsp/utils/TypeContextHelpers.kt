@@ -29,7 +29,7 @@ fun getFieldType(context: ParserRuleContext, compiler: Compiler): QualifiedName?
       is ScalarAccessorExpressionContext, // when we're building an expression on a field
       is ColumnIndexContext -> {
          // When we're defining types
-         context.searchUpForRule<TaxiParser.FieldDeclarationContext>()?.fieldTypeDeclaration()?.nullableTypeReference()
+         context.searchUpForRule<TaxiParser.FieldDeclarationContext>()?.fieldTypeDeclaration()?.typeExpression()?.nullableTypeReference()
             ?.typeReference()
          // when we're writing a query in a find<> block
             ?: context.searchUpForRule<TypeReferenceContext>()

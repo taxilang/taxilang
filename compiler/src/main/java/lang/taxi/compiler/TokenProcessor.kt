@@ -164,7 +164,7 @@ class TokenProcessor(
                   fieldTypeDeclaration == null -> null
                   fieldTypeDeclaration.inlineInheritedType() != null -> lookupSymbolByName(
                      namespace,
-                     memberDeclaration.fieldDeclaration().fieldTypeDeclaration().nullableTypeReference().typeReference()
+                     memberDeclaration.fieldDeclaration().fieldTypeDeclaration().typeExpression().nullableTypeReference().typeReference()
                   )
 
                   else -> null
@@ -852,7 +852,7 @@ class TokenProcessor(
          val typeBodyFieldDeclarationParent =
             typeBody.parent?.searchUpForRule(FieldDeclarationContext::class.java) as? FieldDeclarationContext
          val typeBodyFieldObjectType =
-            typeBodyFieldDeclarationParent?.fieldTypeDeclaration()?.nullableTypeReference()?.typeReference()?.let {
+            typeBodyFieldDeclarationParent?.fieldTypeDeclaration()?.typeExpression()?.nullableTypeReference()?.typeReference()?.let {
                parseType(namespace, it).getOrNull() as? ObjectType
             }
          val typeBodyContext = TypeBodyContext(typeBody, namespace, typeBodyFieldObjectType)
@@ -1284,8 +1284,8 @@ class TokenProcessor(
       typeArgumentsInScope: List<TypeArgument> = emptyList()
    ): Either<List<CompilationError>, ImportableToken> {
       return resolveTypeOrFunction(
-         typeType.nullableTypeReference().typeReference().qualifiedName(),
-         typeType.nullableTypeReference().typeReference().typeArguments(),
+         typeType.typeExpression().nullableTypeReference().typeReference().qualifiedName(),
+         typeType.typeExpression().nullableTypeReference().typeReference().typeArguments(),
          typeType
       )
    }
@@ -1417,12 +1417,12 @@ class TokenProcessor(
 
          else -> {
             resolveTypeOrFunction(
-               fieldTypeContext.nullableTypeReference().typeReference().qualifiedName(),
-               fieldTypeContext.nullableTypeReference().typeReference().typeArguments(),
+               fieldTypeContext.typeExpression().nullableTypeReference().typeReference().qualifiedName(),
+               fieldTypeContext.typeExpression().nullableTypeReference().typeReference().typeArguments(),
                fieldTypeContext
             )
                .map { token ->
-                  if (token is Type && fieldTypeContext.nullableTypeReference().typeReference().arrayMarker() != null) {
+                  if (token is Type && fieldTypeContext.typeExpression().nullableTypeReference().typeReference().arrayMarker() != null) {
                      ArrayType(token, fieldTypeContext.toCompilationUnit())
                   } else {
                      token
@@ -1442,8 +1442,8 @@ class TokenProcessor(
                            // starring : first(Person[])
                            // as a parameterContraint with an expression group.
                            // However, we actually want to resolve Person[] as an input to a function.
-                           fieldTypeContext.parameterConstraint()?.expressionGroup() != null -> {
-                              val expressionGroup = fieldTypeContext.parameterConstraint().expressionGroup()
+                           fieldTypeContext.typeExpression().parameterConstraint()?.expressionGroup() != null -> {
+                              val expressionGroup = fieldTypeContext.typeExpression().parameterConstraint().expressionGroup()
                               val expression = expressionCompiler(fieldCompiler).compile(expressionGroup)
                                  .map { expression -> listOf(expression) }
                               expression
@@ -1588,7 +1588,7 @@ class TokenProcessor(
       typeType: FieldTypeDeclarationContext
    ): Either<List<CompilationError>, Type> {
       return parseType(namespace, typeType.inlineInheritedType().typeReference()).map { inlineInheritedType ->
-         val declaredTypeName = typeType.nullableTypeReference().typeReference().qualifiedName().identifier().text()
+         val declaredTypeName = typeType.typeExpression().nullableTypeReference().typeReference().qualifiedName().identifier().text()
 
          typeSystem.register(
             ObjectType(

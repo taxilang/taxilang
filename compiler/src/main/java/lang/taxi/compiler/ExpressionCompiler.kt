@@ -14,10 +14,11 @@ import lang.taxi.compiler.fields.FieldCompiler
 import lang.taxi.compiler.fields.FieldTypeSpec
 import lang.taxi.expressions.*
 import lang.taxi.functions.Function
+import lang.taxi.query.ConstraintBuilder
+import lang.taxi.services.operations.constraints.ExpressionConstraint
 import lang.taxi.types.*
 import lang.taxi.utils.*
 import org.antlr.v4.runtime.ParserRuleContext
-import kotlin.math.exp
 
 class ExpressionCompiler(
    private val tokenProcessor: TokenProcessor,
@@ -112,7 +113,11 @@ class ExpressionCompiler(
          when (targetType) {
             null -> expression.right() // we weren't given a type, so can't do type checking
             else -> {
-               val error = if (enforceTypeChecks) typeChecker.assertIsAssignable(expression.returnType, targetType, expressionGroup) else null
+               val error = if (enforceTypeChecks) typeChecker.assertIsAssignable(
+                  expression.returnType,
+                  targetType,
+                  expressionGroup
+               ) else null
                if (error != null) {
                   listOf(error).left()
                } else {
@@ -156,7 +161,6 @@ class ExpressionCompiler(
          }
 
 
-
    }
 
    private fun compileExpressionProjection(
@@ -180,7 +184,10 @@ class ExpressionCompiler(
       require(lambdaExpression.expressionGroup().size == 1) { "expected exactly 1 expression group on the rhs of the lambda" }
       return lambdaExpression.expressionInputs()
          .expressionInput().map { expressionInput ->
-            tokenProcessor.parseType(expressionInput.findNamespace(), expressionInput.nullableTypeReference().typeReference())
+            tokenProcessor.parseType(
+               expressionInput.findNamespace(),
+               expressionInput.nullableTypeReference().typeReference()
+            )
          }.invertEitherList().flattenErrors()
          .flatMap { inputs ->
             compile(lambdaExpression.expressionGroup(0)).map { expression ->
@@ -212,8 +219,12 @@ class ExpressionCompiler(
       assignmentType: Type?
    ): Either<List<CompilationError>, Expression> {
       return when {
-         expressionAtom.typeReference() != null -> parseTypeExpression(expressionAtom.typeReference())
-         expressionAtom.functionCall() != null -> parseFunctionExpression(expressionAtom.functionCall(), assignmentType)
+         expressionAtom.typeExpression() != null -> parseTypeExpression(expressionAtom.typeExpression())
+         expressionAtom.functionCall() != null -> parseFunctionExpressionOrTypeExpression(
+            expressionAtom.functionCall(),
+            assignmentType
+         )
+
          expressionAtom.literal() != null -> parseLiteralExpression(expressionAtom.literal())
          expressionAtom.fieldReferenceSelector() != null -> parseAttributeSelector(expressionAtom.fieldReferenceSelector())
          expressionAtom.modelAttributeTypeReference() != null -> parseModelAttributeTypeReference(expressionAtom.modelAttributeTypeReference())
@@ -378,6 +389,56 @@ class ExpressionCompiler(
 
    }
 
+   /**
+    * Sometimes, the grammar gets it wrong, and parses a TypeExpression
+    * as a FunctionCall.
+    *
+    * This is because gramatically, there's very little difference between
+    *  - A type expression:  Actor(FirstName == 'Jimmy')
+    *  - A function call:    uppercase(FirstName)
+    *
+    * Attempts to improve the grammar to refine the conditions
+    * became a rabbit-hole of edge cases.
+    *
+    * Instead, parse the thing, and see what the symbols resolve to.
+    */
+   private fun parseFunctionExpressionOrTypeExpression(
+      readFunction: TaxiParser.FunctionCallContext,
+      assignmentType: Type?
+   ): Either<List<CompilationError>, Expression> {
+      return tokenProcessor.resolveImportableToken(readFunction.qualifiedName(), readFunction)
+         .flatMap { token ->
+            when (token) {
+               is Type -> parseFunctionExpressionAsTypeExpression(token, readFunction)
+               else -> parseFunctionExpression(readFunction, assignmentType)
+            }
+         }
+   }
+
+   /**
+    * Takes a functionCall context which should've been parsed as a typeExpression,
+    * and returns the typeExpression.
+    *
+    * I have a strong feeling this is gonna bite me in the butt.
+    */
+   private fun parseFunctionExpressionAsTypeExpression(
+      type: Type,
+      functionCall: TaxiParser.FunctionCallContext
+   ): Either<List<CompilationError>, TypeExpression> {
+      val size = functionCall.argumentList().argument().size
+      require(size == 1) { "Expected an argumentList with size of 1, but found $size: ${functionCall.source().content}" }
+      val argument = functionCall.argumentList().argument().single()
+      require(argument.scalarAccessorExpression() != null) { "Expected a scalar expression, but did not find one" }
+      return compileScalarAccessor(argument.scalarAccessorExpression()).map { accessor ->
+         require(accessor is Expression) { "Expected to receive an expression when parsing functionExpression" }
+         TypeExpression(
+            type, listOf(
+               ExpressionConstraint(accessor)
+            ),
+            functionCall.toCompilationUnits()
+         )
+      }
+   }
 
    private fun parseFunctionExpression(
       readFunction: TaxiParser.FunctionCallContext,
@@ -409,20 +470,30 @@ class ExpressionCompiler(
    }
 
 
-   private fun parseTypeExpression(typeType: TaxiParser.TypeReferenceContext): Either<List<CompilationError>, Expression> {
-      if (canResolveAsScopePath(typeType.qualifiedName())) {
-         return resolveScopePath(typeType.qualifiedName())
+   private fun parseTypeExpression(typeExpression: TaxiParser.TypeExpressionContext): Either<List<CompilationError>, Expression> {
+      // MP 4-Mar-24: Validate this still works...
+      val typeReference = typeExpression.nullableTypeReference().typeReference()
+      if (typeReference != null && canResolveAsScopePath(typeReference.qualifiedName())) {
+         return resolveScopePath(typeReference.qualifiedName())
       }
 
-      return tokenProcessor.parseType(typeType.findNamespace(), typeType)
-         .map { type -> TypeExpression(type, typeType.toCompilationUnits()) }
+
+
+      return tokenProcessor.parseTypeOrUnionType(typeExpression.nullableTypeReference())
+         .flatMap { type ->
+            ConstraintBuilder(this).build(
+               typeExpression.parameterConstraint(),
+               type
+            ).map { constraints -> type to constraints }
+         }
+         .map { (type, constraints) -> TypeExpression(type, constraints, typeExpression.toCompilationUnits()) }
          .handleErrorWith { errors ->
-            if (Enums.isPotentialEnumMemberReference(typeType.qualifiedName().identifier().text())) {
-               tokenProcessor.resolveEnumMember(typeType.qualifiedName().identifier().text(), typeType)
+            if (Enums.isPotentialEnumMemberReference(typeReference.qualifiedName().identifier().text())) {
+               tokenProcessor.resolveEnumMember(typeReference.qualifiedName().identifier().text(), typeExpression)
                   .map { enumMember ->
                      LiteralExpression(
                         LiteralAccessor(enumMember.value, enumMember.enum),
-                        typeType.toCompilationUnits()
+                        typeExpression.toCompilationUnits()
                      )
                   }
             } else {

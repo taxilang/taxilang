@@ -8,6 +8,7 @@ import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.functions.FunctionAccessor
+import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.*
 
 // Note: Expression inheriting Accessor is tech debt,
@@ -75,7 +76,9 @@ data class FieldReferenceExpression(
 
 }
 
-data class TypeExpression(val type: Type, override val compilationUnits: List<CompilationUnit>) : Expression() {
+data class TypeExpression(val type: Type,
+                          val constraints: List<Constraint>,
+                          override val compilationUnits: List<CompilationUnit>) : Expression() {
    override val returnType: Type = type
 }
 

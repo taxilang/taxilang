@@ -120,6 +120,7 @@ expressionGroup:
    | expressionGroup COALESCE expressionGroup
    | expressionGroup LOGICAL_AND expressionGroup
    | expressionGroup LOGICAL_OR expressionGroup
+   | expressionGroup '.' functionCall
    | whenBlock
    // Inputs go last, so that when parsing lambdas, the inputs are the LHS and everything remainin goes RHS.
    // Might not work for nested lambdas, if that's a thing.
@@ -130,7 +131,7 @@ expressionGroup:
 // as types
 // 1-Oct: Tried collapsing scalarAccessorExpression into this, but it caused errors.
 // Would like to simplify...
-expressionAtom: functionCall | typeReference | fieldReferenceSelector | modelAttributeTypeReference | literal | anonymousTypeDefinition;
+expressionAtom: functionCall | typeExpression | fieldReferenceSelector | modelAttributeTypeReference | literal | anonymousTypeDefinition;
 
 //scalarAccessorExpression
   //    : xpathAccessorDeclaration
@@ -229,8 +230,12 @@ modelAttributeTypeReference: typeReference '::' typeReference |
 // fieldType usages allow richer syntax with additional features like
 // inline type definitions, optionality, aliases and accessors.
 // Other type usage sites are not as flexible (eg., return type of an operation)
-fieldTypeDeclaration: (nullableTypeReference parameterConstraint?)? inlineInheritedType? accessor?;
+fieldTypeDeclaration: typeExpression? inlineInheritedType? accessor?;
 
+// A type expression is both a type, with optional contraints.
+// eg:
+// Film( ActorId == 123 )
+typeExpression: nullableTypeReference parameterConstraint?;
 //typeReference : qualifiedName typeArguments? arrayMarker? optionalType?;
 
 typeReference
@@ -378,7 +383,7 @@ queryOperationCapabilities: (queryOperationCapability (',' queryOperationCapabil
 queryOperationCapability:
    queryFilterCapability | identifier;
 
-queryFilterCapability: 'filter'( '(' filterCapability (',' filterCapability)* ')');
+queryFilterCapability: K_Filter( '(' filterCapability (',' filterCapability)* ')');
 
 filterCapability: EQ | NQ | IN | LIKE | GT | GE | LT | LE;
 
@@ -674,6 +679,7 @@ queryParam: annotation* identifier ':' typeReference;
 queryDirective: K_Stream | K_Find | K_Map;
 findDirective: K_Find;
 
+
 givenBlock : 'given' '{' factList '}';
 
 factList : fact (',' fact)*;
@@ -706,11 +712,9 @@ queryBody:
 // - OR a mutation on its own
 // but it must contain one.
 queryOrMutation:
-   (queryDirective ( ('{' queryTypeList  '}') | anonymousTypeDefinition ) typeProjection? mutation?) |
+   (queryDirective ( ('{' expressionGroup '}') | anonymousTypeDefinition  ) typeProjection? mutation?) |
    mutation;
 
-
-queryTypeList: fieldTypeDeclaration (',' fieldTypeDeclaration)*;
 
 typeProjection: 'as' (typeReference | expressionInputs? anonymousTypeDefinition);
 //as {
@@ -741,7 +745,7 @@ BooleanLiteral
 // names, operations and so on with words that are reserved in some context.
 
 identifier:
-   K_Table | K_Stream | K_Find | K_Map | K_Except | K_Call | IdentifierToken;
+   K_Table | K_Stream | K_Find | K_Map | K_Except | K_Call | K_Filter | IdentifierToken;
 
 K_Find: 'find';
 
@@ -782,7 +786,7 @@ K_Map : 'map';
 
 K_Table: 'table';
 K_Stream: 'stream';
-
+K_Filter: 'filter';
 // Identifier for signalling a mutation within a query
 K_Call: 'call';
 

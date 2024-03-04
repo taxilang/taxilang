@@ -183,7 +183,7 @@ class FieldCompiler(
       //
       // This is current partly encapsulated through FieldTypeSpec, but
       // capturing it is awkward.
-      val qualifiedName = fieldTypeDeclaration?.nullableTypeReference()?.typeReference()?.qualifiedName()
+      val qualifiedName = fieldTypeDeclaration?.typeExpression()?.nullableTypeReference()?.typeReference()?.qualifiedName()
       return when {
          // Before resolving as a type, first check if we can resolve
          // through scope.
@@ -483,12 +483,12 @@ class FieldCompiler(
                errors.addAll(it)
                null
             }
-            val simpleType = fieldDeclaration?.nullableTypeReference()
+            val simpleType = fieldDeclaration?.typeExpression()?.nullableTypeReference()
             if (fieldType.accessor != null && accessor != null) {
                error("It is invalid for both the field to define an inferred accessor and an explict accessor.  Shouldn't happen")
             }
             tokenProcessor.mapConstraints(
-               fieldDeclaration?.parameterConstraint()?.expressionGroup(),
+               fieldDeclaration?.typeExpression()?.parameterConstraint()?.expressionGroup(),
                this,
                this.resolutionContext.activeScopes
             ).map { constraints ->

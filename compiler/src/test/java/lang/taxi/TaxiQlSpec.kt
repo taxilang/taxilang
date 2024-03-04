@@ -363,7 +363,7 @@ class TaxiQlSpec : DescribeSpec({
 
          query.typesToFind.should.have.size(1)
          val discoveryType = query.typesToFind.first()
-         discoveryType.anonymousType?.anonymous.should.be.`true`
+         discoveryType.type.anonymous.should.be.`true`
          discoveryType.startingFacts.should.have.size(2)
       }
 

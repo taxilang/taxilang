@@ -2,6 +2,7 @@ package lang.taxi.lsp.completion
 
 import lang.taxi.TaxiParser.*
 import lang.taxi.expressions.Expression
+import lang.taxi.expressions.TypeExpression
 import lang.taxi.lsp.CompilationResult
 import lang.taxi.searchUpExcluding
 import lang.taxi.searchUpForRule
@@ -93,7 +94,7 @@ class EditorCompletionService(private val typeCompletionBuilder: TypeCompletionB
          is EnumConstantContext -> listOf(CompletionItem("synonym of"))
 
          // Query completions
-         is QueryTypeListContext -> typeCompletionBuilder.getTypes(typeRepository, decorators)
+         is TypeExpressionContext -> typeCompletionBuilder.getTypes(typeRepository, decorators)
          is ArrayMarkerContext -> typeCompletionBuilder.getTypes(typeRepository, decorators)
          is ParameterConstraintContext -> typeCompletionBuilder.getTypes(typeRepository, decorators)
          else -> emptyList()

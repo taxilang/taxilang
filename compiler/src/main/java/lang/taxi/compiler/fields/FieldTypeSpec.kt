@@ -2,6 +2,7 @@ package lang.taxi.compiler.fields
 
 import lang.taxi.accessors.Accessor
 import lang.taxi.expressions.Expression
+import lang.taxi.expressions.TypeExpression
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.query.DiscoveryType
 import lang.taxi.types.ArrayType
@@ -28,14 +29,12 @@ data class FieldTypeSpec private constructor(
       fun forType(type: Type) = FieldTypeSpec(type, null, null)
       fun forFunction(function: FunctionAccessor) = FieldTypeSpec(function.returnType, function, null)
       fun forExpression(expression: Expression) = FieldTypeSpec(expression.returnType, null, expression)
-      fun forDiscoveryTypes(typesToDiscover: List<DiscoveryType>): FieldTypeSpec {
-         return when {
-            typesToDiscover.isEmpty() -> TODO("How do we derive FieldTypeSpec without any inputs?")
-            typesToDiscover.size == 1 -> forType(typesToDiscover.single().type)
-            else -> {
-               log().warn("Multiple discovery types for projection results are not yet supported - returning Any")
-               forType(PrimitiveType.ANY)
-            }
+      fun forDiscoveryTypes(discoveryType: DiscoveryType): FieldTypeSpec {
+         return when(val expression = discoveryType.expression) {
+            // This is for backwards compatibility. It may be that we actually want to use the expression in
+            // all cases.
+            is TypeExpression -> forType(expression.type)
+            else -> forExpression(expression)
          }
       }
    }

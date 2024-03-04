@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.types.shouldBeInstanceOf
+import lang.taxi.expressions.TypeExpression
 import lang.taxi.query.QueryMode
 import lang.taxi.types.StreamType
 import lang.taxi.types.UnionType
@@ -73,7 +74,7 @@ class ContinuousQueryServicesGrammarSpec : DescribeSpec({
                   views : ViewCount
                }[]
             """.compiled()
-            val streamingType = schema.queries.single().typesToFind.single().type
+            val streamingType = schema.queries.single().typesToFind.single().expression.asA<TypeExpression>().type
             streamingType.shouldBeInstanceOf<StreamType>()
             val unionType = streamingType.typeParameters()[0]
             unionType.shouldBeInstanceOf<UnionType>()

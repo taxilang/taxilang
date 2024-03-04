@@ -264,7 +264,7 @@ class TokenCollator : TaxiBaseListener() {
             listOf(TypeDeclarationContext::class.java, AnnotationTypeDeclarationContext::class.java))
             ?: error("Field ${ctx.identifier()} declares an inline type - expected to find a parent type declaration, but didn't")
 
-         val inlineTypeName = qualify(fieldCtx.nullableTypeReference().typeReference().qualifiedName().text)
+         val inlineTypeName = qualify(fieldCtx.typeExpression().nullableTypeReference().typeReference().qualifiedName().text)
          val owningTypeName = when (owningType) {
             is TypeDeclarationContext -> qualify(owningType.identifier().text)
             is AnnotationTypeDeclarationContext -> qualify(owningType.identifier().text)
