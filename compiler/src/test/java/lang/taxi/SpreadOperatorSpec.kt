@@ -146,7 +146,7 @@ class SpreadOperatorSpec : DescribeSpec({
             }
          """.trimIndent()
          )
-         exception.message.should.contain("UnknownSource(6,5) missing '}' at 'house'")
+         exception.message.should.contain("UnknownSource(6,5) Syntax error at 'house'.  That's all we know.")
       }
 
       it("is not allowed for models") {

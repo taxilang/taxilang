@@ -204,14 +204,6 @@ fieldDeclaration
   :   fieldModifier? identifier (':' (anonymousTypeDefinition | fieldTypeDeclaration | expressionGroup |  modelAttributeTypeReference))? typeProjection?
   ;
 
-// Used in queries to scope projection of collections.
-// eg:
-//findAll { OrderTransaction[] } as {
-//   items: Thing[] by [OrderItem[]]
-// }[]
-collectionProjectionExpression: '[' typeReference projectionScopeDefinition? ']' ;
-
-projectionScopeDefinition: 'with' '(' scalarAccessorExpression (',' scalarAccessorExpression)*  ')';
 
 // Used to describe navigation from one entity to another
 // Eg from Type to Property Type (Person::FirstName)
@@ -575,11 +567,6 @@ argument: literal |  scalarAccessorExpression | fieldReferenceSelector | typeRef
 
 columnIndex : IntegerLiteral | StringLiteral;
 
-expression
-    :   '(' expression ')'
-    |   literal
-    |   identifier;
-
 qualifiedName
     :   identifier ('.' identifier)*
     ;
@@ -672,7 +659,6 @@ queryParamList: queryParam (',' queryParam)*;
 queryParam: annotation* identifier ':' typeReference;
 
 queryDirective: K_Stream | K_Find | K_Map;
-findDirective: K_Find;
 
 givenBlock : 'given' '{' factList '}';
 
@@ -706,7 +692,7 @@ queryBody:
 // - OR a mutation on its own
 // but it must contain one.
 queryOrMutation:
-   (queryDirective ( ('{' queryTypeList  '}') | anonymousTypeDefinition ) typeProjection? mutation?) |
+   (queryDirective ( ('{' queryTypeList  '}') | anonymousTypeDefinition | expressionGroup ) typeProjection? mutation?) |
    mutation;
 
 
