@@ -1,0 +1,32 @@
+@import 'base.css';
+
+/*! purgecss start ignore */
+@import 'docsearch.css';
+@import 'prism.css';
+@import 'bar-of-progress.css';
+/*! purgecss end ignore */
+
+@import 'tailwindcss/components';
+@import 'utilities.css';
+
+.leader-line {
+  z-index: 10;
+}
+
+
+@media (min-width: 1024px) {
+
+  .breakout-image {
+    left: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    max-width: 100vw;
+    position: relative;
+    right: 50%;
+    width: 100vw;
+  }
+
+  .breakout-image svg {
+    width: 100%;
+  }
+}
