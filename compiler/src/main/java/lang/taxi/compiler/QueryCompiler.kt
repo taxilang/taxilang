@@ -5,6 +5,7 @@ import lang.taxi.*
 import lang.taxi.TaxiParser.ValueContext
 import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.fields.FieldTypeSpec
+import lang.taxi.expressions.Expression
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.mutations.Mutation
 import lang.taxi.query.*
@@ -240,7 +241,7 @@ internal class QueryCompiler(
             readValue(factDeclaration.value(), factType, false, parameters)
                .map { factValue ->
                   when {
-                     factValue is FunctionExpression -> Parameter(
+                     factValue is Expression -> Parameter(
                         name = variableName,
                         value = FactValue.Expression(factType,factValue),
                         annotations = emptyList()
@@ -259,7 +260,7 @@ internal class QueryCompiler(
                   }
                }
          } catch (e: Exception) {
-            listOf(CompilationError(factCtx.start, "Failed to create TypedInstance - ${e.message}")).left()
+            listOf(CompilationError(factCtx.start, "Failed to create TypedInstance - ${e.message ?: e::class.simpleName}")).left()
          }
       }
    }
@@ -369,7 +370,7 @@ internal class QueryCompiler(
             }
          }
 
-         is FunctionExpression -> {
+         is Expression -> {
             tokenProcessor.typeChecker.ifAssignable(value.returnType, factType, valueContext) { value }
                .wrapErrorsInList()
          }
