@@ -174,7 +174,7 @@ class SpreadOperatorSpec : DescribeSpec({
             """
 find { Movie[] } as {
     cast : Person[]
-    aListers : filterAll(this.cast, (Person) -> containsString(PersonName, 'a')) as  { // Inferred return type is Person
+    aListers : filter(this.cast, (Person) -> containsString(PersonName, 'a')) as  { // Inferred return type is Person
        ...except { id }
     }
 }[]
@@ -202,7 +202,7 @@ find { Movie[] } as {
             """
 find { Movie[] } as {
     cast : Person[]
-    aListers : filterAll(this.cast, (Person) -> containsString(PersonName, 'a')) as  { // Inferred return type is Person
+    aListers : filter(this.cast, (Person) -> containsString(PersonName, 'a')) as  { // Inferred return type is Person
        bloodType : BloodType
        creditScore : CreditScore
        ...except { id }

@@ -1,6 +1,8 @@
 package lang.taxi.query
 
 import lang.taxi.expressions.Expression
+import lang.taxi.expressions.TypeExpression
+import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
 import lang.taxi.types.TypedValue
@@ -50,6 +52,13 @@ data class DiscoveryType(
 ) {
    val typeName: QualifiedName = expression.returnType.toQualifiedName()
    val type = expression.returnType
+
+   // largely here for convenience & backwards compatibility
+   val constraints: List<Constraint>
+      get() {
+         if (expression !is TypeExpression) return emptyList()
+         return expression.constraints
+      }
 }
 
 

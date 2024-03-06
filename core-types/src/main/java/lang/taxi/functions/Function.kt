@@ -9,14 +9,22 @@ import lang.taxi.types.*
 import java.util.EnumSet
 
 
-enum class FunctionModifiers {
-   Query
+enum class FunctionModifier(private val token: String) {
+   Query("query"),
+   Extension("extension");
+   companion object {
+      private val byToken = values().associateBy { it.token }
+      fun forToken(token:String):FunctionModifier {
+         return byToken[token] ?: error("$token is not a valid modifier")
+      }
+   }
 }
 
 class FunctionDefinition(
    val parameters: List<Parameter>,
    val returnType: Type,
-   val modifiers: EnumSet<FunctionModifiers>,
+   val returnTypeIsNullable: Boolean = false,
+   val modifiers: EnumSet<FunctionModifier>,
    val typeArguments: List<TypeArgument>,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
@@ -24,6 +32,19 @@ class FunctionDefinition(
    private val equality = ImmutableEquality(this, FunctionDefinition::parameters, FunctionDefinition::returnType)
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
+
+   val isExtensionFunction: Boolean = modifiers.contains(FunctionModifier.Extension)
+   /**
+    * In an extension function, the receiver type is the first parameter
+    */
+   val receiverType: Type?
+      get() {
+         if (!isExtensionFunction) return null
+         // the compiler should catch this
+         require(parameters.isNotEmpty()) { "It is invalid to have an extension function without parameters" }
+         return parameters.first().type
+      }
+
    fun resolveTypeParameters(
       inputs: List<Accessor>,
       assignmentType: Type,
@@ -74,7 +95,11 @@ class FunctionDefinition(
       return FunctionDefinition(
          resolvedParameters,
          resolvedReturnType,
-         modifiers, typeArguments, typeDoc, compilationUnit
+         returnTypeIsNullable,
+         modifiers,
+         typeArguments,
+         typeDoc,
+         compilationUnit
       )
    }
 }
@@ -120,6 +145,9 @@ data class Function(
       }
    }
 
+   val isExtension get() = definition?.isExtensionFunction ?: false
+   val receiverType get() = definition?.receiverType
+
    override val typeDoc: String?
       get() {
          return if (isDefined) this.definition!!.typeDoc else null;
@@ -130,14 +158,18 @@ data class Function(
          return if (isDefined) this.definition!!.parameters else emptyList()
       }
 
+   val returnTypeIsNullable: Boolean
+      get() {
+         return if (isDefined) this.definition!!.returnTypeIsNullable else false
+      }
    val returnType: Type?
       get() {
          return if (isDefined) this.definition!!.returnType else null
       }
 
-   val modifiers: EnumSet<FunctionModifiers>
+   val modifiers: EnumSet<FunctionModifier>
       get() {
-         return if (isDefined) this.definition!!.modifiers else EnumSet.noneOf(FunctionModifiers::class.java)
+         return if (isDefined) this.definition!!.modifiers else EnumSet.noneOf(FunctionModifier::class.java)
       }
 
 }

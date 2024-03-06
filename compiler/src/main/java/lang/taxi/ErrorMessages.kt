@@ -9,8 +9,8 @@ object ErrorMessages {
    @Deprecated("Use Errors.unresolvedType()")
    fun unresolvedType(type: String) = "$type is not defined"
 }
-enum class ErrorCodes(val errorCode: Int) {
-   UNRESOLVED_TYPE(1)
+enum class ErrorCodes(val errorCode: String) {
+   UNRESOLVED_TYPE("UnresolvedType")
 }
 object Errors {
    fun unresolvedType(type: String, compilationUnit: CompilationUnit):CompilationError {

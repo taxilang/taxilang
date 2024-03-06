@@ -96,6 +96,12 @@ data class FunctionExpression(val function: FunctionAccessor, override val compi
    val inputs = function.inputs
 }
 
+data class ExtensionFunctionExpression(val functionExpression: FunctionExpression, val receiverValue: Expression, override val compilationUnits: List<CompilationUnit>) : Expression() {
+   override val returnType: Type = functionExpression.returnType
+   val inputs = functionExpression.inputs
+}
+
+
 /**
  * An OperatorExpression is a tuple of
  * Lhs Operator Rhs

@@ -30,6 +30,7 @@ class ExpressionCompiler(
     */
    private val fieldCompiler: FieldCompiler? = null,
    private val scopes: List<Argument> = emptyList(),
+   private val typedExpressionBuilder: TypedExpressionBuilder = DefaultTypedExpressionBuilder
 ) : FunctionParameterReferenceResolver {
    private val functionCompiler = FunctionAccessorCompiler(
       tokenProcessor,
@@ -38,6 +39,16 @@ class ExpressionCompiler(
       this,
    )
 
+   fun withTypedExpressionBuilder(newBuilder: TypedExpressionBuilder):ExpressionCompiler {
+      return ExpressionCompiler(
+         tokenProcessor,
+         typeChecker,
+         errors,
+         fieldCompiler,
+         scopes,
+         typedExpressionBuilder = newBuilder
+      )
+   }
    fun withParameters(arguments: List<Argument>): ExpressionCompiler {
       // TODO : In future, does it make sense to "nest" these, so that as we add arguments,
       // they form scopes / contexts?
@@ -47,7 +58,8 @@ class ExpressionCompiler(
          typeChecker,
          errors,
          fieldCompiler,
-         scopes + arguments
+         scopes + arguments,
+         typedExpressionBuilder = typedExpressionBuilder
       )
    }
 
@@ -102,6 +114,11 @@ class ExpressionCompiler(
          }
 
          expressionGroup.children.size == 2 && expressionGroup.expressionInputs() != null -> parseLambdaExpression(
+            expressionGroup
+         )
+
+         // Might need to be more specific here -- this should be expressionGroup.functionCall
+         expressionGroup.children.size == 3 && expressionGroup.functionCall() != null -> parseExtensionFunctionCallExpression(
             expressionGroup
          )
 
@@ -319,6 +336,7 @@ class ExpressionCompiler(
       return LiteralExpression(LiteralAccessor(literal.valueOrNullValue()), literal.toCompilationUnits()).right()
    }
 
+
    private fun parseOperatorExpression(expressionGroup: ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
 
       val lhsOrError = expressionGroup.expressionGroup(0)?.let { compile(it) }
@@ -406,18 +424,120 @@ class ExpressionCompiler(
       readFunction: TaxiParser.FunctionCallContext,
       assignmentType: Type?
    ): Either<List<CompilationError>, Expression> {
-      return tokenProcessor.resolveImportableToken(readFunction.qualifiedName(), readFunction)
+      return parseFunctionExpressionOrTypeExpression(readFunction.qualifiedName().text, readFunction, assignmentType)
+   }
+
+   /**
+    * At this point, we have some tokens, but we don't know what they are.
+    * They could be:
+    *  - A type name
+    *  - A function name
+    *  - A function call on a type name (FirstName.toUppercase())
+    *  - A function call on a scoped variable (myFirstName.toUppercase())
+    */
+   private fun parseFunctionExpressionOrTypeExpression(
+      tokenName: String,
+      readFunction: TaxiParser.FunctionCallContext,
+      assignmentType: Type?,
+      receiver: Expression? = null,
+   ): Either<List<CompilationError>, Expression> {
+      parseFunctionExpressionOrTypeExpressionUsingScopeName(tokenName, readFunction, assignmentType)?.let {
+         return it
+      }
+
+
+      return tokenProcessor.resolveImportableToken(tokenName, readFunction.qualifiedName())
          .flatMap { token ->
             when (token) {
                is Type -> parseFunctionExpressionAsTypeExpression(token, readFunction)
-               else -> parseFunctionExpression(readFunction, assignmentType)
+               else -> parseFunctionExpression(
+                  readFunction,
+                  assignmentType,
+                  functionName = tokenName,
+                  receiver = receiver
+               )
+            }
+         }
+         .flatMapLeft { error ->
+            if (!error.any { it.errorCode == ErrorCodes.UNRESOLVED_TYPE.errorCode }) {
+               return@flatMapLeft error.left()
+            }
+            // At this point, we likely have an error like "Movie.filterEach is not defined".
+            // Try to recover from a parse error, by checking if this is actually a function call
+            // in the form of foo.bar(), indicating a call of bar() on foo.
+            // Verify by trying to resolve BOTH foo and bar.
+            if (readFunction.qualifiedName().identifier().size > 1) {
+               val lhs = readFunction.qualifiedName().identifier()
+                  .dropLast(1)
+                  .joinToString(".") { it.text }
+               parseFunctionExpressionOrTypeExpression(lhs, readFunction, assignmentType)
+                  .flatMap { lhsExpression ->
+                     val rhs = readFunction.qualifiedName().identifier().last().text
+                     parseFunctionExpressionOrTypeExpression(
+                        rhs,
+                        readFunction,
+                        assignmentType,
+                        receiver = lhsExpression
+                     ).map { rhsExpression ->
+                        require(rhsExpression is FunctionExpression) { "Expected a FunctionExpression, but got ${rhsExpression::class.simpleName}" }
+                        ExtensionFunctionExpression(
+                           functionExpression = rhsExpression,
+                           receiverValue = lhsExpression,
+                           compilationUnits = readFunction.toCompilationUnits()
+                        )
+                     }
+                  }
+            } else {
+               error.left()
             }
          }
    }
 
    /**
+    * Attempts to resolve a token as an ExtensionFunctionExpression where the first
+    * part of the call is a scoped variable.
+    * If possible, returns either the extensionFunctionExpression, or the compilation errors.
+    *
+    * If the token is not a scope, then returns null.
+    */
+   private fun parseFunctionExpressionOrTypeExpressionUsingScopeName(
+      tokenName: String,
+      readFunction: TaxiParser.FunctionCallContext,
+      assignmentType: Type?
+   ): Either<List<CompilationError>, Expression>? {
+      val tokenParts = tokenName.split(".")
+      val firstToken = listOf(tokenParts.first())
+      return if (canResolveAsScopePath(firstToken)) {
+         resolveScopePath(firstToken, readFunction)
+            .flatMap { selector ->
+               val remainingTokens = tokenParts.drop(1)
+               when {
+                  remainingTokens.isEmpty() -> selector.right()
+                  remainingTokens.size == 1 -> {
+                     parseFunctionExpression(
+                        readFunction,
+                        assignmentType,
+                        receiver = selector,
+                        remainingTokens.single()
+                     ).map { function ->
+                        ExtensionFunctionExpression(function, selector, readFunction.toCompilationUnits())
+                     }
+                  }
+
+                  else -> error("Unhandled branch - there were ${remainingTokens.size} tokens left to process, don't know how to handle this: ${readFunction.source().content}")
+               }
+            }
+      } else {
+         null
+      }
+   }
+
+   /**
     * Takes a functionCall context which should've been parsed as a typeExpression,
     * and returns the typeExpression.
+    *
+    * This is for scenarios like Person(PersonName == 'Jimmy')
+    * It should not be invoked for extension function calls on types, like Person.toUpperCase()
     *
     * I have a strong feeling this is gonna bite me in the butt.
     */
@@ -425,12 +545,37 @@ class ExpressionCompiler(
       type: Type,
       functionCall: TaxiParser.FunctionCallContext
    ): Either<List<CompilationError>, TypeExpression> {
+
+      // Check to see if this type expression is part of an extension function call.
+      // eg: Movie.filter( (Title) -> Title == "Jaws" )
+      // If so, we can't treat the arguments as constraints.
+      // Otherwise, it's a type expression with constraints
+      // eg: Movie( Title == "Jaws" ), and we should include them in the parsed type.
+      val typeExpressionIsFollowedByFunctionCall =
+         !functionCall.qualifiedName().text.endsWith(type.qualifiedName.toQualifiedName().typeName)
+      val parseArgumentAsConstraints = !typeExpressionIsFollowedByFunctionCall
+      if (!parseArgumentAsConstraints) {
+         // Defer to the typeExpressionBuilder to create the typed expression.
+         // This allows an opportunity to decorate streamed types (in stream { Foo }) to
+         // Stream<Foo>
+         return typedExpressionBuilder.typedExpression(type, emptyList(), functionCall)
+            .right()
+      }
+
+      // We're parsing a type with constraints
+      // eg: Movie( Title == "Jaws" ).
+      // Convert the remaining arguments to constraints
       val size = functionCall.argumentList().argument().size
       require(size == 1) { "Expected an argumentList with size of 1, but found $size: ${functionCall.source().content}" }
       val argument = functionCall.argumentList().argument().single()
       require(argument.scalarAccessorExpression() != null) { "Expected a scalar expression, but did not find one" }
       return compileScalarAccessor(argument.scalarAccessorExpression()).map { accessor ->
          require(accessor is Expression) { "Expected to receive an expression when parsing functionExpression" }
+         // Note: We're intentionally not deferring to the typeExpressionBuilder here.
+         // This is because we're not constructing a typeExpression that we want to wrap for stream { Foo } -> Stream<Foo>
+         // It got really hard to detect reliably if we're inside a place that should / shouldn't wrap when
+         // inside the builder. So, for now, I'm just not calling the builder when I don't need wrapping.
+         // Can revisit this when needed, but need to ensure that we improve the logic inside StreamDecoratingTypedExpressionBuilder
          TypeExpression(
             type, listOf(
                ExpressionConstraint(accessor)
@@ -440,9 +585,49 @@ class ExpressionCompiler(
       }
    }
 
+   /**
+    * These are function calls that are invoked with a dot - eg:
+    * find { "hello".toUpper() }
+    */
+   private fun parseExtensionFunctionCallExpression(expression: ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
+      val lhsOrError = expression.expressionGroup(0)?.let { compile(it) }
+         ?: error("Expected an expression group at index 0")
+      return lhsOrError.flatMap { lhsExpression ->
+         parseFunctionExpression(expression.functionCall(), lhsExpression.returnType, receiver = lhsExpression)
+//         tokenProcessor.resolveFunction(expression.functionCall().qualifiedName(), expression)
+            .map { lhsExpression to it }
+      }.flatMap { (lhsExpression, functionExpression) ->
+         if (!functionExpression.function.function.isExtension) {
+            return@flatMap listOf(
+               CompilationError(
+                  expression.functionCall().toCompilationUnit(),
+                  "Function ${functionExpression.function.qualifiedName} is not an extension function, so cannot be called using the dot-syntax"
+               )
+            )
+               .left()
+         }
+         ExtensionFunctionExpression(functionExpression, lhsExpression, expression.toCompilationUnits())
+            .right()
+      }
+   }
+
    private fun parseFunctionExpression(
       readFunction: TaxiParser.FunctionCallContext,
-      assignmentType: Type?
+      assignmentType: Type?,
+      /**
+       * Indicates if this function has been called with a receiver (ie., an extension function).
+       * This is when calling an extension function as "hello".toUpperCase()
+       * In this case, the first param is considered the receiver, which needs to be considered when
+       * parsing the params of the function, moving their offset by 1.
+       */
+      receiver: Expression? = null,
+      /**
+       * Allows overriding the function name.
+       * Needed when parsing a function with dot-syntax,
+       * eg: PersonName.uppercase()
+       *
+       */
+      functionName: String = readFunction.qualifiedName().identifier().text()
    ): Either<List<CompilationError>, FunctionExpression> {
 
       // It's not always required to declare a type for a variable.
@@ -457,13 +642,13 @@ class ExpressionCompiler(
       //    d : String = anotherFunction() // anotherFunction should return String
       // }
       val declaredFunctionReturnType = assignmentType?.right() ?: tokenProcessor.getType(
-         readFunction.findNamespace(),
-         PrimitiveType.ANY.qualifiedName,
-         readFunction
+         namespace = readFunction.findNamespace(),
+         name = PrimitiveType.ANY.qualifiedName,
+         context = readFunction
       )
       return declaredFunctionReturnType
          .flatMap { targetType ->
-            functionCompiler.buildFunctionAccessor(readFunction, targetType)
+            functionCompiler.buildFunctionAccessor(readFunction, targetType, receiver, functionName)
          }.map { functionAccessor ->
             FunctionExpression(functionAccessor, readFunction.toCompilationUnits())
          }
@@ -471,7 +656,6 @@ class ExpressionCompiler(
 
 
    private fun parseTypeExpression(typeExpression: TaxiParser.TypeExpressionContext): Either<List<CompilationError>, Expression> {
-      // MP 4-Mar-24: Validate this still works...
       val typeReference = typeExpression.nullableTypeReference().typeReference()
       if (typeReference != null && canResolveAsScopePath(typeReference.qualifiedName())) {
          return resolveScopePath(typeReference.qualifiedName())
@@ -486,7 +670,7 @@ class ExpressionCompiler(
                type
             ).map { constraints -> type to constraints }
          }
-         .map { (type, constraints) -> TypeExpression(type, constraints, typeExpression.toCompilationUnits()) }
+         .map { (type, constraints) -> typedExpressionBuilder.typedExpression(type, constraints, typeExpression) }
          .handleErrorWith { errors ->
             if (Enums.isPotentialEnumMemberReference(typeReference.qualifiedName().identifier().text())) {
                tokenProcessor.resolveEnumMember(typeReference.qualifiedName().identifier().text(), typeExpression)
@@ -505,8 +689,13 @@ class ExpressionCompiler(
 
    fun canResolveAsScopePath(qualifiedName: QualifiedNameContext): Boolean {
       val identifierTokens = qualifiedName.identifier().map { it.text }
+      return canResolveAsScopePath(identifierTokens)
+   }
+
+   private fun canResolveAsScopePath(identifierTokens: List<String>): Boolean {
       return scopes.any { it.matchesReference(identifierTokens) }
    }
+
 
    /**
     * Resolves a path declared using a scope, against the field name.

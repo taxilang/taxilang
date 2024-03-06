@@ -558,9 +558,9 @@ columnDefinition : 'column' '(' columnIndex ')' ;
 // rather than permitting void return types.
 // This is because in a mapping declaration, functions really only have purpose if
 // they return things.
-functionDeclaration: typeDoc? 'declare' (functionModifiers)? 'function' typeArguments? qualifiedName '(' operationParameterList? ')' ':' typeReference;
+functionDeclaration: typeDoc? 'declare' (functionModifiers)* 'function' typeArguments? qualifiedName '(' operationParameterList? ')' ':' nullableTypeReference;
 
-functionModifiers: 'query';
+functionModifiers: K_Query | K_Extension;
 
 
 // Could be MyType( foo == bar ), or myFunction( param1, param1 )
@@ -745,7 +745,7 @@ BooleanLiteral
 // names, operations and so on with words that are reserved in some context.
 
 identifier:
-   K_Table | K_Stream | K_Find | K_Map | K_Except | K_Call | K_Filter | IdentifierToken;
+   K_Table | K_Stream | K_Find | K_Map | K_Except | K_Call | K_Filter | K_Query | K_Extension | IdentifierToken;
 
 K_Find: 'find';
 
@@ -794,6 +794,9 @@ K_Except : 'except';
 
 K_When: 'when';
 K_Else: 'else';
+
+K_Query: 'query';
+K_Extension: 'extension';
 
 IdentifierToken
     :   Letter LetterOrDigit*

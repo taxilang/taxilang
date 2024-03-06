@@ -6,6 +6,7 @@ import lang.taxi.TaxiParser.ValueContext
 import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.fields.FieldTypeSpec
 import lang.taxi.expressions.Expression
+import lang.taxi.expressions.ExtensionFunctionExpression
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.mutations.Mutation
@@ -124,7 +125,11 @@ internal class QueryCompiler(
        */
       val typeExpression: Either<List<CompilationError>, Expression> = when {
          queryBodyContext.queryOrMutation().expressionGroup() != null -> {
-            expressionCompiler.withParameters(parameters).compile(queryBodyContext.queryOrMutation().expressionGroup())
+            expressionCompiler
+               // wrap stream { Foo } so that Foo becomes Stream<Foo>
+               .withTypedExpressionBuilder(StreamDecoratingTypedExpressionBuilder)
+               .withParameters(parameters)
+               .compile(queryBodyContext.queryOrMutation().expressionGroup())
          }
 
          queryBodyContext.queryOrMutation()?.anonymousTypeDefinition() != null -> parseAnonymousTypesIfPresent(
@@ -143,12 +148,36 @@ internal class QueryCompiler(
          else -> error("Unhandled code branch - expected to create a type expression by parsing query block")
       }
       return typeExpression
-         .map { expression ->
-            // Wrap stream queries as Stream<T>
-            if (expression is TypeExpression && queryDirective == QueryMode.STREAM) {
-               expression.copy(type = StreamType.of(expression.type))
-            } else expression
-         }
+//         .map { expression ->
+//            if (queryDirective == QueryMode.STREAM) {
+//               // Wrap stream queries as Stream<T>
+//               when (expression) {
+//                  is TypeExpression -> expression.copy(type = StreamType.of(expression.type))
+//                  is ExtensionFunctionExpression -> {
+//                     if (expression.receiverValue is TypeExpression) {
+//                        val receiverTypeExpression = expression.receiverValue as TypeExpression
+//                        expression.copy(
+//                           receiverValue = receiverTypeExpression.copy(
+//                              type = StreamType.of(
+//                                 receiverTypeExpression.type
+//                              )
+//                           )
+//                        )
+//                     } else {
+//                        return listOf(
+//                           CompilationError(
+//                              expression.compilationUnits.first(),
+//                              "This expression cannot be streamed."
+//                           )
+//                        )
+//                           .left()
+//                     }
+//                  }
+//
+//                  else -> error("Unhandled branch in wrapping stream queries")
+//               }
+//            } else expression
+//         }
          .map { expression ->
             DiscoveryType(
                expression, parameters
