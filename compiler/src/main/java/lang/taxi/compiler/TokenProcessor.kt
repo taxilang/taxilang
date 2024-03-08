@@ -1259,14 +1259,42 @@ class TokenProcessor(
          }.invertEitherList()
          .flattenErrors()
          .map { types ->
-            typeSystem.registerToken(
-               UnionType(
-                  types,
-                  null,
-                  emptyList(),
-                  unionType.toCompilationUnit()
-               )
-            ) as Type
+
+            // MP: 8-Mar-24: Don't register Union Types into the type system.
+            // Instead, treat them more like Array types, which are created on-demand.
+            // This is because otherwise, the following code becomes invalid:
+            // query JoinedStreamsA {
+            //    stream { Tweet | TweetAnalytics }
+            // }
+            //
+            // query JoinedStreamsB {
+            //    stream { Tweet | TweetAnalytics }
+            // }
+            // as we've registered the union type twice.
+            //
+            // I also considered registering the type twice, but with context-specific names,
+            // eg: JoinedStreamsA$Union_TweetTweetAnalytics and
+            //     JoinedStreamsB$Union_TweetTweetAnalytics
+            //
+            // I ditched that idea, as not registered seems to be simpler for now. It's similar to how we
+            // handle arrays.
+            //
+            // Note for future self:
+            // Languages like Typescript handle this differently.
+            // They DO register the type, but use structure, rather than naming, as the unique
+            // attribute. Two types with the same structure but different names, are registered as
+            // a single structure (as a first-class concept), and two names pointing to the structure.
+            // This is how things like structural equality are implemented.
+            // For us, given the focus on semantics, that wouldn't quite work - ie., two types that
+            // are struturally similar but with different names indicate two different semantic concepts.
+            // However, It is something to consider when dealing with side-effects of not registering
+            // the union type.
+            UnionType(
+               types,
+               null,
+               emptyList(),
+               unionType.toCompilationUnit()
+            )
 
          }
    }
@@ -1284,8 +1312,7 @@ class TokenProcessor(
       typeArgumentsInScope: List<TypeArgument> = emptyList()
    ): Either<List<CompilationError>, ImportableToken> {
       return resolveTypeOrFunction(
-         typeType.nullableTypeReference().typeReference().qualifiedName(),
-         typeType.nullableTypeReference().typeReference().typeArguments(),
+         typeType.nullableTypeReference(),
          typeType
       )
    }
@@ -1417,17 +1444,16 @@ class TokenProcessor(
 
          else -> {
             resolveTypeOrFunction(
-               fieldTypeContext.nullableTypeReference().typeReference().qualifiedName(),
-               fieldTypeContext.nullableTypeReference().typeReference().typeArguments(),
+               fieldTypeContext.nullableTypeReference(),
                fieldTypeContext
             )
-               .map { token ->
-                  if (token is Type && fieldTypeContext.nullableTypeReference().typeReference().arrayMarker() != null) {
-                     ArrayType(token, fieldTypeContext.toCompilationUnit())
-                  } else {
-                     token
-                  }
-               }
+//               .map { token ->
+//                  if (token is Type && fieldTypeContext.nullableTypeReference().typeReference()?.arrayMarker() != null//                  ) {
+//                     ArrayType(token, fieldTypeContext.toCompilationUnit())
+//                  } else {
+//                     token
+//                  }
+//               }
                .flatMap { token: ImportableToken ->
                   when (token) {
                      is Type -> {
@@ -1726,20 +1752,20 @@ class TokenProcessor(
    }
 
    internal fun resolveTypeOrFunction(
-      tokenName: QualifiedNameContext,
-      typeArgumentCtx: TypeArgumentsContext? = null,
+      typeArgumentCtx: NullableTypeReferenceContext,
       context: ParserRuleContext
    ): Either<List<CompilationError>, ImportableToken> {
-      val type = resolveUserType(
-         context.findNamespace(),
-         tokenName,
-         typeArgumentCtx
-      )
+      val type = parseTypeOrUnionType(typeArgumentCtx)
+
       return type.handleErrorWith { errors ->
+         val tokenName = typeArgumentCtx.typeReference()?.qualifiedName()
+         if (tokenName == null) {
+            TODO("Expected a token name here")
+         }
          when {
             // If the only issue is that we couldn't find the type, check to see if it's a function
             errors.all { it.errorCode == ErrorCodes.UNRESOLVED_TYPE.errorCode } -> {
-               resolveFunction(tokenName, context).mapLeft {
+               resolveFunction(tokenName!!, context).mapLeft {
                   listOf(
                      Errors.unresolvedType(
                         tokenName.identifier().text(),

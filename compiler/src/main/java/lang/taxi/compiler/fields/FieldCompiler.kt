@@ -183,13 +183,13 @@ class FieldCompiler(
       //
       // This is current partly encapsulated through FieldTypeSpec, but
       // capturing it is awkward.
-      val qualifiedName = fieldTypeDeclaration?.nullableTypeReference()?.typeReference()?.qualifiedName()
+      val qualifiedName: TaxiParser.QualifiedNameContext? = fieldTypeDeclaration?.nullableTypeReference()?.typeReference()?.qualifiedName()
       return when {
          // Before resolving as a type, first check if we can resolve
          // through scope.
          // (eg: this.foo), or a named scope:
          // find { Foo[] } as (foo:Foo) -> { foo.xxxxx }
-         fieldTypeDeclaration != null && expressionCompiler.canResolveAsScopePath(qualifiedName!!) -> {
+         fieldTypeDeclaration != null && qualifiedName != null && expressionCompiler.canResolveAsScopePath(qualifiedName) -> {
             expressionCompiler.resolveScopePath(qualifiedName).flatMap { scopePathExpression ->
                val fieldTypeSpec = FieldTypeSpec.forExpression(scopePathExpression)
                parseFieldProjection(member, fieldTypeSpec).flatMap { fieldProjectionType ->
