@@ -1,5 +1,7 @@
 package lang.taxi.types
 
+import lang.taxi.ImmutableEquality
+
 /**
  * A Union Type is a declaration that could be one of several types - eg: A | B.
  * Currently only partially implemented with usage in Stream queries ( stream { A | B } ).
@@ -16,7 +18,9 @@ data class UnionType(
       fun isUnionType(type: Type): Boolean = type is UnionType
    }
    private val wrapper = LazyLoadingWrapper(this)
-
+   private val equality = ImmutableEquality(this, UnionType::types, UnionType::annotations)
+   override fun equals(other: Any?): Boolean  = equality.isEqualTo(other)
+   override fun hashCode(): Int = equality.hash()
 
    override val inheritsFrom: Set<Type> = emptySet()
    override val allInheritedTypes: Set<Type> = emptySet()
