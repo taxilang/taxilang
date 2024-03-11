@@ -154,6 +154,13 @@ open class TaxiDocument(
          }
       }
 
+      if (UnionType.isUnionType(qualifiedName)) {
+         val types = UnionType.getTypeNames(qualifiedName).map {
+            type(it)
+         }
+         return UnionType(types, null, emptyList(), CompilationUnit.unspecified())
+      }
+
       if (PrimitiveType.isPrimitiveType(qualifiedName.toString())) {
          return PrimitiveType.fromDeclaration(qualifiedName.toString())
       }

@@ -6,6 +6,10 @@ import lang.taxi.ImmutableEquality
  * A Union Type is a declaration that could be one of several types - eg: A | B.
  * Currently only partially implemented with usage in Stream queries ( stream { A | B } ).
  * However, need to implement more broadly.
+ *
+ * Note: UnionTypes are treated as structural types (like Arrays or Streams), in that they are not
+ * registered directly with the schema, but created on demand
+ *
  */
 data class UnionType(
    val types: List<Type>,
@@ -13,9 +17,29 @@ data class UnionType(
    override val annotations: List<Annotation>,
    val source: CompilationUnit
 ) : Type {
+   // Design choice:
+   // We don't register union types in the schema
+   // This was causing problems when multiple queries / streams ended up defining the same
+   // UnionType, and trying to register them.
+   // We could've taken a relaxed approach, only registering if the type didn't exist already.
+   // Hoewver, that would make UnionTypes "special", in comparison to other structural types
+   // like Maps, Arrays and Streams.
+   // On the down-side, we end up having to do some string manipulation in the name,
+   // which could lead to edge cases
    companion object {
-      fun unionTypeName(types: List<Type>) = "UnionType${types.joinToString("_") { it.qualifiedName }}"
+      private const val PREFIX = "UnionType$"
+      private const val SEPERATOR = "$$"
+      fun unionTypeName(types: List<Type>) = "$PREFIX${types.joinToString(SEPERATOR) { it.qualifiedName }}"
       fun isUnionType(type: Type): Boolean = type is UnionType
+      fun isUnionType(name: QualifiedName): Boolean = name.parameterizedName.startsWith(PREFIX)
+      fun getTypeNames(qualifiedName: QualifiedName): List<QualifiedName> {
+         // I wish we could do this without string manipulation.
+         // See above
+         return qualifiedName.parameterizedName.removePrefix(PREFIX)
+            .split("$$")
+            .map { QualifiedName.from(it) }
+
+      }
    }
    private val wrapper = LazyLoadingWrapper(this)
    private val equality = ImmutableEquality(this, UnionType::types, UnionType::annotations)

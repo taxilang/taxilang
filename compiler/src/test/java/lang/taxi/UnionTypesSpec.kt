@@ -3,7 +3,9 @@ package lang.taxi
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import org.junit.Test
+import io.kotest.matchers.types.shouldBeInstanceOf
+import lang.taxi.types.StreamType
+import lang.taxi.types.UnionType
 
 class UnionTypesSpec : DescribeSpec({
    describe("union types") {
@@ -51,6 +53,35 @@ class UnionTypesSpec : DescribeSpec({
          val typeA = schema.objectType("ThingA").field("tweetsAndAnalytics").type
          val typeB = schema.objectType("ThingB").field("moreTweetsAndAnalytics").type
          typeA.shouldBe(typeB)
+      }
+
+      it("is possible to fetch a union type from the schema") {
+         val schema =   """
+         model Tweet {}
+         model TweetAnalytics {}
+
+         service Tweets {
+            stream tweets : Stream<Tweet>
+            stream analytics : Stream<TweetAnalytics>
+         }
+
+         // Create a query with the union type within it.
+         query JoinedStreamsA {
+            stream { Tweet | TweetAnalytics }
+         }
+      """.compiled()
+
+         val streamOfUnionType = schema.query("JoinedStreamsA").returnType
+            .shouldBeInstanceOf<StreamType>()
+
+         schema.type(streamOfUnionType.toQualifiedName().parameterizedName)
+            .shouldNotBeNull()
+
+         val unionType = streamOfUnionType.typeParameters()[0]
+            .shouldBeInstanceOf<UnionType>()
+         schema.type(unionType.toQualifiedName().parameterizedName)
+            .shouldNotBeNull()
+
       }
 
       // ORB-275 - excluded, as it looks like union types are not supported on operation inputs yet.
