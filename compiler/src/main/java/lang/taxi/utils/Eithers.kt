@@ -64,3 +64,10 @@ fun <A, B> Either<List<List<A>>, B>.flattenErrors(): Either<List<A>, B> {
 fun <A, B> Either<A, B>.wrapErrorsInList(): Either<List<A>, B> {
    return this.mapLeft { listOf(it) }
 }
+
+fun <E,A,E2> Either<E,A>.flatMapLeft(transform: (E) -> Either<E2,A>):Either<E2,A> {
+   return when (this) {
+      is Either.Left -> transform(this.value)
+      is Either.Right -> this
+   }
+}

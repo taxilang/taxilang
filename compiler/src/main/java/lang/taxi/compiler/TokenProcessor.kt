@@ -19,7 +19,7 @@ import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.toExpressionGroup
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionDefinition
-import lang.taxi.functions.FunctionModifiers
+import lang.taxi.functions.FunctionModifier
 import lang.taxi.linter.Linter
 import lang.taxi.policies.*
 import lang.taxi.query.FactValue
@@ -164,7 +164,8 @@ class TokenProcessor(
                   fieldTypeDeclaration == null -> null
                   fieldTypeDeclaration.inlineInheritedType() != null -> lookupSymbolByName(
                      namespace,
-                     memberDeclaration.fieldDeclaration().fieldTypeDeclaration().nullableTypeReference().typeReference()
+                     memberDeclaration.fieldDeclaration().fieldTypeDeclaration().typeExpression()
+                        .nullableTypeReference().typeReference()
                   )
 
                   else -> null
@@ -852,9 +853,10 @@ class TokenProcessor(
          val typeBodyFieldDeclarationParent =
             typeBody.parent?.searchUpForRule(FieldDeclarationContext::class.java) as? FieldDeclarationContext
          val typeBodyFieldObjectType =
-            typeBodyFieldDeclarationParent?.fieldTypeDeclaration()?.nullableTypeReference()?.typeReference()?.let {
-               parseType(namespace, it).getOrNull() as? ObjectType
-            }
+            typeBodyFieldDeclarationParent?.fieldTypeDeclaration()?.typeExpression()?.nullableTypeReference()
+               ?.typeReference()?.let {
+                  parseType(namespace, it).getOrNull() as? ObjectType
+               }
          val typeBodyContext = TypeBodyContext(typeBody, namespace, typeBodyFieldObjectType)
          val fieldCompiler = FieldCompiler(this, typeBodyContext, typeName, errors, resolutionContext)
          val compiledFields = fieldCompiler.compileAllFields()
@@ -1312,7 +1314,7 @@ class TokenProcessor(
       typeArgumentsInScope: List<TypeArgument> = emptyList()
    ): Either<List<CompilationError>, ImportableToken> {
       return resolveTypeOrFunction(
-         typeType.nullableTypeReference(),
+         typeType.typeExpression().nullableTypeReference(),
          typeType
       )
    }
@@ -1355,7 +1357,7 @@ class TokenProcessor(
          // But have changed it, because in inline projections of entires, we're receiving
          // the array.
          // This might break something.
-         return listOf( ProjectionFunctionScope.implicitThis(projectionSourceType.projectionType)).right()
+         return listOf(ProjectionFunctionScope.implicitThis(projectionSourceType.projectionType)).right()
       }
       return expressionInputs.expressionInput().map { input ->
          val identifier = input.identifier()?.text ?: ProjectionFunctionScope.THIS
@@ -1390,6 +1392,7 @@ class TokenProcessor(
                inputType != null && input.expressionGroup() == null -> {
                   ProjectionFunctionScope(identifier, inputType, expression = null).right()
                }
+
                else -> {
                   listOf(
                      CompilationError(input.toCompilationUnit(), "Expcted either a type or an expression here")
@@ -1406,7 +1409,7 @@ class TokenProcessor(
       targetType: Type?
    ): Either<List<CompilationError>, ProjectionFunctionScope> {
       return expressionCompiler().compile(expressionGroup, targetType)
-         .map {  expression ->  ProjectionFunctionScope(identifier, expression.returnType, expression) }
+         .map { expression -> ProjectionFunctionScope(identifier, expression.returnType, expression) }
 
    }
 
@@ -1444,11 +1447,12 @@ class TokenProcessor(
 
          else -> {
             resolveTypeOrFunction(
-               fieldTypeContext.nullableTypeReference(),
+               fieldTypeContext.typeExpression().nullableTypeReference(),
                fieldTypeContext
             )
 //               .map { token ->
-//                  if (token is Type && fieldTypeContext.nullableTypeReference().typeReference()?.arrayMarker() != null//                  ) {
+//                  if (token is Type && fieldTypeContext.typeExpression().nullableTypeReference().typeReference()?.arrayMarker() != null
+//                  ) {
 //                     ArrayType(token, fieldTypeContext.toCompilationUnit())
 //                  } else {
 //                     token
@@ -1468,8 +1472,9 @@ class TokenProcessor(
                            // starring : first(Person[])
                            // as a parameterContraint with an expression group.
                            // However, we actually want to resolve Person[] as an input to a function.
-                           fieldTypeContext.parameterConstraint()?.expressionGroup() != null -> {
-                              val expressionGroup = fieldTypeContext.parameterConstraint().expressionGroup()
+                           fieldTypeContext.typeExpression().parameterConstraint()?.expressionGroup() != null -> {
+                              val expressionGroup =
+                                 fieldTypeContext.typeExpression().parameterConstraint().expressionGroup()
                               val expression = expressionCompiler(fieldCompiler).compile(expressionGroup)
                                  .map { expression -> listOf(expression) }
                               expression
@@ -1614,7 +1619,8 @@ class TokenProcessor(
       typeType: FieldTypeDeclarationContext
    ): Either<List<CompilationError>, Type> {
       return parseType(namespace, typeType.inlineInheritedType().typeReference()).map { inlineInheritedType ->
-         val declaredTypeName = typeType.nullableTypeReference().typeReference().qualifiedName().identifier().text()
+         val declaredTypeName =
+            typeType.typeExpression().nullableTypeReference().typeReference().qualifiedName().identifier().text()
 
          typeSystem.register(
             ObjectType(
@@ -2093,7 +2099,11 @@ class TokenProcessor(
       val typeArguments = (functionToken.typeArguments()?.typeReference() ?: emptyList()).map { typeType ->
          resolveGenericTypeArgument(qualifiedName, typeType)
       }
-      return parseType(namespace, functionToken.typeReference(), typeArguments).flatMap { returnType ->
+      return parseType(
+         namespace,
+         functionToken.nullableTypeReference().typeReference(),
+         typeArguments
+      ).flatMap { returnType ->
          val parameters =
             functionToken.operationParameterList()?.operationParameter()?.mapIndexed { index, parameterDefinition ->
                val anonymousParameterTypeName = "$qualifiedName\$Param$index"
@@ -2106,23 +2116,32 @@ class TokenProcessor(
                )
             }?.reportAndRemoveErrorList(errors) ?: emptyList()
 
-         if (functionToken.functionModifiers() != null && functionToken.functionModifiers().text != "query") {
-            return@flatMap CompilationError(
-               functionToken.start,
-               "Only query function modifier is allowed!"
-            ).asList().left()
+         val modifiers = functionToken.functionModifiers().map { modifier ->
+            FunctionModifier.forToken(modifier.text)
+         }.let {
+            if (it.isEmpty()) {
+               EnumSet.noneOf(FunctionModifier::class.java)
+            } else {
+               EnumSet.copyOf(it)
+            }
          }
 
-         val functionAttributes = functionToken.functionModifiers()?.let {
-            EnumSet.of(FunctionModifiers.Query)
+         if (modifiers.contains(FunctionModifier.Extension) && parameters.isEmpty()) {
+            return listOf(
+               CompilationError(
+                  functionToken.toCompilationUnit(),
+                  "Extension functions must have at least one parameter, as this defines the type the function can operate against"
+               )
+            )
+               .left()
          }
-            ?: EnumSet.noneOf(FunctionModifiers::class.java)
 
+         val nullable = functionToken.nullableTypeReference().Nullable() != null
          val typeDoc = parseTypeDoc(functionToken.typeDoc())
          val function = Function(
             qualifiedName,
             FunctionDefinition(
-               parameters, returnType, functionAttributes, typeArguments, typeDoc, functionToken.toCompilationUnit()
+               parameters, returnType, nullable, modifiers, typeArguments, typeDoc, functionToken.toCompilationUnit()
             )
          )
          this.functions.add(function)

@@ -9,7 +9,8 @@ object Collections {
       AnyOf,
       NoneOf,
       Single,
-      FilterAll,
+      Filter,
+      FilterEach,
       SingleBy,
       First,
       Last,
@@ -75,10 +76,18 @@ object GetAtIndex : FunctionApi {
 }
 
 
-object FilterAll : FunctionApi {
-   // This naming sucks, but we use filter as a reserved word in the grammar :(
+object Filter : FunctionApi {
    override val taxi: String =
-      "declare function <T> filterAll(collection:T[], callback: (T) -> Boolean):T[]"
-   override val name: QualifiedName = stdLibName("filterAll")
+      "declare extension function <T> filter(collection:T[], callback: (T) -> Boolean):T[]"
+   override val name: QualifiedName = stdLibName("filter")
 }
 
+object FilterEach : FunctionApi {
+   override val taxi: String =
+      """[[ Evaluates the predicate against the provided value, returning the value if the predicate
+         returns true, or null.
+         Intended for use against filtering streams, where null values are excluded
+         ]]
+         declare extension function <T> filterEach(item: T, callback: (T) -> Boolean):T?""".trimIndent()
+   override val name: QualifiedName = stdLibName("filterEach")
+}

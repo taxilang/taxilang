@@ -1,6 +1,7 @@
 package lang.taxi.query
 
 import lang.taxi.expressions.Expression
+import lang.taxi.expressions.TypeExpression
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
@@ -41,20 +42,23 @@ sealed class FactValue() {
 }
 
 data class DiscoveryType(
-   val type: Type,
-   val constraints: List<Constraint>,
+   val expression: Expression,
    /**
     * Starting facts aren't the same as a constraint, in that they don't
     * constraint the output type.  However, they do inform query strategies,
     * so we pop them here for query operations to consider.
     */
    val startingFacts: List<Parameter>,
-   /**
-    * If the query body is an anonymoust type store the definition here,
-    */
-   val anonymousType: Type? = null
 ) {
-   val typeName: QualifiedName = type.toQualifiedName()
+   val typeName: QualifiedName = expression.returnType.toQualifiedName()
+   val type = expression.returnType
+
+   // largely here for convenience & backwards compatibility
+   val constraints: List<Constraint>
+      get() {
+         if (expression !is TypeExpression) return emptyList()
+         return expression.constraints
+      }
 }
 
 
