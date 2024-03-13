@@ -99,7 +99,7 @@ class TaxiQlVariablesSpec : DescribeSpec({
             given { message : String = "hello" }
             find { result : String = upperCase(message) }
          """.trimIndent())
-         val accessor = query.typesToFind.single().anonymousType!!.asA<ObjectType>()
+         val accessor = query.discoveryType!!.type.asA<ObjectType>()
             .field("result")
             .accessor!!
          val functionExpression = accessor.shouldBeInstanceOf<FunctionExpression>()

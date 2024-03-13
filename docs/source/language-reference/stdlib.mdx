@@ -151,12 +151,23 @@ declare function noneOf(values:Boolean...): Boolean
 declare function <T> single(collection:T[], callback: (T) -> Boolean):T
 ```
 
-### filterAll
-`taxi.stdlib.filterAll`
+### filter
+`taxi.stdlib.filter`
 
 ```taxi
-declare function <T> filterAll(collection:T[], callback: (T) -> Boolean):T[]
+declare extension function <T> filter(collection:T[], callback: (T) -> Boolean):T[]
 ```
+
+### filterEach
+`taxi.stdlib.filterEach`
+
+```taxi
+declare extension function <T> filterEach(item: T, callback: (T) -> Boolean):T?
+```
+
+Evaluates the predicate against the provided value, returning the value if the predicate
+        returns true, or null.
+        Intended for use against filtering streams, where null values are excluded
 
 ### singleBy
 `taxi.stdlib.singleBy`

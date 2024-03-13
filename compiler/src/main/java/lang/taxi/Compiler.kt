@@ -76,14 +76,14 @@ data class CompilationError(
    val detailMessage: String,
    val sourceName: String? = null,
    val severity: Severity = Severity.ERROR,
-   val errorCode: Int? = null,
+   val errorCode: String? = null,
 ) : Serializable {
    constructor(
       compiled: Compiled,
       detailMessage: String,
       sourceName: String = compiled.compilationUnits.first().source.sourceName,
       severity: Severity = Severity.ERROR,
-      errorCode: Int? = null,
+      errorCode: String? = null,
    ) : this(
       compiled.compilationUnits.firstOrNull()?.location
          ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity, errorCode
@@ -94,7 +94,7 @@ data class CompilationError(
       detailMessage: String,
       sourceName: String = compilationUnit.source.sourceName,
       severity: Severity = Severity.ERROR,
-      errorCode: Int? = null,
+      errorCode: String? = null,
    ) : this(
       compilationUnit.location, detailMessage, sourceName, severity, errorCode
    )
@@ -104,7 +104,7 @@ data class CompilationError(
       detailMessage: String,
       sourceName: String? = null,
       severity: Severity = Severity.ERROR,
-      errorCode: Int? = null,
+      errorCode: String? = null,
    ) : this(position.line, position.char, detailMessage, sourceName, severity, errorCode)
 
    constructor(
@@ -112,7 +112,7 @@ data class CompilationError(
       detailMessage: String,
       sourceName: String = offendingToken.tokenSource.sourceName,
       severity: Severity = Severity.ERROR,
-      errorCode: Int? = null,
+      errorCode: String? = null,
    ) : this(
       offendingToken.line,
       offendingToken.charPositionInLine,

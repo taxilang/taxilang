@@ -19,7 +19,7 @@ data class TaxiQlQuery(
    val facts: List<Parameter>,
    val queryMode: QueryMode,
    val parameters: List<Parameter>,
-   val typesToFind: List<DiscoveryType>,
+   val discoveryType: DiscoveryType?,
    val projectedType: Type?,
    val projectionScopeVars: List<ProjectionFunctionScope>,
    val mutation: Mutation?,
@@ -28,7 +28,14 @@ data class TaxiQlQuery(
    override val compilationUnits: List<CompilationUnit>
 ) : Documented, Annotatable, Compiled {
 
-   val source:TaxiQLQueryString = compilationUnits.joinToString("\n") { it.source.content }
+   @Deprecated(
+      "Only single discovery types are supported. Use discoveryType instead.",
+      replaceWith = ReplaceWith("discoveryType")
+   )
+   val typesToFind: List<DiscoveryType> = listOfNotNull(discoveryType)
+
+   val source: TaxiQLQueryString = compilationUnits.joinToString("\n") { it.source.content }
+
    /**
     * If the return type is a collection, returns
     * the member type.  Otherwise the actual return type is returned.
@@ -42,11 +49,8 @@ data class TaxiQlQuery(
          return when {
             mutation != null -> mutation.operation.returnType
             projectedObjectType != null -> projectedObjectType!!
-            else -> {
-               typesToFind.singleOrNull()?.anonymousType
-                  ?: typesToFind.singleOrNull()?.type
-                  ?: error("Could not infer return type of query.")
-            }
+            discoveryType != null -> discoveryType.expression.returnType
+            else ->  error("Could not infer return type of query.")
          }
       }
 

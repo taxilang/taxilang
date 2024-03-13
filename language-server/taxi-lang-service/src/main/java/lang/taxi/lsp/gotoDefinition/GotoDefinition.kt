@@ -24,7 +24,7 @@ class GotoDefinitionService(private val typeCompletionBuilder: TypeCompletionBui
       val context =
          getRuleContext(compiler, params)
       val compilationUnit = when (context) {
-         is TaxiParser.FieldTypeDeclarationContext -> compiler.getDeclarationSource(context.nullableTypeReference().typeReference())
+         is TaxiParser.FieldTypeDeclarationContext -> compiler.getDeclarationSource(context.typeExpression().nullableTypeReference().typeReference())
          is QualifiedNameContext -> {
             if (context.parent is TypeReferenceContext) {
                compiler.getDeclarationSource(context.parent as TypeReferenceContext)
