@@ -190,12 +190,16 @@ class ExpressionCompiler(
          val member = typeProjection.searchUpForRule<TypeMemberDeclarationContext>()
             ?: error("Exptected that we were projecting inside a field declaration.  Can't work out a suggested name for the anonymous type")
          val typeName = fieldCompiler.anonymousTypeNameForMember(member) + "$${NameGenerator.randomString(length = 5)}"
-         fieldCompiler.parseFieldProjection(typeProjection, projectionSourceType, typeName)
+         fieldCompiler.parseFieldProjection(typeProjection, projectionSourceType, typeName, emptyList())
       } else {
          error("Expected we were parsing an expression with a projection inside a field.  Understand this usecase")
       }
    }
 
+   /**
+    * Parses an expression like
+    * (A,B) -> A > B
+    */
    private fun parseLambdaExpression(lambdaExpression: ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
       require(lambdaExpression.children.size == 2) { "Expected exactly 2 children in the lambda expression" }
       require(lambdaExpression.expressionGroup().size == 1) { "expected exactly 1 expression group on the rhs of the lambda" }

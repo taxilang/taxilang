@@ -384,19 +384,21 @@ class FieldCompiler(
    private fun parseFieldProjection(
       member: TaxiParser.TypeMemberDeclarationContext,
       projectionSourceType: FieldTypeSpec,
+      argumentsInScope: List<Argument> = emptyList()
    ): Either<List<CompilationError>, Pair<Type, List<ProjectionFunctionScope>>?> {
       val typeProjection = member.fieldDeclaration().typeProjection() ?: return null.right()
       val typeName = anonymousTypeNameForMember(member)
-      return parseFieldProjection(typeProjection, projectionSourceType, typeName)
+      return parseFieldProjection(typeProjection, projectionSourceType, typeName, argumentsInScope)
    }
 
 
    fun parseFieldProjection(
       typeProjection: TypeProjectionContext,
       projectionSourceType: FieldTypeSpec,
-      anonymousTypeName: String
+      anonymousTypeName: String,
+      argumentsInScope: List<Argument>
    ): Either<List<CompilationError>, Pair<Type, List<ProjectionFunctionScope>>> {
-      return tokenProcessor.parseProjectionScope(typeProjection.expressionInputs(), projectionSourceType)
+      return tokenProcessor.parseProjectionScope(typeProjection.expressionInputs(), projectionSourceType, argumentsInScope)
          .flatMap { projectionScope ->
             val projectedType = when {
                typeProjection.anonymousTypeDefinition() != null -> parseAnonymousTypeBody(

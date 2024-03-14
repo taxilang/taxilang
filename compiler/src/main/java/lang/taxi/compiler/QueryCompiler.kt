@@ -3,6 +3,7 @@ package lang.taxi.compiler
 import arrow.core.*
 import lang.taxi.*
 import lang.taxi.TaxiParser.ValueContext
+import lang.taxi.accessors.Argument
 import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.fields.FieldTypeSpec
 import lang.taxi.expressions.Expression
@@ -48,7 +49,7 @@ internal class QueryCompiler(
       val queryOrErrors = factsOrErrors.flatMap { facts ->
 
          parseQueryBody(ctx, facts + parameters, queryDirective).flatMap { typesToDiscover ->
-            parseTypeToProject(ctx.queryOrMutation()?.typeProjection(), typesToDiscover).flatMap { typeToProject ->
+            parseTypeToProject(ctx.queryOrMutation()?.typeProjection(), typesToDiscover, parameters).flatMap { typeToProject ->
                parseMutation(ctx.queryOrMutation().mutation()).map { mutation ->
                   TaxiQlQuery(
                      name = name,
@@ -324,7 +325,7 @@ internal class QueryCompiler(
          listOf(
             CompilationError(
                variableName.toCompilationUnit(),
-               "Cannot resolve variable ${variableName.identifier().toString()}"
+               "Cannot resolve variable ${variableName.identifier().text}"
             )
          ).left()
       } else {
@@ -484,7 +485,8 @@ internal class QueryCompiler(
 
    private fun parseTypeToProject(
       queryProjection: TaxiParser.TypeProjectionContext?,
-      typesToDiscover: DiscoveryType?
+      typesToDiscover: DiscoveryType?,
+      scopedArguments: List<Argument>
    ): Either<List<CompilationError>, Pair<Type, List<ProjectionFunctionScope>>?> {
       if (queryProjection == null || typesToDiscover == null) {
          return null.right()
@@ -542,7 +544,8 @@ internal class QueryCompiler(
 
          tokenProcessor.parseProjectionScope(
             queryProjection.expressionInputs(),
-            FieldTypeSpec.forDiscoveryTypes(typesToDiscover)
+            FieldTypeSpec.forDiscoveryTypes(typesToDiscover),
+            scopedArguments
          ).flatMap { projectionScopedVariables ->
             anonymousProjectionType.let { anonymousTypeDef ->
                val isList = anonymousTypeDef.arrayMarker() != null
@@ -555,7 +558,8 @@ internal class QueryCompiler(
                         listOf(typesToDiscover),
                         concreteProjectionTypeType,
                         possibleBaseType,
-                        projectionScopedVariables
+                        projectionScopedVariables,
+                        scopedArguments
                      ),
                      anonymousTypeDefinition = anonymousProjectionType
                   ).map { createdType ->
@@ -580,7 +584,7 @@ data class ResolutionContext(
    val concreteProjectionTypeContext: TaxiParser.TypeReferenceContext? = null,
    val baseType: Type? = null,
    val activeScopes: List<ProjectionFunctionScope> = emptyList(),
-   val parameters: List<Parameter> = emptyList()
+   val parameters: List<Argument> = emptyList()
 ) {
    fun appendScope(projectionScope: List<ProjectionFunctionScope>): ResolutionContext {
       return this.copy(activeScopes = activeScopes + projectionScope)
