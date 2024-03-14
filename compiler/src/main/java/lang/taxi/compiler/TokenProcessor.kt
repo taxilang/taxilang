@@ -1350,7 +1350,8 @@ class TokenProcessor(
     */
    fun parseProjectionScope(
       expressionInputs: ExpressionInputsContext?,
-      projectionSourceType: FieldTypeSpec
+      projectionSourceType: FieldTypeSpec,
+      arguments: List<Argument>
    ): Either<List<CompilationError>, List<ProjectionFunctionScope>> {
       if (expressionInputs == null || expressionInputs.expressionInput().isEmpty()) {
          // MP: 2-Feb-23 : That was projectionSourceType.type
@@ -1384,7 +1385,8 @@ class TokenProcessor(
                input.expressionGroup() != null -> resolveProjectionScopeInputExpression(
                   identifier,
                   input.expressionGroup(),
-                  inputType
+                  inputType,
+                  arguments
                )
                // Just the type
                // eg:
@@ -1406,9 +1408,10 @@ class TokenProcessor(
    private fun resolveProjectionScopeInputExpression(
       identifier: String,
       expressionGroup: ExpressionGroupContext,
-      targetType: Type?
+      targetType: Type?,
+      scopedArguments: List<Argument> = emptyList()
    ): Either<List<CompilationError>, ProjectionFunctionScope> {
-      return expressionCompiler().compile(expressionGroup, targetType)
+      return expressionCompiler(scopedArguments = scopedArguments).compile(expressionGroup, targetType)
          .map { expression -> ProjectionFunctionScope(identifier, expression.returnType, expression) }
 
    }

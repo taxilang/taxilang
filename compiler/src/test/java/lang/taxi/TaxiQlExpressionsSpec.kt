@@ -142,5 +142,9 @@ class TaxiQlExpressionsSpec : DescribeSpec({
          val expression = field.accessor as FieldReferenceExpression
          expression.fieldNames.should.have.elements("movie", "title")
       }
+
+      it("is possible to write an expression referencing vars from the given clause") {
+
+      }
    }
 })
