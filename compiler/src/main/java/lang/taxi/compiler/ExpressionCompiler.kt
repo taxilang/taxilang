@@ -190,7 +190,7 @@ class ExpressionCompiler(
          val member = typeProjection.searchUpForRule<TypeMemberDeclarationContext>()
             ?: error("Exptected that we were projecting inside a field declaration.  Can't work out a suggested name for the anonymous type")
          val typeName = fieldCompiler.anonymousTypeNameForMember(member) + "$${NameGenerator.randomString(length = 5)}"
-         fieldCompiler.parseFieldProjection(typeProjection, projectionSourceType, typeName)
+         fieldCompiler.parseFieldProjection(typeProjection, projectionSourceType, typeName, emptyList())
       } else {
          error("Expected we were parsing an expression with a projection inside a field.  Understand this usecase")
       }
