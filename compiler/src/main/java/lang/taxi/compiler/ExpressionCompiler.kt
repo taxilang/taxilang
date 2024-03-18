@@ -196,6 +196,10 @@ class ExpressionCompiler(
       }
    }
 
+   /**
+    * Parses an expression like
+    * (A,B) -> A > B
+    */
    private fun parseLambdaExpression(lambdaExpression: ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
       require(lambdaExpression.children.size == 2) { "Expected exactly 2 children in the lambda expression" }
       require(lambdaExpression.expressionGroup().size == 1) { "expected exactly 1 expression group on the rhs of the lambda" }
