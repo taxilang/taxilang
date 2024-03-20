@@ -66,7 +66,6 @@ data class Service(
 
    val tables: List<Table> = this.members.filterIsInstance<Table>()
    val streams: List<Stream> = this.members.filterIsInstance<Stream>()
-
    fun operation(name: String): Operation {
       return this.operations.first { it.name == name }
    }
