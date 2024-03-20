@@ -1,12 +1,13 @@
 package lang.taxi
 
 import com.winterbe.expekt.expect
+import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
-import lang.taxi.query.convertToPropertyConstraint
+import lang.taxi.query.convertToConstraint
 import lang.taxi.services.operations.constraints.ExpressionConstraint
 
 class ConstraintsSpec : DescribeSpec({
@@ -39,8 +40,11 @@ type SomeServiceRequest {
       val (schema,query) = """
          model Person {
             name : Name inherits String
-         }""".compiledWithQuery("find { Person[]( Name == 'Jimmy' ) }")
+            lastName: LastName inherits String
+            age: Age inherits Int
+         }""".compiledWithQuery("find { Person[]( Name == 'Jimmy' && LastName == 'Page' || Age == 99) }")
       val constraint = query.typesToFind.single().constraints.single() as ExpressionConstraint
-      val converted = constraint.convertToPropertyConstraint()
+      val converted = constraint.convertToConstraint()
+      converted.size.should.equal(5)
    }
 })
