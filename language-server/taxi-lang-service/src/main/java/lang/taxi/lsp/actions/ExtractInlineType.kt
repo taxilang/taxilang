@@ -37,7 +37,7 @@ class ExtractInlineType : CodeActionProvider {
       val context = compiler
          .contextAt(params.range.start, params.textDocument)!!
 
-      val inlineTypeDefContext = context.searchUpForRule<TaxiParser.TypeReferenceContext>()!!
+      val inlineTypeDefContext = context.searchUpForRule<TaxiParser.TypeReferenceContext>() ?: return null
       val inlineTypeName = inlineTypeDefContext.qualifiedName().identifier().text()
       val typeDeclarationSource = inlineTypeDefContext.source().content
 
