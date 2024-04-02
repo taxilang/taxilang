@@ -571,8 +571,8 @@ class ExpressionCompiler(
       // Convert the remaining arguments to constraints
       val size = functionCall.argumentList()?.argument()?.size ?: 0
       if (size == 0) {
-         return listOf(CompilationError(functionCall.toCompilationUnit(), "An expression is required here"))
-            .left()
+         return TypeExpression(type, emptyList(), functionCall.toCompilationUnits())
+            .right()
       }
       require(size == 1) { "Expected an argumentList with size of 1, but found $size: ${functionCall.source().content}" }
       val argument = functionCall.argumentList().argument().single()
