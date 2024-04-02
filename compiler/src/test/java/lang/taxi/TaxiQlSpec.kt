@@ -2,6 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -88,6 +89,15 @@ class TaxiQlSpec : DescribeSpec({
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
          query.queryMode.should.equal(QueryMode.FIND_ALL)
+      }
+
+      it("is valid to declare an empty set of type constraints") {
+         val src = """
+            find { Order() }
+         """.trimIndent()
+         val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
+         val query = queries.first()
+         query.discoveryType!!.constraints.shouldBeEmpty()
       }
 
       it("should resolve unambiguous types without imports") {
