@@ -7,7 +7,6 @@ import lang.taxi.lsp.sourceService.isWebIdeUri
 import lang.taxi.lsp.utils.Ranges
 import lang.taxi.packages.MalformedTaxiConfFileException
 import lang.taxi.types.SourceNames
-import lang.taxi.utils.log
 import org.eclipse.lsp4j.CodeAction
 import org.eclipse.lsp4j.CodeActionParams
 import org.eclipse.lsp4j.Command
@@ -40,7 +39,6 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.LanguageClient
 import org.eclipse.lsp4j.services.LanguageClientAware
 import org.eclipse.lsp4j.services.TextDocumentService
-import java.io.File
 import java.net.URI
 import java.nio.file.Path
 import java.time.Duration
@@ -350,20 +348,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
          // by excluding those without messages, it removes the entry from the UI
          .filter { it.second.isNotEmpty() }
          .map { (uri, diagnostics) ->
-         // When sending diagnostic messages, use the canonical path of the file, rather than
-         // the normalized URI.  This means we get an OS specific file.
-         // VSCode on windows seems to not like the URI
-
-         val filePath = try {
-            val parsedURI = URI.create(uri)
-            when (parsedURI.scheme) {
-               "file" -> File(parsedURI).canonicalPath
-               "inmemory" -> uri
-               else -> uri
-            }
-         } catch (e: Exception) {
-            UnknownSource.UNKNOWN_SOURCE
-         }
+         val filePath = SourceNames.normalize(uri)
          PublishDiagnosticsParams(filePath, diagnostics)
       }
 
