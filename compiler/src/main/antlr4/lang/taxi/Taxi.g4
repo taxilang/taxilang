@@ -712,8 +712,28 @@ queryBody:
 // - OR a mutation on its own
 // but it must contain one.
 queryOrMutation:
-   (queryDirective ( ('{' expressionGroup '}') | anonymousTypeDefinition  ) typeProjection? mutation?) |
+   (queryDirective ( ('{' expressionGroup '}') | anonymousTypeDefinition  ) typeProjection? mutation? serviceRestrictions?) |
    mutation;
+
+serviceOrMemberReference: typeReference || memberReference;
+serviceOrMemberReferenceList: serviceOrMemberReference (',' serviceOrMemberReference)*;
+
+// Allows controlling which services are included / excluded from
+// a query
+// eg:
+// find { Foo[] } as {
+//   .. snip ..
+// } using {
+//   SomeService,
+//   AnotherService::SpecificOperation
+// }
+// Note that Using and Excluding are mutually
+// exclusive.
+// By definition, if things are defined with Using
+// then everything else is excluded.
+// Likewise, an Exclusion list includes everything else.
+serviceRestrictions: (K_Using | K_Excluding) '{' serviceOrMemberReferenceList '}';
+
 
 
 typeProjection: 'as' (typeReference | expressionInputs? anonymousTypeDefinition);
@@ -797,6 +817,9 @@ K_Else: 'else';
 
 K_Query: 'query';
 K_Extension: 'extension';
+
+K_Using: 'using';
+K_Excluding: 'excluding';
 
 IdentifierToken
     :   Letter LetterOrDigit*

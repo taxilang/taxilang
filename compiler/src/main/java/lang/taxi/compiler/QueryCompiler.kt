@@ -2,25 +2,27 @@ package lang.taxi.compiler
 
 import arrow.core.*
 import lang.taxi.*
+import lang.taxi.TaxiParser.ServiceOrMemberReferenceContext
+import lang.taxi.TaxiParser.TypeReferenceContext
 import lang.taxi.TaxiParser.ValueContext
 import lang.taxi.accessors.Argument
 import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.fields.FieldTypeSpec
 import lang.taxi.expressions.Expression
-import lang.taxi.expressions.ExtensionFunctionExpression
-import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.mutations.Mutation
 import lang.taxi.query.*
+import lang.taxi.services.Operation
 import lang.taxi.services.OperationScope
 import lang.taxi.services.Service
-import lang.taxi.services.operations.constraints.Constraint
+import lang.taxi.services.ServiceMember
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.wrapErrorsInList
 import lang.taxi.values.PrimitiveValues
+import org.antlr.v4.runtime.ParserRuleContext
 
 internal class QueryCompiler(
    private val tokenProcessor: TokenProcessor,
@@ -49,24 +51,29 @@ internal class QueryCompiler(
       val queryOrErrors = factsOrErrors.flatMap { facts ->
 
          parseQueryBody(ctx, facts + parameters, queryDirective).flatMap { typesToDiscover ->
-            parseTypeToProject(ctx.queryOrMutation()?.typeProjection(), typesToDiscover, parameters).flatMap { typeToProject ->
-               parseMutation(ctx.queryOrMutation().mutation()).map { mutation ->
-                  TaxiQlQuery(
-                     name = name,
-                     facts = facts,
-                     queryMode = queryDirective,
-                     parameters = parameters,
-                     discoveryType = typesToDiscover,
-                     projectedType = typeToProject?.first,
-                     projectionScopeVars = typeToProject?.second ?: emptyList(),
-                     typeDoc = docs,
-                     annotations = annotations,
-                     mutation = mutation,
-                     compilationUnits = listOf(compilationUnit)
-                  )
+            parseTypeToProject(
+               ctx.queryOrMutation()?.typeProjection(),
+               typesToDiscover,
+               parameters
+            ).flatMap { typeToProject ->
+               parseMutation(ctx.queryOrMutation().mutation()).flatMap { mutation ->
+                  parseServiceRestrictions(ctx.queryOrMutation().serviceRestrictions()).map { serviceRestrictions ->
+                     TaxiQlQuery(
+                        name = name,
+                        facts = facts,
+                        queryMode = queryDirective,
+                        parameters = parameters,
+                        discoveryType = typesToDiscover,
+                        projectedType = typeToProject?.first,
+                        projectionScopeVars = typeToProject?.second ?: emptyList(),
+                        typeDoc = docs,
+                        annotations = annotations,
+                        mutation = mutation,
+                        serviceRestrictions = serviceRestrictions,
+                        compilationUnits = listOf(compilationUnit)
+                     )
+                  }
                }
-
-
             }
          }
       }
@@ -77,23 +84,20 @@ internal class QueryCompiler(
       if (mutationCtx == null) return Either.Right(null)
       val memberReference = mutationCtx.memberReference()
 
-      return tokenProcessor.resolveImportableToken(
-         memberReference.typeReference(0).qualifiedName(),
-         mutationCtx,
-         SymbolKind.SERVICE
+      return resolveServiceAndOperation(
+         memberReference.typeReference(0),
+         memberReference.typeReference(1),
+         operationTokenRequired = true,
+         memberReference
       )
-         .flatMap { token ->
+         .flatMap { (service, operation) ->
             fun compilationError(message: String): Either<List<CompilationError>, Nothing> {
                return listOf(CompilationError(memberReference.start, message)).left()
             }
+            if (operation !is Operation) return@flatMap compilationError("Mutations are only supported on operations")
 
-            if (token !is Service) return@flatMap compilationError("Mutations require a reference to services and operations in the form of ServiceName::operationName.  ${token.qualifiedName} is not a service")
-            val operationName = memberReference.typeReference(1)
-               ?: return@flatMap compilationError("Mutations require a reference to services and operations in the form of ServiceName::operationName. No operation name was provided")
-            if (!token.containsOperation(operationName.text)) return@flatMap compilationError("Service ${token.qualifiedName} does not declare an operation ${operationName.text}")
-            val operation = token.operation(operationName.text)
             if (operation.scope != OperationScope.MUTATION) return@flatMap compilationError("Call statements are only valid with write operations.  Operation ${memberReference.text} is not a write operation")
-            (token to operation).right()
+            (service to operation).right()
          }
          .map { (service, operation) ->
             Mutation(
@@ -101,6 +105,39 @@ internal class QueryCompiler(
                operation,
                mutationCtx.toCompilationUnits()
             )
+         }
+   }
+
+   /**
+    * Given a service + operation call reference in the form of
+    * ServiceName::OperationName or, just a service reference in the form of ServiceName,
+    * will resolve both service and operation, returning compilation errors if encountered
+    */
+   private fun resolveServiceAndOperation(
+      serviceToken: TypeReferenceContext,
+      operationToken: TypeReferenceContext?,
+      operationTokenRequired: Boolean,
+      context: ParserRuleContext
+   ): Either<List<CompilationError>, Pair<Service, ServiceMember?>> {
+      return tokenProcessor.resolveImportableToken(
+         serviceToken.qualifiedName(),
+         context,
+         SymbolKind.SERVICE
+      )
+         .flatMap { service ->
+            fun compilationError(message: String): Either<List<CompilationError>, Nothing> {
+               return listOf(CompilationError(serviceToken.start, message)).left()
+            }
+
+            if (service !is Service) return@flatMap compilationError("Expected a reference to a service.  ${service.qualifiedName} is not a service")
+            if (operationToken == null && operationTokenRequired) {
+               return@flatMap compilationError("Mutations require a reference to services and operations in the form of ServiceName::operationName. No operation name was provided")
+            }
+            val operation = if (operationToken != null) {
+               if (!service.containsMember(operationToken.text)) return@flatMap compilationError("Service ${service.qualifiedName} does not declare an operation ${operationToken.text}")
+               service.member(operationToken.text)
+            } else null
+            (service to operation).right()
          }
    }
 
@@ -210,28 +247,6 @@ internal class QueryCompiler(
       }
    }
 
-//   private fun toDiscoveryType(
-//      type: Type,
-//      parameterConstraint: TaxiParser.ParameterConstraintContext?,
-//      queryDirective: QueryMode,
-//      constraintBuilder: ConstraintBuilder,
-//      facts: List<Parameter>
-//   ): Either<List<CompilationError>, DiscoveryType> {
-//      val constraintsOrErrors =
-//         parameterConstraint?.let { constraintExpressionList ->
-//            constraintBuilder.build(constraintExpressionList, type)
-//         } ?: emptyList<Constraint>().right()
-//      return constraintsOrErrors.map { constraints ->
-//         // If we're building a streaming query, then wrap the requested type
-//         // in a stream
-//         val typeToDiscover = if (queryDirective == QueryMode.STREAM) {
-//            StreamType.of(type)
-//         } else {
-//            type
-//         }
-//         DiscoveryType(typeToDiscover, constraints, facts, if (type.anonymous) type else null)
-//      }
-//   }
 
    private fun parseFacts(
       givenBlock: TaxiParser.GivenBlockContext,
@@ -573,6 +588,57 @@ internal class QueryCompiler(
       }
 
       return projectionType
+   }
+
+   private fun parseServiceRestrictions(serviceRestrictions: TaxiParser.ServiceRestrictionsContext?): Either<List<CompilationError>, ServiceRestrictions> {
+      if (serviceRestrictions == null) {
+         return ServiceRestrictions.EMPTY.right()
+      }
+      return serviceRestrictions.serviceOrMemberReferenceList().serviceOrMemberReference()
+         .map { serviceOrMemberReferenceContext ->
+            parseServiceOrMemberReference(serviceOrMemberReferenceContext)
+         }
+         .invertEitherList()
+         .flattenErrors()
+         .map { parsedRestrictions: List<ServiceRestriction> ->
+            // Collapse the individual restrictions, so they're grouped by
+            // the service they're restricting.
+
+            val grouped = parsedRestrictions.groupBy { it.service }
+               .map { (service, restrictions) ->
+                  val allOperations = restrictions.flatMap { it.members }
+                  ServiceRestriction(service, allOperations)
+               }
+
+            if (serviceRestrictions.K_Using() != null) {
+               ServiceRestrictions(inclusions = grouped, exclusions = emptyList())
+            } else {
+               ServiceRestrictions(inclusions = emptyList(), exclusions = grouped)
+            }
+         }
+   }
+
+   private fun parseServiceOrMemberReference(serviceOrOperationContext: ServiceOrMemberReferenceContext): Either<List<CompilationError>, ServiceRestriction> {
+      return if (serviceOrOperationContext.memberReference() != null) {
+         // This is a call in the form of Service::Operation
+         resolveServiceAndOperation(
+            serviceToken = serviceOrOperationContext.memberReference().typeReference(0),
+            operationToken = serviceOrOperationContext.memberReference().typeReference(1),
+            operationTokenRequired = true,
+            context = serviceOrOperationContext
+         )
+      } else {
+         // This is just a service name
+         resolveServiceAndOperation(
+            serviceToken = serviceOrOperationContext.typeReference()!!,
+            operationToken = null,
+            operationTokenRequired = false,
+            context = serviceOrOperationContext
+         )
+      }.map { (service, operation) ->
+         ServiceRestriction(service, listOfNotNull(operation))
+      }
+
    }
 }
 

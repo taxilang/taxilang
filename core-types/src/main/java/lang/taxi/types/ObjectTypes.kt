@@ -301,8 +301,8 @@ data class ObjectType(
    }
 
    fun hasField(name: String): Boolean = allFields.any { it.name == name }
-   fun field(name: String): Field = allFields.first { it.name == name }
-   fun annotation(name: String): Annotation = annotations.first { it.qualifiedName == name }
+   fun field(name: String): Field = allFields.firstOrNull { it.name == name } ?: error("Type ${this.qualifiedName} has no field named '$name'")
+   fun annotation(name: String): Annotation = annotations.firstOrNull { it.qualifiedName == name } ?: error("Type ${this.qualifiedName} has no annotation named '$name'")
 
    /**
     * Returns a list of field references for any fields on this type, or

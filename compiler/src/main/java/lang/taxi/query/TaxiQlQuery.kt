@@ -23,6 +23,7 @@ data class TaxiQlQuery(
    val projectedType: Type?,
    val projectionScopeVars: List<ProjectionFunctionScope>,
    val mutation: Mutation?,
+   val serviceRestrictions: ServiceRestrictions = ServiceRestrictions.EMPTY,
    override val typeDoc: String?,
    override val annotations: List<Annotation>,
    override val compilationUnits: List<CompilationUnit>
@@ -50,7 +51,7 @@ data class TaxiQlQuery(
             mutation != null -> mutation.operation.returnType
             projectedObjectType != null -> projectedObjectType!!
             discoveryType != null -> discoveryType.expression.returnType
-            else ->  error("Could not infer return type of query.")
+            else -> error("Could not infer return type of query.")
          }
       }
 
