@@ -2,13 +2,15 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.accessors.ColumnAccessor
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.expressions.*
-import lang.taxi.functions.FunctionModifiers
+import lang.taxi.functions.FunctionModifier
 import lang.taxi.functions.stdlib.Left
 import lang.taxi.linter.LinterRules
 import lang.taxi.types.FormulaOperator
@@ -51,6 +53,18 @@ class FunctionSpec : DescribeSpec({
          """.compiled().function("concat")
          function.parameters[0].isVarArg.should.be.`true`
       }
+      it("is valid to declare a function returning a nullable type") {
+         val function = """
+            declare function sometimes(String):String?
+         """.compiled().function("sometimes")
+         function.returnTypeIsNullable.shouldBeTrue()
+      }
+      it("is valid to declare a function accepting a nullable type") {
+         val function = """
+            declare function sometimes(String?):String
+         """.compiled().function("sometimes")
+         function.parameters.single().nullable.shouldBeTrue()
+      }
 
       it("is invalid to declare vararg in position other than final arg") {
          // TODO
@@ -85,7 +99,7 @@ class FunctionSpec : DescribeSpec({
          function.parameters[1].name.should.equal("b")
 
          function.returnType.should.equal(PrimitiveType.STRING)
-         function.modifiers.should.equal(EnumSet.of(FunctionModifiers.Query))
+         function.modifiers.should.equal(EnumSet.of(FunctionModifier.Query))
       }
 
       xit("can infer the type on a model when using a function") {

@@ -139,7 +139,7 @@ class SignatureHelpService {
             // eg: firstName : left()
             // The grammar doesn't know if it's a param constraint eg: `FirstName( a == b )`
             // or a function
-            foundRule.nullableTypeReference()
+            foundRule.typeExpression().nullableTypeReference()
          }
 
          is IdentifierContext -> foundRule
@@ -150,7 +150,7 @@ class SignatureHelpService {
             // eg:  left(a) looks a lot like Person(FirstName == 2)
             // That's why we end up here.
             if (token.searchUpForRule<FieldTypeDeclarationContext>() != null) {
-               token.searchUpForRule<FieldTypeDeclarationContext>()!!.nullableTypeReference()
+               token.searchUpForRule<FieldTypeDeclarationContext>()!!.typeExpression().nullableTypeReference()
             } else {
                return null
             }

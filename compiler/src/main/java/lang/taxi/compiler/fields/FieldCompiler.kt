@@ -183,7 +183,7 @@ class FieldCompiler(
       //
       // This is current partly encapsulated through FieldTypeSpec, but
       // capturing it is awkward.
-      val qualifiedName: TaxiParser.QualifiedNameContext? = fieldTypeDeclaration?.nullableTypeReference()?.typeReference()?.qualifiedName()
+      val qualifiedName: TaxiParser.QualifiedNameContext? = fieldTypeDeclaration?.typeExpression()?.nullableTypeReference()?.typeReference()?.qualifiedName()
       return when {
          // Before resolving as a type, first check if we can resolve
          // through scope.
@@ -384,19 +384,21 @@ class FieldCompiler(
    private fun parseFieldProjection(
       member: TaxiParser.TypeMemberDeclarationContext,
       projectionSourceType: FieldTypeSpec,
+      argumentsInScope: List<Argument> = emptyList()
    ): Either<List<CompilationError>, Pair<Type, List<ProjectionFunctionScope>>?> {
       val typeProjection = member.fieldDeclaration().typeProjection() ?: return null.right()
       val typeName = anonymousTypeNameForMember(member)
-      return parseFieldProjection(typeProjection, projectionSourceType, typeName)
+      return parseFieldProjection(typeProjection, projectionSourceType, typeName, argumentsInScope)
    }
 
 
    fun parseFieldProjection(
       typeProjection: TypeProjectionContext,
       projectionSourceType: FieldTypeSpec,
-      anonymousTypeName: String
+      anonymousTypeName: String,
+      argumentsInScope: List<Argument>
    ): Either<List<CompilationError>, Pair<Type, List<ProjectionFunctionScope>>> {
-      return tokenProcessor.parseProjectionScope(typeProjection.expressionInputs(), projectionSourceType)
+      return tokenProcessor.parseProjectionScope(typeProjection.expressionInputs(), projectionSourceType, argumentsInScope)
          .flatMap { projectionScope ->
             val projectedType = when {
                typeProjection.anonymousTypeDefinition() != null -> parseAnonymousTypeBody(
@@ -483,12 +485,12 @@ class FieldCompiler(
                errors.addAll(it)
                null
             }
-            val simpleType = fieldDeclaration?.nullableTypeReference()
+            val simpleType = fieldDeclaration?.typeExpression()?.nullableTypeReference()
             if (fieldType.accessor != null && accessor != null) {
                error("It is invalid for both the field to define an inferred accessor and an explict accessor.  Shouldn't happen")
             }
             tokenProcessor.mapConstraints(
-               fieldDeclaration?.parameterConstraint()?.expressionGroup(),
+               fieldDeclaration?.typeExpression()?.parameterConstraint()?.expressionGroup(),
                this,
                this.resolutionContext.activeScopes
             ).map { constraints ->

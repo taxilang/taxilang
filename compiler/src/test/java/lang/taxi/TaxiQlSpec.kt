@@ -2,15 +2,18 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeEmpty
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.types.shouldNotBeInstanceOf
 import lang.taxi.accessors.CollectionProjectionExpressionAccessor
 import lang.taxi.accessors.FieldSourceAccessor
 import lang.taxi.expressions.OperatorExpression
+import lang.taxi.expressions.TypeExpression
 import lang.taxi.query.Parameter
 import lang.taxi.query.QueryMode
 import lang.taxi.services.operations.constraints.ExpressionConstraint
@@ -86,6 +89,15 @@ class TaxiQlSpec : DescribeSpec({
          val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
          val query = queries.first()
          query.queryMode.should.equal(QueryMode.FIND_ALL)
+      }
+
+      it("is valid to declare an empty set of type constraints") {
+         val src = """
+            find { Order() }
+         """.trimIndent()
+         val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
+         val query = queries.first()
+         query.discoveryType!!.constraints.shouldBeEmpty()
       }
 
       it("should resolve unambiguous types without imports") {
@@ -363,7 +375,7 @@ class TaxiQlSpec : DescribeSpec({
 
          query.typesToFind.should.have.size(1)
          val discoveryType = query.typesToFind.first()
-         discoveryType.anonymousType?.anonymous.should.be.`true`
+         discoveryType.type.anonymous.should.be.`true`
          discoveryType.startingFacts.should.have.size(2)
       }
 
@@ -1123,6 +1135,31 @@ class TaxiQlSpec : DescribeSpec({
          """.trimIndent()
          )
          error.errors.single().detailMessage.shouldBe("Cannot project an array to a non-array. Try adding [] after your projection type definition")
+      }
+
+      it("is possible to express an or syntax in a find expression") {
+         val (schema,query) = """
+            model Film {
+               id : FilmId inherits Int
+               title : Title inherits String
+            }
+            model Cast {
+               actors : Actor[]
+            }
+            model Actor {
+               name : PersonName inherits String
+            }
+         """.compiledWithQuery(
+            """
+            find { Film( FilmId == 1 || Title == "Jaws" ) }
+            """)
+         query.shouldNotBeNull()
+         val expression = query.discoveryType!!.expression
+            .shouldBeInstanceOf<TypeExpression>()
+         val expressionConstraint = expression.constraints.single().shouldBeInstanceOf<ExpressionConstraint>()
+         expressionConstraint.expression
+            .shouldBeInstanceOf<OperatorExpression>()
+            .operator.shouldBe(FormulaOperator.LogicalOr)
       }
    }
 })

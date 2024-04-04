@@ -13,16 +13,19 @@ import lang.taxi.types.ArgumentSelector
  *
  * While we phase it out, need to provide backwards compatibility.
  */
-fun ExpressionConstraint.convertToPropertyConstraint(): List<PropertyToParameterConstraint> {
+fun ExpressionConstraint.convertToConstraint(): List<Constraint> {
    require(this.expression is OperatorExpression) {"Only operator expressions can be downgraded to PropertyToParameterConstraint.  Got ${expression::class.simpleName}"}
    val expression = this.expression as OperatorExpression
-   return expression.convertToPropertyConstraint()
+   return expression.convertToConstraint()
 }
 
-private fun OperatorExpression.convertToPropertyConstraint():List<PropertyToParameterConstraint> {
+private fun OperatorExpression.convertToConstraint():List<Constraint> {
    if (lhs is OperatorExpression && rhs is OperatorExpression) {
-      return (lhs as OperatorExpression).convertToPropertyConstraint() + (rhs as OperatorExpression).convertToPropertyConstraint()
+      return (lhs as OperatorExpression).convertToConstraint() +
+             ExpressionConstraint(this) +
+             (rhs as OperatorExpression).convertToConstraint()
    }
+
    val propertyIdentifier = when (val lhs = this.lhs) {
       is TypeExpression -> PropertyTypeIdentifier(lhs.returnType)
       is ArgumentSelector -> {

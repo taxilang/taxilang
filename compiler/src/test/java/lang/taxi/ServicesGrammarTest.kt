@@ -10,11 +10,8 @@ import lang.taxi.expressions.LiteralExpression
 import lang.taxi.services.ConsumedOperation
 import lang.taxi.services.OperationScope
 import lang.taxi.services.Parameter
-import lang.taxi.services.operations.constraints.ConstantValueExpression
 import lang.taxi.services.operations.constraints.ExpressionConstraint
 import lang.taxi.services.operations.constraints.InstanceArgument
-import lang.taxi.services.operations.constraints.PropertyFieldNameIdentifier
-import lang.taxi.services.operations.constraints.PropertyToParameterConstraint
 import lang.taxi.services.operations.constraints.ReturnValueDerivedFromParameterConstraint
 import lang.taxi.types.ArgumentSelector
 import lang.taxi.types.FormulaOperator
@@ -420,6 +417,8 @@ namespace services {
       table.annotations.shouldHaveSize(1)
       table.annotations.first().name.shouldBe("MyAnnotation")
    }
+
+
 
    @Test
    fun `can declare a table with array long-hand`() {

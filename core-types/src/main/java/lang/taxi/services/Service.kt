@@ -66,24 +66,30 @@ data class Service(
 
    val tables: List<Table> = this.members.filterIsInstance<Table>()
    val streams: List<Stream> = this.members.filterIsInstance<Stream>()
-
    fun operation(name: String): Operation {
-      return this.operations.first { it.name == name }
+      return this.operations.firstOrNull { it.name == name }  ?: error("No operation named $name exists on ${this.qualifiedName}")
    }
 
    fun queryOperation(name: String): QueryOperation {
-      return this.queryOperations.first { it.name == name }
+      return this.queryOperations.firstOrNull { it.name == name }  ?: error("No queryOperation named $name exists on ${this.qualifiedName}")
    }
 
    fun table(name: String): Table {
-      return this.tables.first { it.name == name }
+      return this.tables.firstOrNull { it.name == name }  ?: error("No table named $name exists on ${this.qualifiedName}")
    }
 
    fun stream(name: String): Stream {
-      return this.streams.first { it.name == name }
+      return this.streams.firstOrNull { it.name == name }  ?: error("No stream named $name exists on ${this.qualifiedName}")
    }
 
+
    fun containsOperation(name: String) = operations.any { it.name == name }
+
+   fun containsMember(name: String) = members.any { it.name == name }
+
+   fun member(name: String):ServiceMember {
+      return this.members.firstOrNull { it.name == name } ?: error("No member named $name exists on ${this.qualifiedName}")
+   }
 
    val referencedTypes: List<Type> = this.members.flatMap { it.referencedTypes }
 }

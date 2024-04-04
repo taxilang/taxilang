@@ -8,18 +8,20 @@ import lang.taxi.*
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.expressions.Expression
+import lang.taxi.expressions.TypeExpression
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.PrimitiveType
+import lang.taxi.types.StreamType
 import lang.taxi.types.Type
+import lang.taxi.types.TypeArgument
 import lang.taxi.types.TypeChecker
 import lang.taxi.types.TypeReferenceSelector
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.wrapErrorsInList
 import org.antlr.v4.runtime.ParserRuleContext
-import org.antlr.v4.runtime.RuleContext
 
 interface FunctionParameterReferenceResolver {
    fun compileScalarAccessor(
@@ -62,12 +64,18 @@ class FunctionAccessorCompiler(
    internal fun buildFunctionAccessor(
       functionContext: TaxiParser.FunctionCallContext,
       targetType: Type,
-
-      ): Either<List<CompilationError>, FunctionAccessor> {
+      receiver: Expression? = null,
+      /**
+       * Allows overriding the name of the function.
+       * This is needed when a function call is using dot syntax, eg:
+       * PersonName.uppercase()
+       */
+      functionName: String = functionContext.qualifiedName().identifier().text()
+   ): Either<List<CompilationError>, FunctionAccessor> {
       val namespace = functionContext.findNamespace()
       return tokenProcessor.attemptToLookupSymbolByName(
          namespace,
-         functionContext.qualifiedName().identifier().text(),
+         functionName,
          functionContext,
          symbolKind = SymbolKind.FUNCTION
       )
@@ -79,11 +87,28 @@ class FunctionAccessorCompiler(
                   ?.let { compilationError ->
                      errors.add(compilationError)
                   }
+               receiver?.let { receiver ->
+                  val firstParam = function.parameters.firstOrNull()
+                  // In theory, this isn't possible, as the compiler will catch it earlier. But, belts 'n' braces
+                     ?: return@flatMap listOf(
+                        CompilationError(
+                           functionContext.toCompilationUnit(),
+                           "Function ${function.qualifiedName} can not be called as an extension function, as it does not take any params"
+                        )
+                     )
+                        .left()
+                  typeChecker.assertIsAssignable(receiver.returnType, firstParam.type, functionContext)
+                     ?.let { compilationError ->
+                        return@flatMap listOf(compilationError).left()
+                     }
+
+               }
 
                val unparsedParameters = functionContext.argumentList()?.argument() ?: emptyList()
                val parametersOrErrors: Either<List<CompilationError>, List<Accessor>> =
                   unparsedParameters.mapIndexed { parameterIndex, parameterContext ->
-                     val parameterType = function.getParameterType(parameterIndex)
+                     val declaredParamIndex = if (receiver != null) parameterIndex + 1 else parameterIndex
+                     val parameterType = function.getParameterType(declaredParamIndex)
                      val parameterAccessor: Either<List<CompilationError>, Accessor> = when {
                         parameterContext.literal() != null -> LiteralAccessor(
                            parameterContext.literal().value()
@@ -122,9 +147,27 @@ class FunctionAccessorCompiler(
                   }.invertEitherList()
                      .flattenErrors()
                parametersOrErrors.flatMap { parameters: List<Accessor> ->
-                  // There used to be view related stuff here - I suspect now thats
-                  //deleted, this can be simplified
-                  buildAndResolveTypeArgumentsOrError(function, parameters, targetType, functionContext)
+                  // If we're invoked as an extension function, we'll be passed a receiver, which
+                  // is to be used as the first parameter
+                  val allParams = if (receiver != null) {
+                     val unwrappedReceiver = if (receiver is TypeExpression && StreamType.isStream(receiver.type) && function.parameters.firstOrNull()?.type is TypeArgument) {
+                        // If the receiver is Stream<T>, unwrap it to <T>.
+                        // Functions don't operate on Streams, but on the items that the stream emits
+                        // If we have functions declare inputs of Stream<T>, then we end up doing a context search for a stream,
+                        // each time that we go to evaluate the function.
+                        // Most typically this occurs when the receiver argument is parameterized.
+                        // ie - people don't generally declare
+                        //    declare extension function something(stream: Stream<T>):Stream<T>
+                        // but they do declare:
+                        //    declare extension function <T> something(input: T):T
+                        // which ends up operating on a stream.
+                        // Therefore, unwrap Stream<T> to T as the input.
+                        receiver.copy(type = receiver.type.typeParameters().first())
+                     } else receiver
+
+                     listOf(unwrappedReceiver) + parameters
+                  } else parameters
+                  buildAndResolveTypeArgumentsOrError(function, allParams, targetType, functionContext)
 
                }
             }

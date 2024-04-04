@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder
 import java.io.File
 import java.lang.Exception
 import java.net.URI
+import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -46,11 +47,14 @@ object SourceNames {
    // inmemory:// ....
    private fun tryParseAsInMemory(sourceName: String): String? {
       return try {
-         if(sourceName.startsWith("inmemory:")) sourceName else null
+         return when {
+            sourceName.startsWith("inmemory:") -> sourceName
+            sourceName.startsWith("file:///web/sandbox") -> sourceName
+            else -> null
+         }
       } catch(e:Exception) {
          null
       }
-
    }
 
    private fun tryParseAsFile(sourceName: String): String? {
