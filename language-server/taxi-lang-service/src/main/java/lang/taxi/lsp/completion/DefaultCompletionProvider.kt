@@ -59,10 +59,21 @@ class DefaultCompletionProvider(
             ) {
                annotationParameterCompletion(contextAtCursor, decorators, compilationResult)
             } else {
-               val typeCompletions = typeCompletionBuilder.getTypes(typeRepository, decorators)
-               val functionCompletions =
-                  functionCompletionProvider.buildFunctions(compilationResult.documentOrEmpty, decorators)
-               typeCompletions + functionCompletions
+               // if we're completing an import statement, don't use the import decorator
+               // eg: import films.Fi <---- caret is here
+               if (contextAtCursor.searchUpForRule<TaxiParser.ImportDeclarationContext>() != null &&
+                  params.position.isBetween(
+                     contextAtCursor.searchUpForRule<TaxiParser.ImportDeclarationContext>()?.getStart(),
+                     contextAtCursor.searchUpForRule<TaxiParser.ImportDeclarationContext>()?.getStop()
+                  )
+                  ) {
+                  emptyList()
+               } else {
+                  val typeCompletions = typeCompletionBuilder.getTypes(typeRepository, decorators)
+                  val functionCompletions =
+                     functionCompletionProvider.buildFunctions(compilationResult.documentOrEmpty, decorators)
+                  typeCompletions + functionCompletions
+               }
             }
          }
 
