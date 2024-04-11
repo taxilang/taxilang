@@ -1,13 +1,13 @@
 namespace vyne.openApi {
    [[ subscription information ]]
-   model AnonymousTypePostStreams {
+   closed model AnonymousTypePostStreams {
       [[ this unique identifier allows management of the subscription ]]
       subscriptionId : String
    }
    
    service StreamsService {
       [[ subscribes a client to receive out-of-band data ]]
-      @HttpOperation(method = "POST" , url = "/streams")
+      @taxi.http.HttpOperation(method = "POST" , url = "/streams")
       operation PostStreams(
       [[ the location where data will be sent.  Must be network accessible
       by the source server ]]
