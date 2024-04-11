@@ -6,6 +6,7 @@ import lang.taxi.testing.TestHelpers.compile
 import lang.taxi.testing.TestHelpers.expectToCompileTheSame
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
+import kotlin.test.fail
 
 class OpenApiModelAndTypeExportTest {
 
@@ -61,7 +62,7 @@ class OpenApiModelAndTypeExportTest {
 
       val expectedTaxi = """
          namespace vyne.openApi {
-            model Pet {
+            closed model Pet {
                pet_id : Int
             }
          }

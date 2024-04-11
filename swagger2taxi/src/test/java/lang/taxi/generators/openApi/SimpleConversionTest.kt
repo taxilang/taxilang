@@ -21,7 +21,7 @@ class SimpleConversionTest {
         expect(taxiDef.taxi).to.be.not.empty
         val expected = """
 namespace vyne.openApi {
-   model Pet {
+   closed model Pet {
       id : Int
       name : String
       tag : String?
@@ -29,24 +29,24 @@ namespace vyne.openApi {
 
    type Pets inherits Pet[]
 
-   model Error {
+   closed model Error {
       code : Int
       message : String
    }
 
    service PetsService {
-      @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/v1/pets")
+      @taxi.http.HttpOperation(method = "GET" , url = "http://petstore.swagger.io/v1/pets")
       operation listPets(
       [[ How many items to return at one time (max 100) ]]
-      limit : Int ) : Pets
-      @HttpOperation(method = "POST" , url = "http://petstore.swagger.io/v1/pets")
+      limit : Int? ) : Pets
+      @taxi.http.HttpOperation(method = "POST" , url = "http://petstore.swagger.io/v1/pets")
       operation createPets(  )
    }
    service PetsPetIdService {
-      @HttpOperation(method = "GET" , url = "http://petstore.swagger.io/v1/pets/{petId}")
+      @taxi.http.HttpOperation(method = "GET" , url = "http://petstore.swagger.io/v1/pets/{petId}")
       operation showPetById(
       [[ The id of the pet to retrieve ]]
-      @PathVariable(value = "petId") petId : String ) : Pets
+      @taxi.http.PathVariable(value = "petId") petId : String ) : Pets
    }
 }
         """.trimIndent()

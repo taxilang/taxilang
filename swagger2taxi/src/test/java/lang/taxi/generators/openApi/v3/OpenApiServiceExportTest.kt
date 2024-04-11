@@ -39,7 +39,7 @@ class OpenApiServiceExportTest {
                [[ Returns all pets from the system that the user has access to
                Nam sed condimentum est. Maecenas tempor sagittis sapien, nec rhoncus sem sagittis sit amet.
                ]]
-               @HttpOperation(method = "GET" , url = "/pets")
+               @taxi.http.HttpOperation(method = "GET" , url = "/pets")
                operation findPets(   )
             }
          }
@@ -85,8 +85,8 @@ class OpenApiServiceExportTest {
       val expectedTaxi = """
          namespace vyne.openApi {
             service Pets_petsService {
-               @HttpOperation(method = "GET" , url = "/pets-pets")
-               operation find_pets( pet_limit : Int   )
+               @taxi.http.HttpOperation(method = "GET" , url = "/pets-pets")
+               operation find_pets( pet_limit : Int?   )
             }
          }
       """.trimIndent()
@@ -123,10 +123,10 @@ class OpenApiServiceExportTest {
       val expectedTaxi = """
          namespace vyne.openApi {
             service PetsService {
-               @HttpOperation(method = "GET" , url = "/pets")
+               @taxi.http.HttpOperation(method = "GET" , url = "/pets")
                operation findPets(
                   [[ The upper limit to the number of pets you can possibly tolerate ]]
-                  pet_limit : Int
+                  pet_limit : Int?
                )
             }
          }
@@ -164,9 +164,9 @@ class OpenApiServiceExportTest {
       val expectedTaxi = """
          namespace vyne.openApi {
             service PetsIdService {
-               @HttpOperation(method = "GET" , url = "/pets/{id}")
+               @taxi.http.HttpOperation(method = "GET" , url = "/pets/{id}")
                operation getPet(
-                  @PathVariable("id")
+                  @taxi.http.PathVariable("id")
                   id : Int
                )
             }
@@ -206,13 +206,13 @@ class OpenApiServiceExportTest {
 
       val expectedTaxi = """
          namespace vyne.openApi {
-            model AnonymousTypePostPetsBody {
+            parameter model AnonymousTypePostPetsBody {
               name: String
             }
             service PetsService {
-               @HttpOperation(method = "POST" , url = "/pets")
+               @taxi.http.HttpOperation(method = "POST" , url = "/pets")
                operation PostPets(
-                 @RequestBody anonymousTypePostPetsBody : AnonymousTypePostPetsBody
+                 @taxi.http.RequestBody anonymousTypePostPetsBody : AnonymousTypePostPetsBody?
                )
             }
          }
@@ -255,13 +255,13 @@ class OpenApiServiceExportTest {
 
       val expectedTaxi = """
          namespace vyne.openApi {
-            model NewPet {
+            closed model NewPet {
               name: String
             }
             service PetsService {
-               @HttpOperation(method = "POST" , url = "/pets")
+               @taxi.http.HttpOperation(method = "POST" , url = "/pets")
                operation PostPets(
-                 @RequestBody newPet : NewPet
+                 @taxi.http.RequestBody newPet : NewPet?
                )
             }
          }
@@ -298,11 +298,11 @@ class OpenApiServiceExportTest {
 
       val expectedTaxi = """
          namespace vyne.openApi {
-            model AnonymousTypePostPets {
+            closed model AnonymousTypePostPets {
               name: String
             }
             service PetsService {
-               @HttpOperation(method = "POST" , url = "/pets")
+               @taxi.http.HttpOperation(method = "POST" , url = "/pets")
                operation PostPets(): AnonymousTypePostPets
             }
          }
@@ -342,11 +342,11 @@ class OpenApiServiceExportTest {
 
       val expectedTaxi = """
          namespace vyne.openApi {
-            model Pet {
+            closed model Pet {
               name: String
             }
             service PetsService {
-               @HttpOperation(method = "POST" , url = "/pets")
+               @taxi.http.HttpOperation(method = "POST" , url = "/pets")
                operation PostPets(): Pet
             }
          }

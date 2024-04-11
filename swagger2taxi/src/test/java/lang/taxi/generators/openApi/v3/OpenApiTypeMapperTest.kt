@@ -53,7 +53,7 @@ internal class OpenApiTypeMapperTest {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
-            model Person {
+            closed model Person {
               name: String
             }
          }
@@ -74,7 +74,7 @@ internal class OpenApiTypeMapperTest {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
-            model Person {
+            closed model Person {
               name: String?
             }
          }
@@ -97,10 +97,10 @@ internal class OpenApiTypeMapperTest {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
-            model AnonymousTypePersonAddress {
+            closed model AnonymousTypePersonAddress {
               street: String
             }
-            model Person {
+            closed model Person {
               address: AnonymousTypePersonAddress
             }
          }
@@ -127,13 +127,13 @@ internal class OpenApiTypeMapperTest {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
-            model AnonymousTypePersonAddressHouse {
+            closed model AnonymousTypePersonAddressHouse {
               number: Int
             }
-            model AnonymousTypePersonAddress {
+            closed model AnonymousTypePersonAddress {
               house: AnonymousTypePersonAddressHouse
             }
-            model Person {
+            closed model Person {
               address: AnonymousTypePersonAddress
             }
          }
@@ -158,10 +158,10 @@ internal class OpenApiTypeMapperTest {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
-            model Address {
+            closed model Address {
               street: String
             }
-            model Person {
+            closed model Person {
               address: Address
             }
          }
@@ -181,7 +181,7 @@ internal class OpenApiTypeMapperTest {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
-            model Person {
+            closed model Person {
               partner: Person
             }
          }
@@ -220,7 +220,7 @@ internal class OpenApiTypeMapperTest {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
-            model AnonymousTypePeopleElement {
+            closed model AnonymousTypePeopleElement {
               name : String
             }
             type People inherits AnonymousTypePeopleElement[]
@@ -245,7 +245,7 @@ internal class OpenApiTypeMapperTest {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
-            model Person {
+            closed model Person {
               name : String
             }
             type People inherits Person[]
@@ -292,7 +292,7 @@ internal class OpenApiTypeMapperTest {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
-            model Person {
+            closed model Person {
               name : String
             }
             type People inherits Array<Array<Person>>
@@ -315,7 +315,7 @@ internal class OpenApiTypeMapperTest {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
-            model Organisation {
+            closed model Organisation {
               people : String[]
             }
          }
@@ -340,10 +340,10 @@ internal class OpenApiTypeMapperTest {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
-            model AnonymousTypeOrganisationPeopleElement {
+            closed model AnonymousTypeOrganisationPeopleElement {
               name : String
             }
-            model Organisation {
+            closed model Organisation {
               people : AnonymousTypeOrganisationPeopleElement[]
             }
          }
@@ -370,10 +370,10 @@ internal class OpenApiTypeMapperTest {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
-            model Person {
+            closed model Person {
               name : String
             }
-            model Organisation {
+            closed model Organisation {
               people : Person[]
             }
          }
@@ -399,7 +399,7 @@ internal class OpenApiTypeMapperTest {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
-            model Organisation {
+            closed model Organisation {
               people : Array<Array<Array<String>>>
             }
          }
@@ -430,10 +430,10 @@ internal class OpenApiTypeMapperTest {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
-            model Person {
+            closed model Person {
               name : String
             }
-            model Organisation {
+            closed model Organisation {
               people : Array<Array<Array<Person>>>
             }
          }
@@ -458,7 +458,7 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
             type People inherits String[]
-            model Organisation {
+            closed model Organisation {
               people: People
             }
          }
@@ -486,13 +486,13 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
 
-            model AnonymousTypePeopleElement {
+            closed model AnonymousTypePeopleElement {
                name : String
             }
 
             type People inherits AnonymousTypePeopleElement[]
 
-            model Organisation {
+            closed model Organisation {
                people : People
             }
          }
@@ -522,13 +522,13 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
 
-            model Person {
+            closed model Person {
                name : String
             }
 
             type People inherits Person[]
 
-            model Organisation {
+            closed model Organisation {
                people : People
             }
          }
@@ -559,7 +559,7 @@ internal class OpenApiTypeMapperTest {
 
             type People inherits Array<Array<Array<String>>>
 
-            model Organisation {
+            closed model Organisation {
                people : People
             }
          }
@@ -593,13 +593,13 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
 
-            model Person {
+            closed model Person {
                name : String
             }
 
             type People inherits Array<Array<Array<Person>>>
 
-            model Organisation {
+            closed model Organisation {
                people : People
             }
          }
@@ -625,11 +625,11 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
 
-            model Named {
+            closed model Named {
                name : String
             }
 
-            model Organisation inherits Named {
+            closed model Organisation inherits Named {
               age: Int
             }
          }
@@ -654,13 +654,13 @@ internal class OpenApiTypeMapperTest {
       ) shouldGenerate """
          namespace vyne.openApi {
 
-            model Group {
+            closed model Group {
                name : String
             }
 
-            model AnonymousTypePersonGroup inherits Group
+            closed model AnonymousTypePersonGroup inherits Group
 
-            model Person {
+            closed model Person {
                group : AnonymousTypePersonGroup
             }
          }

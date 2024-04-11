@@ -109,7 +109,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          """
       ) generates """
          namespace org.example {
-            model Person {
+            closed model Person {
               name: String
             }
          }
@@ -133,10 +133,10 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          """
       ) generates """
          namespace vyne.openApi {
-            model Address {
+            closed model Address {
               street: String
             }
-            model Person {
+            closed model Person {
               address: Address
             }
          }
@@ -163,7 +163,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          import org.other.Address
 
          namespace vyne.openApi {
-            model Person {
+            closed model Person {
               address: Address
             }
          }
@@ -188,7 +188,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
 
          namespace vyne.openApi {
             type Name inherits String
-            model Person {
+            closed model Person {
                name : Name
             }
          }
@@ -212,7 +212,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          import org.other.Name
 
          namespace vyne.openApi {
-            model Person {
+            closed model Person {
                name : Name
             }
          }
@@ -241,13 +241,13 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          """
       ) generates """
          namespace vyne.openApi {
-            model House {
+            closed model House {
               number: Int
             }
-            model AnonymousTypePersonAddress {
+            closed model AnonymousTypePersonAddress {
               house: House
             }
-            model Person {
+            closed model Person {
               address: AnonymousTypePersonAddress
             }
          }
@@ -279,10 +279,10 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          import org.other.House
 
          namespace vyne.openApi {
-            model AnonymousTypePersonAddress {
+            closed model AnonymousTypePersonAddress {
               house: House
             }
-            model Person {
+            closed model Person {
               address: AnonymousTypePersonAddress
             }
          }
@@ -310,14 +310,14 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
       ) generates listOf("""
          import vyne.openApi.Address
          namespace example {
-            model Person {
+            closed model Person {
               address: Address
             }
          }
          """,
          """
          namespace vyne.openApi {
-            model Address {
+            closed model Address {
               street: String
             }
 
@@ -347,10 +347,10 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          """
       ) generates """
          namespace example {
-            model Address {
+            closed model Address {
               street: String
             }
-            model Person {
+            closed model Person {
               address: Address
             }
          }
@@ -375,7 +375,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
       ) generates listOf(
          """
          namespace example {
-            model Person {
+            closed model Person {
               name : String
             }
          }
@@ -435,7 +435,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          import org.other.Name
 
          namespace vyne.openApi {
-            model Organisation {
+            closed model Organisation {
               people : Array<Array<Array<Name>>>
             }
          }
@@ -468,7 +468,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
 
             type Name inherits String
 
-            model Organisation {
+            closed model Organisation {
               people : Array<Array<Array<Name>>>
             }
          }
@@ -504,12 +504,12 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
 
             type Name inherits String
 
-            model Person {
+            closed model Person {
                name : Name
             }
 
             service PeopleService {
-               @HttpOperation(method = "GET" , url = "/people")
+               @taxi.http.HttpOperation(method = "GET" , url = "/people")
                operation GetPeople(  ) : Person[]
             }
          }
@@ -546,7 +546,7 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          namespace vyne.openApi {
 
             service PeopleService {
-               @HttpOperation(method = "GET" , url = "/people")
+               @taxi.http.HttpOperation(method = "GET" , url = "/people")
                operation GetPeople(  ) : Person[]
             }
          }
@@ -582,13 +582,13 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
 
             type Name inherits String
 
-            model Person {
+            parameter model Person {
                name : Name
             }
 
             service PeopleService {
-               @HttpOperation(method = "POST" , url = "/people")
-               operation PostPeople( @RequestBody person : Person )
+               @taxi.http.HttpOperation(method = "POST" , url = "/people")
+               operation PostPeople( @taxi.http.RequestBody person : Person? )
             }
          }
       """
@@ -624,8 +624,8 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          namespace vyne.openApi {
 
             service PeopleService {
-               @HttpOperation(method = "POST" , url = "/people")
-               operation PostPeople( @RequestBody person : Person )
+               @taxi.http.HttpOperation(method = "POST" , url = "/people")
+               operation PostPeople( @taxi.http.RequestBody person : Person? )
             }
          }
       """
@@ -655,8 +655,8 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
             type PersonId inherits String
 
             service PeopleIdService {
-               @HttpOperation(method = "GET" , url = "/people/{id}")
-               operation GetPeopleId( @PathVariable(value = "id") id : PersonId )
+               @taxi.http.HttpOperation(method = "GET" , url = "/people/{id}")
+               operation GetPeopleId( @taxi.http.PathVariable(value = "id") id : PersonId )
             }
          }
       """
@@ -685,8 +685,8 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          namespace vyne.openApi {
 
             service PeopleIdService {
-               @HttpOperation(method = "GET" , url = "/people/{id}")
-               operation GetPeopleId( @PathVariable(value = "id") id : PersonId )
+               @taxi.http.HttpOperation(method = "GET" , url = "/people/{id}")
+               operation GetPeopleId( @taxi.http.PathVariable(value = "id") id : PersonId )
             }
          }
       """
