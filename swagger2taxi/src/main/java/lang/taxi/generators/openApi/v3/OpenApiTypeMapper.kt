@@ -45,7 +45,12 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       }
    }
 
-   private fun generate(name: QualifiedName, schema: Schema<*>, modifiers: List<Modifier>, declaredSupertypes: List<String>) =
+   private fun generate(
+      name: QualifiedName,
+      schema: Schema<*>,
+      modifiers: List<Modifier>,
+      declaredSupertypes: List<String>
+   ) =
       if (schema.isModel()) {
          generateModel(name, schema, modifiers, declaredSupertypes)
       } else {
@@ -58,13 +63,20 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       context: String,
       modifiers: List<Modifier>
    ): Type =
-      getTypeFromExtensions(schema, modifiers) ?: toType(schema, context, modifiers) ?: schema.`$ref`?.getTypeFromRef(modifiers)
-      ?: generateModelIfAppropriate(schema, context, modifiers) ?: PrimitiveType.ANY
+      getTypeFromExtensions(schema, modifiers)
+         ?: toType(schema, context, modifiers)
+         ?: schema.`$ref`?.getTypeFromRef(modifiers)
+         ?: generateModelIfAppropriate(schema, context, modifiers) ?: PrimitiveType.ANY
 
    private fun getTypeFromExtensions(schema: Schema<*>, modifiers: List<Modifier>): Type? {
       val explicitTaxiType = schema.taxiExtension
       return if (explicitTaxiType != null) {
-         generateNamedTypeRecursively(schema, qualify(explicitTaxiType.name), modifiers = modifiers, declaredSupertypes = explicitTaxiType.inherits)
+         generateNamedTypeRecursively(
+            schema,
+            qualify(explicitTaxiType.name),
+            modifiers = modifiers,
+            declaredSupertypes = explicitTaxiType.inherits
+         )
       } else {
          null
       }
@@ -77,9 +89,11 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       } else null
 
    private fun toType(schema: Schema<*>, context: String, modifiers: List<Modifier>) =
-      primitiveTypeFor(schema) ?: intermediateTypeFor(schema) ?: if (schema is ArraySchema) {
-         makeArrayType(schema, context + "Element", modifiers)
-      } else null
+      primitiveTypeFor(schema)
+         ?: intermediateTypeFor(schema)
+         ?: if (schema is ArraySchema) {
+            makeArrayType(schema, context + "Element", modifiers)
+         } else null
 
    private fun primitiveTypeFor(schema: Schema<*>) = when (schema) {
       is BooleanSchema -> PrimitiveType.BOOLEAN
@@ -88,7 +102,30 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       is IntegerSchema -> PrimitiveType.INTEGER
       is NumberSchema -> PrimitiveType.DECIMAL
       is StringSchema -> PrimitiveType.STRING
+      is JsonSchema -> {
+         extractPrimitivesFromJsonSchema(schema)
+      }
+
       else -> null
+   }
+
+   private fun extractPrimitivesFromJsonSchema(schema: JsonSchema): PrimitiveType? {
+      return when {
+         schema.type != null -> primitiveTypeNameToTaxiPrimitive(schema.type)
+         !schema.types.isNullOrEmpty() -> primitiveTypeNameToTaxiPrimitive(schema.types.first())
+         else -> null
+      }
+   }
+
+   private fun primitiveTypeNameToTaxiPrimitive(typeName: String): PrimitiveType? {
+      return when (typeName) {
+         "boolean" -> PrimitiveType.BOOLEAN
+         "integer" -> PrimitiveType.INTEGER
+         "number" -> PrimitiveType.DECIMAL
+         "string" -> PrimitiveType.STRING
+         else -> null
+      }
+
    }
 
    private fun intermediateTypeFor(schema: Schema<*>): Type? = when (schema) {
@@ -137,7 +174,8 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       _generatedTypes[name] = ObjectType.undefined(name.fullyQualifiedName)
       if (schema is ComposedSchema) {
          val allOf = schema.allOf ?: emptyList()
-         val inherits = allOf.mapNotNull { it.`$ref`?.getTypeFromRef(modifiers) }.toSet() + declaredSupertypes.map { UnresolvedImportedType(it) }.toSet()
+         val inherits = allOf.mapNotNull { it.`$ref`?.getTypeFromRef(modifiers) }
+            .toSet() + declaredSupertypes.map { UnresolvedImportedType(it) }.toSet()
          // If requiredFields is present, it contributes to the definition of nullable.
          // However, if requiredFields is omitted we only consider the nullable attribute of fields
          val requiredFields = if (allOf.any { it.required != null }) {
@@ -216,7 +254,11 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       val nullable = schema.nullable ?: explicitlyRequired?.not() ?: false
       return Field(
          name = legalName,
-         type = generateUnnamedTypeRecursively(schema, context = parent.typeName + legalName.capitalize(), listOf(Modifier.CLOSED)),
+         type = generateUnnamedTypeRecursively(
+            schema,
+            context = parent.typeName + legalName.capitalize(),
+            listOf(Modifier.CLOSED)
+         ),
          nullable = nullable,
          compilationUnit = CompilationUnit.unspecified(),
          typeDoc = schema.description,
