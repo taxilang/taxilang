@@ -28,6 +28,11 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
                url : String
             }
 
+            annotation WebsocketOperation {
+               path : String
+            }
+
+
             annotation HttpHeader {
                name : String
                [[ Pass a value when using as an annotation on an operation.
@@ -104,6 +109,29 @@ data class HttpOperation(val method: String, val url: String) : AnnotationProvid
 
    override fun toAnnotation(): Annotation = Annotation(NAME, mapOf("method" to method, "url" to url))
 }
+
+data class WebsocketOperation(val path: String) : AnnotationProvider {
+   companion object {
+      const val NAME = "taxi.http.WebsocketOperation"
+      fun fromAnnotation(annotation: Annotation): WebsocketOperation {
+         // TODO : We should just define the bloody annotation in taxi.  Then this would be handled
+         // at the compiler level!!!
+         val parameters = annotation.parameters
+         require(parameters.containsKey("path")) { "@WebsocketOperation requires a path parameter" }
+         return WebsocketOperation(parameters["path"]!!.toString())
+      }
+
+      fun fromQuery(query: TaxiQlQuery): WebsocketOperation? {
+         val httpAnnotation = query.annotations.singleOrNull { annotation -> annotation.name == WebsocketOperation.NAME }
+         return if (httpAnnotation != null) {
+            fromAnnotation(httpAnnotation)
+         } else null
+      }
+   }
+
+   override fun toAnnotation(): Annotation = Annotation(NAME, mapOf("path" to path))
+}
+
 
 object HttpRequestBody : AnnotationProvider {
    override fun toAnnotation(): Annotation {
