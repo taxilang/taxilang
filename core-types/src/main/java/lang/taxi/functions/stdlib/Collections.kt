@@ -34,7 +34,7 @@ object AllOf : FunctionApi {
 }
 
 object Contains : FunctionApi {
-   override val taxi: String = "declare function <T> contains(collection: T[], searchTarget:T): Boolean"
+   override val taxi: String = "declare extension function <T> contains(collection: T[], searchTarget:T): Boolean"
    override val name: QualifiedName = stdLibName("contains")
 }
 

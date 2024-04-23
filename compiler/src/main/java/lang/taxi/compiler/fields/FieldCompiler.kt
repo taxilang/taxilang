@@ -183,7 +183,8 @@ class FieldCompiler(
       //
       // This is current partly encapsulated through FieldTypeSpec, but
       // capturing it is awkward.
-      val qualifiedName: TaxiParser.QualifiedNameContext? = fieldTypeDeclaration?.typeExpression()?.nullableTypeReference()?.typeReference()?.qualifiedName()
+      val qualifiedName: TaxiParser.QualifiedNameContext? =
+         fieldTypeDeclaration?.typeExpression()?.nullableTypeReference()?.typeReference()?.qualifiedName()
       return when {
          // Before resolving as a type, first check if we can resolve
          // through scope.
@@ -363,23 +364,12 @@ class FieldCompiler(
       anonymousTypeName: String,
       anonymousTypeDefinition: TaxiParser.AnonymousTypeDefinitionContext,
       resolutionContext: ResolutionContext
-   ): Either<List<CompilationError>, Type> {
-      val fieldType = tokenProcessor.parseAnonymousType(
-         anonymousTypeDefinition.findNamespace(),
-         anonymousTypeDefinition,
-         anonymousTypeName,
-         resolutionContext
-      )
-         .map { type ->
-            val isDeclaredAsCollection = anonymousTypeDefinition.arrayMarker() != null
-            if (isDeclaredAsCollection) {
-               ArrayType.of(type, anonymousTypeDefinition.toCompilationUnit())
-            } else {
-               type
-            }
-         }
-      return fieldType
-   }
+   ): Either<List<CompilationError>, Type> = tokenProcessor.parseAnonymousType(
+      anonymousTypeDefinition.findNamespace(),
+      anonymousTypeDefinition,
+      anonymousTypeName,
+      resolutionContext
+   )
 
    private fun parseFieldProjection(
       member: TaxiParser.TypeMemberDeclarationContext,
@@ -398,7 +388,11 @@ class FieldCompiler(
       anonymousTypeName: String,
       argumentsInScope: List<Argument>
    ): Either<List<CompilationError>, Pair<Type, List<ProjectionFunctionScope>>> {
-      return tokenProcessor.parseProjectionScope(typeProjection.expressionInputs(), projectionSourceType, argumentsInScope)
+      return tokenProcessor.parseProjectionScope(
+         typeProjection.expressionInputs(),
+         projectionSourceType,
+         argumentsInScope
+      )
          .flatMap { projectionScope ->
             val projectedType = when {
                typeProjection.anonymousTypeDefinition() != null -> parseAnonymousTypeBody(

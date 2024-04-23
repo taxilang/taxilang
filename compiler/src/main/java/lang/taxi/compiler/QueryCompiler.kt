@@ -578,9 +578,7 @@ internal class QueryCompiler(
                      ),
                      anonymousTypeDefinition = anonymousProjectionType
                   ).map { createdType ->
-                     val compiledType =
-                        if (isList) ArrayType(createdType, anonymousProjectionType.toCompilationUnit()) else createdType
-                     compiledType to projectionScopedVariables
+                     createdType to projectionScopedVariables
                   }
             }
 
