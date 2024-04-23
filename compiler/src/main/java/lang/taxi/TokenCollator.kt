@@ -303,7 +303,7 @@ class TokenCollator : TaxiBaseListener() {
       if (collateExceptions(ctx)) {
          // TODO : Why did I have to change this?  Why is Identifier() retuning null now?
          // Was:  qualify(ctx.policyIdentifier().identifier().text)
-         val qualifiedName = qualify(ctx.policyIdentifier().text)
+         val qualifiedName = qualify(ctx.identifier().text)
          unparsedPolicies[qualifiedName] = namespace to ctx
       }
       super.exitPolicyDeclaration(ctx)

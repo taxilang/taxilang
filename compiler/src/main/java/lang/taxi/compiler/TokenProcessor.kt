@@ -847,7 +847,7 @@ class TokenProcessor(
       typeName: String,
       anonymousTypeDefinition: AnonymousTypeDefinitionContext,
       resolutionContext: ResolutionContext,
-   ): Either<List<CompilationError>, ObjectType> {
+   ): Either<List<CompilationError>, Type> {
       val annotations = collateAnnotations(anonymousTypeDefinition.annotation())
       val (fields, expression) = anonymousTypeDefinition.typeBody().let { typeBody ->
          val typeBodyFieldDeclarationParent =
@@ -901,7 +901,7 @@ class TokenProcessor(
       }
 
 
-      return this.typeSystem.register(
+      val registeredType = this.typeSystem.register(
          ObjectType(
             QualifiedName(namespace, typeName).fullyQualifiedName,
             ObjectTypeDefinition(
@@ -915,7 +915,15 @@ class TokenProcessor(
                isAnonymous = true
             )
          )
-      ).right()
+      )
+      val isDeclaredAsCollection = anonymousTypeDefinition.arrayMarker() != null
+      return if (isDeclaredAsCollection) {
+         ArrayType.of(registeredType, anonymousTypeDefinition.toCompilationUnit())
+            .right()
+      } else {
+         registeredType.right()
+      }
+
 
    }
 
@@ -2352,7 +2360,7 @@ class TokenProcessor(
       val namespace = operationDeclaration.findNamespace()
       return parseTypeOrVoid(namespace, signature.operationReturnType())
          .flatMap { returnType ->
-            val scope = operationDeclaration.operationScope()?.identifier()?.text
+            val scope = operationDeclaration.operationScope()?.text
             val operationParameters = signature.parameters().mapIndexed { index, operationParameterContext ->
                parseParameter(namespace, operationParameterContext, paramIndex = index)
             }.reportAndRemoveErrorList(errors)
@@ -2528,19 +2536,12 @@ class TokenProcessor(
    }
 
    private fun compilePolicies() {
+      val policyCompiler = PolicyCompiler(this)
       this.tokens.unparsedPolicies.map { (name, namespaceTokenPair) ->
          val (namespace, token) = namespaceTokenPair
 
-         parseType(namespace, token.typeReference()).map { targetType ->
-            val annotations = emptyList<Annotation>() // TODO
-            val ruleSets = compilePolicyRulesets(namespace, token)
-            Policy(
-               name,
-               targetType,
-               ruleSets,
-               annotations,
-               compilationUnits = listOf(token.toCompilationUnit())
-            )
+         parseType(namespace, token.typeReference()).flatMap { targetType ->
+            policyCompiler.compilerPolicy(name, token, targetType)
          }
       }.invertEitherList().flattenErrors()
          .mapLeft { this.errors.addAll(it) }
@@ -2564,59 +2565,6 @@ class TokenProcessor(
       }
    }
 
-   private fun compilePolicyRulesets(namespace: String, token: PolicyDeclarationContext): List<RuleSet> {
-      return token.policyRuleSet().map {
-         compilePolicyRuleset(namespace, it)
-      }
-   }
-
-   private fun compilePolicyRuleset(namespace: String, token: PolicyRuleSetContext): RuleSet {
-      val operationType = token.policyOperationType().identifier()?.text
-      val operationScope = PolicyOperationScope.parse(token.policyScope()?.text)
-      val scope = PolicyScope.from(operationType, operationScope)
-      val statements = if (token.policyBody() != null) {
-         token.policyBody().policyStatement().map { compilePolicyStatement(namespace, it) }
-      } else {
-         listOf(
-            PolicyStatement(
-               ElseCondition(),
-               Instructions.parse(token.policyInstruction()),
-               token.toCompilationUnit()
-            )
-         )
-      }
-      return RuleSet(scope, statements)
-   }
-
-   private fun compilePolicyStatement(namespace: String, token: PolicyStatementContext): PolicyStatement {
-      val (condition, instruction) = compileCondition(namespace, token)
-      return PolicyStatement(condition, instruction, token.toCompilationUnit())
-   }
-
-   private fun compileCondition(
-      namespace: String,
-      token: PolicyStatementContext
-   ): Pair<Condition, Instruction> {
-      return when {
-         token.policyCase() != null -> compileCaseCondition(namespace, token.policyCase())
-         token.policyElse() != null -> ElseCondition() to Instructions.parse(token.policyElse().policyInstruction())
-         else -> error("Invalid condition is neither a case nor an else")
-      }
-   }
-
-   private fun compileCaseCondition(
-      namespace: String,
-      case: PolicyCaseContext
-   ): Pair<Condition, Instruction> {
-      val typeResolver = typeResolver(namespace)
-      val condition = CaseCondition(
-         Subjects.parse(case.policyExpression(0), typeResolver),
-         Operator.parse(case.policyOperator().text),
-         Subjects.parse(case.policyExpression(1), typeResolver)
-      )
-      val instruction = Instructions.parse(case.policyInstruction())
-      return condition to instruction
-   }
 
 
 }

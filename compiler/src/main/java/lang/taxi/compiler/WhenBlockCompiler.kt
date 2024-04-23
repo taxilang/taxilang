@@ -3,16 +3,19 @@ package lang.taxi.compiler
 import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.right
-import lang.taxi.*
+import lang.taxi.CompilationError
+import lang.taxi.CompilationMessage
+import lang.taxi.TaxiParser
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.accessors.NullValue
-import lang.taxi.compiler.fields.FieldCompiler
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.LiteralExpression
+import lang.taxi.toCompilationUnits
 import lang.taxi.types.AssignmentExpression
 import lang.taxi.types.ElseMatchExpression
 import lang.taxi.types.InlineAssignmentExpression
 import lang.taxi.types.Type
+import lang.taxi.types.TypeChecker
 import lang.taxi.types.WhenCaseBlock
 import lang.taxi.types.WhenExpression
 import lang.taxi.utils.flattenErrors
@@ -21,10 +24,11 @@ import lang.taxi.utils.wrapErrorsInList
 import org.antlr.v4.runtime.ParserRuleContext
 
 class WhenBlockCompiler internal constructor(
-   private val compiler: FieldCompiler,
-   private val expressionCompiler: ExpressionCompiler
+//   private val fieldCompiler: FieldCompiler,
+   private val expressionCompiler: ExpressionCompiler,
+   private val typeChecker:TypeChecker = expressionCompiler.typeChecker
 ) {
-   private val typeChecker = compiler.typeChecker
+
 
    fun compileWhenCondition(
       whenBlock: TaxiParser.WhenBlockContext,
@@ -140,7 +144,7 @@ class WhenBlockCompiler internal constructor(
       scalarAssigningDeclaration: TaxiParser.ScalarAccessorExpressionContext,
       whenClauseSelectorType: Type
    ): Either<List<CompilationError>, AssignmentExpression> {
-      return compiler.compileScalarAccessor(scalarAssigningDeclaration, targetType = whenClauseSelectorType)
+      return expressionCompiler.compileScalarAccessor(scalarAssigningDeclaration, targetType = whenClauseSelectorType)
          .map { accessor -> InlineAssignmentExpression(accessor) }
    }
 

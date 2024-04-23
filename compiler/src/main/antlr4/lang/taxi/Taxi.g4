@@ -131,7 +131,7 @@ expressionGroup:
 // as types
 // 1-Oct: Tried collapsing scalarAccessorExpression into this, but it caused errors.
 // Would like to simplify...
-expressionAtom: functionCall | typeExpression | fieldReferenceSelector | modelAttributeTypeReference | literal | anonymousTypeDefinition;
+expressionAtom: functionCall | typeExpression | typeProjection | fieldReferenceSelector | modelAttributeTypeReference | literal | literalArray | anonymousTypeDefinition;
 
 //scalarAccessorExpression
   //    : xpathAccessorDeclaration
@@ -412,7 +412,7 @@ operationSignature
      :   annotation* identifier  '(' operationParameterList? ')' operationReturnType?
      ;
 
-operationScope : identifier;
+operationScope : K_Read | K_Write;
 
 operationReturnType
     : ':' typeReference ('(' (operationReturnValueOriginExpression ',')? expressionGroup? ')')?
@@ -466,85 +466,13 @@ comp_operator : GT
 
 
 policyDeclaration
-    :  annotation* 'policy' policyIdentifier 'against' typeReference '{' policyRuleSet* '}';
+    :  annotation* 'policy' identifier 'against' typeReference expressionInputs? '{' policyRuleSet* '}';
 
-policyOperationType
-    : identifier;
 
-policyRuleSet : policyOperationType policyScope? '{' (policyBody | policyInstruction) '}';
+policyRuleSet : operationScope? policyScope? '{' expressionGroup '}';
 
 policyScope : 'internal' | 'external';
 
-
-policyBody
-    :   policyStatement*
-    ;
-
-policyIdentifier : identifier;
-
-policyStatement
-    : policyCase | policyElse;
-
-// TODO: Should consider revisiting this, so that operators are followed by valid tokens.
-// eg: 'in' must be followed by an array.  We could enforce this at the language, to simplify in Vyne
-policyCase
-    : 'case' policyExpression policyOperator policyExpression '->' policyInstruction
-    ;
-
-policyElse
-    : 'else' '->' policyInstruction
-    ;
-policyExpression
-    : callerIdentifer
-    | thisIdentifier
-    | literalArray
-    | literal;
-
-
-callerIdentifer : 'caller' '.' typeReference;
-thisIdentifier : 'this' '.' typeReference;
-
-// TODO: Should consider revisiting this, so that operators are followed by valid tokens.
-// eg: 'in' must be followed by an array.  We could enforce this at the language, to simplify in Vyne
-policyOperator
-    : EQ
-    | NQ
-    | IN
-    ;
-
-literalArray
-    : '[' literal (',' literal)* ']'
-    ;
-
-policyInstruction
-    : policyInstructionEnum
-    | policyFilterDeclaration
-    ;
-
-policyInstructionEnum
-    : 'permit';
-
-policyFilterDeclaration
-    : 'filter' filterAttributeNameList?
-    ;
-
-filterAttributeNameList
-    : '(' identifier (',' identifier)* ')'
-    ;
-
-// processors currently disabled
-// https://gitlab.com/vyne/vyne/issues/52
-//policyProcessorDeclaration
-//    : 'process' 'using' qualifiedName policyProcessorParameterList?
-//    ;
-
-//policyProcessorParameterList
-//    : '(' policyParameter (',' policyParameter)* ')'
-//    ;
-
-//policyParameter
-//    : literal | literalArray;
-//
 
 columnDefinition : 'column' '(' columnIndex ')' ;
 
@@ -624,6 +552,10 @@ literal
     |   BooleanLiteral
     |   StringLiteral
     |   'null'
+    ;
+
+literalArray
+    : '[' literal (',' literal)* ']'
     ;
 
 typeExtensionDeclaration
@@ -735,8 +667,12 @@ serviceOrMemberReferenceList: serviceOrMemberReference (',' serviceOrMemberRefer
 serviceRestrictions: (K_Using | K_Excluding) '{' serviceOrMemberReferenceList '}';
 
 
+// Note: 23-Apr-24...
+// tried allowing both 'as' and '->' here, but it created ambiguity with the
+// expressionInputs block, causing failing tests.
+typeProjection: ('as') (typeReference | expressionInputs? anonymousTypeDefinition);
 
-typeProjection: 'as' (typeReference | expressionInputs? anonymousTypeDefinition);
+
 //as {
 //    orderId // if orderId is defined on the Order type, then the type is inferrable
 //    productId: ProductId // Discovered, using something in the query context, it's up to Vyne to decide how.
@@ -765,7 +701,7 @@ BooleanLiteral
 // names, operations and so on with words that are reserved in some context.
 
 identifier:
-   K_Table | K_Stream | K_Find | K_Map | K_Except | K_Call | K_Filter | K_Query | K_Extension | IdentifierToken;
+   K_Table | K_Stream | K_Find | K_Map | K_Except | K_Call | K_Filter | K_Query | K_Extension  | K_Read | K_Write | IdentifierToken;
 
 K_Find: 'find';
 
@@ -809,6 +745,10 @@ K_Stream: 'stream';
 K_Filter: 'filter';
 // Identifier for signalling a mutation within a query
 K_Call: 'call';
+
+// Operation scopes
+K_Read : 'read';
+K_Write : 'write';
 
 K_Except : 'except';
 

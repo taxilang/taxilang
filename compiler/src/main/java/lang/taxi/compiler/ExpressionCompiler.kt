@@ -22,7 +22,7 @@ import org.antlr.v4.runtime.ParserRuleContext
 
 class ExpressionCompiler(
    private val tokenProcessor: TokenProcessor,
-   private val typeChecker: TypeChecker,
+   val typeChecker: TypeChecker,
    private val errors: MutableList<CompilationError>,
    /**
     * Pass the fieldCompiler when the expression being compiled is within the field of a model / query result.
@@ -39,7 +39,7 @@ class ExpressionCompiler(
       this,
    )
 
-   fun withTypedExpressionBuilder(newBuilder: TypedExpressionBuilder):ExpressionCompiler {
+   fun withTypedExpressionBuilder(newBuilder: TypedExpressionBuilder): ExpressionCompiler {
       return ExpressionCompiler(
          tokenProcessor,
          typeChecker,
@@ -49,6 +49,7 @@ class ExpressionCompiler(
          typedExpressionBuilder = newBuilder
       )
    }
+
    fun withParameters(arguments: List<Argument>): ExpressionCompiler {
       // TODO : In future, does it make sense to "nest" these, so that as we add arguments,
       // they form scopes / contexts?
@@ -192,8 +193,44 @@ class ExpressionCompiler(
          val typeName = fieldCompiler.anonymousTypeNameForMember(member) + "$${NameGenerator.randomString(length = 5)}"
          fieldCompiler.parseFieldProjection(typeProjection, projectionSourceType, typeName, emptyList())
       } else {
-         error("Expected we were parsing an expression with a projection inside a field.  Understand this usecase")
+         val anonymousTypeName = projectionSourceType.type.qualifiedName + "$${NameGenerator.randomString(length = 5)}"
+         compileExpressionProjectionWithoutField(
+            typeProjection,
+            projectionSourceType,
+            anonymousTypeName,
+         )
       }
+   }
+
+   // This occurs when compiling a type projection expression outside of a field
+   // eg: in a policy
+   //
+   private fun compileExpressionProjectionWithoutField(
+      typeProjection: TypeProjectionContext,
+      projectionSourceType: FieldTypeSpec,
+      anonymousTypeName: String,
+   ): Either<List<CompilationError>, Pair<Type, List<ProjectionFunctionScope>>> {
+      return tokenProcessor.parseProjectionScope(typeProjection.expressionInputs(), projectionSourceType, this.scopes)
+         .flatMap { projectionScope ->
+            val projectedType = when {
+               typeProjection.anonymousTypeDefinition() != null -> tokenProcessor.parseAnonymousType(
+                  anonymousTypeName,
+                  typeProjection.anonymousTypeDefinition(),
+                  anonymousTypeName,
+                  ResolutionContext(
+                     // Implementing policies 2.0
+                     // We need spread operator capabilities when compiling expressions,
+                     // which requires a scope.
+                     activeScopes = listOf(ProjectionFunctionScope.implicitThis(projectionSourceType.type)),
+                     parameters = this.scopes
+                  )
+               )
+
+               typeProjection.typeReference() != null -> tokenProcessor.typeOrError(typeProjection.typeReference())
+               else -> error("Can't lookup type reference for projection from statement: ${typeProjection.source().content}")
+            }
+            projectedType.map { type -> type to projectionScope }
+         }
    }
 
    /**
@@ -225,9 +262,8 @@ class ExpressionCompiler(
       return when {
          expression.expressionAtom() != null -> compileExpressionAtom(expression.expressionAtom(), assignmentType)
          expression.whenBlock() != null -> {
-            require(fieldCompiler != null) { "Cannot compile a When Block as the expression compiler was initialized without a field compiler" }
             require(assignmentType != null) { "Cannot compile a When Block as no assignment type has been provided" }
-            val whenCompiler = WhenBlockCompiler(fieldCompiler, this)
+            val whenCompiler = WhenBlockCompiler(this)
             whenCompiler.compileWhenCondition(expression.whenBlock(), assignmentType)
          }
 
@@ -247,11 +283,14 @@ class ExpressionCompiler(
          )
 
          expressionAtom.literal() != null -> parseLiteralExpression(expressionAtom.literal())
+         expressionAtom.literalArray() != null -> parseLiteralArray(expressionAtom.literalArray())
          expressionAtom.fieldReferenceSelector() != null -> parseAttributeSelector(expressionAtom.fieldReferenceSelector())
          expressionAtom.modelAttributeTypeReference() != null -> parseModelAttributeTypeReference(expressionAtom.modelAttributeTypeReference())
          else -> error("Unhandled atom in expression: ${expressionAtom.text}")
       }
    }
+
+
 
    private fun parseAttributeSelector(fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext): Either<List<CompilationError>, Expression> {
       return when {
@@ -336,6 +375,10 @@ class ExpressionCompiler(
       }
    }
 
+
+   private fun parseLiteralArray(literalArray: TaxiParser.LiteralArrayContext): Either<List<CompilationError>, Expression> {
+      return LiteralExpression(LiteralAccessor(literalArray.value()), literalArray.toCompilationUnits()).right()
+   }
    private fun parseLiteralExpression(literal: TaxiParser.LiteralContext): Either<List<CompilationError>, Expression> {
       return LiteralExpression(LiteralAccessor(literal.valueOrNullValue()), literal.toCompilationUnits()).right()
    }
@@ -510,11 +553,15 @@ class ExpressionCompiler(
       assignmentType: Type?
    ): Either<List<CompilationError>, Expression>? {
       val tokenParts = tokenName.split(".")
-      val firstToken = listOf(tokenParts.first())
-      return if (canResolveAsScopePath(firstToken)) {
-         resolveScopePath(firstToken, readFunction)
+      val (scopePath, remainingTokens) = when (tokenParts.size) {
+         0 -> error("Expected tokens defining a scope for calling an expression")
+         1 -> listOf(tokenParts.single()) to emptyList<String>()
+         else -> tokenParts.dropLast(1) to listOf(tokenParts.last())
+      }
+
+      return if (canResolveAsScopePath(scopePath)) {
+         resolveScopePath(scopePath, readFunction)
             .flatMap { selector ->
-               val remainingTokens = tokenParts.drop(1)
                when {
                   remainingTokens.isEmpty() -> selector.right()
                   remainingTokens.size == 1 -> {
@@ -723,7 +770,8 @@ class ExpressionCompiler(
       context: ParserRuleContext
    ): Either<List<CompilationError>, ArgumentSelector> {
       // if we can resolve it through a scope, do so.
-      val resolvedScopeReference = scopes.first { it.matchesReference(identifierTokens) }
+      val resolvedScopeReference = scopes.firstOrNull { it.matchesReference(identifierTokens) }
+         ?: error("Internal error : Failed to resolve identifier ${identifierTokens.joinToString(".")} - current scopes are ${scopes.joinToString { it.name }}")
       return resolveScopePath(
          resolvedScopeReference,
          resolvedScopeReference.pruneFieldPath(identifierTokens),
