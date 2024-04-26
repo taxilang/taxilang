@@ -71,7 +71,7 @@ object PrimitiveTypes {
    }
 
    fun getTaxiPrimitive(rawType: Class<*>): Type {
-      return javaTypeToPrimitive[rawType.canonicalName]!!
+      return javaTypeToPrimitive[rawType.canonicalName] ?: error("No primitive type defined for ${rawType.canonicalName}")
    }
 
    fun isTaxiPrimitive(javaTypeQualifiedName: String): Boolean {
