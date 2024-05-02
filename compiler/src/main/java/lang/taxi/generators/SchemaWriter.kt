@@ -65,6 +65,7 @@ open class SchemaWriter(
 
 
             val typeDeclarations = generateTaxiForTypes(types, namespacedDoc.namespace)
+               .filter { it.isNotEmpty() }
             // typeDeclarations excludes any types in the schema that were present,
             // but we don't need to output. (eg., builtin types).
             // To prevent emitting empty schemas, check now and bail
