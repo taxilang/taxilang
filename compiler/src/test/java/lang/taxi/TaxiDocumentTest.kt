@@ -1,6 +1,8 @@
 package lang.taxi
 
 import com.winterbe.expekt.expect
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -66,4 +68,49 @@ class TaxiDocumentTest {
         return Compiler(this).compile()
     }
 
+   @Test
+   fun `two docs with different fields in a type have a different hash`() {
+      val src1 = """
+         model Film {
+           filmId : FilmId inherits String
+         }
+      """.compiled()
+      val src2 = """
+         model Film {
+           filmId : FilmId inherits String
+           title : Title inherits String
+         }
+      """.compiled()
+      src1.hashCode().shouldNotBe(src2.hashCode())
+   }
+
+   @Test
+   fun `two docs with different annotations on fields in a type have a different hash`() {
+      val src1 = """
+         model Film {
+           filmId : FilmId inherits String
+         }
+      """.compiled()
+      val src2 = """
+         model Film {
+            @Id
+           filmId : FilmId inherits String
+         }
+      """.compiled()
+      src1.hashCode().shouldNotBe(src2.hashCode())
+   }
+   @Test
+   fun `two docs with same types have the same hash`() {
+      val src1 = """
+         model Film {
+           filmId : FilmId inherits String
+         }
+      """.compiled()
+      val src2 = """
+         model Film {
+           filmId : FilmId inherits String
+         }
+      """.compiled()
+      src1.hashCode().shouldBe(src2.hashCode())
+   }
 }
