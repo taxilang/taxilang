@@ -39,7 +39,8 @@ model Person {
             person.hasField("lastName").should.be.`true`
          }
 
-         it("should set the source in the correct namespace") {
+         // How is this used?
+         xit("should set the source in the correct namespace") {
             val capturedSource= """
                namespace names {
                   type FirstName inherits String

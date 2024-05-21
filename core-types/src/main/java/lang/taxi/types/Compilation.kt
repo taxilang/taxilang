@@ -17,7 +17,7 @@ interface Compiled {
  */
 data class CompilationUnit(
    val source: SourceCode,
-   val location: SourceLocation = SourceLocation.UNKNOWN_POSITION
+   val location: SourceLocation = SourceLocation.UNKNOWN_POSITION,
 ) {
    companion object {
       fun unspecified(): CompilationUnit {

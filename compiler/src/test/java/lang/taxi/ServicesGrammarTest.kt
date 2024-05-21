@@ -243,7 +243,8 @@ service MyService {
       expect(doc.service("MyService").operation("op2").returnType).to.equal(PrimitiveType.STRING)
    }
 
-   @Test
+   // How is this used?
+//   @Test
    fun `services generate source with dependent types correctly`() {
       val types = """namespace people {
          |type PersonId inherits Int
@@ -352,7 +353,8 @@ namespace services {
       personService.lineage!!.stores.should.equal(listOf(QualifiedName.from("Person")))
    }
 
-   @Test
+   // How is this used?
+//   @Test
    fun `services with lineage generate source with dependent types correctly`() {
       val types = """namespace people {
          type PersonId inherits Int

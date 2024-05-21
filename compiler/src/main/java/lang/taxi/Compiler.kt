@@ -45,19 +45,25 @@ fun ParserRuleContext?.toCompilationUnit(
    /**
     * Looks in the source file declaring this context, and grabs all the imports
     */
-   includeImportsPresentInFile: Boolean = false
+   includeImportsPresentInFile: Boolean = false,
+
 ): CompilationUnit {
    return if (this == null) {
       CompilationUnit.unspecified()
    } else {
       val rawSource = this.source().let { src ->
-         if (includeImportsPresentInFile) {
+         if (includeImportsPresentInFile && this.importsInFile().isNotEmpty()) {
             val imports = this.importsInFile().joinToString("\n") { "import ${it.fullyQualifiedName}" }
             return@let src.copy(content = listOf(imports, src.content).joinToString("\n\n"))
          } else src
       }
+      // MP: 21-May-24
+      // Unclear where this standalone source is used.
+      // However, this is breaking user-provided formatting when saving queries
+      // If nothing is actually using this, let's remove it. Otherwise, document why we need this.
+//      val standalone = rawSource.makeStandalone(this.findNamespace(), dependantTypeNames),
       return CompilationUnit(
-         rawSource.makeStandalone(this.findNamespace(), dependantTypeNames),
+         rawSource,
          SourceLocation(this.start.line, this.start.charPositionInLine)
       )
    }
