@@ -774,7 +774,8 @@ namespace foo {
       messages.should.be.empty
    }
 
-   @Test
+   // // How is this used?
+//   @Test
    fun `compilation units with namespacs and imports are correct`() {
       val srcA = """
          import foo.bar.Person

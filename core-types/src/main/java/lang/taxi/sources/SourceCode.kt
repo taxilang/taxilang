@@ -74,7 +74,11 @@ data class SourceCode(
          requiredImports.filter { qualifiedName -> presentImports.none { it == qualifiedName.fullyQualifiedName } }
 
       val contentWithoutImports = this.content.lines().filter { !it.trim().startsWith("import") }
-         .map { it.trimIndent() }
+         // Don't trim the indent here.
+         // Doing this means that when we save content then the source
+         // is modified and users lose their indentation.
+         // We should keep the source as-is, and format it on the way out.
+         // .map { it.trimIndent() }
          .joinToString("\n")
       val allImports = presentImports + missingImports.map { "import ${it.fullyQualifiedName}" }
       val importPrelude =  allImports.joinToString("\n")
