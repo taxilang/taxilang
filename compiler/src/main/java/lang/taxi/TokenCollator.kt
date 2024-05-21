@@ -88,7 +88,6 @@ data class Tokens(
       imports.groupBy { it.second.source().normalizedSourceName }
    }
 
-
    /**
     * This method is currently stubbed out.
     * There's a problem with the existing implementation that it incorrectly rejects
@@ -102,13 +101,6 @@ data class Tokens(
     * For now, this is disabled, but we need to resolve this.
     */
    private fun collectDuplicateTypes(others: Tokens): List<CompilationError> {
-      // TODO : This used to be called as part of a reduce function, that we've now removed.
-      // This menas that checking for ducpliate types (which was disabled anyway)
-      // now isn't called anymore.
-
-      // Stubbed for a demo
-      // TODO("Revisit duplicate type definition handling")
-      return emptyList()
       // Don't allow definition of given types in multiple files.
       // Though this is a bit too strict (we'd like to allow multiple definitions that are semantically equivelant to each other)
       // this is a quick update to resolve the immediate issue at client side.
@@ -118,7 +110,7 @@ data class Tokens(
             CompilationError(
                (others.unparsedTypes[it]
                   ?: error("")).second.start,
-               "Attempt to redefine type $it. Types may be extended (using an extension), but not redefined"
+               "Duplicate type definition - $it is already defined"
             )
          }
          compilationErrors

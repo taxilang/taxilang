@@ -165,7 +165,6 @@ namespace bar {
       foo.field("hatedNames").type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Name>")
    }
 
-   @Disabled("Need to make this work consistently. See TokenCollator:collectDuplicateTypes for detail")
    @Test
    fun given_typeIsRedeclaredWithSemanticallyEquivalentDefinition_then_itIsInValid() {
       val source1 = """
@@ -177,8 +176,6 @@ namespace foo {
 }"""
       val source2 = """
 namespace foo {
-    // type alias FirstName as String
-    // type alias LastName as String
     type Person {
         lastName : LastName as String
         firstName : FirstName as String
@@ -191,7 +188,6 @@ namespace foo {
    }
 
    @Test
-   @Disabled("Need to make this work consistently. See TokenCollator:collectDuplicateTypes for detail")
    fun given_typeIsRedeclaredWithDifferentDefinition_then_exceptionIsThrown() {
       val source1 = """
 namespace foo {
