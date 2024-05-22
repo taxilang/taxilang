@@ -9,6 +9,7 @@ import lang.taxi.types.Arrays
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.Compiled
 import lang.taxi.types.Documented
+import lang.taxi.types.ImportableToken
 import lang.taxi.types.ObjectType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
@@ -27,8 +28,9 @@ data class TaxiQlQuery(
    override val typeDoc: String?,
    override val annotations: List<Annotation>,
    override val compilationUnits: List<CompilationUnit>
-) : Documented, Annotatable, Compiled {
+) : Documented, Annotatable, Compiled, ImportableToken {
 
+   override val qualifiedName: String = name.parameterizedName
    @Deprecated(
       "Only single discovery types are supported. Use discoveryType instead.",
       replaceWith = ReplaceWith("discoveryType")
