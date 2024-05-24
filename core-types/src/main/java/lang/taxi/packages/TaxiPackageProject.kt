@@ -34,6 +34,8 @@ data class TaxiPackageProject(
       PackageIdentifier(ProjectName.fromId(projectId), version)
    }
    val packageRootPath:Path? = taxiConfFile?.parent
+
+   val sourceRootPath = packageRootPath?.resolve(sourceRoot)
 }
 
 // TODO : We also have PackageSource in the packageImporter.
