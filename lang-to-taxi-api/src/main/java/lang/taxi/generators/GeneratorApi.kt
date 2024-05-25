@@ -8,7 +8,8 @@ data class GeneratedTaxiCode(
    val successful = taxi.isNotEmpty()
    val hasErrors = messages.hasErrors()
    val hasWarnings = messages.hasWarnings()
-
+   val errorCount = messages.errorCount
+   val warningCount = messages.warningCount
    val concatenatedSource = taxi.joinToString("\n")
 
 }
@@ -20,6 +21,16 @@ fun List<Message>.hasErrors(): Boolean {
 fun List<Message>.hasWarnings(): Boolean {
    return this.any { it.level == Level.WARN }
 }
+
+val List<Message>.errorCount: Int
+   get() {
+      return this.count { it.level == Level.ERROR }
+   }
+
+val List<Message>.warningCount: Int
+   get() {
+      return this.count { it.level == Level.WARN }
+   }
 
 data class Message(val level: Level, val message: String, val link: String? = null)
 enum class Level {

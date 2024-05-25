@@ -26,6 +26,7 @@ typealias SourceCodeLanguage = String
 object SourceCodeLanguages {
    const val TAXI = "taxi"
    const val WSDL = "wsdl"
+   const val OAS = "OpenAPI"
 }
 
 

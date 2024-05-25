@@ -70,14 +70,14 @@ class TaxiGenerator(
          )
    }
 
-   fun generateTaxi(
-      wsdlSourceUrl: URL
-   ): GeneratedTaxiCode {
-      val taxiDoc = generateTaxiDocument(wsdlSourceUrl)
+   fun generateTaxiAndCompile(
+      wsdlSource: String
+   ): Pair<TaxiDocument,GeneratedTaxiCode> {
+      val taxiDoc = generateTaxiDocument(wsdlSource)
       val taxi = schemaWriter.generateSchemas(
          listOf(taxiDoc)
       )
-      return GeneratedTaxiCode(
+      return taxiDoc to GeneratedTaxiCode(
          taxi, logger.messages
       )
    }
