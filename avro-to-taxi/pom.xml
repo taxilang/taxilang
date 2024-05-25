@@ -2,41 +2,26 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
    <parent>
-      <artifactId>parent</artifactId>
       <groupId>org.taxilang</groupId>
+      <artifactId>parent</artifactId>
       <version>1.55.0-SNAPSHOT</version>
    </parent>
-   <modelVersion>4.0.0</modelVersion>
 
-   <artifactId>protobuf-to-taxi</artifactId>
-
+   <artifactId>avro-to-taxi</artifactId>
    <properties>
-      <maven.compiler.source>11</maven.compiler.source>
-      <maven.compiler.target>11</maven.compiler.target>
-      <wire.version>4.5.1</wire.version>
-      <okio.version>3.3.0</okio.version>
+      <avro.version>1.11.3</avro.version>
    </properties>
 
    <dependencies>
       <dependency>
-         <groupId>com.squareup.wire</groupId>
-         <artifactId>wire-compiler</artifactId>
+         <groupId>org.apache.avro</groupId>
+         <artifactId>avro</artifactId>
+         <version>${avro.version}</version>
       </dependency>
 
-      <dependency>
-         <groupId>com.squareup.wire</groupId>
-         <artifactId>wire-schema</artifactId>
-      </dependency>
 
-      <dependency>
-         <groupId>com.squareup.okio</groupId>
-         <artifactId>okio</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>com.squareup.okio</groupId>
-         <artifactId>okio-fakefilesystem</artifactId>
-      </dependency>
 
       <dependency>
          <groupId>org.taxilang</groupId>
@@ -73,24 +58,4 @@
          <version>${project.version}</version>
       </dependency>
    </dependencies>
-
-   <dependencyManagement>
-      <dependencies>
-         <dependency>
-            <groupId>com.squareup.wire</groupId>
-            <artifactId>wire-bom</artifactId>
-            <version>${wire.version}</version>
-            <scope>import</scope>
-            <type>pom</type>
-         </dependency>
-         <dependency>
-            <groupId>com.squareup.okio</groupId>
-            <artifactId>okio-bom</artifactId>
-            <version>${okio.version}</version>
-            <type>pom</type>
-            <scope>import</scope>
-         </dependency>
-      </dependencies>
-   </dependencyManagement>
-
 </project>
