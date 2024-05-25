@@ -106,6 +106,7 @@ enum class PrimitiveType(
    BOOLEAN("Boolean", "Represents a value which is either `true` or `false`."),
    STRING("String", "A collection of characters."),
    INTEGER("Int", "A signed integer - ie. a whole number (positive or negative), with no decimal places"),
+   LONG("Long", "A signed long - ie. a whole number (positive or negative), with no decimal places"),
    DECIMAL("Decimal", "A signed decimal number - ie., a whole number with decimal places."),
    LOCAL_DATE(
       "Date",
@@ -168,7 +169,7 @@ enum class PrimitiveType(
 
    companion object {
       private val typesByName = values().associateBy { it.declaration }
-      private val typesByQualifiedName = values().associateBy { it.qualifiedName }
+      private val typesByQualifiedName: Map<String, PrimitiveType> = values().associateBy { it.qualifiedName }
       private val typesByLookup = typesByName + typesByQualifiedName
 
       const val NAMESPACE = "lang.taxi"
@@ -200,6 +201,10 @@ enum class PrimitiveType(
 
       fun isAssignableToPrimitiveType(type: Type): Boolean {
          return getUnderlyingPrimitiveIfExists(type) != null
+      }
+
+      fun getPrimitive(name: String):PrimitiveType {
+         return typesByLookup[name] ?: error("Type $name is not a primitive type")
       }
 
       fun getUnderlyingPrimitive(type: Type): PrimitiveType {

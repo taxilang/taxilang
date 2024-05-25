@@ -29,11 +29,13 @@ object PrimitiveTypes {
       PrimitiveType.INTEGER to listOf(
          Integer::class.java,
          Int::class.java,
-         BigInteger::class.java,
          kotlin.Short::class.java,
+         Short::class.java
+      ),
+      PrimitiveType.LONG to listOf(
+         BigInteger::class.java,
          kotlin.Long::class.java,
          Long::class.java,
-         Short::class.java
       ),
       PrimitiveType.DECIMAL to listOf(
          BigDecimal::class.java,

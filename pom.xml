@@ -67,6 +67,7 @@
       <module>taxi-to-openapi-plugin</module>
        <module>soap-to-taxi</module>
       <module>package-manager</module>
+       <module>avro-to-taxi</module>
    </modules>
 
    <properties>
