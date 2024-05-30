@@ -11,6 +11,8 @@
 
    <artifactId>avro-to-taxi</artifactId>
    <properties>
+      <!--If bumping this version, revisit dependencyManagement
+      for commons-compress below -->
       <avro.version>1.11.3</avro.version>
    </properties>
 
@@ -20,7 +22,6 @@
          <artifactId>avro</artifactId>
          <version>${avro.version}</version>
       </dependency>
-
 
 
       <dependency>
@@ -58,4 +59,19 @@
          <version>${project.version}</version>
       </dependency>
    </dependencies>
+
+   <dependencyManagement>
+      <dependencies>
+         <!-- Set to 1.26.0 because of vulnerabilities:
+         CVE-2024-25710 , CVE-2024-26308.
+         Transitive in avro. Hopefully resolved in a release of
+         avro > 1.11.3
+         -->
+         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.26.0</version>
+         </dependency>
+      </dependencies>
+   </dependencyManagement>
 </project>
