@@ -1,11 +1,17 @@
 package lang.taxi.generators.avro
 
 import lang.taxi.types.Annotation
+import lang.taxi.types.toQualifiedName
 
+object AvroAnnotationSchema {
+   val taxi = listOf(AvroMessageAnnotation.taxi, AvroFieldAnnotation.taxi).joinToString("\n")
+}
 object AvroMessageAnnotation {
    val NAME = "lang.taxi.formats.AvroMessage"
    val taxi = """
-      annotation $NAME
+      namespace lang.taxi.formats {
+         annotation ${NAME.toQualifiedName().typeName}
+      }
    """.trimIndent()
 
    fun annotation():Annotation {
@@ -14,8 +20,12 @@ object AvroMessageAnnotation {
 }
 object AvroFieldAnnotation {
    val NAME = "lang.taxi.formats.AvroField"
-   val taxi = """annotation $NAME {
+   val taxi = """namespace lang.taxi.formats {
+      |
+      |annotation ${NAME.toQualifiedName().typeName} {
       | ordinal: Int
+      |}
+      |
       |}
    """.trimMargin()
    fun annotation(ordinal:Int):Annotation {
