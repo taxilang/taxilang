@@ -132,7 +132,7 @@ class AvroTypeMapper(private val avroSchema: Schema, private val logger: Logger)
                .appendNotNull(NameFromTaxiMetadata.ifPresent(avroField.getProp(TAXI_TYPENAME)))
 
 
-            val (fieldSchema, nullable) = unwrapPotentialNullableType(avroField.schema())
+            val (fieldSchema, nullable) = unwrapUnionType(avroField.schema())
 
             val typeRef = getOrCreateType(fieldSchema, fieldNameHelper)
             Field(
@@ -158,11 +158,15 @@ class AvroTypeMapper(private val avroSchema: Schema, private val logger: Logger)
 
    }
 
-   private fun unwrapPotentialNullableType(schema: Schema): Pair<Schema, Boolean> {
+   private fun unwrapUnionType(schema: Schema): Pair<Schema, IsNullable> {
       if (schema.type != Schema.Type.UNION) {
          return schema to false
       }
       val types = schema.types
+      if (types.size == 1) {
+         return types[0] to false
+      }
+
       return if (types.size == 2 && types.any { it.type == Schema.Type.NULL }) {
          types.single { it.type != Schema.Type.NULL } to true
       } else {
@@ -175,3 +179,5 @@ class AvroTypeMapper(private val avroSchema: Schema, private val logger: Logger)
       return ArrayType(memberType, CompilationUnit.unspecified())
    }
 }
+
+private typealias IsNullable = Boolean
