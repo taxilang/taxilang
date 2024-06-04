@@ -2,6 +2,7 @@ package lang.taxi.types
 
 import lang.taxi.utils.takeHead
 
+typealias ParameterizedName = String
 data class QualifiedName(
    val namespace: String,
    val typeName: String,
@@ -20,7 +21,7 @@ data class QualifiedName(
       this.parameters.joinToString(",") { it.parameterizedName }
    }
 
-   val parameterizedName: String = if (parameters.isEmpty()) {
+   val parameterizedName: ParameterizedName = if (parameters.isEmpty()) {
       toString()
    } else {
       "${toString()}<$parameterizedTypeNames>"

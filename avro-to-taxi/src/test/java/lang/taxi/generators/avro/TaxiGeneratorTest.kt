@@ -1,7 +1,10 @@
 package lang.taxi.generators.avro
 
 import com.google.common.io.Resources
+import com.winterbe.expekt.should
+import lang.taxi.sources.SourceCodeLanguages
 import lang.taxi.testing.shouldCompileTheSameAs
+import org.apache.avro.Schema
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import kotlin.io.path.toPath
@@ -14,7 +17,8 @@ class TaxiGeneratorTest {
          .toURI().toPath()
       val generated = TaxiGenerator()
          .generate(avroFile)
-      generated.concatenatedSource.shouldCompileTheSameAs("""
+      generated.concatenatedSource.shouldCompileTheSameAs(
+         """
 namespace simple {
    [[ A full addressbook of people ]]
    @lang.taxi.formats.AvroMessage
@@ -52,7 +56,20 @@ namespace simple.addressbook.people.phones {
       HOME(1),
       WORK(2)
    }
-}""".trimIndent())
+}""".trimIndent()
+      )
+   }
+
+
+   @Test
+   fun `source map contains a reference to the generated source`() {
+      val avroFile = Resources.getResource("addressBookWithTaxiAnnotations.avsc")
+         .toURI().toPath()
+      val generated = TaxiGenerator()
+         .generate(avroFile)
+
+      generated.sourceMap.containsType("foo.AddressBook")
+         .should.be.`true`
    }
 
    @Test

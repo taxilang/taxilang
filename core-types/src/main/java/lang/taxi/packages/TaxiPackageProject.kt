@@ -13,6 +13,12 @@ typealias GlobPattern = String
  */
 typealias SourcesType = String
 
+object SourcesTypes {
+   val ORIGINAL_SOURCE: SourcesType = "@taxi/originalSources"
+   val ORBITAL_CONFIG = "@orbital/config"
+   val SOURCE_MAP = "@taxi/sourcemaps"
+}
+
 data class TaxiPackageProject(
    val name: String,
    val version: String,

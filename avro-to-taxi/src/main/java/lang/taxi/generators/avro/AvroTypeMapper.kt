@@ -5,6 +5,8 @@ import lang.taxi.generators.Logger
 import lang.taxi.generators.NameFromTaxiMetadata
 import lang.taxi.generators.NamespacedType
 import lang.taxi.generators.TypeNameHelper
+import lang.taxi.sources.SourceCode
+import lang.taxi.sources.SourceCodeLanguages
 import lang.taxi.types.ArrayType
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.EnumDefinition
@@ -19,8 +21,14 @@ import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
 import org.apache.avro.Schema
+import java.net.URI
+import java.nio.file.Paths
 
-class AvroTypeMapper(private val avroSchema: Schema, private val logger: Logger) {
+class AvroTypeMapper(
+   private val avroSchema: Schema,
+   private val logger: Logger,
+   private val path: String? = null
+) {
 
    companion object {
       const val TAXI_TYPENAME = "taxi.dataType"
@@ -43,7 +51,10 @@ class AvroTypeMapper(private val avroSchema: Schema, private val logger: Logger)
    fun generateTypes(): Set<Type> {
       if (avroSchema.type == Schema.Type.ARRAY) {
          val elementType = avroSchema.elementType
-         getOrCreateType(avroSchema.elementType, TypeNameHelper.forHint(NamespacedType(elementType.namespace, elementType.name)))
+         getOrCreateType(
+            avroSchema.elementType,
+            TypeNameHelper.forHint(NamespacedType(elementType.namespace, elementType.name))
+         )
       } else {
          getOrCreateType(avroSchema, TypeNameHelper.forHint(NamespacedType(avroSchema.namespace, avroSchema.name)))
       }
@@ -150,7 +161,7 @@ class AvroTypeMapper(private val avroSchema: Schema, private val logger: Logger)
                fields = fields.toSet(),
                modifiers = listOf(Modifier.CLOSED),
                typeDoc = schema.doc,
-               compilationUnit = CompilationUnit.unspecified(),
+               compilationUnit = avroCompilationUnit(schema, typeName, path),
                annotations = setOf(AvroMessageAnnotation.annotation())
             )
          )
@@ -181,3 +192,23 @@ class AvroTypeMapper(private val avroSchema: Schema, private val logger: Logger)
 }
 
 private typealias IsNullable = Boolean
+
+private fun avroCompilationUnit(schema: Schema, typeName: QualifiedName, fileName: String?): CompilationUnit {
+   val sourceName = fileName ?: "Generated for ${typeName.parameterizedName}"
+   val path = fileName?.let {
+      try {
+         Paths.get(it)
+      } catch (e: Exception) {
+         // Do nothing
+         null
+      }
+   }
+   return CompilationUnit(
+      SourceCode(
+         sourceName,
+         schema.toString(true),
+         path = path,
+         language = SourceCodeLanguages.AVRO
+      )
+   )
+}
