@@ -27,6 +27,8 @@ object SourceCodeLanguages {
    const val TAXI = "taxi"
    const val WSDL = "wsdl"
    const val OAS = "OpenAPI"
+   const val AVRO = "Avro"
+   const val SOURCE_MAP_JSON = "sourcemap+json"
 }
 
 
