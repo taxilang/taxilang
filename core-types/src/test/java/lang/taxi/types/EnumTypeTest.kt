@@ -23,8 +23,8 @@ class EnumTypeTest {
    fun lookupByNameOrValueWithNameNoValue() {
       // Enum has no value, with shuld default to name
       val enumType = enumType(listOf(
-         EnumValue(name = "USD", qualifiedName = "Currency.USD", annotations = emptyList(), synonyms = emptyList()),
-         EnumValue(name = "EUR", qualifiedName = "Currency.EUR", annotations = emptyList(), synonyms = emptyList())
+         EnumValue(name = "USD", enumValueQualifiedName = "Currency.USD", annotations = emptyList(), synonyms = emptyList()),
+         EnumValue(name = "EUR", enumValueQualifiedName = "Currency.EUR", annotations = emptyList(), synonyms = emptyList())
       ))
 
       enumType.has("USD").should.be.`true`

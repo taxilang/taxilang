@@ -359,7 +359,7 @@ class TaxiGenerator(
                   enumValue.value,
                   EnumValue.enumValueQualifiedName(qualifiedName, enumValue.name),
                   enumValue.annotations,
-                  synonyms = listOf(enumValue.qualifiedName),
+                  synonyms = listOf(enumValue.enumValueQualifiedName),
                   typeDoc = enumValue.typeDoc
                )
             }

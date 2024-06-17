@@ -11,7 +11,7 @@ object Enums {
       return "${enum.parameterizedName}.$enumValueName"
    }
 
-   fun isPotentialEnumMemberReference(value:String):Boolean {
+   fun isPotentialEnumMemberReference(value: String): Boolean {
       // WOuld be nice to have a smarter check here
       return value.contains(".")
    }
@@ -32,31 +32,46 @@ object Enums {
  */
 typealias EnumValueQualifiedName = String
 
-data class EnumValueExtension(val name: String,
-                              override val annotations: List<Annotation>,
-                              val synonyms: List<EnumValueQualifiedName>,
-                              override val typeDoc: String? = null,
-                              override val compilationUnit: CompilationUnit) : Annotatable, Documented, TypeDefinition {
-   private val equality = ImmutableEquality(this, EnumValueExtension::name, EnumValueExtension::annotations, EnumValueExtension::synonyms, EnumValueExtension::typeDoc)
+data class EnumValueExtension(
+   val name: String,
+   override val annotations: List<Annotation>,
+   val synonyms: List<EnumValueQualifiedName>,
+   override val typeDoc: String? = null,
+   override val compilationUnit: CompilationUnit
+) : Annotatable, Documented, TypeDefinition {
+   private val equality = ImmutableEquality(
+      this,
+      EnumValueExtension::name,
+      EnumValueExtension::annotations,
+      EnumValueExtension::synonyms,
+      EnumValueExtension::typeDoc
+   )
+
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
 }
+
 data class EnumValue(
    val name: String,
    val value: Any = name,
-   val qualifiedName: EnumValueQualifiedName,
+   val enumValueQualifiedName: EnumValueQualifiedName,
    override val annotations: List<Annotation> = emptyList(),
    val synonyms: List<EnumValueQualifiedName> = emptyList(),
    override val typeDoc: String? = null,
    val isDefault: Boolean = false
-) : Annotatable, Documented {
+) : Annotatable, Documented, Named {
+
+   override val qualifiedName: String = enumValueQualifiedName
+
    companion object {
-      fun enumValueQualifiedName(enum:EnumType, valueName:String): EnumValueQualifiedName {
-         return enumValueQualifiedName(enum.toQualifiedName(),valueName)
+      fun enumValueQualifiedName(enum: EnumType, valueName: String): EnumValueQualifiedName {
+         return enumValueQualifiedName(enum.toQualifiedName(), valueName)
       }
-      fun enumValueQualifiedName(enumName:QualifiedName, valueName: String):EnumValueQualifiedName {
+
+      fun enumValueQualifiedName(enumName: QualifiedName, valueName: String): EnumValueQualifiedName {
          return "${enumName.fullyQualifiedName}.$valueName"
       }
+
       fun splitEnumValueName(name: EnumValueQualifiedName): Pair<QualifiedName, String> {
          val parts = name.split(".")
          return QualifiedName.from(parts.dropLast(1).joinToString(".")) to parts.last()
@@ -64,24 +79,38 @@ data class EnumValue(
    }
 }
 
-data class EnumDefinition(val values: List<EnumValue>,
-                          override val annotations: List<Annotation> = emptyList(),
-                          override val compilationUnit: CompilationUnit,
-                          val inheritsFrom: Set<Type> = emptySet(),
-                          val basePrimitive: PrimitiveType,
-                          val isLenient: Boolean = false,
-                          override val typeDoc: String? = null) : Annotatable, TypeDefinition, Documented {
-   private val equality = ImmutableEquality(this, EnumDefinition::values, EnumDefinition::annotations, EnumDefinition::typeDoc, EnumDefinition::basePrimitive, EnumDefinition::inheritsFrom)
+data class EnumDefinition(
+   val values: List<EnumValue>,
+   override val annotations: List<Annotation> = emptyList(),
+   override val compilationUnit: CompilationUnit,
+   val inheritsFrom: Set<Type> = emptySet(),
+   val basePrimitive: PrimitiveType,
+   val isLenient: Boolean = false,
+   override val typeDoc: String? = null
+) : Annotatable, TypeDefinition, Documented {
+   private val equality = ImmutableEquality(
+      this,
+      EnumDefinition::values,
+      EnumDefinition::annotations,
+      EnumDefinition::typeDoc,
+      EnumDefinition::basePrimitive,
+      EnumDefinition::inheritsFrom
+   )
+
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
 }
 
 
-data class EnumExtension(val values: List<EnumValueExtension>,
-                         override val annotations: List<Annotation> = emptyList(),
-                         override val compilationUnit: CompilationUnit,
-                         override val typeDoc: String? = null) : Annotatable, TypeDefinition, Documented {
-   private val equality = ImmutableEquality(this, EnumExtension::values, EnumExtension::annotations, EnumExtension::typeDoc)
+data class EnumExtension(
+   val values: List<EnumValueExtension>,
+   override val annotations: List<Annotation> = emptyList(),
+   override val compilationUnit: CompilationUnit,
+   override val typeDoc: String? = null
+) : Annotatable, TypeDefinition, Documented {
+   private val equality =
+      ImmutableEquality(this, EnumExtension::values, EnumExtension::annotations, EnumExtension::typeDoc)
+
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
 }
@@ -90,20 +119,31 @@ data class EnumExtension(val values: List<EnumValueExtension>,
  * Simple structure containing both the defining enum, and a value within it.
  */
 data class EnumMember(val enum: EnumType, val value: EnumValue) {
-   val qualifiedName:EnumValueQualifiedName = value.qualifiedName
+   val qualifiedName: EnumValueQualifiedName = value.enumValueQualifiedName
 }
 
-data class EnumType(override val qualifiedName: String,
-                    override var definition: EnumDefinition?,
-                    override val extensions: MutableList<EnumExtension> = mutableListOf()) : UserType<EnumDefinition, EnumExtension>, Annotatable, Documented {
+data class EnumType(
+   override val qualifiedName: String,
+   override var definition: EnumDefinition?,
+   override val extensions: MutableList<EnumExtension> = mutableListOf()
+) : UserType<EnumDefinition, EnumExtension>, Annotatable, Documented, HasMembers<EnumValue> {
    companion object {
       fun undefined(name: String): EnumType {
          return EnumType(name, definition = null)
       }
    }
 
-   private val members:Map<EnumValue,EnumMember> by lazy {
-      this.values.map { value -> value to EnumMember(this,value) }.toMap()
+   private val members: Map<EnumValue, EnumMember> by lazy {
+      this.values.map { value -> value to EnumMember(this, value) }.toMap()
+   }
+
+   override fun getMember(name: String): Either<String, EnumValue> {
+      return if (hasName(name)) {
+         ofName(name).right()
+      } else {
+         "Enum ${this.qualifiedName} has no member named $name".left()
+      }
+
    }
 
    val isLenient: Boolean
@@ -130,7 +170,7 @@ data class EnumType(override val qualifiedName: String,
       }
 
    // Not sure it makes sense to support formats on enums.  Let's revisit if there's a usecase.
-   override val formatAndZoneOffset: FormatsAndZoneOffset?= null
+   override val formatAndZoneOffset: FormatsAndZoneOffset? = null
    override val format: List<String>? = null
    override val offset: Int? = null
 //   override val calculation: Formula?
@@ -218,7 +258,7 @@ data class EnumType(override val qualifiedName: String,
    }
 
    fun hasValue(value: Any?): Boolean {
-      return hasExplicitValue(value)  || this.hasDefault
+      return hasExplicitValue(value) || this.hasDefault
    }
 
    /**
@@ -246,17 +286,20 @@ data class EnumType(override val qualifiedName: String,
       ?: defaultValue
       ?: error("Enum ${this.qualifiedName} does not contain a member with a value of $value")
 
-   fun ofName(name: String?) = this.values.firstOrNull { lenientEqual(it.name, name) }
+   fun ofName(name: String?): EnumValue = this.values.firstOrNull { lenientEqual(it.name, name) }
       ?: defaultValue
       ?: error("Enum ${this.qualifiedName} does not contains a member named $name")
 
-   fun of(valueOrName: Any?) = this.values.firstOrNull { lenientEqual(it.value, valueOrName) || lenientEqual(it.name, valueOrName) }
-      ?: defaultValue
-      ?: error("Enum ${this.qualifiedName} does not contain either a name nor a value of $valueOrName")
+   fun of(valueOrName: Any?) =
+      this.values.firstOrNull { lenientEqual(it.value, valueOrName) || lenientEqual(it.name, valueOrName) }
+         ?: defaultValue
+         ?: error("Enum ${this.qualifiedName} does not contain either a name nor a value of $valueOrName")
 
-   fun member(valueOrName:Any?):EnumMember {
-      return members[this.of(valueOrName)] ?: error("Enum ${this.qualifiedName} does nto contain a member with either name or value of $valueOrName")
+   fun member(valueOrName: Any?): EnumMember {
+      return members[this.of(valueOrName)]
+         ?: error("Enum ${this.qualifiedName} does nto contain a member with either name or value of $valueOrName")
    }
+
    private fun valueExtensions(valueName: String): List<EnumValueExtension> {
       return this.extensions.flatMap { it.values.filter { value -> value.name == valueName } }
    }

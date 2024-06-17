@@ -196,7 +196,7 @@ class ReferenceCaseMatchExpression(val reference: String, override val type: Typ
 }
 
 class EnumLiteralCaseMatchExpression(val enumValue: EnumValue, override val type: EnumType) : WhenCaseMatchExpression {
-   override fun asTaxi(): String = enumValue.qualifiedName
+   override fun asTaxi(): String = enumValue.enumValueQualifiedName
 }
 
 class LiteralCaseMatchExpression(val value: Any) : WhenCaseMatchExpression {

@@ -160,7 +160,7 @@ class DefaultTypeMapper(
          EnumValue(
             name = it.name,
             annotations = emptyList(), // TODO : Support annotations on EnumValues when exporting
-            qualifiedName = Enums.enumValue(QualifiedName.from(targetTypeName), it.name),
+            enumValueQualifiedName = Enums.enumValue(QualifiedName.from(targetTypeName), it.name),
             synonyms = emptyList()
 
          )
