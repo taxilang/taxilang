@@ -1,7 +1,6 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
-import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.accessors.NullValue
 import lang.taxi.expressions.FieldReferenceExpression
 import lang.taxi.expressions.FunctionExpression
@@ -266,7 +265,7 @@ class ConditionalDataTypesTest {
       val whenBlock = doc.objectType("Trade")
          .field("underlyingIndex").accessor as WhenExpression
       val enumExpression = whenBlock.cases[0].matchExpression as LiteralExpression
-      enumExpression.literal.value.asA<EnumValue>().qualifiedName.should.equal("FixedOrFloatLeg.Float")
+      enumExpression.literal.value.asA<EnumValue>().enumValueQualifiedName.should.equal("FixedOrFloatLeg.Float")
    }
 
    @Test

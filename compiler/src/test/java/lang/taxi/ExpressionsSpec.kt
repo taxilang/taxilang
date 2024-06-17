@@ -1,7 +1,6 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
-import io.kotest.assertions.fail
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldContainExactly
@@ -378,6 +377,25 @@ class ExpressionsSpec : DescribeSpec({
          }
          """.validated()
          errors.shouldContainMessage("Type mismatch. Type of MovieRating is not assignable to type PersonId")
+      }
+
+      it("should not have a stack overflow when there's a partially completed expression") {
+         val error = """
+            model StockPrice {}
+            type StockTicker inherits String
+
+
+         """.compiledWithQueryProducingCompilationException("""
+            import taxi.stdlib.filterEach
+            import StockPrice
+
+            // This is an error seen within the language server
+            // The user was partially through writing StockTicker within the
+            // function expression
+            // But this causes a stack overflow exception
+            stream { StockPrice.filterEach((Sto)) }
+         """.trimIndent())
+         error.errors.shouldContainMessage("Sto is not defined")
       }
    }
 })

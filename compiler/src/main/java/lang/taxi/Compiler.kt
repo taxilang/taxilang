@@ -335,6 +335,11 @@ class Compiler(
       TokenProcessor(tokens, collectImports = false, typeChecker = typeChecker, linter = config.linter)
    }
 
+   val typeSystem:TypeSystem
+      get() {
+         return tokenProcessorWithImports.typeSystem
+      }
+
    fun validate(): List<CompilationError> {
       val compilationErrors = parseResult.errors
       if (compilationErrors.isNotEmpty()) {
@@ -599,10 +604,11 @@ class Compiler(
       val timedTokens = measureTimedValue {
          Tokens.combine(tokensCollection)
       }
+
       return CollectedTokens(
          timedTokens.value,
          errors,
-         syntheticTokens
+         syntheticTokens,
       )
    }
 

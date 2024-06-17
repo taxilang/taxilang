@@ -291,7 +291,6 @@ class ExpressionCompiler(
    }
 
 
-
    private fun parseAttributeSelector(fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext): Either<List<CompilationError>, Expression> {
       return when {
          fieldCompiler != null -> parseFieldReferenceSelector(fieldReferenceSelector)
@@ -379,6 +378,7 @@ class ExpressionCompiler(
    private fun parseLiteralArray(literalArray: TaxiParser.LiteralArrayContext): Either<List<CompilationError>, Expression> {
       return LiteralExpression(LiteralAccessor(literalArray.value()), literalArray.toCompilationUnits()).right()
    }
+
    private fun parseLiteralExpression(literal: TaxiParser.LiteralContext): Either<List<CompilationError>, Expression> {
       return LiteralExpression(LiteralAccessor(literal.valueOrNullValue()), literal.toCompilationUnits()).right()
    }
@@ -491,8 +491,70 @@ class ExpressionCompiler(
       parseFunctionExpressionOrTypeExpressionUsingScopeName(tokenName, readFunction, assignmentType)?.let {
          return it
       }
+      return tokenProcessor.findInSymbolTree(tokenName, readFunction)
+         .flatMap { namedElements ->
 
+            when {
+               namedElements.size == 1 && namedElements.single().value is Type -> {
+                  // The text we were passed exactly matched a Type
+                  // So, parse it as such
+                  parseFunctionExpressionAsTypeExpression(namedElements.single().value as Type, readFunction)
+               }
 
+               namedElements.size == 1 && namedElements.single().value is Function -> {
+                  // The text we were passed exactly matched a function name
+                  // (eg: filterEach(...)
+                  // So, parse it as such
+                  parseFunctionExpression(
+                     readFunction = readFunction,
+                     assignmentType = assignmentType,
+                     receiver = receiver,
+                     functionName = namedElements.single().text
+                  )
+               }
+
+               namedElements.size == 2 -> {
+                  if (namedElements[0].value is Type && namedElements[1].value is Function) {
+                     // This is an extension function call
+                     // eg: Movies.filterEach( ... )
+                     // First parse the left-hand-side (Movies)
+                     parseFunctionExpressionAsTypeExpression(
+                        namedElements[0].value as Type,
+                        readFunction
+                     ).flatMap { lhs ->
+                        parseFunctionExpression(
+                           readFunction = readFunction,
+                           assignmentType = assignmentType,
+                           receiver = lhs,
+                           functionName = namedElements[1].text
+                        ).map { rhs ->
+                           ExtensionFunctionExpression(
+                              functionExpression = rhs,
+                              receiverValue = lhs,
+                              compilationUnits = readFunction.toCompilationUnits()
+                           )
+                        }
+                     }
+                  } else {
+                     listOf(
+                        CompilationError(
+                           readFunction.toCompilationUnit(),
+                           "An internal error occurred: Could not resolve token '$tokenName' as type or function correctly. Matched two nodes, but were of unexpected types: ${namedElements[0].value::class} and ${namedElements[1].value::class}"
+                        )
+                     ).left()
+                  }
+               }
+
+               else -> listOf(
+                  CompilationError(
+                     readFunction.toCompilationUnit(),
+                     "An internal error occurred: Could not resolve token '$tokenName' as type or function correctly. Expected 1-2 nodes, but found ${namedElements.size}"
+                  )
+               ).left()
+
+            }
+         }
+// Old implementation - left below whilst debugging
       return tokenProcessor.resolveImportableToken(tokenName, readFunction.qualifiedName())
          .flatMap { token ->
             when (token) {
@@ -546,6 +608,8 @@ class ExpressionCompiler(
     * If possible, returns either the extensionFunctionExpression, or the compilation errors.
     *
     * If the token is not a scope, then returns null.
+    *
+    * TODO :  Can we merge this functionality into SymbolTree somehow?
     */
    private fun parseFunctionExpressionOrTypeExpressionUsingScopeName(
       tokenName: String,

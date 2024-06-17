@@ -72,7 +72,7 @@ class TokenProcessor(
    )
 
    private var createEmptyTypesPerformed: Boolean = false
-   private val typeSystem: TypeSystem
+   val typeSystem: TypeSystem
    private val synonymRegistry: SynonymRegistry<ParserRuleContext>
    private val services = mutableListOf<Service>()
    private val policies = mutableListOf<Policy>()
@@ -593,7 +593,7 @@ class TokenProcessor(
       fieldName: String,
       typeRule: TypeExtensionDeclarationContext
    ): EnumValue {
-      return enumType.values.firstOrNull { enumValue -> enumValue.qualifiedName == defaultValue }
+      return enumType.values.firstOrNull { enumValue -> enumValue.enumValueQualifiedName == defaultValue }
          ?: throw CompilationException(
             typeRule.start,
             "Cannot set default value for field $fieldName as $defaultValue as enum ${enumType.toQualifiedName().fullyQualifiedName} does not have corresponding value",
@@ -1797,7 +1797,24 @@ class TokenProcessor(
       }
    }
 
+   // An experimental approach that uses a full
+   // tree of symbols to navigate 'dots' properly
+   fun findInSymbolTree(tokenName: String, context: ParserRuleContext): Either<List<CompilationError>, List<TextFragmentWithCompiledToken>> {
+      return this.typeSystem.symbolTree.getSymbol(
+         tokenName,
+         context.findNamespace(),
+         importsInSource(context).map { it.fullyQualifiedName },
+         context = context
+      )
+   }
 
+   // TODO:
+   // The "lookup" phase is now better implemented using a
+   // symbolTree.
+   // However, that doesn't currently address on-demand
+   // compilation
+   // Consider calling lookupSymbol().
+   // We need to converge the two approaches
    internal fun resolveImportableToken(
       tokenName: String,
       context: ParserRuleContext,

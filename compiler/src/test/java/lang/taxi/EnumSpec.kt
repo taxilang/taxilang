@@ -20,7 +20,7 @@ enum Foo {
       """.trimIndent()
             val document = Compiler(src).compile()
             document.enumType("Foo").value("One").value.should.equal(1)
-            document.enumType("Foo").value("One").qualifiedName.should.equal("Foo.One")
+            document.enumType("Foo").value("One").enumValueQualifiedName.should.equal("Foo.One")
             document.enumType("Foo").value("Two").value.should.equal(2)
          }
 
