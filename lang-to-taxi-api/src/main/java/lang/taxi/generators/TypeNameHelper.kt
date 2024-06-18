@@ -3,6 +3,7 @@ package lang.taxi.generators
 import lang.taxi.generators.NamingUtils.replaceIllegalCharacters
 import lang.taxi.generators.NamingUtils.toCapitalizedWords
 import lang.taxi.types.QualifiedName
+import lang.taxi.utils.takeTail
 
 /**
  * Encapsulates common rules for creating type names when generating
@@ -35,7 +36,17 @@ data class TypeNameHelper private constructor(private val hints: List<TypeNameHi
       val name = this.hints.fold(null as QualifiedName?) { acc, hint ->
          hint.decorateName(acc)
       } ?: error("Failed to generate type name with the following hints: ${hints.joinToString()}")
-      return name
+
+      // Replace common names with something more helpful
+      if (name.typeName == "Id" && name.namespace.isNotEmpty()) {
+         val (tail,remaining) = name.namespace.split(".")
+            .takeTail()
+         val idName = tail.toCapitalizedWords() + "Id"
+         return QualifiedName(name.namespace, idName)
+      } else {
+         return name
+      }
+
    }
 
 
