@@ -4,7 +4,10 @@ import com.squareup.wire.schema.EnumType
 import com.squareup.wire.schema.MessageType
 import com.squareup.wire.schema.ProtoType
 import com.squareup.wire.schema.Schema
+import lang.taxi.generators.FieldName
 import lang.taxi.generators.Logger
+import lang.taxi.generators.NamespacedType
+import lang.taxi.generators.TypeNameHelper
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 
@@ -15,35 +18,26 @@ class ProtobufTypeMapper(
    private val _generatedTypes = mutableMapOf<QualifiedName, Type>()
    private val generatedTypes: Set<Type> get() = _generatedTypes.values.toSet()
 
-   init {
-      createBuiltInTypes()
-   }
-
-   private fun createBuiltInTypes() {
-      mapOf(
-         ProtoType.ANY to PrimitiveType.ANY,
-         ProtoType.BOOL to PrimitiveType.BOOLEAN,
-         ProtoType.BYTES to PrimitiveType.ANY, // TODO
-         ProtoType.DOUBLE to PrimitiveType.DOUBLE,
-         ProtoType.DURATION to PrimitiveType.ANY, // TODO
-         ProtoType.FIXED32 to PrimitiveType.INTEGER,
-         ProtoType.FIXED64 to PrimitiveType.DECIMAL,
-         ProtoType.FLOAT to PrimitiveType.DECIMAL,
-         ProtoType.INT32 to PrimitiveType.INTEGER,
-         ProtoType.INT64 to PrimitiveType.DECIMAL,
-         ProtoType.SFIXED32 to PrimitiveType.INTEGER,
-         ProtoType.SFIXED64 to PrimitiveType.DECIMAL,
-         ProtoType.SINT32 to PrimitiveType.INTEGER,
-         ProtoType.SINT64 to PrimitiveType.DECIMAL,
-         ProtoType.STRING to PrimitiveType.STRING,
-         ProtoType.TIMESTAMP to PrimitiveType.INSTANT,
-         ProtoType.UINT32 to PrimitiveType.INTEGER,
-         ProtoType.UINT64 to PrimitiveType.DECIMAL,
-      ).forEach { (protoType, taxiType) ->
-         _generatedTypes[protoType.toString().toQualifiedName()] = taxiType
-      }
-   }
-
+   private val scalarTypes =  mapOf(
+      ProtoType.ANY to PrimitiveType.ANY,
+      ProtoType.BOOL to PrimitiveType.BOOLEAN,
+      ProtoType.BYTES to PrimitiveType.ANY, // TODO
+      ProtoType.DOUBLE to PrimitiveType.DOUBLE,
+      ProtoType.DURATION to PrimitiveType.ANY, // TODO
+      ProtoType.FIXED32 to PrimitiveType.INTEGER,
+      ProtoType.FIXED64 to PrimitiveType.DECIMAL,
+      ProtoType.FLOAT to PrimitiveType.DECIMAL,
+      ProtoType.INT32 to PrimitiveType.INTEGER,
+      ProtoType.INT64 to PrimitiveType.LONG,
+      ProtoType.SFIXED32 to PrimitiveType.INTEGER,
+      ProtoType.SFIXED64 to PrimitiveType.DECIMAL,
+      ProtoType.SINT32 to PrimitiveType.INTEGER,
+      ProtoType.SINT64 to PrimitiveType.LONG,
+      ProtoType.STRING to PrimitiveType.STRING,
+      ProtoType.TIMESTAMP to PrimitiveType.INSTANT,
+      ProtoType.UINT32 to PrimitiveType.INTEGER,
+      ProtoType.UINT64 to PrimitiveType.LONG,
+   )
 
    fun generateTypes(packagesToInclude: List<String> = listOf("*")): Set<Type> {
       protoSchema.types
@@ -61,8 +55,42 @@ class ProtobufTypeMapper(
       return generatedTypes
    }
 
-   private fun getOrCreateType(type: ProtoType): Type {
-      return getOrCreateType(QualifiedName.from(type.toString()))
+   private fun getOrCreateType(type: ProtoType, nameHelper: TypeNameHelper): Type {
+      val typeFromProtoSchema = protoSchema.getType(type)
+      return when {
+         type.isScalar -> getOrCreateScalarType(type, nameHelper)
+         type.isMap -> buildMap(type, nameHelper)
+         typeFromProtoSchema != null && scalarTypes.containsKey(typeFromProtoSchema.type) -> scalarTypes[typeFromProtoSchema.type]!!
+         else -> {
+            val name = QualifiedName.from(typeFromProtoSchema!!.type.toString())
+            getOrCreateType(name)
+         }
+      }
+   }
+
+   private fun buildMap(type: ProtoType, nameHelper: TypeNameHelper): Type {
+      val keyType = getOrCreateType(type.keyType!!, nameHelper.append(FieldName("MapKey")))
+      val valueType = getOrCreateType(type.valueType!!, nameHelper.append(FieldName("MapValue")))
+      return MapType(
+         keyType,
+         valueType,
+         CompilationUnit.unspecified()
+      )
+   }
+
+   private fun getOrCreateScalarType(type: ProtoType, nameHelper: TypeNameHelper):Type {
+      val typeName = nameHelper.suggestName()
+      return this._generatedTypes.getOrPut(typeName) {
+         val baseType = scalarTypes[type]
+            ?: error("No scalar type found for type ${type.simpleName}")
+         ObjectType(
+            typeName.parameterizedName,
+            ObjectTypeDefinition(
+               inheritsFrom = setOf(baseType),
+               compilationUnit = CompilationUnit.unspecified()
+            )
+         )
+      }
    }
 
    private fun getOrCreateType(name: QualifiedName): Type {
@@ -91,6 +119,13 @@ class ProtobufTypeMapper(
       return generated
    }
 
+   private fun getOrCreateEnumType(enumType: EnumType, nameHelper: TypeNameHelper): Type {
+      return _generatedTypes.getOrPut(QualifiedName.from(enumType.type.toString())) {
+         createEnum(enumType)
+      }
+   }
+
+
    private fun createEnum(type: EnumType): Type {
       val enumName = type.type.toString()
       val enumValues = type.constants.map { enumValue ->
@@ -103,8 +138,8 @@ class ProtobufTypeMapper(
       }
 
       return lang.taxi.types.EnumType(
-         enumName,
-         EnumDefinition(
+         qualifiedName = enumName,
+         definition = EnumDefinition(
             enumValues,
             annotations = listOf(
                Annotation(ProtobufMessageAnnotation.NAME)
@@ -114,6 +149,10 @@ class ProtobufTypeMapper(
             compilationUnit = CompilationUnit.unspecified()
          )
       )
+   }
+
+   private fun getOrCreateMessageType(type: ProtoType): Type {
+      TODO("Not yet implemented")
    }
 
    private fun createModel(type: MessageType): Type {
@@ -139,8 +178,9 @@ class ProtobufTypeMapper(
 
          )
       }
+      val typeName = type.type.toString()
       return ObjectType(
-         type.type.toString(),
+         typeName,
          ObjectTypeDefinition(
             fields.toSet(),
             annotations = setOf(
@@ -178,7 +218,10 @@ class ProtobufTypeMapper(
                UnresolvedImportedType(declaredTypeName)
             }
          }
-         protoField.type != null -> getOrCreateType(protoField.type!!)
+         protoField.type != null -> getOrCreateType(protoField.type!!, TypeNameHelper.forHint(
+            NamespacedType(type.type.enclosingTypeOrPackage.orEmpty(), type.name))
+            .append(FieldName(protoField.name))
+         )
          else -> {
             logger.error("Field ${protoField.name} on $type did not expose a type.  This suggests a problem with loading the schema")
             PrimitiveType.ANY
