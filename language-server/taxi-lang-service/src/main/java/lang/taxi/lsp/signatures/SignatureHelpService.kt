@@ -36,7 +36,7 @@ class SignatureHelpService {
    ): CompletableFuture<SignatureHelp> {
       val empty = CompletableFuture.completedFuture(SignatureHelp())
       val schema = lastCompilationResult.document ?: return empty
-      val token = lastCompilationResult.getNearestToken(params.textDocument, params.position)
+      val token = lastCompilationResult.getEnclosingToken(params.textDocument, params.position)
          ?: return empty
 
       val compiler = lastCompilationResult.compiler

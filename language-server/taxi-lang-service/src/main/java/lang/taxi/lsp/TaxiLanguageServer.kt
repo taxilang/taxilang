@@ -86,7 +86,7 @@ class TaxiLanguageServer(
          capabilities.workspaceSymbolProvider = Either.forLeft(true)
          capabilities.hoverProvider = Either.forLeft(true)
          capabilities.documentFormattingProvider = Either.forLeft(true)
-         capabilities.signatureHelpProvider = SignatureHelpOptions(listOf("("), listOf(","))
+         capabilities.signatureHelpProvider = SignatureHelpOptions(listOf("(", ","), listOf(",", ")"))
          capabilities.setCodeActionProvider(true)
          capabilities.workspace = WorkspaceServerCapabilities(WorkspaceFoldersOptions().apply {
             supported = true
