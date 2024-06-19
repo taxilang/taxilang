@@ -1659,7 +1659,13 @@ class TokenProcessor(
          } else {
             null
          }
-      }.map { it as Type }
+      }.flatMap {
+         if (it is Type) {
+            it.right()
+         } else {
+            listOf(CompilationError(context.toCompilationUnit(), "Expected a type here")).left()
+         }
+      }
    }
 
    private fun resolveUserToken(
@@ -1683,6 +1689,7 @@ class TokenProcessor(
                      if (importableToken is DefinableToken<*> && !importableToken.isDefined) {
                         unparsedCheckAndCompile(qualifiedTypeName) ?: importableToken.right()
                      } else {
+
                         importableToken.right()
                      }
                   }
@@ -1799,11 +1806,22 @@ class TokenProcessor(
 
    // An experimental approach that uses a full
    // tree of symbols to navigate 'dots' properly
-   fun findInSymbolTree(tokenName: String, context: ParserRuleContext): Either<List<CompilationError>, List<TextFragmentWithCompiledToken>> {
+   fun findInSymbolTree(
+      tokenName: String,
+      context: ParserRuleContext
+   ): Either<List<CompilationError>, List<TextFragmentWithCompiledToken>> {
+      val topLevelObject = context.searchUpForRule(listOf(SingleNamespaceDocumentContext::class.java, MultiNamespaceDocumentContext::class.java))
+      val importTokens = when (topLevelObject) {
+         is SingleNamespaceDocumentContext -> topLevelObject.importDeclaration()
+         is MultiNamespaceDocumentContext -> topLevelObject.importDeclaration()
+         else -> emptyList()
+      }
+
+      val importsInSource = importTokens.map { it.qualifiedName().text }
       return this.typeSystem.symbolTree.getSymbol(
          tokenName,
          context.findNamespace(),
-         importsInSource(context).map { it.fullyQualifiedName },
+         importsInSource,
          context = context
       )
    }
@@ -2254,6 +2272,7 @@ class TokenProcessor(
          serviceLineage
       )
       this.services.add(service)
+      this.typeSystem.registerToken(service)
       return service.right()
 
    }
@@ -2581,7 +2600,6 @@ class TokenProcessor(
          }
       }
    }
-
 
 
 }
