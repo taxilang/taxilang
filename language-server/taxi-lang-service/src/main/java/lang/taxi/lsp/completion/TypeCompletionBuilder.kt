@@ -147,7 +147,7 @@ class TypeCompletionBuilder(
 }
 
 interface CompletionDecorator {
-   fun decorate(typeName: QualifiedName, token: ImportableToken?, completionItem: CompletionItem): CompletionItem
+   fun decorate(typeName: QualifiedName, token: Named?, completionItem: CompletionItem): CompletionItem
 }
 
 fun CompletionItem.decorate(
