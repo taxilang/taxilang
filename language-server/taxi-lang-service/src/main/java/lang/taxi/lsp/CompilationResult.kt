@@ -3,6 +3,7 @@ package lang.taxi.lsp
 import lang.taxi.CompilationError
 import lang.taxi.Compiler
 import lang.taxi.TaxiDocument
+import lang.taxi.lsp.completion.isBetween
 import lang.taxi.lsp.completion.normalizedUriPath
 import lang.taxi.messages.Severity
 import lang.taxi.types.SourceNames
@@ -38,6 +39,19 @@ data class CompilationResult(
 
    fun containsTokensForSource(uri: String): Boolean {
       return compiler.containsTokensForSource(uri)
+   }
+
+   /**
+    * Finds the nearest token to the cursor that encloses the current position.
+    */
+   fun getEnclosingToken(textDocument: TextDocumentIdentifier, position: Position): ParserRuleContext? {
+      return getNearestToken(textDocument, position)?.let { token ->
+         var tokenToEvaluate: ParserRuleContext? = token
+         while (tokenToEvaluate != null && !position.isBetween(tokenToEvaluate.start, tokenToEvaluate.stop)) {
+            tokenToEvaluate = tokenToEvaluate.parent as ParserRuleContext?
+         }
+         tokenToEvaluate
+      }
    }
 
    fun getNearestToken(textDocument: TextDocumentIdentifier, position: Position): ParserRuleContext? {
