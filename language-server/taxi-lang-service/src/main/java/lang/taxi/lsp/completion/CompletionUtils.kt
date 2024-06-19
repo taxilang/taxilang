@@ -15,6 +15,7 @@ fun Position.isBetween(left: Token?, right: Token?): Boolean {
    if (editorLine !in startLine..endLine) return false
    return when {
       // On a line inbetween the start and end
+      startLine == endLine -> this.character >= left.charPositionInLine && this.character <= right.charPositionInLine
       this.line > startLine && this.line < endLine -> true
       this.line == startLine -> this.character >= left.charPositionInLine
       this.line == endLine -> this.character < right.charPositionInLine

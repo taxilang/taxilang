@@ -146,6 +146,12 @@ open class CompilationException(val errors: List<CompilationError>) :
          )
       )
    )
+
+   override fun fillInStackTrace(): Throwable {
+      // don't fill in the stack trace - it's expensive,
+      // and we return these for signalling, not for exceptions
+      return this
+   }
 }
 
 data class DocumentStrucutreError(val detailMessage: String)
@@ -373,6 +379,11 @@ class Compiler(
 
    fun lookupTypeByName(typeType: TaxiParser.TypeReferenceContext): QualifiedName {
       return QualifiedName.from(tokenProcessorWithImports.lookupSymbolByName(typeType))
+   }
+
+   fun findInSymbolTree(tokenName: String,
+                        context: ParserRuleContext): Either<List<CompilationError>, List<TextFragmentWithCompiledToken>> {
+      return this.tokenProcessorWithImports.findInSymbolTree(tokenName, context)
    }
 
    fun getDeclarationSource(text: String, context: ParserRuleContext): CompilationUnit? {

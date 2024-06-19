@@ -24,7 +24,6 @@ import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.SignatureHelp
 import org.eclipse.lsp4j.SignatureHelpParams
 import org.eclipse.lsp4j.SignatureInformation
-import org.eclipse.lsp4j.util.Positions
 import java.util.concurrent.CompletableFuture
 import kotlin.math.max
 import kotlin.math.min
@@ -37,7 +36,7 @@ class SignatureHelpService {
    ): CompletableFuture<SignatureHelp> {
       val empty = CompletableFuture.completedFuture(SignatureHelp())
       val schema = lastCompilationResult.document ?: return empty
-      val token = lastCompilationResult.getNearestToken(params.textDocument, params.position)
+      val token = lastCompilationResult.getEnclosingToken(params.textDocument, params.position)
          ?: return empty
 
       val compiler = lastCompilationResult.compiler
@@ -61,6 +60,7 @@ class SignatureHelpService {
       token: ParserRuleContext,
       position: Position
    ): Pair<SignatureInformation, Int> {
+
       val params = annotationType.fields.map { field ->
          val nullable = if (field.nullable) "?" else ""
          val defaultValue = when (field.accessor) {

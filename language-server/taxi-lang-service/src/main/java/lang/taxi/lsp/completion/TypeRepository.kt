@@ -5,7 +5,6 @@ import lang.taxi.types.AnnotationType
 import lang.taxi.types.EnumType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * An abstraction for type completion.
@@ -25,9 +24,15 @@ interface TypeRepository {
  * Used in VSCode editor, where the set of types is constantly fluxing.
  */
 class CompilationResultTypeRepository(
+   private val lastCompilationResult: CompilationResult?,
    private val lastSuccessfulCompilationResult: CompilationResult?,
-   private val lastCompilationResult: CompilationResult?
 ) : TypeRepository {
+   init {
+
+       if (lastSuccessfulCompilationResult != null && !lastSuccessfulCompilationResult.successful) {
+         error("The type repository has been constructed incorrectly - the last successful compilation result has errors")
+       }
+   }
    override fun getTypeNames(): List<Pair<QualifiedName, Type?>> {
       val compiledDoc = lastSuccessfulCompilationResult?.document
       val lastSuccessfulCompilationTypeNames = lastSuccessfulCompilationResult?.compiler?.declaredTypeNames()

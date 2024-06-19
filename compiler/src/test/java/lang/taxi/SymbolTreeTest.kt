@@ -3,8 +3,10 @@ package lang.taxi
 import arrow.core.right
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import lang.taxi.services.Service
 import lang.taxi.sources.SourceCode
 import lang.taxi.types.EnumType
 import lang.taxi.types.EnumValue
@@ -190,19 +192,23 @@ class SymbolTreeTest {
 
 
    @Test
-   fun `can get a model by short name if unambiguous`() {
+   fun `can get a service by name`() {
+      val fragment = """namespace com.foo
 
+         model Film {}
+         service FilmsApi {
+            operation getFilms():Film
+         }
+      """.trimIndent()
+         .symbolTree()
+         .getSymbol("com.foo.FilmsApi")
+         .getOrNull()
+         .shouldNotBeNull()
+         .single()
+      fragment.value.shouldBeInstanceOf<Service>()
    }
 
-   @Test
-   fun `can get a model by name if imports are provided`() {
 
-   }
-
-   @Test
-   fun `getting a model by name throws when ambiguous`() {
-
-   }
 }
 
 private fun String.symbolTree(): SymbolTree {

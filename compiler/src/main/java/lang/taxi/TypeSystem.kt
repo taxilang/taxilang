@@ -121,6 +121,20 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
       return type
    }
 
+   /**
+    * Call for importable tokens that aren't DefinableTokens
+    * eg: Services
+    */
+   fun registerToken(token: ImportableToken) {
+      if (compiledTokens.containsKey(token.qualifiedName)) {
+         throw IllegalArgumentException("Attempting to redefine type ${token.qualifiedName}")
+      } else {
+         symbolTree.register(token)
+         compiledTokens[token.qualifiedName] = token
+      }
+
+   }
+
    fun getTokens(
       includeImportedTypes: Boolean = false,
       predicate: (ImportableToken) -> Boolean
