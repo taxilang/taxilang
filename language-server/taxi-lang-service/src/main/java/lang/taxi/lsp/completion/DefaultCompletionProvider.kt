@@ -33,7 +33,7 @@ class DefaultCompletionProvider(
       contextAtCursor: ParserRuleContext?,
       lastSuccessfulCompilation: CompilationResult?,
       typeRepository: TypeRepository
-   ): CompletableFuture<List<CompletionItem>> {
+   ): CompletableFuture<CompletionItemList> {
       val decorators = listOf(importDecorator)
       val completions = when (contextAtCursor) {
          is TaxiParser.ElementValuePairContext -> {

@@ -36,7 +36,7 @@ class EditorCompletionService(private val typeCompletionBuilder: TypeCompletionB
          lastSuccessfulCompilation
       )
       return completionItems.thenApply {
-         Either.forLeft(it.toMutableList())
+         Either.forLeft(it.completions.toMutableList())
       }
    }
 
@@ -47,7 +47,7 @@ class EditorCompletionService(private val typeCompletionBuilder: TypeCompletionB
       contextAtCursor: ParserRuleContext?,
       lastSuccessfulCompilation: CompilationResult?,
       typeRepository: TypeRepository,
-   ): CompletableFuture<List<CompletionItem>> {
+   ): CompletableFuture<CompletionItemList> {
       if (contextAtCursor == null) {
          return bestGuessCompletionsWithoutContext(compilationResult, params, importDecorator)
       }
@@ -240,7 +240,7 @@ class EditorCompletionService(private val typeCompletionBuilder: TypeCompletionB
       compilationResult: CompilationResult,
       params: CompletionParams,
       importDecorator: ImportCompletionDecorator
-   ): CompletableFuture<List<CompletionItem>> {
+   ): CompletableFuture<CompletionItemList> {
       val typeRepository = CompilationResultTypeRepository(compilationResult,compilationResult)
       val lookupResult = compilationResult.compiler.getNearestToken(
          params.position.line,
@@ -335,7 +335,8 @@ class EditorCompletionService(private val typeCompletionBuilder: TypeCompletionB
    }
 }
 
-fun completed(list: List<CompletionItem> = emptyList()) = CompletableFuture.completedFuture(list)
+fun completed(list: List<CompletionItem> = emptyList()) = CompletableFuture.completedFuture(list.asCompletionItemList())
+fun completed(list: CompletionItemList) = CompletableFuture.completedFuture(list)
 fun completions(list: List<CompletionItem> = emptyList()): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
    return CompletableFuture.completedFuture(Either.forLeft(list.toMutableList()))
 }
