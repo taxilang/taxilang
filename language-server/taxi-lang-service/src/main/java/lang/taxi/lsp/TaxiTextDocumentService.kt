@@ -184,6 +184,10 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    private var compilerErrorDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
    private var linterDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
 
+   fun forceCompilationNow():CompilationResult {
+      return compilerService.compile()
+   }
+
    override fun codeAction(params: CodeActionParams): CompletableFuture<MutableList<Either<Command, CodeAction>>> {
       val lastCompilationResult =
          compilerService.getOrComputeLastCompilationResult(uriToAssertIsPreset = params.textDocument.uri)
