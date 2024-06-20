@@ -63,7 +63,7 @@ class EditorCompletionService(private val typeCompletionBuilder: TypeCompletionB
       compilationResult: CompilationResult,
       lastSuccessfulCompilation: CompilationResult?,
    ): List<CompletionItem> {
-      val typeRepository = CompilationResultTypeRepository(lastSuccessfulCompilation, compilationResult)
+      val typeRepository = CompilationResultTypeRepository(compilationResult, lastSuccessfulCompilation)
       val completionContext = when {
          // IdentifierContext is generally too general purpose to offer any insights.
          // Go higher.
