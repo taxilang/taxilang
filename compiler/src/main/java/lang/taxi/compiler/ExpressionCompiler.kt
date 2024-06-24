@@ -241,14 +241,18 @@ class ExpressionCompiler(
       require(lambdaExpression.children.size == 2) { "Expected exactly 2 children in the lambda expression" }
       require(lambdaExpression.expressionGroup().size == 1) { "expected exactly 1 expression group on the rhs of the lambda" }
       return lambdaExpression.expressionInputs()
-         .expressionInput().map { expressionInput ->
+         .expressionInput().mapIndexed { index, expressionInput ->
             tokenProcessor.parseType(
                expressionInput.findNamespace(),
                expressionInput.nullableTypeReference().typeReference()
-            )
+            ).map { type ->
+               val name = expressionInput.identifier()?.text ?: "p$index"
+               ProjectionFunctionScope(name, type)
+            }
          }.invertEitherList().flattenErrors()
          .flatMap { inputs ->
-            compile(lambdaExpression.expressionGroup(0)).map { expression ->
+            withParameters(inputs)
+               .compile(lambdaExpression.expressionGroup(0)).map { expression ->
                LambdaExpression(inputs, expression, lambdaExpression.toCompilationUnits())
             }
          }
@@ -952,8 +956,8 @@ class ExpressionCompiler(
       val sourceTypeReference = modelAttributeReferenceCtx.typeReference().first()
       val targetTypeReference = modelAttributeReferenceCtx.typeReference()[1]
 
-      return fieldCompiler!!.typeOrError(sourceTypeReference).flatMap { sourceType ->
-         fieldCompiler.typeOrError(targetTypeReference).map { targetType ->
+      return tokenProcessor.typeOrError(sourceTypeReference).flatMap { sourceType ->
+         tokenProcessor.typeOrError(targetTypeReference).map { targetType ->
             val returnType = if (modelAttributeReferenceCtx.arrayMarker() != null) {
                ArrayType.of(targetType, targetTypeReference.toCompilationUnit())
             } else {

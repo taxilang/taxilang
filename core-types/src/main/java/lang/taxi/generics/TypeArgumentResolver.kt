@@ -97,7 +97,10 @@ object TypeArgumentResolver {
       providedInputAccessor: LambdaExpression
    ): Type? {
       val lambdaParameterTypes = declaredInput.parameterTypes
-      val expressionParameterTypes = providedInputAccessor.inputs
+      // TODO : This is ignoring the assigned identifier in the inputs.
+      // ie: (t:T, a:A) -> A
+      // Historically, we didn't allow one - but that was wrong.
+      val expressionParameterTypes = providedInputAccessor.inputs.map { it.type }
       val result = resolveTypeArgumentFromInputTypes(typeArgument, lambdaParameterTypes, expressionParameterTypes)
       return result
    }

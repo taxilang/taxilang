@@ -74,7 +74,7 @@ class StreamDecoratingTypedExpressionBuilderTest : DescribeSpec({
 
          // Make sure the Title == Jaws wasn't modified
          val lambda = functionExpression.function.inputs[1].shouldBeInstanceOf<LambdaExpression>()
-         lambda.inputs.single().shouldBeInstanceOf<ObjectType>()
+         lambda.inputs.single().type.shouldBeInstanceOf<ObjectType>()
             .toQualifiedName().parameterizedName.shouldBe("Title")
 
          val operatorExpression = lambda.expression.shouldBeInstanceOf<OperatorExpression>()

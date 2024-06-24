@@ -2,6 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.nulls.shouldNotBeNull
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.LambdaExpression
 import lang.taxi.expressions.LiteralExpression
@@ -174,7 +175,7 @@ class ExpressionTypesSpec : DescribeSpec({
             .objectType("AcceptableCalorieRange")
             .expression!! as LambdaExpression
 
-         expressionType.inputs.map { it.qualifiedName }.should.equal(listOf("MinimumAcceptableCalories","MaximumAcceptableCalories"))
+         expressionType.inputs.map { it.type.qualifiedName }.should.equal(listOf("MinimumAcceptableCalories","MaximumAcceptableCalories"))
          val lambdaExpression = expressionType.expression as OperatorExpression
          lambdaExpression.asTaxi().should.equal("ProductCalories > MinimumAcceptableCalories && ProductCalories < MaximumAcceptableCalories")
          lambdaExpression.operator.should.equal(FormulaOperator.LogicalAnd)
