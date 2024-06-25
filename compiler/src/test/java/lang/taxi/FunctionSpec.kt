@@ -519,8 +519,9 @@ namespace pkgB {
             functionExpression.returnType.qualifiedName.should.equal(PrimitiveType.INTEGER.qualifiedName)
             val resolvedInputs = functionExpression.function.inputs
             resolvedInputs[0].asA<TypeExpression>().type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Entry>")
-            resolvedInputs[1].asA<LambdaExpression>().inputs[0].qualifiedName.should.equal("Entry")
-            resolvedInputs[1].asA<LambdaExpression>().inputs[1].should.equal(PrimitiveType.INTEGER)
+
+            resolvedInputs[1].asA<LambdaExpression>().inputs[0].type.qualifiedName.should.equal("Entry")
+            resolvedInputs[1].asA<LambdaExpression>().inputs[1].type.should.equal(PrimitiveType.INTEGER)
          }
       }
 

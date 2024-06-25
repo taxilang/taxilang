@@ -6,6 +6,7 @@ import arrow.core.left
 import arrow.core.right
 import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Accessor
+import lang.taxi.accessors.Argument
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.services.operations.constraints.Constraint
@@ -30,7 +31,7 @@ abstract class Expression : Compiled, TaxiStatementGenerator, Accessor {
 }
 
 data class LambdaExpression(
-   val inputs: List<Type>,
+   val inputs: List<Argument>,
    val expression: Expression,
    override val compilationUnits: List<CompilationUnit>
 ) : Expression() {
