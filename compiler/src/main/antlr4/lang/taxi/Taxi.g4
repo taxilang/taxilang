@@ -111,8 +111,8 @@ expressionGroup:
    expressionGroup POW expressionGroup
    | expressionGroup (MULT | DIV) expressionGroup
    | expressionGroup (PLUS | MINUS) expressionGroup
-   | LPAREN expressionGroup RPAREN
    | castExpression expressionGroup
+   | LPAREN expressionGroup RPAREN
    | (PLUS | MINUS)* expressionAtom
    // The below is added for lambdas, but not sure order of precedence
    // is correct. TBD.
@@ -670,8 +670,7 @@ serviceRestrictions: (K_Using | K_Excluding) '{' serviceOrMemberReferenceList '}
 // Note: 23-Apr-24...
 // tried allowing both 'as' and '->' here, but it created ambiguity with the
 // expressionInputs block, causing failing tests.
-typeProjection: ('as') (typeReference | expressionInputs? anonymousTypeDefinition);
-
+typeProjection: ('as') expressionInputs? (anonymousTypeDefinition | typeReference);
 
 //as {
 //    orderId // if orderId is defined on the Order type, then the type is inferrable
