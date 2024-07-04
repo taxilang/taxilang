@@ -164,6 +164,25 @@ class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
          query.projectionScopeVars[1].expression!!.asA<FunctionExpression>().function.qualifiedName.shouldBe("taxi.stdlib.first")
       }
 
+      it("is possible to use a named variable to project to a direct type") {
+         val (schema, query) = """
+            model Film {
+               title : Title inherits String
+            }
+            model Movie {
+               name : Title
+            }
+            model FilmCatalog {
+               films : Film[]
+            }
+         """.compiledWithQuery("""
+            find { FilmCatalog } as (films:Film[]) -> Movie[]
+         """.trimIndent())
+         query.projectionScopeVars.shouldHaveSize(1)
+         query.projectionScopeVars.single().type.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<Film>")
+         query.projectedType!!.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<Movie>")
+      }
+
 
       // This ins't implemented, but it should be.
       xit("should allow referencing a named projection scope in a constraint using a type selector") {

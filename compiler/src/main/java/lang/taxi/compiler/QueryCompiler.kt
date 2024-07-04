@@ -510,16 +510,6 @@ internal class QueryCompiler(
       val concreteProjectionTypeType = queryProjection.typeReference()
       val anonymousProjectionType = queryProjection.anonymousTypeDefinition()
 
-      // Why did we have this?
-//      if (anonymousProjectionType != null && concreteProjectionTypeType == null && typesToDiscover.size > 1) {
-//         return listOf(
-//            CompilationError(
-//               queryProjection.start,
-//               "When anonymous projected type is defined without an explicit based discoverable type sizes should be 1"
-//            )
-//         ).left()
-//      }
-
       if (concreteProjectionTypeType != null && concreteProjectionTypeType.arrayMarker() == null && anonymousProjectionType == null && typesToDiscover.typeName.parameters.isNotEmpty()) {
          return listOf(
             CompilationError(
@@ -545,43 +535,34 @@ internal class QueryCompiler(
          } else null.right()
 
       val projectionType = baseTypeOrErrors.flatMap { possibleBaseType: Type? ->
-         if (possibleBaseType != null && anonymousProjectionType == null) {
-            return@flatMap (possibleBaseType to emptyList<ProjectionFunctionScope>()).right()
-         }
-         if (anonymousProjectionType == null) {
-            return@flatMap listOf(
-               CompilationError(
-                  queryProjection.toCompilationUnit(),
-                  "An internal error occurred.  Expected an anonymous type definition here."
-               )
-            ).left()
-         }
 
          tokenProcessor.parseProjectionScope(
             queryProjection.expressionInputs(),
             FieldTypeSpec.forDiscoveryTypes(typesToDiscover),
             scopedArguments
          ).flatMap { projectionScopedVariables ->
-            anonymousProjectionType.let { anonymousTypeDef ->
-               val isList = anonymousTypeDef.arrayMarker() != null
-
-               this
-                  .tokenProcessor
-                  .parseAnonymousType(
-                     namespace = anonymousProjectionType.findNamespace(),
-                     resolutionContext = ResolutionContext(
-                        listOf(typesToDiscover),
-                        concreteProjectionTypeType,
-                        possibleBaseType,
-                        projectionScopedVariables,
-                        scopedArguments
-                     ),
-                     anonymousTypeDefinition = anonymousProjectionType
-                  ).map { createdType ->
-                     createdType to projectionScopedVariables
-                  }
+            if (possibleBaseType != null && anonymousProjectionType == null) {
+               (possibleBaseType to projectionScopedVariables).right()
+            } else {
+               // Parse the anonymous projection type
+               anonymousProjectionType.let { anonymousTypeDef ->
+                  this
+                     .tokenProcessor
+                     .parseAnonymousType(
+                        namespace = anonymousProjectionType.findNamespace(),
+                        resolutionContext = ResolutionContext(
+                           listOf(typesToDiscover),
+                           concreteProjectionTypeType,
+                           possibleBaseType,
+                           projectionScopedVariables,
+                           scopedArguments
+                        ),
+                        anonymousTypeDefinition = anonymousProjectionType
+                     ).map { createdType ->
+                        createdType to projectionScopedVariables
+                     }
+               }
             }
-
          }
       }
 
