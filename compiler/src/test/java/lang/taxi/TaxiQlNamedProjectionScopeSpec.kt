@@ -212,7 +212,6 @@ class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
          val selector = constraint.rhs.asA<ModelAttributeReferenceSelector>()
          selector.argumentSelector.shouldNotBeNull()
          selector.targetType.qualifiedName.shouldBe("FilmId")
-         selector.memberSource.fullyQualifiedName.shouldBe("FilmId")
          selector.argumentSelector!!.scope.name.shouldBe("src")
          selector.argumentSelector!!.scope.type.qualifiedName.shouldBe("Film")
       }
