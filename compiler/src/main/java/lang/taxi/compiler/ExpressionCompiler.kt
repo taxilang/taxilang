@@ -956,7 +956,21 @@ class ExpressionCompiler(
       val sourceTypeReference = modelAttributeReferenceCtx.typeReference().first()
       val targetTypeReference = modelAttributeReferenceCtx.typeReference()[1]
 
-      return tokenProcessor.typeOrError(sourceTypeReference).flatMap { sourceType ->
+
+      // The source is either a type, and sometimes with an argument selector
+      // if the type is a reference to a scoped argument.
+      // eg: (movie:Movie) -> {
+      //   something : Something[]( MovieId == movie::MovieId )
+      val source: Either<List<CompilationError>, Pair<Type, ArgumentSelector?>> = if (canResolveAsScopePath(sourceTypeReference.qualifiedName())) {
+         // Is the source actually a scoped variable?
+         resolveScopePath(sourceTypeReference.qualifiedName()).map { selector ->
+            selector.returnType to selector
+         }
+      } else {
+         tokenProcessor.typeOrError(sourceTypeReference).map { type -> type to null }
+      }
+
+      return source.flatMap { (sourceType, argumentSelector) ->
          tokenProcessor.typeOrError(targetTypeReference).map { targetType ->
             val returnType = if (modelAttributeReferenceCtx.arrayMarker() != null) {
                ArrayType.of(targetType, targetTypeReference.toCompilationUnit())
@@ -967,6 +981,7 @@ class ExpressionCompiler(
                sourceType.toQualifiedName(),
                targetType,
                returnType,
+               argumentSelector,
                modelAttributeReferenceCtx.toCompilationUnit()
             )
          }

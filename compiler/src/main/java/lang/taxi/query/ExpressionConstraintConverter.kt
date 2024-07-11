@@ -6,6 +6,7 @@ import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.services.operations.constraints.*
 import lang.taxi.types.ArgumentSelector
+import lang.taxi.types.ModelAttributeReferenceSelector
 
 /**
  * ExpressionConstraints are the preferred model for describing constraints.
@@ -37,6 +38,13 @@ private fun OperatorExpression.convertToConstraint():List<Constraint> {
    val valueExpression = when (val rhs = this.rhs) {
       is LiteralExpression -> ConstantValueExpression(rhs.value)
       is ArgumentSelector -> ArgumentExpression(rhs)
+      is ModelAttributeReferenceSelector -> {
+         if (rhs.argumentSelector != null) {
+            ArgumentExpression(rhs.argumentSelector!!)
+         } else {
+            TODO("Support for Model Attribute selectors (A::B) without an argument scope is not implemented")
+         }
+      }
       else -> TODO("Support for ${rhs::class.simpleName} on RHS is not yet implemented")
    } as ValueExpression
    return listOf(PropertyToParameterConstraint(

@@ -5,10 +5,12 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.services.operations.constraints.ExpressionConstraint
 import lang.taxi.types.ArgumentSelector
+import lang.taxi.types.ModelAttributeReferenceSelector
 import lang.taxi.types.ObjectType
 
 class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
@@ -184,8 +186,7 @@ class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
       }
 
 
-      // This ins't implemented, but it should be.
-      xit("should allow referencing a named projection scope in a constraint using a type selector") {
+      it("should allow referencing a named projection scope in a constraint using a type selector") {
          val (schema, query) = """
             model Film {
                id : FilmId inherits String
@@ -205,10 +206,14 @@ class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
          query.shouldNotBeNull()
          val reviewConstraints = query.projectedObjectType!!.field("review").constraints
          reviewConstraints.shouldHaveSize(1)
-         val constraint = reviewConstraints.single() as OperatorExpression
-         val selector = constraint.rhs.asA<ArgumentSelector>()
-         selector.scope.name.shouldBe("src")
-         selector.scope.type.qualifiedName.shouldBe("Film")
+         val constraint = reviewConstraints.single()
+            .shouldBeInstanceOf<ExpressionConstraint>()
+            .expression.shouldBeInstanceOf<OperatorExpression>()
+         val selector = constraint.rhs.asA<ModelAttributeReferenceSelector>()
+         selector.argumentSelector.shouldNotBeNull()
+         selector.targetType.qualifiedName.shouldBe("FilmId")
+         selector.argumentSelector!!.scope.name.shouldBe("src")
+         selector.argumentSelector!!.scope.type.qualifiedName.shouldBe("Film")
       }
    }
 })

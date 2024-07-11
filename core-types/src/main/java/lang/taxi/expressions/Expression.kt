@@ -49,6 +49,10 @@ data class LiteralExpression(val literal: LiteralAccessor, override val compilat
       }
    }
 
+   override fun asTaxi(): String {
+      return literal.asTaxi()
+   }
+
    private val equality = ImmutableEquality(this, LiteralExpression::literal)
    override fun hashCode(): Int = equality.hash()
    override fun equals(other: Any?): Boolean = equality.isEqualTo(other)
@@ -124,6 +128,10 @@ data class OperatorExpression(
 
    override fun hashCode(): Int  = equality.hash()
    override fun equals(other: Any?): Boolean = equality.isEqualTo(other)
+
+   override fun asTaxi(): String {
+      return "${lhs.asTaxi()} ${operator.symbol} ${rhs.asTaxi()}"
+   }
 
    companion object {
       fun getReturnType(lhsType: PrimitiveType, operator: FormulaOperator, rhsType: PrimitiveType): Type? {
