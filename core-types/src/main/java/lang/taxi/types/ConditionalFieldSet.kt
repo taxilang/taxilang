@@ -57,7 +57,12 @@ data class ModelAttributeReferenceSelector(
    val memberSource: QualifiedName,
    val targetType: Type,
    override val returnType: Type = targetType,
-   val compilationUnit: CompilationUnit
+   /**
+    * If the source has been resolved using a scoped argument,
+    * this value is provided.
+    */
+   val argumentSelector: ArgumentSelector? = null,
+   val compilationUnit: CompilationUnit,
 ) : TaxiStatementGenerator, Accessor, Expression() {
    override fun asTaxi(): String {
       return compilationUnit.source.content
