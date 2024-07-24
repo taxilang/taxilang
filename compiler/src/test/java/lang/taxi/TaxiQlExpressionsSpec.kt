@@ -146,5 +146,20 @@ class TaxiQlExpressionsSpec : DescribeSpec({
       it("is possible to write an expression referencing vars from the given clause") {
 
       }
+
+      // ORB-363
+      it("is possible to reference imported types in query syntax") {
+         val (schema,query) = """
+            namespace com.stockticker.demo
+
+            parameter model StockTrade {
+              ticker: Ticker inherits String
+            }
+         """.compiledWithQuery("""
+            import com.stockticker.demo.StockTrade
+
+            stream { StockTrade.filterEach( (Ticker) -> Ticker == "AAPL" ) }
+         """.trimIndent())
+      }
    }
 })

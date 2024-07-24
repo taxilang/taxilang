@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package people;
+
+// Example of an enum definition
+enum Status {
+   UNKNOWN = 0;
+   ACTIVE = 1;
+   INACTIVE = 2;
+   SUSPENDED = 3;
+}
+
+// Main message definition
+message Person {
+   string id = 1; // unique identifier
+   string name = 2; // person's name
+   int32 age = 3; // person's age
+   repeated string emails = 4; // list of emails
+   Status status = 5; // enum field
+   Address address = 6; // nested message
+   string phone_number = 7; // phone number
+   string email_address = 8; // email address
+}
+
+// Nested message definition
+message Address {
+   string street = 1;
+   string city = 2;
+   string state = 3;
+   string zip_code = 4;
+}
+
+// Message with a map field
+message PhoneBook {
+   map<string, Person> people = 1; // map of people with unique id as key
+}
+
+// Message for event data with separate fields for different event types
+message Event {
+   string id = 1;
+   Birthday birthday = 2;
+   Meeting meeting = 3;
+}
+
+// Nested message used in Event for Birthday
+message Birthday {
+   string person_id = 1;
+   string date = 2;
+}
+
+// Nested message used in Event for Meeting
+message Meeting {
+   string title = 1;
+   string location = 2;
+   repeated string attendees = 3;
+}

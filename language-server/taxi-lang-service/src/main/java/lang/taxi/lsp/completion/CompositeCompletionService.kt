@@ -54,10 +54,66 @@ interface CompletionProvider {
        * successful compilation
        */
       typeRepository: TypeRepository = CompilationResultTypeRepository(compilationResult, lastSuccessfulCompilation)
-   ): CompletableFuture<List<CompletionItem>>
+   ): CompletableFuture<CompletionItemList>
 }
 
-class CompositeCompletionService(private val completionProviders: List<CompletionProvider>) : CompletionService {
+/**
+ * A list of CompletionItems, returned from a CompletionProvider
+ * Allows additional signalling of exclusivity, to allow refining
+ * a list of completions
+ */
+data class CompletionItemList(
+   val completions: List<CompletionItem>,
+   /**
+    * Indicates if these completions are exclusive, and should
+    * be the only ones displayed.
+    *
+    * If no exclusive items are returned from all completion providers
+    * then everything is returned
+    */
+   val exclusive: Boolean = false
+) {
+   companion object {
+      fun exclusive(completions: List<CompletionItem>) = CompletionItemList(completions, true)
+      fun empty() = CompletionItemList(emptyList(), false)
+   }
+
+   operator fun plus(other: CompletionItemList): CompletionItemList {
+      return CompletionItemList(
+         this.completions + other.completions,
+         this.exclusive || other.exclusive
+      )
+   }
+}
+
+fun List<CompletionItem>.asCompletionItemList():CompletionItemList = CompletionItemList(this)
+fun List<CompletionItem>.asExclusiveCompletionItemList():CompletionItemList = CompletionItemList(this, true)
+
+interface TypeRepositoryProvider {
+   fun getTypeRepository(
+      compilationResult: CompilationResult,
+      lastSuccessfulCompilation: CompilationResult?
+   ): TypeRepository
+}
+
+object DefaultTypeRepositoryProvider : TypeRepositoryProvider {
+   override fun getTypeRepository(
+      compilationResult: CompilationResult,
+      lastSuccessfulCompilation: CompilationResult?
+   ): TypeRepository {
+      return CompilationResultTypeRepository(
+         lastCompilationResult = compilationResult,
+         lastSuccessfulCompilationResult = lastSuccessfulCompilation
+      )
+   }
+
+}
+
+
+class CompositeCompletionService(
+   private val completionProviders: List<CompletionProvider>,
+   private val typeRepositoryProvider: TypeRepositoryProvider = DefaultTypeRepositoryProvider
+   ) : CompletionService {
    override fun computeCompletions(
       compilationResult: CompilationResult,
       params: CompletionParams,
@@ -72,18 +128,27 @@ class CompositeCompletionService(private val completionProviders: List<Completio
                params,
                importDecorator,
                context,
-               lastSuccessfulCompilation
+               lastSuccessfulCompilation,
+               typeRepositoryProvider.getTypeRepository(
+                  compilationResult = compilationResult,
+                  lastSuccessfulCompilation = lastSuccessfulCompilation
+               )
             )
          }
       return CompletableFuture.allOf(*futures.toTypedArray())
          .thenApply { _ ->
-            val completionItems = futures.flatMap { it.get() }
+            val completions = futures.map { it.get() }
+            // If any of the completionLists were exclusive, only show those.
+            val filteredCompletions = if (completions.any { it.exclusive }) {
+               completions.filter { it.exclusive }
+            } else completions
+            val completionItems = filteredCompletions.flatMap { it.completions }
             Either.forLeft(completionItems.toMutableList())
          }
    }
 
    companion object {
-      fun withDefaults(typeCompletionBuilder: TypeCompletionBuilder):CompositeCompletionService {
+      fun withDefaults(typeCompletionBuilder: TypeCompletionBuilder): CompositeCompletionService {
          return CompositeCompletionService(
             listOf(
                EditorCompletionService(typeCompletionBuilder),

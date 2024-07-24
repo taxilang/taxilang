@@ -187,7 +187,7 @@ class JsonSchemaTypeMapper(
       val enumValues = schema.possibleValuesAsList.map {
          EnumValue(
             it.toString(),
-            qualifiedName = EnumValue.enumValueQualifiedName(name, it.toString())
+            enumValueQualifiedName = EnumValue.enumValueQualifiedName(name, it.toString())
          )
       }
       return EnumType(

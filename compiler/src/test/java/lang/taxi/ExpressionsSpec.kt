@@ -1,13 +1,14 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
-import io.kotest.assertions.fail
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import lang.taxi.accessors.Argument
 import lang.taxi.expressions.*
 import lang.taxi.types.*
 
@@ -378,6 +379,83 @@ class ExpressionsSpec : DescribeSpec({
          }
          """.validated()
          errors.shouldContainMessage("Type mismatch. Type of MovieRating is not assignable to type PersonId")
+      }
+
+      it("should not have a stack overflow when there's a partially completed expression") {
+         val error = """
+            model StockPrice {}
+            type StockTicker inherits String
+
+
+         """.compiledWithQueryProducingCompilationException(
+            """
+            import taxi.stdlib.filterEach
+            import StockPrice
+
+            // This is an error seen within the language server
+            // The user was partially through writing StockTicker within the
+            // function expression
+            // But this causes a stack overflow exception
+            stream { StockPrice.filterEach((Sto)) }
+         """.trimIndent()
+         )
+         error.errors.shouldContainMessage("Sto is not defined")
+      }
+
+      describe("referencing members of inputs") {
+         val schema = """
+         model UserUpdateMessage {
+            userId : UserId inherits String
+            message : StatusMessage inherits String
+            reactions : {
+               likes: LikeCount inherits Int
+            }
+         }
+         """
+         it("expressions can reference input members using field navigation") {
+            val (doc, query) = schema.compiledWithQuery(
+               """stream { UserUpdateMessage.filterEach( (msg:UserUpdateMessage) -> msg.userId == "a" ) }"""
+            )
+            query.shouldNotBeNull()
+            val inputs = query.discoveryType!!.expression.shouldBeInstanceOf<ExtensionFunctionExpression>()
+               .functionExpression.function.inputs
+
+            // 2 inputs, because this is an expression function
+            inputs.shouldHaveSize(2)
+            val lambda = inputs[1].shouldBeInstanceOf<LambdaExpression>()
+            lambda.inputs.shouldHaveSize(1)
+            // Verify (msg:UserUpdateMessage)
+            val inputArgument = lambda.inputs.single().shouldBeInstanceOf<Argument>()
+            inputArgument.name.shouldBe("msg")
+            inputArgument.type.qualifiedName.shouldBe("UserUpdateMessage")
+
+            val expression = lambda.expression.shouldBeInstanceOf<OperatorExpression>()
+            expression.lhs.shouldBeInstanceOf<ArgumentSelector>()
+               .scope.shouldBe(inputArgument)
+         }
+         it("expressions can reference input members using deep field navigation") {
+            val (doc, query) = schema.compiledWithQuery(
+               """stream { UserUpdateMessage.filterEach( (msg:UserUpdateMessage) -> msg.reactions.likes > 0 ) }"""
+            )
+            query.shouldNotBeNull()
+            val inputs = query.discoveryType!!.expression.shouldBeInstanceOf<ExtensionFunctionExpression>()
+               .functionExpression.function.inputs
+
+            // 2 inputs, because this is an expression function
+            inputs.shouldHaveSize(2)
+            val lambda = inputs[1].shouldBeInstanceOf<LambdaExpression>()
+            val expression = lambda.expression.shouldBeInstanceOf<OperatorExpression>()
+
+            val selector = expression.lhs.shouldBeInstanceOf<ArgumentSelector>()
+            selector.selectors.map { (it as FieldReferenceSelector).fieldName }
+               .shouldContainExactly("reactions", "likes")
+         }
+         it("fails compilation if referencing input members using field navigation when field doesnt exist") {
+            val error = schema.compiledWithQueryProducingCompilationException(
+               """stream { UserUpdateMessage.filterEach( (msg:UserUpdateMessage) -> msg.wrongField == "a" ) }"""
+            )
+            error.errors.shouldContainMessage("Cannot resolve reference wrongField against type UserUpdateMessage")
+         }
       }
    }
 })

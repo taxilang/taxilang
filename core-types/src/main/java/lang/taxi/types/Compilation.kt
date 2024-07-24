@@ -1,12 +1,17 @@
 package lang.taxi.types
 
 import lang.taxi.sources.SourceCode
+import lang.taxi.sources.SourceCodeLanguage
 import lang.taxi.sources.SourceLocation
 
 typealias ErrorMessage = String
 
 interface Compiled {
    val compilationUnits: List<CompilationUnit>
+
+   fun compilationUnits(language:SourceCodeLanguage): List<CompilationUnit> {
+      return this.compilationUnits.filter { it.source.language == language }
+   }
 }
 
 /**
@@ -17,7 +22,7 @@ interface Compiled {
  */
 data class CompilationUnit(
    val source: SourceCode,
-   val location: SourceLocation = SourceLocation.UNKNOWN_POSITION
+   val location: SourceLocation = SourceLocation.UNKNOWN_POSITION,
 ) {
    companion object {
       fun unspecified(): CompilationUnit {

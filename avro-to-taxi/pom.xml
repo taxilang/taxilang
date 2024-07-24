@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <groupId>org.taxilang</groupId>
+      <artifactId>parent</artifactId>
+      <version>1.55.0-SNAPSHOT</version>
+   </parent>
+
+   <artifactId>avro-to-taxi</artifactId>
+   <properties>
+      <!--If bumping this version, revisit dependencyManagement
+      for commons-compress below -->
+      <avro.version>1.11.3</avro.version>
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.apache.avro</groupId>
+         <artifactId>avro</artifactId>
+         <version>${avro.version}</version>
+      </dependency>
+
+
+      <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>lang-to-taxi-api</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>compiler</artifactId>
+         <type>test-jar</type>
+         <version>${project.version}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>taxi-annotations</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>compiler</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>taxi-stdlib-annotations</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.taxilang</groupId>
+         <artifactId>compiler</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+   </dependencies>
+
+   <dependencyManagement>
+      <dependencies>
+         <!-- Set to 1.26.0 because of vulnerabilities:
+         CVE-2024-25710 , CVE-2024-26308.
+         Transitive in avro. Hopefully resolved in a release of
+         avro > 1.11.3
+         -->
+         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.26.0</version>
+         </dependency>
+      </dependencies>
+   </dependencyManagement>
+</project>

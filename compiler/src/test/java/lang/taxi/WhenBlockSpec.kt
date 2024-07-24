@@ -2,7 +2,6 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
-import lang.taxi.accessors.ConditionalAccessor
 import lang.taxi.accessors.NullValue
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.types.EnumValue
@@ -121,7 +120,7 @@ class WhenBlockSpec : DescribeSpec({
             .field("country").accessor!!.asA<WhenExpression>()
          val enumLiteral = whenBlock.cases[0].getSingleAssignment().assignment.asA<LiteralExpression>().literal
          val enumValue = enumLiteral.value.asA<EnumValue>()
-         enumValue.qualifiedName.should.equal("Country.NZ")
+         enumValue.enumValueQualifiedName.should.equal("Country.NZ")
       }
 
       // Disabling this for now.

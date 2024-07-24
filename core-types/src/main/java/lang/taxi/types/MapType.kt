@@ -50,8 +50,9 @@ data class MapType(
    override val typeKind: TypeKind = TypeKind.Type
 }
 
-fun ObjectType.isMapType():Boolean {
+fun Type.isMapType():Boolean {
    return this.allInheritedTypes.any { MapType.isMapTypeName(it.qualifiedName) }
+      || this is MapType
 }
 fun ObjectType.getUnderlyingMapType(): MapType {
    require (this.isMapType()) { "${this.qualifiedName} is not a Map"}

@@ -29,7 +29,7 @@ namespace companyX.common {
       hash : hash
    }
 
-   type ProductIdentifier inherits Int
+   type ProductIdentifier inherits Long
 
    type ProductName inherits String
 

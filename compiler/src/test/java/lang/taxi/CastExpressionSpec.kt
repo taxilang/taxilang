@@ -1,13 +1,15 @@
 package lang.taxi
 
+import io.kotest.assertions.fail
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.expressions.CastExpression
 import lang.taxi.expressions.FunctionExpression
+import lang.taxi.expressions.TypeExpression
 
-class CastExpressionSpec :DescribeSpec({
+class CastExpressionSpec : DescribeSpec({
    describe("casting") {
       it("should support casting in function ") {
          val field = """
@@ -26,6 +28,27 @@ class CastExpressionSpec :DescribeSpec({
          castExpression.type.qualifiedName.shouldBe("CurrencyCode")
          castExpression.expression.shouldBeInstanceOf<FunctionExpression>()
       }
+      it("should support casting in a projection") {
+         val (taxi, query) = """
+         model Person {
+            personId: PersonId inherits String
+         }
+         """.compiledWithQuery(
+            """
+            find { Person } as {
+               personId : Long = (Long) PersonId
+            }
+         """.trimIndent()
+         )
+         val personIdField = query.projectedObjectType!!
+            .field("personId")
+         personIdField.type.qualifiedName.shouldBe("lang.taxi.Long")
+         val cast = personIdField.accessor.shouldBeInstanceOf<CastExpression>()
+         cast.expression.shouldBeInstanceOf<TypeExpression>()
+            .type.qualifiedName.shouldBe("PersonId")
+         cast.type.qualifiedName.shouldBe("lang.taxi.Long")
+      }
+
       it("should raise error if cast type is not assignable ") {
          """
       type CurrencyCode inherits String
@@ -36,6 +59,7 @@ class CastExpressionSpec :DescribeSpec({
          """.validated()
             .shouldContainMessage("Type mismatch. Type of CurrencyCode is not assignable to type lang.taxi.Int")
       }
+
 
       it("should allow a cast to infer type expression") {
          val parameter = """

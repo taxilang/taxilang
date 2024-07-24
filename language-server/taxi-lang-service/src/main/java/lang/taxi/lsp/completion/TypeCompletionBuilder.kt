@@ -1,11 +1,12 @@
 package lang.taxi.lsp.completion
 
-import lang.taxi.lsp.CompilationResult
+import lang.taxi.services.Service
 import lang.taxi.types.AnnotationType
 import lang.taxi.types.Arrays
 import lang.taxi.types.Documented
 import lang.taxi.types.EnumType
 import lang.taxi.types.ImportableToken
+import lang.taxi.types.Named
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.StreamType
@@ -14,7 +15,6 @@ import lang.taxi.types.TypeKind
 import lang.taxi.utils.log
 import org.eclipse.lsp4j.CompletionItem
 import org.eclipse.lsp4j.CompletionItemKind
-import java.util.concurrent.atomic.AtomicReference
 
 
 class TypeCompletionBuilder(
@@ -49,7 +49,7 @@ class TypeCompletionBuilder(
    }
 
    fun buildCompletionItem(
-      type: Type?,
+      type: Named?,
       name: QualifiedName,
       decorators: List<CompletionDecorator>
    ): CompletionItem {
@@ -69,14 +69,15 @@ class TypeCompletionBuilder(
       val label = "$typeName$namespace"
       val completionItemKind = when {
          type == null -> {
-            CompletionItemKind.Unit
+            CompletionItemKind.Class
          } // Not sure what to pass here
-         type.typeKind == null -> {
-            CompletionItemKind.Unit
+         type is Type && type.typeKind == null -> {
+            CompletionItemKind.Class
          } // Why would this be null?
          type is AnnotationType -> CompletionItemKind.Interface // ? There isn't an annotation CompletionItemKind :(
-         type.typeKind!! == TypeKind.Model -> CompletionItemKind.Interface
-         type.typeKind!! == TypeKind.Type -> CompletionItemKind.Field
+         type is Type && type.typeKind!! == TypeKind.Model -> CompletionItemKind.Interface
+         type is Type && type.typeKind!! == TypeKind.Type -> CompletionItemKind.Field
+         type is Service -> CompletionItemKind.Class
          else -> {
             log().debug("Unhandled switch case in buildCompletionItem")
             CompletionItemKind.Field
@@ -147,7 +148,7 @@ class TypeCompletionBuilder(
 }
 
 interface CompletionDecorator {
-   fun decorate(typeName: QualifiedName, token: ImportableToken?, completionItem: CompletionItem): CompletionItem
+   fun decorate(typeName: QualifiedName, token: Named?, completionItem: CompletionItem): CompletionItem
 }
 
 fun CompletionItem.decorate(

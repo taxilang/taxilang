@@ -13,6 +13,12 @@ typealias GlobPattern = String
  */
 typealias SourcesType = String
 
+object SourcesTypes {
+   val ORIGINAL_SOURCE: SourcesType = "@taxi/originalSources"
+   val ORBITAL_CONFIG = "@orbital/config"
+   val SOURCE_MAP = "@taxi/sourcemaps"
+}
+
 data class TaxiPackageProject(
    val name: String,
    val version: String,
@@ -34,6 +40,8 @@ data class TaxiPackageProject(
       PackageIdentifier(ProjectName.fromId(projectId), version)
    }
    val packageRootPath:Path? = taxiConfFile?.parent
+
+   val sourceRootPath = packageRootPath?.resolve(sourceRoot)
 }
 
 // TODO : We also have PackageSource in the packageImporter.

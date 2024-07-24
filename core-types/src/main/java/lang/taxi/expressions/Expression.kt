@@ -6,6 +6,7 @@ import arrow.core.left
 import arrow.core.right
 import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Accessor
+import lang.taxi.accessors.Argument
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.services.operations.constraints.Constraint
@@ -30,7 +31,7 @@ abstract class Expression : Compiled, TaxiStatementGenerator, Accessor {
 }
 
 data class LambdaExpression(
-   val inputs: List<Type>,
+   val inputs: List<Argument>,
    val expression: Expression,
    override val compilationUnits: List<CompilationUnit>
 ) : Expression() {
@@ -46,6 +47,10 @@ data class LiteralExpression(val literal: LiteralAccessor, override val compilat
       fun isNullExpression(expression: Expression): Boolean {
          return expression is LiteralExpression && LiteralAccessor.isNullLiteral(expression.literal)
       }
+   }
+
+   override fun asTaxi(): String {
+      return literal.asTaxi()
    }
 
    private val equality = ImmutableEquality(this, LiteralExpression::literal)
@@ -123,6 +128,10 @@ data class OperatorExpression(
 
    override fun hashCode(): Int  = equality.hash()
    override fun equals(other: Any?): Boolean = equality.isEqualTo(other)
+
+   override fun asTaxi(): String {
+      return "${lhs.asTaxi()} ${operator.symbol} ${rhs.asTaxi()}"
+   }
 
    companion object {
       fun getReturnType(lhsType: PrimitiveType, operator: FormulaOperator, rhsType: PrimitiveType): Type? {

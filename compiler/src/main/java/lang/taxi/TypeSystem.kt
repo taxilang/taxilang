@@ -18,6 +18,10 @@ import org.antlr.v4.runtime.Token
 class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
 
    private val importedTokenMap: Map<String, ImportableToken> = importedTokens.associateBy { it.qualifiedName }
+   val symbolTree = SymbolTree.withPrimitives()
+      .registerAll(importedTokens)
+
+
    private val compiledTokens = mutableMapOf<String, ImportableToken>()
    private val referencesToUnresolvedTypes = mutableMapOf<String, Token>()
    private val serviceDefinitionMap = mutableMapOf<String, ServiceDefinition>()
@@ -92,21 +96,6 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
 
    /**
     * Registers the token with the typesystem.
-    *
-    * Use this when registering things that don't extend UserType<T>
-    * The token is returned for convenient chaining
-    */
-   fun registerToken(token: ImportableToken):ImportableToken {
-      if (compiledTokens.containsKey(token.qualifiedName)) {
-         throw IllegalArgumentException("Attempting to redefine type ${token.qualifiedName}")
-      } else {
-         compiledTokens[token.qualifiedName] = token
-      }
-      return token
-   }
-
-   /**
-    * Registers the token with the typesystem.
     * The token is returned for convenient chaining
     */
    fun <TDef : TokenDefinition, TToken : DefinableToken<TDef>> register(
@@ -126,9 +115,24 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
             }
          }
       } else {
+         symbolTree.register(type)
          compiledTokens[type.qualifiedName] = type
       }
       return type
+   }
+
+   /**
+    * Call for importable tokens that aren't DefinableTokens
+    * eg: Services
+    */
+   fun registerToken(token: ImportableToken) {
+      if (compiledTokens.containsKey(token.qualifiedName)) {
+         throw IllegalArgumentException("Attempting to redefine type ${token.qualifiedName}")
+      } else {
+         symbolTree.register(token)
+         compiledTokens[token.qualifiedName] = token
+      }
+
    }
 
    fun getTokens(
@@ -214,6 +218,7 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
             SymbolKind.TYPE -> getImportedType(qualifiedName)
             SymbolKind.SERVICE -> getImportedService(qualifiedName)
             SymbolKind.ANNOTATION -> getImportedType(qualifiedName)
+            SymbolKind.TYPE_OR_FUNCTION -> getImportedToken(qualifiedName)
             else -> error("Handling of imported symbols for kind $symbolKind is not implemented")
          }
       }

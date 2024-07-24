@@ -6,6 +6,7 @@ import lang.taxi.CompilationException
 import lang.taxi.Compiler
 import lang.taxi.CompilerConfig
 import lang.taxi.CompilerTokenCache
+import lang.taxi.errors
 import lang.taxi.linter.toLinterRules
 import lang.taxi.lsp.completion.TypeCompletionBuilder
 import lang.taxi.lsp.parser.TokenInjectingErrorStrategy
@@ -61,7 +62,12 @@ class TaxiCompilerService(
    val compilationProgressEvents: Flux<ProgressParams> = compilationProgressSink.asFlux()
 
    fun lastSuccessfulCompilation(): CompilationResult? {
-      return lastCompilationResult.get()
+      return lastSuccessfulCompilationResult.get()?.let { compilationResult ->
+         if (compilationResult.errors.errors().isNotEmpty()) {
+            log().warn("The last successful compilation was not successful!")
+         }
+         compilationResult
+      }
    }
 
    fun lastCompilation(): CompilationResult? {
