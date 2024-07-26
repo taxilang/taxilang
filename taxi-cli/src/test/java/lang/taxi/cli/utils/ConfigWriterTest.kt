@@ -1,6 +1,7 @@
 package lang.taxi.cli.utils
 
 import com.winterbe.expekt.should
+import io.kotest.matchers.shouldBe
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.writers.ConfigWriter
 import org.junit.jupiter.api.Test
@@ -17,6 +18,6 @@ sourceRoot: src/
 additionalSources: {}
 dependencies: {}
 """
-      output.should.equal(expected)
+      output.shouldBe(expected)
    }
 }

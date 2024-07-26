@@ -50,8 +50,8 @@ class MavenPomGeneratorPlugin(private val configurers: List<MavenModelConfigurer
       val writer = StringBuilderWriter()
 
       model.modelVersion = config.modelVersion
-      model.groupId = config.groupId
-      model.artifactId = config.artifactId
+      model.groupId = config.groupId ?: environment.project.identifier.name.organisation
+      model.artifactId = config.artifactId ?: environment.project.identifier.name.name
       model.version = environment.project.version
 
       config.distributionManagement?.let { distributionManagement ->
