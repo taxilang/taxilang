@@ -1,8 +1,8 @@
 package lang.taxi.cli.plugins.internal
 
 data class MavenGeneratorPluginConfig(
-   val groupId: String,
-   val artifactId: String,
+   val groupId: String? = null, // defaults to the org of the Taxi project if not supplied
+   val artifactId: String? = null, // defaults to the projectId of the Taxi project if not supplied
    val modelVersion: String = "4.0.0",
    val dependencies: List<Dependency> = emptyList(),
    val repositories: List<Repository> = emptyList(),

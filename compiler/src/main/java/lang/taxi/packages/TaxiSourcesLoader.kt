@@ -13,11 +13,14 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
       fun loadPackageAndDependencies(
          packageRootPath: Path,
          project: TaxiPackageProject,
-         packageManager: PackageManager = PackageManager.withDefaultRepositorySystem(ImporterConfig.forProject(project))
+         packageManager: PackageManager = PackageManager.withDefaultRepositorySystem(ImporterConfig.forProject(project)),
+         builtInSourcesToInclude: List<SourceCode> = emptyList()
       ): TaxiPackageSources {
          val dependencySources = packageManager.fetchDependencies(project)
             .flatMap { packageSource -> TaxiSourcesLoader(packageSource.packageRootPath!!).load() }
-         return loadPackage(packageRootPath, project, dependencySources)
+
+         val allDependencies = dependencySources + builtInSourcesToInclude
+         return loadPackage(packageRootPath, project, allDependencies)
       }
 
       fun loadPackageAndDependencies(packageRootPath: Path, importer: PackageManager): TaxiPackageSources {

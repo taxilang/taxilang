@@ -2,6 +2,7 @@ package lang.taxi.cli.plugins.internal
 
 import com.google.common.io.Resources
 import com.winterbe.expekt.should
+import io.kotest.matchers.shouldBe
 import org.apache.commons.io.FileUtils
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
@@ -56,6 +57,16 @@ class MavenPomProjectTest {
       val taxiDependency = model.dependencies.first { it.groupId == "org.taxilang" }
       taxiDependency.version.should.equal("\${taxi.version}")
       model.properties.getProperty("taxi.version").should.equal("0.5.0")
+   }
+
+   @Test
+   fun `uses defaults when not provided`() {
+      copyProject("samples/maven-minimal")
+      executeBuild(folder!!.toPath(), listOf(KotlinPlugin(BuildProperties(Properties()))))
+      val model = loadMavenModel()
+      model.groupId.shouldBe("org.taxi")
+      model.artifactId.shouldBe("maven-sample")
+      model.version.shouldBe("0.3.0")
    }
 
    private fun loadMavenModel(): Model {

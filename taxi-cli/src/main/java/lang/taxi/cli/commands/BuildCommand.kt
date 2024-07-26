@@ -13,6 +13,7 @@ import lang.taxi.generators.WritableSource
 import lang.taxi.messages.Severity
 import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.plugins.Plugin
+import lang.taxi.stdlib.BuiltInSources
 import org.apache.commons.io.FileUtils
 import org.springframework.stereotype.Component
 import java.nio.charset.Charset
@@ -78,7 +79,8 @@ class BuildCommand(private val pluginManager: PluginRegistry) : ProjectShellComm
    private fun loadSources(projectEnvironment: TaxiProjectEnvironment): Pair<List<CompilationError>, TaxiDocument> {
       val taxiProject = TaxiSourcesLoader.loadPackageAndDependencies(
          projectEnvironment.projectRoot,
-         projectEnvironment.project
+         projectEnvironment.project,
+         builtInSourcesToInclude = BuiltInSources.builtInSrc
       )
       return Compiler(taxiProject).compileWithMessages()
    }

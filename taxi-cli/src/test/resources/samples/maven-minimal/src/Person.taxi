@@ -1,0 +1,8 @@
+namespace lang.taxi
+
+type Person {
+   firstName : String
+   lastName : String
+}
+
+type alias Developer as Person

@@ -29,6 +29,7 @@ import kotlin.reflect.jvm.kotlinFunction
 
 
 object SpringTaxiGenerator {
+   @JvmStatic
    fun forBaseUrl(baseUrl: String): TaxiGenerator {
       return TaxiGenerator(
          serviceMapper = SpringServiceMapper(baseUrl)

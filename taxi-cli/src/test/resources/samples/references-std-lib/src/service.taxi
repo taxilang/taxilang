@@ -1,0 +1,11 @@
+import taxi.http.HttpOperation
+import taxi.http.HttpService
+
+model Person {
+   name : Name inherits String
+}
+
+service PersonApi {
+   @HttpOperation(url = "http://localhost:8080/people", method = "GET")
+   operation getPeople():Person[]
+}

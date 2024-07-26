@@ -133,6 +133,7 @@ data class CompilationError(
 }
 
 fun List<CompilationError>.errors(): List<CompilationError> = this.filter { it.severity == Severity.ERROR }
+fun List<CompilationError>.warnings(): List<CompilationError> = this.filter { it.severity == Severity.WARNING }
 
 open class CompilationException(val errors: List<CompilationError>) :
    RuntimeException(errors.joinToString("\n") { it.toString() }) {

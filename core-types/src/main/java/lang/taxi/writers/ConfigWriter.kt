@@ -65,6 +65,7 @@ class ConfigWriter {
          TaxiPackageProject::name,
          TaxiPackageProject::version,
          TaxiPackageProject::sourceRoot,
+         TaxiPackageProject::additionalSources,
          TaxiPackageProject::dependencies
       ).map {
          it.name to it.get(project)
