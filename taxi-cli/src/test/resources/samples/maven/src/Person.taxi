@@ -1,4 +1,4 @@
-namespace lang.taxi
+namespace com.foo
 
 type Person {
    firstName : String

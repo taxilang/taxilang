@@ -48,7 +48,7 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName: String = "taxi.g
       return taxi.types
          // Hack - exclude taxi.stdlib, to avoid the noise of writing annotation classes right now.
          // We should implement this propertly
-         .filter { it.toQualifiedName().namespace != "taxi.stdlib" }
+         .filter { it.toQualifiedName().namespace != "taxi.stdlib" && it.toQualifiedName().namespace != "taxi.http"}
          .mapNotNull { generateType(it, typeNameConstantsGenerator) } +
          typeNameConstantsGenerator.generate()
    }

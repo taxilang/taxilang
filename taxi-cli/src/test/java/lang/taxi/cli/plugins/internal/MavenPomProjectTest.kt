@@ -20,8 +20,7 @@ class MavenPomProjectTest {
    var folder: File? = null
 
    private fun copyProject(path: String) {
-      val testProject = File(Resources.getResource(path).toURI())
-      FileUtils.copyDirectory(testProject, folder!!)
+      folder!!.deployProject(path)
    }
 
    @Test
@@ -80,4 +79,10 @@ class MavenPomProjectTest {
    }
 
 
+}
+
+
+fun File.deployProject(path: String) {
+   val testProject = File(Resources.getResource(path).toURI())
+   FileUtils.copyDirectory(testProject, this)
 }
