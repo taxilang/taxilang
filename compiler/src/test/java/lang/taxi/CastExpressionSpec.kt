@@ -7,7 +7,11 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.expressions.CastExpression
 import lang.taxi.expressions.FunctionExpression
+import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.TypeExpression
+import lang.taxi.types.ElseMatchExpression
+import lang.taxi.types.InlineAssignmentExpression
+import lang.taxi.types.WhenExpression
 
 class CastExpressionSpec : DescribeSpec({
    describe("casting") {
@@ -73,6 +77,37 @@ class CastExpressionSpec : DescribeSpec({
             .operation("findPeople")
             .parameters.single()
          parameter.defaultValue.shouldNotBeNull()
+      }
+      it("is possible to use a cast to construct an error") {
+         val policy = """
+            model NotAuthorizedError {
+               message : ErrorMessage inherits String
+            }
+            model Film
+            model UserInfo {
+               groups: String[]
+            }
+
+            policy PolicyWithError against Film (userInfo : UserInfo) -> {
+               read {
+                  when {
+                     userInfo.groups.contains( 'ADMIN' ) -> Film
+                     else -> throw( (NotAuthorizedError) { message: 'Not Authorized' })
+                  }
+               }
+            }
+         """.compiled()
+            .policy("PolicyWithError")
+         val whenClause = policy.rules.single().expression
+            .shouldBeInstanceOf<WhenExpression>()
+         val elseClause = whenClause.cases.single { it.matchExpression is ElseMatchExpression }
+         val castExpression = elseClause.assignments.single().shouldBeInstanceOf<InlineAssignmentExpression>()
+            .assignment.shouldBeInstanceOf<FunctionExpression>()
+            .inputs.single().shouldBeInstanceOf<CastExpression>()
+         val errorValue = castExpression.expression.shouldBeInstanceOf<LiteralExpression>()
+            .asTypedValue().value!!
+         errorValue.shouldBe(mapOf("message" to "Not Authorized"))
+         castExpression.type.qualifiedName.shouldBe("NotAuthorizedError")
       }
 
       it("should allow casting between compatible types inline") {

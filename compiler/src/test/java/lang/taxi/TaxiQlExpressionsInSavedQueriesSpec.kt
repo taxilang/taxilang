@@ -1,12 +1,16 @@
 package lang.taxi
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.types.shouldNotBeInstanceOf
+import lang.taxi.expressions.CastExpression
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.LambdaExpression
 import lang.taxi.expressions.OperatorExpression
+import lang.taxi.query.FactValue
 import lang.taxi.types.ArgumentSelector
 
 class TaxiQlExpressionsInSavedQueriesSpec : DescribeSpec({
@@ -26,6 +30,15 @@ class TaxiQlExpressionsInSavedQueriesSpec : DescribeSpec({
          }
       """.trimIndent()
          )
+         query.shouldNotBeNull()
+         query.facts.shouldHaveSize(2)
+         val personId = query.facts[1]
+         personId.name.shouldBe("personId")
+         val expression = personId.value.shouldBeInstanceOf<FactValue.Expression>()
+         expression.expression.shouldBeInstanceOf<CastExpression>()
+            .expression.shouldBeInstanceOf<ArgumentSelector>()
+            .scope.name.shouldBe("humanId")
+
       }
       it("is possible to use variable from query in expression") {
          val (schema, query) = """

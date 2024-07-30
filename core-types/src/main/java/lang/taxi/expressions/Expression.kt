@@ -38,11 +38,37 @@ data class LambdaExpression(
    override val returnType: Type = expression.returnType
 }
 
+interface Literal {
+   fun asTypedValue(): TypedValue
+}
+
+data class LiteralArray(override val returnType: Type, val members: List<Expression>, override val compilationUnits: List<CompilationUnit>) : Literal, Expression() {
+   private val equality = ImmutableEquality(this, LiteralArray::returnType, LiteralArray::members)
+   override fun hashCode(): Int = equality.hash()
+   override fun asTypedValue(): TypedValue {
+      return TypedValue(returnType, toListOfValues())
+   }
+
+   override fun equals(other: Any?): Boolean = equality.isEqualTo(other)
+
+   /**
+    * Provides backwards compatibility where old code was relying on a list of values.
+    * Ideally, code should migrate to use a LiteralArray containing a colletion of expressions.
+    */
+   fun toListOfValues(): List<Any?> {
+      return members.map { expression ->
+         require(expression is Literal) { "Cannot convert LiteralArray to list of values, as found member that was not a literal: ${expression::class.simpleName}"}
+         expression.asTypedValue().value
+      }
+   }
+
+   val memberType = Arrays.unwrapPossibleArrayType(returnType)
+}
 
 // Decorator around a LiteralAccessor to make it an Expression.
 // Pure tech-debt, resulting in how Accessors and Expressions have evolved.
 data class LiteralExpression(val literal: LiteralAccessor, override val compilationUnits: List<CompilationUnit>) :
-   Expression() {
+   Literal,Expression() {
    companion object {
       fun isNullExpression(expression: Expression): Boolean {
          return expression is LiteralExpression && LiteralAccessor.isNullLiteral(expression.literal)
@@ -60,6 +86,21 @@ data class LiteralExpression(val literal: LiteralAccessor, override val compilat
    override val returnType: Type = literal.returnType
 
    val value = literal.value
+
+   override fun asTypedValue():TypedValue {
+      val value = if (this.value is Map<*,*>) {
+         this.value.mapValues { (_, v) ->
+            when (v) {
+               null -> v
+               is Literal -> v.asTypedValue().value
+               else -> error("can't convert value with type ${v::class.simpleName} to TypedValue")
+            }
+         }
+      } else {
+         this.value
+      }
+      return TypedValue(this.returnType, value)
+   }
 }
 
 // Pure tech-debt, resulting in how Accessors and Expressions have evolved.

@@ -4,7 +4,6 @@ import arrow.core.*
 import lang.taxi.*
 import lang.taxi.TaxiParser.ServiceOrMemberReferenceContext
 import lang.taxi.TaxiParser.TypeReferenceContext
-import lang.taxi.TaxiParser.ValueContext
 import lang.taxi.accessors.Argument
 import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.compiler.fields.FieldTypeSpec
@@ -298,7 +297,8 @@ internal class QueryCompiler(
       val factDeclaration = factCtx.factDeclaration()
       return tokenProcessor.typeOrError(namespace, factDeclaration.typeReference()).flatMap { factType ->
          try {
-            readValue(factDeclaration.value(), factType, false, parameters)
+            tokenProcessor.expressionCompiler(scopedArguments = parameters)
+               .compile(factDeclaration.expressionGroup(), factType)
                .map { factValue ->
                   when {
                      factValue is Expression -> Parameter(
@@ -307,12 +307,15 @@ internal class QueryCompiler(
                         annotations = emptyList()
                      )
 
-                     factValue != null -> Parameter(
-                        name = variableName,
-                        value = FactValue.Constant(TypedValue(factType, factValue)),
-                        annotations = emptyList()
-                     )
+//                     factValue != null -> Parameter(
+//                        name = variableName,
+//                        value = FactValue.Constant(TypedValue(factType, factValue)),
+//                        annotations = emptyList()
+//                     )
 
+                     // You should never hit here.
+                     // Everything is an expression now.
+                     // TODO : Clean this up before merge
                      else -> {
                         error("It is illegal in the grammar to not decalre a factValue. You shouldn't hit this part")
 
@@ -345,156 +348,6 @@ internal class QueryCompiler(
          ).left()
       } else {
          resolved.right()
-      }
-   }
-
-   private fun readValue(
-      valueContext: ValueContext?,
-      factType: Type,
-      nullable: Boolean,
-      parameters: List<Parameter> = emptyList()
-   ): Either<List<CompilationError>, Any?> {
-      if (valueContext == null) {
-         return (null as Any?).right()
-      }
-
-      val result: Either<List<CompilationError>, Any?> = when {
-         valueContext.literal() != null -> valueContext.literal().nullableValue().right()
-         valueContext.objectValue() != null -> readObjectValue(valueContext.objectValue(), factType)
-         valueContext.valueArray() != null -> readArray(valueContext.valueArray(), factType)
-         valueContext.expressionGroup() != null -> readExpression(valueContext.expressionGroup(), factType, parameters)
-         else -> null
-      }?.flatMap { value -> verifyIsAssignable(factType, value, valueContext, nullable) }
-         ?: (null as Any?).right()
-
-      return result
-   }
-
-   private fun readExpression(
-      expressionGroup: TaxiParser.ExpressionGroupContext,
-      factType: Type,
-      parameters: List<Parameter>
-   ): Either<List<CompilationError>, Any?> {
-      return expressionCompiler
-         .withParameters(parameters)
-         .compile(expressionGroup, factType)
-   }
-
-   private fun verifyIsAssignable(
-      factType: Type,
-      value: Any?,
-      valueContext: ValueContext,
-      nullable: Boolean
-   ): Either<List<CompilationError>, Any?> {
-      return when (value) {
-         null -> {
-            if (!nullable) {
-               listOf(CompilationError(valueContext.toCompilationUnit(), "null values are not supported here")).left()
-            } else {
-               Either.Right(null)
-            }
-         }
-
-         is Collection<*> -> {
-            // We don't need to verify that the inner types of the array match,
-            // as that was verified whilst parsing the array.
-            if (factType is ArrayType) {
-               value.right()
-            } else {
-               listOf(
-                  CompilationError(
-                     valueContext.toCompilationUnit(),
-                     "An array is not assignable to type ${factType.qualifiedName}"
-                  )
-               ).left()
-            }
-         }
-
-         is Map<*, *> -> {
-            // TODO : We should be verifying the type contract here.
-            if (factType !is ObjectType) {
-               return listOf(
-                  CompilationError(
-                     valueContext.toCompilationUnit(),
-                     "Map is not assignable to type ${factType.qualifiedName}"
-                  )
-               ).left()
-            }
-            val missingRequiredFields = factType.fields
-               .filter { !it.nullable }
-               .filter { field -> !value.containsKey(field.name) }
-            if (missingRequiredFields.isNotEmpty()) {
-               return listOf(
-                  CompilationError(
-                     valueContext.toCompilationUnit(),
-                     "Map is not assignable to type ${factType.qualifiedName} as mandatory properties ${missingRequiredFields.joinToString { it.name }} are missing"
-                  )
-               ).left()
-            } else {
-               value.right()
-            }
-         }
-
-         is Expression -> {
-            tokenProcessor.typeChecker.ifAssignable(value.returnType, factType, valueContext) { value }
-               .wrapErrorsInList()
-         }
-
-         else -> {
-            val primitiveType = PrimitiveValues.getTaxiPrimitive(value)
-            tokenProcessor.typeChecker.ifAssignable(primitiveType, factType, valueContext) { value }
-               .wrapErrorsInList()
-         }
-      }
-   }
-
-   private fun readArray(
-      valueArray: TaxiParser.ValueArrayContext,
-      factType: Type
-   ): Either<List<CompilationError>, List<Any?>> {
-      if (factType !is ArrayType) {
-         return listOf(
-            CompilationError(
-               valueArray.toCompilationUnit(),
-               "An array is not assignable to type ${factType.qualifiedName}"
-            )
-         ).left()
-      }
-      val arrayMemberType = factType.memberType
-      val readValue = valueArray.value().map { readValue(it, arrayMemberType, false) }
-         .invertEitherList()
-         .flattenErrors()
-      return readValue
-   }
-
-   private fun readObjectValue(
-      objectValue: TaxiParser.ObjectValueContext,
-      factType: Type
-   ): Either<List<CompilationError>, Map<String, Any?>> {
-      val errors = mutableListOf<CompilationError>()
-      if (factType !is ObjectType) {
-         return listOf(
-            CompilationError(
-               objectValue.toCompilationUnit(),
-               "Map is not assignable to ${factType.qualifiedName}"
-            )
-         ).left()
-      }
-      val mapResult = objectValue.objectField().map { objectField ->
-         val fieldName = objectField.identifier().IdentifierToken().text
-         val field = factType.field(fieldName)
-         val fieldValue = readValue(objectField.value(), field.type, field.nullable)
-            .getOrElse {
-               errors.addAll(it)
-               null
-            }
-         fieldName to fieldValue
-      }.toMap()
-
-      return if (errors.isEmpty()) {
-         mapResult.right()
-      } else {
-         errors.left()
       }
    }
 

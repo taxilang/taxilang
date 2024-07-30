@@ -38,9 +38,6 @@ fun stringLiteralValue(stringLiteral: TerminalNode): String {
    return stringLiteral.text.removeSurrounding(stringLiteral.text.substring(0, 1))
 }
 
-fun TaxiParser.LiteralArrayContext.value(): List<Any> {
-   return this.literal().map { it.value() }
-}
 
 //fun TaxiParser.InstantOffsetExpressionContext?.intValue(): Int? {
 //   return when {

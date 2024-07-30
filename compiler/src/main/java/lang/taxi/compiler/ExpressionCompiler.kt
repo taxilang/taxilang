@@ -149,16 +149,8 @@ class ExpressionCompiler(
    private fun compileCastExpression(
       expressionGroup: ExpressionGroupContext,
       targetType: Type?
-   ) = if (expressionGroup.expressionGroup() == null || expressionGroup.expressionGroup().size != 1) {
-      listOf(
-         CompilationError(
-            expressionGroup.toCompilationUnit(),
-            "An internal error occurred - expected a single expressionGroup after a cast statement"
-         )
-      )
-         .left()
-   } else {
-      tokenProcessor.typeOrError(expressionGroup.castExpression().typeReference())
+   ): Either<List<CompilationError>, CastExpression> {
+      return tokenProcessor.typeOrError(expressionGroup.castExpression().typeReference())
          .flatMap { castType ->
             // We're about to perform casting, so disable the type check. We catch it below
             compile(expressionGroup.expressionGroup().single(), targetType = castType, enforceTypeChecks = false)
@@ -177,8 +169,6 @@ class ExpressionCompiler(
                   ) { castExpression }
                }
          }
-
-
    }
 
    private fun compileExpressionProjection(
@@ -253,8 +243,8 @@ class ExpressionCompiler(
          .flatMap { inputs ->
             withParameters(inputs)
                .compile(lambdaExpression.expressionGroup(0)).map { expression ->
-               LambdaExpression(inputs, expression, lambdaExpression.toCompilationUnits())
-            }
+                  LambdaExpression(inputs, expression, lambdaExpression.toCompilationUnits())
+               }
          }
 
    }
@@ -286,10 +276,15 @@ class ExpressionCompiler(
             assignmentType
          )
 
-         expressionAtom.literal() != null -> parseLiteralExpression(expressionAtom.literal())
-         expressionAtom.literalArray() != null -> parseLiteralArray(expressionAtom.literalArray())
+         expressionAtom.literal() != null -> parseLiteralExpression(expressionAtom.literal(), assignmentType)
+         expressionAtom.valueArray() != null -> parseValueArray(expressionAtom.valueArray(), assignmentType)
          expressionAtom.fieldReferenceSelector() != null -> parseAttributeSelector(expressionAtom.fieldReferenceSelector())
          expressionAtom.modelAttributeTypeReference() != null -> parseModelAttributeTypeReference(expressionAtom.modelAttributeTypeReference())
+         expressionAtom.objectValue() != null -> ValueExpressionCompiler(this).objectValueAsExpression(
+            expressionAtom.objectValue(),
+            assignmentType
+         )
+
          else -> error("Unhandled atom in expression: ${expressionAtom.text}")
       }
    }
@@ -379,12 +374,48 @@ class ExpressionCompiler(
    }
 
 
-   private fun parseLiteralArray(literalArray: TaxiParser.LiteralArrayContext): Either<List<CompilationError>, Expression> {
-      return LiteralExpression(LiteralAccessor(literalArray.value()), literalArray.toCompilationUnits()).right()
+   fun parseValueArray(
+      literalArray: TaxiParser.ValueArrayContext,
+      assignmentType: Type?
+   ): Either<List<CompilationError>, Expression> {
+      if (assignmentType != null && !Arrays.isArray(assignmentType)) {
+         return listOf(
+            CompilationError(
+               literalArray.toCompilationUnit(),
+               "An internal error occurred: Parsing an array, but the assignment type was not an array type - got ${assignmentType.qualifiedName}"
+            )
+         )
+            .left()
+      }
+      val memberType = if (assignmentType != null) {
+         Arrays.unwrapPossibleArrayType(assignmentType)
+      } else PrimitiveType.ANY
+      return literalArray.expressionGroup().map { expression ->
+         compile(expression, memberType)
+      }.invertEitherList().flattenErrors()
+         .map { compiledExpressions ->
+            val arrayType = assignmentType ?: Arrays.arrayOf(memberType)
+            LiteralArray(arrayType, compiledExpressions, literalArray.toCompilationUnits())
+         }
+//      return LiteralExpression(LiteralAccessor(literalArray.value()), literalArray.toCompilationUnits()).right()
    }
 
-   private fun parseLiteralExpression(literal: TaxiParser.LiteralContext): Either<List<CompilationError>, Expression> {
-      return LiteralExpression(LiteralAccessor(literal.valueOrNullValue()), literal.toCompilationUnits()).right()
+   private fun parseLiteralExpression(
+      literal: TaxiParser.LiteralContext,
+      assignmentType: Type?
+   ): Either<List<CompilationError>, Expression> {
+      // The raw accessor initially uses the raw primitive type.
+      // We do this in order to first do assignment type checking, then we
+      // upcast to the semantic type if provided.
+      val rawAccessor = LiteralAccessor(literal.valueOrNullValue())
+
+      val receiverType = assignmentType ?: PrimitiveType.ANY
+      return typeChecker.ifAssignableOrErrorList(rawAccessor.returnType, receiverType, literal) {
+         LiteralExpression(
+            LiteralAccessor(literal.valueOrNullValue(), TypeUtils.getMostSpecificType(assignmentType ?: PrimitiveType.ANY, rawAccessor.returnType)),
+            literal.toCompilationUnits()
+         )
+      }
    }
 
 
@@ -961,14 +992,15 @@ class ExpressionCompiler(
       // if the type is a reference to a scoped argument.
       // eg: (movie:Movie) -> {
       //   something : Something[]( MovieId == movie::MovieId )
-      val source: Either<List<CompilationError>, Pair<Type, ArgumentSelector?>> = if (canResolveAsScopePath(sourceTypeReference.qualifiedName())) {
-         // Is the source actually a scoped variable?
-         resolveScopePath(sourceTypeReference.qualifiedName()).map { selector ->
-            selector.returnType to selector
+      val source: Either<List<CompilationError>, Pair<Type, ArgumentSelector?>> =
+         if (canResolveAsScopePath(sourceTypeReference.qualifiedName())) {
+            // Is the source actually a scoped variable?
+            resolveScopePath(sourceTypeReference.qualifiedName()).map { selector ->
+               selector.returnType to selector
+            }
+         } else {
+            tokenProcessor.typeOrError(sourceTypeReference).map { type -> type to null }
          }
-      } else {
-         tokenProcessor.typeOrError(sourceTypeReference).map { type -> type to null }
-      }
 
       return source.flatMap { (sourceType, argumentSelector) ->
          tokenProcessor.typeOrError(targetTypeReference).map { targetType ->

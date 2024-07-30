@@ -12,6 +12,9 @@ class TypeChecker(val enabled:FeatureToggle = FeatureToggle.DISABLED) {
       val valueTypeWithoutAliases = valueType.resolveAliases()
       val assignmentTargetTypeWithoutAliases = assignmentTargetType.resolveAliases()
 
+      if (assignmentTargetTypeWithoutAliases == PrimitiveType.ANY) {
+         return true
+      }
       if (valueTypeWithoutAliases.resolvesSameAs(assignmentTargetTypeWithoutAliases, considerTypeParameters)) {
          return true
       }
