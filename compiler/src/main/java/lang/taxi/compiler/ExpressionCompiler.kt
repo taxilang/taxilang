@@ -279,7 +279,7 @@ class ExpressionCompiler(
          expressionAtom.literal() != null -> parseLiteralExpression(expressionAtom.literal(), assignmentType)
          expressionAtom.valueArray() != null -> parseValueArray(expressionAtom.valueArray(), assignmentType)
          expressionAtom.fieldReferenceSelector() != null -> parseAttributeSelector(expressionAtom.fieldReferenceSelector())
-         expressionAtom.modelAttributeTypeReference() != null -> parseModelAttributeTypeReference(expressionAtom.modelAttributeTypeReference())
+         expressionAtom.memberReference() != null -> parseTypeMemberReference(expressionAtom.memberReference())
          expressionAtom.objectValue() != null -> ValueExpressionCompiler(this).objectValueAsExpression(
             expressionAtom.objectValue(),
             assignmentType
@@ -980,12 +980,12 @@ class ExpressionCompiler(
       }
    }
 
-   override fun parseModelAttributeTypeReference(
-      modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext
+   override fun parseTypeMemberReference(
+      typeMemberReference: TaxiParser.MemberReferenceContext
    ): Either<List<CompilationError>, ModelAttributeReferenceSelector> {
 
-      val sourceTypeReference = modelAttributeReferenceCtx.typeReference().first()
-      val targetTypeReference = modelAttributeReferenceCtx.typeReference()[1]
+      val sourceTypeReference = typeMemberReference.typeReference().first()
+      val targetTypeReference = typeMemberReference.typeReference()[1]
 
 
       // The source is either a type, and sometimes with an argument selector
@@ -1004,7 +1004,7 @@ class ExpressionCompiler(
 
       return source.flatMap { (sourceType, argumentSelector) ->
          tokenProcessor.typeOrError(targetTypeReference).map { targetType ->
-            val returnType = if (modelAttributeReferenceCtx.arrayMarker() != null) {
+            val returnType = if (typeMemberReference.arrayMarker() != null) {
                ArrayType.of(targetType, targetTypeReference.toCompilationUnit())
             } else {
                targetType
@@ -1014,7 +1014,7 @@ class ExpressionCompiler(
                targetType,
                returnType,
                argumentSelector,
-               modelAttributeReferenceCtx.toCompilationUnit()
+               typeMemberReference.toCompilationUnit()
             )
          }
       }

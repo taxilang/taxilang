@@ -34,8 +34,8 @@ interface FunctionParameterReferenceResolver {
       parameterContext: TaxiParser.ArgumentContext
    ): Either<List<CompilationError>, FieldReferenceSelector>
 
-   fun parseModelAttributeTypeReference(
-      modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext
+   fun parseTypeMemberReference(
+      typeMemberReference: TaxiParser.MemberReferenceContext
    ): Either<List<CompilationError>, Expression>
 }
 
