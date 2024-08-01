@@ -2,6 +2,7 @@ package lang.taxi
 
 import lang.taxi.TaxiParser.AnnotationTypeDeclarationContext
 import lang.taxi.TaxiParser.ServiceDeclarationContext
+import lang.taxi.TaxiParser.ToplevelObjectContext
 import lang.taxi.TaxiParser.TypeDeclarationContext
 import lang.taxi.TaxiParser.TypeDocContext
 import lang.taxi.compiler.SymbolKind
@@ -24,6 +25,7 @@ data class Tokens(
    val unparsedFunctions: Map<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>,
    val namedQueries: List<Pair<Namespace, TaxiParser.NamedQueryContext>>,
    val anonymousQueries: List<Pair<Namespace, TaxiParser.AnonymousQueryContext>>,
+   val topLevelExpressions: List<TaxiParser.ExpressionGroupContext>,
    val tokenStore: TokenStore
 ) {
    companion object {
@@ -43,7 +45,7 @@ data class Tokens(
             mutableMapOf()
          val namedQueries: MutableList<Pair<Namespace, TaxiParser.NamedQueryContext>> = mutableListOf()
          val anonymousQueries: MutableList<Pair<Namespace, TaxiParser.AnonymousQueryContext>> = mutableListOf()
-
+         val topLevelExpressions: MutableList<TaxiParser.ExpressionGroupContext> = mutableListOf()
          members.forEach { tokens ->
             imports.addAll(tokens.imports)
             unparsedTypes.putAll(tokens.unparsedTypes)
@@ -54,6 +56,7 @@ data class Tokens(
             unparsedFunctions.putAll(tokens.unparsedFunctions)
             namedQueries.addAll(tokens.namedQueries)
             anonymousQueries.addAll(tokens.anonymousQueries)
+            topLevelExpressions.addAll(tokens.topLevelExpressions)
          }
          val tokenStores = members.map { it.tokenStore }
          val tokenStore = TokenStore.combine(tokenStores)
@@ -68,6 +71,7 @@ data class Tokens(
             unparsedFunctions,
             namedQueries,
             anonymousQueries,
+            topLevelExpressions,
             tokenStore
          )
       }
@@ -205,6 +209,7 @@ class TokenCollator : TaxiBaseListener() {
    private val unparsedFunctions = mutableMapOf<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>()
    private val namedQueries = mutableListOf<Pair<Namespace, TaxiParser.NamedQueryContext>>()
    private val anonymousQueries = mutableListOf<Pair<Namespace, TaxiParser.AnonymousQueryContext>>()
+   private val topLevelExpressions = mutableListOf<TaxiParser.ExpressionGroupContext>()
 
 
    //    private val unparsedTypes = mutableMapOf<String, ParserRuleContext>()
@@ -222,6 +227,7 @@ class TokenCollator : TaxiBaseListener() {
          unparsedFunctions,
          namedQueries,
          anonymousQueries,
+         topLevelExpressions,
          tokenStore
       )
    }
@@ -241,6 +247,13 @@ class TokenCollator : TaxiBaseListener() {
          imports.add(ctx.qualifiedName().identifier().text() to ctx)
       }
       super.exitImportDeclaration(ctx)
+   }
+
+   override fun exitExpressionGroup(ctx: TaxiParser.ExpressionGroupContext) {
+      if (ctx.parent is ToplevelObjectContext) {
+         topLevelExpressions.add(ctx)
+      }
+      super.exitExpressionGroup(ctx)
    }
 
 

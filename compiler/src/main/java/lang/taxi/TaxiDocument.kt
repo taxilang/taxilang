@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.google.common.collect.Multimaps
+import lang.taxi.expressions.Expression
 import lang.taxi.functions.Function
 import lang.taxi.policies.Policy
 import lang.taxi.query.TaxiQlQuery
@@ -32,7 +33,8 @@ open class TaxiDocument(
    val functions: Set<Function> = emptySet(),
    val annotations: Set<Annotation> = emptySet(),
    val views: Set<View> = emptySet(),
-   val queries: Set<TaxiQlQuery> = emptySet()
+   val queries: Set<TaxiQlQuery> = emptySet(),
+   val expressions: Set<Expression> = emptySet()
 ) {
    private val equality = ImmutableEquality(this, TaxiDocument::types, TaxiDocument::services)
    private val typeMap = types.associateBy { it.qualifiedName }

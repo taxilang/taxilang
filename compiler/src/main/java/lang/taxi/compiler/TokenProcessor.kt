@@ -15,6 +15,7 @@ import lang.taxi.compiler.fields.FieldCompiler
 import lang.taxi.compiler.fields.FieldTypeSpec
 import lang.taxi.compiler.fields.TypeBodyContext
 import lang.taxi.expressions.Expression
+import lang.taxi.expressions.LiteralArray
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.toExpressionGroup
 import lang.taxi.functions.Function
@@ -87,6 +88,7 @@ class TokenProcessor(
 
    private val tokensCurrentlyCompiling = mutableSetOf<String>()
    private val queries = mutableListOf<TaxiQlQuery>()
+   private val topLevelExpressions = mutableListOf<Expression>()
 
    init {
       val importedTypes = if (collectImports) {
@@ -112,7 +114,8 @@ class TokenProcessor(
          functions.toSet(),
          annotations.toSet(),
          views.toSet(),
-         queries.toSet()
+         queries.toSet(),
+         topLevelExpressions.toSet()
       )
    }
 
@@ -235,7 +238,17 @@ class TokenProcessor(
 
       // Queries
       compileQueries()
+      compileTopLevelExpressions()
       //
+   }
+
+   private fun compileTopLevelExpressions() {
+      this.tokens.topLevelExpressions.forEach { expression ->
+         expressionCompiler(null)
+            .compile(expression)
+            .collectErrors(errors)
+            .map { topLevelExpressions.add(it) }
+      }
    }
 
    private fun compileQueries() {
@@ -1084,6 +1097,7 @@ class TokenProcessor(
    ): Either<List<CompilationError>, Map<String, Any>> {
       val mutableParams = annotationParameters.toMutableMap()
       val fieldErrors = type.fields.mapNotNull { field ->
+         // Apply defaults if value not provided
          if (!annotationParameters.containsKey(field.name) && !field.nullable) {
             if (field.accessor is LiteralExpression) {
                mutableParams[field.name] = (field.accessor as LiteralExpression).value
@@ -1100,12 +1114,12 @@ class TokenProcessor(
                paramValue == null && field.nullable -> null
                paramValue == null && !field.nullable -> CompilationError(
                   annotation.start,
-                  "Annotation ${type.qualifiedName}  member '${field.name}' is defined as a not nullable but no value is provided!"
+                  "Annotation ${type.qualifiedName}  member '${field.name}' is defined as not nullable but no value is provided"
                )
 
                Arrays.isArray(field.type) && paramValue !is List<*> -> CompilationError(
                   annotation.start,
-                  "Annotation ${type.qualifiedName}  member '${field.name}' is defined as a not nullable but no value is provided!"
+                  "Annotation ${type.qualifiedName}  member '${field.name}' is defined as not nullable but no value is provided"
                )
 
                Arrays.isArray(field.type) && paramValue is List<*> -> {
@@ -1206,7 +1220,23 @@ class TokenProcessor(
       return when {
          elementValue.literal() != null -> elementValue.literal().value().right()
          elementValue.qualifiedName() != null -> resolveEnumMember(elementValue.qualifiedName())
-         elementValue.literalArray() != null -> elementValue.literalArray().value().right()
+         elementValue.valueArray() != null -> {
+            expressionCompiler().parseValueArray(elementValue.valueArray(), null)
+               .map { value ->
+                  // MP : 31-Jul-24
+                  // We removed some duplication from the grammar. This previously returnred a
+                  // list of values.
+                  // It now contains a newer LiterayArray type, which is a
+                  // list of expressions.
+                  // In time, we may wish to adopt this for annotations, but
+                  // for now make backwards comaptiable by downgrading to a list of values
+                  if (value is LiteralArray) {
+                     value.toListOfValues()
+                  } else {
+                     error("Expected a LiteralArray here, but was ${value::class.simpleName}")
+                  }
+               }
+         }//elementValue.literalArray().value().right()
          elementValue.annotation() != null -> {
             val annotation = elementValue.annotation()
             resolveUserType(

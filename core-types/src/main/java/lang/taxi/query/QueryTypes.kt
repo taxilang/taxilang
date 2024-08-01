@@ -1,6 +1,8 @@
 package lang.taxi.query
 
 import lang.taxi.expressions.Expression
+import lang.taxi.expressions.Literal
+import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.QualifiedName
@@ -9,6 +11,7 @@ import lang.taxi.types.TypedValue
 
 sealed class FactValue() {
    abstract val type:Type
+   @Deprecated("No longer used - everything is an expression")
    data class Constant(val value: TypedValue) : FactValue() {
       override val type: Type = value.type
    }
@@ -24,13 +27,24 @@ sealed class FactValue() {
       get() {
          return when (this) {
             is Constant -> this.value
+            is FactValue.Expression -> {
+               if (this.expression is Literal) {
+                  this.expression.asTypedValue()
+               } else {
+                  error("This variable does not contain a constant")
+               }
+            }
             else -> error("This variable does not contain a constant")
          }
       }
 
    val hasValue: Boolean
       get() {
-         return this is Constant
+         return when {
+            this is Constant -> true
+            this is FactValue.Expression && this.expression is Literal -> true
+            else -> false
+         }
       }
    val variableName: String
       get() {

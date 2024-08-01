@@ -42,6 +42,10 @@ toplevelObject
     |   functionDeclaration
     |   annotationTypeDeclaration
     |   query
+     // Allowing top-level expressions.
+    // Not super-useful for real-world,
+    // but make doucmentation and testing easier
+    |   expressionGroup
     ;
 
 typeModifier
@@ -131,7 +135,14 @@ expressionGroup:
 // as types
 // 1-Oct: Tried collapsing scalarAccessorExpression into this, but it caused errors.
 // Would like to simplify...
-expressionAtom: functionCall | typeExpression | typeProjection | fieldReferenceSelector | modelAttributeTypeReference | literal | literalArray | anonymousTypeDefinition;
+// 31-Jul-24: Removed anonymousTypeDefinition from expressionAtom,
+// as it made it impossible to use cast syntax for constructor-like behaviour
+// eg:  throw((NotAuthorizedException) { message: 'Not Authorized' })
+// should be a cast expression with a value.
+// No compiler tests broke, lets see what happens in Orbital
+ // TODO :This has literla and literalArray, but not value, which also includes objects.
+ // Should we replace literal | literalArray with value?
+expressionAtom: functionCall | typeExpression | typeProjection | fieldReferenceSelector | modelAttributeTypeReference | objectValue | valueArray | literal;
 
 //scalarAccessorExpression
   //    : xpathAccessorDeclaration
@@ -361,7 +372,7 @@ elementValue
     : literal
     | qualifiedName // Support enum references within annotations
     | annotation
-    | literalArray
+    | valueArray
     ;
 
 serviceDeclaration
@@ -554,10 +565,6 @@ literal
     |   'null'
     ;
 
-literalArray
-    : '[' literal (',' literal)* ']'
-    ;
-
 typeExtensionDeclaration
    :  typeDoc? annotation* 'type extension' identifier typeExtensionBody
    ;
@@ -623,14 +630,14 @@ factList : fact (',' fact)*;
 // by clarifying the syntax. (factDeclaration vs variableName)
 // TODO: (5-Jan-24): There are several ideas with high overlap that need clarifying: fact, argument, operationParameter.
 // I suspect facts are invalid.
-factDeclaration : (variableName ':')? typeReference '=' value;
+factDeclaration : (variableName ':')? typeReference '=' expressionGroup;
 fact: factDeclaration | variableName;
 
-value : objectValue | valueArray | literal | expressionGroup;
+//value : objectValue | valueArray | literal | expressionGroup;
 
 objectValue: '{' objectField (',' objectField)* '}';
-objectField : identifier ':' value;
-valueArray: '[' value? (',' value)* ']';
+objectField : identifier ':' expressionGroup;
+valueArray: '[' expressionGroup? (',' expressionGroup)* ']';
 
 variableName: identifier;
 
