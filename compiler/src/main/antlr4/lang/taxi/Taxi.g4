@@ -142,7 +142,7 @@ expressionGroup:
 // No compiler tests broke, lets see what happens in Orbital
  // TODO :This has literla and literalArray, but not value, which also includes objects.
  // Should we replace literal | literalArray with value?
-expressionAtom: functionCall | typeExpression | typeProjection | fieldReferenceSelector | modelAttributeTypeReference | objectValue | valueArray | literal;
+expressionAtom: functionCall | typeExpression | typeProjection | fieldReferenceSelector | memberReference | objectValue | valueArray | literal;
 
 //scalarAccessorExpression
   //    : xpathAccessorDeclaration
@@ -188,7 +188,7 @@ fieldReferenceSelector: propertyFieldNameQualifier qualifiedName;
 typeReferenceSelector: typeReference;
 
 whenCaseDeclaration:
-   caseDeclarationMatchExpression '->' (  /*caseFieldAssignmentBlock |  */  expressionGroup | scalarAccessorExpression | modelAttributeTypeReference);
+   caseDeclarationMatchExpression '->' (  /*caseFieldAssignmentBlock |  */  expressionGroup | scalarAccessorExpression);
 
 caseDeclarationMatchExpression: // when( ... ) {
    expressionGroup |
@@ -213,7 +213,7 @@ fieldModifier
    : 'closed'
    ;
 fieldDeclaration
-  :   fieldModifier? identifier (':' (anonymousTypeDefinition | fieldTypeDeclaration | expressionGroup |  modelAttributeTypeReference))? typeProjection?
+  :   fieldModifier? identifier (':' (anonymousTypeDefinition | fieldTypeDeclaration | expressionGroup ))? typeProjection?
   ;
 
 // Used in queries to scope projection of collections.
@@ -228,15 +228,10 @@ projectionScopeDefinition: 'with' '(' scalarAccessorExpression (',' scalarAccess
 // Used to describe navigation from one entity to another
 // Eg from Type to Property Type (Person::FirstName)
 // Or from Service to Operation (PersonService::findAllPeople)
-memberReference: typeReference '::' typeReference;
-
-// A type reference that refers to the attribute on a model.
-// eg:  firstName : Person::FirstName.
-// Only meaningful within views.
-// Deprecated, prefer memberReference instead.
-modelAttributeTypeReference: typeReference '::' typeReference |
-   LPAREN typeReference '::' typeReference RPAREN arrayMarker;
-
+// Note: Array marker here is unfortunate, as in a service context
+// it doesn't make sense - but we'll have to enforce that at the compiler., not the grammar
+memberReference: typeReference '::' typeReference arrayMarker? |
+   LPAREN typeReference '::' typeReference RPAREN arrayMarker?;
 
 // fieldType usages allow richer syntax with additional features like
 // inline type definitions, optionality, aliases and accessors.
@@ -515,7 +510,7 @@ argumentList
     : argument  (',' argument?)* // allowing trailing commas helps clarify the grammar
     ;
 
-argument: literal |  scalarAccessorExpression | fieldReferenceSelector | typeReferenceSelector | modelAttributeTypeReference | expressionGroup;
+argument: literal |  scalarAccessorExpression | fieldReferenceSelector | typeReferenceSelector | memberReference | expressionGroup;
 
 columnIndex : IntegerLiteral | StringLiteral;
 

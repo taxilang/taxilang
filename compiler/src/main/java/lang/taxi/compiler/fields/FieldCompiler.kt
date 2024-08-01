@@ -165,7 +165,7 @@ class FieldCompiler(
          return resolveImplicitTypeFromToBeProjectedType(member)
       }
       // orderId: Order::OrderId
-      val modelAttributeType = member.fieldDeclaration().modelAttributeTypeReference()
+//      val modelAttributeType = member.fieldDeclaration().memberReference()
       val expressionGroup: TaxiParser.ExpressionGroupContext? = member.fieldDeclaration().expressionGroup()
       val expressionCompiler = tokenProcessor.expressionCompiler(
          fieldCompiler = this,
@@ -255,20 +255,6 @@ class FieldCompiler(
                      )
                   }
 
-               }
-         }
-
-         modelAttributeType != null -> {
-            this.parseModelAttributeTypeReference(namespace, modelAttributeType)
-               .flatMap { (memberSourceType, memberType) ->
-                  toField(
-                     member,
-                     namespace,
-                     FieldTypeSpec.forType(memberType),
-                     typeDoc,
-                     fieldAnnotations,
-                     memberSourceType
-                  )
                }
          }
 
@@ -778,7 +764,7 @@ class FieldCompiler(
 
    fun parseModelAttributeTypeReference(
       namespace: Namespace,
-      modelAttributeReferenceCtx: TaxiParser.ModelAttributeTypeReferenceContext
+      typeMemberReference: TaxiParser.MemberReferenceContext
    ): Either<List<CompilationError>, Pair<QualifiedName, Type>> =
-      tokenProcessor.parseModelAttributeTypeReference(namespace, modelAttributeReferenceCtx)
+      tokenProcessor.parseTypeMemberRefrence(namespace, typeMemberReference)
 }
