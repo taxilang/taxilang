@@ -1,6 +1,9 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.matchers.collections.shouldContainAll
+import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.shouldBe
 import lang.taxi.types.PrimitiveType
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -21,6 +24,16 @@ type ListOfPerson inherits Person[]
       val doc = Compiler(src).compile()
       val type = doc.type("ListOfPerson")
       type.inheritsFrom.map { it.toQualifiedName().parameterizedName }.should.contain("lang.taxi.Array<Person>")
+   }
+
+   @Test
+   fun `a model inherits from any`() {
+      val model = """
+         model Person {
+         }
+      """.compiled()
+         .model("Person")
+      model.inheritsFrom.shouldContainExactly(PrimitiveType.ANY)
    }
 
    @Test
@@ -78,7 +91,7 @@ type ListOfPerson inherits Person[]
       val doc = Compiler(src).compile()
       doc.type("CcySymbol").basePrimitive!!.should.equal(PrimitiveType.STRING)
       doc.type("BaseCurrency").basePrimitive!!.should.equal(PrimitiveType.STRING)
-      doc.type("Person").basePrimitive.should.be.`null`
+      doc.type("Person").basePrimitive.shouldBe(PrimitiveType.ANY)
       PrimitiveType.STRING.basePrimitive.should.equal(PrimitiveType.STRING)
    }
 
@@ -109,9 +122,10 @@ type ListOfPerson inherits Person[]
          enum BetterCountryBis inherits BetterCountry
       """.trimIndent()
       val doc = Compiler(src).compile()
-      doc.type("Country").inheritsFromPrimitive.should.be.`true`
-      doc.type("BetterCountry").inheritsFromPrimitive.should.be.`true`
-      doc.type("BetterCountryBis").inheritsFromPrimitive.should.be.`true`
+      doc.type("Country").isScalar.should.be.`true`
+      doc.type("BetterCountry").isScalar.should.be.`true`
+      doc.type("BetterCountryBis").isScalar.should.be.`true`
+      doc.enumType("Country").basePrimitive.should.equal(PrimitiveType.STRING)
       doc.enumType("BetterCountry").basePrimitive.should.equal(PrimitiveType.STRING)
       doc.enumType("BetterCountryBis").basePrimitive.should.equal(PrimitiveType.STRING)
    }
@@ -201,8 +215,13 @@ type ListOfPerson inherits Person[]
       val doc = Compiler(src).compile()
       doc.type("CcySymbol").basePrimitive.should.be.equal(PrimitiveType.STRING)
       doc.type("CcySymbol").basePrimitive.should.be.equal(PrimitiveType.STRING)
-      doc.type("CcySymbol").allInheritedTypes.should.be.equal(setOf(PrimitiveType.STRING))
-      doc.type("CcySymbol").allInheritedTypes.should.be.equal(setOf(PrimitiveType.STRING))
+      //. Note ... this is an alias for a string, not an inherited type
+      doc.type("CcySymbol").inheritsFrom.shouldContainExactly(PrimitiveType.ANY)
+      doc.type("CcySymbol").allInheritedTypes.shouldContainAll(
+         PrimitiveType.STRING,
+         PrimitiveType.ANY,
+         PrimitiveType.NOTHING
+      )
       doc.type("CcySymbol").inheritsFromPrimitive.should.be.`true`
       doc.type("CcySymbol").inheritsFromPrimitive.should.be.`true`
    }
@@ -211,8 +230,7 @@ type ListOfPerson inherits Person[]
    fun cachePrimitiveTypeProperties() {
       PrimitiveType.INTEGER.basePrimitive.should.be.equal(PrimitiveType.INTEGER)
       PrimitiveType.INTEGER.basePrimitive.should.be.equal(PrimitiveType.INTEGER)
-      PrimitiveType.INTEGER.allInheritedTypes.should.be.equal(emptySet())
-      PrimitiveType.INTEGER.allInheritedTypes.should.be.equal(emptySet())
+      PrimitiveType.INTEGER.allInheritedTypes.shouldContainAll(PrimitiveType.ANY, PrimitiveType.NOTHING)
       PrimitiveType.INTEGER.inheritsFromPrimitive.should.be.`true`
       PrimitiveType.INTEGER.inheritsFromPrimitive.should.be.`true`
    }

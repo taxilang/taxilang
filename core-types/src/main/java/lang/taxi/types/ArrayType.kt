@@ -5,8 +5,9 @@ import arrow.core.left
 import arrow.core.right
 import lang.taxi.ImmutableEquality
 import lang.taxi.expressions.Expression
+import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
 
-data class ArrayType(val type: Type, val source: CompilationUnit, override val inheritsFrom: Set<Type> = emptySet(), val expression: Expression? = null) :
+data class ArrayType(val type: Type, val source: CompilationUnit, override val inheritsFrom: List<Type> = INHERITS_FROM_ANY, val expression: Expression? = null) :
     GenericType {
    // For readability.
    // Should really rename type property
@@ -23,7 +24,7 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
       }
 
       fun untyped(source: CompilationUnit = CompilationUnit.unspecified()) = of(PrimitiveType.ANY, source)
-      fun of(type: Type, source: CompilationUnit = CompilationUnit.unspecified(), inheritsFrom: Set<Type> = emptySet()): ArrayType {
+      fun of(type: Type, source: CompilationUnit = CompilationUnit.unspecified(), inheritsFrom: List<Type> = INHERITS_FROM_ANY): ArrayType {
          return ArrayType(type, source, inheritsFrom)
       }
 
@@ -60,6 +61,7 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
    override val inheritsFromPrimitive: Boolean by lazy { wrapper.inheritsFromPrimitive }
    override val basePrimitive: PrimitiveType? by lazy { wrapper.basePrimitive }
    override val definitionHash: String? by lazy { wrapper.definitionHash }
+   override val isScalar: Boolean = false
 
    private val equality = ImmutableEquality(this, ArrayType::type)
    override fun equals(other: Any?) = equality.isEqualTo(other)

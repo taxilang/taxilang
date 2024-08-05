@@ -9,6 +9,7 @@ import lang.taxi.generators.NamingUtils.getTypeName
 import lang.taxi.generators.NamingUtils.replaceIllegalCharacters
 import lang.taxi.generators.NamingUtils.toCapitalizedWords
 import lang.taxi.types.*
+import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
 import org.everit.json.schema.*
 import java.net.URI
 
@@ -220,7 +221,7 @@ class JsonSchemaTypeMapper(
       val unionPlaceholder = ObjectType(
          name.fullyQualifiedName,
          ObjectTypeDefinition(
-            inheritsFrom = setOf(PrimitiveType.ANY),
+            inheritsFrom = INHERITS_FROM_ANY,
             typeDoc = "Union types are not currently supported.  Could be any of:\n${types.joinToString(separator = "\n") { " * " + it.toQualifiedName().parameterizedName }}",
             compilationUnit = CompilationUnit.unspecified()
          )
@@ -295,7 +296,7 @@ class JsonSchemaTypeMapper(
             ObjectTypeDefinition(
                fields = fields.toSet(),
                typeKind = TypeKind.Type,
-               inheritsFrom = setOf(PrimitiveType.ANY),
+               inheritsFrom = INHERITS_FROM_ANY,
                compilationUnit = CompilationUnit.unspecified(),
                typeDoc = doc
             )
@@ -326,7 +327,7 @@ class JsonSchemaTypeMapper(
       return ObjectType(
          name.fullyQualifiedName,
          ObjectTypeDefinition(
-            inheritsFrom = setOf(baseType),
+            inheritsFrom = listOf(baseType),
             compilationUnit = CompilationUnit.unspecified(),
             typeDoc = description
          )

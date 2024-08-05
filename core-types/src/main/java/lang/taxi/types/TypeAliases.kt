@@ -3,6 +3,7 @@ package lang.taxi.types
 import arrow.core.Either
 import arrow.core.right
 import lang.taxi.ImmutableEquality
+import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
 
 data class TypeAliasExtension(
    val annotations: List<Annotation>,
@@ -65,7 +66,10 @@ data class TypeAlias(
    override val offset: Int?
       get() = definition?.aliasType?.offset
 
-   override val inheritsFrom: Set<Type> = definition?.aliasType?.inheritsFrom ?: emptySet()
+   override val inheritsFrom: List<Type>
+      get() {
+         return definition?.aliasType?.inheritsFrom ?: INHERITS_FROM_ANY
+      }
 
    override val typeDoc: String?
       get() = Documented.typeDoc(listOf(definition) + extensions)

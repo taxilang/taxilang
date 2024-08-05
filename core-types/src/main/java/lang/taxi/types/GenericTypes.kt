@@ -1,15 +1,17 @@
 package lang.taxi.types
 
+import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
+
 /**
  * An unresolved generic argument within a function declaration
  * eg: declare function <T> sum(T[]):T
  */
 data class TypeArgument(
-   override val qualifiedName: String,
+    override val qualifiedName: String,
    // This is the actual name assigned in the functio - ie., given function <T>, it's T
-   val declaredName:String,
-   override val inheritsFrom: Set<Type> = emptySet(),
-   override val compilationUnits: List<CompilationUnit>
+    val declaredName:String,
+    override val inheritsFrom: List<Type> = INHERITS_FROM_ANY,
+    override val compilationUnits: List<CompilationUnit>
 ) : Type {
    private val wrapper = LazyLoadingWrapper(this)
    override val allInheritedTypes: Set<Type> = wrapper.allInheritedTypes

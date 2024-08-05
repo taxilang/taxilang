@@ -31,14 +31,14 @@ class PolicyCompiler(private val tokenProcessor: TokenProcessor) {
             scopedArguments = resolutionContext.argumentsInScope
          )
          val annotations = tokenProcessor.collateAnnotations(token.annotation())
-         token.policyRuleSet().map { compilePolicyRule(it, expressionCompiler) }
+         token.policyRuleSet().map { compilePolicyRule(it, expressionCompiler, targetType) }
             .invertEitherList()
             .flattenErrors()
             .map { rules ->
                Policy(
                   name,
                   targetType,
-                  inputs + thisToken,
+                  (inputs + thisToken).distinct(),
                   rules,
                   annotations,
                   token.toCompilationUnits()
@@ -67,11 +67,12 @@ class PolicyCompiler(private val tokenProcessor: TokenProcessor) {
 
    private fun compilePolicyRule(
       policyRule: TaxiParser.PolicyRuleSetContext,
-      expressionCompiler: ExpressionCompiler
+      expressionCompiler: ExpressionCompiler,
+      targetType: Type
    ): Either<List<CompilationError>, PolicyRule> {
       val policyScope = PolicyOperationScope.parse(policyRule.policyScope()?.text)
       val operationScope = OperationScope.forToken(policyRule.operationScope()?.text)
-      return expressionCompiler.compile(policyRule.expressionGroup(), targetType = PrimitiveType.ANY).map { expression ->
+      return expressionCompiler.compile(policyRule.expressionGroup(), targetType = targetType).map { expression ->
          PolicyRule(operationScope, policyScope, expression)
       }
    }

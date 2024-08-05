@@ -1,13 +1,14 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
 import lang.taxi.types.PrimitiveType
 import lang.taxi.utils.Benchmark
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.util.concurrent.TimeUnit
 
-object EnumSpec : Spek({
+class EnumSpec : DescribeSpec({
 
    describe("enum syntax") {
       describe("basic syntax") {

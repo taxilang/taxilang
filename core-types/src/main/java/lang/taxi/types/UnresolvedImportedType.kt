@@ -1,5 +1,7 @@
 package lang.taxi.types
 
+import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
+
 /**
  * Represents an import which has not been resolved, and no definition
  * has yet been discovered.
@@ -16,8 +18,8 @@ class UnresolvedImportedType(override val qualifiedName: String) : Type {
    override val formatAndZoneOffset: FormatsAndZoneOffset?= null
    override val compilationUnits: List<CompilationUnit>
       get() = TODO("Not yet implemented")
-   override val inheritsFrom: kotlin.collections.Set<lang.taxi.types.Type> = emptySet()
-   override val allInheritedTypes: kotlin.collections.Set<lang.taxi.types.Type> = emptySet()
+   override val inheritsFrom: List<Type> = INHERITS_FROM_ANY
+   override val allInheritedTypes = emptySet<Type>()
    override val format: List<String> = emptyList()
    override val inheritsFromPrimitive: kotlin.Boolean
       get() = TODO("Not yet implemented")

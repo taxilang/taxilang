@@ -327,10 +327,11 @@ $enumValueDeclarations
    }
 
    private fun getInheritanceString(type: ObjectType, currentNamespace: String): String {
-      return if (type.inheritsFrom.isEmpty()) {
+      val declaredInheritance = type.inheritsFrom.filter { it != PrimitiveType.ANY }
+      return if (declaredInheritance.isEmpty()) {
          ""
       } else {
-         " inherits " + type.inheritsFrom.joinToString(",") { typeAsTaxi(it, currentNamespace) }
+         " inherits " + declaredInheritance.joinToString(",") { typeAsTaxi(it, currentNamespace) }
       }
    }
 

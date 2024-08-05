@@ -5,6 +5,7 @@ import arrow.core.left
 import arrow.core.right
 import com.google.common.cache.CacheBuilder
 import lang.taxi.ImmutableEquality
+import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
 
 object Enums {
    fun enumValue(enum: QualifiedName, enumValueName: String): EnumValueQualifiedName {
@@ -83,7 +84,7 @@ data class EnumDefinition(
    val values: List<EnumValue>,
    override val annotations: List<Annotation> = emptyList(),
    override val compilationUnit: CompilationUnit,
-   val inheritsFrom: Set<Type> = emptySet(),
+   val inheritsFrom: List<Type> = INHERITS_FROM_ANY,
    val basePrimitive: PrimitiveType,
    val isLenient: Boolean = false,
    override val typeDoc: String? = null
@@ -133,6 +134,7 @@ data class EnumType(
       }
    }
 
+   override val isScalar: Boolean = true
    private val members: Map<EnumValue, EnumMember> by lazy {
       this.values.map { value -> value to EnumMember(this, value) }.toMap()
    }
@@ -179,8 +181,8 @@ data class EnumType(
    override val basePrimitive: PrimitiveType?
       get() = definition?.basePrimitive
 
-   override val inheritsFrom: Set<Type>
-      get() = definition?.inheritsFrom ?: emptySet()
+   override val inheritsFrom: List<Type>
+      get() = definition?.inheritsFrom ?: INHERITS_FROM_ANY
 
    val inheritsFromNames: List<String>
       get() {

@@ -1,11 +1,9 @@
 package lang.taxi.packages
 
-import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import lang.taxi.Compiler
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import org.taxilang.packagemanager.PackageManager
 import org.taxilang.packagemanger.PackageManagerTest
 import java.io.File
 

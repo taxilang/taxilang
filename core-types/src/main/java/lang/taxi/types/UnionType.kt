@@ -1,6 +1,7 @@
 package lang.taxi.types
 
 import lang.taxi.ImmutableEquality
+import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
 
 /**
  * A Union Type is a declaration that could be one of several types - eg: A | B.
@@ -46,7 +47,7 @@ data class UnionType(
    override fun equals(other: Any?): Boolean  = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
 
-   override val inheritsFrom: Set<Type> = emptySet()
+   override val inheritsFrom: List<Type> = INHERITS_FROM_ANY
    override val allInheritedTypes: Set<Type> = emptySet()
    override val inheritsFromPrimitive: Boolean = false
    override val basePrimitive: PrimitiveType? = null

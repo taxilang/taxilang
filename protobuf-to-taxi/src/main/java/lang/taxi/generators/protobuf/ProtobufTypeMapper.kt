@@ -86,7 +86,7 @@ class ProtobufTypeMapper(
          ObjectType(
             typeName.parameterizedName,
             ObjectTypeDefinition(
-               inheritsFrom = setOf(baseType),
+               inheritsFrom = listOf(baseType),
                compilationUnit = CompilationUnit.unspecified()
             )
          )

@@ -17,18 +17,22 @@ class LazyLoadingWrapper(private val type: Type) {
    val allInheritedTypes: Set<Type>
       by lazy { type.getInheritanceGraph() }
 
+   @Deprecated("Everything inherits from Any, so this isn't useful anymore. Have modified for backwards compatibility")
    val inheritsFromPrimitive: Boolean
-      by lazy { basePrimitive != null }
+      by lazy { basePrimitive != null && basePrimitive != PrimitiveType.ANY }
 
    val baseEnum: EnumType? by lazy {
       if (type !is EnumType) {
          null
       }
 
-      val baseEnums = types.filterIsInstance<EnumType>().filter { it.inheritsFrom.isEmpty() }
+      // Look at the full inheritence graph.
+      // The base enum is the enum that inherits from a Primtive type (normally string)
+      val baseEnums = type.allInheritedTypes.filterIsInstance<EnumType>()
+         .filter { it.inheritsFrom.any { baseEnumInheritsFrom -> PrimitiveType.isPrimitiveType(baseEnumInheritsFrom) } }
 
       when (baseEnums.size) {
-         0 -> error("Couldn't find base type for ${type.qualifiedName}")
+         0 -> type as EnumType
          1 -> baseEnums.first()
          else -> error("Inheriting from multiple enums isn't supported, and technically shouldn't be possible: ${type.qualifiedName}\"")
       }
@@ -36,24 +40,26 @@ class LazyLoadingWrapper(private val type: Type) {
    }
 
 
+   @Deprecated("Use isAssignable to determine assignability")
    val basePrimitive: PrimitiveType?
       by lazy {
-         val primitives = types.filter { it is PrimitiveType || it is EnumType }
-            .filter { it.inheritsFrom.isEmpty() }
-         when {
-            primitives.isEmpty() -> null
-            primitives.size == 1 -> {
-               val baseType = primitives.first()
-               if (baseType is PrimitiveType) {
-                  baseType
-               } else {
-                  // We can revisit this later if neccessary.
-                  require(baseType is EnumType) { "Expected baseType to be EnumType" }
-                  PrimitiveType.STRING
-               }
-            }
-            else -> error("Type ${type.qualifiedName} inherits from multiple primitives: ${primitives.joinToString { type.qualifiedName }}")
-         }
+         PrimitiveType.mostSpecificPrimitive(types)
+//         val primitives = types.filter { it is PrimitiveType || it is EnumType }
+//            .filter { it.inheritsFrom.isEmpty() }
+//         when {
+//            primitives.isEmpty() -> null
+//            primitives.size == 1 -> {
+//               val baseType = primitives.first()
+//               if (baseType is PrimitiveType) {
+//                  baseType
+//               } else {
+//                  // We can revisit this later if neccessary.
+//                  require(baseType is EnumType) { "Expected baseType to be EnumType" }
+//                  PrimitiveType.STRING
+//               }
+//            }
+//            else -> error("Type ${type.qualifiedName} inherits from multiple primitives: ${primitives.joinToString { type.qualifiedName }}")
+//         }
       }
 
    val definitionHash: String by lazy {
@@ -144,22 +150,19 @@ enum class TypeKind {
 }
 
 interface Type : Formattable, Named, Compiled, ImportableToken, Documented, Annotatable {
-   val inheritsFrom: Set<Type>
+   val inheritsFrom: List<Type>
 
    val allInheritedTypes: Set<Type>
 
-
-
+   @Deprecated("Everything now inherits from Any (previously that wasn't true). Consider using isScalar if that's really want you want to know")
    val inheritsFromPrimitive: Boolean
 
    val basePrimitive: PrimitiveType?
 
    val definitionHash: String?
-// Formulas are replaced by expressions / accessors
-//   val calculation: Formula?
 
-
-
+   val isScalar: Boolean
+      get() = false
 
    val anonymous: Boolean
       get() = false
@@ -222,6 +225,7 @@ interface Type : Formattable, Named, Compiled, ImportableToken, Documented, Anno
          return true
       }
       val unaliasedOther = other.resolveAliases()
+      this.inheritsFrom
       return (this.allInheritedTypes + this).any { inheritedType ->
          val unaliasedInheritedType = inheritedType.resolveAliases()
          unaliasedInheritedType.resolvesSameAs(unaliasedOther, considerTypeParameters)
