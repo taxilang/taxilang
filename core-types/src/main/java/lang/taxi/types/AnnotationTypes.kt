@@ -57,7 +57,7 @@ data class AnnotationType(
       }
 
    override val formatAndZoneOffset: FormatsAndZoneOffset? = null
-   override val inheritsFrom: Set<Type> = emptySet()
+   override val inheritsFrom: List<Type> = emptyList()
    override val allInheritedTypes: Set<Type> = emptySet()
    override val format: List<String> = emptyList()
    override val inheritsFromPrimitive: Boolean = false

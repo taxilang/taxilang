@@ -8,6 +8,7 @@ import lang.taxi.generators.GeneratedTaxiCode
 import lang.taxi.generators.Logger
 import lang.taxi.generators.SchemaWriter
 import lang.taxi.types.*
+import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
 import lang.taxi.utils.log
 import lang.taxi.xsd.XsdPrimitives.primtiviesTaxiDoc
 import java.io.File
@@ -90,11 +91,11 @@ class TaxiGenerator(
          val baseType = complexType.baseType?.let { baseType ->
             val baseTypeName = getQualifiedName(baseType)
             if (baseTypeName == XsdPrimitives.ANY_TYPE) {
-               emptySet()
+               INHERITS_FROM_ANY
             } else {
-               setOf(getOrParseType(baseType))
+               listOf(getOrParseType(baseType))
             }
-         } ?: emptySet()
+         } ?: INHERITS_FROM_ANY
 
 
          if (isWildcard && allFields.isNotEmpty()) {
@@ -114,7 +115,7 @@ class TaxiGenerator(
                ObjectTypeDefinition(
                   allFields.toSet(),
                   compilationUnit = CompilationUnit.unspecified(),
-                  inheritsFrom = setOf(PrimitiveType.ANY),
+                  inheritsFrom = INHERITS_FROM_ANY,
                   typeDoc = docs,
                   modifiers = listOf(Modifier.CLOSED)
                )
@@ -137,7 +138,7 @@ class TaxiGenerator(
    private fun buildObjectDefinitionForTypeInheritingEnumClass(
       typeName: QualifiedName,
       allFields: List<Field>,
-      baseType: Set<Type>,
+      baseType: List<Type>,
       docs: String?
    ): TypeDefinition {
       require(baseType.size == 1) { "Cannot handle a type inheriting an enum when there are multiple base types" }
@@ -327,7 +328,7 @@ class TaxiGenerator(
       )
       val builder = {
          ObjectTypeDefinition(
-            inheritsFrom = setOf(baseType),
+            inheritsFrom = listOf(baseType),
             formatAndOffset = FormatsAndZoneOffset.forNullable(
                if (restictions.isNotEmpty()) restictions else null,
                null

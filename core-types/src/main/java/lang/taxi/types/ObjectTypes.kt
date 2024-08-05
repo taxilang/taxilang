@@ -9,6 +9,7 @@ import lang.taxi.expressions.Expression
 import lang.taxi.expressions.ProjectingExpression
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.services.operations.constraints.ConstraintTarget
+import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
 import lang.taxi.utils.quotedIfNecessary
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KProperty1
@@ -36,7 +37,7 @@ data class ObjectTypeDefinition(
    val fields: Set<Field> = emptySet(),
    val annotations: Set<Annotation> = emptySet(),
    val modifiers: List<Modifier> = emptyList(),
-   val inheritsFrom: Set<Type> = emptySet(),
+   val inheritsFrom: List<Type> = INHERITS_FROM_ANY,
    val formatAndOffset: FormatsAndZoneOffset? = null,
 //   @Deprecated("Formulas are replaced by functions and expressions")
 //   val calculation: Formula? = null,
@@ -67,6 +68,8 @@ data class ObjectTypeDefinition(
       get() {
          return expression?.asTaxi()
       }
+
+   val isScalar = fields.isEmpty()
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
@@ -133,6 +136,10 @@ data class ObjectType(
          return if (isDefined) wrapper.allInheritedTypes else emptySet()
       }
 
+   override val isScalar: Boolean
+      get() {
+         return definition?.isScalar ?: false
+      }
    override val inheritsFromPrimitive: Boolean
       get() {
          return if (isDefined) wrapper.inheritsFromPrimitive else false
@@ -240,9 +247,9 @@ data class ObjectType(
       return null;
    }
 
-   override val inheritsFrom: Set<Type>
+   override val inheritsFrom: List<Type>
       get() {
-         return definition?.inheritsFrom ?: emptySet()
+         return definition?.inheritsFrom ?: INHERITS_FROM_ANY
       }
 
    val inheritsFromNames: List<String>

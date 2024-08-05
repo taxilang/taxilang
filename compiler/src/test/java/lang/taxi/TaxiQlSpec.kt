@@ -9,7 +9,6 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeEmpty
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.kotest.matchers.types.shouldNotBeInstanceOf
 import lang.taxi.accessors.CollectionProjectionExpressionAccessor
 import lang.taxi.accessors.FieldSourceAccessor
 import lang.taxi.expressions.OperatorExpression

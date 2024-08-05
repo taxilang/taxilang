@@ -36,6 +36,7 @@ data class CalculatedFieldSetExpression(
 data class WhenExpression(
    val selectorExpression: Expression,
    val cases: List<WhenCaseBlock>,
+   override val returnType: Type,
    override val compilationUnits: List<CompilationUnit>
 ) : Expression()
 

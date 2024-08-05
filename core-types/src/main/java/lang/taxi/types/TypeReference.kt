@@ -4,12 +4,13 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import lang.taxi.ImmutableEquality
+import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
 
 /**
  * In Taxi, a reference to a Type.  Part of reflection within taxi
  */
 data class TypeReference(val type: Type, val source: CompilationUnit) : GenericType {
-   override val inheritsFrom: Set<Type> = emptySet()
+   override val inheritsFrom: List<Type> = INHERITS_FROM_ANY
    companion object {
       const val NAME = "lang.taxi.Type"
       val qualifiedName = QualifiedName.from(NAME)

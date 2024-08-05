@@ -34,6 +34,7 @@ import lang.taxi.services.operations.constraints.InstanceArgument
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.types.Arrays
+import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
 import lang.taxi.utils.*
 import lang.taxi.values.PrimitiveValues
 import org.antlr.v4.runtime.ParserRuleContext
@@ -652,7 +653,7 @@ class TokenProcessor(
       val fieldsOrErrors = fieldCompiler
          .compileAllFields()
          .map { field ->
-            if (Arrays.unwrapPossibleArrayType(field.type).inheritsFromPrimitive || field.type is AnnotationType) {
+            if (Arrays.unwrapPossibleArrayType(field.type).isScalar || field.type is AnnotationType) {
                // Validate that annotation fields use primitive types, primitive arrays or another Annotation Type.
                field.right()
 
@@ -747,8 +748,8 @@ class TokenProcessor(
 
       val inherits = declaredInheritence.let { explicitInheritence ->
          // If we have an expression, then the return type is inferrable from that
-         if (explicitInheritence.isEmpty() && expression != null) {
-            setOf(expression.returnType)
+         if (explicitInheritence == INHERITS_FROM_ANY && expression != null) {
+            listOf(expression.returnType)
          } else {
             explicitInheritence
          }
@@ -818,41 +819,33 @@ class TokenProcessor(
    private fun checkForCircularTypeInheritance(
       typeName: String,
       ctx: TypeDeclarationContext,
-      inherits: Set<Type>,
+      inherits: List<Type>,
       detectedTypeNames: MutableSet<String> = mutableSetOf()
    ): CompilationError? {
       if (inherits.isEmpty()) {
          return null
       }
-      val inheritsFromTypeNames = inherits.map { it.qualifiedName }.toSet()
-      val typesToCheck = inherits.filterNot { detectedTypeNames.contains(it.qualifiedName) }
-         .filter { it !is PrimitiveType }
-
       // Does this directly inherit from itself?
-      if (inheritsFromTypeNames.contains(typeName)) {
+      if (inherits.any { it.toQualifiedName().parameterizedName == typeName }) {
          return CompilationError(
             ctx.toCompilationUnit(),
             "$typeName cannot inherit from itself"
          )
       }
 
+
       // Is there a loop somewhere?
-      val loopTypeNames = inheritsFromTypeNames.filter { detectedTypeNames.contains(it) }
-      if (loopTypeNames.isNotEmpty()) {
+      val typesWithInheritenceLoops = inherits.filter { it.allInheritedTypes.any { it.toQualifiedName().parameterizedName == typeName } }
+      if (typesWithInheritenceLoops.isNotEmpty()) {
          return CompilationError(
             ctx.toCompilationUnit(),
             "$typeName contains a loop in it's inheritance.  Check the inheritance of the following types: ${
-               loopTypeNames.filter { it != typeName }.joinToString(", ")
+               typesWithInheritenceLoops.filter { it.toQualifiedName().parameterizedName != typeName }.joinToString { it.toQualifiedName().parameterizedName}
             }"
          )
       }
-      detectedTypeNames.add(typeName)
-      return typesToCheck
-         .asSequence()
-         .mapNotNull {
-            checkForCircularTypeInheritance(it.qualifiedName, ctx, it.inheritsFrom, detectedTypeNames)
-         }
-         .firstOrNull()
+
+      return null
    }
 
    private fun compileAnonymousType(
@@ -922,7 +915,7 @@ class TokenProcessor(
                annotations = annotations.toSet(),
                modifiers = listOf(),
                formatAndOffset = null,
-               inheritsFrom = setOfNotNull(resolutionContext.baseType),
+               inheritsFrom = listOfNotNull(resolutionContext.baseType),
                expression = expression,
                compilationUnit = anonymousTypeDefinition.toCompilationUnit(),
                isAnonymous = true
@@ -956,8 +949,9 @@ class TokenProcessor(
    fun parseTypeInheritance(
       namespace: Namespace,
       listOfInheritedTypes: ListOfInheritedTypesContext?
-   ): Set<Type> {
-      if (listOfInheritedTypes == null) return emptySet()
+   ): List<Type> {
+      // All types inherit from Any, unless declared otherwise.
+      if (listOfInheritedTypes == null) return INHERITS_FROM_ANY
       return listOfInheritedTypes.typeReference().mapNotNull { typeTypeContext ->
 
          parseInheritedType(namespace, typeTypeContext) {
@@ -969,7 +963,7 @@ class TokenProcessor(
             }
          }
 
-      }.toSet()
+      }.distinct()
    }
 
    private fun parseEnumInheritance(
@@ -1667,7 +1661,7 @@ class TokenProcessor(
             ObjectType(
                QualifiedName(namespace, declaredTypeName).fullyQualifiedName,
                ObjectTypeDefinition(
-                  inheritsFrom = setOf(inlineInheritedType),
+                  inheritsFrom = listOf(inlineInheritedType),
                   compilationUnit = typeType.toCompilationUnit()
                )
             )
@@ -1940,7 +1934,7 @@ class TokenProcessor(
                   enumValues,
                   annotations,
                   ctx.toCompilationUnit(),
-                  inheritsFrom = if (inherits != null) setOf(inherits) else emptySet(),
+                  inheritsFrom = if (inherits != null) listOf(inherits) else INHERITS_FROM_ANY,
                   typeDoc = parseTypeDoc(ctx.typeDoc()),
                   basePrimitive = basePrimitive,
                   isLenient = isLenient

@@ -55,7 +55,7 @@ class WhenBlockCompiler internal constructor(
          )
             .invertEitherList().flattenErrors()
             .map { cases ->
-               WhenExpression(selectorExpression, cases, whenBlock.toCompilationUnits())
+               WhenExpression(selectorExpression, cases, assignmentTargetType, whenBlock.toCompilationUnits())
             }
          cases
       }

@@ -250,7 +250,6 @@ class DefaultTypeMapper(
          val underlyingType = TypeNames.typeFromElement(element)
          val inheritsFrom = getInheritedTypes(underlyingType, existingTypes, "")
             .filterNot { it.qualifiedName == typeName } // Don't inherit from ourselves
-            .toSet()
          ObjectType(
             typeName,
             ObjectTypeDefinition(
@@ -377,15 +376,14 @@ class DefaultTypeMapper(
       clazz: Class<*>,
       existingTypes: MutableSet<Type>,
       defaultNamespace: String
-   ): Set<Type> {
+   ): List<Type> {
       val inheritedTypes = (clazz.interfaces.toList() + listOf(clazz.superclass)).filterNotNull()
 
       val inheritedTaxiTypes = inheritedTypes
          .filter { it.isAnnotationPresent(DataType::class.java) }
          .map { inheritedType -> getTaxiType(inheritedType, existingTypes, defaultNamespace) as ObjectType }
-         .toSet()
       return if (inheritedTaxiTypes.isEmpty() && PrimitiveTypes.isClassTaxiPrimitive(clazz)) {
-         setOf(PrimitiveTypes.getTaxiPrimitive(clazz))
+         listOf(PrimitiveTypes.getTaxiPrimitive(clazz))
       } else {
          inheritedTaxiTypes
       }

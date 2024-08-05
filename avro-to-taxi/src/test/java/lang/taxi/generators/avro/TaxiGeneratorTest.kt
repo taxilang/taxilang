@@ -30,7 +30,7 @@ namespace simple.addressbook {
    @lang.taxi.formats.AvroMessage
    closed model People {
       @lang.taxi.formats.AvroField(ordinal = 0) name : simple.addressbook.people.Name
-      @lang.taxi.formats.AvroField(ordinal = 1) id : simple.addressbook.people.Id
+      @lang.taxi.formats.AvroField(ordinal = 1) id : simple.addressbook.people.PeopleId
       @lang.taxi.formats.AvroField(ordinal = 2) email : simple.addressbook.people.Email?
       @lang.taxi.formats.AvroField(ordinal = 3) phones : simple.addressbook.people.Phones[]
       @lang.taxi.formats.AvroField(ordinal = 4) last_updated : simple.addressbook.people.LastUpdated
@@ -38,7 +38,7 @@ namespace simple.addressbook {
 }
 namespace simple.addressbook.people {
    type Name inherits String
-   type Id inherits Int
+   type PeopleId inherits Int
    type Email inherits String
 
    @lang.taxi.formats.AvroMessage

@@ -150,7 +150,7 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       ObjectType(
          taxiExtName.toString(),
          ObjectTypeDefinition(
-            inheritsFrom = setOfNotNull(supertype) + declaredSupertypes.map { UnresolvedImportedType(it) },
+            inheritsFrom = listOfNotNull(supertype) + declaredSupertypes.map { UnresolvedImportedType(it) },
             compilationUnit = CompilationUnit.unspecified()
          )
       )
@@ -174,8 +174,9 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       _generatedTypes[name] = ObjectType.undefined(name.fullyQualifiedName)
       if (schema is ComposedSchema) {
          val allOf = schema.allOf ?: emptyList()
-         val inherits = allOf.mapNotNull { it.`$ref`?.getTypeFromRef(modifiers) }
-            .toSet() + declaredSupertypes.map { UnresolvedImportedType(it) }.toSet()
+         val inherits = (allOf.mapNotNull { it.`$ref`?.getTypeFromRef(modifiers) } + declaredSupertypes.map {
+            UnresolvedImportedType(it)
+         }).distinct()
          // If requiredFields is present, it contributes to the definition of nullable.
          // However, if requiredFields is omitted we only consider the nullable attribute of fields
          val requiredFields = if (allOf.any { it.required != null }) {
@@ -197,7 +198,7 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       } else {
          makeModel(
             name = name,
-            inherits = emptySet(),
+            inherits = PrimitiveType.INHERITS_FROM_ANY,
             properties = schema.properties ?: emptyMap(),
             requiredFields = schema.required,
             description = schema.description,
@@ -208,7 +209,7 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
 
    private fun makeModel(
       name: QualifiedName,
-      inherits: Set<Type>,
+      inherits: List<Type>,
       properties: Map<String, Schema<Any>>,
       // Nullable, as the requiredFields concept is optional in OpenApi,
       // so we allow null to indicate "defer to the property schema".

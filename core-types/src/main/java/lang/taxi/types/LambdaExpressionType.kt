@@ -1,6 +1,6 @@
 package lang.taxi.types
 
-import kotlin.Annotation
+import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
 
 /**
  * A type in parameters which is a function.
@@ -17,7 +17,7 @@ data class LambdaExpressionType(
 
 ):Type {
    private val wrapper = LazyLoadingWrapper(this)
-   override val inheritsFrom: Set<Type> = emptySet()
+   override val inheritsFrom: List<Type> = INHERITS_FROM_ANY
    override val allInheritedTypes: Set<Type> = wrapper.allInheritedTypes
    override val format: List<String>? = null
    override val inheritsFromPrimitive: Boolean = wrapper.inheritsFromPrimitive
@@ -27,6 +27,7 @@ data class LambdaExpressionType(
    override val offset: Int? = null
    override val typeKind: TypeKind? = TypeKind.Type
    override val typeDoc: String? = null
+   override val isScalar: Boolean = false
 
    // Not currently implemented, but could be in the future
    override val annotations: List<lang.taxi.types.Annotation> = emptyList()

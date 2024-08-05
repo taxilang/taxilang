@@ -2,11 +2,13 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import lang.taxi.accessors.*
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.messages.Severity
 import lang.taxi.types.*
+import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
 import org.antlr.v4.runtime.CharStreams
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -741,6 +743,16 @@ namespace foo {
       val (messages,_) = Compiler("""model Person inherits Person""").compileWithMessages()
       messages.should.have.size(1)
       messages.first().detailMessage.should.equal("Person cannot inherit from itself")
+   }
+
+   @Test
+   fun `a model can inherits another model`() {
+      val doc = """
+         model Human
+         model Person inherits Human
+      """.compiled()
+      doc.model("Human").inheritsFrom.shouldBe(INHERITS_FROM_ANY)
+      doc.model("Person").inheritsFrom.shouldContainExactly(doc.type("Human"))
    }
 
    @Test

@@ -8,7 +8,7 @@ object Errors {
 }
 
 object Throw : FunctionApi {
-   override val taxi: String = "declare function throw(error:Any):Void"
+   override val taxi: String = "declare function throw(error:Any):Nothing"
    override val name: QualifiedName
       get() = stdLibName("throw")
 }

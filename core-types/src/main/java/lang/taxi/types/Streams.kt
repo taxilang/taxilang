@@ -4,9 +4,9 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import lang.taxi.ImmutableEquality
-import kotlin.Annotation
+import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
 
-data class StreamType(val type: Type, val source: CompilationUnit, override val inheritsFrom: Set<Type> = emptySet()) :
+data class StreamType(val type: Type, val source: CompilationUnit, override val inheritsFrom: List<Type> = INHERITS_FROM_ANY) :
    GenericType {
    companion object {
       const val NAME = "lang.taxi.Stream"
@@ -15,7 +15,7 @@ data class StreamType(val type: Type, val source: CompilationUnit, override val 
       fun of(
          type: Type,
          source: CompilationUnit = CompilationUnit.unspecified(),
-         inheritsFrom: Set<Type> = emptySet()
+         inheritsFrom: List<Type> = INHERITS_FROM_ANY
       ): StreamType {
          return StreamType(type, source, inheritsFrom)
       }

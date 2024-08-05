@@ -3,6 +3,7 @@ package lang.taxi.types
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
+import lang.taxi.types.PrimitiveType.Companion.INHERITS_FROM_ANY
 
 data class MapType(
    val keyType: Type, val valueType: Type, val source: CompilationUnit,
@@ -11,7 +12,7 @@ data class MapType(
 
    private val lazyLoadingWrapper = LazyLoadingWrapper(this)
    override val allInheritedTypes: Set<Type> by lazy { getInheritanceGraph() }
-   override val inheritsFrom: Set<Type> = emptySet()
+   override val inheritsFrom: List<Type> = INHERITS_FROM_ANY
    override val inheritsFromPrimitive: Boolean = false
    override val basePrimitive: PrimitiveType? = null
    override val definitionHash: String? by lazy { lazyLoadingWrapper.definitionHash }

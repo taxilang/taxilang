@@ -1,12 +1,13 @@
 package lang.taxi.linter.rules
 
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
 import lang.taxi.linter.LinterRules
 import lang.taxi.validated
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object TypesShouldInheritFromSomethingSpec : Spek({
+class TypesShouldInheritFromSomethingSpec : DescribeSpec({
    describe("types-should-inherit") {
       it("should raise message when a type doesn't inherit from anything") {
          val messages = """

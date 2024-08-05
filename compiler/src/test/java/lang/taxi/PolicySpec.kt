@@ -77,6 +77,7 @@ class PolicySpec : DescribeSpec({
          }
          """.compiled()
             .policy("FilmsPolicy")
+         policy.inputs.shouldHaveSize(1)
          policy.shouldNotBeNull()
          val projection = policy.rules.single()
             .expression
@@ -119,6 +120,25 @@ class PolicySpec : DescribeSpec({
             .cases[0]
             .matchExpression
             .shouldBeInstanceOf<ExtensionFunctionExpression>()
+      }
+
+      it("infers the correct return type from when statements inside policies") {
+         val policy = """
+            model Film {
+               title : Title inherits String
+            }
+            policy TestPolicy against Title {
+               read {
+                  when {
+                     1 == 2 -> "foo"
+                     else -> null
+                  }
+               }
+            }
+         """.compiled()
+         .policy("TestPolicy")
+         policy.rules.single().expression.shouldBeInstanceOf<WhenExpression>()
+            .returnType.qualifiedName.shouldBe("Title")
       }
    }
 })
