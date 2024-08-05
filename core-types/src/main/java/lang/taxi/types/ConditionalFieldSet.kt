@@ -215,7 +215,7 @@ class LiteralCaseMatchExpression(val value: Any) : WhenCaseMatchExpression {
 object ElseMatchExpression : Expression() {
    override fun asTaxi(): String = "else"
    override val compilationUnits: List<CompilationUnit>
-      get() = TODO("Not yet implemented")
+      get() = emptyList()
    override val returnType: Type = PrimitiveType.ANY
 }
 /*
