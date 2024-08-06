@@ -9,6 +9,8 @@ import lang.taxi.types.QualifiedName
 
 data class HttpService(val baseUrl: String) : AnnotationProvider {
    companion object : BuiltIn {
+      const val RESPONSE_CODE_TYPE_NAME = "taxi.http.ResponseCode"
+      const val RESPONSE_BODY_TYPE_NAME = "taxi.http.ResponseBody"
       const val NAME = "taxi.http.HttpService"
       override fun asTaxi(): String = """
          namespace taxi.http {
@@ -44,6 +46,12 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
 
             annotation RequestBody {}
             annotation PathVariable { value : String }
+
+            annotation ResponseBody{}
+
+            annotation ResponseCode {
+               value : Int
+            }
          }
 
       """
