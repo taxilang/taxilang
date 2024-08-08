@@ -166,7 +166,7 @@ internal class QueryCompiler(
                // wrap stream { Foo } so that Foo becomes Stream<Foo>
                .withTypedExpressionBuilder(StreamDecoratingTypedExpressionBuilder)
                .withParameters(parameters)
-               .compile(queryBodyContext.queryOrMutation().expressionGroup())
+               .compile(queryBodyContext.queryOrMutation().expressionGroup(), targetType = PrimitiveType.ANY)
          }
 
          queryBodyContext.queryOrMutation()?.anonymousTypeDefinition() != null -> parseAnonymousTypesIfPresent(

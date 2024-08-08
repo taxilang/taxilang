@@ -144,5 +144,22 @@ class WhenBlockSpec : DescribeSpec({
          errors.first().detailMessage.should.equal("Type mismatch. Type of lang.taxi.String is not assignable to type Country")
 
       }
+
+      it("is valid to use a when block in a return of a query ") {
+         """
+         type Name inherits String
+         query MyQuery {
+            given { n:Name = "jimmy" }
+            find {
+               when (left(Name)) {
+                  "j" -> "Hello"
+                  else -> "World"
+               }
+            }
+         }
+         """.compiled()
+
+      }
+
    }
 })
