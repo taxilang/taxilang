@@ -29,6 +29,7 @@ object SourceCodeLanguages {
    const val OAS = "OpenAPI"
    const val AVRO = "Avro"
    const val SOURCE_MAP_JSON = "sourcemap+json"
+   const val MARKDOWN = "markdown"
 }
 
 
