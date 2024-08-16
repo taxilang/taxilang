@@ -46,4 +46,4 @@ data class TaxiPackageProject(
 
 // TODO : We also have PackageSource in the packageImporter.
 // This is confusing, one should go away.
-data class TaxiPackageSources(val project: TaxiPackageProject, val sources: List<SourceCode>)
+data class TaxiPackageSources(val project: TaxiPackageProject, val sources: List<SourceCode>, val readme: SourceCode?)

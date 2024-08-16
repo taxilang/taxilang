@@ -1,11 +1,13 @@
 package lang.taxi.packages
 
 import lang.taxi.sources.SourceCode
+import lang.taxi.sources.SourceCodeLanguages
 import lang.taxi.utils.log
 import org.taxilang.packagemanager.PackageManager
 import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.readText
 
 class TaxiSourcesLoader(private val sourceRoot: Path) {
    companion object {
@@ -51,8 +53,28 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
             error("No taxi.conf file - how did this happen?")
          }
          val sources = TaxiSourcesLoader(sourceRoot).load()
+         val readme = findReadme(packageRootPath)
 
-         return TaxiPackageSources(project, sources + dependencySources)
+         return TaxiPackageSources(project, sources + dependencySources, readme)
+      }
+
+      fun findReadme(packageRootPath: Path): SourceCode? {
+         if (!Files.isDirectory(packageRootPath)) {
+            return null
+         }
+         val optional =  Files.list(packageRootPath)
+            .filter { it.fileName.toString().equals("readme.md", ignoreCase = true) }
+            .findFirst()
+            .map { path ->
+               SourceCode(
+                  path.fileName.toString(), path.readText(), path, SourceCodeLanguages.MARKDOWN
+               )
+            }
+         return if (optional.isEmpty) {
+            null
+         } else {
+            optional.get()
+         }
       }
 
       fun loadPackage(packageRootPath: Path): TaxiPackageSources {
