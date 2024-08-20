@@ -20,9 +20,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets")
       operation findPets(
       [[ tags to filter by ]]
-      tags : String[]?,
+      @taxi.http.QueryVariable(value = "tags") tags : String[]?,
       [[ maximum number of results to return ]]
-      limit : Int? ) : Pet[]
+      @taxi.http.QueryVariable(value = "limit") limit : Int? ) : Pet[]
       [[ Creates a new pet in the store.  Duplicates are allowed ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://petstore.swagger.io/api/pets")
       operation addPet( @taxi.http.RequestBody newPet : NewPet? ) : Pet

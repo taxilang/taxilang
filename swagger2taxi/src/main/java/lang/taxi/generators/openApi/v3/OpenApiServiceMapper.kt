@@ -4,12 +4,15 @@ package lang.taxi.generators.openApi.v3
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
+import io.swagger.v3.oas.models.parameters.HeaderParameter
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.parameters.PathParameter
 import io.swagger.v3.oas.models.parameters.QueryParameter
 import io.swagger.v3.oas.models.responses.ApiResponse
+import lang.taxi.annotations.HttpHeader
 import lang.taxi.annotations.HttpOperation
 import lang.taxi.annotations.HttpPathVariable
+import lang.taxi.annotations.HttpQueryVariable
 import lang.taxi.annotations.HttpRequestBody
 import lang.taxi.generators.Logger
 import lang.taxi.generators.NamingUtils.replaceIllegalCharacters
@@ -155,15 +158,9 @@ class OpenApiServiceMapper(
 
    private fun getParamAnnotations(param: Parameter): List<Annotation> {
       return when (param) {
-         is QueryParameter -> {
-            logger.warn(
-               "Param Query parameters are not currently supported",
-               "https://gitlab.com/taxi-lang/taxi-lang/issues/21"
-            )
-            emptyList()
-         }
-
+         is QueryParameter ->  listOf(HttpQueryVariable(param.name).toAnnotation())
          is PathParameter -> listOf(HttpPathVariable(param.name).toAnnotation())
+         is HeaderParameter -> listOf(HttpHeader(param.name).toAnnotation())
          else -> emptyList()
       }
    }

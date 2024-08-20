@@ -75,7 +75,7 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
    }
 }
 
-data class HttpHeader(val name: String, val value: String?, val prefix: String? = null, val suffix: String? = null) {
+data class HttpHeader(val name: String, val value: String? = null, val prefix: String? = null, val suffix: String? = null): AnnotationProvider {
    companion object {
       const val NAME = "taxi.http.HttpHeader"
       fun fromMap(map: Map<String, Any?>): HttpHeader {
@@ -92,6 +92,13 @@ data class HttpHeader(val name: String, val value: String?, val prefix: String? 
    fun asValue(value: String = ""):String {
       val valueToUse = this.value ?: value
       return "${prefix.orEmpty()}$valueToUse${suffix.orEmpty()}"
+   }
+
+   override fun toAnnotation(): Annotation {
+      val valueMap = value?.let { mapOf("value" to value) } ?: mapOf()
+      val prefixMap = prefix?.let { mapOf("prefix" to prefix) } ?: mapOf()
+      val suffixMap = suffix?.let { mapOf("suffix" to suffix) } ?: mapOf()
+      return Annotation(HttpHeader.NAME, mapOf("name" to name) + valueMap + prefixMap + suffixMap)
    }
 }
 
@@ -163,3 +170,12 @@ data class HttpPathVariable(val value: String) : AnnotationProvider {
 
    override fun toAnnotation() = Annotation(NAME, mapOf("value" to value))
 }
+
+data class HttpQueryVariable(val value: String) : AnnotationProvider {
+   companion object {
+      const val NAME = "taxi.http.QueryVariable"
+   }
+
+   override fun toAnnotation() = Annotation(NAME, mapOf("value" to value))
+}
+

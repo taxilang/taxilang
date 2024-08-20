@@ -72,11 +72,16 @@ class OpenApiServiceExportTest {
              get:
                operationId: find pets
                parameters:
-                 - name: pet limit
+                 - name: pet_limit
                    in: query
                    required: false
                    schema:
                      type: integer
+                 - name: x-api-interaction-id
+                   in: header
+                   required: false
+                   schema:
+                     type: string
                responses:
                  '200':
                    description: pet response
@@ -86,7 +91,7 @@ class OpenApiServiceExportTest {
          namespace vyne.openApi {
             service Pets_petsService {
                @taxi.http.HttpOperation(method = "GET" , url = "/pets-pets")
-               operation find_pets( pet_limit : Int?   )
+               operation find_pets( @taxi.http.QueryVariable(value = "pet_limit") pet_limit : Int?, @taxi.http.HttpHeader(name = "x-api-interaction-id") x_api_interaction_id : String? )
             }
          }
       """.trimIndent()
@@ -109,7 +114,7 @@ class OpenApiServiceExportTest {
              get:
                operationId: findPets
                parameters:
-                 - name: pet limit
+                 - name: pet_limit
                    in: query
                    required: false
                    schema:
@@ -126,7 +131,7 @@ class OpenApiServiceExportTest {
                @taxi.http.HttpOperation(method = "GET" , url = "/pets")
                operation findPets(
                   [[ The upper limit to the number of pets you can possibly tolerate ]]
-                  pet_limit : Int?
+                  @taxi.http.QueryVariable(value = "pet_limit") pet_limit : Int? 
                )
             }
          }
