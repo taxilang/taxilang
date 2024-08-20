@@ -4275,11 +4275,11 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/application-properties")
       operation com_atlassian_jira_rest_v2_admin_ApplicationPropertiesResource_getApplicationProperty_get(
       [[ The key of the application property. ]]
-      key : String?,
+      @taxi.http.QueryVariable(value = "key") key : String?,
       [[ The permission level of all items being returned in the list. ]]
-      permissionLevel : String?,
+      @taxi.http.QueryVariable(value = "permissionLevel") permissionLevel : String?,
       [[ When a `key` isn't provided, this filters the list of results by the application property `key` using a regular expression. For example, using `jira.lf.*` will return all application properties with keys that start with *jira.lf.*. ]]
-      keyFilter : String? ) : ApplicationProperty[]
+      @taxi.http.QueryVariable(value = "keyFilter") keyFilter : String? ) : ApplicationProperty[]
    }
    service RestApiThreeApplication_propertiesAdvanced_settingsService {
       [[ Returns the application properties that are accessible on the *Advanced Settings* page. To navigate to the *Advanced Settings* page in Jira, choose the Jira icon > **Jira settings** > **System**, **General Configuration** and then click **Advanced Settings** (in the upper right).
@@ -4410,15 +4410,15 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/auditing/record")
       operation com_atlassian_jira_rest_v2_admin_auditing_AuditingResource_getAuditRecords_get(
       [[ The number of records to skip before returning the first result. ]]
-      offset : Int?,
+      @taxi.http.QueryVariable(value = "offset") offset : Int?,
       [[ The maximum number of results to return. ]]
-      limit : Int?,
+      @taxi.http.QueryVariable(value = "limit") limit : Int?,
       [[ The query string. ]]
-      `filter` : String?,
+      @taxi.http.QueryVariable(value = "filter") `filter` : String?,
       [[ The date and time on or after which returned audit records must have been created. If `to` is provided `from` must be before `to` or no audit records are returned. ]]
-      `from` : DateTime?,
+      @taxi.http.QueryVariable(value = "from") `from` : DateTime?,
       [[ The date and time on or before which returned audit results must have been created. If `from` is provided `to` must be after `from` or no audit records are returned. ]]
-      to : DateTime? ) : AuditRecords
+      @taxi.http.QueryVariable(value = "to") to : DateTime? ) : AuditRecords
    }
    service RestApiThreeAvatarTypeSystemService {
       [[ Returns a list of system avatar details by owner type, where the owner types are issue type, project, or user.
@@ -4441,7 +4441,7 @@ namespace vyne.openApi {
       [[ Use [expand](#expansion) to include additional information about comments in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `renderedBody` Returns the comment body rendered in HTML.
       *  `properties` Returns the comment's properties. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       @taxi.http.RequestBody issueCommentListRequestBean : IssueCommentListRequestBean? ) : PageBeanComment
    }
    service RestApiThreeCommentCommentIdPropertiesService {
@@ -4525,7 +4525,7 @@ namespace vyne.openApi {
       [[ The ID of the component. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       [[ The ID of the component to replace the deleted component. If this value is null no replacement is made. ]]
-      moveIssuesTo : String? )
+      @taxi.http.QueryVariable(value = "moveIssuesTo") moveIssuesTo : String? )
    }
    service RestApiThreeComponentIdRelatedIssueCountsService {
       [[ Returns the counts of issues assigned to the component.
@@ -4582,9 +4582,9 @@ namespace vyne.openApi {
       [[ The ID of the custom field. Note: This is the numeric part of the of the field ID. For example, for a field with the ID *customfield\_10075* use *10075*. ]]
       @taxi.http.PathVariable(value = "fieldId") fieldId : Int,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : PageBeanCustomFieldOptionDetails
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : PageBeanCustomFieldOptionDetails
       [[ Creates options and, where the custom select field is of the type *Select List (cascading)*, cascading options for a custom select field.
       Note that this operation **only works for issue field select list options created in Jira or using operations from the [Issue custom field options](#api-group-Issue-custom-field-options) resource**, it cannot be used with issue field select list options created by Connect apps.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -4613,11 +4613,11 @@ namespace vyne.openApi {
       [[ The filter applied to the list of dashboards. Valid values are:
       *  `favourite` Returns dashboards the user has marked as favorite.
       *  `my` Returns dashboards owned by the user. ]]
-      `filter` : String?,
+      @taxi.http.QueryVariable(value = "filter") `filter` : String?,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : PageOfDashboards
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : PageOfDashboards
    }
    service RestApiThreeDashboardSearchService {
       [[ Searches for dashboards. This operation is similar to [Get dashboards](#api-rest-api-3-dashboard-get) except that the results can be refined to include dashboards that have specific attributes. For example, dashboards with a particular name. When multiple attributes are specified only filters matching all attributes are returned.
@@ -4631,15 +4631,15 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/dashboard/search")
       operation com_atlassian_jira_rest_v2_dashboard_DashboardResource_getDashboardsPaginated_get(
       [[ String used to perform a case-insensitive partial match with `name`. ]]
-      dashboardName : String?,
+      @taxi.http.QueryVariable(value = "dashboardName") dashboardName : String?,
       [[ User account ID used to return dashboards with the matching `owner.accountId`. This parameter cannot be used with the `owner` parameter. ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ This parameter is deprecated because of privacy changes. Use `accountId` instead. See the [migration guide](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. User name used to return dashboards with the matching `owner.name`. This parameter cannot be used with the `accountId` parameter. ]]
-      owner : String?,
+      @taxi.http.QueryVariable(value = "owner") owner : String?,
       [[ Group name used to returns dashboards that are shared with a group that matches `sharePermissions.group.name`. ]]
-      groupname : String?,
+      @taxi.http.QueryVariable(value = "groupname") groupname : String?,
       [[ Project ID used to returns dashboards that are shared with a project that matches `sharePermissions.project.id`. ]]
-      projectId : Int?,
+      @taxi.http.QueryVariable(value = "projectId") projectId : Int?,
       [[ [Order](#ordering) the results by a field:
       *  `description` Sorts by dashboard description. Note that this sort works independently of whether the expand to display the description field is in use.
       *  `favourite_count` Sorts by dashboard popularity.
@@ -4647,11 +4647,11 @@ namespace vyne.openApi {
       *  `is_favourite` Sorts by whether the dashboard is marked as a favorite.
       *  `name` Sorts by dashboard name.
       *  `owner` Sorts by dashboard owner name. ]]
-      orderBy : String?,
+      @taxi.http.QueryVariable(value = "orderBy") orderBy : String?,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ Use [expand](#expansion) to include additional information about dashboard in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `description` Returns the description of the dashboard.
       *  `owner` Returns the owner of the dashboard.
@@ -4659,7 +4659,7 @@ namespace vyne.openApi {
       *  `favourite` Returns `isFavourite`, an indicator of whether the user has set the dashboard as a favorite.
       *  `favouritedCount` Returns `popularity`, a count of how many users have set this dashboard as a favorite.
       *  `sharePermissions` Returns details of the share permissions defined for the dashboard. ]]
-      expand : String? ) : PageBeanDashboard
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : PageBeanDashboard
    }
    service RestApiThreeDashboardDashboardIdItemsItemIdPropertiesService {
       [[ Returns the keys of all properties for a dashboard item.
@@ -4745,7 +4745,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/expression/eval")
       operation com_atlassian_jira_rest_v2_expression_JiraExpressionsResource_evaluateJiraExpression_post(
       [[ Use [expand](#expansion) to include additional information in the response. This parameter accepts `meta.complexity`, which returns information about the expression complexity. For example, the number of expensive operations used by the expression) and how close the expression is to reaching the [complexity limit](https://developer.atlassian.com/cloud/jira/platform/jira-expressions/#restrictions). Useful when designing and debugging your expressions. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       @taxi.http.RequestBody jiraExpressionEvalRequestBean : JiraExpressionEvalRequestBean? ) : JiraExpressionResult
    }
    service RestApiThreeFieldService {
@@ -4769,28 +4769,28 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/field/search")
       operation com_atlassian_jira_rest_v2_issue_field_FieldSearchResource_getFieldsPaginated_get(
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ The type of fields to search. ]]
-      `type` : String[]?,
+      @taxi.http.QueryVariable(value = "type") `type` : String[]?,
       [[ The IDs of the custom fields to search, in the format `customfield_XXXXX`. ]]
-      id : String[]?,
+      @taxi.http.QueryVariable(value = "id") id : String[]?,
       [[ String used to perform a case-insensitive partial match with field names or descriptions. ]]
-      `query` : String?,
+      @taxi.http.QueryVariable(value = "query") `query` : String?,
       [[ [Order](#ordering) the results by a field:
       *  `contextsCount` Sorts by the number of contexts related to a field.
       *  `lastUsed` Sorts by the date when the value of the field last changed.
       *  `name` Sorts by the field name.
       *  `screensCount` Sorts by the number of screens related to a field. ]]
-      orderBy : String?,
+      @taxi.http.QueryVariable(value = "orderBy") orderBy : String?,
       [[ Use [expand](#expansion) to include additional information in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `key` Returns the key for each field.
       *  `lastUsed` Returns the date when the value of the field last changed.
       *  `screensCount` Returns the number of screens related to a field.
       *  `contextsCount` Returns the number of contexts related to a field.
       *  `isLocked` Returns information about whether the field is [locked](https://confluence.atlassian.com/x/ZSN7Og). ]]
-      expand : String? ) : PageBeanField
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : PageBeanField
    }
    service RestApiThreeFieldFieldIdContextsService {
       [[ Returns a [paginated](#pagination) list of the contexts a field is used in.
@@ -4800,9 +4800,9 @@ namespace vyne.openApi {
       [[ The ID of the field to return contexts for. ]]
       @taxi.http.PathVariable(value = "fieldId") fieldId : String,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : PageBeanContext
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : PageBeanContext
    }
    service RestApiThreeFieldFieldIdScreensService {
       [[ Returns a [paginated](#pagination) list of the screens a field is used in.
@@ -4812,9 +4812,9 @@ namespace vyne.openApi {
       [[ The ID of the field to return screens for. ]]
       @taxi.http.PathVariable(value = "fieldId") fieldId : String,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : PageBeanScreen
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : PageBeanScreen
    }
    service RestApiThreeFieldFieldKeyOptionService {
       [[ Returns all the options of a select list issue field. A select list issue field is a type of [issue field](https://developer.atlassian.com/cloud/jira/platform/modules/issue-field/) that enables a user to select a value from a list of options.
@@ -4823,9 +4823,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/field/{fieldKey}/option")
       operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_getAllIssueFieldOptions_get(
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ The field key is specified in the following format: **$(app-key)\_\_$(field-key)**. For example, *example-add-on\_\_example-issue-field*. To determine the `fieldKey` value, do one of the following:
       *  open the app's plugin descriptor, then **app-key** is the key at the top and **field-key** is the key in the `jiraIssueFields` module. **app-key** can also be found in the app listing in the Atlassian Universal Plugin Manager.
       *  run [Get fields](#api-rest-api-3-field-get) and in the field details the value is returned in `key`. For example, `"key": "teams-add-on__team-issue-field"` ]]
@@ -4848,11 +4848,11 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/field/{fieldKey}/option/suggestions/edit")
       operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_getSelectableIssueFieldOptions_get(
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ Filters the results to options that are only available in the specified project. ]]
-      projectId : Int?,
+      @taxi.http.QueryVariable(value = "projectId") projectId : Int?,
       [[ The field key is specified in the following format: **$(app-key)\_\_$(field-key)**. For example, *example-add-on\_\_example-issue-field*. To determine the `fieldKey` value, do one of the following:
       *  open the app's plugin descriptor, then **app-key** is the key at the top and **field-key** is the key in the `jiraIssueFields` module. **app-key** can also be found in the app listing in the Atlassian Universal Plugin Manager.
       *  run [Get fields](#api-rest-api-3-field-get) and in the field details the value is returned in `key`. For example, `"key": "teams-add-on__team-issue-field"` ]]
@@ -4865,11 +4865,11 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/field/{fieldKey}/option/suggestions/search")
       operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_getVisibleIssueFieldOptions_get(
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ Filters the results to options that are only available in the specified project. ]]
-      projectId : Int?,
+      @taxi.http.QueryVariable(value = "projectId") projectId : Int?,
       [[ The field key is specified in the following format: **$(app-key)\_\_$(field-key)**. For example, *example-add-on\_\_example-issue-field*. To determine the `fieldKey` value, do one of the following:
       *  open the app's plugin descriptor, then **app-key** is the key at the top and **field-key** is the key in the `jiraIssueFields` module. **app-key** can also be found in the app listing in the Atlassian Universal Plugin Manager.
       *  run [Get fields](#api-rest-api-3-field-get) and in the field details the value is returned in `key`. For example, `"key": "teams-add-on__team-issue-field"` ]]
@@ -4919,9 +4919,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/field/{fieldKey}/option/{optionId}/issue")
       operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_replaceIssueFieldOption_delete(
       [[ The ID of the option that will replace the currently selected option. ]]
-      replaceWith : Int?,
+      @taxi.http.QueryVariable(value = "replaceWith") replaceWith : Int?,
       [[ A JQL query that specifies the issues to be updated. For example, *project=10000*. ]]
-      jql : String?,
+      @taxi.http.QueryVariable(value = "jql") jql : String?,
       [[ The field key is specified in the following format: **$(app-key)\_\_$(field-key)**. For example, *example-add-on\_\_example-issue-field*. To determine the `fieldKey` value, do one of the following:
       *  open the app's plugin descriptor, then **app-key** is the key at the top and **field-key** is the key in the `jiraIssueFields` module. **app-key** can also be found in the app listing in the Atlassian Universal Plugin Manager.
       *  run [Get fields](#api-rest-api-3-field-get) and in the field details the value is returned in `key`. For example, `"key": "teams-add-on__team-issue-field"` ]]
@@ -4943,7 +4943,7 @@ namespace vyne.openApi {
       [[ Use [expand](#expansion) to include additional information about filter in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `sharedUsers` Returns the users that the filter is shared with. This includes users that can browse projects that the filter is shared with. If you don't specify `sharedUsers`, then the `sharedUsers` object is returned but it doesn't list any users. The list of users returned is limited to 1000, to access additional users append `[start-index:end-index]` to the expand request. For example, to access the next 1000 users, use `?expand=sharedUsers[1001:2000]`.
       *  `subscriptions` Returns the users that are subscribed to the filter. If you don't specify `subscriptions`, the `subscriptions` object is returned but it doesn't list any subscriptions. The list of subscriptions returned is limited to 1000, to access additional subscriptions append `[start-index:end-index]` to the expand request. For example, to access the next 1000 subscriptions, use `?expand=subscriptions[1001:2000]`. ]]
-      expand : String? ) : Filter[]
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : Filter[]
       [[ Creates a filter. The filter is shared according to the [default share scope](#api-rest-api-3-filter-post). The filter is not selected as a favorite.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/filter")
@@ -4951,7 +4951,7 @@ namespace vyne.openApi {
       [[ Use [expand](#expansion) to include additional information about filter in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `sharedUsers` Returns the users that the filter is shared with. This includes users that can browse projects that the filter is shared with. If you don't specify `sharedUsers`, then the `sharedUsers` object is returned but it doesn't list any users. The list of users returned is limited to 1000, to access additional users append `[start-index:end-index]` to the expand request. For example, to access the next 1000 users, use `?expand=sharedUsers[1001:2000]`.
       *  `subscriptions` Returns the users that are subscribed to the filter. If you don't specify `subscriptions`, the `subscriptions` object is returned but it doesn't list any subscriptions. The list of subscriptions returned is limited to 1000, to access additional subscriptions append `[start-index:end-index]` to the expand request. For example, to access the next 1000 subscriptions, use `?expand=subscriptions[1001:2000]`. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       @taxi.http.RequestBody `filter` : Filter? ) : Filter
    }
    service RestApiThreeFilterDefaultShareScopeService {
@@ -4979,7 +4979,7 @@ namespace vyne.openApi {
       [[ Use [expand](#expansion) to include additional information about filter in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `sharedUsers` Returns the users that the filter is shared with. This includes users that can browse projects that the filter is shared with. If you don't specify `sharedUsers`, then the `sharedUsers` object is returned but it doesn't list any users. The list of users returned is limited to 1000, to access additional users append `[start-index:end-index]` to the expand request. For example, to access the next 1000 users, use `?expand=sharedUsers[1001:2000]`.
       *  `subscriptions` Returns the users that are subscribed to the filter. If you don't specify `subscriptions`, the `subscriptions` object is returned but it doesn't list any subscriptions. The list of subscriptions returned is limited to 1000, to access additional subscriptions append `[start-index:end-index]` to the expand request. For example, to access the next 1000 subscriptions, use `?expand=subscriptions[1001:2000]`. ]]
-      expand : String? ) : Filter[]
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : Filter[]
    }
    service RestApiThreeFilterMyService {
       [[ Returns the filters owned by the user. If `includeFavourites` is `true`, the user's visible favorite filters are also returned.
@@ -4995,9 +4995,9 @@ namespace vyne.openApi {
       [[ Use [expand](#expansion) to include additional information about filter in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `sharedUsers` Returns the users that the filter is shared with. This includes users that can browse projects that the filter is shared with. If you don't specify `sharedUsers`, then the `sharedUsers` object is returned but it doesn't list any users. The list of users returned is limited to 1000, to access additional users append `[start-index:end-index]` to the expand request. For example, to access the next 1000 users, use `?expand=sharedUsers[1001:2000]`.
       *  `subscriptions` Returns the users that are subscribed to the filter. If you don't specify `subscriptions`, the `subscriptions` object is returned but it doesn't list any subscriptions. The list of subscriptions returned is limited to 1000, to access additional subscriptions append `[start-index:end-index]` to the expand request. For example, to access the next 1000 subscriptions, use `?expand=subscriptions[1001:2000]`. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       [[ Include the user's favorite filters in the response. ]]
-      includeFavourites : Boolean? ) : Filter[]
+      @taxi.http.QueryVariable(value = "includeFavourites") includeFavourites : Boolean? ) : Filter[]
    }
    service RestApiThreeFilterSearchService {
       [[ Searches for filters. This operation is similar to [Get filters](#api-rest-api-3-filter-get) except that the results can be refined to include filters that have specific attributes. For example, filters with a particular name. When multiple attributes are specified only filters matching all attributes are returned.
@@ -5011,15 +5011,15 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/filter/search")
       operation com_atlassian_jira_rest_v2_search_FilterResource_getFiltersPaginated_get(
       [[ String used to perform a case-insensitive partial match with `name`. ]]
-      filterName : String?,
+      @taxi.http.QueryVariable(value = "filterName") filterName : String?,
       [[ User account ID used to return filters with the matching `owner.accountId`. This parameter cannot be used with `owner`. ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ This parameter is deprecated because of privacy changes. Use `accountId` instead. See the [migration guide](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. User name used to return filters with the matching `owner.name`. This parameter cannot be used with `accountId`. ]]
-      owner : String?,
+      @taxi.http.QueryVariable(value = "owner") owner : String?,
       [[ Group name used to returns filters that are shared with a group that matches `sharePermissions.group.groupname`. ]]
-      groupname : String?,
+      @taxi.http.QueryVariable(value = "groupname") groupname : String?,
       [[ Project ID used to returns filters that are shared with a project that matches `sharePermissions.project.id`. ]]
-      projectId : Int?,
+      @taxi.http.QueryVariable(value = "projectId") projectId : Int?,
       [[ [Order](#ordering) the results by a field:
       *  `description` Sorts by filter description. Note that this sorting works independently of whether the expand to display the description field is in use.
       *  `favourite_count` Sorts by the count of how many users have this filter as a favorite.
@@ -5027,11 +5027,11 @@ namespace vyne.openApi {
       *  `id` Sorts by filter ID.
       *  `name` Sorts by filter name.
       *  `owner` Sorts by the ID of the filter owner. ]]
-      orderBy : String?,
+      @taxi.http.QueryVariable(value = "orderBy") orderBy : String?,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ Use [expand](#expansion) to include additional information about filter in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `description` Returns the description of the filter.
       *  `favourite` Returns an indicator of whether the user has set the filter as a favorite.
@@ -5042,7 +5042,7 @@ namespace vyne.openApi {
       *  `sharePermissions` Returns the share permissions defined for the filter.
       *  `subscriptions` Returns the users that are subscribed to the filter.
       *  `viewUrl` Returns a URL to view the filter. ]]
-      expand : String? ) : PageBeanFoundFilter
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : PageBeanFoundFilter
    }
    service RestApiThreeFilterIdService {
       [[ Returns a filter.
@@ -5060,7 +5060,7 @@ namespace vyne.openApi {
       [[ Use [expand](#expansion) to include additional information about filter in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `sharedUsers` Returns the users that the filter is shared with. This includes users that can browse projects that the filter is shared with. If you don't specify `sharedUsers`, then the `sharedUsers` object is returned but it doesn't list any users. The list of users returned is limited to 1000, to access additional users append `[start-index:end-index]` to the expand request. For example, to access the next 1000 users, use `?expand=sharedUsers[1001:2000]`.
       *  `subscriptions` Returns the users that are subscribed to the filter. If you don't specify `subscriptions`, the `subscriptions` object is returned but it doesn't list any subscriptions. The list of subscriptions returned is limited to 1000, to access additional subscriptions append `[start-index:end-index]` to the expand request. For example, to access the next 1000 subscriptions, use `?expand=subscriptions[1001:2000]`. ]]
-      expand : String? ) : Filter
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : Filter
       [[ Updates a filter. Use this operation to update a filter's name, description, JQL, or sharing.
       **[Permissions](#permissions) required:** Permission to access Jira, however the user must own the filter. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/filter/{id}")
@@ -5070,7 +5070,7 @@ namespace vyne.openApi {
       [[ Use [expand](#expansion) to include additional information about filter in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `sharedUsers` Returns the users that the filter is shared with. This includes users that can browse projects that the filter is shared with. If you don't specify `sharedUsers`, then the `sharedUsers` object is returned but it doesn't list any users. The list of users returned is limited to 1000, to access additional users append `[start-index:end-index]` to the expand request. For example, to access the next 1000 users, use `?expand=sharedUsers[1001:2000]`.
       *  `subscriptions` Returns the users that are subscribed to the filter. If you don't specify `subscriptions`, the `subscriptions` object is returned but it doesn't list any subscriptions. The list of subscriptions returned is limited to 1000, to access additional subscriptions append `[start-index:end-index]` to the expand request. For example, to access the next 1000 subscriptions, use `?expand=subscriptions[1001:2000]`. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       @taxi.http.RequestBody `filter` : Filter? ) : Filter
       [[ Delete a filter.
       **[Permissions](#permissions) required:** Permission to access Jira, however filters can only be deleted by the creator of the filter or a user with *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -5133,7 +5133,7 @@ namespace vyne.openApi {
       [[ Use [expand](#expansion) to include additional information about filter in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `sharedUsers` Returns the users that the filter is shared with. This includes users that can browse projects that the filter is shared with. If you don't specify `sharedUsers`, then the `sharedUsers` object is returned but it doesn't list any users. The list of users returned is limited to 1000, to access additional users append `[start-index:end-index]` to the expand request. For example, to access the next 1000 users, use `?expand=sharedUsers[1001:2000]`.
       *  `subscriptions` Returns the users that are subscribed to the filter. If you don't specify `subscriptions`, the `subscriptions` object is returned but it doesn't list any subscriptions. The list of subscriptions returned is limited to 1000, to access additional subscriptions append `[start-index:end-index]` to the expand request. For example, to access the next 1000 subscriptions, use `?expand=subscriptions[1001:2000]`. ]]
-      expand : String? ) : Filter
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : Filter
       [[ Removes a filter as a favorite for the user. Note that this operation only removes filters visible to the user from the user's favorites list. For example, if the user favorites a public filter that is subsequently made private (and is therefore no longer visible on their favorites list) they cannot remove it from their favorites list.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/filter/{id}/favourite")
@@ -5143,7 +5143,7 @@ namespace vyne.openApi {
       [[ Use [expand](#expansion) to include additional information about filter in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `sharedUsers` Returns the users that the filter is shared with. This includes users that can browse projects that the filter is shared with. If you don't specify `sharedUsers`, then the `sharedUsers` object is returned but it doesn't list any users. The list of users returned is limited to 1000, to access additional users append `[start-index:end-index]` to the expand request. For example, to access the next 1000 users, use `?expand=sharedUsers[1001:2000]`.
       *  `subscriptions` Returns the users that are subscribed to the filter. If you don't specify `subscriptions`, the `subscriptions` object is returned but it doesn't list any subscriptions. The list of subscriptions returned is limited to 1000, to access additional subscriptions append `[start-index:end-index]` to the expand request. For example, to access the next 1000 subscriptions, use `?expand=subscriptions[1001:2000]`. ]]
-      expand : String? ) : Filter
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : Filter
    }
    service RestApiThreeFilterIdPermissionService {
       [[ Returns the share permissions for a filter. A filter can be shared with groups, projects, all logged-in users, or the public. Sharing with all logged-in users or the public is known as a global share permission.
@@ -5198,9 +5198,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/group")
       operation com_atlassian_jira_rest_v2_issue_GroupResource_getGroup_get(
       [[ The name of the group. ]]
-      groupname : String,
+      @taxi.http.QueryVariable(value = "groupname") groupname : String,
       [[ List of fields to expand. ]]
-      expand : String? ) : Group
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : Group
       [[ Creates a group.
       **[Permissions](#permissions) required:** Site administration (that is, member of the *site-admin* [group](https://confluence.atlassian.com/x/24xjL)). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/group")
@@ -5210,9 +5210,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/group")
       operation com_atlassian_jira_rest_v2_issue_GroupResource_removeGroup_delete(
       [[ The name of the group. ]]
-      groupname : String,
+      @taxi.http.QueryVariable(value = "groupname") groupname : String,
       [[ The group to transfer restrictions to. Only comments and worklogs are transferred. If restrictions are not transferred, comments and worklogs are inaccessible after the deletion. ]]
-      swapGroup : String? )
+      @taxi.http.QueryVariable(value = "swapGroup") swapGroup : String? )
    }
    service RestApiThreeGroupMemberService {
       [[ Returns all users in a group.
@@ -5221,13 +5221,13 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/group/member")
       operation com_atlassian_jira_rest_v2_issue_GroupResource_getUsersFromGroup_get(
       [[ The name of the group. ]]
-      groupname : String,
+      @taxi.http.QueryVariable(value = "groupname") groupname : String,
       [[ Include inactive users. ]]
-      includeInactiveUsers : Boolean?,
+      @taxi.http.QueryVariable(value = "includeInactiveUsers") includeInactiveUsers : Boolean?,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : PageBeanUserDetails
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : PageBeanUserDetails
    }
    service RestApiThreeGroupUserService {
       [[ Adds a user to a group.
@@ -5235,18 +5235,18 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/group/user")
       operation com_atlassian_jira_rest_v2_issue_GroupResource_addUserToGroup_post(
       [[ The name of the group (case sensitive). ]]
-      groupname : String,
+      @taxi.http.QueryVariable(value = "groupname") groupname : String,
       @taxi.http.RequestBody updateUserToGroupBean : UpdateUserToGroupBean? ) : Group
       [[ Removes a user from a group.
       **[Permissions](#permissions) required:** Site administration (that is, member of the *site-admin* [group](https://confluence.atlassian.com/x/24xjL)). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/group/user")
       operation com_atlassian_jira_rest_v2_issue_GroupResource_removeUserFromGroup_delete(
       [[ The name of the group. ]]
-      groupname : String,
+      @taxi.http.QueryVariable(value = "groupname") groupname : String,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      username : String?,
+      @taxi.http.QueryVariable(value = "username") username : String?,
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. ]]
-      accountId : String )
+      @taxi.http.QueryVariable(value = "accountId") accountId : String )
    }
    service RestApiThreeGroupsPickerService {
       [[ Returns a list of groups whose names contain a query string. A list of group names can be provided to exclude groups from the results.
@@ -5257,15 +5257,15 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/groups/picker")
       operation com_atlassian_jira_rest_v2_issue_GroupPickerResource_findGroups_get(
       [[ This parameter is deprecated, setting it does not affect the results. To find groups containing a particular user, use [Get user groups](#api-rest-api-3-user-groups-get). ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ The string to find in group names. ]]
-      `query` : String?,
+      @taxi.http.QueryVariable(value = "query") `query` : String?,
       [[ A group to exclude from the result. To exclude multiple groups, provide an ampersand-separated list. For example, `exclude=group1&exclude=group2`. ]]
-      exclude : String[]?,
+      @taxi.http.QueryVariable(value = "exclude") exclude : String[]?,
       [[ The maximum number of groups to return. The maximum number of groups that can be returned is limited by the system property `jira.ajax.autocomplete.limit`. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      userName : String? ) : FoundGroups
+      @taxi.http.QueryVariable(value = "userName") userName : String? ) : FoundGroups
    }
    service RestApiThreeGroupuserpickerService {
       [[ Returns a list of users and groups matching a string. The string is used:
@@ -5285,23 +5285,23 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/groupuserpicker")
       operation com_atlassian_jira_rest_v2_issue_GroupAndUserPickerResource_findUsersAndGroups_get(
       [[ The search string. ]]
-      `query` : String,
+      @taxi.http.QueryVariable(value = "query") `query` : String,
       [[ The maximum number of items to return in each list. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ Indicates whether the user avatar should be returned. If an invalid value is provided, the default value is used. ]]
-      showAvatar : Boolean?,
+      @taxi.http.QueryVariable(value = "showAvatar") showAvatar : Boolean?,
       [[ The custom field ID of the field this request is for. ]]
-      fieldId : String?,
+      @taxi.http.QueryVariable(value = "fieldId") fieldId : String?,
       [[ The ID of a project that returned users and groups must have permission to view. To include multiple projects, provide an ampersand-separated list. For example, `projectId=10000&projectId=10001`. This parameter is only used when `fieldId` is present. ]]
-      projectId : String[]?,
+      @taxi.http.QueryVariable(value = "projectId") projectId : String[]?,
       [[ The ID of an issue type that returned users and groups must have permission to view. To include multiple issue types, provide an ampersand-separated list. For example, `issueTypeId=10000&issueTypeId=10001`. Special values, such as `-1` (all standard issue types) and `-2` (all subtask issue types), are supported. This parameter is only used when `fieldId` is present. ]]
-      issueTypeId : String[]?,
+      @taxi.http.QueryVariable(value = "issueTypeId") issueTypeId : String[]?,
       [[ The size of the avatar to return. If an invalid value is provided, the default value is used. ]]
-      avatarSize : String?,
+      @taxi.http.QueryVariable(value = "avatarSize") avatarSize : String?,
       [[ Indicates whether the search for groups should be case insensitive. ]]
-      caseInsensitive : Boolean?,
+      @taxi.http.QueryVariable(value = "caseInsensitive") caseInsensitive : Boolean?,
       [[ Indicates whether Connect app users and groups should be excluded from the search results. If an invalid value is provided, the default value is used. ]]
-      excludeConnectAddons : Boolean? ) : FoundUsersAndGroups
+      @taxi.http.QueryVariable(value = "excludeConnectAddons") excludeConnectAddons : Boolean? ) : FoundUsersAndGroups
    }
    service RestApiThreeIssueService {
       [[ Creates an issue or, where the option to create subtasks is enabled in Jira, a subtask. A transition may be applied, to move the issue or subtask to a workflow step other than the default start step, and issue properties set.
@@ -5314,7 +5314,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issue")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_createIssue_post(
       [[ Whether the project in which the issue is created is added to the user's **Recently viewed** project list, as shown under **Projects** in Jira. ]]
-      updateHistory : Boolean?,
+      @taxi.http.QueryVariable(value = "updateHistory") updateHistory : Boolean?,
       @taxi.http.RequestBody issueUpdateDetails : IssueUpdateDetails? ) : CreatedIssue
    }
    service RestApiThreeIssueBulkService {
@@ -5335,15 +5335,15 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/issue/createmeta")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_getCreateIssueMeta_get(
       [[ List of project IDs. This parameter accepts a comma-separated list. Multiple project IDs can also be provided using an ampersand-separated list. For example, `projectIds=10000,10001&projectIds=10020,10021`. This parameter may be provided with `projectKeys`. ]]
-      projectIds : String[]?,
+      @taxi.http.QueryVariable(value = "projectIds") projectIds : String[]?,
       [[ List of project keys. This parameter accepts a comma-separated list. Multiple project keys can also be provided using an ampersand-separated list. For example, `projectKeys=proj1,proj2&projectKeys=proj3`. This parameter may be provided with `projectIds`. ]]
-      projectKeys : String[]?,
+      @taxi.http.QueryVariable(value = "projectKeys") projectKeys : String[]?,
       [[ List of issue type IDs. This parameter accepts a comma-separated list. Multiple issue type IDs can also be provided using an ampersand-separated list. For example, `issuetypeIds=10000,10001&issuetypeIds=10020,10021`. This parameter may be provided with `issuetypeNames`. ]]
-      issuetypeIds : String[]?,
+      @taxi.http.QueryVariable(value = "issuetypeIds") issuetypeIds : String[]?,
       [[ List of issue type names. This parameter accepts a comma-separated list. Multiple issue type names can also be provided using an ampersand-separated list. For example, `issuetypeNames=name1,name2&issuetypeNames=name3`. This parameter may be provided with `issuetypeIds`. ]]
-      issuetypeNames : String[]?,
+      @taxi.http.QueryVariable(value = "issuetypeNames") issuetypeNames : String[]?,
       [[ Use [expand](#expansion) to include additional information about issue metadata in the response. This parameter accepts `projects.issuetypes.fields`, which returns information about the fields in the issue creation screen for each issue type. Fields hidden from the screen are not returned. Use the information to populate the `fields` and `update` fields in [Create issue](#api-rest-api-3-issue-post) and [Create issues](#api-rest-api-3-issue-bulk-post). ]]
-      expand : String? ) : IssueCreateMetadata
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : IssueCreateMetadata
    }
    service RestApiThreeIssuePickerService {
       [[ Returns lists of issues matching a query string. Use this resource to provide auto-completion suggestions when the user is looking for an issue using a word or string.
@@ -5355,17 +5355,17 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/issue/picker")
       operation com_atlassian_jira_rest_v2_issue_IssueResource_getIssuePickerResource_get(
       [[ A string to match against text fields in the issue such as title, description, or comments. ]]
-      `query` : String?,
+      @taxi.http.QueryVariable(value = "query") `query` : String?,
       [[ A JQL query defining a list of issues to search for the query term. Note that `username` and `userkey` cannot be used as search terms for this parameter, due to privacy reasons. Use `accountId` instead. ]]
-      currentJQL : String?,
+      @taxi.http.QueryVariable(value = "currentJQL") currentJQL : String?,
       [[ The key of an issue to exclude from search results. For example, the issue the user is viewing when they perform this query. ]]
-      currentIssueKey : String?,
+      @taxi.http.QueryVariable(value = "currentIssueKey") currentIssueKey : String?,
       [[ The ID of a project that suggested issues must belong to. ]]
-      currentProjectId : String?,
+      @taxi.http.QueryVariable(value = "currentProjectId") currentProjectId : String?,
       [[ Indicate whether to include subtasks in the suggestions list. ]]
-      showSubTasks : Boolean?,
+      @taxi.http.QueryVariable(value = "showSubTasks") showSubTasks : Boolean?,
       [[ When `currentIssueKey` is a subtask, indicates whether to include the parent issue in the suggestions if it matches the query. ]]
-      showSubTaskParent : Boolean? ) : IssuePickerSuggestions
+      @taxi.http.QueryVariable(value = "showSubTaskParent") showSubTaskParent : Boolean? ) : IssuePickerSuggestions
    }
    service RestApiThreeIssuePropertiesService {
       [[ Sets the values of entity properties on issues. It can set up to 10 entity properties on up to 10,000 issues.
@@ -5442,9 +5442,9 @@ namespace vyne.openApi {
       *  `*navigable,-comment` Returns all navigable fields except comment.
       This parameter may be specified multiple times. For example, `fields=field1,field2& fields=field3`.
       Note: All fields are returned by default. This differs from [Search for issues using JQL (GET)](#api-rest-api-3-search-get) and [Search for issues using JQL (POST)](#api-rest-api-3-search-post) where the default is all navigable fields. ]]
-      fields : String[]?,
+      @taxi.http.QueryVariable(value = "fields") fields : String[]?,
       [[ Indicates whether fields in `fields` are referenced by keys rather than IDs. This parameter is useful where fields have been added by a connect app and a field's key may differ from its ID. ]]
-      fieldsByKeys : Boolean?,
+      @taxi.http.QueryVariable(value = "fieldsByKeys") fieldsByKeys : Boolean?,
       [[ Use [expand](#expansion) to include additional information about the issues in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `renderedFields` Returns field values rendered in HTML format.
       *  `names` Returns the display name of each field.
@@ -5453,7 +5453,7 @@ namespace vyne.openApi {
       *  `editmeta` Returns information about how each field can be edited.
       *  `changelog` Returns a list of recent updates to an issue, sorted by date, starting from the most recent.
       *  `versionedRepresentations` Returns a JSON array for each version of a field's value, with the highest number representing the most recent version. Note: When included in the request, the `fields` parameter is ignored. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       [[ A list of issue properties to return for the issue. This parameter accepts a comma-separated list. Allowed values:
       *  `*all` Returns all issue properties.
       *  Any issue property key, prefixed with a minus to exclude.
@@ -5462,9 +5462,9 @@ namespace vyne.openApi {
       *  `*all,-prop1` Returns all properties except `prop1`.
       *  `prop1,prop2` Returns `prop1` and `prop2` properties.
       This parameter may be specified multiple times. For example, `properties=prop1,prop2& properties=prop3`. ]]
-      properties : String[]?,
+      @taxi.http.QueryVariable(value = "properties") properties : String[]?,
       [[ Whether the project in which the issue is created is added to the user's **Recently viewed** project list, as shown under **Projects** in Jira. This also populates the [JQL issues search](#api-rest-api-3-search-get) `lastViewed` field. ]]
-      updateHistory : Boolean? ) : IssueBean
+      @taxi.http.QueryVariable(value = "updateHistory") updateHistory : Boolean? ) : IssueBean
       [[ Edits an issue. A transition may be applied and issue properties updated as part of the edit.
       The edits to the issue's fields are defined using `update` and `fields`. The fields that can be edited are determined using [ Get edit issue metadata](#api-rest-api-3-issue-issueIdOrKey-editmeta-get).
       The parent field may be set by key or ID. For standard issue types, the parent may be removed by setting `update.parent.set.none` to *true*. Note that the `description`, `environment`, and any `textarea` type custom fields (multi-line text fields) take Atlassian Document Format content. Single line custom fields (`textfield`) accept a string and don't handle Atlassian Document Format content.
@@ -5478,11 +5478,11 @@ namespace vyne.openApi {
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ Indicates whether a notification email about the issue update is sent to all watchers. To disable the notification, administer Jira or administer project permissions are required. If the user doesn't have the necessary permission the request is ignored. ]]
-      notifyUsers : Boolean?,
+      @taxi.http.QueryVariable(value = "notifyUsers") notifyUsers : Boolean?,
       [[ Indicates whether screen security should be overridden to enable hidden fields to be edited. Available to Connect app users with admin permissions. ]]
-      overrideScreenSecurity : Boolean?,
+      @taxi.http.QueryVariable(value = "overrideScreenSecurity") overrideScreenSecurity : Boolean?,
       [[ Indicates whether screen security should be overridden to enable uneditable fields to be edited. Available to Connect app users with admin permissions. ]]
-      overrideEditableFlag : Boolean?,
+      @taxi.http.QueryVariable(value = "overrideEditableFlag") overrideEditableFlag : Boolean?,
       @taxi.http.RequestBody issueUpdateDetails : IssueUpdateDetails? ) : Any
       [[ Deletes an issue.
       An issue cannot be deleted if it has one or more subtasks. To delete an issue with subtasks, set `deleteSubtasks`. This causes the issue's subtasks to be deleted with the issue.
@@ -5495,7 +5495,7 @@ namespace vyne.openApi {
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ Indicates whether the issue's subtasks are deleted when the issue is deleted. ]]
-      deleteSubtasks : String? )
+      @taxi.http.QueryVariable(value = "deleteSubtasks") deleteSubtasks : String? )
    }
    service RestApiThreeIssueIssueIdOrKeyAssigneeService {
       [[ Assigns an issue to a user. Use this operation when the calling user does not have the *Edit Issues* permission but has the *Assign issue* permission for the project that the issue is in.
@@ -5541,9 +5541,9 @@ namespace vyne.openApi {
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : PageBeanChangelog
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : PageBeanChangelog
    }
    service RestApiThreeIssueIssueIdOrKeyCommentService {
       [[ Returns all comments for an issue.
@@ -5557,13 +5557,13 @@ namespace vyne.openApi {
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ [Order](#ordering) the results by a field. Accepts *created* to sort comments by their created date. ]]
-      orderBy : String?,
+      @taxi.http.QueryVariable(value = "orderBy") orderBy : String?,
       [[ Use [expand](#expansion) to include additional information about comments in the response. This parameter accepts `renderedBody`, which returns the comment body rendered in HTML. ]]
-      expand : String? ) : PageOfComments
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : PageOfComments
       [[ Adds a comment to an issue.
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:**
@@ -5574,7 +5574,7 @@ namespace vyne.openApi {
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ Use [expand](#expansion) to include additional information about comments in the response. This parameter accepts `renderedBody`, which returns the comment body rendered in HTML. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       @taxi.http.RequestBody comment : Comment? ) : Comment
    }
    service RestApiThreeIssueIssueIdOrKeyCommentIdService {
@@ -5591,7 +5591,7 @@ namespace vyne.openApi {
       [[ The ID of the comment. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       [[ Use [expand](#expansion) to include additional information about comments in the response. This parameter accepts `renderedBody`, which returns the comment body rendered in HTML. ]]
-      expand : String? ) : Comment
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : Comment
       [[ Updates a comment.
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:**
@@ -5606,7 +5606,7 @@ namespace vyne.openApi {
       [[ The ID of the comment. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       [[ Use [expand](#expansion) to include additional information about comments in the response. This parameter accepts `renderedBody`, which returns the comment body rendered in HTML. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       @taxi.http.RequestBody comment : Comment? ) : Comment
       [[ Deletes a comment.
       **[Permissions](#permissions) required:**
@@ -5636,9 +5636,9 @@ namespace vyne.openApi {
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ Indicates whether hidden fields should be returned. Available to connect app users with admin permissions. ]]
-      overrideScreenSecurity : Boolean?,
+      @taxi.http.QueryVariable(value = "overrideScreenSecurity") overrideScreenSecurity : Boolean?,
       [[ Indicates whether non-editable fields should be returned. Available to connect app users with admin permissions. ]]
-      overrideEditableFlag : Boolean? ) : IssueUpdateMetadata
+      @taxi.http.QueryVariable(value = "overrideEditableFlag") overrideEditableFlag : Boolean? ) : IssueUpdateMetadata
    }
    service RestApiThreeIssueIssueIdOrKeyNotifyService {
       [[ Creates an email notification for an issue and adds it to the mail queue.
@@ -5711,7 +5711,7 @@ namespace vyne.openApi {
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The global ID of the remote issue link. ]]
-      globalId : String? ) : RemoteIssueLink
+      @taxi.http.QueryVariable(value = "globalId") globalId : String? ) : RemoteIssueLink
       [[ Creates or updates a remote issue link for an issue.
       If a `globalId` is provided and a remote issue link with that global ID is found it is updated. Any fields without values in the request are set to null. Otherwise, the remote issue link is created.
       This operation requires [issue linking to be active](https://confluence.atlassian.com/x/yoXKM).
@@ -5735,7 +5735,7 @@ namespace vyne.openApi {
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The global ID of a remote issue link. ]]
-      globalId : String )
+      @taxi.http.QueryVariable(value = "globalId") globalId : String )
    }
    service RestApiThreeIssueIssueIdOrKeyRemotelinkLinkIdService {
       [[ Returns a remote issue link for an issue.
@@ -5790,11 +5790,11 @@ namespace vyne.openApi {
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ Use [expand](#expansion) to include additional information about transitions in the response. This parameter accepts `transitions.fields`, which returns information about the fields in the transition screen for each transition. Fields hidden from the screen are not returned. Use this information to populate the `fields` and `update` fields in [Transition issue](#api-rest-api-3-issue-issueIdOrKey-transitions-post). ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       [[ The ID of the transition. ]]
-      transitionId : String?,
+      @taxi.http.QueryVariable(value = "transitionId") transitionId : String?,
       [[ Indicates whether transitions with the condition *Hide From User Condition* are included in the response. ]]
-      skipRemoteOnlyCondition : Boolean? ) : Transitions
+      @taxi.http.QueryVariable(value = "skipRemoteOnlyCondition") skipRemoteOnlyCondition : Boolean? ) : Transitions
       [[ Performs an issue transition and, if the transition has a screen, updates the fields from the transition screen.
       To update the fields on the transition screen, specify the fields in the `fields` or `update` parameters in the request body. Get details about the fields using [ Get transitions](#api-rest-api-3-issue-issueIdOrKey-transitions-get) with the `transitions.fields` expand.
       This operation can be accessed anonymously.
@@ -5872,9 +5872,9 @@ namespace vyne.openApi {
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      username : String?,
+      @taxi.http.QueryVariable(value = "username") username : String?,
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. Required. ]]
-      accountId : String? )
+      @taxi.http.QueryVariable(value = "accountId") accountId : String? )
    }
    service RestApiThreeIssueIssueIdOrKeyWorklogService {
       [[ Returns worklogs for an issue, starting from the oldest worklog or from the worklog started on or after a date and time.
@@ -5889,13 +5889,13 @@ namespace vyne.openApi {
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ The worklog start date and time, in UNIX timestamp format, after which worklogs are returned. ]]
-      startedAfter : Int?,
+      @taxi.http.QueryVariable(value = "startedAfter") startedAfter : Int?,
       [[ Use [expand](#expansion) to include additional information about worklogs in the response. This parameter accepts`properties`, which returns worklog properties. ]]
-      expand : String? ) : PageOfWorklogs
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : PageOfWorklogs
       [[ Adds a worklog to an issue.
       Time tracking must be enabled in Jira, otherwise this operation returns an error. For more information, see [Configuring time tracking](https://confluence.atlassian.com/x/qoXKM).
       This operation can be accessed anonymously.
@@ -5907,21 +5907,21 @@ namespace vyne.openApi {
       [[ The ID or key the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ Indicates whether users watching the issue are notified by email. ]]
-      notifyUsers : Boolean?,
+      @taxi.http.QueryVariable(value = "notifyUsers") notifyUsers : Boolean?,
       [[ Defines how to update the issue's time estimate, the options are:
       *  `new` Sets the estimate to a specific value, defined in `newEstimate`.
       *  `leave` Leaves the estimate unchanged.
       *  `manual` Reduces the estimate by amount specified in `reduceBy`.
       *  `auto` Reduces the estimate by the value of `timeSpent` in the worklog. ]]
-      adjustEstimate : String?,
+      @taxi.http.QueryVariable(value = "adjustEstimate") adjustEstimate : String?,
       [[ The value to set as the issue's remaining time estimate, as days (\#d), hours (\#h), or minutes (\#m or \#). For example, *2d*. Required when `adjustEstimate` is `new`. ]]
-      newEstimate : String?,
+      @taxi.http.QueryVariable(value = "newEstimate") newEstimate : String?,
       [[ The amount to reduce the issue's remaining estimate by, as days (\#d), hours (\#h), or minutes (\#m). For example, *2d*. Required when `adjustEstimate` is `manual`. ]]
-      reduceBy : String?,
+      @taxi.http.QueryVariable(value = "reduceBy") reduceBy : String?,
       [[ Use [expand](#expansion) to include additional information about work logs in the response. This parameter accepts `properties`, which returns worklog properties. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       [[ Indicates whether the worklog entry should be added to the issue even if the issue is not editable, because jira.issue.editable set to false or missing. For example, the issue is closed. Only connect app users with admin scope permission can use this flag. ]]
-      overrideEditableFlag : Boolean?,
+      @taxi.http.QueryVariable(value = "overrideEditableFlag") overrideEditableFlag : Boolean?,
       @taxi.http.RequestBody worklog : Worklog? ) : Worklog
    }
    service RestApiThreeIssueIssueIdOrKeyWorklogIdService {
@@ -5940,7 +5940,7 @@ namespace vyne.openApi {
       @taxi.http.PathVariable(value = "id") id : String,
       [[ Use [expand](#expansion) to include additional information about work logs in the response. This parameter accepts
       `properties`, which returns worklog properties. ]]
-      expand : String? ) : Worklog
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : Worklog
       [[ Updates a worklog.
       Time tracking must be enabled in Jira, otherwise this operation returns an error. For more information, see [Configuring time tracking](https://confluence.atlassian.com/x/qoXKM).
       This operation can be accessed anonymously.
@@ -5956,18 +5956,18 @@ namespace vyne.openApi {
       [[ The ID of the worklog. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       [[ Indicates whether users watching the issue are notified by email. ]]
-      notifyUsers : Boolean?,
+      @taxi.http.QueryVariable(value = "notifyUsers") notifyUsers : Boolean?,
       [[ Defines how to update the issue's time estimate, the options are:
       *  `new` Sets the estimate to a specific value, defined in `newEstimate`.
       *  `leave` Leaves the estimate unchanged.
       *  `auto` Updates the estimate by the difference between the original and updated value of `timeSpent` or `timeSpentSeconds`. ]]
-      adjustEstimate : String?,
+      @taxi.http.QueryVariable(value = "adjustEstimate") adjustEstimate : String?,
       [[ The value to set as the issue's remaining time estimate, as days (\#d), hours (\#h), or minutes (\#m or \#). For example, *2d*. Required when `adjustEstimate` is `new`. ]]
-      newEstimate : String?,
+      @taxi.http.QueryVariable(value = "newEstimate") newEstimate : String?,
       [[ Use [expand](#expansion) to include additional information about worklogs in the response. This parameter accepts `properties`, which returns worklog properties. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       [[ Indicates whether the worklog should be added to the issue even if the issue is not editable. For example, because the issue is closed. Only connect app users with admin permissions can use this flag. ]]
-      overrideEditableFlag : Boolean?,
+      @taxi.http.QueryVariable(value = "overrideEditableFlag") overrideEditableFlag : Boolean?,
       @taxi.http.RequestBody worklog : Worklog? ) : Worklog
       [[ Deletes a worklog from an issue.
       Time tracking must be enabled in Jira, otherwise this operation returns an error. For more information, see [Configuring time tracking](https://confluence.atlassian.com/x/qoXKM).
@@ -5984,19 +5984,19 @@ namespace vyne.openApi {
       [[ The ID of the worklog. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       [[ Indicates whether users watching the issue are notified by email. ]]
-      notifyUsers : Boolean?,
+      @taxi.http.QueryVariable(value = "notifyUsers") notifyUsers : Boolean?,
       [[ Defines how to update the issue's time estimate, the options are:
       *  `new` Sets the estimate to a specific value, defined in `newEstimate`.
       *  `leave` Leaves the estimate unchanged.
       *  `manual` Increases the estimate by amount specified in `increaseBy`.
       *  `auto` Reduces the estimate by the value of `timeSpent` in the worklog. ]]
-      adjustEstimate : String?,
+      @taxi.http.QueryVariable(value = "adjustEstimate") adjustEstimate : String?,
       [[ The value to set as the issue's remaining time estimate, as days (\#d), hours (\#h), or minutes (\#m or \#). For example, *2d*. Required when `adjustEstimate` is `new`. ]]
-      newEstimate : String?,
+      @taxi.http.QueryVariable(value = "newEstimate") newEstimate : String?,
       [[ The amount to increase the issue's remaining estimate by, as days (\#d), hours (\#h), or minutes (\#m or \#). For example, *2d*. Required when `adjustEstimate` is `manual`. ]]
-      increaseBy : String?,
+      @taxi.http.QueryVariable(value = "increaseBy") increaseBy : String?,
       [[ Indicates whether the work log entry should be added to the issue even if the issue is not editable, because jira.issue.editable set to false or missing. For example, the issue is closed. Only connect app users with admin permissions can use this flag. ]]
-      overrideEditableFlag : Boolean? )
+      @taxi.http.QueryVariable(value = "overrideEditableFlag") overrideEditableFlag : Boolean? )
    }
    service RestApiThreeIssueIssueIdOrKeyWorklogWorklogIdPropertiesService {
       [[ Returns the keys of all properties for a worklog.
@@ -6184,7 +6184,7 @@ namespace vyne.openApi {
       [[ The ID of the issue type. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       [[ The ID of the replacement issue type. ]]
-      alternativeIssueTypeId : String? )
+      @taxi.http.QueryVariable(value = "alternativeIssueTypeId") alternativeIssueTypeId : String? )
    }
    service RestApiThreeIssuetypeIdAlternativesService {
       [[ Returns a list of issue types that can be used to replace the issue type. The alternative issue types are those assigned to the same workflow scheme, field configuration scheme, and screen scheme.
@@ -6211,11 +6211,11 @@ namespace vyne.openApi {
       [[ The ID of the issue type. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       [[ The X coordinate of the top-left corner of the crop region. ]]
-      `x` : Int?,
+      @taxi.http.QueryVariable(value = "x") `x` : Int?,
       [[ The Y coordinate of the top-left corner of the crop region. ]]
-      `y` : Int?,
+      @taxi.http.QueryVariable(value = "y") `y` : Int?,
       [[ The length of each side of the crop region. ]]
-      size : Int,
+      @taxi.http.QueryVariable(value = "size") size : Int,
       @taxi.http.RequestBody any : Any? ) : Avatar
    }
    service RestApiThreeIssuetypeIssueTypeIdPropertiesService {
@@ -6279,13 +6279,13 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/jql/autocompletedata/suggestions")
       operation com_atlassian_jira_rest_v2_search_SearchAutoCompleteResource_getFieldAutoCompleteForQueryString_get(
       [[ The name of the field. ]]
-      fieldName : String?,
+      @taxi.http.QueryVariable(value = "fieldName") fieldName : String?,
       [[ The partial field item name entered by the user. ]]
-      fieldValue : String?,
+      @taxi.http.QueryVariable(value = "fieldValue") fieldValue : String?,
       [[ The name of the [ CHANGED operator predicate](https://confluence.atlassian.com/x/hQORLQ#Advancedsearching-operatorsreference-CHANGEDCHANGED) for which the suggestions are generated. The valid predicate operators are *by*, *from*, and *to*. ]]
-      predicateName : String?,
+      @taxi.http.QueryVariable(value = "predicateName") predicateName : String?,
       [[ The partial predicate item name entered by the user. ]]
-      predicateValue : String? ) : AutoCompleteSuggestions
+      @taxi.http.QueryVariable(value = "predicateValue") predicateValue : String? ) : AutoCompleteSuggestions
    }
    service RestApiThreeJqlMatchService {
       [[ Checks whether one or more issues would be returned by one or more JQL queries.
@@ -6315,9 +6315,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/label")
       operation com_atlassian_jira_rest_v2_label_LabelResource_getAllLabels_get(
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : PageBeanString
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : PageBeanString
    }
    service RestApiThreeMypermissionsService {
       [[ Returns a list of permissions indicating which permissions the user has. Details of the user's permissions can be obtained in a global, project, or issue context.
@@ -6332,17 +6332,17 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/mypermissions")
       operation com_atlassian_jira_rest_v2_permission_PermissionsResource_getMyPermissions_get(
       [[ The key of project. Ignored if `projectId` is provided. ]]
-      projectKey : String?,
+      @taxi.http.QueryVariable(value = "projectKey") projectKey : String?,
       [[ The ID of project. ]]
-      projectId : String?,
+      @taxi.http.QueryVariable(value = "projectId") projectId : String?,
       [[ The key of the issue. Ignored if `issueId` is provided. ]]
-      issueKey : String?,
+      @taxi.http.QueryVariable(value = "issueKey") issueKey : String?,
       [[ The ID of the issue. ]]
-      issueId : String?,
+      @taxi.http.QueryVariable(value = "issueId") issueId : String?,
       [[ A list of permission keys. This parameter accepts a comma-separated list. [ Omitting this parameter is **deprecated**.](https://developer.atlassian.com/cloud/jira/platform/change-notice-get-my-permissions-requires-permissions-query-parameter/) To get the list of available permissions, use [Get all permissions](#api-rest-api-3-permissions-get). Note that deprecated keys cannot be used. Deprecated keys are not returned by [Get all permissions](#api-rest-api-3-permissions-get) but are returned by this operation if `permissions` is omitted. ]]
-      permissions : String?,
-      projectUuid : String?,
-      projectConfigurationUuid : String? ) : Permissions
+      @taxi.http.QueryVariable(value = "permissions") permissions : String?,
+      @taxi.http.QueryVariable(value = "projectUuid") projectUuid : String?,
+      @taxi.http.QueryVariable(value = "projectConfigurationUuid") projectConfigurationUuid : String? ) : Permissions
    }
    service RestApiThreeMypreferencesService {
       [[ Returns the value of a preference of the current user.
@@ -6354,7 +6354,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/mypreferences")
       operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_getPreference_get(
       [[ The key of the preference. ]]
-      key : String ) : String
+      @taxi.http.QueryVariable(value = "key") key : String ) : String
       [[ Creates a preference for the user or updates a preference's value by sending a plain text string. For example, `false`. An arbitrary preference can be created with the value containing up to 255 characters. In addition, the following keys define system preferences that can be set or created:
       *  *user.notifications.mimetype* The mime type used in notifications sent to the user. Defaults to `html`.
       *  *user.notify.own.changes* Indicates whether the user gets notified of their own changes. Defaults to `false`.
@@ -6369,7 +6369,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/mypreferences")
       operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_setPreference_put(
       [[ The key of the preference. The maximum length is 255 characters. ]]
-      key : String,
+      @taxi.http.QueryVariable(value = "key") key : String,
       @taxi.http.RequestBody string : String? ) : Any
       [[ Deletes a preference of the user, which restores the default value of system defined settings.
       Note that these keys are deprecated:
@@ -6380,7 +6380,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/mypreferences")
       operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_removePreference_delete(
       [[ The key of the preference. ]]
-      key : String )
+      @taxi.http.QueryVariable(value = "key") key : String )
    }
    service RestApiThreeMypreferencesLocaleService {
       [[ Returns the locale for the user.
@@ -6408,7 +6408,7 @@ namespace vyne.openApi {
       [[ Use [expand](#expansion) to include additional information about user in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `groups` Returns all groups, including nested groups, the user belongs to.
       *  `applicationRoles` Returns the application roles the user is assigned to. ]]
-      expand : String? ) : User
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : User
    }
    service RestApiThreeNotificationschemeService {
       [[ Returns a [paginated](#pagination) list of [notification schemes](https://confluence.atlassian.com/x/8YdKLg) ordered by display name.
@@ -6433,9 +6433,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/notificationscheme")
       operation com_atlassian_jira_rest_v2_notification_NotificationSchemeResource_getNotificationSchemes_get(
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ Use [expand](#expansion) to include additional information in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `all` Returns all expandable information.
       *  `field` Returns information about any custom fields assigned to receive an event.
@@ -6443,7 +6443,7 @@ namespace vyne.openApi {
       *  `notificationSchemeEvents` Returns a list of event associations. This list is returned for all expandable information.
       *  `projectRole` Returns information about any project roles assigned to receive an event.
       *  `user` Returns information about any users assigned to receive an event. ]]
-      expand : String? ) : PageBeanNotificationScheme
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : PageBeanNotificationScheme
    }
    service RestApiThreeNotificationschemeIdService {
       [[ Returns a [notification scheme](https://confluence.atlassian.com/x/8YdKLg), including the list of events and the recipients who will receive notifications for those events.
@@ -6459,7 +6459,7 @@ namespace vyne.openApi {
       *  `notificationSchemeEvents` Returns a list of event associations. This list is returned for all expandable information.
       *  `projectRole` Returns information about any project roles assigned to receive an event.
       *  `user` Returns information about any users assigned to receive an event. ]]
-      expand : String? ) : NotificationScheme
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : NotificationScheme
    }
    service RestApiThreePermissionsService {
       [[ Returns all permissions, including:
@@ -6561,7 +6561,7 @@ namespace vyne.openApi {
       *  `permissions` Returns all permission grants for each permission scheme.
       *  `projectRole` Returns information about the project role granted the permission.
       *  `user` Returns information about the user who is granted the permission. ]]
-      expand : String? ) : PermissionSchemes
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : PermissionSchemes
       [[ Creates a new permission scheme. You can create a permission scheme with or without defining a set of permission grants.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/permissionscheme")
@@ -6573,7 +6573,7 @@ namespace vyne.openApi {
       *  `permissions` Returns all permission grants for each permission scheme.
       *  `projectRole` Returns information about the project role granted the permission.
       *  `user` Returns information about the user who is granted the permission. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       @taxi.http.RequestBody permissionScheme : PermissionScheme? ) : PermissionScheme
    }
    service RestApiThreePermissionschemeSchemeIdService {
@@ -6590,7 +6590,7 @@ namespace vyne.openApi {
       *  `permissions` Returns all permission grants for each permission scheme.
       *  `projectRole` Returns information about the project role granted the permission.
       *  `user` Returns information about the user who is granted the permission. ]]
-      expand : String? ) : PermissionScheme
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : PermissionScheme
       [[ Updates a permission scheme. Below are some important things to note when using this resource:
       *  If a permissions list is present in the request, then it is set in the permission scheme, overwriting *all existing* grants.
       *  If you want to update only the name and description, then do not send a permissions list in the request.
@@ -6609,7 +6609,7 @@ namespace vyne.openApi {
       *  `permissions` Returns all permission grants for each permission scheme.
       *  `projectRole` Returns information about the project role granted the permission.
       *  `user` Returns information about the user who is granted the permission. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       @taxi.http.RequestBody permissionScheme : PermissionScheme? ) : PermissionScheme
       [[ Deletes a permission scheme.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -6632,7 +6632,7 @@ namespace vyne.openApi {
       *  `projectRole` Returns information about the project role granted the permission.
       *  `field` Returns information about the custom field granted the permission.
       *  `all` Returns all expandable information. ]]
-      expand : String? ) : PermissionGrants
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : PermissionGrants
       [[ Creates a permission grant in a permission scheme.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/permissionscheme/{schemeId}/permission")
@@ -6646,7 +6646,7 @@ namespace vyne.openApi {
       *  `projectRole` Returns information about the project role granted the permission.
       *  `field` Returns information about the custom field granted the permission.
       *  `all` Returns all expandable information. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       @taxi.http.RequestBody permissionGrant : PermissionGrant? ) : PermissionGrant
    }
    service RestApiThreePermissionschemeSchemeIdPermissionPermissionIdService {
@@ -6665,7 +6665,7 @@ namespace vyne.openApi {
       *  `permissions` Returns all permission grants for each permission scheme.
       *  `projectRole` Returns information about the project role granted the permission.
       *  `user` Returns information about the user who is granted the permission. ]]
-      expand : String? ) : PermissionGrant
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : PermissionGrant
       [[ Deletes a permission grant from a permission scheme. See [About permission schemes and grants](#about-permission-schemes) for more details.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/permissionscheme/{schemeId}/permission/{permissionId}")
@@ -6700,11 +6700,11 @@ namespace vyne.openApi {
       *  `issueTypes` Returns all issue types associated with the project.
       *  `lead` Returns information about the the project lead.
       *  `projectKeys` Returns all project keys associated with the project. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       [[ Returns the user's most recently accessed projects. You may specify the number of results to return up to a maximum of 20. If access is anonymous, then the recently accessed projects are based on the current HTTP session. ]]
-      recent : Int?,
+      @taxi.http.QueryVariable(value = "recent") recent : Int?,
       [[ A list of project properties to return for the project. This parameter accepts a comma-separated list. ]]
-      properties : String[]? ) : Project[]
+      @taxi.http.QueryVariable(value = "properties") properties : String[]? ) : Project[]
       [[ Creates a project based on a project type template, as shown in the following table:
       | Project Type Key | Project Template Key |
       |--|--|
@@ -6727,9 +6727,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/project/search")
       operation com_atlassian_jira_rest_v2_issue_ProjectResource_searchProjects_get(
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ [Order](#ordering) the results by a field.
       *  `category` Sorts by project category. A complete list of category IDs is found using [Get all project categories](#api-rest-api-3-projectCategory-get).
       *  `issueCount` Sorts by the total number of issues in each project.
@@ -6737,14 +6737,14 @@ namespace vyne.openApi {
       *  `lastIssueUpdatedTime` Sorts by the last issue update time.
       *  `name` Sorts by project name.
       *  `owner` Sorts by project lead. ]]
-      orderBy : String?,
+      @taxi.http.QueryVariable(value = "orderBy") orderBy : String?,
       [[ Filter the results using a literal string. Projects with a matching `key` or `name` are returned (case insensitive). ]]
-      `query` : String?,
+      @taxi.http.QueryVariable(value = "query") `query` : String?,
       [[ Orders results by the [project type](https://confluence.atlassian.com/x/GwiiLQ#Jiraapplicationsoverview-Productfeaturesandprojecttypes). This parameter accepts a comma-separated list. Valid values are `business`, `service_desk`, and `software`. ]]
-      typeKey : String?,
+      @taxi.http.QueryVariable(value = "typeKey") typeKey : String?,
       [[ The ID of the project's category. A complete list of category IDs is found using the [Get all project categories](#api-rest-api-3-projectCategory-get) operation. ]]
-      categoryId : Int?,
-      searchBy : String?,
+      @taxi.http.QueryVariable(value = "categoryId") categoryId : Int?,
+      @taxi.http.QueryVariable(value = "searchBy") searchBy : String?,
       [[ Filter results by projects for which the user can:
       *  `view` the project, meaning that they have one of the following permissions:
       *  *Browse projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project.
@@ -6754,7 +6754,7 @@ namespace vyne.openApi {
       *  `edit` the project, meaning that they have one of the following permissions:
       *  *Administer projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project.
       *  site administration (that is, member of the *site-admin* [group](https://confluence.atlassian.com/x/24xjL")). ]]
-      action : String?,
+      @taxi.http.QueryVariable(value = "action") action : String?,
       [[ Use [expand](#expansion) to include additional information in the response. This parameter accepts a comma-separated list. Expanded options include:
       *  `description` Returns the project description.
       *  `projectKeys` Returns all project keys associated with a project.
@@ -6762,7 +6762,7 @@ namespace vyne.openApi {
       *  `issueTypes` Returns all issue types associated with the project.
       *  `url` Returns the URL associated with the project.
       *  `insight` EXPERIMENTAL. Returns the insight details of total issue count and last issue update time for the project. ]]
-      expand : String? ) : PageBeanProject
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : PageBeanProject
    }
    service RestApiThreeProjectTypeService {
       [[ Returns all [project types](https://confluence.atlassian.com/x/Var1Nw), whether or not the instance has a valid license for each type.
@@ -6802,9 +6802,9 @@ namespace vyne.openApi {
       *  `lead` The project lead.
       *  `projectKeys` All project keys associated with the project.
       *  `issueTypeHierarchy` The project issue type hierarchy. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       [[ A list of project properties to return for the project. This parameter accepts a comma-separated list. ]]
-      properties : String[]? ) : Project
+      @taxi.http.QueryVariable(value = "properties") properties : String[]? ) : Project
       [[ Updates the [project details](https://confluence.atlassian.com/x/ahLpNw) of a project.
       All parameters are optional in the body of the request.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -6817,7 +6817,7 @@ namespace vyne.openApi {
       *  `issueTypes` The issue types associated with the project.
       *  `lead` The project lead.
       *  `projectKeys` All project keys associated with the project. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       @taxi.http.RequestBody projectInputBean : ProjectInputBean? ) : Project
       [[ Deletes a project.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -6867,11 +6867,11 @@ namespace vyne.openApi {
       [[ The ID or (case-sensitive) key of the project. ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       [[ The X coordinate of the top-left corner of the crop region. ]]
-      `x` : Int?,
+      @taxi.http.QueryVariable(value = "x") `x` : Int?,
       [[ The Y coordinate of the top-left corner of the crop region. ]]
-      `y` : Int?,
+      @taxi.http.QueryVariable(value = "y") `y` : Int?,
       [[ The length of each side of the crop region. ]]
-      size : Int?,
+      @taxi.http.QueryVariable(value = "size") size : Int?,
       @taxi.http.RequestBody any : Any? ) : Avatar
    }
    service RestApiThreeProjectProjectIdOrKeyAvatarsService {
@@ -6892,17 +6892,17 @@ namespace vyne.openApi {
       [[ The project ID or project key (case sensitive). ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ [Order](#ordering) the results by a field:
       *  `description` Sorts by the component description.
       *  `issueCount` Sorts by the count of issues associated with the component.
       *  `lead` Sorts by the user key of the component's project lead.
       *  `name` Sorts by component name. ]]
-      orderBy : String?,
+      @taxi.http.QueryVariable(value = "orderBy") orderBy : String?,
       [[ Filter the results using a literal string. Components with a matching `name` or `description` are returned (case insensitive). ]]
-      `query` : String? ) : PageBeanComponentWithIssueCount
+      @taxi.http.QueryVariable(value = "query") `query` : String? ) : PageBeanComponentWithIssueCount
    }
    service RestApiThreeProjectProjectIdOrKeyComponentsService {
       [[ Returns all components in a project. See the [Get project components paginated](#api-rest-api-3-project-projectIdOrKey-component-get) resource if you want to get a full list of components with pagination.
@@ -7005,9 +7005,9 @@ namespace vyne.openApi {
       [[ The ID of the project role. Use [Get all project roles](#api-rest-api-3-role-get) to get a list of project role IDs. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The user account ID of the user to remove from the project role. ]]
-      user : String?,
+      @taxi.http.QueryVariable(value = "user") user : String?,
       [[ The name of the group to remove from the project role. ]]
-      group : String? )
+      @taxi.http.QueryVariable(value = "group") group : String? )
    }
    service RestApiThreeProjectProjectIdOrKeyRoleIdActorCountService {
       [[ Returns the number of actors (users and groups) assigned to a role in a project role.
@@ -7028,8 +7028,8 @@ namespace vyne.openApi {
       [[ The project ID or project key (case sensitive). ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       [[ Whether the roles should be filtered to include only those the user is assigned to. ]]
-      currentMember : Boolean?,
-      excludeConnectAddons : Boolean? ) : ProjectRole[]
+      @taxi.http.QueryVariable(value = "currentMember") currentMember : Boolean?,
+      @taxi.http.QueryVariable(value = "excludeConnectAddons") excludeConnectAddons : Boolean? ) : ProjectRole[]
    }
    service RestApiThreeProjectProjectIdOrKeyStatusesService {
       [[ Returns the valid statuses for a project. The statuses are grouped by issue type, as each project has a set of valid issue types and each issue type has a set of valid statuses.
@@ -7059,24 +7059,24 @@ namespace vyne.openApi {
       [[ The project ID or project key (case sensitive). ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ [Order](#ordering) the results by a field:
       *  `description` Sorts by version description.
       *  `name` Sorts by version name.
       *  `releaseDate` Sorts by release date, starting with the oldest date. Versions with no release date are listed last.
       *  `sequence` Sorts by the order of appearance in the user interface.
       *  `startDate` Sorts by start date, starting with the oldest date. Versions with no start date are listed last. ]]
-      orderBy : String?,
+      @taxi.http.QueryVariable(value = "orderBy") orderBy : String?,
       [[ Filter the results using a literal string. Versions with matching `name` or `description` are returned (case insensitive). ]]
-      `query` : String?,
+      @taxi.http.QueryVariable(value = "query") `query` : String?,
       [[ A list of status values used to filter the results by version status. This parameter accepts a comma-separated list. The status values are `released`, `unreleased`, and `archived`. ]]
-      status : String?,
+      @taxi.http.QueryVariable(value = "status") status : String?,
       [[ Use [expand](#expansion) to include additional information in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `issuesstatus` Returns the number of issues in each status category for each version.
       *  `operations` Returns actions that can be performed on the specified version. ]]
-      expand : String? ) : PageBeanVersion
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : PageBeanVersion
    }
    service RestApiThreeProjectProjectIdOrKeyVersionsService {
       [[ Returns all versions in a project. The response is not paginated. Use [Get project versions paginated](#api-rest-api-3-project-projectIdOrKey-version-get) if you want to get the versions in a project with pagination.
@@ -7087,7 +7087,7 @@ namespace vyne.openApi {
       [[ The project ID or project key (case sensitive). ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       [[ Use [expand](#expansion) to include additional information in the response. This parameter accepts `operations`, which returns actions that can be performed on the version. ]]
-      expand : String? ) : Version[]
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : Version[]
    }
    service RestApiThreeProjectProjectIdHierarchyService {
       [[ Get the issue type hierarchy for a next-gen project.
@@ -7123,7 +7123,7 @@ namespace vyne.openApi {
       *  `notificationSchemeEvents` Returns a list of event associations. This list is returned for all expandable information.
       *  `projectRole` Returns information about any project roles assigned to receive an event.
       *  `user` Returns information about any users assigned to receive an event. ]]
-      expand : String? ) : NotificationScheme
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : NotificationScheme
    }
    service RestApiThreeProjectProjectKeyOrIdPermissionschemeService {
       [[ Gets the [permission scheme](https://confluence.atlassian.com/x/yodKLg) associated with the project.
@@ -7139,7 +7139,7 @@ namespace vyne.openApi {
       *  `permissions` Returns all permission grants for each permission scheme.
       *  `projectRole` Returns information about the project role granted the permission.
       *  `user` Returns information about the user who is granted the permission. ]]
-      expand : String? ) : PermissionScheme
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : PermissionScheme
       [[ Assigns a permission scheme with a project. See [Managing project permissions](https://confluence.atlassian.com/x/yodKLg) for more information about permission schemes.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/project/{projectKeyOrId}/permissionscheme")
@@ -7153,7 +7153,7 @@ namespace vyne.openApi {
       *  `permissions` Returns all permission grants for each permission scheme.
       *  `projectRole` Returns information about the project role granted the permission.
       *  `user` Returns information about the user who is granted the permission. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       @taxi.http.RequestBody idBean : IdBean? ) : PermissionScheme
    }
    service RestApiThreeProjectProjectKeyOrIdSecuritylevelService {
@@ -7200,7 +7200,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/projectvalidate/key")
       operation com_atlassian_jira_rest_v2_issue_ProjectValidateResource_validateProjectKey_get(
       [[ The project key. ]]
-      key : String? ) : ErrorCollection
+      @taxi.http.QueryVariable(value = "key") key : String? ) : ErrorCollection
    }
    service RestApiThreeProjectvalidateValidProjectKeyService {
       [[ Validates a project key and, if the key is invalid or in use, generates a valid random string for the project key.
@@ -7209,7 +7209,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/projectvalidate/validProjectKey")
       operation com_atlassian_jira_rest_v2_issue_ProjectValidateResource_getValidProjectKey_get(
       [[ The project key. ]]
-      key : String? ) : String
+      @taxi.http.QueryVariable(value = "key") key : String? ) : String
    }
    service RestApiThreeProjectvalidateValidProjectNameService {
       [[ Checks that a project name isn't in use. If the name isn't in use, the passed string is returned. If the name is in use, this operation attempts to generate a valid project name based on the one supplied, usually by adding a sequence number. If a valid project name cannot be generated, a 404 response is returned.
@@ -7218,7 +7218,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/projectvalidate/validProjectName")
       operation com_atlassian_jira_rest_v2_issue_ProjectValidateResource_getValidProjectName_get(
       [[ The project name. ]]
-      name : String ) : String
+      @taxi.http.QueryVariable(value = "name") name : String ) : String
    }
    service RestApiThreeResolutionService {
       [[ Returns a list of all issue resolution values.
@@ -7282,7 +7282,7 @@ namespace vyne.openApi {
       [[ The ID of the project role to delete. Use [Get all project roles](#api-rest-api-3-role-get) to get a list of project role IDs. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The ID of the project role that will replace the one being deleted. ]]
-      swap : Int? )
+      @taxi.http.QueryVariable(value = "swap") swap : Int? )
    }
    service RestApiThreeRoleIdActorsService {
       [[ Returns the [default actors](#api-rest-api-3-resolution-get) for the project role.
@@ -7307,9 +7307,9 @@ namespace vyne.openApi {
       [[ The ID of the project role. Use [Get all project roles](#api-rest-api-3-role-get) to get a list of project role IDs. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The user account ID of the user to remove as a default actor. ]]
-      user : String?,
+      @taxi.http.QueryVariable(value = "user") user : String?,
       [[ The group name of the group to be removed as a default actor. ]]
-      group : String? ) : ProjectRole
+      @taxi.http.QueryVariable(value = "group") group : String? ) : ProjectRole
    }
    service RestApiThreeScreensService {
       [[ Returns all screens.
@@ -7317,9 +7317,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/screens")
       operation com_atlassian_jira_rest_v2_issue_ScreensResource_getAllScreens_get(
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : PageBeanScreen
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : PageBeanScreen
    }
    service RestApiThreeScreensAddToDefaultFieldIdService {
       [[ Adds a field to the default tab of the default screen.
@@ -7347,7 +7347,7 @@ namespace vyne.openApi {
       [[ The ID of the screen. ]]
       @taxi.http.PathVariable(value = "screenId") screenId : Int,
       [[ The key of the project. ]]
-      projectKey : String? ) : ScreenableTab[]
+      @taxi.http.QueryVariable(value = "projectKey") projectKey : String? ) : ScreenableTab[]
       [[ Creates a tab for a screen.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/screens/{screenId}/tabs")
@@ -7387,7 +7387,7 @@ namespace vyne.openApi {
       [[ The ID of the screen tab. ]]
       @taxi.http.PathVariable(value = "tabId") tabId : Int,
       [[ The key of the project. ]]
-      projectKey : String? ) : ScreenableField[]
+      @taxi.http.QueryVariable(value = "projectKey") projectKey : String? ) : ScreenableField[]
       [[ Adds a field to a screen tab.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/screens/{screenId}/tabs/{tabId}/fields")
@@ -7442,9 +7442,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/screenscheme")
       operation com_atlassian_jira_rest_v2_issue_screenscheme_ScreenSchemeResource_getAllScreenSchemes_get(
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : PageBeanScreenScheme
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : PageBeanScreenScheme
    }
    service RestApiThreeSearchService {
       [[ Searches for issues using [JQL](https://confluence.atlassian.com/x/egORLQ).
@@ -7459,11 +7459,11 @@ namespace vyne.openApi {
       *  If no JQL expression is provided, all issues are returned.
       *  `username` and `userkey` cannot be used as search terms due to privacy reasons. Use `accountId` instead.
       *  If a user has hidden their email address in their user profile, partial matches of the email address will not find the user. An exact match is required. ]]
-      jql : String?,
+      @taxi.http.QueryVariable(value = "jql") jql : String?,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. To manage page size, Jira may return fewer items per page where a large number of fields are requested. The greatest number of items returned per page is achieved when requesting `id` or `key` only. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ Determines how to validate the JQL query and treat the validation results. Supported values are:
       *  `strict` Returns a 400 response code if any errors are found, along with a list of all errors (and warnings).
       *  `warn` Returns all errors as warnings.
@@ -7471,7 +7471,7 @@ namespace vyne.openApi {
       *  `true` *Deprecated* A legacy synonym for `strict`.
       *  `false` *Deprecated* A legacy synonym for `warn`.
       Note: If the JQL is not correctly formed a 400 response code is returned, regardless of the `validateQuery` value. ]]
-      validateQuery : String?,
+      @taxi.http.QueryVariable(value = "validateQuery") validateQuery : String?,
       [[ A list of fields to return for each issue, use it to retrieve a subset of fields. This parameter accepts a comma-separated list. Expand options include:
       *  `*all` Returns all fields.
       *  `*navigable` Returns navigable fields.
@@ -7482,7 +7482,7 @@ namespace vyne.openApi {
       *  `*all,-comment` Returns all fields except comments.
       This parameter may be specified multiple times. For example, `fields=field1,field2&fields=field3`.
       Note: All navigable fields are returned by default. This differs from [GET issue](#api-rest-api-3-issue-issueIdOrKey-get) where the default is all fields. ]]
-      fields : String[]?,
+      @taxi.http.QueryVariable(value = "fields") fields : String[]?,
       [[ Use [expand](#expansion) to include additional information about issues in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `renderedFields` Returns field values rendered in HTML format.
       *  `names` Returns the display name of each field.
@@ -7492,11 +7492,11 @@ namespace vyne.openApi {
       *  `editmeta` Returns information about how each field can be edited.
       *  `changelog` Returns a list of recent updates to an issue, sorted by date, starting from the most recent.
       *  `versionedRepresentations` Instead of `fields`, returns `versionedRepresentations` a JSON array containing each version of a field's value, with the highest numbered item representing the most recent version. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       [[ A list of issue property keys for issue properties to include in the results. This parameter accepts a comma-separated list. Multiple properties can also be provided using an ampersand separated list. For example, `properties=prop1,prop2&properties=prop3`. A maximum of 5 issue property keys can be specified. ]]
-      properties : String[]?,
+      @taxi.http.QueryVariable(value = "properties") properties : String[]?,
       [[ Reference fields by their key (rather than ID). ]]
-      fieldsByKeys : Boolean? ) : SearchResults
+      @taxi.http.QueryVariable(value = "fieldsByKeys") fieldsByKeys : Boolean? ) : SearchResults
       [[ Searches for issues using [JQL](https://confluence.atlassian.com/x/egORLQ).
       There is a [GET](#api-rest-api-3-search-get) version of this resource that can be used for smaller JQL query expressions.
       This operation can be accessed anonymously.
@@ -7623,11 +7623,11 @@ namespace vyne.openApi {
       [[ The ID of the entity item. ]]
       @taxi.http.PathVariable(value = "entityId") entityId : String,
       [[ The X coordinate of the top-left corner of the crop region. ]]
-      `x` : Int?,
+      @taxi.http.QueryVariable(value = "x") `x` : Int?,
       [[ The Y coordinate of the top-left corner of the crop region. ]]
-      `y` : Int?,
+      @taxi.http.QueryVariable(value = "y") `y` : Int?,
       [[ The length of each side of the crop region. ]]
-      size : Int,
+      @taxi.http.QueryVariable(value = "size") size : Int,
       @taxi.http.RequestBody any : Any? ) : Avatar
    }
    service RestApiThreeUniversal_avatarTypeTypeOwnerOwningObjectIdAvatarIdService {
@@ -7648,15 +7648,15 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user")
       operation com_atlassian_jira_rest_v2_issue_UserResource_getUser_get(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. Required. ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide) for details. ]]
-      username : String?,
+      @taxi.http.QueryVariable(value = "username") username : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide) for details. ]]
-      key : String?,
+      @taxi.http.QueryVariable(value = "key") key : String?,
       [[ Use [expand](#expansion) to include additional information about users in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `groups` includes all groups and nested groups to which the user belongs.
       *  `applicationRoles` includes details of all the applications to which the user has access. ]]
-      expand : String? ) : User
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : User
       [[ Creates a user. This resource is retained for legacy compatibility. As soon as a more suitable alternative is available this resource will be deprecated.
       The option is provided to set or generate a password for the user. When using the option to generate a password, by omitting `password` from the request, include `"notification": "true"` to ensure the user is sent an email advising them that their account is created. This email includes a link for the user to set their password. If the notification isn't sent for a generated password, the user will need to be sent a reset password request from Jira.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -7667,11 +7667,11 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/user")
       operation com_atlassian_jira_rest_v2_issue_UserResource_removeUser_delete(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. ]]
-      accountId : String,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      username : String?,
+      @taxi.http.QueryVariable(value = "username") username : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      key : String? )
+      @taxi.http.QueryVariable(value = "key") key : String? )
    }
    service RestApiThreeUserAssignableMultiProjectSearchService {
       [[ Returns a list of users who can be assigned issues in one or more projects. The list may be restricted to users whose attributes match a string.
@@ -7681,17 +7681,17 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/assignable/multiProjectSearch")
       operation com_atlassian_jira_rest_v2_issue_UserResource_findBulkAssignableUsers_get(
       [[ A query string that is matched against user attributes, such as `displayName` and `emailAddress`, to find relevant users. The string can match the prefix of the attribute's value. For example, *query=john* matches a user with a `displayName` of *John Smith* and a user with an `emailAddress` of *johnson@example.com*. Required, unless `accountId` is specified. ]]
-      `query` : String?,
+      @taxi.http.QueryVariable(value = "query") `query` : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      username : String?,
+      @taxi.http.QueryVariable(value = "username") username : String?,
       [[ A query string that is matched exactly against user `accountId`. Required, unless `query` is specified. ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ A list of project keys (case sensitive). This parameter accepts a comma-separated list. ]]
-      projectKeys : String,
+      @taxi.http.QueryVariable(value = "projectKeys") projectKeys : String,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : User[]
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : User[]
    }
    service RestApiThreeUserAssignableSearchService {
       [[ Returns a list of users that can be assigned to an issue. Use this operation to find the list of users who can be assigned to:
@@ -7704,24 +7704,24 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/assignable/search")
       operation com_atlassian_jira_rest_v2_issue_UserResource_findAssignableUsers_get(
       [[ A query string that is matched against user attributes, such as `displayName`, and `emailAddress`, to find relevant users. The string can match the prefix of the attribute's value. For example, *query=john* matches a user with a `displayName` of *John Smith* and a user with an `emailAddress` of *johnson@example.com*. Required, unless `username` or `accountId` is specified. ]]
-      `query` : String?,
+      @taxi.http.QueryVariable(value = "query") `query` : String?,
       [[ The sessionId of this request. SessionId is the same until the assignee is set. ]]
-      sessionId : String?,
+      @taxi.http.QueryVariable(value = "sessionId") sessionId : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      username : String?,
+      @taxi.http.QueryVariable(value = "username") username : String?,
       [[ A query string that is matched exactly against user `accountId`. Required, unless `query` is specified. ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ The project ID or project key (case sensitive). Required, unless `issueKey` is specified. ]]
-      project : String?,
+      @taxi.http.QueryVariable(value = "project") project : String?,
       [[ The key of the issue. Required, unless `project` is specified. ]]
-      issueKey : String?,
+      @taxi.http.QueryVariable(value = "issueKey") issueKey : String?,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return. This operation may return less than the maximum number of items even if more are available. The operation fetches users up to the maximum and then, from the fetched users, returns only the users that can be assigned to the issue. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ The ID of the transition. ]]
-      actionDescriptorId : Int?,
-      recommend : Boolean? ) : User[]
+      @taxi.http.QueryVariable(value = "actionDescriptorId") actionDescriptorId : Int?,
+      @taxi.http.QueryVariable(value = "recommend") recommend : Boolean? ) : User[]
    }
    service RestApiThreeUserBulkService {
       [[ Returns details of the users specified by one or more account IDs.
@@ -7729,15 +7729,15 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/bulk")
       operation com_atlassian_jira_rest_v2_user_UserBulkResource_bulkGetUsers_get(
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      username : String[]?,
+      @taxi.http.QueryVariable(value = "username") username : String[]?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      key : String[]?,
+      @taxi.http.QueryVariable(value = "key") key : String[]?,
       [[ The account ID of a user. To specify multiple users, pass multiple `accountId` parameters. For example, `accountId=5b10a2844c20165700ede21g&accountId=5b10ac8d82e05b22cc7d4ef5`. ]]
-      accountId : String[] ) : PageBeanUser
+      @taxi.http.QueryVariable(value = "accountId") accountId : String[] ) : PageBeanUser
    }
    service RestApiThreeUserBulkMigrationService {
       [[ Returns the account IDs for the users specified in the `key` or `username` parameters. Note that multiple `key` or `username` parameters can be specified.
@@ -7745,13 +7745,13 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/bulk/migration")
       operation com_atlassian_jira_rest_v2_user_UserBulkResource_bulkGetUsersMigration_get(
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ Username of a user. To specify multiple users, pass multiple copies of this parameter. For example, `username=fred&username=barney`. Required if `key` isn't provided. Cannot be provided if `key` is present. ]]
-      username : String[]?,
+      @taxi.http.QueryVariable(value = "username") username : String[]?,
       [[ Key of a user. To specify multiple users, pass multiple copies of this parameter. For example, `key=fred&key=barney`. Required if `username` isn't provided. Cannot be provided if `username` is present. ]]
-      key : String[]? ) : UserMigrationBean[]
+      @taxi.http.QueryVariable(value = "key") key : String[]? ) : UserMigrationBean[]
    }
    service RestApiThreeUserColumnsService {
       [[ Returns the default [issue table columns](https://confluence.atlassian.com/x/XYdKLg) for the user. If `accountId` is not passed in the request, the calling user's details are returned.
@@ -7761,9 +7761,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/columns")
       operation com_atlassian_jira_rest_v2_issue_UserResource_getUserDefaultColumns_get(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      username : String? ) : ColumnItem[]
+      @taxi.http.QueryVariable(value = "username") username : String? ) : ColumnItem[]
       [[ Sets the default [ issue table columns](https://confluence.atlassian.com/x/XYdKLg) for the user. If an account ID is not passed, the calling user's default columns are set. If no column details are sent, then all default columns are removed.
       The parameters for this resource are expressed as HTML form data. For example, in curl:
       `curl -X PUT -d columns=summary -d columns=description https://your-domain.atlassian.net/rest/api/3/user/columns?accountId=5b10ac8d82e05b22cc7d4ef5'`
@@ -7773,7 +7773,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/user/columns")
       operation com_atlassian_jira_rest_v2_issue_UserResource_setUserColumns_put(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       @taxi.http.RequestBody array : String[]? ) : Any
       [[ Resets the default [ issue table columns](https://confluence.atlassian.com/x/XYdKLg) for the user to the system default. If `accountId` is not passed, the calling user's default columns are reset.
       **[Permissions](#permissions) required:**
@@ -7782,23 +7782,23 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/user/columns")
       operation com_atlassian_jira_rest_v2_issue_UserResource_resetUserColumns_delete(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      username : String? )
+      @taxi.http.QueryVariable(value = "username") username : String? )
    }
    service RestApiThreeUserEmailService {
       [[ Returns a user's email address. This API is only available to apps approved by Atlassian, according to these [guidelines](https://community.developer.atlassian.com/t/guidelines-for-requesting-access-to-email-address/27603). ]]
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/email")
       operation com_atlassian_jira_rest_v2_user_UnrestrictedUserEmailResource_getUserEmail_get(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, `5b10ac8d82e05b22cc7d4ef5`. Note, this should be treated as an opaque identifier (i.e. do not assume any structure in the value). ]]
-      accountId : String ) : UnrestrictedUserEmail
+      @taxi.http.QueryVariable(value = "accountId") accountId : String ) : UnrestrictedUserEmail
    }
    service RestApiThreeUserEmailBulkService {
       [[ Returns a user's email address. This API is only available to apps approved by Atlassian, according to these [guidelines](https://community.developer.atlassian.com/t/guidelines-for-requesting-access-to-email-address/27603). ]]
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/email/bulk")
       operation com_atlassian_jira_rest_v2_user_UnrestrictedUserEmailResource_getUserEmailBulk_get(
       [[ The account IDs of the users for which emails are required. An `accountId` is an identifier that uniquely identifies the user across all Atlassian products. For example, `5b10ac8d82e05b22cc7d4ef5`. Note, this should be treated as an opaque identifier (that is, do not assume any structure in the value). ]]
-      accountId : String[] ) : UnrestrictedUserEmail
+      @taxi.http.QueryVariable(value = "accountId") accountId : String[] ) : UnrestrictedUserEmail
    }
    service RestApiThreeUserGroupsService {
       [[ Returns the groups to which a user belongs.
@@ -7806,11 +7806,11 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/groups")
       operation com_atlassian_jira_rest_v2_issue_UserResource_getUserGroups_get(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. ]]
-      accountId : String,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      username : String?,
+      @taxi.http.QueryVariable(value = "username") username : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      key : String? ) : GroupName[]
+      @taxi.http.QueryVariable(value = "key") key : String? ) : GroupName[]
    }
    service RestApiThreeUserPermissionSearchService {
       [[ Returns a list of users who fulfill these criteria:
@@ -7825,11 +7825,11 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/permission/search")
       operation com_atlassian_jira_rest_v2_issue_UserResource_findUsersWithAllPermissions_get(
       [[ A query string that is matched against user attributes, such as `displayName` and `emailAddress`, to find relevant users. The string can match the prefix of the attribute's value. For example, *query=john* matches a user with a `displayName` of *John Smith* and a user with an `emailAddress` of *johnson@example.com*. Required, unless `accountId` is specified. ]]
-      `query` : String?,
+      @taxi.http.QueryVariable(value = "query") `query` : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      username : String?,
+      @taxi.http.QueryVariable(value = "username") username : String?,
       [[ A query string that is matched exactly against user `accountId`. Required, unless `query` is specified. ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ A list of permissions. This parameter accepts a comma-separated list. The valid permissions are:
       *  ASSIGNABLE\_USER
       *  ASSIGN\_ISSUE
@@ -7863,15 +7863,15 @@ namespace vyne.openApi {
       *  WORKLOG\_EDIT\_ALL
       *  WORKLOG\_EDIT\_OWN
       *  WORK\_ISSUE ]]
-      permissions : String,
+      @taxi.http.QueryVariable(value = "permissions") permissions : String,
       [[ The issue key for the issue. ]]
-      issueKey : String?,
+      @taxi.http.QueryVariable(value = "issueKey") issueKey : String?,
       [[ The project key for the project (case sensitive). ]]
-      projectKey : String?,
+      @taxi.http.QueryVariable(value = "projectKey") projectKey : String?,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : User[]
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : User[]
    }
    service RestApiThreeUserPickerService {
       [[ Returns a list of users whose attributes match the query term. The returned object includes the `html` field where the matched query term is highlighted with the HTML strong tag. A list of account IDs can be provided to exclude users from the results.
@@ -7881,17 +7881,17 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/picker")
       operation com_atlassian_jira_rest_v2_issue_UserResource_findUsersForPicker_get(
       [[ A query string that is matched against user attributes, such as `displayName`, and `emailAddress`, to find relevant users. The string can match the prefix of the attribute's value. For example, *query=john* matches a user with a `displayName` of *John Smith* and a user with an `emailAddress` of *johnson@example.com*. ]]
-      `query` : String,
+      @taxi.http.QueryVariable(value = "query") `query` : String,
       [[ The maximum number of items to return. The total number of matched users is returned in `total`. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ Include the URI to the user's avatar. ]]
-      showAvatar : Boolean?,
+      @taxi.http.QueryVariable(value = "showAvatar") showAvatar : Boolean?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      exclude : String[]?,
+      @taxi.http.QueryVariable(value = "exclude") exclude : String[]?,
       [[ A list of account IDs to exclude from the search results. This parameter accepts a comma-separated list. Multiple account IDs can also be provided using an ampersand-separated list. For example, `excludeAccountIds=5b10a2844c20165700ede21g,5b10a0effa615349cb016cd8&excludeAccountIds=5b10ac8d82e05b22cc7d4ef5`. Cannot be provided with `exclude`. ]]
-      excludeAccountIds : String[]?,
-      avatarSize : String?,
-      excludeConnectUsers : Boolean? ) : FoundUsers
+      @taxi.http.QueryVariable(value = "excludeAccountIds") excludeAccountIds : String[]?,
+      @taxi.http.QueryVariable(value = "avatarSize") avatarSize : String?,
+      @taxi.http.QueryVariable(value = "excludeConnectUsers") excludeConnectUsers : Boolean? ) : FoundUsers
    }
    service RestApiThreeUserPropertiesService {
       [[ Returns the keys of all properties for a user.
@@ -7902,11 +7902,11 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/properties")
       operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_getUserPropertyKeys_get(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      userKey : String?,
+      @taxi.http.QueryVariable(value = "userKey") userKey : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      username : String? ) : PropertyKeys
+      @taxi.http.QueryVariable(value = "username") username : String? ) : PropertyKeys
    }
    service RestApiThreeUserPropertiesPropertyKeyService {
       [[ Returns the value of a user's property. If no property key is provided [Get user property keys](#api-rest-api-3-user-properties-get) is called.
@@ -7917,11 +7917,11 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/properties/{propertyKey}")
       operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_getUserProperty_get(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      userKey : String?,
+      @taxi.http.QueryVariable(value = "userKey") userKey : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      username : String?,
+      @taxi.http.QueryVariable(value = "username") username : String?,
       [[ The key of the user's property. ]]
       @taxi.http.PathVariable(value = "propertyKey") propertyKey : String ) : EntityProperty
       [[ Sets the value of a user's property. Use this resource to store custom data against a user.
@@ -7932,11 +7932,11 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/user/properties/{propertyKey}")
       operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_setUserProperty_put(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      userKey : String?,
+      @taxi.http.QueryVariable(value = "userKey") userKey : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      username : String?,
+      @taxi.http.QueryVariable(value = "username") username : String?,
       [[ The key of the user's property. The maximum length is 255 characters. ]]
       @taxi.http.PathVariable(value = "propertyKey") propertyKey : String,
       @taxi.http.RequestBody any : Any? ) : Any
@@ -7948,11 +7948,11 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/user/properties/{propertyKey}")
       operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_deleteUserProperty_delete(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      userKey : String?,
+      @taxi.http.QueryVariable(value = "userKey") userKey : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      username : String?,
+      @taxi.http.QueryVariable(value = "username") username : String?,
       [[ The key of the user's property. ]]
       @taxi.http.PathVariable(value = "propertyKey") propertyKey : String )
    }
@@ -7964,16 +7964,16 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/search")
       operation com_atlassian_jira_rest_v2_issue_UserResource_findUsers_get(
       [[ A query string that is matched against user attributes ( `displayName`, and `emailAddress`) to find relevant users. The string can match the prefix of the attribute's value. For example, *query=john* matches a user with a `displayName` of *John Smith* and a user with an `emailAddress` of *johnson@example.com*. Required, unless `accountId` or `property` is specified. ]]
-      `query` : String?,
-      username : String?,
+      @taxi.http.QueryVariable(value = "query") `query` : String?,
+      @taxi.http.QueryVariable(value = "username") username : String?,
       [[ A query string that is matched exactly against a user `accountId`. Required, unless `query` or `property` is specified. ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ A query string used to search properties. Property keys are specified by path, so property keys containing dot (.) or equals (=) characters cannot be used. The query string cannot be specified using a JSON object. Example: To search for the value of `nested` from `{"something":{"nested":1,"other":2}}` use `thepropertykey.something.nested=1`. Required, unless `accountId` or `query` is specified. ]]
-      property : String? ) : User[]
+      @taxi.http.QueryVariable(value = "property") property : String? ) : User[]
    }
    service RestApiThreeUserSearchQueryService {
       [[ Finds users with a structured query and returns user details.
@@ -7993,11 +7993,11 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/search/query")
       operation com_atlassian_jira_rest_v2_search_UserSearchResource_findUsersByQuery_get(
       [[ The search query. ]]
-      `query` : String,
+      @taxi.http.QueryVariable(value = "query") `query` : String,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : PageBeanUser
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : PageBeanUser
    }
    service RestApiThreeUserSearchQueryKeyService {
       [[ Finds users with a structured query and returns a list of user keys.
@@ -8017,11 +8017,11 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/search/query/key")
       operation com_atlassian_jira_rest_v2_search_UserSearchResource_findUserKeysByQuery_get(
       [[ The search query. ]]
-      `query` : String,
+      @taxi.http.QueryVariable(value = "query") `query` : String,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : PageBeanUserKey
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : PageBeanUserKey
    }
    service RestApiThreeUserViewissueSearchService {
       [[ Returns a list of users who fulfill these criteria:
@@ -8036,19 +8036,19 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/user/viewissue/search")
       operation com_atlassian_jira_rest_v2_issue_UserResource_findUsersWithBrowsePermission_get(
       [[ A query string that is matched against user attributes, such as `displayName` and `emailAddress`, to find relevant users. The string can match the prefix of the attribute's value. For example, *query=john* matches a user with a `displayName` of *John Smith* and a user with an `emailAddress` of *johnson@example.com*. Required, unless `accountId` is specified. ]]
-      `query` : String?,
+      @taxi.http.QueryVariable(value = "query") `query` : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
-      username : String?,
+      @taxi.http.QueryVariable(value = "username") username : String?,
       [[ A query string that is matched exactly against user `accountId`. Required, unless `query` is specified. ]]
-      accountId : String?,
+      @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ The issue key for the issue. Required, unless `projectKey` is specified. ]]
-      issueKey : String?,
+      @taxi.http.QueryVariable(value = "issueKey") issueKey : String?,
       [[ The project key for the project (case sensitive). Required, unless `issueKey` is specified. ]]
-      projectKey : String?,
+      @taxi.http.QueryVariable(value = "projectKey") projectKey : String?,
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : User[]
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : User[]
    }
    service RestApiThreeUsersSearchService {
       [[ Returns a list of all (active and inactive) users.
@@ -8056,9 +8056,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/users/search")
       operation com_atlassian_jira_rest_v2_issue_UsersResource_getAllUsers_get(
       [[ The index of the first item to return. ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return. ]]
-      maxResults : Int? ) : User[]
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : User[]
    }
    service RestApiThreeVersionService {
       [[ Creates a project version.
@@ -8078,7 +8078,7 @@ namespace vyne.openApi {
       [[ Use [expand](#expansion) to include additional information about version in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `operations` Returns the list of operations available for this version.
       *  `issuesstatus` Returns the count of issues in this version for each of the status categories *to do*, *in progress*, *done*, and *unmapped*. The *unmapped* property represents the number of issues with a status other than *to do*, *in progress*, and *done*. ]]
-      expand : String? ) : Version
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : Version
       [[ Updates a project version.
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) or *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that contains the version. ]]
@@ -8097,9 +8097,9 @@ namespace vyne.openApi {
       [[ The ID of the version. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       [[ The ID of the version to update `fixVersion` to when the field contains the deleted version. The replacement version must be in the same project as the version being deleted and cannot be the version being deleted. ]]
-      moveFixIssuesTo : String?,
+      @taxi.http.QueryVariable(value = "moveFixIssuesTo") moveFixIssuesTo : String?,
       [[ The ID of the version to update `affectedVersion` to when the field contains the deleted version. The replacement version must be in the same project as the version being deleted and cannot be the version being deleted. ]]
-      moveAffectedIssuesTo : String? )
+      @taxi.http.QueryVariable(value = "moveAffectedIssuesTo") moveAffectedIssuesTo : String? )
    }
    service RestApiThreeVersionIdMergetoMoveIssuesToService {
       [[ Merges two project versions. The merge is completed by deleting the version specified in `id` and replacing any occurrences of its ID in `fixVersion` with the version ID specified in `moveIssuesTo`.
@@ -8161,9 +8161,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/webhook")
       operation com_atlassian_jira_rest_v2_webhook_DynamicWebhookResource_getDynamicWebhooksForApp_get(
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : PageBeanWebhook
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : PageBeanWebhook
       [[ Registers webhooks.
       **[Permissions](#permissions) required:** Only [Connect apps](https://developer.atlassian.com/cloud/jira/platform/integrating-with-jira-cloud/#atlassian-connect) can use this operation. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/webhook")
@@ -8182,9 +8182,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/webhook/failed")
       operation com_atlassian_jira_rest_v2_webhook_FailedWebhookResource_getFailedWebhooks_get(
       [[ The maximum number of webhooks to return per page. If obeying the maxResults directive would result in records with the same failure time being split across pages, the directive is ignored and all records with the same failure time included on the page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ The time after which any webhook failure must have occurred for the record to be returned, expressed as milliseconds since the UNIX epoch. ]]
-      after : Int? ) : FailedWebhooks
+      @taxi.http.QueryVariable(value = "after") after : Int? ) : FailedWebhooks
    }
    service RestApiThreeWebhookRefreshService {
       [[ Webhooks registered through the REST API expire after 30 days. Call this resource periodically to keep them alive.
@@ -8200,7 +8200,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/workflow")
       operation com_atlassian_jira_rest_v2_admin_WorkflowsResource_getAllWorkflows_get(
       [[ The name of the workflow to be returned. Only one workflow can be specified. ]]
-      workflowName : String? ) : DeprecatedWorkflow[]
+      @taxi.http.QueryVariable(value = "workflowName") workflowName : String? ) : DeprecatedWorkflow[]
    }
    service RestApiThreeWorkflowRuleConfigService {
       [[ Returns a paginated list of workflows with transition rules. The workflows can be filtered to return only those containing workflow transition rules:
@@ -8212,15 +8212,15 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/workflow/rule/config")
       operation com_atlassian_jira_rest_v2_admin_workflow_WorkflowRuleConfigResource_getWorkflowTransitionRuleConfigurations_get(
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ The types of the transition rules to return. ]]
-      types : String[],
+      @taxi.http.QueryVariable(value = "types") types : String[],
       [[ The transition rule class keys, as defined in the Connect app descriptor, of the transition rules to return. ]]
-      keys : String[]?,
+      @taxi.http.QueryVariable(value = "keys") keys : String[]?,
       [[ Use [expand](#expansion) to include additional information in the response. This parameter accepts `transition`, which, for each rule, returns information about the transition the rule is assigned to. ]]
-      expand : String? ) : PageBeanWorkflowTransitionRules
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : PageBeanWorkflowTransitionRules
       [[ Updates configuration of workflow transition rules. The following rule types are supported:
       *  [post functions](https://developer.atlassian.com/cloud/jira/platform/modules/workflow-post-function/)
       *  [conditions](https://developer.atlassian.com/cloud/jira/platform/modules/workflow-condition/)
@@ -8237,17 +8237,17 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/workflow/search")
       operation com_atlassian_jira_rest_v2_admin_workflow_WorkflowSearchResource_getWorkflowsPaginated_get(
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int?,
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ The name of a workflow to return. ]]
-      workflowName : String[]?,
+      @taxi.http.QueryVariable(value = "workflowName") workflowName : String[]?,
       [[ Use [expand](#expansion) to include additional information in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `transitions` For each workflow, returns information about the transitions inside the workflow.
       *  `transitions.rules` For each workflow transition, returns information about its rules. Transitions are included automatically if this expand is requested.
       *  `statuses` For each workflow, returns information about the statuses inside the workflow.
       *  `statuses.properties` For each workflow status, returns information about its properties. Statuses are included automatically if this expand is requested. ]]
-      expand : String? ) : PageBeanWorkflow
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : PageBeanWorkflow
    }
    service RestApiThreeWorkflowTransitionsTransitionIdPropertiesService {
       [[ Returns the properties on a workflow transition. Transition properties are used to change the behavior of a transition. For more information, see [Transition properties](https://confluence.atlassian.com/x/zIhKLg#Advancedworkflowconfiguration-transitionproperties) and [Workflow properties](https://confluence.atlassian.com/x/JYlKLg).
@@ -8257,13 +8257,13 @@ namespace vyne.openApi {
       [[ The ID of the transition. To get the ID, view the workflow in text mode in the Jira administration console. The ID is shown next to the transition. ]]
       @taxi.http.PathVariable(value = "transitionId") transitionId : Int,
       [[ Some properties with keys that have the *jira.* prefix are reserved, which means they are not editable. To include these properties in the results, set this parameter to *true*. ]]
-      includeReservedKeys : Boolean?,
+      @taxi.http.QueryVariable(value = "includeReservedKeys") includeReservedKeys : Boolean?,
       [[ The key of the property being returned, also known as the name of the property. If this parameter is not specified, all properties on the transition are returned. ]]
-      key : String?,
+      @taxi.http.QueryVariable(value = "key") key : String?,
       [[ The name of the workflow that the transition belongs to. ]]
-      workflowName : String,
+      @taxi.http.QueryVariable(value = "workflowName") workflowName : String,
       [[ The workflow status. Set to *live* for active and inactive workflows, or *draft* for draft workflows. ]]
-      workflowMode : String? ) : WorkflowTransitionProperty
+      @taxi.http.QueryVariable(value = "workflowMode") workflowMode : String? ) : WorkflowTransitionProperty
       [[ Updates a workflow transition by changing the property value. Trying to update a property that does not exist results in a new property being added to the transition. Transition properties are used to change the behavior of a transition. For more information, see [Transition properties](https://confluence.atlassian.com/x/zIhKLg#Advancedworkflowconfiguration-transitionproperties) and [Workflow properties](https://confluence.atlassian.com/x/JYlKLg).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/workflow/transitions/{transitionId}/properties")
@@ -8271,11 +8271,11 @@ namespace vyne.openApi {
       [[ The ID of the transition. To get the ID, view the workflow in text mode in the Jira admin settings. The ID is shown next to the transition. ]]
       @taxi.http.PathVariable(value = "transitionId") transitionId : Int,
       [[ The key of the property being updated, also known as the name of the property. Set this to the same value as the `key` defined in the request body. ]]
-      key : String,
+      @taxi.http.QueryVariable(value = "key") key : String,
       [[ The name of the workflow that the transition belongs to. ]]
-      workflowName : String,
+      @taxi.http.QueryVariable(value = "workflowName") workflowName : String,
       [[ The workflow status. Set to `live` for inactive workflows or `draft` for draft workflows. Active workflows cannot be edited. ]]
-      workflowMode : String?,
+      @taxi.http.QueryVariable(value = "workflowMode") workflowMode : String?,
       @taxi.http.RequestBody workflowTransitionProperty : WorkflowTransitionProperty? ) : WorkflowTransitionProperty
       [[ Adds a property to a workflow transition. Transition properties are used to change the behavior of a transition. For more information, see [Transition properties](https://confluence.atlassian.com/x/zIhKLg#Advancedworkflowconfiguration-transitionproperties) and [Workflow properties](https://confluence.atlassian.com/x/JYlKLg).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -8284,11 +8284,11 @@ namespace vyne.openApi {
       [[ The ID of the transition. To get the ID, view the workflow in text mode in the Jira admin settings. The ID is shown next to the transition. ]]
       @taxi.http.PathVariable(value = "transitionId") transitionId : Int,
       [[ The key of the property being added, also known as the name of the property. Set this to the same value as the `key` defined in the request body. ]]
-      key : String,
+      @taxi.http.QueryVariable(value = "key") key : String,
       [[ The name of the workflow that the transition belongs to. ]]
-      workflowName : String,
+      @taxi.http.QueryVariable(value = "workflowName") workflowName : String,
       [[ The workflow status. Set to *live* for inactive workflows or *draft* for draft workflows. Active workflows cannot be edited. ]]
-      workflowMode : String?,
+      @taxi.http.QueryVariable(value = "workflowMode") workflowMode : String?,
       @taxi.http.RequestBody workflowTransitionProperty : WorkflowTransitionProperty? ) : WorkflowTransitionProperty
       [[ Deletes a property from a workflow transition. Transition properties are used to change the behavior of a transition. For more information, see [Transition properties](https://confluence.atlassian.com/x/zIhKLg#Advancedworkflowconfiguration-transitionproperties) and [Workflow properties](https://confluence.atlassian.com/x/JYlKLg).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -8297,11 +8297,11 @@ namespace vyne.openApi {
       [[ The ID of the transition. To get the ID, view the workflow in text mode in the Jira admin settings. The ID is shown next to the transition. ]]
       @taxi.http.PathVariable(value = "transitionId") transitionId : Int,
       [[ The name of the transition property to delete, also known as the name of the property. ]]
-      key : String,
+      @taxi.http.QueryVariable(value = "key") key : String,
       [[ The name of the workflow that the transition belongs to. ]]
-      workflowName : String,
+      @taxi.http.QueryVariable(value = "workflowName") workflowName : String,
       [[ The workflow status. Set to `live` for inactive workflows or `draft` for draft workflows. Active workflows cannot be edited. ]]
-      workflowMode : String? )
+      @taxi.http.QueryVariable(value = "workflowMode") workflowMode : String? )
    }
    service RestApiThreeWorkflowschemeService {
       [[ Returns a paginated list of all workflow schemes, not including draft workflow schemes.
@@ -8309,9 +8309,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/workflowscheme")
       operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_getAllWorkflowSchemes_get(
       [[ The index of the first item to return in a page of results (page offset). ]]
-      startAt : Int?,
+      @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
-      maxResults : Int? ) : WorkflowScheme[]
+      @taxi.http.QueryVariable(value = "maxResults") maxResults : Int? ) : WorkflowScheme[]
       [[ Creates a workflow scheme.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/workflowscheme")
@@ -8323,7 +8323,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/workflowscheme/project")
       operation com_atlassian_jira_rest_v2_admin_workflowscheme_project_WorkflowSchemeProjectResource_getWorkflowSchemeProjectAssociations_get(
       [[ The ID of a project to return the workflow schemes for. To include multiple projects, provide an ampersand-Jim: oneseparated list. For example, `projectId=10000&projectId=10001`. ]]
-      projectId : Int[] ) : ContainerOfWorkflowSchemeAssociations
+      @taxi.http.QueryVariable(value = "projectId") projectId : Int[] ) : ContainerOfWorkflowSchemeAssociations
    }
    service RestApiThreeWorkflowschemeIdService {
       [[ Returns a workflow scheme.
@@ -8333,7 +8333,7 @@ namespace vyne.openApi {
       [[ The ID of the workflow scheme. Find this ID by editing the desired workflow scheme in Jira. The ID is shown in the URL as `schemeId`. For example, *schemeId=10301*. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ Returns the workflow scheme's draft rather than scheme itself, if set to true. If the workflow scheme does not have a draft, then the workflow scheme is returned. ]]
-      returnDraftIfExists : Boolean? ) : WorkflowScheme
+      @taxi.http.QueryVariable(value = "returnDraftIfExists") returnDraftIfExists : Boolean? ) : WorkflowScheme
       [[ Updates a workflow scheme, including the name, default workflow, issue type to project mappings, and more. If the workflow scheme is active (that is, being used by at least one project), then a draft workflow scheme is created or updated instead, provided that `updateDraftIfNeeded` is set to `true`.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/workflowscheme/{id}")
@@ -8364,7 +8364,7 @@ namespace vyne.openApi {
       [[ The ID of the workflow scheme. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ Set to `true` to return the default workflow for the workflow scheme's draft rather than scheme itself. If the workflow scheme does not have a draft, then the default workflow for the workflow scheme is returned. ]]
-      returnDraftIfExists : Boolean? ) : DefaultWorkflow
+      @taxi.http.QueryVariable(value = "returnDraftIfExists") returnDraftIfExists : Boolean? ) : DefaultWorkflow
       [[ Sets the default workflow for a workflow scheme.
       Note that active workflow schemes cannot be edited. If the workflow scheme is active, set `updateDraftIfNeeded` to `true` in the request object and a draft workflow scheme is created or updated with the new default workflow. The draft workflow scheme can be published in Jira.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -8381,7 +8381,7 @@ namespace vyne.openApi {
       [[ The ID of the workflow scheme. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ Set to true to create or update the draft of a workflow scheme and delete the mapping from the draft, when the workflow scheme cannot be edited. Defaults to `false`. ]]
-      updateDraftIfNeeded : Boolean? ) : WorkflowScheme
+      @taxi.http.QueryVariable(value = "updateDraftIfNeeded") updateDraftIfNeeded : Boolean? ) : WorkflowScheme
    }
    service RestApiThreeWorkflowschemeIdDraftService {
       [[ Returns the draft workflow scheme for an active workflow scheme. Draft workflow schemes allow changes to be made to the active workflow schemes: When an active workflow scheme is updated, a draft copy is created. The draft is modified, then the changes in the draft are copied back to the active workflow scheme. See [Configuring workflow schemes](https://confluence.atlassian.com/x/tohKLg) for more information.
@@ -8463,7 +8463,7 @@ namespace vyne.openApi {
       [[ The ID of the workflow scheme that the draft belongs to. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The name of a workflow in the scheme. Limits the results to the workflow-issue type mapping for the specified workflow. ]]
-      workflowName : String? ) : IssueTypesWorkflowMapping
+      @taxi.http.QueryVariable(value = "workflowName") workflowName : String? ) : IssueTypesWorkflowMapping
       [[ Sets the issue types for a workflow in a workflow scheme's draft. The workflow can also be set as the default workflow for the draft workflow scheme. Unmapped issues types are mapped to the default workflow.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/workflowscheme/{id}/draft/workflow")
@@ -8471,7 +8471,7 @@ namespace vyne.openApi {
       [[ The ID of the workflow scheme that the draft belongs to. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The name of the workflow. ]]
-      workflowName : String,
+      @taxi.http.QueryVariable(value = "workflowName") workflowName : String,
       @taxi.http.RequestBody issueTypesWorkflowMapping : IssueTypesWorkflowMapping? ) : WorkflowScheme
       [[ Deletes the workflow-issue type mapping for a workflow in a workflow scheme's draft.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -8480,7 +8480,7 @@ namespace vyne.openApi {
       [[ The ID of the workflow scheme that the draft belongs to. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The name of the workflow. ]]
-      workflowName : String )
+      @taxi.http.QueryVariable(value = "workflowName") workflowName : String )
    }
    service RestApiThreeWorkflowschemeIdIssuetypeIssueTypeService {
       [[ Returns the issue type-workflow mapping for an issue type in a workflow scheme.
@@ -8492,7 +8492,7 @@ namespace vyne.openApi {
       [[ The ID of the issue type. ]]
       @taxi.http.PathVariable(value = "issueType") issueType : String,
       [[ Returns the mapping from the workflow scheme's draft rather than the workflow scheme, if set to true. If no draft exists, the mapping from the workflow scheme is returned. ]]
-      returnDraftIfExists : Boolean? ) : IssueTypeWorkflowMapping
+      @taxi.http.QueryVariable(value = "returnDraftIfExists") returnDraftIfExists : Boolean? ) : IssueTypeWorkflowMapping
       [[ Sets the workflow for an issue type in a workflow scheme.
       Note that active workflow schemes cannot be edited. If the workflow scheme is active, set `updateDraftIfNeeded` to `true` in the request body and a draft workflow scheme is created or updated with the new issue type-workflow mapping. The draft workflow scheme can be published in Jira.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -8513,7 +8513,7 @@ namespace vyne.openApi {
       [[ The ID of the issue type. ]]
       @taxi.http.PathVariable(value = "issueType") issueType : String,
       [[ Set to true to create or update the draft of a workflow scheme and update the mapping in the draft, when the workflow scheme cannot be edited. Defaults to `false`. ]]
-      updateDraftIfNeeded : Boolean? ) : WorkflowScheme
+      @taxi.http.QueryVariable(value = "updateDraftIfNeeded") updateDraftIfNeeded : Boolean? ) : WorkflowScheme
    }
    service RestApiThreeWorkflowschemeIdWorkflowService {
       [[ Returns the workflow-issue type mappings for a workflow scheme.
@@ -8523,9 +8523,9 @@ namespace vyne.openApi {
       [[ The ID of the workflow scheme. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The name of a workflow in the scheme. Limits the results to the workflow-issue type mapping for the specified workflow. ]]
-      workflowName : String?,
+      @taxi.http.QueryVariable(value = "workflowName") workflowName : String?,
       [[ Returns the mapping from the workflow scheme's draft rather than the workflow scheme, if set to true. If no draft exists, the mapping from the workflow scheme is returned. ]]
-      returnDraftIfExists : Boolean? ) : IssueTypesWorkflowMapping
+      @taxi.http.QueryVariable(value = "returnDraftIfExists") returnDraftIfExists : Boolean? ) : IssueTypesWorkflowMapping
       [[ Sets the issue types for a workflow in a workflow scheme. The workflow can also be set as the default workflow for the workflow scheme. Unmapped issues types are mapped to the default workflow.
       Note that active workflow schemes cannot be edited. If the workflow scheme is active, set `updateDraftIfNeeded` to `true` in the request body and a draft workflow scheme is created or updated with the new workflow-issue types mappings. The draft workflow scheme can be published in Jira.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -8534,7 +8534,7 @@ namespace vyne.openApi {
       [[ The ID of the workflow scheme. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The name of the workflow. ]]
-      workflowName : String,
+      @taxi.http.QueryVariable(value = "workflowName") workflowName : String,
       @taxi.http.RequestBody issueTypesWorkflowMapping : IssueTypesWorkflowMapping? ) : WorkflowScheme
       [[ Deletes the workflow-issue type mapping for a workflow in a workflow scheme.
       Note that active workflow schemes cannot be edited. If the workflow scheme is active, set `updateDraftIfNeeded` to `true` and a draft workflow scheme is created or updated with the workflow-issue type mapping deleted. The draft workflow scheme can be published in Jira.
@@ -8544,9 +8544,9 @@ namespace vyne.openApi {
       [[ The ID of the workflow scheme. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The name of the workflow. ]]
-      workflowName : String,
+      @taxi.http.QueryVariable(value = "workflowName") workflowName : String,
       [[ Set to true to create or update the draft of a workflow scheme and delete the mapping from the draft, when the workflow scheme cannot be edited. Defaults to `false`. ]]
-      updateDraftIfNeeded : Boolean? )
+      @taxi.http.QueryVariable(value = "updateDraftIfNeeded") updateDraftIfNeeded : Boolean? )
    }
    service RestApiThreeWorklogDeletedService {
       [[ Returns a list of IDs and delete timestamps for worklogs deleted after a date and time.
@@ -8556,7 +8556,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/worklog/deleted")
       operation com_atlassian_jira_rest_v2_issue_worklog_WorklogResource_getIdsOfWorklogsDeletedSince_get(
       [[ The date and time, in UNIX timestamp format, after which deleted worklogs are returned. ]]
-      since : Int? ) : ChangedWorklogs
+      @taxi.http.QueryVariable(value = "since") since : Int? ) : ChangedWorklogs
    }
    service RestApiThreeWorklogListService {
       [[ Returns worklog details for a list of worklog IDs.
@@ -8567,7 +8567,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/worklog/list")
       operation com_atlassian_jira_rest_v2_issue_worklog_WorklogResource_getWorklogsForIds_post(
       [[ Use [expand](#expansion) to include additional information about worklogs in the response. This parameter accepts `properties` that returns the properties of each worklog. ]]
-      expand : String?,
+      @taxi.http.QueryVariable(value = "expand") expand : String?,
       @taxi.http.RequestBody worklogIdsRequestBean : WorklogIdsRequestBean? ) : Worklog[]
    }
    service RestApiThreeWorklogUpdatedService {
@@ -8580,9 +8580,9 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/worklog/updated")
       operation com_atlassian_jira_rest_v2_issue_worklog_WorklogResource_getIdsOfWorklogsModifiedSince_get(
       [[ The date and time, in UNIX timestamp format, after which updated worklogs are returned. ]]
-      since : Int?,
+      @taxi.http.QueryVariable(value = "since") since : Int?,
       [[ Use [expand](#expansion) to include additional information about worklogs in the response. This parameter accepts `properties` that returns the properties of each worklog. ]]
-      expand : String? ) : ChangedWorklogs
+      @taxi.http.QueryVariable(value = "expand") expand : String? ) : ChangedWorklogs
    }
    service RestAtlassian_connectOneAddonsAddonKeyPropertiesService {
       [[ Gets all the properties of an app.
@@ -8636,6 +8636,6 @@ namespace vyne.openApi {
       [[ The key of the module to remove. To include multiple module keys, provide multiple copies of this parameter.
       For example, `moduleKey=dynamic-attachment-entity-property&moduleKey=dynamic-select-field`.
       Nonexistent keys are ignored. ]]
-      moduleKey : String[]? )
+      @taxi.http.QueryVariable(value = "moduleKey") moduleKey : String[]? )
    }
 }

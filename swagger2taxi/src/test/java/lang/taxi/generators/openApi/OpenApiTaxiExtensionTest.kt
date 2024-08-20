@@ -70,9 +70,9 @@ class OpenApiTaxiExtensionTest {
                           @taxi.http.HttpOperation(method = "GET" , url = "http://petstore.swagger.io/api/pets")
                           operation findPets(
                           [[ tags to filter by ]]
-                          tags : petstore.Tag[]?,
+                          @taxi.http.QueryVariable(value = "tags") tags : petstore.Tag[]?,
                           [[ maximum number of results to return ]]
-                          limit : Int? ) : petstore.Pet[]
+                          @taxi.http.QueryVariable(value = "limit") limit : Int? ) : petstore.Pet[]
                           [[ Creates a new pet in the store.  Duplicates are allowed ]]
                           @taxi.http.HttpOperation(method = "POST" , url = "http://petstore.swagger.io/api/pets")
                           operation addPet( @taxi.http.RequestBody newPet : NewPet? ) : petstore.Pet

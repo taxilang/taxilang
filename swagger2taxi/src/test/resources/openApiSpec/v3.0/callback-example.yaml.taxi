@@ -11,6 +11,6 @@ namespace vyne.openApi {
       operation PostStreams(
       [[ the location where data will be sent.  Must be network accessible
       by the source server ]]
-      callbackUrl : String ) : AnonymousTypePostStreams
+      @taxi.http.QueryVariable(value = "callbackUrl") callbackUrl : String ) : AnonymousTypePostStreams
    }
 }
