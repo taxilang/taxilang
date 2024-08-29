@@ -52,8 +52,12 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
             annotation ResponseCode {
                value : Int
             }
-         }
-
+            
+            annotation HttpQueryVariable { value: String }
+            
+            annotation HttpResponseHeader { value: String }
+           
+            
       """
 
       override val name: QualifiedName = QualifiedName.from("taxi.http.HttpService")
@@ -178,4 +182,13 @@ data class HttpQueryVariable(val value: String) : AnnotationProvider {
 
    override fun toAnnotation() = Annotation(NAME, mapOf("value" to value))
 }
+
+data class HttpResponseHeader(val value: String) : AnnotationProvider {
+   companion object {
+      const val NAME = "taxi.http.ResponseHeader"
+   }
+
+   override fun toAnnotation() = Annotation(NAME, mapOf("value" to value))
+}
+
 
