@@ -56,6 +56,7 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
             annotation HttpQueryVariable { value: String }
             
             annotation HttpResponseHeader { value: String }
+         }
            
             
       """
