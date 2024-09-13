@@ -201,9 +201,9 @@ find { Book[] } as {
 ```
 
 ### Using a spread operator
-The spread operator (`...`) is a short hand for "And everything else from that type".
+The spread operator (`...`) is shorthand for "And everything else from that type".
 
-For example:
+For example, given a Person model:
 
 ```taxi
 model Person {
@@ -211,7 +211,34 @@ model Person {
    lastName : LastName
 }
 ```
+
+using the spread operator as follows would return all fields from the Person model along with the reviewRating
+
+```taxi
+find { Person[] } as {
+   reviewRating: ReviewRating
+   ...
+}
+```
+
+
 ### Excluding from a spread operator
+
+The spread operator can also be used to exclude certain fields from a projection:
+<Hint>
+   Note that exclusion works using field names, not types.
+</Hint>
+
+```taxi
+given { Person = {
+    firstName : "Jimmy",
+    lastName : "Schmitt",
+    age : 55
+}}
+find { Person } as {
+    ... except { age, lastName }
+}
+```
 
 ### Restructuring results to look like another type
 Often, you're querying to feed data to another system which has a predefined schema (and a corresponding Taxi definition).
