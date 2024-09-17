@@ -68,7 +68,18 @@ class ConfigWriter {
          TaxiPackageProject::additionalSources,
          TaxiPackageProject::dependencies
       ).map {
-         it.name to it.get(project)
+         val value = it.get(project)
+         val safeValue = if (value is Map<*,*> && value.isNotEmpty()) {
+            // Wrap keys in quotes, so things like @orbital/config remain valid values
+            value.map { entry ->
+               val quotedKey = entry.key!!.toString().surroundInQuotes()
+               val quotedValue = if (entry.value is String) {
+                  (entry.value!! as String).surroundInQuotes()
+               } else entry.value
+               quotedKey to quotedValue
+            }.toMap()
+         } else value
+         it.name to safeValue
       }.joinToString("\n") { (key, value) -> "$key: $value" }
       return conf + "\n"
 
@@ -82,3 +93,5 @@ class ConfigWriter {
       )
    }
 }
+
+private fun String.surroundInQuotes():String = "\"${this}\""
