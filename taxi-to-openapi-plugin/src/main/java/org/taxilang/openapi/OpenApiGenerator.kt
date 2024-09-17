@@ -67,7 +67,7 @@ class OpenApiGenerator {
    }
 
    fun generateYaml(
-     generatedSpecs: List<Pair<QualifiedName, OpenAPI>>
+      generatedSpecs: List<Pair<QualifiedName, OpenAPI>>
    ): List<SimpleWriteableSource> {
       return generatedSpecs
          .map { (serviceName, openApi) ->
@@ -154,7 +154,10 @@ class OpenApiGenerator {
       paths[url] = pathItem
    }
 
-   private fun buildRequestBodyForQueryParams(parameters: List<lang.taxi.query.Parameter>, components: Components): RequestBody? {
+   private fun buildRequestBodyForQueryParams(
+      parameters: List<lang.taxi.query.Parameter>,
+      components: Components
+   ): RequestBody? {
       val parameter = parameters.firstOrNull { it.annotation(HttpRequestBody.NAME) != null } ?: return null
       return buildRequestBody(parameter.type, components)
    }
@@ -189,21 +192,34 @@ class OpenApiGenerator {
       typeDoc: String?,
       responseSchema: Either<Schema<*>, SchemaRef>
    ): io.swagger.v3.oas.models.Operation {
+      val apiResponse = ApiResponse()
+         .description(typeDoc)
+         .let { apiResponse ->
+            if (!VoidSchema.isVoid(responseSchema)) {
+               apiResponse
+                  .content(
+                     Content()
+                        .addMediaType(
+                           "application/json", MediaType().schema(
+                              responseSchema.wrapRefToObjectSchema()
+                           )
+                        )
+                  )
+            } else {
+               // A response with no body
+               apiResponse.description("Success")
+            }
+
+         }
+
+
+
       return io.swagger.v3.oas.models.Operation()
          .summary(typeDoc)
          .responses(
             ApiResponses()
                .addApiResponse(
-                  "200", ApiResponse()
-                     .description(typeDoc)
-                     .content(
-                        Content()
-                           .addMediaType(
-                              "application/json", MediaType().schema(
-                                 responseSchema.wrapRefToObjectSchema()
-                              )
-                           )
-                     )
+                  "200", apiResponse
                )
          );
    }
@@ -248,6 +264,11 @@ class OpenApiGenerator {
                objectTypeToSchema(type, components).right()
             }
          }
+
+         is VoidType -> {
+            VoidSchema().left()
+         }
+
 
          else -> error("Unhandled branch in mapping type to schema")
       }
@@ -313,5 +334,20 @@ private fun SchemaOrSchemaRef.wrapRefToObjectSchema(): Schema<*> {
       is Either.Right -> Schema<String>()
          .type(null)
          .`$ref`(this.value)
+   }
+}
+
+
+class VoidSchema : Schema<VoidType>("void", "void") {
+   companion object {
+      fun isVoid(either: Either<Schema<*>, SchemaRef>): Boolean {
+         return when (either) {
+            is Either.Left -> {
+               either.value is VoidSchema
+            }
+
+            else -> false
+         }
+      }
    }
 }
