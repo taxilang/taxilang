@@ -7,6 +7,7 @@ import io.github.config4k.extract
 import lang.taxi.utils.log
 import org.apache.commons.lang3.SystemUtils
 import java.nio.file.Path
+import kotlin.io.path.name
 
 // Note : I've made the path mandatory here, but may
 // want to relax that for cli-style projects where there
@@ -20,6 +21,14 @@ class TaxiPackageLoader(val taxiConfFilePath: Path? = null) {
 
       fun forPathToTaxiFile(path: Path): TaxiPackageLoader {
          return TaxiPackageLoader(path)
+      }
+
+      fun forDirectoryOrFilePath(path: Path): TaxiPackageLoader {
+         return if (path.name.endsWith(".conf")) {
+            forPathToTaxiFile(path)
+         } else {
+            forDirectoryContainingTaxiFile(path)
+         }
       }
    }
 
