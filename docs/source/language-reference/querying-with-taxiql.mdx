@@ -342,66 +342,6 @@ will be considered.
 
 This excludes the incorrect path.
 
-## Joins
-It is possible to request data joined across multiple models.
-
-Using a join affects the number of rows that are returned to the output.
-
-<Hint>
-   It's not always necessary to specify a join. If you simply want to discover linked data, include the desired
-   information in your output type.
-   See <Link to='#projecting'>Projections</Link>
-</Hint>
-
-### by
-
-`by` is used to relate data explicit using a field.
-By default, data is linked using `@Id` annotated attributes.
-
-For cases where you need a different link, use `by`.
-
-```
-type PersonId inherits String
-model Person {
-   @Id id : PersonId
-   name : PersonName
-}
-model Movie {
-   id : MovieId
-   title : MovieTitle
-  // We should make ambiguous types on models prohibited, unless they are inline refined as follows.
-   directedBy : DirectorId inherits PersonId
-   producedBy : ProducerId inherits PersonId
-}
-
-operation listMovies():Movie[]
-operation getPerson( PersonId ) : Person
-operation listMoviesByActor( ActorId ) : Movie[]
-
-find {
-  Movie[]
-} as {
-  id : MovieId
-  // The below would be illegal without the (by) clause, as PersonName is ambiguous.
-  directorName : PersonName( by DirectorId )
-  producerName : PersonName( by ProducerId )
-}
-```
-
-We can also use `by` to scope data blocks.
-
-```
-find {
-  Actor[] // Define a start point
-} as {
-  name : ActorName
-  movies : [
-    {
-       title : MovieTitle
-       year : YearReleased
-     }
-  ]( by ActorId )
-}[]
 ```
 ## Named queries
 Queries can be named, and saved in a taxi project, just like any other type:
