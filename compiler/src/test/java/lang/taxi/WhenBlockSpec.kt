@@ -160,6 +160,5 @@ class WhenBlockSpec : DescribeSpec({
          """.compiled()
 
       }
-
    }
 })

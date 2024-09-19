@@ -737,7 +737,7 @@ class TokenProcessor(
 
 
       val expression = ctx.expressionTypeDeclaration()?.let {
-         it.expressionGroup().map { expressionGroup -> parseTypeExpression(expressionGroup, activeScopes) }
+         it.expressionGroup().map { expressionGroup -> parseTypeExpression(expressionGroup, activeScopes, interimType) }
       }?.invertEitherList()
          ?.flattenErrors()
          ?.map { it.toExpressionGroup() }
@@ -811,9 +811,10 @@ class TokenProcessor(
 
    private fun parseTypeExpression(
       expressionGroup: ExpressionGroupContext,
-      activeScopes: List<ProjectionFunctionScope>
+      activeScopes: List<ProjectionFunctionScope>,
+      assignmentType: ObjectType
    ): Either<List<CompilationError>, Expression> {
-      return expressionCompiler(scopedArguments = activeScopes).compile(expressionGroup)
+      return expressionCompiler(scopedArguments = activeScopes).compile(expressionGroup, targetType = assignmentType)
    }
 
    private fun checkForCircularTypeInheritance(
