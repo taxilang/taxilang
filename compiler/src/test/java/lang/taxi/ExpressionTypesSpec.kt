@@ -74,7 +74,7 @@ class ExpressionTypesSpec : DescribeSpec({
             type E by Height == Width
             type F by Height != Width
          """.compiled()
-         listOf("A","B","C","D","E","F").forEach { typeName ->
+         listOf("A", "B", "C", "D", "E", "F").forEach { typeName ->
             doc.objectType(typeName).basePrimitive!!.should.equal(PrimitiveType.BOOLEAN)
          }
       }
@@ -175,12 +175,27 @@ class ExpressionTypesSpec : DescribeSpec({
             .objectType("AcceptableCalorieRange")
             .expression!! as LambdaExpression
 
-         expressionType.inputs.map { it.type.qualifiedName }.should.equal(listOf("MinimumAcceptableCalories","MaximumAcceptableCalories"))
+         expressionType.inputs.map { it.type.qualifiedName }.should.equal(
+            listOf(
+               "MinimumAcceptableCalories",
+               "MaximumAcceptableCalories"
+            )
+         )
          val lambdaExpression = expressionType.expression as OperatorExpression
          lambdaExpression.asTaxi().should.equal("ProductCalories > MinimumAcceptableCalories && ProductCalories < MaximumAcceptableCalories")
          lambdaExpression.operator.should.equal(FormulaOperator.LogicalAnd)
       }
-
+      it("is valid to use a when clause in an expression type") {
+         """
+      type CustomerType inherits String
+      type AccountType inherits String by when(lowerCase(CustomerType)) {
+           'retail'  -> 'Personal'
+           'sme' -> 'Personal'
+           else -> 'Business'
+      }
+   """.compiled()
+            .objectType("AccountType")
+      }
    }
 
 
