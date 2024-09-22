@@ -191,8 +191,9 @@ class TaxiQlSpec : DescribeSpec({
          )
          query.facts.should.have.size(1)
          val (name, fact) = query.facts.first()
-         fact.typedValue.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
-         fact.typedValue.value.should.equal("jimmy@demo.com")
+          val typedValue = fact.typedValue
+          typedValue.fqn.should.equal(QualifiedName("foo", "CustomerEmailAddress"))
+          typedValue.value.should.equal("jimmy@demo.com")
       }
 
       it("is possible to declare a fact that is an object") {
@@ -204,7 +205,9 @@ class TaxiQlSpec : DescribeSpec({
          )
          query.facts.should.have.size(1)
          val (name, fact) = query.facts.first()
-         fact.typedValue.value.shouldBe(
+
+          val value = fact.typedValue.value
+         value.shouldBe(
             mapOf(
                "email" to "jimmy@demo.com",
                "firstName" to "Jimmy",

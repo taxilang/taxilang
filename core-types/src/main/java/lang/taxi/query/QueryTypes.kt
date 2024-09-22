@@ -3,6 +3,7 @@ package lang.taxi.query
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.Literal
 import lang.taxi.expressions.LiteralExpression
+import lang.taxi.expressions.ObjectExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.QualifiedName

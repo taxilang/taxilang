@@ -38,6 +38,19 @@ data class LambdaExpression(
    override val returnType: Type = expression.returnType
 }
 
+data class ObjectExpression(override val returnType: Type, val expressionMap: Map<String, Expression>, override val compilationUnits: List<CompilationUnit>): Literal, Expression() {
+   override fun asTypedValue(): TypedValue {
+      val values =  this.expressionMap.map {
+         if (it.value !is Literal) {
+            error("This variable does not contain a constant")
+         }
+         val literal = it.value as Literal
+         it.key to literal.asTypedValue().value
+      }.toMap()
+      return TypedValue(returnType, values)
+   }
+}
+
 interface Literal {
    fun asTypedValue(): TypedValue
 }
