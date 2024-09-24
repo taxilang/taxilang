@@ -115,7 +115,7 @@ class ExpressionCompiler(
          }
 
          expressionGroup.children.size == 2 && expressionGroup.expressionInputs() != null -> parseLambdaExpression(
-            expressionGroup
+            expressionGroup, targetType
          )
 
          // Might need to be more specific here -- this should be expressionGroup.functionCall
@@ -227,7 +227,7 @@ class ExpressionCompiler(
     * Parses an expression like
     * (A,B) -> A > B
     */
-   private fun parseLambdaExpression(lambdaExpression: ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
+   private fun parseLambdaExpression(lambdaExpression: ExpressionGroupContext, targetType: Type?): Either<List<CompilationError>, out Expression> {
       require(lambdaExpression.children.size == 2) { "Expected exactly 2 children in the lambda expression" }
       require(lambdaExpression.expressionGroup().size == 1) { "expected exactly 1 expression group on the rhs of the lambda" }
       return lambdaExpression.expressionInputs()
@@ -242,8 +242,10 @@ class ExpressionCompiler(
          }.invertEitherList().flattenErrors()
          .flatMap { inputs ->
             withParameters(inputs)
-               .compile(lambdaExpression.expressionGroup(0)).map { expression ->
-                  LambdaExpression(inputs, expression, lambdaExpression.toCompilationUnits())
+               .compile(lambdaExpression.expressionGroup(0), targetType).flatMap { expression ->
+                  typeChecker.ifAssignableOrErrorList(expression.returnType, targetType, lambdaExpression) {
+                     LambdaExpression(inputs, expression, lambdaExpression.toCompilationUnits())
+                  }
                }
          }
 
@@ -464,7 +466,7 @@ class ExpressionCompiler(
 
             !isNullCheck && !operator.supports(lhsType, rhsType) -> {
                listOf(
-                  CompilationError(
+                   CompilationError(
                      expressionGroup.toCompilationUnit(),
                      "Operations with symbol '${operator.symbol}' is not supported on types ${lhsType.declaration} and ${rhsType.declaration}"
                   )

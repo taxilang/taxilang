@@ -2,17 +2,13 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.nulls.shouldNotBeNull
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.LambdaExpression
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
-import lang.taxi.functions.FunctionAccessor
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.PrimitiveType
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 
 class ExpressionTypesSpec : DescribeSpec({
    describe("Expression types") {
@@ -185,10 +181,21 @@ class ExpressionTypesSpec : DescribeSpec({
          lambdaExpression.asTaxi().should.equal("ProductCalories > MinimumAcceptableCalories && ProductCalories < MaximumAcceptableCalories")
          lambdaExpression.operator.should.equal(FormulaOperator.LogicalAnd)
       }
-      it("is valid to use a when clause in an expression type") {
+      it("is valid to use a when clause in an expression type - passing a function") {
          """
       type CustomerType inherits String
       type AccountType inherits String by when(lowerCase(CustomerType)) {
+           'retail'  -> 'Personal'
+           'sme' -> 'Personal'
+           else -> 'Business'
+      }
+   """.compiled()
+            .objectType("AccountType")
+      }
+      it("is valid to use a when clause in an expression type - passing a type expression") {
+         """
+      type CustomerType inherits String
+      type AccountType inherits String by (CustomerType) -> when(CustomerType) {
            'retail'  -> 'Personal'
            'sme' -> 'Personal'
            else -> 'Business'
