@@ -203,6 +203,19 @@ class ExpressionTypesSpec : DescribeSpec({
    """.compiled()
             .objectType("AccountType")
       }
+
+      it("assigning a non-assignable type from an expression type statement generates an error") {
+         val errorMessages  = """
+            type Person {
+               name : PersonName inherits String
+               age : Age inherits Int
+            }
+
+            type BestFriend inherits String by (Person[]) -> Person[].filter( (Age) -> Age > 18 )
+         """.validated()
+            .errors()
+         errorMessages.shouldContainMessage("Type mismatch. Type of lang.taxi.Array<Person> is not assignable to type BestFriend")
+      }
    }
 
 

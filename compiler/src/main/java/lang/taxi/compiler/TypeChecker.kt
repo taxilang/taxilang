@@ -19,22 +19,27 @@ import org.antlr.v4.runtime.ParserRuleContext
 fun TypeChecker.assertIsAssignable(valueType: Type, receiverType: Type, token: ParserRuleContext): CompilationError? {
    // This is a first pass, pretty sure this is naieve.
    // Need to take the Vyne implmentation at Type.kt
+   fun error(): CompilationError? {
+      val errorMessage =
+         "Type mismatch. Type of ${valueType.toQualifiedName().parameterizedName} is not assignable to type ${receiverType.toQualifiedName().parameterizedName}"
+      return when (enabled) {
+         FeatureToggle.DISABLED -> null
+         FeatureToggle.ENABLED -> CompilationError(token.start, errorMessage)
+         FeatureToggle.SOFT_ENABLED -> CompilationError(token.start, errorMessage, severity = Severity.WARNING)
+      }
+   }
+
    return when {
+      valueType.isAssignableTo(receiverType) -> null
+      valueType.isScalar != receiverType.isScalar -> error()
+      Arrays.isArray(valueType) != Arrays.isArray(receiverType) -> error()
       // ValueType being an Any could happen in the else branch of a when clause, if using
       // an accessor (such as column/jsonPath/xpath) , where we can't infer the value type returned.
       valueType.basePrimitive == PrimitiveType.ANY -> null
       receiverType.basePrimitive == PrimitiveType.ANY -> null
-      valueType.isAssignableTo(receiverType) -> null
+
 //         receiverType.basePrimitive == valueType.basePrimitive -> null
-      else -> {
-         val errorMessage =
-            "Type mismatch. Type of ${valueType.toQualifiedName().parameterizedName} is not assignable to type ${receiverType.toQualifiedName().parameterizedName}"
-         when (enabled) {
-            FeatureToggle.DISABLED -> null
-            FeatureToggle.ENABLED -> CompilationError(token.start, errorMessage)
-            FeatureToggle.SOFT_ENABLED -> CompilationError(token.start, errorMessage, severity = Severity.WARNING)
-         }
-      }
+      else -> error()
    }
 }
 

@@ -748,7 +748,7 @@ class TokenProcessor(
 
       val inherits = declaredInheritence.let { explicitInheritence ->
          // If we have an expression, then the return type is inferrable from that
-         if (explicitInheritence == INHERITS_FROM_ANY && expression != null) {
+         if (explicitInheritence == INHERITS_FROM_ANY && expression != null && expression.returnType != interimType) {
             listOf(expression.returnType)
          } else {
             explicitInheritence

@@ -509,14 +509,16 @@ namespace pkgB {
                }
                declare function <T,A> reduce(T[], (T,A) -> A):A
 
-               type WeightedAverage by (Entry[]) -> reduce(Entry[], (Entry, Int) -> Int + (Weight*Score))
+               type WeightedAverage inherits Int by (Entry[]) -> reduce(Entry[], (Entry, Int) -> Int + (Weight*Score))
             """.compiled()
                .objectType("WeightedAverage")
                .expression!! as LambdaExpression
 
             // it should resolve the generic parameter types
             val functionExpression = lambda.expression.asA<FunctionExpression>()
-            functionExpression.returnType.qualifiedName.should.equal(PrimitiveType.INTEGER.qualifiedName)
+            // Weighted average is a more specific return type than Int, so
+            // should be selected here.
+            functionExpression.returnType.qualifiedName.should.equal("WeightedAverage")
             val resolvedInputs = functionExpression.function.inputs
             resolvedInputs[0].asA<TypeExpression>().type.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Entry>")
 
