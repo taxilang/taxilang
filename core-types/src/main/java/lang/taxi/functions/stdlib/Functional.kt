@@ -6,6 +6,7 @@ object Functional {
    val functions:List<FunctionApi>  = listOf(
       Reduce,
       Fold,
+      Map,
       Sum,
       Max,
       Min
@@ -18,6 +19,12 @@ object Reduce: FunctionApi {
       get() = stdLibName("reduce")
 }
 
+object Map : FunctionApi {
+   override val taxi: String
+      get() = "declare extension function <T,A> map(collection: T[], callback: (T) -> A):A[]"
+   override val name: QualifiedName
+      get() = stdLibName("map")
+}
 object Fold : FunctionApi {
    override val taxi: String
       get() = "declare extension function <T,A> fold(collection: T[], initial: A, callback: (T,A) -> A):A"
