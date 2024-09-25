@@ -1,6 +1,8 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -233,5 +235,19 @@ type ListOfPerson inherits Person[]
       PrimitiveType.INTEGER.allInheritedTypes.shouldContainAll(PrimitiveType.ANY, PrimitiveType.NOTHING)
       PrimitiveType.INTEGER.inheritsFromPrimitive.should.be.`true`
       PrimitiveType.INTEGER.inheritsFromPrimitive.should.be.`true`
+   }
+
+   @Test
+   fun `considers supertypes in scalar`() {
+      val schema = """
+         model Person {
+            name : Name inherits String
+         }
+         model Superhuman inherits Person
+      """.compiled()
+      schema.type("Name").isScalar.shouldBeTrue()
+      schema.type("Person").isScalar.shouldBeFalse()
+      schema.type("Superhuman").isScalar.shouldBeFalse()
+
    }
 }
