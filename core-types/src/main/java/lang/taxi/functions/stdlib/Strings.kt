@@ -38,12 +38,12 @@ object Trim : FunctionApi {
 object Left : FunctionApi {
    override val taxi: String = """
       [[ Returns the left most characters from the source string ]]
-      declare function left(source:String,count:Int):String""".trimIndent()
+      declare extension function left(source:String,count:Int):String""".trimIndent()
    override val name: QualifiedName = stdLibName("left")
 }
 
 object Right : FunctionApi {
-   override val taxi: String = "declare function right(source:String,count:Int):String"
+   override val taxi: String = "declare extension function right(source:String,count:Int):String"
    override val name: QualifiedName = stdLibName("right")
 }
 
@@ -55,24 +55,24 @@ object Mid : FunctionApi {
       * `startIndex` - the start index (inclusive)
       * `endIndex` - the end index (exclusive)
       ]]
-      declare function mid(source: String,startIndex: Int,endIndex: Int):String""".trimIndent()
+      declare extension function mid(source: String,startIndex: Int,endIndex: Int):String""".trimIndent()
    override val name: QualifiedName = stdLibName("mid")
 }
 
 object Uppercase : FunctionApi {
-   override val taxi: String = "declare function upperCase(String):String"
+   override val taxi: String = "declare extension function upperCase(String):String"
    override val name: QualifiedName = stdLibName("upperCase")
 }
 
 
 object Lowercase : FunctionApi {
-   override val taxi: String = "declare function lowerCase(String):String"
+   override val taxi: String = "declare extension function lowerCase(String):String"
    override val name: QualifiedName = stdLibName("lowerCase")
 }
 
 object Length: FunctionApi {
    override val taxi: String
-      get() = "declare function length(String):Int"
+      get() = "declare extension function length(String):Int"
    override val name: QualifiedName
       get() = stdLibName("length")
 }
@@ -81,7 +81,7 @@ object Find: FunctionApi {
    override val taxi: String
       get() = """
          [[ Returns the index of `valueToSearchFor` within `source` ]]
-         declare function indexOf(source:String, valueToSearchFor:String):Int""".trimIndent()
+         declare extension function indexOf(source:String, valueToSearchFor:String):Int""".trimIndent()
    override val name: QualifiedName
       get() = stdLibName("indexOf")
 }
@@ -90,7 +90,7 @@ object ContainsString : FunctionApi {
    override val taxi: String
       get() = """
          [[ Returns true if `valueToSearchFor` within `source` ]]
-         declare function containsString(source:String, valueToSearchFor:String):Boolean""".trimIndent()
+         declare extension function containsString(source:String, valueToSearchFor:String):Boolean""".trimIndent()
    override val name: QualifiedName
       get() = stdLibName("containsString")
 }
@@ -103,7 +103,7 @@ object Replace : FunctionApi {
        * `searchValue: String`: The string to search for
        * `replacement: String`: The string to use as a replacement
       ]]
-      declare function replace(source: String, searchValue:String, replacement: String):String""".trimIndent()
+      declare extension function replace(source: String, searchValue:String, replacement: String):String""".trimIndent()
    override val name: QualifiedName = stdLibName("replace")
 
 }

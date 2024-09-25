@@ -20,6 +20,6 @@ object Convert : FunctionApi {
 
         As a result, it's also more performant.
        ]]
-      declare function <T> convert(source: Any, targetType: lang.taxi.Type<T>): T""".trimIndent()
+      declare extension function <T> convert(source: Any, targetType: lang.taxi.Type<T>): T""".trimIndent()
    override val name: QualifiedName = stdLibName("convert")
 }
