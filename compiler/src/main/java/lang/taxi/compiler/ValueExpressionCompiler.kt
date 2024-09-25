@@ -12,6 +12,7 @@ import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.accessors.NullValue
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.LiteralExpression
+import lang.taxi.expressions.ObjectExpression
 import lang.taxi.toCompilationUnit
 import lang.taxi.toCompilationUnits
 import lang.taxi.types.ArrayType
@@ -29,15 +30,21 @@ internal class ValueExpressionCompiler(private val expressionCompiler: Expressio
    fun objectValueAsExpression(
       objectValue: TaxiParser.ObjectValueContext,
       factType: Type?
-   ): Either<List<CompilationError>, LiteralExpression> {
+   ): Either<List<CompilationError>, Expression> {
       val objectType = factType ?: PrimitiveType.ANY
       return readObjectValue(objectValue, objectType)
-         .flatMap { parsedValue -> validateNoMissingFields(objectValue, parsedValue, objectType, false) }
+         .flatMap { parsedValue ->
+            validateNoMissingFields(objectValue, parsedValue, objectType, false)
+         }
          .map { parsedValue ->
             if (parsedValue == null) {
                LiteralExpression( LiteralAccessor(NullValue, objectType), objectValue.toCompilationUnits())
             } else {
-               LiteralExpression( LiteralAccessor(parsedValue, objectType), objectValue.toCompilationUnits())
+               if (parsedValue is Map<*, *>) {
+                  ObjectExpression(objectType, parsedValue as Map<String, Expression>,  objectValue.toCompilationUnits())
+               } else {
+                  LiteralExpression(LiteralAccessor(parsedValue, objectType), objectValue.toCompilationUnits())
+               }
             }
 
          }

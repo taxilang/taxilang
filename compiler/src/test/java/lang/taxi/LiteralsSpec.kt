@@ -7,6 +7,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.expressions.CastExpression
 import lang.taxi.expressions.LiteralArray
 import lang.taxi.expressions.LiteralExpression
+import lang.taxi.expressions.ObjectExpression
 import lang.taxi.types.PrimitiveType
 
 class LiteralsSpec : DescribeSpec({
@@ -37,10 +38,10 @@ class LiteralsSpec : DescribeSpec({
       it("should parse an object") {
          val expression = """{ name : "Jimmy" }""".compiled()
             .expressions.single()
-            .shouldBeInstanceOf<LiteralExpression>()
-         val map = expression.asLiteralMap()
+            .shouldBeInstanceOf<ObjectExpression>()
+         val map = expression.expressionMap
          map["name"]!!.returnType.shouldBe(PrimitiveType.STRING)
-         map["name"]!!.value.shouldBe("Jimmy")
+          (map["name"]!! as LiteralExpression).value.shouldBe("Jimmy")
       }
       it("should assign nested types based on target type") {
          val cast = """
@@ -53,12 +54,12 @@ class LiteralsSpec : DescribeSpec({
          """.compiled()
             .expressions.single()
             .shouldBeInstanceOf<CastExpression>()
-         val literal = cast.expression.shouldBeInstanceOf<LiteralExpression>()
-         val map = literal.asLiteralMap()
+         val objectExpression = cast.expression.shouldBeInstanceOf<ObjectExpression>()
+         val map = objectExpression.expressionMap
          map["id"]!!.returnType.qualifiedName.shouldBe("FilmId")
-         map["id"]!!.value.shouldBe(1)
+          (map["id"]!! as LiteralExpression).value.shouldBe(1)
          map["title"]!!.returnType.qualifiedName.shouldBe("Title")
-         map["title"]!!.value.shouldBe("Star Wars")
+          (map["title"]!! as LiteralExpression).value.shouldBe("Star Wars")
       }
 
       it("should assign nested types based on target type within an array") {
@@ -74,12 +75,12 @@ class LiteralsSpec : DescribeSpec({
             .shouldBeInstanceOf<CastExpression>()
          val literalArray = cast.expression.shouldBeInstanceOf<LiteralArray>()
 
-         val literal =literalArray.members.single().shouldBeInstanceOf<LiteralExpression>()
-         val map = literal.asLiteralMap()
+         val objectExpression =literalArray.members.single().shouldBeInstanceOf<ObjectExpression>()
+         val map = objectExpression.expressionMap
          map["id"]!!.returnType.qualifiedName.shouldBe("FilmId")
-         map["id"]!!.value.shouldBe(1)
+          (map["id"]!! as LiteralExpression).value.shouldBe(1)
          map["title"]!!.returnType.qualifiedName.shouldBe("Title")
-         map["title"]!!.value.shouldBe("Star Wars")
+          (map["title"]!! as LiteralExpression).value.shouldBe("Star Wars")
       }
       it("should fail to assign incompatible values in literal types") {
          val errors = """
