@@ -204,6 +204,13 @@ class ExpressionTypesSpec : DescribeSpec({
             .objectType("AccountType")
       }
 
+      it("is possible to use argument names in expression types") {
+         """
+            type Name inherits String
+            type UppercaseName inherits String by (name:Name) -> name.upperCase()
+         """.compiled()
+      }
+
       it("assigning a non-assignable type from an expression type statement generates an error") {
          val errorMessages  = """
             type Person {
