@@ -22,7 +22,7 @@ A collection of functions for manipulating strings
 `taxi.stdlib.left`
 
 ```taxi
-declare function left(source:String,count:Int):String
+declare extension function left(source:String,count:Int):String
 ```
 
 Returns the left most characters from the source string
@@ -31,14 +31,14 @@ Returns the left most characters from the source string
 `taxi.stdlib.right`
 
 ```taxi
-declare function right(source:String,count:Int):String
+declare extension function right(source:String,count:Int):String
 ```
 
 ### mid
 `taxi.stdlib.mid`
 
 ```taxi
-declare function mid(source: String,startIndex: Int,endIndex: Int):String
+declare extension function mid(source: String,startIndex: Int,endIndex: Int):String
 ```
 
 Returns the middle of a string, starting at the `startIndex`, and ending right before the `endIndex`.
@@ -57,14 +57,14 @@ declare function concat(Any...):String
 `taxi.stdlib.upperCase`
 
 ```taxi
-declare function upperCase(String):String
+declare extension function upperCase(String):String
 ```
 
 ### lowerCase
 `taxi.stdlib.lowerCase`
 
 ```taxi
-declare function lowerCase(String):String
+declare extension function lowerCase(String):String
 ```
 
 ### trim
@@ -78,14 +78,14 @@ declare function trim(String):String
 `taxi.stdlib.length`
 
 ```taxi
-declare function length(String):Int
+declare extension function length(String):Int
 ```
 
 ### indexOf
 `taxi.stdlib.indexOf`
 
 ```taxi
-declare function indexOf(source:String, valueToSearchFor:String):Int
+declare extension function indexOf(source:String, valueToSearchFor:String):Int
 ```
 
 Returns the index of `valueToSearchFor` within `source`
@@ -94,7 +94,7 @@ Returns the index of `valueToSearchFor` within `source`
 `taxi.stdlib.replace`
 
 ```taxi
-declare function replace(source: String, searchValue:String, replacement: String):String
+declare extension function replace(source: String, searchValue:String, replacement: String):String
 ```
 
 Replaces the contents of the provided String, returning a new String
@@ -107,7 +107,7 @@ Accepts three args:
 `taxi.stdlib.containsString`
 
 ```taxi
-declare function containsString(source:String, valueToSearchFor:String):Boolean
+declare extension function containsString(source:String, valueToSearchFor:String):Boolean
 ```
 
 Returns true if `valueToSearchFor` within `source`
@@ -148,7 +148,7 @@ declare function noneOf(values:Boolean...): Boolean
 `taxi.stdlib.single`
 
 ```taxi
-declare function <T> single(collection:T[], callback: (T) -> Boolean):T
+declare extension function <T> single(collection:T[], callback: (T) -> Boolean):T
 ```
 
 ### filter
@@ -173,7 +173,7 @@ Evaluates the predicate against the provided value, returning the value if the p
 `taxi.stdlib.singleBy`
 
 ```taxi
-declare function <T,A> singleBy(collection:T[], groupingFunction: (T) -> A, searchValue: A):T
+declare extension function <T,A> singleBy(collection:T[], groupingFunction: (T) -> A, searchValue: A):T
 ```
 
 Similar to Single, where the collection is searched for a single matching value.
@@ -183,7 +183,7 @@ However, results are first grouped by selector.  The results of this are cached 
 `taxi.stdlib.first`
 
 ```taxi
-declare function <T> first(collection: T[]):T
+declare extension function <T> first(collection: T[]):T
 ```
 
 Returns the first item within the collection
@@ -192,7 +192,7 @@ Returns the first item within the collection
 `taxi.stdlib.last`
 
 ```taxi
-declare function <T> last(collection: T[]):T
+declare extension function <T> last(collection: T[]):T
 ```
 
 Returns the last item within the collection
@@ -201,7 +201,7 @@ Returns the last item within the collection
 `taxi.stdlib.getAtIndex`
 
 ```taxi
-declare function <T> getAtIndex(collection: T[], index: Int):T
+declare extension function <T> getAtIndex(collection: T[], index: Int):T
 ```
 
 Returns the item at the provided index
@@ -274,7 +274,7 @@ Utilities for dealing with equality, etc
 `taxi.stdlib.equals`
 
 ```taxi
-declare function <A,B> equals(a:A, b:B): Boolean
+declare extension function <A,B> equals(a:A, b:B): Boolean
 ```
 
 ## Aggregations
@@ -296,35 +296,35 @@ Functions that are functionally functions. Funky
 `taxi.stdlib.reduce`
 
 ```taxi
-declare function <T,A> reduce(collection: T[], callback: (T,A) -> A):A
+declare extension function <T,A> reduce(collection: T[], callback: (T,A) -> A):A
 ```
 
 ### fold
 `taxi.stdlib.fold`
 
 ```taxi
-declare function <T,A> fold(collection: T[], initial: A, callback: (T,A) -> A):A
+declare extension function <T,A> fold(collection: T[], initial: A, callback: (T,A) -> A):A
 ```
 
 ### sum
 `taxi.stdlib.sum`
 
 ```taxi
-declare function <T,A> sum(collection: T[], callback: (T) -> A):A
+declare extension function <T,A> sum(collection: T[], callback: (T) -> A):A
 ```
 
 ### max
 `taxi.stdlib.max`
 
 ```taxi
-declare function <T,A> max(collection: T[], callback: (T) -> A):A
+declare extension function <T,A> max(collection: T[], callback: (T) -> A):A
 ```
 
 ### min
 `taxi.stdlib.min`
 
 ```taxi
-declare function <T,A> min(collection: T[], callback: (T) -> A):A
+declare extension function <T,A> min(collection: T[], callback: (T) -> A):A
 ```
 
 ## Transformations
@@ -335,7 +335,7 @@ Functions for converting between types
 `taxi.stdlib.convert`
 
 ```taxi
-declare function <T> convert(source: Any, targetType: lang.taxi.Type<T>): T
+declare extension function <T> convert(source: Any, targetType: lang.taxi.Type<T>): T
 ```
 
 Converts the provided source into the target type reference.
