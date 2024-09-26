@@ -238,10 +238,10 @@ class ExpressionTypesSpec : DescribeSpec({
                age : Age inherits Int
             }
 
-            type BestFriend inherits String by (Person[]) -> Person[].filter( (Age) -> Age > 18 )
+            type BestFriend inherits String by (Person[]) -> Person[].filter( (Age) -> Age > 18 ).first().convert(Age)
          """.validated()
             .errors()
-         errorMessages.shouldContainMessage("Type mismatch. Type of lang.taxi.Array<Person> is not assignable to type BestFriend")
+         errorMessages.shouldContainMessage("Type mismatch. Type of Age is not assignable to type BestFriend")
       }
    }
 

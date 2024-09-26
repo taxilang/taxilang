@@ -31,8 +31,8 @@ fun TypeChecker.assertIsAssignable(valueType: Type, receiverType: Type, token: P
 
    return when {
       valueType.isAssignableTo(receiverType) -> null
-      valueType.isScalar != receiverType.isScalar -> error()
-      Arrays.isArray(valueType) != Arrays.isArray(receiverType) -> error()
+//      valueType.isScalar != receiverType.isScalar -> error()
+//      Arrays.isArray(valueType) != Arrays.isArray(receiverType) -> error()
       // ValueType being an Any could happen in the else branch of a when clause, if using
       // an accessor (such as column/jsonPath/xpath) , where we can't infer the value type returned.
       valueType.basePrimitive == PrimitiveType.ANY -> null
