@@ -228,7 +228,16 @@ class ExpressionTypesSpec : DescribeSpec({
          person.asA<ObjectType>().allFields.shouldHaveSize(1)
       }
 
-
+      it("is illegal to return an array from an expression type") {
+         """
+            model Person {
+               age : Age inherits Int
+            }
+            type Adults by (Person[]) -> Person[].filter( (Age) -> Age > 18 )
+         """.validated()
+            .errors()
+            .shouldContainMessage("Expression types may not return arrays. Use a function instead")
+      }
 
 
       it("assigning a non-assignable type from an expression type statement generates an error") {
