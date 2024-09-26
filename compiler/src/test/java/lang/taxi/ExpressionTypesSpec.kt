@@ -2,12 +2,17 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.types.shouldBeInstanceOf
+import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.LambdaExpression
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.types.FormulaOperator
+import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
 
 class ExpressionTypesSpec : DescribeSpec({
@@ -210,9 +215,24 @@ class ExpressionTypesSpec : DescribeSpec({
             type UppercaseName inherits String by (name:Name) -> name.upperCase()
          """.compiled()
       }
+      it("validating attributes of expression types") {
+         val t = """
+            model Person {
+               name : Name inherits String
+            }
+            type UppercaseName by (Name) -> Name.upperCase()
+            type ExpressivePerson by (Person) -> Person
+         """.compiled()
+         val person = t.type("ExpressivePerson")
+         person.isScalar.shouldBeFalse()
+         person.asA<ObjectType>().allFields.shouldHaveSize(1)
+      }
+
+
+
 
       it("assigning a non-assignable type from an expression type statement generates an error") {
-         val errorMessages  = """
+         val errorMessages = """
             type Person {
                name : PersonName inherits String
                age : Age inherits Int
