@@ -228,6 +228,20 @@ class ExpressionTypesSpec : DescribeSpec({
          person.asA<ObjectType>().allFields.shouldHaveSize(1)
       }
 
+      it("is valid to use constraints in expression type inputs") {
+         val schema = """
+            model Person {
+               age : Age inherits Int
+            }
+            type Adults by (Person[](Age > 18)) -> Person[].first()
+         """.compiled()
+         val adults = schema.type("Adults")
+            .shouldBeInstanceOf<ObjectType>()
+         val expression = adults.expression.shouldBeInstanceOf<LambdaExpression>()
+         val typeExpression = expression.inputs.single().shouldBeInstanceOf<ProjectionFunctionScope>()
+            .expression.shouldBeInstanceOf<TypeExpression>()
+         typeExpression.constraints.shouldHaveSize(1)
+      }
       it("is illegal to return an array from an expression type") {
          """
             model Person {

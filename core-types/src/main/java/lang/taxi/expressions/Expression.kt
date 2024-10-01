@@ -11,6 +11,7 @@ import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.*
+import kotlin.math.exp
 
 // Note: Expression inheriting Accessor is tech debt,
 // and really around the wrong way.
@@ -36,6 +37,15 @@ data class LambdaExpression(
    override val compilationUnits: List<CompilationUnit>
 ) : Expression() {
    override val returnType: Type = expression.returnType
+
+   // type Adults by (age:Age) -> (Person[](Age > age)) -> Person[].first()
+   // This doesn't feel right - we shouldn't be collapsing inputs, we should be
+   // recursing expressions.
+   val allInputs:List<Argument> = if (expression is LambdaExpression) {
+      inputs + expression.allInputs
+   } else {
+      inputs
+   }
 }
 
 data class ObjectExpression(override val returnType: Type, val expressionMap: Map<String, Expression>, override val compilationUnits: List<CompilationUnit>): Literal, Expression() {
