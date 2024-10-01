@@ -817,7 +817,12 @@ class TokenProcessor(
       return expressionCompiler(scopedArguments = activeScopes).compile(expressionGroup, targetType = assignmentType)
          .flatMap { expression ->
             if (Arrays.isArray(expression.returnType)) {
-               listOf(CompilationError(expressionGroup.toCompilationUnit(), "Expression types may not return arrays. Use a function instead"))
+               listOf(
+                  CompilationError(
+                     expressionGroup.toCompilationUnit(),
+                     "Expression types may not return arrays. Use a function instead"
+                  )
+               )
                   .left()
             } else {
                expression.right()
@@ -845,12 +850,14 @@ class TokenProcessor(
 
 
       // Is there a loop somewhere?
-      val typesWithInheritenceLoops = inherits.filter { it.allInheritedTypes.any { it.toQualifiedName().parameterizedName == typeName } }
+      val typesWithInheritenceLoops =
+         inherits.filter { it.allInheritedTypes.any { it.toQualifiedName().parameterizedName == typeName } }
       if (typesWithInheritenceLoops.isNotEmpty()) {
          return CompilationError(
             ctx.toCompilationUnit(),
             "$typeName contains a loop in it's inheritance.  Check the inheritance of the following types: ${
-               typesWithInheritenceLoops.filter { it.toQualifiedName().parameterizedName != typeName }.joinToString { it.toQualifiedName().parameterizedName}
+               typesWithInheritenceLoops.filter { it.toQualifiedName().parameterizedName != typeName }
+                  .joinToString { it.toQualifiedName().parameterizedName }
             }"
          )
       }
@@ -1600,7 +1607,7 @@ class TokenProcessor(
       }
    }
 
-   private fun resolveGenericTypeArgument(
+   internal fun resolveGenericTypeArgument(
       declaringTypeOrFunctionName: String,
       referencedGenericTypeArgument: TypeReferenceContext
    ): TypeArgument {
@@ -1844,7 +1851,12 @@ class TokenProcessor(
       tokenName: String,
       context: ParserRuleContext
    ): Either<List<CompilationError>, List<TextFragmentWithCompiledToken>> {
-      val topLevelObject = context.searchUpForRule(listOf(SingleNamespaceDocumentContext::class.java, MultiNamespaceDocumentContext::class.java))
+      val topLevelObject = context.searchUpForRule(
+         listOf(
+            SingleNamespaceDocumentContext::class.java,
+            MultiNamespaceDocumentContext::class.java
+         )
+      )
       val importTokens = when (topLevelObject) {
          is SingleNamespaceDocumentContext -> topLevelObject.importDeclaration()
          is MultiNamespaceDocumentContext -> topLevelObject.importDeclaration()
@@ -2175,60 +2187,12 @@ class TokenProcessor(
          // That's ok, we can just return it out of the type system
          return typeSystem.getFunction(qualifiedName).right()
       }
-      val (namespace, functionToken) = namespaceAndParserContext
-      val typeArguments = (functionToken.typeArguments()?.typeReference() ?: emptyList()).map { typeType ->
-         resolveGenericTypeArgument(qualifiedName, typeType)
-      }
-      return parseType(
-         namespace,
-         functionToken.nullableTypeReference().typeReference(),
-         typeArguments
-      ).flatMap { returnType ->
-         val parameters =
-            functionToken.operationParameterList()?.operationParameter()?.mapIndexed { index, parameterDefinition ->
-               val anonymousParameterTypeName = "$qualifiedName\$Param$index"
-               parseParameter(
-                  namespace,
-                  parameterDefinition,
-                  typeArguments,
-                  anonymousParameterTypeName,
-                  paramIndex = index
-               )
-            }?.reportAndRemoveErrorList(errors) ?: emptyList()
-
-         val modifiers = functionToken.functionModifiers().map { modifier ->
-            FunctionModifier.forToken(modifier.text)
-         }.let {
-            if (it.isEmpty()) {
-               EnumSet.noneOf(FunctionModifier::class.java)
-            } else {
-               EnumSet.copyOf(it)
-            }
+      return FunctionCompiler(this).compileFunction(namespaceAndParserContext, qualifiedName)
+         .map { function ->
+            this.functions.add(function)
+            function
          }
 
-         if (modifiers.contains(FunctionModifier.Extension) && parameters.isEmpty()) {
-            return listOf(
-               CompilationError(
-                  functionToken.toCompilationUnit(),
-                  "Extension functions must have at least one parameter, as this defines the type the function can operate against"
-               )
-            )
-               .left()
-         }
-
-         val nullable = functionToken.nullableTypeReference().Nullable() != null
-         val typeDoc = parseTypeDoc(functionToken.typeDoc())
-         val function = Function(
-            qualifiedName,
-            FunctionDefinition(
-               parameters, returnType, nullable, modifiers, typeArguments, typeDoc, functionToken.toCompilationUnit()
-            )
-         )
-         this.functions.add(function)
-         this.typeSystem.register(function)
-
-         function.right()
-      }
    }
 
    private fun compileService(
@@ -2453,7 +2417,7 @@ class TokenProcessor(
          }
    }
 
-   private fun parseParameter(
+   internal fun parseParameter(
       namespace: Namespace,
       operationParameterContext: OperationParameterContext,
       typeArgumentsInScope: List<TypeArgument> = emptyList(),

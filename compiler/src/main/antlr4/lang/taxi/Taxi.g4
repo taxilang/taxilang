@@ -492,7 +492,16 @@ columnDefinition : 'column' '(' columnIndex ')' ;
 // rather than permitting void return types.
 // This is because in a mapping declaration, functions really only have purpose if
 // they return things.
-functionDeclaration: typeDoc? 'declare' (functionModifiers)* 'function' typeArguments? qualifiedName '(' operationParameterList? ')' ':' nullableTypeReference;
+functionDeclaration: typeDoc? K_Declare? (functionModifiers)* 'function' typeArguments? qualifiedName '(' operationParameterList? ')' ':' nullableTypeReference functionExpression?;
+
+// 26-Sep-24: Adding function expressions.
+// This is because expression types have started to hit bounds of complexity - especially
+// around returning array values.
+// The intent of functionExpression is to provide composibility of other functions.
+// Ultimately, logic of complex functions would still be pushed down into an implementation language.
+// But, functionExpressions would allow us to compose together other functions into something useful.
+// Also, unlike expression types (which now cannot return arrays), functions can return arrays
+functionExpression: '->' expressionGroup;
 
 functionModifiers: K_Query | K_Extension;
 
@@ -702,7 +711,7 @@ BooleanLiteral
 // names, operations and so on with words that are reserved in some context.
 
 identifier:
-   K_Table | K_Stream | K_Find | K_Map | K_Except | K_Call | K_Filter | K_Query | K_Extension  | K_Read | K_Write | IdentifierToken;
+   K_Table | K_Stream | K_Find | K_Map | K_Except | K_Call | K_Filter | K_Query | K_Extension  | K_Read | K_Write | K_Declare | IdentifierToken;
 
 K_Find: 'find';
 
@@ -758,6 +767,8 @@ K_Else: 'else';
 
 K_Query: 'query';
 K_Extension: 'extension';
+
+K_Declare: 'declare';
 
 K_Using: 'using';
 K_Excluding: 'excluding';

@@ -19,6 +19,7 @@ import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TypeReferenceSelector
 import java.util.*
 import kotlin.test.assertFailsWith
+import kotlin.test.fail
 
 
 class FunctionSpec : DescribeSpec({
@@ -115,6 +116,44 @@ class FunctionSpec : DescribeSpec({
             .field("initial")
       }
 
+      it("a declare function may not provide a body") {
+         """
+            declare function makeUpperCase(s:String):String -> s.toUpperCase()
+         """.validated()
+            .errors()
+            .shouldContainMessage("A declare function must not provide an implementation. Either update this definition to remove the 'declare' modifier, or remove the implementation")
+
+      }
+      it("a function definition must provide a body") {
+         """
+            function makeUpperCase(s:String):String
+         """.validated()
+            .errors()
+            .shouldContainMessage("A function that is not a 'declare' function must provide an implementation. Either update this definition to 'declare function', or provide an implementation")
+      }
+      it("generates a compiler error if the return type of a function expression is not assignable to the declared return type") {
+         """
+            declare extension function trim(String):String
+            declare extension function upperCase(String):String
+            extension function upperCut(s:String):Int -> s.trim().upperCase()""".trimIndent()
+            .validated()
+            .errors()
+            .shouldContainMessage("Type mismatch. Type of lang.taxi.String is not assignable to type lang.taxi.Int")
+      }
+      it("compiles a function expression ") {
+         val function = """
+            declare extension function trim(String):String
+            declare extension function upperCase(String):String
+            extension function upperCut(s:String):String -> s.trim().upperCase()""".trimIndent()
+            .compiled()
+            .function("upperCut")
+
+         function.isDefined.shouldBeTrue()
+         function.isExternalFunctionDeclaration.shouldBeFalse()
+         function.hasBody.shouldBeTrue()
+         function.body.shouldNotBeNull()
+         val expression = function.body!!.shouldBeInstanceOf<ExtensionFunctionExpression>()
+      }
    }
    describe("using read functions") {
       it("is valid to use a fully qualified reference to function inline") {
