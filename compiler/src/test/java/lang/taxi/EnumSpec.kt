@@ -2,6 +2,10 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldHaveSize
+import lang.taxi.expressions.LiteralArray
+import lang.taxi.query.FactValue
+import lang.taxi.query.Parameter
 import lang.taxi.types.PrimitiveType
 import lang.taxi.utils.Benchmark
 import org.spekframework.spek2.Spek
@@ -411,6 +415,61 @@ enum English {
          taxi.enumType("Selected").of(false).name.should.equal("false")
          taxi.enumType("Selected").of("false").name.should.equal("false")
 
+      }
+
+      it("can parse an array of strings enum values to enums in an array literal") {
+         val (a,b) = """
+         enum Country {
+            NZ("NZD"),
+            AU("AUD")
+         }
+         """.compiledWithQuery("""
+         given { c:Country[] = ["AUD","NZD"] }
+         find {
+            country : Country[]
+         }
+         """.trimIndent())
+         val arrayMembers = b.facts.single().asA<Parameter>()
+            .value.asA<FactValue.Expression>()
+            .expression.asA<LiteralArray>()
+            .members
+         arrayMembers.shouldHaveSize(2)
+      }
+      it("can parse an array of string enum names to enums in an array literal") {
+         val (a,b) = """
+         enum Country {
+            NZ("NZD"),
+            AU("AUD")
+         }
+         """.compiledWithQuery("""
+         given { c:Country[] = ["AU","NZ"] }
+         find {
+            country : Country[]
+         }
+         """.trimIndent())
+         val arrayMembers = b.facts.single().asA<Parameter>()
+            .value.asA<FactValue.Expression>()
+            .expression.asA<LiteralArray>()
+            .members
+         arrayMembers.shouldHaveSize(2)
+      }
+      it("can parse an array of enum references to enums in an array literal") {
+         val (a,b) = """
+         enum Country {
+            NZ("NZD"),
+            AU("AUD")
+         }
+         """.compiledWithQuery("""
+         given { c:Country[] = [Country.NZ, Country.AU] }
+         find {
+            country : Country[]
+         }
+         """.trimIndent())
+         val arrayMembers = b.facts.single().asA<Parameter>()
+            .value.asA<FactValue.Expression>()
+            .expression.asA<LiteralArray>()
+            .members
+         arrayMembers.shouldHaveSize(2)
       }
 
       it("should allow selection of boolean values") {
