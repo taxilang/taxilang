@@ -227,17 +227,32 @@ class ExpressionCompiler(
     * Parses an expression like
     * (A,B) -> A > B
     */
-   private fun parseLambdaExpression(lambdaExpression: ExpressionGroupContext, targetType: Type?): Either<List<CompilationError>, out Expression> {
+   private fun parseLambdaExpression(
+      lambdaExpression: ExpressionGroupContext,
+      targetType: Type?
+   ): Either<List<CompilationError>, out Expression> {
       require(lambdaExpression.children.size == 2) { "Expected exactly 2 children in the lambda expression" }
       require(lambdaExpression.expressionGroup().size == 1) { "expected exactly 1 expression group on the rhs of the lambda" }
       return lambdaExpression.expressionInputs()
          .expressionInput().mapIndexed { index, expressionInput ->
-            tokenProcessor.parseType(
-               expressionInput.findNamespace(),
-               expressionInput.nullableTypeReference().typeReference()
-            ).map { type ->
-               val name = expressionInput.identifier()?.text ?: "p$index"
-               ProjectionFunctionScope(name, type)
+            val parameterName = expressionInput.identifier()?.text ?: "p$index"
+            when {
+               // This is a standard type as a lambda input
+               // eg: ( SomeType )
+               expressionInput.nullableTypeReference() != null -> tokenProcessor.parseType(
+                  expressionInput.findNamespace(),
+                  expressionInput.nullableTypeReference().typeReference()
+               ).map { type ->
+                  ProjectionFunctionScope(parameterName, type)
+               }
+               // This is a type with constraints
+               // eg: ( SomeType( Foo == Bar ) )
+               expressionInput.expressionGroup() != null -> compile(expressionInput.expressionGroup(), targetType)
+                  .map { expression ->
+                     ProjectionFunctionScope(parameterName, expression.returnType, expression)
+                  }
+               else -> return listOf(CompilationError(lambdaExpression.toCompilationUnit(), "An internal error occurred: Unhandled branch in parseLambdaExpression with token ${lambdaExpression.text}"))
+                  .left()
             }
          }.invertEitherList().flattenErrors()
          .flatMap { inputs ->
@@ -414,7 +429,10 @@ class ExpressionCompiler(
       val receiverType = assignmentType ?: PrimitiveType.ANY
       return typeChecker.ifAssignableOrErrorList(rawAccessor.returnType, receiverType, literal) {
          LiteralExpression(
-            LiteralAccessor(literal.valueOrNullValue(), TypeUtils.getMostSpecificType(assignmentType ?: PrimitiveType.ANY, rawAccessor.returnType)),
+            LiteralAccessor(
+               literal.valueOrNullValue(),
+               TypeUtils.getMostSpecificType(assignmentType ?: PrimitiveType.ANY, rawAccessor.returnType)
+            ),
             literal.toCompilationUnits()
          )
       }
@@ -466,7 +484,7 @@ class ExpressionCompiler(
 
             !isNullCheck && !operator.supports(lhsType, rhsType) -> {
                listOf(
-                   CompilationError(
+                  CompilationError(
                      expressionGroup.toCompilationUnit(),
                      "Operations with symbol '${operator.symbol}' is not supported on types ${lhsType.declaration} and ${rhsType.declaration}"
                   )
