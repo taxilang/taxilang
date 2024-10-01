@@ -53,7 +53,7 @@ class OperationContextSpec : DescribeSpec({
                it.returnType.qualifiedName.shouldBe("TradeId")
             }
             constraint.operatorExpression.rhs.asA<ArgumentSelector>().should {
-               it.path.shouldBe("id")
+               it.scopeWithPath.shouldBe("id")
                it.scope.should { scope ->
                   scope.shouldBeInstanceOf<Parameter>()
                   scope.name.shouldBe("id")
@@ -165,12 +165,12 @@ class OperationContextSpec : DescribeSpec({
             expressionConstraint.operatorExpression.lhs.asA<OperatorExpression>().should { lhs ->
                lhs.lhs.asA<TypeExpression>().type.qualifiedName.shouldBe("TradeDate")
                lhs.operator.shouldBe(FormulaOperator.GreaterThanOrEqual)
-               lhs.rhs.asA<ArgumentSelector>().path.shouldBe("startDate")
+               lhs.rhs.asA<ArgumentSelector>().scopeWithPath.shouldBe("startDate")
             }
             expressionConstraint.operatorExpression.rhs.asA<OperatorExpression>().should { lhs ->
                lhs.lhs.asA<TypeExpression>().type.qualifiedName.shouldBe("TradeDate")
                lhs.operator.shouldBe(FormulaOperator.LessThan)
-               lhs.rhs.asA<ArgumentSelector>().path.shouldBe("endDate")
+               lhs.rhs.asA<ArgumentSelector>().scopeWithPath.shouldBe("endDate")
             }
          }
 

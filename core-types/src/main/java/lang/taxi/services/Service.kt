@@ -24,6 +24,15 @@ data class Parameter(
       val namePrefix = if (name.isNullOrBlank()) "" else "$name:"
       return "$annotationTaxi $namePrefix ${type.qualifiedName}".trim()
    }
+   override fun pruneFieldPath(path: List<String>): List<String> {
+      require(path.first() == this.name) { "Expected that the provided path was the name of this parameter"}
+      return path.drop(1)
+   }
+
+   override fun pruneFieldSelectors(fieldSelectors: List<FieldReferenceSelector>): List<FieldReferenceSelector> {
+      require(fieldSelectors.first().fieldName == this.name) { "Expected that the provided selectors started with the name of this parameter"}
+      return fieldSelectors.drop(1)
+   }
 }
 
 interface ServiceMember : Annotatable, Compiled, Documented, Named {
