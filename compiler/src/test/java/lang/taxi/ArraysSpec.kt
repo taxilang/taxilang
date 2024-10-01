@@ -2,9 +2,6 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.types.shouldBeInstanceOf
-import io.kotest.matchers.types.shouldNotBeInstanceOf
-import lang.taxi.types.ArrayType
 
 class ArraysSpec : DescribeSpec({
    describe("arrays") {

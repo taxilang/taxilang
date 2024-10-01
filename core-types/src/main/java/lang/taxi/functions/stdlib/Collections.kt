@@ -40,7 +40,7 @@ object Contains : FunctionApi {
 
 object Single : FunctionApi {
    override val taxi: String =
-      "declare function <T> single(collection:T[], callback: (T) -> Boolean):T"
+      "declare extension function <T> single(collection:T[], callback: (T) -> Boolean):T"
    override val name: QualifiedName = stdLibName("single")
 }
 
@@ -50,28 +50,28 @@ object SingleBy : FunctionApi {
          [[ Similar to Single, where the collection is searched for a single matching value.
          However, results are first grouped by selector.  The results of this are cached to improve future performance
          ]]
-         declare function <T,A> singleBy(collection:T[], groupingFunction: (T) -> A, searchValue: A):T""".trimIndent()
+         declare extension function <T,A> singleBy(collection:T[], groupingFunction: (T) -> A, searchValue: A):T""".trimIndent()
    override val name: QualifiedName = stdLibName("singleBy")
 }
 
 object First : FunctionApi {
    override val taxi: String = """
       [[ Returns the first item within the collection ]]
-      declare function <T> first(collection: T[]):T"""
+      declare extension function <T> first(collection: T[]):T"""
    override val name: QualifiedName = stdLibName("first")
 }
 
 object Last : FunctionApi {
    override val taxi: String = """
       [[ Returns the last item within the collection ]]
-      declare function <T> last(collection: T[]):T""".trimIndent()
+      declare extension function <T> last(collection: T[]):T""".trimIndent()
    override val name: QualifiedName = stdLibName("last")
 }
 
 object GetAtIndex : FunctionApi {
    override val taxi: String = """
       [[ Returns the item at the provided index ]]
-      declare function <T> getAtIndex(collection: T[], index: Int):T""".trimIndent()
+      declare extension function <T> getAtIndex(collection: T[], index: Int):T""".trimIndent()
    override val name: QualifiedName = stdLibName("getAtIndex")
 }
 

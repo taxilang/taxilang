@@ -7,6 +7,6 @@ object ObjectFunctions {
 }
 
 object Equals : FunctionApi {
-   override val taxi: String = "declare function <A,B> equals(a:A, b:B): Boolean"
+   override val taxi: String = "declare extension function <A,B> equals(a:A, b:B): Boolean"
    override val name: QualifiedName = stdLibName("equals")
 }

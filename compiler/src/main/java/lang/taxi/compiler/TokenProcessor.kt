@@ -748,7 +748,7 @@ class TokenProcessor(
 
       val inherits = declaredInheritence.let { explicitInheritence ->
          // If we have an expression, then the return type is inferrable from that
-         if (explicitInheritence == INHERITS_FROM_ANY && expression != null) {
+         if (explicitInheritence == INHERITS_FROM_ANY && expression != null && expression.returnType != interimType) {
             listOf(expression.returnType)
          } else {
             explicitInheritence
@@ -815,6 +815,15 @@ class TokenProcessor(
       assignmentType: ObjectType
    ): Either<List<CompilationError>, Expression> {
       return expressionCompiler(scopedArguments = activeScopes).compile(expressionGroup, targetType = assignmentType)
+         .flatMap { expression ->
+            if (Arrays.isArray(expression.returnType)) {
+               listOf(CompilationError(expressionGroup.toCompilationUnit(), "Expression types may not return arrays. Use a function instead"))
+                  .left()
+            } else {
+               expression.right()
+
+            }
+         }
    }
 
    private fun checkForCircularTypeInheritance(

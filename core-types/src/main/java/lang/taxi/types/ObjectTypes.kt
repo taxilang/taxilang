@@ -69,7 +69,7 @@ data class ObjectTypeDefinition(
          return expression?.asTaxi()
       }
 
-   val isScalar = fields.isEmpty()
+    val isScalar = fields.isEmpty() && inheritsFrom.all { it.isScalar }
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()

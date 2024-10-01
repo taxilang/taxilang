@@ -2,17 +2,18 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.types.shouldBeInstanceOf
+import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.LambdaExpression
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
-import lang.taxi.functions.FunctionAccessor
 import lang.taxi.types.FormulaOperator
+import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
-import org.spekframework.spek2.Spek
-import org.spekframework.spek2.style.specification.describe
 
 class ExpressionTypesSpec : DescribeSpec({
    describe("Expression types") {
@@ -185,7 +186,7 @@ class ExpressionTypesSpec : DescribeSpec({
          lambdaExpression.asTaxi().should.equal("ProductCalories > MinimumAcceptableCalories && ProductCalories < MaximumAcceptableCalories")
          lambdaExpression.operator.should.equal(FormulaOperator.LogicalAnd)
       }
-      it("is valid to use a when clause in an expression type") {
+      it("is valid to use a when clause in an expression type - passing a function") {
          """
       type CustomerType inherits String
       type AccountType inherits String by when(lowerCase(CustomerType)) {
@@ -195,6 +196,61 @@ class ExpressionTypesSpec : DescribeSpec({
       }
    """.compiled()
             .objectType("AccountType")
+      }
+      it("is valid to use a when clause in an expression type - passing a type expression") {
+         """
+      type CustomerType inherits String
+      type AccountType inherits String by (CustomerType) -> when(CustomerType) {
+           'retail'  -> 'Personal'
+           'sme' -> 'Personal'
+           else -> 'Business'
+      }
+   """.compiled()
+            .objectType("AccountType")
+      }
+
+      it("is possible to use argument names in expression types") {
+         """
+            type Name inherits String
+            type UppercaseName inherits String by (name:Name) -> name.upperCase()
+         """.compiled()
+      }
+      it("validating attributes of expression types") {
+         val t = """
+            model Person {
+               name : Name inherits String
+            }
+            type UppercaseName by (Name) -> Name.upperCase()
+            type ExpressivePerson by (Person) -> Person
+         """.compiled()
+         val person = t.type("ExpressivePerson")
+         person.isScalar.shouldBeFalse()
+         person.asA<ObjectType>().allFields.shouldHaveSize(1)
+      }
+
+      it("is illegal to return an array from an expression type") {
+         """
+            model Person {
+               age : Age inherits Int
+            }
+            type Adults by (Person[]) -> Person[].filter( (Age) -> Age > 18 )
+         """.validated()
+            .errors()
+            .shouldContainMessage("Expression types may not return arrays. Use a function instead")
+      }
+
+
+      it("assigning a non-assignable type from an expression type statement generates an error") {
+         val errorMessages = """
+            type Person {
+               name : PersonName inherits String
+               age : Age inherits Int
+            }
+
+            type BestFriend inherits String by (Person[]) -> Person[].filter( (Age) -> Age > 18 ).first().convert(Age)
+         """.validated()
+            .errors()
+         errorMessages.shouldContainMessage("Type mismatch. Type of Age is not assignable to type BestFriend")
       }
    }
 
