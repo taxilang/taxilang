@@ -1,5 +1,6 @@
 package lang.taxi
 
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldNotBeNull
 import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.stdlib.StdLibSchema

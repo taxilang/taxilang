@@ -13,6 +13,7 @@ object Collections {
       FilterEach,
       SingleBy,
       First,
+      ExactlyOne,
       Last,
       GetAtIndex
    )
@@ -36,6 +37,14 @@ object AllOf : FunctionApi {
 object Contains : FunctionApi {
    override val taxi: String = "declare extension function <T> contains(collection: T[], searchTarget:T): Boolean"
    override val name: QualifiedName = stdLibName("contains")
+}
+
+object ExactlyOne : FunctionApi {
+   override val taxi: String =
+      """
+         [[ Returns the only item from the provided collection, or errors if there isn't exactly one item in the collection ]]
+         declare extension function <T> exactlyOne(collection:T[]):T""".trimIndent()
+   override val name: QualifiedName = stdLibName("exactlyOne")
 }
 
 object Single : FunctionApi {
