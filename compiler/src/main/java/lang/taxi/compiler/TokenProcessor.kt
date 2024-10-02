@@ -19,8 +19,6 @@ import lang.taxi.expressions.LiteralArray
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.toExpressionGroup
 import lang.taxi.functions.Function
-import lang.taxi.functions.FunctionDefinition
-import lang.taxi.functions.FunctionModifier
 import lang.taxi.linter.Linter
 import lang.taxi.policies.*
 import lang.taxi.query.FactValue
@@ -410,17 +408,22 @@ class TokenProcessor(
 
       enumUnparsedTypes
          .plus(nonEnumParsedTypes)
-         .forEach { (tokenName, _) ->
-            compileToken(tokenName)
+         .forEach { (tokenName, namespaceTokenPair) ->
+            val (_,token) = namespaceTokenPair
+            compileToken(tokenName, token)
          }
    }
 
-   private fun compileToken(tokenName: String) {
+   private fun compileToken(tokenName: String, token: ParserRuleContext) {
       if (tokens.unparsedInlineTypes.containsKey(tokenName)) {
          // The requested type is defined inline.
          // Rather than compile the requested type, compile the type that declares it.
          val inlineTypeDeclarationType = tokens.unparsedInlineTypes.get(tokenName)!!
-         compileToken(inlineTypeDeclarationType)
+         if (inlineTypeDeclarationType == tokenName) {
+            errors.add(CompilationError(token.toCompilationUnit(), "Type $tokenName is redeclared within it's own type. This is invalid"))
+            return
+         }
+         compileToken(inlineTypeDeclarationType, token)
          return
       }
       val (namespace, tokenRule) = tokens.unparsedTypes[tokenName]!!
@@ -1695,7 +1698,7 @@ class TokenProcessor(
    ): Either<List<CompilationError>, Type> {
       return resolveUserToken(namespace, requestedTypeName, imports, context, symbolKind) { qualifiedTypeName ->
          if (tokens.containsUnparsedType(qualifiedTypeName, symbolKind)) {
-            compileToken(qualifiedTypeName)
+            compileToken(qualifiedTypeName, context)
             typeSystem.getTypeOrError(qualifiedTypeName, context).wrapErrorsInList()
          } else {
             null
@@ -1895,7 +1898,7 @@ class TokenProcessor(
          if (tokens.unparsedFunctions.contains(qualifiedName)) {
             compileFunction(tokens.unparsedFunctions[qualifiedName]!!, qualifiedName)
          } else if (tokens.containsUnparsedType(qualifiedName, SymbolKind.TYPE)) {
-            compileToken(qualifiedName)
+            compileToken(qualifiedName, context)
             typeSystem.getTypeOrError(qualifiedName, context).wrapErrorsInList()
                .map { it }
          } else if (tokens.containsUnparsedService(qualifiedName)) {

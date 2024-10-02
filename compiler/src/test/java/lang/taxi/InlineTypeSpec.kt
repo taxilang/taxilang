@@ -15,5 +15,12 @@ class InlineTypeSpec : DescribeSpec({
          """.compiled()
          doc.annotation("Table").field("table").type.qualifiedName.shouldBe("TableName")
       }
+
+      it("is illegal to refer to an inline type while compiling the type") {
+         """model Person {
+  person : Person inherits String
+}""".validated()
+            .errors().shouldContainMessage("Type Person is redeclared within it's own type. This is invalid")
+      }
    }
 })
