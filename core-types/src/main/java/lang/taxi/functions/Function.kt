@@ -2,6 +2,7 @@ package lang.taxi.functions
 
 import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Accessor
+import lang.taxi.expressions.Expression
 import lang.taxi.generics.TypeArgumentResolver
 import lang.taxi.generics.TypeResolutionFailedException
 import lang.taxi.services.Parameter
@@ -26,6 +27,7 @@ class FunctionDefinition(
    val returnTypeIsNullable: Boolean = false,
    val modifiers: EnumSet<FunctionModifier>,
    val typeArguments: List<TypeArgument>,
+   val body: Expression?,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TokenDefinition, Documented {
@@ -33,6 +35,13 @@ class FunctionDefinition(
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
 
+   /**
+    * Indicates if this function is a 'declare function' declaration - ie.,
+    * it does not have an implementation, and the implementation will be provided
+    * at runtime
+    */
+   val isExternalFunctionDeclaration: Boolean = body == null
+   val hasBody: Boolean = body != null
    val isExtensionFunction: Boolean = modifiers.contains(FunctionModifier.Extension)
    /**
     * In an extension function, the receiver type is the first parameter
@@ -87,17 +96,16 @@ class FunctionDefinition(
             throw TypeResolutionFailedException(errors)
          }
       }
-
-
       val resolvedParameters = TypeArgumentResolver.replaceTypeArguments(parameters, allResolvedTypeArguments)
-
       val resolvedReturnType = TypeArgumentResolver.replaceType(returnType, allResolvedTypeArguments)
+
       return FunctionDefinition(
          resolvedParameters,
          resolvedReturnType,
          returnTypeIsNullable,
          modifiers,
          typeArguments,
+         body,
          typeDoc,
          compilationUnit
       )
@@ -147,6 +155,16 @@ data class Function(
 
    val isExtension get() = definition?.isExtensionFunction ?: false
    val receiverType get() = definition?.receiverType
+   val hasBody get() = definition?.hasBody ?: false
+
+   /**
+    * Indicates if this function is a 'declare function' declaration - ie.,
+    * it does not have an implementation, and the implementation will be provided
+    * at runtime
+    */
+   val isExternalFunctionDeclaration: Boolean = definition?.isExternalFunctionDeclaration ?: false
+
+   val body = definition?.body
 
    override val typeDoc: String?
       get() {
@@ -157,6 +175,7 @@ data class Function(
       get() {
          return if (isDefined) this.definition!!.parameters else emptyList()
       }
+
 
    val returnTypeIsNullable: Boolean
       get() {

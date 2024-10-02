@@ -224,7 +224,7 @@ service MyService {
 
       val expressionConstraint = contract.returnTypeConstraints[1] as ExpressionConstraint
       expressionConstraint.operatorExpression.rhs.asA<ArgumentSelector>().should {
-         it.path.shouldBe("request.target")
+         it.scopeWithPath.shouldBe("request.target")
          it.returnType.qualifiedName.shouldBe("Currency")
       }
    }

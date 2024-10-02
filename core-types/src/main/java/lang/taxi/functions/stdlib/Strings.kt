@@ -31,7 +31,7 @@ object Concat : FunctionApi {
 }
 
 object Trim : FunctionApi {
-   override val taxi: String = "declare function trim(String):String"
+   override val taxi: String = "declare extension function trim(String):String"
    override val name: QualifiedName = stdLibName("trim")
 }
 

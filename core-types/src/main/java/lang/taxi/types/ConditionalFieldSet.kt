@@ -107,6 +107,7 @@ data class ArgumentSelector(
    override val declaredType: Type = selectors.lastOrNull()?.declaredType ?: scope.type
    override val returnType: Type = declaredType
    val path = selectors.joinToString(".") { it.fieldName }
+   val scopeWithPath = listOf(scope.name, path).filter { it.isNotEmpty() }.joinToString(".")
    override fun asTaxi(): String = "${scope.name}.$path"
 
    private val equality = ImmutableEquality(this,
