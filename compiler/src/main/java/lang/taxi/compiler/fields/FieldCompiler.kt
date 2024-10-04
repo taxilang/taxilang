@@ -377,7 +377,7 @@ class FieldCompiler(
       return tokenProcessor.parseProjectionScope(
          typeProjection.expressionInputs(),
          projectionSourceType,
-         argumentsInScope
+         argumentsInScope + this.resolutionContext.argumentsInScope
       )
          .flatMap { projectionScope ->
             val projectedType = when {

@@ -1,6 +1,7 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
+import io.kotest.common.runBlocking
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldContainExactly
@@ -11,6 +12,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.accessors.Argument
 import lang.taxi.expressions.*
 import lang.taxi.types.*
+import org.junit.jupiter.api.Test
 
 class ExpressionsSpec : DescribeSpec({
 
@@ -455,6 +457,49 @@ class ExpressionsSpec : DescribeSpec({
                """stream { UserUpdateMessage.filterEach( (msg:UserUpdateMessage) -> msg.wrongField == "a" ) }"""
             )
             error.errors.shouldContainMessage("Cannot resolve reference wrongField against type UserUpdateMessage")
+         }
+         it("can reference a global scope variable by name in a filter expression") {
+            """
+            model Movie {
+               cast : Actor[]
+            }
+            model Actor {
+               name : Name inherits String
+            }
+            service Movies {
+               operation findOne():Movie
+            }
+         """.compiledWithQuery(
+               """
+            given { name : Name = 'Mark' }
+            find { Movie } as (cast:Actor[]) -> {
+               starring : Actor[] by cast.filter( (Name) -> Name == name )
+            }
+      """
+            )
+         }
+         it("can reference a global scope variable by name as an input to a projection scope") {
+            """
+            declare extension function <T> filter(collection:T[], callback: (T) -> Boolean):T[]
+            model Movie {
+               cast : Actor[]
+            }
+            model Actor {
+               name : Name inherits String
+            }
+            service Movies {
+               operation findOne():Movie
+            }
+         """.compiledWithQuery(
+               """
+            given { actorsName : Name = 'Mark' }
+            find { Movie } as (cast:Actor[]) -> {
+               starring : Actor[] as (filteredCast:Actor[] by cast.filter( (Name) -> Name == actorsName )) -> {
+                  name: Name
+               }[]
+            }
+      """
+            )
          }
       }
    }

@@ -1428,7 +1428,7 @@ class TokenProcessor(
                         )
                      ).left()
                   } else {
-                     resolveProjectionScopeInputExpression(identifier, expression, inputType)
+                     resolveProjectionScopeInputExpression(identifier, expression, inputType, arguments)
                   }
                }
                // Inferred Type from Expression

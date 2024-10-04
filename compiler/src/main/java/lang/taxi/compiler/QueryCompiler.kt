@@ -53,7 +53,7 @@ internal class QueryCompiler(
             parseTypeToProject(
                ctx.queryOrMutation()?.typeProjection(),
                typesToDiscover,
-               parameters
+               facts + parameters
             ).flatMap { typeToProject ->
                parseMutation(ctx.queryOrMutation().mutation()).flatMap { mutation ->
                   parseServiceRestrictions(ctx.queryOrMutation().serviceRestrictions()).map { serviceRestrictions ->
