@@ -15,7 +15,8 @@ object Collections {
       First,
       ExactlyOne,
       Last,
-      GetAtIndex
+      GetAtIndex,
+      Intersection
    )
 }
 
@@ -99,4 +100,13 @@ object FilterEach : FunctionApi {
          ]]
          declare extension function <T> filterEach(item: T, callback: (T) -> Boolean):T?""".trimIndent()
    override val name: QualifiedName = stdLibName("filterEach")
+}
+
+object Intersection : FunctionApi {
+   override val taxi: String =
+      """[[
+         Returns a collection containing the items present in both the provided collections
+         ]]
+         declare extension function <T> intersection(collectionA: T[], collectionB: T[]):T[]""".trimIndent()
+   override val name: QualifiedName = stdLibName("intersection")
 }
