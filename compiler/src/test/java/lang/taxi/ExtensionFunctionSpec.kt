@@ -121,6 +121,22 @@ class ExtensionFunctionSpec : DescribeSpec({
          expression.functionExpression.function.qualifiedName.shouldBe("taxi.stdlib.filterEach")
       }
 
+      it("is valid to call an extesnion function on a named parameter") {
+         val (schema,query) = """
+            declare extension function <T> filter(collection:T[], callback: (T) -> Boolean):T[]
+            model Movie {
+               cast : Actor[]
+            }
+            model Actor {
+               name : Name inherits String
+            }
+         """.compiledWithQuery("""
+            find { Movie } as (cast:Actor[]) -> {
+               starring : Actor[] by cast.filter( (Name) -> Name == 'Mark' )
+            }
+         """.trimIndent())
+      }
+
 
    }
 })
