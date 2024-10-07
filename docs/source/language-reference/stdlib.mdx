@@ -188,6 +188,15 @@ declare extension function <T> first(collection: T[]):T
 
 Returns the first item within the collection
 
+### exactlyOne
+`taxi.stdlib.exactlyOne`
+
+```taxi
+declare extension function <T> exactlyOne(collection:T[]):T
+```
+
+Returns the only item from the provided collection, or errors if there isn't exactly one item in the collection
+
 ### last
 `taxi.stdlib.last`
 
@@ -205,6 +214,15 @@ declare extension function <T> getAtIndex(collection: T[], index: Int):T
 ```
 
 Returns the item at the provided index
+
+### intersection
+`taxi.stdlib.intersection`
+
+```taxi
+declare extension function <T> intersection(collectionA: T[], collectionB: T[]):T[]
+```
+
+Returns a collection containing the items present in both the provided collections
 
 ## Dates
 
@@ -355,3 +373,21 @@ Converts the provided source into the target type reference.
   - No graph searches or remote invocations are performed
 
   As a result, it's also more performant.
+
+### toRawType
+`taxi.stdlib.toRawType`
+
+```taxi
+declare extension function toRawType(source: Any):Any
+```
+
+Removes the semantic typing from the provided scalar value, returning a scalar value
+typed with the raw primitive type.
+
+This can be useful if trying to compare values ignoring their type.
+
+- If called with an Array, will remove semantic types of all members. The array should only contain scalar values.
+- If called with a scalar value, will remove the semantic type of the value
+
+Not supported for calling on an object (or array of objects), as Taxi's type system
+is structural, and needs to know the structure of the type it's operating on.

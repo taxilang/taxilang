@@ -172,7 +172,7 @@ class DefaultTypeMapper(
             values = enumValues,
             annotations = emptyList(), // TODO : Support annotations on Enums when exporting
             compilationUnit = exportedCompilationUnit(element),
-            basePrimitive = PrimitiveType.STRING // TODO
+            valueType = PrimitiveType.STRING // TODO
          )
       )
    }

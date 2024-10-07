@@ -126,7 +126,7 @@ class EnumTypeTest {
       val definition = EnumDefinition(
          values = values,
          compilationUnit = CompilationUnit(SourceCode("", "")),
-         basePrimitive = PrimitiveType.STRING
+         valueType = PrimitiveType.STRING
       )
       return EnumType("Currency", definition)
    }

@@ -10,6 +10,7 @@ import lang.taxi.types.Named
 import lang.taxi.types.NamespaceToken
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.toQualifiedName
+import lang.taxi.utils.flatMapLeft
 import lang.taxi.utils.takeHead
 import org.antlr.v4.runtime.ParserRuleContext
 import java.util.concurrent.ConcurrentHashMap
@@ -195,6 +196,21 @@ class SymbolTree {
       }
    }
 
+   /**
+    * Resolves a list of strings to a member, considering imported values
+    * for things like extension functions.
+    *
+    * There is a conflict in how implicit lookups are performed,
+    * as both extension functions and enum defaults attempt to provide
+    * behaviour for non-defined values.
+    *
+    * Therefore, for enums the following order-of-precedence exists:
+    *  - Explicit values defined on an enum
+    *  - Extension functions, matched by imported name (or declared in the same namespace)
+    *  - Default values on the enum
+    *  - Throw an error
+    *
+    */
    private fun resolveMember(
       named: TextFragmentWithCompiledToken,
       remainingNameParts: List<String>,
@@ -206,14 +222,30 @@ class SymbolTree {
       return remainingNameParts.fold(listOf(named)) { acc, name ->
          val last = acc.last()
          if (last.value is HasMembers<*>) {
-            val member = last.value.getMember(name)
-               .getOrElse { errorMessage ->
-                  // The parent didn't have a member matching the
-                  // requested name.
-                  // Throw an error
+            val resolvedMember = last.value.getMember(name, permitImplicitResolution = false)
+               .map { resolvedMember -> TextFragmentWithCompiledToken(name,resolvedMember) }
+               .flatMapLeft { error ->
+                  // It wasn't available as an explicit value on the member (but might be an implicit value - like an enum default)
+                  // First, check if this is resolved via imports (ie., is it an extension function?)
+                  val resolvedViaImports = resolveViaImports(
+                     name,
+                     currentNamespace,
+                     imports
+                  )
+                  if (resolvedViaImports == null) {
+                     // The parent didn't have a member matching the
+                     // requested name, and we coulnd't resolve it as an extension function
+                     // Try now using implicit resolution (ie., default values)
+                     // If this fails, we give up.
+                     last.value.getMember(name, permitImplicitResolution = true)
+                        .map { resolvedMember -> TextFragmentWithCompiledToken(name,resolvedMember) }
+                  } else {
+                     resolvedViaImports.right()
+                  }
+               }.getOrElse { errorMessage ->
                   return errorMessage.left()
                }
-            acc + TextFragmentWithCompiledToken(name,member)
+            acc + resolvedMember
          } else {
 
             // It doesn't have any members.
@@ -234,11 +266,6 @@ class SymbolTree {
 
          }
       }.right()
-      // TODO ...
-
-      // otherwise, can we resolve this as an extension function?
-
-      TODO("Not yet implemented")
    }
 
 

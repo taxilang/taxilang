@@ -17,6 +17,7 @@ object StdLib {
          Transformations.functions +
          Dates.functions +
          Errors.functions +
+         EnumFunctions.functions +
          listOf(Coalesce)
    val taxi = functions.namespacedTaxi() + BuiltIns.taxi
 }

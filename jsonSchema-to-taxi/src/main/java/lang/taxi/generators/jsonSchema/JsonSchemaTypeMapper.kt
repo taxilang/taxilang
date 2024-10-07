@@ -197,7 +197,7 @@ class JsonSchemaTypeMapper(
             enumValues,
             compilationUnit = CompilationUnit.unspecified(),
             typeDoc = schema.description,
-            basePrimitive = PrimitiveType.STRING
+            valueType = PrimitiveType.STRING
          )
       )
    }

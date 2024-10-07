@@ -145,7 +145,7 @@ class ProtobufTypeMapper(
                Annotation(ProtobufMessageAnnotation.NAME)
             ),
             typeDoc = type.documentation,
-            basePrimitive = PrimitiveType.STRING,
+            valueType = PrimitiveType.STRING,
             compilationUnit = CompilationUnit.unspecified()
          )
       )
