@@ -295,7 +295,7 @@ typeArguments: '<' typeReference (',' typeReference)* '>';
 
 // A "lenient" enum will match on case insensitive values
 enumDeclaration
-    :    typeDoc? annotation* lenientKeyword? 'enum' qualifiedName
+    :    typeDoc? annotation* lenientKeyword? 'enum' qualifiedName typeArguments?
          (('inherits' enumInheritedType) | ('{' enumConstants? '}'))
     ;
 
@@ -312,7 +312,7 @@ enumConstant
     ;
 
 enumValue
-   : '(' literal ')'
+   : '(' (literal | objectValue) ')'
    ;
 
 enumSynonymDeclaration

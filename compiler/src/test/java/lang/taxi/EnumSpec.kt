@@ -3,14 +3,19 @@ package lang.taxi
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.expressions.LiteralArray
 import lang.taxi.query.FactValue
 import lang.taxi.query.Parameter
 import lang.taxi.types.PrimitiveType
+import lang.taxi.types.TypedValue
 import lang.taxi.utils.Benchmark
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.util.concurrent.TimeUnit
+import kotlin.test.fail
 
 class EnumSpec : DescribeSpec({
 
@@ -516,6 +521,98 @@ enum English {
             val hash2 = frenchB.hashCode()
             hash1 == hash2
          }
+      }
+      it("can declare an enum with an object body") {
+         val type = """
+            model ErrorDetails {
+               code : ErrorCode inherits Int
+               message : ErrorMessage inherits String
+            }
+            enum Errors<ErrorDetails> {
+               BadRequest({ code : 400, message : 'Bad Request' }),
+               Unauthorized({ code : 401, message : 'Unauthorized' })
+            }
+         """.compiled()
+            .enumType("Errors")
+         type.valueType!!.qualifiedName.shouldBe("ErrorDetails")
+         val typedValue = type.ofName("BadRequest").value.shouldBeInstanceOf<TypedValue>()
+         typedValue.type.qualifiedName.shouldBe("ErrorDetails")
+         typedValue.value.shouldBe(mapOf(
+            "code" to 400,
+            "message" to "Bad Request"
+         ))
+      }
+      it("can declare an enum with an object body with a default value") {
+         val type = """
+            model ErrorDetails {
+               code : ErrorCode inherits Int
+               message : ErrorMessage inherits String
+            }
+            enum Errors<ErrorDetails> {
+               default BadRequest({ code : 400, message : 'Bad Request' }),
+               Unauthorized({ code : 401, message : 'Unauthorized' })
+            }
+         """.compiled()
+            .enumType("Errors")
+         type.valueType!!.qualifiedName.shouldBe("ErrorDetails")
+         val typedValue = type.ofName("Poopsy").value.shouldBeInstanceOf<TypedValue>()
+         typedValue.type.qualifiedName.shouldBe("ErrorDetails")
+         typedValue.value.shouldBe(mapOf(
+            "code" to 400,
+            "message" to "Bad Request"
+         ))
+      }
+      it("is illegal to declare an enum with multiple type arguments") {
+          """
+            model ErrorDetails {
+               code : ErrorCode inherits Int
+               message : ErrorMessage inherits String
+            }
+            enum Errors<ErrorDetails, ErrorCode> {
+               BadRequest({ code : 400, message : 'Bad Request' }),
+               Unauthorized({ code : 401, message : 'Unauthorized' })
+            }
+         """.validated()
+            .shouldContainMessage("An enum supports at most 1 type argument")
+      }
+      it("reports errors if an assigned field value of an enum is not assignable") {
+         val errors = """ model ErrorDetails {
+               code : ErrorCode inherits Int
+               message : ErrorMessage inherits String
+            }
+            enum Errors<ErrorDetails> {
+            // String is not assignable to int
+               BadRequest({ code : "400", message : 'Bad Request' }),
+               Unauthorized({ code : 401, message : 'Unauthorized' })
+            }
+         """.validated()
+         errors.errors().shouldContainMessage("Type mismatch. Type of lang.taxi.String is not assignable to type ErrorCode")
+      }
+      it("reports errors if a required field value of an enum is not provided") {
+         val errors = """ model ErrorDetails {
+               code : ErrorCode inherits Int
+               message : ErrorMessage inherits String
+            }
+            enum Errors<ErrorDetails> {
+            // Message is missing
+               BadRequest({ code : 400 }),
+               Unauthorized({ code : 401, message : 'Unauthorized' })
+            }
+         """.validated()
+         errors.errors().shouldContainMessage("Map is not assignable to type ErrorDetails as mandatory properties message are missing")
+      }
+      it("reports errors if the entire value is of wrong type") {
+         val errors = """ model ErrorDetails {
+               code : ErrorCode inherits Int
+               message : ErrorMessage inherits String
+            }
+            enum Errors<ErrorDetails> {
+            // Wrong type
+               BadRequest("Bad Request"),
+               Unauthorized({ code : 401, message : 'Unauthorized' })
+            }
+         """.validated()
+         errors.errors().shouldContainMessage("Value of Bad Request is not assignable to type ErrorDetails")
       }
    }
 })

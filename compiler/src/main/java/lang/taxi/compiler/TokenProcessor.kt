@@ -17,6 +17,7 @@ import lang.taxi.compiler.fields.TypeBodyContext
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.LiteralArray
 import lang.taxi.expressions.LiteralExpression
+import lang.taxi.expressions.ObjectExpression
 import lang.taxi.expressions.toExpressionGroup
 import lang.taxi.functions.Function
 import lang.taxi.linter.Linter
@@ -409,7 +410,7 @@ class TokenProcessor(
       enumUnparsedTypes
          .plus(nonEnumParsedTypes)
          .forEach { (tokenName, namespaceTokenPair) ->
-            val (_,token) = namespaceTokenPair
+            val (_, token) = namespaceTokenPair
             compileToken(tokenName, token)
          }
    }
@@ -420,7 +421,12 @@ class TokenProcessor(
          // Rather than compile the requested type, compile the type that declares it.
          val inlineTypeDeclarationType = tokens.unparsedInlineTypes.get(tokenName)!!
          if (inlineTypeDeclarationType == tokenName) {
-            errors.add(CompilationError(token.toCompilationUnit(), "Type $tokenName is redeclared within it's own type. This is invalid"))
+            errors.add(
+               CompilationError(
+                  token.toCompilationUnit(),
+                  "Type $tokenName is redeclared within it's own type. This is invalid"
+               )
+            )
             return
          }
          compileToken(inlineTypeDeclarationType, token)
@@ -1948,10 +1954,13 @@ class TokenProcessor(
       typeName: String,
       ctx: EnumDeclarationContext
    ): Either<List<CompilationError>, EnumType> {
-      return compileEnumValues(namespace, typeName, ctx.enumConstants())
-         .map { enumValues ->
+      return compileEnumTypeArguments(ctx.typeArguments()).flatMap { typeArgument ->
+         compileEnumValues(namespace, typeName, ctx.enumConstants(), typeArgument).map { enumValues ->
+            val basePrimitive = if (typeArgument == null) deriveEnumBaseType(enumValues) else null
+            val valueType = typeArgument ?: basePrimitive
+            ?: error("An internal error occurred - expected either a base primitive or a value type")
+
             val annotations = collateAnnotations(ctx.annotation())
-            val basePrimitive = deriveEnumBaseType(enumValues)
             val inherits = parseEnumInheritance(namespace, ctx.enumInheritedType())
             val isLenient = ctx.lenientKeyword() != null
             val enumType = EnumType(
@@ -1961,15 +1970,26 @@ class TokenProcessor(
                   ctx.toCompilationUnit(),
                   inheritsFrom = if (inherits != null) listOf(inherits) else INHERITS_FROM_ANY,
                   typeDoc = parseTypeDoc(ctx.typeDoc()),
-                  basePrimitive = basePrimitive,
-                  isLenient = isLenient
+                  isLenient = isLenient,
+                  valueType = valueType
                )
             )
             typeSystem.register(enumType)
             enumType
          }
+      }
+   }
 
-
+   private fun compileEnumTypeArguments(typeArguments: TypeArgumentsContext?): Either<List<CompilationError>, Type?> {
+      if (typeArguments == null || typeArguments.typeReference().isNullOrEmpty()) {
+         return null.right()
+      }
+      val typeReferences = typeArguments.typeReference()!!
+      if (typeReferences.size != 1) {
+         return listOf(CompilationError(typeArguments.toCompilationUnit(), "An enum supports at most 1 type argument"))
+            .left()
+      }
+      return parseType(typeArguments.findNamespace(), typeReferences.single())
    }
 
    private fun deriveEnumBaseType(enumValues: List<EnumValue>): PrimitiveType {
@@ -2003,7 +2023,8 @@ class TokenProcessor(
    private fun compileEnumValues(
       namespace: Namespace,
       enumQualifiedName: String,
-      enumConstants: EnumConstantsContext?
+      enumConstants: EnumConstantsContext?,
+      valueType: Type?
    ): Either<List<CompilationError>, List<EnumValue>> {
       @Suppress("IfThenToElvis")
       return if (enumConstants == null) {
@@ -2013,22 +2034,70 @@ class TokenProcessor(
             val annotations = collateAnnotations(enumConstant.annotation())
             val name = unescape(enumConstant.identifier().text)
             val qualifiedName = "$enumQualifiedName.$name"
-            val value = enumConstant.enumValue()?.literal()?.value() ?: name
-            val isDefault = enumConstant.defaultKeyword() != null
-            parseSynonyms(enumConstant).map { synonyms ->
-               synonymRegistry.registerSynonyms(qualifiedName, synonyms, enumConstant)
-               EnumValue(
-                  name,
-                  value,
-                  qualifiedName,
-                  annotations,
-                  synonyms,
-                  parseTypeDoc(enumConstant.typeDoc()),
-                  isDefault
-               )
+            when {
+               enumConstant.enumValue()?.literal() != null -> enumConstant.enumValue()!!.literal().value().right()
+               enumConstant.enumValue()?.objectValue() != null -> {
+                  if (valueType == null) {
+                     listOf(
+                        CompilationError(
+                           enumConstant.toCompilationUnit(),
+                           "An enum that decalres an object value must declare a type - eg: enum MyEnum<MyValueType>"
+                        )
+                     )
+                        .left()
+                  } else {
+                     // parsing object values in enums
+                     val objectValue = enumConstant.enumValue().objectValue()
+                     val errors = mutableListOf<CompilationError>()
+                     val valueCompiler = ValueExpressionCompiler(ExpressionCompiler(this, this.typeChecker, errors))
+                     valueCompiler.objectValueAsExpression(objectValue, valueType).flatMap { expression ->
+                        if (expression !is ObjectExpression) {
+                           listOf(
+                              CompilationError(
+                                 enumConstant.toCompilationUnit(),
+                                 "An enum's value must be a literal"
+                              )
+                           )
+                              .left()
+                        } else {
+                           expression.asTypedValue().right()
+                        }
+                     }
+
+                  }
+               }
+
+               else -> name.right()
+            }.flatMap { value ->
+               // validate the value maps the value type
+               when {
+                  valueType == null -> value.right()
+                  value !is TypedValue -> listOf(
+                     CompilationError(
+                        enumConstant.toCompilationUnit(),
+                        "Value of $value is not assignable to type ${valueType!!.qualifiedName}"
+                     )
+                  )
+                     .left()
+                  // At this point, we have a TypedValue, and a Type that it's expected to be assignable to.
+                  else -> typeChecker.ifAssignableOrErrorList(value.type, valueType, enumConstant) { value }
+               }
+            }.flatMap { value ->
+               val isDefault = enumConstant.defaultKeyword() != null
+               parseSynonyms(enumConstant).map { synonyms ->
+                  synonymRegistry.registerSynonyms(qualifiedName, synonyms, enumConstant)
+                  EnumValue(
+                     name,
+                     value,
+                     qualifiedName,
+                     annotations,
+                     synonyms,
+                     parseTypeDoc(enumConstant.typeDoc()),
+                     isDefault
+                  )
+               }
             }
-         }.invertEitherList()
-            .mapLeft { listOfLists: List<List<CompilationError>> -> listOfLists.flatten() }
+         }.invertEitherList().flattenErrors()
             .flatMap { enumValues -> validateOnlySingleDefaultEnumValuePresent(enumValues, enumConstants) }
       }
 

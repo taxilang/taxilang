@@ -121,6 +121,27 @@ class ExtensionFunctionSpec : DescribeSpec({
          expression.functionExpression.function.qualifiedName.shouldBe("taxi.stdlib.filterEach")
       }
 
+      it("is valid to declare an extension function against a type") {
+         """
+         declare extension function <T> lookupEnumByName(enumType: lang.taxi.Type<T>, enumName: String): T
+         model ErrorDetails {
+            code : ErrorCode inherits Int
+            message : ErrorMessage inherits String
+         }
+         enum Errors<ErrorDetails> {
+            BadRequest({ code : 400, message : 'Bad Request' }),
+            Unauthorized({ code : 401, message : 'Unauthorized' })
+         }
+         """.compiledWithQuery(
+            """
+            given { errorResponse : String = 'BadRequest' }
+            find {
+               error : ErrorDetails by Errors.lookupEnumByName(errorResponse)
+            }
+            """.trimIndent()
+         )
+      }
+
       it("is valid to call an extesnion function on a named parameter") {
          val (schema,query) = """
             declare extension function <T> filter(collection:T[], callback: (T) -> Boolean):T[]

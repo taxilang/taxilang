@@ -100,7 +100,7 @@ class AvroTypeMapper(
                typeDoc = schema.doc,
                compilationUnit = CompilationUnit.unspecified(),
                // This might need to be string?
-               basePrimitive = PrimitiveType.INTEGER
+               valueType = PrimitiveType.INTEGER
             )
          )
       }

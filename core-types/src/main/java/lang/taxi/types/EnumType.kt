@@ -85,8 +85,8 @@ data class EnumDefinition(
    override val annotations: List<Annotation> = emptyList(),
    override val compilationUnit: CompilationUnit,
    val inheritsFrom: List<Type> = INHERITS_FROM_ANY,
-   val basePrimitive: PrimitiveType,
    val isLenient: Boolean = false,
+   val valueType: Type,
    override val typeDoc: String? = null
 ) : Annotatable, TypeDefinition, Documented {
    private val equality = ImmutableEquality(
@@ -94,7 +94,7 @@ data class EnumDefinition(
       EnumDefinition::values,
       EnumDefinition::annotations,
       EnumDefinition::typeDoc,
-      EnumDefinition::basePrimitive,
+      EnumDefinition::valueType,
       EnumDefinition::inheritsFrom
    )
 
@@ -139,9 +139,14 @@ data class EnumType(
       this.values.map { value -> value to EnumMember(this, value) }.toMap()
    }
 
-   override fun getMember(name: String): Either<String, EnumValue> {
+   override fun getMember(name: String, permitImplicitResolution: Boolean): Either<String, EnumValue> {
       return if (hasName(name)) {
-         ofName(name).right()
+         val matchedByName = ofName(name)
+         if (matchedByName.name !== name && !permitImplicitResolution) {
+            "Enum ${this.qualifiedName} has no member named $name, and although it has default values, matching on implicit resolution was disallowed".left()
+         } else {
+            matchedByName.right()
+         }
       } else {
          "Enum ${this.qualifiedName} has no member named $name".left()
       }
@@ -179,7 +184,10 @@ data class EnumType(
 //      get() = null
 
    override val basePrimitive: PrimitiveType?
-      get() = definition?.basePrimitive
+      get() = definition?.valueType?.basePrimitive
+
+   val valueType: Type?
+      get() = definition?.valueType
 
    override val inheritsFrom: List<Type>
       get() = definition?.inheritsFrom ?: INHERITS_FROM_ANY

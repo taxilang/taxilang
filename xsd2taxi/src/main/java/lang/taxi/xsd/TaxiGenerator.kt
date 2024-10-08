@@ -375,7 +375,7 @@ class TaxiGenerator(
             valuesFromExtendedEnums + localEnumValues,
             emptyList(),
             CompilationUnit.unspecified(),
-            basePrimitive = PrimitiveType.STRING,
+            valueType = PrimitiveType.STRING,
             typeDoc = getDocumentation(simpleType)
 
          )
@@ -427,7 +427,7 @@ class TaxiGenerator(
          EnumDefinition(
             enumValues,
             compilationUnit = CompilationUnit.unspecified(),
-            basePrimitive = PrimitiveType.STRING, // Possibly more flexible to pass this in from the xsd type
+            valueType = PrimitiveType.STRING, // Possibly more flexible to pass this in from the xsd type
             typeDoc = getDocumentation(simpleType)
          )
       )
