@@ -229,5 +229,20 @@ namespace bar {
 
          schemaB.model("bar.Pet").field("name").type.qualifiedName.shouldBe("FirstName")
       }
+
+      // ORB-675
+      it("returns correct error when an incorrect import statement is used") {
+         val errors = """
+            import com.foo.livelyUpYourself
+
+            type LastName inherits String
+            model Person {
+               firstName : FirstName inherits String
+               lastName : LastName by LastName.livelyUpYourself()
+            }
+         """.validated()
+            errors.errors().shouldContainMessage("livelyUpYourself is not defined")
+            errors.errors().shouldContainMessage("Cannot import com.foo.livelyUpYourself as it is not defined")
+      }
    }
 })

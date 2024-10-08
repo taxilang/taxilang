@@ -102,23 +102,22 @@ class SymbolTree {
       nameToMatch: String,
       currentNamespace: String,
       imports: List<String>
-   ): TextFragmentWithCompiledToken? {
+   ): Either<String,TextFragmentWithCompiledToken> {
       // Is the name imported?
       val matchedByImport = imports.filter { it.endsWith(nameToMatch) }
          .singleOrNull()?.let { matchingImport ->
             symbolsByName[matchingImport] ?:
-            // this is an error, as the compiler should've picked this up earlier
-            error("Symbol $matchingImport has been imported, but is not found")
+            return ErrorMessages.unresolvedType(nameToMatch).left()
          }
       if (matchedByImport != null) {
-         return TextFragmentWithCompiledToken(nameToMatch, matchedByImport)
+         return TextFragmentWithCompiledToken(nameToMatch, matchedByImport).right()
       }
 
       // Is the name unambiguous?
 
       val matchesByName = symbolsEndingWithName(nameToMatch)
       if (matchesByName.size == 1) {
-         return TextFragmentWithCompiledToken(nameToMatch,matchesByName.single())
+         return TextFragmentWithCompiledToken(nameToMatch,matchesByName.single()).right()
       }
 
       // Does the symbol exist in the same namespace?
@@ -127,11 +126,11 @@ class SymbolTree {
          joinNameParts(currentNamespace, nameToMatch)
       )
       if (matchesInNamespace.size == 1) {
-         return TextFragmentWithCompiledToken(nameToMatch,matchesInNamespace.single())
+         return TextFragmentWithCompiledToken(nameToMatch,matchesInNamespace.single()).right()
       }
 
       // Not sure what else to try - give up
-      return null
+      return ErrorMessages.unresolvedType(nameToMatch).left()
    }
 
    private fun symbolsEndingWithName(searchName: String): List<Named> {
@@ -181,10 +180,7 @@ class SymbolTree {
             unresolvedNameParts.first(),
             currentNamespace,
             imports
-         )
-         if (resolvedViaImports == null) {
-            return ErrorMessages.unresolvedType(requestedName).left()
-         }
+         ).getOrElse { return it.left() }
          val remainingNameParts = unresolvedNameParts.drop(1)
          return if (remainingNameParts.isEmpty()) {
             listOf(resolvedViaImports).right()
@@ -227,43 +223,35 @@ class SymbolTree {
                .flatMapLeft { error ->
                   // It wasn't available as an explicit value on the member (but might be an implicit value - like an enum default)
                   // First, check if this is resolved via imports (ie., is it an extension function?)
-                  val resolvedViaImports = resolveViaImports(
+                  resolveViaImports(
                      name,
                      currentNamespace,
                      imports
                   )
-                  if (resolvedViaImports == null) {
-                     // The parent didn't have a member matching the
-                     // requested name, and we coulnd't resolve it as an extension function
-                     // Try now using implicit resolution (ie., default values)
-                     // If this fails, we give up.
-                     last.value.getMember(name, permitImplicitResolution = true)
-                        .map { resolvedMember -> TextFragmentWithCompiledToken(name,resolvedMember) }
-                  } else {
-                     resolvedViaImports.right()
-                  }
+               }.flatMapLeft {
+                  // The parent didn't have a member matching the
+                  // requested name, and we coulnd't resolve it as an extension function
+                  // Try now using implicit resolution (ie., default values)
+                  // If this fails, we give up.
+                  last.value.getMember(name, permitImplicitResolution = true)
+                     .map { resolvedMember -> TextFragmentWithCompiledToken(name,resolvedMember) }
                }.getOrElse { errorMessage ->
                   return errorMessage.left()
                }
+
             acc + resolvedMember
          } else {
-
             // It doesn't have any members.
             // Attempt to look up the member via an import.
             // This is really only allowable if the member
             // is an extension function
-            val importLookup = resolveViaImports(
+            resolveViaImports(
                name,
                currentNamespace,
                imports
-            )
-
-            if (importLookup != null) {
+            ).map {  importLookup ->
                acc + importLookup
-            } else {
-               return ErrorMessages.unresolvedType(name).left()
-            }
-
+            }.getOrElse { return it.left() }
          }
       }.right()
    }
