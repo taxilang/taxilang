@@ -13,7 +13,7 @@
    <properties>
       <!--If bumping this version, revisit dependencyManagement
       for commons-compress below -->
-      <avro.version>1.11.3</avro.version>
+      <avro.version>1.11.4</avro.version>
    </properties>
 
    <dependencies>
@@ -65,7 +65,7 @@
          <!-- Set to 1.26.0 because of vulnerabilities:
          CVE-2024-25710 , CVE-2024-26308.
          Transitive in avro. Hopefully resolved in a release of
-         avro > 1.11.3
+         avro > 1.11.4
          -->
          <dependency>
             <groupId>org.apache.commons</groupId>
