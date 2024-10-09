@@ -1858,7 +1858,8 @@ class TokenProcessor(
    // tree of symbols to navigate 'dots' properly
    fun findInSymbolTree(
       tokenName: String,
-      context: ParserRuleContext
+      context: ParserRuleContext,
+      compileIfRequired: Boolean = true
    ): Either<List<CompilationError>, List<TextFragmentWithCompiledToken>> {
       val topLevelObject = context.searchUpForRule(
          listOf(
@@ -1873,12 +1874,54 @@ class TokenProcessor(
       }
 
       val importsInSource = importTokens.map { it.qualifiedName().text }
-      return this.typeSystem.symbolTree.getSymbol(
+      val result = this.typeSystem.symbolTree.getSymbol(
          tokenName,
          context.findNamespace(),
          importsInSource,
          context = context
       )
+      result.flatMap { symbols ->
+
+         // MP: 9-Oct-24
+         // ORB-678 ... see ExpressionTypesSpec - An expression type can be referenced before its inputs are referenced
+         // Before we can return the symbols, we should ensure they've been compiled
+         // Otherwise, attempts to use this symbol in things like expressions causes
+         // incorrect compiler behaviour, as the token isn't really usable.
+         // Note: Could this cause a stack overflow? Unsure.
+         symbols.map { symbol ->
+            if (symbol.value is ObjectType && !symbol.value.isDefined && compileIfRequired) {
+               val typeName = symbol.value.toQualifiedName()
+               val uncompiledToken = tokens.unparsedTypes[tokenName]
+               val tokenToCompile = when {
+                   uncompiledToken == null -> {
+                      listOf(CompilationError(context.toCompilationUnit(), "An internal error occurred: A reference to $tokenName could not be compiled, as it's token was not found"))
+                         .left()
+                   }
+                  uncompiledToken.second !is TypeDeclarationContext -> {
+                     listOf(CompilationError(context.toCompilationUnit(), "An internal error occurred: Cannot compile $tokenName as it's token is not of the expected type - expected a TypeDeclarationContext, but got ${uncompiledToken.second::class.simpleName}"))
+                        .left()
+                  }
+                  else -> {
+                     (uncompiledToken.second as TypeDeclarationContext).right()
+                  }
+               }
+
+               // Compile the symbol
+               tokenToCompile.flatMap { typeDeclaration ->
+                  compileType(typeName.namespace, typeName.typeName, typeDeclaration)
+                     .map {
+                        // We've compiled the type, and there were no errors, so return the original
+                        // symbol we were trying to look up from the symbol tree.
+                        // It's now compiled
+                        symbol
+                     }
+               }
+            } else {
+               symbol.right()
+            }
+         }.invertEitherList().flattenErrors()
+      }
+      return result
    }
 
    // TODO:

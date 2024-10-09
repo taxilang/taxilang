@@ -3,6 +3,7 @@ package lang.taxi
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.accessors.ProjectionFunctionScope
@@ -265,6 +266,31 @@ class ExpressionTypesSpec : DescribeSpec({
          """.validated()
             .errors()
          errorMessages.shouldContainMessage("Type mismatch. Type of Age is not assignable to type BestFriend")
+      }
+
+      // ORB-678
+      it("An expression type can be referenced before its inputs are referenced") {
+         // Edge case bug:
+         // The order things are declared here matter, to trigger compilation in a specific
+         // order.
+         // Found that Customer wasn't yet compiled when the input the expression type (AccountSubType)
+         // was evaluated, leading to incorrect behaviour (specifically, incorrect type checker behaviour,
+         // but all sorts of stuff could go wrong)
+         """
+type CustomerId inherits String
+
+model CustomerAccount {
+  accountType : AccountSubType // Referring to a field here forces compilation of the expression type
+}
+
+parameter model Customer { // ... which requires this type, which hasn't been compiled yet
+    id: CustomerId
+}
+
+type AccountSubType inherits String by (customer:Customer(CustomerId == '123')) -> Customer
+         """.validated()
+            .errors()
+            .shouldBeEmpty()
       }
    }
 
