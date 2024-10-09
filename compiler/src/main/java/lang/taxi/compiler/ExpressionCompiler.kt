@@ -247,7 +247,16 @@ class ExpressionCompiler(
                }
                // This is a type with constraints
                // eg: ( SomeType( Foo == Bar ) )
-               expressionInput.expressionGroup() != null -> compile(expressionInput.expressionGroup(), targetType)
+               expressionInput.expressionGroup() != null -> compile(
+                  expressionInput.expressionGroup(),
+                  // ORB-679
+                  // targetType passed here should not be our targetType that was passed in as an arg.
+                  // This is because this call is compiling an INPUT to an expression - not the expression itself.
+                  // eg:
+                  // type CustomerType inherits String by (customer:Customer(CustomerId == '123')) -> // impl. omitted
+                  // We're compiling the Customer expression, which is not intended to be assignable to CustomerType
+                  targetType = null
+               )
                   .map { expression ->
                      ProjectionFunctionScope(parameterName, expression.returnType, expression)
                   }
@@ -715,7 +724,10 @@ class ExpressionCompiler(
       type: Type,
       functionCall: TaxiParser.FunctionCallContext
    ): Either<List<CompilationError>, TypeExpression> {
-
+      if (type is ObjectType && !type.isDefined) {
+         return listOf(CompilationError(functionCall.toCompilationUnit(), "An internal error has occurred - attempted to use a type in an expression before the type was compiled"))
+            .left()
+      }
       // Check to see if this type expression is part of an extension function call.
       // eg: Movie.filter( (Title) -> Title == "Jaws" )
       // If so, we can't treat the arguments as constraints.
