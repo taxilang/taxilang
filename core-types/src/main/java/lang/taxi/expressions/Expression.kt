@@ -168,6 +168,14 @@ data class FunctionExpression(val function: FunctionAccessor, override val compi
 data class ExtensionFunctionExpression(val functionExpression: FunctionExpression, val receiverValue: Expression, override val compilationUnits: List<CompilationUnit>) : Expression() {
    override val returnType: Type = functionExpression.returnType
    val inputs = functionExpression.inputs
+
+   /**
+    * Indicates if the receiver function is looking for Type<T>, rather than an instance of T
+    */
+   val receiverIsTypeReference: Boolean
+      get() {
+         return functionExpression.function.parameters[0].type is TypeReference
+      }
 }
 
 
