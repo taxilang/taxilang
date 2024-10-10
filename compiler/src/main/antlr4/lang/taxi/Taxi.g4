@@ -82,7 +82,7 @@ typeMemberDeclaration
      :   typeDoc? annotation* fieldDeclaration
      ;
 
-expressionTypeDeclaration : 'by' expressionGroup*;
+expressionTypeDeclaration : 'by' expressionGroup;
 
 // (A,B) -> C
 // Used in functions:

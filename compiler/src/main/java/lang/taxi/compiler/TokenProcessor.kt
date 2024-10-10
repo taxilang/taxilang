@@ -746,11 +746,8 @@ class TokenProcessor(
 
 
       val expression = ctx.expressionTypeDeclaration()?.let {
-         it.expressionGroup().map { expressionGroup -> parseTypeExpression(expressionGroup, activeScopes, interimType) }
-      }?.invertEitherList()
-         ?.flattenErrors()
-         ?.map { it.toExpressionGroup() }
-         ?.getOrElse { errors ->
+         parseTypeExpression(it.expressionGroup(), activeScopes, interimType)
+      }?.getOrElse { errors ->
             this.errors.addAll(errors)
             null
          }
