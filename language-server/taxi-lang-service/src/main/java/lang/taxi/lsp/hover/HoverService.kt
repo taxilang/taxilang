@@ -85,8 +85,8 @@ class HoverService {
 
          else -> "type"
       }
-      val typeDoc = if (type is Documented) {
-         type.typeDoc?.trim() + "\n\n---\n\n"
+      val typeDoc = if (!type.typeDoc.isNullOrBlank()) {
+         "\n\n---\n\n" + type.typeDoc?.trim() + "\n\n---\n\n"
       } else {
          ""
       }
@@ -94,9 +94,7 @@ class HoverService {
 ## $typeLabel ${type.toQualifiedName().typeName}
 
 `${type.qualifiedName}`
-${getInheritenceDocs(type)}
-
----
+${getInheritanceDocs(type)}
 
 $typeDoc
 
@@ -119,17 +117,7 @@ $src
        """.trimMargin()
    }
 
-   private fun getInheritenceDocs(type: Type): String {
-      val inheritenceDeclaration = if (type.inheritsFromPrimitive) {
-         type.getInheritanceGraph().joinToString(separator = "->") { it.qualifiedName }
-//            type.basePrimitive!!.toQualifiedName().typeName
-      } else if (type is EnumType && type.baseEnum != null) {
-         "inherits ${type.baseEnum!!.qualifiedName}"
-      } else if (type.inheritsFrom.isNotEmpty()) {
-         "inherits ${type.inheritsFrom.joinToString { it.qualifiedName }}"
-      } else {
-         ""
-      }
+   private fun getInheritanceDocs(type: Type): String {
       return if (!type.inheritsFromPrimitive && type.inheritsFrom.isEmpty()) {
          ""
       } else {
