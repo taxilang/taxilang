@@ -125,6 +125,7 @@ expressionGroup:
    | expressionGroup LOGICAL_AND expressionGroup
    | expressionGroup LOGICAL_OR expressionGroup
    | expressionGroup '.' functionCall
+   | expressionGroup '.' qualifiedName
    | whenBlock
    // Inputs go last, so that when parsing lambdas, the inputs are the LHS and everything remainin goes RHS.
    // Might not work for nested lambdas, if that's a thing.
