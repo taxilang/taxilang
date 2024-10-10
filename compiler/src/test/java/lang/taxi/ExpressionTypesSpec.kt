@@ -268,6 +268,18 @@ class ExpressionTypesSpec : DescribeSpec({
          errorMessages.shouldContainMessage("Type mismatch. Type of Age is not assignable to type BestFriend")
       }
 
+      it("should not complain about extension function following an expression type") {
+         """
+            type AccountSubType inherits String by (parameterSet:String) -> parameterSet
+
+            extension function filterByCustomerType(
+                p1CustomerType: String
+              ):String -> p1CustomerType
+         """.validated()
+            .errors()
+            .shouldBeEmpty()
+      }
+
       // ORB-678
       it("An expression type can be referenced before its inputs are referenced") {
          // Edge case bug:
