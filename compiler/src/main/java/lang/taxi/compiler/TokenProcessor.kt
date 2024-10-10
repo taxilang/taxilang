@@ -1415,6 +1415,7 @@ class TokenProcessor(
          // This might break something.
          return listOf(ProjectionFunctionScope.implicitThis(projectionSourceType.projectionType)).right()
       }
+      val inputs = mutableListOf<ProjectionFunctionScope>()
       return expressionInputs.expressionInput().map { input ->
          val identifier = input.identifier()?.text ?: ProjectionFunctionScope.THIS
          resolveExpressionInputType(input.nullableTypeReference()).flatMap { inputType ->
@@ -1431,7 +1432,7 @@ class TokenProcessor(
                         )
                      ).left()
                   } else {
-                     resolveProjectionScopeInputExpression(identifier, expression, inputType, arguments)
+                     resolveProjectionScopeInputExpression(identifier, expression, inputType, arguments + inputs)
                   }
                }
                // Inferred Type from Expression
@@ -1441,7 +1442,7 @@ class TokenProcessor(
                   identifier,
                   input.expressionGroup(),
                   inputType,
-                  arguments
+                  arguments + inputs
                )
                // Just the type
                // eg:
@@ -1456,6 +1457,10 @@ class TokenProcessor(
                   ).left()
                }
             }
+         }.map { scope ->
+            // Collate the inputs, so that inputA can refer to inputB
+            inputs.add(scope)
+            scope
          }
       }.invertEitherList().flattenErrors()
    }

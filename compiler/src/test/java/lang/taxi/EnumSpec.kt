@@ -542,6 +542,24 @@ enum English {
             "message" to "Bad Request"
          ))
       }
+      it("can reference a property of an enum object's body") {
+         val type = """
+            model ErrorDetails {
+               code : ErrorCode inherits Int
+               message : ErrorMessage inherits String
+            }
+            enum Errors<ErrorDetails> {
+               BadRequest({ code : 400, message : 'Bad Request' }),
+               Unauthorized({ code : 401, message : 'Unauthorized' })
+            }
+         """.compiledWithQuery("""
+            given { myError : Errors = Errors.BadRequest }
+            find { "hello" } as {
+               code : myError.code
+            }
+         """.trimIndent())
+
+      }
       it("can declare an enum with an object body with a default value") {
          val type = """
             model ErrorDetails {

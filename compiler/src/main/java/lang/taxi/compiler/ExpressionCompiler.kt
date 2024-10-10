@@ -936,15 +936,21 @@ class ExpressionCompiler(
             .runningFold(initial.right() as Either<List<CompilationError>, FieldReferenceSelector>) { resolvedType, fieldName ->
                resolvedType.flatMap { selector ->
                   val previousType = selector.declaredType
-                  if (previousType is ObjectType && previousType.hasField(fieldName)) {
-                     FieldReferenceSelector(fieldName, previousType.field(fieldName).type).right()
-                  } else {
-                     listOf(
-                        CompilationError(
-                           context.toCompilationUnit(),
-                           "Cannot resolve reference $fieldName against type ${previousType.toQualifiedName().parameterizedName}"
-                        )
-                     ).left()
+                  when {
+                      previousType is ObjectType && previousType.hasField(fieldName) -> {
+                         FieldReferenceSelector(fieldName, previousType.field(fieldName).type).right()
+                      }
+                     previousType is EnumType && previousType.valueType is ObjectType && (previousType.valueType!! as ObjectType).hasField(fieldName) -> {
+                        FieldReferenceSelector(fieldName, (previousType.valueType as ObjectType).field(fieldName).type).right()
+                     }
+                      else -> {
+                         listOf(
+                            CompilationError(
+                               context.toCompilationUnit(),
+                               "Cannot resolve reference $fieldName against type ${previousType.toQualifiedName().parameterizedName}"
+                            )
+                         ).left()
+                      }
                   }
                }
             }.invertEitherList().flattenErrors()

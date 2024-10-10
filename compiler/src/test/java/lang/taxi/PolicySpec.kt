@@ -140,5 +140,21 @@ class PolicySpec : DescribeSpec({
          policy.rules.single().expression.shouldBeInstanceOf<WhenExpression>()
             .returnType.qualifiedName.shouldBe("Title")
       }
+      it("can use parameter expressions referencing other parameter expressions") {
+           """
+            declare extension function uppercase(input:String):String
+            model Film {
+               title : Title inherits String
+            }
+            policy TestPolicy against Title (title:Title, uppercaseTitle:String = title.uppercase()) -> {
+               read {
+                  when {
+                     1 == 2 -> "foo"
+                     else -> null
+                  }
+               }
+            }
+           """.compiled()
+      }
    }
 })
