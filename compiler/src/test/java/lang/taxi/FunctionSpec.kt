@@ -13,6 +13,7 @@ import lang.taxi.expressions.*
 import lang.taxi.functions.FunctionModifier
 import lang.taxi.functions.stdlib.Left
 import lang.taxi.linter.LinterRules
+import lang.taxi.types.ArgumentSelector
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.LambdaExpressionType
 import lang.taxi.types.PrimitiveType
@@ -139,6 +140,16 @@ class FunctionSpec : DescribeSpec({
             .validated()
             .errors()
             .shouldContainMessage("Type mismatch. Type of lang.taxi.String is not assignable to type lang.taxi.Int")
+      }
+      it("can use a default value as an expression referencing another input") {
+         val function = """
+            declare function concat(s1:String,s2:String):String
+            function sayHello(name: String, upperName:String = name.upperCase()):String -> concat(name, upperName)
+         """.compiled()
+            .function("sayHello")
+         function.parameters[1].defaultValue.shouldBeInstanceOf<ExtensionFunctionExpression>()
+            .inputs[0].shouldBeInstanceOf<ArgumentSelector>()
+            .scope.name.shouldBe("name")
       }
       it("compiles a function expression ") {
          val function = """
