@@ -1415,6 +1415,7 @@ class TokenProcessor(
          // This might break something.
          return listOf(ProjectionFunctionScope.implicitThis(projectionSourceType.projectionType)).right()
       }
+      val inputs = mutableListOf<ProjectionFunctionScope>()
       return expressionInputs.expressionInput().map { input ->
          val identifier = input.identifier()?.text ?: ProjectionFunctionScope.THIS
          resolveExpressionInputType(input.nullableTypeReference()).flatMap { inputType ->
@@ -1431,7 +1432,7 @@ class TokenProcessor(
                         )
                      ).left()
                   } else {
-                     resolveProjectionScopeInputExpression(identifier, expression, inputType, arguments)
+                     resolveProjectionScopeInputExpression(identifier, expression, inputType, arguments + inputs)
                   }
                }
                // Inferred Type from Expression
@@ -1441,7 +1442,7 @@ class TokenProcessor(
                   identifier,
                   input.expressionGroup(),
                   inputType,
-                  arguments
+                  arguments + inputs
                )
                // Just the type
                // eg:
@@ -1456,6 +1457,10 @@ class TokenProcessor(
                   ).left()
                }
             }
+         }.map { scope ->
+            // Collate the inputs, so that inputA can refer to inputB
+            inputs.add(scope)
+            scope
          }
       }.invertEitherList().flattenErrors()
    }
@@ -2408,7 +2413,7 @@ class TokenProcessor(
                val operationParameters =
                   queryOperation.operationParameterList().operationParameter()
                      .mapIndexed { index, operationParameterContext ->
-                        parseParameter(namespace, operationParameterContext, paramIndex = index)
+                        parseParameter(namespace, operationParameterContext, paramIndex = index, activeScopes = emptyList())
                      }.reportAndRemoveErrorList(errors)
                QueryOperation(
                   name = name,
@@ -2508,7 +2513,7 @@ class TokenProcessor(
          .flatMap { returnType ->
             val scope = operationDeclaration.operationScope()?.text
             val operationParameters = signature.parameters().mapIndexed { index, operationParameterContext ->
-               parseParameter(namespace, operationParameterContext, paramIndex = index)
+               parseParameter(namespace, operationParameterContext, paramIndex = index, activeScopes = emptyList())
             }.reportAndRemoveErrorList(errors)
 
             parseOperationContract(operationDeclaration, operationParameters, returnType).map { contract ->
@@ -2536,7 +2541,8 @@ class TokenProcessor(
       // When parsing paraeters that are lambdas we need a useful name
       anonymousParameterTypeName: String? = null,
       // If the param is unnamed, we assign a name based on index.
-      paramIndex: Int
+      paramIndex: Int,
+      activeScopes: List<Argument>
    ): Either<List<CompilationError>, lang.taxi.services.Parameter> {
       val paramTypeOrError: Either<List<CompilationError>, Type> =
          if (operationParameterContext.nullableTypeReference()?.typeReference() != null) {
@@ -2564,7 +2570,7 @@ class TokenProcessor(
             compileNullableExpression(
                expressionGroup = operationParameterContext.parameterDefaultValue()?.expressionGroup(),
                fieldCompiler = null,
-               activeScopes = listOf(InstanceArgument(paramType)), // expose the param as "this" in expressions
+               activeScopes = listOf(InstanceArgument(paramType)) + activeScopes, // expose the param as "this" in expressions
                targetType = paramType
             ).map { defaultValue ->
                val isNullable = operationParameterContext.nullableTypeReference()?.Nullable() != null

@@ -36,7 +36,8 @@ class FunctionCompiler(
                functionToken.nullableTypeReference().typeReference(),
                typeArguments
             ).flatMap { returnType ->
-               val parameters =
+               val parsedParams = mutableListOf<lang.taxi.services.Parameter>()
+               val parameters: List<lang.taxi.services.Parameter> =
                   functionToken.operationParameterList()?.operationParameter()
                      ?.mapIndexed { index, parameterDefinition ->
                         val anonymousParameterTypeName = "$qualifiedName\$Param$index"
@@ -45,8 +46,14 @@ class FunctionCompiler(
                            parameterDefinition,
                            typeArguments,
                            anonymousParameterTypeName,
-                           paramIndex = index
-                        )
+                           paramIndex = index,
+                           parsedParams
+                        ).map {
+                           // capture the param, so we can reference it
+                           // in other parameters
+                           parsedParams.add(it)
+                           it
+                        }
                      }?.reportAndRemoveErrorList(tokenProcessor.errors) ?: emptyList()
 
                val modifiers = functionToken.functionModifiers().map { modifier ->
