@@ -21,7 +21,30 @@ object Reduce: FunctionApi {
 
 object Map : FunctionApi {
    override val taxi: String
-      get() = "declare extension function <T,A> map(collection: T[], callback: (T) -> A):A[]"
+      get() = """
+         [[ Performs a mapping transformation function on every member of the provided array.
+
+         If the callback is in the form of a type expression, then each input value is converted
+         into an instance of that type.
+
+         For example:
+
+         ```taxi
+         // Will convert Person[] to Person2[]
+         Person[].map((Person) -> Person2)
+         ```
+
+         If the callback is in the form of any other type of expression, then that expression is
+         evaluated against each member of the input array.
+
+         For example:
+
+         ```taxi
+         // Will return an array of Title, where the text has been converted to uppercase
+         Film[].map ( (Title) -> Title.upperCase() )
+         ```
+         ]]
+         declare extension function <T,A> map(collection: T[], callback: (T) -> A):A[]""".trimIndent()
    override val name: QualifiedName
       get() = stdLibName("map")
 }
