@@ -404,7 +404,7 @@ class ExpressionCompiler(
       literalArray: TaxiParser.ValueArrayContext,
       assignmentType: Type?
    ): Either<List<CompilationError>, Expression> {
-      if (assignmentType != null && !Arrays.isArray(assignmentType)) {
+      if (assignmentType != null && !Arrays.isArray(assignmentType) && assignmentType != PrimitiveType.ANY) {
          return listOf(
             CompilationError(
                literalArray.toCompilationUnit(),
@@ -420,7 +420,11 @@ class ExpressionCompiler(
          compile(expression, memberType)
       }.invertEitherList().flattenErrors()
          .map { compiledExpressions ->
-            val arrayType = assignmentType ?: Arrays.arrayOf(memberType)
+            val arrayType = if (assignmentType != null && assignmentType != PrimitiveType.ANY) {
+               assignmentType
+            } else {
+               Arrays.arrayOf(memberType)
+            }
             LiteralArray(arrayType, compiledExpressions, literalArray.toCompilationUnits())
          }
 //      return LiteralExpression(LiteralAccessor(literalArray.value()), literalArray.toCompilationUnits()).right()
