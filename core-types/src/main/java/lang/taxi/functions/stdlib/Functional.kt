@@ -50,7 +50,26 @@ object Map : FunctionApi {
 }
 object Fold : FunctionApi {
    override val taxi: String
-      get() = "declare extension function <T,A> fold(collection: T[], initial: A, callback: (T,A) -> A):A"
+      get() = """
+         |[[
+         | Iterates over a collection, combining elements to produce a single accumulated result.
+         |
+         | Example:
+         |
+         |```taxi
+         |// Given:
+         |model Entry {
+         |   weight:Weight inherits Int
+         |   score:Score inherits Int
+         |}
+         |
+         |type WeightedAverage by (Entry[]) -> Entry[].fold(0, (Entry, Int) -> Int + (Weight*Score))
+         |```
+         |]]
+         |declare extension function <T,A> fold(collection: T[], initial: A, callback: (T,A) -> A):A
+         |
+      """.trimMargin()
+
    override val name: QualifiedName
       get() = stdLibName("fold")
 }
