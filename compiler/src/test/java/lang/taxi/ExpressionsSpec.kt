@@ -501,6 +501,10 @@ class ExpressionsSpec : DescribeSpec({
       """
             )
          }
+         // ORB-698
+         it("can declare a simple array") {
+            "".compiledWithQuery("""find { [1,2,3] }""")
+         }
       }
    }
 })
