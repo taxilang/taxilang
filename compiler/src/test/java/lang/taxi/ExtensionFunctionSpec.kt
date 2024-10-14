@@ -68,7 +68,7 @@ class ExtensionFunctionSpec : DescribeSpec({
             declare extension function increment(Int):Int
             """.trimIndent()
             .compiledWithQueryProducingCompilationException("""find { "hello".increment() }""")
-         error.errors.shouldContainMessage("Type mismatch. Type of lang.taxi.Int is not assignable to type lang.taxi.String")
+         error.errors.shouldContainMessage("Type mismatch. Type of lang.taxi.String is not assignable to type lang.taxi.Int")
       }
       it("is valid to call an chain extension functions on it's receiver") {
          val (doc, query) = """
@@ -82,7 +82,7 @@ class ExtensionFunctionSpec : DescribeSpec({
       it("is invalid to call an extension function on a type that's not it's receiver") {
          val error = """declare extension function toUpper(String):String"""
             .compiledWithQueryProducingCompilationException("""find { 123.toUpper() }""")
-         error.errors.shouldContainMessage("Type mismatch. Type of lang.taxi.String is not assignable to type lang.taxi.Int")
+         error.errors.shouldContainMessage("Type mismatch. Type of lang.taxi.Int is not assignable to type lang.taxi.String")
       }
 
 

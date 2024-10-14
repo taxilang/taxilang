@@ -77,6 +77,7 @@ class FunctionDefinition(
       val resolveReturnTypeFromAssignment = typeArguments.contains(returnType)
          && parameters.none { TypeArgumentResolver.declarationCanResolveArgument(it.type, returnType) }
          && assignmentType != PrimitiveType.ANY
+
       val (resolvedReturnTypeArgument, typeArgumentsToResolveFromInputs) = if (resolveReturnTypeFromAssignment) {
          mapOf(returnType as TypeArgument to assignmentType) to typeArguments.filter { it != returnType }
       } else (emptyMap<TypeArgument, Type>() to typeArguments)

@@ -575,6 +575,12 @@ namespace pkgB {
             resolvedInputs[1].asA<LambdaExpression>().inputs[0].type.qualifiedName.should.equal("Entry")
             resolvedInputs[1].asA<LambdaExpression>().inputs[1].type.should.equal(PrimitiveType.INTEGER)
          }
+         it("should infer the return type") {
+            val (_,query) = "declare extension function <T,A> doSum(collection: T[], callback: (T) -> A):A".compiledWithQuery(
+               """find { [1,2,3].sum( (Int) -> Int)  }"""
+            )
+            query.discoveryType!!.expression.returnType.shouldBe(PrimitiveType.INTEGER)
+         }
       }
 
    }
