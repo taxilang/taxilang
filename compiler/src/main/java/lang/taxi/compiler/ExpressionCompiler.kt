@@ -452,11 +452,19 @@ class ExpressionCompiler(
       val rawAccessor = LiteralAccessor(literal.valueOrNullValue())
 
       val receiverType = assignmentType ?: PrimitiveType.ANY
+      val returnType = try {
+         TypeUtils.getMostSpecificType(assignmentType ?: PrimitiveType.ANY, rawAccessor.returnType)
+      } catch (e:Exception) {
+         // We can't go into the type checker (where these errors are normally reported,
+         // as the types are incompatible, and we couldn't determine the return type.
+         // So, report the error from here.
+         return listOf(Errors.typeMismatch(rawAccessor.returnType,receiverType, literal)).left()
+      }
       return typeChecker.ifAssignableOrErrorList(rawAccessor.returnType, receiverType, literal) {
          LiteralExpression(
             LiteralAccessor(
                literal.valueOrNullValue(),
-               TypeUtils.getMostSpecificType(assignmentType ?: PrimitiveType.ANY, rawAccessor.returnType)
+               returnType
             ),
             literal.toCompilationUnits()
          )

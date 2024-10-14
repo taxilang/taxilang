@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import lang.taxi.CompilationError
+import lang.taxi.Errors
 import lang.taxi.messages.Severity
 import lang.taxi.toCompilationUnit
 import lang.taxi.toggles.FeatureToggle
@@ -20,12 +21,10 @@ fun TypeChecker.assertIsAssignable(valueType: Type, receiverType: Type, token: P
    // This is a first pass, pretty sure this is naieve.
    // Need to take the Vyne implmentation at Type.kt
    fun error(): CompilationError? {
-      val errorMessage =
-         "Type mismatch. Type of ${valueType.toQualifiedName().parameterizedName} is not assignable to type ${receiverType.toQualifiedName().parameterizedName}"
       return when (enabled) {
          FeatureToggle.DISABLED -> null
-         FeatureToggle.ENABLED -> CompilationError(token.start, errorMessage)
-         FeatureToggle.SOFT_ENABLED -> CompilationError(token.start, errorMessage, severity = Severity.WARNING)
+         FeatureToggle.ENABLED -> Errors.typeMismatch(valueType, receiverType, token)
+         FeatureToggle.SOFT_ENABLED -> Errors.typeMismatch(valueType, receiverType, token).copy(severity = Severity.WARNING)
       }
    }
 
