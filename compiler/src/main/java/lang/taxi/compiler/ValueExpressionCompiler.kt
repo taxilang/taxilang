@@ -12,7 +12,7 @@ import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.accessors.NullValue
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.LiteralExpression
-import lang.taxi.expressions.ObjectExpression
+import lang.taxi.expressions.ObjectLiteralExpression
 import lang.taxi.toCompilationUnit
 import lang.taxi.toCompilationUnits
 import lang.taxi.types.ArrayType
@@ -41,7 +41,7 @@ internal class ValueExpressionCompiler(private val expressionCompiler: Expressio
                LiteralExpression( LiteralAccessor(NullValue, objectType), objectValue.toCompilationUnits())
             } else {
                if (parsedValue is Map<*, *>) {
-                  ObjectExpression(objectType, parsedValue as Map<String, Expression>,  objectValue.toCompilationUnits())
+                  ObjectLiteralExpression(objectType, parsedValue as Map<String, Expression>,  objectValue.toCompilationUnits())
                } else {
                   LiteralExpression(LiteralAccessor(parsedValue, objectType), objectValue.toCompilationUnits())
                }

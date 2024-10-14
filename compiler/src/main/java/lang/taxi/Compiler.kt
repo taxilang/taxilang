@@ -83,6 +83,7 @@ data class CompilationError(
    val sourceName: String? = null,
    val severity: Severity = Severity.ERROR,
    val errorCode: String? = null,
+   val throwable: Throwable? = null
 ) : Serializable {
    constructor(
       compiled: Compiled,
@@ -90,9 +91,10 @@ data class CompilationError(
       sourceName: String = compiled.compilationUnits.first().source.sourceName,
       severity: Severity = Severity.ERROR,
       errorCode: String? = null,
+      throwable: Throwable? = null
    ) : this(
       compiled.compilationUnits.firstOrNull()?.location
-         ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity, errorCode
+         ?: SourceLocation.UNKNOWN_POSITION, detailMessage, sourceName, severity, errorCode, throwable
    )
 
    constructor(
@@ -101,8 +103,9 @@ data class CompilationError(
       sourceName: String = compilationUnit.source.sourceName,
       severity: Severity = Severity.ERROR,
       errorCode: String? = null,
+      throwable: Throwable? = null
    ) : this(
-      compilationUnit.location, detailMessage, sourceName, severity, errorCode
+      compilationUnit.location, detailMessage, sourceName, severity, errorCode, throwable = throwable
    )
 
    constructor(
@@ -111,7 +114,8 @@ data class CompilationError(
       sourceName: String? = null,
       severity: Severity = Severity.ERROR,
       errorCode: String? = null,
-   ) : this(position.line, position.char, detailMessage, sourceName, severity, errorCode)
+      throwable: Throwable? = null
+   ) : this(position.line, position.char, detailMessage, sourceName, severity, errorCode, throwable)
 
    constructor(
       offendingToken: Token,
@@ -119,13 +123,15 @@ data class CompilationError(
       sourceName: String = offendingToken.tokenSource.sourceName,
       severity: Severity = Severity.ERROR,
       errorCode: String? = null,
+      throwable: Throwable? = null
    ) : this(
       offendingToken.line,
       offendingToken.charPositionInLine,
       detailMessage,
       sourceName,
       severity,
-      errorCode
+      errorCode,
+      throwable
    )
 
 

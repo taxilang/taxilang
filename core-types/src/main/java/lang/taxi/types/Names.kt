@@ -60,6 +60,13 @@ data class QualifiedName(
 interface HasQualifiedName {
    val name : QualifiedName
 }
+
+/**
+ * A first-class citizen within a schema - eg,
+ * a Type, a Function, A Service
+ *
+ * These things are uniquely named across the entire schema
+ */
 interface Named {
    val qualifiedName: String
 

@@ -2,6 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
@@ -227,7 +228,7 @@ enum Australian {
    One synonym of English.One
 }"""
             val errors = Compiler(src).validate()
-            errors.should.satisfy { it.any { error -> error.detailMessage.contains("language.English is not defined") } }
+            errors.shouldContainMessage("Cannot import language.English as it is not defined")
          }
          it("should throw an error if the reference value is not a value on the type") {
             val src = """
@@ -237,8 +238,7 @@ enum Australian {
 }
             """.trimIndent()
             val errors = Compiler(src).validate()
-            errors.should.have.size(1)
-            errors.first().detailMessage.should.equal("Single is not defined on type English")
+               .shouldContainMessage("Single is not defined on type English")
          }
          it("should throw an error if the reference value is not an enum") {
             val src = """
@@ -248,10 +248,8 @@ enum Australian {
    One synonym of Word.Single
 }
             """.trimIndent()
-            val errors = Compiler(src).validate()
-            errors.should.have.size(1)
-            errors.first().detailMessage.should.equal("Word is not an Enum")
-
+            Compiler(src).validate()
+               .shouldContainMessage("Word.Single is not defined")
          }
          it("should support referencing enum synonyms before they have been defined") {
             val src = """
@@ -543,7 +541,7 @@ enum English {
          ))
       }
       it("can reference a property of an enum object's body") {
-         val type = """
+         val (schema,query) = """
             model ErrorDetails {
                code : ErrorCode inherits Int
                message : ErrorMessage inherits String
@@ -558,6 +556,7 @@ enum English {
                code : myError.code
             }
          """.trimIndent())
+         query
 
       }
       it("can declare an enum with an object body with a default value") {
@@ -620,7 +619,8 @@ enum English {
          errors.errors().shouldContainMessage("Map is not assignable to type ErrorDetails as mandatory properties message are missing")
       }
       it("reports errors if the entire value is of wrong type") {
-         val errors = """ model ErrorDetails {
+         val errors = """
+            model ErrorDetails {
                code : ErrorCode inherits Int
                message : ErrorMessage inherits String
             }
@@ -631,6 +631,74 @@ enum English {
             }
          """.validated()
          errors.errors().shouldContainMessage("Value of Bad Request is not assignable to type ErrorDetails")
+      }
+
+      it("Can refer to a property of an enum") {
+         """
+model ErrorDetails {
+   code : ErrorCode inherits Int
+   message : ErrorMessage inherits String
+}
+enum Errors<ErrorDetails> {
+   BadRequest({ code : 400, message : 'Bad Request' }),
+   Unauthorized({ code : 401, message : 'Unauthorized' })
+}
+model Response {
+  error: ErrorCode by Errors.BadRequest.code
+}
+         """.validated()
+            .errors().shouldBeEmpty()
+      }
+
+      it("Can refer to a property of an enum") {
+         """
+model ErrorDetails {
+   code : ErrorCode inherits Int
+   message : ErrorMessage inherits String
+   status : {
+      severity : Severity inherits String
+      resolution : {
+         playbookSteps : PlaybookSteps inherits String
+      }
+   }
+}
+enum Errors<ErrorDetails> {
+   BadRequest({ code : 400, message : 'Bad Request', status: { severity: 'Bad', resolution : { playbookSteps : 'Go nuts' } }  }),
+   Unauthorized({ code : 401, message : 'Unauthorized', status: { severity: 'Bad', resolution : { playbookSteps : 'Go nuts' } }  })
+}
+model Response {
+  playbookSteps: PlaybookSteps by Errors.BadRequest.status.resolution.playbookSteps
+}
+         """.validated()
+            .errors().shouldBeEmpty()
+      }
+
+      it("Can refer to a property of an enum when using namespaces") {
+         """
+namespace com.foo.bar {
+   model ErrorDetails {
+      code : ErrorCode inherits Int
+      message : ErrorMessage inherits String
+      status : {
+         severity : Severity inherits String
+         resolution : {
+            playbookSteps : PlaybookSteps inherits String
+         }
+      }
+   }
+   enum Errors<ErrorDetails> {
+      BadRequest({ code : 400, message : 'Bad Request', status: { severity: 'Bad', resolution : { playbookSteps : 'Go nuts' } }  }),
+      Unauthorized({ code : 401, message : 'Unauthorized', status: { severity: 'Bad', resolution : { playbookSteps : 'Go nuts' } }  })
+   }
+}
+
+namespace com.baz {
+   model Response {
+     error: com.foo.bar.ErrorCode by com.foo.bar.Errors.BadRequest.status.resolution.playbookSteps
+   }
+}
+         """.validated()
+            .errors().shouldBeEmpty()
       }
    }
 })

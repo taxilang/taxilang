@@ -345,7 +345,7 @@ class ConditionalDataTypesTest {
          }
       """.trimIndent()
       Compiler(src).validate()
-         .shouldContainMessage("FixedOrFloatLeg is not defined")
+         .shouldContainMessage("FixedOrFloatLeg.Float is not defined")
 
    }
 

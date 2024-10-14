@@ -5,6 +5,7 @@ import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
 import lang.taxi.*
+import lang.taxi.TaxiParser.ArgumentContext
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.expressions.Expression
@@ -62,28 +63,25 @@ class FunctionAccessorCompiler(
    }
 
    internal fun buildFunctionAccessor(
-      functionContext: TaxiParser.FunctionCallContext,
+      namespace: String,
+      functionName: String,
+      context: ParserRuleContext, // either A TaxiParser.FunctionCallContext or a TaxiParser.MethodCallContext
+      arguments: List<ArgumentContext>,
       targetType: Type,
       receiver: Expression? = null,
-      /**
-       * Allows overriding the name of the function.
-       * This is needed when a function call is using dot syntax, eg:
-       * PersonName.uppercase()
-       */
-      functionName: String = functionContext.qualifiedName().identifier().text()
+
    ): Either<List<CompilationError>, FunctionAccessor> {
-      val namespace = functionContext.findNamespace()
       return tokenProcessor.attemptToLookupSymbolByName(
          namespace,
          functionName,
-         functionContext,
+         context,
          symbolKind = SymbolKind.FUNCTION
       )
          .wrapErrorsInList()
          .flatMap { qualifiedName ->
-            tokenProcessor.resolveFunction(qualifiedName, functionContext).flatMap { function ->
+            tokenProcessor.resolveFunction(qualifiedName, context).flatMap { function ->
                require(function.isDefined) { "Function should have already been compiled before evaluation in a read function expression" }
-               typeChecker.assertIsAssignable(function.returnType!!, targetType, functionContext)
+               typeChecker.assertIsAssignable(function.returnType!!, targetType, context)
                   ?.let { compilationError ->
                      errors.add(compilationError)
                   }
@@ -92,21 +90,20 @@ class FunctionAccessorCompiler(
                   // In theory, this isn't possible, as the compiler will catch it earlier. But, belts 'n' braces
                      ?: return@flatMap listOf(
                         CompilationError(
-                           functionContext.toCompilationUnit(),
+                           context.toCompilationUnit(),
                            "Function ${function.qualifiedName} can not be called as an extension function, as it does not take any params"
                         )
                      )
                         .left()
-                  typeChecker.assertIsAssignable(receiver.returnType, firstParam.type, functionContext)
+                  typeChecker.assertIsAssignable(receiver.returnType, firstParam.type, context)
                      ?.let { compilationError ->
                         return@flatMap listOf(compilationError).left()
                      }
 
                }
 
-               val unparsedParameters = functionContext.argumentList()?.argument() ?: emptyList()
                val parametersOrErrors: Either<List<CompilationError>, List<Accessor>> =
-                  unparsedParameters.mapIndexed { parameterIndex, parameterContext ->
+                  arguments.mapIndexed { parameterIndex, parameterContext ->
                      val declaredParamIndex = if (receiver != null) parameterIndex + 1 else parameterIndex
                      val parameterType = function.getParameterType(declaredParamIndex)
                      val parameterAccessor: Either<List<CompilationError>, Accessor> = when {
@@ -133,7 +130,7 @@ class FunctionAccessorCompiler(
                            compileExpressionGroupParameter(parameterContext.expressionGroup())
                         }
 
-                        else -> TODO("readFunction parameter accessor not defined for code ${functionContext.source().content}")
+                        else -> TODO("readFunction parameter accessor not defined for code ${context.source().content}")
 
                      }.flatMap { parameterAccessor ->
                         typeChecker.ifAssignable(
@@ -167,11 +164,28 @@ class FunctionAccessorCompiler(
 
                      listOf(unwrappedReceiver) + parameters
                   } else parameters
-                  buildAndResolveTypeArgumentsOrError(function, allParams, targetType, functionContext)
+                  buildAndResolveTypeArgumentsOrError(function, allParams, targetType, context)
 
                }
             }
          }
+   }
+
+   internal fun buildFunctionAccessor(
+      functionContext: TaxiParser.FunctionCallContext,
+      targetType: Type,
+      receiver: Expression? = null,
+      /**
+       * Allows overriding the name of the function.
+       * This is needed when a function call is using dot syntax, eg:
+       * PersonName.uppercase()
+       */
+      functionName: String = functionContext.qualifiedName().identifier().text()
+   ): Either<List<CompilationError>, FunctionAccessor> {
+      val namespace = functionContext.findNamespace()
+      return buildFunctionAccessor(
+         namespace, functionName, functionContext, functionContext.argumentList()?.argument() ?: emptyList(), targetType, receiver
+      )
    }
 
    private fun compileExpressionGroupParameter(expressionGroup: TaxiParser.ExpressionGroupContext): Either<List<CompilationError>, Expression> {

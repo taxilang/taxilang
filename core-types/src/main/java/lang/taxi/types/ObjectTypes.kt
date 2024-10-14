@@ -123,7 +123,7 @@ data class ObjectType(
    override val qualifiedName: String,
    override var definition: ObjectTypeDefinition?,
    override val extensions: MutableList<ObjectTypeExtension> = mutableListOf()
-) : UserType<ObjectTypeDefinition, ObjectTypeExtension>, Annotatable, Documented {
+) : UserType<ObjectTypeDefinition, ObjectTypeExtension>, Annotatable, Documented, HasChildSymbols<Type> {
    companion object {
       fun undefined(name: String): ObjectType {
          return ObjectType(name, definition = null)
@@ -256,6 +256,15 @@ data class ObjectType(
       get() {
          return inheritsFrom.map { it.qualifiedName }
       }
+
+   override fun getMember(name: String, permitImplicitResolution: Boolean): Either<String, Type> {
+      return if (this.hasField(name)) {
+         this.field(name).type.right()
+      } else {
+         "Type ${this.qualifiedName} has no member $name"
+            .left()
+      }
+   }
 
    override fun toString(): String {
       return qualifiedName

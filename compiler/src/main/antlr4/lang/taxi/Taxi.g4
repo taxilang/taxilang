@@ -124,8 +124,8 @@ expressionGroup:
    | expressionGroup COALESCE expressionGroup
    | expressionGroup LOGICAL_AND expressionGroup
    | expressionGroup LOGICAL_OR expressionGroup
-   | expressionGroup '.' functionCall
-   | expressionGroup '.' qualifiedName
+   | expressionGroup '.' methodCall
+   | expressionGroup '.' identifier
    | whenBlock
    // Inputs go last, so that when parsing lambdas, the inputs are the LHS and everything remainin goes RHS.
    // Might not work for nested lambdas, if that's a thing.
@@ -508,8 +508,16 @@ functionModifiers: K_Query | K_Extension;
 
 
 // Could be MyType( foo == bar ), or myFunction( param1, param1 )
+// Note: This is a top-level function call, not a method (or extension function) invoked on
+// a call target
 functionCall: qualifiedName '(' argumentList? ')';
 
+// This is a call on something - almost always an extension function.
+// The main difference here is that we don't accept a qualified name (ie.,
+// many dots), only a single identifier.
+// This is important for disticntion between method calls, and property access
+// (eg., a.b.c().d.e)
+methodCall: identifier '(' argumentList? ')';
 
 // A list of arguments passed into a function call
 // Permits trailing commas.  foo(a, )

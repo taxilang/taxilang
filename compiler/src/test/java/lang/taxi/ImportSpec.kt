@@ -241,7 +241,7 @@ namespace bar {
                lastName : LastName by LastName.livelyUpYourself()
             }
          """.validated()
-            errors.errors().shouldContainMessage("livelyUpYourself is not defined")
+            errors.errors().shouldContainMessage("Type LastName has no member livelyUpYourself")
             errors.errors().shouldContainMessage("Cannot import com.foo.livelyUpYourself as it is not defined")
       }
    }

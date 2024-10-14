@@ -60,7 +60,7 @@ data class EnumValue(
    val synonyms: List<EnumValueQualifiedName> = emptyList(),
    override val typeDoc: String? = null,
    val isDefault: Boolean = false
-) : Annotatable, Documented, Named {
+) : Annotatable, Documented, Named, HasChildSymbols<Type> {
 
    override val qualifiedName: String = enumValueQualifiedName
 
@@ -77,6 +77,24 @@ data class EnumValue(
          val parts = name.split(".")
          return QualifiedName.from(parts.dropLast(1).joinToString(".")) to parts.last()
       }
+   }
+
+   override fun getMember(name: String, permitImplicitResolution: Boolean): Either<String, Type> {
+      // MP 11-Oct-24:
+      // Really not sure about this implementation -- does getMember make sense here?
+      // Normally, we're doing something like EnumType.EnumMemberName.attribute
+      // eg:Errors.BadRequest.code
+      if (this.value !is TypedValue) {
+         return "$enumValueQualifiedName has no member named $name".left()
+      }
+      if (this.value.type !is ObjectType) {
+         return "$enumValueQualifiedName has no member named $name".left()
+      }
+      val valueType = this.value.type as ObjectType
+      if (!valueType.hasField(name)) {
+         return "$enumValueQualifiedName has no member named $name".left()
+      }
+      return valueType.field(name).type.right()
    }
 }
 
@@ -127,7 +145,7 @@ data class EnumType(
    override val qualifiedName: String,
    override var definition: EnumDefinition?,
    override val extensions: MutableList<EnumExtension> = mutableListOf()
-) : UserType<EnumDefinition, EnumExtension>, Annotatable, Documented, HasMembers<EnumValue> {
+) : UserType<EnumDefinition, EnumExtension>, Annotatable, Documented, HasChildSymbols<EnumValue> {
    companion object {
       fun undefined(name: String): EnumType {
          return EnumType(name, definition = null)
@@ -142,7 +160,7 @@ data class EnumType(
    override fun getMember(name: String, permitImplicitResolution: Boolean): Either<String, EnumValue> {
       return if (hasName(name)) {
          val matchedByName = ofName(name)
-         if (matchedByName.name !== name && !permitImplicitResolution) {
+         if (matchedByName.name != name && !permitImplicitResolution) {
             "Enum ${this.qualifiedName} has no member named $name, and although it has default values, matching on implicit resolution was disallowed".left()
          } else {
             matchedByName.right()

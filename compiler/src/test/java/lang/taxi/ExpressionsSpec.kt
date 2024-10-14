@@ -13,6 +13,7 @@ import lang.taxi.accessors.Argument
 import lang.taxi.expressions.*
 import lang.taxi.types.*
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 
 class ExpressionsSpec : DescribeSpec({
 
@@ -404,6 +405,47 @@ class ExpressionsSpec : DescribeSpec({
          error.errors.shouldContainMessage("Sto is not defined")
       }
 
+      describe("chaning accessors") {
+         val schema = """model ErrorDetails {
+            code : ErrorCode inherits Int
+            message : ErrorMessage inherits String
+         }
+         enum Errors<ErrorDetails> {
+            BadRequest({ code : 400, message : 'Bad Request' }),
+            Unauthorized({ code : 401, message : 'Unauthorized' })
+         }
+         declare extension function upperCase(String):String"""
+         it("can chain enum references and fields") {
+            val (schema, query) = schema.compiledWithQuery(
+               """
+find {  Errors.enumForName('BadRequest').code }
+         """.trimIndent()
+            )
+            val memberAccessExpression = query.discoveryType!!.expression
+               .shouldBeInstanceOf<MemberAccessExpression>()
+            val lhs = memberAccessExpression.lhs.shouldBeInstanceOf<ExtensionFunctionExpression>()
+            lhs.receiverValue.shouldBeInstanceOf<TypeExpression>()
+               .type.qualifiedName.shouldBe("Errors")
+            lhs.functionExpression.function.qualifiedName.shouldBe("taxi.stdlib.enumForName")
+
+            memberAccessExpression.rhs.fieldName.shouldBe("code")
+         }
+         it("can chain enum references and fields and methods") {
+            val (schema, query) = schema.compiledWithQuery(
+               """
+find {  Errors.enumForName('BadRequest').message.upperCase() }
+         """.trimIndent()
+            )
+            val extensionFunction = query.discoveryType!!.expression.shouldBeInstanceOf<ExtensionFunctionExpression>()
+            extensionFunction.receiverValue.shouldBeInstanceOf<MemberAccessExpression>()
+               .rhs.fieldName.shouldBe("message")
+
+            extensionFunction.functionExpression.function.qualifiedName.shouldBe("upperCase")
+         }
+      }
+
+
+
       describe("referencing members of inputs") {
          val schema = """
          model UserUpdateMessage {
@@ -505,6 +547,8 @@ class ExpressionsSpec : DescribeSpec({
          it("can declare a simple array") {
             "".compiledWithQuery("""find { [1,2,3] }""")
          }
+
+
       }
    }
 })

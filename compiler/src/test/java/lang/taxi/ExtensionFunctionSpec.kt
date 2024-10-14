@@ -4,14 +4,18 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldNotBeInstanceOf
 import lang.taxi.expressions.ExtensionFunctionExpression
+import lang.taxi.expressions.LambdaExpression
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.types.ArgumentSelector
+import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
+import lang.taxi.types.TypeReference
 
 class ExtensionFunctionSpec : DescribeSpec({
    describe("extension functions") {
@@ -140,6 +144,31 @@ class ExtensionFunctionSpec : DescribeSpec({
             }
             """.trimIndent()
          )
+      }
+      it("can compile function with type reference") {
+         val f ="""declare extension function <T> lookupEnumByName(enumType: lang.taxi.Type<T>): T"""
+            .compiled()
+            .function("lookupEnumByName")
+         f.parameters.single().type.shouldBeInstanceOf<TypeReference>()
+      }
+      it("can call an expression function against an array") {
+         val expression = """
+            declare extension function <T> filter(collection:T[], callback: (T) -> Boolean):T[]
+            model Film {
+               title : Title inherits String
+               minAge : Age inherits Int
+            }
+            type AllowedFilms by (Film[], viewerAge:Age) -> Film[].filter( (Film) -> Film::Age > viewerAge )
+               .convert(Title)
+         """.compiled()
+            .type("AllowedFilms")
+            .asA<ObjectType>()
+            .expression!!
+         expression.shouldBeInstanceOf<LambdaExpression>()
+            .expression.shouldBeInstanceOf<ExtensionFunctionExpression>() // this is the .convert() part...
+            .receiverValue.shouldBeInstanceOf<ExtensionFunctionExpression>() // this is the .filter() part..
+            .receiverValue.shouldBeInstanceOf<TypeExpression>() // this is the Film[] party
+            .type.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<Film>")
       }
 
       it("is valid to call an extesnion function on a named parameter") {
