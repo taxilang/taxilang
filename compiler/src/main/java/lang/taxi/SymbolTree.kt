@@ -4,12 +4,16 @@ import arrow.core.Either
 import arrow.core.getOrElse
 import arrow.core.left
 import arrow.core.right
-import lang.taxi.types.HasMembers
+import lang.taxi.compiler.TokenProcessor
+import lang.taxi.compiler.CircularReferenceException
+import lang.taxi.types.DefinableToken
+import lang.taxi.types.HasChildSymbols
 import lang.taxi.types.ImportableToken
 import lang.taxi.types.Named
 import lang.taxi.types.NamespaceToken
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.toQualifiedName
+import lang.taxi.utils.createCompilationError
 import lang.taxi.utils.flatMapLeft
 import lang.taxi.utils.takeHead
 import org.antlr.v4.runtime.ParserRuleContext
@@ -89,20 +93,34 @@ class SymbolTree {
             // (could be the root)
             // return the node, along with the remaining parts of the requested name
             val matchedNameParts = nameParts.subList(0, index).joinToString(".")
-            return Triple(treeNode, TextFragmentWithCompiledToken(matchedNameParts, treeNode.node), nameParts.subList(index, nameParts.size))
+            return Triple(
+               treeNode,
+               TextFragmentWithCompiledToken(matchedNameParts, treeNode.node),
+               nameParts.subList(index, nameParts.size)
+            )
          } else {
             nextNode
          }
       }
       val matchedToken = TextFragmentWithCompiledToken(name, requestedNode.node)
-      return Triple(requestedNode, matchedToken,emptyList())
+      return Triple(requestedNode, matchedToken, emptyList())
    }
+
 
    private fun resolveViaImports(
       nameToMatch: String,
       currentNamespace: String,
       imports: List<String>
    ): Either<String,TextFragmentWithCompiledToken> {
+      // MP 12-Oct
+      // don't try to resolve multi-part tokens here.
+      // If it's a fully-qualified name (foo.bar.Person), it's not going to resolve as an import.
+      // If it's reference with properties and extension-functions, (eg: Countries.NZ.flagColour())
+      // you need to handle & iterate the remaining tokens.
+      if (nameToMatch.contains(".")) {
+         return "An internal error occurred: Symbol '$nameToMatch' should only attempt to resolve a single symbol via imports".left()
+      }
+
       // Is the name imported?
       val matchedByImport = imports.filter { it.endsWith(nameToMatch) }
          .singleOrNull()?.let { matchingImport ->
@@ -154,25 +172,71 @@ class SymbolTree {
       }
    }
 
-   fun getSymbol(
-      requestedName: String,
-      currentNamespace: String = "",
-      imports: List<String> = emptyList(),
-      context: ParserRuleContext
-   ): Either<List<CompilationError>, List<TextFragmentWithCompiledToken>> {
-      return getSymbol(requestedName, currentNamespace, imports)
-         .mapLeft { listOf(CompilationError(context.toCompilationUnit(), it)) }
+   /**
+    * Requests the token processor to compile the referenced token, if it hasn't yet
+    * been compiled.
+    */
+   private fun compileIfRequired(
+      token: TextFragmentWithCompiledToken,
+      tokenProcessor: TokenProcessor,
+      context: ParserRuleContext,
+      // If false, this method does nothing.
+      // Only here to simplify call chains.
+      shouldCompile: Boolean = true
+   ): Either<List<CompilationError>, TextFragmentWithCompiledToken> {
+      if (!shouldCompile) {
+         return token.right()
+      }
+      return if (token.value is DefinableToken<*> && !token.value.isDefined) {
+         tokenProcessor.compile(token.value, context).map { compiledToken ->
+            if (!compiledToken.isDefined) {
+               return listOf(CompilationError(
+                  context.toCompilationUnit(),
+                  "A circular reference was encountered when compiling ${token.value.qualifiedName}",
+                  throwable = CircularReferenceException(compiledToken)
+                  )).left()
+            } else {
+               token.copy(value = compiledToken)
+            }
+         }
+      } else {
+         token.right()
+      }
+   }
+
+   fun getBestMatch(requestedName: String, currentNamespace: String, imports: List<String>): Pair<TextFragmentWithCompiledToken, List<String>> {
+      val (mostSpecificNode, matchedToken, unresolvedNameParts) =  findMostSpecificTreeNode(requestedName, root)
+      if (mostSpecificNode == root) {
+         // MP 12:Oct
+         // If the name to match is many parts, just try to match the first part,
+         // Here's the rationale
+         // If it's a namespace declaration, the reference is already absolute, so we
+         // don't need to try to resolve via imports.
+         // However, it could be the first token in a many-part statement (eg., Enum.Property.ExtensionFunction())
+         // We only want to resolve the first part of that for now.
+         val nameParts = requestedName.split(".")
+         resolveViaImports(nameParts.first(), currentNamespace, imports)
+            .map { resolved ->
+               return resolved to nameParts.drop(1)
+            }
+      }
+      return matchedToken to unresolvedNameParts
    }
 
    fun getSymbol(
       requestedName: String,
       currentNamespace: String = "",
       imports: List<String> = emptyList(),
-
-      ): Either<String, List<TextFragmentWithCompiledToken>> {
-      val (mostSpecificNode,matchedToken, unresolvedNameParts) = findMostSpecificTreeNode(requestedName, root)
+      context: ParserRuleContext,
+      // We need the token processor, as if we hit any symbols
+      // that aren't yet compiled, we'll need to process them before
+      // we can navigate into their child symbols.
+      tokenProcessor: TokenProcessor,
+      compileIfRequired: Boolean = true
+   ): Either<List<CompilationError>, List<TextFragmentWithCompiledToken>> {
+      val (mostSpecificNode, matchedToken, unresolvedNameParts) = findMostSpecificTreeNode(requestedName, root)
       if (unresolvedNameParts.isEmpty()) {
-         return listOf(TextFragmentWithCompiledToken(requestedName,mostSpecificNode.node)).right()
+         return listOf(TextFragmentWithCompiledToken(requestedName, mostSpecificNode.node)).right()
       }
 
       if (mostSpecificNode == root) {
@@ -180,15 +244,15 @@ class SymbolTree {
             unresolvedNameParts.first(),
             currentNamespace,
             imports
-         ).getOrElse { return it.left() }
+         ).getOrElse { return context.createCompilationError(it) }
          val remainingNameParts = unresolvedNameParts.drop(1)
          return if (remainingNameParts.isEmpty()) {
             listOf(resolvedViaImports).right()
          } else {
-            resolveMember(resolvedViaImports, remainingNameParts, currentNamespace, imports)
+            resolveMember(resolvedViaImports, remainingNameParts, currentNamespace, imports, tokenProcessor, context, compileIfRequired)
          }
       } else {
-         return resolveMember(matchedToken, unresolvedNameParts, currentNamespace, imports)
+         return resolveMember(matchedToken, unresolvedNameParts, currentNamespace, imports, tokenProcessor, context, compileIfRequired)
       }
    }
 
@@ -211,53 +275,81 @@ class SymbolTree {
       named: TextFragmentWithCompiledToken,
       remainingNameParts: List<String>,
       currentNamespace: String,
-      imports: List<String>
-   ): Either<String, List<TextFragmentWithCompiledToken>> {
+      imports: List<String>,
+      tokenProcessor: TokenProcessor,
+      context: ParserRuleContext,
+      compileIfRequired: Boolean
+   ): Either<List<CompilationError>, List<TextFragmentWithCompiledToken>> {
       // If it has members (eg., operations, fields, enum values)
       // resolve that
       return remainingNameParts.fold(listOf(named)) { acc, name ->
-         val last = acc.last()
-         if (last.value is HasMembers<*>) {
-            val resolvedMember = last.value.getMember(name, permitImplicitResolution = false)
-               .map { resolvedMember -> TextFragmentWithCompiledToken(name,resolvedMember) }
-               .flatMapLeft { error ->
-                  // It wasn't available as an explicit value on the member (but might be an implicit value - like an enum default)
-                  // First, check if this is resolved via imports (ie., is it an extension function?)
-                  resolveViaImports(
-                     name,
-                     currentNamespace,
-                     imports
-                  )
-               }.flatMapLeft {
-                  // The parent didn't have a member matching the
-                  // requested name, and we coulnd't resolve it as an extension function
-                  // Try now using implicit resolution (ie., default values)
-                  // If this fails, we give up.
-                  last.value.getMember(name, permitImplicitResolution = true)
-                     .map { resolvedMember -> TextFragmentWithCompiledToken(name,resolvedMember) }
-               }.getOrElse { errorMessage ->
-                  return errorMessage.left()
-               }
+         val last = compileIfRequired(acc.last(), tokenProcessor, context, compileIfRequired)
+            .getOrElse { return it.left() }
+         when (last.value) {
+            is HasChildSymbols<*> -> {
+               val resolvedMember = resolveTokenAsMember(last.value, name, currentNamespace, imports)
+                  .getOrElse { return context.createCompilationError(it) }
+               acc + resolvedMember
+            }
 
-            acc + resolvedMember
-         } else {
-            // It doesn't have any members.
-            // Attempt to look up the member via an import.
-            // This is really only allowable if the member
-            // is an extension function
-            resolveViaImports(
-               name,
-               currentNamespace,
-               imports
-            ).map {  importLookup ->
-               acc + importLookup
-            }.getOrElse { return it.left() }
+            is NamespaceToken -> {
+               val combinedToken = listOf(last.text, name).joinToString(".")
+               if (symbolsByName.containsKey(combinedToken)) {
+                  val resolvedMember = TextFragmentWithCompiledToken(combinedToken, symbolsByName[combinedToken]!!)
+                  acc + resolvedMember
+               } else {
+                  return context.createCompilationError(ErrorMessages.unresolvedType(combinedToken))
+               }
+            }
+
+            else -> {
+               // It doesn't have any members.
+               // Attempt to look up the member via an import.
+               // This is really only allowable if the member
+               // is an extension function
+               resolveViaImports(
+                  name,
+                  currentNamespace,
+                  imports
+               ).map { importLookup ->
+                  acc + importLookup
+               }.getOrElse { return context.createCompilationError(it) }
+            }
          }
       }.right()
    }
 
-
+   private fun resolveTokenAsMember(
+      tokenWithMembers: HasChildSymbols<*>,
+      name: String,
+      currentNamespace: String,
+      imports: List<String>
+   ): Either<String, TextFragmentWithCompiledToken> {
+      val resolvedMember = tokenWithMembers.getMember(name, permitImplicitResolution = false)
+         .map { resolvedMember -> TextFragmentWithCompiledToken(name, resolvedMember) }
+         .flatMapLeft { error ->
+            // It wasn't available as an explicit value on the member (but might be an implicit value - like an enum default)
+            // First, check if this is resolved via imports (ie., is it an extension function?)
+            resolveViaImports(
+               name,
+               currentNamespace,
+               imports
+            )
+         }.flatMapLeft {
+            // The parent didn't have a member matching the
+            // requested name, and we coulnd't resolve it as an extension function
+            // Try now using implicit resolution (ie., default values)
+            // If this fails, we give up.
+            tokenWithMembers.getMember(name, permitImplicitResolution = true)
+               .map { resolvedMember -> TextFragmentWithCompiledToken(name, resolvedMember) }
+         }.getOrElse { errorMessage ->
+            return errorMessage.left()
+         }
+      return resolvedMember.right()
+   }
 }
+
+
 
 /**
  * Models a single text part, mapped to a compiled token (Named),

@@ -7,7 +7,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.expressions.CastExpression
 import lang.taxi.expressions.LiteralArray
 import lang.taxi.expressions.LiteralExpression
-import lang.taxi.expressions.ObjectExpression
+import lang.taxi.expressions.ObjectLiteralExpression
 import lang.taxi.types.PrimitiveType
 
 class LiteralsSpec : DescribeSpec({
@@ -38,7 +38,7 @@ class LiteralsSpec : DescribeSpec({
       it("should parse an object") {
          val expression = """{ name : "Jimmy" }""".compiled()
             .expressions.single()
-            .shouldBeInstanceOf<ObjectExpression>()
+            .shouldBeInstanceOf<ObjectLiteralExpression>()
          val map = expression.expressionMap
          map["name"]!!.returnType.shouldBe(PrimitiveType.STRING)
           (map["name"]!! as LiteralExpression).value.shouldBe("Jimmy")
@@ -54,8 +54,8 @@ class LiteralsSpec : DescribeSpec({
          """.compiled()
             .expressions.single()
             .shouldBeInstanceOf<CastExpression>()
-         val objectExpression = cast.expression.shouldBeInstanceOf<ObjectExpression>()
-         val map = objectExpression.expressionMap
+         val objectLiteralExpression = cast.expression.shouldBeInstanceOf<ObjectLiteralExpression>()
+         val map = objectLiteralExpression.expressionMap
          map["id"]!!.returnType.qualifiedName.shouldBe("FilmId")
           (map["id"]!! as LiteralExpression).value.shouldBe(1)
          map["title"]!!.returnType.qualifiedName.shouldBe("Title")
@@ -75,8 +75,8 @@ class LiteralsSpec : DescribeSpec({
             .shouldBeInstanceOf<CastExpression>()
          val literalArray = cast.expression.shouldBeInstanceOf<LiteralArray>()
 
-         val objectExpression =literalArray.members.single().shouldBeInstanceOf<ObjectExpression>()
-         val map = objectExpression.expressionMap
+         val objectLiteralExpression =literalArray.members.single().shouldBeInstanceOf<ObjectLiteralExpression>()
+         val map = objectLiteralExpression.expressionMap
          map["id"]!!.returnType.qualifiedName.shouldBe("FilmId")
           (map["id"]!! as LiteralExpression).value.shouldBe(1)
          map["title"]!!.returnType.qualifiedName.shouldBe("Title")

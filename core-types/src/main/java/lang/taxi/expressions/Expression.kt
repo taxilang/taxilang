@@ -11,7 +11,6 @@ import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.functions.FunctionAccessor
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.*
-import kotlin.math.exp
 
 // Note: Expression inheriting Accessor is tech debt,
 // and really around the wrong way.
@@ -48,7 +47,10 @@ data class LambdaExpression(
    }
 }
 
-data class ObjectExpression(override val returnType: Type, val expressionMap: Map<String, Expression>, override val compilationUnits: List<CompilationUnit>): Literal, Expression() {
+/**
+ * An expression that returns an object literal
+ */
+data class ObjectLiteralExpression(override val returnType: Type, val expressionMap: Map<String, Expression>, override val compilationUnits: List<CompilationUnit>): Literal, Expression() {
    override fun asTypedValue(): TypedValue {
       val values =  this.expressionMap.map {
          if (it.value !is Literal) {
@@ -142,7 +144,21 @@ data class FieldReferenceExpression(
       get() {
          return selectors.joinToString(".") { it.fieldName }
       }
+}
 
+/**
+ * Encapsulates traversing a member of a property
+ * The result of the LHS is the call target, and the RHS is the expression
+ * to evaluate against it.
+ *
+ * I suspect this is the replacement of FieldReferenceExpression, but not sure yet.
+ */
+data class MemberAccessExpression(
+   val lhs: Expression,
+   val rhs: FieldReferenceSelector,
+   override val compilationUnits: List<CompilationUnit>
+) : Expression() {
+   override val returnType: Type = rhs.returnType
 }
 
 data class TypeExpression(val type: Type,

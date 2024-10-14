@@ -17,8 +17,7 @@ import lang.taxi.compiler.fields.TypeBodyContext
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.LiteralArray
 import lang.taxi.expressions.LiteralExpression
-import lang.taxi.expressions.ObjectExpression
-import lang.taxi.expressions.toExpressionGroup
+import lang.taxi.expressions.ObjectLiteralExpression
 import lang.taxi.functions.Function
 import lang.taxi.linter.Linter
 import lang.taxi.policies.*
@@ -38,7 +37,6 @@ import lang.taxi.utils.*
 import lang.taxi.values.PrimitiveValues
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
-import java.util.*
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.flatten
@@ -224,6 +222,42 @@ class TokenProcessor(
       return attemptToLookupSymbolByName(namespace, name, context).map { qfn ->
          typeSystem.getType(qfn)
       }.wrapErrorsInList()
+   }
+
+   /**
+    * Compiles a named token that has not yet been compiled.
+    */
+   fun <T : Named> compile(named: T, context: ParserRuleContext): Either<List<CompilationError>, T> {
+      val namespace = named.toQualifiedName().namespace
+      val name = named.toQualifiedName().typeName
+      if (tokensCurrentlyCompiling.contains(name)) {
+         // Avoid stack overflows
+         // However, the caller may not have a fully implemented token...
+         return named.right()
+      }
+
+      tokensCurrentlyCompiling.add(named.qualifiedName)
+      val result = when {
+         named is EnumType -> {
+            val token = tokens.unparsedTypes[named.qualifiedName]
+               ?: return context.createCompilationError("An internal error occurred: Cannot compile requsted token ${named.qualifiedName} as it was not found")
+            compileEnum(namespace, name, token.second as EnumDeclarationContext)
+               .map { it as T }
+         }
+
+         named is Type -> {
+            val token = tokens.unparsedTypes[named.qualifiedName]
+               ?: return context.createCompilationError("An internal error occurred: Cannot compile requsted token ${named.qualifiedName} as it was not found")
+            compileType(namespace, name, token.second as TypeDeclarationContext)
+               .map { it as T }
+         }
+
+         else -> {
+            return context.createCompilationError("An internal error occurred: On-demand compilation of token type ${named::class.simpleName} is not implemented")
+         }
+      }
+      tokensCurrentlyCompiling.remove(named.qualifiedName)
+      return result
    }
 
    private fun compile() {
@@ -748,9 +782,9 @@ class TokenProcessor(
       val expression = ctx.expressionTypeDeclaration()?.let {
          parseTypeExpression(it.expressionGroup(), activeScopes, interimType)
       }?.getOrElse { errors ->
-            this.errors.addAll(errors)
-            null
-         }
+         this.errors.addAll(errors)
+         null
+      }
 
       val inherits = declaredInheritence.let { explicitInheritence ->
          // If we have an expression, then the return type is inferrable from that
@@ -1731,6 +1765,10 @@ class TokenProcessor(
       // If not, then the method should return null.
       unparsedCheckAndCompile: (String) -> Either<List<CompilationError>, ImportableToken>?
    ): Either<List<CompilationError>, ImportableToken> {
+      // Note: Use requestedTypeName, as qualifying it to the local namespace didn't help
+      val error = {
+         Errors.unresolvedType(requestedTypeName, context.toCompilationUnit()).asList()
+      }
       return attemptToLookupSymbolByName(namespace, requestedTypeName, context, symbolKind)
          .wrapErrorsInList()
          .flatMap { qualifiedTypeName ->
@@ -1752,11 +1790,6 @@ class TokenProcessor(
             val compilationResult = unparsedCheckAndCompile(qualifiedTypeName)
             if (compilationResult != null) {
                return@flatMap compilationResult
-            }
-
-            // Note: Use requestedTypeName, as qualifying it to the local namespace didn't help
-            val error = {
-               Errors.unresolvedType(requestedTypeName, context.toCompilationUnit()).asList()
             }
 
             if (ArrayType.isArrayTypeName(requestedTypeName)) {
@@ -1856,13 +1889,22 @@ class TokenProcessor(
       }
    }
 
-   // An experimental approach that uses a full
-   // tree of symbols to navigate 'dots' properly
-   fun findInSymbolTree(
+   /**
+    * Looks up the first matched type (ie., not a namespace declaration)
+    * in the symbol tree, if possible.
+    */
+   fun findBestMatchInSymbolTree(
       tokenName: String,
-      context: ParserRuleContext,
-      compileIfRequired: Boolean = true
-   ): Either<List<CompilationError>, List<TextFragmentWithCompiledToken>> {
+      context: ParserRuleContext
+   ): Pair<TextFragmentWithCompiledToken, List<String>> {
+      val (currentNamespace, imports) = getNamespaces(context)
+      return this.typeSystem.symbolTree.getBestMatch(tokenName, currentNamespace, imports)
+   }
+
+   /**
+    * Returns a pair of the current namespace, and the imports currently in scope
+    */
+   private fun getNamespaces(context: ParserRuleContext):Pair<Namespace, List<String>> {
       val topLevelObject = context.searchUpForRule(
          listOf(
             SingleNamespaceDocumentContext::class.java,
@@ -1876,11 +1918,32 @@ class TokenProcessor(
       }
 
       val importsInSource = importTokens.map { it.qualifiedName().text }
+      val currentNamespace = context.findNamespace()
+      return currentNamespace to importsInSource
+   }
+
+   /**
+    * Will resolve a dot-notated reference to the correct symbols,
+    * forcing compilation along the way if requried.
+    *
+    * returns a series of tokens for the referenced symbols, or the compilation errors
+    * if not able to fully resolve the entire chain
+    */
+   // An experimental approach that uses a full
+   // tree of symbols to navigate 'dots' properly
+   fun findInSymbolTree(
+      tokenName: String,
+      context: ParserRuleContext,
+      compileIfRequired: Boolean = true
+   ): Either<List<CompilationError>, List<TextFragmentWithCompiledToken>> {
+      val (currentNamespace, importsInSource) = getNamespaces(context)
       val result = this.typeSystem.symbolTree.getSymbol(
          tokenName,
-         context.findNamespace(),
+         currentNamespace,
          importsInSource,
-         context = context
+         context = context,
+         this,
+         compileIfRequired
       )
       result.flatMap { symbols ->
 
@@ -1893,16 +1956,28 @@ class TokenProcessor(
          symbols.map { symbol ->
             if (symbol.value is ObjectType && !symbol.value.isDefined && compileIfRequired) {
                val typeName = symbol.value.toQualifiedName()
-               val uncompiledToken = tokens.unparsedTypes[tokenName]
+               val uncompiledToken = tokens.unparsedTypes[typeName.fullyQualifiedName]
                val tokenToCompile = when {
-                   uncompiledToken == null -> {
-                      listOf(CompilationError(context.toCompilationUnit(), "An internal error occurred: A reference to $tokenName could not be compiled, as it's token was not found"))
-                         .left()
-                   }
-                  uncompiledToken.second !is TypeDeclarationContext -> {
-                     listOf(CompilationError(context.toCompilationUnit(), "An internal error occurred: Cannot compile $tokenName as it's token is not of the expected type - expected a TypeDeclarationContext, but got ${uncompiledToken.second::class.simpleName}"))
+                  uncompiledToken == null -> {
+                     listOf(
+                        CompilationError(
+                           context.toCompilationUnit(),
+                           "An internal error occurred: A reference to $tokenName could not be compiled, as it's token was not found"
+                        )
+                     )
                         .left()
                   }
+
+                  uncompiledToken.second !is TypeDeclarationContext -> {
+                     listOf(
+                        CompilationError(
+                           context.toCompilationUnit(),
+                           "An internal error occurred: Cannot compile $tokenName as it's token is not of the expected type - expected a TypeDeclarationContext, but got ${uncompiledToken.second::class.simpleName}"
+                        )
+                     )
+                        .left()
+                  }
+
                   else -> {
                      (uncompiledToken.second as TypeDeclarationContext).right()
                   }
@@ -2096,7 +2171,7 @@ class TokenProcessor(
                      val errors = mutableListOf<CompilationError>()
                      val valueCompiler = ValueExpressionCompiler(ExpressionCompiler(this, this.typeChecker, errors))
                      valueCompiler.objectValueAsExpression(objectValue, valueType).flatMap { expression ->
-                        if (expression !is ObjectExpression) {
+                        if (expression !is ObjectLiteralExpression) {
                            listOf(
                               CompilationError(
                                  enumConstant.toCompilationUnit(),
@@ -2237,21 +2312,28 @@ class TokenProcessor(
       parserRuleContext: ParserRuleContext,
       enumSelector: (EnumType, String) -> Either<List<CompilationError>, T>
    ): Either<List<CompilationError>, T> {
-      val (enumName, enumValueName) = Enums.splitEnumValueQualifiedName(name)
-
-      return resolveUserType(
-         parserRuleContext.findNamespace(),
-         enumName.parameterizedName,
-         parserRuleContext
-      )
-         .flatMap { enumType ->
-            if (enumType is EnumType) {
-               enumSelector(enumType, enumValueName)
-            } else {
-               CompilationError(parserRuleContext.start, "${enumType.qualifiedName} is not an Enum").asList()
-                  .left()
+      // MP 11-Oct-24:
+      // Rewrote this implementation to use the symbol tree, now that
+      // an enum can have an object value (and therefore expressions can reference child properties)
+//      val matchingSymbol2 = findInSymbolTree(name, parserRuleContext, compileIfRequired = false)
+      val (matchedSymbol, unresolvedParts) = findBestMatchInSymbolTree(name, parserRuleContext)
+      if (matchedSymbol.value is EnumType) {
+         val enumValueName = unresolvedParts.first()
+         return resolveUserType(
+            parserRuleContext.findNamespace(),
+            matchedSymbol.value.qualifiedName,
+            parserRuleContext
+         )
+            .flatMap { enumType ->
+               if (enumType is EnumType) {
+                  enumSelector(enumType, enumValueName)
+               } else {
+                  CompilationError(parserRuleContext.start, "${enumType.qualifiedName} is not an Enum").asList()
+                     .left()
+               }
             }
-         }
+      }
+      return listOf(Errors.unresolvedType(name, parserRuleContext.toCompilationUnit())).left()
    }
 
    private fun <T> resolveEnumReference(
@@ -2413,7 +2495,12 @@ class TokenProcessor(
                val operationParameters =
                   queryOperation.operationParameterList().operationParameter()
                      .mapIndexed { index, operationParameterContext ->
-                        parseParameter(namespace, operationParameterContext, paramIndex = index, activeScopes = emptyList())
+                        parseParameter(
+                           namespace,
+                           operationParameterContext,
+                           paramIndex = index,
+                           activeScopes = emptyList()
+                        )
                      }.reportAndRemoveErrorList(errors)
                QueryOperation(
                   name = name,

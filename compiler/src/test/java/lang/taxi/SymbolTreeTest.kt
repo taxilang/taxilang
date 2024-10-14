@@ -1,5 +1,6 @@
 package lang.taxi
 
+import arrow.core.Either
 import arrow.core.right
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
@@ -13,6 +14,7 @@ import lang.taxi.types.EnumValue
 import lang.taxi.types.NamespaceToken
 import lang.taxi.types.ObjectType
 import org.junit.Test
+import org.mockito.kotlin.mock
 
 class SymbolTreeTest {
    @Test
@@ -95,6 +97,26 @@ class SymbolTreeTest {
          }"""
          .symbolTree()
          .getSymbol("com.foo.bar.Person")
+         .getOrNull()!!
+         .single()
+         .shouldBeInstanceOf<ObjectType>()
+   }
+
+   @Test
+   fun `can get attribute of enum value by name`() {
+      """
+         namespace com.foo.bar
+
+         model ErrorDetails {
+            code : ErrorCode inherits Int
+            message : ErrorMessage inherits String
+         }
+         enum Errors<ErrorDetails> {
+            BadRequest({ code : 400, message : 'Bad Request' }),
+            Unauthorized({ code : 401, message : 'Unauthorized' })
+         }
+      """.symbolTree()
+         .getSymbol("com.foo.bar.Errors.BadRequest.code")
          .getOrNull()!!
          .single()
          .shouldBeInstanceOf<ObjectType>()
@@ -216,7 +238,12 @@ private fun String.symbolTree(): SymbolTree {
    compiler.compile()
    return compiler.typeSystem.symbolTree
 }
-
+// Convenience method
+private fun SymbolTree.getSymbol(requestedName: String, currentNamespace: String = "", imports: List<String> = emptyList()):Either<List<CompilationError>, List<TextFragmentWithCompiledToken>> {
+   return this.getSymbol(
+      requestedName, currentNamespace, imports, context = mock {  }, tokenProcessor = mock {}
+   )
+}
 private fun List<String>.symbolTree(): SymbolTree {
    val compiler = Compiler(this.mapIndexed { idx, src -> SourceCode("SourceFile$idx", src) })
    compiler.compile()

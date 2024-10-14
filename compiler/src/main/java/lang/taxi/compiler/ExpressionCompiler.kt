@@ -118,8 +118,13 @@ class ExpressionCompiler(
             expressionGroup, targetType
          )
 
-         // Might need to be more specific here -- this should be expressionGroup.functionCall
-         expressionGroup.children.size == 3 && expressionGroup.functionCall() != null -> parseExtensionFunctionCallExpression(
+         // Might need to be more specific here -- this should be expressionGroup.functionCall()
+         expressionGroup.children.size == 3 && expressionGroup.methodCall() != null -> parseExtensionFunctionCallExpression(
+            expressionGroup
+         )
+
+         // Might need to be more specific here -- this should be expressionGroup.propertyName
+         expressionGroup.children.size == 3 && expressionGroup.identifier() != null -> parseAccessorExpression(
             expressionGroup
          )
 
@@ -260,7 +265,13 @@ class ExpressionCompiler(
                   .map { expression ->
                      ProjectionFunctionScope(parameterName, expression.returnType, expression)
                   }
-               else -> return listOf(CompilationError(lambdaExpression.toCompilationUnit(), "An internal error occurred: Unhandled branch in parseLambdaExpression with token ${lambdaExpression.text}"))
+
+               else -> return listOf(
+                  CompilationError(
+                     lambdaExpression.toCompilationUnit(),
+                     "An internal error occurred: Unhandled branch in parseLambdaExpression with token ${lambdaExpression.text}"
+                  )
+               )
                   .left()
             }
          }.invertEitherList().flattenErrors()
@@ -455,9 +466,21 @@ class ExpressionCompiler(
    private fun parseOperatorExpression(expressionGroup: ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
 
       val lhsOrError = expressionGroup.expressionGroup(0)?.let { compile(it) }
-         ?: error("Expected an expression group at index 0")
+         ?: return listOf(
+            CompilationError(
+               expressionGroup.toCompilationUnit(),
+               "An internal error occurred: Expected an expression group at index 0, but was null"
+            )
+         )
+            .left()
       val rhsOrError = expressionGroup.expressionGroup(1)?.let { compile(it) }
-         ?: error("Expected an expression group at index 1")
+         ?: return listOf(
+            CompilationError(
+               expressionGroup.toCompilationUnit(),
+               "An internal error occurred: Expected an expression group at index 1, but was null"
+            )
+         )
+            .left()
       val operatorSymbol = expressionGroup.children[1]
       val operatorOrError = when {
          FormulaOperator.isSymbol(operatorSymbol.text) -> FormulaOperator.forSymbol(operatorSymbol.text).right()
@@ -622,52 +645,6 @@ class ExpressionCompiler(
 
             }
          }
-// Old implementation - left below whilst debugging
-      return tokenProcessor.resolveImportableToken(tokenName, readFunction.qualifiedName())
-         .flatMap { token ->
-            when (token) {
-               is Type -> parseFunctionExpressionAsTypeExpression(token, readFunction)
-               else -> parseFunctionExpression(
-                  readFunction,
-                  assignmentType,
-                  functionName = tokenName,
-                  receiver = receiver
-               )
-            }
-         }
-         .flatMapLeft { error ->
-            if (!error.any { it.errorCode == ErrorCodes.UNRESOLVED_TYPE.errorCode }) {
-               return@flatMapLeft error.left()
-            }
-            // At this point, we likely have an error like "Movie.filterEach is not defined".
-            // Try to recover from a parse error, by checking if this is actually a function call
-            // in the form of foo.bar(), indicating a call of bar() on foo.
-            // Verify by trying to resolve BOTH foo and bar.
-            if (readFunction.qualifiedName().identifier().size > 1) {
-               val lhs = readFunction.qualifiedName().identifier()
-                  .dropLast(1)
-                  .joinToString(".") { it.text }
-               parseFunctionExpressionOrTypeExpression(lhs, readFunction, assignmentType)
-                  .flatMap { lhsExpression ->
-                     val rhs = readFunction.qualifiedName().identifier().last().text
-                     parseFunctionExpressionOrTypeExpression(
-                        rhs,
-                        readFunction,
-                        assignmentType,
-                        receiver = lhsExpression
-                     ).map { rhsExpression ->
-                        require(rhsExpression is FunctionExpression) { "Expected a FunctionExpression, but got ${rhsExpression::class.simpleName}" }
-                        ExtensionFunctionExpression(
-                           functionExpression = rhsExpression,
-                           receiverValue = lhsExpression,
-                           compilationUnits = readFunction.toCompilationUnits()
-                        )
-                     }
-                  }
-            } else {
-               error.left()
-            }
-         }
    }
 
    /**
@@ -729,7 +706,12 @@ class ExpressionCompiler(
       functionCall: TaxiParser.FunctionCallContext
    ): Either<List<CompilationError>, TypeExpression> {
       if (type is ObjectType && !type.isDefined) {
-         return listOf(CompilationError(functionCall.toCompilationUnit(), "An internal error has occurred - attempted to use a type in an expression before the type was compiled"))
+         return listOf(
+            CompilationError(
+               functionCall.toCompilationUnit(),
+               "An internal error has occurred - attempted to use a type in an expression before the type was compiled"
+            )
+         )
             .left()
       }
       // Check to see if this type expression is part of an extension function call.
@@ -783,14 +765,14 @@ class ExpressionCompiler(
       val lhsOrError = expression.expressionGroup(0)?.let { compile(it) }
          ?: error("Expected an expression group at index 0")
       return lhsOrError.flatMap { lhsExpression ->
-         parseFunctionExpression(expression.functionCall(), lhsExpression.returnType, receiver = lhsExpression)
+         parseMethodInvocation(expression.methodCall(), lhsExpression.returnType, receiver = lhsExpression)
 //         tokenProcessor.resolveFunction(expression.functionCall().qualifiedName(), expression)
             .map { lhsExpression to it }
       }.flatMap { (lhsExpression, functionExpression) ->
          if (!functionExpression.function.function.isExtension) {
             return@flatMap listOf(
                CompilationError(
-                  expression.functionCall().toCompilationUnit(),
+                  expression.methodCall().toCompilationUnit(),
                   "Function ${functionExpression.function.qualifiedName} is not an extension function, so cannot be called using the dot-syntax"
                )
             )
@@ -798,6 +780,35 @@ class ExpressionCompiler(
          }
          ExtensionFunctionExpression(functionExpression, lhsExpression, expression.toCompilationUnits())
             .right()
+      }
+   }
+
+   private fun parseAccessorExpression(expression: ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
+      val lhsOrError = expression.expressionGroup(0)?.let { compile(it) }
+         ?: expression.createInternalError("Expected an expression group at index 0")
+      return lhsOrError.flatMap { lhsExpression ->
+         val memberIdentifier = expression.identifier()
+            ?: return expression.createInternalError("Expected a qualifiedName, but none was found")
+         getMemberReference(lhsExpression.returnType, memberIdentifier.text, expression).map { member ->
+            MemberAccessExpression(lhsExpression, member, expression.toCompilationUnits())
+         }
+      }
+   }
+
+   private fun parseMethodInvocation(
+      methodCall: TaxiParser.MethodCallContext,
+      targetType: Type,
+      receiver: Expression
+   ): Either<List<CompilationError>, FunctionExpression> {
+      return functionCompiler.buildFunctionAccessor(
+         methodCall.findNamespace(),
+         methodCall.identifier().text,
+         methodCall,
+         methodCall.argumentList()?.argument() ?: emptyList(),
+         targetType,
+         receiver
+      ).map { functionAccessor ->
+         FunctionExpression(functionAccessor, methodCall.toCompilationUnits())
       }
    }
 
@@ -850,9 +861,6 @@ class ExpressionCompiler(
       if (typeReference != null && canResolveAsScopePath(typeReference.qualifiedName())) {
          return resolveScopePath(typeReference.qualifiedName())
       }
-
-
-
       return tokenProcessor.parseTypeOrUnionType(typeExpression.nullableTypeReference())
          .flatMap { type ->
             ConstraintBuilder(this).build(
@@ -921,6 +929,36 @@ class ExpressionCompiler(
       }
    }
 
+   private fun getMemberReference(
+      sourceType: Type,
+      fieldName: String,
+      context: ParserRuleContext
+   ): Either<List<CompilationError>, FieldReferenceSelector> {
+      return when {
+         sourceType is ObjectType && sourceType.hasField(fieldName) -> {
+            FieldReferenceSelector(fieldName, sourceType.field(fieldName).type).right()
+         }
+
+         sourceType is EnumType && sourceType.valueType is ObjectType && (sourceType.valueType!! as ObjectType).hasField(
+            fieldName
+         ) -> {
+            FieldReferenceSelector(
+               fieldName,
+               (sourceType.valueType as ObjectType).field(fieldName).type
+            ).right()
+         }
+
+         else -> {
+            listOf(
+               CompilationError(
+                  context.toCompilationUnit(),
+                  "Cannot resolve reference $fieldName against type ${sourceType.toQualifiedName().parameterizedName}"
+               )
+            ).left()
+         }
+      }
+   }
+
    /**
     * Maps the full scope path.
     * Callers are responsible for dropping the first path, if
@@ -940,22 +978,7 @@ class ExpressionCompiler(
             .runningFold(initial.right() as Either<List<CompilationError>, FieldReferenceSelector>) { resolvedType, fieldName ->
                resolvedType.flatMap { selector ->
                   val previousType = selector.declaredType
-                  when {
-                      previousType is ObjectType && previousType.hasField(fieldName) -> {
-                         FieldReferenceSelector(fieldName, previousType.field(fieldName).type).right()
-                      }
-                     previousType is EnumType && previousType.valueType is ObjectType && (previousType.valueType!! as ObjectType).hasField(fieldName) -> {
-                        FieldReferenceSelector(fieldName, (previousType.valueType as ObjectType).field(fieldName).type).right()
-                     }
-                      else -> {
-                         listOf(
-                            CompilationError(
-                               context.toCompilationUnit(),
-                               "Cannot resolve reference $fieldName against type ${previousType.toQualifiedName().parameterizedName}"
-                            )
-                         ).left()
-                      }
-                  }
+                  getMemberReference(previousType, fieldName, context)
                }
             }.invertEitherList().flattenErrors()
       }

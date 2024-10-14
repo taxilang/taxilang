@@ -1,6 +1,5 @@
 package lang.taxi
 
-import io.kotest.assertions.fail
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -8,7 +7,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.expressions.CastExpression
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.LiteralExpression
-import lang.taxi.expressions.ObjectExpression
+import lang.taxi.expressions.ObjectLiteralExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.types.ElseMatchExpression
 import lang.taxi.types.InlineAssignmentExpression
@@ -105,7 +104,7 @@ class CastExpressionSpec : DescribeSpec({
          val castExpression = elseClause.assignments.single().shouldBeInstanceOf<InlineAssignmentExpression>()
             .assignment.shouldBeInstanceOf<FunctionExpression>()
             .inputs.single().shouldBeInstanceOf<CastExpression>()
-         val errorObjectExpression = castExpression.expression.shouldBeInstanceOf<ObjectExpression>()
+         val errorObjectExpression = castExpression.expression.shouldBeInstanceOf<ObjectLiteralExpression>()
          val errorMessageLiteralExpression =  errorObjectExpression.expressionMap["message"] as LiteralExpression
           val errorValue = errorMessageLiteralExpression.asTypedValue()
          errorValue.value.shouldBe("Not Authorized")
