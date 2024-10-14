@@ -9,6 +9,7 @@ import lang.taxi.expressions.FieldReferenceExpression
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.functions.stdlib.Convert
+import lang.taxi.types.PrimitiveType
 
 class ReflectionSpec : DescribeSpec({
    describe("Using type references") {

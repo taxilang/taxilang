@@ -120,7 +120,8 @@ class ExpressionCompiler(
 
          // Might need to be more specific here -- this should be expressionGroup.functionCall()
          expressionGroup.children.size == 3 && expressionGroup.methodCall() != null -> parseExtensionFunctionCallExpression(
-            expressionGroup
+            expressionGroup,
+            targetType
          )
 
          // Might need to be more specific here -- this should be expressionGroup.propertyName
@@ -761,11 +762,19 @@ class ExpressionCompiler(
     * These are function calls that are invoked with a dot - eg:
     * find { "hello".toUpper() }
     */
-   private fun parseExtensionFunctionCallExpression(expression: ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
+   private fun parseExtensionFunctionCallExpression(expression: ExpressionGroupContext, targetType: Type?): Either<List<CompilationError>, out Expression> {
       val lhsOrError = expression.expressionGroup(0)?.let { compile(it) }
          ?: error("Expected an expression group at index 0")
       return lhsOrError.flatMap { lhsExpression ->
-         parseMethodInvocation(expression.methodCall(), lhsExpression.returnType, receiver = lhsExpression)
+         parseMethodInvocation(
+            methodCall = expression.methodCall(),
+            // MP: 14-Oct-24
+            // Was: lhsExpression.returnType.
+            // But, I don't think that actually is the targetType of the extension function - it's
+            // whatever the declared type is that this function is being assigned to, or Any if that's not know
+            // eg: Consider: [1,2,3].sum() ... the targetType isn't declared here (but is inferrable)
+            targetType = targetType ?: PrimitiveType.ANY,
+            receiver = lhsExpression)
 //         tokenProcessor.resolveFunction(expression.functionCall().qualifiedName(), expression)
             .map { lhsExpression to it }
       }.flatMap { (lhsExpression, functionExpression) ->
