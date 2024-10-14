@@ -1,6 +1,7 @@
 package lang.taxi
 
 import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Type
 import lang.taxi.utils.log
 import org.antlr.v4.runtime.*
 
@@ -9,11 +10,20 @@ object ErrorMessages {
    @Deprecated("Use Errors.unresolvedType()")
    fun unresolvedType(type: String) = "$type is not defined"
 }
+
 enum class ErrorCodes(val errorCode: String) {
    UNRESOLVED_TYPE("UnresolvedType")
 }
+
 object Errors {
-   fun unresolvedType(type: String, compilationUnit: CompilationUnit):CompilationError {
+   fun typeMismatch(valueType: Type, receiverType: Type, token: ParserRuleContext): CompilationError {
+      return CompilationError(
+         token.toCompilationUnit(),
+         "Type mismatch. Type of ${valueType.toQualifiedName().parameterizedName} is not assignable to type ${receiverType.toQualifiedName().parameterizedName}"
+      )
+   }
+
+   fun unresolvedType(type: String, compilationUnit: CompilationUnit): CompilationError {
       return CompilationError(
          compilationUnit,
          "$type is not defined",
@@ -22,20 +32,30 @@ object Errors {
    }
 }
 
-class CollectingErrorListener(private val sourceName: String, private val listener: TokenCollator) : BaseErrorListener() {
+class CollectingErrorListener(private val sourceName: String, private val listener: TokenCollator) :
+   BaseErrorListener() {
 
 
    val errors: MutableList<CompilationError> = mutableListOf()
-   override fun syntaxError(recognizer: Recognizer<*, *>, offendingSymbol: Any,
-                            line: Int, charPositionInLine: Int,
-                            msg: String, e: RecognitionException?) {
+   override fun syntaxError(
+      recognizer: Recognizer<*, *>, offendingSymbol: Any,
+      line: Int, charPositionInLine: Int,
+      msg: String, e: RecognitionException?
+   ) {
 
 //      var sourceName = recognizer.inputStream.sourceName
 //      if (!sourceName.isEmpty()) {
 //         sourceName = String.format("%s:%d:%d: ", sourceName, line, charPositionInLine)
 //      }
       when {
-         e is NoViableAltException && offendingSymbol is Token -> errors.add(CompilationError(offendingSymbol, "Syntax error at '${e.offendingToken.text}'.  That's all we know.", sourceName))
+         e is NoViableAltException && offendingSymbol is Token -> errors.add(
+            CompilationError(
+               offendingSymbol,
+               "Syntax error at '${e.offendingToken.text}'.  That's all we know.",
+               sourceName
+            )
+         )
+
          offendingSymbol is Token -> errors.add(CompilationError(offendingSymbol, msg, sourceName))
          else -> log().error("Unhandled error situation - offending symbol was not a token")
       }

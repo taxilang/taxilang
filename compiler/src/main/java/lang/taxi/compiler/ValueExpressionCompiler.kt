@@ -19,6 +19,7 @@ import lang.taxi.types.ArrayType
 import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.Type
+import lang.taxi.utils.createCompilationError
 import lang.taxi.utils.wrapErrorsInList
 import lang.taxi.values.PrimitiveValues
 
@@ -142,6 +143,9 @@ internal class ValueExpressionCompiler(private val expressionCompiler: Expressio
       val mapResult = objectValue.objectField().map { objectField ->
          val fieldName = objectField.identifier().IdentifierToken().text
          val fieldType = if (factType is ObjectType) {
+            if (!factType.hasField(fieldName)) {
+               return objectValue.createCompilationError("Type ${factType.qualifiedName} has no field $fieldName")
+            }
             factType.field(fieldName).type
          } else null // leave it null to let the compiler assign the right primitive type
          val fieldValue = expressionCompiler.compile(objectField.expressionGroup(), fieldType)
