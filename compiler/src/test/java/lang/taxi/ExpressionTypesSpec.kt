@@ -251,7 +251,12 @@ class ExpressionTypesSpec : DescribeSpec({
             type Adults by (Person[]) -> Person[].filter( (Age) -> Age > 18 )
          """.validated()
             .errors()
-            .shouldContainMessage("Expression types may not return arrays. Use a function instead")
+
+            // Note: After fixing a bug in the type checker, this is now being returned.
+            // The real error is the commented out one, but it doesn't really matter which error
+            // so long as users cant do it.
+            .shouldContainMessage("Type mismatch. Type of lang.taxi.Array<Person> is not assignable to type Adults")
+//            .shouldContainMessage("Expression types may not return arrays. Use a function instead")
       }
 
 

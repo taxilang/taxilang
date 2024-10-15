@@ -4,14 +4,19 @@ import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
-import lang.taxi.*
+import lang.taxi.CompilationError
+import lang.taxi.TaxiParser
 import lang.taxi.TaxiParser.ArgumentContext
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.TypeExpression
+import lang.taxi.findNamespace
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
+import lang.taxi.source
+import lang.taxi.text
+import lang.taxi.toCompilationUnit
 import lang.taxi.types.FieldReferenceSelector
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.StreamType
@@ -22,6 +27,7 @@ import lang.taxi.types.TypeReferenceSelector
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.wrapErrorsInList
+import lang.taxi.value
 import org.antlr.v4.runtime.ParserRuleContext
 
 interface FunctionParameterReferenceResolver {
@@ -105,6 +111,7 @@ class FunctionAccessorCompiler(
                val parametersOrErrors: Either<List<CompilationError>, List<Accessor>> =
                   arguments.mapIndexed { parameterIndex, parameterContext ->
                      val declaredParamIndex = if (receiver != null) parameterIndex + 1 else parameterIndex
+                     val parameter = function.getParameter(declaredParamIndex)
                      val parameterType = function.getParameterType(declaredParamIndex)
                      val parameterAccessor: Either<List<CompilationError>, Accessor> = when {
                         parameterContext.literal() != null -> LiteralAccessor(
@@ -133,12 +140,7 @@ class FunctionAccessorCompiler(
                         else -> TODO("readFunction parameter accessor not defined for code ${context.source().content}")
 
                      }.flatMap { parameterAccessor ->
-                        typeChecker.ifAssignable(
-                           parameterAccessor.returnType, parameterType.basePrimitive
-                              ?: PrimitiveType.ANY, parameterContext
-                        ) {
-                           parameterAccessor
-                        }.wrapErrorsInList()
+                        typeChecker.ifAssignableOrErrorList(parameterAccessor, parameter, parameterContext) { parameterAccessor }
                      }
                      parameterAccessor
                   }.invertEitherList()
@@ -202,4 +204,6 @@ class FunctionAccessorCompiler(
          }
    }
 }
+
+
 

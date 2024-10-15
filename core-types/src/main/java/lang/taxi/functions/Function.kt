@@ -118,6 +118,21 @@ data class Function(
    override var definition: FunctionDefinition?
 ) : Named, Compiled, ImportableToken, DefinableToken<FunctionDefinition>, Documented {
    val typeArguments: List<TypeArgument>? = definition?.typeArguments
+   fun getParameter(parameterIndex: Int): Parameter {
+      return when {
+         parameterIndex < this.parameters.size -> {
+            this.parameters[parameterIndex]
+         }
+
+         this.parameters.last().isVarArg -> {
+            return this.parameters.last()
+         }
+
+         else -> {
+            error("Parameter index $parameterIndex is out of bounds - function $qualifiedName only takes ${this.parameters.size} parameters")
+         }
+      }
+   }
    fun getParameterType(parameterIndex: Int): Type {
       return when {
          parameterIndex < this.parameters.size -> {

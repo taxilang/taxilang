@@ -551,6 +551,34 @@ namespace pkgB {
                .objectType("reduce")
             TODO()
          }
+         // orb-715
+         it("reports error if a lambda argument is supplied with an arg of the wrong type") {
+val f = """
+   function compoundFilter(
+           firstSet: String[]
+         ):String[] -> filter( firstSet,  1 == 1 )
+""".validated()
+   .shouldContainMessage("Expected a lambda expression here")
+         }
+         it("does not report error if a lambda argument is supplied with an arg of the correct type" ) {
+            val f = """
+   function compoundFilter(
+           firstSet: String[]
+         ):String[] -> filter( firstSet,  (String) -> 1 == 1 )
+""".validated()
+         }
+
+         // ORB-713
+         it("reports an error if the return type of the body of a function is not assignable to the declared type") {
+            """
+               function compoundFilter(
+                 firstSet: String[],
+                 secondSet: String[]
+               ):String[] -> secondSet.contains('hello')
+            """.validated()
+               .shouldContainMessage("Type mismatch. Type of lang.taxi.Boolean is not assignable to type lang.taxi.Array<lang.taxi.String>")
+         }
+
          it("when calling a function with generic params then the generics are resolved") {
             val lambda = """
                model Entry {
