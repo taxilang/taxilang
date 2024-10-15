@@ -39,6 +39,7 @@ class AssignmentSpec : DescribeSpec({
          schema.type("GivenName[]").isAssignableTo(schema.type("Name[]")).should.be.`true`
          schema.type("Name[]").isAssignableTo(schema.type("FirstName[]")).should.be.`false`
          schema.type("Name[]").isAssignableTo(schema.type("GivenName[]")).should.be.`false`
+         schema.type("FirstName").isAssignableTo(schema.type("FirstName[]")).should.be.`false`
       }
 
       it("should consider variance rules across type aliases when calculating isAssignable") {

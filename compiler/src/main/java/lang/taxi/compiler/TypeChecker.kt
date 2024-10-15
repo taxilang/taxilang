@@ -5,18 +5,41 @@ import arrow.core.left
 import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.Errors
+import lang.taxi.accessors.Accessor
+import lang.taxi.expressions.LambdaExpression
+import lang.taxi.expressions.ProjectingExpression
 import lang.taxi.messages.Severity
+import lang.taxi.services.Parameter
 import lang.taxi.toCompilationUnit
 import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.Arrays
+import lang.taxi.types.LambdaExpressionType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.StreamType
 import lang.taxi.types.Type
 import lang.taxi.types.TypeChecker
+import lang.taxi.utils.createCompilationError
 import org.antlr.v4.runtime.ParserRuleContext
 
-// These are TypeChecker extensions that require access to compiler specific concepts, such as compiler errors
 
+fun TypeChecker.assertIsAssignable(
+   inputAccessor: Accessor,
+   parameter: Parameter,
+   context: ParserRuleContext
+): CompilationError? {
+   // TODO  :This could get out of hand.
+   // Should we move this logic onto the the parameter / accessor with a .isAssignable() type
+   // check there?
+   if (parameter.type is LambdaExpressionType) {
+      when {
+         inputAccessor is LambdaExpression -> {} // do nothing
+         inputAccessor is ProjectingExpression && inputAccessor.expression is LambdaExpression -> {} // do nothing
+         else -> return CompilationError(context.toCompilationUnit(), "Expected a lambda expression here")
+      }
+   }
+   return assertIsAssignable(inputAccessor.returnType, parameter.type.basePrimitive ?: PrimitiveType.ANY, context)
+}
+// These are TypeChecker extensions that require access to compiler specific concepts, such as compiler errors
 fun TypeChecker.assertIsAssignable(valueType: Type, receiverType: Type, token: ParserRuleContext): CompilationError? {
    // This is a first pass, pretty sure this is naieve.
    // Need to take the Vyne implmentation at Type.kt
@@ -30,8 +53,15 @@ fun TypeChecker.assertIsAssignable(valueType: Type, receiverType: Type, token: P
 
    return when {
       valueType.isAssignableTo(receiverType) -> null
+      // I *want* to use this check - which is the right check
+      // however, we have a nasty condition where, when compiling an expression type
+      // we have to use an interim type definition whilst we compile the expression itself.
+      // In that scenario, this check fails.
+      // There's definitely a solution to this, but not one I've found.
+      // Tests fail when this is uncommented.
 //      valueType.isScalar != receiverType.isScalar -> error()
-//      Arrays.isArray(valueType) != Arrays.isArray(receiverType) -> error()
+      Arrays.isArray(valueType) != Arrays.isArray(receiverType) -> error()
+      Arrays.isArray(receiverType) != Arrays.isArray(valueType) -> error()
       // ValueType being an Any could happen in the else branch of a when clause, if using
       // an accessor (such as column/jsonPath/xpath) , where we can't infer the value type returned.
       valueType.basePrimitive == PrimitiveType.ANY -> null
@@ -73,6 +103,16 @@ fun <A> TypeChecker.ifAssignable(
    return error?.left() ?: valueProvider().right()
 }
 
+fun <A> TypeChecker.ifAssignable(
+   inputAccessor: Accessor,
+   parameter: Parameter,
+   context: ParserRuleContext,
+   valueProvider: () -> A
+): Either<CompilationError, A> {
+   val error = assertIsAssignable(inputAccessor, parameter, context)
+   return error?.left() ?: valueProvider().right()
+}
+
 /**
  * Returns the value from the valueProvider if the valueType is assignable to the receiver type.
  * Otherwise, generates a Not Assignable compiler error
@@ -84,6 +124,20 @@ fun <A> TypeChecker.ifAssignableOrErrorList(
    valueProvider: () -> A
 ): Either<List<CompilationError>, A> {
    return ifAssignable(valueType, receiverType, token, valueProvider)
+      .mapLeft { listOf(it) }
+}
+
+/**
+ * Returns the value from the valueProvider if the valueType is assignable to the receiver type.
+ * Otherwise, generates a Not Assignable compiler error
+ */
+fun <A> TypeChecker.ifAssignableOrErrorList(
+   valueAccessor: Accessor,
+   parameter: Parameter,
+   token: ParserRuleContext,
+   valueProvider: () -> A
+): Either<List<CompilationError>, A> {
+   return ifAssignable(valueAccessor, parameter, token, valueProvider)
       .mapLeft { listOf(it) }
 }
 
