@@ -297,6 +297,14 @@ data class EnumType(
       return this.values.any { lenientEqual(it.value, value) }
    }
 
+   /**
+    * Examines if an enum with the exact name is defined.
+    * Ignores default values if defined
+    */
+   fun hasExplicitName(value: String): Boolean {
+      return this.values.any { it.value == value }
+   }
+
    private fun lenientEqual(first: Any, second: Any?): Boolean {
       // Regardless of lenient, we toString() the values, so that an enum of "1" matches a value of 1, and vice versa.
       // This is a concious choice.
