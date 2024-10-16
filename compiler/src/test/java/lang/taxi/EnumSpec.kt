@@ -2,6 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
@@ -299,6 +300,9 @@ enum English {
                enum.of("UK").name.should.equal("UNKNOWN")
                enum.hasName("UK").should.be.`true` //should match default
                enum.hasValue("UK").should.be.`true` //should match default
+
+               enum.hasExplicitName("UK").shouldBeFalse()
+               enum.hasExplicitValue("UK").shouldBeFalse()
             }
             it("is invalid to declare more than one default") {
                val src = """
