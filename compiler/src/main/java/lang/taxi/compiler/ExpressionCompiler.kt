@@ -714,14 +714,34 @@ class ExpressionCompiler(
       type: Type,
       functionCall: TaxiParser.FunctionCallContext
    ): Either<List<CompilationError>, TypeExpression> {
-      if (type is ObjectType && !type.isDefined) {
-         return listOf(
-            CompilationError(
-               functionCall.toCompilationUnit(),
-               "An internal error has occurred - attempted to use a type in an expression before the type was compiled"
+      // In complex projects, we occasioanlly end up here where the type hasn't yet
+      // been compiled properly. Haven't yet been able to reproduce in a test
+      // If we hit that sitatuion, try to compile the type now.
+      val forceCompiledType = if (type is ObjectType && !type.isDefined) {
+         // Last ditch attempt.
+         // The token hasn't been compiled, which stops us from proceeding.
+         // Try to compile it now.
+         // Note: The context we pass here is used for generating errors if the requested
+         // token can't be compiled.
+         // It's not the token we actually use to compile the type
+         val recompiledType = tokenProcessor.compile(type, functionCall)
+            .getOrElse {
+               return it.left()
+            }
+
+         // Forcing compilation didn't work, so we have to give up.
+         if (!recompiledType.isDefined) {
+            return listOf(
+               CompilationError(
+                  functionCall.toCompilationUnit(),
+                  "An internal error has occurred - attempted to use a type in an expression before the type was compiled"
+               )
             )
-         )
-            .left()
+               .left()
+         }
+         recompiledType
+      } else {
+         type
       }
       // Check to see if this type expression is part of an extension function call.
       // eg: Movie.filter( (Title) -> Title == "Jaws" )
@@ -729,13 +749,13 @@ class ExpressionCompiler(
       // Otherwise, it's a type expression with constraints
       // eg: Movie( Title == "Jaws" ), and we should include them in the parsed type.
       val typeExpressionIsFollowedByFunctionCall =
-         !functionCall.qualifiedName().text.endsWith(type.qualifiedName.toQualifiedName().typeName)
+         !functionCall.qualifiedName().text.endsWith(forceCompiledType.qualifiedName.toQualifiedName().typeName)
       val parseArgumentAsConstraints = !typeExpressionIsFollowedByFunctionCall
       if (!parseArgumentAsConstraints) {
          // Defer to the typeExpressionBuilder to create the typed expression.
          // This allows an opportunity to decorate streamed types (in stream { Foo }) to
          // Stream<Foo>
-         return typedExpressionBuilder.typedExpression(type, emptyList(), functionCall)
+         return typedExpressionBuilder.typedExpression(forceCompiledType, emptyList(), functionCall)
             .right()
       }
 
@@ -744,7 +764,7 @@ class ExpressionCompiler(
       // Convert the remaining arguments to constraints
       val size = functionCall.argumentList()?.argument()?.size ?: 0
       if (size == 0) {
-         return TypeExpression(type, emptyList(), functionCall.toCompilationUnits())
+         return TypeExpression(forceCompiledType, emptyList(), functionCall.toCompilationUnits())
             .right()
       }
       require(size == 1) { "Expected an argumentList with size of 1, but found $size: ${functionCall.source().content}" }
@@ -758,7 +778,7 @@ class ExpressionCompiler(
          // inside the builder. So, for now, I'm just not calling the builder when I don't need wrapping.
          // Can revisit this when needed, but need to ensure that we improve the logic inside StreamDecoratingTypedExpressionBuilder
          TypeExpression(
-            type, listOf(
+            forceCompiledType, listOf(
                ExpressionConstraint(accessor)
             ),
             functionCall.toCompilationUnits()
