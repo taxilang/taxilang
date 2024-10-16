@@ -229,8 +229,7 @@ class TokenProcessor(
     */
    fun <T : Named> compile(named: T, context: ParserRuleContext): Either<List<CompilationError>, T> {
       val namespace = named.toQualifiedName().namespace
-      val name = named.toQualifiedName().typeName
-      if (tokensCurrentlyCompiling.contains(name)) {
+      if (tokensCurrentlyCompiling.contains(named.qualifiedName)) {
          // Avoid stack overflows
          // However, the caller may not have a fully implemented token...
          return named.right()
@@ -241,14 +240,14 @@ class TokenProcessor(
          named is EnumType -> {
             val token = tokens.unparsedTypes[named.qualifiedName]
                ?: return context.createCompilationError("An internal error occurred: Cannot compile requsted token ${named.qualifiedName} as it was not found")
-            compileEnum(namespace, name, token.second as EnumDeclarationContext)
+            compileEnum(namespace, named.qualifiedName, token.second as EnumDeclarationContext)
                .map { it as T }
          }
 
          named is Type -> {
             val token = tokens.unparsedTypes[named.qualifiedName]
                ?: return context.createCompilationError("An internal error occurred: Cannot compile requsted token ${named.qualifiedName} as it was not found")
-            compileType(namespace, name, token.second as TypeDeclarationContext)
+            compileType(namespace, named.qualifiedName, token.second as TypeDeclarationContext)
                .map { it as T }
          }
 
@@ -1985,7 +1984,7 @@ class TokenProcessor(
 
                // Compile the symbol
                tokenToCompile.flatMap { typeDeclaration ->
-                  compileType(typeName.namespace, typeName.typeName, typeDeclaration)
+                  compileType(typeName.namespace, typeName.fullyQualifiedName, typeDeclaration)
                      .map {
                         // We've compiled the type, and there were no errors, so return the original
                         // symbol we were trying to look up from the symbol tree.
