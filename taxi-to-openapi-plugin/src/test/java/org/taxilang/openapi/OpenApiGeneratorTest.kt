@@ -5,10 +5,8 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
-import io.swagger.v3.core.util.Yaml
 import io.swagger.v3.core.util.Yaml31
 import io.swagger.v3.oas.models.OpenAPI
-import lang.taxi.Compiler
 import lang.taxi.annotations.HttpService
 import lang.taxi.compiled
 import lang.taxi.generators.WritableSource
