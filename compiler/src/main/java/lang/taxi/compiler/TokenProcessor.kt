@@ -1540,7 +1540,9 @@ class TokenProcessor(
             namespace,
             fieldTypeContext
          ).map { FieldTypeSpec.forType(it) }
-
+         fieldTypeContext.typeExpression() == null -> {
+            fieldTypeContext.createCompilationError("Expected a type declaration here")
+         }
          else -> {
             resolveTypeOrFunction(
                fieldTypeContext.typeExpression().nullableTypeReference(),
