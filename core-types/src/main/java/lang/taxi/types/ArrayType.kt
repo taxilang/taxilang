@@ -80,7 +80,9 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
       }
    }
 
-   override val formatAndZoneOffset: FormatsAndZoneOffset? = null
+   // ORB-740 - ensure that the format of the array is the format of the member
+   // types, or parsing of Instant[] fails
+   override val formatAndZoneOffset: FormatsAndZoneOffset? = memberType.formatAndZoneOffset
    override val format: List<String>? = null
    override val offset: Int? = null
    override val typeKind: TypeKind = TypeKind.Type
