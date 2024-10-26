@@ -7,6 +7,8 @@ import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import lang.taxi.messages.Severity
+import lang.taxi.types.ArrayType
+import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
 
 class FormattedTypesSpec : DescribeSpec({
@@ -363,6 +365,29 @@ class FormattedTypesSpec : DescribeSpec({
 
 
          """.trimIndent()
+
+         // ORB-759
+         it("captures formats specified in nested array of anonymous object") {
+            val(_,query) = """
+          model StockReport {
+            quantity : Quantity inherits Int
+            @Format("dd/MM/yyyy")
+            lastUpdated : LastUpdated inherits Date
+         }
+            """.compiledWithQuery("""
+         find {
+            stockReport: StockReport[] as {
+               @Format("MM-yy")
+               lastUpdated: LastUpdated
+              }[]
+         }
+            """.trimIndent())
+            val lastUpdatedField = query.discoveryType!!.type.asA<ObjectType>()
+               .field("stockReport").type.asA<ArrayType>()
+               .memberType.asA<ObjectType>()
+               .field("lastUpdated")
+            lastUpdatedField.fieldFormat!!.patterns.single().shouldBe("MM-yy")
+         }
 
          xit("should be invalid to override a format without all the correct components") {
 
