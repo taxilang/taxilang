@@ -1,0 +1,264 @@
+---
+title: Models
+description: Learn how to define data structures using models in Taxi, and understand the distinction between models and types
+---
+
+import { Callout } from '@/components/docs/Callout';
+
+## Overview
+
+Models in Taxi define specific data structures used by services or applications. Unlike semantic types which define meaning, models describe how data is organized.
+
+<Callout type="warning" title="Share Semantics, Not Structure">
+  Models represent structural contracts and should not be shared between systems. Instead, share semantic types and let each system define its own models using those types. This enables loose coupling between systems.
+</Callout>
+
+## Basic syntax
+
+```taxi
+model Person {
+    id: PersonId
+    firstName: FirstName
+    lastName: LastName
+    email: EmailAddress?  // Optional field
+    friends: Person[]     // Array of Person
+}
+```
+
+Key features:
+- Fields can use semantic types
+- `?` marks optional (nullable) fields
+- Arrays are supported using `[]` syntax
+- Documentation can be added using `[[ ]]`
+
+
+## Parameter and closed models
+Taxi lets you control how models can be constructed and returned using the `parameter` and `closed` modifiers.
+
+### Parameter models
+
+Parameter models explicitly indicate that an object can be constructed as input to a service:
+
+```taxi
+parameter model CreateCustomerRequest {
+    firstName: FirstName
+    lastName: LastName
+    email: EmailAddress
+}
+
+service CustomerService {
+    operation createCustomer(CreateCustomerRequest): Customer
+}
+```
+
+### Closed models
+
+Closed models can only be returned from services - they cannot be constructed by combining fields from other sources:
+
+```taxi
+closed model CustomerRecord {
+    id: CustomerId
+    internalId: InternalId        // System-generated
+    lastModified: Timestamp       // System-managed
+}
+
+service CustomerService {
+    operation getCustomer(CustomerId): CustomerRecord
+}
+```
+
+### Parameter and closed combined
+
+Some models need to be both parameter and closed. This is common with database tables, where the model:
+- Can be used as input for insert/update operations (parameter)
+- Can be returned from queries (closed)
+- Should not be constructed by combining fields from other sources (closed)
+
+```taxi
+parameter closed model Customer {
+    id: CustomerId
+    name: CustomerName
+    email: EmailAddress
+}
+
+service CustomerDatabase {
+    // Can be used as input
+    operation insertCustomer(Customer): CustomerId
+    
+    // Can be returned from queries
+    operation findCustomer(CustomerId): Customer
+    
+    // Declared as a table
+    table customers: Customer[]
+}
+```
+
+<Callout type="note" title="Model Resolution">
+  By default (without parameter or closed), TaxiQL will:
+  1. Look for an exact instance of the model
+  2. Try to construct it by combining known values
+  3. Look for services that can return it
+</Callout>
+
+
+
+## Field types
+
+### Basic fields
+
+```taxi
+model Customer {
+    // Required fields
+    id: CustomerId
+    name: CustomerName
+    
+    // Optional field
+    nickname: Nickname?
+    
+    // Array field
+    orders: Order[]
+    
+    // Map field
+    preferences: Map<PreferenceKey, PreferenceValue>
+}
+```
+
+### Nested objects
+
+```taxi
+model Order {
+    orderId: OrderId
+    
+    // Inline object definition
+    address: {
+        street: StreetAddress
+        city: City
+        country: CountryCode
+    }
+    
+    // Alternative: reference a defined model
+    shippingAddress: Address
+}
+```
+
+### Inheritance
+
+While possible, model inheritance should be used sparingly:
+
+```taxi
+model PersonBase {
+    id: PersonId
+    firstName: FirstName
+    lastName: LastName
+}
+
+model Employee inherits PersonBase {
+    employeeId: EmployeeId
+    department: DepartmentName
+}
+```
+
+<Callout type="warning" title="Model Inheritance">
+  Prefer composition over inheritance for models. Inheritance can create tight coupling between models, which goes against Taxi's principle of loose coupling.
+</Callout>
+
+
+## Best practices
+Models are typically defined by producing systems - such as REST APIs, databases, 
+or message queues.
+
+The best practices here focus on describing those models using Taxi, rather than
+the practices of designing good APIs or event payloads.
+
+### Use semantic types
+
+```taxi
+// Good - uses semantic types
+model Customer {
+    id: CustomerId
+    email: EmailAddress
+}
+
+// Bad - uses primitive types
+model Customer {
+    id: String      // What kind of ID?
+    email: String   // Is this really an email?
+}
+```
+
+### Document nullability
+
+```taxi
+model User {
+    // Required fields - core identity
+    id: UserId
+    email: EmailAddress
+    
+    // Optional fields - additional information
+    middleName: MiddleName?
+    phoneNumber: PhoneNumber?
+}
+```
+
+### Organization
+
+```taxi
+// Service-specific models together
+model CreateOrderRequest {
+    customerId: CustomerId
+    items: OrderItem[]
+}
+
+model CreateOrderResponse {
+    orderId: OrderId
+    status: OrderStatus
+}
+
+// Service definition with its models
+service OrderService {
+    operation createOrder(CreateOrderRequest): CreateOrderResponse
+}
+```
+
+## Common patterns
+
+### Request/response models
+
+```taxi
+parameter model SearchRequest {
+    query: SearchQuery
+    maxResults: MaxResults?
+    offset: Offset?
+}
+
+closed model SearchResponse {
+    results: SearchResult[]
+    totalCount: TotalCount
+    hasMore: Boolean
+}
+```
+
+### Event models
+
+```taxi
+closed model CustomerEvent {
+    eventId: EventId
+    timestamp: EventTimestamp
+    customerId: CustomerId
+    type: EventType
+    payload: CustomerEventPayload
+}
+```
+
+### View models
+
+```taxi
+closed model CustomerSummary {
+    id: CustomerId
+    name: CustomerName
+    status: CustomerStatus
+    // Computed field
+    isActive: Boolean by (this.status == CustomerStatus.ACTIVE)
+}
+```
+

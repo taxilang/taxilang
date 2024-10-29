@@ -1,0 +1,365 @@
+---
+title: Basic Types
+description: Understanding Taxi's built-in primitive types and special types that form the foundation of the type system
+---
+
+import { Callout } from '@/components/docs/Callout';
+
+## Type Hierarchy
+
+<Callout type="note" title="Type System Foundation">
+  Every type in Taxi inherits from `Any`, which in turn inherits from `Nothing`. This creates a complete type hierarchy that enables type-safe operations across the system.
+</Callout>
+
+## Core Primitive Types
+
+### Logical
+| Type    | Description                                |
+|---------|--------------------------------------------|
+| Boolean | Represents a value which is either `true` or `false` |
+
+### Numeric
+| Type    | Description                                |
+|---------|--------------------------------------------|
+| Int     | A signed integer - a whole number (positive or negative), with no decimal places |
+| Long    | A signed long - a whole number (positive or negative), with no decimal places |
+| Decimal | A signed decimal number - a whole number with decimal places |
+| Double  | A double-precision 64-bit IEEE 754 floating point number |
+
+### Text
+| Type   | Description                |
+|--------|----------------------------|
+| String | A collection of characters |
+
+### Date and Time Types
+
+<Callout type="note" title="Time Handling">
+  Taxi provides several types for handling dates and times. When dealing with points in time, prefer `Instant` as it includes timezone information.
+</Callout>
+
+| Type     | Description                        | Default Format                 | Example                   |
+|----------|------------------------------------|--------------------------------|---------------------------|
+| Date     | A date, without time or timezone   | `yyyy-MM-dd`                   | `2024-03-15`              |
+| Time     | Time only, excluding the date part | `HH:mm:ss`                     | `14:30:00`                |
+| DateTime | A date and time, without timezone  | `yyyy-MM-dd'T'HH:mm:ss.SSS`    | `2024-03-15T14:30:00.000` |
+| Instant  | A point in time with timezone      | `yyyy-MM-dd'T'HH:mm:ss[.SSS]X` | `2024-03-15T14:30:00Z`    |
+
+Format Symbols:
+
+| Symbol | Meaning              | Example     |
+|--------|----------------------|-------------|
+| y      | Year                 | 2024        |
+| M      | Month                | 07 or July  |
+| d      | Day                  | 25          |
+| H      | Hour (0-23)          | 13          |
+| m      | Minute               | 30          |
+| s      | Second               | 45          |
+| S      | Millisecond          | 678         |
+| X      | Timezone (accepts Z) | Z or +01:00 |
+| Z      | RFC 822 timezone     | +0100       |
+
+Example Usage:
+```taxi
+// Define types with specific formats
+@Format("dd/MM/yyyy")
+type BirthDate inherits Date
+
+@Format("yyyy-MM-dd HH:mm")
+type AppointmentTime inherits DateTime
+
+@Format("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+type EventTimestamp inherits Instant
+```
+
+## Collection Types
+
+### Arrays
+Arrays can be declared using either bracket notation or generic syntax:
+
+```taxi
+// These declarations are equivalent
+type Friends inherits Person[]
+type AlsoFriends inherits Array<Person>
+```
+
+### Maps
+Maps are key-value collections:
+
+```taxi
+type Inventory inherits Map<ProductId, Quantity>
+```
+
+<Callout type="warning" title="Using Collections">
+  - Use arrays for ordered collections of the same type
+  - Only use maps when you need dynamic key-value relationships
+  - Consider creating a proper model instead of a map if the structure is known
+</Callout>
+
+## Special Types
+
+### Nothing
+`Nothing` is a special type indicating that a function or expression never returns normally, typically due to throwing an exception.
+
+As the bottom type in the type hierarchy, `Nothing` is a subtype of all other types.
+This allows `Nothing` expressions to be assigned to any type, useful for handling exceptional cases.
+
+
+Characteristics:
+- **No Instances:** Represents the absence of a value
+- **Bottom Type:** Subtype of all types, enabling flexible type assignments
+- **Control Flow:** Used for functions that do not complete normally
+
+### Any
+`Any` is the root type in the Taxi type system, representing the most general type. All other types inherit from `Any`, making it the universal supertype.
+
+Characteristics:
+- **Universal Supertype:** All types inherit from `Any`
+- **Extensibility:** Provides a common base for defining more specific semantic subtypes
+
+<Callout type="warning" title="Using Any">
+  While `Any` is available, prefer defining specific semantic types that convey meaning. `Any` should primarily serve as the foundation for more specific types.
+</Callout>
+
+### Void
+Represents the absence of a return value in operations that don't return anything.
+
+## Type Nullability
+
+By default, all types are non-nullable. Use the `?` operator to make a type nullable:
+
+```taxi
+model Person {
+    // Required fields
+    id : PersonId
+    name : PersonName
+    
+    // Optional fields
+    nickname : Nickname?
+    middleName : MiddleName?
+}
+```
+
+<Callout type="note" title="Nullability Enforcement">
+  Taxi defines nullability in the schema, but enforcement is handled by the implementing systems and tools.
+</Callout>
+
+## Enums
+
+Enums in Taxi allow you to define a fixed set of values. Values can be explicitly provided or inferred from the enum name.
+
+```taxi
+// Basic enum - values are same as names
+enum BookCategory {
+    FICTION,
+    NON_FICTION
+}
+
+// Enum with explicit values
+enum Country {
+    NEW_ZEALAND("NZ"),
+    AUSTRALIA("AUS"),
+    UNITED_KINGDOM("UK")
+}
+```
+
+### Value Types and Inference
+
+Taxi automatically infers the enum's base type based on its values:
+
+```taxi
+// Inferred as Int
+enum Numbers {
+   One(1),
+   Two(2)
+}
+
+// Inferred as String when mixing types
+enum Mixed {
+   One("One"),
+   Two(2)    // Will be converted to string
+}
+
+// Boolean values
+enum Selected {
+   Yes(true),
+   No(false)
+}
+
+// String booleans as members
+enum Flags {
+   `true`,    // Note the backticks
+   `false`
+}
+```
+
+<Callout type="note" title="Type Inference">
+  When values are mixed (e.g., strings and numbers), Taxi defaults to treating all values as strings.
+</Callout>
+
+### Generic Enums with Object Bodies
+
+Enums can hold structured data using generic type parameters:
+
+```taxi
+model ErrorDetails {
+   code : ErrorCode inherits Int
+   message : ErrorMessage inherits String
+}
+
+enum Errors<ErrorDetails> {
+   BadRequest({ code : 400, message : 'Bad Request' }),
+   Unauthorized({ code : 401, message : 'Unauthorized' })
+}
+```
+
+You can access properties of enum values:
+
+```taxi
+model Response {
+  // Access a property of an enum value
+  errorCode: ErrorCode by Errors.BadRequest.code
+  
+  // Access nested properties
+  errorMessage: ErrorMessage by Errors.BadRequest.message
+}
+```
+
+<Callout type="warning" title="Generic Constraints">
+  - Enums support at most one type argument
+  - Object values must match the specified type exactly
+  - All required fields must be provided
+</Callout>
+
+### Lenient Matching
+
+#### Basic Lenient Matching
+
+```taxi
+lenient enum Country {
+   NZ("New Zealand"),
+   AUS("Australia")
+}
+```
+
+This allows:
+- Case-insensitive name matching: `"nz"` matches `Country.NZ`
+- Case-insensitive value matching: `"new zealand"` matches `Country.NZ`
+
+#### Special Characters in Lenient Matching
+
+```taxi
+lenient enum DayCountConvention {
+   ACT_360("ACT/360")
+}
+```
+
+This matches:
+- `"Act/360"`
+- `"ACT/360"`
+- `"act/360"`
+
+### Default Values
+
+Enums can specify a default value for unmatched inputs:
+
+```taxi
+enum Country {
+   NZ("New Zealand"),
+   AUS("Australia"),
+   default UNKNOWN("Unknown")
+}
+```
+
+Default values work with both names and values:
+- `"UK"` resolves to `Country.UNKNOWN`
+- Can be combined with lenient matching
+- Only one default value is allowed per enum
+
+### Synonyms
+
+#### Basic Synonyms
+
+```taxi
+enum English {
+   One,
+   Two
+}
+
+enum French {
+   Un synonym of English.One,
+   Deux synonym of English.Two
+}
+```
+
+#### Multiple Synonyms
+
+```taxi
+enum English { One }
+enum French { Un }
+enum Australian {
+   One synonym of [English.One, French.Un]
+}
+```
+
+<Callout type="note" title="Synonym Characteristics">
+  - Relationships are bidirectional
+  - Synonyms are transitive across multiple enums
+  - Can use fully qualified names
+  - Can reference synonyms before their target is declared
+</Callout>
+
+### Array Support
+
+Enums can be used in array literals:
+
+```taxi
+enum Country {
+   NZ("NZD"),
+   AU("AUD")
+}
+
+// Arrays can contain enum values
+given { countries: Country[] = ["NZD", "AUD"] }
+
+// Arrays can use enum names
+given { countries: Country[] = ["NZ", "AU"] }
+
+// Arrays can use enum references
+given { countries: Country[] = [Country.NZ, Country.AU] }
+```
+
+### Enums - common Patterns
+
+#### 1. Status Enums
+
+```taxi
+enum Status<StatusDetails> {
+   ACTIVE({ code: "A", description: "Active" }),
+   INACTIVE({ code: "I", description: "Inactive" }),
+   default UNKNOWN({ code: "U", description: "Unknown" })
+}
+```
+
+#### 2. Code Mappings
+
+```taxi
+enum ExternalMapping {
+   INTERNAL_A("EXT_1") synonym of Internal.A,
+   INTERNAL_B("EXT_2") synonym of Internal.B
+}
+```
+
+#### 3. Validation Results
+
+```taxi
+model ValidationDetails {
+   severity: Severity inherits String
+   code: Code inherits Int
+   message: Message inherits String
+}
+
+enum ValidationResult<ValidationDetails> {
+   OK({ severity: "INFO", code: 0, message: "Valid" }),
+   ERROR({ severity: "ERROR", code: 1, message: "Invalid" })
+}
+```

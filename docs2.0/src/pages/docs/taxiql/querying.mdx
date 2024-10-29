@@ -1,0 +1,284 @@
+---
+title: Querying with TaxiQL
+description: Learn how to write queries and transform data using TaxiQL
+---
+
+import { Callout } from '@/components/docs/Callout';
+
+## Introduction
+
+TaxiQL is Taxi's query language for fetching and transforming data across your systems. 
+Rather than writing integration code against specific APIs or databases, TaxiQL lets you declare what data you want using semantic types.
+
+When you write a TaxiQL query, you're describing the meaning of the data you need, not where to find it. 
+Query engines like [Orbital](https://orbitalhq.com) use these semantic types to automatically 
+discover and orchestrate the necessary service calls - whether that's a simple database query, or a complex flow across REST APIs, 
+message queues, and serverless functions.
+
+This semantic approach means your queries remain stable even as your architecture evolves. 
+As services change their APIs or data moves between systems, TaxiQL adapts automatically, 
+eliminating the traditional maintenance burden of integration code.
+
+## Basic querying
+
+TaxiQL supports two fundamental query verbs:
+
+```taxi
+// Request/response queries
+find { Customer[] }
+
+// Streaming queries
+stream { CustomerEvents }
+```
+
+<Callout type="note" title="Query types">
+  Use <code>find</code> for one-time queries that return a response, and <code>stream</code> for continuous data streams like event feeds or real-time updates.
+</Callout>
+
+## Constraints
+
+Constraints restrict the operations that are called - operations will only be called if they can satisfy the specified constraints:
+
+```taxi
+// Only calls services that can filter by FirstName
+find { Customer(FirstName == 'Jimmy') }
+
+// Multiple constraints
+find { Customer[](
+   FirstName == 'Jimmy' && 
+   LastName == 'Smith'
+) }
+```
+
+Services declare their constraint capabilities:
+
+```taxi
+service CustomerService {
+   // Declares support for FirstName and LastName filtering
+   operation findCustomersWithName(@PathVariable first : FirstName, @PathVariable last : LastName):Customer(FirstName == first && LastName == last) 
+}
+
+service CustomerDatabase {
+   // Tables implicitly support filtering on all fields
+   table customers : Customer[]
+}
+```
+
+<Callout type="note" title="Type-based constraints">
+  Constraints use Types (like `FirstName`), not field names, aligning with Taxi's semantic type system.
+</Callout>
+
+## Client-side filtering
+
+For additional filtering after data retrieval, use filter functions:
+
+```taxi
+// Filter applied in TaxiQL engine after data is fetched
+find { Customer[].filter(FirstName -> FirstName == 'Jimmy') }
+
+// Multiple conditions
+find { 
+   Customer[].filter(customer -> 
+      customer::FirstName == 'Jimmy' && 
+      customer::Age > 21
+   ) 
+}
+```
+
+<Callout type="warning" title="Performance consideration">
+  Server-side constraints are more efficient as they reduce data transfer. Use client-side filtering only when necessary.
+</Callout>
+
+## Given statements vs find constraints
+
+Understanding how `given` statements differ from constraints in `find` statements is crucial for writing effective queries.
+
+### Given statements
+
+A `given` statement makes data available to your query but doesn't constrain which operations can be called:
+
+```taxi
+// Makes OrderStatus available but doesn't constrain the query
+given { status : OrderStatus = 'PENDING' }
+find { Order[] }
+   
+service OrdersService {
+   // This operation will be called because the Order[]
+   // query isn't constrained, even though it returns
+   // orders of any status
+   operation getAllOrders():Order[]
+}
+```
+
+### Operation selection
+
+The presence or absence of constraints affects which operations are eligible to be called:
+
+```taxi
+// Example 1: No constraints
+given { customerId : CustomerId = '123' }
+find { Customer }
+
+service CustomerApi {
+   // Both operations are eligible because either could
+   // satisfy the unconstrained Customer request
+   operation getRandomCustomer():Customer 
+   operation getCustomer(CustomerId):Customer
+}
+
+// Example 2: With constraints
+given { customerId : CustomerId = '123' }
+find { Customer(CustomerId == customerId) }
+
+service CustomerApi {
+   // Won't be called - can't satisfy the CustomerId constraint
+   operation getRandomCustomer():Customer 
+   
+   // Will be called - matches the constraint
+   operation getCustomer(CustomerId):Customer
+}
+```
+
+<Callout type="warning" title="Common pitfall">
+  Don't assume that providing data in `given` will restrict which operations are called. If you need specific data, use constraints in your `find` statement.
+</Callout>
+
+## Projections
+
+Projections let you reshape and combine data from multiple sources:
+
+```taxi
+find { Order[] } as {
+   id: OrderId
+   customer: {
+      name: CustomerName    // From customer service
+      email: EmailAddress
+   }
+   warehouse: WarehouseName // From warehouse service
+}[]
+```
+
+<Callout type="note" title="Data discovery">
+  TaxiQL automatically discovers and combines data from different services based on the types in your projection.
+</Callout>
+
+### Field selection
+
+Select specific fields from a type:
+
+```taxi
+model Order {
+   id: OrderId
+   status: OrderStatus
+   items: OrderItem[]
+   customer: CustomerId
+   total: OrderTotal
+}
+
+// Select specific fields
+find { Order[] } as {
+   id        // Selects OrderId
+   status    // Selects OrderStatus
+   total     // Selects OrderTotal
+}[]
+```
+
+### Using a spread operator
+
+The spread operator (`...`) includes all fields from a type:
+
+```taxi
+find { Order[] } as {
+   ...            // Include all Order fields
+   tracking: {    // Add extra fields
+      location: Location
+      status: ShipmentStatus
+   }
+}[]
+
+// Exclude specific fields
+find { Order[] } as {
+   ... except { total, customer }  // All fields except total and customer
+}[]
+```
+
+## Controlling projection scope
+
+Name variables in your projection to control scope:
+
+```taxi
+find { Order[] } as (order: Order) -> {
+   id: order.id
+   
+   customer: Customer(CustomerId == order.customerId) as {
+      name: CustomerName
+      location: Location
+   }
+}[]
+```
+
+Multiple variables can be in scope:
+
+```taxi
+find { Order } as (order: Order, customer: Customer) -> {
+   orderNumber: order.id
+   customerName: customer.name
+   shippingAddress: customer.address
+}
+```
+
+### Collections in projections
+
+Use the `->` operator for nested collections:
+
+```taxi
+find { Order[] } as {
+   id: OrderId
+   items: OrderItem -> {  // Project each item
+      sku: ProductSku
+      name: ProductName
+      price: Price
+   }[]
+}[]
+```
+
+## Data enrichment
+
+Use `@FirstNotEmpty` to try multiple sources for a field:
+
+```taxi
+find { Customer[] } as {
+   id: CustomerId
+   name: CustomerName
+   @FirstNotEmpty
+   email: EmailAddress  // Try multiple services to find email
+}[]
+```
+
+<Callout type="note" title="Enrichment behavior">
+  When using `@FirstNotEmpty`, TaxiQL continues searching for data until it finds a non-null value or exhausts all possible sources.
+</Callout>
+
+## Named queries
+
+Queries can be saved and reused:
+
+```taxi
+// Define a query
+query FindPendingOrders {
+   find { Order[](Status == 'PENDING') }
+}
+
+// With parameters
+query FindOrdersByStatus(status: OrderStatus) {
+   find { Order[](Status == status) }
+}
+```
+
+## Best practices
+
+1. Use server-side constraints when possible for better performance
+2. Consider streaming queries for real-time data needs
+3. Be explicit with constraints when you need specific data
+4. Use semantic types in projections rather than primitives
+5. Use `@FirstNotEmpty` when data might exist in multiple places

@@ -1,0 +1,244 @@
+---
+title: Services
+description: Learn how to describe your APIs and data sources using Taxi services
+---
+
+import { Callout } from '@/components/docs/Callout';
+
+# Services
+
+## Overview
+
+A service in Taxi describes APIs and data sources in your system. Services tell Taxi where to find data, whether that's in REST APIs, databases, or message queues.
+
+Here's a basic example:
+
+```taxi
+service CustomerApi {
+   // Get a customer by their ID
+   operation getCustomer(CustomerId):Customer
+   
+   // List all customers
+   operation listCustomers():Customer[]
+}
+```
+
+<Callout type="note" title="Why use services?">
+  Services define data locations for Taxi queries. When querying for data like customers or orders, Taxi uses these definitions to determine which APIs to call.
+</Callout>
+
+## Service Types
+
+### REST APIs
+
+HTTP services can be defined using `@HttpService`, with a base URL that applies to all operations:
+
+```taxi
+@HttpService(baseUrl = "https://api.example.com/v1")
+service CustomerApi {
+   // Resolves to GET https://api.example.com/v1/customers
+   @HttpOperation(method = "GET", url = "/customers")
+   operation listCustomers():Customer[]
+   
+   // Resolves to GET https://api.example.com/v1/customers/{id}
+   @HttpOperation(method = "GET", url = "/customers/{id}")
+   operation getCustomer( @PathVariable(name = "id") id: CustomerId ):Customer
+}
+```
+
+### Databases
+
+Databases can be described using the `table` keyword:
+
+```taxi
+service CustomerDb {
+   // Defines a table containing Customer records
+   table customers : Customer[]
+   
+   // Defines a table containing Order records
+   table orders : Order[]
+}
+```
+
+<Callout type="note" title="Database Details">
+  Taxi is database-agnostic. Use annotations to specify connection details and database-specific features.
+</Callout>
+
+### Event Streams
+
+Streaming data sources can be defined using the `stream` keyword:
+
+```taxi
+service EventHub {
+   // Customer login event stream
+   stream loginEvents(): Stream<CustomerLoginEvent>
+   
+   // Order update event stream
+   stream orderUpdates(): Stream<OrderUpdateEvent>
+}
+```
+
+## Operations
+
+Operations define the available methods on a service. Here are common operation types:
+
+### HTTP Operations
+
+HTTP operations define REST endpoints:
+
+```taxi
+service OrderApi {
+   // GET request
+   @HttpOperation(method = "GET", url = "/orders")
+   operation listOrders():Order[]
+   
+   // POST with request body
+   @HttpOperation(method = "POST", url = "/orders")
+   operation createOrder( @HttpRequestBody order: CreateOrderRequest ):Order
+   
+   // PUT with path parameter
+   @HttpOperation(method = "PUT", url = "/orders/{orderId}/status")
+   operation updateStatus(
+      @PathVariable(name = "orderId") id: OrderId,
+      @HttpRequestBody status: OrderStatus
+   ):Order
+}
+```
+
+### Operation Contracts
+
+Operations can specify contracts about their behavior:
+
+```taxi
+model Money {
+   currency : CurrencyCode
+   amount : Decimal
+}
+
+// Contract ensures output currency matches targetCurrency
+operation convertCurrency(
+   input: Money,
+   targetCurrency: CurrencyCode
+) : Money(currency = targetCurrency)
+
+// Contract specifies output derives from input
+operation normalizeAddress(
+   input: Address
+) : NormalizedAddress( from input )
+```
+
+<Callout type="warning" title="Contract Validation">
+  Contracts declare expected behavior. Implementation and validation are handled by the underlying systems, not by Taxi.
+</Callout>
+
+
+## Write operations (Mutations)
+
+TaxiQL distinguishes between read operations (which fetch data) and write operations (which modify data). 
+
+Write operations must be explicitly declared and called, providing more control over when modifications occur.
+
+### Declaring write operations
+
+Write operations are declared using the `write operation` keyword in a service:
+
+```taxi
+service PersonService {
+   // Read operation - can be called implicitly during queries
+   operation findPerson(PersonId):Person
+   
+   // Write operation - must be explicitly called
+   write operation updatePerson(Person):Person
+}
+```
+
+<Callout type="note" title="Write vs Read Operations">
+  Standard operations can be called automatically by TaxiQL when resolving queries. Write operations require explicit calls to ensure mutations happen only when intended.
+</Callout>
+
+### Using write operations
+
+Write operations are invoked explicitly by using a `call` statement:
+
+#### Basic call
+```taxi
+query UpdatePerson {
+   given { person : Person = { id: "123", name: "Alice" } }
+   call PersonService::updatePerson
+}
+```
+
+#### After finding data
+```taxi
+query UpdatePeople {
+   find { Person }
+   call PersonService::updatePerson
+}
+```
+
+### Write operation parameters
+TaxiQL engines automatically construct operation inputs using available data from the query context. 
+
+This means you don't need to exactly match the operation's parameter structure in your `given` or `find` statements:
+
+```taxi
+// Operation signature
+write operation updatePerson(Person):Person
+
+query UpdatePersonName {
+   // TaxiQL will construct a Person object using available fields
+   given { 
+      id: PersonId = "123"
+      name: PersonName = "Alice"
+   }
+   call PersonService::updatePerson
+}
+```
+
+<Callout type="note" title="Data Matching">
+  The TaxiQL engine looks at the write operation's parameter types and constructs the required input using any matching data available from previous `given` or `find` statements.
+</Callout>
+
+### Additional Write Operation Control
+
+TaxiQL engines like Orbital use annotations to provide additional control over write operations:
+
+```taxi
+service CustomerDatabase {
+   // Specify database operation type
+   @UpsertOperation
+   write operation saveCustomer(Customer):Customer
+}
+```
+
+Common annotations include:
+- Database operation types (insert/update/upsert/delete)
+- Message queue destinations
+- Batch processing configurations
+
+<Callout type="note" title="Implementation Specific">
+  Available annotations and their effects depend on your TaxiQL engine. Consult your engine's documentation for supported annotations.
+</Callout>
+
+## Service Lineage
+
+Services can document their dependencies and data persistence:
+
+```taxi
+service CustomerService {
+   lineage {
+      // Declares operation dependency
+      consumes operation addresses.AddressService.validateAddress
+      
+      // Declares persisted data types
+      stores Customer
+      stores CustomerPreferences
+   }
+   
+   operation findCustomer(CustomerId):Customer
+}
+```
+
+<Callout type="note" title="Lineage Benefits">
+  Service lineage helps track data flow, maintain documentation, and integrate with data catalogs.
+</Callout>

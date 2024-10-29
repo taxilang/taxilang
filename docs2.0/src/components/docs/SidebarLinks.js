@@ -8,7 +8,28 @@ export const SidebarLinks = [
     ],
   },
   {
-    title: 'Basic Syntax',
+    title: 'Language reference',
+    links: [
+      { title: 'Basic types', href: '/docs/language/basic-types' },
+      { title: 'Semantic types', href: '/docs/language/semantic-types' },
+      { title: 'Models', href: '/docs/language/models' },
+      { title: 'Services', href: '/docs/language/services' },
+      { title: 'Querying', href: '/docs/taxiql/querying' },
+      { title: 'Adopting semantic types (Guide)', href: '/docs/language/adopting-semantic-types' },
+    ],
+  },
+  {
+    title: 'Querying',
+    links: [
+      { title: 'Basic types', href: '/docs/language/basic-types' },
+      { title: 'Semantic types', href: '/docs/language/semantic-types' },
+      { title: 'Models', href: '/docs/language/models' },
+      { title: 'Services', href: '/docs/language/services' },
+      { title: 'Adopting semantic types (Guide)', href: '/docs/language/adopting-semantic-types' },
+    ],
+  },
+  {
+    title: 'Taxi StdLib',
     links: [
       { title: 'Our guides', href: '/docs/guides' },
     ],

@@ -1,0 +1,185 @@
+---
+title: Adopting semantic types 
+description: Learn how Taxi uses semantic typing to describe the meaning of data, not just its structure
+---
+
+import {Callout} from "../../../components/docs/Callout";
+
+## Introducing Semantic Types
+
+
+
+<Callout type="note" title="Evolution, Not Revolution">
+  Successfully adopting semantic types is an incremental process. Start small, demonstrate value, then expand gradually.
+</Callout>
+
+## Getting Started
+Begin by identifying a focused use case:
+- Find two systems that exchange similar data
+- Identify overlapping concepts between their models
+- Create shared semantic types for these concepts
+
+Example:
+```taxi
+// System A's original model
+model CustomerA {
+    id: String
+    email: String
+}
+
+// System B's original model
+model CustomerB {
+    customerId: String
+    emailAddress: String
+}
+
+// Create shared semantic types
+type CustomerId inherits String
+type EmailAddress inherits String
+
+// Refactor models to use semantic types
+model CustomerA {
+    id: CustomerId
+    email: EmailAddress
+}
+
+model CustomerB {
+    customerId: CustomerId
+    emailAddress: EmailAddress
+}
+```
+
+## Project Organization
+<Callout type="note" title="Separate Types from Models">
+  Types are meant to be shared across systems, while models are system-specific. Your project structure should reflect this separation.
+</Callout>
+
+### File Organization
+
+Start with a simple separation:
+
+```
+src/
+  types/           # Shared semantic types (your taxonomy)
+    customer.taxi
+    order.taxi
+  models/          # System-specific models
+    service-a/
+      customer-model.taxi
+      service-definitions.taxi
+    service-b/
+      customer.api.taxi # A REST API exposing customer details. Has both model and services defined
+```
+
+As your taxonomy grows, consider moving types to their own project:
+
+```
+projects/
+  common-taxonomy/     # Shared semantic types
+  service-a/          # Service A implementation
+    dependencies:
+      - common-taxonomy
+  service-b/          # Service B implementation
+    dependencies:
+      - common-taxonomy
+```
+
+### File naming conventions
+
+#### Types
+Define semantic types on their own, in a file named around the domain they model.
+For example:
+
+ * `customer.types.taxi`
+ * `account.types.taxi`
+
+<Callout type="note" title="Also consider...">
+  You may also wish to consider adopting separate namespaces, which further help keep concepts seperated.
+</Callout>
+
+#### Services and Models
+Define services and models together, in the same file. Name the file after the type
+of service. 
+
+eg:
+
+ * `trades.kafka.taxi`
+ * `account-events.kafka.taxi`
+ * `customer.api.taxi`
+ * `account.database.taxi`
+
+
+## Mature Implementation Architecture
+
+<Callout type="note" title="The Big Picture">
+  A well-implemented Taxi ecosystem has clear separation between shared semantics and system-specific implementations.
+</Callout>
+
+A mature implementation typically includes:
+
+### Shared Taxonomy
+ * Collection of semantic types
+ * Broadly shared across organization
+ * Version controlled and carefully governed
+ * Published as a reusable package
+
+### Service Implementations
+ * Models and service definitions using types from taxonomy
+ * System-specific structures
+ * Published to TaxiQL server (like Orbital)
+ * Each service depends on shared taxonomy
+
+### Data Consumers
+ * Import shared taxonomy only
+ * Don't depend on service-specific models
+ * Query data using TaxiQL
+ * Receive data mapped to their needs
+
+### Example workflow:
+```taxi
+// In shared taxonomy
+type CustomerId inherits String
+type EmailAddress inherits String
+
+// In service implementation
+service CustomerService {
+    operation getCustomer(CustomerId): Customer
+}
+
+// Consumer query using TaxiQL
+find { Customer } as {
+    id: CustomerId
+    contact: EmailAddress
+}
+```
+
+
+## Best Practices
+
+### Type Development
+ * Focus on business concepts
+ * Keep types focused and single-purpose
+ * Document type meanings clearly
+ * Version types carefully
+
+
+### Model Development
+
+ * Use semantic types for fields
+ * Keep models service-specific
+ * Don't share models between services
+
+### Service Integration
+
+ * Publish service contracts to TaxiQL server
+ * Use semantic types in operation signatures
+ * Let TaxiQL handle data mapping
+
+## Measuring Success
+Your implementation is successful when:
+
+ * Services can evolve independently
+ * Data integration requires minimal code
+ * New consumers can easily discover and use data
+ * Changes to one service don't cascade to others
+ * Semantic meaning is preserved across systems

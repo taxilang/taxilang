@@ -1,0 +1,262 @@
+---
+title: Semantic Types
+description: Learn how Taxi uses semantic typing to describe the meaning of data, not just its structure
+---
+
+import { Callout } from '@/components/docs/Callout';
+
+## Core Principle
+
+<Callout type="note" title="Share Semantics, Not Structure">
+  A fundamental principle of Taxi is that systems should share semantic meaning, not structural contracts. This enables loose coupling between systems and more flexible data integration.
+</Callout>
+
+## Types vs Models: Understanding the Distinction
+
+### Semantic Types for Meaning
+Semantic types in Taxi are designed to communicate meaning:
+
+```taxi
+type EmailAddress inherits String
+type CustomerId inherits Int
+```
+
+These types describe what the data means, without enforcing how it should be structured.
+
+### Models for Structure
+Models, on the other hand, define specific data structures:
+
+```taxi
+model Customer {
+    id: CustomerId
+    email: EmailAddress
+}
+```
+
+<Callout type="warning" title="Avoid Fields in Types">
+  While Taxi allows types to contain fields, doing so works against the "share semantics, not structure" principle. If you need to define structure, use a model instead.
+</Callout>
+
+### Why This Matters
+
+Consider two systems exchanging customer data:
+
+**Tightly Coupled (Wrong Way):**
+```taxi
+// Shared structural contract - both systems must agree on exact structure
+model Customer {
+    id: String
+    email: String
+    firstName: String
+    lastName: String
+}
+```
+
+**Loosely Coupled (Taxi Way):**
+```taxi
+// Shared semantic types
+type CustomerId inherits String
+type EmailAddress inherits String
+type FirstName inherits String
+type LastName inherits String
+
+// System A's model
+model CustomerV1 {
+    id: CustomerId
+    contact: EmailAddress
+    name: FirstName
+}
+
+// System B's model
+model CustomerRecord {
+    customerId: CustomerId
+    firstName: FirstName
+    lastName: LastName
+    emailAddress: EmailAddress
+}
+```
+
+In the loosely coupled example:
+- Systems agree on what the data means (semantics)
+- Systems can evolve their structures independently
+- Data can still be mapped between systems based on semantic meaning
+- Changes to one system's model don't force changes in other systems
+
+<Callout type="note" title="Key Takeaway">
+  By sharing semantics (types) rather than structure (models), systems can evolve independently while maintaining their ability to meaningfully exchange data. This is a fundamental advantage of Taxi's approach to data modeling.
+</Callout>
+
+## Basic Concepts
+
+### What Makes a Type Semantic?
+
+A semantic type adds meaning to a primitive type through inheritance:
+
+```taxi
+// Basic semantic type definition
+type CustomerName inherits String
+
+// More specific semantic types can inherit from other semantic types
+type PreferredCustomerName inherits CustomerName
+```
+
+In this example:
+- `String` describes how the data is represented
+- `CustomerName` describes what the data means
+- `PreferredCustomerName` further refines the meaning
+
+<Callout type="note" title="Best Practice: Avoid fields in types">
+  While Taxi allows types to contain fields, it's generally discouraged for semantic types. If you find yourself adding fields to a type, consider using a model instead.
+</Callout>
+
+### Why Use Semantic Types?
+
+Consider these two operation signatures:
+
+```taxi
+// Without semantic typing - unclear what the String represents
+operation getCustomer(String):String
+
+// With semantic typing - clear contract of meaning
+operation getCustomer(EmailAddress):CustomerName
+```
+
+The semantic version clearly shows:
+- Input is specifically an email address
+- Output is specifically a customer's name
+- Tools can use this information for validation and discovery
+
+## Creating Semantic Types
+
+### Basic Syntax
+
+```taxi
+// Simple type definition
+type Age inherits Int
+
+// With documentation
+[[ The legal name of a person as it appears on official documents ]]
+type LegalName inherits String
+
+// With format specification (for dates)
+type DateOfBirth inherits Date(@format = "yyyy-MM-dd")
+```
+
+### Type Inheritance Hierarchies
+
+<Callout type="note" title="Building Type Hierarchies">
+  Think carefully about your type hierarchies. Each level should add meaningful specialization to its parent type.
+</Callout>
+
+```taxi
+// Base type for any kind of identifier
+type Identifier inherits String
+
+// More specific identifier types
+type CustomerId inherits Identifier
+type OrderId inherits Identifier
+
+// Even more specific
+type PreferredCustomerId inherits CustomerId
+```
+
+## Best Practices
+
+### Keep Types Focused
+
+Create types that represent single, clear concepts:
+
+```taxi
+// Good - clear, single concept
+type EmailAddress inherits String
+
+// Bad - mixing concepts
+type EmailAndPhone {
+    email: String
+    phone: String
+}
+```
+
+<Callout type="warning" title="Single Responsibility">
+  Each semantic type should represent exactly one concept. If you find yourself combining multiple concepts, consider splitting them into separate types or using a model.
+</Callout>
+
+### Avoid fields in types
+While Taxi allows types to contain fields, it's generally discouraged for semantic types. 
+
+Types are intended for sharing between systems. When systems share models (which define structure), they
+become tightly coupled.
+
+However, if systems use semantics to communicate requirements, then they can consume data without becoming
+tightly coupled to a producer's contract. This means that as producers change, consumers don't need updating.
+If you find yourself adding fields to a type, consider using a model instead.
+
+### Use Inheritance Meaningfully
+
+Build hierarchies that reflect real semantic relationships:
+
+```taxi
+// Good - meaningful hierarchy
+type PhoneNumber inherits String
+type MobilePhoneNumber inherits PhoneNumber
+type WorkPhoneNumber inherits PhoneNumber
+
+// Bad - inheritance doesn't add meaning
+type CustomerData inherits String // What does this mean?
+```
+
+### Add documentation
+
+Add documentation to explain the purpose and usage:
+
+```taxi
+[[ 
+   ISO 3166-1 alpha-2 country code. 
+   Example: "US", "GB", "FR"
+]]
+type CountryCode inherits String
+```
+
+## Common Patterns
+
+### Identifiers
+
+```taxi
+// Base identifier type
+type Id inherits String
+
+// Specific identifier types
+type OrderId inherits Id
+type CustomerId inherits Id
+type ProductId inherits Id
+```
+
+
+## Examples
+
+### Services
+
+Services can specify exact semantic types they accept and return:
+
+```taxi
+service PaymentService {
+    operation processPayment(
+        amount: Money,
+        currency: Currency,
+        accountId: AccountId
+    ): TransactionId
+}
+```
+
+### Queries
+
+TaxiQL queries can leverage semantic types for precise data discovery:
+
+```taxi
+find { Transaction[] } as {
+    id: TransactionId
+    amount: Money
+    // System knows to look for Currency conversion if needed
+    amountInUsd: Money(currency = "USD")
+}[]
+```
