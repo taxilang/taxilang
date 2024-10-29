@@ -422,7 +422,7 @@ operationSignature
 operationScope : K_Read | K_Write;
 
 operationReturnType
-    : ':' typeReference ('(' (operationReturnValueOriginExpression ',')? expressionGroup? ')')?
+    : ':' typeReference ('(' (operationReturnValueOriginExpression ',')? ((expressionGroup? (LOGICAL_AND SPREAD_OPERATOR)?) | SPREAD_OPERATOR?) ')')?
     ;
 
 
