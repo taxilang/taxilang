@@ -1540,9 +1540,11 @@ class TokenProcessor(
             namespace,
             fieldTypeContext
          ).map { FieldTypeSpec.forType(it) }
+
          fieldTypeContext.typeExpression() == null -> {
             fieldTypeContext.createCompilationError("Expected a type declaration here")
          }
+
          else -> {
             resolveTypeOrFunction(
                fieldTypeContext.typeExpression().nullableTypeReference(),
@@ -1905,7 +1907,7 @@ class TokenProcessor(
    /**
     * Returns a pair of the current namespace, and the imports currently in scope
     */
-   private fun getNamespaces(context: ParserRuleContext):Pair<Namespace, List<String>> {
+   private fun getNamespaces(context: ParserRuleContext): Pair<Namespace, List<String>> {
       val topLevelObject = context.searchUpForRule(
          listOf(
             SingleNamespaceDocumentContext::class.java,
@@ -2715,10 +2717,11 @@ class TokenProcessor(
 
       ): Either<List<CompilationError>, OperationContract?> {
       val signature = operationDeclaration.operationSignature()
-      val expressionGroup = signature.operationReturnType()
+      val returnTypeExpression = signature.operationReturnType()
          ?.expressionGroup()
+      val hasReturnTypeSpreadOperator = signature.operationReturnType()?.SPREAD_OPERATOR() != null
       val returnValueOriginExpression = signature.operationReturnType()?.operationReturnValueOriginExpression()
-      if (returnValueOriginExpression == null && expressionGroup == null) {
+      if (returnValueOriginExpression == null && returnTypeExpression == null && !hasReturnTypeSpreadOperator) {
          return null.right()
       }
 
@@ -2732,9 +2735,12 @@ class TokenProcessor(
       )
 
       return OperationConstraintConverter(
-         expressionGroup,
+         returnTypeExpression,
          returnValueOriginExpression,
          expressionCompiler,
+         hasReturnTypeSpreadOperator,
+         parameters,
+         signature.operationReturnType()!!
       ).constraints().map { constraints ->
          OperationContract(returnType, constraints)
       }

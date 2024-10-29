@@ -305,6 +305,9 @@ count
          errors.shouldContainMessage("Type mismatch. Type of lang.taxi.String is not assignable to type lang.taxi.Boolean")
       }
    }
+   describe("operation contract spread operator") {
+
+   }
 
 })
 
