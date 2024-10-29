@@ -474,6 +474,23 @@ class FieldCompiler(
                this,
                this.resolutionContext.activeScopes
             ).map { constraints ->
+
+               val fieldAccessor = accessor ?: fieldType.accessor
+
+               // ORB-766
+               // Expressions on a field (eg: first(Person[]) can be incorrectly
+               // identified and parsed as a constraint.
+               // For now, we're simply saying:
+               // If there's an expression here, there's no constraint
+               // (because even if there were, the constraint would be on the
+               // input to the expression).
+               // This is tested via ConstraintsSpec, so can revisit this
+               // if it turns out to be an incorrect/oversimplified assumption
+               val fieldConstraints = if (fieldAccessor != null) {
+                  emptyList()
+               } else {
+                  constraints
+               }
                Field(
                   name = TokenProcessor.unescape(member.fieldDeclaration().identifier().text),
                   type = fieldProjection?.projectedType ?: fieldType.type,
@@ -481,8 +498,8 @@ class FieldCompiler(
                   nullable = simpleType?.Nullable() != null,
                   modifiers = mapFieldModifiers(member.fieldDeclaration().fieldModifier()),
                   annotations = fieldAnnotations,
-                  constraints = constraints,
-                  accessor = accessor ?: fieldType.accessor,
+                  constraints = fieldConstraints,
+                  accessor = fieldAccessor,
                   typeDoc = typeDoc,
                   fieldFormat = format,
 //                  projectionScopeTypes = projectionScopeTypes,

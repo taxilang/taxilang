@@ -3,6 +3,7 @@ package lang.taxi
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
@@ -46,5 +47,28 @@ type SomeServiceRequest {
       val constraint = query.typesToFind.single().constraints.single() as ExpressionConstraint
       val converted = constraint.convertToConstraint()
       converted.size.should.equal(5)
+   }
+
+   // ORB-766
+   it("does not parse a function call as a constraint") {
+      val (schema,query) = """
+         closed model Person {
+           name : PersonName inherits String
+          }
+          model Movie {
+            cast : Person[]
+         }
+      """.compiledWithQuery("""
+         find { Movie[] } as {
+         // This isn't a constraint, it's a function call
+         // but it could be parsed either way
+             starring : first(Person[]) as {
+               starsName : PersonName
+            }
+         }[]
+      """.trimIndent())
+      query.projectedObjectType!!
+         .field("starring")
+         .constraints.shouldBeEmpty()
    }
 })
