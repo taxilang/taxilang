@@ -301,8 +301,8 @@ data class EnumType(
     * Examines if an enum with the exact name is defined.
     * Ignores default values if defined
     */
-   fun hasExplicitName(value: String): Boolean {
-      return this.values.any { it.value == value }
+   fun hasExplicitName(name: String): Boolean {
+      return this.values.any { it.name == name }
    }
 
    private fun lenientEqual(first: Any, second: Any?): Boolean {
