@@ -5,6 +5,7 @@ import lang.taxi.linter.rules.NoDuplicateTypesOnModelsRule
 import lang.taxi.linter.rules.NoPrimitiveTypesOnModelsRule
 import lang.taxi.linter.rules.NoTypeAliasOnPrimitivesTypeRule
 import lang.taxi.linter.rules.OperationResponsesShouldBeClosed
+import lang.taxi.linter.rules.OperationWithInputShouldDeclareContract
 import lang.taxi.linter.rules.TypesShouldInheritRule
 import lang.taxi.linter.rules.TypesShouldNotHaveFieldsRule
 import lang.taxi.services.Operation
@@ -68,7 +69,8 @@ object LinterRules {
       NoTypeAliasOnPrimitivesTypeRule,
       TypesShouldInheritRule,
       TypesShouldNotHaveFieldsRule,
-      OperationResponsesShouldBeClosed
+      OperationResponsesShouldBeClosed,
+      OperationWithInputShouldDeclareContract
    )
 }
 
