@@ -18,6 +18,18 @@ import kotlin.test.fail
 
 class PolicySpec : DescribeSpec({
    describe("access policies") {
+      it("can define docs on a policy") {
+         val policy = """
+         model Film {}
+
+         [[ Hello, world! ]]
+         policy AllAccessFilms against Film {
+            read external { Film }
+         }
+         """.compiled()
+            .policy("AllAccessFilms")
+            .typeDoc.shouldBe("Hello, world!")
+      }
       it("is possible to declare a simple pass-through policy") {
          val policy = """
          model Film {}

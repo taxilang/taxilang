@@ -30,6 +30,7 @@ class PolicyCompiler(private val tokenProcessor: TokenProcessor) {
          val expressionCompiler = tokenProcessor.expressionCompiler(
             scopedArguments = resolutionContext.argumentsInScope
          )
+         val docs = tokenProcessor.parseTypeDoc(token.typeDoc())
          val annotations = tokenProcessor.collateAnnotations(token.annotation())
          token.policyRuleSet().map { compilePolicyRule(it, expressionCompiler, targetType) }
             .invertEitherList()
@@ -40,6 +41,7 @@ class PolicyCompiler(private val tokenProcessor: TokenProcessor) {
                   targetType,
                   (inputs + thisToken).distinct(),
                   rules,
+                  typeDoc = docs,
                   annotations,
                   token.toCompilationUnits()
                )
