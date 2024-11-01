@@ -473,7 +473,7 @@ comp_operator : GT
 
 
 policyDeclaration
-    :  annotation* 'policy' identifier 'against' typeReference expressionInputs? '{' policyRuleSet* '}';
+    :  typeDoc? annotation* 'policy' identifier 'against' typeReference expressionInputs? '{' policyRuleSet* '}';
 
 
 policyRuleSet : operationScope? policyScope? '{' expressionGroup '}';

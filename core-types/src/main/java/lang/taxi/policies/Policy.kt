@@ -11,9 +11,10 @@ data class Policy(
    val targetType: Type,
    val inputs: List<ProjectionFunctionScope>,
    val rules: List<PolicyRule>,
+   override val typeDoc: String?,
    override val annotations: List<Annotation>,
    override val compilationUnits: List<CompilationUnit>
-) : Annotatable, Named, Compiled
+) : Annotatable, Named, Compiled, Documented
 
 data class PolicyRule(
    val operationScope: OperationScope?,
