@@ -472,7 +472,7 @@ class FieldCompiler(
             tokenProcessor.mapConstraints(
                fieldDeclaration?.typeExpression()?.parameterConstraint()?.expressionGroup(),
                this,
-               this.resolutionContext.activeScopes
+               this.resolutionContext.argumentsInScope
             ).map { constraints ->
 
                val fieldAccessor = accessor ?: fieldType.accessor
