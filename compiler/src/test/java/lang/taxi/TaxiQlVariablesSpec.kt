@@ -105,5 +105,18 @@ class TaxiQlVariablesSpec : DescribeSpec({
          val functionExpression = accessor.shouldBeInstanceOf<FunctionExpression>()
          functionExpression.inputs[0].shouldBeInstanceOf<ArgumentSelector>()
       }
+
+      it("can reference a variable from given clause in find clause") {
+         """
+model Film {
+  id : FilmId inherits String
+}
+         """.compiledWithQuery("""
+given { filmId: FilmId = '123'}
+find {
+    film : Film(FilmId == filmId)
+}
+         """.trimIndent())
+      }
    }
 })
