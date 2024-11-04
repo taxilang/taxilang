@@ -14,10 +14,11 @@ object TypeArgumentResolver {
    fun resolve(
       typeArguments: List<TypeArgument>,
       declaredInputs: List<Type>,
-      providedInputTypes: List<Accessor>
+      providedInputTypes: List<Accessor>,
+      hasVarArgs: Boolean
    ): Map<TypeArgument, Type> {
       val resolvedTypes = typeArguments.map { typeArgument ->
-         val resolvedType = resolveTypeArgumentFromInputAccessors(typeArgument, declaredInputs, providedInputTypes)
+         val resolvedType = resolveTypeArgumentFromInputAccessors(typeArgument, declaredInputs, providedInputTypes, hasVarArgs)
             ?: resolveTypeArgumentFromLambdaExpressionReturnTypes(typeArgument, declaredInputs, providedInputTypes)
             // It could be that we need more sophisticated resolution logic here - ie., interference from return types
             // etc.
@@ -58,9 +59,19 @@ object TypeArgumentResolver {
    private fun resolveTypeArgumentFromInputAccessors(
       typeArgument: TypeArgument,
       declaredInputs: List<Type>,
-      providedInputs: List<Accessor>
+      providedInputs: List<Accessor>,
+      hasVarArgs: Boolean
    ): Type? {
-      require(declaredInputs.size == providedInputs.size) { "Required ${declaredInputs.size} parameters, only ${providedInputs.size} were provided" }
+      if (!hasVarArgs) {
+         require(declaredInputs.size == providedInputs.size) { "Required ${declaredInputs.size} parameters, only ${providedInputs.size} were provided" }
+      } else {
+         // For vararg functions, must have at least (declared.size - 1) arguments
+         require(providedInputs.size >= declaredInputs.size - 1) {
+            "Not enough arguments provided. Expected at least ${declaredInputs.size - 1} but got ${providedInputs.size}"
+         }
+      }
+
+
       val resolvedTypeParameter: Type? = declaredInputs
          .asSequence()
          .mapIndexed { index, declaredInput ->

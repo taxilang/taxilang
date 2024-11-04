@@ -82,9 +82,9 @@ class FunctionDefinition(
          mapOf(returnType as TypeArgument to assignmentType) to typeArguments.filter { it != returnType }
       } else (emptyMap<TypeArgument, Type>() to typeArguments)
 
-
+      val hasVarArgs = parameters.any { it.isVarArg }
       val resolvedParameterTypeArguments =
-         TypeArgumentResolver.resolve(typeArgumentsToResolveFromInputs, parameters.map { it.type }, inputs)
+         TypeArgumentResolver.resolve(typeArgumentsToResolveFromInputs, parameters.map { it.type }, inputs, hasVarArgs)
       val allResolvedTypeArguments = resolvedReturnTypeArgument + resolvedParameterTypeArguments
       if (requireAllParametersResolved) {
          val errors = allResolvedTypeArguments.values
