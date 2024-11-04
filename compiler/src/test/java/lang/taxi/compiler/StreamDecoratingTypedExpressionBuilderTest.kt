@@ -1,5 +1,6 @@
 package lang.taxi.compiler
 
+import arrow.core.continuations.result
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -87,6 +88,22 @@ class StreamDecoratingTypedExpressionBuilderTest : DescribeSpec({
 
       }
 
+       it("fields with FunctionExpression accessor are not required to provide values") {
+        val result =     """
+         model Account {
+            accountId : AccountId inherits String
+            currency : Currency inherits String
+            insertedAt: InsertedAt inherits Instant = now()
+            updatedAt: UpdateAt inherits Instant = now()
+         }
+      """.compiledWithQuery("""
+          given { account : Account = { accountId : "1" , currency: "TL"  } }
+          find { Account }
+      """.trimIndent()).second
+
+           result.discoveryType.shouldNotBeInstanceOf<TypeExpression>()
+           (result.discoveryType as DiscoveryType).startingFacts.first().value.typedValue.value.shouldBe(mapOf("accountId" to "1", "currency" to "TL"))
+       }
 
    }
 
