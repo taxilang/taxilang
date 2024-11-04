@@ -71,6 +71,10 @@ object TypeArgumentResolver {
          }
       }
 
+      if (hasVarArgs && providedInputs.isEmpty()) {
+         return null
+      }
+
 
       val resolvedTypeParameter: Type? = declaredInputs
          .asSequence()

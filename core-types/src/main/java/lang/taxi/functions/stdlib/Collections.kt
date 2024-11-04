@@ -16,7 +16,8 @@ object Collections {
       ExactlyOne,
       Last,
       GetAtIndex,
-      Intersection
+      Intersection,
+      ListOf
    )
 }
 
@@ -109,4 +110,13 @@ object Intersection : FunctionApi {
          ]]
          declare extension function <T> intersection(collectionA: T[], collectionB: T[]):T[]""".trimIndent()
    override val name: QualifiedName = stdLibName("intersection")
+}
+
+object ListOf : FunctionApi {
+   override val taxi: String =
+      """[[
+         Returns an array containing the provided values
+         ]]
+         declare function <T> listOf(values:T...):T[]""".trimIndent()
+   override val name: QualifiedName = stdLibName("listOf")
 }
