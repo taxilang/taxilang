@@ -11,6 +11,7 @@ import lang.taxi.TaxiParser.ObjectValueContext
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.accessors.NullValue
 import lang.taxi.expressions.Expression
+import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.ObjectLiteralExpression
 import lang.taxi.toCompilationUnit
@@ -101,7 +102,8 @@ internal class ValueExpressionCompiler(private val expressionCompiler: Expressio
             }
             val missingRequiredFields = factType.fields
                .filter { !it.nullable }
-               .filter { field -> !value.containsKey(field.name) }
+               .filter { it.accessor !is FunctionExpression }
+               .filter { field -> !value.containsKey(field.name)}
             if (missingRequiredFields.isNotEmpty()) {
                return listOf(
                   CompilationError(
