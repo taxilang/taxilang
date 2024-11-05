@@ -14,17 +14,17 @@ import { Callout } from '@/components/docs/Callout';
 ## Core Primitive Types
 
 ### Logical
-| Type    | Description                                |
-|---------|--------------------------------------------|
+| Type    | Description                                          |
+|---------|------------------------------------------------------|
 | Boolean | Represents a value which is either `true` or `false` |
 
 ### Numeric
-| Type    | Description                                |
-|---------|--------------------------------------------|
+| Type    | Description                                                                      |
+|---------|----------------------------------------------------------------------------------|
 | Int     | A signed integer - a whole number (positive or negative), with no decimal places |
-| Long    | A signed long - a whole number (positive or negative), with no decimal places |
-| Decimal | A signed decimal number - a whole number with decimal places |
-| Double  | A double-precision 64-bit IEEE 754 floating point number |
+| Long    | A signed long - a whole number (positive or negative), with no decimal places    |
+| Decimal | A signed decimal number - a whole number with decimal places                     |
+| Double  | A double-precision 64-bit IEEE 754 floating point number                         |
 
 ### Text
 | Type   | Description                |
@@ -77,9 +77,11 @@ type EventTimestamp inherits Instant
 Arrays can be declared using either bracket notation or generic syntax:
 
 ```taxi
-// These declarations are equivalent
-type Friends inherits Person[]
-type AlsoFriends inherits Array<Person>
+model Person {
+  // These declarations are equivalent
+  friends : Person[]
+  alsoFriends : Array<Person>
+}
 ```
 
 ### Maps
@@ -90,9 +92,11 @@ type Inventory inherits Map<ProductId, Quantity>
 ```
 
 <Callout type="warning" title="Using Collections">
-  - Use arrays for ordered collections of the same type
-  - Only use maps when you need dynamic key-value relationships
-  - Consider creating a proper model instead of a map if the structure is known
+  <ul>
+    <li>Use arrays for ordered collections of the same type</li>
+    <li>Only use maps when you need dynamic key-value relationships</li>
+    <li>Consider creating a proper model instead of a map if the structure is known</li>
+  </ul>
 </Callout>
 
 ## Special Types

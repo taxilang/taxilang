@@ -19,16 +19,21 @@ This semantic approach means your queries remain stable even as your architectur
 As services change their APIs or data moves between systems, TaxiQL adapts automatically, 
 eliminating the traditional maintenance burden of integration code.
 
-## Basic querying
-
-TaxiQL supports two fundamental query verbs:
+## Basic syntax
+The basic syntax of a TaxiQL query looks like this:
 
 ```taxi
-// Request/response queries
-find { Customer[] }
+// Find all the people
+find { Person[] }
 
-// Streaming queries
-stream { CustomerEvents }
+// Find a person named Jim
+find { Person( FirstName == 'Jim' ) }
+
+// Find all the people named Jim
+find { Person[]( FirstName == 'Jim' ) }
+
+// Find a stream of person events from somewhere
+stream { PersonEvents }
 ```
 
 <Callout type="note" title="Query types">
@@ -68,6 +73,26 @@ service CustomerDatabase {
   Constraints use Types (like `FirstName`), not field names, aligning with Taxi's semantic type system.
 </Callout>
 
+
+### Combining multiple criteria
+Criteria can be combined using either AND (`&&`) or OR (`||`):
+
+```taxi
+// Find all people born in the year 2010.
+find { Person[]( DateOfBirth > '2010-01-01' && DateOfBirth <= '2010-12-31' ) }
+```
+
+The following operators are supported in a query - although support is determined by the actual services running.
+
+| Symbol | Meaning                  |
+|--------|--------------------------|
+| `==`   | Equal to                 |
+| `!=`   | Not equal to             |
+| `>`    | Greater than             |
+| `>=`   | Greater than or equal to |
+| `<`    | Less than                |
+| `<`    | Less than or equal to    |
+
 ## Client-side filtering
 
 For additional filtering after data retrieval, use filter functions:
@@ -85,17 +110,37 @@ find {
 }
 ```
 
-<Callout type="warning" title="Performance consideration">
-  Server-side constraints are more efficient as they reduce data transfer. Use client-side filtering only when necessary.
+<Callout type="note" title="Service filtering vs TaxiQL expressions">
+  
+  <ul>
+    <li>Server-side constraints are more efficient as they reduce data transfer, but you're limited to the APIs your data sources expose.</li>
+    <li>Filtering using TaxiQL expressions is flexible and powerful, but may result in more data being transferred over the wire, and more load on your services</li>
+  </ul>
+  
 </Callout>
 
 ## Given statements vs find constraints
 
 Understanding how `given` statements differ from constraints in `find` statements is crucial for writing effective queries.
 
-### Given statements
+## Given statements
 
-A `given` statement makes data available to your query but doesn't constrain which operations can be called:
+A `given` statement makes data available to your query. This can include ids or values to provide into services.
+
+```
+given { optionalVariableName : VariableType = 'value' }
+...rest of the query...
+
+eg:
+// Uses the email address to search for a Customer
+given { emailAddress : EmailAddress = 'jimmy@demo.com' }
+find { Customer }
+
+// The variable name is optional
+given { EmailAddress = 'jimmy@demo.com' }
+```
+
+However, unlike constraints, `given` statements don't constrain which operations can be called.
 
 ```taxi
 // Makes OrderStatus available but doesn't constrain the query
@@ -110,7 +155,7 @@ service OrdersService {
 }
 ```
 
-### Operation selection
+### Given and Operations
 
 The presence or absence of constraints affects which operations are eligible to be called:
 
@@ -144,27 +189,52 @@ service CustomerApi {
 </Callout>
 
 ## Projections
+Projections are a way of taking data from one place, then transforming & combining it with other data sources.
 
-Projections let you reshape and combine data from multiple sources:
+TaxiQL engines use the information present on the object being projected in order to call services and find other information.
+
+You can project from a pre-defined type to another predefined type - such as:
 
 ```taxi
-find { Order[] } as {
-   id: OrderId
-   customer: {
-      name: CustomerName    // From customer service
-      email: EmailAddress
-   }
-   warehouse: WarehouseName // From warehouse service
+model Purchase {
+   transactionId : TransactionId
+   customerId : CustomerId
+}
+model CustomerTransaction {
+  transactionId : TransactionId
+  name : CustomerName
+  price : Price
+}
+
+find { Purchases[] } as CustomerTransaction[] 
+```
+
+It's also very common to project from a predefined type to a type defined inline within your query
+(called 'anonymous types'). e.g.:
+
+```taxi
+model Purchase {
+   transactionId : TransactionId
+   customerId : CustomerId
+}
+
+find { Purchases[] }
+as {
+  // Projections let you change field names, and reshape objects as required
+  txn: TransactionId
+  // Not present on the original Purchase object, so try to
+  // find it using something we already know (in this case, the CustomerId)
+  customerName: CustomerName
 }[]
 ```
 
 <Callout type="note" title="Data discovery">
-  TaxiQL automatically discovers and combines data from different services based on the types in your projection.
+  TaxiQL engines automatically discover and combine data from different services based on the types in your projection.
 </Callout>
 
-### Field selection
-
-Select specific fields from a type:
+### Field shorthand
+If you want to select fields present on the source type as-is, you can reference the field by it's field name, leaving
+out the type:
 
 ```taxi
 model Order {
@@ -185,7 +255,7 @@ find { Order[] } as {
 
 ### Using a spread operator
 
-The spread operator (`...`) includes all fields from a type:
+You can use a spread operator (`...`) to include all fields (or exclude certain fields) from a model:
 
 ```taxi
 find { Order[] } as {
@@ -202,66 +272,318 @@ find { Order[] } as {
 }[]
 ```
 
-## Controlling projection scope
+The spread operator must be the last entry in the list of fields in your model definition.
 
-Name variables in your projection to control scope:
+## Projection scopes
+Creating a projection requires the syntax `something as { ... }`, which defines a projection scope:
 
 ```taxi
-find { Order[] } as (order: Order) -> {
-   id: order.id
-   
-   customer: Customer(CustomerId == order.customerId) as {
-      name: CustomerName
-      location: Location
+find { Customer } as { // start a projection scope, containing a customer
+   // ... omitted ...
+}
+```
+
+If you're projecting an array, then each item within the array is projected separately:
+
+```taxi
+find { Customer[] } as { // start a projection scope. 
+   // Within the scope, each item is an individual Customer instance
+   firstName : FirstName
+}[] // Be sure to include the array marker at the end, as the object is an array.
+```
+
+If you need to, you can assign a name to the item within the scope. This can be useful
+for nested scopes, or controlling inputs into a function. e.g.:
+
+```taxi
+find { Customer[] } as (customer:Customer) -> {
+   // referencing a field by it's name on Customer
+   firstName : upperCase(customer.firstName)
+   // referencing as field by it's type on Customer
+   lastName : upperCase(customer::LastName)
+
+   // using a variable within a constraint:
+   purchases: Purchase[](CustomerId == customer::CustomerId)
+   // without referring to a variable, Age is resolved against all variables in scope
+   age : Age  
+}[]
+```
+
+Or, when using nested scopes:
+
+```taxi
+find { Customer[] } as (customer:Customer) -> {
+  name : CustomerName
+  orders : Order[] as (order:Order) -> {
+     ageAppropriate : Boolean = customer.age >= order.recommendedAge
+  }
+}
+```
+
+Or, to provide inputs into functions:
+
+```taxi
+model Film {
+   title : FilmTitle inherits String
+   headliner : ActorId
+   cast: Actor[]
+}
+
+find { Film[] } as (film:Film) -> {
+   title : FilmTitle
+   // singleBy selects a single item from
+   // an array (film.cast, an array of Actor), that matches a predicate
+   // (in this case, there the actor ID is the same as the headliner id)
+   star : singleBy(film.cast, (Actor) -> Actor::ActorId, film.headliner) as (actor:Actor) -> {
+      name : actor.name
+      title : film.title
    }
 }[]
 ```
 
-Multiple variables can be in scope:
+### Using variables to modify what's in scope
+By default, the scope contains the entire source object. e.g.:
 
 ```taxi
-find { Order } as (order: Order, customer: Customer) -> {
-   orderNumber: order.id
-   customerName: customer.name
-   shippingAddress: customer.address
+model Film {
+  title : Title
+  cast : Actor[]
+}
+
+find { Film ) as { 
+   // this scope contains an entire film record
 }
 ```
 
-### Collections in projections
-
-Use the `->` operator for nested collections:
+You can modify this by specifying the type of the variable in scope:
 
 ```taxi
-find { Order[] } as {
-   id: OrderId
-   items: OrderItem -> {  // Project each item
-      sku: ProductSku
-      name: ProductName
-      price: Price
-   }[]
+find { Film } as (Actor[]) -> { // note that film has been removed from the scope...
+  title : Title //... therfore title isn't knowable -- this field will return null
+  actorName : ActorName
 }[]
 ```
 
-## Data enrichment
-
-Use `@FirstNotEmpty` to try multiple sources for a field:
+You can also use functions to further reduce the scope:
 
 ```taxi
-find { Customer[] } as {
-   id: CustomerId
-   name: CustomerName
-   @FirstNotEmpty
-   email: EmailAddress  // Try multiple services to find email
+find { Film } as (first(Actor[])) -> {
+   // Now, the scope only contains a single actor
+   headliner : ActorName
+} //  We're not projecting an array anymore, so no aray marker here
+```
+
+Finally, if the data defined in the scope isn't available on the source,
+TaxiQL triggers a query to find it. e.g.:
+
+```taxi
+// Define a few models
+model Film {
+   id : FilmId inherits Int
+   title : Title inherits String
+}
+model Actor {
+   name : ActorName inherits String
+}
+model Cast {
+   actors : Actor[]
+}
+
+// And some services that return them
+service Films {
+   operation getFilm():Film
+   operation getCast(FilmId):Cast
+}
+
+
+// Here's a query:
+find { Film } as (Actor[]) -> {
+  actorName : Name
+  filmTitle : Title // should be null, as it's out-of-scope on Actor
 }[]
 ```
 
-<Callout type="note" title="Enrichment behavior">
-  When using `@FirstNotEmpty`, TaxiQL continues searching for data until it finds a non-null value or exhausts all possible sources.
-</Callout>
+In the above query:
+ * `getFilm()` is called, to fetch the `Film`
+ * The projection requests an `Actor[]` in the scope, which isn't available, so...
+ * A call to `getCast()` is made, passing the `FilmId` to fetch the `Actor[]`
+ * Because it's an array, each `Actor` within the array of `Actor[]` is projected individually
+ * `actorName` is read from the `name` field on `Actor`, because the requested field asks for the type `Name`
+ * `filmTitle` is out-of-scope, so returned as null
+
+### Declaring multiple variables in scope
+
+In the previous example, we saw that `filmTitle` was returned as null, because
+the `Film` was removed from scope.
+
+To run the same query with `Film` in scope, simply add it to the projection:
+
+```taxi
+find { Film } as (Film, Actor[]) -> {
+  actorName : Name
+  filmTitle : Title // Title is now discoverable, as Film is in scope
+}[]
+```
+
+## Streaming queries
+Streaming queries are executed in the same way as request/response
+queries, but use the `stream` keyword instead of `find`.
+
+For example - assuming a Kafka topic emitting stock price updates:
+
+```taxi
+model StockPrice {
+  symbol : StockSymbol
+  price : StockPrice
+}
+
+service KafkaService {
+   stream stockPrices : Stream<StockPrice>
+}
+```
+
+This can be queried using the following:
+
+```taxi
+stream { StockPrice }
+```
+
+This can be combined with other standard querying tools, such as projections and mutations:
+
+```taxi
+stream { StockPrice } as {
+  symbol : StockSymbol
+  updateReceived : Instant = now()
+  currentPrice : StockPrice
+  totalTradedQuantity : TotalTradedQuantity
+}
+call TradeBookService::saveTradeSnapshot
+```
+
+### Filtering streams
+To filter a stream, you can use the `filterEach()` function:
+
+```taxi
+stream { StockQuotes.filterEach( StockSymbol -> StockSymbol == 'AAPL' ) }
+```
+
+
+
+
+## Expressions in queries
+Taxi allows the definition of expressions on both [types](https://docs.taxilang.org/language-reference/advanced-types/#expression-types) and [fields](https://docs.taxilang.org/language-reference/advanced-types/#expression-on-fields).
+
+Often, expressions are used in a projection within a query.
+
+You can also use them on a model to expose derived information when a model is parsed (eg., when
+return from a service).  So, while documentation here focuses on query projections,
+you can do everything here on a model too.
+
+### Writing an expression in a projection
+Expressions can be defined in the fields of a projected result from a query:
+
+```taxi
+find { Flights[] }
+as {
+  flightNumber : FlightNumber
+  totalSeatsAvailable : TotalSeats
+  soldSeats : SoldSeats
+  remainingSeats : Int = (this.totalSeatsAvailable - this.soldSeats)
+}
+```
+
+Expressions can be defined in two ways - on a field, or on a type.
+
+### Expressions on a field
+```taxi
+// Expression types on a field:
+find { Flights[] }
+as {
+  flightNumber : FlightNumber
+  totalSeatsAvailable : TotalSeats
+  soldSeats : SoldSeats
+  // field expressions can be defined EITHER using field references...
+  remainingSeats : Int = (this.totalSeatsAvailable - this.soldSeats)
+  // ...or type references...
+  remainingSeats : Int = (TotalSeats - SoldSeats)
+}
+```
+### Expressions on a type
+To encapsulate common expressions, you can define a type with the expression:
+
+```taxi
+// Expression type:
+type RemainingSeats = TotalSeats - SoldSeats
+
+// Which is then used on a projection:
+find { Flights[] }
+as {
+  flightNumber : FlightNumber
+  totalSeatsAvailable : TotalSeats
+  soldSeats : SoldSeats
+  remainingSeats : RemainingSeats
+}
+```
+
+Unlike field expressions, type expression cannot use field names, and can only reference other types.
+
+### Data discovery within expressions
+When evaluating an expression, first on the source object being projected is checked for the input values into the expression.
+
+If any inputs are not available, then a search is performed using the current data available on
+the source object in an attempt to look up the value.
+
+Finally, if no data is found in scope, then services are called to fetch the required data.  The variables
+available in the current projection scope are available as inputs into services.
+
+## Data discovery rules
+When projecting, TaxiQL engines will use information present on the source object to discover data
+on the target object.
+
+Data can be fetched from a single operation that returns the value, or by invoking a chain
+of operations to return the value.
+
+### Operations with @Id fields on return types
+If the result of an operation is an object that exposes an `@Id` field, then only operations which accept that `@Id` field as
+an input will be called. e.g.:
+
+```taxi
+model Customer {
+  @Id customerId : CustomerId
+  name : CustomerName
+}
+
+service CustomerService {
+   // Can be called when projecting, because
+   // Person has an @Id of type PersonId
+   findCustomer(CustomerId):Customer
+
+   // Cannot be called when projecting, because
+   // Person has an @Id, and it isn't PersonName
+   findCustomerByName(CustomerName):Customer
+}
+```
+
+### Operations without @Id fields on return types
+If the result of an operation is an object that *does not* expose an `@Id` field, then it can be called with
+any information available.
+
+
+### Filling in nulls
+By default, if a service returns a null value, the data is accepted it as-is.
+
+However, if query annotates a field on a projection type with `@FirstNotEmpty`, TaxiQL engines will
+attempt to populate values by invoking operations to populate the missing values.
+
+A search is performed using the other values present on the entity being projected as potential
+inputs to operations, and build a path to populate the missing values.
+
+Operations are invoked following the standard [Data Discovery Rules](#data-discovery-rules)
+
 
 ## Named queries
 
-Queries can be saved and reused:
+Queries can be defined within your Taxi project, and reused:
 
 ```taxi
 // Define a query
@@ -275,10 +597,87 @@ query FindOrdersByStatus(status: OrderStatus) {
 }
 ```
 
-## Best practices
 
-1. Use server-side constraints when possible for better performance
-2. Consider streaming queries for real-time data needs
-3. Be explicit with constraints when you need specific data
-4. Use semantic types in projections rather than primitives
-5. Use `@FirstNotEmpty` when data might exist in multiple places
+## Including / excluding services from a query
+
+TaxiQL allows you to control which services are called during query execution using the `using` and `excluding` keywords. 
+This helps you manage query execution paths while maintaining the declarative nature of TaxiQL.
+
+### Including specific services
+
+Use the `using` keyword to specify which services or operations should be called:
+
+```taxi
+find { Film[] } as {
+   title: Title
+   reviews: ReviewScore
+}
+using { 
+   FilmService::getFilms,    // Specific operation
+   ReviewService             // Entire service
+}
+```
+
+You can include:
+- Specific operations using `ServiceName::operationName`
+- Entire services using just the service name
+- A mixture of both
+
+For example:
+
+```taxi
+model Film {
+   title: FilmTitle inherits String
+}
+service FilmService {
+   operation getFilms():Film[]
+   operation getBlockbusters():Film[]
+}
+service NetflixService {
+   operation getFilms():Film[]
+}
+
+// Only call specific operations
+find { Film[] }
+using { FilmService::getFilms, FilmService::getBlockbusters }
+
+// Mix services and operations
+find { Film[] }
+using { FilmService::getBlockbusters, NetflixService }
+```
+
+<Callout type="note" title="Inclusion behavior">
+  When using the `using` keyword, only the specified services and operations will be called. All other services and operations are excluded from the query plan.
+</Callout>
+
+### Excluding services
+
+Alternatively, use the `excluding` keyword to specify which services or operations should NOT be called:
+
+```taxi
+find { Film[] }
+excluding { 
+   ImdbApi,                      // Exclude entire service
+   RottenTomatoes::getReviews    // Exclude specific operation
+}
+```
+
+This is useful when you want to allow most services but need to prevent specific ones from being called.
+
+### Table operations
+
+You can also include or exclude table operations:
+
+```taxi
+service FilmService {
+   table films: Film[]
+}
+
+// Exclude the films table
+find { Film[] }
+excluding { FilmService::films }
+```
+
+<Callout type="warning" title="Service validation">
+  TaxiQL validates that all specified services and operations exist in your schema. Using non-existent services or operations will result in compilation errors.
+</Callout>

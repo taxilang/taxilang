@@ -2,6 +2,7 @@ import clsx from 'clsx'
 
 import {Icon} from '@/components/Icon'
 import {ExclamationTriangleIcon, LightBulbIcon} from "@heroicons/react/24/outline";
+import {Prose} from "@/components/docs/Prose";
 
 const styles = {
   note: {
@@ -48,9 +49,9 @@ export function Callout({type , title, children}:CalloutProps) {
 
           </div>) : (<></>)}
 
-          <div className={clsx('prose', styles[calloutType].body)}>
+          <Prose className={clsx('prose', styles[calloutType].body)}>
             {children}
-          </div>
+          </Prose>
         </div>
       </div>
     </div>

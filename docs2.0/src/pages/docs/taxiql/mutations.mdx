@@ -1,0 +1,96 @@
+---
+title: Performing mutations
+description: Triggering updates / mutations using TaxiQL
+---
+
+import { Callout } from '@/components/docs/Callout';
+
+While queries fetch and transform data, mutations allow you to make changes - like updating records, 
+triggering actions, or writing data to destinations.
+
+## Declaring mutable operations
+
+Operations that perform changes are marked with the `write` modifier in service definitions:
+
+```taxi
+service FlightsService {
+   // Operation that makes changes
+   write operation bookFlight(BookingRequest):BookingConfirmation
+   
+   // Regular query operation
+   operation getFlights():Flight[]
+}
+```
+
+## Invoking mutations
+
+While queries use the `find` or `stream` keywords, mutations use the `call` directive:
+
+```taxi
+find { Passengers[] }
+call FlightsService::sendFlightManifest
+```
+
+<Callout type="note" title="Write protection">
+  Operations marked with `write` are excluded from being called during regular queries (i.e., in `find` or `stream` blocks). They can only be invoked using `call`.
+</Callout>
+
+## Type conversion in mutations
+
+TaxiQL automatically handles type conversion between your source data and the mutation operation's input requirements:
+
+```taxi
+// Source data model
+model Movie {
+   id: FilmId
+   title: Title
+}
+
+// Target model for database
+model Film {
+   @Id
+   filmId: FilmId
+   title: Title
+   reviewScore: ReviewScore  // Additional field not in source
+}
+
+service FilmDatabase {
+   write operation saveFilm(Film):Film
+}
+
+// TaxiQL will automatically discover missing data
+find { Movie[] }
+call FilmDatabase::saveFilm
+```
+
+## Explicit projections
+
+You can control the transformation of data before mutation using projections:
+
+```taxi
+find { Film[] } as {
+   id: FilmId
+   title: Title = upperCase(Title)  // Transform data before saving
+   rating: ReviewScore
+}
+call FilmDatabase::saveFilm
+```
+
+## Single vs batch mutations
+
+The input type of your mutation operation determines whether data is processed individually or in batches:
+
+```taxi
+service FilmService {
+   // Processes one film at a time
+   write operation saveSingle(Film):Film
+   
+   // Processes films in batches
+   write operation saveBatch(Film[]):Film[]
+}
+```
+
+<Callout type="note" title="Batch processing">
+  Using array types in mutation operations signals that the operation expects to handle multiple records in a single call. This can be more efficient for bulk operations.
+</Callout>
+
