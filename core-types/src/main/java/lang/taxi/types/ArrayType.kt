@@ -40,6 +40,8 @@ data class ArrayType(val type: Type, val source: CompilationUnit, override val i
       /**
        * If the provided type is an array, returns the member type,
        * otherwise reutrns type
+       *
+       * Consider using Collections.memberTypeOrType() instead
        */
       fun memberTypeIfArray(type: Type): Type {
          return when (type) {
