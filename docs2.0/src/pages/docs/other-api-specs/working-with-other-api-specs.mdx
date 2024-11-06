@@ -1,0 +1,112 @@
+---
+title: Language Interoperability
+description: Learn how Taxi integrates with existing schema languages and API specifications
+---
+
+import { Callout } from '@/components/docs/Callout';
+
+## Overview
+
+Taxi is designed to work alongside your existing schema languages and API specifications rather than replace them. By adding semantic metadata to your existing specs, you create a semantic layer that connects data across different systems and formats.
+
+<Callout type="note" title="Enhancement, Not Replacement">
+  Teams can continue using their preferred schema formats and toolchains. Taxi adds semantic meaning through lightweight metadata annotations.
+</Callout>
+
+## Supported Formats
+
+### OpenAPI/Swagger
+Add semantic types to your REST APIs using `x-taxi-type` extensions:
+
+```yaml
+   paths:
+     /customers/{id}:
+       get:
+         parameters:
+           - name: id
+             schema:
+               type: string
+>              x-taxi-type:
+>                name: acme.CustomerId
+```
+
+[Open API reference](./open-api)
+
+### Protocol Buffers
+Enhance protocol buffer messages using the `taxi.dataType` extension:
+
+```protobuf
+   message Customer {
+>    optional string id = 1 [(taxi.dataType)="acme.CustomerId"];
+>    optional string email = 2 [(taxi.dataType)="acme.EmailAddress"];
+   }
+```
+
+[Protobuf reference](./protobuf)
+
+### Avro
+Add semantic meaning to Avro schemas via the `taxi.dataType` attribute:
+
+```json
+   {
+     "type": "record",
+     "name": "Customer",
+     "fields": [
+       {
+         "name": "id",
+         "type": "string",
+>        "taxi.dataType": "acme.CustomerId"
+       }
+     ]
+   }
+```
+
+[Avro reference](./avro)
+
+### SOAP/WSDL
+Enhance SOAP services using the `taxi:type` attribute:
+
+```xml
+<xs:element name="GetCustomerRequest">
+   <xs:complexType>
+      <xs:sequence>
+         <xs:element name="customerId" type="xs:string"
+>           taxi:type="acme.CustomerId"/>
+      </xs:sequence>
+   </xs:complexType>
+</xs:element>
+```
+
+[Soap reference](./soap)
+
+## Data Formats
+Taxi also provides annotations for common data formats.
+
+Taxi includes annotations for common data formats like CSV and XML, enabling schema definitions for 
+formats that may not have formal specifications. 
+
+While Taxi defines these formats, the actual reading and writing of data is handled by TaxiQL query engines, such as [Orbital](https://orbitalhq.com)
+
+### CSV
+```taxi
+>  @Csv(delimiter = "|")
+   model CustomerExport {
+      id: CustomerId
+      email: EmailAddress
+   }
+```
+
+[Csv reference](./csv)
+
+### XML
+```taxi
+>  @Xml
+   model CustomerImport {
+>     @XmlAttribute
+      id: CustomerId
+      email: EmailAddress
+   }
+```
+
+[Xml reference](./xml)
+

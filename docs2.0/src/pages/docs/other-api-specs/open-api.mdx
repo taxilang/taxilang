@@ -1,0 +1,178 @@
+---
+title: OpenAPI Integration
+description: Learn how to embed Taxi semantic types in OpenAPI specifications
+---
+
+import { Callout } from '@/components/docs/Callout';
+
+## Overview
+
+Taxi can be embedded within OpenAPI specifications to add semantic meaning to APIs. This allows you to:
+- Define semantic types for request/response models
+- Add semantic meaning to API parameters
+- Create a unified semantic layer across multiple APIs
+
+<Callout type="note" title="Semantic Enhancement">
+  OpenAPI specs describe API structure. Taxi enhances them with semantic meaning, enabling better data discovery and integration.
+</Callout>
+
+## Adding Taxi to OpenAPI
+
+### Basic Syntax
+
+Taxi metadata is added using `x-taxi-type` extensions in your OpenAPI spec:
+
+```yaml
+x-taxi-type:
+  name: com.acme.MyType    # The semantic type name
+  create: false            # Optional flag to control type creation
+```
+
+### Type Creation Behavior
+
+The `create` flag controls whether new types are created if they don't exist:
+
+| Context | Default | Behavior |
+|---------|---------|----------|
+| Response Models | `true` | Creates new types if not found |
+| Field Attributes | `false` | Requires types to exist |
+
+## Enriching OpenAPI Components
+
+### Response Models
+
+Add semantic meaning to response types:
+
+```yaml
+components:
+  schemas:
+    Customer:
+      x-taxi-type:
+        name: acme.Customer
+      properties:
+        id: 
+          type: string
+          x-taxi-type:
+            name: acme.CustomerId
+        email:
+          type: string
+          x-taxi-type:
+            name: acme.EmailAddress
+```
+
+### Input Parameters
+
+Enrich API parameters with semantic types:
+
+```yaml
+paths:
+  /customers/{id}:
+    get:
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+            x-taxi-type:
+              name: acme.CustomerId
+```
+
+### Field Attributes
+
+Add semantic meaning to model fields:
+
+```yaml
+components:
+  schemas:
+    Customer:
+      properties:
+        name:
+          type: string
+          x-taxi-type:
+            name: acme.CustomerName
+            # Only create if type doesn't exist
+            create: true
+```
+
+## Best Practices
+
+1. **Type Management**
+```yaml
+# Good - References existing semantic type
+x-taxi-type:
+  name: acme.CustomerName
+  create: false
+
+# Bad - Creates duplicate types
+x-taxi-type:
+  name: acme.CustomerName
+  create: true  # Unnecessary if type exists
+   ```
+
+2. **Namespace Organization**
+```yaml
+# Good - Clear namespace hierarchy
+x-taxi-type:
+  name: com.acme.customer.CustomerName
+
+# Bad - Flat namespace
+x-taxi-type:
+  name: CustomerName
+   ```
+
+3. **Type Reuse**
+```yaml
+# Good - Reuses common types
+components:
+ schemas:
+   Customer:
+     properties:
+       email:
+         x-taxi-type:
+           name: common.EmailAddress
+
+# Bad - Creates new types unnecessarily
+components:
+ schemas:
+   Customer:
+     properties:
+       email:
+         x-taxi-type:
+           name: acme.customer.CustomerEmail
+           create: true
+   ```
+
+## Common Patterns
+
+### Semantic API Versioning
+```yaml
+paths:
+  /api/v1/customers:
+    get:
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                x-taxi-type:
+                  # Version independent type
+                  name: acme.Customer
+```
+
+### Service Integration
+```yaml
+paths:
+  /orders:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              x-taxi-type:
+                # Enables automatic service discovery
+                name: acme.CreateOrderRequest
+```
+
+<Callout type="warning" title="Type Creation">
+  Only create new types (`create: true`) when you're intentionally extending your semantic model. Otherwise, reference existing types from your core taxonomy.
+</Callout>

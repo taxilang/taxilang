@@ -2,34 +2,41 @@ import clsx from 'clsx'
 
 export function Logo({className, ...props}) {
   return (
-    <svg
-      viewBox="0 0 180 31"
-      className={clsx('text-slate-900 dark:text-white', className)}
-      {...props}
-    >
-      <g id="orbital_logo_white" transform="translate(-166.83 -166.56)" fill="currentColor">
-        <path id="Path_1" data-name="Path 1"
-              d="M178.3,208.27a11.469,11.469,0,1,0,11.469,11.469A11.469,11.469,0,0,0,178.3,208.27Zm0,19.5a8.029,8.029,0,1,1,8.029-8.029A8.037,8.037,0,0,1,178.3,227.768Z"
-              transform="translate(0 -35.975)"/>
-        <path id="Path_2" data-name="Path 2"
-              d="M498.988,172.3a11.428,11.428,0,0,0-8.067,3.318V166.57h-3.44v17.2h.038a11.469,11.469,0,1,0,11.469-11.469Zm0,19.5a8.029,8.029,0,1,1,8.029-8.029A8.037,8.037,0,0,1,498.988,191.8Z"
-              transform="translate(-276.56 -0.009)"/>
-        <path id="Path_3" data-name="Path 3"
-              d="M366.29,212.639V208.26h-3.44V231.2h3.44v-9.684a9.761,9.761,0,0,1,9.749-9.749v-3.44A13.158,13.158,0,0,0,366.29,212.639Z"
-              transform="translate(-169.067 -35.966)"/>
-        <rect id="Rectangle_2" data-name="Rectangle 2" width="3.44" height="22.938"
-              transform="translate(237.884 172.295)"/>
-        <rect id="Rectangle_3" data-name="Rectangle 3" width="3.44" height="28.673"
-              transform="translate(284.39 166.56)"/>
-        <path id="Path_4" data-name="Path 4"
-              d="M837.249,208.27a11.469,11.469,0,1,0,8.029,19.659v3.317h3.44V219.739h0A11.468,11.468,0,0,0,837.249,208.27Zm0,19.5a8.029,8.029,0,1,1,8.029-8.029A8.037,8.037,0,0,1,837.249,227.768Z"
-              transform="translate(-568.343 -35.975)"/>
-        <rect id="Rectangle_4" data-name="Rectangle 4" width="3.664" height="3.664"
-              transform="translate(237.773 166.56)"/>
-        <path id="Path_5" data-name="Path 5"
-              d="M744.259,166.56h-3.44v5.771H737.97v3.44h2.849v13.171h.018a6.3,6.3,0,0,0,6.289,6.289v-3.44a2.852,2.852,0,0,1-2.849-2.849h-.018V175.771h2.867v-3.44h-2.867Z"
-              transform="translate(-492.607 0)"/>
+
+    <svg width="48" height="48" viewBox="0 0 95 95" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <g clip-path="url(#clip0_6_24)">
+        <rect width="95" height="95" fill="#F2CC05"/>
+        <path
+          d="M6.92229 26.3729V21.0909H29.6663V26.3729H21.5068V48H15.0949V26.3729H6.92229ZM33.083 48H26.0929L35.1721 21.0909H43.8308L52.91 48H45.92L39.6 27.8707H39.3898L33.083 48ZM32.1501 37.4098H46.7609V42.3501H32.1501V37.4098ZM60.17 21.0909L65.084 29.592H65.2943L70.2609 21.0909H77.54L69.42 34.5455L77.8028 48H70.3397L65.2943 39.407H65.084L60.0386 48H52.6281L60.9715 34.5455L52.8383 21.0909H60.17ZM85.1875 21.0909V48H78.6836V21.0909H85.1875Z"
+          fill="black"/>
+        <rect x="14" y="52" width="16" height="16" rx="2" fill="black"/>
+        <rect x="42" y="52" width="16" height="16" rx="2" fill="black"/>
+        <rect x="70.0001" y="52" width="16" height="16" rx="2" fill="black"/>
+        <rect x="28" y="67" width="16" height="16" rx="2" fill="black"/>
+        <rect x="56" y="67" width="16" height="16" rx="2" fill="black"/>
+        <rect x="100" y="83" width="16" height="16" rx="2" transform="rotate(-180 100 83)" fill="black"/>
+        <path
+          d="M26.2432 67.6458L29.5849 64.9724C29.7081 65.6226 29.9693 66.1764 30.3964 66.6036C30.763 66.9701 31.2228 67.2145 31.7568 67.3542L28.4151 70.0276C28.2919 69.3774 28.0307 68.8236 27.6036 68.3964C27.237 68.0299 26.7772 67.7855 26.2432 67.6458Z"
+          fill="black" stroke="black" stroke-linecap="square" stroke-linejoin="round"/>
+        <path
+          d="M43.5849 70.0276L40.2432 67.3542C40.7772 67.2145 41.237 66.9701 41.6036 66.6036C42.0307 66.1764 42.2919 65.6226 42.4151 64.9724L45.7568 67.6458C45.2228 67.7855 44.763 68.0299 44.3964 68.3964C43.9693 68.8236 43.7081 69.3774 43.5849 70.0276Z"
+          fill="black" stroke="black" stroke-linecap="square" stroke-linejoin="round"/>
+        <path
+          d="M54.2432 67.6458L57.5849 64.9724C57.7081 65.6226 57.9693 66.1764 58.3964 66.6036C58.763 66.9701 59.2228 67.2145 59.7568 67.3542L56.4151 70.0276C56.2919 69.3774 56.0307 68.8236 55.6036 68.3964C55.237 68.0299 54.7772 67.7855 54.2432 67.6458Z"
+          fill="black" stroke="black" stroke-linecap="square" stroke-linejoin="round"/>
+        <path
+          d="M71.5849 70.0276L68.2432 67.3542C68.7772 67.2145 69.237 66.9701 69.6036 66.6036C70.0307 66.1764 70.2919 65.6226 70.4151 64.9724L73.7568 67.6458C73.2228 67.7855 72.763 68.0299 72.3964 68.3964C71.9693 68.8236 71.7081 69.3774 71.5849 70.0276Z"
+          fill="black" stroke="black" stroke-linecap="square" stroke-linejoin="round"/>
+        <path
+          d="M82.2432 67.6458L85.5849 64.9724C85.7081 65.6226 85.9693 66.1764 86.3964 66.6036C86.763 66.9701 87.2228 67.2145 87.7568 67.3542L84.4151 70.0276C84.2919 69.3774 84.0307 68.8236 83.6036 68.3964C83.237 68.0299 82.7772 67.7855 82.2432 67.6458Z"
+          fill="black" stroke="black" stroke-linecap="square" stroke-linejoin="round"/>
       </g>
+      <defs>
+        <clipPath id="clip0_6_24">
+          <rect width="95" height="95" rx="10" fill="white"/>
+        </clipPath>
+      </defs>
     </svg>
+
   )
 }

@@ -1,0 +1,209 @@
+---
+title: Avro Integration
+description: Learn how to embed Taxi semantic types in Avro schemas and work with Avro data formats
+---
+
+import { Callout } from '@/components/docs/Callout';
+
+## Overview
+
+Taxi can enhance Apache Avro schemas with semantic meaning, enabling:
+- Semantic typing for Avro records and fields
+- Type-safe data serialization and deserialization
+- Integration with Avro-based messaging systems
+
+<Callout type="note" title="Semantic Enhancement">
+  While Avro describes data structure and serialization, Taxi adds semantic meaning to enable better data discovery and integration across systems.
+</Callout>
+
+## Adding Taxi to Avro
+
+### Schema Annotation
+
+Add semantic types to Avro using the `taxi.dataType` attribute:
+
+```json
+   {
+     "type": "record",
+     "namespace": "customer",
+     "name": "CustomerRecord",
+>    "taxi.dataType": "acme.Customer",
+     "fields": [
+       {
+         "name": "id",
+         "type": "string",
+>        "taxi.dataType": "acme.CustomerId"
+       },
+       {
+         "name": "email",
+         "type": "string",
+>        "taxi.dataType": "acme.EmailAddress"
+       }
+     ]
+   }
+```
+
+### Auto-Type Generation
+
+If no `taxi.dataType` is specified, Taxi will generate types based on:
+- For records: The combination of namespace and name
+- For fields: The field name and underlying primitive type
+
+## Declaring Avro in Taxi
+
+### Basic Model Definition
+
+```taxi
+import lang.taxi.formats.AvroMessage
+import lang.taxi.formats.AvroField
+
+@AvroMessage
+model Customer {
+   @AvroField(ordinal = 0) 
+   id: CustomerId
+   
+   @AvroField(ordinal = 1) 
+   email: EmailAddress?
+   
+   @AvroField(ordinal = 2) 
+   addresses: Address[]
+}
+```
+
+<Callout type="warning" title="Field Ordering">
+  Avro serialization depends on field order. Always specify ordinals using @AvroField to ensure consistent serialization.
+</Callout>
+
+### Type Mapping
+
+Taxi automatically maps Avro types to appropriate semantic types:
+
+```taxi
+@AvroMessage
+model Order {
+   // Maps string to semantic type
+   @AvroField(ordinal = 0) 
+   orderId: OrderId inherits String
+   
+   // Maps int to semantic type
+   @AvroField(ordinal = 1) 
+   quantity: Quantity inherits Int
+   
+   // Maps array to semantic type array
+   @AvroField(ordinal = 2) 
+   items: OrderItem[]
+}
+```
+
+## Best Practices
+
+1. **Type Organization**
+```json
+// Good - Clear semantic typing
+{
+  "type": "record",
+  "name": "Order",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string",
+      "taxi.dataType": "acme.order.OrderId"
+    }
+  ]
+}
+
+// Bad - Missing semantic types
+{
+  "type": "record",
+  "name": "Order",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string"
+    }
+  ]
+}
+```
+
+2. **Namespace Usage**
+```json
+// Good - Consistent namespace hierarchy
+{
+  "type": "record",
+  "namespace": "acme.orders",
+  "name": "Order",
+  "taxi.dataType": "acme.orders.Order",
+  "fields": [...]
+}
+
+// Bad - Inconsistent namespacing
+{
+  "type": "record",
+  "namespace": "orders",
+  "name": "Order",
+  "taxi.dataType": "Order",
+  "fields": [...]
+}
+```
+
+3. **Field Ordinals**
+```taxi
+// Good - Explicit ordinals
+@AvroMessage
+model Customer {
+   @AvroField(ordinal = 0) id: CustomerId
+   @AvroField(ordinal = 1) name: CustomerName
+}
+
+// Bad - Missing ordinals
+@AvroMessage
+model Customer {
+   id: CustomerId    // Serialization order undefined
+   name: CustomerName
+}
+```
+
+## Common Patterns
+
+### Event Messages
+```taxi
+@AvroMessage
+model CustomerEvent {
+   @AvroField(ordinal = 0)
+   eventId: EventId
+   
+   @AvroField(ordinal = 1)
+   customerId: CustomerId
+   
+   @AvroField(ordinal = 2)
+   timestamp: EventTimestamp
+   
+   @AvroField(ordinal = 3)
+   eventType: EventType
+}
+```
+
+### Complex Types
+```taxi
+@AvroMessage
+model Order {
+   @AvroField(ordinal = 0)
+   orderId: OrderId
+   
+   @AvroField(ordinal = 1)
+   customer: {
+      id: CustomerId
+      type: CustomerType
+   }
+   
+   @AvroField(ordinal = 2)
+   items: OrderItem[]
+}
+```
+
+<Callout type="note" title="Integration Benefits">
+  Adding semantic types to Avro schemas enables:
+  - Automatic data discovery across message streams
+  - Type-safe data transformations
+  - Consistent semantic meaning across different serialization formats
+</Callout>

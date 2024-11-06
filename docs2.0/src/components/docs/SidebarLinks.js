@@ -1,10 +1,9 @@
 
 export const SidebarLinks = [
   {
-    title: 'Concepts',
+    title: 'Introduction',
     links: [
-      { title: 'Quick start', href: '/docs' },
-      { title: 'Overview', href: '/docs/introduction' },
+      { title: 'Welcome to Taxi', href: '/docs' },
     ],
   },
   {
@@ -31,9 +30,15 @@ export const SidebarLinks = [
     ],
   },
   {
-    title: 'Embedding in API Specs',
+    title: 'Working with other API specs',
     links: [
-      { title: 'Overview', href: '/docs/workspace/overview' },
+      { title: 'Overview', href: '/docs/other-api-specs/working-with-other-api-specs' },
+      { title: 'Open API', href: '/docs/other-api-specs/open-api' },
+      { title: 'Avro', href: '/docs/other-api-specs/avro' },
+      { title: 'Protobuf', href: '/docs/other-api-specs/protobuf' },
+      { title: 'SOAP', href: '/docs/other-api-specs/soap' },
+      { title: 'CSV', href: '/docs/other-api-specs/csv' },
+      { title: 'XML', href: '/docs/other-api-specs/xml' },
     ],
   },
   {

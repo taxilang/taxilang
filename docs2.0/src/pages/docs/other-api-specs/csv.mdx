@@ -1,0 +1,88 @@
+---
+title: CSV Integration
+description: Learn how to define CSV formats and mappings in Taxi
+---
+
+import { Callout } from '@/components/docs/Callout';
+
+## Overview
+
+Taxi provides CSV format support through model annotations, enabling:
+- CSV reading and writing with semantic types
+- Configurable delimiters, headers, and value handling
+- Column name mapping
+
+## Declaring CSV Models
+
+Add the `Csv` annotation to models that represent CSV data:
+
+```taxi
+> import com.orbitalhq.formats.Csv
+
+> @Csv
+model Person {
+   firstName: FirstName inherits String
+   lastName: LastName inherits String
+   age: Age inherits Int
+}
+```
+
+## Configuration Options
+
+The `Csv` annotation supports several configuration parameters:
+
+```taxi
+> import com.orbitalhq.formats.Csv
+
+> @Csv(
+>   delimiter = "|",
+>   nullValue = "NULL",
+>   firstRecordAsHeader = true,
+>   containsTrailingDelimiters = false,
+>   quoteChar = "\""
+)
+model Person {
+   firstName: FirstName inherits String
+   lastName: LastName inherits String
+   age: Age inherits Int
+}
+```
+
+### Available Options
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| delimiter | Character separating fields | `,` |
+| firstRecordAsHeader | Use first record as column headers | true |
+| nullValue | String to interpret as null | |
+| containsTrailingDelimiters | Whether rows end with delimiter | false |
+| quoteChar | Character for quoting fields | `"` |
+
+## Column Mapping
+
+### Default Mapping
+By default, field names in the model are used to match CSV column names:
+
+```taxi
+model Person {
+   // Matches CSV column "firstName"
+   firstName: FirstName inherits String
+   
+   // Matches CSV column "lastName" 
+   lastName: LastName inherits String
+}
+```
+
+### Legacy Column References
+
+<Callout type="warning" title='Deprecated'>
+  Using the `by column` tag is deprecated. Field names in the model are now used to match columns.
+</Callout>
+
+For backward compatibility, explicit column mapping is supported but discouraged:
+
+```taxi
+model Person {
+> firstName: FirstName by column("fName")  // Maps to CSV column "fName"
+}
+```

@@ -1,0 +1,98 @@
+---
+title: XML Integration
+description: Learn how to define XML formats and mappings in Taxi
+---
+
+import { Callout } from '@/components/docs/Callout';
+
+## Overview
+
+Taxi provides XML format support through model annotations, enabling:
+- XML reading and writing with semantic types
+- Element and attribute mapping
+- Collection handling
+- Expression evaluation
+
+## Declaring XML Models
+
+Add the `Xml` annotation to models that represent XML data:
+
+```taxi
+> import com.orbitalhq.formats.Xml
+
+> @Xml
+model Person {
+   firstName: FirstName inherits String
+   lastName: LastName inherits String
+}
+```
+
+## Attributes vs Elements
+
+By default, fields are mapped to XML elements. To map a field to an XML attribute:
+
+```taxi
+> import com.orbitalhq.formats.Xml
+> import lang.taxi.xml.XmlAttribute
+
+> @Xml
+model Actor inherits Person {
+>    @XmlAttribute
+    id: ActorId
+    
+    fullName: FullName
+}
+```
+
+Results in:
+```xml
+<?xml version='1.0' encoding='UTF-8'?>
+<Actor id="3">
+    <fullName>Jimmy Smith</fullName>
+</Actor>
+```
+
+## Collections
+
+Array fields automatically map to repeated XML elements:
+
+```taxi
+> @Xml
+model Movie {
+>   actors: Actor[]
+}
+```
+
+Results in:
+```xml
+<?xml version='1.0' encoding='UTF-8'?>
+<Movie>
+    <actors id="1">
+        <firstName>Mel</firstName>
+        <lastName>Gibson</lastName>
+    </actors>
+    <actors id="2">
+        <firstName>Jack</firstName>
+        <lastName>Spratt</lastName>
+    </actors>
+</Movie>
+```
+
+## Expressions
+
+Models can include computed fields using expressions:
+
+```taxi
+> import com.orbitalhq.formats.Xml
+> import lang.taxi.xml.XmlAttribute
+
+> @Xml
+model Actor {
+    firstName: FirstName inherits String
+    lastName: LastName inherits String
+    fullName: FullName inherits String = FirstName + ' ' + LastName
+}
+```
+
+### Expression Handling
+- When serializing: Expression values are written as normal elements

@@ -50,13 +50,13 @@ export default class Document extends NextDocument {
             href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;800&family=Manrope:wght@200;300;400&display=swap"
             rel="stylesheet"/>
 
-          <meta name="apple-mobile-web-app-title" content="Orbital"/>
-          <meta name="application-name" content="Orbital"/>
+          <meta name="apple-mobile-web-app-title" content="Taxi"/>
+          <meta name="application-name" content="Taxi"/>
           <meta name="msapplication-TileColor" content="#38bdf8"/>
           <meta name="msapplication-config" content={v('/favicons/browserconfig.xml')}/>
           <meta name='theme-color' content='#f8fafc'/>
           <meta name='referrer' content='origin'/>
-          <script defer data-domain='orbitalhq.com' src='https://plausible.io/js/script.js'></script>
+          <script defer data-domain='taxilang.org' src='https://plausible.io/js/script.js'></script>
 
         </Head>
         <body
