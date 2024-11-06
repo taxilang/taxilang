@@ -4,6 +4,7 @@ import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import lang.taxi.types.Field
@@ -259,6 +260,45 @@ find { Movie[] } as {
          val socialsType = socialsField.type.asA<ObjectType>()
          socialsType.anonymous.shouldBeTrue()
          socialsType.field("twitter").type.qualifiedName.shouldBe("TwitterHandle")
+      }
+
+      it("applies spread operator to streamed projection") {
+         val (schema,query) = """
+            type Message inherits String
+            model StockQuote {
+               ticker : Ticker inherits String
+               price : Price inherits Decimal
+               quantity : Quantity inherits Int
+            }
+         """.compiledWithQuery("""
+        stream { StockQuote } as {
+          message : Message = 'Hello, world',
+          ...
+         }[]
+         """.trimIndent())
+         query.projectedObjectType!!
+            .fields.shouldHaveSize(4)
+
+
+      }
+      it("applies spread operator to array projection") {
+         val (schema,query) = """
+            type Message inherits String
+            model StockQuote {
+               ticker : Ticker inherits String
+               price : Price inherits Decimal
+               quantity : Quantity inherits Int
+            }
+         """.compiledWithQuery("""
+        find { StockQuote } as {
+          message : Message = 'Hello, world',
+          ...
+         }[]
+         """.trimIndent())
+         query.projectedObjectType!!
+            .fields.shouldHaveSize(4)
+
+
       }
    }
 })

@@ -8,6 +8,7 @@ import lang.taxi.accessors.*
 import lang.taxi.compiler.*
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
+import lang.taxi.types.Collections
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.log
@@ -124,7 +125,7 @@ class FieldCompiler(
          // When we're projecting a collection, (in the above example)
          // the projection scope is an Array,
          // but the spread operator should apply to the member
-         ArrayType.memberTypeIfArray(possibleArrayType)
+         Collections.memberTypeOrType(possibleArrayType)
       }
       val fields = when (typeBeingSpread) {
          is ObjectType -> typeBeingSpread.fields
