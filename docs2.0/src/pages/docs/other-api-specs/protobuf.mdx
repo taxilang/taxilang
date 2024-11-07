@@ -85,85 +85,9 @@ model Customer {
 }
 ```
 
-<Callout type="warning" title="Auto-Generation">
-  You shouldn't write these Taxi models manually - they are automatically generated from your protobuf definitions. The examples above are for illustration only.
+<Callout type="note" title="Reccomendation: Add taxi types to Protobuf schemas when possible">
+  <p>You can generate these Protobuf models by hand - but we don't recommend it.</p>
+  <p>If you have a protobuf schema and can annotate it, it's recommended to annotate that with taxi types, rather than
+    duplicating the schema definition as a Taxi model.</p>
 </Callout>
 
-## Best Practices
-
-1. **Type Organization**
-```protobuf
-// Good - Clear semantic typing
-message Order {
-  optional string id = 1 [(taxi.dataType)="acme.OrderId"];
-  optional string status = 2 [(taxi.dataType)="acme.OrderStatus"];
-}
-
-// Bad - Missing semantic types
-message Order {
-  optional string id = 1;  // No semantic meaning
-  optional string status = 2;  // No semantic meaning
-}
-```
-
-2. **Namespace Usage**
-```protobuf
-// Good - Consistent namespace hierarchy
-message Customer {
-  optional string id = 1 [(taxi.dataType)="acme.customer.CustomerId"];
-  optional string type = 2 [(taxi.dataType)="acme.customer.CustomerType"];
-}
-
-// Bad - Inconsistent namespacing
-message Customer {
-  optional string id = 1 [(taxi.dataType)="CustomerId"];
-  optional string type = 2 [(taxi.dataType)="customer.Type"];
-}
-```
-
-3. **Optional Fields**
-```protobuf
-// Good - Explicit optionality
-message Profile {
-  optional string name = 1 [(taxi.dataType)="acme.ProfileName"];
-  required string id = 2 [(taxi.dataType)="acme.ProfileId"];
-}
-
-// Bad - Implicit optionality
-message Profile {
-  string name = 1 [(taxi.dataType)="acme.ProfileName"];  // Ambiguous optionality
-  string id = 2 [(taxi.dataType)="acme.ProfileId"];      // Ambiguous optionality
-}
-```
-
-## Common Patterns
-
-### Message Stream Definitions
-```protobuf
-// Define events with semantic types
-message OrderEvent {
-  optional string order_id = 1 [(taxi.dataType)="acme.OrderId"];
-  optional string event_type = 2 [(taxi.dataType)="acme.OrderEventType"];
-  optional string timestamp = 3 [(taxi.dataType)="acme.EventTimestamp"];
-}
-```
-
-### Nested Messages
-```protobuf
-message Order {
-  message Address {
-    optional string street = 1 [(taxi.dataType)="acme.Street"];
-    optional string city = 2 [(taxi.dataType)="acme.City"];
-  }
-  
-  optional string order_id = 1 [(taxi.dataType)="acme.OrderId"];
-  optional Address shipping_address = 2;
-}
-```
-
-<Callout type="note" title="Integration Benefits">
-  By adding semantic types to your protobuf definitions, you enable:
-  - Automatic data discovery across message streams
-  - Type-safe data transformations
-  - Consistent semantic meaning across different protocols and formats
-</Callout>

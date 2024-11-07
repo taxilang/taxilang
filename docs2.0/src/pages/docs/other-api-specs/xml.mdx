@@ -21,10 +21,10 @@ Add the `Xml` annotation to models that represent XML data:
 > import com.orbitalhq.formats.Xml
 
 > @Xml
-model Person {
-   firstName: FirstName inherits String
-   lastName: LastName inherits String
-}
+  model Person {
+     firstName: FirstName inherits String
+     lastName: LastName inherits String
+  }
 ```
 
 ## Attributes vs Elements
@@ -36,12 +36,12 @@ By default, fields are mapped to XML elements. To map a field to an XML attribut
 > import lang.taxi.xml.XmlAttribute
 
 > @Xml
-model Actor inherits Person {
+  model Actor inherits Person {
 >    @XmlAttribute
-    id: ActorId
+     id: ActorId
     
-    fullName: FullName
-}
+     fullName: FullName
+  }
 ```
 
 Results in:
@@ -58,9 +58,9 @@ Array fields automatically map to repeated XML elements:
 
 ```taxi
 > @Xml
-model Movie {
+  model Movie {
 >   actors: Actor[]
-}
+  }
 ```
 
 Results in:
@@ -83,15 +83,15 @@ Results in:
 Models can include computed fields using expressions:
 
 ```taxi
-> import com.orbitalhq.formats.Xml
-> import lang.taxi.xml.XmlAttribute
-
-> @Xml
-model Actor {
-    firstName: FirstName inherits String
-    lastName: LastName inherits String
-    fullName: FullName inherits String = FirstName + ' ' + LastName
-}
+>  import com.orbitalhq.formats.Xml
+>  import lang.taxi.xml.XmlAttribute
+   
+>  @Xml
+   model Actor {
+       firstName: FirstName inherits String
+       lastName: LastName inherits String
+       fullName: FullName inherits String = FirstName + ' ' + LastName
+   }
 ```
 
 ### Expression Handling

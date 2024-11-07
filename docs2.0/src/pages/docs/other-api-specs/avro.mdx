@@ -50,6 +50,15 @@ If no `taxi.dataType` is specified, Taxi will generate types based on:
 - For fields: The field name and underlying primitive type
 
 ## Declaring Avro in Taxi
+You can also describe your Avro model directly in Taxi.  
+
+<Callout type="note" title="Reccomendation: Add taxi types to Avro schemas when possible">
+  <p>You can generate these Avro models by hand - but we don't recommend it.</p>
+  <p>
+  If you have an Avro schema and can annotate it, it's recommended to annotate that with taxi types, rather than
+  duplicating the schema definition as a Taxi model.
+  </p>
+</Callout>
 
 ### Basic Model Definition
 
@@ -94,116 +103,3 @@ model Order {
    items: OrderItem[]
 }
 ```
-
-## Best Practices
-
-1. **Type Organization**
-```json
-// Good - Clear semantic typing
-{
-  "type": "record",
-  "name": "Order",
-  "fields": [
-    {
-      "name": "id",
-      "type": "string",
-      "taxi.dataType": "acme.order.OrderId"
-    }
-  ]
-}
-
-// Bad - Missing semantic types
-{
-  "type": "record",
-  "name": "Order",
-  "fields": [
-    {
-      "name": "id",
-      "type": "string"
-    }
-  ]
-}
-```
-
-2. **Namespace Usage**
-```json
-// Good - Consistent namespace hierarchy
-{
-  "type": "record",
-  "namespace": "acme.orders",
-  "name": "Order",
-  "taxi.dataType": "acme.orders.Order",
-  "fields": [...]
-}
-
-// Bad - Inconsistent namespacing
-{
-  "type": "record",
-  "namespace": "orders",
-  "name": "Order",
-  "taxi.dataType": "Order",
-  "fields": [...]
-}
-```
-
-3. **Field Ordinals**
-```taxi
-// Good - Explicit ordinals
-@AvroMessage
-model Customer {
-   @AvroField(ordinal = 0) id: CustomerId
-   @AvroField(ordinal = 1) name: CustomerName
-}
-
-// Bad - Missing ordinals
-@AvroMessage
-model Customer {
-   id: CustomerId    // Serialization order undefined
-   name: CustomerName
-}
-```
-
-## Common Patterns
-
-### Event Messages
-```taxi
-@AvroMessage
-model CustomerEvent {
-   @AvroField(ordinal = 0)
-   eventId: EventId
-   
-   @AvroField(ordinal = 1)
-   customerId: CustomerId
-   
-   @AvroField(ordinal = 2)
-   timestamp: EventTimestamp
-   
-   @AvroField(ordinal = 3)
-   eventType: EventType
-}
-```
-
-### Complex Types
-```taxi
-@AvroMessage
-model Order {
-   @AvroField(ordinal = 0)
-   orderId: OrderId
-   
-   @AvroField(ordinal = 1)
-   customer: {
-      id: CustomerId
-      type: CustomerType
-   }
-   
-   @AvroField(ordinal = 2)
-   items: OrderItem[]
-}
-```
-
-<Callout type="note" title="Integration Benefits">
-  Adding semantic types to Avro schemas enables:
-  - Automatic data discovery across message streams
-  - Type-safe data transformations
-  - Consistent semantic meaning across different serialization formats
-</Callout>

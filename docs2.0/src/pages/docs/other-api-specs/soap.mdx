@@ -31,40 +31,12 @@ First, declare the Taxi namespace in your WSDL:
 Add semantic types to WSDL elements using the `taxi:type` attribute:
 
 ```xml
-<xs:complexType name="tCurrency">
-   <xs:sequence>
-      <xs:element name="sISOCode" type="xs:string" 
->        taxi:type="com.orbitalhq.CurrencyIsoCode"/>
-      <xs:element name="sName" type="xs:string" 
->        taxi:type="com.orbitalhq.CurrencyName"/>
-   </xs:sequence>
-</xs:complexType>
-```
-
-## Common Patterns
-
-### Message Types
-```xml
-<xs:element name="GetCustomerRequest">
-   <xs:complexType>
+   <xs:complexType name="tCurrency">
       <xs:sequence>
-         <xs:element name="customerId" type="xs:string"
->           taxi:type="acme.CustomerId"/>
+         <xs:element name="sISOCode" type="xs:string" 
+>           taxi:type="com.orbitalhq.CurrencyIsoCode"/>
+         <xs:element name="sName" type="xs:string" 
+>           taxi:type="com.orbitalhq.CurrencyName"/>
       </xs:sequence>
    </xs:complexType>
-</xs:element>
-```
-
-### Operation Parameters
-```xml
-<xs:element name="GetOrderStatus">
-   <xs:complexType>
-      <xs:sequence>
-         <xs:element name="orderId" type="xs:string"
->           taxi:type="acme.OrderId"/>
-         <xs:element name="region" type="xs:string"
->           taxi:type="acme.RegionCode"/>
-      </xs:sequence>
-   </xs:complexType>
-</xs:element>
 ```

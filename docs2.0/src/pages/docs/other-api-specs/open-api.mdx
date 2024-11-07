@@ -30,12 +30,21 @@ x-taxi-type:
 
 ### Type Creation Behavior
 
-The `create` flag controls whether new types are created if they don't exist:
+The `create` flag controls whether new types are created if they don't exist.
 
-| Context | Default | Behavior |
-|---------|---------|----------|
-| Response Models | `true` | Creates new types if not found |
-| Field Attributes | `false` | Requires types to exist |
+The default behaviour varies between models and field attributes - and defaults to the reccomended best practice
+for each.
+
+| Context          | Default | Behavior                       |
+|------------------|---------|--------------------------------|
+| Response Models  | `true`  | Creates new types if not found |
+| Field Attributes | `false` | Requires types to exist        |
+
+<Callout type="note" title="Type Creation">
+  <p>Semantic types let you share data between systems, while avoiding tight coupling. Try to use existing types (where the semantics match), or create new types in a shared taxonomy - rather than creating types in your OpenAPI spec</p>
+  <p>Only create new types (<code>create: true</code>) when you're intentionally extending your semantic model, or creating a type you're not ready to share yet.</p>
+</Callout>
+
 
 ## Enriching OpenAPI Components
 
@@ -44,20 +53,20 @@ The `create` flag controls whether new types are created if they don't exist:
 Add semantic meaning to response types:
 
 ```yaml
-components:
-  schemas:
-    Customer:
-      x-taxi-type:
-        name: acme.Customer
-      properties:
-        id: 
-          type: string
-          x-taxi-type:
-            name: acme.CustomerId
-        email:
-          type: string
-          x-taxi-type:
-            name: acme.EmailAddress
+   components:
+     schemas:
+       Customer:
+>        x-taxi-type:
+>          name: acme.Customer
+         properties:
+           id: 
+             type: string
+>            x-taxi-type:
+>              name: acme.CustomerId
+           email:
+             type: string
+>            x-taxi-type:
+>              name: acme.EmailAddress
 ```
 
 ### Input Parameters
@@ -65,16 +74,16 @@ components:
 Enrich API parameters with semantic types:
 
 ```yaml
-paths:
-  /customers/{id}:
-    get:
-      parameters:
-        - name: id
-          in: path
-          schema:
-            type: string
-            x-taxi-type:
-              name: acme.CustomerId
+   paths:
+     /customers/{id}:
+       get:
+         parameters:
+           - name: id
+             in: path
+             schema:
+               type: string
+>              x-taxi-type:
+>                name: acme.CustomerId
 ```
 
 ### Field Attributes
@@ -82,16 +91,16 @@ paths:
 Add semantic meaning to model fields:
 
 ```yaml
-components:
-  schemas:
-    Customer:
-      properties:
-        name:
-          type: string
-          x-taxi-type:
-            name: acme.CustomerName
-            # Only create if type doesn't exist
-            create: true
+   components:
+     schemas:
+       Customer:
+         properties:
+           name:
+             type: string
+>            x-taxi-type:
+>              name: acme.CustomerName
+>              # Only create if type doesn't exist
+>              create: true
 ```
 
 ## Best Practices
@@ -141,38 +150,3 @@ components:
            name: acme.customer.CustomerEmail
            create: true
    ```
-
-## Common Patterns
-
-### Semantic API Versioning
-```yaml
-paths:
-  /api/v1/customers:
-    get:
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                x-taxi-type:
-                  # Version independent type
-                  name: acme.Customer
-```
-
-### Service Integration
-```yaml
-paths:
-  /orders:
-    post:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              x-taxi-type:
-                # Enables automatic service discovery
-                name: acme.CreateOrderRequest
-```
-
-<Callout type="warning" title="Type Creation">
-  Only create new types (`create: true`) when you're intentionally extending your semantic model. Otherwise, reference existing types from your core taxonomy.
-</Callout>
