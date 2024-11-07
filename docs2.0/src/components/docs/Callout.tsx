@@ -1,6 +1,4 @@
 import clsx from 'clsx'
-
-import {Icon} from '@/components/Icon'
 import {ExclamationTriangleIcon, LightBulbIcon} from "@heroicons/react/24/outline";
 import {Prose} from "@/components/docs/Prose";
 
