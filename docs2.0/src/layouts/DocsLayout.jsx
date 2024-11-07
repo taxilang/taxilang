@@ -4,12 +4,8 @@ import {useRouter} from 'next/router'
 import clsx from 'clsx'
 
 import {Hero} from '@/components/Hero'
-import {Logo, Logomark} from '@/components/docs/Logo'
-import {MobileNavigation} from '@/components/docs/MobileNavigation'
 import {Navigation} from '@/components/docs/Navigation'
 import {Prose} from '@/components/docs/Prose'
-import {Search} from '@/components/docs/Search'
-import {ThemeSelector} from '@/components/docs/ThemeSelector'
 import {SidebarLinks} from "@/components/docs/SidebarLinks";
 
 

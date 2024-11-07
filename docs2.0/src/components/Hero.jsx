@@ -2,7 +2,6 @@ import {Fragment} from 'react'
 import clsx from 'clsx'
 
 import {Button} from '@/components/Button'
-import wormholeAqua from '@/img/wormhole-aqua-transparent.png'
 
 const codeLanguage = 'javascript'
 const code = `find { Film[] } as {
@@ -52,7 +51,6 @@ export function Hero() {
           <div className="relative lg:static xl:pl-10">
              <div
                 className="absolute inset-x-[-50vw] -top-32 -bottom-48 [mask-image:linear-gradient(transparent,white,white)] dark:[mask-image:linear-gradient(transparent,white,transparent)] lg:left-[calc(50%+14rem)] lg:right-0 lg:-top-32 lg:-bottom-32 lg:[mask-image:none] lg:dark:[mask-image:linear-gradient(white,white,transparent)]">
-                <img src={wormholeAqua.src} className="h-[800px] blur-lg opacity-50"/>
                 {/*<HeroBackground className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 lg:left-0 lg:translate-x-0 lg:translate-y-[-60%]" />*/}
              </div>
              <div className="relative">

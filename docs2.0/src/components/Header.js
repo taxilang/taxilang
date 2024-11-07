@@ -1,12 +1,10 @@
 import Link from 'next/link';
-import {SearchButton} from '@/components/Search';
 import Router from 'next/router';
 import {Logo} from '@/components/Logo';
-import {Dialog, Transition} from '@headlessui/react';
+import {Dialog} from '@headlessui/react';
 import {Fragment, useEffect, useState} from 'react';
 import clsx from 'clsx';
 import {ThemeToggle} from './ThemeToggle';
-import {DemosModel} from "@/components/DemosModal";
 
 
 export function NavPopover({display = 'md:hidden', className, ...props}) {
