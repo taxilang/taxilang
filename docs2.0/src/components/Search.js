@@ -1,22 +1,48 @@
 import {useState, useCallback, useRef, createContext, useContext, useEffect} from 'react'
 import {createPortal} from 'react-dom'
 import Link from 'next/link'
-import Head from 'next/head'
 import {useRouter} from 'next/router'
-import {DocSearchModal} from '@docsearch/react'
+import {DocSearchModal, useDocSearchKeyboardEvents} from 'typesense-docsearch-react'
 import clsx from 'clsx'
-import {useActionKey} from '@/hooks/useActionKey'
-
-const INDEX_NAME = 'orbital'
-const API_KEY = '5fc87cef58bb80203d2207578309fab6'
-const APP_ID = 'KNPXZI5B0M'
 
 const SearchContext = createContext()
+
+const docSearchConfig = {
+  typesenseCollectionName: 'orbital-docs',
+  typesenseServerConfig: {
+    nodes: [
+      // Cloud
+      /*{
+        host: 'q2cy9udgx7zoiaw1p-1.a1.typesense.net',
+        port: '443',
+        protocol: 'https',
+      },*/
+      // Local
+      /*{
+        host: 'localhost',
+        port: '8108',
+        protocol: 'http'
+      },*/
+      // Marty's Herzer box
+      {
+        host: 'docsearch.orbitalhq.com',
+        port: '443',
+        protocol: 'https'
+      },
+    ],
+    // Cloud & Local
+    //apiKey: 'w5BazTsVHfzuNHBiX40faPdLV8kSKakW'
+    // Marty's Herzer box
+    apiKey: 'eWWGkJZnBPmuiwtbt3IHFtIPxMXpwatU'
+  },
+}
 
 export function SearchProvider({children}) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [initialQuery, setInitialQuery] = useState(null)
+  const tags = ['docs', 'taxi', 'changelog', 'blog']; // The available tags
+  const [filterTags, setFilterTags] = useState([...tags]);
 
   const onOpen = useCallback(() => {
     setIsOpen(true)
@@ -38,13 +64,67 @@ export function SearchProvider({children}) {
     isOpen,
     onOpen,
     onClose,
+    onInput
   })
+
+  const modalWrapperRef = useRef(null); // Ref to the modal
+
+  useEffect(() => {
+    if (modalWrapperRef.current && isOpen) {
+      createFilterCheckboxes()
+    }
+  }, [isOpen]);
+
+  // TODO: we need to run the query again somehow when the tags change!
+  /*useEffect(() => {
+    console.log("run the search again!!!")
+    setInitialQuery(query)
+  }, [filterTags]);*/
+
+  const createFilterCheckboxes = () => {
+  // Find the SearchBar and Dropdown using their class names
+    const searchBar = modalWrapperRef.current.querySelector('.DocSearch-SearchBar');
+    const dropdown = modalWrapperRef.current.querySelector('.DocSearch-Dropdown');
+
+    if (searchBar && dropdown) {
+      const filterElements = document.createElement("div");
+      filterElements.className = "filters"; // Optional: assign a class to the container
+
+      tags.forEach(tag => {
+        // Create a checkbox input element
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = `${tag}-checkbox`;
+        checkbox.name = tag;
+        checkbox.checked = filterTags.includes(tag);
+
+        // Create a label for the checkbox
+        const label = document.createElement("label");
+        label.textContent = tag;
+        label.setAttribute("for", `${tag}-checkbox`);
+
+        // Add the event listener to the checkbox
+        checkbox.addEventListener("change", (event) => {
+          const checked = event.target.checked;
+          const tagName = event.target.name;
+
+          setFilterTags(prevTags =>
+            checked ? [...prevTags, tagName] : prevTags.filter(t => t !== tagName)
+          );
+        });
+
+        // Append the checkbox and label to the customElement div
+        filterElements.appendChild(checkbox);
+        filterElements.appendChild(label);
+      });
+
+      // Insert the custom element between the SearchBar and Dropdown
+      searchBar.insertAdjacentElement('afterend', filterElements);
+    }
+  }
 
   return (
     <>
-      <Head>
-        <link rel="preconnect" href={`https://${APP_ID}-dsn.algolia.net`} crossOrigin="true"/>
-      </Head>
       <SearchContext.Provider
         value={{
           isOpen,
@@ -57,59 +137,59 @@ export function SearchProvider({children}) {
       </SearchContext.Provider>
       {isOpen &&
         createPortal(
-          <DocSearchModal
-            initialQuery={initialQuery}
-            initialScrollY={window.scrollY}
-            searchParameters={{
-              facetFilters: 'version:v3',
-              distinct: 1,
-            }}
-            placeholder="Search documentation"
-            onClose={onClose}
-            indexName={INDEX_NAME}
-            apiKey={API_KEY}
-            appId={APP_ID}
-            navigator={{
-              navigate({itemUrl}) {
-                setIsOpen(false)
-                router.push(itemUrl)
-              },
-            }}
-            hitComponent={Hit}
-            transformItems={(items) => {
-              return items.map((item, index) => {
-                // We transform the absolute URL into a relative URL to
-                // leverage Next's preloading.
-                const a = document.createElement('a')
-                a.href = item.url
+          <div ref={modalWrapperRef}>
+            <DocSearchModal
+              {...docSearchConfig}
+              initialScrollY={window.scrollY}
+              initialQuery={initialQuery}
+              typesenseSearchParameters={{
+                facet_by: 'tags',
+                filter_by: `tags: [${filterTags.join(',')}]`
+              }}
+              placeholder="Search documentation"
+              onClose={onClose}
+              navigator={{
+                navigate({itemUrl}) {
+                  setIsOpen(false)
+                  router.push(itemUrl)
+                },
+              }}
+              hitComponent={Hit}
+              transformItems={(items) => {
+                return items?.map((item, index) => {
+                  // We transform the absolute URL into a relative URL to
+                  // leverage Next's preloading but only if it's not a docs.taxilang.org link.
+                  const a = document.createElement('a')
+                  a.href = item.url
 
-                const hash = a.hash === '#content-wrapper' || a.hash === '#header' ? '' : a.hash
+                  const hash = a.hash === '#content-wrapper' || a.hash === '#header' ? '' : a.hash
 
-                if (item.hierarchy?.lvl0) {
-                  item.hierarchy.lvl0 = item.hierarchy.lvl0.replace(/&amp;/g, '&')
-                }
+                  if (item.hierarchy?.lvl0) {
+                    item.hierarchy.lvl0 = item.hierarchy.lvl0.replace(/&amp;/g, '&')
+                  }
 
-                if (item._highlightResult?.hierarchy?.lvl0?.value) {
-                  item._highlightResult.hierarchy.lvl0.value =
-                    item._highlightResult.hierarchy.lvl0.value.replace(/&amp;/g, '&')
-                }
+                  if (item._highlightResult?.hierarchy?.lvl0?.value) {
+                    item._highlightResult.hierarchy.lvl0.value =
+                      item._highlightResult.hierarchy.lvl0.value.replace(/&amp;/g, '&')
+                  }
 
-                return {
-                  ...item,
-                  url: `${a.pathname}${hash}`,
-                  __is_result: () => true,
-                  __is_parent: () => item.type === 'lvl1' && items.length > 1 && index === 0,
-                  __is_child: () =>
-                    item.type !== 'lvl1' &&
-                    items.length > 1 &&
-                    items[0].type === 'lvl1' &&
-                    index !== 0,
-                  __is_first: () => index === 1,
-                  __is_last: () => index === items.length - 1 && index !== 0,
-                }
-              })
-            }}
-          />,
+                  return {
+                    ...item,
+                    url: item.url.includes('docs.taxilang.org') ? item.url : `${a.pathname}${hash}`,
+                    __is_result: () => true,
+                    __is_parent: () => item.type === 'lvl1' && items.length > 1 && index === 0,
+                    __is_child: () =>
+                      item.type !== 'lvl1' &&
+                      items.length > 1 &&
+                      items[0].type === 'lvl1' &&
+                      index !== 0,
+                    __is_first: () => index === 1,
+                    __is_last: () => index === items.length - 1 && index !== 0,
+                  }
+                })
+              }}
+            />
+          </div>,
           document.body
         )}
     </>
@@ -118,7 +198,7 @@ export function SearchProvider({children}) {
 
 function Hit({hit, children}) {
   return (
-    <Link href={hit.url}>
+    <Link href={hit.url} key={hit.url}>
       <a
         className={clsx({
           'DocSearch-Hit--Result': hit.__is_result?.(),
@@ -127,6 +207,8 @@ function Hit({hit, children}) {
           'DocSearch-Hit--LastChild': hit.__is_last?.(),
           'DocSearch-Hit--Child': hit.__is_child?.(),
         })}
+        target={hit.url.includes('docs.taxilang.org') ? '_blank' : '_self'}
+        title={hit.url}
       >
         {children}
       </a>
@@ -136,10 +218,11 @@ function Hit({hit, children}) {
 
 export function SearchButton({children, ...props}) {
   let searchButtonRef = useRef()
-  let actionKey = useActionKey()
   let {onOpen, onInput} = useContext(SearchContext)
 
   useEffect(() => {
+    // NOTE the logic in here doesn't fire at all - leaving it for now, as we need some way
+    //      for this to update the query for when the filter tags are toggled on/off
     function onKeyDown(event) {
       if (searchButtonRef && searchButtonRef.current === document.activeElement && onInput) {
         if (/[a-zA-Z0-9]/.test(String.fromCharCode(event.keyCode))) {
@@ -155,52 +238,18 @@ export function SearchButton({children, ...props}) {
   }, [onInput, searchButtonRef])
 
   return (
-    <button type="button" ref={searchButtonRef} onClick={onOpen} {...props}>
-      {typeof children === 'function' ? children({actionKey}) : children}
+    <button type="button"
+            ref={searchButtonRef}
+            onClick={onOpen}
+            className={`flex shrink-0 items-center text-sm leading-6 text-slate-400 rounded-md ring-1 ring-slate-900/10 shadow-sm py-1.5 pl-2 pr-3 hover:ring-slate-300 dark:bg-slate-800 dark:highlight-white/5 dark:hover:bg-slate-700 ${props.className}`}
+      >
+      <svg width="24" height="24" fill="none" aria-hidden="true" className="mr-3 flex-none">
+        <path d="m19 19-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round"></path>
+        <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round"></circle>
+      </svg>
+      <span className="hidden lg:block">Search...</span><span className="ml-auto pl-3 flex-none text-xs font-semibold text-slate-500">[Ctrl K]</span>
     </button>
-  )
-}
-
-function useDocSearchKeyboardEvents({isOpen, onOpen, onClose}) {
-  useEffect(() => {
-    function onKeyDown(event) {
-      function open() {
-        // We check that no other DocSearch modal is showing before opening
-        // another one.
-        if (!document.body.classList.contains('DocSearch--active')) {
-          onOpen()
-        }
-      }
-
-      if (
-        (event.keyCode === 27 && isOpen) ||
-        (event.key === 'k' && (event.metaKey || event.ctrlKey)) ||
-        (!isEditingContent(event) && event.key === '/' && !isOpen)
-      ) {
-        event.preventDefault()
-
-        if (isOpen) {
-          onClose()
-        } else if (!document.body.classList.contains('DocSearch--active')) {
-          open()
-        }
-      }
-    }
-
-    window.addEventListener('keydown', onKeyDown)
-    return () => {
-      window.removeEventListener('keydown', onKeyDown)
-    }
-  }, [isOpen, onOpen, onClose])
-}
-
-function isEditingContent(event) {
-  let element = event.target
-  let tagName = element.tagName
-  return (
-    element.isContentEditable ||
-    tagName === 'INPUT' ||
-    tagName === 'SELECT' ||
-    tagName === 'TEXTAREA'
   )
 }

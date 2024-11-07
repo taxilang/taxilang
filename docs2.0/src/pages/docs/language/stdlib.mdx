@@ -1,0 +1,429 @@
+---
+IMPORTANT: This file is generated.  Do not edit manually.  For the preamble, edit stdlib.mdx in compiler/src/test/resource. All other content is generated directly from classes
+
+title: Taxi StdLib
+description: Reference documentation on functions provided in Taxi's StdLib packages
+---
+
+Taxi ships with a collections of functions for basic operations on data.
+
+These operations are performed locally on data received from services - it does not instruct remote
+services to perform these changes.
+
+Taxi does not provide implementations of these functions, that's left to
+runtimes, such as Orbital.
+
+
+## Strings
+
+A collection of functions for manipulating strings
+
+### left
+`taxi.stdlib.left`
+
+```taxi
+declare extension function left(source:String,count:Int):String
+```
+
+Returns the left most characters from the source string
+
+### right
+`taxi.stdlib.right`
+
+```taxi
+declare extension function right(source:String,count:Int):String
+```
+
+### mid
+`taxi.stdlib.mid`
+
+```taxi
+declare extension function mid(source: String,startIndex: Int,endIndex: Int):String
+```
+
+Returns the middle of a string, starting at the `startIndex`, and ending right before the `endIndex`.
+
+* `startIndex` - the start index (inclusive)
+* `endIndex` - the end index (exclusive)
+
+### concat
+`taxi.stdlib.concat`
+
+```taxi
+declare function concat(Any...):String
+```
+
+### upperCase
+`taxi.stdlib.upperCase`
+
+```taxi
+declare extension function upperCase(String):String
+```
+
+### lowerCase
+`taxi.stdlib.lowerCase`
+
+```taxi
+declare extension function lowerCase(String):String
+```
+
+### trim
+`taxi.stdlib.trim`
+
+```taxi
+declare extension function trim(String):String
+```
+
+### length
+`taxi.stdlib.length`
+
+```taxi
+declare extension function length(String):Int
+```
+
+### indexOf
+`taxi.stdlib.indexOf`
+
+```taxi
+declare extension function indexOf(source:String, valueToSearchFor:String):Int
+```
+
+Returns the index of `valueToSearchFor` within `source`
+
+### replace
+`taxi.stdlib.replace`
+
+```taxi
+declare extension function replace(source: String, searchValue:String, replacement: String):String
+```
+
+Replaces the contents of the provided String, returning a new String
+Accepts three args:
+ * `source: String`: The string to search
+ * `searchValue: String`: The string to search for
+ * `replacement: String`: The string to use as a replacement
+
+### containsString
+`taxi.stdlib.containsString`
+
+```taxi
+declare extension function containsString(source:String, valueToSearchFor:String):Boolean
+```
+
+Returns true if `valueToSearchFor` within `source`
+
+## Collections
+
+A collection of functions for operating on collections
+
+### contains
+`taxi.stdlib.contains`
+
+```taxi
+declare extension function <T> contains(collection: T[], searchTarget:T): Boolean
+```
+
+### allOf
+`taxi.stdlib.allOf`
+
+```taxi
+declare function allOf(values:Boolean...): Boolean
+```
+
+### anyOf
+`taxi.stdlib.anyOf`
+
+```taxi
+declare function anyOf(values:Boolean...): Boolean
+```
+
+### noneOf
+`taxi.stdlib.noneOf`
+
+```taxi
+declare function noneOf(values:Boolean...): Boolean
+```
+
+### single
+`taxi.stdlib.single`
+
+```taxi
+declare extension function <T> single(collection:T[], callback: (T) -> Boolean):T
+```
+
+### filter
+`taxi.stdlib.filter`
+
+```taxi
+declare extension function <T> filter(collection:T[], callback: (T) -> Boolean):T[]
+```
+
+### filterEach
+`taxi.stdlib.filterEach`
+
+```taxi
+declare extension function <T> filterEach(item: T, callback: (T) -> Boolean):T?
+```
+
+Evaluates the predicate against the provided value, returning the value if the predicate
+        returns true, or null.
+        Intended for use against filtering streams, where null values are excluded
+
+### singleBy
+`taxi.stdlib.singleBy`
+
+```taxi
+declare extension function <T,A> singleBy(collection:T[], groupingFunction: (T) -> A, searchValue: A):T
+```
+
+Similar to Single, where the collection is searched for a single matching value.
+However, results are first grouped by selector.  The results of this are cached to improve future performance
+
+### first
+`taxi.stdlib.first`
+
+```taxi
+declare extension function <T> first(collection: T[]):T
+```
+
+Returns the first item within the collection
+
+### exactlyOne
+`taxi.stdlib.exactlyOne`
+
+```taxi
+declare extension function <T> exactlyOne(collection:T[]):T
+```
+
+Returns the only item from the provided collection, or errors if there isn't exactly one item in the collection
+
+### last
+`taxi.stdlib.last`
+
+```taxi
+declare extension function <T> last(collection: T[]):T
+```
+
+Returns the last item within the collection
+
+### getAtIndex
+`taxi.stdlib.getAtIndex`
+
+```taxi
+declare extension function <T> getAtIndex(collection: T[], index: Int):T
+```
+
+Returns the item at the provided index
+
+### intersection
+`taxi.stdlib.intersection`
+
+```taxi
+declare extension function <T> intersection(collectionA: T[], collectionB: T[]):T[]
+```
+
+Returns a collection containing the items present in both the provided collections
+
+## Dates
+
+Mess about with time. Flux capacitor not included
+
+### addMinutes
+`taxi.stdlib.dates.addMinutes`
+
+```taxi
+declare function <T> addMinutes(T, Int):T
+```
+
+### addDays
+`taxi.stdlib.dates.addDays`
+
+```taxi
+declare function <T> addDays(T, Int):T
+```
+
+### addSeconds
+`taxi.stdlib.dates.addSeconds`
+
+```taxi
+declare function <T> addSeconds(T, Int):T
+```
+
+### now
+`taxi.stdlib.dates.now`
+
+```taxi
+declare function now():Instant
+```
+
+### currentDate
+`taxi.stdlib.dates.currentDate`
+
+```taxi
+declare function currentDate():Date
+```
+
+### currentDateTime
+`taxi.stdlib.dates.currentDateTime`
+
+```taxi
+declare function currentDateTime():DateTime
+```
+
+### currentTime
+`taxi.stdlib.dates.currentTime`
+
+```taxi
+declare function currentTime():Time
+```
+
+### parseDate
+`taxi.stdlib.dates.parseDate`
+
+```taxi
+declare function <T> parseDate(String):T
+```
+
+## Objects
+
+Utilities for dealing with equality, etc
+
+### equals
+`taxi.stdlib.equals`
+
+```taxi
+declare extension function <A,B> equals(a:A, b:B): Boolean
+```
+
+## Aggregations
+
+Functions for aggregating data within transformations.
+
+### sumOver
+`vyne.aggregations.sumOver`
+
+```taxi
+declare query function sumOver(Any...):Decimal
+```
+
+## Functional
+
+Functions that are functionally functions. Funky
+
+### reduce
+`taxi.stdlib.reduce`
+
+```taxi
+declare extension function <T,A> reduce(collection: T[], callback: (T,A) -> A):A
+```
+
+### fold
+`taxi.stdlib.fold`
+
+```taxi
+declare extension function <T,A> fold(collection: T[], initial: A, callback: (T,A) -> A):A
+```
+
+Iterates over a collection, combining elements to produce a single accumulated result.
+
+ Example:
+
+```taxi
+// Given:
+model Entry {
+   weight:Weight inherits Int
+   score:Score inherits Int
+}
+
+type WeightedAverage by (Entry[]) -> Entry[].fold(0, (Entry, Int) -> Int + (Weight*Score))
+```
+
+### map
+`taxi.stdlib.map`
+
+```taxi
+declare extension function <T,A> map(collection: T[], callback: (T) -> A):A[]
+```
+
+Performs a mapping transformation function on every member of the provided array.
+
+If the callback is in the form of a type expression, then each input value is converted
+into an instance of that type.
+
+For example:
+
+```taxi
+// Will convert Person[] to Person2[]
+Person[].map((Person) -> Person2)
+```
+
+If the callback is in the form of any other type of expression, then that expression is
+evaluated against each member of the input array.
+
+For example:
+
+```taxi
+// Will return an array of Title, where the text has been converted to uppercase
+Film[].map ( (Title) -> Title.upperCase() )
+```
+
+### sum
+`taxi.stdlib.sum`
+
+```taxi
+declare extension function <T,A> sum(collection: T[], callback: (T) -> A):A
+```
+
+### max
+`taxi.stdlib.max`
+
+```taxi
+declare extension function <T,A> max(collection: T[], callback: (T) -> A):A
+```
+
+### min
+`taxi.stdlib.min`
+
+```taxi
+declare extension function <T,A> min(collection: T[], callback: (T) -> A):A
+```
+
+## Transformations
+
+Functions for converting between types
+
+### convert
+`taxi.stdlib.convert`
+
+```taxi
+declare extension function <T> convert(source: Any, targetType: lang.taxi.Type<T>): T
+```
+
+Converts the provided source into the target type reference.
+ Conversions are performed locally, using only the data provided in source - ie.,
+ no services or graph searches are performed.
+
+ This method is less powerful than using a standard projection (eg., A as B), because:
+
+  - Only the exact facts passed in the source are considered
+  - No graph searches or remote invocations are performed
+
+  As a result, it's also more performant.
+
+### toRawType
+`taxi.stdlib.toRawType`
+
+```taxi
+declare extension function toRawType(source: Any):Any
+```
+
+Removes the semantic typing from the provided scalar value, returning a scalar value
+typed with the raw primitive type.
+
+This can be useful if trying to compare values ignoring their type.
+
+- If called with an Array, will remove semantic types of all members. The array should only contain scalar values.
+- If called with a scalar value, will remove the semantic type of the value
+
+Not supported for calling on an object (or array of objects), as Taxi's type system
+is structural, and needs to know the structure of the type it's operating on.

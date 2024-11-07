@@ -43,19 +43,19 @@ module.exports = {
       colors: {
         'midnight-blue': '#12263b',
         'aqua': '#05BCC1',
-        'citrus': {
-          DEFAULT: '#e0ff4f',
+        'taxi-yellow': {
+          DEFAULT: '#f0cb30',
 
           // Generated from https://colors.eva.design/
-          100: '#FBFFDB',
-          200: '#F6FFB8',
-          300: '#F0FF95',
-          400: '#EAFF7A',
-          500: '#E0FF4F',
-          600: '#BBDB39',
-          700: '#99B727',
-          800: '#779319',
-          900: '#5F7A0F'
+          100: '#FEF9D5',
+          200: '#FDF2AC',
+          300: '#FAE882',
+          400: '#F0CB30',
+          500: '#F0CB30',
+          600: '#CEA923',
+          700: '#AC8A18',
+          800: '#8B6B0F',
+          900: '#735609'
         },
         'tint': {
           1:  '#283a4c',
@@ -276,7 +276,7 @@ module.exports = {
         // standardize the sans font to our brand font - poppins
         // sans: ['Inter var', ...defaultTheme.fontFamily.sans],
         sans: ['Inter', 'Helvetica', ...defaultTheme.fontFamily.sans],
-        brand: ['Manrope', 'Helvetica', ...defaultTheme.fontFamily.sans],
+        brand: ['Inter', 'Helvetica', ...defaultTheme.fontFamily.sans],
         mono: ['Fira Code', ...defaultTheme.fontFamily.mono],
         // these didn't seem to be used
         // source: ['Source Sans Pro', ...defaultTheme.fontFamily.sans],

@@ -16,3 +16,17 @@ body {
 abbr[title] {
   text-decoration: none;
 }
+
+.filters {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: right;
+  align-items: center;
+  padding: 0.5rem;
+  pointer-events: none;
+  opacity: 0.5;
+
+  input {
+    margin-left: 0.7rem;
+  }
+}

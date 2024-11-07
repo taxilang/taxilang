@@ -13,7 +13,6 @@ export const SidebarLinks = [
       { title: 'Semantic types', href: '/docs/language/semantic-types' },
       { title: 'Models', href: '/docs/language/models' },
       { title: 'Services', href: '/docs/language/services' },
-      { title: 'Functions and expressions', href: '/docs/language/functions' },
     ],
   },
   {
@@ -24,9 +23,10 @@ export const SidebarLinks = [
     ],
   },
   {
-    title: 'Taxi StdLib',
+    title: 'Functions and Expressions',
     links: [
-      { title: 'TODO', href: '/docs/guides' },
+      { title: 'Syntax', href: '/docs/language/functions' },
+      { title: 'Taxi Stdlib', href: '/docs/language/stdlib' },
     ],
   },
   {
@@ -44,13 +44,13 @@ export const SidebarLinks = [
   {
     title: 'Packages',
     links: [
-      { title: 'Writing queries', href: '/docs/querying/writing-queries' },
+      { title: 'TODO', href: '/docs/' },
     ]
   },
   {
      title: 'Taxi CLI',
      links: [
-        {title: 'TODO', href: '/docs/pipelines'},
+        {title: 'TODO', href: '/docs/'},
      ],
   },
   {

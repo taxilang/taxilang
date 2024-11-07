@@ -70,7 +70,7 @@ export default function App({Component, pageProps, router}) {
   const layoutProps = Component.layoutProps?.Layout
     ? {layoutProps: Component.layoutProps, navIsOpen, setNavIsOpen}
     : {}
-  const showHeader = router.pathname !== '/'
+  const showLogoInHeader = router.pathname !== '/'
   const meta = Component.layoutProps?.meta || {}
   const description =
     meta.metaDescription || meta.description || 'Documentation for Taxi - Describe and connect data.'
@@ -103,15 +103,15 @@ export default function App({Component, pageProps, router}) {
       </Head>
       <PostHogProvider client={posthog}>
         <SearchProvider>
-          {showHeader && (
             <Header
+              showLogo={showLogoInHeader}
               hasNav={Boolean(Component.layoutProps?.Layout?.nav)}
               navIsOpen={navIsOpen}
               onNavToggle={(isOpen) => setNavIsOpen(isOpen)}
               title={meta.title}
+              showSearch={true}
               className="sm:px-6 md:px-8"
             />
-          )}
           <Layout {...layoutProps}>
             <Component {...pageProps} />
           </Layout>

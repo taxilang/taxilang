@@ -1,10 +1,10 @@
 import Link from 'next/link';
+import {SearchButton} from '@/components/Search';
 import Router from 'next/router';
 import {Logo} from '@/components/Logo';
-import {Dialog} from '@headlessui/react';
+import {Dialog, Transition} from '@headlessui/react';
 import {Fragment, useEffect, useState} from 'react';
 import clsx from 'clsx';
-import {ThemeToggle} from './ThemeToggle';
 
 
 export function NavPopover({display = 'md:hidden', className, ...props}) {
@@ -52,7 +52,7 @@ export function NavPopover({display = 'md:hidden', className, ...props}) {
           className="fixed top-4 right-4 w-full max-w-xs bg-white rounded-lg shadow-lg p-6 text-base font-semibold text-slate-900 dark:bg-slate-800 dark:text-slate-400 dark:highlight-white/5">
           <button
             type="button"
-            className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+            className="absolute z-10 top-5 right-5 w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
             onClick={() => setIsOpen(false)}
           >
             <span className="sr-only">Close navigation</span>
@@ -83,22 +83,29 @@ export function NavPopover({display = 'md:hidden', className, ...props}) {
   )
 }
 
-
 export function NavItems() {
   return (
     <>
-      <li>
+      {/*<li className="whitespace-nowrap">
+        <ContactUsButton/>
+      </li>*/}
+      <li className="whitespace-nowrap">
         <Link href="/docs">
-          <a className="hover:text-sky-500 dark:hover:text-sky-400">Docs</a>
+          <a className="transition-colors hover:text-sky-500 dark:hover:text-sky-400">Docs</a>
         </Link>
       </li>
-      <li>
+      <li className="whitespace-nowrap">
         <Link href="/changelog">
           <a className="hover:text-sky-500 dark:hover:text-sky-400">Changelog</a>
         </Link>
       </li>
-      <li>
-        <Link href="/blog">
+      <li className="whitespace-nowrap">
+        <Link href="https://playground.taxilang.org">
+          <a className="hover:text-sky-500 dark:hover:text-sky-400">Playground</a>
+        </Link>
+      </li>
+      <li className="whitespace-nowrap">
+        <Link href="https://orbitalhq.com/blog">
           <a className="hover:text-sky-500 dark:hover:text-sky-400">Blog</a>
         </Link>
       </li>
@@ -107,13 +114,13 @@ export function NavItems() {
 }
 
 export function Header({
+                        showLogo = true,
                          hasNav = false,
-                         navIsOpen,
-                         onNavToggle,
                          title,
                          section,
                          allowThemeToggle = false,
-                         className = ''
+                         className = '',
+                         showSearch
                        }) {
   let [isOpaque, setIsOpaque] = useState(false)
 
@@ -139,9 +146,9 @@ export function Header({
     <>
       <div
         className={clsx(
-          'sticky top-[-1px] z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 ',
+          'sticky top-[-1px] z-40 w-full flex-none transition-colors duration-500 lg:z-50 ',
           isOpaque
-            ? 'bg-white supports-backdrop-blur:bg-white/95 dark:bg-slate-900/75'
+            ? 'bg-white supports-backdrop-blur:bg-white/95 dark:bg-slate-900/95'
             : 'bg-white/95 supports-backdrop-blur:bg-white/60 dark:bg-transparent',
           className
         )}
@@ -155,33 +162,37 @@ export function Header({
           >
             <div className="relative flex justify-between items-center">
               <div className='left mr-auto'>
+                {showLogo && (
                 <Link href='/'>
                   <a
-                    className='mr-3 flex items-center w-[200px] overflow-hidden'
+                    className='mr-3 flex items-center overflow-hidden'
                     onContextMenu={(e) => {
                       e.preventDefault();
                       Router.push('/brand');
                     }}
                   >
-                    <span className='sr-only'>Orbital home page</span>
+                    <span className='sr-only'>Taxi home page</span>
                     <Logo className='w-auto h-7'/>
                   </a>
-                </Link>
+                </Link>)}
               </div>
-              <div className='right flex'>
+              <div className='right flex items-center'>
                 <div className='relative hidden md:flex items-center ml-auto'>
                   <nav className='text-sm leading-6 font-semibold text-slate-700 dark:text-slate-200'>
-                    <ul className='flex space-x-8'>
+                    <ul className='flex space-x-8 items-center'>
                       <NavItems/>
+                      {showSearch &&
+                        <SearchButton/>
+                      }
                     </ul>
                   </nav>
-                  <div className='flex items-center border-l border-slate-200 ml-6 pl-6 dark:border-slate-800'>
+                  <div className='flex items-center border-l border-slate-200 ml-6 dark:border-gray-700/70'>
                     {allowThemeToggle && (<ThemeToggle panelClassName='mt-8'/>)}
                     <a
                       href='https://github.com/taxilang/taxilang'
                       className="ml-6 block text-slate-400 hover:text-slate-500 dark:hover:text-slate-300"
                     >
-                      <span className="sr-only">Orbital on GitHub</span>
+                      <span className="sr-only">Taxi on GitHub</span>
                       <svg
                         viewBox="0 0 16 16"
                         className="w-5 h-5"
@@ -194,23 +205,9 @@ export function Header({
                     </a>
                   </div>
                 </div>
-                {/*<SearchButton*/}
-                {/*  className="ml-auto text-slate-500 w-8 h-8 -my-1 flex items-center justify-center hover:text-slate-600 md:hidden dark:text-slate-400 dark:hover:text-slate-300">*/}
-                {/*  <span className="sr-only">Search</span>*/}
-                {/*  <svg*/}
-                {/*    width="24"*/}
-                {/*    height="24"*/}
-                {/*    fill="none"*/}
-                {/*    stroke="currentColor"*/}
-                {/*    strokeWidth="2"*/}
-                {/*    strokeLinecap="round"*/}
-                {/*    strokeLinejoin="round"*/}
-                {/*    aria-hidden="true"*/}
-                {/*  >*/}
-                {/*    <path d="m19 19-3.5-3.5"/>*/}
-                {/*    <circle cx="11" cy="11" r="6"/>*/}
-                {/*  </svg>*/}
-                {/*</SearchButton>*/}
+                {showSearch &&
+                  <SearchButton className="hidden sm:flex"/>
+                }
                 <NavPopover className="ml-2 -my-1" display="md:hidden"/>
               </div>
             </div>
