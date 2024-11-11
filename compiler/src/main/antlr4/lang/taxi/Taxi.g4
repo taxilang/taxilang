@@ -57,7 +57,7 @@ typeModifier
     | 'closed'
     ;
 
-typeKind : 'type' | 'model';
+typeKind : K_Type | K_Model;
 
 typeDeclaration
     :  typeDoc? annotation* typeModifier* typeKind identifier
@@ -242,8 +242,41 @@ fieldTypeDeclaration: typeExpression? inlineInheritedType? accessor?;
 // A type expression is both a type, with optional contraints.
 // eg:
 // Film( ActorId == 123 )
-typeExpression: nullableTypeReference parameterConstraint?;
-//typeReference : qualifiedName typeArguments? arrayMarker? optionalType?;
+typeExpression: (nullableTypeReference | inlineAnonynousType) parameterConstraint?;
+
+// This is a short-term workaround.
+// Problem:
+// Statements like the following should be possible:
+// stream { Foo } as {
+//   thing: Thing[] = listOf({
+//        someConst: RefCode = "IAmAConstantValue"
+//        someExpression: FullName = concat(FirstName, LastName)
+//   })
+// }[]
+//
+// Currently, this works if we extract the inline type def out to a type
+// eg: listOf(MyExtractedType)
+// However, that moves the projection logic onto the type, making the type single-shot.
+// In a scenarion where we're trying to define projection logic to map to something like a DB record,
+// we can't stil projection logic on the model iteslf, as it tightly couples the model to a single projection scenario.
+// It also makes reading the type back from the db very difficult.
+//
+// However, our current grammar differentaites between object literals and type expressions.
+// I think that as the type expression syntax has gotten richer, this distinction may not make sense anymore.
+// There's a seperate branch for collapsing those two things together, but it's a signficiant change.
+// So this statement allows us to define an anonymous type inline.
+// eg: the above becomes:
+// stream { Foo } as {
+//   thing: Thing[] = listOf(type {
+//        someConst: RefCode = "IAmAConstantValue"
+//        someExpression: FullName = concat(FirstName, LastName)
+//   })
+// }[]
+// This is undesirable long-term, as we're adding more confusing and inconsistent syntax, which
+// ultimately isn't needed.
+// (While it's early days on the refactor branch, I haven't yet found a scenario which can't be addressed
+// by collapsing type definitions and object expressions together.
+inlineAnonynousType : K_Type anonymousTypeDefinition;
 
 typeReference
     :   qualifiedName typeArguments? arrayMarker?;
@@ -336,7 +369,7 @@ enumConstantExtension
 
 // type aliases
 typeAliasDeclaration
-    : typeDoc? annotation* 'type alias' identifier aliasedType
+    : typeDoc? annotation* K_Type 'alias' identifier aliasedType
     ;
 
 aliasedType
@@ -348,7 +381,7 @@ inlineInheritedType
    ;
 
 typeAliasExtensionDeclaration
-   : typeDoc? annotation* 'type alias extension' identifier
+   : typeDoc? annotation* K_Type 'alias extension' identifier
    ;
 // Annotations
 annotation
@@ -579,7 +612,7 @@ literal
     ;
 
 typeExtensionDeclaration
-   :  typeDoc? annotation* 'type extension' identifier typeExtensionBody
+   :  typeDoc? annotation* K_Type 'extension' identifier typeExtensionBody
    ;
 
 typeExtensionBody
@@ -720,7 +753,7 @@ BooleanLiteral
 // names, operations and so on with words that are reserved in some context.
 
 identifier:
-   K_Table | K_Stream | K_Find | K_Map | K_Except | K_Call | K_Filter | K_Query | K_Extension  | K_Read | K_Write | K_Declare | IdentifierToken;
+   K_Table | K_Stream | K_Find | K_Map | K_Except | K_Call | K_Filter | K_Query | K_Extension  | K_Read | K_Write | K_Declare | K_Type | K_Model | IdentifierToken;
 
 K_Find: 'find';
 
@@ -758,6 +791,8 @@ K_Find: 'find';
 //     but begs the question why we have two implementation appraoches.
 K_Map : 'map';
 
+K_Type : 'type';
+K_Model : 'model';
 
 K_Table: 'table';
 K_Stream: 'stream';

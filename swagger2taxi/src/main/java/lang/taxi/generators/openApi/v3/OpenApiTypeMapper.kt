@@ -4,6 +4,7 @@ package lang.taxi.generators.openApi.v3
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.media.*
 import lang.taxi.generators.NamingUtils
+import lang.taxi.generators.NamingUtils.escapeIfContainsIllegalCharacters
 import lang.taxi.generators.NamingUtils.replaceIllegalCharacters
 import lang.taxi.types.*
 
@@ -51,11 +52,13 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       modifiers: List<Modifier>,
       declaredSupertypes: List<String>
    ) =
-      if (schema.isModel()) {
-         generateModel(name, schema, modifiers, declaredSupertypes)
-      } else {
-         val supertype = toType(schema, name.typeName, modifiers)
-         generateType(name, supertype, declaredSupertypes)
+      when {
+          schema.isModel() -> generateModel(name, schema, modifiers, declaredSupertypes)
+          schema.isEnum() -> enumTypeFor(schema, name)!!
+          else -> {
+             val supertype = toType(schema, name.typeName, modifiers)
+             generateType(name, supertype, declaredSupertypes)
+          }
       }
 
    fun generateUnnamedTypeRecursively(
@@ -89,7 +92,8 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       } else null
 
    private fun toType(schema: Schema<*>, context: String, modifiers: List<Modifier>) =
-      primitiveTypeFor(schema)
+      enumTypeFor(schema, qualify(context))
+         ?: primitiveTypeFor(schema)
          ?: intermediateTypeFor(schema)
          ?: if (schema is ArraySchema) {
             makeArrayType(schema, context + "Element", modifiers)
@@ -107,6 +111,31 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       }
 
       else -> null
+   }
+
+   private fun enumTypeFor(schema: Schema<*>, enumName: QualifiedName): Type? {
+      if (schema.enum.isNullOrEmpty()) {
+         return null
+      }
+      return _generatedTypes.getOrPut(enumName) {
+         val enumValues = schema.enum
+            .filterNotNull()
+            .map { value ->
+            EnumValue(
+               value.toString().escapeIfContainsIllegalCharacters(),
+               value.toString().escapeIfContainsIllegalCharacters(),
+               EnumValue.enumValueQualifiedName(enumName, value.toString())
+            )
+         }
+         EnumType(
+            enumName.fullyQualifiedName,
+            EnumDefinition(
+               enumValues,
+               compilationUnit = CompilationUnit.unspecified(),
+               valueType = PrimitiveType.STRING
+            )
+         )
+      }
    }
 
    private fun extractPrimitivesFromJsonSchema(schema: JsonSchema): PrimitiveType? {
@@ -278,9 +307,10 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       return qualify(typeName)
    }
 
-   private fun qualify(name: String) =
+   private fun qualify(name: String): QualifiedName =
       NamingUtils.qualifyTypeNameIfRaw(name, defaultNamespace)
 }
 
 fun Schema<*>.isModel() = (this is ComposedSchema && oneOf == null && anyOf == null) || !properties.isNullOrEmpty()
 fun Schema<*>.isType() = !isModel()
+fun Schema<*>.isEnum() = (!this.enum.isNullOrEmpty())
