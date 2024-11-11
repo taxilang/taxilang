@@ -351,6 +351,46 @@ internal class OpenApiTypeMapperTest {
    }
 
    @Test
+   fun `enum field on object type`() {
+      openApiYaml(
+         schemas = """
+            Pet:
+               type: object
+               properties:
+                  id:
+                     type: string
+                  name:
+                     type: string
+                  petType:
+                     type: string
+                     enum:
+                        - dog
+                        - cat
+                        - bird
+                        - fish
+               required:
+                  - id
+                  - name
+                  - type
+         """
+      ) shouldGenerate """
+         namespace vyne.openApi {
+            closed model Pet {
+               id : String
+               name : String
+               petType : PetPetType?
+            }
+            enum PetPetType {
+               dog,
+               cat,
+               bird,
+               fish
+            }
+         }
+      """
+   }
+
+   @Test
    fun `inline array of reference to object type`() {
 
       openApiYaml(
@@ -404,6 +444,70 @@ internal class OpenApiTypeMapperTest {
             }
          }
       """
+   }
+
+   @Test
+   fun `a type reference to an enum`() {
+      openApiYaml(
+         schemas = """
+          PetType:
+            type: string
+            enum:
+              - dog
+              - cat
+              - killer-whale
+              - bird
+              - fish
+          Pet:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              petType:
+                ${'$'}ref: '#/components/schemas/PetType'
+            required:
+              - id
+              - name
+              - type
+          Owner:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              petTypePreference:
+                ${'$'}ref: '#/components/schemas/PetType'
+            required:
+              - id
+              - name
+              - petTypePreference
+
+"""
+      )  shouldGenerate """
+namespace vyne.openApi {
+   enum PetType {
+      dog,
+      cat,
+      `killer-whale`,
+      bird,
+      fish
+   }
+
+   closed model Pet {
+      id : String
+      name : String
+      petType : PetType?
+   }
+
+   closed model Owner {
+      id : String
+      name : String
+      petTypePreference : PetType
+   }
+}"""
    }
 
    @Test

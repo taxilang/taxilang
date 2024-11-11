@@ -12,7 +12,7 @@ namespace vyne.openApi {
       [[ The ID of the notification. ]]
       id : Int
       [[ Identifies the recipients of the notification. ]]
-      notificationType : String
+      notificationType : EventNotificationNotificationType
       [[ The value of the `notificationType`:
       *  `User` The `parameter` is the user account ID.
       *  `Group` The `parameter` is the group name.
@@ -30,6 +30,21 @@ namespace vyne.openApi {
       projectRole : AnonymousTypeEventNotificationProjectRole
       [[ The specified user. ]]
       user : AnonymousTypeEventNotificationUser
+   }
+   
+   enum EventNotificationNotificationType {
+      CurrentAssignee,
+      Reporter,
+      CurrentUser,
+      ProjectLead,
+      ComponentLead,
+      User,
+      Group,
+      ProjectRole,
+      EmailAddress,
+      AllWatchers,
+      UserCustomField,
+      GroupCustomField
    }
    
    [[ The specified group. ]]
@@ -76,9 +91,14 @@ namespace vyne.openApi {
    [[ The scope of an entity. Indicated for entities associated with [next-gen projects](https://confluence.atlassian.com/x/loMyO). ]]
    closed model Scope {
       [[ The type of scope. ]]
-      `type` : String
+      `type` : ScopeType
       [[ The project the entity has scope in. ]]
       project : AnonymousTypeScopeProject
+   }
+   
+   enum ScopeType {
+      PROJECT,
+      TEMPLATE
    }
    
    [[ The project the entity has scope in. ]]
@@ -95,13 +115,19 @@ namespace vyne.openApi {
       [[ The name of the project. ]]
       name : String
       [[ The [project type](https://confluence.atlassian.com/x/GwiiLQ#Jiraapplicationsoverview-Productfeaturesandprojecttypes) of the project. ]]
-      projectTypeKey : String
+      projectTypeKey : ProjectForScopeProjectTypeKey
       [[ Whether or not the project is simplified. ]]
       simplified : Boolean
       [[ The URLs of the project's avatars. ]]
       avatarUrls : AnonymousTypeProjectForScopeAvatarUrls
       [[ The category the project belongs to. ]]
       projectCategory : AnonymousTypeProjectForScopeProjectCategory
+   }
+   
+   enum ProjectForScopeProjectTypeKey {
+      software,
+      service_desk,
+      business
    }
    
    [[ The URLs of the project's avatars. ]]
@@ -262,9 +288,22 @@ namespace vyne.openApi {
       [[ The number of days in a working week. ]]
       workingDaysPerWeek : Decimal
       [[ The format that will appear on an issue's *Time Spent* field. ]]
-      timeFormat : String
+      timeFormat : TimeTrackingConfigurationTimeFormat
       [[ The default unit of time applied to logged time. ]]
-      defaultUnit : String
+      defaultUnit : TimeTrackingConfigurationDefaultUnit
+   }
+   
+   enum TimeTrackingConfigurationTimeFormat {
+      pretty,
+      days,
+      hours
+   }
+   
+   enum TimeTrackingConfigurationDefaultUnit {
+      minute,
+      hour,
+      day,
+      week
    }
    
    [[ List of issue transitions. ]]
@@ -392,7 +431,7 @@ namespace vyne.openApi {
       [[ Defines the projects that the option is available in. If the scope is not defined, then the option is available in all projects. ]]
       scope : AnonymousTypeIssueFieldOptionConfigurationScope
       [[ DEPRECATED ]]
-      attributes : String[]
+      attributes : IssueFieldOptionConfigurationAttributesElement[]
    }
    
    [[ Defines the projects that the option is available in. If the scope is not defined, then the option is available in all projects. ]]
@@ -411,7 +450,12 @@ namespace vyne.openApi {
       [[ The ID of the project that the option's behavior applies to. ]]
       id : Int
       [[ Defines the behavior of the option in the project.If notSelectable is set, the option cannot be set as the field's value. This is useful for archiving an option that has previously been selected but shouldn't be used anymore.If defaultValue is set, the option is selected by default. ]]
-      attributes : String[]
+      attributes : ProjectScopeBeanAttributesElement[]
+   }
+   
+   enum ProjectScopeBeanAttributesElement {
+      notSelectable,
+      defaultValue
    }
    
    [[ Defines the behavior of the option within the global context. If this property is set, even if set to an empty object, then the option is available in all projects. ]]
@@ -419,7 +463,17 @@ namespace vyne.openApi {
    
    closed model GlobalScopeBean {
       [[ Defines the behavior of the option in the global context.If notSelectable is set, the option cannot be set as the field's value. This is useful for archiving an option that has previously been selected but shouldn't be used anymore.If defaultValue is set, the option is selected by default. ]]
-      attributes : String[]
+      attributes : GlobalScopeBeanAttributesElement[]
+   }
+   
+   enum GlobalScopeBeanAttributesElement {
+      notSelectable,
+      defaultValue
+   }
+   
+   enum IssueFieldOptionConfigurationAttributesElement {
+      notSelectable,
+      defaultValue
    }
    
    [[ Details of the group membership or permissions needed to receive the notification. ]]
@@ -749,9 +803,15 @@ namespace vyne.openApi {
       [[ The status the transition goes to. ]]
       to : String
       [[ The type of the transition. ]]
-      `type` : String
+      `type` : TransitionType
       screen : ScreenID?
       rules : WorkflowRules?
+   }
+   
+   enum TransitionType {
+      global,
+      initial,
+      directed
    }
    
    [[ ID of a screen. ]]
@@ -846,7 +906,13 @@ namespace vyne.openApi {
       [[ The title of the group label. ]]
       title : String
       [[ The type of the group label. ]]
-      `type` : String
+      `type` : GroupLabelType
+   }
+   
+   enum GroupLabelType {
+      ADMIN,
+      SINGLE,
+      MULTIPLE
    }
    
    closed model SimpleListWrapperGroupName {
@@ -882,7 +948,7 @@ namespace vyne.openApi {
       [[ An email address associated with the project. ]]
       email : String
       [[ The default assignee when creating issues for this project. ]]
-      assigneeType : String
+      assigneeType : ProjectAssigneeType
       [[ The versions defined in the project. For more information, see [Create version](#api-rest-api-3-version-post). ]]
       versions : Version[]
       [[ The name of the project. ]]
@@ -894,11 +960,11 @@ namespace vyne.openApi {
       [[ The category the project belongs to. ]]
       projectCategory : AnonymousTypeProjectProjectCategory
       [[ The [project type](https://confluence.atlassian.com/x/GwiiLQ#Jiraapplicationsoverview-Productfeaturesandprojecttypes) of the project. ]]
-      projectTypeKey : String
+      projectTypeKey : ProjectProjectTypeKey
       [[ Whether the project is simplified. ]]
       simplified : Boolean
       [[ The type of the project. ]]
-      style : String
+      style : ProjectStyle
       [[ Whether the project is selected as a favorite. ]]
       favourite : Boolean
       [[ Whether the project is private. ]]
@@ -930,7 +996,7 @@ namespace vyne.openApi {
       *  `atlassian` regular Atlassian user account
       *  `app` system account used for Connect applications and OAuth to represent external systems
       *  `customer` Jira Service Desk account representing an external service desk ]]
-      accountType : String
+      accountType : UserAccountType
       [[ This property is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
       name : String
       [[ The email address of the user. Depending on the user’s privacy setting, this may be returned as null. ]]
@@ -951,6 +1017,13 @@ namespace vyne.openApi {
       applicationRoles : AnonymousTypeUserApplicationRoles
       [[ Expand options that include additional user details in the response. ]]
       expand : String
+   }
+   
+   enum UserAccountType {
+      atlassian,
+      app,
+      customer,
+      unknown
    }
    
    [[ The avatars of the user. ]]
@@ -1022,7 +1095,7 @@ namespace vyne.openApi {
       *  `PROJECT_DEFAULT` the assignee to any issues created with this component is nominally the default assignee for the project that the component is in.
       Default value: `PROJECT_DEFAULT`.
       Optional when creating or updating a component. ]]
-      assigneeType : String
+      assigneeType : ComponentAssigneeType
       [[ The details of the user associated with `assigneeType`, if any. See `realAssignee` for details of the user assigned to issues created with this component. ]]
       assignee : AnonymousTypeComponentAssignee
       [[ The type of the assignee that is assigned to issues created with this component, when an assignee cannot be set from the `assigneeType`. For example, `assigneeType` is set to `COMPONENT_LEAD` but no component lead is set. This property is set to one of the following values:
@@ -1030,7 +1103,7 @@ namespace vyne.openApi {
       *  `COMPONENT_LEAD` when `assignee`Type is `COMPONENT_LEAD` and the component lead has permission to be assigned issues in the project that the component is in.
       *  `UNASSIGNED` when `assigneeType` is `UNASSIGNED` and Jira is configured to allow unassigned issues.
       *  `PROJECT_DEFAULT` when none of the preceding cases are true. ]]
-      realAssigneeType : String
+      realAssigneeType : ComponentRealAssigneeType
       [[ The user assigned to issues created with this component, when `assigneeType` does not identify a valid assignee. ]]
       realAssignee : AnonymousTypeComponentRealAssignee
       [[ Indicates whether a user is associated with `assigneeType`. For example, if the `assigneeType` is set to `COMPONENT_LEAD` but the component lead is not set, then `false` is returned. ]]
@@ -1044,11 +1117,30 @@ namespace vyne.openApi {
    [[ The user details for the component's lead user. ]]
    closed type AnonymousTypeComponentLead inherits User
    
+   enum ComponentAssigneeType {
+      PROJECT_DEFAULT,
+      COMPONENT_LEAD,
+      PROJECT_LEAD,
+      UNASSIGNED
+   }
+   
    [[ The details of the user associated with `assigneeType`, if any. See `realAssignee` for details of the user assigned to issues created with this component. ]]
    closed type AnonymousTypeComponentAssignee inherits User
    
+   enum ComponentRealAssigneeType {
+      PROJECT_DEFAULT,
+      COMPONENT_LEAD,
+      PROJECT_LEAD,
+      UNASSIGNED
+   }
+   
    [[ The user assigned to issues created with this component, when `assigneeType` does not identify a valid assignee. ]]
    closed type AnonymousTypeComponentRealAssignee inherits User
+   
+   enum ProjectAssigneeType {
+      PROJECT_LEAD,
+      UNASSIGNED
+   }
    
    [[ Details about a project version. ]]
    closed model Version {
@@ -1133,6 +1225,19 @@ namespace vyne.openApi {
       name : String
       [[ The description of the project category. Required on create, optional on update. ]]
       description : String
+   }
+   
+   enum ProjectProjectTypeKey {
+      software,
+      service_desk,
+      business
+   }
+   
+   enum ProjectStyle {
+      CLASSIC,
+      NEXTGEN,
+      classic,
+      `next-gen`
    }
    
    [[ The issue type hierarchy for the project ]]
@@ -1244,9 +1349,14 @@ namespace vyne.openApi {
    [[ The group or role to which this item is visible. ]]
    closed model Visibility {
       [[ Indicates whether visibility of this item is restricted to a group or role. ]]
-      `type` : String
+      `type` : VisibilityType
       [[ The name of the group or role to which visibility of this item is restricted. ]]
       value : String
+   }
+   
+   enum VisibilityType {
+      group,
+      role
    }
    
    [[ List of issue level security items in a project. ]]
@@ -1373,7 +1483,18 @@ namespace vyne.openApi {
       *  Operators: `=`, `!=`, `IN`, and `NOT IN`. ]]
       jqlFilter : String
       [[ The Jira events that trigger the webhook. ]]
-      events : String[]?
+      events : WebhookDetailsEventsElement[]?
+   }
+   
+   enum WebhookDetailsEventsElement {
+      `jira:issue_created`,
+      `jira:issue_updated`,
+      `jira:issue_deleted`,
+      comment_created,
+      comment_updated,
+      comment_deleted,
+      issue_property_set,
+      issue_property_deleted
    }
    
    [[ Details of a permission scheme. ]]
@@ -1488,7 +1609,7 @@ namespace vyne.openApi {
    closed model JqlQueryOrderByClauseElement {
       field : JqlQueryField
       [[ The direction in which to order the results. ]]
-      direction : String
+      direction : JqlQueryOrderByClauseElementDirection
    }
    
    [[ A field used in a JQL query. See [Advanced searching - fields reference](https://confluence.atlassian.com/x/dAiiLQ) for more information about fields in JQL queries. ]]
@@ -1508,7 +1629,20 @@ namespace vyne.openApi {
       [[ The path in the property value to query. ]]
       path : String
       [[ The type of the property value extraction. Not available if the extraction for the property is not registered on the instance with the [Entity property](https://developer.atlassian.com/cloud/jira/platform/modules/entity-property/) module. ]]
-      `type` : String?
+      `type` : JqlQueryFieldEntityPropertyType?
+   }
+   
+   enum JqlQueryFieldEntityPropertyType {
+      number,
+      string,
+      text,
+      date,
+      user
+   }
+   
+   enum JqlQueryOrderByClauseElementDirection {
+      asc,
+      desc
    }
    
    [[ A page of items. ]]
@@ -1536,8 +1670,19 @@ namespace vyne.openApi {
       [[ The JQL filter that specifies which issues the webhook is sent for. ]]
       jqlFilter : String
       [[ The Jira events that trigger the webhook. ]]
-      events : String[]?
+      events : WebhookEventsElement[]?
       expirationDate : Int
+   }
+   
+   enum WebhookEventsElement {
+      `jira:issue_created`,
+      `jira:issue_updated`,
+      `jira:issue_deleted`,
+      comment_created,
+      comment_updated,
+      comment_deleted,
+      issue_property_set,
+      issue_property_deleted
    }
    
    closed model DeleteAndReplaceVersionBean {
@@ -1962,7 +2107,13 @@ namespace vyne.openApi {
       [[ The maximum number of issues to return from the JQL query. Inspect `meta.issues.jql.maxResults` in the response to ensure the maximum value has not been exceeded. ]]
       maxResults : Int
       [[ Determines how to validate the JQL query and treat the validation results. ]]
-      validation : String
+      validation : JexpJqlIssuesValidation
+   }
+   
+   enum JexpJqlIssuesValidation {
+      strict,
+      warn,
+      none
    }
    
    [[ Details of any errors encountered while updating workflow transition rules for a workflow. ]]
@@ -2015,7 +2166,14 @@ namespace vyne.openApi {
       [[ The ID of the screen tab field after which to place the moved screen tab field. Required if `position` isn't provided. ]]
       after : String
       [[ The named position to which the screen tab field should be moved. Required if `after` isn't provided. ]]
-      position : String
+      position : MoveFieldBeanPosition
+   }
+   
+   enum MoveFieldBeanPosition {
+      Earlier,
+      Later,
+      First,
+      Last
    }
    
    [[ Details of a permission and its availability to a user. ]]
@@ -2027,13 +2185,18 @@ namespace vyne.openApi {
       [[ The name of the permission. ]]
       name : String
       [[ The type of the permission. ]]
-      `type` : String
+      `type` : UserPermissionType
       [[ The description of the permission. ]]
       description : String
       [[ Indicates whether the permission is available to the user in the queried context. ]]
       havePermission : Boolean
       [[ Indicate whether the permission key is deprecated. Note that deprecated keys cannot be used in the `permissions parameter of Get my permissions. Deprecated keys are not returned by Get all permissions.` ]]
       deprecatedKey : Boolean
+   }
+   
+   enum UserPermissionType {
+      GLOBAL,
+      PROJECT
    }
    
    closed model NestedResponse {
@@ -2176,7 +2339,7 @@ namespace vyne.openApi {
       *  `global` Shared globally. If set in a request, no other `sharePermission` properties need to be specified.
       *  `loggedin` Shared with all logged-in users. Note: This value is set in a request by specifying `authenticated` as the `type`.
       *  `project-unknown` Shared with a project that the user does not have access to. Cannot be set in a request. ]]
-      `type` : String
+      `type` : SharePermissionType
       [[ The project that the filter is shared with. This is similar to the project object returned by [Get project](#api-rest-api-3-project-projectIdOrKey-get) but it contains a subset of the properties, which are: `self`, `id`, `key`, `assigneeType`, `name`, `roles`, `avatarUrls`, `projectType`, `simplified`.
       For a request, specify the `id` for the project. ]]
       project : AnonymousTypeSharePermissionProject?
@@ -2185,6 +2348,16 @@ namespace vyne.openApi {
       role : AnonymousTypeSharePermissionRole?
       [[ The group that the filter is shared with. For a request, specify the `name` property for the group. ]]
       group : AnonymousTypeSharePermissionGroup?
+   }
+   
+   enum SharePermissionType {
+      group,
+      project,
+      projectRole,
+      global,
+      loggedin,
+      authenticated,
+      `project-unknown`
    }
    
    [[ The project that the filter is shared with. This is similar to the project object returned by [Get project](#api-rest-api-3-project-projectIdOrKey-get) but it contains a subset of the properties, which are: `self`, `id`, `key`, `assigneeType`, `name`, `roles`, `avatarUrls`, `projectType`, `simplified`.
@@ -2271,17 +2444,32 @@ namespace vyne.openApi {
       [[ The display name of the field. ]]
       displayName : String
       [[ Indicates whether the field can be used in a query's `ORDER BY` clause. ]]
-      orderable : String
+      orderable : FieldReferenceDataOrderable
       [[ Indicates whether the content of this field can be searched. ]]
-      searchable : String
+      searchable : FieldReferenceDataSearchable
       [[ Indicates whether the field provide auto-complete suggestions. ]]
-      auto : String
+      auto : FieldReferenceDataAuto
       [[ If the item is a custom field, the ID of the custom field. ]]
       cfid : String
       [[ The valid search operators for the field. ]]
       operators : String[]
       [[ The data types of items in the field. ]]
       types : String[]
+   }
+   
+   enum FieldReferenceDataOrderable {
+      `true`,
+      `false`
+   }
+   
+   enum FieldReferenceDataSearchable {
+      `true`,
+      `false`
+   }
+   
+   enum FieldReferenceDataAuto {
+      `true`,
+      `false`
    }
    
    [[ An operand that is a list of values. ]]
@@ -2296,7 +2484,13 @@ namespace vyne.openApi {
       *  `AUTHENTICATED` Shared with all logged-in users.
       *  `GLOBAL` Shared with all logged-in users. This shows as `AUTHENTICATED` in the response.
       *  `PRIVATE` Not shared with any users. ]]
-      scope : String
+      scope : DefaultShareScopeScope
+   }
+   
+   enum DefaultShareScopeScope {
+      GLOBAL,
+      AUTHENTICATED,
+      PRIVATE
    }
    
    [[ Details of webhooks to register. ]]
@@ -2331,8 +2525,18 @@ namespace vyne.openApi {
    [[ A time predicate for a temporal JQL clause. ]]
    closed model JqlQueryClauseTimePredicate {
       [[ The operator between the field and the operand. ]]
-      operator : String
+      operator : JqlQueryClauseTimePredicateOperator
       operand : JqlQueryClauseOperand
+   }
+   
+   enum JqlQueryClauseTimePredicateOperator {
+      before,
+      after,
+      `from`,
+      to,
+      on,
+      during,
+      `by`
    }
    
    type JqlQueryClauseOperand
@@ -2522,7 +2726,7 @@ namespace vyne.openApi {
       *  `false` *Deprecated* A legacy synonym for `warn`.
       The default is `strict`.
       Note: If the JQL is not correctly formed a 400 response code is returned, regardless of the `validateQuery` value. ]]
-      validateQuery : String
+      validateQuery : SearchRequestBeanValidateQuery
       [[ Use [expand](em>#expansion) to include additional information about issues in the response. Note that, unlike the majority of instances where `expand` is specified, `expand` is defined as a list of values. The expand options are:
       *  `renderedFields` Returns field values rendered in HTML format.
       *  `names` Returns the display name of each field.
@@ -2537,6 +2741,14 @@ namespace vyne.openApi {
       properties : String[]
       [[ Reference fields by their key (rather than ID). The default is `false`. ]]
       fieldsByKeys : Boolean
+   }
+   
+   enum SearchRequestBeanValidateQuery {
+      strict,
+      warn,
+      none,
+      `true`,
+      `false`
    }
    
    closed model AddFieldBean {
@@ -2608,9 +2820,14 @@ namespace vyne.openApi {
       [[ The display name of the function. ]]
       displayName : String
       [[ Indicates whether the function can take a list of arguments. ]]
-      isList : String
+      isList : FunctionReferenceDataIsList
       [[ The data types returned by the function. ]]
       types : String[]
+   }
+   
+   enum FunctionReferenceDataIsList {
+      `true`,
+      `false`
    }
    
    closed model ProjectRoleActorsUpdateBean {
@@ -2965,7 +3182,7 @@ namespace vyne.openApi {
       *  `url`: Stores a URL
       *  `userpicker`: Stores a user using a picker control
       *  `version`: Stores a version using a picker control ]]
-      `type` : String
+      `type` : CustomFieldDefinitionJsonBeanType
       [[ The searcher defines the way the field is searched in Jira. For example, *com.atlassian.jira.plugin.system.customfieldtypes:grouppickersearcher*.
       The search UI (basic search and JQL search) will display different operations and values for the field, based on the field searcher. You must specify a searcher that is valid for the field type, as listed below (abbreviated values shown):
       *  `cascadingselect`: `cascadingselectsearcher`
@@ -2989,7 +3206,47 @@ namespace vyne.openApi {
       *  `url`: `exacttextsearcher`
       *  `userpicker`: `userpickergroupsearcher`
       *  `version`: `versionsearcher` ]]
-      searcherKey : String
+      searcherKey : CustomFieldDefinitionJsonBeanSearcherKey
+   }
+   
+   enum CustomFieldDefinitionJsonBeanType {
+      `com.atlassian.jira.plugin.system.customfieldtypes:cascadingselect`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:datepicker`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:datetime`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:float`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:grouppicker`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:importid`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:labels`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:multigrouppicker`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:multiselect`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:multiuserpicker`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:multiversion`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:project`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:radiobuttons`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:readonlyfield`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:select`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:textarea`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:textfield`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:url`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:userpicker`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:version`
+   }
+   
+   enum CustomFieldDefinitionJsonBeanSearcherKey {
+      `com.atlassian.jira.plugin.system.customfieldtypes:cascadingselectsearcher`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:daterange`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:datetimerange`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:exactnumber`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:exacttextsearcher`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:grouppickersearcher`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:labelsearcher`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:multiselectsearcher`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:numberrange`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:projectsearcher`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:textsearcher`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:userpickergroupsearcher`,
+      `com.atlassian.jira.plugin.system.customfieldtypes:versionsearcher`
    }
    
    [[ A page of items. ]]
@@ -3272,7 +3529,7 @@ namespace vyne.openApi {
       boolean : Boolean
       binary : Boolean
       numberValue : Decimal
-      numberType : String
+      numberType : JsonNodeNumberType
       intValue : Int
       longValue : Int
       bigIntegerValue : Int
@@ -3292,6 +3549,15 @@ namespace vyne.openApi {
       `null` : Boolean
    }
    
+   enum JsonNodeNumberType {
+      INT,
+      LONG,
+      BIG_INTEGER,
+      FLOAT,
+      DOUBLE,
+      BIG_DECIMAL
+   }
+   
    type byte inherits String
    
    closed model IssueTypeCreateBean {
@@ -3300,7 +3566,12 @@ namespace vyne.openApi {
       [[ The description of the issue type. ]]
       description : String?
       [[ Whether the issue type is `subtype` or `standard`. Defaults to `standard`. ]]
-      `type` : String?
+      `type` : IssueTypeCreateBeanType?
+   }
+   
+   enum IssueTypeCreateBeanType {
+      subtask,
+      standard
    }
    
    closed model ProjectInputBean {
@@ -3309,9 +3580,9 @@ namespace vyne.openApi {
       [[ The name of the project. Required when creating a project. Optional when updating a project. ]]
       name : String
       [[ The [project type](https://confluence.atlassian.com/x/GwiiLQ#Jiraapplicationsoverview-Productfeaturesandprojecttypes), which dictates the application-specific feature set. Required when creating a project. Not applicable for the Update project resource. ]]
-      projectTypeKey : String
+      projectTypeKey : ProjectInputBeanProjectTypeKey
       [[ A prebuilt configuration for a project. The type of the `projectTemplateKey` must match with the type of the `projectTypeKey`. Required when creating a project. Not applicable for the Update project resource. ]]
-      projectTemplateKey : String
+      projectTemplateKey : ProjectInputBeanProjectTemplateKey
       [[ A brief description of the project. ]]
       description : String
       [[ This parameter is deprecated because of privacy changes. Use `leadAccountId` instead. See the [migration guide](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. The user name of the project lead. Either `lead` or `leadAccountId` must be set when creating a project. Optional when updating a project. Cannot be provided with `leadAccountId`. ]]
@@ -3321,7 +3592,7 @@ namespace vyne.openApi {
       [[ A link to information about this project, such as project documentation ]]
       url : String
       [[ The default assignee when creating issues for this project. ]]
-      assigneeType : String
+      assigneeType : ProjectInputBeanAssigneeType
       [[ An integer value for the project's avatar. ]]
       avatarId : Int
       [[ The ID of the issue security scheme for the project, which enables you to control who can and cannot view issues. Use the [Get issue security schemes](#api-rest-api-3-issuesecurityschemes-get) resource to get all issue security scheme IDs. ]]
@@ -3332,6 +3603,39 @@ namespace vyne.openApi {
       notificationScheme : Int
       [[ The ID of the project's category. A complete list of category IDs is found using the [Get all project categories](#api-rest-api-3-projectCategory-get) operation. ]]
       categoryId : Int
+   }
+   
+   enum ProjectInputBeanProjectTypeKey {
+      software,
+      service_desk,
+      business
+   }
+   
+   enum ProjectInputBeanProjectTemplateKey {
+      `com.pyxis.greenhopper.jira:gh-simplified-agility-kanban`,
+      `com.pyxis.greenhopper.jira:gh-simplified-agility-scrum`,
+      `com.pyxis.greenhopper.jira:gh-simplified-basic`,
+      `com.pyxis.greenhopper.jira:gh-simplified-kanban-classic`,
+      `com.pyxis.greenhopper.jira:gh-simplified-scrum-classic`,
+      `com.atlassian.servicedesk:simplified-it-service-desk`,
+      `com.atlassian.servicedesk:simplified-internal-service-desk`,
+      `com.atlassian.servicedesk:simplified-external-service-desk`,
+      `com.atlassian.servicedesk:simplified-hr-service-desk`,
+      `com.atlassian.servicedesk:simplified-facilities-service-desk`,
+      `com.atlassian.jira-core-project-templates:jira-core-simplified-content-management`,
+      `com.atlassian.jira-core-project-templates:jira-core-simplified-document-approval`,
+      `com.atlassian.jira-core-project-templates:jira-core-simplified-lead-tracking`,
+      `com.atlassian.jira-core-project-templates:jira-core-simplified-process-control`,
+      `com.atlassian.jira-core-project-templates:jira-core-simplified-procurement`,
+      `com.atlassian.jira-core-project-templates:jira-core-simplified-project-management`,
+      `com.atlassian.jira-core-project-templates:jira-core-simplified-recruitment`,
+      `com.atlassian.jira-core-project-templates:jira-core-simplified-task-`,
+      `com.atlassian.jira.jira-incident-management-plugin:im-incident-management`
+   }
+   
+   enum ProjectInputBeanAssigneeType {
+      PROJECT_LEAD,
+      UNASSIGNED
    }
    
    type ConnectModules
@@ -3345,7 +3649,7 @@ namespace vyne.openApi {
       [[ The description of the task. ]]
       description : String?
       [[ The status of the task. ]]
-      status : String
+      status : TaskProgressBeanRemoveOptionFromIssuesResultStatus
       [[ Information about the progress of the task. ]]
       message : String?
       [[ The result of the task execution. ]]
@@ -3364,6 +3668,16 @@ namespace vyne.openApi {
       finished : Int?
       [[ A timestamp recording when the task progress was last updated. ]]
       lastUpdate : Int
+   }
+   
+   enum TaskProgressBeanRemoveOptionFromIssuesResultStatus {
+      ENQUEUED,
+      RUNNING,
+      COMPLETE,
+      FAILED,
+      CANCEL_REQUESTED,
+      CANCELLED,
+      DEAD
    }
    
    [[ The result of the task execution. ]]
@@ -3533,9 +3847,13 @@ namespace vyne.openApi {
    closed model FieldChangedClause {
       field : JqlQueryField
       [[ The operator applied to the field. ]]
-      operator : String
+      operator : FieldChangedClauseOperator
       [[ The list of time predicates. ]]
       predicates : JqlQueryClauseTimePredicate[]
+   }
+   
+   enum FieldChangedClauseOperator {
+      changed
    }
    
    closed model IssuesUpdateBean {
@@ -3570,7 +3888,7 @@ namespace vyne.openApi {
       *  `COMPONENT_LEAD` the assignee to any issues created with this component is nominally the lead for the component.
       *  `UNASSIGNED` an assignee is not set for issues created with this component.
       *  `PROJECT_DEFAULT` the assignee to any issues created with this component is nominally the default assignee for the project that the component is in. ]]
-      assigneeType : String
+      assigneeType : ComponentWithIssueCountAssigneeType
       [[ The key of the project to which the component is assigned. ]]
       project : String
       [[ The user details for the component's lead user. ]]
@@ -3588,11 +3906,18 @@ namespace vyne.openApi {
       *  `COMPONENT_LEAD` when `assignee`Type is `COMPONENT_LEAD` and the component lead has permission to be assigned issues in the project that the component is in.
       *  `UNASSIGNED` when `assigneeType` is `UNASSIGNED` and Jira is configured to allow unassigned issues.
       *  `PROJECT_DEFAULT` when none of the preceding cases are true. ]]
-      realAssigneeType : String
+      realAssigneeType : ComponentWithIssueCountRealAssigneeType
       [[ The name for the component. ]]
       name : String
       [[ The unique identifier for the component. ]]
       id : String
+   }
+   
+   enum ComponentWithIssueCountAssigneeType {
+      PROJECT_DEFAULT,
+      COMPONENT_LEAD,
+      PROJECT_LEAD,
+      UNASSIGNED
    }
    
    [[ The user details for the component's lead user. ]]
@@ -3603,6 +3928,13 @@ namespace vyne.openApi {
    
    [[ The user assigned to issues created with this component, when `assigneeType` does not identify a valid assignee. ]]
    closed type AnonymousTypeComponentWithIssueCountRealAssignee inherits User
+   
+   enum ComponentWithIssueCountRealAssigneeType {
+      PROJECT_DEFAULT,
+      COMPONENT_LEAD,
+      PROJECT_LEAD,
+      UNASSIGNED
+   }
    
    [[ Details about system and custom avatars. ]]
    closed model Avatars {
@@ -3735,13 +4067,21 @@ namespace vyne.openApi {
       *  `projectRole` Share with a project role in a project. Specify `projectId` and `projectRoleId` as well.
       *  `global` Share globally, including anonymous users. If set, this type overrides all existing share permissions and must be deleted before any non-global share permissions is set.
       *  `authenticated` Share with all logged-in users. This shows as `loggedin` in the response. If set, this type overrides all existing share permissions and must be deleted before any non-global share permissions is set. ]]
-      `type` : String
+      `type` : SharePermissionInputBeanType
       [[ The ID of the project to share the filter with. Set `type` to `project`. ]]
       projectId : String?
       [[ The name of the group to share the filter with. Set `type` to `group`. ]]
       groupname : String?
       [[ The ID of the project role to share the filter with. Set `type` to `projectRole` and the `projectId` for the project that the role is in. ]]
       projectRoleId : String?
+   }
+   
+   enum SharePermissionInputBeanType {
+      project,
+      group,
+      projectRole,
+      global,
+      authenticated
    }
    
    [[ Details about the time tracking provider. ]]
@@ -4076,7 +4416,7 @@ namespace vyne.openApi {
       [[ The description of the task. ]]
       description : String?
       [[ The status of the task. ]]
-      status : String
+      status : TaskProgressBeanObjectStatus
       [[ Information about the progress of the task. ]]
       message : String?
       [[ The result of the task execution. ]]
@@ -4095,6 +4435,16 @@ namespace vyne.openApi {
       finished : Int?
       [[ A timestamp recording when the task progress was last updated. ]]
       lastUpdate : Int
+   }
+   
+   enum TaskProgressBeanObjectStatus {
+      ENQUEUED,
+      RUNNING,
+      COMPLETE,
+      FAILED,
+      CANCEL_REQUESTED,
+      CANCELLED,
+      DEAD
    }
    
    [[ List of property keys. ]]
@@ -4157,8 +4507,22 @@ namespace vyne.openApi {
    closed model FieldValueClause {
       field : JqlQueryField
       [[ The operator between the field and operand. ]]
-      operator : String
+      operator : FieldValueClauseOperator
       operand : JqlQueryClauseOperand
+   }
+   
+   enum FieldValueClauseOperator {
+      `=`,
+      `!=`,
+      `>`,
+      `<`,
+      `>=`,
+      `<=`,
+      `in`,
+      `not in`,
+      `~=`,
+      is,
+      `is not`
    }
    
    [[ A page of items. ]]
@@ -4199,7 +4563,13 @@ namespace vyne.openApi {
       [[ The list of nested clauses. ]]
       clauses : JqlQueryClause[]
       [[ The operator between the clauses. ]]
-      operator : String
+      operator : CompoundClauseOperator
+   }
+   
+   enum CompoundClauseOperator {
+      `and`,
+      `or`,
+      not
    }
    
    [[ A page of items. ]]
@@ -4242,16 +4612,27 @@ namespace vyne.openApi {
    closed model FieldWasClause {
       field : JqlQueryField
       [[ The operator between the field and operand. ]]
-      operator : String
+      operator : FieldWasClauseOperator
       operand : JqlQueryClauseOperand
       [[ The list of time predicates. ]]
       predicates : JqlQueryClauseTimePredicate[]
    }
    
+   enum FieldWasClauseOperator {
+      was,
+      `was in`,
+      `was not in`,
+      `was not`
+   }
+   
    [[ An operand that is a JQL keyword. See [Advanced searching - keywords reference](https://confluence.atlassian.com/jiracorecloud/advanced-searching-keywords-reference-765593717.html#Advancedsearching-keywordsreference-EMPTYEMPTY) for more information about operand keywords. ]]
    closed model KeywordOperand {
       [[ The keyword that is the operand value. ]]
-      keyword : String
+      keyword : KeywordOperandKeyword
+   }
+   
+   enum KeywordOperandKeyword {
+      empty
    }
    
    [[ A list of matched issues or errors for each JQL query, in the order the JQL queries were passed. ]]
@@ -4263,10 +4644,127 @@ namespace vyne.openApi {
       [[ The URL (self link) of the version after which to place the moved version. Cannot be used with `position`. ]]
       after : String
       [[ An absolute position in which to place the moved version. Cannot be used with `after`. ]]
-      position : String
+      position : VersionMoveBeanPosition
+   }
+   
+   enum VersionMoveBeanPosition {
+      Earlier,
+      Later,
+      First,
+      Last
+   }
+   
+   enum type {
+      issuetype,
+      project,
+      user
+   }
+   
+   enum filter {
+      my,
+      favourite
+   }
+   
+   enum orderBy {
+      description,
+      `-description`,
+      `+description`,
+      favorite_count,
+      `-favorite_count`,
+      `+favorite_count`,
+      id,
+      `-id`,
+      `+id`,
+      is_favorite,
+      `-is_favorite`,
+      `+is_favorite`,
+      name,
+      `-name`,
+      `+name`,
+      owner,
+      `-owner`,
+      `+owner`
+   }
+   
+   enum typeElement {
+      custom,
+      system
+   }
+   
+   enum avatarSize {
+      xsmall,
+      `xsmall@2x`,
+      `xsmall@3x`,
+      small,
+      `small@2x`,
+      `small@3x`,
+      medium,
+      `medium@2x`,
+      `medium@3x`,
+      large,
+      `large@2x`,
+      `large@3x`,
+      xlarge,
+      `xlarge@2x`,
+      `xlarge@3x`,
+      xxlarge,
+      `xxlarge@2x`,
+      `xxlarge@3x`,
+      xxxlarge,
+      `xxxlarge@2x`,
+      `xxxlarge@3x`
+   }
+   
+   enum deleteSubtasks {
+      `true`,
+      `false`
    }
    
    type binary inherits String
+   
+   enum adjustEstimate {
+      new,
+      leave,
+      manual,
+      auto
+   }
+   
+   enum action {
+      view,
+      browse,
+      edit
+   }
+   
+   enum projectTypeKey {
+      software,
+      service_desk,
+      business
+   }
+   
+   enum newProjectTypeKey {
+      software,
+      service_desk,
+      business
+   }
+   
+   enum validateQuery {
+      strict,
+      warn,
+      none,
+      `true`,
+      `false`
+   }
+   
+   enum typesElement {
+      postfunction,
+      condition,
+      validator
+   }
+   
+   enum workflowMode {
+      live,
+      draft
+   }
    
    service RestApiThreeApplication_propertiesService {
       [[ Returns all application properties or an application property.
@@ -4427,7 +4925,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/avatar/{type}/system")
       operation com_atlassian_jira_rest_v2_issue_AvatarResource_getAllSystemAvatars_get(
       [[ The avatar type. ]]
-      @taxi.http.PathVariable(value = "type") `type` : String ) : SystemAvatars
+      @taxi.http.PathVariable(value = "type") `type` : type ) : SystemAvatars
    }
    service RestApiThreeCommentListService {
       [[ Returns the comments for a list of comment IDs.
@@ -4613,7 +5111,7 @@ namespace vyne.openApi {
       [[ The filter applied to the list of dashboards. Valid values are:
       *  `favourite` Returns dashboards the user has marked as favorite.
       *  `my` Returns dashboards owned by the user. ]]
-      @taxi.http.QueryVariable(value = "filter") `filter` : String?,
+      @taxi.http.QueryVariable(value = "filter") `filter` : filter?,
       [[ The index of the first item to return in a page of results (page offset). ]]
       @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
@@ -4647,7 +5145,7 @@ namespace vyne.openApi {
       *  `is_favourite` Sorts by whether the dashboard is marked as a favorite.
       *  `name` Sorts by dashboard name.
       *  `owner` Sorts by dashboard owner name. ]]
-      @taxi.http.QueryVariable(value = "orderBy") orderBy : String?,
+      @taxi.http.QueryVariable(value = "orderBy") orderBy : orderBy?,
       [[ The index of the first item to return in a page of results (page offset). ]]
       @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
@@ -4773,7 +5271,7 @@ namespace vyne.openApi {
       [[ The maximum number of items to return per page. ]]
       @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ The type of fields to search. ]]
-      @taxi.http.QueryVariable(value = "type") `type` : String[]?,
+      @taxi.http.QueryVariable(value = "type") `type` : typeElement[]?,
       [[ The IDs of the custom fields to search, in the format `customfield_XXXXX`. ]]
       @taxi.http.QueryVariable(value = "id") id : String[]?,
       [[ String used to perform a case-insensitive partial match with field names or descriptions. ]]
@@ -4783,7 +5281,7 @@ namespace vyne.openApi {
       *  `lastUsed` Sorts by the date when the value of the field last changed.
       *  `name` Sorts by the field name.
       *  `screensCount` Sorts by the number of screens related to a field. ]]
-      @taxi.http.QueryVariable(value = "orderBy") orderBy : String?,
+      @taxi.http.QueryVariable(value = "orderBy") orderBy : orderBy?,
       [[ Use [expand](#expansion) to include additional information in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `key` Returns the key for each field.
       *  `lastUsed` Returns the date when the value of the field last changed.
@@ -5027,7 +5525,7 @@ namespace vyne.openApi {
       *  `id` Sorts by filter ID.
       *  `name` Sorts by filter name.
       *  `owner` Sorts by the ID of the filter owner. ]]
-      @taxi.http.QueryVariable(value = "orderBy") orderBy : String?,
+      @taxi.http.QueryVariable(value = "orderBy") orderBy : orderBy?,
       [[ The index of the first item to return in a page of results (page offset). ]]
       @taxi.http.QueryVariable(value = "startAt") startAt : Int?,
       [[ The maximum number of items to return per page. ]]
@@ -5297,7 +5795,7 @@ namespace vyne.openApi {
       [[ The ID of an issue type that returned users and groups must have permission to view. To include multiple issue types, provide an ampersand-separated list. For example, `issueTypeId=10000&issueTypeId=10001`. Special values, such as `-1` (all standard issue types) and `-2` (all subtask issue types), are supported. This parameter is only used when `fieldId` is present. ]]
       @taxi.http.QueryVariable(value = "issueTypeId") issueTypeId : String[]?,
       [[ The size of the avatar to return. If an invalid value is provided, the default value is used. ]]
-      @taxi.http.QueryVariable(value = "avatarSize") avatarSize : String?,
+      @taxi.http.QueryVariable(value = "avatarSize") avatarSize : avatarSize?,
       [[ Indicates whether the search for groups should be case insensitive. ]]
       @taxi.http.QueryVariable(value = "caseInsensitive") caseInsensitive : Boolean?,
       [[ Indicates whether Connect app users and groups should be excluded from the search results. If an invalid value is provided, the default value is used. ]]
@@ -5495,7 +5993,7 @@ namespace vyne.openApi {
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ Indicates whether the issue's subtasks are deleted when the issue is deleted. ]]
-      @taxi.http.QueryVariable(value = "deleteSubtasks") deleteSubtasks : String? )
+      @taxi.http.QueryVariable(value = "deleteSubtasks") deleteSubtasks : deleteSubtasks? )
    }
    service RestApiThreeIssueIssueIdOrKeyAssigneeService {
       [[ Assigns an issue to a user. Use this operation when the calling user does not have the *Edit Issues* permission but has the *Assign issue* permission for the project that the issue is in.
@@ -5561,7 +6059,7 @@ namespace vyne.openApi {
       [[ The maximum number of items to return per page. ]]
       @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ [Order](#ordering) the results by a field. Accepts *created* to sort comments by their created date. ]]
-      @taxi.http.QueryVariable(value = "orderBy") orderBy : String?,
+      @taxi.http.QueryVariable(value = "orderBy") orderBy : orderBy?,
       [[ Use [expand](#expansion) to include additional information about comments in the response. This parameter accepts `renderedBody`, which returns the comment body rendered in HTML. ]]
       @taxi.http.QueryVariable(value = "expand") expand : String? ) : PageOfComments
       [[ Adds a comment to an issue.
@@ -5913,7 +6411,7 @@ namespace vyne.openApi {
       *  `leave` Leaves the estimate unchanged.
       *  `manual` Reduces the estimate by amount specified in `reduceBy`.
       *  `auto` Reduces the estimate by the value of `timeSpent` in the worklog. ]]
-      @taxi.http.QueryVariable(value = "adjustEstimate") adjustEstimate : String?,
+      @taxi.http.QueryVariable(value = "adjustEstimate") adjustEstimate : adjustEstimate?,
       [[ The value to set as the issue's remaining time estimate, as days (\#d), hours (\#h), or minutes (\#m or \#). For example, *2d*. Required when `adjustEstimate` is `new`. ]]
       @taxi.http.QueryVariable(value = "newEstimate") newEstimate : String?,
       [[ The amount to reduce the issue's remaining estimate by, as days (\#d), hours (\#h), or minutes (\#m). For example, *2d*. Required when `adjustEstimate` is `manual`. ]]
@@ -5961,7 +6459,7 @@ namespace vyne.openApi {
       *  `new` Sets the estimate to a specific value, defined in `newEstimate`.
       *  `leave` Leaves the estimate unchanged.
       *  `auto` Updates the estimate by the difference between the original and updated value of `timeSpent` or `timeSpentSeconds`. ]]
-      @taxi.http.QueryVariable(value = "adjustEstimate") adjustEstimate : String?,
+      @taxi.http.QueryVariable(value = "adjustEstimate") adjustEstimate : adjustEstimate?,
       [[ The value to set as the issue's remaining time estimate, as days (\#d), hours (\#h), or minutes (\#m or \#). For example, *2d*. Required when `adjustEstimate` is `new`. ]]
       @taxi.http.QueryVariable(value = "newEstimate") newEstimate : String?,
       [[ Use [expand](#expansion) to include additional information about worklogs in the response. This parameter accepts `properties`, which returns worklog properties. ]]
@@ -5990,7 +6488,7 @@ namespace vyne.openApi {
       *  `leave` Leaves the estimate unchanged.
       *  `manual` Increases the estimate by amount specified in `increaseBy`.
       *  `auto` Reduces the estimate by the value of `timeSpent` in the worklog. ]]
-      @taxi.http.QueryVariable(value = "adjustEstimate") adjustEstimate : String?,
+      @taxi.http.QueryVariable(value = "adjustEstimate") adjustEstimate : adjustEstimate?,
       [[ The value to set as the issue's remaining time estimate, as days (\#d), hours (\#h), or minutes (\#m or \#). For example, *2d*. Required when `adjustEstimate` is `new`. ]]
       @taxi.http.QueryVariable(value = "newEstimate") newEstimate : String?,
       [[ The amount to increase the issue's remaining estimate by, as days (\#d), hours (\#h), or minutes (\#m or \#). For example, *2d*. Required when `adjustEstimate` is `manual`. ]]
@@ -6737,7 +7235,7 @@ namespace vyne.openApi {
       *  `lastIssueUpdatedTime` Sorts by the last issue update time.
       *  `name` Sorts by project name.
       *  `owner` Sorts by project lead. ]]
-      @taxi.http.QueryVariable(value = "orderBy") orderBy : String?,
+      @taxi.http.QueryVariable(value = "orderBy") orderBy : orderBy?,
       [[ Filter the results using a literal string. Projects with a matching `key` or `name` are returned (case insensitive). ]]
       @taxi.http.QueryVariable(value = "query") `query` : String?,
       [[ Orders results by the [project type](https://confluence.atlassian.com/x/GwiiLQ#Jiraapplicationsoverview-Productfeaturesandprojecttypes). This parameter accepts a comma-separated list. Valid values are `business`, `service_desk`, and `software`. ]]
@@ -6754,7 +7252,7 @@ namespace vyne.openApi {
       *  `edit` the project, meaning that they have one of the following permissions:
       *  *Administer projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project.
       *  site administration (that is, member of the *site-admin* [group](https://confluence.atlassian.com/x/24xjL")). ]]
-      @taxi.http.QueryVariable(value = "action") action : String?,
+      @taxi.http.QueryVariable(value = "action") action : action?,
       [[ Use [expand](#expansion) to include additional information in the response. This parameter accepts a comma-separated list. Expanded options include:
       *  `description` Returns the project description.
       *  `projectKeys` Returns all project keys associated with a project.
@@ -6778,7 +7276,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/project/type/{projectTypeKey}")
       operation com_atlassian_jira_rest_v2_project_type_ProjectTypeResource_getProjectTypeByKey_get(
       [[ The key of the project type. ]]
-      @taxi.http.PathVariable(value = "projectTypeKey") projectTypeKey : String ) : ProjectType
+      @taxi.http.PathVariable(value = "projectTypeKey") projectTypeKey : projectTypeKey ) : ProjectType
    }
    service RestApiThreeProjectTypeProjectTypeKeyAccessibleService {
       [[ Returns a [project type](https://confluence.atlassian.com/x/Var1Nw) if it is accessible to the user.
@@ -6786,7 +7284,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://myjira/rest/api/3/project/type/{projectTypeKey}/accessible")
       operation com_atlassian_jira_rest_v2_project_type_ProjectTypeResource_getAccessibleProjectTypeByKey_get(
       [[ The key of the project type. ]]
-      @taxi.http.PathVariable(value = "projectTypeKey") projectTypeKey : String ) : ProjectType
+      @taxi.http.PathVariable(value = "projectTypeKey") projectTypeKey : projectTypeKey ) : ProjectType
    }
    service RestApiThreeProjectProjectIdOrKeyService {
       [[ Returns the [project details](https://confluence.atlassian.com/x/ahLpNw) for a project.
@@ -6900,7 +7398,7 @@ namespace vyne.openApi {
       *  `issueCount` Sorts by the count of issues associated with the component.
       *  `lead` Sorts by the user key of the component's project lead.
       *  `name` Sorts by component name. ]]
-      @taxi.http.QueryVariable(value = "orderBy") orderBy : String?,
+      @taxi.http.QueryVariable(value = "orderBy") orderBy : orderBy?,
       [[ Filter the results using a literal string. Components with a matching `name` or `description` are returned (case insensitive). ]]
       @taxi.http.QueryVariable(value = "query") `query` : String? ) : PageBeanComponentWithIssueCount
    }
@@ -7048,7 +7546,7 @@ namespace vyne.openApi {
       [[ The project ID or project key (case sensitive). ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       [[ The key of the new project type. ]]
-      @taxi.http.PathVariable(value = "newProjectTypeKey") newProjectTypeKey : String ) : Project
+      @taxi.http.PathVariable(value = "newProjectTypeKey") newProjectTypeKey : newProjectTypeKey ) : Project
    }
    service RestApiThreeProjectProjectIdOrKeyVersionService {
       [[ Returns a [paginated](#pagination) representation of all versions in a project. See the [Get project versions](#api-rest-api-3-project-projectIdOrKey-versions-get) resource if you want to get a full list of versions without pagination.
@@ -7068,7 +7566,7 @@ namespace vyne.openApi {
       *  `releaseDate` Sorts by release date, starting with the oldest date. Versions with no release date are listed last.
       *  `sequence` Sorts by the order of appearance in the user interface.
       *  `startDate` Sorts by start date, starting with the oldest date. Versions with no start date are listed last. ]]
-      @taxi.http.QueryVariable(value = "orderBy") orderBy : String?,
+      @taxi.http.QueryVariable(value = "orderBy") orderBy : orderBy?,
       [[ Filter the results using a literal string. Versions with matching `name` or `description` are returned (case insensitive). ]]
       @taxi.http.QueryVariable(value = "query") `query` : String?,
       [[ A list of status values used to filter the results by version status. This parameter accepts a comma-separated list. The status values are `released`, `unreleased`, and `archived`. ]]
@@ -7471,7 +7969,7 @@ namespace vyne.openApi {
       *  `true` *Deprecated* A legacy synonym for `strict`.
       *  `false` *Deprecated* A legacy synonym for `warn`.
       Note: If the JQL is not correctly formed a 400 response code is returned, regardless of the `validateQuery` value. ]]
-      @taxi.http.QueryVariable(value = "validateQuery") validateQuery : String?,
+      @taxi.http.QueryVariable(value = "validateQuery") validateQuery : validateQuery?,
       [[ A list of fields to return for each issue, use it to retrieve a subset of fields. This parameter accepts a comma-separated list. Expand options include:
       *  `*all` Returns all fields.
       *  `*navigable` Returns navigable fields.
@@ -8216,7 +8714,7 @@ namespace vyne.openApi {
       [[ The maximum number of items to return per page. ]]
       @taxi.http.QueryVariable(value = "maxResults") maxResults : Int?,
       [[ The types of the transition rules to return. ]]
-      @taxi.http.QueryVariable(value = "types") types : String[],
+      @taxi.http.QueryVariable(value = "types") types : typesElement[],
       [[ The transition rule class keys, as defined in the Connect app descriptor, of the transition rules to return. ]]
       @taxi.http.QueryVariable(value = "keys") keys : String[]?,
       [[ Use [expand](#expansion) to include additional information in the response. This parameter accepts `transition`, which, for each rule, returns information about the transition the rule is assigned to. ]]
@@ -8263,7 +8761,7 @@ namespace vyne.openApi {
       [[ The name of the workflow that the transition belongs to. ]]
       @taxi.http.QueryVariable(value = "workflowName") workflowName : String,
       [[ The workflow status. Set to *live* for active and inactive workflows, or *draft* for draft workflows. ]]
-      @taxi.http.QueryVariable(value = "workflowMode") workflowMode : String? ) : WorkflowTransitionProperty
+      @taxi.http.QueryVariable(value = "workflowMode") workflowMode : workflowMode? ) : WorkflowTransitionProperty
       [[ Updates a workflow transition by changing the property value. Trying to update a property that does not exist results in a new property being added to the transition. Transition properties are used to change the behavior of a transition. For more information, see [Transition properties](https://confluence.atlassian.com/x/zIhKLg#Advancedworkflowconfiguration-transitionproperties) and [Workflow properties](https://confluence.atlassian.com/x/JYlKLg).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/workflow/transitions/{transitionId}/properties")
@@ -8275,7 +8773,7 @@ namespace vyne.openApi {
       [[ The name of the workflow that the transition belongs to. ]]
       @taxi.http.QueryVariable(value = "workflowName") workflowName : String,
       [[ The workflow status. Set to `live` for inactive workflows or `draft` for draft workflows. Active workflows cannot be edited. ]]
-      @taxi.http.QueryVariable(value = "workflowMode") workflowMode : String?,
+      @taxi.http.QueryVariable(value = "workflowMode") workflowMode : workflowMode?,
       @taxi.http.RequestBody workflowTransitionProperty : WorkflowTransitionProperty? ) : WorkflowTransitionProperty
       [[ Adds a property to a workflow transition. Transition properties are used to change the behavior of a transition. For more information, see [Transition properties](https://confluence.atlassian.com/x/zIhKLg#Advancedworkflowconfiguration-transitionproperties) and [Workflow properties](https://confluence.atlassian.com/x/JYlKLg).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -8288,7 +8786,7 @@ namespace vyne.openApi {
       [[ The name of the workflow that the transition belongs to. ]]
       @taxi.http.QueryVariable(value = "workflowName") workflowName : String,
       [[ The workflow status. Set to *live* for inactive workflows or *draft* for draft workflows. Active workflows cannot be edited. ]]
-      @taxi.http.QueryVariable(value = "workflowMode") workflowMode : String?,
+      @taxi.http.QueryVariable(value = "workflowMode") workflowMode : workflowMode?,
       @taxi.http.RequestBody workflowTransitionProperty : WorkflowTransitionProperty? ) : WorkflowTransitionProperty
       [[ Deletes a property from a workflow transition. Transition properties are used to change the behavior of a transition. For more information, see [Transition properties](https://confluence.atlassian.com/x/zIhKLg#Advancedworkflowconfiguration-transitionproperties) and [Workflow properties](https://confluence.atlassian.com/x/JYlKLg).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
@@ -8301,7 +8799,7 @@ namespace vyne.openApi {
       [[ The name of the workflow that the transition belongs to. ]]
       @taxi.http.QueryVariable(value = "workflowName") workflowName : String,
       [[ The workflow status. Set to `live` for inactive workflows or `draft` for draft workflows. Active workflows cannot be edited. ]]
-      @taxi.http.QueryVariable(value = "workflowMode") workflowMode : String? )
+      @taxi.http.QueryVariable(value = "workflowMode") workflowMode : workflowMode? )
    }
    service RestApiThreeWorkflowschemeService {
       [[ Returns a paginated list of all workflow schemes, not including draft workflow schemes.

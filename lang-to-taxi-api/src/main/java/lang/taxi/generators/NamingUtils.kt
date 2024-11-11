@@ -7,6 +7,7 @@ import lang.taxi.utils.takeTail
 import java.net.URI
 
 object NamingUtils {
+   private val reservedWords = setOf("true", "false", "type", "model", "service", "from", "by", "in", "and", "or")
    private val illegalIdentifierCharacters = "[^a-zA-Z0-9\$_]+".toRegex()
    fun String.replaceFirstCharacterIfDigit(): String {
       return this.replaceFirstChar { char: Char ->
@@ -30,8 +31,17 @@ object NamingUtils {
       }
    }
 
+   fun String.escapeIfContainsIllegalCharacters(): String {
+      return when {
+         illegalIdentifierCharacters.containsMatchIn(this) -> "`$this`"
+         reservedWords.contains(this) -> "`$this`"
+         else -> this
+      }
+   }
+
    fun String.replaceIllegalCharacters(): String = replace(illegalIdentifierCharacters, "_")
       .replaceFirstCharacterIfDigit()
+
    fun String.removeIllegalCharacters(): String = replace(illegalIdentifierCharacters, "")
 
    fun qualifyTypeNameIfRaw(typeName: String, defaultNamespace: String): QualifiedName {

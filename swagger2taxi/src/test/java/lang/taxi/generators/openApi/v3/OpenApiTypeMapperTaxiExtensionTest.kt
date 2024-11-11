@@ -66,7 +66,8 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
               type: string
               format: password
          """
-      ) generates listOf("""
+      ) generates listOf(
+         """
          namespace vyne.openApi {
             type password inherits String
          }
@@ -75,7 +76,8 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          namespace org.example {
             type Password inherits vyne.openApi.password
          }
-      """)
+      """
+      )
    }
 
    @Test
@@ -220,6 +222,38 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
    }
 
    @Test
+   fun `named schema of object type with field of enum type with x-taxi-type, create = true`() {
+
+      openApiYaml(
+         schemas = """
+            Person:
+              type: object
+              properties:
+                status:
+                  x-taxi-type:
+                    name: org.other.DeadOrAlive
+                    create: true
+                  type: string
+                  enum:
+                   - living
+                   - dead
+         """
+      ) generates """
+         namespace vyne.openApi {
+            closed model Person {
+               status : org.other.DeadOrAlive
+            }
+         }
+         namespace org.other {
+            enum DeadOrAlive {
+               living,
+               dead
+            }
+         }
+      """
+   }
+
+   @Test
    fun `named schema of object type with doubly nested anonymous model, create = true`() {
 
       openApiYaml(
@@ -307,7 +341,8 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
                 street:
                   type: string
          """
-      ) generates listOf("""
+      ) generates listOf(
+         """
          import vyne.openApi.Address
          namespace example {
             closed model Person {
@@ -322,7 +357,8 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
             }
 
          }
-         """)
+         """
+      )
    }
 
    @Test
@@ -385,7 +421,8 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
          namespace vyne.openApi {
             type People inherits Person[]
          }
-         """)
+         """
+      )
    }
 
    @Test
