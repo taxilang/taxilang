@@ -148,7 +148,7 @@ export function Header({
         className={clsx(
           'sticky top-[-1px] z-40 w-full flex-none transition-colors duration-500 lg:z-50 ',
           isOpaque
-            ? 'bg-white supports-backdrop-blur:bg-white/95 dark:bg-zinc-900/80 border-b border-zinc-700/80'
+            ? 'bg-white supports-backdrop-blur:bg-white/95 dark:bg-zinc-900/80 backdrop-blur border-b border-zinc-700/80'
             : 'bg-white/95 supports-backdrop-blur:bg-white/60 dark:bg-transparent',
           className
         )}
