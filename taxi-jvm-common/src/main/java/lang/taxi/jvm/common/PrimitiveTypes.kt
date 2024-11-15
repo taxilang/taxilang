@@ -51,10 +51,10 @@ object PrimitiveTypes {
          Float::class.java
       ),
       PrimitiveType.ANY to listOf(Any::class.java),
-      PrimitiveType.LOCAL_DATE to listOf(LocalDate::class.java),
-      PrimitiveType.TIME to listOf(LocalTime::class.java),
-      PrimitiveType.DATE_TIME to listOf(LocalDateTime::class.java),
-      PrimitiveType.INSTANT to listOf(Instant::class.java)
+      PrimitiveType.LOCAL_DATE to listOf(LocalDate::class.java, kotlinx.datetime.LocalDate::class.java),
+      PrimitiveType.TIME to listOf(LocalTime::class.java, kotlinx.datetime.LocalTime::class.java),
+      PrimitiveType.DATE_TIME to listOf(LocalDateTime::class.java, kotlinx.datetime.LocalDateTime::class.java),
+      PrimitiveType.INSTANT to listOf(Instant::class.java, kotlinx.datetime.Instant::class.java),
    )
    private val javaTypeToPrimitive: Map<String, PrimitiveType> =
       taxiPrimitiveToJavaTypes.flatMap { (primitive, javaTypes) ->
