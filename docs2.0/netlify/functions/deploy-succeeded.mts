@@ -12,7 +12,7 @@ export default async (req: Request, context: Context) => {
     headers: {
       'Authorization' : `token ${githubToken}`
     },
-    body: JSON.stringify({"event_type": "Trigger reindex from Netlify Post-deploy"})
+    body: JSON.stringify({"event_type": "Trigger reindex from Netlify - Taxilang - Post-deploy"})
   })
 
   console.log(`Trigger returned status ${triggerResult.status} - ${triggerResult.statusText}`);
