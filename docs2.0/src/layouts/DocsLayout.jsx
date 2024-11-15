@@ -34,7 +34,7 @@ function useTableOfContents(tableOfContents) {
         let style = window.getComputedStyle(el)
         let scrollMt = parseFloat(style.scrollMarginTop)
 
-        let top = window.scrollY + el.getBoundingClientRect().top - scrollMt
+        let top = window.scrollY + el.getBoundingClientRect().top - scrollMt - 40
         return {slug, top}
       })
   }, [])
@@ -157,9 +157,8 @@ export function DocsLayout({children, tableOfContents, meta, slug}) {
                 <dd className="mt-1">
                   <Link
                     href={previousPage.href}
-                    className="text-base font-semibold text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
                   >
-                    <div>
+                    <div className="cursor-pointer text-base font-semibold text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
                       <span aria-hidden="true">&larr;</span> {previousPage.title}
                     </div>
                   </Link>
@@ -174,9 +173,10 @@ export function DocsLayout({children, tableOfContents, meta, slug}) {
                 <dd className="mt-1">
                   <Link
                     href={nextPage.href}
-                    className="text-base font-semibold text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
                   >
-                    <div>{nextPage.title} <span aria-hidden="true">&rarr;</span></div>
+                    <div className="cursor-pointer text-base font-semibold text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">
+                      {nextPage.title} <span aria-hidden="true">&rarr;</span>
+                    </div>
                   </Link>
                 </dd>
               </div>
