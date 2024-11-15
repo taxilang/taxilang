@@ -299,7 +299,7 @@
 
 &
 .DocSearch-Hit-path {
-  @apply bg-sky-400 text-white dark:bg-sky-400/50;
+  @apply bg-emerald-400 text-white dark:bg-emerald-400/50;
 }
 
 .DocSearch-Hit[aria-selected='true']
@@ -361,7 +361,7 @@
 }
 
 .DocSearch-Hit[aria-selected='true'] .DocSearch-Hit--Result {
-  @apply bg-sky-500 dark:bg-sky-600;
+  @apply bg-emerald-500 dark:bg-emerald-600;
 }
 
 .DocSearch-Hit--FirstChild::before {
@@ -374,7 +374,7 @@
 
 .DocSearch-Hits mark {
   background: none;
-  @apply text-sky-600 font-semibold border-b-2 border-sky-300 dark:text-white dark:border-0;
+  @apply text-emerald-600 font-semibold border-b-2 border-emerald-300 dark:text-white dark:border-0;
 }
 
 .DocSearch-Hit-path mark {
@@ -464,7 +464,7 @@
 }
 
 .DocSearch-NoResults-Prefill-List + .DocSearch-Help a {
-  @apply text-sky-500 font-semibold dark:text-sky-400;
+  @apply text-emerald-500 font-semibold dark:text-emerald-400;
 }
 
 .DocSearch-Hit-action [title='Save this search'],
