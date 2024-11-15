@@ -61,11 +61,11 @@ const TagYourApis = (highlightedCode) => {
 
   const [tab, setTab] = useState('Open API');
 
-  return (<div className='max-w-2xl mx-auto min-h-[590px]'>
+  return (<div className='max-w-4xl mx-auto min-h-[590px]'>
     <div className='flex flex-col items-center py-8'>
       <div className={'text-center text-lg pb-8'}>
         <SectionHeading>Describe</SectionHeading>
-        <BigText>Works with your existing stack</BigText>
+        <BigText>BYO API Specs</BigText>
         <SectionHeadingParagraph>
           <p>Taxi works with your existing API schemas and specs - simply embed tags to show how data relates.</p>
           <p>Alternatively, use Taxi to describe your APIs, CSV files, Event payloads and more</p>
@@ -87,13 +87,14 @@ const TagYourApis = (highlightedCode) => {
 }
 
 const Query = (highlightedCode) => {
-  return (<div className='max-w-5xl mx-auto py-16'>
+  return (<div className='max-w-4xl mx-auto py-16'>
       <div className={'text-center text-lg'}>
         <SectionHeading>Orchestrate & Integrate</SectionHeading>
-        <BigText>Integrate everything</BigText>
+        <BigText>You query, Taxi integrates & adapts</BigText>
         <SectionHeadingParagraph>
-          <p>Use the same tags you embedded in your API specs to write queries for data - <br />across APIs, databases, Kafka topics, S3 buckets, the lot.</p>
-          <p>There's no resolvers or glue code to maintain, API clients to generate, or YAML mapping files misalign.</p>
+          <p>Write queries for data using the same tags you embedded in your API specs. Taxi's query engine handles the integration, linking across APIs, databases, Kafka topics, S3 buckets, the lot.</p>
+          <p>There's no resolvers or glue code to maintain, API clients to generate, or YAML whitespace headaches.</p>
+          <p>As your API specs change, Taxi queries automatically adapt.</p>
         </SectionHeadingParagraph>
       </div>
     <div className={'max-w-2xl mx-auto'}>
