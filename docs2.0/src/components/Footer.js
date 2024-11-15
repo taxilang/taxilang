@@ -4,18 +4,18 @@ import { Logo } from '@/components/Logo';
 const footerNav = [
   {
     'Getting Started': [
-      { title: 'Quick start', href: '/docs' },
+      { title: 'Quick start', href: 'https://orbitalhq.com/docs' },
       // { title: 'Connecting OpenAPI Services', href: '/docs' },
       // { title: 'Connecting Message Queues', href: '/docs' },
-      { title: 'Connecting a Kafka topic', href: '/docs/describing-data-sources/connect-kafka-topic' },
-      { title: 'Connecting Databases', href: '/docs/connecting-data-sources/connecting-a-database' },
-      { title: 'Querying for data', href: '/docs/querying/writing-queries' },
+      { title: 'Connecting a Kafka topic', href: 'https://orbitalhq.com/docs/describing-data-sources/connect-kafka-topic' },
+      { title: 'Connecting Databases', href: 'https://orbitalhq.com/docs/connecting-data-sources/connecting-a-database' },
+      { title: 'Querying for data', href: 'https://orbitalhq.com/docs/querying/writing-queries' },
       // { title: 'Building data pipelines', href: '/docs' }
     ],
     Guides: [
-      { title: 'APIs, DBs and Queues - A flyby of Orbital ', href: '/docs/guides/apis-databases-kafka' },
-      { title: 'Building a backend for frontend', href: '/docs/guides/composing-api-and-database' },
-      { title: 'Custom kafka streams', href: '/docs/guides/streaming-data' },
+      { title: 'APIs, DBs and Queues - A flyby of Orbital ', href: 'https://orbitalhq.com/docs/guides/apis-databases-kafka' },
+      { title: 'Building a backend for frontend', href: 'https://orbitalhq.com/docs/guides/composing-api-and-database' },
+      { title: 'Custom kafka streams', href: 'https://orbitalhq.com/docs/guides/streaming-data' },
       { title: 'Generating from code', href: 'https://orbitalhq.com/docs/guides/generating-taxi-from-code' }
     ],
     'Community and Tools': [
