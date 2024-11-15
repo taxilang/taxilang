@@ -9,7 +9,7 @@ interface FaqProps {
 const FAQ = ({faqs}: FaqProps) => {
   return (
     <div className="mx-8 py-18 sm:pt-32 lg:py-20">
-      <div className="bg-slate-800 mx-auto rounded-2xl shadow-lg max-w-7xl lg:grid lg:grid-cols-12 lg:gap-12 p-6 sm:p-8 md:p-12">
+      <div className="bg-[#0c0a09] ring-1 mx-auto rounded-2xl shadow-lg max-w-7xl lg:grid lg:grid-cols-12 lg:gap-12 p-6 sm:p-8 md:p-12">
         <div className="lg:col-span-5">
           <h2 className="text-4xl font-bold leading-10 tracking-tight text-citrus">Frequently
             asked

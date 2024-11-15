@@ -1,0 +1,178 @@
+---
+title: The Taxi CLI
+description: An overview of the `taxi` command line tool, and it's config
+---
+
+import {Callout} from "../../../components/docs/Callout";
+
+The `taxi` command line tool provides access to the compiler - which validates the syntax of taxi projects  - and allows plugins of generators to create models and services in different languages and frameworks.
+
+## Install
+
+Taxi is distributed by [SDKMAN](https://sdkman.io/).  If you haven't installed this yet, follow the instructions at [SDKMAN's installation page](https://sdkman.io/install).
+
+Then simply run:
+
+```
+sdk i taxi
+taxi
+```
+
+## Project overview
+
+A typical taxi project will be laid out as follows:
+
+```text
+project/
+├── src/
+│   ├── someTypes.taxi
+│   └── moreTypes.taxi
+└── taxi.conf
+```
+
+## taxi.conf
+
+A `taxi.conf` file describes a project's layout, and the plugins to be invoked after compilation.  It follows the [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md#hocon-human-optimized-config-object-notation) format, which is like supercharged JSON.
+
+Read more details about the taxi.conf file [here](/language-reference/taxi-projects/#the-taxiconf-file)
+
+
+## Plugins
+
+Taxi's compiler and language generators are extensible and pluggable.
+
+You can leverage our existing plugins to generate code, or author your own.  Read more about plugins [here](/taxi-cli/plugins-intro/).
+
+## Command reference
+
+### init
+
+Creates a new taxi project, with a `taxi.conf` file, and the recommended layout.
+
+```bash
+$  taxi init
+```
+
+```bash
+mkdir hello-world
+cd hello-world
+taxi init
+```
+
+You'll be prompted with basic project details to name and create your new taxi project
+
+* Project group: `demo` ⏎
+* Project name: `hello-world` ⏎
+* Project version: ⏎  (Defaults are fine)
+* Source directory:  ⏎ (Defaults are fine)
+
+A new `taxi.conf` has now been created, as follows:
+
+```text
+name: demo/hello-world
+version: 0.1.0
+sourceRoot: src/
+```
+
+### build
+
+Compile the taxi project, and invoke any language generators
+
+```bash
+taxi build
+```
+
+This command invokes the taxi compiler to validate your taxi code, and invokes any language generators configured.  (See [Plugins](/taxi-cli/plugins-intro).
+If no plugins are configured, no code will be emitted, but the project is still compiled, ensuring no syntactic errors exist.
+
+### version-bump
+
+```bash
+taxi version-bump major|minor|patch
+```
+
+This command increments the version defined in the `taxi.conf` file.
+
+<Callout>
+
+   Running this command will change the layout of your `taxi.conf` file, to follow HOCON layout.
+
+   While there are no material differences between the files before and after, cosmetic changes can occur.  We're aware of this issue, and will address it in a future release.
+</Callout>
+
+[Semantic Versioning](https://semver.org/) principals are followed when incrementing the version.
+
+### set-version
+
+```bash
+taxi set-version $newVersion
+```
+
+This command updates the version defined in the `taxi.conf` with to `$newVersion`
+
+eg:
+
+```bash
+$  taxi-hello-world taxi set-version 0.2.3
+Taxi version 0.10.4
+Version updated from 0.1.0 to 0.2.3
+```
+
+<Callout>
+
+   Running this command will change the layout of your `taxi.conf` file, to follow HOCON layout.
+
+   While there are no material differences between the files before and after, cosmetic changes can occur.
+   We're aware of this issue, and will address it in a future release.
+</Callout>
+
+
+### publish
+
+```bash
+taxi publish
+```
+
+Publishes the current project to the repository defined in the `publishToRepository` of the `taxi.conf` file.
+
+This involves creating a zip file from the current project, and uploading it to the configured repository.
+
+When a project is published, only the following artifacts are added:
+
+ * The `taxi.conf` file at the root of the project
+ * All `*.taxi` files present in the configured `sourceRoot`
+
+No other content is added.
+
+eg:
+
+```bash
+$ taxi publish
+Taxi Dev version @680c65b
+Adding file /sample-project/taxi.conf
+Adding file /sample-project/src/Test-enum.taxi
+Publishing package taxi/sample/0.3.0 from /tmp/sample-0.3.0.zip to http://localhost:8081/
+Will attempt to publish to http://localhost:8081/repository/taxi/taxi/sample/0.3.0/sample-0.3.0.zip using basic auth credentials supplied
+Artifact uploaded successfully
+```
+
+### orbital
+
+```bash
+taxi orbital
+```
+
+This command launches a local version of Orbital - a TaxiQL query engine - configured to read the taxi project with live updates.
+
+A `docker-compose.yml` file is downloadded from [start.orbitalhq.com](https://start.orbitalhq.com), then runs `docker compose up`.
+Orbital is automatically configured as described in [Building a standalone taxonomy](https://docs.vyne.co/developers-guide/setting-up-vyne-locally#building-a-standalone-taxonomy), with the following components:
+
+A `docker-compose.yml` file is created locally, configured to use `latest`.  You can override the version by passing
+`--version` or `-v`. eg:
+
+```bash
+taxi orbital -v 0.14.0
+```
+
+Note that if a `docker-compose.yml` already exists, then it is not overridden.  You can change this by passing `-f` or `--force`.
+

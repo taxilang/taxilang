@@ -34,7 +34,7 @@ export function IconContainer({as: Component = 'div', className = '', light, dar
   )
 }
 
-export function HeadMetaTags({title = "Orbital - Effortless, self-repairing orchestration"}) {
+export function HeadMetaTags({title = "Taxi - Semantic schemas and querying"}) {
   return (
     <Head>
       <meta
@@ -52,24 +52,6 @@ export function HeadMetaTags({title = "Orbital - Effortless, self-repairing orch
   )
 }
 
-export function HeroSection({title, children, className = ''}) {
-  return (
-    <section id="hero" className={cn('relative dark:bg-slate-900', className)}>
-      <Image
-        src={OrbitalLogo}
-        className={'absolute sm:blur-2xl md:blur-3xl opacity-15 pointer-events-none w-[350px] md:w-[550px] right-0'}
-        alt="Orbital aqua wormhole background image"
-      />
-      <div className="md:max-w-4xl mx-auto flex flex-col px-16 py-8 sm:pt-16 md:py-16 relative items-center">
-        <h1 className={`font-light text-4xl md:text-6xl leading-[3rem] md:leading-[5rem] dark:text-white font-brand text-center`}>
-          {title}
-        </h1>
-        {children}
-      </div>
-  </section>
-  )
-}
-
 export function SectionHeading({className = '', ...props}) {
   return <h2 className={`mt-8 font-semibold font-brand text-indigo-300 text-center text-md ${className}`} {...props} />
 }
@@ -79,7 +61,7 @@ export function Caption({className = '', ...props}) {
 }
 
 export function SectionHeadingParagraph({className = '', ...props}) {
-  return (<div className={`mt-8 mb-10 text-lg text-slate-300 lg:text-center max-w-4xl mx-auto ${className}`} {...props}>
+  return (<div className={`mt-8 mb-10 text-lg text-slate-300 lg:text-center max-w-5xl mx-auto flex flex-col gap-4 ${className}`} {...props}>
   </div>)
 }
 

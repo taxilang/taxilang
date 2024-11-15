@@ -6,6 +6,8 @@ import * as React from 'react';
 import FAQ from '@/components/Faq';
 import {OrbitalLogoMark} from "@/components/icons/orbital-logo";
 import {TaxiLogo} from "@/components/icons/taxi-icon-yellow";
+import {microservicesCodeSnippets, publishYourApiCodeSnippets} from "@/components/home/code-snippets";
+import {EmbedAndQuery} from "@/components/home/EmbedAndQuery";
 
 const faqs = [
   {
@@ -35,7 +37,7 @@ const faqs = [
 function HeroSection() {
   return (
     <header className='relative'>
-      <div className='sm:px-6 md:px-8 dark:bg-midnight-blue'>
+      <div className='sm:px-6 md:px-8 dark:bg-brand-background'>
         <div className='font-brand dark:text-white mx-auto max-w-8xl flex items-center gap-8 flex-col my-16 relative'>
           <TaxiLogo className={'h-[100px]'} />
           <h2 className='font-light lg:text-6xl text-4xl leading-tight text-center'>
@@ -75,10 +77,11 @@ export default function Home(
   return (
     <>
       <HeadMetaTags title="Taxi - Describe how your APIs and Data relate"/>
-      <div className='overflow-hidden dark:bg-midnight-blue'>
+      <div className='overflow-hidden dark:bg-brand-background'>
         <HeroSection/>
       </div>
       <div className='overflow-hidden'>
+        <EmbedAndQuery microservicesCodeSnippets={microserviceHighlightedSnippets} publishYourApiHighlightedSnippets={publishYourApiHighlightedSnippets} />
         {/*<FeaturesSection/>*/}
       </div>
       <div className="relative z-10">
@@ -94,9 +97,8 @@ export function getStaticProps() {
 
   return {
     props: {
-      // queryExampleCodeHighlightedSnippets: highlightCodeSnippets(queryExampleCodeSnippets),
-      // microserviceHighlightedSnippets: highlightCodeSnippets(microservicesCodeSnippets),
-      // publishYourApiHighlightedSnippets: highlightCodeSnippets(publishYourApiCodeSnippets),
+      microserviceHighlightedSnippets: highlightCodeSnippets(microservicesCodeSnippets),
+      publishYourApiHighlightedSnippets: highlightCodeSnippets(publishYourApiCodeSnippets),
     }
   };
 }

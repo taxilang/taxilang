@@ -3,7 +3,7 @@
 }
 
 .DocSearch-Container {
-  @apply w-screen h-screen fixed z-[200] top-0 left-0 cursor-auto flex flex-col bg-black/20 backdrop-blur-sm p-4 sm:p-6 md:p-[10vh] lg:p-[12vh] dark:bg-slate-900/80;
+  @apply w-screen h-screen fixed z-[200] top-0 left-0 cursor-auto flex flex-col bg-black/20 backdrop-blur-sm p-4 sm:p-6 md:p-[10vh] lg:p-[12vh] dark:bg-zinc-900/80;
 }
 
 .DocSearch-LoadingIndicator svg {
@@ -37,7 +37,7 @@
 
 &
 {
-  background: theme('colors.slate.800')
+  background: theme('colors.zinc.800')
 ;
   box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.05)
 ;
@@ -47,7 +47,7 @@
 .DocSearch-SearchBar {
   z-index: 1;
   padding: 0 1rem;
-  @apply flex-none relative flex items-center border-b border-slate-100 dark:border-slate-200/5;
+  @apply flex-none relative flex items-center border-b border-zinc-100 dark:border-zinc-200/5;
 }
 
 .DocSearch-Form {
@@ -77,17 +77,17 @@
   bottom: -0.25rem;
   left: -1rem;
   width: 1px;
-  background: theme('colors.slate.200');
+  background: theme('colors.zinc.200');
 
-  @apply dark:bg-slate-700;
+  @apply dark:bg-zinc-700;
 }
 
 .DocSearch-Hit > a {
   position: relative;
   font-size: 0.875rem;
-  border-bottom: 1px solid theme('colors.slate.100');
+  border-bottom: 1px solid theme('colors.zinc.100');
 
-  @apply dark:border-slate-200/5;
+  @apply dark:border-zinc-200/5;
 }
 
 .DocSearch-Hit--Result {
@@ -120,13 +120,13 @@
   background: transparent;
   height: 3.5rem;
   font-size: 1rem;
-  color: theme('colors.slate.900');
+  color: theme('colors.zinc.900');
   margin-left: 0.75rem;
   margin-right: 1rem;
   flex: auto;
   min-width: 0;
 
-  @apply dark:text-slate-200;
+  @apply dark:text-zinc-200;
 }
 
 @screen sm {
@@ -156,7 +156,7 @@
   font-size: 0;
   border-radius: 0.375rem;
   padding: 0.25rem 0.375rem;
-  @apply ring-1 ring-slate-900/5 shadow-sm hover:ring-slate-900/10 hover:shadow dark:ring-0 dark:bg-slate-600;
+  @apply ring-1 ring-zinc-900/5 shadow-sm hover:ring-zinc-900/10 hover:shadow dark:ring-0 dark:bg-zinc-600;
   width: 1.75rem;
   height: 1.5rem;
   /* esc */
@@ -181,7 +181,7 @@
 .DocSearch-Hit-source {
   line-height: 1.5rem;
   font-weight: 600;
-  color: theme('colors.slate.900');
+  color: theme('colors.zinc.900');
   padding-top: 2.5rem;
   margin: 0 1.5rem 1rem;
 
@@ -189,7 +189,7 @@
 
 &
 {
-  color: theme('colors.slate.200')
+  color: theme('colors.zinc.200')
 ;
 }
 }
@@ -223,7 +223,7 @@
   background-repeat: no-repeat;
   background-position: center center;
 
-  @apply bg-white ring-1 ring-slate-900/5 shadow-sm dark:bg-slate-700 dark:ring-0;
+  @apply bg-white ring-1 ring-zinc-900/5 shadow-sm dark:bg-zinc-700 dark:ring-0;
 }
 
 .DocSearch-Hit--Parent .DocSearch-Hit-icon {
@@ -248,11 +248,11 @@
   font-size: 0.75rem;
   line-height: 1.5rem;
   font-weight: 600;
-  color: theme('colors.slate.700');
-  background: theme('colors.slate.100');
+  color: theme('colors.zinc.700');
+  background: theme('colors.zinc.100');
   border-radius: 999px;
   padding: 0 0.375rem;
-  @apply dark:bg-slate-700/50 dark:text-slate-400;
+  @apply dark:bg-zinc-700/50 dark:text-zinc-400;
 }
 
 .DocSearch-Hit[aria-selected='true'] .DocSearch-Hit-icon {
@@ -266,7 +266,7 @@
 }
 
 .DocSearch-Hit-title {
-  @apply text-slate-700 leading-6 truncate dark:text-slate-400;
+  @apply text-zinc-700 leading-6 truncate dark:text-zinc-400;
 }
 
 .DocSearch-Hit-title + .DocSearch-Hit-path {
@@ -341,7 +341,7 @@
 }
 
 .DocSearch-Hit:first-child > a {
-  @apply border-t border-slate-100 dark:border-slate-200/5;
+  @apply border-t border-zinc-100 dark:border-zinc-200/5;
 }
 
 .DocSearch-Hit--Result {
@@ -353,11 +353,11 @@
 }
 
 .DocSearch-Hit--Result {
-  @apply bg-slate-50 rounded-lg dark:bg-slate-700/30;
+  @apply bg-zinc-50 rounded-lg dark:bg-zinc-700/30;
 }
 
 .DocSearch-Hit[aria-selected='true'] > a {
-  @apply bg-slate-50 dark:bg-slate-700/[0.16];
+  @apply bg-zinc-50 dark:bg-zinc-700/[0.16];
 }
 
 .DocSearch-Hit[aria-selected='true'] .DocSearch-Hit--Result {
@@ -387,7 +387,7 @@
 }
 
 .DocSearch-Footer {
-  @apply flex-none flex justify-end border-t border-slate-100 py-4 px-6 dark:border-slate-200/5;
+  @apply flex-none flex justify-end border-t border-zinc-100 py-4 px-6 dark:border-zinc-200/5;
 }
 
 .DocSearch-Commands {
@@ -395,11 +395,11 @@
 }
 
 .DocSearch-Logo a {
-  @apply flex items-center text-slate-400 text-xs font-medium dark:text-slate-600;
+  @apply flex items-center text-zinc-400 text-xs font-medium dark:text-zinc-600;
 }
 
 .DocSearch-Logo svg {
-  @apply ml-3 text-[#5468ff] dark:text-slate-400;
+  @apply ml-3 text-[#5468ff] dark:text-zinc-400;
 }
 
 .DocSearch-Hit--deleting,
@@ -417,11 +417,11 @@
 }
 
 .DocSearch-Title strong {
-  @apply text-slate-900 font-normal dark:text-slate-200;
+  @apply text-zinc-900 font-normal dark:text-zinc-200;
 }
 
 .DocSearch-StartScreen .DocSearch-Help {
-  @apply text-center text-slate-400 py-16 px-6;
+  @apply text-center text-zinc-400 py-16 px-6;
 }
 
 .DocSearch-NoResults {
@@ -430,15 +430,15 @@
 
 .DocSearch-NoResults .DocSearch-Title {
   text-align: center;
-  color: theme('colors.slate.400');
+  color: theme('colors.zinc.400');
 }
 
 .DocSearch-NoResults-Prefill-List .DocSearch-Help {
-  @apply text-sm leading-6 font-semibold mb-3 text-slate-900 dark:text-slate-200;
+  @apply text-sm leading-6 font-semibold mb-3 text-zinc-900 dark:text-zinc-200;
 }
 
 .DocSearch-NoResults-Prefill-List ul {
-  @apply rounded-lg bg-slate-50 border border-slate-200 dark:bg-slate-700/30 dark:border-slate-700 overflow-hidden;
+  @apply rounded-lg bg-zinc-50 border border-zinc-200 dark:bg-zinc-700/30 dark:border-zinc-700 overflow-hidden;
 }
 
 .DocSearch-NoResults-Prefill-List button {
@@ -452,11 +452,11 @@
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
 
-  @apply text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-white/[0.02];
+  @apply text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-white/[0.02];
 }
 
 .DocSearch-NoResults-Prefill-List li + li button {
-  @apply border-t border-slate-200 dark:border-slate-200/5;
+  @apply border-t border-zinc-200 dark:border-zinc-200/5;
 }
 
 .DocSearch-NoResults-Prefill-List + .DocSearch-Help {
@@ -521,11 +521,11 @@
 }
 
 .DocSearch-Hit-action [title='Remove this search from favorites']::before {
-  @apply absolute inset-0 content-[''] pointer-events-none bg-sky-50 dark:bg-slate-700/30;
+  @apply absolute inset-0 content-[''] pointer-events-none bg-sky-50 dark:bg-zinc-700/30;
 }
 
 .DocSearch-Hit[aria-selected='true'] [title='Remove this search from favorites']::before {
-  @apply bg-sky-100 dark:bg-slate-700/40;
+  @apply bg-sky-100 dark:bg-zinc-700/40;
 }
 
 .DocSearch-Hit-action [title='Remove this search from favorites']::after {
@@ -569,5 +569,5 @@
 }
 
 .DocSearch-Hit-action + .DocSearch-Hit-action {
-  @apply ml-3 pl-3 border-l border-slate-200 dark:border-slate-200/5;
+  @apply ml-3 pl-3 border-l border-zinc-200 dark:border-zinc-200/5;
 }

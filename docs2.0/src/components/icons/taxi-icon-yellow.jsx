@@ -1,9 +1,10 @@
 
 export function TaxiLogo(props) {
+  const { useCurrentColor, ...restProps } = props;
   return (
-    <svg width="95" height="95" viewBox="0 0 95 95" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg width="95" height="95" viewBox="0 0 95 95" fill="none" xmlns="http://www.w3.org/2000/svg" {...restProps}>
       <g clip-path="url(#clip0_6_24)">
-        <rect width="95" height="95" fill="#F2CC05"/>
+        <rect width="95" height="95" fill={useCurrentColor ? 'currentColor' : '#F2cc05'}/>
         <path
           d="M6.92229 26.3729V21.0909H29.6663V26.3729H21.5068V48H15.0949V26.3729H6.92229ZM33.083 48H26.0929L35.1721 21.0909H43.8308L52.91 48H45.92L39.6 27.8707H39.3898L33.083 48ZM32.1501 37.4098H46.7609V42.3501H32.1501V37.4098ZM60.17 21.0909L65.084 29.592H65.2943L70.2609 21.0909H77.54L69.42 34.5455L77.8028 48H70.3397L65.2943 39.407H65.084L60.0386 48H52.6281L60.9715 34.5455L52.8383 21.0909H60.17ZM85.1875 21.0909V48H78.6836V21.0909H85.1875Z"
           fill="black"/>

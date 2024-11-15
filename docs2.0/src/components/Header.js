@@ -27,7 +27,7 @@ export function NavPopover({display = 'md:hidden', className, ...props}) {
     <div className={clsx(className, display)} {...props}>
       <button
         type="button"
-        className="text-slate-500 w-8 h-8 flex items-center justify-center hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+        className="text-zinc-500 w-8 h-8 flex items-center justify-center hover:text-zinc-600 dark:text-zinc-400 dark:hover:text-zinc-300"
         onClick={() => setIsOpen(true)}
       >
         <span className="sr-only">Navigation</span>
@@ -47,12 +47,12 @@ export function NavPopover({display = 'md:hidden', className, ...props}) {
         open={isOpen}
         onClose={setIsOpen}
       >
-        <Dialog.Overlay className="fixed inset-0 bg-black/20 backdrop-blur-sm dark:bg-slate-900/80"/>
+        <Dialog.Overlay className="fixed inset-0 bg-black/20 backdrop-blur-sm dark:bg-zinc-900/80"/>
         <div
-          className="fixed top-4 right-4 w-full max-w-xs bg-white rounded-lg shadow-lg p-6 text-base font-semibold text-slate-900 dark:bg-slate-800 dark:text-slate-400 dark:highlight-white/5">
+          className="fixed top-4 right-4 w-full max-w-xs bg-white rounded-lg shadow-lg p-6 text-base font-semibold text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:highlight-white/5">
           <button
             type="button"
-            className="absolute z-10 top-5 right-5 w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+            className="absolute z-10 top-5 right-5 w-8 h-8 flex items-center justify-center text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 dark:hover:text-zinc-300"
             onClick={() => setIsOpen(false)}
           >
             <span className="sr-only">Close navigation</span>
@@ -148,7 +148,7 @@ export function Header({
         className={clsx(
           'sticky top-[-1px] z-40 w-full flex-none transition-colors duration-500 lg:z-50 ',
           isOpaque
-            ? 'bg-white supports-backdrop-blur:bg-white/95 dark:bg-slate-900/95'
+            ? 'bg-white supports-backdrop-blur:bg-white/95 dark:bg-zinc-900/80 border-b border-zinc-700/80'
             : 'bg-white/95 supports-backdrop-blur:bg-white/60 dark:bg-transparent',
           className
         )}
@@ -178,7 +178,7 @@ export function Header({
               </div>
               <div className='right flex items-center'>
                 <div className='relative hidden md:flex items-center ml-auto'>
-                  <nav className='text-sm leading-6 font-semibold text-slate-700 dark:text-slate-200'>
+                  <nav className='text-sm leading-6 font-semibold text-zinc-700 dark:text-zinc-200'>
                     <ul className='flex space-x-8 items-center'>
                       <NavItems/>
                       {showSearch &&
@@ -186,11 +186,11 @@ export function Header({
                       }
                     </ul>
                   </nav>
-                  <div className='flex items-center border-l border-slate-200 ml-6 dark:border-gray-700/70'>
+                  <div className='flex items-center border-l border-zinc-200 ml-6 dark:border-gray-700/70'>
                     {allowThemeToggle && (<ThemeToggle panelClassName='mt-8'/>)}
                     <a
                       href='https://github.com/taxilang/taxilang'
-                      className="ml-6 block text-slate-400 hover:text-slate-500 dark:hover:text-slate-300"
+                      className="ml-6 block text-zinc-400 hover:text-zinc-500 dark:hover:text-zinc-300"
                     >
                       <span className="sr-only">Taxi on GitHub</span>
                       <svg
@@ -213,11 +213,11 @@ export function Header({
             </div>
           </div>
           {hasNav && (
-            <div className="flex items-center p-4 border-b border-slate-900/10 lg:hidden dark:border-slate-50/[0.06]">
+            <div className="flex items-center p-4 border-b border-zinc-900/10 lg:hidden dark:border-zinc-50/[0.06]">
               <button
                 type="button"
                 onClick={() => onNavToggle(!navIsOpen)}
-                className="text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+                className="text-zinc-500 hover:text-zinc-600 dark:text-zinc-400 dark:hover:text-zinc-300"
               >
                 <span className="sr-only">Navigation</span>
                 <svg width="24" height="24">
@@ -239,7 +239,7 @@ export function Header({
                         width="3"
                         height="6"
                         aria-hidden="true"
-                        className="mx-3 overflow-visible text-slate-400"
+                        className="mx-3 overflow-visible text-zinc-400"
                       >
                         <path
                           d="M0 0L3 3L0 6"
@@ -251,7 +251,7 @@ export function Header({
                       </svg>
                     </li>
                   )}
-                  <li className="font-semibold text-slate-900 truncate dark:text-slate-200">
+                  <li className="font-semibold text-zinc-900 truncate dark:text-zinc-200">
                     {title}
                   </li>
                 </ol>

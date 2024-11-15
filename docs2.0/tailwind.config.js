@@ -41,7 +41,7 @@ module.exports = {
     },
     extend: {
       colors: {
-        'midnight-blue': '#12263b',
+        'brand-background': '#18181b', // zinc-900
         'aqua': '#05BCC1',
         'taxi-yellow': {
           DEFAULT: '#f0cb30',
