@@ -157,8 +157,6 @@ export function SearchProvider({children}) {
               hitComponent={Hit}
               transformItems={(items) => {
                 return items?.map((item, index) => {
-                  // We transform the absolute URL into a relative URL to
-                  // leverage Next's preloading but only if it's not a docs.taxilang.org link.
                   const a = document.createElement('a')
                   a.href = item.url
 
@@ -175,7 +173,9 @@ export function SearchProvider({children}) {
 
                   return {
                     ...item,
-                    url: item.url.includes('docs.taxilang.org') ? item.url : `${a.pathname}${hash}`,
+                    // We transform the absolute URL into a relative URL to
+                    // leverage Next's preloading but only if it is a docs.taxilang.org link.
+                    url: item.url.includes('docs.taxilang.org') ? `${a.pathname}${hash}` : item.url,
                     __is_result: () => true,
                     __is_parent: () => item.type === 'lvl1' && items.length > 1 && index === 0,
                     __is_child: () =>
@@ -207,7 +207,7 @@ function Hit({hit, children}) {
           'DocSearch-Hit--LastChild': hit.__is_last?.(),
           'DocSearch-Hit--Child': hit.__is_child?.(),
         })}
-        target={hit.url.includes('docs.taxilang.org') ? '_blank' : '_self'}
+        target={hit.url.includes('docs.taxilang.org') ? '_self' : '_blank' }
         title={hit.url}
       >
         {children}
