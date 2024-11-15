@@ -53,7 +53,7 @@ export function HeadMetaTags({title = "Taxi - Semantic schemas and querying"}) {
 }
 
 export function SectionHeading({className = '', ...props}) {
-  return <h2 className={`mt-8 font-semibold font-brand text-indigo-300 text-center text-md ${className}`} {...props} />
+  return <h2 className={`mt-8 font-semibold font-brand text-emerald-500 text-center text-md ${className}`} {...props} />
 }
 
 export function Caption({className = '', ...props}) {

@@ -91,22 +91,22 @@ export function NavItems() {
       </li>*/}
       <li className="whitespace-nowrap">
         <Link href="/docs">
-          <a className="transition-colors hover:text-sky-500 dark:hover:text-sky-400">Docs</a>
+          <a className="transition-colors hover:text-taxi-yellow-600 dark:hover:text-yellow-500">Docs</a>
         </Link>
       </li>
       <li className="whitespace-nowrap">
         <Link href="https://orbitalhq.com/changelog">
-          <a className="hover:text-sky-500 dark:hover:text-sky-400">Changelog</a>
+          <a className="transition-colors hover:text-yellow-600 dark:hover:text-yellow-500">Changelog</a>
         </Link>
       </li>
       <li className="whitespace-nowrap">
         <Link href="https://playground.taxilang.org">
-          <a className="hover:text-sky-500 dark:hover:text-sky-400">Playground</a>
+          <a className="transition-colors hover:text-yellow-600 dark:hover:text-yellow-500">Playground</a>
         </Link>
       </li>
       <li className="whitespace-nowrap">
         <Link href="https://orbitalhq.com/blog">
-          <a className="hover:text-sky-500 dark:hover:text-sky-400">Blog</a>
+          <a className="transition-colors hover:text-yellow-600 dark:hover:text-yellow-500">Blog</a>
         </Link>
       </li>
     </>
@@ -146,7 +146,7 @@ export function Header({
     <>
       <div
         className={clsx(
-          'sticky top-[-1px] z-40 w-full flex-none transition-colors duration-500 lg:z-50 ',
+          'sticky top-0 z-40 w-full flex-none transition-colors duration-500 lg:z-50 ',
           isOpaque
             ? 'bg-white supports-backdrop-blur:bg-white/95 dark:bg-zinc-900/80 backdrop-blur border-b border-zinc-700/80'
             : 'bg-white/95 supports-backdrop-blur:bg-white/60 dark:bg-transparent',
