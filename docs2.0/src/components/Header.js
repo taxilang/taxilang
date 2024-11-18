@@ -156,7 +156,7 @@ export function Header({
         <div className="max-w-8xl mx-auto">
           <div
             className={clsx(
-              'py-4 sm:px-0 pt-8',
+              'py-4 sm:px-0 pt-5',
               hasNav ? 'mx-4 lg:mx-0' : ''
             )}
           >
