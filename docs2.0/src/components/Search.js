@@ -244,10 +244,10 @@ export function SearchButton({children, ...props}) {
             className={`flex shrink-0 items-center text-sm leading-6 text-zinc-400 rounded-md ring-1 ring-zinc-900/10 shadow-sm py-1.5 pl-2 pr-3 hover:ring-zinc-300 dark:bg-zinc-800 dark:highlight-white/5 dark:hover:bg-zinc-700 ${props.className}`}
       >
       <svg width="24" height="24" fill="none" aria-hidden="true" className="mr-3 flex-none">
-        <path d="m19 19-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-              stroke-linejoin="round"></path>
-        <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round"></circle>
+        <path d="m19 19-3.5-3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+              strokeLinejoin="round"></path>
+        <circle cx="11" cy="11" r="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                strokeLinejoin="round"></circle>
       </svg>
       <span className="hidden lg:block">Search...</span><span className="ml-auto pl-3 flex-none text-xs font-semibold text-zinc-500">[Ctrl K]</span>
     </button>
