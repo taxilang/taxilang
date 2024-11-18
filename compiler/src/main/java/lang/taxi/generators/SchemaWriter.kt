@@ -211,7 +211,8 @@ $operations
          }
          val paramName = if (!param.name.isNullOrEmpty()) param.name?.reservedWordEscaped() + " : " else ""
          val paramDeclaration = typeAsTaxi(param.type, namespace, param.nullable)
-         paramDocs + paramAnnotations + paramName + paramDeclaration + constraintString
+         val defaultValue = param.defaultValue?.let { "=${it.asTaxi()}" } ?: ""
+         paramDocs + paramAnnotations + paramName + paramDeclaration + constraintString + defaultValue
       }
 
       val params = if (paramsHaveDocs || paramsList.size > 2) {
