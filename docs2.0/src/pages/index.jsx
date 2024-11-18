@@ -18,7 +18,8 @@ const faqs = [
     question: 'How does this compare to GraphQL?',
     answer: [
       `Orbital gives you many of the benefits of GraphQL (API federation, custom response schemas), without having to move your tech stack over to GraphQl - instead working with your existing tech stack(s).`
-    ]
+    ],
+    learnMore: '/docs#taxi-vs-graph-ql'
   },
   {
     question: "What do you mean by 'Adapts Automatically'?",
@@ -41,7 +42,7 @@ function HeroSection() {
         <div className='font-brand dark:text-white mx-auto max-w-8xl flex items-center gap-8 flex-col my-16 relative'>
           <TaxiLogo className={'h-[100px]'} />
           <h2 className='font-light lg:text-6xl text-4xl leading-tight text-center'>
-            A language for APIs and data
+            A language for APIs, data<br />and connecting it all together.
           </h2>
 
           <p className='lg:text-2xl font-light max-w-4xl text-lg text-center'>

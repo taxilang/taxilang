@@ -1,9 +1,10 @@
 import {cn} from '@/lib/utils';
 import {Disclosure} from '@headlessui/react';
 import {MinusSmallIcon, PlusSmallIcon} from '@heroicons/react/24/outline';
+import {LinkButton} from "@/components/LinkButton";
 
 interface FaqProps {
-  faqs: { question: string, answer: string[] }[];
+  faqs: { question: string, answer: string[], learnMore?: string }[];
 }
 
 const FAQ = ({faqs}: FaqProps) => {
@@ -41,6 +42,7 @@ const FAQ = ({faqs}: FaqProps) => {
                     </dt>
                     <Disclosure.Panel as="dd" className="mt-4 pr-12 text-base leading-7 text-gray-300">
                       { faq.answer.map((text, index) => <p key={index} className={'mb-6'}>{text}</p> )}
+                      { faq.learnMore && (<LinkButton styles='w-fit' label='Learn more' link={faq.learnMore} />)}
                     </Disclosure.Panel>
                   </>
                 )}

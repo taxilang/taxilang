@@ -90,7 +90,7 @@ const Query = (highlightedCode) => {
   return (<div className='max-w-4xl mx-auto py-16'>
       <div className={'text-center text-lg'}>
         <SectionHeading>Orchestrate & Integrate</SectionHeading>
-        <BigText>You query, Taxi integrates & adapts</BigText>
+        <BigText>You query. Taxi integrates & adapts.</BigText>
         <SectionHeadingParagraph>
           <p>Write queries for data using the same tags you embedded in your API specs. Taxi's query engine handles the integration, linking across APIs, databases, Kafka topics, S3 buckets, the lot.</p>
           <p>There's no resolvers or glue code to maintain, API clients to generate, or YAML whitespace headaches.</p>
