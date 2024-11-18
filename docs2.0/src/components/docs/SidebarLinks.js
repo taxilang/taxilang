@@ -60,9 +60,11 @@ export const SidebarLinks = [
   {
     title: 'Guides',
     links: [
-      {title: 'Introduction to Semantic Integration', href: '/docs/background/intro-to-semantic-integration'},
+      /*{title: 'Introduction to Semantic Integration', href: '/docs/background/intro-to-semantic-integration'},*/
       {title: 'Adopting semantic types', href: '/docs/language/adopting-semantic-types'},
-      {title: 'Tips on building Taxonomies', href: '/docs/background/tips-on-taxonomies'}
+      /*{title: 'Tips on building Taxonomies', href: '/docs/background/tips-on-taxonomies'}*/
+      {title: 'Best practices for taxonomy development', href: '/docs/language/best-practices-for-taxonomy-development'},
+      {title: 'Building your base taxonomy', href: '/docs/language/building-your-base-taxonomy'},
     ]
   },
 ]
