@@ -24,9 +24,11 @@ const fontSemiBold = opentype.loadSync(resolve('Poppins-SemiBold.ttf'));
 const fontExtraBold = opentype.loadSync(resolve('Poppins-ExtraBold.ttf'));
 
 const colors = {
+  zinc200: '#e4e4e7',
+  zinc300: '#d4d4d8',
   sky500: '#0EA5E9',
   slate400: '#bae6fd',
-  slate500: '#64748B',
+  violet400: '#a78bfa',
   'slate500/30': 'rgba(100, 116, 139, 0.3)',
 }
 
@@ -219,7 +221,7 @@ export default async function handler(req, res) {
         ctx,
         PADDING.x,
         HEIGHT - PADDING.y - titleText.height - 16 - eyebrowText.height,
-        {color: colors.sky500}
+        {color: colors.zinc200}
       )
 
       if (date) {
@@ -263,7 +265,7 @@ export default async function handler(req, res) {
         ? getText(eyebrow, {font: fontSemiBold, size: 28, lineHeight: 48})
         : null
       let titleText = getText(title, {
-        font: fontExtraBold,
+        font: fontLight,
         size: 72,
         lineHeight: 80,
         letterSpacing: -0.025,
@@ -283,19 +285,19 @@ export default async function handler(req, res) {
 
       if (descriptionText) {
         descriptionText.draw(ctx, PADDING.x, HEIGHT - offset - descriptionText.height, {
-          color: colors.slate500,
+          color: colors.violet400,
         })
         offset += descriptionText.height + 16
       }
 
-      titleText.draw(ctx, PADDING.x, HEIGHT - offset - titleText.height, {color: colors.sky500})
+      titleText.draw(ctx, PADDING.x, HEIGHT - offset - titleText.height, {color: colors.zinc200})
 
       if (eyebrowText) {
         eyebrowText.draw(
           ctx,
           PADDING.x,
           HEIGHT - offset - titleText.height - 16 - eyebrowText.height,
-          {color: colors.sky500}
+          {color: colors.zinc200}
         )
       }
     }

@@ -94,10 +94,10 @@ The concept of Semantic vs Structural contracts are discussed in detail in this 
 [![Semantic vs Structural contracts](https://img.youtube.com/vi/ScneH_uel78/0.jpg)](https://www.youtube.com/watch?v=ScneH_uel78)
 
 ### How does Taxi relate to OpenAPI / RAML / AsyncApi etc.
-Taxi has [strong interoperability with OpenApi](/docs/other-api-specs/open-api).  While you can use
+Taxi has [strong interoperability with OpenApi](/docs/other-api-specs/open-api).  While you *could* use
 Taxi to fully describe REST-ish APIs in the same way you can use OpenAPI, most people prefer to combine the two.
 
-It's more common to embed Taxi metadata inside your existing OpenAPI specs, to get the best of both worlds.  This lets you use
+Typically, developers embed Taxi metadata inside existing OpenAPI specs, to get the best of both worlds.  This lets you use
 OpenAPI to describe the capabilities of an API, and Taxi metadata describes how the inputs and data returned relate to other systems
 in your ecosystem.
 
@@ -114,10 +114,12 @@ But, in most other areas other OpenAPI is stronger:
 
 
 ### Taxi vs Protobuf / Avro
-In addition to the differences with OpenAPI / RAML, Protobuf and Avro are also an encoding specification - they
-document how payloads are serialized to bytes.
+Just like with OpenAPI, Taxi typically doesn't replace Protobuf / Avro, but is used alongside it.
 
+Importantly, Protobuf and Avro are also an encoding specification - they document how payloads are serialized to bytes.
 Taxi does not attempt to be a serialization protocol.
+
+Learn more about how to embed Taxi metadata in your [Protobuf](/docs/other-api-specs/protobuf) and [Avro](/docs/other-api-specs/avro) specs.
 
 ### Taxi vs GraphQL
 Taxi (and espeically the query language - TaxiQL) and GraphQL share similar goals - providing a single entrypoint for
