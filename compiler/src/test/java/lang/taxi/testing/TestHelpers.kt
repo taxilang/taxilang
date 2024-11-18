@@ -31,7 +31,7 @@ object TestHelpers {
       return assertAreTheSame(generatedDoc, expectedDoc, generated)
    }
 
-   private fun assertAreTheSame(
+   fun assertAreTheSame(
       generatedDoc: TaxiDocument,
       expectedDoc: TaxiDocument,
       generatedSources: List<String>
