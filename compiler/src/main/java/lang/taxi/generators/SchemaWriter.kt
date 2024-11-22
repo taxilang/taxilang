@@ -282,7 +282,7 @@ ${scope}operation $operationName( $params )$returnDeclaration""".trimIndent()
          }
 
          """$enumValueTypedoc
-${generateAnnotations(enumValue)} ${enumValue.name}$enumValueDeclaration${synonymDeclaration}""".trim().trimEmptyLines()
+${generateAnnotations(enumValue)} ${enumValue.name.reservedWordEscaped()}$enumValueDeclaration${synonymDeclaration}""".trim().trimEmptyLines()
       }.joinToString(",\n").prependIndent()
       return """$enumDocs
 ${generateAnnotations(type)} enum ${type.toQualifiedName().typeName} {

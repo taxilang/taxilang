@@ -382,6 +382,42 @@ internal class OpenApiTypeMapperTest {
    }
 
    @Test
+   fun `enum fields with reserved words are esacped`() {
+      openApiYaml(
+         schemas = """
+            Pet:
+               type: object
+               properties:
+                  id:
+                     type: string
+                  name:
+                     type: string
+                  petType:
+                     type: string
+                     enum:
+                        - closed
+                        - open
+               required:
+                  - id
+                  - name
+                  - type
+         """
+      ) shouldGenerate """
+         namespace vyne.openApi {
+            closed model Pet {
+               id : String
+               name : String
+               petType : PetPetType?
+            }
+            enum PetPetType {
+               `closed`,
+               open
+            }
+         }
+      """
+   }
+
+   @Test
    fun `inline array of reference to object type`() {
 
       openApiYaml(
