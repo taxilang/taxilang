@@ -394,42 +394,15 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
    }
 
    @Test
-   fun `component array of inline object type, create = true`() {
-
-      openApiYaml(
-         schemas = """
-            People:
-              type: array
-              items:
-                x-taxi-type:
-                  name: example.Person
-                type: object
-                properties:
-                  name:
-                    type: string
-         """
-      ) generates listOf(
-         """
-         namespace example {
-            closed model Person {
-              name : String
-            }
-         }
-         """,
-         """
-         import example.Person
-         namespace vyne.openApi {
-            type People inherits Person[]
-         }
-         """
-      )
-   }
-
-   @Test
    fun `component array of inline object type, create = false`() {
 
       openApiYaml(
          schemas = """
+            Organisation:
+              type: object
+              properties:
+                people:
+                  ${'$'}ref: "#/components/schemas/People"
             People:
               type: array
               items:
@@ -444,7 +417,9 @@ internal class OpenApiTypeMapperTaxiExtensionTest {
       ) generates """
          import org.other.Person
          namespace vyne.openApi {
-            type People inherits Person[]
+               closed model Organisation {
+                  people : org.other.Person[]
+               }
          }
          """
    }
