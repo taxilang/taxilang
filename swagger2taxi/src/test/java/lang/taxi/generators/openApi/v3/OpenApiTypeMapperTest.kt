@@ -199,32 +199,9 @@ internal class OpenApiTypeMapperTest {
                 type: string
          """
       ) shouldGenerate """
-         namespace vyne.openApi {
-            type Strings inherits String[]
-         }
-      """
-   }
+         // This shouldn't generate anything, as there's no types referecing the Strings type,
+         // and we don't generate ArrayTypes as anything unless they're a field on an object
 
-   @Test
-   fun `component array of inline object type`() {
-
-      openApiYaml(
-         schemas = """
-            People:
-              type: array
-              items:
-                type: object
-                properties:
-                  name:
-                    type: string
-         """
-      ) shouldGenerate """
-         namespace vyne.openApi {
-            closed model AnonymousTypePeopleElement {
-              name : String
-            }
-            type People inherits AnonymousTypePeopleElement[]
-         }
       """
    }
 
@@ -233,6 +210,11 @@ internal class OpenApiTypeMapperTest {
 
       openApiYaml(
          schemas = """
+            Flight:
+              type: object
+              properties:
+                passengers:
+                  ${'$'}ref: "#/components/schemas/People"
             Person:
               type: object
               properties:
@@ -244,12 +226,15 @@ internal class OpenApiTypeMapperTest {
                 ${'$'}ref: "#/components/schemas/Person"
          """
       ) shouldGenerate """
-         namespace vyne.openApi {
-            closed model Person {
-              name : String
+            namespace vyne.openApi {
+               closed model Flight {
+                  passengers : Person[]
+               }
+
+               closed model Person {
+                  name : String
+               }
             }
-            type People inherits Person[]
-         }
       """
    }
 
@@ -266,9 +251,8 @@ internal class OpenApiTypeMapperTest {
                   type: string
          """
       ) shouldGenerate """
-         namespace vyne.openApi {
-            type Strings inherits Array<Array<String>>
-         }
+         // This shouldn't generate anything, as there's no types referecing the Strings type,
+         // and we don't generate ArrayTypes as anything unless they're a field on an object
       """
    }
 
@@ -277,6 +261,11 @@ internal class OpenApiTypeMapperTest {
 
       openApiYaml(
          schemas = """
+            Flight:
+              type: object
+              properties:
+                passengers:
+                  ${'$'}ref: "#/components/schemas/People"
             Person:
               type: object
               properties:
@@ -292,10 +281,12 @@ internal class OpenApiTypeMapperTest {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
+            closed model Flight {
+               passengers : Array<Person[]>
+            }
             closed model Person {
               name : String
             }
-            type People inherits Array<Array<Person>>
          }
       """
    }
@@ -561,9 +552,8 @@ namespace vyne.openApi {
          """
       ) shouldGenerate """
          namespace vyne.openApi {
-            type People inherits String[]
             closed model Organisation {
-              people: People
+              people: String[]
             }
          }
       """
@@ -594,10 +584,8 @@ namespace vyne.openApi {
                name : String
             }
 
-            type People inherits AnonymousTypePeopleElement[]
-
             closed model Organisation {
-               people : People
+               people : AnonymousTypePeopleElement[]
             }
          }
          """
@@ -630,10 +618,8 @@ namespace vyne.openApi {
                name : String
             }
 
-            type People inherits Person[]
-
             closed model Organisation {
-               people : People
+               people : Person[]
             }
          }
          """
@@ -661,10 +647,8 @@ namespace vyne.openApi {
       ) shouldGenerate """
          namespace vyne.openApi {
 
-            type People inherits Array<Array<Array<String>>>
-
             closed model Organisation {
-               people : People
+               people : Array<Array<String[]>>
             }
          }
          """
@@ -701,10 +685,8 @@ namespace vyne.openApi {
                name : String
             }
 
-            type People inherits Array<Array<Array<Person>>>
-
             closed model Organisation {
-               people : People
+               people : Array<Array<Person[]>>
             }
          }
          """

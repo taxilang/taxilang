@@ -15,9 +15,11 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
    val generatedTypes: Set<Type> get() = _generatedTypes.values.toSet()
 
    fun generateTypes() {
-      api.components?.schemas?.forEach { (name, schema) ->
-         generateNamedTypeRecursively(schema, qualify(name), listOf(Modifier.CLOSED))
-      }
+      api.components?.schemas
+         ?.filter { it !is ArraySchema }
+         ?.forEach { (name, schema) ->
+            generateNamedTypeRecursively(schema, qualify(name), listOf(Modifier.CLOSED))
+         }
    }
 
    private fun generateNamedTypeRecursively(
@@ -51,14 +53,15 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       schema: Schema<*>,
       modifiers: List<Modifier>,
       declaredSupertypes: List<String>
-   ) =
+   ): Type =
       when {
-          schema.isModel() -> generateModel(name, schema, modifiers, declaredSupertypes)
-          schema.isEnum() -> enumTypeFor(schema, name)!!
-          else -> {
-             val supertype = toType(schema, name.typeName, modifiers)
-             generateType(name, supertype, declaredSupertypes)
-          }
+         schema.isModel() -> generateModel(name, schema, modifiers, declaredSupertypes)
+         schema.isEnum() -> enumTypeFor(schema, name)!!
+         schema is ArraySchema -> toType(schema, name.typeName, modifiers)!!
+         else -> {
+            val supertype = toType(schema, name.typeName, modifiers)
+            generateType(name, supertype, declaredSupertypes)
+         }
       }
 
    fun generateUnnamedTypeRecursively(
@@ -91,7 +94,7 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
          generateModel(name, schema, modifiers)
       } else null
 
-   private fun toType(schema: Schema<*>, context: String, modifiers: List<Modifier>) =
+   private fun toType(schema: Schema<*>, context: String, modifiers: List<Modifier>): Type? =
       enumTypeFor(schema, qualify(context))
          ?: primitiveTypeFor(schema)
          ?: intermediateTypeFor(schema)
@@ -121,12 +124,12 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
          val enumValues = schema.enum
             .filterNotNull()
             .map { value ->
-            EnumValue(
-               value.toString().escapeIfContainsIllegalCharacters(),
-               value.toString().escapeIfContainsIllegalCharacters(),
-               EnumValue.enumValueQualifiedName(enumName, value.toString())
-            )
-         }
+               EnumValue(
+                  value.toString().escapeIfContainsIllegalCharacters(),
+                  value.toString().escapeIfContainsIllegalCharacters(),
+                  EnumValue.enumValueQualifiedName(enumName, value.toString())
+               )
+            }
          EnumType(
             enumName.fullyQualifiedName,
             EnumDefinition(
@@ -282,6 +285,7 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
    ): Field {
       val legalName = name.replaceIllegalCharacters()
       val nullable = schema.nullable ?: explicitlyRequired?.not() ?: false
+
       return Field(
          name = legalName,
          type = generateUnnamedTypeRecursively(

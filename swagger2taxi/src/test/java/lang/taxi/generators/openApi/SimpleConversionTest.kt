@@ -27,8 +27,6 @@ namespace vyne.openApi {
       tag : String?
    }
 
-   type Pets inherits Pet[]
-
    closed model Error {
       code : Int
       message : String
@@ -38,7 +36,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://petstore.swagger.io/v1/pets")
       operation listPets(
       [[ How many items to return at one time (max 100) ]]
-       @taxi.http.QueryVariable(value = "limit") limit : Int? ) : Pets
+       @taxi.http.QueryVariable(value = "limit") limit : Int? ) : Pet[]
       @taxi.http.HttpOperation(method = "POST" , url = "http://petstore.swagger.io/v1/pets")
       operation createPets(  )
    }
@@ -46,7 +44,7 @@ namespace vyne.openApi {
       @taxi.http.HttpOperation(method = "GET" , url = "http://petstore.swagger.io/v1/pets/{petId}")
       operation showPetById(
       [[ The id of the pet to retrieve ]]
-      @taxi.http.PathVariable(value = "petId") petId : String ) : Pets
+      @taxi.http.PathVariable(value = "petId") petId : String ) : Pet[]
    }
 }
         """.trimIndent()
