@@ -7,9 +7,10 @@ private fun String.isReservedWord() = ReservedWords.words.contains(this)
 private fun String.isValidIdentifier() = this.matches(validIdentifier)
 
 fun String.reservedWordEscaped(): String {
-    return if (this.isReservedWord() || !this.isValidIdentifier()) {
-        "`$this`"
-    } else {
-        this
-    }
+   val isEscaped = this.startsWith("`") && this.endsWith("`")
+   return when {
+      isEscaped -> this
+      this.isReservedWord() || !this.isValidIdentifier() -> return "`$this`"
+      else -> return this
+   }
 }

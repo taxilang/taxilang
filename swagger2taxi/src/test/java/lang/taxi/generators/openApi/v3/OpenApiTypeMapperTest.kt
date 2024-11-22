@@ -397,6 +397,7 @@ internal class OpenApiTypeMapperTest {
                      enum:
                         - closed
                         - open
+                        - mix-and-match
                required:
                   - id
                   - name
@@ -411,7 +412,8 @@ internal class OpenApiTypeMapperTest {
             }
             enum PetPetType {
                `closed`,
-               open
+               open,
+               `mix-and-match`
             }
          }
       """
