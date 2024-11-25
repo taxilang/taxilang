@@ -160,7 +160,13 @@ open class TaxiDocument(
          val types = UnionType.getTypeNames(qualifiedName).map {
             type(it)
          }
-         return UnionType(types, null, emptyList(), CompilationUnit.unspecified())
+         return UnionType(types, emptyList(), CompilationUnit.unspecified())
+      }
+      if (IntersectionType.isIntersectionType(qualifiedName)) {
+         val types = IntersectionType.getTypeNames(qualifiedName).map {
+            type(it)
+         }
+         return IntersectionType(types, emptyList(), CompilationUnit.unspecified())
       }
 
       if (PrimitiveType.isPrimitiveType(qualifiedName.toString())) {

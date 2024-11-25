@@ -29,7 +29,7 @@ What is the type of `Adults` here?
 ## Considered Options
 
 ### Using compiler magic to build a type alias:
-```angular2html
+```taxi
 type Adults = (Person[]) -> Person[].filter( (Age) -> Age > 18 )
 // becomes...
 type alias Adults = Person[] 

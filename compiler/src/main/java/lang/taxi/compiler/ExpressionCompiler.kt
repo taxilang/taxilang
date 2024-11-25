@@ -907,7 +907,7 @@ class ExpressionCompiler(
          }
          .map { (type, constraints) -> typedExpressionBuilder.typedExpression(type, constraints, typeExpression) }
          .handleErrorWith { errors ->
-            if (Enums.isPotentialEnumMemberReference(typeReference.qualifiedName().identifier().text())) {
+            if (typeReference != null && Enums.isPotentialEnumMemberReference(typeReference.qualifiedName().identifier().text())) {
                tokenProcessor.resolveEnumMember(typeReference.qualifiedName().identifier().text(), typeExpression)
                   .map { enumMember ->
                      LiteralExpression(
