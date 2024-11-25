@@ -82,7 +82,8 @@ typeMemberDeclaration
      :   typeDoc? annotation* fieldDeclaration
      ;
 
-expressionTypeDeclaration : 'by' expressionGroup;
+// Using by is deprecated, prefer =
+expressionTypeDeclaration : ('by'|'=') expressionGroup;
 
 // (A,B) -> C
 // Used in functions:
@@ -282,9 +283,10 @@ typeReference
     :   qualifiedName typeArguments? arrayMarker?;
     //
 unionType : typeReference ('|' typeReference)*;
+intersectionType : typeReference ('&' typeReference)*;
 
 // Use in call sites where optional types are permitted
-nullableTypeReference : (typeReference | unionType) Nullable?;
+nullableTypeReference : (typeReference | unionType | intersectionType) Nullable?;
 
 accessor
 // by is deprecated, use "="

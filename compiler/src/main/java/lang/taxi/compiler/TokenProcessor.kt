@@ -1331,6 +1331,11 @@ class TokenProcessor(
          )
 
          typeReference.unionType() != null -> parseUnionType(typeReference.unionType(), typeArgumentsInScope)
+         typeReference.intersectionType() != null -> parseIntersectionType(
+            typeReference.intersectionType(),
+            typeArgumentsInScope
+         )
+
          else -> listOf(CompilationError(typeReference.toCompilationUnit(), "Type expected")).left()
       }
    }
@@ -1339,55 +1344,20 @@ class TokenProcessor(
       unionType: UnionTypeContext,
       typeArgumentsInScope: List<TypeArgument>
    ): Either<List<CompilationError>, Type> {
-      return unionType.typeReference()
-         .map { unionTypeMember ->
-            parseType(
-               unionType.findNamespace(),
-               unionTypeMember,
-               typeArgumentsInScope
-            )
-         }.invertEitherList()
-         .flattenErrors()
-         .map { types ->
-
-            // MP: 8-Mar-24: Don't register Union Types into the type system.
-            // Instead, treat them more like Array types, which are created on-demand.
-            // This is because otherwise, the following code becomes invalid:
-            // query JoinedStreamsA {
-            //    stream { Tweet | TweetAnalytics }
-            // }
-            //
-            // query JoinedStreamsB {
-            //    stream { Tweet | TweetAnalytics }
-            // }
-            // as we've registered the union type twice.
-            //
-            // I also considered registering the type twice, but with context-specific names,
-            // eg: JoinedStreamsA$Union_TweetTweetAnalytics and
-            //     JoinedStreamsB$Union_TweetTweetAnalytics
-            //
-            // I ditched that idea, as not registered seems to be simpler for now. It's similar to how we
-            // handle arrays.
-            //
-            // Note for future self:
-            // Languages like Typescript handle this differently.
-            // They DO register the type, but use structure, rather than naming, as the unique
-            // attribute. Two types with the same structure but different names, are registered as
-            // a single structure (as a first-class concept), and two names pointing to the structure.
-            // This is how things like structural equality are implemented.
-            // For us, given the focus on semantics, that wouldn't quite work - ie., two types that
-            // are struturally similar but with different names indicate two different semantic concepts.
-            // However, It is something to consider when dealing with side-effects of not registering
-            // the union type.
-            UnionType(
-               types,
-               null,
-               emptyList(),
-               unionType.toCompilationUnit()
-            )
-
-         }
+      return SumTypeCompiler(this).parseSumType(unionType.typeReference(), typeArgumentsInScope, unionType)
    }
+
+   private fun parseIntersectionType(
+      intersectionType: IntersectionTypeContext,
+      typeArgumentsInScope: List<TypeArgument>
+   ): Either<List<CompilationError>, Type> {
+      return SumTypeCompiler(this).parseSumType(
+         intersectionType.typeReference(),
+         typeArgumentsInScope,
+         intersectionType,
+      )
+   }
+
 
    internal fun parseType(
       namespace: Namespace,
