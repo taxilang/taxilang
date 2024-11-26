@@ -7,6 +7,7 @@ import {Hero} from '@/components/Hero'
 import {Navigation} from '@/components/docs/Navigation'
 import {Prose} from '@/components/docs/Prose'
 import {SidebarLinks} from "@/components/docs/SidebarLinks";
+import {MobileNavigation} from '@/components/docs/MobileNavigation';
 
 
 function GitHubIcon(props) {
@@ -115,7 +116,7 @@ export function DocsLayout({children, tableOfContents, meta, slug}) {
       {isHomePage && <Hero/>}
 
       <div className="relative mx-auto flex max-w-[96rem] justify-center sm:px-2 lg:px-8 xl:px-12">
-        <div className="hidden md:relative md:block md:flex-none">
+        <div className="hidden lg:relative lg:block lg:flex-none">
           <div className="absolute inset-y-0 right-0 w-[50vw] bg-slate-50 dark:hidden"/>
           <div
             className="absolute top-16 bottom-0 right-0 hidden h-12 w-px bg-gradient-to-t from-slate-800 dark:block"/>
@@ -128,7 +129,10 @@ export function DocsLayout({children, tableOfContents, meta, slug}) {
             />
           </div>
         </div>
-        <div className="min-w-0 max-w-2xl flex-auto px-4 py-16 lg:max-w-none lg:px-8 md:px-16">
+        <div className="ml-3 md:ml-6 sticky top-[6rem] md:top-[7rem] self-start flex lg:hidden">
+          <MobileNavigation navigation={navigation}/>
+        </div>
+        <div className="min-w-0 max-w-2xl flex-auto lg:max-w-none p-4 md:p-8 lg:p-16">
           <article>
             {(title || section) && (
               <header className="mb-9 space-y-1">
@@ -195,8 +199,8 @@ export function DocsLayout({children, tableOfContents, meta, slug}) {
                   On this page
                 </h2>
                 <ol role="list" className="mt-4 space-y-3 text-sm mb-20">
-                  {tableOfContents.map((section) => (
-                    <li key={section.id}>
+                  {tableOfContents.map((section, index) => (
+                    <li key={`${section.id}${index}`}>
                       <h3>
                         <Link href={`#${section.slug}`}>
                           <a
@@ -214,8 +218,8 @@ export function DocsLayout({children, tableOfContents, meta, slug}) {
                           role="list"
                           className="mt-2 space-y-3 pl-5 text-slate-500 dark:text-slate-400"
                         >
-                          {section.children.map((subSection) => (
-                            <li key={subSection.slug}>
+                          {section.children.map((subSection, index) => (
+                            <li key={subSection.slug+index}>
                               <Link
                                 href={`#${subSection.slug}`}
                               >

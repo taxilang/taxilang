@@ -249,7 +249,7 @@ export function SearchButton({children, ...props}) {
         <circle cx="11" cy="11" r="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
                 strokeLinejoin="round"></circle>
       </svg>
-      <span className="hidden lg:block">Search...</span><span className="ml-auto pl-3 flex-none text-xs font-semibold text-zinc-500">[Ctrl K]</span>
+      <span className="hidden lg:block">Search...</span><span className="hidden lg:block ml-auto pl-3 flex-none text-xs font-semibold text-zinc-500">[Ctrl K]</span>
     </button>
   )
 }

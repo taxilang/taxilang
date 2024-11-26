@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
+import Router, { useRouter } from 'next/router'
 import { Dialog } from '@headlessui/react'
 
-import { Logomark } from '@/components/docs/Logo'
 import { Navigation } from '@/components/docs/Navigation'
+import {Logo} from '@/components/Logo';
 
 function MenuIcon(props) {
   return (
@@ -81,8 +81,17 @@ export function MobileNavigation({ navigation }) {
             >
               <CloseIcon className="h-6 w-6 stroke-slate-500" />
             </button>
-            <Link href="/" className="ml-6" aria-label="Home page">
-              <Logomark className="h-9 w-9" />
+            <Link href='/'>
+              <a
+                className='mr-3 flex items-center overflow-hidden'
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  Router.push('/brand');
+                }}
+              >
+                <span className='sr-only'>Taxi home page</span>
+                <Logo className='w-auto ml-4 h-7'/>
+              </a>
             </Link>
           </div>
           <Navigation navigation={navigation} className="mt-5 px-1" />

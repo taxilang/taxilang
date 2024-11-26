@@ -172,7 +172,7 @@ export function Header({
                     }}
                   >
                     <span className='sr-only'>Taxi home page</span>
-                    <Logo className='w-auto h-7'/>
+                    <Logo className='w-auto h-12'/>
                   </a>
                 </Link>)}
               </div>

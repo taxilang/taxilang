@@ -1,7 +1,7 @@
 export function Logo({className, ...props}) {
   return (
 
-    <svg width="48" height="48" viewBox="0 0 95 95" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg width="48" height="48" viewBox="0 0 95 95" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} {...props}>
       <g clipPath="url(#clip0_6_24)">
         <rect width="95" height="95" fill="#F2CC05"/>
         <path

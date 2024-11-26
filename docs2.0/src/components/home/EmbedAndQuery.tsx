@@ -61,7 +61,7 @@ const TagYourApis = (highlightedCode) => {
 
   const [tab, setTab] = useState('Open API');
 
-  return (<div className='max-w-4xl mx-auto min-h-[590px]'>
+  return (<div className='max-w-4xl p-4 mx-auto min-h-[590px]'>
     <div className='flex flex-col items-center py-8'>
       <div className={'text-center text-lg pb-8'}>
         <SectionHeading>Describe</SectionHeading>
@@ -87,7 +87,7 @@ const TagYourApis = (highlightedCode) => {
 }
 
 const Query = (highlightedCode) => {
-  return (<div className='max-w-4xl mx-auto py-16'>
+  return (<div className='max-w-4xl mx-auto p-4 py-16'>
       <div className={'text-center text-lg'}>
         <SectionHeading>Orchestrate & Integrate</SectionHeading>
         <BigText>You query. Taxi integrates & adapts.</BigText>
