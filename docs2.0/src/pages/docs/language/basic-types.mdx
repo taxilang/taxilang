@@ -99,6 +99,126 @@ type Inventory inherits Map<ProductId, Quantity>
   </ul>
 </Callout>
 
+## Union and Intersection types
+Taxi has partial (but growing) support for union and intersection types.
+
+Theses are most commonly found in queries, specifically relating to joining streams.
+
+### Merging properties
+For both Union Types and Intersection Types inherit all the properties of their
+underlying types:
+
+```taxi
+model Person { 
+  name : Name
+}
+model LivingThing {
+   age : Age
+}
+type PersonOrAge = Person | Age
+type PersonWithAge = Person & Age
+```
+
+In both scenarios, the resulting type contains two fields: 
+
+ - `name : Name`
+ - `age : Age`
+
+#### Dealing with name conflicts
+If both types declare a type with the same name, this results in a conflict. Conflicts are resolved as follows:
+
+1. If both types have the same name and the same type, the resulting type will contain only a single field.
+ 
+```taxi
+model Person { 
+  name : Name
+}
+model LivingThing {
+   name : Name
+}
+type PersonWithAge = Person & Age // contains only name : Name
+```
+
+2. If both models have fields with the same name, but different types, the declaring model's name is prepended:
+
+```taxi
+model Tweet {
+   id : TweetId inherits Int
+   user : UserId
+}
+model User {
+   id : UserId inherits Int
+}
+
+// Contains fields Tweet_id and User_id
+type TweetAndUser = Tweet | User
+```
+
+3. If both models have fields with the same name, and both models also have the same name, then the declaring models fully qualified name is prepended:
+
+```taxi
+namespace foo {
+  model Tweet {
+     id : TweetId inherits Int
+     user : UserId
+  }
+}
+
+namespace bar {
+  model Tweet {
+     id : UserId inherits Int
+  }
+}
+// Contains fields foo_Tweet_id and bar_Tweet_id
+type TweetAndUser = Tweet | User
+```
+
+<Callout type={'note'}>
+  Unlike in other languages, fields names are a lot less important in Taxi. Most mapping,
+  orchestration, and transformation functions use Types, rather than field names.
+</Callout>
+
+### Union types
+A `union type` is declared using the `|` operator, and broadly represents "This *or* That"
+
+```taxi
+// Subscribe to feeds of both Foo and Bar, and emit
+// when either emit a message.
+stream { Foo | Bar }
+```
+
+### Intersection types
+Intersection types are declared using the `&` operator, and broadly represent "This *and* That"
+
+```taxi
+// Subscribe to feeds of both Foo and Bar, and emit
+// only after both have emitted a message
+stream { Foo & Bar }
+```
+
+A stream of an intersection type is generally stateful, so requires
+some form of State Store provided by the TaxiQL engine. Read more about this
+in State Stores.
+
+### Limitations
+Currently, Union and Intersection types are only supported as 
+discovery types in a stream - as shown above.
+
+Over time, support will expand to cover scenarios like:
+ * Support for declaring top-level union / intersection types:
+
+```taxi
+// This is currently legal, but not fully supported by query engines
+type Baz = Foo & Bar
+type BreadRoll = Foo | Bar
+```
+
+ * Fields with Union Types (similar to OpenAPI's `anyof`)
+ * `find { }` queries, where the behaviour is similar to `stream {}` queries:
+   * `find { A | B }` - Load A and B, return if either produce a result
+   * `find { A & B }` - Load A and B, return only if both produce a result
+
+
 ## Special Types
 
 ### Nothing
