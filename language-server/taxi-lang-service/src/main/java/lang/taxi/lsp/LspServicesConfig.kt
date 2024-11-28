@@ -5,6 +5,7 @@ import lang.taxi.lsp.completion.CompletionService
 import lang.taxi.lsp.completion.CompositeCompletionService
 import lang.taxi.lsp.formatter.FormatterService
 import lang.taxi.lsp.gotoDefinition.GotoDefinitionService
+import lang.taxi.lsp.highlighting.SemanticTokenService
 import lang.taxi.lsp.hover.HoverService
 import lang.taxi.lsp.linter.LintingService
 import lang.taxi.lsp.signatures.SignatureHelpService
@@ -21,5 +22,6 @@ data class LspServicesConfig(
     val hoverService: HoverService = HoverService(),
     val codeActionService: CodeActionService = CodeActionService(),
     val signatureHelpService: SignatureHelpService = SignatureHelpService(),
-    val lintingService: LintingService = LintingService()
+    val lintingService: LintingService = LintingService(),
+   val semanticTokenService: SemanticTokenService = SemanticTokenService()
 )

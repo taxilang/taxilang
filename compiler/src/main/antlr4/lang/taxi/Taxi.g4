@@ -14,15 +14,15 @@ multiNamespaceDocument
     ;
 
 importDeclaration
-    :   'import' qualifiedName
+    :   K_Import qualifiedName
     ;
 
 namespaceDeclaration
-    :   'namespace' qualifiedName
+    :   K_Namespace qualifiedName
     ;
 
 namespaceBlock
-    :   'namespace' qualifiedName namespaceBody
+    :   K_Namespace qualifiedName namespaceBody
     ;
 
 
@@ -53,8 +53,8 @@ typeModifier
 // is used when constructing requests,
 // and that frameworks should freely construct
 // these types based on known values.
-    : 'parameter'
-    | 'closed'
+    : K_Parameter
+    | K_Closed
     ;
 
 typeKind : K_Type | K_Model;
@@ -62,7 +62,7 @@ typeKind : K_Type | K_Model;
 typeDeclaration
     :  typeDoc? annotation* typeModifier* typeKind identifier
          typeArguments?
-        ('inherits' listOfInheritedTypes)?
+        (K_Inherits listOfInheritedTypes)?
         (typeBody | expressionTypeDeclaration)?
     ;
 
@@ -333,7 +333,7 @@ typeArguments: '<' typeReference (',' typeReference)* '>';
 // A "lenient" enum will match on case insensitive values
 enumDeclaration
     :    typeDoc? annotation* lenientKeyword? 'enum' qualifiedName typeArguments?
-         (('inherits' enumInheritedType) | ('{' enumConstants? '}'))
+         ((K_Inherits enumInheritedType) | ('{' enumConstants? '}'))
     ;
 
 enumInheritedType
@@ -380,7 +380,7 @@ aliasedType
    ;
 
 inlineInheritedType
-   : 'inherits' typeReference
+   : K_Inherits typeReference
    ;
 
 typeAliasExtensionDeclaration
@@ -819,6 +819,12 @@ K_Declare: 'declare';
 
 K_Using: 'using';
 K_Excluding: 'excluding';
+
+K_Import: 'import';
+K_Namespace: 'namespace';
+K_Parameter: 'parameter';
+K_Closed: 'closed';
+K_Inherits: 'inherits';
 
 IdentifierToken
     :   Letter LetterOrDigit*
