@@ -33,9 +33,13 @@ class TypeCompletionBuilder(
       decorators: List<CompletionDecorator> = emptyList(),
       filter: (QualifiedName, Type?) -> Boolean,
    ): List<CompletionItem> {
-      val completionItems = typeRepository.getTypeNames()
-         .filter { (name, type) -> filter(name, type) }
-         .map { (name, type) -> buildCompletionItem(type, name, decorators) }
+      val completionItems = try {
+         typeRepository.getTypeNames()
+            .filter { (name, type) -> filter(name, type) }
+            .map { (name, type) -> buildCompletionItem(type, name, decorators) }
+      } catch (e:Exception) {
+         emptyList()
+      }
       val primitiveCompletions = primitives.filter { (type, _) -> filter(type.toQualifiedName(), type) }
          .map { (_, completionItem) -> completionItem }
       return completionItems + primitiveCompletions
