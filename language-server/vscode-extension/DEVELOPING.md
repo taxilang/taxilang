@@ -11,7 +11,7 @@ Easiest way to test grammar:
 Install [vscode-tmgrammar-snap](https://github.com/PanAeon/vscode-tmgrammar-test)
 
 ```bash
-npm i -g vscode-tmgrammar-snap
+npm i -g vscode-tmgrammar-test
 ```
 
 Modify `taxi.tmLanguage.json`, then run this from the `vscode-extension` directory:
