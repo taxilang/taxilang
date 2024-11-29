@@ -91,7 +91,10 @@ class ExpressionCompiler(
                   expressionGroup.typeProjection()!!
                ).flatMap { projectedTypeAndScope ->
                   // ...and stick it all together as a ProjectingExpression
-                  val projection = FieldProjection.forNullable(expression.returnType, projectedTypeAndScope)!!
+                  val constraints = if (expression is TypeExpression) {
+                     expression.constraints
+                  } else emptyList()
+                  val projection = FieldProjection.forNullable(expression.returnType, constraints, projectedTypeAndScope)!!
                   val projectingExpression = ProjectingExpression(expression, projection)
                   if (enforceTypeChecks) {
                      typeChecker.ifAssignableOrErrorList(

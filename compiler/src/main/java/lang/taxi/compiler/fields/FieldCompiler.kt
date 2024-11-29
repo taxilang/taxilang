@@ -202,7 +202,8 @@ class FieldCompiler(
                      typeDoc,
                      fieldAnnotations,
                      null,
-                     FieldProjection.forNullable(fieldTypeSpec.type, fieldProjectionType),
+                     // TODO: where do constraints come from here?
+                     FieldProjection.forNullable(fieldTypeSpec.type, emptyList(),  fieldProjectionType),
                   )
 
                }
@@ -214,7 +215,7 @@ class FieldCompiler(
                .flatMap { fieldTypeSpec ->
                   parseFieldProjection(member, fieldTypeSpec)
                      .flatMap { fieldProjectionType ->
-                        val projection = FieldProjection.forNullable(fieldTypeSpec.type, fieldProjectionType)
+                        val projection = FieldProjection.forNullable(fieldTypeSpec.type, emptyList(), fieldProjectionType)
                            ?.let { projection ->
                               // Ensure that the source type can be projected to the target type.
                               typeChecker.ifProjectableOrErrorList(
@@ -252,7 +253,7 @@ class FieldCompiler(
                         typeDoc,
                         fieldAnnotations,
                         null,
-                        FieldProjection.forNullable(fieldTypeSpec.type, projectionType)
+                        FieldProjection.forNullable(fieldTypeSpec.type, emptyList(),  projectionType)
                      )
                   }
 
@@ -271,7 +272,7 @@ class FieldCompiler(
                         typeDoc,
                         fieldAnnotations,
                         null,
-                        FieldProjection.forNullable(fieldTypeSpec.type, fieldProjectionType)
+                        FieldProjection.forNullable(fieldTypeSpec.type, emptyList(), fieldProjectionType)
                      )
                   }
 
