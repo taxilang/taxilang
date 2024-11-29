@@ -1,6 +1,7 @@
 package lang.taxi.types
 
 import lang.taxi.accessors.ProjectionFunctionScope
+import lang.taxi.services.operations.constraints.Constraint
 
 /**
  * Allows a field to define a projection for the field specifically.
@@ -15,16 +16,21 @@ import lang.taxi.accessors.ProjectionFunctionScope
  */
 data class FieldProjection(
    val sourceType: Type,
+   val sourceTypeConstraints: List<Constraint> = emptyList(),
    val projectedType: Type,
    val projectionFunctionScope: List<ProjectionFunctionScope>
 ) {
    companion object {
-      fun forNullable(sourceType: Type, projectedTypeAndScope: Pair<Type, List<ProjectionFunctionScope>>?): FieldProjection? {
+      fun forNullable(
+         sourceType: Type,
+         sourceTypeConstraints: List<Constraint> = emptyList(),
+         projectedTypeAndScope: Pair<Type, List<ProjectionFunctionScope>>?
+      ): FieldProjection? {
          return if (projectedTypeAndScope == null) {
             null
          } else {
             val (projectedType, scope) = projectedTypeAndScope
-            FieldProjection(sourceType, projectedType, scope)
+            FieldProjection(sourceType, sourceTypeConstraints,  projectedType, scope)
          }
       }
    }

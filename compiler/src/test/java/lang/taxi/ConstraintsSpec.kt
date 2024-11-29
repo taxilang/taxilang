@@ -2,14 +2,17 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
+import io.kotest.assertions.fail
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.query.convertToConstraint
 import lang.taxi.services.operations.constraints.ExpressionConstraint
+import lang.taxi.types.ObjectType
 
 class ConstraintsSpec : DescribeSpec({
    describe("Constraints") {
@@ -70,5 +73,69 @@ type SomeServiceRequest {
       query.projectedObjectType!!
          .field("starring")
          .constraints.shouldBeEmpty()
+   }
+
+   it("parses constraints of nested properties") {
+      val (schema,query) = """
+   closed model Deal {
+     id : DealId inherits Int
+     borrowerId : BorrowerId inherits Int
+   }
+   closed model ExistingDeals {
+     deals: Deal[]
+   }
+
+   service DealApi {
+     operation getDeal(DealId):Deal(...)
+     operation getExistingDeals(BorrowerId):ExistingDeals(...)
+   }
+""".compiledWithQuery("""
+given { id: DealId = 1}
+find { Deal(DealId == id )} as(deal: Deal) -> {
+    existing : ExistingDeals(BorrowerId == deal.borrowerId)
+    ...
+}
+""".trimIndent())
+      query.projectedObjectType!!
+         .field("existing")
+   }
+
+   it("compiles constraints on field of anonymous field type") {
+      val (schema, query) = """
+      model Film {
+         id : FilmId inherits Int
+      }
+      model FilmRevenue {}
+      """.trimIndent().compiledWithQuery("""
+         find { Film[] } as (film:Film) -> {
+            earnings: {
+               revenue: FilmRevenue(FilmId == film.id)
+            }
+         }[]
+      """.trimIndent())
+      val revenueField = query.projectedObjectType!!.field("earnings").type.asA<ObjectType>().field("revenue")
+      revenueField.constraints.shouldHaveSize(1)
+   }
+   it("parses constraints of nested properties with projections") {
+val (schema,query) = """
+   closed model Deal {
+     id : DealId inherits Int
+     borrowerId : BorrowerId inherits Int
+   }
+   closed model ExistingDeals {
+     deals: Deal[]
+   }
+""".compiledWithQuery("""
+given { id: DealId = 1}
+find { Deal(DealId == id )} as(deal: Deal) -> {
+    existing : Deal[] = ExistingDeals(BorrowerId == deal.borrowerId) as Deal[]
+//    existing : ExistingDeals(BorrowerId == deal.borrowerId)
+    ...
+}
+""".trimIndent())
+      val field = query.projectedObjectType!!
+         .field("existing")
+      field.projection!!
+         .sourceTypeConstraints.shouldHaveSize(1)
    }
 })
