@@ -188,7 +188,7 @@ export function DocsLayout({children, tableOfContents, meta, slug}) {
           </dl>
         </div>
         <div
-          className="hidden md:sticky md:top-[5.25rem] md:-mr-6 md:block md:h-[calc(100vh-5.25rem)] md:flex-none md:overflow-y-auto md:overflow-x-hidden md:py-16 md:pr-6">
+          className="hidden md:block md:-mr-6 md:py-8 lg:py-16 md:pr-6 md:sticky md:top-[5.25rem] md:h-[calc(100vh-5.25rem)] md:flex-none md:overflow-y-auto md:overflow-x-hidden">
           <nav aria-labelledby="on-this-page-title" className="w-56">
             {tableOfContents && tableOfContents.length > 0 && (
               <>
