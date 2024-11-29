@@ -122,7 +122,7 @@ export function DocsLayout({children, tableOfContents, meta, slug}) {
             className="absolute top-16 bottom-0 right-0 hidden h-12 w-px bg-gradient-to-t from-slate-800 dark:block"/>
           <div className="absolute top-28 bottom-0 right-0 hidden w-px bg-slate-800 dark:block"/>
           <div
-            className="sticky top-[4.5rem] -ml-0.5 h-[calc(100vh-4.5rem)] overflow-y-auto overflow-x-hidden py-16 pl-0.5">
+            className="sticky top-[5.25rem] -ml-0.5 h-[calc(100vh-5.25rem)] overflow-y-auto py-16 pl-0.5">
             <Navigation
               navigation={navigation}
               className="w-64 pr-8 xl:w-72 xl:pr-16"
@@ -188,7 +188,7 @@ export function DocsLayout({children, tableOfContents, meta, slug}) {
           </dl>
         </div>
         <div
-          className="hidden md:sticky md:top-[4.5rem] md:-mr-6 md:block md:h-[calc(100vh-4.5rem)] md:flex-none md:overflow-y-auto md:py-16 md:pr-6">
+          className="hidden md:sticky md:top-[5.25rem] md:-mr-6 md:block md:h-[calc(100vh-5.25rem)] md:flex-none md:overflow-y-auto md:overflow-x-hidden md:py-16 md:pr-6">
           <nav aria-labelledby="on-this-page-title" className="w-56">
             {tableOfContents && tableOfContents.length > 0 && (
               <>
