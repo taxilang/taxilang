@@ -265,11 +265,15 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    private fun computeLinterMessages(documentUri: String) {
       val normalizedUri = SourceNames.normalize(documentUri)
       val uri = URI.create(normalizedUri)
-      this.linterDiagnostics = mapOf(
-         normalizedUri to
-            lintingService.computeInsightFor(uri, compilerService.getOrComputeLastCompilationResult())
-      )
+
+      this.linterDiagnostics = try {
+         val insight = lintingService.computeInsightFor(uri, compilerService.getOrComputeLastCompilationResult())
+         mapOf(normalizedUri to insight)
+      } catch (exception: Exception) {
+         mapOf(normalizedUri to emptyList()) // Provide a fallback or empty result
+      }
    }
+
 
    override fun didSave(params: DidSaveTextDocumentParams) {
       // We only retrigger full reload on save of a the taxi.conf
