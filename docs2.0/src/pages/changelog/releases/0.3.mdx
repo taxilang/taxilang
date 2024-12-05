@@ -1,0 +1,77 @@
+---
+LastUpdated: 'Tue May 12 2020 10:00:00 GMT+1000 (Australian Eastern Standard Time)'
+version: '0.3'
+title: Release notes - 0.3
+---
+
+## 0.3.0
+2020-05-03
+
+### Bug Fixes
+
+* avoid null pointers if source contains compiler errors ([cec98aa](https://gitlab.com/taxi-lang/taxi-lang/commit/cec98aa4da7994f2f0db92ea00421870d421724a))
+* **imports:** references to imported types are now correctly resolved ([de8701c](https://gitlab.com/taxi-lang/taxi-lang/commit/de8701c002d3e92d46760431c8c0a85e12f04c5e))
+
+
+### Features
+
+* **compiler:** collect more errors during parsing before throwing exception ([5d5f6e9](https://gitlab.com/taxi-lang/taxi-lang/commit/5d5f6e936af5ae983e9cf6a8ef9e428dc707295e))
+* **compiler:** improve hooks exposed for tooling ([e97a9df](https://gitlab.com/taxi-lang/taxi-lang/commit/e97a9df8d0b7ad8c93f8171181fe50dc9cee20b1))
+* **extensions:** support extensions on type alias and enums ([a7dad5d](https://gitlab.com/taxi-lang/taxi-lang/commit/a7dad5d137051a92364358766d3d6539a6791f95))
+* **imports:** support imports that cross-reference files ([ee6e7a8](https://gitlab.com/taxi-lang/taxi-lang/commit/ee6e7a88c2f1f4d850cb67921e23ea2fec5f494b))
+* support for columnar accessor added ([e19c5e4](https://gitlab.com/taxi-lang/taxi-lang/commit/e19c5e4fa312c8337c2babb834d934fb7e1bbea9))
+* **swagger2taxi:** better support for  and anyOf types when importing OpenAPI schemas ([2af73f6](https://gitlab.com/taxi-lang/taxi-lang/commit/2af73f64d76090ded0fc186c6a869388f5b33797))
+* **swaggerImporter:** better detection of openApi vs swagger for yaml and json formats ([cdc27e5](https://gitlab.com/taxi-lang/taxi-lang/commit/cdc27e59a071847702fd0ce831820f66685c07f4))
+* **swaggerImporter:** support passing a baseUrl for services as an explicit param ([e521f24](https://gitlab.com/taxi-lang/taxi-lang/commit/e521f2475f4b9a320c77c9b355cd1f8afe5db43b))
+* **typedoc:** type extensions now support typedoc ([7b27863](https://gitlab.com/taxi-lang/taxi-lang/commit/7b2786356f712fed9e72c855e1bb2d31ccfdcfb8))
+
+
+
+
+
+## 0.3.1
+2020-05-03
+
+
+
+
+## 0.3.2
+2020-05-03
+
+
+
+
+## 0.3.3
+2020-05-06
+
+### Bug Fixes
+
+* **typedoc:** trim whitepsace margin when parsing typedoc ([e17bedb](https://gitlab.com/taxi-lang/taxi-lang/commit/e17bedb92edef2b6a5bd7d50e11689aaf346c2bb))
+
+
+### Features
+
+* **taxidoc:** taxidoc now supported on fields ([6c46148](https://gitlab.com/taxi-lang/taxi-lang/commit/6c4614897b9d1635923ad468391e74798a4d878d))
+
+
+
+
+
+## 0.3.4
+2020-05-12
+
+### Bug Fixes
+
+* **build:** fix version in pom, should be 0.3.4-SNAPSHOT ([443efa9](https://gitlab.com/taxi-lang/taxi-lang/commit/443efa91050279d9caa7b23592d5ec30a6490376))
+* **build:** fix version in pom, should be 0.3.4-SNAPSHOT ([fedd100](https://gitlab.com/taxi-lang/taxi-lang/commit/fedd1009284410d57fd4f78524c89914df0271ab))
+
+
+### Features
+
+* **config:** config now defines sourceRoot, for tooling to consume ([09a6b87](https://gitlab.com/taxi-lang/taxi-lang/commit/09a6b879063f05334edc47e5eb49cafe39ccfd5d))
+* enums support values, and infer basetype from the value ([a585378](https://gitlab.com/taxi-lang/taxi-lang/commit/a585378bbf83d25ee6891782ff038ffc19ca93fb))
+* **enums:** add support for enums declaring synonyms with each other ([b0b1b19](https://gitlab.com/taxi-lang/taxi-lang/commit/b0b1b194cf7f8ca13924c662111657eeba9d6b5f))
+
+
+
+

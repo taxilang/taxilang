@@ -28,12 +28,11 @@ const fallbackLayouts = {
 
 const fallbackDefaultExports = {
   'src/pages/{docs,components}/**/*': ['@/layouts/DocsLayout', 'DocsLayout'],
-  'src/pages/blog/**/*': ['@/layouts/BlogPostLayout', 'BlogPostLayout'],
-  'src/pages/changelog/**/*': ['@/layouts/BlogPostLayout', 'BlogPostLayout'],
+  'src/pages/changelog/**/*': ['@/layouts/DocsLayout', 'DocsLayout'],
 }
 
 const fallbackGetStaticProps = {
-  'src/pages/blog/**/*': '@/layouts/BlogPostLayout',
+  'src/pages/changelog/**/*': '@/layouts/DocsLayout'
 }
 
 module.exports = withBundleAnalyzer({

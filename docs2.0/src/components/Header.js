@@ -95,7 +95,7 @@ export function NavItems() {
         </Link>
       </li>
       <li className="whitespace-nowrap">
-        <Link href="https://orbitalhq.com/changelog">
+        <Link href="/changelog">
           <a className="transition-colors hover:text-yellow-600 dark:hover:text-yellow-500">Changelog</a>
         </Link>
       </li>
