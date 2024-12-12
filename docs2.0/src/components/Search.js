@@ -175,7 +175,7 @@ export function SearchProvider({children}) {
                     ...item,
                     // We transform the absolute URL into a relative URL to
                     // leverage Next's preloading but only if it is a docs.taxilang.org link.
-                    url: item.url.includes('docs.taxilang.org') ? `${a.pathname}${hash}` : item.url,
+                    url: item.url.includes('taxilang.org') ? `${a.pathname}${hash}` : item.url,
                     __is_result: () => true,
                     __is_parent: () => item.type === 'lvl1' && items.length > 1 && index === 0,
                     __is_child: () =>
@@ -207,7 +207,7 @@ function Hit({hit, children}) {
           'DocSearch-Hit--LastChild': hit.__is_last?.(),
           'DocSearch-Hit--Child': hit.__is_child?.(),
         })}
-        target={hit.url.includes('docs.taxilang.org') ? '_self' : '_blank' }
+        target={hit.url.includes('taxilang.org') ? '_self' : '_blank' }
         title={hit.url}
       >
         {children}
