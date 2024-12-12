@@ -50,7 +50,16 @@ class TaxiCompilerService(
    private val lastCompilationResult: AtomicReference<CompilationResult> = AtomicReference();
 
    private val tokenCache: CompilerTokenCache = CompilerTokenCache(
-      listOf(TokenInjectingErrorStrategy.parserCustomizer)
+      // MP 27-Nov-24: Removing this, as it hasn't seemed to work.
+      // Also, when this is enabled, we seem to be reporting errors complaining about the FAKE token
+      // (e.g., recovery has failed), against a fake URI.
+      // Because the WebUI now shows errors linked by URI, this means errors don't get reported.
+      // An example of a reproducer model that triggers this condition is:
+      // model Person {
+      //  friends: [] // <--- this is the error
+      //}
+//      listOf(TokenInjectingErrorStrategy.parserCustomizer)
+      emptyList()
    )
    val typeCompletionBuilder = TypeCompletionBuilder()
 
