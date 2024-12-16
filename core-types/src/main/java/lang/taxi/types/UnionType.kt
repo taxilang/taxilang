@@ -43,6 +43,7 @@ data class UnionType(
 
       }
    }
+
    override val qualifiedName: String = unionTypeName(this.types)
    private val equality = ImmutableEquality(this, UnionType::types, UnionType::annotations)
    override fun equals(other: Any?): Boolean = equality.isEqualTo(other)
@@ -78,6 +79,7 @@ data class IntersectionType(
 
       }
    }
+
    override val qualifiedName: String = intersectionTypeName(this.types)
    private val equality = ImmutableEquality(this, IntersectionType::types, IntersectionType::annotations)
    override fun equals(other: Any?): Boolean = equality.isEqualTo(other)
@@ -95,7 +97,7 @@ data class IntersectionType(
 abstract class SumType(
    types: List<Type>,
    private val source: CompilationUnit
-) : Type {
+) : Type, TypeWithFields {
 
    // Sum types don't have docs, as they're declared
    // as a type expression in a parent type.
@@ -133,11 +135,13 @@ abstract class SumType(
          }
       }
    }
+
+
    /**
     * The fields of a union type are only the fields
     * that are present in ALL types
     */
-   val fields: Set<Field> = types.flatMap { type ->
+   override val fields: List<Field> = types.flatMap { type ->
       when (type) {
          is ObjectType -> type.allFields.map { field ->
             // Check if this field name exists in other types
@@ -174,6 +178,8 @@ abstract class SumType(
 
          else -> emptySet<Field>()
       }
-   }.toSet()
+   }.distinct()
+
+   override val allFields: List<Field> = fields
 
 }

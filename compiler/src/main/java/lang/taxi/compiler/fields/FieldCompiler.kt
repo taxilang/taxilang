@@ -304,7 +304,7 @@ class FieldCompiler(
                   )
                typeOrError.flatMap { type ->
                   when {
-                     type !is ObjectType || !type.hasField(fieldName) ->
+                     type !is TypeWithFields || !type.hasField(fieldName) ->
                         listOf(
                            CompilationError(
                               member.start,
