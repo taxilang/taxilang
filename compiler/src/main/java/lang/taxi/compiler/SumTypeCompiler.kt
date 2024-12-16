@@ -2,6 +2,7 @@ package lang.taxi.compiler
 
 import arrow.core.Either
 import arrow.core.flatMap
+import arrow.core.getOrElse
 import arrow.core.right
 import lang.taxi.CompilationError
 import lang.taxi.TaxiParser.IntersectionTypeContext
@@ -46,6 +47,7 @@ class SumTypeCompiler(
             parseSumType(declaringContext, types)
          }
    }
+
    private fun parseSumType(
       declaringContext: ParserRuleContext, types: List<Type>
    ): Either<List<CompilationError>, Type> {
@@ -60,15 +62,18 @@ class SumTypeCompiler(
                ArrayType(internalSumType, declaringContext.toCompilationUnit())
             }
          }
+
          types.all { it is StreamType } -> {
             val memberTypes = types.map { (it as StreamType).type }
             parseSumType(declaringContext, memberTypes).map { internalSumType ->
                StreamType(internalSumType, declaringContext.toCompilationUnit())
             }
          }
+
          types.all { it is ObjectType } -> {
             createSumType(declaringContext, types)
          }
+
          else -> {
             declaringContext.createCompilationError("Cannot create sum type of mismatched container types: Types in a sum must be all arrays, streams, or object types")
          }
@@ -79,7 +84,27 @@ class SumTypeCompiler(
     * Creates the actual sum type.
     * Call this once all structural types (eg: Array, Stream)  have been resolve to their member types.
     */
-   private fun createSumType(declaringContext: ParserRuleContext, types: List<Type>):Either<List<CompilationError>, Type> {
+   private fun createSumType(
+      declaringContext: ParserRuleContext,
+      types: List<Type>
+   ): Either<List<CompilationError>, Type> {
+      // MP: 13-Dec-24: Superceeded below, and now registering
+      // Sum types to the type system.
+      // Otherwise performing field short-hand projections is impossible,
+      // as the type isn't present.
+      // eg:
+      // stream { A | B } as {
+      //    foo,
+      //    bar
+      // }
+      // We can't resolve foo and bar, as the type isn't present.
+      //
+      // Worked around the below restrictions by registering the types on
+      // demand, registering them the first time they are looked up.
+      // Added test
+      // UnionTypesSpec -> is possible to have multiple queries with identical inline union types
+      // to verify the below issues don't raise compiler exceptions.
+      //
       // MP: 8-Mar-24: Don't register Sum Types into the type system.
       // Instead, treat them more like Array types, which are created on-demand.
       // This is because otherwise, the following code becomes invalid:
@@ -110,16 +135,34 @@ class SumTypeCompiler(
       // However, It is something to consider when dealing with side-effects of not registering
       // the union type.
       return when (declaringContext) {
-         is UnionTypeContext ->  UnionType(
-            types,
-            emptyList(),
-            declaringContext.toCompilationUnit()
-         ).right()
-         is IntersectionTypeContext -> IntersectionType(
-            types,
-            emptyList(),
-            declaringContext.toCompilationUnit()
-         ).right()
+         is UnionTypeContext -> {
+            val typeName = UnionType.unionTypeName(types)
+            tokenProcessor.getType(declaringContext.findNamespace(), typeName, declaringContext)
+               .getOrElse {
+                  val unionType = UnionType(
+                     types,
+                     emptyList(),
+                     declaringContext.toCompilationUnit()
+                  )
+                  tokenProcessor.typeSystem.registerToken(unionType)
+                  unionType
+               }.right()
+         }
+
+         is IntersectionTypeContext -> {
+            val typeName = IntersectionType.intersectionTypeName(types)
+            tokenProcessor.getType(declaringContext.findNamespace(), typeName, declaringContext)
+               .getOrElse {
+                  val intersectionType = IntersectionType(
+                     types,
+                     emptyList(),
+                     declaringContext.toCompilationUnit()
+                  )
+                  tokenProcessor.typeSystem.registerToken(intersectionType)
+                  intersectionType
+               }.right()
+         }
+
          else -> declaringContext.createCompilationError(
             "An internal error occurred parsing a sum type - expected to find either a UnionType or IntersectionType, but neither were present"
          )

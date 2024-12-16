@@ -219,9 +219,15 @@ class TokenProcessor(
       name: String,
       context: ParserRuleContext
    ): Either<List<CompilationError>, Type> {
-      return attemptToLookupSymbolByName(namespace, name, context).map { qfn ->
-         typeSystem.getType(qfn)
-      }.wrapErrorsInList()
+      return attemptToLookupSymbolByName(namespace, name, context)
+         .wrapErrorsInList()
+         .flatMap { qfn ->
+            try {
+               typeSystem.getType(qfn).right()
+            } catch (e: UndefinedSymbolException) {
+               context.createCompilationError(e.message!!)
+            }
+         }
    }
 
    /**
@@ -2875,7 +2881,12 @@ enum class SymbolKind {
    }
 
    fun matches(token: ImportableToken): Boolean {
-      val isType = token is PrimitiveType || (token is UserType<*, *> && token !is AnnotationType)
+      val isType = when {
+         token is PrimitiveType -> true
+         (token is UserType<*, *> && token !is AnnotationType) -> true
+         token is SumType -> true
+         else -> false
+      }
       return when (this) {
 //         MATCH_ANYTHING -> true
          TYPE -> isType

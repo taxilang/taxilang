@@ -8,6 +8,7 @@ import lang.taxi.utils.log
 import org.apache.commons.lang3.SystemUtils
 import java.nio.file.Path
 import kotlin.io.path.name
+import kotlin.io.path.toPath
 
 // Note : I've made the path mandatory here, but may
 // want to relax that for cli-style projects where there
@@ -52,7 +53,7 @@ class TaxiPackageLoader(val taxiConfFilePath: Path? = null) {
             log().debug("Reading config at $path")
             val config = try {
                ConfigFactory.parseFile(path.toFile())
-            } catch (e: ConfigException.Parse) {
+            } catch (e: ConfigException) {
                throw MalformedTaxiConfFileException(
                   path,
                   e.message ?: e::class.simpleName!!,
@@ -66,7 +67,16 @@ class TaxiPackageLoader(val taxiConfFilePath: Path? = null) {
          }.toMutableList()
       configs.add(ConfigFactory.load())
       val config = configs.reduceRight(Config::withFallback)
-      val loaded: TaxiPackageProject = config.extract()
+
+      val loaded: TaxiPackageProject = try {
+         config.extract()
+      } catch (e:ConfigException) {
+         throw MalformedTaxiConfFileException(
+            e.origin().url().toURI().toPath(),
+            e.message ?: e::class.simpleName!!,
+            lineNumber = e.origin().lineNumber()
+         )
+      }
       // If we were explicitly given a root path, use that.
       // The "root path" concept is tricky, as the config is actally composed of many locations
       return if (taxiConfFilePath != null) {

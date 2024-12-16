@@ -203,7 +203,7 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
 
    private fun getToken(qualifiedName: String, symbolKind: SymbolKind = SymbolKind.TYPE): ImportableToken {
       return getTokenIfPresent(qualifiedName, symbolKind)
-         ?: throw IllegalArgumentException("$qualifiedName is not defined")
+       ?: throw UndefinedSymbolException("$qualifiedName is not defined")
    }
 
    private fun getTokenIfPresent(qualifiedName: String, symbolKind: SymbolKind = SymbolKind.TYPE): ImportableToken? {
@@ -325,3 +325,4 @@ class TypeSystem(importedTokens: List<ImportableToken>) : TypeProvider {
 }
 
 class AmbiguousNameException(message: String) : RuntimeException(message)
+class UndefinedSymbolException(message: String) : RuntimeException(message)

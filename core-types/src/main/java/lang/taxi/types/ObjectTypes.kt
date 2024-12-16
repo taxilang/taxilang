@@ -123,7 +123,7 @@ data class ObjectType(
    override val qualifiedName: String,
    override var definition: ObjectTypeDefinition?,
    override val extensions: MutableList<ObjectTypeExtension> = mutableListOf()
-) : UserType<ObjectTypeDefinition, ObjectTypeExtension>, Annotatable, Documented, HasChildSymbols<Type> {
+) : UserType<ObjectTypeDefinition, ObjectTypeExtension>, Annotatable, Documented, HasChildSymbols<Type>, TypeWithFields {
    companion object {
       fun undefined(name: String): ObjectType {
          return ObjectType(name, definition = null)
@@ -282,7 +282,7 @@ data class ObjectType(
             .flatMap { it.fields }
       }
 
-   val allFields: List<Field>
+   override val allFields: List<Field>
       get() {
          return inheritedFields + fields
       }
@@ -292,7 +292,7 @@ data class ObjectType(
          return listOfNotNull(this.definition?.typeDoc).plus(this.extensions.mapNotNull { it.typeDoc })
             .joinToString("\n")
       }
-   val fields: List<Field>
+   override val fields: List<Field>
       get() {
          return this.definition?.fields?.map { field ->
             val fieldExtensions = fieldExtensions(field.name)
@@ -316,8 +316,6 @@ data class ObjectType(
       return this.extensions.flatMap { it.fieldExtensions(fieldName) }
    }
 
-   fun hasField(name: String): Boolean = allFields.any { it.name == name }
-   fun field(name: String): Field = allFields.firstOrNull { it.name == name } ?: error("Type ${this.qualifiedName} has no field named '$name'")
    fun annotation(name: String): Annotation = annotations.firstOrNull { it.qualifiedName == name } ?: error("Type ${this.qualifiedName} has no annotation named '$name'")
 
    /**

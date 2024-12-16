@@ -177,6 +177,24 @@ class UnionTypesSpec : DescribeSpec({
             .type.shouldBeInstanceOf<IntersectionType>()
       }
 
+      it("is possible to project an intersection type using field shorthand syntax") {
+         """
+            model Tweet {
+               userId : UserId inherits String
+               text : TweetText inherits String
+            }
+            model Analytics {
+               viewCount : ViewCount inherits String
+            }
+         """.compiledWithQuery("""
+            stream { Tweet & Analytics } as {
+               userId,
+               text,
+               viewCount
+            }[]
+         """.trimIndent())
+      }
+
 
       it("the union type has the attributes of both types") {
         val taxi = """
@@ -278,6 +296,28 @@ class UnionTypesSpec : DescribeSpec({
             operation doSomethingElse(A|B):A|B
          }
       """.compiled()
+      }
+
+      it("is possible to have multiple queries with identical inline union types") {
+         """
+            model Tweet {}
+            model Analytics {}
+
+            query UnionQueryA {
+               stream { Tweet | Analytics }
+            }
+            query UnionQueryB {
+               stream { Tweet | Analytics }
+            }
+            query IntersectionQueryA {
+               stream { Tweet & Analytics }
+            }
+            query IntersectionQueryB {
+               stream { Tweet & Analytics }
+            }
+         """.compiledWithQuery("""
+            stream { Tweet & Analytics }
+         """.trimIndent())
       }
    }
 })
