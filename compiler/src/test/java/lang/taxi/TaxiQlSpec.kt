@@ -121,6 +121,28 @@ class TaxiQlSpec : DescribeSpec({
          query.typesToFind.first().typeName.parameterizedName.should.equal("lang.taxi.Array<foo.Order>")
       }
 
+       it("can have nullable parameters") {
+           val src = """
+                 query RecentOrdersQuery( startDate:Instant, endDate:Instant? ) {
+                    find {
+                       Order[]( TradeDate >= startDate && TradeDate < endDate )
+                    } as OutputOrder[]
+                 }
+              """.trimIndent()
+           val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
+           val query = queries.first()
+           query.parameters.should.have.size(2)
+           query.parameters.should.equal(
+               listOf(
+                   Parameter.variable("startDate", PrimitiveType.INSTANT),
+                   Parameter.variable("endDate", PrimitiveType.INSTANT, emptyList(), true),
+               )
+           )
+           query.projectedType?.toQualifiedName()?.parameterizedName.should.equal("lang.taxi.Array<foo.OutputOrder>")
+           query.typesToFind.should.have.size(1)
+           query.typesToFind.first().typeName.parameterizedName.should.equal("lang.taxi.Array<foo.Order>")
+       }
+
 
       it("should compile a named query with params") {
          val src = """

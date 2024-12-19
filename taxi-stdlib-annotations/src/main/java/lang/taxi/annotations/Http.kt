@@ -184,12 +184,24 @@ data class HttpQueryVariable(val value: String) : AnnotationProvider {
    override fun toAnnotation() = Annotation(NAME, mapOf("value" to value))
 }
 
-data class HttpResponseHeader(val value: String) : AnnotationProvider {
+data class HttpResponseHeader(val name: String, val value: String? = null) : AnnotationProvider {
    companion object {
       const val NAME = "taxi.http.ResponseHeader"
+      fun fromAnnotation(annotation: Annotation): HttpResponseHeader {
+         val parameters = annotation.parameters
+
+         return when {
+            parameters.containsKey("name") -> HttpResponseHeader(parameters["name"]!!.toString(), parameters["value"]?.toString())
+            !parameters.containsKey("name") && parameters.containsKey("value") -> HttpResponseHeader(parameters["value"]!!.toString(), null)
+            else -> error("@ResponseHeader requires name or value annotation!")
+         }
+      }
    }
 
-   override fun toAnnotation() = Annotation(NAME, mapOf("value" to value))
+   override fun toAnnotation(): Annotation {
+      val valueMap = value?.let { mapOf("value" to value) } ?: mapOf()
+      return Annotation(HttpHeader.NAME, mapOf("name" to name) + valueMap )
+   }
 }
 
 
