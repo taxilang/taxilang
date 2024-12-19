@@ -319,8 +319,9 @@ class TokenProcessor(
                   val annotations = collateAnnotations(queryParam.annotation())
                   val parameterName = queryParam.identifier().text ?: "p$idx"
                   val queryParameter: Either<List<CompilationError>, Parameter> =
-                     typeOrError(namedQueryContext.findNamespace(), queryParam.typeReference()).map { parameterType ->
-                        Parameter(parameterName, FactValue.Variable(parameterType, parameterName), annotations)
+                     typeOrError(namedQueryContext.findNamespace(), queryParam.nullableTypeReference().typeReference()).map { parameterType ->
+                        val isNullable = queryParam.nullableTypeReference().Nullable() != null
+                        Parameter(parameterName, FactValue.Variable(parameterType, parameterName), annotations, isNullable)
                      }
                   queryParameter
                }?.invertEitherList() ?: emptyList<Parameter>().right()

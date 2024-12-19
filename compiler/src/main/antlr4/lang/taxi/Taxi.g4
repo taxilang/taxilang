@@ -131,7 +131,8 @@ expressionGroup:
    // Inputs go last, so that when parsing lambdas, the inputs are the LHS and everything remainin goes RHS.
    // Might not work for nested lambdas, if that's a thing.
    | expressionInputs expressionGroup
-   | expressionGroup typeProjection;
+   | expressionGroup typeProjection
+   | valueArray;
 
 // readFunction before typeType to avoid functons being identified
 // as types
@@ -661,7 +662,7 @@ queryParameters: '(' queryParamList ')';
 
 queryParamList: queryParam (',' queryParam)*;
 
-queryParam: annotation* identifier ':' typeReference;
+queryParam: annotation* identifier ':' nullableTypeReference;
 
 queryDirective: K_Stream | K_Find | K_Map;
 findDirective: K_Find;

@@ -10,11 +10,12 @@ import lang.taxi.types.TypedValue
 data class Parameter(
    override val name: String,
    val value: FactValue,
-   override val annotations: List<Annotation>
+   override val annotations: List<Annotation>,
+   val nullable: Boolean = false
 ) : Argument, Annotatable {
    companion object {
-      fun variable(name: String, type: Type, annotations: List<Annotation> = emptyList()): Parameter {
-         return Parameter(name, FactValue.Variable(type, name), annotations)
+      fun variable(name: String, type: Type, annotations: List<Annotation> = emptyList(), nullable: Boolean = false): Parameter {
+         return Parameter(name, FactValue.Variable(type, name), annotations, nullable)
       }
    }
 
