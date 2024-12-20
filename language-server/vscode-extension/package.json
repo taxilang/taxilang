@@ -7,7 +7,7 @@
       "type": "git",
       "url": "https://gitlab.com/taxi-lang/language-server"
    },
-   "version": "1.54.0",
+   "version": "1.59.0",
    "engines": {
       "vscode": "^1.44.0"
    },
