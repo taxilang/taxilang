@@ -14,8 +14,10 @@ class GitVersionResolver : VersionResolver {
             .setVersion(request.artifact.version)
       }
 
+      val fullGitUrl = GitRepoTransport.resolveGitShorthandIfPresent(request.artifact.version)
+
       val path = GitRepoTransport(session)
-         .cloneRepo(URI(request.artifact.version))
+         .cloneRepo(URI(fullGitUrl))
       val taxiConf = path.resolve("taxi.conf")
       val project = TaxiProjectLoader(taxiConf).load()
       val result = VersionResult(request)

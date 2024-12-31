@@ -2,14 +2,14 @@ package org.taxilang.packagemanager.transports
 
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
 import lang.taxi.packages.ImporterConfig
 import org.eclipse.jgit.api.Git
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.taxilang.packagemanager.PackageManager
 import org.taxilang.packagemanager.RepositorySystemProvider
-import org.taxilang.packagemanager.repository.git.GitRepoTransportFactory
-import org.taxilang.packagemanager.repository.git.GitRepositorySupport
+import org.taxilang.packagemanager.repository.git.GitRepoTransport
 import org.taxilang.packagemanger.PackageManagerTest
 import org.taxilang.packagemanger.loadProject
 import java.io.File
@@ -24,6 +24,24 @@ class GitRepoTransportTest {
 
    @field:TempDir
    lateinit var tempWorkdir: File
+
+
+   @Test
+   fun `resolves git shorthand urls`() {
+      GitRepoTransport.resolveGitShorthandIfPresent("github:taxi-lang/test-project-a")
+         .shouldBe("https://github.com/taxi-lang/test-project-a.git")
+
+      GitRepoTransport.resolveGitShorthandIfPresent("github:taxi-lang/test-project-a#0.34.0")
+         .shouldBe("https://github.com/taxi-lang/test-project-a.git#0.34.0")
+
+
+      GitRepoTransport.resolveGitShorthandIfPresent("gitlab:taxi-lang/test-project-a")
+         .shouldBe("https://gitlab.com/taxi-lang/test-project-a.git")
+
+      GitRepoTransport.resolveGitShorthandIfPresent("gitlab:taxi-lang/test-project-a#0.34.0")
+         .shouldBe("https://gitlab.com/taxi-lang/test-project-a.git#0.34.0")
+
+   }
 
    @Test
    fun `will load dependencies from remote git repo`() {
@@ -42,8 +60,46 @@ class GitRepoTransportTest {
       cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/bundle/src").exists().shouldBeTrue()
       cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/bundle/src/types.taxi").exists().shouldBeTrue()
       cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/bundle/taxi.conf").exists().shouldBeTrue()
-
    }
+
+   @Test
+   fun `will load dependencies from remote github repo using shorthand`() {
+      // Base Project
+      val (packageIdentifier, baseProjectPath) = PackageManagerTest.createTaxiProject(
+         tempWorkdir.toPath(),
+         identifier = "org.test/rootProject/0.1.0",
+         // This is a real test git project, deployed on github
+         dependencies = listOf("com.orbitalhq/core/github:orbitalapi/orbital-core-taxi#0.34.0"),
+         typeNames = listOf("Film")
+      )
+      val taxiProject = loadProject(baseProjectPath)
+      val packageManager = buildPackageManager(cacheDir.toPath())
+      val loaded = packageManager.fetchDependencies(taxiProject)
+
+      cacheDir.toPath().resolve("com/orbitalhq/core/0.34.0/bundle/src").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("com/orbitalhq/core/0.34.0/bundle/src/TaxiQL.taxi").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("com/orbitalhq/core/0.34.0/bundle/taxi.conf").exists().shouldBeTrue()
+   }
+
+   @Test
+   fun `will load dependencies from remote gitlab repo using shorthand`() {
+      // Base Project
+      val (packageIdentifier, baseProjectPath) = PackageManagerTest.createTaxiProject(
+         tempWorkdir.toPath(),
+         identifier = "org.test/rootProject/0.1.0",
+         // This is a real test git project, deployed on gitlab
+         dependencies = listOf("org.test/dependencyA/gitlab:taxi-lang/test-project-a"),
+         typeNames = listOf("Film")
+      )
+      val taxiProject = loadProject(baseProjectPath)
+      val packageManager = buildPackageManager(cacheDir.toPath())
+      val loaded = packageManager.fetchDependencies(taxiProject)
+
+      cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/bundle/src").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/bundle/src/types.taxi").exists().shouldBeTrue()
+      cacheDir.toPath().resolve("org/test/dependencyA/0.1.0/bundle/taxi.conf").exists().shouldBeTrue()
+   }
+
 
    @Test
    fun `will load dependencies from git`() {

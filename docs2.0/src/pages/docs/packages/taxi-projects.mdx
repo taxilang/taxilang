@@ -72,12 +72,20 @@ The format for declaring dependencies is:
 
 ```hocon
 dependencies: {
-    org/ProjectName : 0.2.0
+    // Fetch from a package manager, such as Nexus 
+    "org/ProjectName" : 0.2.0
+
+    // Fetch from a github repository, at a specific branch / tag
+    "com.orbitalhq/core" : "github:orbitalapi/orbital-core-taxi#0.34.0"
+   
+    // Fetch from a gitlab repository (at https://gitlab.com) on the default branch
+    "org.test/dependencyA" : "gitlab:taxi-lang/test-project-a"
+
+    // Fetch from a different git provider
+    "org.test/dependencyB" : "https://someGitProvider.com/taxi-lang/test-project-a.git"
+
 }
 ```
-
-An example configuration for declaring dependencies is
-shown [here](https://gitlab.com/taxi-lang/taxi-lang/-/blob/develop/package-importer/src/test/resources/testRepo/taxi/lang.taxi.Dummy/0.2.0/taxi.conf).
 
 For details on sharing, publishing and depending on taxonomies, see [Publishing Taxi projects](./publishing)
 
@@ -109,7 +117,7 @@ repositories: [
 ]
 ```
 
-For more information on publishing and sharing taxonomies, see <Link to="../devtools/distributing-taxi-projects">here</Link>
+For more information on publishing and sharing taxonomies, see [/docs/packages/publishing#sharing-projects-with-nexus](sharing projects with Nexus)
 
 ### Credentials
 Credentials define how to authenticate with a repository.
