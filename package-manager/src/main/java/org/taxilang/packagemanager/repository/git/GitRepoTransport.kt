@@ -32,6 +32,7 @@ class GitRepoTransportFactory : TransporterFactory {
    companion object {
       const val REPO_TYPE = "git"
    }
+
    override fun newInstance(session: RepositorySystemSession, remote: RemoteRepository): Transporter {
       if (remote.contentType == REPO_TYPE) {
          return GitRepoTransport(session)
@@ -44,6 +45,38 @@ class GitRepoTransportFactory : TransporterFactory {
    override fun getPriority(): Float = 0F
 }
 
+enum class GitProviderShorthand(private val prefix: String, private val fullDomain: String) {
+   Github("github:", "https://github.com"),
+   Gitlab("gitlab:", "https://gitlab.com");
+
+   fun matches(url: String) = url.startsWith(prefix)
+
+   /**
+    * Converts:
+    * github:foo/bar to https://github.com/foo/bar.git
+    * github:foo/bar#0.34.0 to https://github.com/foo/bar.git#0.34.0
+    */
+   fun resolveUrl(url: String): String {
+      val parts = url.split("#")
+      val repoUrl = parts[0].replace(prefix, fullDomain + "/") + ".git"
+      return if (parts.size > 1) {
+         "$repoUrl#${parts[1]}"
+      } else {
+         repoUrl
+      }
+   }
+
+   companion object {
+      fun isKnownPrefix(url: String): Boolean {
+         return values().any { url.startsWith(it.prefix) }
+      }
+
+      fun forUrl(url: String): GitProviderShorthand? {
+         return values().find { url.startsWith(it.prefix) }
+      }
+   }
+}
+
 class GitRepoTransport(private val session: RepositorySystemSession) :
    Transporter {
    companion object {
@@ -51,7 +84,12 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
       const val ARTIFACT_ID_PARAM = "artifactId"
 
       fun isGitUrl(uri: URI): Boolean {
-         return isGitUrl(uri.withoutQueryString().toASCIIString())
+         return if (GitProviderShorthand.isKnownPrefix(uri.toASCIIString())) {
+            true
+         } else {
+            isGitUrl(uri.withoutQueryString().toASCIIString())
+         }
+
       }
 
       fun isGitUrl(url: String): Boolean {
@@ -59,8 +97,22 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
             url.endsWith(".git") || url.endsWith(".git/") -> true
             // Branch / commit sha reference
             url.contains(".git#") -> true
+            GitProviderShorthand.values().any { it.matches(url) } -> true
             else -> false
          }
+      }
+
+      /**
+       * Resolves shorthands (eg: github: gitlab:) to full urls
+       */
+      fun resolveGitShorthandIfPresent(url: String): String {
+         val shortHand = GitProviderShorthand.forUrl(url)
+         return shortHand?.resolveUrl(url) ?: url
+      }
+
+      fun resolveGitShorthandIfPresent(uri: URI): URI {
+         val resolved = resolveGitShorthandIfPresent(uri.toASCIIString())
+         return URI.create(resolved)
       }
    }
 
@@ -85,8 +137,9 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
       // We expect to have received a location from the
       // GitProjectLayout, which encodes additional information in the queryString.
       // Strip that out now.
-      val gitRepoUri = task.location.withoutQueryString()
-      val queryParams = task.location.queryParams()
+      val resolvedGitUri = GitRepoTransport.resolveGitShorthandIfPresent(task.location)
+      val gitRepoUri = resolvedGitUri.withoutQueryString()
+      val queryParams = resolvedGitUri.queryParams()
       val extension = queryParams[EXTENSION_QUERY_PARAM]
 
       when (extension) {
@@ -137,14 +190,7 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
       if (checkoutDir.exists()) {
          log().debug("Using existing git repository at $checkoutDir")
          val git = Git(RepositoryBuilder().setGitDir(checkoutDir.resolve(".git")).build())
-         val gitRepo = git.repository
-         val requiredBranch = getRequiredBranch(branchName, git)
-         if (requiredBranch != null && gitRepo.branch != requiredBranch) {
-            log().info("Switching git repo at $checkoutDir to branch $requiredBranch")
-            git.checkout().setName(requiredBranch).call()
-         }
-         log().debug("Pulling repo at $checkoutDir")
-         git.pull().call()
+         switchToRequiredBranch(branchName, git)
       } else {
          checkoutDir.mkdirs()
          val branchPart = if (branchName == null) {
@@ -170,16 +216,55 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
     * Returns the branch to check out when a repository is cloned locally.
     * If a branch name was provided, we use that. Otherwise, we find the "default" branch
     */
-   private fun getRequiredBranch(branchName: String?, git: Git): String? {
-      if (branchName != null) {
-         return branchName
-      }
+   private fun switchToRequiredBranch(branchName: String?, git: Git): String? {
+      val branchNameToCheckout = branchName ?: findDefaultBranch(git)
+      return switchToBranchOrTag(branchNameToCheckout, git)
+   }
+
+   /**
+    * Resolves the default branch (eg., master / main)
+    */
+   private fun findDefaultBranch(git: Git): String? {
       val headRef = git.repository.exactRef("refs/remotes/origin/HEAD")
-      val defaultBranchName = headRef?.target?.name?.substring("refs/remotes/origin/".length)
+         ?: git.repository.exactRef("HEAD")
+         ?: return null
+
+      val defaultBranchName = when {
+         headRef.target.name.startsWith("refs/remotes/origin/") -> headRef.target.name.removePrefix("refs/remotes/origin/")
+         headRef.target.name.startsWith("refs/heads/") -> headRef.target.name.removePrefix("refs/heads/")
+         else -> headRef.target.name
+      }
       /// TODO: This still appears to be null sometimes in unit tests
       // We could fetch the remote to find the HEAD, but will see if this is an issue
       // with real repos.
       return defaultBranchName
+   }
+
+   private fun switchToBranchOrTag(refName: String?, git: Git): String? {
+      val repository = git.repository
+      val ref = refName?.let {
+         repository.findRef(refName)
+            ?: repository.findRef("refs/tags/$refName")
+            ?: repository.findRef("refs/heads/$refName")
+            ?: throw IllegalArgumentException("Could not find branch or tag '$refName' in repository '$repository'")
+      }
+
+      if (ref != null) {
+         log().info("Switching ${repository.identifier} to branch $refName")
+         git.checkout()
+            .setName(ref.name)
+            .call()
+      } else {
+         git.checkout().call()
+      }
+
+
+      val isTag = ref?.name?.startsWith("refs/tags/") ?: false
+      if (!isTag) {
+         log().debug("Pulling branch $refName")
+         git.pull().call()
+      }
+      return ref?.name
    }
 
    override fun put(task: PutTask?) {
@@ -205,8 +290,7 @@ fun URI.queryParams(): Map<String, String> {
 }
 
 fun URI.withoutQueryString(): URI {
-   val uriWithoutQuery = this.toASCIIString().split("?")[0]
-   return URI(uriWithoutQuery)
+   return URI(this.scheme, this.userInfo, this.host, this.port, this.path, null, this.fragment)
 }
 
 fun URI.withoutFragment(): URI {

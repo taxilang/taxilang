@@ -20,11 +20,18 @@ sourceRoot: src/
 dependencies: {
     // Depends on a project in the "acme" organisation called "sample", version 0.3.0
    "org.acme/sample": 0.3.0
+
+    // Fetch from a github repository, at a specific branch / tag
+    "com.orbitalhq/core" : "github:orbitalapi/orbital-core-taxi#0.34.0"
+   
+    // Fetch from a gitlab repository (at https://gitlab.com) on the default branch
+    "org.test/dependencyA" : "gitlab:taxi-lang/test-project-a"
+
    // Depends on a project from git
-   "org.acme/another-project" : "https://gitlab.com/taxi-lang/another-project.git"
+   "org.acme/another-project" : "https://someGitProvider.com/taxi-lang/another-project.git"
 
    // Depends on a project from git, at a specific branch / tag
-   "org.acme/project-3" : "https://gitlab.com/taxi-lang/project-3.git#1.2.0"
+   "org.acme/project-3" : "https://someGitProvider.com/taxi-lang/project-3.git#1.2.0"
 }
 ```
 
@@ -62,14 +69,43 @@ dependencies: {
 
 If working exclusively with git repos, you don't need to declare a `repositories` section.
 
+### Github / Gitlab shorthand
+To use dependencies from github.com or gitlab.com, you can use the format `github:org/project` (or `github:org/project#tag`)
+
+For example:
+
+```hocon
+dependencies: {
+    // Fetch from a github repository, at a specific branch / tag
+    "com.orbitalhq/core" : "github:orbitalapi/orbital-core-taxi#0.34.0"
+   
+    // Fetch from a gitlab repository (at https://gitlab.com) on the default branch
+    "org.test/dependencyA" : "gitlab:taxi-lang/test-project-a"
+}
+```
+
 ### Authenticating to Git repos
 To provide authentication credentials, use a Username + Personal Authentication Token (supported in Github and Gitlab).
 
 For example:
 
+```hocon
+dependencies: {
+    "com.orbitalhq/core" : "https://alexhamilton:glpat-dundadadadundundun@github.com/taxi-conf/reynolds-pamphlet.git"
+}
 ```
-https://alexhamilton:glpat-dundadadadundundun@github.com/taxi-conf/reynolds-pamphlet.git
+
+HOCON supports env variable substitution, so you can also move sensitive credentials into an env variable:
+
+```hocon
+dependencies: {
+    // Note the variable is outside of quotes.
+    "com.orbitalhq/core" : "https://"${GH_PAT}"@github.com/taxi-conf/reynolds-pamphlet.git"
+}
 ```
+
+However, be careful of gotcha's with variable substitution in HOCON - see more information in [this issue](https://github.com/lightbend/config/issues/633) in the HOCON library
+
 
 ## Sharing projects with Nexus
 Currently, [Sonatype Nexus](https://www.sonatype.com/nexus/repository-oss) is the only non-git supported repository.
