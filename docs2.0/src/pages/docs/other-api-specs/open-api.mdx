@@ -45,6 +45,31 @@ for each.
   <p>Only create new types (<code>create: true</code>) when you're intentionally extending your semantic model, or creating a type you're not ready to share yet.</p>
 </Callout>
 
+### Declaring write operations
+Some TaxiQL behaviour depends on operations being declared as write operations (sometimes referred to as 'mutations').
+
+To indicate that an operation is a write operation, use a `x-taxi-operation-kind` of `write` at the operation level:
+
+```yaml
+   openapi: "3.0.0"
+   info:
+     version: 1.0.0
+     title: Swagger Petstore
+   paths:
+     /pets:
+       post:
+>        x-taxi-operation-kind: write
+         responses:
+           '200':
+             description: successful operation
+             content:
+               application/json:
+                 schema:
+                   type: object
+                   properties:
+                     name:
+                       type: string
+```
 
 ## Enriching OpenAPI Components
 
@@ -103,50 +128,3 @@ Add semantic meaning to model fields:
 >              create: true
 ```
 
-## Best Practices
-
-1. **Type Management**
-```yaml
-# Good - References existing semantic type
-x-taxi-type:
-  name: acme.CustomerName
-  create: false
-
-# Bad - Creates duplicate types
-x-taxi-type:
-  name: acme.CustomerName
-  create: true  # Unnecessary if type exists
-   ```
-
-2. **Namespace Organization**
-```yaml
-# Good - Clear namespace hierarchy
-x-taxi-type:
-  name: com.acme.customer.CustomerName
-
-# Bad - Flat namespace
-x-taxi-type:
-  name: CustomerName
-   ```
-
-3. **Type Reuse**
-```yaml
-# Good - Reuses common types
-components:
- schemas:
-   Customer:
-     properties:
-       email:
-         x-taxi-type:
-           name: common.EmailAddress
-
-# Bad - Creates new types unnecessarily
-components:
- schemas:
-   Customer:
-     properties:
-       email:
-         x-taxi-type:
-           name: acme.customer.CustomerEmail
-           create: true
-   ```
