@@ -49,7 +49,7 @@ async function generateVersionChangelogs() {
       const {version, releaseDate, aggregateVersion} = getVersionFromContent(content);
       const frontMatter = `---
 version: ${version}
-aggregateVersion: ${aggregateVersion}
+aggregateVersion: '${aggregateVersion}'
 releaseDate: ${releaseDate}
 title: ${aggregateVersion} release notes
 ---`
