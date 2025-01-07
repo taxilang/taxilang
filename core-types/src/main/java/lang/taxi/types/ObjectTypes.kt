@@ -95,13 +95,13 @@ enum class FieldModifier(val token: String) {
    CLOSED("closed")
 }
 
-enum class Modifier(val token: String) {
+enum class Modifier(val token: String, val conventionalSortOrder: Int) {
 
    // A Parameter type indicates that the object
 // is used when constructing requests,
 // and that frameworks should freely construct
 // these types based on known values.
-   PARAMETER_TYPE("parameter"),
+   PARAMETER_TYPE("parameter", conventionalSortOrder = 1),
 
    /**
     * Closed types cannot be constructed by composing other values.
@@ -109,14 +109,17 @@ enum class Modifier(val token: String) {
     *
     * This is generally appropriate to describe models exposed by services.
     */
-   CLOSED("closed");
+   CLOSED("closed", conventionalSortOrder = 0);
 
    companion object {
       fun fromToken(token: String): Modifier {
          return Modifier.values().first { it.token == token }
       }
    }
+}
 
+fun List<Modifier>.sortedConventionally():List<Modifier> {
+   return this.sortedBy { it.conventionalSortOrder }
 }
 
 data class ObjectType(

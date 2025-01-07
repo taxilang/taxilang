@@ -3,7 +3,7 @@ namespace vyne.openApi {
       id : Int
    }
    
-   closed model NewPet {
+   closed parameter model NewPet {
       name : String
       tag : String?
    }

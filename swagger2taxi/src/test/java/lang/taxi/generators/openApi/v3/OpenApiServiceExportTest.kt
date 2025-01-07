@@ -131,7 +131,7 @@ class OpenApiServiceExportTest {
                @taxi.http.HttpOperation(method = "GET" , url = "/pets")
                operation findPets(
                   [[ The upper limit to the number of pets you can possibly tolerate ]]
-                  @taxi.http.QueryVariable(value = "pet_limit") pet_limit : Int? 
+                  @taxi.http.QueryVariable(value = "pet_limit") pet_limit : Int?
                )
             }
          }
@@ -260,7 +260,7 @@ class OpenApiServiceExportTest {
 
       val expectedTaxi = """
          namespace vyne.openApi {
-            closed model NewPet {
+            closed parameter model NewPet {
               name: String
             }
             service PetsService {
@@ -309,6 +309,47 @@ class OpenApiServiceExportTest {
             service PetsService {
                @taxi.http.HttpOperation(method = "POST" , url = "/pets")
                operation PostPets(): AnonymousTypePostPets
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
+
+   @Test
+   fun `service can be declared as a write operation`() {
+      @Language("yaml")
+      val openApiSpec = """
+         openapi: "3.0.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         paths:
+           /pets:
+             post:
+               x-taxi-operation-kind: write
+               responses:
+                 '200':
+                   description: successful operation
+                   content:
+                     application/json:
+                       schema:
+                         type: object
+                         properties:
+                           name:
+                             type: string
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            closed model AnonymousTypePostPets {
+              name: String
+            }
+            service PetsService {
+               @taxi.http.HttpOperation(method = "POST" , url = "/pets")
+               write operation PostPets(): AnonymousTypePostPets
             }
          }
       """.trimIndent()

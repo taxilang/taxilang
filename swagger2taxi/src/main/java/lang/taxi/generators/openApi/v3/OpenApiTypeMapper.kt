@@ -201,42 +201,53 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
       schema: Schema<*>,
       modifiers: List<Modifier>,
       declaredSupertypes: List<String> = emptyList()
-   ) = _generatedTypes.getOrPut(name) {
-      // This allows us to support recursion - the undefined type will prevent us getting into an endless loop
-      _generatedTypes[name] = ObjectType.undefined(name.fullyQualifiedName)
-      if (schema is ComposedSchema) {
-         val allOf = schema.allOf ?: emptyList()
-         val inherits = (allOf.mapNotNull { it.`$ref`?.getTypeFromRef(modifiers) } + declaredSupertypes.map {
-            UnresolvedImportedType(it)
-         }).distinct()
-         // If requiredFields is present, it contributes to the definition of nullable.
-         // However, if requiredFields is omitted we only consider the nullable attribute of fields
-         val requiredFields = if (allOf.any { it.required != null }) {
-            allOf.flatMap { it.required ?: emptyList() }
+   ): Type {
+      val type =  _generatedTypes.getOrPut(name) {
+         // This allows us to support recursion - the undefined type will prevent us getting into an endless loop
+         _generatedTypes[name] = ObjectType.undefined(name.fullyQualifiedName)
+         if (schema is ComposedSchema) {
+            val allOf = schema.allOf ?: emptyList()
+            val inherits = (allOf.mapNotNull { it.`$ref`?.getTypeFromRef(modifiers) } + declaredSupertypes.map {
+               UnresolvedImportedType(it)
+            }).distinct()
+            // If requiredFields is present, it contributes to the definition of nullable.
+            // However, if requiredFields is omitted we only consider the nullable attribute of fields
+            val requiredFields = if (allOf.any { it.required != null }) {
+               allOf.flatMap { it.required ?: emptyList() }
+            } else {
+               null
+            }
+            val properties =
+               allOf.flatMap { it.properties?.toList() ?: emptyList() }
+                  .toMap()
+            makeModel(
+               name = name,
+               inherits = inherits,
+               properties = properties,
+               requiredFields = requiredFields,
+               description = schema.description,
+               modifiers = modifiers
+            )
          } else {
-            null
+            makeModel(
+               name = name,
+               inherits = PrimitiveType.INHERITS_FROM_ANY,
+               properties = schema.properties ?: emptyMap(),
+               requiredFields = schema.required,
+               description = schema.description,
+               modifiers = modifiers
+            )
          }
-         val properties =
-            allOf.flatMap { it.properties?.toList() ?: emptyList() }
-               .toMap()
-         makeModel(
-            name = name,
-            inherits = inherits,
-            properties = properties,
-            requiredFields = requiredFields,
-            description = schema.description,
-            modifiers = modifiers
-         )
-      } else {
-         makeModel(
-            name = name,
-            inherits = PrimitiveType.INHERITS_FROM_ANY,
-            properties = schema.properties ?: emptyMap(),
-            requiredFields = schema.required,
-            description = schema.description,
-            modifiers = modifiers
+      }
+      if (type is ObjectType && type.definition != null && !type.modifiers.containsAll(modifiers)) {
+         // We can land here if a model is defined initially as one thing (eg.,
+         // a return type, or schema type), and then needs to be used somewhere with other
+         // modifiers (eg., the schema type is a parameter, so needs the parameter modified added)
+         type.definition = type.definition!!.copy(
+            modifiers = (modifiers + type.definition!!.modifiers).distinct()
          )
       }
+      return type
    }
 
    private fun makeModel(

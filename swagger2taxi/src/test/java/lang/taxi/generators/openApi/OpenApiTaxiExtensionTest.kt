@@ -53,7 +53,7 @@ class OpenApiTaxiExtensionTest {
 
                      type ErrorCode inherits Int
 
-                     closed model NewPet {
+                     closed parameter model NewPet {
                         name : Name
                         tag : Tag?
                      }

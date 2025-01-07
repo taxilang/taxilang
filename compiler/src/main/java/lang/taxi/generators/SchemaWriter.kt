@@ -309,7 +309,10 @@ $enumValueDeclarations
          """.trimMargin()
       } else ""
 
-      val modifiers = type.modifiers.joinToString(" ") { it.token }
+      val modifiers = type.modifiers
+         .sortedConventionally()
+         .joinToString(" ") { it.token }
+
       val inheritanceString = getInheritanceString(type, currentNamespace)
 
       // When writing formats, we only care about the ones declared on this type, not inherited elsewhere

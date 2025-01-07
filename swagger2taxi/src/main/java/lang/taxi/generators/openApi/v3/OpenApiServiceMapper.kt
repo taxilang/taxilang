@@ -93,7 +93,11 @@ class OpenApiServiceMapper(
       val operationId = OperationIdProvider.getOperationId(openApiOperation, pathMapping, method)
       val requestBodyParam =
          openApiOperation.requestBody?.content?.values?.firstOrNull()?.schema?.let { requestBodySchema ->
-            val type = typeGenerator.generateUnnamedTypeRecursively(requestBodySchema, operationId + "Body", listOf(Modifier.PARAMETER_TYPE))
+            val type = typeGenerator.generateUnnamedTypeRecursively(
+               requestBodySchema,
+               operationId + "Body",
+               listOf(Modifier.PARAMETER_TYPE)
+            )
             lang.taxi.services.Parameter(
                annotations = listOf(HttpRequestBody.toAnnotation()),
                type = type,
@@ -106,7 +110,7 @@ class OpenApiServiceMapper(
 
       return lang.taxi.services.Operation(
          operationId,
-         OperationScope.READ_ONLY, // scope - TODO
+         openApiOperation.taxiOperationKind,
          annotations.toAnnotations(),
          parameters + listOfNotNull(requestBodyParam),
          returnType,
@@ -148,9 +152,13 @@ class OpenApiServiceMapper(
 
    private fun getParamType(swaggerParam: Parameter): Type {
       if (swaggerParam.`$ref` != null) {
-         TODO()
+         TODO("Support for a parameter type without an OpenAPI schema reference is not supported - $swaggerParam")
       } else {
-         return typeGenerator.generateUnnamedTypeRecursively(swaggerParam.schema, swaggerParam.name, listOf(Modifier.PARAMETER_TYPE))
+         return typeGenerator.generateUnnamedTypeRecursively(
+            swaggerParam.schema,
+            swaggerParam.name,
+            listOf(Modifier.PARAMETER_TYPE)
+         )
       }
 
 
@@ -158,7 +166,7 @@ class OpenApiServiceMapper(
 
    private fun getParamAnnotations(param: Parameter): List<Annotation> {
       return when (param) {
-         is QueryParameter ->  listOf(HttpQueryVariable(param.name).toAnnotation())
+         is QueryParameter -> listOf(HttpQueryVariable(param.name).toAnnotation())
          is PathParameter -> listOf(HttpPathVariable(param.name).toAnnotation())
          is HeaderParameter -> listOf(HttpHeader(param.name).toAnnotation())
          else -> emptyList()
