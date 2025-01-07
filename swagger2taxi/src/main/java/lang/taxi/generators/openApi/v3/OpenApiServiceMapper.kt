@@ -148,7 +148,7 @@ class OpenApiServiceMapper(
 
    private fun getParamType(swaggerParam: Parameter): Type {
       if (swaggerParam.`$ref` != null) {
-         TODO()
+         TODO("Support for a parameter type without an OpenAPI schema reference is not supported - $swaggerParam")
       } else {
          return typeGenerator.generateUnnamedTypeRecursively(swaggerParam.schema, swaggerParam.name, listOf(Modifier.PARAMETER_TYPE))
       }

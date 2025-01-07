@@ -131,7 +131,7 @@ class OpenApiServiceExportTest {
                @taxi.http.HttpOperation(method = "GET" , url = "/pets")
                operation findPets(
                   [[ The upper limit to the number of pets you can possibly tolerate ]]
-                  @taxi.http.QueryVariable(value = "pet_limit") pet_limit : Int? 
+                  @taxi.http.QueryVariable(value = "pet_limit") pet_limit : Int?
                )
             }
          }
@@ -260,7 +260,7 @@ class OpenApiServiceExportTest {
 
       val expectedTaxi = """
          namespace vyne.openApi {
-            closed model NewPet {
+            closed parameter model NewPet {
               name: String
             }
             service PetsService {
