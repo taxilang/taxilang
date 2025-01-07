@@ -319,6 +319,47 @@ class OpenApiServiceExportTest {
    }
 
    @Test
+   fun `service can be declared as a write operation`() {
+      @Language("yaml")
+      val openApiSpec = """
+         openapi: "3.0.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         paths:
+           /pets:
+             post:
+               x-taxi-operation-kind: write
+               responses:
+                 '200':
+                   description: successful operation
+                   content:
+                     application/json:
+                       schema:
+                         type: object
+                         properties:
+                           name:
+                             type: string
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            closed model AnonymousTypePostPets {
+              name: String
+            }
+            service PetsService {
+               @taxi.http.HttpOperation(method = "POST" , url = "/pets")
+               write operation PostPets(): AnonymousTypePostPets
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef =  TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
+
+   @Test
    fun `response as a reference to a component schema`() {
       @Language("yaml")
       val openApiSpec = """
