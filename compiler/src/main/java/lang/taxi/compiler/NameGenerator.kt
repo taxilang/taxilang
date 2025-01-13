@@ -9,7 +9,8 @@ object NameGenerator {
 
 
    fun generate(prefix: String = "AnonymousType"): String {
-      return "$prefix${randomString()}"
+      // replacing "-" with "_" for so the Typescript SDK can generate valid TS
+      return "$prefix${randomString()}".replace("-", "_")
    }
    // This is both shorter than a UUID (e.g. Xl3S2itovd5CDS7cKSNvml4_ODA)  and also more secure having 160 bits of entropy.
    fun randomString(length:Int  = 20): String {

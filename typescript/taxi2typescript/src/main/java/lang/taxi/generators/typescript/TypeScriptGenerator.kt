@@ -1,16 +1,10 @@
 package lang.taxi.generators.typescript
 
 import lang.taxi.TaxiDocument
-import lang.taxi.generators.ModelGenerator
-import lang.taxi.generators.Processor
-import lang.taxi.generators.TaxiProjectEnvironment
-import lang.taxi.generators.WritableSource
-import lang.taxi.types.ArrayType
-import lang.taxi.types.Arrays
-import lang.taxi.types.ObjectType
-import lang.taxi.types.PrimitiveType
-import lang.taxi.types.Type
+import lang.taxi.generators.*
+import lang.taxi.types.*
 import lang.taxi.utils.log
+import lang.taxi.utils.trimEmptyLines
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -22,10 +16,6 @@ import { DatatypeContainer, DatatypeName } from '@orbitalhq/orbital-client';
 
 function buildDatatypeContainer<V>(name: DatatypeName, value: V): DatatypeContainer<V> {
   return { name, value };
-}
-
-function Datatype(type: DatatypeName) {
-  return Reflect.metadata('datatype', type);
 }
 
 """
@@ -139,11 +129,13 @@ ${definitions.prependIndent("  ")}
    }
 
    private fun generateNamespaceContent(types: List<Type>): String {
-      val (typeDefinitions, models) = types.filterIsInstance<ObjectType>().partition { it.inheritsFromPrimitive }
-      val taxonomyDefinition = generateTaxonomyClass(typeDefinitions, models)
+      val (typeDefinitions, models) = types.filterIsInstance<ObjectType>().partition { it.isScalar }
+      val enums = types.filterIsInstance<EnumType>()
+      val taxonomyDefinition = generateTaxonomyClass(typeDefinitions, models, enums)
       val definitions = listOf(
          typeDefinitions.joinToString(separator = "\n") { generateType(it) },
          models.joinToString(separator = "\n") { generateModel(it) },
+         enums.joinToString(separator = "\n") { generateEnum(it) },
          taxonomyDefinition
       ).joinToString(separator = "\n")
       return definitions
@@ -152,7 +144,7 @@ ${definitions.prependIndent("  ")}
    private fun generateType(type: ObjectType): String {
       val nameInsideNamespace = type.toQualifiedName().typeName
       val typeAlias = "${nameInsideNamespace}Type"
-      return """export type $typeAlias = ${deduceUnderlyingPrimitiveTypeInTypeScript(type)};
+      return """${generateTypeDoc(type)}export type $typeAlias = ${deduceUnderlyingPrimitiveTypeInTypeScript(type)};
 export type $nameInsideNamespace = DatatypeContainer<$typeAlias>;"""
    }
 
@@ -161,6 +153,9 @@ export type $nameInsideNamespace = DatatypeContainer<$typeAlias>;"""
          val optional = if (field.nullable) {
             "?"
          } else "";
+         val isEnum = if (field.type is EnumType) {
+            " | null"
+         } else ""
 
          // TODO  :What is this TypeSuffix?
          // Checking for arrays b/c we're otherwise generating:
@@ -171,15 +166,41 @@ export type $nameInsideNamespace = DatatypeContainer<$typeAlias>;"""
             PrimitiveType.isPrimitiveType(field.type.qualifiedName) -> ""
             else -> "Type"
          }
-         "readonly ${field.name}$optional: ${deduceTypeName(field.type)}$typeSuffix"
-      }.removeSuffix("\n");
-      return "export type ${model.toQualifiedName().typeName} = DatatypeContainer<{ $fields }>;"
+         "\n  ${generateTypeDoc(field)}  readonly ${formatName(field)}$optional: ${deduceTypeName(field.type)}$typeSuffix${isEnum}"
+      }
+      // TODO: for models that are declared within the namespace, we also need the modelType declared
+      //val modelType = model.takeIf { !it.isScalar }
+      //   ?.let { "export type ${it.toQualifiedName().typeName}Type = ${it.toQualifiedName().typeName};\n" }
+      //   .orEmpty()
+      //return "${modelType}export type ${model.toQualifiedName().typeName} = DatatypeContainer<{ $fields }>;"
+      return "${generateTypeDoc(model)}export type ${model.toQualifiedName().typeName} = DatatypeContainer<{$fields\n}>;"
    }
 
-   private fun generateTaxonomyClass(types: List<ObjectType>, models: List<ObjectType>): String {
+   private fun generateEnum(enum: EnumType): String {
+      val enumDocs = enum.values.joinToString(separator = "\n") { generateTypeDoc(it) }
+      val members = enum.values.joinToString(separator = " | ") { "'${it.value}'" }
+
+      val typeName = enum.toQualifiedName().typeName
+      val typeDoc = generateTypeDoc(enum)
+
+      return """
+        $typeDoc$enumDocs
+        export type ${typeName}Type = $members;
+        export type $typeName = DatatypeContainer<${typeName}Type | null>;
+    """.trimEmptyLines()
+   }
+
+   private fun generateTypeDoc(type: Documented): String {
+      return if (type.typeDoc?.isNotEmpty() == true) {
+         "// ${type.typeDoc!!.splitToSequence("\n").joinToString("\n// ").plus("\n")}"
+      } else ""
+   }
+
+   private fun generateTaxonomyClass(types: List<ObjectType>, models: List<ObjectType>, enums: List<EnumType>): String {
       return """export class Taxonomy {
 ${types.joinToString(separator = "\n") { generateTypePropertyToTaxonomyClass(it).prependIndent("  ") }}
 ${models.joinToString(separator = "\n") { generateModelPropertyToTaxonomyClass(it).prependIndent("  ") }}
+${enums.joinToString(separator = "\n") { generateEnumToTaxonomyClass(it).prependIndent("  ") }}
 }"""
    }
 
@@ -212,19 +233,33 @@ ${generateModelPropertyValueObjectToTaxonomyClass(type).prependIndent("  ")}
          }
          val fieldInitializationValue = when {
             Arrays.isArray(field.type) -> "[]"
+            fieldType is EnumType -> "null"
             else -> getEmptyPrimitiveValue(fieldType.basePrimitive!!)
          }
-         "${field.name}: $fieldInitializationValue"
+
+         "${formatName(field)}: $fieldInitializationValue"
       }.joinToString(",\n")
+   }
+
+
+   private fun generateEnumToTaxonomyClass(type: EnumType): String {
+      return """readonly ${type.toQualifiedName().typeName}: ${type.toQualifiedName().typeName} = buildDatatypeContainer('${type.qualifiedName}', null);"""
    }
 
    private fun deduceUnderlyingPrimitiveTypeInTypeScript(type: ObjectType): String {
       return getPrimitiveTypeNameInTypeScript(type.basePrimitive!!)
    }
 
+   private fun formatName(field: Field): String {
+      // Check if the field name contains a backtick and replace with single quotes
+     return field.name.reservedWordEscaped().replace('`', '\'')
+   }
+
    private fun deduceTypeName(type: Type): String {
       return if (type is PrimitiveType) {
          getPrimitiveTypeNameInTypeScript(type)
+      } else if (type.inheritsFrom.count() == 1 && type.inheritsFrom.contains(PrimitiveType.ANY) && type.isScalar) {
+         type.qualifiedName
       } else if (type is ArrayType) {
          "${type.memberType.qualifiedName}[]"
       } else {
@@ -242,6 +277,8 @@ ${generateModelPropertyValueObjectToTaxonomyClass(type).prependIndent("  ")}
          PrimitiveType.TIME -> "Date"
          PrimitiveType.INSTANT -> "Date"
          PrimitiveType.DATE_TIME -> "Date"
+         PrimitiveType.LOCAL_DATE -> "Date"
+         PrimitiveType.ANY -> "any"
          else -> "unknown"
       }
 
@@ -254,6 +291,8 @@ ${generateModelPropertyValueObjectToTaxonomyClass(type).prependIndent("  ")}
       PrimitiveType.TIME -> "new Date()"
       PrimitiveType.INSTANT -> "new Date()"
       PrimitiveType.DATE_TIME -> "new Date()"
+      PrimitiveType.LOCAL_DATE -> "new Date()"
+      PrimitiveType.ANY -> "''"
       else -> "null"
    }
 }

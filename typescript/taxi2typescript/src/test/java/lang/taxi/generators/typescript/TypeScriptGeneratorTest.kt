@@ -91,6 +91,79 @@ class TypeScriptGeneratorTest {
    }
 
    @Test
+   fun generatesSchemaWithBackTickVariables() {
+      val taxi = """
+        namespace animals {
+            model Cow {
+                name : Name inherits String
+                `weight lbs` : WeightPounds inherits Decimal
+                `weight:kgs` : WeightKilograms inherits Decimal
+            }
+        }
+      """.trimIndent()
+
+      val output = compileAndGenerate(taxi)
+      val expected = """
+        export namespace animals {
+            export type NameType = string;
+            export type Name = DatatypeContainer<NameType>;
+            export type WeightPoundsType = number;
+            export type WeightPounds = DatatypeContainer<WeightPoundsType>;
+            export type WeightKilogramsType = number;
+            export type WeightKilograms = DatatypeContainer<WeightKilogramsType>;
+            export type Cow = DatatypeContainer<{
+               readonly name: animals.NameType;
+               readonly 'weight lbs': animals.WeightPoundsType;
+               readonly 'weight:kgs': animals.WeightKilogramsType
+            }>;
+            export class Taxonomy {
+                readonly Name: Name = buildDatatypeContainer('animals.Name', '');
+                readonly WeightPounds: WeightPounds = buildDatatypeContainer('animals.WeightPounds', 0.0);
+                readonly WeightKilograms: WeightKilograms = buildDatatypeContainer('animals.WeightKilograms', 0.0);
+                readonly Cow: Cow = buildDatatypeContainer('animals.Cow', {
+                    name: '',
+                    'weight lbs': 0.0,
+                    'weight:kgs': 0.0
+                });
+            }
+        }
+        export const taxonomy = { animals: { ...(new animals.Taxonomy()) } };
+        """
+
+      output.shouldEqualIgnoringHeaderAndWhitespace(expected)
+   }
+
+   @Test
+   fun `generates'Any'TypedVariables`() {
+      val taxi = """
+        namespace animals {
+            model Cow {
+                `any type` : AnyType inherits Any
+            }
+        }
+      """.trimIndent()
+
+      val output = compileAndGenerate(taxi)
+      val expected = """
+        export namespace animals {
+            export type AnyTypeType = any;
+            export type AnyType = DatatypeContainer<AnyTypeType>;
+            export type Cow = DatatypeContainer<{
+               readonly 'any type': animals.AnyTypeType
+            }>;
+            export class Taxonomy {
+                readonly AnyType: AnyType = buildDatatypeContainer('animals.AnyType', '');
+                readonly Cow: Cow = buildDatatypeContainer('animals.Cow', {
+                    'any type': ''
+                });
+            }
+        }
+        export const taxonomy = { animals: { ...(new animals.Taxonomy()) } };
+        """
+      output.shouldEqualIgnoringHeaderAndWhitespace(expected)
+   }
+
+   @Test
    fun givenTypeHasTypeAlias_then_itIsGenerated() {
       val taxi = """
          namespace vyne {
@@ -154,6 +227,67 @@ export const taxonomy = { ...(new Taxonomy()) };
    }
 
    @Test
+   fun modelsWithinSameNamespaceAreGeneratedCorrectly(){
+      val taxi ="""
+         namespace demos.esg {
+             type EnvironmentalScore inherits Decimal
+         }
+         namespace refinitiv {
+             model EsgScore {
+                 e_score: demos.esg.EnvironmentalScore
+             }
+             model AssetInfo {
+                 esgScores: EsgScore
+             }
+         }
+      """.trimIndent()
+      val output = compileAndGenerate(taxi).substringAfter(staticHeader).removeWhitespace()
+      val expected = """
+export namespace demos.esg {
+  export type EnvironmentalScoreType = number;
+  export type EnvironmentalScore = DatatypeContainer<EnvironmentalScoreType>;
+
+  export class Taxonomy {
+    readonly EnvironmentalScore: EnvironmentalScore = buildDatatypeContainer(
+      'demos.esg.EnvironmentalScore',
+      0.0
+    );
+  }
+}
+export namespace refinitiv {
+  export type EsgScore = DatatypeContainer<{
+    readonly e_score: demos.esg.EnvironmentalScoreType
+  }>;
+  export type AssetInfo = DatatypeContainer<{
+    readonly esgScores: refinitiv.EsgScoreType
+  }>;
+  export class Taxonomy {
+    readonly EsgScore: EsgScore = buildDatatypeContainer('refinitiv.EsgScore', {
+      e_score: 0.0
+    });
+    readonly AssetInfo: AssetInfo = buildDatatypeContainer(
+      'refinitiv.AssetInfo',
+      {
+        esgScores: ''
+      }
+    );
+  }
+}
+export const taxonomy = {
+  demos: {
+      esg: {
+           ...(new demos.esg.Taxonomy())
+      },
+  },
+   refinitiv: {
+     ...(new refinitiv.Taxonomy())
+  }
+};
+      """.removeWhitespace()
+      expect(output).to.equal(expected)
+   }
+
+   @Test
    fun nullableTypesAreGeneratedCorrectly() {
       val taxi = """
          type MiddleName inherits String
@@ -177,19 +311,77 @@ export const taxonomy = { ...(new Taxonomy()) };
       output.should.equal(expected)
    }
 
-   @Disabled("Not supported yet")
    @Test
    fun enumTypes() {
       val taxi = """
-         type Person {
-             gender : Gender
-         }
-         enum Gender {
-             MALE,
-             FEMALE
+         namespace demos.Foo {
+            type Person {
+                gender : Gender
+            }
+            enum Gender {
+                MALE,
+                FEMALE
+            }
          }
       """.trimIndent()
       val output = compileAndGenerate(taxi).substringAfter(staticHeader).removeWhitespace()
+      val expected = """
+         export namespace demos.Foo {
+            export type Person = DatatypeContainer<{ readonly gender: demos.Foo.GenderType | null }>;
+            export type GenderType = 'MALE' | 'FEMALE';
+            export type Gender = DatatypeContainer<GenderType | null>;
+            export class Taxonomy {
+              readonly Person: Person = buildDatatypeContainer('demos.Foo.Person', {
+                gender: null
+              });
+              readonly Gender: Gender = buildDatatypeContainer('demos.Foo.Gender', null);
+            }
+         }
+         export const taxonomy = {
+            demos: {
+               Foo: {
+                 ...(new demos.Foo.Taxonomy())
+               },
+            }
+         };
+      """.removeWhitespace()
+      expect(output).to.equal(expected)
+   }
+
+   @Disabled("Not supported yet")
+   @Test
+   fun complexEnumTypes() {
+      val taxi = """
+         namespace demos.Foo {
+            enum Country {
+               NEW_ZEALAND("NZ"),
+               AUSTRALIA("AUS"),
+               UNITED_KINGDOM("UK")
+            }
+            enum Numbers {
+               One(1),
+               Two(2)
+            }
+            enum Mixed {
+               One("One"),
+               Two(2)    // Will be converted to string
+            }
+            enum Selected {
+               Yes(true),
+               No(false)
+            }
+            model ErrorDetails {
+               code : ErrorCode inherits Int
+               message : ErrorMessage inherits String
+            }
+
+            enum Errors<ErrorDetails> {
+               BadRequest({ code : 400, message : 'Bad Request' }),
+               Unauthorized({ code : 401, message : 'Unauthorized' })
+            }
+         }
+      """.trimIndent()
+      val output = compileAndGenerate(taxi).substringAfter(staticHeader)//.removeWhitespace()
       val expected = """
 
       """.removeWhitespace()
@@ -204,9 +396,43 @@ export const taxonomy = { ...(new Taxonomy()) };
          // Note - when we fix enum generation, this should stop compiling
          enum BankDirection inherits Direction
       """.trimIndent()
-      val output = compileAndGenerate(taxi).substringAfter(staticHeader).removeWhitespace()
+      val output = compileAndGenerate(taxi).substringAfter(staticHeader)
       val expected = """
 
+      """.removeWhitespace()
+
+      output.should.equal(expected)
+   }
+
+   @Test
+   fun dateTypes() {
+      val taxi = """
+         type Date_1 inherits Time
+         type Date_2 inherits Instant
+         type Date_3 inherits Date
+         @Format("dd-MM-yyyy")
+         type InheritedDate inherits Date_3
+      """.trimIndent()
+      val output = compileAndGenerate(taxi).substringAfter(staticHeader).removeWhitespace()
+      val expected = """
+         export type Date_1Type = Date;
+         export type Date_1 = DatatypeContainer<Date_1Type>;
+         export type Date_2Type = Date;
+         export type Date_2 = DatatypeContainer<Date_2Type>;
+         export type Date_3Type = Date;
+         export type Date_3 = DatatypeContainer<Date_3Type>;
+         export type InheritedDateType = Date;
+         export type InheritedDate = DatatypeContainer<InheritedDateType>;
+
+         export class Taxonomy {
+           readonly Date_1: Date_1 = buildDatatypeContainer('Date_1', new Date());
+           readonly Date_2: Date_2 = buildDatatypeContainer('Date_2', new Date());
+           readonly Date_3: Date_3 = buildDatatypeContainer('Date_3', new Date());
+           readonly InheritedDate: InheritedDate = buildDatatypeContainer('InheritedDate', new Date());
+         }
+         export const taxonomy = {
+         ...(new Taxonomy())
+         };
       """.removeWhitespace()
 
       output.should.equal(expected)
@@ -301,6 +527,63 @@ export class Taxonomy {
 export const taxonomy = { ...(new Taxonomy()) };
          """
       output.shouldEqualIgnoringHeaderAndWhitespace(expected)
+   }
+
+   @Test
+   fun generateCommentsFromTypedocs() {
+      val taxi = """
+         namespace demos.Foo {
+            [[how old in years the person is]]
+            type Age inherits Int
+            [[
+            A person, a real live person!
+            This is a multiline doc
+            ]]
+            model Person {
+                [[field documentation]]
+                gender : Gender
+            }
+            [[Gender enum doc]]
+            enum Gender {
+                [[an enum specific doc]]
+                MALE,
+                FEMALE
+            }
+         }
+      """.trimIndent()
+      val output = compileAndGenerate(taxi).substringAfter(staticHeader).removeWhitespace()
+      val expected = """
+         export namespace demos.Foo {
+           // how old in years the person is
+           export type AgeType = number;
+           export type Age = DatatypeContainer<AgeType>;
+           // A person, a real live person!
+           // This is a multiline doc
+           export type Person = DatatypeContainer<{
+             // field documentation
+             readonly gender: demos.Foo.GenderType | null
+           }>;
+           // Gender enum doc
+           // an enum specific doc
+           export type GenderType = 'MALE' | 'FEMALE';
+           export type Gender = DatatypeContainer<GenderType | null>;
+           export class Taxonomy {
+             readonly Age: Age = buildDatatypeContainer('demos.Foo.Age', 0);
+             readonly Person: Person = buildDatatypeContainer('demos.Foo.Person', {
+               gender: null
+             });
+             readonly Gender: Gender = buildDatatypeContainer('demos.Foo.Gender', null);
+           }
+         }
+         export const taxonomy = {
+           demos: {
+               Foo: {
+                    ...(new demos.Foo.Taxonomy())
+               },
+           }
+         };
+      """.removeWhitespace()
+      expect(output).to.equal(expected)
    }
 
    @Disabled("Not supported yet")
