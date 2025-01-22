@@ -8,6 +8,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeEmpty
+import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.accessors.CollectionProjectionExpressionAccessor
 import lang.taxi.accessors.FieldSourceAccessor
@@ -1185,5 +1186,71 @@ class TaxiQlSpec : DescribeSpec({
             .shouldBeInstanceOf<OperatorExpression>()
             .operator.shouldBe(FormulaOperator.LogicalOr)
       }
+
+      it("shows the correct return type when a query returns an array") {
+         val (schema,query) = """
+            model Film {
+               id : FilmId inherits Int
+               title : Title inherits String
+            }"""
+            .compiledWithQuery("""find { Film[] }""")
+            query.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<Film>")
+            query.unwrappedReturnType.toQualifiedName().parameterizedName.shouldBe("Film")
+      }
+
+      it("shows the correct return type when a query returns an object") {
+         val (schema,query) = """
+            model Film {
+               id : FilmId inherits Int
+               title : Title inherits String
+            }"""
+            .compiledWithQuery("""find { Film }""")
+         query.returnType.toQualifiedName().parameterizedName.shouldBe("Film")
+         query.unwrappedReturnType.toQualifiedName().parameterizedName.shouldBe("Film")
+      }
+
+      it("shows the correct return type when a query returns a projected array") {
+         val (schema,query) = """
+            model Film {
+               id : FilmId inherits Int
+               title : Title inherits String
+            }"""
+            .compiledWithQuery("""find { Film[] } as { title : Title }[]""")
+         query.returnType.toQualifiedName().parameterizedName.shouldStartWith("lang.taxi.Array<AnonymousType")
+         query.unwrappedReturnType.toQualifiedName().parameterizedName.shouldStartWith("AnonymousType")
+      }
+
+      it("shows the correct return type when a query calls a mutation") {
+         val (schema,query) = """
+            model Film {
+               id : FilmId inherits Int
+               title : Title inherits String
+            }
+            model UpdatedFilm {}
+            service FilmsApi {
+               write operation updateFilm(Film):UpdatedFilm
+            }
+            """
+            .compiledWithQuery("""find { Film } call FilmsApi::updateFilm""")
+         query.returnType.toQualifiedName().parameterizedName.shouldBe("UpdatedFilm")
+         query.unwrappedReturnType.toQualifiedName().parameterizedName.shouldBe("UpdatedFilm")
+      }
+
+      it("shows the correct return type when a query calls a mutation returning array") {
+         val (schema,query) = """
+            model Film {
+               id : FilmId inherits Int
+               title : Title inherits String
+            }
+            model UpdatedFilm {}
+            service FilmsApi {
+               write operation updateFilm(Film):UpdatedFilm[]
+            }
+            """
+            .compiledWithQuery("""find { Film } call FilmsApi::updateFilm""")
+         query.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<UpdatedFilm>")
+         query.unwrappedReturnType.toQualifiedName().parameterizedName.shouldBe("UpdatedFilm")
+      }
+
    }
 })

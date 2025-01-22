@@ -51,7 +51,7 @@ data class TaxiQlQuery(
       get() {
          return when {
             mutation != null -> mutation.operation.returnType
-            projectedObjectType != null -> projectedObjectType!!
+            projectedType != null -> projectedType
             discoveryType != null -> discoveryType.expression.returnType
             else -> error("Could not infer return type of query.")
          }
