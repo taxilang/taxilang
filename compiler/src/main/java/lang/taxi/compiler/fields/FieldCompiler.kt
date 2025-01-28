@@ -162,12 +162,14 @@ class FieldCompiler(
       // orderId: {  foo: String }
       val anonymousTypeDefinition = member.fieldDeclaration().anonymousTypeDefinition()
 
-      if ((fieldTypeDeclaration == null && anonymousTypeDefinition == null) && isChildOfProjection) {
+      val expressionGroup: TaxiParser.ExpressionGroupContext? = member.fieldDeclaration().expressionGroup()
+
+      if ((fieldTypeDeclaration == null && anonymousTypeDefinition == null && expressionGroup == null) && isChildOfProjection) {
          return resolveImplicitTypeFromToBeProjectedType(member)
       }
       // orderId: Order::OrderId
 //      val modelAttributeType = member.fieldDeclaration().memberReference()
-      val expressionGroup: TaxiParser.ExpressionGroupContext? = member.fieldDeclaration().expressionGroup()
+
       val expressionCompiler = tokenProcessor.expressionCompiler(
          fieldCompiler = this,
          scopedArguments = this.resolutionContext.argumentsInScope
