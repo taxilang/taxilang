@@ -1,11 +1,16 @@
 package lang.taxi
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.types.shouldBeInstanceOf
+import lang.taxi.types.ArrayType
+import lang.taxi.types.ObjectType
 
 // These are exploratory tests
 class ChainedProjectionsSpec : DescribeSpec({
    describe("chaining projection types") {
       val schema = """
+         model Studio {}
          model Film {
             id : FilmId inherits Int
          }
@@ -30,6 +35,30 @@ find { Film } as {
          )
          val field = query.projectedObjectType!!.field("cast")
          field.projection
+      }
+
+      it("chains projections on a field in a nested anonymous type") {
+         val (_, query) = schema.compiledWithQuery(
+            """
+find { Studio } as {
+   film : Film as {
+      id : FilmId
+      cast : CastResponse as Actor[] as (actor:Actor) -> {
+         personName : PersonName
+      }[]
+   }
+}
+      """.trimIndent()
+         )
+         val castField = query.projectedObjectType!!.field("film")
+            .type.asA<ObjectType>()
+            .field("cast")
+
+         val castArrayType = castField.type.shouldBeInstanceOf<ArrayType>()
+         castArrayType.memberType
+            .asA<ObjectType>()
+            .hasField("personName")
+            .shouldBeTrue()
       }
 
       it("chains projections on a field without scoped vars") {
