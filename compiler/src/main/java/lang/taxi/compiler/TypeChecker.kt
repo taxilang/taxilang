@@ -74,9 +74,16 @@ fun TypeChecker.assertIsAssignable(valueType: Type, receiverType: Type, token: P
 
 fun TypeChecker.assertIsProjectable(sourceType: Type, targetType: Type, token: ParserRuleContext):CompilationError? {
    return when {
-      Arrays.isArray(sourceType) && !Arrays.isArray(targetType) && targetType.anonymous -> "Cannot project an array to a non-array. Try adding [] after your projection type definition"
-      Arrays.isArray(sourceType) && !Arrays.isArray(targetType) && !targetType.anonymous -> "Cannot project an array to a non-array. Did you mean ${targetType.toQualifiedName().typeName}[] ?"
-      !Arrays.isArray(sourceType) && Arrays.isArray(targetType) -> "Cannot project an object to an array."
+
+      // Projecting Array to non-array is now permitted - this is required to allow
+      // field-based aggregation of data
+//      Arrays.isArray(sourceType) && !Arrays.isArray(targetType) && targetType.anonymous -> "Cannot project an array to a non-array. Try adding [] after your projection type definition"
+//      Arrays.isArray(sourceType) && !Arrays.isArray(targetType) && !targetType.anonymous -> "Cannot project an array to a non-array. Did you mean ${targetType.toQualifiedName().typeName}[] ?"
+
+      // Projecting a non-array to an array is now permitted - this is required
+      // to allow field selection of an array from an object
+      //      !Arrays.isArray(sourceType) && Arrays.isArray(targetType) -> "Cannot project an object to an array."
+
       StreamType.isStream(sourceType) && !Arrays.isArray(targetType) && targetType.anonymous -> "A stream must be projected to an array. Try adding [] after your projection type definition"
       StreamType.isStream(sourceType) && !Arrays.isArray(targetType) && !targetType.anonymous -> "A stream must be projected to an array. Did you mean ${targetType.toQualifiedName().typeName}[] ?"
       else -> null

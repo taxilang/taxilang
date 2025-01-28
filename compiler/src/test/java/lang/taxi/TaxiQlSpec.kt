@@ -1138,7 +1138,8 @@ class TaxiQlSpec : DescribeSpec({
          )
       }
 
-      it("is invalid to project a nested array to a non-array") {
+      // this is now permitted
+      xit("is invalid to project a nested array to a non-array") {
          val error = """
             model Film {
                id : FilmId inherits Int
