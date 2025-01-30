@@ -548,6 +548,24 @@ find {  Errors.enumForName('BadRequest').message.upperCase() }
             "".compiledWithQuery("""find { [1,2,3] }""")
          }
 
+         it("infers the type of an object array returned from a function expression") {
+            val schema = """
+         model Person {
+            firstName : FirstName inherits String
+            lastName : LastName inherits String
+         }
+         function getPeople():Person[] -> [
+            { firstName : 'Jimmy', lastName: 'Schmitt' },
+            { firstName : 'Matt', lastName: 'Plant' }
+         ]
+            """.compiled()
+            val function = schema.function("getPeople")
+            function
+               .returnType!!.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<Person>")
+
+            function.body!!.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<Person>")
+         }
+
 
       }
    }

@@ -84,7 +84,7 @@ class FunctionCompiler(
                val functionBody = functionToken.functionExpression()?.let { functionExpression ->
 
                   tokenProcessor.expressionCompiler(scopedArguments = parameters)
-                     .compile(functionExpression.expressionGroup())
+                     .compile(functionExpression.expressionGroup(), targetType = returnType)
                      .flatMap { expression ->
                         tokenProcessor.typeChecker.ifAssignableOrErrorList(expression.returnType, returnType, functionToken) { expression }
                      }
