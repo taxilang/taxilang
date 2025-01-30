@@ -91,7 +91,7 @@ class OperationConstraintConverter(
       }
    }
 
-   private fun compileSpreadOperatorExpression(expressionConstraints: Either<List<CompilationError>, List<Constraint>>) =
+   private fun compileSpreadOperatorExpression(expressionConstraints: Either<List<CompilationError>, List<Constraint>>): Either<List<CompilationError>, List<ExpressionConstraint>> =
       expressionConstraints.flatMap { constraints ->
          val usedParameters = collectParametersPresent(constraints)
          val unusedParametersExpression = parameters.filter { !usedParameters.contains(it) }
@@ -111,14 +111,14 @@ class OperationConstraintConverter(
                   compilationUnits = context.toCompilationUnits()
                )
             }
-            .reduce { acc, operatorExpression ->
+            .reduceOrNull { acc, operatorExpression ->
                OperatorExpression(
                   lhs = acc,
                   operator = FormulaOperator.LogicalAnd,
                   rhs = operatorExpression,
                   compilationUnits = context.toCompilationUnits()
                )
-            }
+            } ?: return emptyList<ExpressionConstraint>().right()
          when (constraints.size) {
             0 -> unusedParametersExpression.right()
             1 -> {
