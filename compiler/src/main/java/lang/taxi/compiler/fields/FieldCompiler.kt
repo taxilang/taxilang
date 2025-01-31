@@ -128,7 +128,7 @@ class FieldCompiler(
          Collections.memberTypeOrType(possibleArrayType)
       }
       val fields = when (typeBeingSpread) {
-         is ObjectType -> typeBeingSpread.fields
+         is ObjectType -> typeBeingSpread.allFields
          else -> emptyList()
       }
 

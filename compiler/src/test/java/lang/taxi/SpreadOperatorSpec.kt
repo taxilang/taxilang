@@ -300,6 +300,62 @@ find { Movie[] } as {
 
 
       }
+
+      it("applies spread operator 'except' to top-level find") {
+         val (schema,query) = """
+            type Message inherits String
+            model StockQuote {
+               ticker : Ticker inherits String
+               price : Price inherits Decimal
+               quantity : Quantity inherits Int
+            }
+         """.compiledWithQuery("""
+        find { quote: StockQuote as { ... except { ticker } } }
+         """.trimIndent())
+         val discoveryType = query.discoveryType!!.type.asA<ObjectType>()
+            discoveryType.field("quote")
+               .type.asA<ObjectType>()
+               .fields
+               .shouldHaveSize(2)
+      }
+
+      it("'except' operator considers inherited fields") {
+         val (schema,query) = """
+            type Message inherits String
+            model StockQuote {
+               ticker : Ticker inherits String
+               price : Price inherits Decimal
+               quantity : Quantity inherits Int
+            }
+            model BuySideQuote inherits StockQuote
+         """.compiledWithQuery("""
+        find { quote: BuySideQuote as { ... except { ticker } } }
+         """.trimIndent())
+         val discoveryType = query.discoveryType!!.type.asA<ObjectType>()
+         discoveryType.field("quote")
+            .type.asA<ObjectType>()
+            .fields
+            .shouldHaveSize(2)
+      }
+
+      it("spread operator considers inherited fields") {
+         val (schema,query) = """
+            type Message inherits String
+            model StockQuote {
+               ticker : Ticker inherits String
+               price : Price inherits Decimal
+               quantity : Quantity inherits Int
+            }
+            model BuySideQuote inherits StockQuote
+         """.compiledWithQuery("""
+        find { quote: BuySideQuote as { message: Message, ...  } }
+         """.trimIndent())
+         val discoveryType = query.discoveryType!!.type.asA<ObjectType>()
+         discoveryType.field("quote")
+            .type.asA<ObjectType>()
+            .fields
+            .shouldHaveSize(4)
+      }
    }
 })
 
