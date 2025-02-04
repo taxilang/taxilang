@@ -194,17 +194,17 @@ publish-plugin:
 
 ## Deploy the ADR to gitlab pages
 ## See https://github.com/thomvaill/log4brains?tab=readme-ov-file#-cicd-configuration-examples
-pages:
-   stage: deploy
-   image: node:14-alpine3.12
-   variables:
-      GIT_DEPTH: 0 # required by Log4brains to work correctly (needs the whole Git history)
-   script:
-      - mkdir -p public
-      - npm install -g --unsafe-perm log4brains
-      - log4brains build --basePath /$CI_PROJECT_NAME/language-decisions --out public/language-decisions
-   artifacts:
-      paths:
-         - public
-   rules:
-      - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+#pages:
+#   stage: deploy
+#   image: node:14-alpine3.12
+#   variables:
+#      GIT_DEPTH: 0 # required by Log4brains to work correctly (needs the whole Git history)
+#   script:
+#      - mkdir -p public
+#      - npm install -g --unsafe-perm log4brains
+#      - log4brains build --basePath /$CI_PROJECT_NAME/language-decisions --out public/language-decisions
+#   artifacts:
+#      paths:
+#         - public
+#   rules:
+#      - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
