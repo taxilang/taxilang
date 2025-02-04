@@ -8,6 +8,7 @@ import lang.taxi.expressions.TypeExpression
 import lang.taxi.types.ArgumentSelector
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.FormulaOperator
+import lang.taxi.types.ModelAttributeReferenceSelector
 import lang.taxi.utils.log
 
 /**
@@ -49,6 +50,8 @@ class ExpressionConstraint(val expression: Expression) : Constraint {
          constraintToCheck is ArgumentSelector && requestedConstraint is ArgumentSelector -> satisfies(
             constraintToCheck, requestedConstraint
          )
+         constraintToCheck is ArgumentSelector && requestedConstraint is ModelAttributeReferenceSelector -> satisfies(constraintToCheck, requestedConstraint)
+
 
          else -> {
             log().warn("constraint satisfies check not implemented for comparison between ${constraintToCheck::class.simpleName} and ${requestedConstraint::class.simpleName}")
@@ -120,6 +123,20 @@ class ExpressionConstraint(val expression: Expression) : Constraint {
       } else {
          ConstraintComparison(
               true,
+            listOf(constraintToCheck to requestedConstraint)
+         )
+      }
+   }
+
+   private fun satisfies(
+      constraintToCheck: ArgumentSelector,
+      requestedConstraint: ModelAttributeReferenceSelector
+   ): ConstraintComparison {
+      return if (!requestedConstraint.returnType.isAssignableTo(constraintToCheck.returnType)) {
+         ConstraintComparison.NOT_SATISFIED
+      } else {
+         ConstraintComparison(
+            true,
             listOf(constraintToCheck to requestedConstraint)
          )
       }
