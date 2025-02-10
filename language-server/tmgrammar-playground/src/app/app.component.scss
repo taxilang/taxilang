@@ -1,0 +1,17 @@
+:host {
+  display: flex;
+  height: 100vh;
+}
+
+as-split {
+  height: 100%;
+}
+
+.full-height {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+ngx-monaco-editor {
+  flex-grow: 1;
+}

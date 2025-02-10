@@ -6,9 +6,6 @@
    ],
    "patterns": [
       {
-         "include": "#import-declaration"
-      },
-      {
          "include": "#declaration"
       },
       {
@@ -16,7 +13,7 @@
       },
       {
          "name": "storage.type.taxi",
-         "match": "\\b(type|type alias|enum|namespace|policy|service|operation)\\b"
+         "match": "\\b(type|type alias|enum|namespace|service|operation)\\b"
       },
       {
          "name": "storage.modifier.taxi",
@@ -56,25 +53,6 @@
                "include": "#declaration"
             }
          ]
-      },
-      "import-declaration": {
-         "name": "meta.import.taxi",
-         "begin": "(?<!\\.|\\$)\\b(import)(?!(\\s*:)|(\\$))\\b",
-         "beginCaptures": {
-            "1": {
-               "name": "keyword.control.import.taxi"
-            }
-         },
-         "end": "(?=;|$)",
-         "patterns": [
-            {
-               "include": "#import-export-declaration"
-            }
-         ]
-      },
-      "import-export-declaration": {
-         "name": "meta.import.declaration.taxi",
-         "match": "\\b(?:[_$[:alpha:]][_$[:alnum:]]*\\.)+(?:[_$[:alpha:]][_$[:alnum:]]*)\\b"
       },
       "type-primitive": {
          "name": "support.type.primitive.taxi",
@@ -185,64 +163,23 @@
          ]
       },
       "annotation": {
+         "name": "meta.decorator.taxi",
+         "begin": "(?<!\\.|\\$)\\b\\@",
+         "beginCaptures": {
+            "0": {
+               "name": "punctuation.decorator.taxi"
+            }
+         },
+         "end": "(?=\\s)",
          "patterns": [
             {
-               "begin": "((@)\\s*([^\\s(]+))(\\()",
-               "beginCaptures": {
-                  "2": {
-                     "name": "punctuation.definition.annotation.taxi"
-                  },
-                  "3": {
-                     "name": "storage.type.annotation.taxi"
-                  },
-                  "4": {
-                     "name": "punctuation.definition.annotation-arguments.begin.bracket.round.taxi"
-                  }
-               },
-               "end": "\\)",
-               "endCaptures": {
-                  "0": {
-                     "name": "punctuation.definition.annotation-arguments.end.bracket.round.taxi"
-                  }
-               },
-               "name": "meta.declaration.annotation.taxi",
-               "contentName": "meta.annotation.parameters.taxi",
-               "patterns": [
-                  {
-                     "captures": {
-                        "1": {
-                           "name": "constant.other.key.taxi"
-                        },
-                        "2": {
-                           "name": "keyword.operator.assignment.taxi"
-                        }
-                     },
-                     "match": "(\\w*)\\s*(=)"
-                  },
-                  {
-                     "include": "#string"
-                  },
-                  {
-                     "include": "#literal"
-                  }
-               ]
-            },
-            {
-               "match": "(@)\\s*(\\w+)",
-               "captures": {
-                  "1": {
-                     "name": "punctuation.definition.annotation.taxi"
-                  },
-                  "2": {
-                     "name": "storage.type.annotation.taxi"
-                  }
-               }
+               "include": "#expression"
             }
          ]
       },
       "model-definition": {
          "name": "meta.class.model.taxi",
-         "begin": "(?<!\\.|\\$)\\b(?:(parameter)\\s+)?\\b(?:(closed)\\s+)?\\b(?:(type)|(model))\\b",
+         "begin": "\\b(?:(model))\\b",
          "beginCaptures": {
             "1": {
                "name": "storage.type.model.taxi"
@@ -251,7 +188,7 @@
                "name": "storage.type.type.taxi"
             }
          },
-         "end": "(?<=\\})",
+         "end": "(?<=\\n\\})",
          "patterns": [
             {
                "include": "#comment"
@@ -326,7 +263,7 @@
                "name": "punctuation.definition.block.taxi"
             }
          },
-         "end": "(?=\\})",
+         "end": "\\}",
          "endCaptures": {
             "0": {
                "name": "punctuation.definition.block.taxi"
@@ -344,33 +281,14 @@
             }
          ]
       },
-      "anonymous-type": {
-         "name": "meta.anonymous.type.taxi",
-         "begin": "\\{",
-         "beginCaptures": {
-            "0": {
-               "name": "punctuation.definition.block.begin.taxi"
-            }
-         },
-         "end": "\\}",
-         "endCaptures": {
-            "0": {
-               "name": "punctuation.definition.block.end.taxi"
-            }
-         },
-         "patterns": [
-            {
-               "include": "#comment"
-            },
-            {
-               "include": "#field-declaration"
-            }
-         ]
-      },
-
       "field-declaration": {
          "name": "meta.field.declaration.taxi",
-         "begin": "(?<!\\()(?=(([A-Za-z_$][A-Za-z0-9_$]*)|(`[^`]+`)|(\\[([^\\[\\]]|\\[[^\\[\\]]+\\])+\\]))\\s*(\\?\\s*)?(=|:))",
+         "begin": "(?<!\\()(?:(?<!\\.|\\$)\\b(readonly)\\s+)?(?=(([_$[:alpha:]][_$[:alnum:]]*)|(\\'[^']*\\')|(\\\"[^\"]*\\\")|(\\[([^\\[\\]]|\\[[^\\[\\]]+\\])+\\]))\\s*(\\?\\s*)?(=|:))",
+         "beginCaptures": {
+            "1": {
+               "name": "storage.modifier.taxi"
+            }
+         },
          "end": "(?=\\}|;|,|$)|(?<=\\})",
          "patterns": [
             {
@@ -384,13 +302,25 @@
                      "include": "#type-annotation"
                   },
                   {
+                     "include": "#string"
+                  },
+                  {
                      "include": "#array-literal"
                   },
                   {
-                     "include": "#anonymous-type"
+                     "include": "#comment"
                   },
                   {
-                     "include": "#comment"
+                     "name": "entity.name.function.taxi",
+                     "match": "(?x)([_$[:alpha:]][_$[:alnum:]]*)(?=(\\?\\s*)?\\s* (=\\s*( (async\\s+) | (function\\s*[(<]) | (function\\s+) | ([_$[:alpha:]][_$[:alnum:]]*\\s*=>) | ((<([^<>]|\\<[^<>]+\\>)+>\\s*)?\\(([^()]|\\([^()]*\\))*\\)(\\s*:\\s*(.)*)?\\s*=>)) ) | (:\\s*( (<) | ([(]\\s*( ([)]) | (\\.\\.\\.) | ([_$[:alnum:]]+\\s*( ([:,?=])| ([)]\\s*=>) )) ))) ))"
+                  },
+                  {
+                     "name": "variable.object.property.taxi",
+                     "match": "[_$[:alpha:]][_$[:alnum:]]*"
+                  },
+                  {
+                     "name": "keyword.operator.optional.taxi",
+                     "match": "\\?"
                   }
                ]
             }
@@ -669,46 +599,56 @@
       "string": {
          "patterns": [
             {
-               "begin": "\"",
-               "beginCaptures": {
-                  "0": {
-                     "name": "punctuation.definition.string.begin.taxi"
-                  }
-               },
-               "end": "\"",
-               "endCaptures": {
-                  "0": {
-                     "name": "punctuation.definition.string.end.taxi"
-                  }
-               },
-               "name": "string.quoted.double.taxi",
-               "patterns": [
-                  {
-                     "match": "\\\\.",
-                     "name": "constant.character.escape.taxi"
-                  }
-               ]
+               "include": "#qstring-single"
             },
             {
-               "begin": "'",
-               "beginCaptures": {
-                  "0": {
-                     "name": "punctuation.definition.string.begin.taxi"
-                  }
-               },
-               "end": "'",
-               "endCaptures": {
-                  "0": {
-                     "name": "punctuation.definition.string.end.taxi"
-                  }
-               },
-               "name": "string.quoted.single.taxi",
-               "patterns": [
-                  {
-                     "match": "\\\\.",
-                     "name": "constant.character.escape.taxi"
-                  }
-               ]
+               "include": "#qstring-double"
+            }
+         ]
+      },
+      "qstring-single": {
+         "name": "string.quoted.single.taxi",
+         "begin": "'",
+         "beginCaptures": {
+            "0": {
+               "name": "punctuation.definition.string.begin.taxi"
+            }
+         },
+         "end": "(\\')|((?:[^\\\\\\n])$)",
+         "endCaptures": {
+            "1": {
+               "name": "punctuation.definition.string.end.taxi"
+            },
+            "2": {
+               "name": "invalid.illegal.newline.taxi"
+            }
+         },
+         "patterns": [
+            {
+               "include": "#string-character-escape"
+            }
+         ]
+      },
+      "qstring-double": {
+         "name": "string.quoted.double.taxi",
+         "begin": "\"",
+         "beginCaptures": {
+            "0": {
+               "name": "punctuation.definition.string.begin.taxi"
+            }
+         },
+         "end": "(\")|((?:[^\\\\\\n])$)",
+         "endCaptures": {
+            "1": {
+               "name": "punctuation.definition.string.end.taxi"
+            },
+            "2": {
+               "name": "invalid.illegal.newline.taxi"
+            }
+         },
+         "patterns": [
+            {
+               "include": "#string-character-escape"
             }
          ]
       }

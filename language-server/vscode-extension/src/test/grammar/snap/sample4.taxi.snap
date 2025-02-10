@@ -1,0 +1,460 @@
+>import com.taxi.types.LoanApplicationUnderwriter
+#^^^^^^ source.taxi meta.import.taxi keyword.control.import.taxi
+#      ^ source.taxi meta.import.taxi
+#       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.import.taxi meta.import.declaration.taxi
+>import com.taxi.types.account.AccountName
+#^^^^^^ source.taxi meta.import.taxi keyword.control.import.taxi
+#      ^ source.taxi meta.import.taxi
+#       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.import.taxi meta.import.declaration.taxi
+>
+>namespace com.taxi.services.zoho.deal
+#^^^^^^^^^ source.taxi storage.type.taxi
+#         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>
+>service DealService {
+#^^^^^^^ source.taxi storage.type.taxi
+#       ^^^^^^^^^^^^^^^ source.taxi
+>
+>    //detail view
+#^^^^ source.taxi punctuation.whitespace.comment.leading.taxi
+#    ^^ source.taxi comment.line.double-slash.taxi punctuation.definition.comment.taxi
+#      ^^^^^^^^^^^ source.taxi comment.line.double-slash.taxi
+>    @HttpOperation(url = "https://www.zohoapis.eu/crm/v5/Deals/{loanApplicationId}", method = "GET")
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#                  ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#                   ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                      ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                       ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                        ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                                                                                  ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                                                                                   ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                     ^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                             ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                              ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                                                                                               ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                                                                                                  ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                                                                                                   ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+>    @HttpRetry(responseCode = [403, 500], exponentialRetryPolicy = @HttpExponentialRetryPolicy(maxRetries = 2, retryDelay = 2, jitter = 0.5))
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#              ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#               ^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                             ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                               ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                  ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                    ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                       ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                          ^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                 ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                               ^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                             ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                               ^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                                             ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                               ^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                                                     ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                      ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                                                       ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                        ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi meta.delimiter.decimal.period.taxi
+#                                                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                                                           ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+#                                                                                                                                            ^^ source.taxi
+>    operation getDeal(
+#^^^^ source.taxi
+#    ^^^^^^^^^ source.taxi storage.type.taxi
+#             ^^^^^^^^^^ source.taxi
+>    @PathVariable("loanApplicationId") loanApplicationId: LoanApplicationId
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#                 ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#                  ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                   ^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                                    ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                                     ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+#                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>    ): DealResponse(...)
+#^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>
+>    //LCadmin deals - stages 0 to 5
+#^^^^ source.taxi punctuation.whitespace.comment.leading.taxi
+#    ^^ source.taxi comment.line.double-slash.taxi punctuation.definition.comment.taxi
+#      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi comment.line.double-slash.taxi
+>    @HttpOperation(url = "https://www.zohoapis.eu/crm/v5/Deals/search?criteria=((Stage:equals:0. Stalled Deals)or(Stage:equals:1. Sales)or(Stage:equals:2. New Application)or(Stage:equals:3. Credit Assessment)or(Stage:equals:4. Offer out)or(Stage:equals:5. Loan Document Checks/Approval))&sort_by=Modified_Time&fields=Contact_Name,Introduced_By,Modified_Time,$currency_symbol,Account_Name,Deal_Name,Currency,$currency_symbol,Borrower_Amount_for_drawdown,Closing_Date,Workflow_Step,Stage,Created_Time", method = "GET")
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#                  ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#                   ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                      ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                       ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                        ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+>    @HttpRetry(responseCode = [403, 500], exponentialRetryPolicy = @HttpExponentialRetryPolicy(maxRetries = 2, retryDelay = 2, jitter = 0.5))
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#              ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#               ^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                             ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                               ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                  ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                    ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                       ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                          ^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                 ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                               ^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                             ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                               ^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                                             ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                               ^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                                                     ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                      ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                                                       ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                        ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi meta.delimiter.decimal.period.taxi
+#                                                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                                                           ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+#                                                                                                                                            ^^ source.taxi
+>    operation getAllDeals(
+#^^^^ source.taxi
+#    ^^^^^^^^^ source.taxi storage.type.taxi
+#             ^^^^^^^^^^^^^^ source.taxi
+>    @HttpHeader(name = "If-Modified-Since") ifModifiedSince : ZohoModifiedSinceTime = (ZohoModifiedSinceTime) addDays(now(), -30)
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#               ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#                ^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                    ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                     ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                      ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                       ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                        ^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                                          ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+#                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+#                                                                                                                              ^^ source.taxi constant.numeric.decimal.taxi
+#                                                                                                                                ^^ source.taxi
+>    ): AllDealsResponse(...)
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>
+>    //brokerage deals
+#^^^^ source.taxi punctuation.whitespace.comment.leading.taxi
+#    ^^ source.taxi comment.line.double-slash.taxi punctuation.definition.comment.taxi
+#      ^^^^^^^^^^^^^^^ source.taxi comment.line.double-slash.taxi
+>    @HttpOperation(url = "https://www.zohoapis.eu/crm/v5/Accounts/{brokerageId}/Introduced_By?sort_by=Modified_Time&fields=Contact_Name,Introduced_By,Modified_Time,$currency_symbol,Account_Name,Deal_Name,Currency,$currency_symbol,Borrower_Amount_for_drawdown,Closing_Date,Workflow_Step,Stage,Created_Time", method = "GET")
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#                  ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#                   ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                      ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                       ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                        ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                                                                                                                                                                                                                                                                                                                ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                                                                                                                                                                                                                                                                                                                 ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                                                                                                                                                                                                   ^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                                                                                                                                                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                                                                                                                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                                                                                                                                                                                                                                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                                                                                                                                                                                                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                                                                                                                                                                                                                                                                                                                             ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                                                                                                                                                                                                                                                                                                                                ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                                                                                                                                                                                                                                                                                                                                 ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+>    @HttpRetry(responseCode = [403, 500], exponentialRetryPolicy = @HttpExponentialRetryPolicy(maxRetries = 2, retryDelay = 2, jitter = 0.5))
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#              ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#               ^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                             ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                               ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                  ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                    ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                       ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                          ^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                 ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                               ^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                             ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                               ^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                                             ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                               ^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                                                     ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                      ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                                                       ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                        ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi meta.delimiter.decimal.period.taxi
+#                                                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                                                           ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+#                                                                                                                                            ^^ source.taxi
+>    operation getBrokerageDeals(
+#^^^^ source.taxi
+#    ^^^^^^^^^ source.taxi storage.type.taxi
+#             ^^^^^^^^^^^^^^^^^^^^ source.taxi
+>    @PathVariable("brokerageId") brokerageId: BrokerageId,
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#                 ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#                  ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                   ^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                              ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                               ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+#                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>    @HttpHeader(name = "If-Modified-Since") ifModifiedSince : ZohoModifiedSinceTime = (ZohoModifiedSinceTime) addDays(now(), -30)
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#               ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#                ^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                    ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                     ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                      ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                       ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                        ^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                                          ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+#                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+#                                                                                                                              ^^ source.taxi constant.numeric.decimal.taxi
+#                                                                                                                                ^^ source.taxi
+>    ): DealResponse(BrokerageId == brokerageId)
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>
+>    //broker view of Deals
+#^^^^ source.taxi punctuation.whitespace.comment.leading.taxi
+#    ^^ source.taxi comment.line.double-slash.taxi punctuation.definition.comment.taxi
+#      ^^^^^^^^^^^^^^^^^^^^ source.taxi comment.line.double-slash.taxi
+>    @HttpOperation(url = "https://www.zohoapis.eu/crm/v5/Contacts/{brokerId}/Deals?sort_by=Modified_Time&fields=Contact_Name,Introduced_By,Modified_Time,$currency_symbol,Account_Name,Deal_Name,Currency,$currency_symbol,Borrower_Amount_for_drawdown,Closing_Date,Workflow_Step,Stage,Workflow_Stage,Created_Time", method = "GET")
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#                  ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#                   ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                      ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                       ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                        ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                                                                                                                                                                                                                                                                                                                    ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                                                                                                                                                                                                                                                                                                                     ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                                                                                                                                                                                                       ^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                                                                                                                                                                                                                                             ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                                                                                                                                                                                                              ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                                                                                                                                                                                                                                               ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                                                                                                                                                                                                                ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                                                                                                                                                                                                                                                                                                                                 ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                                                                                                                                                                                                                                                                                                                                    ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                                                                                                                                                                                                                                                                                                                                     ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+>    @HttpRetry(responseCode = [403, 500], exponentialRetryPolicy = @HttpExponentialRetryPolicy(maxRetries = 2, retryDelay = 2, jitter = 0.5))
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#              ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#               ^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                             ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                               ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                  ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                    ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                       ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                          ^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                 ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                               ^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                             ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                               ^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                                             ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                               ^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                                                     ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                      ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                                                       ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                        ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi meta.delimiter.decimal.period.taxi
+#                                                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                                                           ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+#                                                                                                                                            ^^ source.taxi
+>    operation getBrokerDeals(
+#^^^^ source.taxi
+#    ^^^^^^^^^ source.taxi storage.type.taxi
+#             ^^^^^^^^^^^^^^^^^ source.taxi
+>    @PathVariable("brokerId") brokerId: BrokerId,
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#                 ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#                  ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                   ^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                            ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+#                             ^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>    @HttpHeader(name = "If-Modified-Since") ifModifiedSince : ZohoModifiedSinceTime = (ZohoModifiedSinceTime) addDays(now(), -30)
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#               ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#                ^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                    ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                     ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                      ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                       ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                        ^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                                          ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+#                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+#                                                                                                                              ^^ source.taxi constant.numeric.decimal.taxi
+#                                                                                                                                ^^ source.taxi
+>    ): DealResponse(BrokerId == brokerId)
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>
+>     //borrower deals
+#^^^^^ source.taxi punctuation.whitespace.comment.leading.taxi
+#     ^^ source.taxi comment.line.double-slash.taxi punctuation.definition.comment.taxi
+#       ^^^^^^^^^^^^^^ source.taxi comment.line.double-slash.taxi
+>    @HttpOperation(url = "https://www.zohoapis.eu/crm/v5/Accounts/{borrowerId}/Deals?sort_by=Modified_Time&fields=Amount,Contact_Name,Introduced_By,Modified_Time,$currency_symbol,Account_Name,Deal_Name,Currency,$currency_symbol,Borrower_Amount_for_drawdown,Closing_Date,Workflow_Step,Stage,Created_Time,Platform_loan_id,Term_in_month", method = "GET")
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#                  ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#                   ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                      ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                       ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                        ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                                                                                                                                                                                                                                                                                                                                             ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                                                                                                                                                                                                                                                                                                                                              ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                                                                                                                                                                                                                                ^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                                                                                                                                                                                                                                                                      ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                                                                                                                                                                                                                                       ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                                                                                                                                                                                                                                                                        ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                                                                                                                                                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                                                                                                                                                                                                                                                                                                                                                          ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                                                                                                                                                                                                                                                                                                                                                             ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                                                                                                                                                                                                                                                                                                                                                              ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+>    @HttpRetry(responseCode = [403, 500], exponentialRetryPolicy = @HttpExponentialRetryPolicy(maxRetries = 2, retryDelay = 2, jitter = 0.5))
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#              ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#               ^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                             ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                               ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                  ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                    ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                       ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                          ^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                 ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                               ^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                             ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                               ^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                                           ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                            ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                                             ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                               ^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                                                                                     ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                      ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                                                                       ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                                                                        ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                                                         ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi meta.delimiter.decimal.period.taxi
+#                                                                                                                                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.numeric.decimal.taxi
+#                                                                                                                                           ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+#                                                                                                                                            ^^ source.taxi
+>    operation getBorrowerDeals(
+#^^^^ source.taxi
+#    ^^^^^^^^^ source.taxi storage.type.taxi
+#             ^^^^^^^^^^^^^^^^^^^ source.taxi
+>    @PathVariable("borrowerId") borrowerId: BorrowerId
+#^^^^ source.taxi
+#    ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#     ^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#                 ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#                  ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                   ^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                             ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                              ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+#                               ^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>    ): DealResponse(...)
+#^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>
+>
+>}
+#^^ source.taxi
+>
+>

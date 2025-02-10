@@ -1,0 +1,35 @@
+import com.taxi.types.LoanApplicationUnderwriter
+import com.taxi.types.account.AccountName
+
+namespace com.taxi.services.zoho.deal
+
+closed model DealResponse {
+    data: Deal[]
+}
+
+// temp workaround
+closed model AllDealsResponse {
+    data: Deal[]
+}
+
+closed model Deal {
+    id: LoanApplicationId
+    Deal_Name: LoanApplicationName
+    Currency: LoanApplicationCurrency
+
+    Account_Name: {
+        name: BorrowerName
+        id: BorrowerId
+    }
+
+    Contact_Name: {
+        name: ContactName
+        id: ContactId
+    }
+
+    Introduced_By: {
+        name: BrokerageName
+        id: BrokerageId
+    }
+
+}

@@ -396,7 +396,7 @@
             }
          ]
       },
-      "column-expression": {
+       "column-expression": {
          "name": "storage.modifier.column.taxi",
          "begin": "\\sby\\scolumn(\\s)*",
          "end": "\\)",

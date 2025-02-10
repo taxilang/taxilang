@@ -1,0 +1,120 @@
+>import com.taxi.types.LoanApplicationUnderwriter
+#^^^^^^ source.taxi meta.import.taxi keyword.control.import.taxi
+#      ^ source.taxi meta.import.taxi
+#       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.import.taxi meta.import.declaration.taxi
+>import com.taxi.types.account.AccountName
+#^^^^^^ source.taxi meta.import.taxi keyword.control.import.taxi
+#      ^ source.taxi meta.import.taxi
+#       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.import.taxi meta.import.declaration.taxi
+>
+>namespace com.taxi.services.zoho.deal
+#^^^^^^^^^ source.taxi storage.type.taxi
+#         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>
+>closed model DealResponse {
+#^^^^^^ source.taxi meta.class.model.taxi storage.type.type.taxi
+#      ^^^^^^ source.taxi meta.class.model.taxi
+#            ^ source.taxi meta.class.model.taxi
+#             ^^^^^^^^^^^^ source.taxi meta.class.model.taxi entity.name.type.class.taxi
+#                         ^ source.taxi meta.class.model.taxi
+#                          ^ source.taxi meta.class.model.taxi punctuation.definition.block.taxi
+>    data: Deal[]
+#^^^^ source.taxi meta.class.model.taxi
+#    ^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi
+#        ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#         ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi
+#          ^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi entity.name.type.taxi
+#              ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi
+#               ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi
+>}
+#^ source.taxi meta.class.model.taxi
+>
+>// temp workaround
+#^^ source.taxi comment.line.double-slash.taxi punctuation.definition.comment.taxi
+#  ^^^^^^^^^^^^^^^^ source.taxi comment.line.double-slash.taxi
+>closed model AllDealsResponse {
+#^^^^^^ source.taxi meta.class.model.taxi storage.type.type.taxi
+#      ^^^^^^ source.taxi meta.class.model.taxi
+#            ^ source.taxi meta.class.model.taxi
+#             ^^^^^^^^^^^^^^^^ source.taxi meta.class.model.taxi entity.name.type.class.taxi
+#                             ^ source.taxi meta.class.model.taxi
+#                              ^ source.taxi meta.class.model.taxi punctuation.definition.block.taxi
+>    data: Deal[]
+#^^^^ source.taxi meta.class.model.taxi
+#    ^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi
+#        ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#         ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi
+#          ^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi entity.name.type.taxi
+#              ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi
+#               ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi
+>}
+#^ source.taxi meta.class.model.taxi
+>
+>closed model Deal {
+#^^^^^^ source.taxi meta.class.model.taxi storage.type.type.taxi
+#      ^^^^^^ source.taxi meta.class.model.taxi
+#            ^ source.taxi meta.class.model.taxi
+#             ^^^^ source.taxi meta.class.model.taxi entity.name.type.class.taxi
+#                 ^ source.taxi meta.class.model.taxi
+#                  ^ source.taxi meta.class.model.taxi punctuation.definition.block.taxi
+>    id: LoanApplicationId
+#^^^^ source.taxi meta.class.model.taxi
+#    ^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi
+#      ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#       ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi
+#        ^^^^^^^^^^^^^^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi entity.name.type.taxi
+>    Deal_Name: LoanApplicationName
+#^^^^ source.taxi meta.class.model.taxi
+#    ^^^^^^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi
+#             ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#              ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi
+#               ^^^^^^^^^^^^^^^^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi entity.name.type.taxi
+>    Currency: LoanApplicationCurrency
+#^^^^ source.taxi meta.class.model.taxi
+#    ^^^^^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi
+#            ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#             ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi
+#              ^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi entity.name.type.taxi
+>
+>    Account_Name: {
+#^^^^ source.taxi meta.class.model.taxi
+#    ^^^^^^^^^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi
+#                ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                 ^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi
+>        name: BorrowerName
+#^^^^^^^^ source.taxi meta.class.model.taxi
+#        ^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi
+#            ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#             ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi
+#              ^^^^^^^^^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi entity.name.type.taxi
+>        id: BorrowerId
+#^^^^^^^^ source.taxi meta.class.model.taxi
+#        ^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi
+#          ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#           ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi
+#            ^^^^^^^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi entity.name.type.taxi
+>    }
+#^^^^ source.taxi meta.class.model.taxi
+#    ^ source.taxi meta.class.model.taxi
+>
+>    Contact_Name: {
+#^^^^^^^^^^^^^^^^^^^^ source.taxi
+>        name: ContactName
+#^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>        id: ContactId
+#^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>    }
+#^^^^^^ source.taxi
+>
+>    Introduced_By: {
+#^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>        name: BrokerageName
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>        id: BrokerageId
+#^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>    }
+#^^^^^^ source.taxi
+>
+>}
+#^^ source.taxi
+>
