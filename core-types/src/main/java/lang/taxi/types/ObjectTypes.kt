@@ -45,6 +45,11 @@ data class ObjectTypeDefinition(
    val isAnonymous: Boolean = false,
    val typeKind: TypeKind = TypeKind.Type,
    val expression: Expression? = null,
+   /**
+    * If this is a partial type, then this is the reference type
+    * that this is a partial of.
+    */
+   val partialOfType: Type? = null,
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : TypeDefinition, Documented {
@@ -70,6 +75,7 @@ data class ObjectTypeDefinition(
       }
 
     val isScalar = fields.isEmpty() && inheritsFrom.all { it.isScalar }
+   val isPartial = this.partialOfType != null
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
    override fun hashCode(): Int = equality.hash()
@@ -139,6 +145,14 @@ data class ObjectType(
          return if (isDefined) wrapper.allInheritedTypes else emptySet()
       }
 
+   val isPartialType:Boolean
+      get() {
+         return definition?.isPartial ?: false
+      }
+   val partialOfType:Type?
+      get() {
+         return definition?.partialOfType
+      }
    override val isScalar: Boolean
       get() {
          return definition?.isScalar ?: false

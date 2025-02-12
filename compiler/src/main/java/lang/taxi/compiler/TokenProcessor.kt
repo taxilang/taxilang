@@ -500,6 +500,8 @@ class TokenProcessor(
                tokenRule
             ).collectErrors(errors)
 
+            is PartialModelDeclarationContext -> compilePartialModel(tokenName, tokenRule).collectErrors(errors)
+
             else -> TODO("Not handled: $tokenRule")
          }.map { type ->
             this.errors.addAll(linter.lint(type))
@@ -732,6 +734,11 @@ class TokenProcessor(
          )
       }
 
+   }
+
+   private fun compilePartialModel(tokenName: String, tokenRule: PartialModelDeclarationContext): Either<List<CompilationError>, ObjectType> {
+      return PartialModelCompiler(this)
+         .compilePartialModel(QualifiedName.from(tokenName), tokenRule)
    }
 
    private fun compileType(
