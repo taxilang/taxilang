@@ -5,7 +5,8 @@
 >
 >namespace com.acme.foo {
 #^^^^^^^^^ source.taxi storage.type.taxi
-#         ^^^^^^^^^^^^^^^^ source.taxi
+#         ^^^^^^^^^^^^^^ source.taxi
+#                       ^ source.taxi punctuation.definition.block.taxi
 >
 >   @Annotation(foo = "Bar" )
 #^^^ source.taxi
@@ -22,29 +23,17 @@
 #                          ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
 #                           ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
 >   type FirstName inherits String
-#^^^ source.taxi
-#   ^^^^ source.taxi meta.class.model.taxi
-#       ^ source.taxi meta.class.model.taxi
-#        ^^^^^^^^^ source.taxi meta.class.model.taxi entity.name.type.class.taxi
-#                 ^ source.taxi meta.class.model.taxi
-#                  ^^^^^^^^ source.taxi meta.class.model.taxi storage.modifier.taxi
-#                          ^ source.taxi meta.class.model.taxi
-#                           ^^^^^^ source.taxi meta.class.model.taxi support.type.primitive.taxi
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
 >
 >   enum NumberEnum {
-#^^^ source.taxi meta.class.model.taxi
-#   ^^^^ source.taxi meta.class.model.taxi entity.name.type.class.taxi
-#       ^ source.taxi meta.class.model.taxi
-#        ^^^^^^^^^^ source.taxi meta.class.model.taxi entity.name.type.class.taxi
-#                  ^ source.taxi meta.class.model.taxi
-#                   ^ source.taxi meta.class.model.taxi punctuation.definition.block.taxi
+#^^^^^^^^^^^^^^^^^^^^^ source.taxi
 >      One(1),
-#^^^^^^^^^^^^^^ source.taxi meta.class.model.taxi
+#^^^^^^^^^^^^^^ source.taxi
 >      Two(2)
-#^^^^^^^^^^^^^ source.taxi meta.class.model.taxi
+#^^^^^^^^^^^^^ source.taxi
 >   }
-#^^^ source.taxi meta.class.model.taxi
-#   ^ source.taxi meta.class.model.taxi
+#^^^ source.taxi
+#   ^ source.taxi punctuation.definition.block.taxi
 >   enum CharEnum {
 #^^^ source.taxi
 #   ^^^^ source.taxi meta.enum.declaration.taxi keyword.control.export.taxi
@@ -67,94 +56,114 @@
 >
 >   type LastName inherits com.people.Names
 #^^^ source.taxi
-#   ^^^^ source.taxi meta.class.model.taxi
-#       ^ source.taxi meta.class.model.taxi
-#        ^^^^^^^^ source.taxi meta.class.model.taxi entity.name.type.class.taxi
-#                ^ source.taxi meta.class.model.taxi
-#                 ^^^^^^^^ source.taxi meta.class.model.taxi storage.modifier.taxi
-#                         ^^^^^^^^^^^^^^^^^ source.taxi meta.class.model.taxi
+#   ^^^^ source.taxi storage.type.type.taxi
+#       ^ source.taxi storage.type.type.taxi
+#        ^^^^^^^^ source.taxi storage.type.type.taxi entity.name.type.class.taxi
+#                ^ source.taxi storage.type.type.taxi
+#                 ^^^^^^^^ source.taxi storage.type.type.taxi storage.modifier.taxi
+#                         ^^^^^^^^^^^^^^^^^ source.taxi storage.type.type.taxi
 >
 >   [[ These are some docs ]]
-#^^^ source.taxi meta.class.model.taxi
-#   ^^ source.taxi meta.class.model.taxi comment.block.taxidoc.taxi punctuation.definition.comment.taxi
-#     ^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.class.model.taxi comment.block.taxidoc.taxi
-#                          ^^ source.taxi meta.class.model.taxi comment.block.taxidoc.taxi punctuation.definition.comment.taxi
+#^^^ source.taxi storage.type.type.taxi
+#   ^^ source.taxi storage.type.type.taxi comment.block.taxidoc.taxi punctuation.definition.comment.taxi
+#     ^^^^^^^^^^^^^^^^^^^^^ source.taxi storage.type.type.taxi comment.block.taxidoc.taxi
+#                          ^^ source.taxi storage.type.type.taxi comment.block.taxidoc.taxi punctuation.definition.comment.taxi
 >   model Person {
-#^^^ source.taxi meta.class.model.taxi
-#   ^^^^^ source.taxi meta.class.model.taxi entity.name.type.class.taxi
-#        ^ source.taxi meta.class.model.taxi
-#         ^^^^^^ source.taxi meta.class.model.taxi entity.name.type.class.taxi
-#               ^ source.taxi meta.class.model.taxi
-#                ^ source.taxi meta.class.model.taxi punctuation.definition.block.taxi
+#^^^ source.taxi storage.type.type.taxi
+#   ^^^^^ source.taxi storage.type.type.taxi entity.name.type.class.taxi
+#        ^ source.taxi storage.type.type.taxi
+#         ^^^^^^ source.taxi storage.type.type.taxi entity.name.type.class.taxi
+#               ^ source.taxi storage.type.type.taxi
+#                ^ source.taxi storage.type.type.taxi punctuation.definition.block.taxi
 >      id : PersonId inherits Int
-#^^^^^^ source.taxi meta.class.model.taxi
-#      ^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi
-#         ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
-#          ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi
-#           ^^^^^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi entity.name.type.taxi
-#                   ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi
-#                    ^^^^^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi entity.name.type.taxi
-#                            ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi
-#                             ^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi support.type.primitive.taxi
+#^^^^^^ source.taxi storage.type.type.taxi
+#      ^^^ source.taxi storage.type.type.taxi variable.object.property.taxi
+#         ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#          ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#           ^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+#                   ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                    ^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+#                            ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                             ^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi support.type.primitive.taxi
 >      name : FirstName by column('Foo')
-#^^^^^^ source.taxi meta.class.model.taxi
-#      ^^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi
-#           ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
-#            ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi
-#             ^^^^^^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi entity.name.type.taxi
-#                      ^^^^^^^^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi storage.modifier.column.taxi
-#                                ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi storage.modifier.column.taxi
-#                                 ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi storage.modifier.column.taxi string.quoted.single.taxi punctuation.definition.string.begin.taxi
-#                                  ^^^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi storage.modifier.column.taxi string.quoted.single.taxi
-#                                     ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi storage.modifier.column.taxi string.quoted.single.taxi punctuation.definition.string.end.taxi
-#                                      ^ source.taxi meta.class.model.taxi meta.field.declaration.taxi meta.type.annotation.taxi storage.modifier.column.taxi
+#^^^^^^ source.taxi storage.type.type.taxi
+#      ^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi
+#           ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#            ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#             ^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+#                      ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                       ^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+#                         ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                          ^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+#                                ^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                                  ^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+#                                     ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                                      ^ source.taxi storage.type.type.taxi variable.object.property.taxi
 >   }
-#^^^ source.taxi meta.class.model.taxi
-#   ^ source.taxi meta.class.model.taxi
+#^^^ source.taxi storage.type.type.taxi
+#   ^ source.taxi storage.type.type.taxi punctuation.definition.block.taxi
 >
 >   service MyService {
 #^^^ source.taxi
-#   ^^^^^^^ source.taxi storage.type.taxi
-#          ^^^^^^^^^^^^^ source.taxi
+#   ^^^^^^^ source.taxi meta.service.taxi keyword.control.service.taxi
+#          ^ source.taxi meta.service.taxi
+#           ^^^^^^^^^ source.taxi meta.service.taxi entity.name.type.service.taxi
+#                    ^ source.taxi meta.service.taxi
+#                     ^ source.taxi meta.service.taxi punctuation.definition.block.taxi
 >      // This is a line comment
-#^^^^^^ source.taxi punctuation.whitespace.comment.leading.taxi
-#      ^^ source.taxi comment.line.double-slash.taxi punctuation.definition.comment.taxi
-#        ^^^^^^^^^^^^^^^^^^^^^^^ source.taxi comment.line.double-slash.taxi
+#^^^^^^ source.taxi meta.service.taxi punctuation.whitespace.comment.leading.taxi
+#      ^^ source.taxi meta.service.taxi comment.line.double-slash.taxi punctuation.definition.comment.taxi
+#        ^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.service.taxi comment.line.double-slash.taxi
 >      operation findPeople(PersonId):Person
-#^^^^^^ source.taxi
-#      ^^^^^^^^^ source.taxi storage.type.taxi
-#               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+#^^^^^^ source.taxi meta.service.taxi
+#      ^^^^^^^^^ source.taxi meta.service.taxi meta.operation.taxi keyword.control.operation.taxi
+#               ^ source.taxi meta.service.taxi meta.operation.taxi
+#                ^^^^^^^^^^ source.taxi meta.service.taxi meta.operation.taxi entity.name.function.operation.taxi
+#                          ^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi punctuation.definition.parameters.begin.taxi
+#                           ^^^^^^^^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi entity.name.type.taxi
+#                                   ^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi punctuation.definition.parameters.end.taxi
+#                                    ^ source.taxi meta.service.taxi meta.operation.taxi keyword.operator.return-type.taxi
+#                                     ^^^^^^ source.taxi meta.service.taxi meta.operation.taxi entity.name.type.taxi
 >
 >      /**
-#^^^^^^ source.taxi
-#      ^^ source.taxi comment.block.taxi punctuation.definition.comment.taxi
-#        ^^ source.taxi comment.block.taxi
+#^^^^^^ source.taxi meta.service.taxi
+#      ^^ source.taxi meta.service.taxi comment.block.taxi punctuation.definition.comment.taxi
+#        ^^ source.taxi meta.service.taxi comment.block.taxi
 >       * This is a block
-#^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi comment.block.taxi
+#^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.service.taxi comment.block.taxi
 >       * comment
-#^^^^^^^^^^^^^^^^^ source.taxi comment.block.taxi
+#^^^^^^^^^^^^^^^^^ source.taxi meta.service.taxi comment.block.taxi
 >       */
-#^^^^^^^ source.taxi comment.block.taxi
-#       ^^ source.taxi comment.block.taxi punctuation.definition.comment.taxi
+#^^^^^^^ source.taxi meta.service.taxi comment.block.taxi
+#       ^^ source.taxi meta.service.taxi comment.block.taxi punctuation.definition.comment.taxi
 >      operation findPeopleWithName(name : FirstName):Person[]
-#^^^^^^ source.taxi
-#      ^^^^^^^^^ source.taxi storage.type.taxi
-#               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+#^^^^^^ source.taxi meta.service.taxi
+#      ^^^^^^^^^ source.taxi meta.service.taxi meta.operation.taxi keyword.control.operation.taxi
+#               ^ source.taxi meta.service.taxi meta.operation.taxi
+#                ^^^^^^^^^^^^^^^^^^ source.taxi meta.service.taxi meta.operation.taxi entity.name.function.operation.taxi
+#                                  ^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi punctuation.definition.parameters.begin.taxi
+#                                   ^^^^^^^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi variable.parameter.name.taxi
+#                                          ^^^^^^^^^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi entity.name.type.taxi
+#                                                   ^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi punctuation.definition.parameters.end.taxi
+#                                                    ^ source.taxi meta.service.taxi meta.operation.taxi keyword.operator.return-type.taxi
+#                                                     ^^^^^^ source.taxi meta.service.taxi meta.operation.taxi entity.name.type.taxi
+#                                                           ^^ source.taxi meta.service.taxi meta.operation.taxi
 >   }
-#^^^^^ source.taxi
+#^^^ source.taxi meta.service.taxi
+#   ^ source.taxi meta.service.taxi punctuation.definition.block.taxi
 >
 >   closed model MyClosedModel {
 #^^^ source.taxi
-#   ^^^^^^ source.taxi meta.class.model.taxi storage.type.type.taxi
-#         ^^^^^^ source.taxi meta.class.model.taxi
-#               ^ source.taxi meta.class.model.taxi
-#                ^^^^^^^^^^^^^ source.taxi meta.class.model.taxi entity.name.type.class.taxi
-#                             ^ source.taxi meta.class.model.taxi
-#                              ^ source.taxi meta.class.model.taxi punctuation.definition.block.taxi
+#   ^^^^^^ source.taxi storage.type.type.taxi storage.type.type.taxi
+#         ^^^^^^ source.taxi storage.type.type.taxi
+#               ^ source.taxi storage.type.type.taxi
+#                ^^^^^^^^^^^^^ source.taxi storage.type.type.taxi entity.name.type.class.taxi
+#                             ^ source.taxi storage.type.type.taxi
+#                              ^ source.taxi storage.type.type.taxi punctuation.definition.block.taxi
 >
 >   }
-#^^^ source.taxi meta.class.model.taxi
-#   ^ source.taxi meta.class.model.taxi
+#^^^ source.taxi storage.type.type.taxi
+#   ^ source.taxi storage.type.type.taxi punctuation.definition.block.taxi
 >}
 #^^ source.taxi
 >

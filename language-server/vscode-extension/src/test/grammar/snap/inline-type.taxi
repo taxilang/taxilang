@@ -1,0 +1,6 @@
+model Person {
+   address: {
+      street1: Street1
+   }
+   name: Name
+}

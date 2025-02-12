@@ -1,0 +1,30 @@
+
+@HttpOperation(url = '/api/q/brokerage/{brokerageId}/loanapplications', method = 'GET')
+query getBrokerageDeals(@PathVariable("brokerageId") brokerageId: BrokerageId) {
+given { brokerageId }
+
+ find { DealResponse } as (deal:Deal[]) -> {
+           id : LoanApplicationId
+           name : LoanApplicationName
+           amount: {
+                 amount: LoanApplicationAmount
+                 currency: LoanApplicationCurrency
+             }
+           createdTime : LoanApplicationCreatedTime
+           modifiedTime : LoanApplicationModifiedTime
+           stage : LoanApplicationStage
+           workflowStep : LoanApplicationStep
+           brokerage : Brokerage as (deal: first(Deal[])) -> {
+               name : BrokerageName
+               id : BrokerageId
+           }
+           company : {
+               name : BorrowerName
+               id : BorrowerId
+           }
+           broker : {
+               fullName : ContactName
+               id : ContactId
+           }
+        }[]
+    }
