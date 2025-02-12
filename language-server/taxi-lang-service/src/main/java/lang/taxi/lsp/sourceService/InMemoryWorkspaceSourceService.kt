@@ -21,12 +21,12 @@ class InMemoryWorkspaceSourceService(
       }
    }
 
-   override fun loadSources(): Sequence<SourceCode> {
-      return sources.asSequence()
+   override fun loadSources(): List<Pair<TaxiPackageProject?, Sequence<SourceCode>>> {
+      return listOf(null to sources.asSequence())
    }
 
-   override fun loadProject(): TaxiPackageProject? {
-      return null
+   override fun loadProjects(): List<TaxiPackageProject> {
+      return emptyList()
    }
 }
 

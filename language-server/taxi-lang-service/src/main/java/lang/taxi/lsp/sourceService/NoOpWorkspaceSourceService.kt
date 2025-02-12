@@ -21,11 +21,11 @@ class NoOpWorkspaceSourceService : WorkspaceSourceService {
         }
     }
 
-    override fun loadSources(): Sequence<SourceCode> {
-        return emptySequence()
+    override fun loadSources(): List<Pair<TaxiPackageProject?, Sequence<SourceCode>>> {
+        return emptyList()
     }
 
-    override fun loadProject(): TaxiPackageProject? {
-        return null
+    override fun loadProjects(): List<TaxiPackageProject> {
+        return emptyList()
     }
 }

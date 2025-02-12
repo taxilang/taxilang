@@ -1,6 +1,7 @@
 package lang.taxi.lsp.sourceService
 
 import lang.taxi.packages.TaxiPackageProject
+import lang.taxi.packages.TaxiPackageSources
 import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.sources.SourceCode
 import lang.taxi.types.SourceNames
@@ -8,8 +9,8 @@ import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.services.LanguageClient
 import java.io.File
 import java.net.URI
-import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 
 /**
  * Responsible in a LSP service for deciding where to discover sources from.
@@ -34,28 +35,36 @@ class FileBasedWorkspaceSourceService(
 
             return FileBasedWorkspaceSourceService(root.toPath())
          }
-
       }
    }
 
-   override fun loadSources(): Sequence<SourceCode> {
-      val taxiConfFile = root.resolve("taxi.conf")
-      return if (Files.exists(taxiConfFile)) {
-            val packageSources = TaxiSourcesLoader.loadPackageAndDependencies(root)
-            packageSources.sources.asSequence()
-      } else {
-         loadAllTaxiFilesUnderRoot()
+   private fun loadTaxiPackages(): List<TaxiPackageSources> {
+      val taxiConfFiles = FileWorkspaceProjectFinder.findTaxiConfFiles(root)
+      return taxiConfFiles.map { path ->
+         val packageRootPath = if (path.isDirectory()) {
+            path
+         } else {
+            path.parent
+         }
+         TaxiSourcesLoader.loadPackageAndDependencies(packageRootPath)
       }
    }
 
-   override fun loadProject(): TaxiPackageProject? {
-      val taxiConfFile = root.resolve("taxi.conf")
-      return if (Files.exists(taxiConfFile)) {
-         val packageSources = TaxiSourcesLoader.loadPackage(root)
-         packageSources.project
+   override fun loadSources(): List<Pair<TaxiPackageProject?, Sequence<SourceCode>>> {
+      val packages = loadTaxiPackages()
+      // MP: 11-Feb-25: Support multiple projects in workspace.
+      return if (packages.isEmpty()) {
+         listOf(null to loadAllTaxiFilesUnderRoot())
       } else {
-         null
+         packages.map {
+            it.project to it.sources.asSequence()
+         }
       }
+   }
+
+   override fun loadProjects(): List<TaxiPackageProject> {
+      val taxiPackageSources = loadTaxiPackages()
+      return taxiPackageSources.map { it.project }
    }
 
    private fun loadAllTaxiFilesUnderRoot(): Sequence<SourceCode> {

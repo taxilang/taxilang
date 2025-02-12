@@ -7,6 +7,7 @@ import org.taxilang.packagemanager.PackageManager
 import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 import kotlin.io.path.readText
 
 class TaxiSourcesLoader(private val sourceRoot: Path) {
@@ -77,12 +78,17 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
          }
       }
 
-      fun loadPackage(packageRootPath: Path): TaxiPackageSources {
-         val taxiConfFile = packageRootPath.resolve("taxi.conf")
-         if (!Files.exists(taxiConfFile)) {
-            throw FileNotFoundException("No taxi config file exists at $taxiConfFile")
+      fun loadPackage(taxiConfFileOrDirectory: Path): TaxiPackageSources {
+         val (taxiConfFile, packageRootPath) = if (taxiConfFileOrDirectory.isDirectory()) {
+            taxiConfFileOrDirectory.resolve("taxi.conf") to taxiConfFileOrDirectory
+         } else {
+            taxiConfFileOrDirectory to taxiConfFileOrDirectory.parent
          }
-         val taxiPackage = TaxiPackageLoader(taxiConfFile).load()
+
+         if (!Files.exists(taxiConfFile)) {
+            throw FileNotFoundException("No taxi config file exists at $taxiConfFileOrDirectory")
+         }
+         val taxiPackage = TaxiPackageLoader.forDirectoryOrFilePath(taxiConfFile).load()
          return loadPackage(packageRootPath, taxiPackage)
       }
    }
