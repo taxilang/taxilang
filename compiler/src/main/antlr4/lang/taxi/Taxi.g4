@@ -32,6 +32,7 @@ namespaceBody
 
 toplevelObject
     :   typeDeclaration
+    |   partialModelDeclaration
     |   enumDeclaration
     |   enumExtensionDeclaration
     |   typeExtensionDeclaration
@@ -65,6 +66,8 @@ typeDeclaration
         ('inherits' listOfInheritedTypes)?
         (typeBody | expressionTypeDeclaration)?
     ;
+
+partialModelDeclaration: typeDoc? annotation* 'partial' typeModifier* K_Model identifier 'from' typeReference;
 
 listOfInheritedTypes
     : typeReference (',' typeReference)*

@@ -100,7 +100,81 @@ service CustomerDatabase {
   3. Look for services that can return it
 </Callout>
 
+## Partial Models
 
+A partial model creates a new type where all fields from an existing model become optional. This is particularly useful for PATCH operations in REST APIs, where you want to update only specific fields of a resource.
+
+### Basic Usage
+
+```taxi
+model Person {
+   name: Name inherits String
+   age: Age inherits Int
+}
+
+partial model PartialPerson from Person
+```
+
+The generated `PartialPerson` will have all fields made optional (nullable):
+```taxi
+model PartialPerson {
+   name: Name?
+   age: Age?
+}
+```
+
+### Nested types in partials
+
+When a model contains references to other models or arrays, the compiler automatically creates partial versions of those types too:
+
+```taxi
+model Pet {
+   name: PetName inherits String
+   age: Age inherits Int
+   parent: Pet            // Self-referential field
+}
+
+model Person {
+   name: Name inherits String
+   pet: Pet              // Reference to another model
+   deadPets: Pet[]       // Array of models
+}
+
+partial model PartialPerson from Person
+```
+
+This expands to:
+```taxi
+model PartialPerson { 
+   name: Name?           // Primitive types become nullable
+   pet: PartialPet?     // Model references become partial and nullable
+   deadPets: PartialPet[]?  // Arrays become nullable arrays of partial types
+}
+
+model PartialPet {
+   name: PetName?
+   age: Age?
+   parent: PartialPet?   // Self-references become partial too
+}
+```
+
+### Inheritance and Modifiers
+
+Partial models:
+- Do not inherit from their reference type
+- Inherit all annotations and modifiers from the reference type
+- Can add new annotations and modifiers
+- Cannot modify the structure beyond making fields optional
+
+Example with additional modifiers:
+```taxi
+model Person {
+   name: Name inherits String
+}
+
+@OmitNulls
+partial parameter model PartialPerson from Person
+```
 
 ## Field types
 

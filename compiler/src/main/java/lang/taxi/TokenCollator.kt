@@ -283,6 +283,7 @@ class TokenCollator : TaxiBaseListener() {
       super.exitFieldDeclaration(ctx)
    }
 
+
    override fun exitEnumDeclaration(ctx: TaxiParser.EnumDeclarationContext) {
       if (collateExceptions(ctx)) {
          val name = qualify(ctx.qualifiedName().identifier().text())
@@ -290,6 +291,7 @@ class TokenCollator : TaxiBaseListener() {
       }
       super.exitEnumDeclaration(ctx)
    }
+
 
    override fun exitNamespaceDeclaration(ctx: TaxiParser.NamespaceDeclarationContext) {
       collateExceptions(ctx)
@@ -335,6 +337,13 @@ class TokenCollator : TaxiBaseListener() {
          unparsedTypes[typeName] = namespace to ctx
       }
       super.exitTypeDeclaration(ctx)
+   }
+   override fun exitPartialModelDeclaration(ctx: TaxiParser.PartialModelDeclarationContext) {
+      if (collateExceptions(ctx)) {
+         val typeName = qualify(ctx.identifier().text)
+         unparsedTypes[typeName] = namespace to ctx
+      }
+      super.exitPartialModelDeclaration(ctx)
    }
 
    override fun exitTypeAliasDeclaration(ctx: TaxiParser.TypeAliasDeclarationContext) {
