@@ -55,7 +55,7 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
          )
       }
 
-      private fun loadPackage(
+      fun loadPackage(
          path: Path,
          project: TaxiPackageProject,
          dependencySources: List<SourceCode> = emptyList()
