@@ -15,7 +15,9 @@
       <maven.compiler.source>17</maven.compiler.source>
       <maven.compiler.target>17</maven.compiler.target>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <cxf.version>4.0.4</cxf.version>
+      <!-- CVE-2025-23184, resolved in 4.0.6 -->
+      <cxf.version>4.0.6</cxf.version>
+      <jaxb.version>4.0.4</jaxb.version>
    </properties>
 
    <dependencies>
@@ -32,9 +34,7 @@
       <dependency>
          <groupId>com.sun.xml.bind</groupId>
          <artifactId>jaxb-xjc</artifactId>
-         <!-- TODO : Not sure if this should be the same as the cxf version,
-         or if that's just a coincidence -->
-         <version>${cxf.version}</version>
+         <version>${jaxb.version}</version>
       </dependency>
 
       <!--      <dependency>-->
