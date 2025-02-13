@@ -70,14 +70,16 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
          return TaxiPackageSources(project, sources + dependencySources, readme)
       }
 
-      fun findReadme(path: Path): SourceCode? {
-         val (packageRoot, taxiConfFile) = packageRootAndTaxiConfAtPath(path)
-         val optional = Files.list(packageRoot)
+      fun findReadme(packageRootPath: Path): SourceCode? {
+         if (!Files.isDirectory(packageRootPath)) {
+            return null
+         }
+         val optional =  Files.list(packageRootPath)
             .filter { it.fileName.toString().equals("readme.md", ignoreCase = true) }
             .findFirst()
-            .map { filePath ->
+            .map { path ->
                SourceCode(
-                  filePath.fileName.toString(), filePath.readText(), filePath, SourceCodeLanguages.MARKDOWN
+                  path.fileName.toString(), path.readText(), path, SourceCodeLanguages.MARKDOWN
                )
             }
          return if (optional.isEmpty) {
