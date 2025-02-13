@@ -19,7 +19,10 @@ import org.taxilang.packagemanager.asDependency
 import javax.tools.Tool
 
 // This class is modelled heavily from maven's DefaultArtifactDescriptorReader
-class TaxiDescriptorReader : ArtifactDescriptorReader, Service {
+class TaxiDescriptorReader(
+   private val artifactResolver: ArtifactResolver,
+   private val  versionResolver: VersionResolver,
+) : ArtifactDescriptorReader {
    override fun readArtifactDescriptor(
       session: RepositorySystemSession,
       request: ArtifactDescriptorRequest
@@ -31,12 +34,11 @@ class TaxiDescriptorReader : ArtifactDescriptorReader, Service {
    }
 
 
-   private lateinit var artifactResolver: ArtifactResolver
-   private lateinit var versionResolver: VersionResolver
-   override fun initService(locator: ServiceLocator) {
-      artifactResolver = locator.getService(ArtifactResolver::class.java)
-      versionResolver = locator.getService(VersionResolver::class.java)
-   }
+
+//   override fun initService(locator: ServiceLocator) {
+//      artifactResolver = locator.getService(ArtifactResolver::class.java)
+//      versionResolver = locator.getService(VersionResolver::class.java)
+//   }
 
    private fun loadTaxiConf(
       session: RepositorySystemSession,

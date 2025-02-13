@@ -1,0 +1,37 @@
+{
+  "name": "@orbitalhq/taxiql-client",
+  "version": "0.0.3",
+  "description": "A Typescript client for executing TaxiQL from client side libraries",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "npm run build:js && npm run build:types",
+    "build:js": "node esbuild.config.js",
+    "build:types": "tsc --declaration --jsx react-jsx --esModuleInterop src/index.ts --emitDeclarationOnly --outDir ./dist",
+    "prepublishOnly": "npm run build"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^22.12.0",
+    "@types/react": "^19.0.8",
+    "esbuild": "^0.24.2",
+    "nanoid": "^5.0.9",
+    "react": "^19.0.0",
+    "typescript": "^5.7.3"
+  },
+  "peerDependencies": {
+    "react": "^17.0.0 || ^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "files": [
+    "dist"
+  ]
+}

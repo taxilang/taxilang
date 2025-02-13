@@ -1,0 +1,9 @@
+{
+   "name": "@orbitalhq/taxiql-codegen-cli-win32",
+   "description": "The Windows binary for taxiql TS codegen",
+   "version": "0.0.4",
+   "os": [
+      "win32"
+   ],
+   "license": "Apache-2.0"
+}

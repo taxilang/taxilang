@@ -1,0 +1,7 @@
+namespace films.reviews {
+   closed model FilmReview {
+      filmId: films.reviews.SquashedTomatoesFilmId,
+      score: films.reviews.FilmReviewScore,
+      filmReview: films.reviews.ReviewText
+   }
+}

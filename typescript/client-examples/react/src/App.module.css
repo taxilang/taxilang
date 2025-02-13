@@ -1,0 +1,76 @@
+:root {
+  margin: 1rem;
+}
+
+.logoContainer {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+
+  .plus {
+    font-size: 4rem;
+  }
+}
+
+.logo {
+  height: 4em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em rgba(196, 255, 33, 0.67));
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+.navLinks {
+  display: flex;
+  gap: 2px;
+  border-radius: 0.5rem;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.15);
+  font-size: 1.05rem;
+
+  a {
+    padding: 0.25rem 1rem;
+    border-radius: 4px;
+    color: #FFF;
+  }
+
+  a:hover {
+    background: rgba(255,255,255, 0.05);
+  }
+
+  a.active {
+    background: rgba(255,255,255, 0.15);
+    color: #d5ff5d;
+  }
+
+  a:last-child {
+
+  }
+}
+
+.mainContainer {
+  display: flex;
+  gap: 2rem;
+  margin: 2rem 1rem;
+}
+
+@keyframes logoSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logoSpin infinite 20s linear;
+  }
+}

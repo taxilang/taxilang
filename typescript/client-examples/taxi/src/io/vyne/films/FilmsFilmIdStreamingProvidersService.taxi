@@ -1,0 +1,9 @@
+import films.FilmId
+import io.vyne.films.StreamingProvider
+
+namespace io.vyne.films {
+   service FilmsFilmIdStreamingProvidersService {
+      @HttpOperation(method = "GET" , url = "http://films-api/films/{filmId}/streamingProviders")
+      operation getStreamingProvidersForFilmUsingGET( @PathVariable(value = "filmId") filmId : films.FilmId ) : StreamingProvider(...)
+   }
+}

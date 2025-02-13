@@ -1,0 +1,7 @@
+query StreamFilmsWithReview {
+   stream { Film } as {
+      title : Title
+      reviewScore : ReviewScore
+      review : ReviewText
+   }[]
+}

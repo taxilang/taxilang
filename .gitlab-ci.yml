@@ -25,7 +25,7 @@ cache:
 default:
    tags:
       - docker
-   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/maven:3.9.0-eclipse-temurin-17
+   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/maven:3.9.9-eclipse-temurin-21
 
 .setup-nvm: &setup-nvm
    - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash'
@@ -48,7 +48,7 @@ default:
 
 stages:
    - build
-   - build-plugin
+   - build-tools
    - trigger-release
    - deploy
    - deploy-plugin
@@ -64,7 +64,9 @@ validate:
       - master
       - develop
    script:
-      - 'mvn $MAVEN_CLI_OPTS clean verify'
+      # Don't run tests while experimenting with native builds.
+      # If this got merged to develop, that was a mistake!
+      - 'mvn $MAVEN_CLI_OPTS clean verify -DskipTests'
    services:
       -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
          alias: docker
@@ -84,6 +86,64 @@ validate:
             # Note:This won't actually work, b/c of https://gitlab.com/gitlab-org/gitlab-runner/issues/2620
             # However, leaving this here to pick up later
             - "*/target/surefire-reports/TEST-*.xml"
+
+
+# This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
+# Because some enforcer rules might check dependency convergence and class duplications
+# we use `test-compile` here instead of `validate`, so the correct classpath is picked up.
+build-ts-codegen-tools-linux:
+   stage: build
+   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/vegardit/graalvm-maven:latest-java23
+   script:
+      # Don't run tests when building native tools
+      - 'mvn package -pl taxiql-codegen/taxiql-codegen-cli -am -Pnative -DskipTests'
+   artifacts:
+      paths:
+         - 'taxiql-codegen/taxiql-codegen-cli/target/taxiql-codegen-cli'
+
+
+# This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
+# Because some enforcer rules might check dependency convergence and class duplications
+# we use `test-compile` here instead of `validate`, so the correct classpath is picked up.
+build-ts-codegen-tools-windows:
+   variables:
+      MAVEN_VERSION: 3.9.9
+      GRAALVM_HOME: "C:/graalvm"
+   stage: build
+   tags:
+      - windows
+   script:
+     ## Setup has been performed directly on the tagged windows box, to keep this build step faster.
+     ## It's not portable though!
+
+#      - echo "Setting up Maven and GraalVM"
+
+      # Install Maven
+#      - echo "Installing Maven"
+#      - $env:MAVEN_HOME = "C:/maven"
+#      - Invoke-WebRequest -Uri "https://downloads.apache.org/maven/maven-3/${env:MAVEN_VERSION}/binaries/apache-maven-${env:MAVEN_VERSION}-bin.zip" -OutFile "maven.zip"
+#      - Expand-Archive -Path "maven.zip" -DestinationPath "C:/"
+#      - Rename-Item "C:/apache-maven-${env:MAVEN_VERSION}" $env:MAVEN_HOME
+#      - $env:Path += ";$env:MAVEN_HOME/bin"
+
+      # Install GraalVM
+#      - echo "Installing GraalVM"
+#      https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-23.0.2/graalvm-community-jdk-23.0.2_windows-x64_bin.zip
+#      - Invoke-WebRequest -Uri "https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-23.0.2/graalvm-community-jdk-23.0.2_windows-x64_bin.zip" -OutFile "graalvm.zip"
+#      - Expand-Archive -Path "graalvm.zip" -DestinationPath "C:/"
+#      - Rename-Item "C:/graalvm-community-openjdk-23.0.2+7.1" $env:GRAALVM_HOME
+#      - $env:Path += ";$env:GRAALVM_HOME/bin"
+
+      # Install Native Image Tool
+#      - echo "Installing Native Image Tool"
+#      - '"& $env:GRAALVM_HOME\bin\gu.cmd install native-image"'
+
+
+      # Don't run tests when building native tools
+      - '.\mvnw package -pl taxiql-codegen/taxiql-codegen-cli -am -Pnative -DskipTests'
+   artifacts:
+      paths:
+         - 'taxiql-codegen\taxiql-codegen-cli\target\taxiql-codegen-cli.exe'
 
 ## Manual jobs to trigger a release and increment the version (major,minor,patch)
 release-major:
@@ -146,7 +206,7 @@ publish-snapshot-jars:
          - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-jar-with-dependencies.jar'
 
 build-plugin-beta:
-   stage: build-plugin
+   stage: build-tools
    script:
       - *setup-nvm
       - *prepare-vscode-plugin-build

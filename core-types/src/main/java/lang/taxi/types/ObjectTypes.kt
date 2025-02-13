@@ -237,10 +237,32 @@ data class ObjectType(
 
    override val referencedTypes: List<Type>
       get() {
-         val fieldTypes = this.allFields.map { it.type }
-         val inheritedTypes = this.definition?.inheritsFrom?.toList() ?: emptyList()
-         return (fieldTypes + inheritedTypes).filterIsInstance<UserType<*, *>>()
+         return collectReferencedTypes(mutableSetOf())
+            .toList()
       }
+
+   private fun collectReferencedTypes(set:MutableSet<Type>):MutableSet<Type> {
+      val inheritedTypes = this.definition?.inheritsFrom?.toList() ?: emptyList()
+      set.addAll(inheritedTypes)
+      val fieldTypes = this.allFields
+         .map { it.type }
+         .filter { !set.contains(it) }
+      set.addAll(fieldTypes)
+
+      fun recurseIntoType(type:Type) {
+         when (type) {
+            is ObjectType -> type.collectReferencedTypes(set)
+            is ArrayType -> {
+               set.add(type.memberType)
+               recurseIntoType(type.memberType)
+            }
+         }
+      }
+      fieldTypes.forEach { recurseIntoType(it)}
+      return set.filterIsInstance<UserType<*,*>>()
+         .toMutableSet()
+
+   }
 
    override fun addExtension(extension: ObjectTypeExtension): Either<ErrorMessage, ObjectTypeExtension> {
       val error = verifyMaxOneTypeRefinementPerField(extension.fieldExtensions)

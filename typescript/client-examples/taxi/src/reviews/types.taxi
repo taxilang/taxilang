@@ -1,0 +1,8 @@
+namespace films.reviews
+
+type SquashedTomatoesFilmId inherits String
+[[ A score indicating how good the movie is.  Higher scores are better]]
+type FilmReviewScore inherits Decimal
+
+[[ The text of a film review ]]
+type ReviewText inherits String

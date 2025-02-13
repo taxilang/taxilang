@@ -1,0 +1,11 @@
+[
+   {
+      "name": "lang.taxi.packages.TaxiPackageProject",
+      "allDeclaredConstructors": true,
+      "allPublicConstructors": true,
+      "allDeclaredMethods": true,
+      "allPublicMethods": true,
+      "allDeclaredFields": true,
+      "allPublicFields": true
+   }
+]

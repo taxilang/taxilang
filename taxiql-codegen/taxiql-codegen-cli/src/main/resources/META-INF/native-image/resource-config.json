@@ -1,0 +1,19 @@
+{
+   "resources": {
+      "includes": [
+         {
+            "pattern": "META-INF/services/org.eclipse.aether.spi.connector.transport.TransporterFactory"
+         },
+         {
+            "pattern": "META-INF/services/org.eclipse.aether.spi.connector.RepositoryConnectorFactory"
+         },
+         {
+            "pattern": "META-INF/services/org.eclipse.aether.spi.connector.layout.RepositoryLayoutFactory"
+         },
+         {
+            "pattern": "META-INF/services/org.eclipse.aether.spi.locator.ServiceLocator"
+         }
+      ]
+   },
+   "bundles": []
+}

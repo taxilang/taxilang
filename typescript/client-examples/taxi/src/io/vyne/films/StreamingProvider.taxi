@@ -1,0 +1,8 @@
+import io.vyne.films.providers.StreamingProviderName
+import io.vyne.films.providers.PricerPerMonth
+namespace io.vyne.films {
+   closed model StreamingProvider {
+      name : StreamingProviderName
+      pricePerMonth : PricerPerMonth
+   }
+}

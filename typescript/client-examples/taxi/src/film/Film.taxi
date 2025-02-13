@@ -1,0 +1,33 @@
+import film.Title
+import film.Description
+import film.ReleaseYear
+import language.LanguageId
+import film.RentalDuration
+import film.RentalRate
+import film.Length
+import film.ReplacementCost
+import film.Rating
+import film.LastUpdate
+import film.Fulltext
+import film.SpecialFeatures
+namespace film {
+   [[ This is a film ]]
+   @com.orbitalhq.jdbc.Table( connection = "films", schema = "public" , table = "film")
+   model Film {
+      @Id film_id : films.FilmId
+      title : film.Title
+      [[ What a film marketing person has described this film as. In space, no one hears you scream. ]]
+      description : film.Description?
+      release_year : film.ReleaseYear?
+      language_id : language.LanguageId
+      original_language_id : language.OriginalLanguageId?
+      rental_duration : film.RentalDuration
+      rental_rate : film.RentalRate
+      length : film.Length?
+      replacement_cost : film.ReplacementCost
+      rating : film.Rating?
+      last_update : film.LastUpdate
+      special_features : film.SpecialFeatures[]?
+      fulltext : film.Fulltext
+   }
+}

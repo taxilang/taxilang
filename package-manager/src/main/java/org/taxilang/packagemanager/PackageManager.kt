@@ -51,7 +51,8 @@ class PackageManager(
    companion object {
       fun withDefaultRepositorySystem(config: ImporterConfig): PackageManager {
          val (system, session) = RepositorySystemProvider.build()
-         return PackageManager(config, system, session)
+         val packageManager = PackageManager(config, system, session)
+         return packageManager
       }
    }
 

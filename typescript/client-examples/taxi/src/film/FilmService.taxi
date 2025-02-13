@@ -1,0 +1,8 @@
+import vyne.vyneQl.VyneQlQuery
+import film.Film
+namespace film {
+   @com.orbitalhq.jdbc.DatabaseService(connection = "films")
+   service FilmDatabase {
+      table films : Film[]
+   }
+}

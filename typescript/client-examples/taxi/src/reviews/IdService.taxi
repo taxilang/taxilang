@@ -1,0 +1,16 @@
+namespace films.reviews {
+   service SquashedTomatoesIdService {
+      @HttpOperation(method = "GET", url = "http://films-api/ids/squashed/{id}")
+      operation getIdResolutionForSquashedTomatoesIdUsingGET( @PathVariable(value = "id") id : SquashedTomatoesFilmId ) : IdResolution(...)
+   }
+
+   service NetflixIdService {
+      @HttpOperation(method = "GET", url = "http://films-api/ids/netflix/{id}")
+      operation getIdResolutionForNetflixIdUsingGET( @PathVariable(value = "id") id : demo.netflix.NetflixFilmId ) : IdResolution(...)
+   }
+
+   service InternalIdService {
+      @HttpOperation(method = "GET", url = "http://films-api/ids/internal/{id}")
+      operation getIdResolutionForNetflixIdUsingGET( @PathVariable(value = "id") id : films.FilmId ) : IdResolution(...)
+   }
+}

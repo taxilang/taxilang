@@ -1,0 +1,6 @@
+namespace films.reviews {
+   service FilmsReviewService {
+      @HttpOperation(method = "GET", url = "http://films-api/reviews/{filmId}")
+      operation getFilmReviewForSquashedTomatoesFilmIdUsingGET( @PathVariable(value = "filmId") filmId : SquashedTomatoesFilmId ) : FilmReview(...)
+   }
+}

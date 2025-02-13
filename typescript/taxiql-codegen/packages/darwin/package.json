@@ -1,0 +1,9 @@
+{
+   "name": "@orbitalhq/taxiql-codegen-cli-darwin",
+   "description": "The maxOS binary for taxiql TS codegen",
+   "version": "0.0.1",
+   "os": [
+      "darwin"
+   ],
+   "license": "Apache-2.0"
+}

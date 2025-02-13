@@ -230,6 +230,9 @@ class PackageManagerTest {
          val (repoSystem, session) = RepositorySystemProvider.build(
             listOf(TaxiFileSystemTransportFactory::class.java)
          )
+//         val (repoSystem, session) = RepositorySystemProvider.build(
+//            mapOf("Transport" to TaxiFileSystemTransportFactory())
+//         )
          val remoteRepositories = if (registerRemoteRepository) {
             listOf(
                RemoteRepository.Builder(

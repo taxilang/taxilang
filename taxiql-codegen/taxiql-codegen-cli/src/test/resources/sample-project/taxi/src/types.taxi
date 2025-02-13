@@ -1,0 +1,11 @@
+type Title inherits String
+type FilmId inherits String
+
+type ReviewScore inherits Int
+type ReviewText inherits String
+
+model Film {
+   id : FilmId
+   title : Title
+}
+

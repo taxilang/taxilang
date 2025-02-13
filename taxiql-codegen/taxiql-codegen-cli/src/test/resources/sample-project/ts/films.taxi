@@ -1,0 +1,7 @@
+query FindFilmsWithReview {
+   find { Film[] } as {
+      title : Title
+      reviewScore : ReviewScore
+      review : ReviewText
+   }[]
+}

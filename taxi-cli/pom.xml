@@ -99,9 +99,9 @@
          <artifactId>spring-web</artifactId>
       </dependency>
       <dependency>
-         <groupId>com.beust</groupId>
+         <groupId>org.jcommander</groupId>
          <artifactId>jcommander</artifactId>
-         <version>1.72</version>
+         <version>2.0</version>
       </dependency>
       <dependency>
          <groupId>org.apache.commons</groupId>
@@ -134,27 +134,13 @@
       </dependency>
    </dependencies>
 
-   <dependencyManagement>
-      <dependencies>
-         <dependency>
-            <!-- Import dependency management from Spring Boot -->
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-dependencies</artifactId>
-            <!-- WARNING: I had upgraded this to 3.1.6, and all the logging stopped.
-            Something, somewhere in Spring is redirecting stdout, and I can't find where.
-            println() stops working after spring initializes, and all STDOUT logging in logback
-            stops working.
-            -->
-            <version>2.7.9</version>
-            <type>pom</type>
-            <scope>import</scope>
-         </dependency>
-      </dependencies>
-   </dependencyManagement>
-
    <build>
       <finalName>taxi-cli</finalName>
       <plugins>
+         <plugin>
+            <groupId>org.graalvm.buildtools</groupId>
+            <artifactId>native-maven-plugin</artifactId>
+         </plugin>
          <plugin>
             <groupId>io.github.git-commit-id</groupId>
             <artifactId>git-commit-id-maven-plugin</artifactId>
@@ -268,7 +254,6 @@
          <plugin>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-maven-plugin</artifactId>
-            <version>2.7.9</version>
             <executions>
                <execution>
                   <goals>
@@ -307,4 +292,5 @@
          </build>
       </profile>
    </profiles>
+
 </project>
