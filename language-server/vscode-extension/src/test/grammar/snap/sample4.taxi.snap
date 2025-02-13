@@ -1,0 +1,29 @@
+>service DealService {
+#^^^^^^^ source.taxi meta.service.taxi keyword.control.service.taxi
+#       ^ source.taxi meta.service.taxi
+#        ^^^^^^^^^^^ source.taxi meta.service.taxi entity.name.type.service.taxi
+#                   ^ source.taxi meta.service.taxi
+#                    ^ source.taxi meta.service.taxi punctuation.definition.block.taxi
+>    operation getDeal(
+#^^^^ source.taxi meta.service.taxi
+#    ^^^^^^^^^ source.taxi meta.service.taxi meta.operation.taxi keyword.control.operation.taxi
+#             ^ source.taxi meta.service.taxi meta.operation.taxi
+#              ^^^^^^^ source.taxi meta.service.taxi meta.operation.taxi entity.name.function.operation.taxi
+#                     ^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi punctuation.definition.parameters.begin.taxi
+>      loanApplicationId: LoanApplicationId
+#^^^^^^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi
+#      ^^^^^^^^^^^^^^^^^^^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi variable.parameter.name.taxi
+#                         ^^^^^^^^^^^^^^^^^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi entity.name.type.taxi
+>    ): DealResponse(...)
+#^^^^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi
+#    ^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi punctuation.definition.parameters.end.taxi
+#     ^ source.taxi meta.service.taxi meta.operation.taxi keyword.operator.return-type.taxi
+#      ^ source.taxi meta.service.taxi meta.operation.taxi
+#       ^^^^^^^^^^^^ source.taxi meta.service.taxi meta.operation.taxi entity.name.type.taxi
+#                   ^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi punctuation.definition.parameters.begin.taxi
+#                    ^^^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi
+#                       ^ source.taxi meta.service.taxi meta.operation.taxi meta.parameters.taxi punctuation.definition.parameters.end.taxi
+>}
+#^ source.taxi meta.service.taxi punctuation.definition.block.taxi
+>
+>

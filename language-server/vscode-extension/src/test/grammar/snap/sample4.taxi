@@ -1,0 +1,6 @@
+service DealService {
+    operation getDeal(
+      loanApplicationId: LoanApplicationId
+    ): DealResponse(...)
+}
+

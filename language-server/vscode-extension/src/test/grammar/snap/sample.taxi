@@ -1,3 +1,5 @@
+import foo.bar.baz.Bingo
+
 namespace com.acme.foo {
 
    @Annotation(foo = "Bar" )
@@ -17,7 +19,7 @@ namespace com.acme.foo {
    [[ These are some docs ]]
    model Person {
       id : PersonId inherits Int
-      name : FirstName by column("Foo")
+      name : FirstName by column('Foo')
    }
 
    service MyService {
@@ -29,5 +31,9 @@ namespace com.acme.foo {
        * comment
        */
       operation findPeopleWithName(name : FirstName):Person[]
+   }
+
+   closed model MyClosedModel {
+
    }
 }

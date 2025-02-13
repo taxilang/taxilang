@@ -1,0 +1,54 @@
+import com.taxi.types.LoanApplicationUnderwriter
+import com.taxi.types.account.AccountName
+
+namespace com.taxi.services.zoho.deal
+
+closed model DealResponse {
+    data: Deal[]
+}
+
+@Format("yyyy-MM-dd'T'HH:mm:ssX")
+type ZohoModifiedSinceTime inherits Instant
+
+service DealService {
+
+    //detail view
+    @HttpOperation(url = "https://www.zohoapis.eu/crm/v5/Deals/{loanApplicationId}", method = "GET")
+    @HttpRetry(responseCode = [403, 500], exponentialRetryPolicy = @HttpExponentialRetryPolicy(maxRetries = 2, retryDelay = 2, jitter = 0.5))
+    operation getDeal(
+    @PathVariable("loanApplicationId") loanApplicationId: LoanApplicationId
+    ): DealResponse(...)
+
+    //LCadmin deals - stages 0 to 5
+    @HttpOperation(url = "https://www.zohoapis.eu/crm/v5/Deals/search?criteria=((Stage:equals:0. Stalled Deals)or(Stage:equals:1. Sales)or(Stage:equals:2. New Application)or(Stage:equals:3. Credit Assessment)or(Stage:equals:4. Offer out)or(Stage:equals:5. Loan Document Checks/Approval))&sort_by=Modified_Time&fields=Contact_Name,Introduced_By,Modified_Time,$currency_symbol,Account_Name,Deal_Name,Currency,$currency_symbol,Borrower_Amount_for_drawdown,Closing_Date,Workflow_Step,Stage,Created_Time", method = "GET")
+    @HttpRetry(responseCode = [403, 500], exponentialRetryPolicy = @HttpExponentialRetryPolicy(maxRetries = 2, retryDelay = 2, jitter = 0.5))
+    operation getAllDeals(
+    @HttpHeader(name = "If-Modified-Since") ifModifiedSince : ZohoModifiedSinceTime = (ZohoModifiedSinceTime) addDays(now(), -30)
+    ): AllDealsResponse(...)
+
+    //brokerage deals
+    @HttpOperation(url = "https://www.zohoapis.eu/crm/v5/Accounts/{brokerageId}/Introduced_By?sort_by=Modified_Time&fields=Contact_Name,Introduced_By,Modified_Time,$currency_symbol,Account_Name,Deal_Name,Currency,$currency_symbol,Borrower_Amount_for_drawdown,Closing_Date,Workflow_Step,Stage,Created_Time", method = "GET")
+    @HttpRetry(responseCode = [403, 500], exponentialRetryPolicy = @HttpExponentialRetryPolicy(maxRetries = 2, retryDelay = 2, jitter = 0.5))
+    operation getBrokerageDeals(
+    @PathVariable("brokerageId") brokerageId: BrokerageId,
+    @HttpHeader(name = "If-Modified-Since") ifModifiedSince : ZohoModifiedSinceTime = (ZohoModifiedSinceTime) addDays(now(), -30)
+    ): DealResponse(BrokerageId == brokerageId)
+
+    //broker view of Deals
+    @HttpOperation(url = "https://www.zohoapis.eu/crm/v5/Contacts/{brokerId}/Deals?sort_by=Modified_Time&fields=Contact_Name,Introduced_By,Modified_Time,$currency_symbol,Account_Name,Deal_Name,Currency,$currency_symbol,Borrower_Amount_for_drawdown,Closing_Date,Workflow_Step,Stage,Workflow_Stage,Created_Time", method = "GET")
+    @HttpRetry(responseCode = [403, 500], exponentialRetryPolicy = @HttpExponentialRetryPolicy(maxRetries = 2, retryDelay = 2, jitter = 0.5))
+    operation getBrokerDeals(
+    @PathVariable("brokerId") brokerId: BrokerId,
+    @HttpHeader(name = "If-Modified-Since") ifModifiedSince : ZohoModifiedSinceTime = (ZohoModifiedSinceTime) addDays(now(), -30)
+    ): DealResponse(BrokerId == brokerId)
+
+     //borrower deals
+    @HttpOperation(url = "https://www.zohoapis.eu/crm/v5/Accounts/{borrowerId}/Deals?sort_by=Modified_Time&fields=Amount,Contact_Name,Introduced_By,Modified_Time,$currency_symbol,Account_Name,Deal_Name,Currency,$currency_symbol,Borrower_Amount_for_drawdown,Closing_Date,Workflow_Step,Stage,Created_Time,Platform_loan_id,Term_in_month", method = "GET")
+    @HttpRetry(responseCode = [403, 500], exponentialRetryPolicy = @HttpExponentialRetryPolicy(maxRetries = 2, retryDelay = 2, jitter = 0.5))
+    operation getBorrowerDeals(
+    @PathVariable("borrowerId") borrowerId: BorrowerId
+    ): DealResponse(...)
+
+
+}
+

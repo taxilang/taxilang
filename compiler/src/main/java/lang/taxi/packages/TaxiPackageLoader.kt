@@ -6,6 +6,7 @@ import com.typesafe.config.ConfigFactory
 import io.github.config4k.extract
 import lang.taxi.utils.log
 import org.apache.commons.lang3.SystemUtils
+import java.lang.reflect.InvocationTargetException
 import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.io.path.toPath
@@ -47,8 +48,9 @@ class TaxiPackageLoader(val taxiConfFilePath: Path? = null) {
    fun load(): TaxiPackageProject {
 
       log().debug("Searching for config files at ${pathsToSearch.joinToString(" , ")}")
+      val pathsToLoad = pathsToSearch.filter { it.toFile().exists() }
 
-      val configs: MutableList<Config> = pathsToSearch.filter { path -> path.toFile().exists() }
+      val configs: MutableList<Config> = pathsToLoad
          .map { path ->
             log().debug("Reading config at $path")
             val config = try {
@@ -70,11 +72,26 @@ class TaxiPackageLoader(val taxiConfFilePath: Path? = null) {
 
       val loaded: TaxiPackageProject = try {
          config.extract()
-      } catch (e:ConfigException) {
+      } catch (e: ConfigException) {
          throw MalformedTaxiConfFileException(
             e.origin().url().toURI().toPath(),
             e.message ?: e::class.simpleName!!,
             lineNumber = e.origin().lineNumber()
+         )
+      } catch (e: InvocationTargetException) {
+         // This is thrown when the TaxiPackageProject couldn't be instantiated -
+         // normally a field that is required wasn't provided.
+         // This can also be thrown if there was no valid taxi.conf cound
+         // If there were multiple files, it's difficult to know which one was the erroring one.
+         val pathPart = if (pathsToLoad.size > 1) {
+            "The error may have occurred in any of the following files: ${pathsToLoad.joinToString(", ")}"
+         } else {
+            "File with error: ${pathsToLoad.single()}"
+         }
+         val message = "An error occurred reading the Taxi project file - ${e.message} - $pathPart"
+         throw MalformedTaxiConfFileException(
+            pathsToLoad.first(),
+            message
          )
       }
       // If we were explicitly given a root path, use that.

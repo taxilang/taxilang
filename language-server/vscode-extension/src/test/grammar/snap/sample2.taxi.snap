@@ -1,0 +1,141 @@
+>import com.taxi.types.LoanApplicationUnderwriter
+#^^^^^^ source.taxi meta.import.taxi keyword.control.import.taxi
+#      ^ source.taxi meta.import.taxi
+#       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.import.taxi meta.import.declaration.taxi
+>import com.taxi.types.account.AccountName
+#^^^^^^ source.taxi meta.import.taxi keyword.control.import.taxi
+#      ^ source.taxi meta.import.taxi
+#       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.import.taxi meta.import.declaration.taxi
+>
+>namespace com.taxi.services.zoho.deal
+#^^^^^^^^^ source.taxi storage.type.taxi
+#         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi
+>
+>closed model DealResponse {
+#^^^^^^ source.taxi storage.type.type.taxi storage.type.type.taxi
+#      ^^^^^^ source.taxi storage.type.type.taxi
+#            ^ source.taxi storage.type.type.taxi
+#             ^^^^^^^^^^^^ source.taxi storage.type.type.taxi entity.name.type.class.taxi
+#                         ^ source.taxi storage.type.type.taxi
+#                          ^ source.taxi storage.type.type.taxi punctuation.definition.block.taxi
+>    data: Deal[]
+#^^^^ source.taxi storage.type.type.taxi
+#    ^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi
+#        ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#         ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#          ^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+#              ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#               ^ source.taxi storage.type.type.taxi variable.object.property.taxi
+>}
+#^ source.taxi storage.type.type.taxi punctuation.definition.block.taxi
+>
+>// temp workaround
+#^^ source.taxi comment.line.double-slash.taxi punctuation.definition.comment.taxi
+#  ^^^^^^^^^^^^^^^^ source.taxi comment.line.double-slash.taxi
+>closed model AllDealsResponse {
+#^^^^^^ source.taxi storage.type.type.taxi storage.type.type.taxi
+#      ^^^^^^ source.taxi storage.type.type.taxi
+#            ^ source.taxi storage.type.type.taxi
+#             ^^^^^^^^^^^^^^^^ source.taxi storage.type.type.taxi entity.name.type.class.taxi
+#                             ^ source.taxi storage.type.type.taxi
+#                              ^ source.taxi storage.type.type.taxi punctuation.definition.block.taxi
+>    data: Deal[]
+#^^^^ source.taxi storage.type.type.taxi
+#    ^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi
+#        ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#         ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#          ^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+#              ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#               ^ source.taxi storage.type.type.taxi variable.object.property.taxi
+>}
+#^ source.taxi storage.type.type.taxi punctuation.definition.block.taxi
+>
+>closed model Deal {
+#^^^^^^ source.taxi storage.type.type.taxi storage.type.type.taxi
+#      ^^^^^^ source.taxi storage.type.type.taxi
+#            ^ source.taxi storage.type.type.taxi
+#             ^^^^ source.taxi storage.type.type.taxi entity.name.type.class.taxi
+#                 ^ source.taxi storage.type.type.taxi
+#                  ^ source.taxi storage.type.type.taxi punctuation.definition.block.taxi
+>    id: LoanApplicationId
+#^^^^ source.taxi storage.type.type.taxi
+#    ^^ source.taxi storage.type.type.taxi variable.object.property.taxi
+#      ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#       ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#        ^^^^^^^^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+>    Deal_Name: LoanApplicationName
+#^^^^ source.taxi storage.type.type.taxi
+#    ^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi
+#             ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#              ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#               ^^^^^^^^^^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+>    Currency: LoanApplicationCurrency
+#^^^^ source.taxi storage.type.type.taxi
+#    ^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi
+#            ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#             ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#              ^^^^^^^^^^^^^^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+>
+>    Account_Name: {
+#^^^^ source.taxi storage.type.type.taxi
+#    ^^^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi
+#                ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                 ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                  ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts punctuation.definition.block.ts
+>        name: BorrowerName
+#^^^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#            ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#             ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi
+#              ^^^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi entity.name.type.taxi
+>        id: BorrowerId
+#^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#          ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#           ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi
+#            ^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi entity.name.type.taxi
+>    }
+#^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#    ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts punctuation.definition.block.ts
+>
+>    Contact_Name: {
+#^^^^ source.taxi storage.type.type.taxi
+#    ^^^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi
+#                ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                 ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                  ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts punctuation.definition.block.ts
+>        name: ContactName
+#^^^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#            ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#             ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi
+#              ^^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi entity.name.type.taxi
+>        id: ContactId
+#^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#          ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#           ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi
+#            ^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi entity.name.type.taxi
+>    }
+#^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#    ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts punctuation.definition.block.ts
+>
+>    Introduced_By: {
+#^^^^ source.taxi storage.type.type.taxi
+#    ^^^^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi
+#                 ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                  ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                   ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts punctuation.definition.block.ts
+>        name: BrokerageName
+#^^^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#            ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#             ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi
+#              ^^^^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi entity.name.type.taxi
+>        id: BrokerageId
+#^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#          ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#           ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi
+#            ^^^^^^^^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi entity.name.type.taxi
+>    }
+#^^^^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#    ^ source.taxi storage.type.type.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts punctuation.definition.block.ts
+>
+>}
+#^ source.taxi storage.type.type.taxi punctuation.definition.block.taxi
+>

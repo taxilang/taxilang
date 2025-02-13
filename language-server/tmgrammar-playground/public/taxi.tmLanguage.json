@@ -1,0 +1,716 @@
+{
+   "name": "Taxi",
+   "scopeName": "source.taxi",
+   "fileTypes": [
+      "taxi"
+   ],
+   "patterns": [
+      {
+         "include": "#import-declaration"
+      },
+      {
+         "include": "#declaration"
+      },
+      {
+         "include": "#statements"
+      },
+      {
+         "name": "storage.type.taxi",
+         "match": "\\b(type|type alias|enum|namespace|policy|service|operation)\\b"
+      },
+      {
+         "name": "storage.modifier.taxi",
+         "match": "\\b(inherits)\\b"
+      }
+   ],
+   "repository": {
+      "declaration": {
+         "name": "meta.declaration.taxi",
+         "patterns": [
+            {
+               "include": "#annotation"
+            },
+            {
+               "include": "#model-definition"
+            },
+            {
+               "include": "#type-definition"
+            },
+            {
+               "include": "#enum-declaration"
+            }
+         ]
+      },
+      "statements": {
+         "patterns": [
+            {
+               "include": "#string"
+            },
+            {
+               "include": "#comment"
+            },
+            {
+               "include": "#literal"
+            },
+            {
+               "include": "#declaration"
+            }
+         ]
+      },
+      "import-declaration": {
+         "name": "meta.import.taxi",
+         "begin": "(?<!\\.|\\$)\\b(import)(?!(\\s*:)|(\\$))\\b",
+         "beginCaptures": {
+            "1": {
+               "name": "keyword.control.import.taxi"
+            }
+         },
+         "end": "(?=;|$)",
+         "patterns": [
+            {
+               "include": "#import-export-declaration"
+            }
+         ]
+      },
+      "import-export-declaration": {
+         "name": "meta.import.declaration.taxi",
+         "match": "\\b(?:[_$[:alpha:]][_$[:alnum:]]*\\.)+(?:[_$[:alpha:]][_$[:alnum:]]*)\\b"
+      },
+      "type-primitive": {
+         "name": "support.type.primitive.taxi",
+         "match": "\\b(Boolean|String|Int|Decimal|Date|Time|DateTime|Instant|Any|Double|Void)\\b"
+      },
+      "comment": {
+         "patterns": [
+            {
+               "name": "comment.block.documentation.taxi",
+               "begin": "/\\*\\*(?!/)",
+               "beginCaptures": {
+                  "0": {
+                     "name": "punctuation.definition.comment.taxi"
+                  }
+               },
+               "end": "\\*/",
+               "endCaptures": {
+                  "0": {
+                     "name": "punctuation.definition.comment.taxi"
+                  }
+               },
+               "patterns": [
+                  {
+                     "include": "#docblock"
+                  }
+               ]
+            },
+            {
+               "name": "comment.block.taxidoc.taxi",
+               "begin": "\\[\\[(?!/)",
+               "beginCaptures": {
+                  "0": {
+                     "name": "punctuation.definition.comment.taxi"
+                  }
+               },
+               "end": "\\]\\]",
+               "endCaptures": {
+                  "0": {
+                     "name": "punctuation.definition.comment.taxi"
+                  }
+               }
+            },
+            {
+               "name": "comment.block.taxi",
+               "begin": "/\\*",
+               "beginCaptures": {
+                  "0": {
+                     "name": "punctuation.definition.comment.taxi"
+                  }
+               },
+               "end": "\\*/",
+               "endCaptures": {
+                  "0": {
+                     "name": "punctuation.definition.comment.taxi"
+                  }
+               }
+            },
+            {
+               "begin": "(^[ \\t]+)?(?=//)",
+               "beginCaptures": {
+                  "1": {
+                     "name": "punctuation.whitespace.comment.leading.taxi"
+                  }
+               },
+               "end": "(?=$)",
+               "patterns": [
+                  {
+                     "name": "comment.line.double-slash.taxi",
+                     "begin": "//",
+                     "beginCaptures": {
+                        "0": {
+                           "name": "punctuation.definition.comment.taxi"
+                        }
+                     },
+                     "end": "(?=$)"
+                  }
+               ]
+            }
+         ]
+      },
+      "type-definition": {
+         "name": "meta.class.taxi",
+         "begin": "\\b(?:(type))\\b",
+         "beginCaptures": {
+            "1": {
+               "name": "storage.type.model.taxi"
+            },
+            "2": {
+               "name": "storage.type.type.taxi"
+            }
+         },
+         "end": "\\n",
+         "patterns": [
+            {
+               "include": "#comment"
+            },
+            {
+               "include": "#type-inheritance"
+            },
+            {
+               "match": "[_$[:alpha:]][_$[:alnum:]]*",
+               "captures": {
+                  "0": {
+                     "name": "entity.name.type.class.taxi"
+                  }
+               }
+            }
+         ]
+      },
+      "annotation": {
+         "patterns": [
+            {
+               "begin": "((@)\\s*([^\\s(]+))(\\()",
+               "beginCaptures": {
+                  "2": {
+                     "name": "punctuation.definition.annotation.taxi"
+                  },
+                  "3": {
+                     "name": "storage.type.annotation.taxi"
+                  },
+                  "4": {
+                     "name": "punctuation.definition.annotation-arguments.begin.bracket.round.taxi"
+                  }
+               },
+               "end": "\\)",
+               "endCaptures": {
+                  "0": {
+                     "name": "punctuation.definition.annotation-arguments.end.bracket.round.taxi"
+                  }
+               },
+               "name": "meta.declaration.annotation.taxi",
+               "contentName": "meta.annotation.parameters.taxi",
+               "patterns": [
+                  {
+                     "captures": {
+                        "1": {
+                           "name": "constant.other.key.taxi"
+                        },
+                        "2": {
+                           "name": "keyword.operator.assignment.taxi"
+                        }
+                     },
+                     "match": "(\\w*)\\s*(=)"
+                  },
+                  {
+                     "include": "#string"
+                  },
+                  {
+                     "include": "#literal"
+                  }
+               ]
+            },
+            {
+               "match": "(@)\\s*(\\w+)",
+               "captures": {
+                  "1": {
+                     "name": "punctuation.definition.annotation.taxi"
+                  },
+                  "2": {
+                     "name": "storage.type.annotation.taxi"
+                  }
+               }
+            }
+         ]
+      },
+      "model-definition": {
+         "name": "meta.class.model.taxi",
+         "begin": "(?<!\\.|\\$)\\b(?:(parameter)\\s+)?\\b(?:(closed)\\s+)?\\b(?:(type)|(model))\\b",
+         "beginCaptures": {
+            "1": {
+               "name": "storage.type.model.taxi"
+            },
+            "2": {
+               "name": "storage.type.type.taxi"
+            }
+         },
+         "end": "(?<=\\})",
+         "patterns": [
+            {
+               "include": "#comment"
+            },
+            {
+               "include": "#type-inheritance"
+            },
+            {
+               "match": "[_$[:alpha:]][_$[:alnum:]]*",
+               "captures": {
+                  "0": {
+                     "name": "entity.name.type.class.taxi"
+                  }
+               }
+            },
+            {
+               "include": "#class-or-interface-body"
+            }
+         ]
+      },
+      "type-inheritance": {
+         "begin": "(?<!\\.|\\$)(?:\\b(inherits)\\b)(?!\\$)",
+         "beginCaptures": {
+            "1": {
+               "name": "storage.modifier.taxi"
+            }
+         },
+         "end": "(?=(\\{|\\n))",
+         "endCaptures": {
+            "1": {
+               "name": "punctuation.definition.block.taxi"
+            }
+         },
+         "patterns": [
+            {
+               "include": "#comment"
+            },
+            {
+               "include": "#type-inheritance"
+            },
+            {
+               "include": "#type-primitive"
+            },
+            {
+               "match": "([_$[:alpha:]][_$[:alnum:]]*)\\s*(\\.)(?=\\s*[_$[:alpha:]][_$[:alnum:]]*(\\s*\\.\\s*[_$[:alpha:]][_$[:alnum:]]*)*\\s*([,<{]|extends|implements|//|/\\*))",
+               "captures": {
+                  "1": {
+                     "name": "entity.name.type.module.taxi"
+                  },
+                  "2": {
+                     "name": "punctuation.accessor.taxi"
+                  }
+               }
+            },
+            {
+               "match": "([_$[:alpha:]][_$[:alnum:]]*)(?=\\s*([,<{]|inherits|//|/\\*))",
+               "captures": {
+                  "1": {
+                     "name": "entity.other.inherited-class.taxi"
+                  }
+               }
+            },
+            {
+               "include": "#expression"
+            }
+         ]
+      },
+      "class-or-interface-body": {
+         "begin": "\\{",
+         "beginCaptures": {
+            "0": {
+               "name": "punctuation.definition.block.taxi"
+            }
+         },
+         "end": "(?=\\})",
+         "endCaptures": {
+            "0": {
+               "name": "punctuation.definition.block.taxi"
+            }
+         },
+         "patterns": [
+            {
+               "include": "#comment"
+            },
+            {
+               "include": "#annotation"
+            },
+            {
+               "include": "#field-declaration"
+            }
+         ]
+      },
+      "anonymous-type": {
+         "name": "meta.anonymous.type.taxi",
+         "begin": "\\{",
+         "beginCaptures": {
+            "0": {
+               "name": "punctuation.definition.block.begin.taxi"
+            }
+         },
+         "end": "\\}",
+         "endCaptures": {
+            "0": {
+               "name": "punctuation.definition.block.end.taxi"
+            }
+         },
+         "patterns": [
+            {
+               "include": "#comment"
+            },
+            {
+               "include": "#field-declaration"
+            }
+         ]
+      },
+
+      "field-declaration": {
+         "name": "meta.field.declaration.taxi",
+         "begin": "(?<!\\()(?=(([A-Za-z_$][A-Za-z0-9_$]*)|(`[^`]+`)|(\\[([^\\[\\]]|\\[[^\\[\\]]+\\])+\\]))\\s*(\\?\\s*)?(=|:))",
+         "end": "(?=\\}|;|,|$)|(?<=\\})",
+         "patterns": [
+            {
+               "include": "#variable-initializer"
+            },
+            {
+               "begin": "(?=((?:[_$[:alpha:]][_$[:alnum:]]*)|(?:\\'[^']*\\')|(?:\\\"[^\"]*\\\")|(\\[([^\\[\\]]|\\[[^\\[\\]]+\\])+\\]))\\s*(\\?\\s*)?(=|:))",
+               "end": "(?=[};,=]|$)|(?<=\\})",
+               "patterns": [
+                  {
+                     "include": "#type-annotation"
+                  },
+                  {
+                     "include": "#array-literal"
+                  },
+                  {
+                     "include": "#anonymous-type"
+                  },
+                  {
+                     "include": "#comment"
+                  }
+               ]
+            }
+         ]
+      },
+       "column-expression": {
+         "name": "storage.modifier.column.taxi",
+         "begin": "\\sby\\scolumn(\\s)*",
+         "end": "\\)",
+         "patterns": [
+            {
+               "include": "#string"
+            }
+         ]
+      },
+      "type-annotation": {
+         "name": "meta.type.annotation.taxi",
+         "begin": ":",
+         "beginCaptures": {
+            "0": {
+               "name": "keyword.operator.type.annotation.taxi"
+            }
+         },
+         "end": "(?=$|[,);\\}\\]]|//)|(?==[^>])|(?<=[\\}>\\]\\)]|[_$[:alpha:]])\\s*(?=\\{)",
+         "patterns": [
+            {
+               "include": "#comment"
+            },
+            {
+               "include": "#type"
+            },
+            {
+               "include": "#column-expression"
+            }
+         ]
+      },
+      "type": {
+         "name": "meta.type.taxi",
+         "patterns": [
+            {
+               "include": "#comment"
+            },
+            {
+               "include": "#type-primitive"
+            },
+            {
+               "include": "#type-builtin-literals"
+            },
+            {
+               "include": "#type-parameters"
+            },
+            {
+               "include": "#type-object"
+            },
+            {
+               "include": "#type-name"
+            }
+         ]
+      },
+      "type-name": {
+         "patterns": [
+            {
+               "match": "([_$[:alpha:]][_$[:alnum:]]*)\\s*(\\.)",
+               "captures": {
+                  "1": {
+                     "name": "entity.name.type.module.taxi"
+                  },
+                  "2": {
+                     "name": "punctuation.accessor.taxi"
+                  }
+               }
+            },
+            {
+               "name": "entity.name.type.taxi",
+               "match": "[_$[:alpha:]][_$[:alnum:]]*"
+            }
+         ]
+      },
+      "type-parameters": {
+         "name": "meta.type.parameters.taxi",
+         "begin": "(<)",
+         "beginCaptures": {
+            "1": {
+               "name": "punctuation.definition.typeparameters.begin.taxi"
+            }
+         },
+         "end": "(?=$)|(>)",
+         "endCaptures": {
+            "1": {
+               "name": "punctuation.definition.typeparameters.end.taxi"
+            }
+         },
+         "patterns": [
+            {
+               "include": "#comment"
+            },
+            {
+               "name": "storage.modifier.taxi",
+               "match": "(?<!\\.|\\$)\\b(extends)\\b(?!\\$)"
+            },
+            {
+               "include": "#type"
+            },
+            {
+               "include": "#punctuation-comma"
+            }
+         ]
+      },
+      "enum-declaration": {
+         "name": "meta.enum.declaration.taxi",
+         "begin": "\\b(enum)\\s+([_$[:alpha:]][_$[:alnum:]]*)",
+         "beginCaptures": {
+            "1": {
+               "name": "keyword.control.export.taxi"
+            },
+            "2": {
+               "name": "storage.modifier.taxi"
+            },
+            "3": {
+               "name": "storage.type.enum.taxi"
+            },
+            "4": {
+               "name": "entity.name.type.enum.taxi"
+            }
+         },
+         "end": "(?<=\\})",
+         "patterns": [
+            {
+               "include": "#comment"
+            },
+            {
+               "begin": "\\{",
+               "beginCaptures": {
+                  "0": {
+                     "name": "punctuation.definition.block.taxi"
+                  }
+               },
+               "end": "\\}",
+               "endCaptures": {
+                  "0": {
+                     "name": "punctuation.definition.block.taxi"
+                  }
+               },
+               "patterns": [
+                  {
+                     "include": "#comment"
+                  },
+                  {
+                     "begin": "([_$[:alpha:]][_$[:alnum:]]*)",
+                     "beginCaptures": {
+                        "0": {
+                           "name": "variable.other.enummember.taxi"
+                        }
+                     },
+                     "end": "(?=,|\\}|$)",
+                     "patterns": [
+                        {
+                           "include": "#comment"
+                        },
+                        {
+                           "include": "#variable-initializer"
+                        }
+                     ]
+                  },
+                  {
+                     "begin": "(?=((\\'[^']*\\')|(\\\"[^\"]*\\\")|(\\[([^\\[\\]]|\\[[^\\[\\]]+\\])+\\])))",
+                     "end": "(?=,|\\}|$)",
+                     "patterns": [
+                        {
+                           "include": "#string"
+                        },
+                        {
+                           "include": "#array-literal"
+                        },
+                        {
+                           "include": "#comment"
+                        },
+                        {
+                           "include": "#variable-initializer"
+                        }
+                     ]
+                  },
+                  {
+                     "include": "#punctuation-comma"
+                  }
+               ]
+            }
+         ]
+      },
+      "literal": {
+         "name": "literal.taxi",
+         "patterns": [
+            {
+               "include": "#numeric-literal"
+            },
+            {
+               "include": "#boolean-literal"
+            },
+            {
+               "include": "#null-literal"
+            },
+            {
+               "include": "#array-literal"
+            }
+         ]
+      },
+      "numeric-literal": {
+         "patterns": [
+            {
+               "match": "(?x)\n(?<!\\$)(?:\n  (?:\\b[0-9]+(\\.)[0-9]+[eE][+-]?[0-9]+\\b)| # 1.1E+3\n  (?:\\b[0-9]+(\\.)[eE][+-]?[0-9]+\\b)|       # 1.E+3\n  (?:\\B(\\.)[0-9]+[eE][+-]?[0-9]+\\b)|       # .1E+3\n  (?:\\b[0-9]+[eE][+-]?[0-9]+\\b)|            # 1E+3\n  (?:\\b[0-9]+(\\.)[0-9]+\\b)|                # 1.1\n  (?:\\b[0-9]+(\\.)\\B)|                      # 1.\n  (?:\\B(\\.)[0-9]+\\b)|                      # .1\n  (?:\\b[0-9]+\\b(?!\\.))                     # 1\n)(?!\\$)",
+               "captures": {
+                  "0": {
+                     "name": "constant.numeric.decimal.taxi"
+                  },
+                  "1": {
+                     "name": "meta.delimiter.decimal.period.taxi"
+                  },
+                  "2": {
+                     "name": "meta.delimiter.decimal.period.taxi"
+                  },
+                  "3": {
+                     "name": "meta.delimiter.decimal.period.taxi"
+                  },
+                  "4": {
+                     "name": "meta.delimiter.decimal.period.taxi"
+                  },
+                  "5": {
+                     "name": "meta.delimiter.decimal.period.taxi"
+                  },
+                  "6": {
+                     "name": "meta.delimiter.decimal.period.taxi"
+                  }
+               }
+            }
+         ]
+      },
+      "boolean-literal": {
+         "patterns": [
+            {
+               "name": "constant.language.boolean.true.taxi",
+               "match": "(?<!\\.|\\$)\\btrue\\b(?!\\$)"
+            },
+            {
+               "name": "constant.language.boolean.false.taxi",
+               "match": "(?<!\\.|\\$)\\bfalse\\b(?!\\$)"
+            }
+         ]
+      },
+      "null-literal": {
+         "name": "constant.language.null.taxi",
+         "match": "(?<!\\.|\\$)\\bnull\\b(?!\\$)"
+      },
+      "array-literal": {
+         "name": "meta.array.literal.taxi",
+         "begin": "\\[",
+         "beginCaptures": {
+            "0": {
+               "name": "meta.brace.square.taxi"
+            }
+         },
+         "end": "\\]",
+         "endCaptures": {
+            "0": {
+               "name": "meta.brace.square.taxi"
+            }
+         },
+         "patterns": [
+            {
+               "include": "#expression"
+            },
+            {
+               "include": "#punctuation-comma"
+            }
+         ]
+      },
+      "string": {
+         "patterns": [
+            {
+               "begin": "\"",
+               "beginCaptures": {
+                  "0": {
+                     "name": "punctuation.definition.string.begin.taxi"
+                  }
+               },
+               "end": "\"",
+               "endCaptures": {
+                  "0": {
+                     "name": "punctuation.definition.string.end.taxi"
+                  }
+               },
+               "name": "string.quoted.double.taxi",
+               "patterns": [
+                  {
+                     "match": "\\\\.",
+                     "name": "constant.character.escape.taxi"
+                  }
+               ]
+            },
+            {
+               "begin": "'",
+               "beginCaptures": {
+                  "0": {
+                     "name": "punctuation.definition.string.begin.taxi"
+                  }
+               },
+               "end": "'",
+               "endCaptures": {
+                  "0": {
+                     "name": "punctuation.definition.string.end.taxi"
+                  }
+               },
+               "name": "string.quoted.single.taxi",
+               "patterns": [
+                  {
+                     "match": "\\\\.",
+                     "name": "constant.character.escape.taxi"
+                  }
+               ]
+            }
+         ]
+      }
+   }
+}

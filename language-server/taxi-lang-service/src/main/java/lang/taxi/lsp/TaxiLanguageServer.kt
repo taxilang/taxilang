@@ -2,6 +2,8 @@ package lang.taxi.lsp
 
 import ch.qos.logback.classic.Level
 import lang.taxi.CompilerConfig
+import lang.taxi.lsp.highlighting.SemanticTokenModifiers
+import lang.taxi.lsp.highlighting.SemanticTokenTypes
 import lang.taxi.lsp.logging.LspClientLogAppender
 import lang.taxi.lsp.sourceService.FileBasedWorkspaceSourceService
 import lang.taxi.lsp.sourceService.WorkspaceSourceServiceFactory
@@ -14,6 +16,8 @@ import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.MessageParams
 import org.eclipse.lsp4j.MessageType
 import org.eclipse.lsp4j.SaveOptions
+import org.eclipse.lsp4j.SemanticTokensLegend
+import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions
 import org.eclipse.lsp4j.ServerCapabilities
 import org.eclipse.lsp4j.SignatureHelpOptions
 import org.eclipse.lsp4j.TextDocumentSyncKind
@@ -82,6 +86,15 @@ class TaxiLanguageServer(
             change = TextDocumentSyncKind.Full
             save = Either.forRight(SaveOptions(false))
          })
+         capabilities.semanticTokensProvider = SemanticTokensWithRegistrationOptions(
+            SemanticTokensLegend(
+               SemanticTokenTypes.ALL,
+               SemanticTokenModifiers.ALL
+            )
+         ).apply {
+            full = Either.forLeft(true)
+            range = Either.forLeft(true)
+         }
          capabilities.definitionProvider = Either.forLeft(true)
          capabilities.workspaceSymbolProvider = Either.forLeft(true)
          capabilities.hoverProvider = Either.forLeft(true)

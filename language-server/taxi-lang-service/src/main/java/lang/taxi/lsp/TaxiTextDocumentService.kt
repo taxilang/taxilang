@@ -31,6 +31,11 @@ import org.eclipse.lsp4j.MessageParams
 import org.eclipse.lsp4j.MessageType
 import org.eclipse.lsp4j.PublishDiagnosticsParams
 import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.SemanticTokens
+import org.eclipse.lsp4j.SemanticTokensDelta
+import org.eclipse.lsp4j.SemanticTokensDeltaParams
+import org.eclipse.lsp4j.SemanticTokensParams
+import org.eclipse.lsp4j.SemanticTokensRangeParams
 import org.eclipse.lsp4j.SignatureHelp
 import org.eclipse.lsp4j.SignatureHelpParams
 import org.eclipse.lsp4j.TextDocumentIdentifier
@@ -39,6 +44,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.LanguageClient
 import org.eclipse.lsp4j.services.LanguageClientAware
 import org.eclipse.lsp4j.services.TextDocumentService
+import org.http4k.core.body.Form
 import java.net.URI
 import java.nio.file.Path
 import java.time.Duration
@@ -146,6 +152,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    private val codeActionService = services.codeActionService
    private val lintingService = services.lintingService
    private val signatureHelpService = services.signatureHelpService
+   private val semanticTokenService = services.semanticTokenService
    private lateinit var client: LanguageClient
    private var progressUpdatesService: ProgressUpdatesService? = null
    private var rootUri: String? = null
@@ -188,6 +195,37 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       return compilerService.compile()
    }
 
+   override fun semanticTokensFull(params: SemanticTokensParams): CompletableFuture<SemanticTokens> {
+      if (!params.textDocument.uri.endsWith(".taxi")) {
+         return CompletableFuture.completedFuture(SemanticTokens(emptyList()))
+      }
+      val lastCompilationResult =
+         compilerService.getOrComputeLastCompilationResult(uriToAssertIsPreset = params.textDocument.uri)
+      return semanticTokenService.computeTokens(
+         lastCompilationResult,
+         compilerService.lastSuccessfulCompilation(),
+         params.textDocument.uri,
+         null
+      )
+   }
+
+   override fun semanticTokensRange(params: SemanticTokensRangeParams): CompletableFuture<SemanticTokens> {
+      if (!params.textDocument.uri.endsWith(".taxi")) {
+         return CompletableFuture.completedFuture(SemanticTokens(emptyList()))
+      }
+      val lastCompilationResult =
+         compilerService.getOrComputeLastCompilationResult(uriToAssertIsPreset = params.textDocument.uri)
+      return semanticTokenService.computeTokens(
+         lastCompilationResult,
+         compilerService.lastSuccessfulCompilation(),
+         params.textDocument.uri,
+         params.range
+      )
+   }
+
+   override fun semanticTokensFullDelta(params: SemanticTokensDeltaParams?): CompletableFuture<Either<SemanticTokens, SemanticTokensDelta>> {
+      return super.semanticTokensFullDelta(params)
+   }
    override fun codeAction(params: CodeActionParams): CompletableFuture<MutableList<Either<Command, CodeAction>>> {
       val lastCompilationResult =
          compilerService.getOrComputeLastCompilationResult(uriToAssertIsPreset = params.textDocument.uri)

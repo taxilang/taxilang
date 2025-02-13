@@ -9,7 +9,6 @@ import lang.taxi.CompilerTokenCache
 import lang.taxi.errors
 import lang.taxi.linter.toLinterRules
 import lang.taxi.lsp.completion.TypeCompletionBuilder
-import lang.taxi.lsp.parser.TokenInjectingErrorStrategy
 import lang.taxi.lsp.sourceService.WorkspaceSourceService
 import lang.taxi.lsp.utils.Ranges
 import lang.taxi.packages.MalformedTaxiConfFileException
@@ -41,7 +40,7 @@ import kotlin.io.path.readText
 class TaxiCompilerService(
    private val compilerConfig: CompilerConfig = CompilerConfig(),
 ) {
-   private var taxiProjectConfig: TaxiPackageProject? = null
+   private var taxiProjects: List<TaxiPackageProject> = emptyList()
    private lateinit var workspaceSourceService: WorkspaceSourceService
    private val sources: MutableMap<URI, String> = mutableMapOf()
    private val charStreams: MutableMap<URI, CharStream> = mutableMapOf()
@@ -163,7 +162,8 @@ class TaxiCompilerService(
       this.sources.clear()
       this.charStreams.clear()
       try {
-         this.taxiProjectConfig = this.workspaceSourceService.loadProject()
+         // TODO.. starting to refactor to support mutliple taxi projects in VSCode
+         this.taxiProjects = this.workspaceSourceService.loadProjects()
       } catch (e: MalformedTaxiConfFileException) {
          log().info("Cannot read taxi.conf file: ${e.path} - ${e.message}")
          cancelProgress("taxi.conf file is invalid")
@@ -175,7 +175,7 @@ class TaxiCompilerService(
       val loadedSources = try {
          val loadedSources = this.workspaceSourceService.loadSources()
          // At this point, the taxi.conf is valid, and all deps have been resolved
-         this.taxiProjectConfig?.taxiConfFile?.let { removeTaxiConfErrors(it) }
+         this.taxiProjects.forEach { it.taxiConfFile?.let { removeTaxiConfErrors(it) } }
          loadedSources
       } catch (e: DependencyCollectionException) {
          cancelProgress("Unable to collect requested dependencies: ${e.message}")
@@ -192,6 +192,7 @@ class TaxiCompilerService(
       }
 
       loadedSources
+         .flatMap { it.second }
          .forEach { sourceCode ->
             // Prefer operating on the path - less chances to screw up
             // the normalization of the URI, which seems to be getting
@@ -214,39 +215,42 @@ class TaxiCompilerService(
    }
 
    private fun reportUnresolvableDependencies(e: ArtifactResolutionException) {
-      val taxiConfFile = taxiProjectConfig?.taxiConfFile!!
-      val taxiConfig = taxiConfFile?.readText()
-      val defaultLineNumber = 1;
-      val messages = e.results
-         .filter { it.exceptions.isNotEmpty() }
-         .map { requestedArtifact ->
-            val artifactId =
-               requestedArtifact.request.artifact.groupId + "/" + requestedArtifact.request.artifact.artifactId
-            val range = taxiConfig?.lineSequence()?.indexOfFirst { it.contains(artifactId) }?.let { lineNumber ->
-               val line = taxiConfig.lines()[lineNumber]
-               val startChar = line.indexOfFirst { !it.isWhitespace() }
-               val endChar = line.length - 1
-               Range(Position(lineNumber, startChar), Position(lineNumber, endChar))
-            } ?: Ranges.fullLine(defaultLineNumber)
-            val errorMessage = requestedArtifact.exceptions.joinToString("; ") {
-               it.message
-                  ?: "Could not resolve ${requestedArtifact.artifact} - An unknown error occurred (${it::class.java.simpleName}"
-            }
-            errorMessage to range
-         }
-      reportTaxiConfMessages(FileDiagnosticMessage(taxiConfFile, messages))
+      TODO("Handle dependency resolution issues")
+//      val taxiConfFile = taxiProjects?.taxiConfFile!!
+//      val taxiConfig = taxiConfFile?.readText()
+//      val defaultLineNumber = 1;
+//      val messages = e.results
+//         .filter { it.exceptions.isNotEmpty() }
+//         .map { requestedArtifact ->
+//            val artifactId =
+//               requestedArtifact.request.artifact.groupId + "/" + requestedArtifact.request.artifact.artifactId
+//            val range = taxiConfig?.lineSequence()?.indexOfFirst { it.contains(artifactId) }?.let { lineNumber ->
+//               val line = taxiConfig.lines()[lineNumber]
+//               val startChar = line.indexOfFirst { !it.isWhitespace() }
+//               val endChar = line.length - 1
+//               Range(Position(lineNumber, startChar), Position(lineNumber, endChar))
+//            } ?: Ranges.fullLine(defaultLineNumber)
+//            val errorMessage = requestedArtifact.exceptions.joinToString("; ") {
+//               it.message
+//                  ?: "Could not resolve ${requestedArtifact.artifact} - An unknown error occurred (${it::class.java.simpleName}"
+//            }
+//            errorMessage to range
+//         }
+//      reportTaxiConfMessages(FileDiagnosticMessage(taxiConfFile, messages))
    }
 
    private fun handleTaxiConfException(e: Exception, lineNumber: Int = 1) {
-      taxiProjectConfig?.let { project ->
-         reportTaxiConfMessages(
-            FileDiagnosticMessage(
-               project.taxiConfFile!!,
-               e.message ?: "An error occurred",
-               lineNumber
-            )
-         )
-      }
+      TODO("Error handling on taxi.conf files is not currently working")
+//      // TODO: Catch this error so that we can report with
+//      taxiProjects?.let { project ->
+//         reportTaxiConfMessages(
+//            FileDiagnosticMessage(
+//               project.taxiConfFile!!,
+//               e.message ?: "An error occurred",
+//               lineNumber
+//            )
+//         )
+//      }
    }
 
    private fun removeTaxiConfErrors(path: Path) {
@@ -315,11 +319,12 @@ class TaxiCompilerService(
 
    private fun buildCompiler(): Pair<List<CharStream>, Compiler> {
       val charStreams = this.charStreams.values.toList()
-      val configWithTaxiProjectSettings = taxiProjectConfig?.let { taxiConf ->
-         compilerConfig.copy(
-            linterRuleConfiguration = taxiConf.linter.toLinterRules()
-         )
-      } ?: this.compilerConfig
+      // Naive implementation - grab all the linter rules from all the projects.
+      val linterRules = taxiProjects.flatMap { it.linter.toLinterRules() }
+         .distinct()
+      val configWithTaxiProjectSettings = compilerConfig.copy(
+         linterRuleConfiguration = linterRules
+      )
       val compiler = Compiler(charStreams, tokenCache = tokenCache, config = configWithTaxiProjectSettings)
       return Pair(charStreams, compiler)
    }
