@@ -1,0 +1,10 @@
+{
+   "name": "@orbitalhq/taxiql-codegen-cli-linux",
+   "description": "The Linux binary for taxiql TS codegen",
+   "version": "0.0.1",
+   "os": [
+      "linux",
+      "freebsd"
+   ],
+   "license": "Apache-2.0"
+}

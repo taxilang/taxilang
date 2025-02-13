@@ -1,0 +1,15 @@
+namespace film
+
+[[ The description of the film ]]
+type Description inherits String
+type Fulltext inherits String
+type LastUpdate inherits Instant
+type Length inherits Int
+type Rating inherits String
+type ReleaseYear inherits Int
+type RentalDuration inherits Int
+type RentalRate inherits Decimal
+type ReplacementCost inherits Decimal
+type SpecialFeatures inherits String
+[[ The title of the film ]]
+type Title inherits String

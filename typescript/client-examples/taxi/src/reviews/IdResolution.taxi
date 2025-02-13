@@ -1,0 +1,8 @@
+namespace films.reviews {
+   closed model IdResolution {
+      filmId: films.FilmId,
+      netflixId: demo.netflix.NetflixFilmId,
+      squashedTomatoesFilmId: films.reviews.SquashedTomatoesFilmId
+   }
+}
+

@@ -1,0 +1,17 @@
+{
+   "compilerOptions": {
+      "outDir": "dist",
+      "module": "ESNext",
+      "moduleResolution": "Bundler",
+      "target": "ESNext",
+      "lib": ["ESNext", "DOM"],
+      "esModuleInterop": true,
+      "declaration": true,
+      "declarationMap": true,
+      "allowSyntheticDefaultImports": true,
+      "emitDeclarationOnly": true,
+      "strict": true,
+      "jsx": "react-jsx",
+   },
+   "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

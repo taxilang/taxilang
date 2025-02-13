@@ -1,0 +1,4 @@
+namespace demo.netflix
+
+type NetflixFilmId inherits Int
+type NetflixAnnouncement inherits String

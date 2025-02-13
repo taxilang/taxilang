@@ -1,0 +1,18 @@
+.home {
+  overflow: auto;
+  --header-height: 260px;
+  height: calc(100vh - var(--header-height));
+  padding-right: 1rem;
+}
+
+.taxiCode {
+  tab-size: 4;
+  font-family: monospace;
+  font-size: 1rem;
+  background: rgba(255,255,255, 0.1);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px dashed #888;
+  word-break: break-all;
+  white-space: break-spaces;
+}

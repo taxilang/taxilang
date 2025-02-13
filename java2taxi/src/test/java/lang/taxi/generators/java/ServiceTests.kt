@@ -2,6 +2,7 @@ package lang.taxi.generators.java
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
+import io.kotest.matchers.shouldBe
 import lang.taxi.annotations.*
 import lang.taxi.demo.FirstName
 import lang.taxi.generators.kotlin.TypeAliasRegister
@@ -183,12 +184,12 @@ namespace foo {
 
 
 }""".trimNewLines())
-      taxiDef[2].trimNewLines().should.equal("""namespace lang.taxi.generators.java {
+      taxiDef[2].trimNewLines().shouldBe("""namespace lang.taxi.generators.java {
 
 
 
    service JavaService {
-      operation findByEmail(  arg0 : FirstName ) : foo.Person
+      operation findByEmail(  firstName : FirstName ) : foo.Person
    }
 }""".trimNewLines())
    }

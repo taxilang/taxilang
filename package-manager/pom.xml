@@ -78,6 +78,11 @@
          <version>${maven-resolver.version}</version>
       </dependency>
       <dependency>
+         <groupId>org.apache.maven.resolver</groupId>
+         <artifactId>maven-resolver-supplier</artifactId>
+         <version>${maven-resolver.version}</version>
+      </dependency>
+      <dependency>
          <groupId>commons-io</groupId>
          <artifactId>commons-io</artifactId>
          <scope>test</scope>

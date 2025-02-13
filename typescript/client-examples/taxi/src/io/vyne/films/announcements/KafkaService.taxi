@@ -1,0 +1,10 @@
+import demo.netflix.NewFilmReleaseAnnouncement
+import com.orbitalhq.kafka.KafkaOperation
+import lang.taxi.Stream
+namespace com.orbitalhq.films.announcements {
+   @com.orbitalhq.kafka.KafkaService(connectionName = "kafka")
+      service KafkaService {
+         @com.orbitalhq.kafka.KafkaOperation(topic = "releases" , offset = "latest")
+         stream newReleases : Stream<NewFilmReleaseAnnouncement>
+      }
+}
