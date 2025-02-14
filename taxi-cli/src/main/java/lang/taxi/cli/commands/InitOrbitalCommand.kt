@@ -4,7 +4,7 @@ import com.beust.jcommander.Parameter
 import com.beust.jcommander.Parameters
 import lang.taxi.cli.utils.log
 import lang.taxi.generators.TaxiEnvironment
-import org.beryx.textio.TextIO
+import org.jline.reader.LineReader
 import org.springframework.stereotype.Component
 import java.net.URI
 import java.nio.file.Files
@@ -12,7 +12,7 @@ import java.nio.file.Files
 
 @Component
 @Parameters(commandDescription = "Creates a docker-compose file to launch a local developers instance of Orbital")
-class InitOrbitalCommand(private val prompt: TextIO) : ProjectlessShellCommand {
+class InitOrbitalCommand(private val prompt: LineReader) : ProjectlessShellCommand {
    override val name: String = "orbital"
 
    @Parameter(

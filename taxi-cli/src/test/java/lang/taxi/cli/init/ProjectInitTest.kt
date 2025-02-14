@@ -5,13 +5,9 @@ import io.kotest.matchers.paths.shouldNotExist
 import io.kotest.matchers.string.shouldContain
 import lang.taxi.cli.commands.InitCommand
 import lang.taxi.cli.config.CliTaxiEnvironment
-import lang.taxi.generators.TaxiProjectEnvironment
-import org.beryx.textio.TextIO
-import org.beryx.textio.TextIoFactory
-import org.beryx.textio.mock.MockTextTerminal
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import java.nio.charset.Charset
+import org.mockito.kotlin.mock
 import java.nio.file.Path
 
 class ProjectInitTest {
@@ -20,7 +16,7 @@ class ProjectInitTest {
 
    @Test
    fun `can create a project with orbital defaults`() {
-      val command = InitCommand(TextIO(MockTextTerminal()))
+      val command = InitCommand(mock { })
       command.projectGroup = "com.test"
       command.projectName = "test-project"
       command.projectVersion = "1.0.0"
@@ -30,10 +26,10 @@ class ProjectInitTest {
       val environment = CliTaxiEnvironment.forRoot(folder, null)
       command.execute(environment)
 
-      val workspaceFile = folder.resolve("workspace.conf")
+      val workspaceFile = folder.resolve("workspace/workspace.conf")
       workspaceFile.shouldExist()
       workspaceFile.toFile().readText()
-         .shouldContain("workspace/projects/test-project")
+         .shouldContain("projects/test-project")
 
       // Orbital config files
       listOf(
@@ -49,7 +45,7 @@ class ProjectInitTest {
 
    @Test
    fun `can create a project without orbital defaults`() {
-      val command = InitCommand(TextIO(MockTextTerminal()))
+      val command = InitCommand(mock { })
       command.projectGroup = "com.test"
       command.projectName = "test-project"
       command.projectVersion = "1.0.0"

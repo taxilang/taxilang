@@ -16,6 +16,7 @@
       <jreleaser.git.root.search>true</jreleaser.git.root.search>
       <app.main.class>lang.taxi.cli.TaxiCli</app.main.class>
       <app.distribution.directory>${project.build.directory}/distributions/app</app.distribution.directory>
+      <jline.version>3.29.0</jline.version>
    </properties>
    <dependencies>
       <dependency>
@@ -28,11 +29,6 @@
          <artifactId>kotest-assertions-core-jvm</artifactId>
          <version>${kotest.version}</version>
          <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.beryx</groupId>
-         <artifactId>text-io</artifactId>
-         <version>3.4.1</version>
       </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
@@ -93,6 +89,12 @@
          <groupId>org.springframework.boot</groupId>
          <artifactId>spring-boot-starter</artifactId>
       </dependency>
+      <dependency>
+         <groupId>org.jline</groupId>
+         <artifactId>jline</artifactId>
+         <version>${jline.version}</version>
+      </dependency>
+
       <dependency>
          <!-- because I want to use RestTemplate.  Probably overkill -->
          <groupId>org.springframework</groupId>
@@ -283,7 +285,9 @@
                            <apiHost>vendors.sdkman.io</apiHost>
                            <candidate>taxi</candidate>
                            <version>${project.version}</version>
-                           <url>https://repo.orbitalhq.com/release/org/taxilang/taxi-cli/${project.version}/taxi-cli-${project.version}.zip</url>
+                           <url>
+                              https://repo.orbitalhq.com/release/org/taxilang/taxi-cli/${project.version}/taxi-cli-${project.version}.zip
+                           </url>
                         </configuration>
                      </execution>
                   </executions>
