@@ -5,7 +5,6 @@ import lang.taxi.cli.utils.log
 import lang.taxi.generators.TaxiEnvironment
 import lang.taxi.generators.TaxiProjectEnvironment
 import lang.taxi.packages.ImporterConfig
-import org.beryx.textio.TextIO
 import org.springframework.stereotype.Component
 import org.taxilang.packagemanager.PackageManager
 import org.taxilang.packagemanager.RepositorySystemProvider

@@ -81,7 +81,7 @@ class ConfigWriter {
          } else value
          it.name to safeValue
       }.joinToString("\n") { (key, value) -> "$key: $value" }
-      return conf + "\n"
+      return HoconPrettifier.format(conf) + "\n"
 
    }
 

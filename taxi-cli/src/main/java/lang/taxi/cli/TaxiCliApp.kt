@@ -10,8 +10,8 @@ import lang.taxi.cli.utils.log
 import lang.taxi.generators.TaxiEnvironment
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.packages.TaxiProjectLoader
-import org.beryx.textio.TextIO
-import org.beryx.textio.TextIoFactory
+import org.jline.reader.LineReader
+import org.jline.reader.LineReaderBuilder
 import org.slf4j.LoggerFactory
 import org.springframework.boot.Banner
 import org.springframework.boot.SpringApplication
@@ -64,8 +64,8 @@ class TaxiCli {
    }
 
    @Bean
-   fun textIo(): TextIO {
-      return TextIoFactory.getTextIO()
+   fun lineReader():LineReader {
+      return LineReaderBuilder.builder().build()
    }
 
    @Bean
