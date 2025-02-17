@@ -17,13 +17,13 @@ const faqs = [
   {
     question: 'How does this compare to GraphQL?',
     answer: [
-      `Orbital gives you many of the benefits of GraphQL (API federation, custom response schemas), without having to move your tech stack over to GraphQl - instead working with your existing tech stack(s).`
+      `Taxi gives you many of the benefits of GraphQL (API federation, custom response schemas), without having to move your tech stack over to GraphQl - instead working with your existing tech stack(s).`
     ],
     learnMore: '/docs#taxi-vs-graph-ql'
   },
   {
     question: "What do you mean by 'Adapts Automatically'?",
-    answer: ["Orbital generates integration on-the-fly, so as your APIs change, integration automatically adapts.  We also have CI/CD tooling that can detect changes which Orbital can't recover from, and warn you ahead of deployment."]
+    answer: ["TaxiQL generates integration on-the-fly, so as your APIs change, integration automatically adapts."]
   },
   {
     question: "What's the relationship between Taxi and Orbital?",
