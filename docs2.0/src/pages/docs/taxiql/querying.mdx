@@ -232,6 +232,128 @@ as {
   TaxiQL engines automatically discover and combine data from different services based on the types in your projection.
 </Callout>
 
+### Iterating vs Transforming
+
+Projections in TaxiQL can either:
+1. **Iterate** over a collection and transform each element. (`A[] as B[]`)
+2. **Transform** a single object into another type. (`A as B`)
+
+**Key Rules**
+- **`A[] as B[]` always iterates** over the collection.
+- **All other projections perform a transformation.**
+- **Scopes do not change projection behavior.** Even if a collection is in scope, projection behavior is determined solely by input/output types.
+
+Specifically:
+
+| Projection            | Behavior                                                                                                                       |
+|-----------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `A[] as B[]`          | **Iteration** - Each `A` is transformed into `B` individually.                                                                 |
+| `A as B[]`            | **Transformation** - `A` is converted into `B[]`, but `A` itself is not iterated.                                              |
+| `A as (c:C) -> B[]`   | **Transformation** - `A` is transformed into `B[]`, using `C` as additional context, but neither `A` nor `C` are iterated.     |
+| `A as (c:C[]) -> B[]` | **Transformation** - `C[]` is available in scope for transformation, but it is not iterated unless explicitly projected later. |
+| `A as C[] as B[]`     | **Iteration** - Two separate projections: `A` to `C[]` (transformation), then `C[]` to `B[]` (iteration).                      |
+
+
+**✅ Iteration: Collection to Collection (`A[] as B[]`)**
+- When the **input** is an array and the **output** is also an array, each element in the input array is processed separately.
+
+```taxi
+find { Actor[] } as FamousActor[]
+```
+or, as a field within a projection:
+```taxi
+find { Film } as {
+  cast : Actor[] as FamousActor[]
+}
+```
+
+In both cases, each `Actor` is individually transformed into a `FamousActor`.
+
+
+**✅ Transformation: Object to Object (`A as B`)**
+- When the **input** is a single object and the **output** is also a single object, a transformation occurs.
+
+```taxi
+find { Actor } as FamousActor
+```
+or
+```taxi
+find { Film } as {
+  starring : Actor as FamousActor
+}
+```
+
+The `Actor` is transformed into a `FamousActor`.
+
+---
+
+**✅ Transformation: Object to Collection (`A as B[]`)**
+- The input is a **single object** (`A`), but the output is an **array** (`B[]`).
+- This is a **transformation**, **not an iteration**.
+- This is typically used to select a field from an object, or to use a source as an object to discover another value.
+
+```taxi
+find { Film } as AwardNomination[]
+```
+
+
+This transforms a `Film` into a collection of `AwardNomination[]`, but does **not** iterate over each `AwardNomination`.
+
+
+**Field-Level Projections**
+These same rules **also apply to fields inside projections**.
+
+**✅ Iteration in a Field: Collection to Collection (`A[] as B[]`)**
+- **Field projection iterates if the field is an array.**
+
+```taxi
+find { Film } as {
+   actors: Actor[] as FamousActor[]
+}
+```
+Each `Actor` in the array is transformed into a `FamousActor`.
+
+---
+
+**❌ Incorrect: Object to Array Transformation (`A as B[]`)**
+- If the field projection is **from an object (`A`)** to an **array (`B[]`)**, **it does not iterate**.
+- Instead, the whole `A` is transformed into `B[]`
+
+```taxi
+find { Studio } as {
+    name : StudioName
+    // This is NOT an iterating transformation
+    films : FilmResponse as (films:Film[]) -> {
+        title: Title
+    }[]
+}
+```
+
+🚨 Troubleshooting: Why is `films` empty?
+- `FilmResponse` **contains a collection (`Film[]`)**.
+- But since this projection is **object-to-array (`A as B[]`)**, **films is not iterated**.
+- The scoping statement (`(films:Film[]) -> `) places films in scope, but does not change the behaviour of the projection to iterating.
+
+✅ **Fix: Explicitly Force Iteration by Splitting Projections**
+```taxi
+find { Studio } as {
+    name : StudioName
+    films : FilmResponse as Film[] as {
+        title: Title
+    }[]
+}
+```
+Now, `FilmResponse` is **explicitly projected into `Film[]` first**, ensuring that the second projection **iterates**.
+
+**Summary**
+
+- **Collection (`A[]`) → Collection (`B[]`) always iterates.**
+- **Object (`A`) → Object (`B`) always transforms.**
+- **Object (`A`) → Collection (`B[]`) transforms, does not iterate.**
+- **Field projections follow the same rules as top-level projections.**
+- **If you need iteration but the projection is transforming, split it into two projections.**
+
+
 ### Field shorthand
 If you want to select fields present on the source type as-is, you can reference the field by it's field name, leaving
 out the type:

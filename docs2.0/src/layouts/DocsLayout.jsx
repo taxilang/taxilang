@@ -56,7 +56,7 @@ function useTableOfContents(tableOfContents) {
       }
 
       for (let heading of headings) {
-        if (top >= heading.top) {
+        if (top && heading && top >= heading.top) {
           current = heading.slug
         } else {
           break
