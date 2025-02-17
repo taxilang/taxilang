@@ -165,6 +165,7 @@ Partial models:
 - Inherit all annotations and modifiers from the reference type
 - Can add new annotations and modifiers
 - Cannot modify the structure beyond making fields optional
+- Cannot be declared as `closed` (the compiler will remove any `closed` modifiers on the created Partial model)
 
 Example with additional modifiers:
 ```taxi
