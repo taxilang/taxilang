@@ -24,7 +24,7 @@ cache:
 
 default:
    tags:
-      - docker
+      - private-docker
    image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/maven:3.9.9-eclipse-temurin-21
 
 .setup-nvm: &setup-nvm
@@ -120,7 +120,7 @@ build-ts-codegen-tools-windows:
         when: on_success
       - when: manual
    tags:
-      - windows
+      - private-windows
    script:
      ## Setup has been performed directly on the tagged windows box, to keep this build step faster.
      ## It's not portable though!
