@@ -19,8 +19,6 @@ import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
-import lang.taxi.utils.wrapErrorsInList
-import lang.taxi.values.PrimitiveValues
 import org.antlr.v4.runtime.ParserRuleContext
 
 internal class QueryCompiler(
@@ -97,11 +95,22 @@ internal class QueryCompiler(
 
             if (operation.scope != OperationScope.MUTATION) return@flatMap compilationError("Call statements are only valid with write operations.  Operation ${memberReference.text} is not a write operation")
             (service to operation).right()
+         }.flatMap { (service, operation) ->
+            when (val mutationProjection = mutationCtx.typeProjection()) {
+                null -> Triple(service, operation, null).right()
+                else -> {
+                   val mutationOperationResultExpression = TypeExpression(operation.returnType, emptyList(), mutationProjection.toCompilationUnits())
+                   parseTypeToProject(mutationProjection, DiscoveryType(mutationOperationResultExpression, emptyList()), emptyList()).flatMap { typeToProject ->
+                      Triple(service, operation, typeToProject).right()
+                   }
+                }
+            }
          }
-         .map { (service, operation) ->
+         .map { (service, operation, typeToProject) ->
             Mutation(
                service,
                operation,
+               typeToProject,
                mutationCtx.toCompilationUnits()
             )
          }
