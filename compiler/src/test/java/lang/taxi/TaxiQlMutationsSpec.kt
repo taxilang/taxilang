@@ -1,9 +1,13 @@
 package lang.taxi
 
+import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeTypeOf
+import lang.taxi.expressions.FunctionExpression
 import lang.taxi.services.OperationScope
 
 class TaxiQlMutationsSpec : DescribeSpec ({
@@ -12,6 +16,8 @@ class TaxiQlMutationsSpec : DescribeSpec ({
          model Person {
             personId : PersonId inherits String
          }
+         
+         model VipPerson inherits Person
 
          service PersonService {
             operation findAllPeople():Person[]
@@ -127,5 +133,87 @@ class TaxiQlMutationsSpec : DescribeSpec ({
          ).queries().first()
          query.mutation.shouldNotBeNull()
       }
+
+       it ("a mutation can have a typed projection") {
+           val taxi = src.compiled()
+
+           val query = Compiler(
+               source = """given { person : PersonId = "123" }
+               call PersonService::updatePerson as VipPerson""",
+               importSources = listOf(taxi)
+           ).queries().first()
+           query.mutation.shouldNotBeNull()
+           query.mutation!!.projectedType.shouldNotBeNull()
+           query.mutation!!.projectedType!!.first.qualifiedName.shouldBe("VipPerson")
+       }
+
+       it ("a mutation can have an anonymous projection") {
+           val taxi = src.compiled()
+
+           val query = Compiler(
+               source = """given { person : PersonId = "123" }
+               call PersonService::updatePerson as {
+                 vipId: PersonId
+               }""",
+               importSources = listOf(taxi)
+           ).queries().first()
+           query.mutation.shouldNotBeNull()
+           query.mutation!!.projectedType.shouldNotBeNull()
+           query.mutation!!.projectedType?.first?.anonymous.shouldBe(true)
+       }
+
+       it ("A mutation-with-projection against a non-existent service should generate a compilation error") {
+           val taxi = src.compiled()
+
+           val (compilationError, _) = Compiler(
+               source = """given { person : PersonId = "123" }
+               call FooService::updatePerson as {
+                 vipId: PersonId
+               }""",
+               importSources = listOf(taxi)
+           ).compileWithMessages()
+
+           compilationError.shouldNotBeEmpty()
+           compilationError.first().detailMessage.should.equal("FooService is not defined")
+       }
+
+       it ("A query-with-projection can have a mutation-with-projection") {
+           val taxi = src.compiled()
+
+           val query = Compiler(
+               source = """given { person : PersonId = "123" }
+               find { Person }  as {
+                 cid: PersonId
+               }
+               call PersonService::updatePerson as {
+                 vipId: PersonId
+               }""",
+               importSources = listOf(taxi)
+           ).queries().first()
+           query.mutation.shouldNotBeNull()
+           query.mutation!!.projectedType.shouldNotBeNull()
+           query.mutation!!.projectedType?.first?.anonymous.shouldBe(true)
+       }
+
+       it ("A mutation-with-projection that defines scoped variables") {
+           val taxi = src.compiled()
+
+           val query = Compiler(
+               source = """
+               find { Person[] } 
+               call PersonService::updatePerson as (person: first(Person[])) -> {
+                 vipId: PersonId
+               }""",
+               importSources = listOf(taxi)
+           ).queries().first()
+           query.mutation.shouldNotBeNull()
+           query.mutation!!.projectedType.shouldNotBeNull()
+           query.mutation!!.projectedType?.first?.anonymous.shouldBe(true)
+           val projectionFunctionScope = query.mutation!!.projectedType!!.second.first()
+           projectionFunctionScope.name.should.equal("person")
+           projectionFunctionScope.type.qualifiedName.should.equal("Person")
+           val functionExpression = projectionFunctionScope.expression.shouldBeTypeOf<FunctionExpression>()
+           functionExpression.function.qualifiedName.should.equal("taxi.stdlib.first")
+       }
    }
 })

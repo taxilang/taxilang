@@ -742,7 +742,7 @@ typeProjection: ('as') expressionInputs? (anonymousTypeDefinition | typeReferenc
 //}
 anonymousTypeDefinition: annotation* typeBody arrayMarker? accessor? parameterConstraint?;
 
-mutation: K_Call memberReference;
+mutation: K_Call memberReference typeProjection?;
 
 NOT_IN: 'not in';
 IN: 'in';
