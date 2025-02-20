@@ -6,6 +6,7 @@ import lang.taxi.cli.pluginArtifacts
 import lang.taxi.cli.plugins.InternalPlugin
 import lang.taxi.cli.plugins.PluginRegistry
 import lang.taxi.generators.TaxiProjectEnvironment
+import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.packages.TaxiProjectLoader
 import java.nio.file.Path
 
@@ -19,4 +20,10 @@ fun executeBuild(path: Path, plugins: List<InternalPlugin>) {
    )
    val environment = CliTaxiEnvironment.forRoot(path, project) as TaxiProjectEnvironment
    build.execute(environment)
+}
+
+fun projectAndEnvironmentAt(path:Path): Pair<TaxiPackageProject, TaxiProjectEnvironment> {
+   val project = TaxiProjectLoader(path.resolve("taxi.conf")).load()
+   val environment = CliTaxiEnvironment.forRoot(path, project) as TaxiProjectEnvironment
+   return project to environment
 }

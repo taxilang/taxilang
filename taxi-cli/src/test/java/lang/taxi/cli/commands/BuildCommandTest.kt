@@ -20,7 +20,8 @@ class BuildCommandTest {
    }
 }
 
-private fun File.deployProject(path: String) {
+
+fun File.deployProject(path: String) {
    val testProject = File(Resources.getResource(path).toURI())
    FileUtils.copyDirectory(testProject, this)
 }

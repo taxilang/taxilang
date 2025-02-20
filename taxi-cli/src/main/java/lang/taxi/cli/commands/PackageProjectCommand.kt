@@ -5,6 +5,7 @@ import lang.taxi.cli.utils.log
 import lang.taxi.generators.TaxiProjectEnvironment
 import org.springframework.stereotype.Component
 import org.taxilang.packagemanager.repository.nexus.PackagePublisher
+import kotlin.io.path.copyTo
 
 @Component
 @Parameters(commandDescription = "Creates a zipped package of a Taxi project, suitable for uploading or distributing.")
@@ -14,6 +15,9 @@ class PackageProjectCommand  : ProjectShellCommand {
    override fun execute(environment: TaxiProjectEnvironment) {
       val publisher = PackagePublisher(credentials = environment.project.credentials)
       val (project,bundle) = publisher.createBundle(environment.projectRoot)
-      log().info("Project package created at ${bundle.zip}")
+      val targetPath = environment.projectRoot.resolve(bundle.zip.fileName)
+      bundle.zip.copyTo(targetPath)
+      log().info("Project package created at $targetPath")
+
    }
 }
