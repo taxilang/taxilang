@@ -11,6 +11,7 @@ import org.junit.jupiter.api.io.TempDir
 import org.springframework.boot.info.BuildProperties
 import java.io.File
 import java.io.FileReader
+import java.nio.file.Path
 import java.util.*
 
 class MavenPomProjectTest {
@@ -86,3 +87,6 @@ fun File.deployProject(path: String) {
    val testProject = File(Resources.getResource(path).toURI())
    FileUtils.copyDirectory(testProject, this)
 }
+
+fun Path.deployProject(path: String) =
+   this.toFile().deployProject(path)
