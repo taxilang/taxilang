@@ -1,0 +1,28 @@
+{
+   "name": "pom-version-updater",
+   "version": "1.0.0",
+   "description": "Updates package.json version from pom.xml version",
+   "main": "sync-pom-version.js",
+   "bin": {
+      "sync-pom-version": "./sync-pom-version.js"
+   },
+   "scripts": {
+      "start": "node sync-pom-version.js"
+   },
+   "keywords": [
+      "pom",
+      "maven",
+      "version",
+      "package.json",
+      "npm"
+   ],
+   "author": "",
+   "license": "MIT",
+   "dependencies": {
+      "commander": "^11.1.0",
+      "fast-xml-parser": "^4.3.2"
+   },
+   "engines": {
+      "node": ">=14.0.0"
+   }
+}

@@ -88,9 +88,6 @@ validate:
             - "*/target/surefire-reports/TEST-*.xml"
 
 
-# This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
-# Because some enforcer rules might check dependency convergence and class duplications
-# we use `test-compile` here instead of `validate`, so the correct classpath is picked up.
 build-ts-codegen-tools-linux:
    stage: build
    image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/vegardit/graalvm-maven:latest-java23
@@ -106,9 +103,6 @@ build-ts-codegen-tools-linux:
         when: on_success
       - when: manual
 
-# This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
-# Because some enforcer rules might check dependency convergence and class duplications
-# we use `test-compile` here instead of `validate`, so the correct classpath is picked up.
 build-ts-codegen-tools-windows:
    variables:
       MAVEN_VERSION: 3.9.9
@@ -153,6 +147,84 @@ build-ts-codegen-tools-windows:
    artifacts:
       paths:
          - 'taxiql-codegen\taxiql-codegen-cli\target\taxiql-codegen-cli.exe'
+
+
+## There's no gitlab hosted macos runners, so we can't build these automatically.
+## Due to be resolved in this epic:
+## https://gitlab.com/groups/gitlab-org/-/epics/8267
+## ETA 20 March 2025
+## Note - this code has not been tested.
+#build-ts-codegen-tools-macos:
+#   stage: build
+#   tags:
+#      - saas-macos-medium-m1
+#   image: macos-14-xcode-15
+#   script:
+#      # Install Maven if not present
+#      - if ! command -v mvn &> /dev/null; then brew install maven; fi
+#
+#      # Install GraalVM via Homebrew
+#      - brew install --cask graalvm-jdk
+#
+#      # Set up environment variables
+#      - echo 'export GRAALVM_HOME=$(/usr/libexec/java_home -v 22)' >> $HOME/.zshrc
+#      - echo 'export PATH="$GRAALVM_HOME/bin:$PATH"' >> $HOME/.zshrc
+#      - source $HOME/.zshrc
+#
+#      # Install Native Image Tool
+#      - gu install native-image
+#
+#      # Build native image (don't run tests)
+#      - mvn package -pl taxiql-codegen/taxiql-codegen-cli -am -Pnative -DskipTests
+#      - mkdir taxiql-codegen/taxiql-codegen-cli/target
+#      - cp taxiql-codegen/taxiql-codegen-cli/target/taxiql-codegen-cli taxiql-codegen/taxiql-codegen-cli/target/macos/taxiql-codegen-cli
+#   artifacts:
+#      paths:
+#         - 'taxiql-codegen/taxiql-codegen-cli/target/macos/taxiql-codegen-cli'
+#   ## Run automatically on develop, master, or tags, otherwise require a manual trigger
+#   rules:
+#      - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_TAG'
+#        when: on_success
+#      - when: manual
+#
+
+.npm-install-sync-pom: &npm-install-sync-pom
+   - cd sync-pom-version
+   - npm i
+   - npm i -g .
+   ## Go back from whence we came
+   - cd ..
+
+.npm-set-version-and-publish: &npm-set-version-and-publish
+   - sync-pom-version -b $CI_PIPELINE_IID
+   - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+   - npm publish
+
+publish-codegen-node-windows:
+   stage: deploy
+   image: node
+   dependencies:
+      - build-ts-codegen-tools-windows
+   script:
+      - mkdir -p typescript/taxiql-codegen/packages/win32/bin
+      - cp 'taxiql-codegen/taxiql-codegen-cli/target/taxiql-codegen-cli.exe' typescript/taxiql-codegen/packages/win32/bin
+      - *npm-install-sync-pom
+      - cd typescript/taxiql-codegen/packages/win32
+      - *npm-set-version-and-publish
+
+publish-codegen-node-linux:
+   stage: deploy
+   image: node
+   dependencies:
+      - build-ts-codegen-tools-linux
+   script:
+      - mkdir -p typescript/taxiql-codegen/packages/linux/bin
+      - cp 'taxiql-codegen/taxiql-codegen-cli/target/taxiql-codegen-cli' typescript/taxiql-codegen/packages/linux/bin/
+      - *npm-install-sync-pom
+      - cd typescript/taxiql-codegen/packages/linux
+      - *npm-set-version-and-publish
+   # TODO : Doubt that the linux tool will work on mac, but will give it a go
+      #- copy 'taxiql-codegen/taxiql-codegen-cli/target/taxiql-codegen-cli' typescript/taxiql-codegen/packages/darwin
 
 ## Manual jobs to trigger a release and increment the version (major,minor,patch)
 release-major:
