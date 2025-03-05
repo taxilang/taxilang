@@ -8,7 +8,8 @@
     "_build:installer": "esbuild ./scripts/install-binary-from-npm.ts --bundle --platform=node --outfile=dist/install-binary.js",
     "test": "npx vitest",
     "_postinstall": "node dist/install-binary.js",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "debug-codegen": "node src/codeGen.ts"
   },
   "main": "dist/build.js",
   "type": "module",
@@ -21,6 +22,7 @@
     "@types/minimist": "^1.2.5",
     "@types/node": "^22.12.0",
     "esbuild": "^0.24.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
     "vitest": "^3.0.4"
   },

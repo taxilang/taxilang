@@ -13,5 +13,8 @@
 
    <modules>
       <module>taxi2typescript</module>
+      <module>taxiql-codegen/packages/win32</module>
+      <module>taxiql-codegen/packages/darwin</module>
+      <module>taxiql-codegen/packages/linux</module>
    </modules>
 </project>

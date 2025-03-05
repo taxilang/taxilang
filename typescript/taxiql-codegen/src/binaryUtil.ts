@@ -2,6 +2,8 @@ import {spawn} from 'child_process';
 import {ChildProcess} from 'node:child_process';
 import path from 'path';
 import process from 'process';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 
 // Lookup table for all platforms and binary distribution packages (well, the ones we support)
 const binaryDistributionPackages: Partial<Record<NodeJS.Platform, string>> = {
@@ -26,9 +28,7 @@ function getBinaryPath() {
   try {
     // Resolving will fail if the optionalDependency was not installed
     // Resolve from the nearest node_modules root
-    return require.resolve(`@orbitalhq/${PLATFORM_SPECIFIC_PACKAGE_NAME}/bin/${BINARY_NAME}`, {
-      paths: [path.resolve(__dirname, 'node_modules')],
-    });
+    return require.resolve(`@orbitalhq/${PLATFORM_SPECIFIC_PACKAGE_NAME}/bin/${BINARY_NAME}`)
   } catch (e) {
     // NOTE: if developing this locally, you'll probably end up getting your binary from here
     try {

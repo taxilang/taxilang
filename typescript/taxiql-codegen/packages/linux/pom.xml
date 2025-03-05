@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <groupId>org.taxilang</groupId>
+      <artifactId>typescript</artifactId>
+      <version>1.63.0-SNAPSHOT</version>
+      <relativePath>../../../pom.xml</relativePath>
+   </parent>
+
+   <!-- This pom doesn't do anything except provide a convenient way
+   to pass the version into the package.json file.
+    We use an npm plugin called sync-pom-version-to-package in the package.json,
+    however it seems to fail without a pom.xml file in the same directory.
+    -->
+
+   <artifactId>taxiql-codegen-native-binary-linux</artifactId>
+   <packaging>pom</packaging>
+
+</project>
