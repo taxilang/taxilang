@@ -8,8 +8,10 @@ import lang.taxi.packages.Repository
 import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.packages.TaxiProjectLoader
 import lang.taxi.writers.ConfigWriter
+import org.eclipse.aether.artifact.DefaultArtifact
 import org.eclipse.aether.repository.RemoteRepository
 import org.eclipse.aether.repository.RepositoryPolicy
+import org.eclipse.aether.resolution.ArtifactRequest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.taxilang.packagemanager.PackageManager
@@ -228,7 +230,7 @@ class PackageManagerTest {
          registerRemoteRepository: Boolean = true
       ): PackageManager {
          val (repoSystem, session) = RepositorySystemProvider.build(
-            listOf(TaxiFileSystemTransportFactory::class.java)
+            mapOf("Transport" to TaxiFileSystemTransportFactory())
          )
 //         val (repoSystem, session) = RepositorySystemProvider.build(
 //            mapOf("Transport" to TaxiFileSystemTransportFactory())
