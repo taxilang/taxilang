@@ -97,22 +97,20 @@ build-ts-codegen-tools-linux:
    artifacts:
       paths:
          - 'taxiql-codegen/taxiql-codegen-cli/target/taxiql-codegen-cli'
-   ## Run automatically on develop, master or tags, otherwise require a manual trigger
-   rules:
-      - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_TAG'
-        when: on_success
-      - when: manual
+   only:
+      - tags
+      - master
+      - develop
 
 build-ts-codegen-tools-windows:
    variables:
       MAVEN_VERSION: 3.9.9
       GRAALVM_HOME: "C:/graalvm"
    stage: build
-   ## Run automatically on develop, master or tags, otherwise require a manual trigger
-   rules:
-      - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_TAG'
-        when: on_success
-      - when: manual
+   only:
+      - tags
+      - master
+      - develop
    tags:
       - private-windows
    script:
