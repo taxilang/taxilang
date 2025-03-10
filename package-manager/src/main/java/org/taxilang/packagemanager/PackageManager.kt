@@ -61,6 +61,11 @@ class PackageManager(
     */
    fun bundleAndInstall(projectLocation: Path, projectConfig: TaxiPackageProject): Path {
       log().info("Installing ${projectConfig.identifier.id} to $projectLocation")
+
+      // First, fetch the dependencies
+      fetchDependencies(projectConfig)
+
+      // Now create the bundle
       val bundle = TaxiPackageBundler.createBundle(
          projectLocation,
          projectConfig.identifier
@@ -69,6 +74,7 @@ class PackageManager(
          file = bundle.zip,
          extension = "zip"
       )
+
       val installRequest = InstallRequest()
       installRequest.addArtifact(dependency.artifact)
       val result = repositorySystem.install(repositorySystemSession, installRequest)
