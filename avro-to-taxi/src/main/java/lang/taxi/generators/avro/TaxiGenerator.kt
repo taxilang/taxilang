@@ -6,6 +6,7 @@ import lang.taxi.generators.Logger
 import lang.taxi.generators.SchemaWriter
 import lang.taxi.generators.SourceMap
 import org.apache.avro.Schema
+import org.apache.avro.SchemaParseException
 import java.net.URI
 import java.nio.file.Path
 
@@ -20,7 +21,11 @@ class TaxiGenerator(
    }
 
    fun generate(avroSchema: String, path: String): GeneratedTaxiCode {
-      val schema = Schema.Parser().parse(avroSchema)
+      val schema = try {
+         Schema.Parser().parse(avroSchema)
+      } catch (e:SchemaParseException) {
+         throw RuntimeException("Avro file $path is invalid: ${e.message}")
+      }
       return generate(schema, path)
    }
 
