@@ -34,7 +34,6 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
                path : String
             }
 
-
             annotation HttpHeader {
                name : String
                [[ Pass a value when using as an annotation on an operation.
@@ -47,18 +46,23 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
             annotation RequestBody {}
             annotation PathVariable { value : String }
 
-            annotation ResponseBody{}
+            annotation ResponseBody {}
 
             annotation ResponseCode {
                value : Int
             }
-            
-            annotation HttpQueryVariable { value: String }
-            
-            annotation HttpResponseHeader { value: String }
+
+            annotation QueryVariable {
+               value: String
+            }
+
+            annotation ResponseHeader {
+               name: String
+               value: String?
+             }
          }
-           
-            
+
+
       """
 
       override val name: QualifiedName = QualifiedName.from("taxi.http.HttpService")
@@ -190,17 +194,15 @@ data class HttpResponseHeader(val name: String, val value: String? = null) : Ann
       fun fromAnnotation(annotation: Annotation): HttpResponseHeader {
          val parameters = annotation.parameters
 
-         return when {
-            parameters.containsKey("name") -> HttpResponseHeader(parameters["name"]!!.toString(), parameters["value"]?.toString())
-            !parameters.containsKey("name") && parameters.containsKey("value") -> HttpResponseHeader(parameters["value"]!!.toString(), null)
-            else -> error("@ResponseHeader requires name or value annotation!")
-         }
+         val name = parameters["name"]?.toString() ?: error("Name is required")
+         val value = parameters["value"]?.toString()
+         return HttpResponseHeader(name, value)
       }
    }
 
    override fun toAnnotation(): Annotation {
       val valueMap = value?.let { mapOf("value" to value) } ?: mapOf()
-      return Annotation(HttpHeader.NAME, mapOf("name" to name) + valueMap )
+      return Annotation(NAME, mapOf("name" to name) + valueMap )
    }
 }
 
