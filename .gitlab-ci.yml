@@ -165,8 +165,13 @@ build-ts-codegen-tools-macos:
       - brew install --cask graalvm-jdk
 
       # Set up environment variables dynamically
-      - export GRAALVM_HOME=$(/usr/libexec/java_home -v 22)
+      - #export GRAALVM_HOME=$(/usr/libexec/java_home -v 22)
+      - #export PATH="$GRAALVM_HOME/bin:$PATH"
+      - export GRAALVM_HOME=$(/usr/libexec/java_home -v 22 2>/dev/null || echo "/Library/Java/JavaVirtualMachines/graalvm-22.0.0/Contents/Home")
       - export PATH="$GRAALVM_HOME/bin:$PATH"
+      - echo "Using GraalVM from $GRAALVM_HOME"
+      - which gu || echo "gu not found in PATH"
+      - gu install native-image
 
       # Install Native Image Tool
       - gu install native-image
