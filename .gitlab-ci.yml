@@ -161,25 +161,13 @@ build-ts-codegen-tools-macos:
       # Install Maven if not present
       - if ! command -v mvn &> /dev/null; then brew install maven; fi
 
-      # Install GraalVM via Homebrew
-      - brew install --cask graalvm-jdk
+      # Install GraalVM via SDK Man
+      - curl -s "https://get.sdkman.io" | bash
+      - source "$HOME/.sdkman/bin/sdkman-init.sh"
+      - sdk version
 
-      # Set up environment variables dynamically
-      #- export GRAALVM_HOME=$(/usr/libexec/java_home -v 22)
-      #- export PATH="$GRAALVM_HOME/bin:$PATH"
-      - export PATH="/Library/Java/JavaVirtualMachines/graalvm-23.jdk/Contents/Home/bin:$PATH"
-      - export GRAALVM_HOME="/Library/Java/JavaVirtualMachines/graalvm-23.jdk/Contents/Home"
-      - echo "Using GraalVM from $GRAALVM_HOME"
-      - ls -l $GRAALVM_HOME/bin | grep gu || echo "gu binary not found"
-      - ls -l /Library/Java/JavaVirtualMachines
-      - ls -l $GRAALVM_HOME/bin
-      - echo "final path $PATH"
-      - echo "Java version:" && java -version
-
-      - "$GRAALVM_HOME/bin/gu install native-image"
-
-      # Install Native Image Tool
-#      - gu install native-image
+      # Now install GraalVM:
+      - sdk install java 23.0.2-graal
 
       # Build native image (don't run tests)
       - mvn package -pl taxiql-codegen/taxiql-codegen-cli -am -Pnative -DskipTests
