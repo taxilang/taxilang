@@ -173,10 +173,10 @@ build-ts-codegen-tools-macos:
       - ls -l $GRAALVM_HOME/bin | grep gu || echo "gu binary not found"
       - ls -l /Library/Java/JavaVirtualMachines
       - ls -l $GRAALVM_HOME/bin
-      - echo "Final PATH: $PATH"
+      - echo "final path $PATH"
       - echo "Java version:" && java -version
 
-      - "$GRAALVM_HOME/bin/gu" install native-image
+      - "$GRAALVM_HOME/bin/gu install native-image"
 
       # Install Native Image Tool
 #      - gu install native-image
