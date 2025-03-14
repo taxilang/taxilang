@@ -167,14 +167,19 @@ build-ts-codegen-tools-macos:
       # Set up environment variables dynamically
       #- export GRAALVM_HOME=$(/usr/libexec/java_home -v 22)
       #- export PATH="$GRAALVM_HOME/bin:$PATH"
-      - export GRAALVM_HOME=$(/usr/libexec/java_home -v 22 2>/dev/null || echo "/Library/Java/JavaVirtualMachines/graalvm-22.0.0/Contents/Home")
-      - export PATH="$GRAALVM_HOME/bin:$PATH"
+      - export PATH="/Library/Java/JavaVirtualMachines/graalvm-23.jdk/Contents/Home/bin:$PATH"
+      - export GRAALVM_HOME="/Library/Java/JavaVirtualMachines/graalvm-23.jdk/Contents/Home"
       - echo "Using GraalVM from $GRAALVM_HOME"
-      - which gu || echo "gu not found in PATH"
-      - gu install native-image
+      - ls -l $GRAALVM_HOME/bin | grep gu || echo "gu binary not found"
+      - ls -l /Library/Java/JavaVirtualMachines
+      - ls -l $GRAALVM_HOME/bin
+      - echo "Final PATH: $PATH"
+      - echo "Java version:" && java -version
+
+      - "$GRAALVM_HOME/bin/gu" install native-image
 
       # Install Native Image Tool
-      - gu install native-image
+#      - gu install native-image
 
       # Build native image (don't run tests)
       - mvn package -pl taxiql-codegen/taxiql-codegen-cli -am -Pnative -DskipTests
