@@ -158,9 +158,6 @@ build-ts-codegen-tools-macos:
       - saas-macos-medium-m1
    image: macos-14-xcode-15
    script:
-      # Install Maven if not present
-      - if ! command -v mvn &> /dev/null; then brew install maven; fi
-
       # Install GraalVM via SDK Man
       - curl -s "https://get.sdkman.io" | bash
       - source "$HOME/.sdkman/bin/sdkman-init.sh"
@@ -168,10 +165,10 @@ build-ts-codegen-tools-macos:
 
       # Now install GraalVM:
       - sdk install java 23.0.2-graal
-
+      - sdk install maven
       # Build native image (don't run tests)
       - mvn package -pl taxiql-codegen/taxiql-codegen-cli -am -Pnative -DskipTests
-      - mkdir taxiql-codegen/taxiql-codegen-cli/target
+      - mkdir taxiql-codegen/taxiql-codegen-cli/target/macos
       - cp taxiql-codegen/taxiql-codegen-cli/target/taxiql-codegen-cli taxiql-codegen/taxiql-codegen-cli/target/macos/taxiql-codegen-cli
    artifacts:
       paths:
