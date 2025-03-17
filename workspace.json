@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "projects": {
+    "taxiql-client": "typescript/taxiql-client",
+    "taxiql-codegen": "typescript/taxiql-codegen"
+  }
+}

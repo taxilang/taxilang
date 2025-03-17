@@ -89,3 +89,5 @@ taxi-cli/trace.log
 out/
 taxi-cli/out/
 
+### Nx ###
+.nx/
