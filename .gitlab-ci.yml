@@ -389,7 +389,7 @@ release-taxiql-client:
          - .nx/cache
    rules:
       - if: $CI_COMMIT_TAG =~ /^ts-client-v.*$/
-        when: manual
+        when: always
 
 release-taxiql-codegen:
    stage: typescript-release
@@ -407,7 +407,7 @@ release-taxiql-codegen:
          - .nx/cache
    rules:
       - if: $CI_COMMIT_TAG =~ /^ts-codegen-v.*$/
-        when: manual
+        when: always
 
 
 ## Deploy the ADR to gitlab pages
