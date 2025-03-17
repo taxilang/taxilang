@@ -1,6 +1,6 @@
 {
   "name": "@orbitalhq/taxiql-client",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "A Typescript client for executing TaxiQL from client side libraries",
   "license": "Apache-2.0",
   "scripts": {
