@@ -5,7 +5,7 @@ export interface TypedQuery<TResultType> {
 export interface TypedStream<TResultType> extends TypedQuery<TResultType> {
 }
 
-export interface CodegenConfig {
+export type CodegenConfig = {
   documents: string[],
   taxiConf: string,
   outputDir: string,

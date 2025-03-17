@@ -1,4 +1,5 @@
 {
+   "extends": "../../tsconfig.base.json",
    "compilerOptions": {
       "outDir": "dist",
       "module": "ESNext",
@@ -11,7 +12,6 @@
       "allowSyntheticDefaultImports": true,
       "emitDeclarationOnly": true,
       "strict": true,
-      "jsx": "react-jsx",
    },
    "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

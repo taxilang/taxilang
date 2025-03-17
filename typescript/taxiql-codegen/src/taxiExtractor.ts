@@ -23,7 +23,13 @@ const taxiExtractor = async (filePaths: string[]) => {
    });
 
    const returnVal = queries.join('\n')
-   console.log('Extracted Queries:\n', returnVal);
+   if (queries.length > 1) {
+      console.log(`Extracted ${queries.length} TaxiQL queries from sources:
+`, returnVal);
+   } else {
+      console.info('No TaxiQL queries were found in your sources.');
+   }
+
 
    return queries
 };

@@ -1,10 +1,10 @@
-import {CodegenConfig} from '@orbitalhq/taxiql-client';
+import {CodegenConfig} from '../../taxiql-client/src/types'; // I tried REALLY HARD to get inter-module links working. Nx and everything. But couldn't, and screw you, TS. See giving-up-on-modules.md
 import {transform} from 'esbuild';
 import {readFile, writeFile} from 'fs/promises';
 import minimist from 'minimist';
 import {resolve} from 'path';
 
-const DEFAULT_CONFIG_PATH = './codegen.config.ts'
+const DEFAULT_CONFIG_PATH = './taxi-codegen.config.ts'
 const DEFAULT_CONFIG: CodegenConfig = {
    "documents": [
       "./src/**/*.{js,jsx,ts,tsx}",

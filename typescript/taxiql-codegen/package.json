@@ -4,12 +4,13 @@
   "description": "A tool for generating types from taxiql tags and for typing the responses of queries executed using the @orbitalhq/orbital-client SDK",
   "license": "Apache-2.0",
   "scripts": {
-    "build": "node esbuild.config.js",
+    "build": "tsc --noEmit && node esbuild.config.js",
     "_build:installer": "esbuild ./scripts/install-binary-from-npm.ts --bundle --platform=node --outfile=dist/install-binary.js",
     "test": "npx vitest",
     "_postinstall": "node dist/install-binary.js",
     "prepublishOnly": "npm run build",
-    "debug-codegen": "node src/codeGen.ts"
+    "debug-codegen": "node src/codeGen.ts",
+    "typecheck": "tsc --noEmit"
   },
   "main": "dist/build.js",
   "type": "module",
@@ -19,15 +20,13 @@
     "minimist": "^1.2.8"
   },
   "devDependencies": {
+    "@orbitalhq/taxiql-client": "0.1.0",
     "@types/minimist": "^1.2.5",
     "@types/node": "^22.12.0",
     "esbuild": "^0.25.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
     "vitest": "^3.0.4"
-  },
-  "peerDependencies": {
-    "@orbitalhq/taxiql-client": "0.0.1"
   },
   "optionalDependencies": {
     "@orbitalhq/taxiql-codegen-cli-darwin": "^1.63.0-beta.2540",
