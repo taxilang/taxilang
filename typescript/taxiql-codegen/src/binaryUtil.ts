@@ -49,8 +49,9 @@ const runBinary = (args: any[]): ChildProcess | null => {
 
   try {
     console.log('Command:', binaryPath, args.join(' '));
+    // Change stdio from 'inherit' to 'pipe' so we can capture output
     return spawn(binaryPath, args, {
-      stdio: 'inherit',
+      stdio: 'pipe',
     });
   } catch (error: any) {
     console.error(`Error running the binary: ${error.message}`);

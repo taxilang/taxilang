@@ -1,0 +1,414 @@
+{
+  "graph": {
+    "nodes": {
+      "taxiql-codegen": {
+        "name": "taxiql-codegen",
+        "type": "lib",
+        "data": {
+          "root": "typescript/taxiql-codegen",
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "_build:installer",
+                "_postinstall",
+                "prepublishOnly",
+                "debug-codegen",
+                "typecheck"
+              ]
+            },
+            "description": "A tool for generating types from taxiql tags and for typing the responses of queries executed using the @orbitalhq/orbital-client SDK",
+            "js": {
+              "packageName": "@orbitalhq/taxiql-codegen",
+              "packageMain": "dist/build.js",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "targets": {
+            "test": {
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "typescript/taxiql-codegen",
+                "command": "npm test"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true
+            },
+            "typecheck": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "typecheck"
+              },
+              "metadata": {
+                "description": "Runs type-checking for the project.",
+                "technologies": [
+                  "typescript"
+                ],
+                "help": {
+                  "command": "npx tsc -p tsconfig.json --help",
+                  "example": {
+                    "options": {
+                      "noEmit": true
+                    }
+                  }
+                },
+                "scriptContent": "tsc --noEmit",
+                "runCommand": "npm run typecheck"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx nx watch --projects taxiql-codegen --includeDependentProjects -- npx nx build-deps taxiql-codegen"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "_build:installer": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "_build:installer"
+              },
+              "metadata": {
+                "scriptContent": "esbuild ./scripts/install-binary-from-npm.ts --bundle --platform=node --outfile=dist/install-binary.js",
+                "runCommand": "npm run _build:installer"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "_postinstall": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "_postinstall"
+              },
+              "metadata": {
+                "scriptContent": "node dist/install-binary.js",
+                "runCommand": "npm run _postinstall"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "prepublishOnly": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "prepublishOnly"
+              },
+              "metadata": {
+                "scriptContent": "npm run build",
+                "runCommand": "npm run prepublishOnly"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "debug-codegen": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "debug-codegen"
+              },
+              "metadata": {
+                "scriptContent": "node src/codeGen.ts",
+                "runCommand": "npm run debug-codegen"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "typescript/taxiql-codegen",
+                "command": "npm run build"
+              },
+              "outputs": [
+                "{projectRoot}/dist"
+              ],
+              "configurations": {},
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "cache": true
+            }
+          },
+          "name": "taxiql-codegen",
+          "tags": [
+            "npm:public",
+            "typescript"
+          ],
+          "projectType": "library",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "typescript/taxiql-codegen/src",
+          "implicitDependencies": []
+        }
+      },
+      "taxiql-client": {
+        "name": "taxiql-client",
+        "type": "lib",
+        "data": {
+          "root": "typescript/taxiql-client",
+          "name": "taxiql-client",
+          "tags": [
+            "npm:public",
+            "typescript"
+          ],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "build:js",
+                "build:types",
+                "prepublishOnly"
+              ]
+            },
+            "description": "A Typescript client for executing TaxiQL from client side libraries",
+            "js": {
+              "packageName": "@orbitalhq/taxiql-client",
+              "packageMain": "dist/index.js",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "targets": {
+            "build:js": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "build:js"
+              },
+              "metadata": {
+                "scriptContent": "node esbuild.config.js",
+                "runCommand": "npm run build:js"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build:types": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "build:types"
+              },
+              "metadata": {
+                "scriptContent": "tsc --declaration --jsx react-jsx --esModuleInterop src/index.ts --emitDeclarationOnly --outDir ./dist",
+                "runCommand": "npm run build:types"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "prepublishOnly": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "prepublishOnly"
+              },
+              "metadata": {
+                "scriptContent": "npm run build",
+                "runCommand": "npm run prepublishOnly"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "typescript/taxiql-client",
+                "command": "npm run build"
+              },
+              "outputs": [
+                "{projectRoot}/dist"
+              ],
+              "configurations": {},
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "typescript/taxiql-client",
+                "command": "npm test"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true
+            }
+          },
+          "projectType": "library",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "typescript/taxiql-client/src",
+          "implicitDependencies": []
+        }
+      },
+      "taxi-lang": {
+        "name": "taxi-lang",
+        "type": "lib",
+        "data": {
+          "root": ".",
+          "name": "taxi-lang",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "build",
+                "test",
+                "build:client",
+                "build:codegen",
+                "test:client",
+                "test:codegen",
+                "graph"
+              ]
+            },
+            "description": "Welcome! 👋 Taxi is a language for documenting data - such as data models - and the contracts of APIs.",
+            "js": {
+              "packageName": "taxi-lang",
+              "packageMain": "index.js",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {
+            "build": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "build"
+              },
+              "metadata": {
+                "scriptContent": "nx run-many --target=build --parallel=3",
+                "runCommand": "npm run build"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test"
+              },
+              "metadata": {
+                "scriptContent": "nx run-many --target=test --parallel=3",
+                "runCommand": "npm run test"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true
+            },
+            "build:client": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "build:client"
+              },
+              "metadata": {
+                "scriptContent": "nx build taxiql-client",
+                "runCommand": "npm run build:client"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build:codegen": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "build:codegen"
+              },
+              "metadata": {
+                "scriptContent": "nx build taxiql-codegen",
+                "runCommand": "npm run build:codegen"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:client": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:client"
+              },
+              "metadata": {
+                "scriptContent": "nx test taxiql-client",
+                "runCommand": "npm run test:client"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:codegen": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:codegen"
+              },
+              "metadata": {
+                "scriptContent": "nx test taxiql-codegen",
+                "runCommand": "npm run test:codegen"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "graph": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "graph"
+              },
+              "metadata": {
+                "scriptContent": "nx graph",
+                "runCommand": "npm run graph"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      }
+    },
+    "dependencies": {
+      "taxiql-codegen": [
+        {
+          "source": "taxiql-codegen",
+          "target": "taxiql-client",
+          "type": "static"
+        }
+      ],
+      "taxiql-client": [],
+      "taxi-lang": []
+    }
+  }
+}

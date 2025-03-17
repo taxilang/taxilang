@@ -5,6 +5,8 @@ const config = {
    outfile: './dist/build.js',
    bundle: true,
    platform: 'node',
+   // Don't bundle node_modules
+   packages: 'external',
    external: ['esbuild'],
    sourcemap: true,
    format: 'esm'

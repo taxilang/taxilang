@@ -353,6 +353,11 @@ publish-plugin:
    - 'nvm install 20'
    - 'nvm use 20'
    - 'npm install -g nx'
+   - cd typescript/taxiql-client
+   - npm link
+   - cd ../taxiql-codegen
+   - npm link @orbitalhq/taxiql-client
+   - cd ../..
    - 'npm ci'
 
 build-typescript:

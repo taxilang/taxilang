@@ -1,4 +1,4 @@
-import {CodegenConfig} from '@orbitalhq/taxiql-client';
+import {CodegenConfig} from '../../taxiql-client/src/types'; // I tried REALLY HARD to get inter-module links working. Nx and everything. But couldn't, and screw you, TS. See giving-up-on-modules.md
 import fg from 'fast-glob';
 
 export default async function resolveFiles(documents: string[], config: CodegenConfig) {

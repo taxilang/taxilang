@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import chokidar from 'chokidar';
-import loadConfig from './loadConfig';
-import processFiles from './processFiles';
-import resolveFiles from './resolveFiles';
+import loadConfig from './loadConfig.js';
+import processFiles from './processFiles.js';
+import resolveFiles from './resolveFiles.js';
 
 export async function startProcessingAndWatching() {
   try {
