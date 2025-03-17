@@ -17,13 +17,13 @@ const faqs = [
   {
     question: 'How does this compare to GraphQL?',
     answer: [
-      `Taxi gives you many of the benefits of GraphQL (API federation, custom response schemas), without having to move your tech stack over to GraphQl - instead working with your existing tech stack(s).`
+      "Taxi provides many of the benefits of GraphQL—data federation and custom response schemas—without requiring resolvers or a single global schema. It integrates with your existing tech stack and supports more than just HTTP. TaxiQL works across all data sources and integration patterns, including Kafka streams, S3 buckets, API orchestration and batch workloads."
     ],
     learnMore: '/docs#taxi-vs-graph-ql'
   },
   {
-    question: "What do you mean by 'Adapts Automatically'?",
-    answer: ["TaxiQL generates integration on-the-fly, so as your APIs change, integration automatically adapts."]
+    question: "How does TaxiQL adapt automatically?",
+    answer: ["TaxiQL generates integration on-the-fly, powered by semantic metadata in your APIs. So as your APIs change, the integration automatically adapts."]
   },
   {
     question: "What's the relationship between Taxi and Orbital?",
