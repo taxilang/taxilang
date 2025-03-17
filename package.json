@@ -1,0 +1,29 @@
+{
+  "name": "taxi-lang",
+  "version": "1.0.0",
+  "description": "Welcome! 👋 Taxi is a language for documenting data - such as data models - and the contracts of APIs.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build": "nx run-many --target=build --parallel=3",
+    "test": "nx run-many --target=test --parallel=3",
+    "build:client": "nx build taxiql-client",
+    "build:codegen": "nx build taxiql-codegen",
+    "test:client": "nx test taxiql-client",
+    "test:codegen": "nx test taxiql-codegen",
+    "graph": "nx graph"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nx/eslint": "20.6.0",
+    "@nx/js": "^20.6.0",
+    "@nx/next": "20.6.0",
+    "@nx/vite": "20.6.0",
+    "nx": "20.6.0"
+  },
+  "nx": {}
+}

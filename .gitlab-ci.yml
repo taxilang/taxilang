@@ -52,6 +52,7 @@ stages:
    - trigger-release
    - deploy
    - deploy-plugin
+   - typescript-release
 
 
 # This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
@@ -193,6 +194,10 @@ build-ts-codegen-tools-macos:
 publish-codegen-node-windows:
    stage: deploy
    image: node
+   only:
+      - tags
+      - master
+      - develop
    dependencies:
       - build-ts-codegen-tools-windows
    script:
@@ -205,6 +210,10 @@ publish-codegen-node-windows:
 publish-codegen-node-linux:
    stage: deploy
    image: node
+   only:
+      - tags
+      - master
+      - develop
    dependencies:
       - build-ts-codegen-tools-linux
    script:
@@ -217,6 +226,10 @@ publish-codegen-node-linux:
 publish-codegen-node-mac:
    stage: deploy
    image: node
+   only:
+      - tags
+      - master
+      - develop
    dependencies:
       - build-ts-codegen-tools-macos
    script:
@@ -331,6 +344,70 @@ publish-plugin:
    after_script:
       - *cleanup-after-vscode-plugin-build
 
+# TypeScript build & release jobs
+.setup-nx: &setup-nx
+   - 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash'
+   - 'export NVM_DIR="$HOME/.nvm"'
+   - 'unset NPM_CONFIG_PREFIX'
+   - '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm'
+   - 'nvm install 20'
+   - 'nvm use 20'
+   - 'npm install -g nx'
+   - 'npm ci'
+
+build-typescript:
+   stage: build
+   image: node:22
+   script:
+      - *setup-nx
+      - npx nx build taxiql-client
+      - npx nx build taxiql-codegen
+   cache:
+      key: ${CI_COMMIT_REF_SLUG}-typescript
+      paths:
+         - node_modules/
+         - .nx/cache
+   artifacts:
+      paths:
+         - typescript/taxiql-client/dist
+         - typescript/taxiql-codegen/dist
+
+# Release jobs triggered by tags
+release-taxiql-client:
+   stage: typescript-release
+   image: node:22
+   script:
+      - *setup-nx
+      - cd typescript/taxiql-client
+      - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+      - npx nx build taxiql-client
+      - npm publish
+   cache:
+      key: ${CI_COMMIT_REF_SLUG}-typescript
+      paths:
+         - node_modules/
+         - .nx/cache
+   rules:
+      - if: $CI_COMMIT_TAG =~ /^client-v.*$/
+        when: manual
+
+release-taxiql-codegen:
+   stage: typescript-release
+   image: node:22
+   script:
+      - *setup-nx
+      - cd typescript/taxiql-codegen
+      - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+      - npx nx build taxiql-codegen
+      - npm publish
+   cache:
+      key: ${CI_COMMIT_REF_SLUG}-typescript
+      paths:
+         - node_modules/
+         - .nx/cache
+   rules:
+      - if: $CI_COMMIT_TAG =~ /^codegen-v.*$/
+        when: manual
 
 
 ## Deploy the ADR to gitlab pages

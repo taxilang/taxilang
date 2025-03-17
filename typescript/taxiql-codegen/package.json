@@ -21,7 +21,7 @@
   "devDependencies": {
     "@types/minimist": "^1.2.5",
     "@types/node": "^22.12.0",
-    "esbuild": "^0.24.2",
+    "esbuild": "^0.25.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
     "vitest": "^3.0.4"
@@ -30,9 +30,9 @@
     "@orbitalhq/taxiql-client": "0.0.1"
   },
   "optionalDependencies": {
-    "@orbitalhq/taxiql-codegen-cli-darwin": "0.0.1",
-    "@orbitalhq/taxiql-codegen-cli-linux": "0.0.1",
-    "@orbitalhq/taxiql-codegen-cli-win32": "0.0.3"
+    "@orbitalhq/taxiql-codegen-cli-darwin": "^1.63.0-beta.2540",
+    "@orbitalhq/taxiql-codegen-cli-linux": "^1.63.0-beta.2540",
+    "@orbitalhq/taxiql-codegen-cli-win32": "^1.63.0-beta.2540"
   },
   "files": [
     "dist/build.js",

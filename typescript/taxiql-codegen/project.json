@@ -1,0 +1,24 @@
+{
+  "name": "taxiql-codegen",
+  "projectType": "library",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "typescript/taxiql-codegen/src",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "typescript/taxiql-codegen",
+        "command": "npm run build"
+      },
+      "outputs": ["{projectRoot}/dist"]
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "typescript/taxiql-codegen",
+        "command": "npm test"
+      }
+    }
+  },
+  "tags": ["typescript"]
+}

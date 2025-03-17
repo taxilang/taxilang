@@ -165,6 +165,23 @@ then overlay semantic data using Taxi.
 
 ## Developer notes
 
+### TypeScript Projects
+
+The TypeScript projects in this repository are managed with [Nx](https://nx.dev/). For more details, see the [TypeScript README](./typescript/README.md).
+
+```bash
+# Build all TypeScript projects
+npm run build
+
+# Build specific projects
+npm run build:client  # Build taxiql-client
+npm run build:codegen # Build taxiql-codegen
+
+# Test specific projects
+npm run test:client   # Test taxiql-client
+npm run test:codegen  # Test taxiql-codegen
+```
+
 ### Maven Co-ordinates
 
 Currently, we publish to the Orbital maven repo:
