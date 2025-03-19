@@ -29,6 +29,13 @@ import java.nio.file.Paths
 class KotlinGenerator(private val typeNamesTopLevelPackageName: String = "taxi.generated") : ModelGenerator {
    // TODO : This really shouldn't be a field.
    private lateinit var processorHelper: ProcessorHelper
+   private val ignoredNamespaces = listOf(
+      "com.orbitalhq",
+      "taxi.stdlib",
+      "taxi.http",
+      "vyne",
+      "lang.taxi"
+   )
 
    companion object {
       val kotlinPrimitives = listOf(String::class, Int::class, Boolean::class)
@@ -48,7 +55,11 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName: String = "taxi.g
       return taxi.types
          // Hack - exclude taxi.stdlib, to avoid the noise of writing annotation classes right now.
          // We should implement this propertly
-         .filter { it.toQualifiedName().namespace != "taxi.stdlib" && it.toQualifiedName().namespace != "taxi.http"}
+         .filter { type ->
+            val namespace = type.toQualifiedName().namespace
+            ignoredNamespaces.none { ignoredNamespace -> namespace.startsWith(ignoredNamespace) }
+         }
+         .filter { !it.anonymous }
          .mapNotNull { generateType(it, typeNameConstantsGenerator) } +
          typeNameConstantsGenerator.generate()
    }
@@ -59,6 +70,10 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName: String = "taxi.g
          is TypeAlias -> generateType(type, typeNamesAsConstantsGenerator)
          is EnumType -> generateType(type, typeNamesAsConstantsGenerator)
          is AnnotationType -> generateType(type, typeNamesAsConstantsGenerator)
+         is IntersectionType -> {
+            // Not supported
+            null
+         }
          else -> TODO("Type ${type.javaClass.name} not yet supported")
       }
    }
