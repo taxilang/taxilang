@@ -1,6 +1,6 @@
 {
   "name": "@orbitalhq/taxiql-codegen",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A tool for generating types from taxiql tags and for typing the responses of queries executed using the @orbitalhq/orbital-client SDK",
   "license": "Apache-2.0",
   "scripts": {
@@ -20,7 +20,7 @@
     "minimist": "^1.2.8"
   },
   "devDependencies": {
-    "@orbitalhq/taxiql-client": "0.1.0",
+    "@orbitalhq/taxiql-client": "^0.1.1",
     "@types/minimist": "^1.2.5",
     "@types/node": "^22.12.0",
     "esbuild": "^0.25.1",
