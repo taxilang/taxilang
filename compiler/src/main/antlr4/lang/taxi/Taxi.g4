@@ -687,7 +687,7 @@ fact: factDeclaration | variableName;
 
 //value : objectValue | valueArray | literal | expressionGroup;
 
-objectValue: '{' objectField (',' objectField)* '}';
+objectValue: '{' objectField? (',' objectField)* '}';
 objectField : identifier ':' expressionGroup;
 valueArray: '[' expressionGroup? (',' expressionGroup)* ']';
 

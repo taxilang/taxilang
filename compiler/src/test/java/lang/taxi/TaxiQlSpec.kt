@@ -12,7 +12,10 @@ import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.accessors.CollectionProjectionExpressionAccessor
 import lang.taxi.accessors.FieldSourceAccessor
+import lang.taxi.expressions.FunctionExpression
+import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.OperatorExpression
+import lang.taxi.expressions.ProjectingExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.query.Parameter
 import lang.taxi.query.QueryMode
@@ -674,8 +677,26 @@ class TaxiQlSpec : DescribeSpec({
          nestedAnonymousType.field("lastName").type.anonymous.should.be.`true`
       }
 
+       it("parses empty model using a coalesce operator") {
+           val src = """
+                     find {
+                        Customer
+                     } as  {
+                       person: coalesce(Person, {}) as {
+                                 email : CustomerEmailAddress
+                                 firstName : FirstName?
+                                 lastName : LastName?
+                             }
+                     }
+               """.trimIndent()
+           val queries = Compiler(source = src, importSources = listOf(taxi)).queries()
+           val query = queries.first()
+           val projectingExpression = (query.projectedType!! as ObjectType).fields.first().accessor as ProjectingExpression
+           (projectingExpression.expression as FunctionExpression).function.qualifiedName.should.equal("taxi.stdlib.coalesce")
 
-      // This feature got broken while implementing named projection scopes.
+       }
+
+       // This feature got broken while implementing named projection scopes.
       // However, it's unused, and the syntax isn't really standard with spread operators.
       // Lets re-introduce if we decide to revive the feature
       xit("Should Detect anonymous type with invalid complex field definitions referencing projected type") {
