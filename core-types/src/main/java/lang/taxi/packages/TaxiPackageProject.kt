@@ -20,11 +20,11 @@ object SourcesTypes {
 }
 
 data class TaxiPackageProject(
-   val name: String,
-   val version: String,
+   override val name: String,
+   override val version: String,
    val sourceRoot: String = ".",
    val output: String = "dist/",
-   val dependencies: Map<String, String> = emptyMap(),
+   override val dependencies: Map<String, String> = emptyMap(),
    val repositories: List<Repository> = emptyList(),
    val plugins: Map<String, Config> = emptyMap(),
    val pluginSettings: PluginSettings = PluginSettings(),
@@ -34,7 +34,7 @@ data class TaxiPackageProject(
    val linter: Map<String, TaxiConfLinterRuleConfig> = emptyMap(),
    val additionalSources: Map<SourcesType, GlobPattern> = emptyMap(),
    val taxiConfFile: Path? = null
-) {
+) : TaxiPackageSummary {
    val identifier: PackageIdentifier = PackageIdentifier(ProjectName.fromId(name), version)
    val dependencyPackages: List<PackageIdentifier> = dependencies.map { (projectId, version) ->
       PackageIdentifier(ProjectName.fromId(projectId), version)
@@ -44,6 +44,19 @@ data class TaxiPackageProject(
    val sourceRootPath = packageRootPath?.resolve(sourceRoot)
 }
 
-// TODO : We also have PackageSource in the packageImporter.
-// This is confusing, one should go away.
+/**
+ * Intended to provide minimal package details,
+ * to allow sources to be sent over the wire,
+ * but not neccessarily power all build tooling (eg., plugins, etc).
+ *
+ * Added because when we expose TaxiPackageProject over server
+ * endpoints, sensitive details, such as paths, etc can be exposed
+ * (plus it's also very noisy)
+ */
+interface TaxiPackageSummary {
+   val name: String
+   val version: String
+   val dependencies: Map<String, String>
+}
+
 data class TaxiPackageSources(val project: TaxiPackageProject, val sources: List<SourceCode>, val readme: SourceCode?)
