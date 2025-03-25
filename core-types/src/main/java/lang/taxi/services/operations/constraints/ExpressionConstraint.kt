@@ -3,12 +3,13 @@ package lang.taxi.services.operations.constraints
 import lang.taxi.ImmutableEquality
 import lang.taxi.expressions.Expression
 import lang.taxi.expressions.LiteralExpression
+import lang.taxi.expressions.MemberAccessExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.types.ArgumentSelector
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.FormulaOperator
-import lang.taxi.types.ModelAttributeReferenceSelector
+import lang.taxi.types.MemberTypeReferenceExpression
 import lang.taxi.utils.log
 
 /**
@@ -50,7 +51,8 @@ class ExpressionConstraint(val expression: Expression) : Constraint {
          constraintToCheck is ArgumentSelector && requestedConstraint is ArgumentSelector -> satisfies(
             constraintToCheck, requestedConstraint
          )
-         constraintToCheck is ArgumentSelector && requestedConstraint is ModelAttributeReferenceSelector -> satisfies(constraintToCheck, requestedConstraint)
+         constraintToCheck is ArgumentSelector && requestedConstraint is MemberTypeReferenceExpression -> satisfies(constraintToCheck, requestedConstraint)
+         constraintToCheck is ArgumentSelector && requestedConstraint is MemberAccessExpression -> satisfies(constraintToCheck, requestedConstraint)
 
 
          else -> {
@@ -130,7 +132,20 @@ class ExpressionConstraint(val expression: Expression) : Constraint {
 
    private fun satisfies(
       constraintToCheck: ArgumentSelector,
-      requestedConstraint: ModelAttributeReferenceSelector
+      requestedConstraint: MemberTypeReferenceExpression
+   ): ConstraintComparison {
+      return if (!requestedConstraint.returnType.isAssignableTo(constraintToCheck.returnType)) {
+         ConstraintComparison.NOT_SATISFIED
+      } else {
+         ConstraintComparison(
+            true,
+            listOf(constraintToCheck to requestedConstraint)
+         )
+      }
+   }
+   private fun satisfies(
+      constraintToCheck: ArgumentSelector,
+      requestedConstraint: MemberAccessExpression
    ): ConstraintComparison {
       return if (!requestedConstraint.returnType.isAssignableTo(constraintToCheck.returnType)) {
          ConstraintComparison.NOT_SATISFIED

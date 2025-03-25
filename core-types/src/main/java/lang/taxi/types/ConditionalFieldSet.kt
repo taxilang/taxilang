@@ -17,8 +17,8 @@ interface FieldSetExpression : TaxiStatementGenerator
 
 @Deprecated("Use expressions instead")
 data class CalculatedModelAttributeFieldSetExpression(
-   val operand1: ModelAttributeReferenceSelector,
-   val operand2: ModelAttributeReferenceSelector,
+   val operand1: MemberTypeReferenceExpression,
+   val operand2: MemberTypeReferenceExpression,
    val operator: FormulaOperator
 ) : FieldSetExpression {
    override fun asTaxi(): String = "(${operand1.asTaxi()} ${operator.symbol} ${operand2.asTaxi()})"
@@ -54,7 +54,17 @@ data class AccessorExpressionSelector(
    }
 }
 
-data class ModelAttributeReferenceSelector(
+/**
+ * Expresses a type reference selector in the form of either:
+ *
+ * TypeA::TypeB
+ * or
+ * variableA::TypeB
+ *
+ * See also MemberAccessExpression, which models variableA.memberB
+ * Suspect these two types can / should be merged
+ */
+data class MemberTypeReferenceExpression(
    val memberSource: QualifiedName,
    val targetType: Type,
    override val returnType: Type = targetType,
@@ -63,6 +73,10 @@ data class ModelAttributeReferenceSelector(
     * this value is provided.
     */
    val argumentSelector: ArgumentSelector? = null,
+   // If the source is a complex expression, use this.
+   // TODO : Suspect that argumentSelector and sourceExpression
+   // can be / should be collapsed
+   val sourceExpression: Expression? = null,
    val compilationUnit: CompilationUnit,
 ) : TaxiStatementGenerator, Accessor, Expression() {
    override fun asTaxi(): String {

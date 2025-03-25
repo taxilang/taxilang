@@ -2,16 +2,18 @@ package lang.taxi
 
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
-import io.kotest.assertions.fail
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.expressions.LiteralExpression
+import lang.taxi.expressions.MemberAccessExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.query.convertToConstraint
 import lang.taxi.services.operations.constraints.ExpressionConstraint
+import lang.taxi.types.MemberTypeReferenceExpression
 import lang.taxi.types.ObjectType
 
 class ConstraintsSpec : DescribeSpec({
@@ -137,5 +139,73 @@ find { Deal(DealId == id )} as(deal: Deal) -> {
          .field("existing")
       field.projection!!
          .sourceTypeConstraints.shouldHaveSize(1)
+   }
+
+   it("can use a field member accessor on the rhs of a constraints expression") {
+      val (schema,query) = """
+         model Film {
+            filmId : FilmId inherits Int
+         }
+         model FilmReview {
+            reviewId : ReviewId inherits String
+         }
+         model ReviewWrapper {
+            reviewId: ReviewId
+            review: FilmReview
+         }
+      """.compiledWithQuery("""
+         find { Film[] } as (film:Film) -> {
+           review: FilmReview(ReviewId == ReviewWrapper(FilmId == film::FilmId).reviewId)
+         }[]
+      """.trimIndent())
+      val reviewField = query.projectedObjectType!!.field("review")
+      val expression = reviewField.constraints.single()
+         .shouldBeInstanceOf<ExpressionConstraint>()
+         .expression.shouldBeInstanceOf<OperatorExpression>()
+      expression.lhs.shouldBeInstanceOf<TypeExpression>()
+         .type.qualifiedName.shouldBe("ReviewId")
+
+      val memberAccessExpression = expression.rhs.shouldBeInstanceOf<MemberAccessExpression>()
+      val memberTypeExpression = memberAccessExpression.lhs.shouldBeInstanceOf<TypeExpression>()
+      memberTypeExpression.type.qualifiedName.shouldBe("ReviewWrapper")
+      memberTypeExpression.constraints.single()
+         .shouldBeInstanceOf<ExpressionConstraint>()
+         .expression.shouldBeInstanceOf<OperatorExpression>()
+
+      memberAccessExpression.rhs.fieldName.shouldBe("reviewId")
+   }
+
+   it("can use a type member accessor on the rhs of a constraints expression") {
+      val (schema,query) = """
+         model Film {
+            filmId : FilmId inherits Int
+         }
+         model FilmReview {
+            reviewId : ReviewId inherits String
+         }
+         model ReviewWrapper {
+            review: FilmReview
+         }
+      """.compiledWithQuery("""
+         find { Film[] } as (film:Film) -> {
+           review: FilmReview(ReviewId == ReviewWrapper(FilmId == film::FilmId)::ReviewId)
+         }[]
+      """.trimIndent())
+      val reviewField = query.projectedObjectType!!.field("review")
+      val expression = reviewField.constraints.single()
+         .shouldBeInstanceOf<ExpressionConstraint>()
+         .expression.shouldBeInstanceOf<OperatorExpression>()
+      expression.lhs.shouldBeInstanceOf<TypeExpression>()
+         .type.qualifiedName.shouldBe("ReviewId")
+
+      val memberAccessExpression = expression.rhs.shouldBeInstanceOf<MemberTypeReferenceExpression>()
+      memberAccessExpression.returnType.qualifiedName.shouldBe("ReviewId")
+      memberAccessExpression.targetType.qualifiedName.shouldBe("ReviewId")
+      memberAccessExpression.memberSource.parameterizedName.shouldBe("ReviewWrapper")
+      val memberTypeExpression = memberAccessExpression.sourceExpression.shouldBeInstanceOf<TypeExpression>()
+      memberTypeExpression.type.qualifiedName.shouldBe("ReviewWrapper")
+      memberTypeExpression.constraints.single()
+         .shouldBeInstanceOf<ExpressionConstraint>()
+         .expression.shouldBeInstanceOf<OperatorExpression>()
    }
 })

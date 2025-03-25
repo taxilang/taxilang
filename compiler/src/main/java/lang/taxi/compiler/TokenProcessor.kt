@@ -1394,16 +1394,16 @@ class TokenProcessor(
 
    internal fun parseTypeMemberRefrence(
       namespace: Namespace,
-      typeMemberReference: MemberReferenceContext
+      memberSourceTypeType: TypeReferenceContext, //? Not sure if this is the correct typ
+      memberReference: MemberReferenceContext
    ):
       Either<List<CompilationError>, Pair<QualifiedName, Type>> {
-      val memberSourceTypeType = typeMemberReference.typeReference().first()
-      val memberTypeType = typeMemberReference.typeReference()[1]
+      val memberTypeType = memberReference.typeReference()
       val sourceTypeName = try {
          QualifiedName.from(lookupSymbolByName(memberSourceTypeType)).right()
       } catch (e: Exception) {
          CompilationError(
-            typeMemberReference.start,
+            memberReference.start,
             "Only Model AttributeReference expressions (SourceType::FieldType) are allowed for views"
          ).asList().left()
       }

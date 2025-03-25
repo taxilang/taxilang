@@ -634,37 +634,6 @@ class FieldCompiler(
       }
    }
 
-   private fun buildCollectionProjectionExpression(collectionProjectionExpression: TaxiParser.CollectionProjectionExpressionContext): Either<List<CompilationError>, Accessor> {
-      return this.tokenProcessor.typeOrError(
-         collectionProjectionExpression.findNamespace(),
-         collectionProjectionExpression.typeReference()
-      )
-         .flatMap { type ->
-            val scopeOrError: Either<List<CompilationError>, ProjectionScopeDefinition?> =
-               if (collectionProjectionExpression.projectionScopeDefinition() != null) {
-                  compileProjectionScope(collectionProjectionExpression.projectionScopeDefinition())
-               } else null.right()
-            scopeOrError.map { scope ->
-               CollectionProjectionExpressionAccessor(
-                  type,
-                  scope,
-                  collectionProjectionExpression.toCompilationUnits()
-               )
-            }
-         }
-   }
-
-   private fun compileProjectionScope(projectionScopeDefinition: TaxiParser.ProjectionScopeDefinitionContext): Either<List<CompilationError>, ProjectionScopeDefinition> {
-      val accessors: Either<List<CompilationError>, List<Accessor>> =
-         projectionScopeDefinition.scalarAccessorExpression().map { accessor ->
-            compileScalarAccessor(accessor, targetType = PrimitiveType.ANY)
-         }.invertEitherList()
-            .flattenErrors()
-
-      return accessors.map { ProjectionScopeDefinition(it) }
-
-   }
-
    private fun buildReadFieldAccessor(byFieldSourceExpression: TaxiParser.ByFieldSourceExpressionContext): Either<List<CompilationError>, Accessor> {
       //as {
       //      traderEmail: SomeType['traderId']
@@ -775,17 +744,4 @@ class FieldCompiler(
          .compile(readExpressionContext, targetType)
       return expression
    }
-
-
-   fun typeResolver(namespace: Namespace) = tokenProcessor.typeResolver(namespace)
-
-   fun typeOrError(context: TypeReferenceContext) = tokenProcessor.typeOrError(context)
-   fun parseType(namespace: Namespace, typeType: TypeReferenceContext) =
-      tokenProcessor.parseType(namespace, typeType)
-
-   fun parseModelAttributeTypeReference(
-      namespace: Namespace,
-      typeMemberReference: TaxiParser.MemberReferenceContext
-   ): Either<List<CompilationError>, Pair<QualifiedName, Type>> =
-      tokenProcessor.parseTypeMemberRefrence(namespace, typeMemberReference)
 }

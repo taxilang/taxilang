@@ -42,6 +42,7 @@ interface FunctionParameterReferenceResolver {
    ): Either<List<CompilationError>, FieldReferenceSelector>
 
    fun parseTypeMemberReference(
+      lhsExpressionGroup: TaxiParser.ExpressionGroupContext,
       typeMemberReference: TaxiParser.MemberReferenceContext
    ): Either<List<CompilationError>, Expression>
 }

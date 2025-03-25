@@ -6,7 +6,7 @@ import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.services.operations.constraints.*
 import lang.taxi.types.ArgumentSelector
-import lang.taxi.types.ModelAttributeReferenceSelector
+import lang.taxi.types.MemberTypeReferenceExpression
 
 /**
  * ExpressionConstraints are the preferred model for describing constraints.
@@ -38,7 +38,7 @@ private fun OperatorExpression.convertToConstraint():List<Constraint> {
    val valueExpression = when (val rhs = this.rhs) {
       is LiteralExpression -> ConstantValueExpression(rhs.value)
       is ArgumentSelector -> ArgumentExpression(rhs)
-      is ModelAttributeReferenceSelector -> {
+      is MemberTypeReferenceExpression -> {
          if (rhs.argumentSelector != null) {
             ArgumentExpression(rhs.argumentSelector!!)
          } else {
