@@ -16,7 +16,7 @@ class TaxiQlMutationsSpec : DescribeSpec ({
          model Person {
             personId : PersonId inherits String
          }
-         
+
          model VipPerson inherits Person
 
          service PersonService {
@@ -200,7 +200,7 @@ class TaxiQlMutationsSpec : DescribeSpec ({
 
            val query = Compiler(
                source = """
-               find { Person[] } 
+               find { Person[] }
                call PersonService::updatePerson as (person: first(Person[])) -> {
                  vipId: PersonId
                }""",

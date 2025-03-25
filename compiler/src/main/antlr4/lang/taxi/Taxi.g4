@@ -85,6 +85,10 @@ typeMemberDeclaration
      :   typeDoc? annotation* fieldDeclaration
      ;
 
+typeExtensionDeclaration
+   :  typeDoc? annotation* K_Type 'extension' identifier typeExtensionBody
+   ;
+
 // Using by is deprecated, prefer =
 expressionTypeDeclaration : ('by'|'=') expressionGroup;
 
@@ -124,12 +128,13 @@ expressionGroup:
    | (PLUS | MINUS)* expressionAtom
    // The below is added for lambdas, but not sure order of precedence
    // is correct. TBD.
+   | expressionGroup memberReference
+   | expressionGroup '.' methodCall
+   | expressionGroup '.' identifier
    | expressionGroup comp_operator expressionGroup
    | expressionGroup COALESCE expressionGroup
    | expressionGroup LOGICAL_AND expressionGroup
    | expressionGroup LOGICAL_OR expressionGroup
-   | expressionGroup '.' methodCall
-   | expressionGroup '.' identifier
    | whenBlock
    // Inputs go last, so that when parsing lambdas, the inputs are the LHS and everything remainin goes RHS.
    // Might not work for nested lambdas, if that's a thing.
@@ -148,7 +153,7 @@ expressionGroup:
 // No compiler tests broke, lets see what happens in Orbital
  // TODO :This has literla and literalArray, but not value, which also includes objects.
  // Should we replace literal | literalArray with value?
-expressionAtom: functionCall | typeExpression | typeProjection | fieldReferenceSelector | memberReference | objectValue | valueArray | literal;
+expressionAtom: functionCall | typeExpression | typeProjection | fieldReferenceSelector | objectValue | valueArray | literal;
 
 //scalarAccessorExpression
   //    : xpathAccessorDeclaration
@@ -190,7 +195,11 @@ whenBlock:
 // Otherwise, these no lexer difference between
 // a fieldReferenceSelector (not permitted in expression types)
 // and a typeReferenceSelector (which is permitted)
+//
+// TODO : 24-Mar-25: All other things like this have moved into ExpressionGroup.
+// This needs to as well...
 fieldReferenceSelector: propertyFieldNameQualifier qualifiedName;
+
 typeReferenceSelector: typeReference;
 
 whenCaseDeclaration:
@@ -222,22 +231,22 @@ fieldDeclaration
   :   fieldModifier? identifier (':' (anonymousTypeDefinition | fieldTypeDeclaration | expressionGroup ))? typeProjection?
   ;
 
-// Used in queries to scope projection of collections.
-// eg:
-//findAll { OrderTransaction[] } as {
-//   items: Thing[] by [OrderItem[]]
-// }[]
-collectionProjectionExpression: '[' typeReference projectionScopeDefinition? ']' ;
-
-projectionScopeDefinition: 'with' '(' scalarAccessorExpression (',' scalarAccessorExpression)*  ')';
 
 // Used to describe navigation from one entity to another
 // Eg from Type to Property Type (Person::FirstName)
 // Or from Service to Operation (PersonService::findAllPeople)
 // Note: Array marker here is unfortunate, as in a service context
 // it doesn't make sense - but we'll have to enforce that at the compiler., not the grammar
-memberReference: typeReference '::' typeReference arrayMarker? |
-   LPAREN typeReference '::' typeReference RPAREN arrayMarker?;
+// See also expressionGroup, where this concept is also represented
+memberReference: '::' typeReference arrayMarker?;
+// MP: 25-Mar-25: We used to support a more complex syntax here, in the form of
+// `(Foo::Bar)[]` which differentiates from Foo:Bar[]
+// However, after changing the grammar to support expressions on the LHS of
+// member references, this because complex to support, and nobody is using it.
+// So, have dropped reference to this for now
+
+
+
 
 // fieldType usages allow richer syntax with additional features like
 // inline type definitions, optionality, aliases and accessors.
@@ -617,10 +626,6 @@ literal
     |   'null'
     ;
 
-typeExtensionDeclaration
-   :  typeDoc? annotation* K_Type 'extension' identifier typeExtensionBody
-   ;
-
 typeExtensionBody
     :   '{' typeExtensionMemberDeclaration* '}'
     ;
@@ -706,7 +711,7 @@ queryOrMutation:
    (queryDirective ( ('{' expressionGroup '}') | anonymousTypeDefinition  ) typeProjection? mutation? serviceRestrictions?) |
    mutation;
 
-serviceOrMemberReference: typeReference || memberReference;
+serviceOrMemberReference: typeReference memberReference?;
 serviceOrMemberReferenceList: serviceOrMemberReference (',' serviceOrMemberReference)*;
 
 // Allows controlling which services are included / excluded from
@@ -742,7 +747,7 @@ typeProjection: ('as') expressionInputs? (anonymousTypeDefinition | typeReferenc
 //}
 anonymousTypeDefinition: annotation* typeBody arrayMarker? accessor? parameterConstraint?;
 
-mutation: K_Call memberReference typeProjection?;
+mutation: K_Call typeReference memberReference typeProjection?;
 
 NOT_IN: 'not in';
 IN: 'in';
@@ -757,9 +762,10 @@ BooleanLiteral
 
 // Identifiers define tokens that name things. Listing `K_xxx` keywords here ensures that users can  define field
 // names, operations and so on with words that are reserved in some context.
-
+// MP: 25-Mar-25: Unfortunately, allowing 'K_Extension' in the identifier group breaks the grammar parsing of
+// type extensions, so people are just gonna have to use backticks for that one.
 identifier:
-   K_Table | K_Stream | K_Find | K_Map | K_Except | K_Call | K_Filter | K_Query | K_Extension  | K_Read | K_Write | K_Declare | K_Type | K_Model | IdentifierToken;
+   K_Table | K_Stream | K_Find | K_Map | K_Except | K_Call | K_Filter | K_Query |  K_Read | K_Write | K_Declare | K_Type | K_Model | IdentifierToken;
 
 K_Find: 'find';
 

@@ -82,8 +82,8 @@ internal class QueryCompiler(
       val memberReference = mutationCtx.memberReference()
 
       return resolveServiceAndOperation(
-         memberReference.typeReference(0),
-         memberReference.typeReference(1),
+         mutationCtx.typeReference(),
+         memberReference.typeReference(),
          operationTokenRequired = true,
          memberReference
       )
@@ -93,7 +93,7 @@ internal class QueryCompiler(
             }
             if (operation !is Operation) return@flatMap compilationError("Mutations are only supported on operations")
 
-            if (operation.scope != OperationScope.MUTATION) return@flatMap compilationError("Call statements are only valid with write operations.  Operation ${memberReference.text} is not a write operation")
+            if (operation.scope != OperationScope.MUTATION) return@flatMap compilationError("Call statements are only valid with write operations.  Operation ${service.qualifiedName}::${operation.name} is not a write operation")
             (service to operation).right()
          }.flatMap { (service, operation) ->
             when (val mutationProjection = mutationCtx.typeProjection()) {
@@ -463,8 +463,8 @@ internal class QueryCompiler(
       return if (serviceOrOperationContext.memberReference() != null) {
          // This is a call in the form of Service::Operation
          resolveServiceAndOperation(
-            serviceToken = serviceOrOperationContext.memberReference().typeReference(0),
-            operationToken = serviceOrOperationContext.memberReference().typeReference(1),
+            serviceToken = serviceOrOperationContext.typeReference(),
+            operationToken = serviceOrOperationContext.memberReference().typeReference(),
             operationTokenRequired = true,
             context = serviceOrOperationContext
          )

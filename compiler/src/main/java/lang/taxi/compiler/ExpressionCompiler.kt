@@ -94,7 +94,8 @@ class ExpressionCompiler(
                   val constraints = if (expression is TypeExpression) {
                      expression.constraints
                   } else emptyList()
-                  val projection = FieldProjection.forNullable(expression.returnType, constraints, projectedTypeAndScope)!!
+                  val projection =
+                     FieldProjection.forNullable(expression.returnType, constraints, projectedTypeAndScope)!!
                   val projectingExpression = ProjectingExpression(expression, projection)
                   if (enforceTypeChecks) {
                      typeChecker.ifAssignableOrErrorList(
@@ -132,7 +133,17 @@ class ExpressionCompiler(
             expressionGroup
          )
 
-         expressionGroup.children.size == 3 -> parseOperatorExpression(expressionGroup)          // lhs operator rhs
+         expressionGroup.memberReference() != null -> {
+            if (expressionGroup.expressionGroup().orEmpty().size != 1) {
+               expressionGroup.createInternalError("Cannot have a member reference without a preceding expression group")
+            } else {
+               parseTypeMemberReference(expressionGroup.expressionGroup().single(), expressionGroup.memberReference())
+            }
+         }
+
+         expressionGroup.children.size == 3 -> parseOperatorExpression(expressionGroup)
+
+         // lhs operator rhs
          expressionGroup.expressionGroup().isEmpty() -> compileSingleExpression(expressionGroup, targetType)
 
          else -> error("Unhandled expression group scenario: ${expressionGroup.text}")
@@ -320,7 +331,6 @@ class ExpressionCompiler(
          expressionAtom.literal() != null -> parseLiteralExpression(expressionAtom.literal(), assignmentType)
          expressionAtom.valueArray() != null -> parseValueArray(expressionAtom.valueArray(), assignmentType)
          expressionAtom.fieldReferenceSelector() != null -> parseAttributeSelector(expressionAtom.fieldReferenceSelector())
-         expressionAtom.memberReference() != null -> parseTypeMemberReference(expressionAtom.memberReference())
          expressionAtom.objectValue() != null -> ValueExpressionCompiler(this).objectValueAsExpression(
             expressionAtom.objectValue(),
             assignmentType
@@ -457,11 +467,11 @@ class ExpressionCompiler(
       val receiverType = assignmentType ?: PrimitiveType.ANY
       val returnType = try {
          TypeUtils.getMostSpecificType(assignmentType ?: PrimitiveType.ANY, rawAccessor.returnType)
-      } catch (e:Exception) {
+      } catch (e: Exception) {
          // We can't go into the type checker (where these errors are normally reported,
          // as the types are incompatible, and we couldn't determine the return type.
          // So, report the error from here.
-         return listOf(Errors.typeMismatch(rawAccessor.returnType,receiverType, literal)).left()
+         return listOf(Errors.typeMismatch(rawAccessor.returnType, receiverType, literal)).left()
       }
       return typeChecker.ifAssignableOrErrorList(rawAccessor.returnType, receiverType, literal) {
          LiteralExpression(
@@ -793,7 +803,10 @@ class ExpressionCompiler(
     * These are function calls that are invoked with a dot - eg:
     * find { "hello".toUpper() }
     */
-   private fun parseExtensionFunctionCallExpression(expression: ExpressionGroupContext, targetType: Type?): Either<List<CompilationError>, out Expression> {
+   private fun parseExtensionFunctionCallExpression(
+      expression: ExpressionGroupContext,
+      targetType: Type?
+   ): Either<List<CompilationError>, out Expression> {
       val lhsOrError = expression.expressionGroup(0)?.let { compile(it) }
          ?: error("Expected an expression group at index 0")
       return lhsOrError.flatMap { lhsExpression ->
@@ -805,7 +818,8 @@ class ExpressionCompiler(
             // whatever the declared type is that this function is being assigned to, or Any if that's not know
             // eg: Consider: [1,2,3].sum() ... the targetType isn't declared here (but is inferrable)
             targetType = targetType ?: PrimitiveType.ANY,
-            receiver = lhsExpression)
+            receiver = lhsExpression
+         )
 //         tokenProcessor.resolveFunction(expression.functionCall().qualifiedName(), expression)
             .map { lhsExpression to it }
       }.flatMap { (lhsExpression, functionExpression) ->
@@ -910,7 +924,10 @@ class ExpressionCompiler(
          }
          .map { (type, constraints) -> typedExpressionBuilder.typedExpression(type, constraints, typeExpression) }
          .handleErrorWith { errors ->
-            if (typeReference != null && Enums.isPotentialEnumMemberReference(typeReference.qualifiedName().identifier().text())) {
+            if (typeReference != null && Enums.isPotentialEnumMemberReference(
+                  typeReference.qualifiedName().identifier().text()
+               )
+            ) {
                tokenProcessor.resolveEnumMember(typeReference.qualifiedName().identifier().text(), typeExpression)
                   .map { enumMember ->
                      LiteralExpression(
@@ -1086,39 +1103,53 @@ class ExpressionCompiler(
    }
 
    override fun parseTypeMemberReference(
+      lhsExpressionGroup: ExpressionGroupContext,
       typeMemberReference: TaxiParser.MemberReferenceContext
-   ): Either<List<CompilationError>, ModelAttributeReferenceSelector> {
-
-      val sourceTypeReference = typeMemberReference.typeReference().first()
-      val targetTypeReference = typeMemberReference.typeReference()[1]
-
-
+   ): Either<List<CompilationError>, MemberTypeReferenceExpression> {
+      val compiledLhsExpression = compile(lhsExpressionGroup)
+      val sourceTypeReference = lhsExpressionGroup.expressionAtom()?.typeExpression()?.nullableTypeReference()?.typeReference()
       // The source is either a type, and sometimes with an argument selector
       // if the type is a reference to a scoped argument.
       // eg: (movie:Movie) -> {
       //   something : Something[]( MovieId == movie::MovieId )
+      var sourceExpression: Expression? = null
       val source: Either<List<CompilationError>, Pair<Type, ArgumentSelector?>> =
-         if (canResolveAsScopePath(sourceTypeReference.qualifiedName())) {
-            // Is the source actually a scoped variable?
-            resolveScopePath(sourceTypeReference.qualifiedName()).map { selector ->
-               selector.returnType to selector
+         when {
+            sourceTypeReference != null && canResolveAsScopePath(sourceTypeReference.qualifiedName()) -> {
+                 // Is the source actually a scoped variable?
+                 resolveScopePath(sourceTypeReference.qualifiedName()).map { selector ->
+                    selector.returnType to selector
+                 }
+             }
+            // The LHS could be an expression that we're using as a type reference
+            compiledLhsExpression.isRight() -> {
+               compiledLhsExpression.map { lhsExpression ->
+                  sourceExpression = lhsExpression
+                  lhsExpression.returnType to null
+               }
             }
-         } else {
-            tokenProcessor.typeOrError(sourceTypeReference).map { type -> type to null }
-         }
+             else -> {
+                if (sourceTypeReference == null) {
+                   lhsExpressionGroup.createCompilationError("Expected either a type reference, an expression returning a type, or a variable name here")
+                } else {
+                   tokenProcessor.typeOrError(sourceTypeReference).map { type -> type to null }
+                }
 
+             }
+         }
       return source.flatMap { (sourceType, argumentSelector) ->
-         tokenProcessor.typeOrError(targetTypeReference).map { targetType ->
+         tokenProcessor.typeOrError(typeMemberReference.typeReference()).map { targetType ->
             val returnType = if (typeMemberReference.arrayMarker() != null) {
-               ArrayType.of(targetType, targetTypeReference.toCompilationUnit())
+               ArrayType.of(targetType, typeMemberReference.typeReference().toCompilationUnit())
             } else {
                targetType
             }
-            ModelAttributeReferenceSelector(
+            MemberTypeReferenceExpression(
                sourceType.toQualifiedName(),
                targetType,
                returnType,
                argumentSelector,
+               sourceExpression,
                typeMemberReference.toCompilationUnit()
             )
          }

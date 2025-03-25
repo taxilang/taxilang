@@ -1,7 +1,6 @@
 package lang.taxi
 
 import com.winterbe.expekt.should
-import io.kotest.common.runBlocking
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldContainExactly
@@ -12,8 +11,6 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.accessors.Argument
 import lang.taxi.expressions.*
 import lang.taxi.types.*
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.fail
 
 class ExpressionsSpec : DescribeSpec({
 
@@ -80,7 +77,7 @@ class ExpressionsSpec : DescribeSpec({
                .model("Foo")
             val field = model.field("field")
             field.type.qualifiedName.shouldBe("B")
-            val accessor = field.accessor.shouldBeInstanceOf<ModelAttributeReferenceSelector>()
+            val accessor = field.accessor.shouldBeInstanceOf<MemberTypeReferenceExpression>()
             accessor.memberSource.parameterizedName.shouldBe("A")
             accessor.targetType.qualifiedName.shouldBe("B")
          }
@@ -95,7 +92,7 @@ class ExpressionsSpec : DescribeSpec({
                .model("Foo")
             val field = model.field("field")
             field.type.qualifiedName.shouldBe("B")
-            val accessor = field.accessor.shouldBeInstanceOf<ModelAttributeReferenceSelector>()
+            val accessor = field.accessor.shouldBeInstanceOf<MemberTypeReferenceExpression>()
             accessor.memberSource.parameterizedName.shouldBe("A")
             accessor.targetType.qualifiedName.shouldBe("B")
          }
@@ -105,11 +102,11 @@ class ExpressionsSpec : DescribeSpec({
                model B
                model Foo {
                   field : A[]::B
-                }
+               }
             """.compiled()
                .model("Foo").field("field")
             field.type.qualifiedName.shouldBe("B")
-            val accessor = field.accessor.shouldBeInstanceOf<ModelAttributeReferenceSelector>()
+            val accessor = field.accessor.shouldBeInstanceOf<MemberTypeReferenceExpression>()
             accessor.memberSource.parameterizedName.shouldBe("lang.taxi.Array<A>")
             accessor.targetType.qualifiedName.shouldBe("B")
          }
@@ -123,7 +120,7 @@ class ExpressionsSpec : DescribeSpec({
             """.compiled()
                .model("Foo").field("field")
             field.type.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<B>")
-            val accessor = field.accessor.shouldBeInstanceOf<ModelAttributeReferenceSelector>()
+            val accessor = field.accessor.shouldBeInstanceOf<MemberTypeReferenceExpression>()
             accessor.memberSource.parameterizedName.shouldBe("A")
             accessor.targetType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<B>")
          }
@@ -133,12 +130,12 @@ class ExpressionsSpec : DescribeSpec({
                model A
                model B
                model Foo {
-                  field : (A::B[])[]
+                  field : A::B[][]
                 }
             """.compiled()
                .model("Foo").field("field")
             field.type.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<lang.taxi.Array<B>>")
-            val accessor = field.accessor.shouldBeInstanceOf<ModelAttributeReferenceSelector>()
+            val accessor = field.accessor.shouldBeInstanceOf<MemberTypeReferenceExpression>()
             accessor.memberSource.parameterizedName.shouldBe("A")
             accessor.targetType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<B>")
             accessor.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<lang.taxi.Array<B>>")
@@ -193,7 +190,7 @@ class ExpressionsSpec : DescribeSpec({
                .model("Foo")
                .field("field")
             field.accessor.shouldNotBeNull()
-            val selector = field.accessor.shouldBeInstanceOf<ModelAttributeReferenceSelector>()
+            val selector = field.accessor.shouldBeInstanceOf<MemberTypeReferenceExpression>()
             selector.memberSource.shouldBe("Foo".toQualifiedName())
             selector.targetType.qualifiedName.shouldBe("A")
          }

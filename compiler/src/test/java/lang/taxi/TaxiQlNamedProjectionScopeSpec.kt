@@ -10,7 +10,7 @@ import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.services.operations.constraints.ExpressionConstraint
 import lang.taxi.types.ArgumentSelector
-import lang.taxi.types.ModelAttributeReferenceSelector
+import lang.taxi.types.MemberTypeReferenceExpression
 import lang.taxi.types.ObjectType
 
 class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
@@ -209,7 +209,7 @@ class TaxiQlNamedProjectionScopeSpec : DescribeSpec({
          val constraint = reviewConstraints.single()
             .shouldBeInstanceOf<ExpressionConstraint>()
             .expression.shouldBeInstanceOf<OperatorExpression>()
-         val selector = constraint.rhs.asA<ModelAttributeReferenceSelector>()
+         val selector = constraint.rhs.asA<MemberTypeReferenceExpression>()
          selector.argumentSelector.shouldNotBeNull()
          selector.targetType.qualifiedName.shouldBe("FilmId")
          selector.argumentSelector!!.scope.name.shouldBe("src")
