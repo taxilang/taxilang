@@ -9,6 +9,7 @@ import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.Argument
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.functions.FunctionAccessor
+import lang.taxi.services.Service
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.*
 
@@ -165,6 +166,10 @@ data class TypeExpression(val type: Type,
                           val constraints: List<Constraint>,
                           override val compilationUnits: List<CompilationUnit>) : Expression() {
    override val returnType: Type = type
+}
+
+data class ServiceExpression(val service: Service, override val compilationUnits: List<CompilationUnit>) : Expression() {
+   override val returnType: Type = PrimitiveType.VOID
 }
 
 /**

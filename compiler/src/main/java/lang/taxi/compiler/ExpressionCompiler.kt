@@ -15,6 +15,7 @@ import lang.taxi.compiler.fields.FieldTypeSpec
 import lang.taxi.expressions.*
 import lang.taxi.functions.Function
 import lang.taxi.query.ConstraintBuilder
+import lang.taxi.services.Service
 import lang.taxi.services.operations.constraints.ExpressionConstraint
 import lang.taxi.types.*
 import lang.taxi.utils.*
@@ -938,7 +939,37 @@ class ExpressionCompiler(
             } else {
                errors.left()
             }
+         }
+         .handleErrorWith { errors ->
+            // This is possibly a reference to a service
+            if (typeReference != null) {
+               // TODO: MP 26-Mar-25: It'd be cleaner if we didn't have to specify the symbol kind here.
+               tokenProcessor.attemptToLookupSymbolByName(
+                  typeReference.findNamespace(),
+                  typeReference.qualifiedName().identifier().text(),
+                  typeReference,
+                  SymbolKind.SERVICE
+               ).wrapErrorsInList()
+                  // If this wasn't a service, stick with the previous set of errors, as they;re more relevant
+                  .mapLeft { errors }
+                  .flatMap {
+                     tokenProcessor.typeSystem.getTokenOrError(it, typeReference, SymbolKind.SERVICE).wrapErrorsInList()
+                        // If this wasn't a service, stick with the previous set of errors, as they;re more relevant
+                        .mapLeft { errors }
+                        .flatMap { importableToken ->
+                           when (importableToken) {
+                              is Service -> ServiceExpression(
+                                 importableToken,
+                                 typeReference.toCompilationUnits()
+                              ).right()
 
+                              else -> typeReference.createCompilationError("Expected a service reference here")
+                           }
+                        }
+                  }
+            } else {
+               errors.left()
+            }
          }
    }
 
@@ -1107,7 +1138,8 @@ class ExpressionCompiler(
       typeMemberReference: TaxiParser.MemberReferenceContext
    ): Either<List<CompilationError>, MemberTypeReferenceExpression> {
       val compiledLhsExpression = compile(lhsExpressionGroup)
-      val sourceTypeReference = lhsExpressionGroup.expressionAtom()?.typeExpression()?.nullableTypeReference()?.typeReference()
+      val sourceTypeReference =
+         lhsExpressionGroup.expressionAtom()?.typeExpression()?.nullableTypeReference()?.typeReference()
       // The source is either a type, and sometimes with an argument selector
       // if the type is a reference to a scoped argument.
       // eg: (movie:Movie) -> {
@@ -1116,11 +1148,11 @@ class ExpressionCompiler(
       val source: Either<List<CompilationError>, Pair<Type, ArgumentSelector?>> =
          when {
             sourceTypeReference != null && canResolveAsScopePath(sourceTypeReference.qualifiedName()) -> {
-                 // Is the source actually a scoped variable?
-                 resolveScopePath(sourceTypeReference.qualifiedName()).map { selector ->
-                    selector.returnType to selector
-                 }
-             }
+               // Is the source actually a scoped variable?
+               resolveScopePath(sourceTypeReference.qualifiedName()).map { selector ->
+                  selector.returnType to selector
+               }
+            }
             // The LHS could be an expression that we're using as a type reference
             compiledLhsExpression.isRight() -> {
                compiledLhsExpression.map { lhsExpression ->
@@ -1128,14 +1160,15 @@ class ExpressionCompiler(
                   lhsExpression.returnType to null
                }
             }
-             else -> {
-                if (sourceTypeReference == null) {
-                   lhsExpressionGroup.createCompilationError("Expected either a type reference, an expression returning a type, or a variable name here")
-                } else {
-                   tokenProcessor.typeOrError(sourceTypeReference).map { type -> type to null }
-                }
 
-             }
+            else -> {
+               if (sourceTypeReference == null) {
+                  lhsExpressionGroup.createCompilationError("Expected either a type reference, an expression returning a type, or a variable name here")
+               } else {
+                  tokenProcessor.typeOrError(sourceTypeReference).map { type -> type to null }
+               }
+
+            }
          }
       return source.flatMap { (sourceType, argumentSelector) ->
          tokenProcessor.typeOrError(typeMemberReference.typeReference()).map { targetType ->

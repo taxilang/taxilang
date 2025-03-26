@@ -6,7 +6,9 @@ import com.google.common.base.Stopwatch
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.collect.Table
+import lang.taxi.TaxiParser.ExpressionGroupContext
 import lang.taxi.compiler.TokenProcessor
+import lang.taxi.expressions.Expression
 import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.linter.Linter
 import lang.taxi.linter.LinterRuleConfiguration
@@ -48,7 +50,7 @@ fun ParserRuleContext?.toCompilationUnit(
     */
    includeImportsPresentInFile: Boolean = false,
 
-): CompilationUnit {
+   ): CompilationUnit {
    return if (this == null) {
       CompilationUnit.unspecified()
    } else {
@@ -319,7 +321,7 @@ class Compiler(
                ImporterConfig.forProject(rootProject.project)
             )
          } else packageManager
-         val sources = TaxiSourcesLoader.loadPackageAndDependencies(packageRootPath,thePackageManager)
+         val sources = TaxiSourcesLoader.loadPackageAndDependencies(packageRootPath, thePackageManager)
          return Compiler(sources)
       }
 
@@ -349,7 +351,7 @@ class Compiler(
       TokenProcessor(tokens, collectImports = false, typeChecker = typeChecker, linter = config.linter)
    }
 
-   val typeSystem:TypeSystem
+   val typeSystem: TypeSystem
       get() {
          return tokenProcessorWithImports.typeSystem
       }
@@ -389,8 +391,10 @@ class Compiler(
       return QualifiedName.from(tokenProcessorWithImports.lookupSymbolByName(typeType))
    }
 
-   fun findInSymbolTree(tokenName: String,
-                        context: ParserRuleContext): Either<List<CompilationError>, List<TextFragmentWithCompiledToken>> {
+   fun findInSymbolTree(
+      tokenName: String,
+      context: ParserRuleContext
+   ): Either<List<CompilationError>, List<TextFragmentWithCompiledToken>> {
       return this.tokenProcessorWithImports.findInSymbolTree(tokenName, context)
    }
 
@@ -652,6 +656,17 @@ class Compiler(
          }
       }.map { QualifiedName.from(it) }
          .toSet()
+   }
+
+   /**
+    * Compiles the specific expression.
+    * It's expected that this is called after a compilation pass (ie.,
+    * it's intended for compiler tooling like the Lang server), rather than
+    * part of the initial compile process.
+    */
+   fun compileExpression(expressionGroup:ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
+      return tokenProcessorWithImports.expressionCompiler()
+         .compile(expressionGroup)
    }
 }
 
