@@ -590,7 +590,7 @@ qualifiedName
     ;
 
 arrayMarker
-   : '[]'
+   : '[' ']'
    ;
 
 Nullable : '?';
@@ -693,7 +693,7 @@ fact: factDeclaration | variableName;
 //value : objectValue | valueArray | literal | expressionGroup;
 
 objectValue: '{' objectField? (',' objectField)* '}';
-objectField : identifier ':' expressionGroup;
+objectField : (identifier | StringLiteral) ':' expressionGroup;
 valueArray: '[' expressionGroup? (',' expressionGroup)* ']';
 
 variableName: identifier;

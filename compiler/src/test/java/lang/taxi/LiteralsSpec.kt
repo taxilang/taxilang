@@ -1,6 +1,8 @@
 package lang.taxi
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -42,6 +44,72 @@ class LiteralsSpec : DescribeSpec({
          val map = expression.expressionMap
          map["name"]!!.returnType.shouldBe(PrimitiveType.STRING)
           (map["name"]!! as LiteralExpression).value.shouldBe("Jimmy")
+      }
+      it("should parse an object using string double-quoted names") {
+         val expression = """{ "name" : "Jimmy" }""".compiled()
+            .expressions.single()
+            .shouldBeInstanceOf<ObjectLiteralExpression>()
+         val map = expression.expressionMap
+         map["name"]!!.returnType.shouldBe(PrimitiveType.STRING)
+         (map["name"]!! as LiteralExpression).value.shouldBe("Jimmy")
+      }
+      it("should parse an object using string single-quoted names") {
+         val expression = """{ 'name' : "Jimmy" }""".compiled()
+            .expressions.single()
+            .shouldBeInstanceOf<ObjectLiteralExpression>()
+         val map = expression.expressionMap
+         map["name"]!!.returnType.shouldBe(PrimitiveType.STRING)
+         (map["name"]!! as LiteralExpression).value.shouldBe("Jimmy")
+      }
+      it("is valid to declare an empty array") {
+         val expression = """{ 'names' : [] }""".compiled()
+            .expressions.single()
+            .shouldBeInstanceOf<ObjectLiteralExpression>()
+         val map = expression.expressionMap
+         map["names"]!!.returnType.qualifiedName.shouldBe("lang.taxi.Array")
+         (map["names"]!! as LiteralArray).members.shouldBeEmpty()
+      }
+      it("is valid to declare a single element string array") {
+         val expression = """{ 'names' : ['jimmy'] }""".compiled()
+            .expressions.single()
+            .shouldBeInstanceOf<ObjectLiteralExpression>()
+         val map = expression.expressionMap
+         map["names"]!!.returnType.qualifiedName.shouldBe("lang.taxi.Array")
+         (map["names"]!! as LiteralArray).members.shouldHaveSize(1)
+         (map["names"]!! as LiteralArray).members[0].shouldBeInstanceOf<LiteralExpression>()
+            .value.shouldBe("jimmy")
+      }
+      it("is valid to declare a string array") {
+         val expression = """{ 'names' : ['jimmy','schmitt'] }""".compiled()
+            .expressions.single()
+            .shouldBeInstanceOf<ObjectLiteralExpression>()
+         val map = expression.expressionMap
+         map["names"]!!.returnType.qualifiedName.shouldBe("lang.taxi.Array")
+         (map["names"]!! as LiteralArray).members.shouldHaveSize(2)
+         (map["names"]!! as LiteralArray).members[0].shouldBeInstanceOf<LiteralExpression>()
+            .value.shouldBe("jimmy")
+         (map["names"]!! as LiteralArray).members[1].shouldBeInstanceOf<LiteralExpression>()
+            .value.shouldBe("schmitt")
+      }
+      it("is valid to declare a number array") {
+         val expression = """{ 'names' : [1,2] }""".compiled()
+            .expressions.single()
+            .shouldBeInstanceOf<ObjectLiteralExpression>()
+         val map = expression.expressionMap
+         (map["names"]!! as LiteralArray).members.shouldHaveSize(2)
+         (map["names"]!! as LiteralArray).members[0].shouldBeInstanceOf<LiteralExpression>()
+            .value.shouldBe(1)
+         (map["names"]!! as LiteralArray).members[1].shouldBeInstanceOf<LiteralExpression>()
+            .value.shouldBe(2)
+      }
+      it("is valid to declare an object array") {
+         val expression = """{ people : [{ name: "jimmy" }, { "name" : "jack" } ]}""".compiled()
+            .expressions.single()
+            .shouldBeInstanceOf<ObjectLiteralExpression>()
+         val map = expression.expressionMap
+         val array = map["people"]!!.shouldBeInstanceOf<LiteralArray>()
+         array.members[0].shouldBeInstanceOf<ObjectLiteralExpression>()
+         array.members[1].shouldBeInstanceOf<ObjectLiteralExpression>()
       }
       it("should assign nested types based on target type") {
          val cast = """

@@ -26,7 +26,7 @@ fun TaxiParser.LiteralContext.value(): Any {
    return when {
       this.BooleanLiteral() != null -> this.BooleanLiteral().text.toBoolean()
       this.StringLiteral() != null -> stringLiteralValue(this.StringLiteral())
-      this.IntegerLiteral() != null -> this.IntegerLiteral().text.toInt()
+      this.IntegerLiteral() != null -> numericLiteralValue(this.IntegerLiteral())
       this.DecimalLiteral() != null -> BigDecimal(this.DecimalLiteral().text)
       this.isNullValue() -> error("null is not permitted here")
       else -> TODO()
@@ -34,6 +34,14 @@ fun TaxiParser.LiteralContext.value(): Any {
    }
 }
 
+fun numericLiteralValue(literal: TerminalNode): Any {
+   val longValue = literal.text.toLong()
+   return if (longValue in Int.MIN_VALUE..Int.MAX_VALUE) {
+      longValue.toInt()
+   } else {
+      longValue
+   }
+}
 fun stringLiteralValue(stringLiteral: TerminalNode): String {
    return stringLiteral.text.removeSurrounding(stringLiteral.text.substring(0, 1))
 }
