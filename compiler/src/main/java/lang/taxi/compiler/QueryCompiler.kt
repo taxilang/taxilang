@@ -1,6 +1,7 @@
 package lang.taxi.compiler
 
 import arrow.core.*
+import com.google.common.base.Throwables
 import lang.taxi.*
 import lang.taxi.TaxiParser.ServiceOrMemberReferenceContext
 import lang.taxi.TaxiParser.TypeReferenceContext
@@ -332,10 +333,11 @@ internal class QueryCompiler(
                   }
                }
          } catch (e: Exception) {
+            val rootCause = Throwables.getRootCause(e)
             listOf(
                CompilationError(
                   factCtx.start,
-                  "Failed to create TypedInstance - ${e.message ?: e::class.simpleName}"
+                  "Failed to create TypedInstance - ${rootCause::class.simpleName} ${rootCause.message}"
                )
             ).left()
          }
