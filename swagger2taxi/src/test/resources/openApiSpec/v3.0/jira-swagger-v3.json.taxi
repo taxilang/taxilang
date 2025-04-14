@@ -1275,7 +1275,7 @@ namespace vyne.openApi {
       [[ Total issue count. ]]
       totalIssueCount : Int
       [[ The last issue update time. ]]
-      lastIssueUpdateTime : DateTime
+      lastIssueUpdateTime : Instant
    }
    
    [[ List of project avatars. ]]
@@ -1326,9 +1326,9 @@ namespace vyne.openApi {
       [[ The ID of the user who updated the comment last. ]]
       updateAuthor : AnonymousTypeCommentUpdateAuthor
       [[ The date and time at which the comment was created. ]]
-      created : DateTime
+      created : Instant
       [[ The date and time at which the comment was updated last. ]]
-      updated : DateTime
+      updated : Instant
       [[ The group or role to which this comment is visible. Optional on create and update. ]]
       visibility : AnonymousTypeCommentVisibility
       [[ Indicates whether the comment is visible in Jira Service Desk. Defaults to true when comments are created in the Jira Cloud Platform. This includes when the site doesn't use Jira Service Desk or the project isn't a Jira Service Desk project and, therefore, there is no Jira Service Desk for the issue to be visible on. To create a comment with its visibility in Jira Service Desk set to false, use the Jira Service Desk REST API [Create request comment](https://developer.atlassian.com/cloud/jira/service-desk/rest/#api-rest-servicedeskapi-request-issueIdOrKey-comment-post) operation. ]]
@@ -1800,13 +1800,13 @@ namespace vyne.openApi {
       [[ A comment about the worklog in [Atlassian Document Format](https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/). Optional when creating or updating a worklog. ]]
       comment : Any
       [[ The datetime on which the worklog was created. ]]
-      created : DateTime
+      created : Instant
       [[ The datetime on which the worklog was last updated. ]]
-      updated : DateTime
+      updated : Instant
       [[ Details about any restrictions in the visibility of the worklog. Optional when creating or updating a worklog. ]]
       visibility : AnonymousTypeWorklogVisibility
       [[ The datetime on which the worklog effort was started. Required when creating a worklog. Optional when updating a worklog. ]]
-      started : DateTime
+      started : Instant
       [[ The time spent working on the issue as days (\#d), hours (\#h), or minutes (\#m or \#). Required when creating a worklog if `timeSpentSeconds` isn't provided. Optional when updating a worklog. Cannot be provided if `timeSpentSecond` is provided. ]]
       timeSpent : String
       [[ The time in seconds spent working on the issue. Required when creating a worklog if `timeSpent` isn't provided. Optional when updating a worklog. Cannot be provided if `timeSpent` is provided. ]]
@@ -1965,7 +1965,7 @@ namespace vyne.openApi {
       [[ The user who made the change. ]]
       author : AnonymousTypeChangelogAuthor
       [[ The date on which the change took place. ]]
-      created : DateTime
+      created : Instant
       [[ The list of items changed. ]]
       items : ChangeDetails[]
       [[ The history metadata associated with the changed. ]]
@@ -2382,7 +2382,7 @@ namespace vyne.openApi {
       [[ Details of the user who added the attachment. ]]
       author : AnonymousTypeAttachmentAuthor
       [[ The datetime the attachment was created. ]]
-      created : DateTime
+      created : Instant
       [[ The size of the attachment. ]]
       size : Int
       [[ The MIME type of the attachment. ]]
@@ -2972,7 +2972,7 @@ namespace vyne.openApi {
       [[ Whether the field is locked. ]]
       isLocked : Boolean?
       [[ The date when the value of the field last changed. ]]
-      lastUsed : DateTime?
+      lastUsed : Instant?
       [[ Number of screens where the field is used. ]]
       screensCount : Int?
       [[ Number of contexts where the field is used. ]]
@@ -2992,9 +2992,9 @@ namespace vyne.openApi {
       [[ The build number of the Jira version. ]]
       buildNumber : Int
       [[ The timestamp when the Jira version was built. ]]
-      buildDate : DateTime
+      buildDate : Instant
       [[ The time in Jira when this request was responded to. ]]
-      serverTime : DateTime
+      serverTime : Instant
       [[ The unique identifier of the Jira version. ]]
       scmInfo : String
       [[ The name of the Jira instance. ]]
@@ -3757,7 +3757,7 @@ namespace vyne.openApi {
       [[ Details of the user who attached the file. ]]
       author : AnonymousTypeAttachmentMetadataAuthor
       [[ The datetime the attachment was created. ]]
-      created : DateTime
+      created : Instant
       [[ The size of the attachment. ]]
       size : Int
       [[ The MIME type of the attachment. ]]
@@ -3796,7 +3796,7 @@ namespace vyne.openApi {
       [[ The key of the user who created the audit record. ]]
       authorKey : String
       [[ The date and time on which the audit record was created. ]]
-      created : DateTime
+      created : Instant
       [[ The category of the audit record. For a list of these categories, see the help article [Auditing in Jira applications](https://confluence.atlassian.com/x/noXKM). ]]
       category : String
       [[ The event the audit record originated from. ]]
@@ -4914,9 +4914,9 @@ namespace vyne.openApi {
       [[ The query string. ]]
       @taxi.http.QueryVariable(value = "filter") `filter` : String?,
       [[ The date and time on or after which returned audit records must have been created. If `to` is provided `from` must be before `to` or no audit records are returned. ]]
-      @taxi.http.QueryVariable(value = "from") `from` : DateTime?,
+      @taxi.http.QueryVariable(value = "from") `from` : Instant?,
       [[ The date and time on or before which returned audit results must have been created. If `from` is provided `to` must be after `from` or no audit records are returned. ]]
-      @taxi.http.QueryVariable(value = "to") to : DateTime? ) : AuditRecords
+      @taxi.http.QueryVariable(value = "to") to : Instant? ) : AuditRecords
    }
    service RestApiThreeAvatarTypeSystemService {
       [[ Returns a list of system avatar details by owner type, where the owner types are issue type, project, or user.
