@@ -105,7 +105,7 @@ class OpenApiTypeMapper(private val api: OpenAPI, val defaultNamespace: String) 
    private fun primitiveTypeFor(schema: Schema<*>) = when (schema) {
       is BooleanSchema -> PrimitiveType.BOOLEAN
       is DateSchema -> PrimitiveType.LOCAL_DATE
-      is DateTimeSchema -> PrimitiveType.DATE_TIME
+      is DateTimeSchema -> PrimitiveType.INSTANT
       is IntegerSchema -> PrimitiveType.INTEGER
       is NumberSchema -> PrimitiveType.DECIMAL
       is StringSchema -> PrimitiveType.STRING
