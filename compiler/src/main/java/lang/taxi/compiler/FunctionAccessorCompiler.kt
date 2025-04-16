@@ -23,6 +23,7 @@ import lang.taxi.types.StreamType
 import lang.taxi.types.Type
 import lang.taxi.types.TypeArgument
 import lang.taxi.types.TypeChecker
+import lang.taxi.types.TypeReferenceSelector
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.wrapErrorsInList
@@ -128,6 +129,11 @@ class FunctionAccessorCompiler(
                            parameterContext
                         )
 
+                        parameterContext.typeReferenceSelector() != null -> compileTypeReferenceAccessor(
+                           namespace,
+                           parameterContext
+                        )
+
                         parameterContext.expressionGroup() != null -> {
                            compileExpressionGroupParameter(parameterContext.expressionGroup())
                         }
@@ -189,6 +195,15 @@ class FunctionAccessorCompiler(
       return tokenProcessor.expressionCompiler().compile(expressionGroup)
    }
 
+   private fun compileTypeReferenceAccessor(
+      namespace: String,
+      parameterContext: TaxiParser.ArgumentContext
+   ): Either<List<CompilationError>, TypeReferenceSelector> {
+      return tokenProcessor.typeOrError(namespace, parameterContext.typeReferenceSelector().typeReference())
+         .map { type ->
+            TypeReferenceSelector(type)
+         }
+   }
 }
 
 

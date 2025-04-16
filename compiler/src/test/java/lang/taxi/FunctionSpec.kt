@@ -17,6 +17,7 @@ import lang.taxi.types.ArgumentSelector
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.LambdaExpressionType
 import lang.taxi.types.PrimitiveType
+import lang.taxi.types.TypeReferenceSelector
 import java.util.*
 import kotlin.test.assertFailsWith
 import kotlin.test.fail
@@ -311,6 +312,25 @@ namespace pkgB {
             .shouldContainMessage("Type mismatch. Type of lang.taxi.String is not assignable to type lang.taxi.Int")
       }
 
+      // Ignored until coalesce becomes a function
+      xit("should allow fields to reference other types") {
+         val accessor = """
+               type FirstName inherits String
+               type LastName inherits String
+               type FullName inherits String
+
+               declare function coalesce(String...):String
+
+               model Person {
+                  field1: String by coalesce(FirstName, LastName, FullName)
+               }
+
+            """.compiled()
+            .model("Person").field("field1").accessor as FunctionExpression
+         (accessor.inputs[0] as TypeReferenceSelector).type.qualifiedName.should.equal("FirstName")
+         (accessor.inputs[1] as TypeReferenceSelector).type.qualifiedName.should.equal("LastName")
+         (accessor.inputs[2] as TypeReferenceSelector).type.qualifiedName.should.equal("FullName")
+      }
 
       // No type checking now that we've moved across to functions.
       // Need to support this.

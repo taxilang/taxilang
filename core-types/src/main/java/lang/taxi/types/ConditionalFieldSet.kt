@@ -6,6 +6,32 @@ import lang.taxi.accessors.Argument
 import lang.taxi.accessors.LiteralAccessor
 import lang.taxi.expressions.Expression
 
+/**
+ * A set of fields with additional conditional mapping logic
+ * applied
+ */
+data class ConditionalFieldSet(val fields: List<Field>, val expression: FieldSetExpression)
+
+@Deprecated("Use expressions instead")
+interface FieldSetExpression : TaxiStatementGenerator
+
+@Deprecated("Use expressions instead")
+data class CalculatedModelAttributeFieldSetExpression(
+   val operand1: MemberTypeReferenceExpression,
+   val operand2: MemberTypeReferenceExpression,
+   val operator: FormulaOperator
+) : FieldSetExpression {
+   override fun asTaxi(): String = "(${operand1.asTaxi()} ${operator.symbol} ${operand2.asTaxi()})"
+}
+
+@Deprecated("Use expressions instead")
+data class CalculatedFieldSetExpression(
+   val operand1: FieldReferenceSelector,
+   val operand2: FieldReferenceSelector,
+   val operator: FormulaOperator
+) : FieldSetExpression {
+   override fun asTaxi(): String = "(${operand1.asTaxi()} ${operator.symbol} ${operand2.asTaxi()})"
+}
 
 data class WhenExpression(
    val selectorExpression: Expression,
@@ -24,7 +50,7 @@ data class AccessorExpressionSelector(
    override val declaredType: Type
 ) : WhenSelectorExpression {
    override fun asTaxi(): String {
-      return "Not implemented: AccessorExpressionSelector asTaxi()"
+      TODO("Not yet implemented")
    }
 }
 
@@ -62,6 +88,16 @@ data class MemberTypeReferenceExpression(
          return listOf(compilationUnit)
       }
 }
+
+@Deprecated("replaced by TypeExpression")
+data class TypeReferenceSelector(val type: Type) : Accessor {
+   init {
+      error("Where is this still used?")
+   }
+
+   override val returnType: Type = type
+}
+
 // TODO : Can FieldReferenceSelector, ReferenceAssignment and ReferenceCaseMatchExpression all be merged?
 // TODO : This will be replaced by ScopedReferenceSelector, which works for scopes not named "this" as well
 data class FieldReferenceSelector(val fieldName: String, override val returnType: Type) : WhenSelectorExpression,
