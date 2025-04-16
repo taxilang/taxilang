@@ -574,8 +574,6 @@ data class Field(
    // TODO : Can we fold readCondition into accessor?
    // exploring with ConditionalAccessor
    val accessor: Accessor? = null,
-   @Deprecated("use accessor instead")
-   val readExpression: FieldSetExpression? = null,
    override val typeDoc: String? = null,
    // TODO : This feels wrong - what's the relationship between this and the
    //  defaults served by accessors?
