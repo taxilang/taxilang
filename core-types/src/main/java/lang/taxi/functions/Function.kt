@@ -1,5 +1,9 @@
 package lang.taxi.functions
 
+import arrow.core.Either
+import arrow.core.getOrElse
+import arrow.core.left
+import arrow.core.right
 import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Accessor
 import lang.taxi.expressions.Expression
@@ -54,6 +58,16 @@ class FunctionDefinition(
          return parameters.first().type
       }
 
+   private fun inputsWithDefaultsApplied(inputs: List<Accessor>): Either<String, List<Accessor>> {
+      return this.parameters.mapIndexed { index, parameter ->
+         when {
+            inputs.size > index -> inputs[index]
+            parameter.defaultValue != null -> parameter.defaultValue
+            else -> return "No argument provided for parameter ${parameter.name} at index $index, and no default value is defined".left()
+         }
+      }.right()
+   }
+
    fun resolveTypeParameters(
       inputs: List<Accessor>,
       assignmentType: Type,
@@ -83,8 +97,10 @@ class FunctionDefinition(
       } else (emptyMap<TypeArgument, Type>() to typeArguments)
 
       val hasVarArgs = parameters.any { it.isVarArg }
+
+      val inputsWithDefaultsApplied = inputsWithDefaultsApplied(inputs).getOrElse { throw IllegalArgumentException(it) }
       val resolvedParameterTypeArguments =
-         TypeArgumentResolver.resolve(typeArgumentsToResolveFromInputs, parameters.map { it.type }, inputs, hasVarArgs)
+         TypeArgumentResolver.resolve(typeArgumentsToResolveFromInputs, parameters.map { it.type }, inputsWithDefaultsApplied, hasVarArgs)
       val allResolvedTypeArguments = resolvedReturnTypeArgument + resolvedParameterTypeArguments
       if (requireAllParametersResolved) {
          val errors = allResolvedTypeArguments.values

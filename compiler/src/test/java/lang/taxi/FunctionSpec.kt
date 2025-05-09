@@ -4,11 +4,14 @@ import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.accessors.ColumnAccessor
 import lang.taxi.accessors.LiteralAccessor
+import lang.taxi.accessors.NullValue
 import lang.taxi.expressions.*
 import lang.taxi.functions.FunctionModifier
 import lang.taxi.functions.stdlib.Left
@@ -16,8 +19,10 @@ import lang.taxi.linter.LinterRules
 import lang.taxi.types.ArgumentSelector
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.LambdaExpressionType
+import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TypeReferenceSelector
+import org.junit.Test
 import java.util.*
 import kotlin.test.assertFailsWith
 import kotlin.test.fail
@@ -55,6 +60,43 @@ class FunctionSpec : DescribeSpec({
          """.compiled().function("concat")
          function.parameters[0].isVarArg.should.be.`true`
       }
+      it("should parse vararg params") {
+         val (_,query) = """
+            declare function concat(b:String...):String
+         """.compiledWithQuery("""
+            find { foo : concat('a','b','c') }
+         """.trimIndent())
+         val expression = query.returnType.asA<ObjectType>()
+            .field("foo")
+            .accessor.shouldBeInstanceOf<FunctionExpression>()
+         expression.inputs.shouldHaveSize(3)
+         expression.inputs[0].shouldBeInstanceOf<LiteralAccessor>()
+         expression.inputs[1].shouldBeInstanceOf<LiteralAccessor>()
+         expression.inputs[2].shouldBeInstanceOf<LiteralAccessor>()
+      }
+      it("is invalid to declare a vararg as a property that isn't the final property") {
+         """
+            declare function foo(b:String..., count:Int):String
+         """.validated()
+            .shouldContainMessage("Vararg parameters must be the final parameter in a function definition")
+      }
+      it("is invalid to declare multiple vararg arguments") {
+         """
+            declare function foo(a:String..., b:String...):String
+         """.validated()
+            .shouldContainMessage("It is invalid to declare multiple vararg parameters in a function definition")
+      }
+      it("should parse a mix of defaults and vararg params") {
+         val (_,query) = """
+            declare function mixedDefaultWithVarargs(count: Int = 1, b:String...):String
+         """.compiledWithQuery("""
+            find { foo : mixedDefaultWithVarargs(1, 'a','b','c') }
+         """.trimIndent())
+         val expression = query.returnType.asA<ObjectType>()
+            .field("foo")
+            .accessor.shouldBeInstanceOf<FunctionExpression>()
+         expression.inputs.shouldHaveSize(4)
+      }
       it("is valid to declare a function returning a nullable type") {
          val function = """
             declare function sometimes(String):String?
@@ -68,9 +110,6 @@ class FunctionSpec : DescribeSpec({
          function.parameters.single().nullable.shouldBeTrue()
       }
 
-      it("is invalid to declare vararg in position other than final arg") {
-         // TODO
-      }
       it("should allow functions with multiple params") {
          val taxi = """
             declare function concat(a:String,b:String):String
@@ -310,6 +349,29 @@ namespace pkgB {
             }
          """.validated(linterRules = LinterRules.allDisabled())
             .shouldContainMessage("Type mismatch. Type of lang.taxi.String is not assignable to type lang.taxi.Int")
+      }
+
+      it("supports default arguments on functions") {
+         val (_, query) = """
+            // odd name so as not to clash with the real joinToString() method...
+            declare extension function <T> joinUp(values:T[], separator: String = ",", prefix: String? = null, postfix: String? = null): String
+         """.trimIndent().compiledWithQuery(
+            """
+          given { s:String[] = ['a','b','c'] }
+           find { result : String[].joinUp() }
+      """
+         )
+         val expression = query.returnType.asA<ObjectType>()
+            .field("result")
+            .accessor.shouldBeInstanceOf<ExtensionFunctionExpression>()
+         expression.inputs.shouldHaveSize(4)
+         expression.inputs[0].shouldBeInstanceOf<TypeExpression>()
+         expression.inputs[1].shouldBeInstanceOf<LiteralExpression>()
+            .value.shouldBe(",")
+         expression.inputs[2].shouldBeInstanceOf<LiteralExpression>()
+            .value.shouldBe(NullValue)
+         expression.inputs[3].shouldBeInstanceOf<LiteralExpression>()
+            .value.shouldBe(NullValue)
       }
 
       // Ignored until coalesce becomes a function
@@ -553,14 +615,14 @@ namespace pkgB {
          }
          // orb-715
          it("reports error if a lambda argument is supplied with an arg of the wrong type") {
-val f = """
+            val f = """
    function compoundFilter(
            firstSet: String[]
          ):String[] -> filter( firstSet,  1 == 1 )
 """.validated()
-   .shouldContainMessage("Expected a lambda expression here")
+               .shouldContainMessage("Expected a lambda expression here")
          }
-         it("does not report error if a lambda argument is supplied with an arg of the correct type" ) {
+         it("does not report error if a lambda argument is supplied with an arg of the correct type") {
             val f = """
    function compoundFilter(
            firstSet: String[]
@@ -604,7 +666,7 @@ val f = """
             resolvedInputs[1].asA<LambdaExpression>().inputs[1].type.should.equal(PrimitiveType.INTEGER)
          }
          it("should infer the return type") {
-            val (_,query) = "declare extension function <T,A> doSum(collection: T[], callback: (T) -> A):A".compiledWithQuery(
+            val (_, query) = "declare extension function <T,A> doSum(collection: T[], callback: (T) -> A):A".compiledWithQuery(
                """find { [1,2,3].sum( (Int) -> Int)  }"""
             )
             query.discoveryType!!.expression.returnType.shouldBe(PrimitiveType.INTEGER)

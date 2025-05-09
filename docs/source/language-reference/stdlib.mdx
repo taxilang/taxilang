@@ -233,6 +233,15 @@ declare function <T> listOf(values:T...):T[]
 
 Returns an array containing the provided values
 
+### joinToString
+`taxi.stdlib.joinToString`
+
+```taxi
+declare extension function <T> joinToString(values:T[], separator: String = ",", prefix: String? = null, postfix: String? = null): String
+```
+
+Creates a string from all the elements separated using separator and using the given prefix and postfix if supplied.
+
 ## Dates
 
 Mess about with time. Flux capacitor not included

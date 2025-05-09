@@ -12,4 +12,5 @@ class StdLibTest {
    fun `stdlib compiles`() {
       StdLibSchema.taxiDocument.shouldNotBeNull()
    }
+
 }
