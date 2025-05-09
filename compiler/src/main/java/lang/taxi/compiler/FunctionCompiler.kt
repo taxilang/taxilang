@@ -13,6 +13,7 @@ import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionDefinition
 import lang.taxi.functions.FunctionModifier
 import lang.taxi.toCompilationUnit
+import lang.taxi.utils.createCompilationError
 import java.util.*
 
 class FunctionCompiler(
@@ -55,6 +56,19 @@ class FunctionCompiler(
                            it
                         }
                      }?.reportAndRemoveErrorList(tokenProcessor.errors) ?: emptyList()
+
+               // Varargs (if present) must be the final parameter
+               if (parameters.count { it.isVarArg } >  1) {
+                  return functionToken.createCompilationError("It is invalid to declare multiple vararg parameters in a function definition")
+               }
+               parameters.singleOrNull { it.isVarArg }?.let { varArgParam ->
+                  if (parameters.indexOf(varArgParam) != parameters.size - 1) {
+                     return functionToken.createCompilationError("Vararg parameters must be the final parameter in a function definition")
+                  }
+               }
+               if (parameters.any { it.isVarArg }) {
+
+               }
 
                val modifiers = functionToken.functionModifiers().map { modifier ->
                   FunctionModifier.forToken(modifier.text)

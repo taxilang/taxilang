@@ -17,7 +17,8 @@ object Collections {
       Last,
       GetAtIndex,
       Intersection,
-      ListOf
+      ListOf,
+      JoinToString
    )
 }
 
@@ -115,8 +116,18 @@ object Intersection : FunctionApi {
 object ListOf : FunctionApi {
    override val taxi: String =
       """[[
+         xxx
          Returns an array containing the provided values
          ]]
          declare function <T> listOf(values:T...):T[]""".trimIndent()
    override val name: QualifiedName = stdLibName("listOf")
+}
+
+object JoinToString : FunctionApi {
+   override val taxi: String = """
+   [[ Creates a string from all the elements separated using separator and using the given prefix and postfix if supplied. Null values are omitted ]]
+   declare extension function <T> joinToString(values:T[], separator: String = ",", prefix: String? = null, postfix: String? = null): String
+   """.trimIndent()
+
+   override val name: QualifiedName = stdLibName("joinToString")
 }

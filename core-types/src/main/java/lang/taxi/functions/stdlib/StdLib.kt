@@ -18,6 +18,7 @@ object StdLib {
          Dates.functions +
          Errors.functions +
          EnumFunctions.functions +
+         Math.functions +
          listOf(Coalesce)
    val taxi = functions.namespacedTaxi() + BuiltIns.taxi
 }

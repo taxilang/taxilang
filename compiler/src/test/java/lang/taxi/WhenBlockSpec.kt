@@ -151,7 +151,7 @@ class WhenBlockSpec : DescribeSpec({
          query MyQuery {
             given { n:Name = "jimmy" }
             find {
-               when (left(Name)) {
+               when (left(Name, 1)) {
                   "j" -> "Hello"
                   else -> "World"
                }

@@ -5,6 +5,7 @@ import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
 import lang.taxi.CompilationError
+import lang.taxi.Namespace
 import lang.taxi.TaxiParser
 import lang.taxi.TaxiParser.ArgumentContext
 import lang.taxi.accessors.Accessor
@@ -14,6 +15,7 @@ import lang.taxi.expressions.TypeExpression
 import lang.taxi.findNamespace
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
+import lang.taxi.services.Parameter
 import lang.taxi.source
 import lang.taxi.text
 import lang.taxi.toCompilationUnit
@@ -24,6 +26,8 @@ import lang.taxi.types.Type
 import lang.taxi.types.TypeArgument
 import lang.taxi.types.TypeChecker
 import lang.taxi.types.TypeReferenceSelector
+import lang.taxi.utils.createCompilationError
+import lang.taxi.utils.createInternalError
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import lang.taxi.utils.wrapErrorsInList
@@ -77,7 +81,7 @@ class FunctionAccessorCompiler(
       targetType: Type,
       receiver: Expression? = null,
 
-   ): Either<List<CompilationError>, FunctionAccessor> {
+      ): Either<List<CompilationError>, FunctionAccessor> {
       return tokenProcessor.attemptToLookupSymbolByName(
          namespace,
          functionName,
@@ -109,69 +113,119 @@ class FunctionAccessorCompiler(
 
                }
 
-               val parametersOrErrors: Either<List<CompilationError>, List<Accessor>> =
-                  arguments.mapIndexed { parameterIndex, parameterContext ->
-                     val declaredParamIndex = if (receiver != null) parameterIndex + 1 else parameterIndex
-                     val parameter = function.getParameter(declaredParamIndex)
-                     val parameterType = function.getParameterType(declaredParamIndex)
-                     val parameterAccessor: Either<List<CompilationError>, Accessor> = when {
-                        parameterContext.literal() != null -> LiteralAccessor(
-                           parameterContext.literal().value()
-                        ).right()
+               val parametersOrErrors: Either<List<CompilationError>, List<Accessor>> = run {
 
-                        parameterContext.scalarAccessorExpression() != null -> referenceResolver.compileScalarAccessor(
-                           parameterContext.scalarAccessorExpression(),
-                           parameterType,
-                        )
+                  // First handle regular (non-vararg) parameters
+                  val nonVarArgParamsOrErrors = function.parameters
+                     .filter { !it.isVarArg }
+                     .mapIndexed { parameterIndex, parameter ->
 
-                        parameterContext.fieldReferenceSelector() != null -> referenceResolver.compileFieldReferenceAccessor(
-                           function,
-                           parameterContext
-                        )
+                        val argumentInputIndex = if (receiver != null) parameterIndex - 1 else parameterIndex
+                        val argumentInputContext = arguments.getOrNull(argumentInputIndex)
+                        val parameterType = function.getParameterType(parameterIndex)
+                        val parameterAccessor: Either<List<CompilationError>, Accessor> = when {
+                           parameterIndex == 0 && receiver != null -> receiver.right()
+                           argumentInputContext == null && parameter.defaultValue != null -> parameter.defaultValue!!.right()
+                           argumentInputContext == null -> context.createCompilationError("No value provided for parameter ${parameter.name} on function $functionName, and no default value is defined")
+                           else -> compileArgument(
+                              argumentInputContext,
+                              function,
+                              namespace,
+                              parameter,
+                              parameterType,
+                           )
 
-                        parameterContext.typeReferenceSelector() != null -> compileTypeReferenceAccessor(
-                           namespace,
-                           parameterContext
-                        )
-
-                        parameterContext.expressionGroup() != null -> {
-                           compileExpressionGroupParameter(parameterContext.expressionGroup())
                         }
-
-                        else -> TODO("readFunction parameter accessor not defined for code ${context.source().content}")
-
-                     }.flatMap { parameterAccessor ->
-                        typeChecker.ifAssignableOrErrorList(parameterAccessor, parameter, parameterContext) { parameterAccessor }
+                        parameterAccessor
                      }
-                     parameterAccessor
-                  }.invertEitherList()
-                     .flattenErrors()
+
+                  // Now handle varargs (if present)
+                  val varargParam = function.parameters.lastOrNull()?.let { if (it.isVarArg) it else null }
+                  val varArgAccessorsOrErrors = if (varargParam != null) {
+                     val varArgIndex = function.parameters.indexOf(varargParam).let {
+                        if (receiver != null) it - 1 else it
+                     }
+                     val varArgInputs = arguments.drop(varArgIndex)
+                     varArgInputs.map { argumentInputContext ->
+                        compileArgument(argumentInputContext,
+                           function,
+                           namespace,
+                           varargParam,
+                           function.getParameterType(function.parameters.indexOf(varargParam)))
+                     }
+                  } else emptyList()
+
+                  (nonVarArgParamsOrErrors + varArgAccessorsOrErrors).invertEitherList().flattenErrors()
+               }
                parametersOrErrors.flatMap { parameters: List<Accessor> ->
                   // If we're invoked as an extension function, we'll be passed a receiver, which
                   // is to be used as the first parameter
                   val allParams = if (receiver != null) {
-                     val unwrappedReceiver = if (receiver is TypeExpression && StreamType.isStream(receiver.type) && function.parameters.firstOrNull()?.type is TypeArgument) {
-                        // If the receiver is Stream<T>, unwrap it to <T>.
-                        // Functions don't operate on Streams, but on the items that the stream emits
-                        // If we have functions declare inputs of Stream<T>, then we end up doing a context search for a stream,
-                        // each time that we go to evaluate the function.
-                        // Most typically this occurs when the receiver argument is parameterized.
-                        // ie - people don't generally declare
-                        //    declare extension function something(stream: Stream<T>):Stream<T>
-                        // but they do declare:
-                        //    declare extension function <T> something(input: T):T
-                        // which ends up operating on a stream.
-                        // Therefore, unwrap Stream<T> to T as the input.
-                        receiver.copy(type = receiver.type.typeParameters().first())
-                     } else receiver
+                     val unwrappedReceiver =
+                        if (receiver is TypeExpression && StreamType.isStream(receiver.type) && function.parameters.firstOrNull()?.type is TypeArgument) {
+                           // If the receiver is Stream<T>, unwrap it to <T>.
+                           // Functions don't operate on Streams, but on the items that the stream emits
+                           // If we have functions declare inputs of Stream<T>, then we end up doing a context search for a stream,
+                           // each time that we go to evaluate the function.
+                           // Most typically this occurs when the receiver argument is parameterized.
+                           // ie - people don't generally declare
+                           //    declare extension function something(stream: Stream<T>):Stream<T>
+                           // but they do declare:
+                           //    declare extension function <T> something(input: T):T
+                           // which ends up operating on a stream.
+                           // Therefore, unwrap Stream<T> to T as the input.
+                           receiver.copy(type = receiver.type.typeParameters().first())
+                        } else receiver
 
-                     listOf(unwrappedReceiver) + parameters
+                     // Use the unwrappedReceiver, but ignore the resolved parameter (which is also the receiver)
+                     listOf(unwrappedReceiver) + parameters.drop(1)
                   } else parameters
                   buildAndResolveTypeArgumentsOrError(function, allParams, targetType, context)
 
                }
             }
          }
+   }
+
+   private fun compileArgument(
+      argumentInputContext: ArgumentContext,
+      function: Function,
+      namespace: Namespace,
+      parameter: Parameter,
+      parameterType: Type
+   ): Either<List<CompilationError>, Accessor> {
+      return when {
+         argumentInputContext.literal() != null -> LiteralAccessor(
+            argumentInputContext.literal().value()
+         ).right()
+
+         argumentInputContext.scalarAccessorExpression() != null -> referenceResolver.compileScalarAccessor(
+            argumentInputContext.scalarAccessorExpression(),
+            parameterType,
+         )
+
+         argumentInputContext.fieldReferenceSelector() != null -> referenceResolver.compileFieldReferenceAccessor(
+            function,
+            argumentInputContext
+         )
+
+         argumentInputContext.typeReferenceSelector() != null -> compileTypeReferenceAccessor(
+            namespace,
+            argumentInputContext
+         )
+
+         argumentInputContext.expressionGroup() != null -> {
+            compileExpressionGroupParameter(argumentInputContext.expressionGroup())
+         }
+
+         else -> argumentInputContext.createInternalError("readFunction parameter accessor not defined for code ${argumentInputContext.source().content}")
+      }.flatMap { parameterAccessor ->
+         typeChecker.ifAssignableOrErrorList(
+            parameterAccessor,
+            parameter,
+            argumentInputContext
+         ) { parameterAccessor }
+      }
    }
 
    internal fun buildFunctionAccessor(
@@ -187,7 +241,12 @@ class FunctionAccessorCompiler(
    ): Either<List<CompilationError>, FunctionAccessor> {
       val namespace = functionContext.findNamespace()
       return buildFunctionAccessor(
-         namespace, functionName, functionContext, functionContext.argumentList()?.argument() ?: emptyList(), targetType, receiver
+         namespace,
+         functionName,
+         functionContext,
+         functionContext.argumentList()?.argument() ?: emptyList(),
+         targetType,
+         receiver
       )
    }
 

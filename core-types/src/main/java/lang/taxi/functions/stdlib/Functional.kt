@@ -7,9 +7,6 @@ object Functional {
       Reduce,
       Fold,
       Map,
-      Sum,
-      Max,
-      Min
    )
 }
 object Reduce: FunctionApi {
@@ -74,24 +71,3 @@ object Fold : FunctionApi {
       get() = stdLibName("fold")
 }
 
-object Max : FunctionApi {
-   override val taxi: String
-      get() = "declare extension function <T,A> max(collection: T[], callback: (T) -> A):A"
-   override val name: QualifiedName
-      get() = stdLibName("max")
-}
-
-object Min : FunctionApi {
-   override val taxi: String
-      get() = "declare extension function <T,A> min(collection: T[], callback: (T) -> A):A"
-   override val name: QualifiedName
-      get() = stdLibName("min")
-}
-
-
-object Sum : FunctionApi {
-   override val taxi: String
-      get() = "declare extension function <T,A> sum(collection: T[], callback: (T) -> A):A"
-   override val name: QualifiedName
-      get() = stdLibName("sum")
-}
