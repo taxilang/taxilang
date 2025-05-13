@@ -6,7 +6,7 @@
    <parent>
       <groupId>org.taxilang</groupId>
       <artifactId>taxiql-codegen</artifactId>
-      <version>1.64.0</version>
+      <version>1.65.0-SNAPSHOT</version>
    </parent>
 
    <artifactId>taxiql-codegen-cli</artifactId>
