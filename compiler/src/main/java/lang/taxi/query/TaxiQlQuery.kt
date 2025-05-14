@@ -14,6 +14,7 @@ import lang.taxi.types.Documented
 import lang.taxi.types.ImportableToken
 import lang.taxi.types.ObjectType
 import lang.taxi.types.QualifiedName
+import lang.taxi.types.StreamType
 import lang.taxi.types.Type
 import kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf.Type.Argument.Projection
 
@@ -87,6 +88,7 @@ data class TaxiQlQuery(
       get() {
          return when (projectedType) {
             null -> null
+            is StreamType -> projectedType.type as ObjectType
             is ArrayType -> projectedType.type as ObjectType
             is ObjectType -> projectedType
             else -> {
