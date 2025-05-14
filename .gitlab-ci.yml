@@ -113,32 +113,31 @@ build-ts-codegen-tools-windows:
       - master
       - develop
    tags:
-      - private-windows
+      - saas-windows-medium-amd64
    script:
      ## Setup has been performed directly on the tagged windows box, to keep this build step faster.
      ## It's not portable though!
 
-#      - echo "Setting up Maven and GraalVM"
+      - echo "Setting up Maven and GraalVM"
 
       # Install Maven
-#      - echo "Installing Maven"
-#      - $env:MAVEN_HOME = "C:/maven"
-#      - Invoke-WebRequest -Uri "https://downloads.apache.org/maven/maven-3/${env:MAVEN_VERSION}/binaries/apache-maven-${env:MAVEN_VERSION}-bin.zip" -OutFile "maven.zip"
-#      - Expand-Archive -Path "maven.zip" -DestinationPath "C:/"
-#      - Rename-Item "C:/apache-maven-${env:MAVEN_VERSION}" $env:MAVEN_HOME
-#      - $env:Path += ";$env:MAVEN_HOME/bin"
+      - echo "Installing Maven"
+      - $env:MAVEN_HOME = "C:/maven"
+      - Invoke-WebRequest -Uri "https://downloads.apache.org/maven/maven-3/${env:MAVEN_VERSION}/binaries/apache-maven-${env:MAVEN_VERSION}-bin.zip" -OutFile "maven.zip"
+      - Expand-Archive -Path "maven.zip" -DestinationPath "C:/"
+      - Rename-Item "C:/apache-maven-${env:MAVEN_VERSION}" $env:MAVEN_HOME
+      - $env:Path += ";$env:MAVEN_HOME/bin"
 
       # Install GraalVM
-#      - echo "Installing GraalVM"
-#      https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-23.0.2/graalvm-community-jdk-23.0.2_windows-x64_bin.zip
-#      - Invoke-WebRequest -Uri "https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-23.0.2/graalvm-community-jdk-23.0.2_windows-x64_bin.zip" -OutFile "graalvm.zip"
-#      - Expand-Archive -Path "graalvm.zip" -DestinationPath "C:/"
-#      - Rename-Item "C:/graalvm-community-openjdk-23.0.2+7.1" $env:GRAALVM_HOME
-#      - $env:Path += ";$env:GRAALVM_HOME/bin"
+      - echo "Installing GraalVM"
+      - Invoke-WebRequest -Uri "https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-23.0.2/graalvm-community-jdk-23.0.2_windows-x64_bin.zip" -OutFile "graalvm.zip"
+      - Expand-Archive -Path "graalvm.zip" -DestinationPath "C:/"
+      - Rename-Item "C:/graalvm-community-openjdk-23.0.2+7.1" $env:GRAALVM_HOME
+      - $env:Path += ";$env:GRAALVM_HOME/bin"
 
       # Install Native Image Tool
-#      - echo "Installing Native Image Tool"
-#      - '"& $env:GRAALVM_HOME\bin\gu.cmd install native-image"'
+      - echo "Installing Native Image Tool"
+      - '"& $env:GRAALVM_HOME\bin\gu.cmd install native-image"'
 
 
       # Don't run tests when building native tools
@@ -148,11 +147,6 @@ build-ts-codegen-tools-windows:
          - 'taxiql-codegen\taxiql-codegen-cli\target\taxiql-codegen-cli.exe'
 
 
-# There's no gitlab hosted macos runners, so we can't build these automatically.
-# Due to be resolved in this epic:
-# https://gitlab.com/groups/gitlab-org/-/epics/8267
-# ETA 20 March 2025
-# Note - this code has not been tested.
 build-ts-codegen-tools-macos:
    stage: build
    only:
