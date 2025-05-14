@@ -1,6 +1,8 @@
 package lang.taxi.query
 
 import lang.taxi.accessors.ProjectionFunctionScope
+import lang.taxi.expressions.Expression
+import lang.taxi.expressions.ProjectingExpression
 import lang.taxi.mutations.Mutation
 import lang.taxi.types.Annotatable
 import lang.taxi.types.Annotation
@@ -13,6 +15,7 @@ import lang.taxi.types.ImportableToken
 import lang.taxi.types.ObjectType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
+import kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf.Type.Argument.Projection
 
 
 data class TaxiQlQuery(
@@ -21,8 +24,9 @@ data class TaxiQlQuery(
    val queryMode: QueryMode,
    val parameters: List<Parameter>,
    val discoveryType: DiscoveryType?,
-   val projectedType: Type?,
-   val projectionScopeVars: List<ProjectionFunctionScope>,
+//   val projectedType: Type?,
+//   val projectionScopeVars: List<ProjectionFunctionScope>,
+   val projection: Expression?,
    val mutation: Mutation?,
    val serviceRestrictions: ServiceRestrictions = ServiceRestrictions.EMPTY,
    override val typeDoc: String?,
@@ -31,6 +35,7 @@ data class TaxiQlQuery(
 ) : Documented, Annotatable, Compiled, ImportableToken {
 
    override val qualifiedName: String = name.parameterizedName
+
    @Deprecated(
       "Only single discovery types are supported. Use discoveryType instead.",
       replaceWith = ReplaceWith("discoveryType")
@@ -38,6 +43,22 @@ data class TaxiQlQuery(
    val typesToFind: List<DiscoveryType> = listOfNotNull(discoveryType)
 
    val source: TaxiQLQueryString = compilationUnits.joinToString("\n") { it.source.content }
+
+   // For backwards compatability
+   val projectedType: Type? = projectingExpression?.returnType
+   // For backwards compatability
+   val projectionScopeVars: List<ProjectionFunctionScope> = projectingExpression?.projection?.projectionFunctionScope
+      ?: emptyList()
+
+   // In most cases, a projection should be a ProjectingExpression, rather than
+   // some other expression type.
+   // Can't think of a use-case that differs here
+   val projectingExpression: ProjectingExpression?
+      get() {
+         return if (projection is ProjectingExpression) {
+            projection
+         } else null
+      }
 
    /**
     * If the return type is a collection, returns
@@ -49,12 +70,16 @@ data class TaxiQlQuery(
       }
    val returnType: Type
       get() {
-         return when {
+         val returnType =  when {
             mutation != null -> mutation.operation.returnType
             projectedType != null -> projectedType
             discoveryType != null -> discoveryType.expression.returnType
             else -> error("Could not infer return type of query.")
          }
+         // If we're mapping, then we end up with a T[]
+         return if (queryMode == QueryMode.MAP) {
+            Arrays.arrayOf(returnType)
+         } else returnType
       }
 
 

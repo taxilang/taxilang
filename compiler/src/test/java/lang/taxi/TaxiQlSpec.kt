@@ -2,6 +2,7 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveSize
@@ -718,7 +719,10 @@ class TaxiQlSpec : DescribeSpec({
          queryCompilationError.first().detailMessage.should.contain("InvalidType is not defined")
       }
 
-      it("when discovery type is a collection then the type that we project into should also be a collection") {
+      // Disabled this test, as it's no longer true.
+      // We no longer enforce at the compiler that find { T[] } as { ... } the projection type must be a collection
+      // Otherwise, aggregations wouldn't be possible
+      xit("when discovery type is a collection then the type that we project into should also be a collection") {
          val src = """
                          query RecentOrdersQuery( startDate:Instant, endDate:Instant ) {
                             find {
@@ -731,7 +735,10 @@ class TaxiQlSpec : DescribeSpec({
          queryCompilationError.first().detailMessage.should.contain("projection type is a list but the type to discover is not, both should either be list or single entity.")
       }
 
-      it("discovery type and anonymous projected type should either be list or be single entity II") {
+      // Disabled this test, as it's no longer true
+      // We no longer enforce at the compiler that find { T[] } as { ... } the projection type must be a collection
+      // Otherwise, aggregations wouldn't be possible
+      xit("discovery type and anonymous projected type should either be list or be single entity II") {
          val src = """
                              query RecentOrdersQuery( startDate:Instant, endDate:Instant ) {
                                 find {
@@ -1004,7 +1011,7 @@ class TaxiQlSpec : DescribeSpec({
          val field = query.projectedType!!.asA<ObjectType>()
             .field("other")
          field.type.qualifiedName.should.not.equal("Person")
-         field.type.qualifiedName.should.startWith("Anonymous")
+         field.type.anonymous.shouldBeTrue()
          val type = field.type.asA<ObjectType>()
          type.field("nickName").type.qualifiedName.should.equal("PersonName")
       }

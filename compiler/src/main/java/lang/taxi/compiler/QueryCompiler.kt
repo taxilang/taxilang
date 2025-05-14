@@ -18,6 +18,7 @@ import lang.taxi.services.Service
 import lang.taxi.services.ServiceMember
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
+import lang.taxi.utils.createInternalError
 import lang.taxi.utils.flattenErrors
 import lang.taxi.utils.invertEitherList
 import org.antlr.v4.runtime.ParserRuleContext
@@ -49,11 +50,11 @@ internal class QueryCompiler(
       val queryOrErrors = factsOrErrors.flatMap { facts ->
 
          parseQueryBody(ctx, facts + parameters, queryDirective).flatMap { typesToDiscover ->
-            parseTypeToProject(
-               ctx.queryOrMutation()?.typeProjection(),
+            parseProjectionExpression(
+               ctx.queryOrMutation()?.expressionGroup(),
                typesToDiscover,
                facts + parameters
-            ).flatMap { typeToProject ->
+            ).flatMap { projectionExpression ->
                parseMutation(ctx.queryOrMutation().mutation()).flatMap { mutation ->
                   parseServiceRestrictions(ctx.queryOrMutation().serviceRestrictions()).map { serviceRestrictions ->
                      TaxiQlQuery(
@@ -62,8 +63,7 @@ internal class QueryCompiler(
                         queryMode = queryDirective,
                         parameters = parameters,
                         discoveryType = typesToDiscover,
-                        projectedType = typeToProject?.first,
-                        projectionScopeVars = typeToProject?.second ?: emptyList(),
+                        projection = projectionExpression,
                         typeDoc = docs,
                         annotations = annotations,
                         mutation = mutation,
@@ -73,6 +73,31 @@ internal class QueryCompiler(
                   }
                }
             }
+//            parseTypeToProject(
+//               ctx.queryOrMutation()?.typeProjection(),
+//               typesToDiscover,
+//               facts + parameters
+//            ).flatMap { typeToProject ->
+//               parseMutation(ctx.queryOrMutation().mutation()).flatMap { mutation ->
+//                  parseServiceRestrictions(ctx.queryOrMutation().serviceRestrictions()).map { serviceRestrictions ->
+//                     TaxiQlQuery(
+//                        name = name,
+//                        facts = facts,
+//                        queryMode = queryDirective,
+//                        parameters = parameters,
+//                        discoveryType = typesToDiscover,
+//                        projectedType = typeToProject?.first,
+//                        projectionScopeVars = typeToProject?.second ?: emptyList(),
+//                        typeDoc = docs,
+//                        annotations = annotations,
+//                        mutation = mutation,
+//                        serviceRestrictions = serviceRestrictions,
+//                        compilationUnits = listOf(compilationUnit),
+//                        projectingExpression = null
+//                     )
+//                  }
+//               }
+//            }
          }
       }
       return queryOrErrors
@@ -171,12 +196,12 @@ internal class QueryCompiler(
        * }
        */
       val typeExpression: Either<List<CompilationError>, Expression> = when {
-         queryBodyContext.queryOrMutation().expressionGroup() != null -> {
+         queryBodyContext.queryOrMutation().queryInputExpressionGroup()?.expressionGroup() != null -> {
             expressionCompiler
                // wrap stream { Foo } so that Foo becomes Stream<Foo>
                .withTypedExpressionBuilder(StreamDecoratingTypedExpressionBuilder)
                .withParameters(parameters)
-               .compile(queryBodyContext.queryOrMutation().expressionGroup(), targetType = PrimitiveType.ANY)
+               .compile(queryBodyContext.queryOrMutation().queryInputExpressionGroup().expressionGroup(), targetType = PrimitiveType.ANY)
          }
 
          queryBodyContext.queryOrMutation()?.anonymousTypeDefinition() != null -> parseAnonymousTypesIfPresent(
@@ -185,6 +210,9 @@ internal class QueryCompiler(
             constraintBuilder,
             parameters
          )
+         queryBodyContext.queryOrMutation()?.expressionGroup() != null -> {
+            TODO()
+         }
 
          queryBodyContext.queryOrMutation().mutation() != null -> {
             // at this stage, it's just a mutation, with no discovery types, so return null
@@ -362,6 +390,22 @@ internal class QueryCompiler(
       }
    }
 
+   private fun parseProjectionExpression(
+      expressionGroup: TaxiParser.ExpressionGroupContext?,
+      typesToDiscover: DiscoveryType?,
+      parameters: List<Argument>
+   ): Either<List<CompilationError>, Expression?> {
+      if (expressionGroup == null) {
+         return null.right()
+      }
+      if (typesToDiscover == null) {
+         return expressionGroup.createInternalError("Expected a discoveryType, but none was found")
+      }
+      val expression = expressionCompiler.withParameters(parameters)
+         .forDiscoveryType(typesToDiscover)
+         .compile(expressionGroup, null)
+      return expression
+   }
    private fun parseTypeToProject(
       queryProjection: TaxiParser.TypeProjectionContext?,
       typesToDiscover: DiscoveryType?,
