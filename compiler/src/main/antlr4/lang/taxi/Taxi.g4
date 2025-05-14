@@ -708,8 +708,12 @@ queryBody:
 // - OR a mutation on its own
 // but it must contain one.
 queryOrMutation:
-   (queryDirective ( ('{' expressionGroup '}') | anonymousTypeDefinition  ) typeProjection? mutation? serviceRestrictions?) |
+   (queryDirective ( ('{' queryInputExpressionGroup '}') | anonymousTypeDefinition  ) expressionGroup? /* this expression now provides the projection */ mutation? serviceRestrictions?) |
    mutation;
+
+// Just a wrapper to disambiguate multiple expressionGroups
+// in the queryOrMutation type.
+queryInputExpressionGroup: expressionGroup;
 
 serviceOrMemberReference: typeReference memberReference?;
 serviceOrMemberReferenceList: serviceOrMemberReference (',' serviceOrMemberReference)*;
@@ -762,10 +766,13 @@ BooleanLiteral
 
 // Identifiers define tokens that name things. Listing `K_xxx` keywords here ensures that users can  define field
 // names, operations and so on with words that are reserved in some context.
+// Unfortunately, we can't include K_Call here, as it
+// breaks the grammar detecting mutations
+
 // MP: 25-Mar-25: Unfortunately, allowing 'K_Extension' in the identifier group breaks the grammar parsing of
 // type extensions, so people are just gonna have to use backticks for that one.
 identifier:
-   K_Table | K_Stream | K_Find | K_Map | K_Except | K_Call | K_Filter | K_Query |  K_Read | K_Write | K_Declare | K_Type | K_Model | IdentifierToken;
+   K_Table | K_Stream | K_Find | K_Map | K_Except |  K_Filter | K_Query |  K_Read | K_Write | K_Declare | K_Type | K_Model | IdentifierToken;
 
 K_Find: 'find';
 

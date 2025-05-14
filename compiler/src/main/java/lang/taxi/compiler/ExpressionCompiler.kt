@@ -16,6 +16,7 @@ import lang.taxi.expressions.*
 import lang.taxi.functions.Function
 import lang.taxi.query.ConstraintBuilder
 import lang.taxi.services.Service
+import lang.taxi.query.DiscoveryType
 import lang.taxi.services.operations.constraints.ExpressionConstraint
 import lang.taxi.types.*
 import lang.taxi.utils.*
@@ -31,7 +32,13 @@ class ExpressionCompiler(
     */
    private val fieldCompiler: FieldCompiler? = null,
    private val scopes: List<Argument> = emptyList(),
-   private val typedExpressionBuilder: TypedExpressionBuilder = DefaultTypedExpressionBuilder
+   private val typedExpressionBuilder: TypedExpressionBuilder = DefaultTypedExpressionBuilder,
+   // MP: 11-Mar-25
+   // Only for when compiling a top-level projection expression (currently)
+   // Trying to get top-level projection expressions using the same code
+   // as field projections.
+   // This isn't right long-term, but exploring
+   private val discoveryType: DiscoveryType? = null
 ) : FunctionParameterReferenceResolver {
    private val functionCompiler = FunctionAccessorCompiler(
       tokenProcessor,
@@ -64,6 +71,12 @@ class ExpressionCompiler(
          typedExpressionBuilder = typedExpressionBuilder
       )
    }
+   fun forDiscoveryType(source: DiscoveryType): ExpressionCompiler {
+      return ExpressionCompiler(
+         tokenProcessor, typeChecker, errors, fieldCompiler, scopes, typedExpressionBuilder,
+         discoveryType = source
+      )
+   }
 
    fun compile(
       expressionGroup: ExpressionGroupContext,
@@ -81,6 +94,23 @@ class ExpressionCompiler(
       return when {
          expressionGroup.castExpression() != null -> compileCastExpression(expressionGroup, targetType)
 
+         // 11-Mar:
+         // Top-level projections
+         // find { Foo } as (Thing[]) -> Bar[] as {
+         // }[]
+         expressionGroup.children.size ==1 && expressionGroup.expressionAtom()?.typeProjection() != null && discoveryType != null -> {
+            val anonymousTypeName = NameGenerator.generate()
+            val fieldTypeSpec = FieldTypeSpec.forDiscoveryTypes(discoveryType)
+            compileExpressionProjectionWithoutField(
+               expressionGroup.expressionAtom()!!.typeProjection()!!,
+               fieldTypeSpec,
+               anonymousTypeName
+            ).map { projectedTypeAndScope ->
+               // TODO: Constraints?
+               val projection = FieldProjection.forNullable(discoveryType.type, emptyList(), projectedTypeAndScope)!!
+               ProjectingExpression(discoveryType.expression, projection)
+            }
+         }
          expressionGroup.children.size == 2 && expressionGroup.children.last() is TypeProjectionContext && expressionGroup.children.first() is ExpressionGroupContext -> {
             // This is an expression with a projection.
             // Compile the expression first.
@@ -232,8 +262,13 @@ class ExpressionCompiler(
                      // Implementing policies 2.0
                      // We need spread operator capabilities when compiling expressions,
                      // which requires a scope.
-                     activeScopes = listOf(ProjectionFunctionScope.implicitThis(projectionSourceType.type)),
-                     parameters = this.scopes
+                     // MP: 11-Mar-25: Updated this -- why weren't we passing the projectionScope in here?
+                     // It now breaks things as we're DRYing up expression compilation and sending more
+                     // code down this path.
+                     activeScopes = projectionScope,
+                     //activeScopes = listOf(ProjectionFunctionScope.implicitThis(projectionSourceType.type)),
+                     parameters = this.scopes,
+                     typesToDiscover = listOfNotNull(discoveryType)
                   )
                )
 
@@ -336,8 +371,9 @@ class ExpressionCompiler(
             expressionAtom.objectValue(),
             assignmentType
          )
+         expressionAtom.typeProjection() != null -> parseTypeProjectionExpression(expressionAtom.typeProjection(), assignmentType)
 
-         else -> error("Unhandled atom in expression: ${expressionAtom.text}")
+         else -> expressionAtom.createInternalError("Unhandled atom in expression: ${expressionAtom.text}")
       }
    }
 
@@ -911,6 +947,9 @@ class ExpressionCompiler(
    }
 
 
+   private fun parseTypeProjectionExpression(typeProjection: TypeProjectionContext, assignmentType: Type?): Either<List<CompilationError>, Expression> {
+      TODO()
+   }
    private fun parseTypeExpression(typeExpression: TaxiParser.TypeExpressionContext): Either<List<CompilationError>, Expression> {
       val typeReference = typeExpression.nullableTypeReference().typeReference()
       if (typeReference != null && canResolveAsScopePath(typeReference.qualifiedName())) {

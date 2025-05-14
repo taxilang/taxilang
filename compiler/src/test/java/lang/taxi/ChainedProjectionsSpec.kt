@@ -113,7 +113,7 @@ find { Film } as Actor[]
          val field = query
       }
 
-      it("top-level chained projection") {
+      it("field-level chained projection") {
          val (_,query) = schema.compiledWithQuery(
             """find { Film } as {
    id : FilmId
@@ -124,5 +124,33 @@ find { Film } as Actor[]
          )
          val field = query
       }
+
+      it("top-level chained projection") {
+         val (_,query) = schema.compiledWithQuery(
+            """find { Film } as CastResponse as Actor[] as (actor:Actor) -> {
+      personName : PersonName
+   }[]
+"""
+         )
+         val field = query
+      }
+//
+//      it("can use a projection after multiple chained projection") {
+//         """
+//model FilmListWrapper {
+//   filmBundle: FilmBundle[]
+//}
+//model FilmBundle {
+//   film: Film
+//}
+//model Film {
+//   title : Title inherits String
+//}
+//         """.compiledWithQuery("""
+//            find { FilmListWrapper } as (bundle:FilmBundle[]) -> Film[] as {
+//               name : Title
+//            }[]
+//         """.trimIndent())
+//      }
    }
 })

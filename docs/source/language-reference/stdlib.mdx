@@ -231,6 +231,7 @@ Returns a collection containing the items present in both the provided collectio
 declare function <T> listOf(values:T...):T[]
 ```
 
+xxx
 Returns an array containing the provided values
 
 ### joinToString
@@ -240,7 +241,7 @@ Returns an array containing the provided values
 declare extension function <T> joinToString(values:T[], separator: String = ",", prefix: String? = null, postfix: String? = null): String
 ```
 
-Creates a string from all the elements separated using separator and using the given prefix and postfix if supplied.
+Creates a string from all the elements separated using separator and using the given prefix and postfix if supplied. Null values are omitted
 
 ## Dates
 
@@ -383,27 +384,6 @@ For example:
 ```taxi
 // Will return an array of Title, where the text has been converted to uppercase
 Film[].map ( (Title) -> Title.upperCase() )
-```
-
-### sum
-`taxi.stdlib.sum`
-
-```taxi
-declare extension function <T,A> sum(collection: T[], callback: (T) -> A):A
-```
-
-### max
-`taxi.stdlib.max`
-
-```taxi
-declare extension function <T,A> max(collection: T[], callback: (T) -> A):A
-```
-
-### min
-`taxi.stdlib.min`
-
-```taxi
-declare extension function <T,A> min(collection: T[], callback: (T) -> A):A
 ```
 
 ## Transformations

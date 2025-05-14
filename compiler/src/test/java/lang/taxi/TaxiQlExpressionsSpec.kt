@@ -161,5 +161,7 @@ class TaxiQlExpressionsSpec : DescribeSpec({
             stream { StockTrade.filterEach( (Ticker) -> Ticker == "AAPL" ) }
          """.trimIndent())
       }
+
+
    }
 })

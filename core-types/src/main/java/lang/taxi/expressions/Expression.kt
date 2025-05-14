@@ -290,8 +290,7 @@ data class ExpressionGroup(val expressions: List<Expression>) : Expression() {
 data class ProjectingExpression(val expression: Expression, val projection: FieldProjection) : Expression() {
    override val compilationUnits: List<CompilationUnit> = expression.compilationUnits
 
-   override val returnType: Type
-      get() = projection.projectedType
+   override val returnType: Type = projection.returnType
 }
 
 fun List<Expression>.toExpressionGroup(): Expression {
