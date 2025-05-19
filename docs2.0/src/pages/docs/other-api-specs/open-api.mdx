@@ -45,10 +45,14 @@ for each.
   <p>Only create new types (<code>create: true</code>) when you're intentionally extending your semantic model, or creating a type you're not ready to share yet.</p>
 </Callout>
 
-### Declaring write operations
-Some TaxiQL behaviour depends on operations being declared as write operations (sometimes referred to as 'mutations').
+### Declaring operation kinds
+Some TaxiQL behavior depends on whether operations are read-only or write operations (sometimes referred to as 'mutations').
 
-To indicate that an operation is a write operation, use a `x-taxi-operation-kind` of `write` at the operation level:
+By default:
+- **GET**, **HEAD**, and **OPTIONS** methods are treated as **read** operations (default, no modifier)
+- **POST**, **PUT**, **PATCH**, and **DELETE** methods are treated as **write** operations
+
+You can override this default behavior using `x-taxi-operation-kind` at the operation level:
 
 ```yaml
    openapi: "3.0.0"
@@ -57,8 +61,23 @@ To indicate that an operation is a write operation, use a `x-taxi-operation-kind
      title: Swagger Petstore
    paths:
      /pets:
+       # POST operations are 'write' by default, but this can be overridden
        post:
->        x-taxi-operation-kind: write
+         x-taxi-operation-kind: read  # Override to make a POST operation read-only
+         responses:
+           '200':
+             description: successful operation
+             content:
+               application/json:
+                 schema:
+                   type: object
+                   properties:
+                     name:
+                       type: string
+       
+       # GET operations are 'read' by default, but this can be overridden
+       get:
+         x-taxi-operation-kind: write  # Override to make a GET operation a write operation
          responses:
            '200':
              description: successful operation
@@ -70,6 +89,10 @@ To indicate that an operation is a write operation, use a `x-taxi-operation-kind
                      name:
                        type: string
 ```
+
+Possible values for `x-taxi-operation-kind`:
+- `read` - The operation is read-only (default for GET, HEAD, OPTIONS)
+- `write` - The operation modifies data (default for POST, PUT, PATCH, DELETE)
 
 ## Enriching OpenAPI Components
 

@@ -110,7 +110,7 @@ class OpenApiServiceMapper(
 
       return lang.taxi.services.Operation(
          operationId,
-         openApiOperation.taxiOperationKind,
+         openApiOperation.getOperationKind(method),
          annotations.toAnnotations(),
          parameters + listOfNotNull(requestBodyParam),
          returnType,
