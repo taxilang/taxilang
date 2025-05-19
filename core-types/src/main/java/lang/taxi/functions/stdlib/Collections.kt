@@ -8,6 +8,9 @@ object Collections {
       AllOf,
       AnyOf,
       NoneOf,
+      All,
+      Any,
+      None,
       Single,
       Filter,
       FilterEach,
@@ -23,18 +26,48 @@ object Collections {
 }
 
 object NoneOf : FunctionApi {
-   override val taxi: String = "declare function noneOf(values:Boolean...): Boolean"
+   override val taxi: String = """
+      [[ Returns true if all of the provided boolean values are false.
+      See also: none()
+      ]]
+      declare function noneOf(values:Boolean...): Boolean""".trimIndent()
    override val name: QualifiedName = stdLibName("noneOf")
 }
 
+object None : FunctionApi {
+   override val taxi: String =
+      """[[ Returns true if none of the items in the collection satisfy the predicate ]]
+         declare extension function <T> none(collection: T[], predicate: (T) -> Boolean): Boolean""".trimIndent()
+   override val name: QualifiedName = stdLibName("none")
+}
+
 object AnyOf : FunctionApi {
-   override val taxi: String = "declare function anyOf(values:Boolean...): Boolean"
+   override val taxi: String = """
+       [[ Returns true if any of the provided boolean values are true.
+      See also: any()
+      ]]
+      declare function anyOf(values:Boolean...): Boolean""".trimIndent()
    override val name: QualifiedName = stdLibName("anyOf")
 }
+
+object Any : FunctionApi {
+   override val taxi: String =
+      """[[ Returns true if any of the items in the collection satisfy the predicate ]]
+         declare extension function <T> any(collection: T[], predicate: (T) -> Boolean): Boolean""".trimIndent()
+   override val name: QualifiedName = stdLibName("any")
+}
+
 
 object AllOf : FunctionApi {
    override val taxi: String = "declare function allOf(values:Boolean...): Boolean"
    override val name: QualifiedName = stdLibName("allOf")
+}
+
+object All : FunctionApi {
+   override val taxi: String =
+      """[[ Returns true if all of the items in the collection satisfy the predicate ]]
+         declare extension function <T> all(collection: T[], predicate: (T) -> Boolean): Boolean""".trimIndent()
+   override val name: QualifiedName = stdLibName("all")
 }
 
 object Contains : FunctionApi {
