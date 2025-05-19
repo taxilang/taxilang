@@ -3,6 +3,29 @@ package lang.taxi.types
 import lang.taxi.accessors.ProjectionFunctionScope
 import lang.taxi.services.operations.constraints.Constraint
 
+enum class ProjectionKind {
+
+   /**
+    * An iteration occurs when the projection is array-to-array
+    * Input[] as Output[]
+    */
+   Iteration,
+
+   /**
+    * An aggregation occurs when the projection is array-to-single
+    * Input[] as Output
+    */
+   Aggregation,
+
+   /**
+    * Conversion is everything else - ie.,
+    * ie.,
+    *  - Input to Output[] (less common)
+    *  - Input to Output (common)
+    */
+   Conversion
+}
+
 /**
  * Allows a field to define a projection for the field specifically.
  * ie.,
@@ -26,7 +49,14 @@ data class FieldProjection(
     * Generally this is the same as the proejcted type, unless the projection is
     * operating on a stream, in which case it's Stream<T>, not T[]
     */
-   val returnType = convertToStreamIfStreamType(sourceType,projectedType)
+   val returnType = convertToStreamIfStreamType(sourceType, projectedType)
+
+   val projectionKind: ProjectionKind = when {
+      Arrays.isArray(sourceType) && Arrays.isArray(projectedType) -> ProjectionKind.Iteration
+      StreamType.isStream(sourceType) && Arrays.isArray(projectedType) -> ProjectionKind.Iteration
+      Arrays.isArray(sourceType) && !Arrays.isArray(projectedType) -> ProjectionKind.Aggregation
+      else -> ProjectionKind.Conversion
+   }
 
    companion object {
       /**
@@ -41,9 +71,13 @@ data class FieldProjection(
             // The response is Stream<B>, not Stream<B[]>
             // That might not be right ... if not, we can revisit this logic.
             val unwrappedProjectedType = Arrays.unwrapPossibleArrayType(projectedType)
-            return StreamType.of(unwrappedProjectedType, projectedType.compilationUnits.firstOrNull() ?: CompilationUnit.unspecified())
+            return StreamType.of(
+               unwrappedProjectedType,
+               projectedType.compilationUnits.firstOrNull() ?: CompilationUnit.unspecified()
+            )
          } else return projectedType
       }
+
       fun forNullable(
          sourceType: Type,
          sourceTypeConstraints: List<Constraint> = emptyList(),
@@ -53,7 +87,7 @@ data class FieldProjection(
             null
          } else {
             val (projectedType, scope) = projectedTypeAndScope
-            FieldProjection(sourceType, sourceTypeConstraints,  projectedType, scope)
+            FieldProjection(sourceType, sourceTypeConstraints, projectedType, scope)
          }
       }
    }
