@@ -402,4 +402,169 @@ class OpenApiServiceExportTest {
 
       expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
    }
+
+   @Test
+   fun `POST operations are write by default`() {
+      @Language("yaml")
+      val openApiSpec = """
+         openapi: "3.0.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         paths:
+           /pets:
+             post:
+               responses:
+                 '200':
+                   description: successful operation
+                   content:
+                     application/json:
+                       schema:
+                         type: object
+                         properties:
+                           name:
+                             type: string
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            closed model AnonymousTypePostPets {
+              name: String
+            }
+            service PetsService {
+               @taxi.http.HttpOperation(method = "POST" , url = "/pets")
+               write operation PostPets(): AnonymousTypePostPets
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
+
+   @Test
+   fun `GET is read by default`() {
+      @Language("yaml")
+      val openApiSpec = """
+         openapi: "3.0.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         paths:
+           /pets:
+             get:
+               operationId: findPets
+               responses:
+                 '200':
+                   description: pet response
+                   content:
+                     application/json:
+                       schema:
+                         type: object
+                         properties:
+                           name:
+                             type: string
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            closed model AnonymousTypeFindPets {
+              name: String
+            }
+            service PetsService {
+               @taxi.http.HttpOperation(method = "GET" , url = "/pets")
+               operation findPets(): AnonymousTypeFindPets
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
+
+   @Test
+   fun `GET can be overridden to write using x-taxi-operation-kind`() {
+      @Language("yaml")
+      val openApiSpec = """
+         openapi: "3.0.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         paths:
+           /pets:
+             get:
+               x-taxi-operation-kind: write
+               operationId: findPets
+               responses:
+                 '200':
+                   description: pet response
+                   content:
+                     application/json:
+                       schema:
+                         type: object
+                         properties:
+                           name:
+                             type: string
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            closed model AnonymousTypeFindPets {
+              name: String
+            }
+            service PetsService {
+               @taxi.http.HttpOperation(method = "GET" , url = "/pets")
+               write operation findPets(): AnonymousTypeFindPets
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
+
+   @Test
+   fun `POST can be overridden to read using x-taxi-operation-kind`() {
+      @Language("yaml")
+      val openApiSpec = """
+         openapi: "3.0.0"
+         info:
+           version: 1.0.0
+           title: Swagger Petstore
+         paths:
+           /pets:
+             post:
+               x-taxi-operation-kind: read
+               operationId: findPets
+               responses:
+                 '200':
+                   description: pet response
+                   content:
+                     application/json:
+                       schema:
+                         type: object
+                         properties:
+                           name:
+                             type: string
+      """.trimIndent()
+
+      val expectedTaxi = """
+         namespace vyne.openApi {
+            closed model AnonymousTypeFindPets {
+              name: String
+            }
+            service PetsService {
+               @taxi.http.HttpOperation(method = "POST" , url = "/pets")
+               operation findPets(): AnonymousTypeFindPets
+            }
+         }
+      """.trimIndent()
+
+      val taxiDef = TaxiGenerator().generateAsStrings(openApiSpec, "vyne.openApi")
+
+      expectToCompileTheSame(taxiDef.taxi, expectedTaxi)
+   }
 }

@@ -11,7 +11,7 @@
    <artifactId>swagger2taxi</artifactId>
 
    <properties>
-      <jackson.version>2.14.2</jackson.version>
+      <jackson.version>2.17.2</jackson.version>
       <open-api.version>2.2.10</open-api.version>
    </properties>
 

@@ -91,3 +91,4 @@ taxi-cli/out/
 
 ### Nx ###
 .nx/
+**/.claude/settings.local.json
