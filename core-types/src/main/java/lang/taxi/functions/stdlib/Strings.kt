@@ -19,7 +19,10 @@ object Strings {
       Length,
       Find,
       Replace,
-      ContainsString
+      ContainsString,
+      PadStart,
+      PadEnd,
+      ApplyFormat
 //      Coalesce
    )
 }
@@ -68,6 +71,34 @@ object Uppercase : FunctionApi {
 object Lowercase : FunctionApi {
    override val taxi: String = "declare extension function lowerCase(String):String"
    override val name: QualifiedName = stdLibName("lowerCase")
+}
+
+object PadStart : FunctionApi {
+   override val taxi: String = """
+      [[ Pads the string to the specified length at the start with the specified character or space.
+      padWith should be a single character - if multiple characters are passed, only the first is used
+      ]]
+      declare extension function padStart(input: String, length: Int, padWith: String):String""".trimIndent()
+   override val name: QualifiedName = stdLibName("padStart")
+}
+
+object PadEnd : FunctionApi {
+   override val taxi: String = """
+      [[ Pads the string to the specified length at the end with the specified character or space.
+       padWith should be a single character - if multiple characters are passed, only the first is used
+       ]]
+      declare extension function padEnd(input: String, length: Int, padWith: String):String""".trimIndent()
+   override val name: QualifiedName = stdLibName("padEnd")
+}
+
+object ApplyFormat : FunctionApi {
+   override val taxi: String = """
+      [[ Applies the provided format to the input string, and returns the result.
+
+       Formats follow the format defined by the [Java Formatter](https://docs.oracle.com/javase/8/docs/api/java/util/Formatter.html) conventions
+       ]]
+      declare extension function applyFormat(input: Any, format: String):String""".trimIndent().format()
+   override val name: QualifiedName = stdLibName("applyFormat")
 }
 
 object Length: FunctionApi {
