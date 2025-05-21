@@ -64,6 +64,7 @@ private fun docPath(fileName: String): Path {
    // Returns the root of the project
    val projectPart = currentPath.subpath(0, compilerPathIndex).toString()
    val projectRootPath = Paths.get("/", projectPart)
-   val docsPath = projectRootPath.resolve("docs/source/language-reference/")
+
+   val docsPath = projectRootPath.resolve("docs2.0/src/pages/docs/language/")
    return docsPath.resolve(fileName)
 }

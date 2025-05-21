@@ -112,6 +112,37 @@ declare extension function containsString(source:String, valueToSearchFor:String
 
 Returns true if `valueToSearchFor` within `source`
 
+### padStart
+`taxi.stdlib.padStart`
+
+```taxi
+declare extension function padStart(input: String, length: Int, padWith: String):String
+```
+
+Pads the string to the specified length at the start with the specified character or space.
+padWith should be a single character - if multiple characters are passed, only the first is used
+
+### padEnd
+`taxi.stdlib.padEnd`
+
+```taxi
+declare extension function padEnd(input: String, length: Int, padWith: String):String
+```
+
+Pads the string to the specified length at the end with the specified character or space.
+padWith should be a single character - if multiple characters are passed, only the first is used
+
+### applyFormat
+`taxi.stdlib.applyFormat`
+
+```taxi
+declare extension function applyFormat(input: Any, format: String):String
+```
+
+Applies the provided format to the input string, and returns the result.
+
+Formats follow the format defined by the [Java Formatter](https://docs.oracle.com/javase/8/docs/api/java/util/Formatter.html) conventions
+
 ## Collections
 
 A collection of functions for operating on collections
@@ -137,12 +168,45 @@ declare function allOf(values:Boolean...): Boolean
 declare function anyOf(values:Boolean...): Boolean
 ```
 
+Returns true if any of the provided boolean values are true.
+See also: any()
+
 ### noneOf
 `taxi.stdlib.noneOf`
 
 ```taxi
 declare function noneOf(values:Boolean...): Boolean
 ```
+
+Returns true if all of the provided boolean values are false.
+See also: none()
+
+### all
+`taxi.stdlib.all`
+
+```taxi
+declare extension function <T> all(collection: T[], predicate: (T) -> Boolean): Boolean
+```
+
+Returns true if all of the items in the collection satisfy the predicate
+
+### any
+`taxi.stdlib.any`
+
+```taxi
+declare extension function <T> any(collection: T[], predicate: (T) -> Boolean): Boolean
+```
+
+Returns true if any of the items in the collection satisfy the predicate
+
+### none
+`taxi.stdlib.none`
+
+```taxi
+declare extension function <T> none(collection: T[], predicate: (T) -> Boolean): Boolean
+```
+
+Returns true if none of the items in the collection satisfy the predicate
 
 ### single
 `taxi.stdlib.single`
@@ -224,6 +288,25 @@ declare extension function <T> intersection(collectionA: T[], collectionB: T[]):
 
 Returns a collection containing the items present in both the provided collections
 
+### listOf
+`taxi.stdlib.listOf`
+
+```taxi
+declare function <T> listOf(values:T...):T[]
+```
+
+xxx
+Returns an array containing the provided values
+
+### joinToString
+`taxi.stdlib.joinToString`
+
+```taxi
+declare extension function <T> joinToString(values:T[], separator: String = ",", prefix: String? = null, postfix: String? = null): String
+```
+
+Creates a string from all the elements separated using separator and using the given prefix and postfix if supplied. Null values are omitted
+
 ## Dates
 
 Mess about with time. Flux capacitor not included
@@ -284,6 +367,40 @@ declare function currentTime():Time
 declare function <T> parseDate(String):T
 ```
 
+## Math
+
+Numbers 'n' such. Maths for the brits.
+
+### round
+`taxi.stdlib.round`
+
+```taxi
+declare extension function round(value: Decimal, precision: Int = 0): Decimal
+```
+
+Rounds a decimal value to the specified precision.
+
+### sum
+`taxi.stdlib.sum`
+
+```taxi
+declare extension function <T,A> sum(collection: T[], callback: (T) -> A):A
+```
+
+### max
+`taxi.stdlib.max`
+
+```taxi
+declare extension function <T,A> max(collection: T[], callback: (T) -> A):A
+```
+
+### min
+`taxi.stdlib.min`
+
+```taxi
+declare extension function <T,A> min(collection: T[], callback: (T) -> A):A
+```
+
 ## Objects
 
 Utilities for dealing with equality, etc
@@ -294,6 +411,31 @@ Utilities for dealing with equality, etc
 ```taxi
 declare extension function <A,B> equals(a:A, b:B): Boolean
 ```
+
+## Enums
+
+Utilities for enums
+
+### enumForName
+`taxi.stdlib.enumForName`
+
+```taxi
+declare extension function <T> enumForName(enumType: lang.taxi.Type<T>, enumName: String): T
+```
+
+Returns the enum value for the provided name
+
+### hasEnumNamed
+`taxi.stdlib.hasEnumNamed`
+
+```taxi
+declare extension function <T> hasEnumNamed(enumType: lang.taxi.Type<T>, enumName: String): Boolean
+```
+
+Indicates if the enum contains an entry for the provided key.
+
+Ignores default entries, so an enum with a default will return false to enumContains()
+ if the key isn't explicitly defined.
 
 ## Aggregations
 
@@ -367,27 +509,6 @@ For example:
 Film[].map ( (Title) -> Title.upperCase() )
 ```
 
-### sum
-`taxi.stdlib.sum`
-
-```taxi
-declare extension function <T,A> sum(collection: T[], callback: (T) -> A):A
-```
-
-### max
-`taxi.stdlib.max`
-
-```taxi
-declare extension function <T,A> max(collection: T[], callback: (T) -> A):A
-```
-
-### min
-`taxi.stdlib.min`
-
-```taxi
-declare extension function <T,A> min(collection: T[], callback: (T) -> A):A
-```
-
 ## Transformations
 
 Functions for converting between types
@@ -427,3 +548,14 @@ This can be useful if trying to compare values ignoring their type.
 
 Not supported for calling on an object (or array of objects), as Taxi's type system
 is structural, and needs to know the structure of the type it's operating on.
+
+## Errors
+
+Functions for creating and handling errors
+
+### throw
+`taxi.stdlib.throw`
+
+```taxi
+declare function throw(error:Any):Nothing
+```
