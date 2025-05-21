@@ -137,12 +137,45 @@ declare function allOf(values:Boolean...): Boolean
 declare function anyOf(values:Boolean...): Boolean
 ```
 
+Returns true if any of the provided boolean values are true.
+See also: any()
+
 ### noneOf
 `taxi.stdlib.noneOf`
 
 ```taxi
 declare function noneOf(values:Boolean...): Boolean
 ```
+
+Returns true if all of the provided boolean values are false.
+See also: none()
+
+### all
+`taxi.stdlib.all`
+
+```taxi
+declare extension function <T> all(collection: T[], predicate: (T) -> Boolean): Boolean
+```
+
+Returns true if all of the items in the collection satisfy the predicate
+
+### any
+`taxi.stdlib.any`
+
+```taxi
+declare extension function <T> any(collection: T[], predicate: (T) -> Boolean): Boolean
+```
+
+Returns true if any of the items in the collection satisfy the predicate
+
+### none
+`taxi.stdlib.none`
+
+```taxi
+declare extension function <T> none(collection: T[], predicate: (T) -> Boolean): Boolean
+```
+
+Returns true if none of the items in the collection satisfy the predicate
 
 ### single
 `taxi.stdlib.single`
@@ -303,6 +336,40 @@ declare function currentTime():Time
 declare function <T> parseDate(String):T
 ```
 
+## Math
+
+Numbers 'n' such. Maths for the brits.
+
+### round
+`taxi.stdlib.round`
+
+```taxi
+declare extension function round(value: Decimal, precision: Int = 0): Decimal
+```
+
+Rounds a decimal value to the specified precision.
+
+### sum
+`taxi.stdlib.sum`
+
+```taxi
+declare extension function <T,A> sum(collection: T[], callback: (T) -> A):A
+```
+
+### max
+`taxi.stdlib.max`
+
+```taxi
+declare extension function <T,A> max(collection: T[], callback: (T) -> A):A
+```
+
+### min
+`taxi.stdlib.min`
+
+```taxi
+declare extension function <T,A> min(collection: T[], callback: (T) -> A):A
+```
+
 ## Objects
 
 Utilities for dealing with equality, etc
@@ -313,6 +380,31 @@ Utilities for dealing with equality, etc
 ```taxi
 declare extension function <A,B> equals(a:A, b:B): Boolean
 ```
+
+## Enums
+
+Utilities for enums
+
+### enumForName
+`taxi.stdlib.enumForName`
+
+```taxi
+declare extension function <T> enumForName(enumType: lang.taxi.Type<T>, enumName: String): T
+```
+
+Returns the enum value for the provided name
+
+### hasEnumNamed
+`taxi.stdlib.hasEnumNamed`
+
+```taxi
+declare extension function <T> hasEnumNamed(enumType: lang.taxi.Type<T>, enumName: String): Boolean
+```
+
+Indicates if the enum contains an entry for the provided key.
+
+Ignores default entries, so an enum with a default will return false to enumContains()
+ if the key isn't explicitly defined.
 
 ## Aggregations
 
@@ -425,3 +517,14 @@ This can be useful if trying to compare values ignoring their type.
 
 Not supported for calling on an object (or array of objects), as Taxi's type system
 is structural, and needs to know the structure of the type it's operating on.
+
+## Errors
+
+Functions for creating and handling errors
+
+### throw
+`taxi.stdlib.throw`
+
+```taxi
+declare function throw(error:Any):Nothing
+```
