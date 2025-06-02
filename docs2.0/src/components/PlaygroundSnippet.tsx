@@ -318,7 +318,7 @@ export interface OperationStub {
 }
 
 // Attach compound components
-PlaygroundSnippet.Description = Description;
-PlaygroundSnippet.Scenario = Scenario;
+(PlaygroundSnippet as any).Description = Description;
+(PlaygroundSnippet as any).Scenario = Scenario;
 
 export default PlaygroundSnippet;

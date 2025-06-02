@@ -206,7 +206,6 @@ type CanPurchasePremium inherits Boolean by allOf(IsActive, HasSufficientFunds, 
 This example demonstrates how to use `allOf()` to verify if a user meets all required criteria for premium access.
 
 <PlaygroundSnippet
-  title = 'This is a title'
   scenario={{
   "schema" : "model Customer {\n   name: String\n   isActive: IsActive inherits Boolean\n   hasSufficientFunds: HasSufficientFunds inherits Boolean\n   isVerified: IsVerified inherits Boolean\n}\ntype HasPremiumAccess inherits Boolean by allOf(IsActive, HasSufficientFunds, IsVerified)",
   "query" : "given {\n   customer: Customer = {\n      name: 'Bob',\n      isActive: true,\n      hasSufficientFunds: true,\n      isVerified: true\n   }\n}\nfind {\n   name: customer.name\n   hasPremiumAccess: HasPremiumAccess\n}",
