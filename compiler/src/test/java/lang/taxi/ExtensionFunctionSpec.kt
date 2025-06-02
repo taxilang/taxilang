@@ -187,6 +187,27 @@ class ExtensionFunctionSpec : DescribeSpec({
          """.trimIndent())
       }
 
+      it("is valid to call an extension function against a property accessed") {
+val (schema,query) = """
+   model User {
+      username: String
+      roles: String[]
+   }
+""".compiledWithQuery("""
+given {
+   user: User = {
+      username: 'AdminUser',
+      roles: ['USER', 'EDITOR', 'ADMIN']
+   }
+}
+find {
+   username: user.username
+   isAdmin: Boolean = user.roles.contains("ADMIN")
+   isGuest: Boolean = user.roles.contains("GUEST")
+}
+""".trimIndent())
+      }
+
 
    }
 })

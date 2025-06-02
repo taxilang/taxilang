@@ -1,0 +1,431 @@
+---
+title: Functions
+description: Declare, compose, and extend functionality with Taxi's function system
+---
+
+import { Callout } from '@/components/docs/Callout';
+
+## Overview
+
+Taxi's function system allows you to declare functions for data manipulation. While Taxi doesn't implement these functions itself (that's left to runtimes like [Orbital](https://orbitalhq.com)), it provides a rich system for declaring, composing, and extending functionality.
+
+<Callout type="note" title="Type-centric parameters">
+  In Taxi's type-centric approach, function parameters are defined by their **type**, not by variable names. Variable names are optional and improve readability, but the type is what's mandatory. This applies to all function definitions in Taxi.
+</Callout>
+
+## Function parameters in Taxi
+
+Understanding how Taxi handles function parameters is crucial since it differs from traditional programming languages.
+
+### Type-first parameter definition
+
+In Taxi, parameters are primarily defined by their type:
+
+```taxi
+// Basic function - parameter defined by type
+function upperTrim(String): String -> String.trim().upperCase()
+
+// Multiple parameters by type
+function concat(String, String): String
+
+// Optional variable names for readability
+function upperTrim(text: String): String -> text.trim().upperCase()
+function concat(first: String, second: String): String
+```
+
+### Parameter access patterns
+
+How you access parameters depends on whether you've assigned variable names:
+
+```taxi
+// Without variable names - use the type name
+function formatName(FirstName, LastName): String -> 
+   concat(FirstName, ' ', LastName).upperCase()
+
+// With variable names - use the variable
+function formatName(first: FirstName, last: LastName): String -> 
+   concat(first, ' ', last).upperCase()
+
+// Mixed approach
+function processCustomer(Customer, status: Status): String ->
+   concat(Customer::Name, ' - ', status)
+```
+
+<Callout type="info" title="Types vs variables as inputs" content={`
+Inputs to functions are defined using their type, and optionally a variable name:
+  - \`(String)\` references the String **type** directly
+  - \`(text: String)\` creates a **variable** named \`text\` of type String
+  - Without variable names, access fields using the type: \`String.trim()\`
+  - With variable names, access through the variable: \`text.trim()\`
+`}>
+</Callout>
+
+## Declaring functions
+
+Function declarations define the signature and contract of operations that can be used throughout your Taxi schemas.
+
+There are two basic types of functions in Taxi:
+ * **External functions**: Use `declare function` to expose a function signature to the compiler without providing implementation. The actual implementation is provided by runtime engines like [Orbital](https://orbitalhq.com). Examples include Taxi's [StdLib](docs/language/stdlib) functions like `concat()` and `upperCase()`.
+ * **Composed functions**:  Use `function` to define functions with implementation bodies that combine existing functions. These are written entirely in Taxi and built from other functions.
+
+
+```taxi
+// External function - signature only
+declare extension function upperCase(String): String
+
+// Composed function - has implementation body  
+function formatName(FirstName, LastName): String ->
+   concat(FirstName, ' ', LastName).upperCase()
+```
+
+### Declaring external functions
+
+External functions are defined as `declare function ...`, and do not define a function body:
+
+```taxi
+namespace com.example {
+   // Type-based parameters
+   declare function concat(String, String): String
+   declare function upperCase(String): String
+   
+   // With optional variable names
+   declare function calculateTax(amount: Decimal, rate: TaxRate): Decimal
+}
+```
+
+### With parameter names
+
+Named parameters improve readability and make function calls more self-documenting, especially for functions with multiple parameters of the same type.
+
+```taxi
+declare function concat(first: String, second: String): String
+declare function substring(
+   text: String, 
+   start: Int, 
+   length: Int
+): String
+```
+
+### Vararg parameters
+
+Variable argument parameters allow functions to accept a flexible number of inputs, useful for operations like concatenation or mathematical functions that work on multiple values.
+
+```taxi
+// Type-based varargs
+// values accepts multiple strings
+declare function concat(String...): String
+
+// Mixed regular and vararg with variable names
+declare function max(first: Int, rest: Int...): Int
+```
+
+## Using functions
+
+Functions can be integrated into your data models and queries in several ways, enabling both compile-time expressions and runtime data transformations.
+
+### In field expressions
+
+Field expressions allow you to define computed fields that automatically calculate values based on other fields in the same model.
+
+```taxi
+model Person {
+   firstName : FirstName inherits String
+   lastName : LastName inherits String
+   
+   // Using type references directly
+   fullName : String = concat(FirstName, ' ', LastName)
+   
+   // Using field references with 'this'
+   formalName : String = concat(this.lastName, ', ', this.firstName)
+   
+   // Chained operations on types
+   displayName : String = concat(FirstName, ' ', LastName).upperCase()
+}
+```
+
+### In expression types
+
+Expression types encapsulate common calculations into reusable type definitions, promoting consistency and reducing duplication across your schemas.
+
+```taxi
+// Type-based expression
+type FullName inherits String = concat(FirstName, ' ', LastName)
+
+// Used in models
+model Person {
+   firstName : FirstName
+   lastName : LastName
+   fullName : FullName  // Computed using the expression
+}
+```
+
+## Composed functions
+
+Composed functions let you build complex business logic by combining simpler functions, creating reusable operations that encapsulate multi-step transformations.
+
+```taxi
+// Type-based parameters
+function upperTrim(String): String -> 
+   String.trim().upperCase()
+
+// With variable names for readability
+function formatName(first: FirstName, last: LastName): String ->
+   concat(first, ' ', last).upperCase()
+
+// Complex logic with conditionals
+function displayPrice(amount: Decimal, currency: Currency): String ->
+   when {
+      currency == "USD" -> concat("$", amount)
+      currency == "EUR" -> concat("€", amount)
+      else -> concat(amount, " ", currency)
+   }
+```
+
+<Callout type="note" title="Function composition">
+  Composed functions let you create reusable business logic by combining existing functions. This promotes code reuse and maintains consistency.
+</Callout>
+
+### Collection operations
+
+Collection operations provide powerful tools for filtering, transforming, and extracting data from arrays, enabling complex data processing with simple, readable syntax.
+
+```taxi
+// Type-based collection functions
+function activeAddress(Address[]): Address -> 
+   Address[].single((IsCurrentAddress) -> IsCurrentAddress == true)
+
+// With variable names
+function activeCustomers(customers: Customer[]): Customer[] ->
+   customers.filter((c: Customer) -> c::IsActive == true)
+
+// Type references in transformations
+function customerNames(Customer[]): String[] ->
+   Customer[].map((Customer) -> Customer::FullName)
+```
+
+<Callout type="note" title="Functions vs Expression Types" content={`
+Functions and Expression Types can be used interchangeably.\n\nIt's sometimes cleaner to model your business logic as an expression type, which can be declared directly as a field type on a model.\n\nOther times, it's more natural to express logic as a function (especially using [extension functions](#extension-function)).\n\nOften, it's a matter of style and taste.`}>
+   
+  
+  
+</Callout>
+
+## Extension functions
+
+Extension functions provide a natural, method-like syntax for operations that primarily work on a specific type, making your code more readable and discoverable.
+
+### Basic extension functions
+
+```taxi
+// Declare extension function
+declare extension function upperCase(String): String
+declare extension function isActive(Customer): Boolean
+
+// Usage as method calls
+find { Customer } as {
+   name: CustomerName.upperCase()
+   active: Customer.isActive()
+}
+```
+
+### Extension functions with bodies
+
+Extension functions with implementation bodies allow you to define complex operations that can be called using intuitive method syntax.
+
+```taxi
+// Type-based extension
+extension function formatPhone(PhoneNumber): String ->
+   concat("(", PhoneNumber.substring(0, 3), ") ", PhoneNumber.substring(3, 6), "-", PhoneNumber.substring(6))
+
+// With variable name
+extension function formatPhone(phone: PhoneNumber): String ->
+   concat("(", phone.substring(0, 3), ") ", phone.substring(3, 6), "-", phone.substring(6))
+
+// Collection extension with type reference
+extension function primaryApplicant(Individual[]): Individual ->
+   Individual[].single((IsPrimaryApplicant) -> IsPrimaryApplicant == true)
+```
+
+### Usage patterns
+
+Extension functions shine when you need to chain operations or when the primary parameter is the most important context for the operation.
+
+```taxi
+// Direct type usage
+type FormattedPhone = PhoneNumber.formatPhone()
+
+// In queries
+find { Case } as {
+   primary: Individual[].primaryApplicant()
+   primaryPhone: Individual[].primaryApplicant().phoneNumber.formatPhone()
+}
+
+// In expressions with variable names
+model Account {
+   customers: Customer[]
+   activeCustomerCount: Int = this.customers.activeCount()
+}
+```
+
+## Lambda functions
+
+Lambda functions enable higher-order operations where functions can accept other functions as parameters, allowing for flexible 
+and reusable data processing patterns.
+
+They follow the same type-centric parameter approach:
+
+```taxi
+// Function accepting a lambda
+declare function map<T, R>(items: T[], mapper: (T) -> R): R[]
+declare function filter<T>(items: T[], predicate: (T) -> Boolean): T[]
+
+// Usage with type-based parameters
+type CustomerNames = map(Customer[], (Customer) -> Customer::Name)
+type ActiveCustomers = filter(Customer[], (Customer) -> Customer::IsActive)
+
+// With variable names for clarity
+type CustomerNames = map(Customer[], (c: Customer) -> c::Name)
+type ActiveCustomers = filter(Customer[], (c: Customer) -> c::IsActive)
+```
+
+### Multiple parameter lambdas
+
+```taxi
+declare function reduce<T, R>(
+   items: T[], 
+   initial: R, 
+   reducer: (R, T) -> R
+): R
+
+// Type-based parameters
+type TotalValue = reduce(Order[], 0, (Decimal, Order) -> Decimal + Order::Amount)
+
+// With variable names
+type TotalValue = reduce(Order[], 0, (total: Decimal, order: Order) -> total + order::Amount)
+```
+
+### Collection operations with lambdas
+
+```taxi
+// Type references
+customers.filter((Customer) -> Customer::IsActive == true)
+customers.map((Customer) -> Customer::EmailAddress)
+
+// Variable names
+customers.filter((c: Customer) -> c::IsActive == true)
+customers.map((c: Customer) -> c::EmailAddress)
+
+// Complex expressions with mixed approaches
+orders
+   .filter((Order) -> Order::Amount > 100 && Order::Status == "Pending")
+   .map((order: Order) -> order::Customer::Name)
+```
+
+## Generic functions
+
+Generic functions provide type safety while working across different types:
+
+```taxi
+// Generic function declaration
+declare function <T> firstOrNull(T[]): T?
+declare function <T, R> transform(T, transformer: (T) -> R): R
+
+// Generic extension function
+declare extension function <T> isEmpty(T[]): Boolean
+
+// Usage maintains type safety
+type FirstCustomer = firstOrNull(Customer[])  // Returns Customer?
+type Names = transform(Customer[], (Customer[]) -> String[])  // Returns String[]
+```
+
+## Function composition patterns
+
+### Pipeline pattern
+
+```taxi
+// Chained operations with type references
+function processCustomerName(String): String ->
+   String.trim().lowerCase().capitalizeFirst()
+
+// With filtering and transformation
+function getActiveCustomerEmails(Customer[]): EmailAddress[] ->
+   Customer[]
+      .filter((Customer) -> Customer::IsActive == true)
+      .filter((Customer) -> Customer::HasEmail == true)
+      .map((Customer) -> Customer::EmailAddress)
+
+// Same logic with variable names for readability
+function getActiveCustomerEmails(customers: Customer[]): EmailAddress[] ->
+   customers
+      .filter((c: Customer) -> c::IsActive == true)
+      .filter((c: Customer) -> c::HasEmail == true)
+      .map((c: Customer) -> c::EmailAddress)
+```
+
+### Conditional composition
+
+```taxi
+function calculatePrice(basePrice: Decimal, customerType: CustomerType): Decimal ->
+   when {
+      customerType == "VIP" -> basePrice * 0.8
+      customerType == "Regular" -> basePrice * 0.95
+      else -> basePrice
+   }
+```
+
+### Nested function calls
+
+```taxi
+// Type-based approach
+function formatCustomerSummary(Customer): String ->
+   concat(
+      Customer::FirstName.upperCase(),
+      " ",
+      Customer::LastName.upperCase(),
+      " (",
+      Customer::EmailAddress.lowerCase(),
+      ")"
+   )
+
+// With variable for readability
+function formatCustomerSummary(customer: Customer): String ->
+   concat(
+      customer::FirstName.upperCase(),
+      " ",
+      customer::LastName.upperCase(),
+      " (",
+      customer::EmailAddress.lowerCase(),
+      ")"
+   )
+```
+
+### Advanced patterns
+
+```taxi
+// Complex transformation showing type-centric approach
+function enrichWithCustomerData(Order[]): EnrichedOrder[] ->
+   Order[].map((Order) -> EnrichedOrder {
+      orderId: Order::OrderId,
+      amount: Order::Amount,
+      customerName: Order::Customer::Name,
+      customerTier: Order::Customer::LoyaltyTier,
+      isHighValue: Order::Amount > 500
+   })
+
+// Same with variable names
+function enrichWithCustomerData(orders: Order[]): EnrichedOrder[] ->
+   orders.map((order: Order) -> EnrichedOrder {
+      orderId: order::OrderId,
+      amount: order::Amount,
+      customerName: order::Customer::Name,
+      customerTier: order::Customer::LoyaltyTier,
+      isHighValue: order::Amount > 500
+   })
+```
+
+## Standard library (StdLib)
+
+Taxi includes a comprehensive standard library of commonly-needed functions, covering string manipulation, numeric operations, and collection processing.
+
+Read more in the docs for [StdLib](/docs/language/stdlib)
+

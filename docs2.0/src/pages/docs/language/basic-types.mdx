@@ -84,6 +84,31 @@ model Person {
 }
 ```
 
+Array values can be read in two different ways:
+
+**Array index syntax**
+
+```taxi
+model Person {
+  friends: Person[]
+  bestFriend : this.friends[0] // access using field name
+  anotherWayOfSayingBestFriend: Person[][0] // access using type reference
+}
+
+// or, in a query:
+given { index: Int = 3 } // can come from any expression
+find { Person } as {
+   friends: this.friends[index]
+}
+```
+
+**Using a get function**
+Taxi's stdlib has a number of functions for filtering and reading arrays, such as:
+ * [`getAtIndex()`](/docs/language/stdlib#get-at-index)
+ * [`first()`](/docs/language/stdlib#first)
+ * [`last()`](/docs/language/stdlib#last)
+
+
 ### Maps
 Maps are key-value collections:
 

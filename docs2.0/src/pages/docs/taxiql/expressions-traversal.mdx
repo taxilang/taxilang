@@ -1,0 +1,209 @@
+---
+title: Expressions
+description: Use expressions to compute data
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+
+Expressions allow defining business logic, computing and transforming data - either directly within a query,
+or on an expression type, which allows encpaulating business logic into reusiable types.
+
+
+## Expressions in queries
+
+Expressions can be defined inline in a query body, or a `given` clause:
+
+<PlaygroundSnippet
+  title="Computing values with expressions"
+  scenario={{
+    "schema": `model Flight {
+   flightNumber : FlightNumber inherits String
+   totalSeats : TotalSeats inherits Int
+   soldSeats : SoldSeats inherits Int
+}
+    
+    service FlightService {
+       operation getFlights():Flight[]
+    }`,
+    "query": `find { Flight[] } as {
+   flightNumber : FlightNumber
+   totalSeats : TotalSeats
+   soldSeats : SoldSeats
+   // Compute remaining seats
+   remainingSeats : Int = this.totalSeats - this.soldSeats
+   // Calculate utilization percentage
+   utilization : Decimal = (SoldSeats / TotalSeats) * 100
+}[]`,
+    "parameters": {},
+    "stubs": [
+      {
+        "operationName": "getFlights",
+        "response": `[
+   { "flightNumber": "AA123", "totalSeats": 180, "soldSeats": 165 },
+   { "flightNumber": "UA456", "totalSeats": 200, "soldSeats": 120 },
+   { "flightNumber": "DL789", "totalSeats": 150, "soldSeats": 150 }
+]`
+      }
+    ]
+  }}>
+  <PlaygroundSnippet.Description>
+    Expressions calculate values on-the-fly during query execution, eliminating the need for pre-computed fields
+  </PlaygroundSnippet.Description>
+</PlaygroundSnippet>
+
+
+## Expression types
+
+Define reusable expressions as types:
+
+```taxi
+// Define expression type
+type RemainingSeats = TotalSeats - SoldSeats
+type UtilizationRate = SoldSeats / TotalSeats
+
+// Use in projections
+find { Flight[] } as {
+   flightNumber : FlightNumber
+   remaining : RemainingSeats
+   utilization : UtilizationRate
+}[]
+```
+
+<Callout type="note" title="Type expressions">
+  Expression types can only reference other types, not field names. They provide reusable business logic.
+</Callout>
+
+### Using expression types to filter collections
+
+Create types that filter or transform collections:
+
+```taxi
+type IsActive inherits Boolean
+type IsPrimary inherits Boolean
+
+// Filter to single item
+type ActiveAddress inherits Address = 
+   (Address[]) -> Address[].single((IsActive) -> IsActive == true)
+
+// Filter to collection
+type ActiveAddresses inherits Address[] = 
+   (Address[]) -> Address[].filter((IsActive) -> IsActive == true)
+
+// With negation
+type InactiveAddresses inherits Address[] = 
+   (Address[]) -> Address[].filter((IsActive) -> IsActive != true)
+```
+
+### Collection operations
+
+```taxi
+// single - find one item
+type PrimaryContact = 
+   (Contact[]) -> Contact[].single((IsPrimary) -> IsPrimary == true)
+
+// filter - find multiple items
+type ActiveContacts = 
+   (Contact[]) -> Contact[].filter((IsActive) -> IsActive == true)
+
+// map - transform items
+type ContactNames = 
+   (Contact[]) -> Contact[].map((Contact) -> Contact::FullName)
+```
+
+## Combining traversal and expressions
+
+Expression types can be traversed using standard type traversal
+
+```taxi
+// Expression type using traversal
+type PrimaryEmail inherits EmailAddress = 
+   PrimaryContact::EmailAddress
+
+// In a query
+find { Case } as {
+   // Combines traversal with expression types
+   mainContactEmail: PrimaryApplicant::ActiveAddress::EmailAddress
+   // Multiple levels of expression types
+   primaryPhone: PrimaryContact::PreferredPhone
+}
+```
+
+## Data discovery in expressions
+
+When evaluating expressions, TaxiQL:
+
+1. First checks the source object for required values
+2. Then searches available data in scope
+3. Finally calls services to fetch missing data
+
+```taxi
+model Order {
+   basePrice : Price
+   customerId : CustomerId
+}
+
+// DiscountRate not on Order, will be discovered
+find { Order[] } as {
+   price : Price
+   finalPrice : Decimal = Price * (1 - DiscountRate)
+}[]
+```
+## Conditional expressions
+
+```taxi
+type PricingTier = when {
+   OrderTotal > 1000 -> "Premium"
+   OrderTotal > 100 -> "Standard"
+   else -> "Basic"
+}
+```
+
+## Advanced examples
+
+### Nested lambda expressions
+
+```taxi
+// Find customers with active premium accounts
+type PremiumActiveCustomers = 
+   (Customer[]) -> Customer[]
+      .filter((HasAccount) -> HasAccount == true)
+      .filter((Account) -> Account::Status == "Premium")
+      .filter((Account) -> Account::IsActive == true)
+```
+
+### Expression composition
+
+```taxi
+// Compose multiple expression types
+type DiscountedPrice = BasePrice * DiscountMultiplier
+type TaxAmount = DiscountedPrice * TaxRate
+type FinalPrice = DiscountedPrice + TaxAmount
+
+find { Order[] } as {
+   orderId : OrderId
+   final : FinalPrice  // Uses composed expressions
+}[]
+```
+
+## Common use cases
+
+### Business calculations
+
+```taxi
+type GrossMargin = (Revenue - CostOfGoods) / Revenue
+type NetProfit = Revenue - TotalExpenses
+type ProfitMargin = NetProfit / Revenue * 100
+```
+
+### Dynamic categorization
+
+```taxi
+type CustomerSegment = when {
+   LifetimeValue > 10000 && LastOrderDays < 30 -> "VIP Active"
+   LifetimeValue > 10000 -> "VIP Dormant"  
+   LastOrderDays < 90 -> "Regular Active"
+   else -> "At Risk"
+}
+```

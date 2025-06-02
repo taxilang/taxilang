@@ -1,0 +1,399 @@
+---
+title: Projections
+description: Transform and combine data from multiple sources using TaxiQL projections
+---
+
+import { Callout } from '@/components/docs/Callout';
+
+## Understanding projections
+
+Projections are TaxiQL's way of transforming data and combining it from multiple sources. They allow you to reshape objects, enrich them with additional data, and create exactly the structure you need.
+
+```taxi
+// Basic projection syntax
+find { Source } as { /* .. target structure.. */}
+```
+
+## Projection types
+
+TaxiQL supports three main ways to define your projection target, each suited to different use cases depending on whether you need a one-off structure or want to reuse existing type definitions.
+
+### Anonymous types
+
+Anonymous types let you define the exact structure you need inline within your query. 
+
+This is the most common approach, and ideal for consumer contracts, where you need a specific shape that isn't intended to be shared, so doesn't warrant creating a reusable type.
+
+
+```taxi
+find { Purchase[] } as {
+   txn: TransactionId
+   customerName: CustomerName  // Discovered from other services
+   total: OrderTotal
+}[]
+```
+
+### Named types
+
+Named type projections transform your source data to match an existing model definition. This approach promotes reusability and ensures consistency when multiple queries need the same output format.
+
+```taxi
+model CustomerTransaction {
+   transactionId : TransactionId
+   name : CustomerName
+   price : Price
+}
+
+find { Purchase[] } as CustomerTransaction[]
+```
+
+### Adding fields to existing models
+
+This pattern allows you to extend an existing model with additional fields without modifying the original type definition. It's particularly useful when you need most of a model's structure plus some extra enrichment.
+
+```taxi
+find { Book[] } as BookDatabaseRecord {
+   // Inherits all BookDatabaseRecord fields
+   rottenTomatoesReview : RottenTomatoesReview  // Plus this extra field
+}[]
+```
+
+## Field selection
+
+Field selection gives you fine-grained control over which data to include in your projections, allowing you to optimize queries by only requesting the fields you actually need.
+
+### Field shorthand
+
+When you only need to rename or select specific fields without changing their types, field shorthand provides a concise syntax that automatically infers the field types from the source.
+
+```taxi
+model Order {
+   id: OrderId
+   status: OrderStatus
+   total: OrderTotal
+}
+
+find { Order[] } as {
+   id        // Selects OrderId
+   status    // Selects OrderStatus
+}[]
+```
+
+### Spread operator
+
+The spread operator provides a convenient way to include most fields from the source while selectively adding new ones or excluding unwanted fields.
+
+```taxi
+// Include all fields
+find { Order[] } as {
+   ...
+   tracking: TrackingNumber  // Plus extra field
+}[]
+
+// Exclude specific fields
+find { Order[] } as {
+   ... except { total, customer }
+}[]
+```
+
+<Callout type="note" title="Spread position">
+  The spread operator must be the last entry in your field list.
+</Callout>
+
+## Iterating vs Transforming
+
+Projections in TaxiQL can either:
+1. **Iterate** over a collection and transform each element. (`A[] as B[]`)
+2. **Transform** a single object into another type. (`A as B`)
+
+**Key Rules**
+- **`A[] as B[]` always iterates** over the collection.
+- **All other projections perform a transformation.**
+- **Scopes do not change projection behavior.** Even if a collection is in scope, projection behavior is determined solely by input/output types.
+
+Specifically:
+
+| Projection            | Behavior                                                                                                                       |
+|-----------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `A[] as B[]`          | **Iteration** - Each `A` is transformed into `B` individually.                                                                 |
+| `A as B[]`            | **Transformation** - `A` is converted into `B[]`, but `A` itself is not iterated.                                              |
+| `A[] as B`            | **Aggregation** - `A[]` is converted into `B`, using some aggregation logic defined in the query                               |
+| `A as (c:C) -> B[]`   | **Transformation** - `A` is transformed into `B[]`, using `C` as additional context, but neither `A` nor `C` are iterated.     |
+| `A as (c:C[]) -> B[]` | **Transformation** - `C[]` is available in scope for transformation, but it is not iterated unless explicitly projected later. |
+| `A as C[] as B[]`     | **Iteration** - Two separate projections: `A` to `C[]` (transformation), then `C[]` to `B[]` (iteration).                      |
+
+
+**✅ Iteration: Collection to Collection (`A[] as B[]`)**
+- When the **input** is an array and the **output** is also an array, each element in the input array is processed separately.
+
+```taxi
+find { Actor[] } as FamousActor[]
+```
+or, as a field within a projection:
+```taxi
+find { Film } as {
+  cast : Actor[] as FamousActor[]
+}
+```
+
+In both cases, each `Actor` is individually transformed into a `FamousActor`.
+
+
+**✅ Transformation: Object to Object (`A as B`)**
+- When the **input** is a single object and the **output** is also a single object, a transformation occurs.
+
+```taxi
+find { Actor } as FamousActor
+```
+or
+```taxi
+find { Film } as {
+  starring : Actor as FamousActor
+}
+```
+
+The `Actor` is transformed into a `FamousActor`.
+
+---
+
+**✅ Transformation: Object to Collection (`A as B[]`)**
+- The input is a **single object** (`A`), but the output is an **array** (`B[]`).
+- This is a **transformation**, **not an iteration**.
+- This is typically used to select a field from an object, or to use a source as an object to discover another value.
+
+```taxi
+find { Film } as AwardNomination[]
+```
+
+
+This transforms a `Film` into a collection of `AwardNomination[]`, but does **not** iterate over each `AwardNomination`.
+
+
+**Field-Level Projections**
+These same rules **also apply to fields inside projections**.
+
+**✅ Iteration in a Field: Collection to Collection (`A[] as B[]`)**
+- **Field projection iterates if the field is an array.**
+
+```taxi
+find { Film } as {
+   actors: Actor[] as FamousActor[]
+}
+```
+Each `Actor` in the array is transformed into a `FamousActor`.
+
+---
+
+**❌ Incorrect: Object to Array Transformation (`A as B[]`)**
+- If the field projection is **from an object (`A`)** to an **array (`B[]`)**, **it does not iterate**.
+- Instead, the whole `A` is transformed into `B[]`
+
+```taxi
+find { Studio } as {
+    name : StudioName
+    // This is NOT an iterating transformation
+    films : FilmResponse as (films:Film[]) -> {
+        title: Title
+    }[]
+}
+```
+
+🚨 Troubleshooting: Why is `films` empty?
+- `FilmResponse` **contains a collection (`Film[]`)**.
+- But since this projection is **object-to-array (`A as B[]`)**, **films is not iterated**.
+- The scoping statement (`(films:Film[]) -> `) places films in scope, but does not change the behaviour of the projection to iterating.
+
+✅ **Fix: Explicitly Force Iteration by Splitting Projections**
+```taxi
+find { Studio } as {
+    name : StudioName
+    films : FilmResponse as Film[] as {
+        title: Title
+    }[]
+}
+```
+Now, `FilmResponse` is **explicitly projected into `Film[]` first**, ensuring that the second projection **iterates**.
+
+**Summary**
+
+- **Collection (`A[]`) → Collection (`B[]`) always iterates.**
+- **Object (`A`) → Object (`B`) always transforms.**
+- **Object (`A`) → Collection (`B[]`) transforms, does not iterate.**
+- **Field projections follow the same rules as top-level projections.**
+- **If you need iteration but the projection is transforming, split it into two projections.**
+
+
+## Projection scopes
+
+Projection scopes control what data is available during the transformation process, allowing you to reference fields from the source object and pass data between nested projections.
+
+### Basic scopes
+
+Each projection creates a scope containing the data being transformed:
+
+```taxi
+// Array projection - each Customer is in scope individually
+find { Customer[] } as {
+   firstName : FirstName
+   lastName : LastName
+}[]
+
+// Named variable in scope
+find { Customer[] } as (customer:Customer) -> {
+   name: upperCase(customer.firstName)
+   age: Age  // Resolved from customer automatically
+}[]
+```
+
+### Nested scopes
+
+Nested scopes enable complex transformations where inner projections need access to data from outer scopes, such as when projecting related collections that depend on parent object values.
+
+```taxi
+find { Customer[] } as (customer:Customer) -> {
+   name : CustomerName
+   orders : Order[] as (order:Order) -> {
+      ageAppropriate : Boolean = customer.age >= order.recommendedAge
+   }[]
+}[]
+```
+
+### Modifying scope
+
+You can explicitly control what data is available in the projection scope, which is useful when you want to restrict or expand the context for data resolution.
+
+```taxi
+// Default scope contains entire Film
+find { Film } as { 
+   title : Title
+   cast : Actor[]
+}
+
+// Modified scope contains only Actor[]
+find { Film } as (Actor[]) -> {
+   actorName : ActorName
+   title : Title  // null - Film not in scope
+}[]
+
+// Multiple items in scope
+find { Film } as (Film, Actor[]) -> {
+   actorName : ActorName
+   title : Title  // Now available from Film
+}[]
+```
+
+## Data discovery
+
+Data discovery is TaxiQL's ability to automatically find and call services to populate fields that aren't present in the source data, enabling rich data enrichment without manual service orchestration.
+
+### Automatic enrichment
+
+TaxiQL automatically discovers data from other services:
+
+```taxi
+model Purchase {
+   customerId : CustomerId
+   amount : Amount
+}
+
+model Customer {
+   @Id customerId : CustomerId
+   name : CustomerName
+}
+
+service CustomerService {
+   operation findCustomer(CustomerId): Customer
+}
+
+// CustomerName automatically discovered via customerId
+find { Purchase[] } as {
+   amount : Amount
+   customerName : CustomerName
+}[]
+```
+
+### @Id attribute rules
+
+The @Id annotation controls which operations TaxiQL will consider when discovering data, ensuring that only appropriate lookup operations are used for enrichment.
+
+```taxi
+model Movie {
+   @Id id : MovieId
+   year : YearReleased
+}
+
+service ReviewService {
+   operation getReview(MovieId): Review         // ✅ Called
+   operation getReviewsByYear(YearReleased): Review[]  // ❌ Not called
+}
+```
+
+### @FirstNotEmpty
+
+The @FirstNotEmpty annotation instructs TaxiQL to try multiple data sources when the primary source returns null values, enabling robust data enrichment from fallback services.
+
+```taxi
+find { Person[] } as {
+   name : PersonName
+   @FirstNotEmpty
+   email : EmailAddress  // If null, tries other services
+}[]
+```
+
+## Streaming projections
+
+Streaming projections allow you to transform data as it flows through event streams, applying the same enrichment and transformation capabilities to real-time data.
+
+```taxi
+stream { StockPrice } as {
+   symbol : StockSymbol
+   updateReceived : Instant = now()
+   currentPrice : StockPrice
+}
+
+// Filter streams
+stream { StockQuotes.filterEach(StockSymbol -> StockSymbol == 'AAPL') }
+```
+
+## Common patterns
+
+These patterns demonstrate typical projection use cases that solve real-world data integration challenges, showing how to combine TaxiQL features effectively.
+
+### Enrichment pattern
+
+```taxi
+// Start with basic order data
+find { Order[] } as {
+   orderId : OrderId
+   // Enrich with customer details
+   customerName : CustomerName
+   customerEmail : EmailAddress
+   // Add calculated fields
+   totalWithTax : Decimal = OrderTotal * 1.2
+}[]
+```
+
+### Aggregation pattern
+
+```taxi
+// Transform detailed data into summary
+find { Transaction[] } as CustomerSummary {
+   customerId : CustomerId
+   totalSpent : sum(TransactionAmount)
+   transactionCount : count(TransactionId)
+}[]
+```
+
+### Nested enrichment
+
+```taxi
+find { Invoice[] } as {
+   invoiceNumber : InvoiceNumber
+   items : InvoiceItem[] as {
+      description : ItemDescription
+      // Enrich each item with product details
+      productCategory : ProductCategory
+      supplier : SupplierName
+   }[]
+}[]
+```

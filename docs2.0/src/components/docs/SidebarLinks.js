@@ -15,16 +15,13 @@ export const SidebarLinks = [
     ],
   },
   {
-    title: 'Querying',
+    title: 'Working with data',
     links: [
       {title: 'Querying', href: '/docs/taxiql/querying'},
+      {title: 'Transforming data (projections)', href: '/docs/taxiql/projections'},
       {title: 'Mutations', href: '/docs/taxiql/mutations'},
-    ],
-  },
-  {
-    title: 'Functions and Expressions',
-    links: [
-      {title: 'Syntax', href: '/docs/language/functions'},
+      {title: 'Functions', href: '/docs/taxiql/functions'},
+      {title: 'Expressions', href: '/docs/taxiql/expressions-traversal'},
       {title: 'Taxi Stdlib', href: '/docs/language/stdlib'},
     ],
   },
