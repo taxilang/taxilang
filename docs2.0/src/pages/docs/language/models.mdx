@@ -7,37 +7,82 @@ import { Callout } from '@/components/docs/Callout';
 
 ## Overview
 
-Models in Taxi define specific data structures used by services or applications. Unlike semantic types which define meaning, models describe how data is organized.
+Models in Taxi describe the data structures that your systems actually work with - the JSON (or other format) returned 
+from API calls, database records, event payloads, and so on.
 
-<Callout type="warning" title="Share Semantics, Not Structure">
-  Models represent structural contracts and should not be shared between systems. Instead, share semantic types and let each system define its own models using those types. This enables loose coupling between systems.
+```taxi
+// This might be the JSON response from GET /api/customers/123
+model Customer {
+    id: CustomerId
+    firstName: FirstName  
+    lastName: LastName
+    email: EmailAddress
+    createdAt: Timestamp
+}
+```
+What makes Taxi models special is that they're built from semantic types, 
+which gives meaning to each field. This allows consumers to query for exactly the data they need,
+regardless of how the original structure is organized.
+
+<Callout type="note" title="Consumer Data Contracts">
+  Producers publish models composed of semantic types, but consumers can query for just the data they need using projections. This decouples consumers from the producer's specific model structure.
 </Callout>
 
 ## Basic syntax
 
 ```taxi
-model Person {
-    id: PersonId
-    firstName: FirstName
-    lastName: LastName
-    email: EmailAddress?  // Optional field
-    friends: Person[]     // Array of Person
+// Producer publishes a model
+model CustomerRecord {
+    id: CustomerId
+    profile: UserProfile
+    accountStatus: AccountStatus
+    createdAt: Timestamp
+}
+
+// Consumer queries with their own data contract
+find { CustomerRecord } as {
+    customerId: CustomerId
+    status: AccountStatus
+    // Only the fields the consumer needs
 }
 ```
 
-Key features:
-- Fields can use semantic types
-- `?` marks optional (nullable) fields
-- Arrays are supported using `[]` syntax
-- Documentation can be added using `[[ ]]`
-
+**Things to note**
+ * Model fields are composed of semantic types that convey meaning
+ * The `?` operator marks fields as optional (nullable)
+ * Arrays are declared using `[]` syntax after the type
+ * Comments use `//` for single lines or `/* */` for blocks
 
 ## Parameter and closed models
-Taxi lets you control how models can be constructed and returned using the `parameter` and `closed` modifiers.
+
+By default, when you run a TaxiQL query, the query engine will try to construct any model it needs by combining available data and calling services to populate missing fields. This automatic construction happens at query time.
+
+Often this isn't what you want. The `parameter` and `closed` modifiers control when and how the TaxiQL engine can construct models.
+
+### Default behavior (consumer models)
+
+Without any modifiers, models are "consumer models" - the TaxiQL engine will actively try to construct them:
+
+```taxi
+model CustomerSummary {
+    id: CustomerId
+    name: CustomerName
+    email: EmailAddress
+    orderCount: OrderCount
+}
+
+// During query execution, TaxiQL might:
+find { Customer } as CustomerSummary
+// 1. Get CustomerId, CustomerName, EmailAddress from Customer
+// 2. Call a service to get OrderCount using the CustomerId
+// 3. Construct the CustomerSummary with all fields populated
+```
+
+This automatic construction is powerful for data integration, but sometimes inappropriate.
 
 ### Parameter models
 
-Parameter models explicitly indicate that an object can be constructed as input to a service:
+Use `parameter` for models that represent input to operations. The TaxiQL engine can only construct these when preparing to call a service:
 
 ```taxi
 parameter model CreateCustomerRequest {
@@ -49,55 +94,76 @@ parameter model CreateCustomerRequest {
 service CustomerService {
     operation createCustomer(CreateCustomerRequest): Customer
 }
+
+// TaxiQL can construct CreateCustomerRequest, but only to call createCustomer
+// It won't try to construct this model for general querying
 ```
+
+**Parameter models are constructed:**
+- When TaxiQL needs to call an operation that requires them as input
+- From available data that matches the required fields
+
+**Parameter models are NOT constructed:**
+- For general query results or projections
 
 ### Closed models
 
-Closed models can only be returned from services - they cannot be constructed by combining fields from other sources:
+Use `closed` for models that can only be returned from services, never constructed by combining data:
 
 ```taxi
 closed model CustomerRecord {
-    id: CustomerId
-    internalId: InternalId        // System-generated
-    lastModified: Timestamp       // System-managed
+    id: CustomerId               // System-generated
+    name: CustomerName
+    internalScore: InternalScore // Calculated by the system
+    lastModified: Timestamp      // System-managed
 }
 
 service CustomerService {
     operation getCustomer(CustomerId): CustomerRecord
 }
+
+// TaxiQL will NEVER try to construct CustomerRecord
+// It can only get instances by calling getCustomer()
 ```
 
-### Parameter and closed combined
+**Closed models:**
+- Can only be obtained by calling services that return them
+- Are never constructed by combining fields from other sources
+- Prevent unwanted automatic construction of system-managed data
 
-Some models need to be both parameter and closed. This is common with database tables, where the model:
-- Can be used as input for insert/update operations (parameter)
-- Can be returned from queries (closed)
-- Should not be constructed by combining fields from other sources (closed)
+### Parameter closed models
+
+Some models serve as both input and output, needing both modifiers:
 
 ```taxi
 parameter closed model Customer {
-    id: CustomerId
+    id: CustomerId?          // Optional for creates, required for updates
     name: CustomerName
     email: EmailAddress
 }
 
 service CustomerDatabase {
-    // Can be used as input
-    operation insertCustomer(Customer): CustomerId
-    
-    // Can be returned from queries
-    operation findCustomer(CustomerId): Customer
-    
-    // Declared as a table
-    table customers: Customer[]
+    operation insertCustomer(Customer): CustomerId    // Customer as parameter
+    operation updateCustomer(Customer): Customer      // Customer as parameter  
+    operation findCustomer(CustomerId): Customer      // Customer as closed result
 }
+
+// TaxiQL can construct Customer, but only:
+// - As input when calling insertCustomer or updateCustomer
+// - Never for general querying (closed prevents this)
 ```
 
-<Callout type="note" title="Model Resolution">
-  By default (without parameter or closed), TaxiQL will:
-  1. Look for an exact instance of the model
-  2. Try to construct it by combining known values
-  3. Look for services that can return it
+### Model types summary
+
+| Model Type         | TaxiQL Construction Behavior                                         |
+|--------------------|----------------------------------------------------------------------|
+| Default (consumer) | Constructs freely for queries by combining data and calling services |
+| `parameter`        | Only constructs when needed as input to operations                   |
+| `closed`           | Never constructs - only obtains from service calls                   |
+| `parameter closed` | Only constructs as operation input, never for general queries        |
+
+<Callout type="note" title="Query-Time Construction">
+  Model construction happens during query execution, not at compile time. The TaxiQL engine decides whether and how to construct models based on these modifiers and the available data sources.
 </Callout>
 
 ## Partial Models
@@ -295,45 +361,5 @@ service OrderService {
 }
 ```
 
-## Common patterns
 
-### Request/response models
-
-```taxi
-parameter model SearchRequest {
-    query: SearchQuery
-    maxResults: MaxResults?
-    offset: Offset?
-}
-
-closed model SearchResponse {
-    results: SearchResult[]
-    totalCount: TotalCount
-    hasMore: Boolean
-}
-```
-
-### Event models
-
-```taxi
-closed model CustomerEvent {
-    eventId: EventId
-    timestamp: EventTimestamp
-    customerId: CustomerId
-    type: EventType
-    payload: CustomerEventPayload
-}
-```
-
-### View models
-
-```taxi
-closed model CustomerSummary {
-    id: CustomerId
-    name: CustomerName
-    status: CustomerStatus
-    // Computed field
-    isActive: Boolean by (this.status == CustomerStatus.ACTIVE)
-}
-```
 

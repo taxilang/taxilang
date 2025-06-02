@@ -1,13 +1,13 @@
 module.exports.taxiPrismLanguage = (Prism) => {
   Prism.languages.taxi = Prism.languages.extend('clike', {
     'keyword': [
-      /\b(?:type|inherits|model|service|operation|query|given|as|alias)\b/,
+      /\b(?:type|inherits|model|service|operation|query|given|as|alias|declare|extension)\b/,
       // keywords that have to be followed by an identifier
-      /\b(?:type|model|query|service|operation|table|stream|find|stream)\b(?=\s*(?:[{_$a-zA-Z\xA0-\uFFFF]|$))/,
+      /\b(?:type|model|query|service|operation|table|stream|find|stream|declare|extension)\b(?=\s*(?:[{_$a-zA-Z\xA0-\uFFFF]|$))/,
     ],
     'class-name': [
       {
-        pattern: /(\b(?:type|inherits|model|service|operation|query|table|stream|as)\s+)/,
+        pattern: /(\b(?:type|inherits|model|service|operation|query|table|stream|as|declare|extension)\s+)/,
         lookbehind: true,
         greedy: true,
         inside: null // see below

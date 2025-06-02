@@ -1,6 +1,8 @@
 package lang.taxi
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import lang.taxi.functions.stdlib.FunctionApi
+import lang.taxi.functions.stdlib.HasRunnableExamples
 
 private data class DocSection(
    val title: String,
@@ -24,7 +26,9 @@ class TypeDocDocumentationWriter(val schema: TaxiDocument) {
    }
 
    private fun generateSection(section: DocSection): String {
-      val functions = section.functions.joinToString("\n\n") { generateFunction(it) }
+      val functions = section.functions
+         .sortedBy { it.name.typeName }
+         .joinToString("\n\n------\n\n") { generateFunction(it) }
 
       return """## ${section.title}
 
@@ -41,6 +45,19 @@ $functions
             it.substringAfter("]]").trim()
          } else it
       }
+
+      val runnableSnippets = if (functionApi is HasRunnableExamples) {
+
+         functionApi.examples.joinToString("\n\n", prefix = "#### Examples\n") { example ->
+            val queryJson = jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(example.query)
+            """
+${example.markdown}
+
+<PlaygroundSnippet scenario={$queryJson
+}></PlaygroundSnippet>
+            """.trimIndent()
+         }
+      } else ""
       return """### ${functionApi.name.typeName}
 `${functionApi.name.fullyQualifiedName}`
 
@@ -49,6 +66,8 @@ $taxiWithoutTypeDoc
 ```
 
 ${function.typeDoc ?: ""}
+
+$runnableSnippets
       """.trim()
    }
 }

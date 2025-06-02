@@ -172,6 +172,8 @@ class ExpressionCompiler(
             }
          }
 
+         isArrayAccess(expressionGroup) -> parseArrayAccessExpression(expressionGroup)
+
          expressionGroup.children.size == 3 -> parseOperatorExpression(expressionGroup)
 
          // lhs operator rhs
@@ -195,6 +197,36 @@ class ExpressionCompiler(
             }
          }
       }
+   }
+
+   private fun parseArrayAccessExpression(expressionGroup: ExpressionGroupContext): Either<List<CompilationError>, Expression> {
+      val arrayInstanceExpressionGroup = expressionGroup.expressionGroup()[0]
+      val arrayIndexExpressionGroup = expressionGroup.expressionGroup()[1]
+      return compile(arrayInstanceExpressionGroup)
+         .flatMap { arrayInstanceExpression ->
+            if (!Arrays.isArray(arrayInstanceExpression.returnType)) {
+               arrayInstanceExpressionGroup.createCompilationError("Array access not supported on type ${arrayInstanceExpression.returnType.toQualifiedName().parameterizedName}")
+            } else {
+               compile(arrayIndexExpressionGroup).flatMap { arrayIndexExpression ->
+                  if (arrayIndexExpression.returnType.basePrimitive == null || !NumberTypes.isNumberType(arrayIndexExpression.returnType.basePrimitive!!)) {
+                     arrayIndexExpressionGroup.createCompilationError("Array access requires a numeric type for the array index, but found type ${arrayIndexExpression.returnType.toQualifiedName().parameterizedName}")
+                  } else {
+                     ArrayAccessExpression(arrayInstanceExpression, arrayIndexExpression, expressionGroup.toCompilationUnits())
+                        .right()
+                  }
+
+               }
+            }
+         }
+   }
+
+   private fun isArrayAccess(expressionGroup: ExpressionGroupContext): Boolean {
+      val members = expressionGroup.children
+      return members.size == 4 &&
+         members[0] is ExpressionGroupContext &&
+         members[1].text == "[" &&
+         members[2] is ExpressionGroupContext &&
+         members[3].text == "]"
    }
 
    private fun compileCastExpression(

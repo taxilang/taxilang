@@ -1,6 +1,8 @@
+import React from 'react'
 import clsx from 'clsx'
 import {ExclamationTriangleIcon, LightBulbIcon} from "@heroicons/react/24/outline";
 import {Prose} from "@/components/docs/Prose";
+import ReactMarkdown from 'react-markdown';
 
 const styles = {
   note: {
@@ -23,17 +25,30 @@ const icons = {
 }
 
 type CalloutProps = {
-  type: 'note' | 'warning',
+  type: 'info' | 'note' | 'warning',
   title: string,
-  children: any
+  children?: React.ReactNode,
+  content?: string
 }
-export function Callout({type , title, children}:CalloutProps) {
-  const calloutType = type || 'note';
+export function Callout({type , title, children, content}:CalloutProps) {
+  let calloutType = type || 'note';
+
+  // We get this wrong so often, just alias info -> note
+  if (calloutType === 'info') calloutType = 'note';
   let IconComponent = icons[calloutType]
   const calloutTypeStyles = styles[calloutType]
   if (calloutTypeStyles === undefined) {
     throw new Error('No styles defined for calloutType ' + calloutType)
   }
+
+  // Use content prop if provided, otherwise use children
+  // Content prop preserves line breaks for complex markdown (lists, etc.)
+  // Children is processed for simple inline markdown
+  const markdownContent = content || (children && typeof children === 'string' ? children
+    .trim()
+    .split('\n')
+    .map(line => line.trim())
+    .join('\n') : '');
 
   return (
     <div className={clsx('my-12 flex', styles[calloutType].container)}>
@@ -48,7 +63,9 @@ export function Callout({type , title, children}:CalloutProps) {
           </div>) : (<></>)}
 
           <Prose className={clsx('prose', styles[calloutType].body)}>
-            {children}
+            <ReactMarkdown>
+              {markdownContent}
+            </ReactMarkdown>
           </Prose>
         </div>
       </div>

@@ -25,6 +25,16 @@
          <artifactId>arrow-core</artifactId>
       </dependency>
       <dependency>
+         <groupId>com.fasterxml.jackson.module</groupId>
+         <artifactId>jackson-module-kotlin</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>com.fasterxml.jackson.core</groupId>
+         <artifactId>jackson-core</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>com.google.guava</groupId>
          <artifactId>guava</artifactId>
       </dependency>
@@ -97,6 +107,21 @@
       <dependency>
          <groupId>io.kotest</groupId>
          <artifactId>kotest-assertions-core-jvm</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <!-- OkHttp dependency -->
+      <dependency>
+         <groupId>com.squareup.okhttp3</groupId>
+         <artifactId>okhttp</artifactId>
+         <version>4.12.0</version>
+         <scope>test</scope>
+      </dependency>
+
+      <!-- JSONAssert dependency -->
+      <dependency>
+         <groupId>org.skyscreamer</groupId>
+         <artifactId>jsonassert</artifactId>
+         <version>1.5.1</version>
          <scope>test</scope>
       </dependency>
    </dependencies>

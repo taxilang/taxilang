@@ -88,8 +88,8 @@ module.exports = {
             color: theme('colors.slate.700'),
             hr: {
               borderColor: theme('colors.slate.100'),
-              marginTop: '3em',
-              marginBottom: '3em',
+              marginTop: '2rem',
+              marginBottom: '2rem',
             },
             'h1, h2, h3': {
               letterSpacing: '-0.025em',
@@ -246,8 +246,12 @@ module.exports = {
               color: theme('colors.slate.200'),
             },
             hr: {
-              borderColor: theme('colors.slate.200'),
-              opacity: '0.05',
+              // Not sure where these are getting ovverriden from,
+              // so adding !important
+              borderColor: theme('colors.slate.200') + ' !important',
+              opacity: '0.5 !important',
+              marginTop: '2rem',
+              marginBottom: '2rem',
             },
             pre: {
               boxShadow: 'inset 0 0 0 1px rgb(255 255 255 / 0.1)',

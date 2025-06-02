@@ -1,5 +1,6 @@
 import '../css/fonts.css'
 import '../css/main.css'
+import '../css/codemirror-custom.css'
 import 'focus-visible'
 import {Fragment, useEffect, useState} from 'react'
 import {Header} from '@/components/Header'

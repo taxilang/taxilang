@@ -30,3 +30,8 @@
     width: 100%;
   }
 }
+
+/* Add spacing between consecutive PlaygroundSnippet components */
+.playground-snippet-container + .playground-snippet-container {
+  margin-top: 1rem;
+}

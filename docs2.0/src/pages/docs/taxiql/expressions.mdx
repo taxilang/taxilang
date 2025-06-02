@@ -1,0 +1,498 @@
+---
+title: Expressions
+description: Compute and transform data dynamically with reusable business logic
+---
+
+import { Callout } from '@/components/docs/Callout';
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
+# Expressions
+
+## Why use expressions?
+
+Expressions solve three key challenges in data integration:
+
+1. **Reusable business logic** - Define calculations once, use everywhere
+2. **Dynamic data enrichment** - Compute values that don't exist in source systems
+3. **Semantic computations** - Express business rules using your domain vocabulary
+
+Without expressions, you'd need to:
+- Duplicate calculation logic across queries
+- Rely on source systems to provide all computed values
+- Handle business logic in application code instead of your data layer
+
+## Basic expressions in queries
+
+Start with inline expressions to compute values during projection:
+
+<PlaygroundSnippet
+  title="Computing values with expressions"
+  scenario={{
+    "schema": `model Flight {
+   flightNumber : FlightNumber inherits String
+   totalSeats : TotalSeats inherits Int
+   soldSeats : SoldSeats inherits Int
+}
+    
+    service FlightService {
+       operation getFlights():Flight[]
+    }`,
+    "query": `find { Flight[] } as {
+   flightNumber : FlightNumber
+   totalSeats : TotalSeats
+   soldSeats : SoldSeats
+   // Compute remaining seats
+   remainingSeats : Int = this.totalSeats - this.soldSeats
+   // Calculate utilization percentage
+   utilization : Decimal = (SoldSeats / TotalSeats) * 100
+}[]`,
+    "parameters": {},
+    "stubs": [
+      {
+        "operationName": "getFlights",
+        "response": `[
+   { "flightNumber": "AA123", "totalSeats": 180, "soldSeats": 165 },
+   { "flightNumber": "UA456", "totalSeats": 200, "soldSeats": 120 },
+   { "flightNumber": "DL789", "totalSeats": 150, "soldSeats": 150 }
+]`
+      }
+    ]
+  }}>
+  <PlaygroundSnippet.Description>
+    Expressions calculate values on-the-fly during query execution, eliminating the need for pre-computed fields
+  </PlaygroundSnippet.Description>
+</PlaygroundSnippet>
+
+## Expression types for reusable logic
+
+Turn common calculations into semantic types that encapsulate business rules:
+
+<PlaygroundSnippet
+  title="Reusable expression types"
+  scenario={{
+    "schema": `// Define business metrics as expression types
+type RemainingSeats inherits Int = TotalSeats - SoldSeats
+type UtilizationRate inherits Decimal = (SoldSeats / TotalSeats) * 100
+type IsFullyBooked inherits Boolean = RemainingSeats == 0
+type IsHighDemand inherits Boolean = UtilizationRate > 80
+    
+    model Flight {
+       flightNumber : FlightNumber inherits String
+       totalSeats : TotalSeats inherits Int
+       soldSeats : SoldSeats inherits Int
+    }
+    
+    service FlightService {
+       operation getFlights():Flight[]
+    }`,
+    "query": `// Use expression types like any other type
+find { Flight[] } as {
+   flight : FlightNumber
+   remaining : RemainingSeats
+   utilization : UtilizationRate
+   fullyBooked : IsFullyBooked
+   highDemand : IsHighDemand
+}[]`,
+    "parameters": {},
+    "stubs": [
+      {
+        "operationName": "getFlights",
+        "response": `[
+   { "flightNumber": "AA123", "totalSeats": 180, "soldSeats": 165 },
+   { "flightNumber": "UA456", "totalSeats": 200, "soldSeats": 120 },
+   { "flightNumber": "DL789", "totalSeats": 150, "soldSeats": 150 }
+]`
+      }
+    ]
+  }}>
+  <PlaygroundSnippet.Description>
+    Expression types create a shared vocabulary for business metrics that can be used consistently across your organization
+  </PlaygroundSnippet.Description>
+</PlaygroundSnippet>
+
+<Callout type="note" title="Expression type benefits">
+  Expression types aren't just about code reuse - they create semantic meaning. `UtilizationRate` is more meaningful than a raw percentage calculation, making queries self-documenting.
+</Callout>
+
+## Collection filtering with expressions
+
+Expression types excel at encapsulating complex filtering logic:
+
+<PlaygroundSnippet
+  title="Smart collection filtering"
+  scenario={{
+    "schema": `type CustomerId inherits String
+type OrderId inherits String
+type OrderStatus inherits String
+type OrderTotal inherits Decimal
+type IsActive inherits Boolean = OrderStatus == "ACTIVE"
+type IsHighValue inherits Boolean = OrderTotal > 1000
+    
+    // Expression type that filters to active orders
+    type ActiveOrders inherits Order[] = 
+       (Order[]) -> Order[].filter((IsActive) -> IsActive == true)
+    
+    // Expression type that finds high-value active orders
+    type HighValueActiveOrders inherits Order[] = 
+       (Order[]) -> Order[]
+          .filter((IsActive) -> IsActive == true)
+          .filter((IsHighValue) -> IsHighValue == true)
+    
+    model Customer {
+       id : CustomerId
+       name : CustomerName inherits String
+    }
+    
+    model Order {
+       id : OrderId
+       customerId : CustomerId
+       status : OrderStatus
+       total : OrderTotal
+    }
+    
+    service CustomerService {
+       operation getCustomer(CustomerId):Customer
+    }
+    
+    service OrderService {
+       operation getOrdersForCustomer(CustomerId):Order[]
+    }`,
+    "query": `given { CustomerId = "CUST123" }
+find { Customer } as {
+   name : CustomerName
+   // Get all orders
+   allOrders : Order[]
+   // Use expression type to get only active orders
+   activeOrders : ActiveOrders
+   // Use expression type for high-value active orders
+   premiumOrders : HighValueActiveOrders
+}`,
+    "parameters": {},
+    "stubs": [
+      {
+        "operationName": "getCustomer",
+        "response": `{ "id": "CUST123", "name": "Acme Corp" }`
+      },
+      {
+        "operationName": "getOrdersForCustomer",
+        "response": `[
+   { "id": "ORD001", "customerId": "CUST123", "status": "ACTIVE", "total": 500 },
+   { "id": "ORD002", "customerId": "CUST123", "status": "COMPLETED", "total": 1500 },
+   { "id": "ORD003", "customerId": "CUST123", "status": "ACTIVE", "total": 2000 },
+   { "id": "ORD004", "customerId": "CUST123", "status": "CANCELLED", "total": 750 },
+   { "id": "ORD005", "customerId": "CUST123", "status": "ACTIVE", "total": 300 }
+]`
+      }
+    ]
+  }}>
+  <PlaygroundSnippet.Description>
+    Expression types that filter collections encapsulate business rules about what data is relevant, making queries cleaner and more maintainable
+  </PlaygroundSnippet.Description>
+</PlaygroundSnippet>
+
+## Dynamic data discovery
+
+Expressions can reference data not present on the source object - TaxiQL will discover and fetch it:
+
+<PlaygroundSnippet
+  title="Automatic data enrichment"
+  scenario={{
+    "schema": `type ProductId inherits String
+type Price inherits Decimal
+type DiscountRate inherits Decimal
+type TaxRate inherits Decimal
+type CustomerId inherits String
+    
+    // Expression types for pricing calculations
+    type DiscountAmount inherits Decimal = Price * DiscountRate
+    type DiscountedPrice inherits Decimal = Price - DiscountAmount
+    type TaxAmount inherits Decimal = DiscountedPrice * TaxRate
+    type FinalPrice inherits Decimal = DiscountedPrice + TaxAmount
+    
+    model Order {
+       productId : ProductId
+       customerId : CustomerId
+       basePrice : Price
+    }
+    
+    model CustomerProfile {
+       customerId : CustomerId
+       discountRate : DiscountRate  // Customer's discount tier
+    }
+    
+    model TaxInfo {
+       rate : TaxRate
+    }
+    
+    service OrderService {
+       operation getOrders():Order[]
+    }
+    
+    service CustomerService {
+       operation getCustomerProfile(CustomerId):CustomerProfile
+    }
+    
+    service TaxService {
+       operation getCurrentTaxRate():TaxInfo
+    }`,
+    "query": `// Expression types will trigger data discovery
+find { Order[] } as {
+   product : ProductId
+   basePrice : Price
+   discount : DiscountAmount     // Discovers DiscountRate from CustomerProfile
+   afterDiscount : DiscountedPrice
+   tax : TaxAmount              // Discovers TaxRate from TaxService
+   total : FinalPrice           // Computed from discovered data
+}[]`,
+    "parameters": {},
+    "stubs": [
+      {
+        "operationName": "getOrders",
+        "response": `[
+   { "productId": "PROD-A", "customerId": "CUST-1", "basePrice": 100 },
+   { "productId": "PROD-B", "customerId": "CUST-2", "basePrice": 250 }
+]`
+      },
+      {
+        "operationName": "getCustomerProfile",
+        "response": `{ "customerId": "CUST-1", "discountRate": 0.10 }`
+      },
+      {
+        "operationName": "getCurrentTaxRate",
+        "response": `{ "rate": 0.08 }`
+      }
+    ]
+  }}>
+  <PlaygroundSnippet.Description>
+    Expression types can reference data from multiple sources. TaxiQL automatically discovers and fetches required data to evaluate expressions.
+  </PlaygroundSnippet.Description>
+</PlaygroundSnippet>
+
+## Conditional logic with when expressions
+
+Use `when` expressions for dynamic categorization and business rules:
+
+<PlaygroundSnippet
+  title="Dynamic categorization"
+  scenario={{
+    "schema": `type Revenue inherits Decimal
+type LastOrderDays inherits Int
+type OrderCount inherits Int
+    
+    // Customer segmentation logic
+    type CustomerSegment inherits String = when {
+       Revenue > 50000 && LastOrderDays < 30 -> "VIP Active"
+       Revenue > 50000 && LastOrderDays < 90 -> "VIP Returning"
+       Revenue > 50000 -> "VIP Dormant"
+       Revenue > 10000 && LastOrderDays < 60 -> "High Value"
+       LastOrderDays < 90 -> "Active"
+       LastOrderDays < 180 -> "At Risk"
+       else -> "Churned"
+    }
+    
+    // Recommended action based on segment
+    type RecommendedAction inherits String = when {
+       CustomerSegment == "VIP Active" -> "Maintain engagement"
+       CustomerSegment == "VIP Dormant" -> "Win-back campaign"
+       CustomerSegment == "At Risk" -> "Retention offer"
+       CustomerSegment == "Churned" -> "Re-engagement campaign"
+       else -> "Standard communication"
+    }
+    
+    model CustomerAnalytics {
+       customerId : CustomerId inherits String
+       name : CustomerName inherits String
+       totalRevenue : Revenue
+       daysSinceLastOrder : LastOrderDays
+       orderCount : OrderCount
+    }
+    
+    service AnalyticsService {
+       operation getCustomerAnalytics():CustomerAnalytics[]
+    }`,
+    "query": `find { CustomerAnalytics[] } as {
+   customer : CustomerName
+   revenue : Revenue
+   lastActive : LastOrderDays
+   // Automatic segmentation
+   segment : CustomerSegment
+   // Cascading business rules
+   action : RecommendedAction
+}[]`,
+    "parameters": {},
+    "stubs": [
+      {
+        "operationName": "getCustomerAnalytics",
+        "response": `[
+   { "customerId": "C1", "name": "MegaCorp", "totalRevenue": 75000, "daysSinceLastOrder": 15, "orderCount": 125 },
+   { "customerId": "C2", "name": "SmallBiz", "totalRevenue": 8000, "daysSinceLastOrder": 45, "orderCount": 23 },
+   { "customerId": "C3", "name": "OldClient", "totalRevenue": 55000, "daysSinceLastOrder": 200, "orderCount": 89 },
+   { "customerId": "C4", "name": "NewStartup", "totalRevenue": 2000, "daysSinceLastOrder": 5, "orderCount": 3 }
+]`
+      }
+    ]
+  }}>
+  <PlaygroundSnippet.Description>
+    Conditional expressions encode business rules directly in your type system, ensuring consistent application of logic across all queries
+  </PlaygroundSnippet.Description>
+</PlaygroundSnippet>
+
+## Best practices
+
+### When to use expression types vs inline expressions
+
+**Use expression types when:**
+- The logic represents a business concept (e.g., `ProfitMargin`, `CustomerLifetimeValue`)
+- Multiple queries need the same calculation
+- The expression encodes important business rules
+- You want to build a semantic vocabulary
+
+**Use inline expressions when:**
+- The calculation is query-specific
+- You're prototyping or exploring data
+- The logic doesn't represent a reusable concept
+
+### Composition patterns
+
+Build complex expressions from simpler ones:
+
+```taxi
+// Base calculations
+type GrossRevenue inherits Decimal = UnitPrice * Quantity
+type DiscountAmount inherits Decimal = GrossRevenue * DiscountPercentage
+type NetRevenue inherits Decimal = GrossRevenue - DiscountAmount
+
+// Derived calculations
+type TaxAmount inherits Decimal = NetRevenue * TaxRate
+type TotalAmount inherits Decimal = NetRevenue + TaxAmount
+
+// Business metrics
+type ProfitMargin inherits Decimal = (NetRevenue - TotalCost) / NetRevenue * 100
+type AverageOrderValue inherits Decimal = TotalAmount / OrderCount
+```
+
+### Performance considerations
+
+<Callout type="note" title="Execution optimization">
+  TaxiQL optimizes expression evaluation by:
+  - Caching intermediate results within a query
+  - Batching data discovery operations
+  - Evaluating expressions only when the result is needed
+</Callout>
+
+## Common patterns
+
+### Financial calculations
+
+```taxi
+// Comprehensive financial metrics
+type GrossProfit inherits Decimal = Revenue - CostOfGoodsSold
+type OperatingProfit inherits Decimal = GrossProfit - OperatingExpenses
+type NetProfit inherits Decimal = OperatingProfit - InterestAndTaxes
+
+type GrossProfitMargin inherits Decimal = (GrossProfit / Revenue) * 100
+type NetProfitMargin inherits Decimal = (NetProfit / Revenue) * 100
+type ReturnOnInvestment inherits Decimal = (NetProfit / TotalInvestment) * 100
+```
+
+### Data quality indicators
+
+```taxi
+// Data completeness checks
+type HasCompleteProfile inherits Boolean = 
+   FirstName != null && LastName != null && Email != null
+
+type DataQualityScore inherits Int = when {
+   HasCompleteProfile && HasVerifiedEmail && HasPhone -> 100
+   HasCompleteProfile && HasVerifiedEmail -> 80
+   HasCompleteProfile -> 60
+   else -> 40
+}
+```
+
+### Time-based calculations
+
+```taxi
+// Business-relevant time calculations
+type DaysSinceLastPurchase inherits Int = 
+   CurrentDate - LastPurchaseDate
+
+type IsNewCustomer inherits Boolean = 
+   DaysSinceFirstPurchase < 30
+
+type ChurnRisk inherits String = when {
+   DaysSinceLastPurchase > 365 -> "High"
+   DaysSinceLastPurchase > 180 -> "Medium"
+   DaysSinceLastPurchase > 90 -> "Low"
+   else -> "None"
+}
+```
+
+## Advanced techniques
+
+### Nested lambda composition
+
+Chain operations for complex transformations:
+
+```taxi
+// Multi-step filtering and transformation
+type PremiumActiveProducts inherits Product[] = 
+   (Product[]) -> Product[]
+      .filter((IsActive) -> IsActive == true)
+      .filter((Price) -> Price > 100)
+      .filter((Rating) -> Rating >= 4.5)
+      .filter((StockLevel) -> StockLevel > 0)
+```
+
+### Cross-type expressions
+
+Reference multiple types in calculations:
+
+```taxi
+// Inventory calculations across types
+type StockValue inherits Decimal = 
+   QuantityOnHand * UnitCost
+
+type ReorderRequired inherits Boolean = 
+   QuantityOnHand < ReorderPoint && 
+   DaysUntilNextDelivery > LeadTimeDays
+
+type OptimalOrderQuantity inherits Int = when {
+   ReorderRequired -> EconomicOrderQuantity
+   else -> 0
+}
+```
+
+## Troubleshooting
+
+### Expression evaluation order
+
+Expressions are evaluated left-to-right with standard operator precedence:
+
+```taxi
+// Parentheses control evaluation order
+type Calculation1 = A + B * C    // B * C evaluated first
+type Calculation2 = (A + B) * C  // A + B evaluated first
+```
+
+### Type resolution in expressions
+
+When TaxiQL can't resolve a type in an expression:
+
+1. Check the type is available on the source object or through discovery
+2. Verify services exist that can provide the missing type
+3. Ensure proper type inheritance relationships
+
+### Debugging expressions
+
+Use intermediate expression types to debug complex calculations:
+
+```taxi
+// Break down complex expressions
+type Step1 = BaseValue * Multiplier
+type Step2 = Step1 + Adjustment
+type FinalResult = Step2 / Divisor
+
+// Instead of
+type ComplexCalc = (BaseValue * Multiplier + Adjustment) / Divisor
+```

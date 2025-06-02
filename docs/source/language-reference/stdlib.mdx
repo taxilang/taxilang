@@ -184,11 +184,24 @@ Returns true if none of the items in the collection satisfy the predicate
 declare extension function <T> single(collection:T[], callback: (T) -> Boolean):T
 ```
 
+Returns the first item from a collection that matches the provided predicate
+
 ### filter
 `taxi.stdlib.filter`
 
 ```taxi
 declare extension function <T> filter(collection:T[], callback: (T) -> Boolean):T[]
+```
+
+Returns the members of the collection that match the provided predicate.
+
+For example:
+
+```
+find { Person } as {
+   friends: Friend[] // all friends
+   youngFriends : Friend[].filter( (Age) -> Age < 70) // Seventy is the new 30
+}
 ```
 
 ### filterEach

@@ -5,6 +5,8 @@ title: Taxi StdLib
 description: Reference documentation on functions provided in Taxi's StdLib packages
 ---
 
+import PlaygroundSnippet from "@/components/PlaygroundSnippet";
+
 Taxi ships with a collections of functions for basic operations on data.
 
 These operations are performed locally on data received from services - it does not instruct remote
@@ -18,6 +20,50 @@ runtimes, such as Orbital.
 
 A collection of functions for manipulating strings
 
+### applyFormat
+`taxi.stdlib.applyFormat`
+
+```taxi
+declare extension function applyFormat(input: Any, format: String):String
+```
+
+Applies the provided format to the input string, and returns the result.
+
+Formats follow the format defined by the [Java Formatter](https://docs.oracle.com/javase/8/docs/api/java/util/Formatter.html) conventions
+
+------
+
+### concat
+`taxi.stdlib.concat`
+
+```taxi
+declare function concat(Any...):String
+```
+
+------
+
+### containsString
+`taxi.stdlib.containsString`
+
+```taxi
+declare extension function containsString(source:String, valueToSearchFor:String):Boolean
+```
+
+Returns true if `valueToSearchFor` within `source`
+
+------
+
+### indexOf
+`taxi.stdlib.indexOf`
+
+```taxi
+declare extension function indexOf(source:String, valueToSearchFor:String):Int
+```
+
+Returns the index of `valueToSearchFor` within `source`
+
+------
+
 ### left
 `taxi.stdlib.left`
 
@@ -27,12 +73,25 @@ declare extension function left(source:String,count:Int):String
 
 Returns the left most characters from the source string
 
-### right
-`taxi.stdlib.right`
+------
+
+### length
+`taxi.stdlib.length`
 
 ```taxi
-declare extension function right(source:String,count:Int):String
+declare extension function length(String):Int
 ```
+
+------
+
+### lowerCase
+`taxi.stdlib.lowerCase`
+
+```taxi
+declare extension function lowerCase(String):String
+```
+
+------
 
 ### mid
 `taxi.stdlib.mid`
@@ -46,49 +105,31 @@ Returns the middle of a string, starting at the `startIndex`, and ending right b
 * `startIndex` - the start index (inclusive)
 * `endIndex` - the end index (exclusive)
 
-### concat
-`taxi.stdlib.concat`
+------
+
+### padEnd
+`taxi.stdlib.padEnd`
 
 ```taxi
-declare function concat(Any...):String
+declare extension function padEnd(input: String, length: Int, padWith: String):String
 ```
 
-### upperCase
-`taxi.stdlib.upperCase`
+Pads the string to the specified length at the end with the specified character or space.
+padWith should be a single character - if multiple characters are passed, only the first is used
+
+------
+
+### padStart
+`taxi.stdlib.padStart`
 
 ```taxi
-declare extension function upperCase(String):String
+declare extension function padStart(input: String, length: Int, padWith: String):String
 ```
 
-### lowerCase
-`taxi.stdlib.lowerCase`
+Pads the string to the specified length at the start with the specified character or space.
+padWith should be a single character - if multiple characters are passed, only the first is used
 
-```taxi
-declare extension function lowerCase(String):String
-```
-
-### trim
-`taxi.stdlib.trim`
-
-```taxi
-declare extension function trim(String):String
-```
-
-### length
-`taxi.stdlib.length`
-
-```taxi
-declare extension function length(String):Int
-```
-
-### indexOf
-`taxi.stdlib.indexOf`
-
-```taxi
-declare extension function indexOf(source:String, valueToSearchFor:String):Int
-```
-
-Returns the index of `valueToSearchFor` within `source`
+------
 
 ### replace
 `taxi.stdlib.replace`
@@ -103,83 +144,36 @@ Accepts three args:
  * `searchValue: String`: The string to search for
  * `replacement: String`: The string to use as a replacement
 
-### containsString
-`taxi.stdlib.containsString`
+------
+
+### right
+`taxi.stdlib.right`
 
 ```taxi
-declare extension function containsString(source:String, valueToSearchFor:String):Boolean
+declare extension function right(source:String,count:Int):String
 ```
 
-Returns true if `valueToSearchFor` within `source`
+------
 
-### padStart
-`taxi.stdlib.padStart`
+### trim
+`taxi.stdlib.trim`
 
 ```taxi
-declare extension function padStart(input: String, length: Int, padWith: String):String
+declare extension function trim(String):String
 ```
 
-Pads the string to the specified length at the start with the specified character or space.
-padWith should be a single character - if multiple characters are passed, only the first is used
+------
 
-### padEnd
-`taxi.stdlib.padEnd`
+### upperCase
+`taxi.stdlib.upperCase`
 
 ```taxi
-declare extension function padEnd(input: String, length: Int, padWith: String):String
+declare extension function upperCase(String):String
 ```
-
-Pads the string to the specified length at the end with the specified character or space.
-padWith should be a single character - if multiple characters are passed, only the first is used
-
-### applyFormat
-`taxi.stdlib.applyFormat`
-
-```taxi
-declare extension function applyFormat(input: Any, format: String):String
-```
-
-Applies the provided format to the input string, and returns the result.
-
-Formats follow the format defined by the [Java Formatter](https://docs.oracle.com/javase/8/docs/api/java/util/Formatter.html) conventions
 
 ## Collections
 
 A collection of functions for operating on collections
-
-### contains
-`taxi.stdlib.contains`
-
-```taxi
-declare extension function <T> contains(collection: T[], searchTarget:T): Boolean
-```
-
-### allOf
-`taxi.stdlib.allOf`
-
-```taxi
-declare function allOf(values:Boolean...): Boolean
-```
-
-### anyOf
-`taxi.stdlib.anyOf`
-
-```taxi
-declare function anyOf(values:Boolean...): Boolean
-```
-
-Returns true if any of the provided boolean values are true.
-See also: any()
-
-### noneOf
-`taxi.stdlib.noneOf`
-
-```taxi
-declare function noneOf(values:Boolean...): Boolean
-```
-
-Returns true if all of the provided boolean values are false.
-See also: none()
 
 ### all
 `taxi.stdlib.all`
@@ -190,6 +184,45 @@ declare extension function <T> all(collection: T[], predicate: (T) -> Boolean): 
 
 Returns true if all of the items in the collection satisfy the predicate
 
+------
+
+### allOf
+`taxi.stdlib.allOf`
+
+```taxi
+declare function allOf(values:Boolean...): Boolean
+```
+
+Returns `true` only if all provided boolean values are `true`. Equivalent to logical AND.
+
+This function ensures that every condition in a set must be satisfied.
+
+```taxi
+// Check if a user can purchase a premium item
+type CanPurchasePremium inherits Boolean by allOf(IsActive, HasSufficientFunds, IsVerified)
+```
+
+#### Examples
+This example demonstrates how to use `allOf()` to verify if a user meets all required criteria for premium access.
+
+<PlaygroundSnippet
+  title = 'This is a title'
+  scenario={{
+  "schema" : "model Customer {\n   name: String\n   isActive: IsActive inherits Boolean\n   hasSufficientFunds: HasSufficientFunds inherits Boolean\n   isVerified: IsVerified inherits Boolean\n}\ntype HasPremiumAccess inherits Boolean by allOf(IsActive, HasSufficientFunds, IsVerified)",
+  "query" : "given {\n   customer: Customer = {\n      name: 'Bob',\n      isActive: true,\n      hasSufficientFunds: true,\n      isVerified: true\n   }\n}\nfind {\n   name: customer.name\n   hasPremiumAccess: HasPremiumAccess\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"name\": \"Bob\",\n               \"hasPremiumAccess\": true\n            }",
+  "stackId" : null
+}
+}>
+  <PlaygroundSnippet.Description>
+    This example demonstrates how to use `allOf()` to verify if a user meets all required criteria for premium access.
+  </PlaygroundSnippet.Description>
+</PlaygroundSnippet>
+
+------
+
 ### any
 `taxi.stdlib.any`
 
@@ -199,58 +232,71 @@ declare extension function <T> any(collection: T[], predicate: (T) -> Boolean): 
 
 Returns true if any of the items in the collection satisfy the predicate
 
-### none
-`taxi.stdlib.none`
+------
+
+### anyOf
+`taxi.stdlib.anyOf`
 
 ```taxi
-declare extension function <T> none(collection: T[], predicate: (T) -> Boolean): Boolean
+declare function anyOf(values:Boolean...): Boolean
 ```
 
-Returns true if none of the items in the collection satisfy the predicate
+Returns `true` if at least one of the provided boolean values is `true`. Equivalent to logical OR.
 
-### single
-`taxi.stdlib.single`
+This function evaluates multiple conditions and returns true if any of them are true.
 
 ```taxi
-declare extension function <T> single(collection:T[], callback: (T) -> Boolean):T
+// Check if a user has any account verification
+type IsVerified inherits Boolean by anyOf(HasEmailVerification, HasPhoneVerification, HasIdVerification)
 ```
 
-### filter
-`taxi.stdlib.filter`
+#### Examples
+This example demonstrates how to use `anyOf()` to verify if a user meets any of several verification criteria.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model User {\n   name: String\n   hasEmailVerification: Boolean\n   hasPhoneVerification: Boolean\n   hasIdVerification: Boolean\n}\ntype IsVerified inherits Boolean by anyOf(hasEmailVerification, hasPhoneVerification, hasIdVerification)",
+  "query" : "given {\n   user: User = {\n      name: 'Alice',\n      hasEmailVerification: false,\n      hasPhoneVerification: true,\n      hasIdVerification: false\n   }\n}\nfind {\n   name: user.name\n   isVerified: anyOf(user.hasEmailVerification, user.hasPhoneVerification, user.hasIdVerification)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"name\": \"Alice\",\n               \"isVerified\": true\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+------
+
+### contains
+`taxi.stdlib.contains`
 
 ```taxi
-declare extension function <T> filter(collection:T[], callback: (T) -> Boolean):T[]
+declare extension function <T> contains(collection: T[], searchTarget:T): Boolean
 ```
 
-### filterEach
-`taxi.stdlib.filterEach`
+Returns `true` if the collection contains the specified search target element.
+
+This function checks whether a given element exists within an array or collection.
 
 ```taxi
-declare extension function <T> filterEach(item: T, callback: (T) -> Boolean):T?
+// Check if a user's roles include admin privileges
+find { user: User } as {
+   hasAdminAccess: user.roles.contains("ADMIN")
+}
 ```
 
-Evaluates the predicate against the provided value, returning the value if the predicate
-        returns true, or null.
-        Intended for use against filtering streams, where null values are excluded
+#### Examples
+This example demonstrates how to use `contains()` to check if a user has a specific role.
 
-### singleBy
-`taxi.stdlib.singleBy`
+<PlaygroundSnippet scenario={{
+  "schema" : "model User {\n   username: String\n   roles: String[]\n}",
+  "query" : "given {\n   user: User = {\n      username: 'AdminUser',\n      roles: ['USER', 'EDITOR', 'ADMIN']\n   }\n}\nfind {\n   username: user.username\n   isAdmin: user.roles.contains(\"ADMIN\")\n   isGuest: user.roles.contains(\"GUEST\")\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"username\": \"AdminUser\",\n               \"isAdmin\": true,\n               \"isGuest\": false\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
 
-```taxi
-declare extension function <T,A> singleBy(collection:T[], groupingFunction: (T) -> A, searchValue: A):T
-```
-
-Similar to Single, where the collection is searched for a single matching value.
-However, results are first grouped by selector.  The results of this are cached to improve future performance
-
-### first
-`taxi.stdlib.first`
-
-```taxi
-declare extension function <T> first(collection: T[]):T
-```
-
-Returns the first item within the collection
+------
 
 ### exactlyOne
 `taxi.stdlib.exactlyOne`
@@ -259,16 +305,131 @@ Returns the first item within the collection
 declare extension function <T> exactlyOne(collection:T[]):T
 ```
 
-Returns the only item from the provided collection, or errors if there isn't exactly one item in the collection
+Returns the only item from the provided collection, or throws an error if there isn't exactly one item in the collection.
 
-### last
-`taxi.stdlib.last`
+This function is useful when you expect a collection to contain precisely one element and want to retrieve it.
 
 ```taxi
-declare extension function <T> last(collection: T[]):T
+// Get the single active session for a user
+find { user: User } as {
+   currentSession: user.sessions.filter((session) -> session.isActive).exactlyOne()
+}
 ```
 
-Returns the last item within the collection
+#### Examples
+This example demonstrates how to use `exactlyOne()` to retrieve the single active session for a user.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Session {\n   id: String\n   isActive: Boolean\n}\n\nmodel User {\n   username: String\n   sessions: Session[]\n}",
+  "query" : "given {\n   user: User = {\n      username: 'ActiveUser',\n      sessions: [\n         { id: 'session-1', isActive: true },\n         { id: 'session-2', isActive: false }\n      ]\n   }\n}\nfind {\n   username: user.username\n   activeSessionId: user.sessions.filter((session) -> session.isActive).exactlyOne().id\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"username\": \"ActiveUser\",\n               \"activeSessionId\": \"session-1\"\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+------
+
+### filter
+`taxi.stdlib.filter`
+
+```taxi
+declare extension function <T> filter(collection:T[], callback: (T) -> Boolean):T[]
+```
+
+Returns a new collection containing only the members of the original collection that match the provided predicate.
+
+This function is used to select a subset of elements from a collection based on a condition.
+
+```taxi
+find { store: Store } as {
+   allProducts: store.products // all products
+   inStockProducts: store.products.filter((product) -> product.stockLevel > 0)
+   affordableProducts: store.products.filter((product) -> product.price < 50.00)
+}
+```
+
+#### Examples
+This example demonstrates how to use `filter()` to find friends who meet a certain age criteria.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Friend {\n   name: Name inherits String\n   age: Age inherits Int\n}",
+  "query" : "given {\n   friends: Friend[] = [\n      { name: 'Jim', age: 20 },\n      { name: 'Jack', age: 80 },\n      { name: 'Alice', age: 75 },\n      { name: 'Bob', age: 30 }\n   ]\n}\nfind {\n   // Names of seniors (over 70)\n   seniorFriends: friends.filter((friend) -> friend.age > 70) as Name[]\n   // Names of young adults (under 30)\n   youngFriends: friends.filter((friend) -> friend.age < 30) as Name[]\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"seniorFriends\": [\n                  \"Jack\",\n                  \"Alice\"\n               ],\n               \"youngFriends\": [\n                  \"Jim\"\n               ]\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+------
+
+### filterEach
+`taxi.stdlib.filterEach`
+
+```taxi
+declare extension function <T> filterEach(item: T, callback: (T) -> Boolean):T?
+```
+
+Evaluates the predicate against the provided item, returning the item if the predicate returns true, or null otherwise.
+
+This function is intended for use in filtering streams, where null values are automatically excluded.
+
+```taxi
+// Filter individual items in a pipeline
+find { items: Item[] } as {
+   processedItems: items.map((item) -> filterEach(item, (i) -> i.status == "READY"))
+}
+```
+
+#### Examples
+This example demonstrates how to use `filterEach()` to process items in a stream-like manner, keeping only those that meet certain criteria.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Item {\n   id: String\n   status: String\n   value: Int\n}",
+  "query" : "given {\n   items: Item[] = [\n      { id: 'item-1', status: 'READY', value: 100 },\n      { id: 'item-2', status: 'PENDING', value: 200 },\n      { id: 'item-3', status: 'READY', value: 300 },\n      { id: 'item-4', status: 'FAILED', value: 400 }\n   ]\n}\nfind {\n   // Only keep READY items with a value over 200\n   highValueReadyItems: items.map((item) ->\n      filterEach(item, (i) -> i.status == 'READY' && i.value > 200)\n   )\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"highValueReadyItems\": [\n                  {\n                     \"id\": \"item-3\",\n                     \"status\": \"READY\",\n                     \"value\": 300\n                  }\n               ]\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+------
+
+### first
+`taxi.stdlib.first`
+
+```taxi
+declare extension function <T> first(collection: T[]):T
+```
+
+Returns the first item within the collection. Throws an error if the collection is empty.
+
+This function retrieves the first element in an ordered collection.
+
+```taxi
+// Get the most recent transaction from a sorted list
+find { account: Account } as {
+   latestTransaction: account.transactions.first()
+}
+```
+
+#### Examples
+This example demonstrates how to use `first()` to retrieve the most recent transaction for an account.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Transaction {\n   date: String\n   amount: Decimal\n   description: String\n}\n\nmodel Account {\n   accountNumber: String\n   transactions: Transaction[] // Assumed to be in descending date order\n}",
+  "query" : "given {\n   account: Account = {\n      accountNumber: 'ACC-12345',\n      transactions: [\n         { date: '2023-05-01', amount: 150.00, description: 'Grocery Store' },\n         { date: '2023-04-28', amount: 45.99, description: 'Online Shop' },\n         { date: '2023-04-25', amount: 20.00, description: 'Transfer' }\n      ]\n   }\n}\nfind {\n   accountNumber: account.accountNumber\n   mostRecentTransaction: account.transactions.first()\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"accountNumber\": \"ACC-12345\",\n               \"mostRecentTransaction\": {\n                  \"date\": \"2023-05-01\",\n                  \"amount\": 150.00,\n                  \"description\": \"Grocery Store\"\n               }\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+------
 
 ### getAtIndex
 `taxi.stdlib.getAtIndex`
@@ -277,7 +438,31 @@ Returns the last item within the collection
 declare extension function <T> getAtIndex(collection: T[], index: Int):T
 ```
 
-Returns the item at the provided index
+Returns the item at the provided index in the collection. Throws an error if the index is out of bounds.
+
+This function retrieves an element at a specific position in a collection, with zero-based indexing.
+
+```taxi
+// Get the second item in a list
+find { playlist: Playlist } as {
+   secondSong: playlist.songs.getAtIndex(1) // Note: index starts at 0
+}
+```
+
+#### Examples
+This example demonstrates how to use `getAtIndex()` to retrieve a specific song from a playlist by its position.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Song {\n   title: String\n   artist: String\n   duration: Int\n}\n\nmodel Playlist {\n   name: String\n   songs: Song[]\n}",
+  "query" : "given {\n   playlist: Playlist = {\n      name: 'Road Trip Mix',\n      songs: [\n         { title: 'Highway Star', artist: 'Deep Purple', duration: 372 },\n         { title: 'Born to Run', artist: 'Bruce Springsteen', duration: 270 },\n         { title: 'Life in the Fast Lane', artist: 'Eagles', duration: 251 }\n      ]\n   }\n}\nfind {\n   playlistName: playlist.name\n   firstSong: playlist.songs.getAtIndex(0)\n   secondSong: playlist.songs.getAtIndex(1)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"playlistName\": \"Road Trip Mix\",\n               \"firstSong\": {\n                  \"title\": \"Highway Star\",\n                  \"artist\": \"Deep Purple\",\n                  \"duration\": 372\n               },\n               \"secondSong\": {\n                  \"title\": \"Born to Run\",\n                  \"artist\": \"Bruce Springsteen\",\n                  \"duration\": 270\n               }\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+------
 
 ### intersection
 `taxi.stdlib.intersection`
@@ -286,17 +471,31 @@ Returns the item at the provided index
 declare extension function <T> intersection(collectionA: T[], collectionB: T[]):T[]
 ```
 
-Returns a collection containing the items present in both the provided collections
+Returns a new collection containing only the elements that are present in both of the provided collections.
 
-### listOf
-`taxi.stdlib.listOf`
+This function identifies common elements between two collections.
 
 ```taxi
-declare function <T> listOf(values:T...):T[]
+// Find common tags between two products
+find { productA: Product, productB: Product } as {
+   commonTags: intersection(productA.tags, productB.tags)
+}
 ```
 
-xxx
-Returns an array containing the provided values
+#### Examples
+This example demonstrates how to use `intersection()` to find common elements between two collections.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Product {\n   name: String\n   tags: String[]\n}",
+  "query" : "given {\n   productA: Product = {\n      name: 'Smartphone',\n      tags: ['electronics', 'mobile', 'camera', 'touchscreen']\n   }\n   productB: Product = {\n      name: 'Digital Camera',\n      tags: ['electronics', 'camera', 'photography', 'zoom']\n   }\n}\nfind {\n   productAName: productA.name\n   productBName: productB.name\n   commonTags: intersection(productA.tags, productB.tags)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"productAName\": \"Smartphone\",\n               \"productBName\": \"Digital Camera\",\n               \"commonTags\": [\n                  \"electronics\",\n                  \"camera\"\n               ]\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+------
 
 ### joinToString
 `taxi.stdlib.joinToString`
@@ -307,16 +506,184 @@ declare extension function <T> joinToString(values:T[], separator: String = ",",
 
 Creates a string from all the elements separated using separator and using the given prefix and postfix if supplied. Null values are omitted
 
+------
+
+### last
+`taxi.stdlib.last`
+
+```taxi
+declare extension function <T> last(collection: T[]):T
+```
+
+Returns the last item within the collection. Throws an error if the collection is empty.
+
+This function retrieves the final element in an ordered collection.
+
+```taxi
+// Get the oldest transaction from a date-sorted list
+find { account: Account } as {
+   oldestTransaction: account.transactions.last()
+}
+```
+
+#### Examples
+This example demonstrates how to use `last()` to retrieve the oldest transaction for an account.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Transaction {\n   date: String\n   amount: Decimal\n   description: String\n}\n\nmodel Account {\n   accountNumber: String\n   transactions: Transaction[] // Assumed to be in descending date order (newest first)\n}",
+  "query" : "given {\n   account: Account = {\n      accountNumber: 'ACC-12345',\n      transactions: [\n         { date: '2023-05-01', amount: 150.00, description: 'Grocery Store' },\n         { date: '2023-04-28', amount: 45.99, description: 'Online Shop' },\n         { date: '2023-04-25', amount: 20.00, description: 'Transfer' }\n      ]\n   }\n}\nfind {\n   accountNumber: account.accountNumber\n   oldestTransaction: account.transactions.last()\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"accountNumber\": \"ACC-12345\",\n               \"oldestTransaction\": {\n                  \"date\": \"2023-04-25\",\n                  \"amount\": 20.00,\n                  \"description\": \"Transfer\"\n               }\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+------
+
+### listOf
+`taxi.stdlib.listOf`
+
+```taxi
+declare function <T> listOf(values:T...):T[]
+```
+
+Creates and returns an array containing all the provided values.
+
+This function is useful for creating collections inline without having to define them separately.
+
+```taxi
+// Create a list of allowed status values
+find { order: Order } as {
+   isValidStatus: listOf('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED').contains(order.status)
+}
+```
+
+#### Examples
+This example demonstrates how to use `listOf()` to create an inline collection and validate against it.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Order {\n   id: String\n   status: String\n}",
+  "query" : "given {\n   orders: Order[] = [\n      { id: 'order-1', status: 'PENDING' },\n      { id: 'order-2', status: 'SHIPPED' },\n      { id: 'order-3', status: 'CANCELED' }\n   ]\n}\nfind {\n   validOrders: orders.filter((order) ->\n      listOf('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED').contains(order.status)\n   )\n   invalidOrders: orders.filter((order) ->\n      !listOf('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED').contains(order.status)\n   )\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"validOrders\": [\n                  {\n                     \"id\": \"order-1\",\n                     \"status\": \"PENDING\"\n                  },\n                  {\n                     \"id\": \"order-2\",\n                     \"status\": \"SHIPPED\"\n                  }\n               ],\n               \"invalidOrders\": [\n                  {\n                     \"id\": \"order-3\",\n                     \"status\": \"CANCELED\"\n                  }\n               ]\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+------
+
+### none
+`taxi.stdlib.none`
+
+```taxi
+declare extension function <T> none(collection: T[], predicate: (T) -> Boolean): Boolean
+```
+
+Returns true if none of the items in the collection satisfy the predicate
+
+------
+
+### noneOf
+`taxi.stdlib.noneOf`
+
+```taxi
+declare function noneOf(values:Boolean...): Boolean
+```
+
+Returns `true` only if all provided boolean values are `false`. Equivalent to logical NOR.
+
+This function is useful for checking if none of multiple conditions apply.
+
+```taxi
+// Check if a user has no permissions
+type NoPermissions inherits Boolean by noneOf(IsAdmin, IsEditor, IsViewer)
+```
+
+#### Examples
+This example demonstrates how to use `noneOf()` to verify if a user lacks all specified roles.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model User {\n   username: String\n   isAdmin: Boolean\n   isEditor: Boolean\n   isViewer: Boolean\n}\ntype HasNoAccess inherits Boolean by noneOf(isAdmin, isEditor, isViewer)",
+  "query" : "given {\n   user: User = {\n      username: 'GuestUser',\n      isAdmin: false,\n      isEditor: false,\n      isViewer: false\n   }\n}\nfind {\n   username: user.username\n   noAccess: noneOf(user.isAdmin, user.isEditor, user.isViewer)\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"username\": \"GuestUser\",\n               \"noAccess\": true\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+------
+
+### single
+`taxi.stdlib.single`
+
+```taxi
+declare extension function <T> single(collection:T[], callback: (T) -> Boolean):T
+```
+
+Returns the first item from a collection that matches the provided predicate. Throws an error if no matching item is found.
+
+This function is useful when you need to find a specific element in a collection based on a condition.
+
+```taxi
+// Find a product by its SKU code
+find { inventory: Inventory } as {
+   appleMacbook: inventory.products.single((product) -> product.sku == "MB-PRO-2023")
+}
+```
+
+#### Examples
+This example demonstrates how to use `single()` to find a specific product in an inventory.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Product {\n   name: String\n   sku: String\n   price: Decimal\n}\n\nmodel Inventory {\n   products: Product[]\n}",
+  "query" : "given {\n   inventory: Inventory = {\n      products: [\n         { name: 'Laptop', sku: 'LT-001', price: 1200.00 },\n         { name: 'Smartphone', sku: 'SP-002', price: 999.99 },\n         { name: 'Tablet', sku: 'TB-003', price: 499.50 }\n      ]\n   }\n}\nfind {\n   smartphoneDetails: inventory.products.single((product) -> product.sku == 'SP-002')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"smartphoneDetails\": {\n                  \"name\": \"Smartphone\",\n                  \"sku\": \"SP-002\",\n                  \"price\": 999.99\n               }\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
+------
+
+### singleBy
+`taxi.stdlib.singleBy`
+
+```taxi
+declare extension function <T,A> singleBy(collection:T[], groupingFunction: (T) -> A, searchValue: A):T
+```
+
+Returns the item from a collection where the value returned by the grouping function matches the search value.
+
+Similar to `single()`, but results are first grouped by the selector function, and these results are cached
+to improve future performance when querying the same collection multiple times.
+
+```taxi
+// Find a product by its SKU code using a cached search
+find { inventory: Inventory } as {
+   appleMacbook: inventory.products.singleBy((product) -> product.sku, "MB-PRO-2023")
+}
+```
+
+#### Examples
+This example demonstrates how to use `singleBy()` to efficiently find items in a collection by a specific property.
+
+<PlaygroundSnippet scenario={{
+  "schema" : "model Product {\n   name: String\n   sku: String\n   price: Decimal\n}\n\nmodel Inventory {\n   products: Product[]\n}",
+  "query" : "given {\n   inventory: Inventory = {\n      products: [\n         { name: 'Laptop', sku: 'LT-001', price: 1200.00 },\n         { name: 'Smartphone', sku: 'SP-002', price: 999.99 },\n         { name: 'Tablet', sku: 'TB-003', price: 499.50 }\n      ]\n   }\n}\nfind {\n   // Find products by SKU code\n   laptop: inventory.products.singleBy((product) -> product.sku, 'LT-001')\n   tablet: inventory.products.singleBy((product) -> product.sku, 'TB-003')\n}",
+  "parameters" : { },
+  "stubs" : [ ],
+  "expectedJson" : "{\n               \"laptop\": {\n                  \"name\": \"Laptop\",\n                  \"sku\": \"LT-001\",\n                  \"price\": 1200.00\n               },\n               \"tablet\": {\n                  \"name\": \"Tablet\",\n                  \"sku\": \"TB-003\",\n                  \"price\": 499.50\n               }\n            }",
+  "stackId" : null
+}
+}></PlaygroundSnippet>
+
 ## Dates
 
 Mess about with time. Flux capacitor not included
-
-### addMinutes
-`taxi.stdlib.dates.addMinutes`
-
-```taxi
-declare function <T> addMinutes(T, Int):T
-```
 
 ### addDays
 `taxi.stdlib.dates.addDays`
@@ -325,6 +692,17 @@ declare function <T> addMinutes(T, Int):T
 declare function <T> addDays(T, Int):T
 ```
 
+------
+
+### addMinutes
+`taxi.stdlib.dates.addMinutes`
+
+```taxi
+declare function <T> addMinutes(T, Int):T
+```
+
+------
+
 ### addSeconds
 `taxi.stdlib.dates.addSeconds`
 
@@ -332,12 +710,7 @@ declare function <T> addDays(T, Int):T
 declare function <T> addSeconds(T, Int):T
 ```
 
-### now
-`taxi.stdlib.dates.now`
-
-```taxi
-declare function now():Instant
-```
+------
 
 ### currentDate
 `taxi.stdlib.dates.currentDate`
@@ -346,6 +719,8 @@ declare function now():Instant
 declare function currentDate():Date
 ```
 
+------
+
 ### currentDateTime
 `taxi.stdlib.dates.currentDateTime`
 
@@ -353,12 +728,25 @@ declare function currentDate():Date
 declare function currentDateTime():DateTime
 ```
 
+------
+
 ### currentTime
 `taxi.stdlib.dates.currentTime`
 
 ```taxi
 declare function currentTime():Time
 ```
+
+------
+
+### now
+`taxi.stdlib.dates.now`
+
+```taxi
+declare function now():Instant
+```
+
+------
 
 ### parseDate
 `taxi.stdlib.dates.parseDate`
@@ -371,6 +759,24 @@ declare function <T> parseDate(String):T
 
 Numbers 'n' such. Maths for the brits.
 
+### max
+`taxi.stdlib.max`
+
+```taxi
+declare extension function <T,A> max(collection: T[], callback: (T) -> A):A
+```
+
+------
+
+### min
+`taxi.stdlib.min`
+
+```taxi
+declare extension function <T,A> min(collection: T[], callback: (T) -> A):A
+```
+
+------
+
 ### round
 `taxi.stdlib.round`
 
@@ -380,25 +786,13 @@ declare extension function round(value: Decimal, precision: Int = 0): Decimal
 
 Rounds a decimal value to the specified precision.
 
+------
+
 ### sum
 `taxi.stdlib.sum`
 
 ```taxi
 declare extension function <T,A> sum(collection: T[], callback: (T) -> A):A
-```
-
-### max
-`taxi.stdlib.max`
-
-```taxi
-declare extension function <T,A> max(collection: T[], callback: (T) -> A):A
-```
-
-### min
-`taxi.stdlib.min`
-
-```taxi
-declare extension function <T,A> min(collection: T[], callback: (T) -> A):A
 ```
 
 ## Objects
@@ -424,6 +818,8 @@ declare extension function <T> enumForName(enumType: lang.taxi.Type<T>, enumName
 ```
 
 Returns the enum value for the provided name
+
+------
 
 ### hasEnumNamed
 `taxi.stdlib.hasEnumNamed`
@@ -452,13 +848,6 @@ declare query function sumOver(Any...):Decimal
 
 Functions that are functionally functions. Funky
 
-### reduce
-`taxi.stdlib.reduce`
-
-```taxi
-declare extension function <T,A> reduce(collection: T[], callback: (T,A) -> A):A
-```
-
 ### fold
 `taxi.stdlib.fold`
 
@@ -479,6 +868,8 @@ model Entry {
 
 type WeightedAverage by (Entry[]) -> Entry[].fold(0, (Entry, Int) -> Int + (Weight*Score))
 ```
+
+------
 
 ### map
 `taxi.stdlib.map`
@@ -509,6 +900,15 @@ For example:
 Film[].map ( (Title) -> Title.upperCase() )
 ```
 
+------
+
+### reduce
+`taxi.stdlib.reduce`
+
+```taxi
+declare extension function <T,A> reduce(collection: T[], callback: (T,A) -> A):A
+```
+
 ## Transformations
 
 Functions for converting between types
@@ -530,6 +930,8 @@ Converts the provided source into the target type reference.
   - No graph searches or remote invocations are performed
 
   As a result, it's also more performant.
+
+------
 
 ### toRawType
 `taxi.stdlib.toRawType`

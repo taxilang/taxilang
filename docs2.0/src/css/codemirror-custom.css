@@ -1,0 +1,50 @@
+/* Custom styles for CodeMirror instances in Playground */
+:root {
+  --playground-font-size: 0.95rem;
+  --playground-line-height: 1.6;
+  --playground-font-family: 'Fira Code', 'IBM Plex Mono', monospace;
+  --playground-bg-color: rgba(30, 41, 59, 0.6);
+  --playground-gutter-bg-color: rgba(30, 41, 59, 0.8);
+  --playground-active-line-bg-color: rgba(30, 41, 59, 1);
+}
+
+.cm-editor {
+  background-color: var(--playground-bg-color) !important;
+  font-size: var(--playground-font-size) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.cm-editor .cm-scroller {
+  font-family: var(--playground-font-family);
+}
+
+.cm-editor .cm-content {
+  font-family: var(--playground-font-family);
+  font-size: var(--playground-font-size) !important;
+  font-variant-ligatures: contextual; /* Enable ligatures for Fira Code */
+}
+
+.cm-editor .cm-line {
+  font-family: var(--playground-font-family);
+  line-height: var(--playground-line-height); /* Improve readability with the smaller font size */
+}
+
+.cm-editor .cm-gutters {
+  background-color: var(--playground-gutter-bg-color) !important;
+  border-right: 1px solid var(--playground-active-line-bg-color);
+  font-family: var(--playground-font-family);
+  font-size: var(--playground-font-size) !important;
+}
+
+.cm-editor .cm-activeLineGutter {
+  background-color: var(--playground-active-line-bg-color) !important;
+}
+
+/* Add a very subtle border */
+.cm-wrapper {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
