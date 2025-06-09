@@ -2,10 +2,7 @@ package lang.taxi.generators.avro
 
 import com.google.common.io.Resources
 import com.winterbe.expekt.should
-import lang.taxi.sources.SourceCodeLanguages
 import lang.taxi.testing.shouldCompileTheSameAs
-import org.apache.avro.Schema
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import kotlin.io.path.toPath
 
@@ -80,6 +77,23 @@ namespace simple.addressbook.people.phones {
          .generate(avroFile)
 
       val concatenatedSource = generated.concatenatedSource
+
+      // ensure types were declared / not declared as expected
+      // As a result, the source can't compile (yet), so we have to do string searches
+      concatenatedSource.should.contain("type EmailAddress inherits String")
+      concatenatedSource.should.not.contain("type PersonId")
+      concatenatedSource.should.not.contain("type PersonName")
+
+      val schemaWithBaseSchema = """
+         $concatenatedSource
+         namespace foo {
+            type PersonId inherits Int
+            type PersonName inherits String
+
+         }
+      """.trimIndent()
+
+
       val expected = """namespace foo {
    @lang.taxi.formats.AvroMessage
    closed model AddressBook {
@@ -117,7 +131,7 @@ namespace foo.addressbook.people {
 namespace foo.addressbook.people.phones {
    type Number inherits String
 }"""
-      concatenatedSource.shouldCompileTheSameAs(expected)
+      schemaWithBaseSchema.shouldCompileTheSameAs(expected)
    }
 
    @Test

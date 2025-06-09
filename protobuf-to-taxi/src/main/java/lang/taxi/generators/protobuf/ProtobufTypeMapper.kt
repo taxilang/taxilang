@@ -7,7 +7,7 @@ import com.squareup.wire.schema.Schema
 import lang.taxi.generators.FieldName
 import lang.taxi.generators.Logger
 import lang.taxi.generators.NamespacedType
-import lang.taxi.generators.TypeNameHelper
+import lang.taxi.generators.TypeDefinitionHelper
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 
@@ -55,7 +55,7 @@ class ProtobufTypeMapper(
       return generatedTypes
    }
 
-   private fun getOrCreateType(type: ProtoType, nameHelper: TypeNameHelper): Type {
+   private fun getOrCreateType(type: ProtoType, nameHelper: TypeDefinitionHelper): Type {
       val typeFromProtoSchema = protoSchema.getType(type)
       return when {
          type.isScalar -> getOrCreateScalarType(type, nameHelper)
@@ -68,7 +68,7 @@ class ProtobufTypeMapper(
       }
    }
 
-   private fun buildMap(type: ProtoType, nameHelper: TypeNameHelper): Type {
+   private fun buildMap(type: ProtoType, nameHelper: TypeDefinitionHelper): Type {
       val keyType = getOrCreateType(type.keyType!!, nameHelper.append(FieldName("MapKey")))
       val valueType = getOrCreateType(type.valueType!!, nameHelper.append(FieldName("MapValue")))
       return MapType(
@@ -78,7 +78,7 @@ class ProtobufTypeMapper(
       )
    }
 
-   private fun getOrCreateScalarType(type: ProtoType, nameHelper: TypeNameHelper):Type {
+   private fun getOrCreateScalarType(type: ProtoType, nameHelper: TypeDefinitionHelper):Type {
       val typeName = nameHelper.suggestName()
       return this._generatedTypes.getOrPut(typeName) {
          val baseType = scalarTypes[type]
@@ -119,7 +119,7 @@ class ProtobufTypeMapper(
       return generated
    }
 
-   private fun getOrCreateEnumType(enumType: EnumType, nameHelper: TypeNameHelper): Type {
+   private fun getOrCreateEnumType(enumType: EnumType, nameHelper: TypeDefinitionHelper): Type {
       return _generatedTypes.getOrPut(QualifiedName.from(enumType.type.toString())) {
          createEnum(enumType)
       }
@@ -218,7 +218,7 @@ class ProtobufTypeMapper(
                UnresolvedImportedType(declaredTypeName)
             }
          }
-         protoField.type != null -> getOrCreateType(protoField.type!!, TypeNameHelper.forHint(
+         protoField.type != null -> getOrCreateType(protoField.type!!, TypeDefinitionHelper.forHint(
             NamespacedType(type.type.enclosingTypeOrPackage.orEmpty(), type.name))
             .append(FieldName(protoField.name))
          )
