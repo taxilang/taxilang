@@ -15,17 +15,27 @@
                   {
                      "name": "name",
                      "type": "string",
-                     "taxi.dataType": "foo.PersonName"
+                     // declaring a type name using a name property on an object
+                     // Type is not declared, it is imported
+                     "taxi.dataType": {
+                        "name": "foo.PersonName"
+                     }
                   },
                   {
                      "name": "id",
                      "type": "int",
+                     // declaring a type using a pure string
+                     // Type is not declared, it is imported
                      "taxi.dataType": "foo.PersonId"
                   },
                   {
                      "name": "email",
                      "type": "string",
-                     "taxi.dataType": "foo.EmailAddress"
+                     // declaring a type usiong an object, and defining this type should be declared (vs imported)
+                     "taxi.dataType": {
+                        "name" : "foo.EmailAddress",
+                        "create" : true
+                     }
                   },
                   {
                      "name": "phones",

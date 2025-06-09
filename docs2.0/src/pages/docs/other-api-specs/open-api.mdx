@@ -40,9 +40,10 @@ for each.
 | Response Models  | `true`  | Creates new types if not found |
 | Field Attributes | `false` | Requires types to exist        |
 
-<Callout type="note" title="Type Creation">
+<Callout type="note" title="Type Creation" content={`
   <p>Semantic types let you share data between systems, while avoiding tight coupling. Try to use existing types (where the semantics match), or create new types in a shared taxonomy - rather than creating types in your OpenAPI spec</p>
   <p>Only create new types (<code>create: true</code>) when you're intentionally extending your semantic model, or creating a type you're not ready to share yet.</p>
+  `}>
 </Callout>
 
 ### Declaring operation kinds
