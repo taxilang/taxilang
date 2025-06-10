@@ -147,6 +147,11 @@ class AvroTypeMapper(
          nameHelper.appendNotNull(SchemaMetadataTaxiDefinition.ifPresent(schema.getProp(TAXI_TYPENAME)))
       val typeName = thisNameHelper.suggestName()
       return _generatedTypes.getOrPut(typeName) {
+         if (!thisNameHelper.declaresNewType(SchemaTypeDeclaration.DeclarationLocation.Model)) {
+            return UnresolvedImportedType(typeName.parameterizedName)
+         }
+
+
          // This allows us to support recursion - the undefined type will prevent us getting into an endless loop
          val undefined = ObjectType.undefined(typeName.fullyQualifiedName)
          _generatedTypes[typeName] = undefined

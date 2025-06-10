@@ -1,0 +1,67 @@
+{
+   "type": "record",
+   "name": "Film",
+   "namespace": "com.example.media",
+   "fields": [
+      {
+         "name": "title",
+         "type": "string"
+      },
+      {
+         "name": "director",
+         "type": {
+            "type": "record",
+            "name": "Person",
+            "fields": [
+               {
+                  "name": "name",
+                  "type": "string"
+               },
+               {
+                  "name": "age",
+                  "type": "int"
+               }
+            ]
+         }
+      },
+      {
+         "name": "producer",
+         "type": "Person"
+         // no taxi type definition here, so a new model is created
+      },
+      {
+         "name": "leadActor",
+         "type": "Person",
+         // Person should not get defined, as it's declared here without create: true
+         "taxi.dataType" : "com.example.LeadActor"
+      },
+      {
+         "name": "cast",
+         "type": [
+            "null",
+            {
+               "type": "array",
+               "items": "Person"
+            }
+         ],
+         // Actor should not get created, as it's defined as a type here
+         // without create: true
+         "taxi.dataType": "com.example.Actor"
+      },
+      {
+         "name": "crew",
+         "type": [
+            "null",
+            {
+               "type": "array",
+               "items": "Person"
+            }
+         ],
+         // StageHand should get created
+         "taxi.dataType": {
+            "name": "com.example.StageHand",
+            "create" : true
+         }
+      }
+   ]
+}

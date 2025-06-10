@@ -16,7 +16,7 @@ namespace vyne.openApi {
       [[ How many items to return at one time (max 100) ]]
       @taxi.http.QueryVariable(value = "limit") limit : Int? ) : Pet[]
       @taxi.http.HttpOperation(method = "POST" , url = "http://petstore.swagger.io/v1/pets")
-      operation createPets(  )
+      write operation createPets(  )
    }
    service PetsPetIdService {
       @taxi.http.HttpOperation(method = "GET" , url = "http://petstore.swagger.io/v1/pets/{petId}")

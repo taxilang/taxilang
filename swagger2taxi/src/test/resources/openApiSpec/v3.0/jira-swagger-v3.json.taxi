@@ -4827,7 +4827,7 @@ namespace vyne.openApi {
       *Note: Be careful when changing [application properties and advanced settings](https://confluence.atlassian.com/x/vYXKM).*
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/application-properties/{id}")
-      operation com_atlassian_jira_rest_v2_admin_ApplicationPropertiesResource_setApplicationProperty_put(
+      write operation com_atlassian_jira_rest_v2_admin_ApplicationPropertiesResource_setApplicationProperty_put(
       [[ The key of the application property to update. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       @taxi.http.RequestBody simpleApplicationPropertyBean : SimpleApplicationPropertyBean? ) : ApplicationProperty
@@ -4870,7 +4870,7 @@ namespace vyne.openApi {
       *  *Delete own attachments* [project permission](https://confluence.atlassian.com/x/yodKLg) to delete an attachment created by the calling user.
       *  *Delete all attachments* [project permission](https://confluence.atlassian.com/x/yodKLg) to delete an attachment created by any user. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/attachment/{id}")
-      operation com_atlassian_jira_rest_v2_issue_attachment_AttachmentResource_removeAttachment_delete(
+      write operation com_atlassian_jira_rest_v2_issue_attachment_AttachmentResource_removeAttachment_delete(
       [[ The ID of the attachment. ]]
       @taxi.http.PathVariable(value = "id") id : String )
    }
@@ -4935,7 +4935,7 @@ namespace vyne.openApi {
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue.
       *  If the comment has visibility restrictions, belongs to the group or has the role visibility is restricted to. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/comment/list")
-      operation com_atlassian_jira_rest_v2_issue_IssueCommentListResource_getCommentsByIds_post(
+      write operation com_atlassian_jira_rest_v2_issue_IssueCommentListResource_getCommentsByIds_post(
       [[ Use [expand](#expansion) to include additional information about comments in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `renderedBody` Returns the comment body rendered in HTML.
       *  `properties` Returns the comment's properties. ]]
@@ -4974,7 +4974,7 @@ namespace vyne.openApi {
       *  *Edit Own Comments* [project permission](https://confluence.atlassian.com/x/yodKLg) to create or update the value of a property on a comment created by the user.
       Also, when the visibility of a comment is restricted to a role or group the user must be a member of that role or group. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/comment/{commentId}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_issue_CommentPropertyResource_setCommentProperty_put(
+      write operation com_atlassian_jira_rest_v2_issue_CommentPropertyResource_setCommentProperty_put(
       [[ The ID of the comment. ]]
       @taxi.http.PathVariable(value = "commentId") commentId : String,
       [[ The key of the property. The maximum length is 255 characters. ]]
@@ -4986,7 +4986,7 @@ namespace vyne.openApi {
       *  *Edit Own Comments* [project permission](https://confluence.atlassian.com/x/yodKLg) to delete a property from a comment created by the user.
       Also, when the visibility of a comment is restricted to a role or group the user must be a member of that role or group. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/comment/{commentId}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_issue_CommentPropertyResource_deleteCommentProperty_delete(
+      write operation com_atlassian_jira_rest_v2_issue_CommentPropertyResource_deleteCommentProperty_delete(
       [[ The ID of the comment. ]]
       @taxi.http.PathVariable(value = "commentId") commentId : String,
       [[ The key of the property. ]]
@@ -4997,7 +4997,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** *Administer projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project in which the component is created or *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/component")
-      operation com_atlassian_jira_rest_v2_issue_ComponentResource_createComponent_post( @taxi.http.RequestBody component : Component? ) : Component
+      write operation com_atlassian_jira_rest_v2_issue_ComponentResource_createComponent_post( @taxi.http.RequestBody component : Component? ) : Component
    }
    service RestApiThreeComponentIdService {
       [[ Returns a component.
@@ -5011,7 +5011,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** *Administer projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project containing the component or *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/component/{id}")
-      operation com_atlassian_jira_rest_v2_issue_ComponentResource_updateComponent_put(
+      write operation com_atlassian_jira_rest_v2_issue_ComponentResource_updateComponent_put(
       [[ The ID of the component. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       @taxi.http.RequestBody component : Component? ) : Component
@@ -5019,7 +5019,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** *Administer projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project containing the component or *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/component/{id}")
-      operation com_atlassian_jira_rest_v2_issue_ComponentResource_deleteComponent_delete(
+      write operation com_atlassian_jira_rest_v2_issue_ComponentResource_deleteComponent_delete(
       [[ The ID of the component. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       [[ The ID of the component to replace the deleted component. If this value is null no replacement is made. ]]
@@ -5049,11 +5049,11 @@ namespace vyne.openApi {
       [[ Selects a time tracking provider.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/configuration/timetracking")
-      operation com_atlassian_jira_rest_v2_admin_timetracking_TimeTrackingResource_selectTimeTrackingImplementation_put( @taxi.http.RequestBody timeTrackingProvider : TimeTrackingProvider? ) : Any
+      write operation com_atlassian_jira_rest_v2_admin_timetracking_TimeTrackingResource_selectTimeTrackingImplementation_put( @taxi.http.RequestBody timeTrackingProvider : TimeTrackingProvider? ) : Any
       [[ Disables time tracking.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/configuration/timetracking")
-      operation com_atlassian_jira_rest_v2_admin_timetracking_TimeTrackingResource_disableTimeTracking_delete(  ) : Any
+      write operation com_atlassian_jira_rest_v2_admin_timetracking_TimeTrackingResource_disableTimeTracking_delete(  ) : Any
    }
    service RestApiThreeConfigurationTimetrackingListService {
       [[ Returns all time tracking providers. By default, Jira only has one time tracking provider: *JIRA provided time tracking*. However, you can install other time tracking providers via apps from the Atlassian Marketplace. For more information on time tracking providers, see the documentation for the [ Time Tracking Provider](https://developer.atlassian.com/cloud/jira/platform/modules/time-tracking-provider/) module.
@@ -5069,7 +5069,7 @@ namespace vyne.openApi {
       [[ Sets the time tracking settings.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/configuration/timetracking/options")
-      operation com_atlassian_jira_rest_v2_admin_timetracking_TimeTrackingResource_setSharedTimeTrackingConfiguration_put( @taxi.http.RequestBody timeTrackingConfiguration : TimeTrackingConfiguration? ) : TimeTrackingConfiguration
+      write operation com_atlassian_jira_rest_v2_admin_timetracking_TimeTrackingResource_setSharedTimeTrackingConfiguration_put( @taxi.http.RequestBody timeTrackingConfiguration : TimeTrackingConfiguration? ) : TimeTrackingConfiguration
    }
    service RestApiThreeCustomFieldFieldIdOptionService {
       [[ Returns the options and, where the custom select field is of the type *Select List (cascading)*, cascading options for custom select fields. Cascading options are included in the item count when determining pagination.
@@ -5087,7 +5087,7 @@ namespace vyne.openApi {
       Note that this operation **only works for issue field select list options created in Jira or using operations from the [Issue custom field options](#api-group-Issue-custom-field-options) resource**, it cannot be used with issue field select list options created by Connect apps.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/customField/{fieldId}/option")
-      operation com_atlassian_jira_rest_v2_issue_BulkCustomFieldOptionResource_createCustomFieldOptions_post(
+      write operation com_atlassian_jira_rest_v2_issue_BulkCustomFieldOptionResource_createCustomFieldOptions_post(
       [[ The ID of the custom field. Note: This is the numeric part of the of the field ID. For example, for a field with the ID *customfield\_10075* use *10075*. ]]
       @taxi.http.PathVariable(value = "fieldId") fieldId : Int,
       @taxi.http.RequestBody bulkCreateCustomFieldOptionRequest : BulkCreateCustomFieldOptionRequest? ) : Any
@@ -5193,7 +5193,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** The user must be the owner of the dashboard. Note, users with the *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) are considered owners of the System dashboard. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/dashboard/{dashboardId}/items/{itemId}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_dashboard_DashboardItemPropertyResource_setDashboardItemProperty_put(
+      write operation com_atlassian_jira_rest_v2_dashboard_DashboardItemPropertyResource_setDashboardItemProperty_put(
       [[ The ID of the dashboard. ]]
       @taxi.http.PathVariable(value = "dashboardId") dashboardId : String,
       [[ The ID of the dashboard item. ]]
@@ -5205,7 +5205,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** The user must be the owner of the dashboard. Note, users with the *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) are considered owners of the System dashboard. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/dashboard/{dashboardId}/items/{itemId}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_dashboard_DashboardItemPropertyResource_deleteDashboardItemProperty_delete(
+      write operation com_atlassian_jira_rest_v2_dashboard_DashboardItemPropertyResource_deleteDashboardItemProperty_delete(
       [[ The ID of the dashboard. ]]
       @taxi.http.PathVariable(value = "dashboardId") dashboardId : String,
       [[ The ID of the dashboard item. ]]
@@ -5241,7 +5241,7 @@ namespace vyne.openApi {
       **[Permissions](#permissions) required**: None. However, an expression may return different results for different users depending on their permissions. For example, different users may see different comments on the same issue.
       Permission to access Jira Software is required to access Jira Software context variables (`board` and `sprint`) or fields (for example, `issue.sprint`). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/expression/eval")
-      operation com_atlassian_jira_rest_v2_expression_JiraExpressionsResource_evaluateJiraExpression_post(
+      write operation com_atlassian_jira_rest_v2_expression_JiraExpressionsResource_evaluateJiraExpression_post(
       [[ Use [expand](#expansion) to include additional information in the response. This parameter accepts `meta.complexity`, which returns information about the expression complexity. For example, the number of expensive operations used by the expression) and how close the expression is to reaching the [complexity limit](https://developer.atlassian.com/cloud/jira/platform/jira-expressions/#restrictions). Useful when designing and debugging your expressions. ]]
       @taxi.http.QueryVariable(value = "expand") expand : String?,
       @taxi.http.RequestBody jiraExpressionEvalRequestBean : JiraExpressionEvalRequestBean? ) : JiraExpressionResult
@@ -5259,7 +5259,7 @@ namespace vyne.openApi {
       [[ Creates a custom field.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/field")
-      operation com_atlassian_jira_rest_v2_issue_FieldResource_createCustomField_post( @taxi.http.RequestBody customFieldDefinitionJsonBean : CustomFieldDefinitionJsonBean? ) : FieldDetails
+      write operation com_atlassian_jira_rest_v2_issue_FieldResource_createCustomField_post( @taxi.http.RequestBody customFieldDefinitionJsonBean : CustomFieldDefinitionJsonBean? ) : FieldDetails
    }
    service RestApiThreeFieldSearchService {
       [[ Returns a [paginated](#pagination) list of fields for Classic Jira projects. Only custom fields can be queried, `type` must be set to `custom`.
@@ -5332,7 +5332,7 @@ namespace vyne.openApi {
       Note that this operation **only works for issue field select list options added by Connect apps**, it cannot be used with issue field select list options created in Jira or using operations from the [Issue custom field options](#api-group-Issue-custom-field-options) resource.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). Jira permissions are not required for the app providing the field. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/field/{fieldKey}/option")
-      operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_createIssueFieldOption_post(
+      write operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_createIssueFieldOption_post(
       [[ The field key is specified in the following format: **$(app-key)\_\_$(field-key)**. For example, *example-add-on\_\_example-issue-field*. To determine the `fieldKey` value, do one of the following:
       *  open the app's plugin descriptor, then **app-key** is the key at the top and **field-key** is the key in the `jiraIssueFields` module. **app-key** can also be found in the app listing in the Atlassian Universal Plugin Manager.
       *  run [Get fields](#api-rest-api-3-field-get) and in the field details the value is returned in `key`. For example, `"key": "teams-add-on__team-issue-field"` ]]
@@ -5389,7 +5389,7 @@ namespace vyne.openApi {
       Note that this operation **only works for issue field select list options added by Connect apps**, it cannot be used with issue field select list options created in Jira or using operations from the [Issue custom field options](#api-group-Issue-custom-field-options) resource.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). Jira permissions are not required for the app providing the field. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/field/{fieldKey}/option/{optionId}")
-      operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_updateIssueFieldOption_put(
+      write operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_updateIssueFieldOption_put(
       [[ The field key is specified in the following format: **$(app-key)\_\_$(field-key)**. For example, *example-add-on\_\_example-issue-field*. To determine the `fieldKey` value, do one of the following:
       *  open the app's plugin descriptor, then **app-key** is the key at the top and **field-key** is the key in the `jiraIssueFields` module. **app-key** can also be found in the app listing in the Atlassian Universal Plugin Manager.
       *  run [Get fields](#api-rest-api-3-field-get) and in the field details the value is returned in `key`. For example, `"key": "teams-add-on__team-issue-field"` ]]
@@ -5401,7 +5401,7 @@ namespace vyne.openApi {
       Note that this operation **only works for issue field select list options added by Connect apps**, it cannot be used with issue field select list options created in Jira or using operations from the [Issue custom field options](#api-group-Issue-custom-field-options) resource.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). Jira permissions are not required for the app providing the field. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/field/{fieldKey}/option/{optionId}")
-      operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_deleteIssueFieldOption_delete(
+      write operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_deleteIssueFieldOption_delete(
       [[ The field key is specified in the following format: **$(app-key)\_\_$(field-key)**. For example, *example-add-on\_\_example-issue-field*. To determine the `fieldKey` value, do one of the following:
       *  open the app's plugin descriptor, then **app-key** is the key at the top and **field-key** is the key in the `jiraIssueFields` module. **app-key** can also be found in the app listing in the Atlassian Universal Plugin Manager.
       *  run [Get fields](#api-rest-api-3-field-get) and in the field details the value is returned in `key`. For example, `"key": "teams-add-on__team-issue-field"` ]]
@@ -5415,7 +5415,7 @@ namespace vyne.openApi {
       Note that this operation **only works for issue field select list options added by Connect apps**, it cannot be used with issue field select list options created in Jira or using operations from the [Issue custom field options](#api-group-Issue-custom-field-options) resource.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). Jira permissions are not required for the app providing the field. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/field/{fieldKey}/option/{optionId}/issue")
-      operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_replaceIssueFieldOption_delete(
+      write operation com_atlassian_jira_rest_v2_issue_field_IssueFieldOptionResource_replaceIssueFieldOption_delete(
       [[ The ID of the option that will replace the currently selected option. ]]
       @taxi.http.QueryVariable(value = "replaceWith") replaceWith : Int?,
       [[ A JQL query that specifies the issues to be updated. For example, *project=10000*. ]]
@@ -5445,7 +5445,7 @@ namespace vyne.openApi {
       [[ Creates a filter. The filter is shared according to the [default share scope](#api-rest-api-3-filter-post). The filter is not selected as a favorite.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/filter")
-      operation com_atlassian_jira_rest_v2_search_FilterResource_createFilter_post(
+      write operation com_atlassian_jira_rest_v2_search_FilterResource_createFilter_post(
       [[ Use [expand](#expansion) to include additional information about filter in the response. This parameter accepts a comma-separated list. Expand options include:
       *  `sharedUsers` Returns the users that the filter is shared with. This includes users that can browse projects that the filter is shared with. If you don't specify `sharedUsers`, then the `sharedUsers` object is returned but it doesn't list any users. The list of users returned is limited to 1000, to access additional users append `[start-index:end-index]` to the expand request. For example, to access the next 1000 users, use `?expand=sharedUsers[1001:2000]`.
       *  `subscriptions` Returns the users that are subscribed to the filter. If you don't specify `subscriptions`, the `subscriptions` object is returned but it doesn't list any subscriptions. The list of subscriptions returned is limited to 1000, to access additional subscriptions append `[start-index:end-index]` to the expand request. For example, to access the next 1000 subscriptions, use `?expand=subscriptions[1001:2000]`. ]]
@@ -5460,7 +5460,7 @@ namespace vyne.openApi {
       [[ Sets the default sharing for new filters and dashboards for a user.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/filter/defaultShareScope")
-      operation com_atlassian_jira_rest_v2_search_FilterResource_setDefaultShareScope_put( @taxi.http.RequestBody defaultShareScope : DefaultShareScope? ) : DefaultShareScope
+      write operation com_atlassian_jira_rest_v2_search_FilterResource_setDefaultShareScope_put( @taxi.http.RequestBody defaultShareScope : DefaultShareScope? ) : DefaultShareScope
    }
    service RestApiThreeFilterFavouriteService {
       [[ Returns the visible favorite filters of the user.
@@ -5562,7 +5562,7 @@ namespace vyne.openApi {
       [[ Updates a filter. Use this operation to update a filter's name, description, JQL, or sharing.
       **[Permissions](#permissions) required:** Permission to access Jira, however the user must own the filter. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/filter/{id}")
-      operation com_atlassian_jira_rest_v2_search_FilterResource_updateFilter_put(
+      write operation com_atlassian_jira_rest_v2_search_FilterResource_updateFilter_put(
       [[ The ID of the filter to update. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ Use [expand](#expansion) to include additional information about filter in the response. This parameter accepts a comma-separated list. Expand options include:
@@ -5573,7 +5573,7 @@ namespace vyne.openApi {
       [[ Delete a filter.
       **[Permissions](#permissions) required:** Permission to access Jira, however filters can only be deleted by the creator of the filter or a user with *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/filter/{id}")
-      operation com_atlassian_jira_rest_v2_search_FilterResource_deleteFilter_delete(
+      write operation com_atlassian_jira_rest_v2_search_FilterResource_deleteFilter_delete(
       [[ The ID of the filter to delete. ]]
       @taxi.http.PathVariable(value = "id") id : Int )
    }
@@ -5600,7 +5600,7 @@ namespace vyne.openApi {
       *  filters shared with a public project.
       *  filters shared with the public. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/filter/{id}/columns")
-      operation com_atlassian_jira_rest_v2_search_FilterResource_setColumns_put(
+      write operation com_atlassian_jira_rest_v2_search_FilterResource_setColumns_put(
       [[ The ID of the filter. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       @taxi.http.RequestBody array : String[]? ) : Any
@@ -5612,7 +5612,7 @@ namespace vyne.openApi {
       *  filters shared with a public project.
       *  filters shared with the public. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/filter/{id}/columns")
-      operation com_atlassian_jira_rest_v2_search_FilterResource_resetColumns_delete(
+      write operation com_atlassian_jira_rest_v2_search_FilterResource_resetColumns_delete(
       [[ The ID of the filter. ]]
       @taxi.http.PathVariable(value = "id") id : Int )
    }
@@ -5625,7 +5625,7 @@ namespace vyne.openApi {
       *  filters shared with a public project.
       *  filters shared with the public. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/filter/{id}/favourite")
-      operation com_atlassian_jira_rest_v2_search_FilterResource_setFavouriteForFilter_put(
+      write operation com_atlassian_jira_rest_v2_search_FilterResource_setFavouriteForFilter_put(
       [[ The ID of the filter. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ Use [expand](#expansion) to include additional information about filter in the response. This parameter accepts a comma-separated list. Expand options include:
@@ -5635,7 +5635,7 @@ namespace vyne.openApi {
       [[ Removes a filter as a favorite for the user. Note that this operation only removes filters visible to the user from the user's favorites list. For example, if the user favorites a public filter that is subsequently made private (and is therefore no longer visible on their favorites list) they cannot remove it from their favorites list.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/filter/{id}/favourite")
-      operation com_atlassian_jira_rest_v2_search_FilterResource_deleteFavouriteForFilter_delete(
+      write operation com_atlassian_jira_rest_v2_search_FilterResource_deleteFavouriteForFilter_delete(
       [[ The ID of the filter. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ Use [expand](#expansion) to include additional information about filter in the response. This parameter accepts a comma-separated list. Expand options include:
@@ -5660,7 +5660,7 @@ namespace vyne.openApi {
       Be aware that this operation uses different objects for updating share permissions compared to [Update filter](#api-rest-api-3-filter-id-put).
       **[Permissions](#permissions) required:** *Share dashboards and filters* [global permission](https://confluence.atlassian.com/x/x4dKLg) and the user must own the filter. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/filter/{id}/permission")
-      operation com_atlassian_jira_rest_v2_search_FilterResource_addSharePermission_post(
+      write operation com_atlassian_jira_rest_v2_search_FilterResource_addSharePermission_post(
       [[ The ID of the filter. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       @taxi.http.RequestBody sharePermissionInputBean : SharePermissionInputBean? ) : SharePermission[]
@@ -5683,7 +5683,7 @@ namespace vyne.openApi {
       [[ Deletes a share permission from a filter.
       **[Permissions](#permissions) required:** Permission to access Jira and the user must own the filter. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/filter/{id}/permission/{permissionId}")
-      operation com_atlassian_jira_rest_v2_search_FilterResource_deleteSharePermission_delete(
+      write operation com_atlassian_jira_rest_v2_search_FilterResource_deleteSharePermission_delete(
       [[ The ID of the filter. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The ID of the share permission. ]]
@@ -5702,11 +5702,11 @@ namespace vyne.openApi {
       [[ Creates a group.
       **[Permissions](#permissions) required:** Site administration (that is, member of the *site-admin* [group](https://confluence.atlassian.com/x/24xjL)). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/group")
-      operation com_atlassian_jira_rest_v2_issue_GroupResource_createGroup_post( @taxi.http.RequestBody addGroupBean : AddGroupBean? ) : Group
+      write operation com_atlassian_jira_rest_v2_issue_GroupResource_createGroup_post( @taxi.http.RequestBody addGroupBean : AddGroupBean? ) : Group
       [[ Deletes a group.
       **[Permissions](#permissions) required:** Site administration (that is, member of the *site-admin* strategic [group](https://confluence.atlassian.com/x/24xjL)). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/group")
-      operation com_atlassian_jira_rest_v2_issue_GroupResource_removeGroup_delete(
+      write operation com_atlassian_jira_rest_v2_issue_GroupResource_removeGroup_delete(
       [[ The name of the group. ]]
       @taxi.http.QueryVariable(value = "groupname") groupname : String,
       [[ The group to transfer restrictions to. Only comments and worklogs are transferred. If restrictions are not transferred, comments and worklogs are inaccessible after the deletion. ]]
@@ -5731,14 +5731,14 @@ namespace vyne.openApi {
       [[ Adds a user to a group.
       **[Permissions](#permissions) required:** Site administration (that is, member of the *site-admin* [group](https://confluence.atlassian.com/x/24xjL)). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/group/user")
-      operation com_atlassian_jira_rest_v2_issue_GroupResource_addUserToGroup_post(
+      write operation com_atlassian_jira_rest_v2_issue_GroupResource_addUserToGroup_post(
       [[ The name of the group (case sensitive). ]]
       @taxi.http.QueryVariable(value = "groupname") groupname : String,
       @taxi.http.RequestBody updateUserToGroupBean : UpdateUserToGroupBean? ) : Group
       [[ Removes a user from a group.
       **[Permissions](#permissions) required:** Site administration (that is, member of the *site-admin* [group](https://confluence.atlassian.com/x/24xjL)). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/group/user")
-      operation com_atlassian_jira_rest_v2_issue_GroupResource_removeUserFromGroup_delete(
+      write operation com_atlassian_jira_rest_v2_issue_GroupResource_removeUserFromGroup_delete(
       [[ The name of the group. ]]
       @taxi.http.QueryVariable(value = "groupname") groupname : String,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
@@ -5810,7 +5810,7 @@ namespace vyne.openApi {
       In a next-gen project any issue may be made a child providing that the parent and child are members of the same project. In a classic project the parent field is only valid for subtasks.
       **[Permissions](#permissions) required:** *Browse projects* and *Create issues* [project permissions](https://confluence.atlassian.com/x/yodKLg) for the project in which the issue or subtask is created. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issue")
-      operation com_atlassian_jira_rest_v2_issue_IssueResource_createIssue_post(
+      write operation com_atlassian_jira_rest_v2_issue_IssueResource_createIssue_post(
       [[ Whether the project in which the issue is created is added to the user's **Recently viewed** project list, as shown under **Projects** in Jira. ]]
       @taxi.http.QueryVariable(value = "updateHistory") updateHistory : Boolean?,
       @taxi.http.RequestBody issueUpdateDetails : IssueUpdateDetails? ) : CreatedIssue
@@ -5823,7 +5823,7 @@ namespace vyne.openApi {
       *  `parent` the must contain the ID or key of the parent issue.
       **[Permissions](#permissions) required:** *Browse projects* and *Create issues* [project permissions](https://confluence.atlassian.com/x/yodKLg) for the project in which each issue or subtask is created. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issue/bulk")
-      operation com_atlassian_jira_rest_v2_issue_IssueResource_createIssues_post( @taxi.http.RequestBody issuesUpdateBean : IssuesUpdateBean? ) : CreatedIssues
+      write operation com_atlassian_jira_rest_v2_issue_IssueResource_createIssues_post( @taxi.http.RequestBody issuesUpdateBean : IssuesUpdateBean? ) : CreatedIssues
    }
    service RestApiThreeIssueCreatemetaService {
       [[ Returns details of projects, issue types within projects, and, when requested, the create screen fields for each issue type for the user. Use the information to populate the requests in [ Create issue](#api-rest-api-3-issue-post) and [Create issues](#api-rest-api-3-issue-bulk-post).
@@ -5875,7 +5875,7 @@ namespace vyne.openApi {
       *  *Browse projects* and *Edit issues* [project permissions](https://confluence.atlassian.com/x/yodKLg) for the project containing the issue.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issue/properties")
-      operation com_atlassian_jira_rest_v2_property_IssuePropertyBulkUpdateResource_bulkSetIssuesProperties_post( @taxi.http.RequestBody issueEntityProperties : IssueEntityProperties? )
+      write operation com_atlassian_jira_rest_v2_property_IssuePropertyBulkUpdateResource_bulkSetIssuesProperties_post( @taxi.http.RequestBody issueEntityProperties : IssueEntityProperties? )
    }
    service RestApiThreeIssuePropertiesPropertyKeyService {
       [[ Sets a property value on multiple issues. The issues to be updated can be specified by a filter.
@@ -5896,7 +5896,7 @@ namespace vyne.openApi {
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue.
       *  *Edit issues* [project permission](https://confluence.atlassian.com/x/yodKLg) for each issue. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/issue/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_property_IssuePropertyBulkUpdateResource_bulkSetIssueProperty_put(
+      write operation com_atlassian_jira_rest_v2_property_IssuePropertyBulkUpdateResource_bulkSetIssueProperty_put(
       [[ The key of the property. The maximum length is 255 characters. ]]
       @taxi.http.PathVariable(value = "propertyKey") propertyKey : String,
       @taxi.http.RequestBody bulkIssuePropertyUpdateRequest : BulkIssuePropertyUpdateRequest? )
@@ -5914,7 +5914,7 @@ namespace vyne.openApi {
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue.
       *  *Edit issues* [project permission](https://confluence.atlassian.com/x/yodKLg) for each issue. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/issue/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_property_IssuePropertyBulkUpdateResource_bulkDeleteIssueProperty_delete(
+      write operation com_atlassian_jira_rest_v2_property_IssuePropertyBulkUpdateResource_bulkDeleteIssueProperty_delete(
       [[ The key of the property. ]]
       @taxi.http.PathVariable(value = "propertyKey") propertyKey : String,
       @taxi.http.RequestBody issueFilterForBulkPropertyDelete : IssueFilterForBulkPropertyDelete? )
@@ -5972,7 +5972,7 @@ namespace vyne.openApi {
       *  *Browse projects* and *Edit issues* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}")
-      operation com_atlassian_jira_rest_v2_issue_IssueResource_editIssue_put(
+      write operation com_atlassian_jira_rest_v2_issue_IssueResource_editIssue_put(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ Indicates whether a notification email about the issue update is sent to all watchers. To disable the notification, administer Jira or administer project permissions are required. If the user doesn't have the necessary permission the request is ignored. ]]
@@ -5989,7 +5989,7 @@ namespace vyne.openApi {
       *  *Browse projects* and *Delete issues* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project containing the issue.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}")
-      operation com_atlassian_jira_rest_v2_issue_IssueResource_deleteIssue_delete(
+      write operation com_atlassian_jira_rest_v2_issue_IssueResource_deleteIssue_delete(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ Indicates whether the issue's subtasks are deleted when the issue is deleted. ]]
@@ -6005,7 +6005,7 @@ namespace vyne.openApi {
       *  *Browse Projects* and *Assign Issues* [ project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/assignee")
-      operation com_atlassian_jira_rest_v2_issue_IssueResource_assignIssue_put(
+      write operation com_atlassian_jira_rest_v2_issue_IssueResource_assignIssue_put(
       [[ The ID or key of the issue to be assigned. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       @taxi.http.RequestBody user : User? ) : Any
@@ -6023,7 +6023,7 @@ namespace vyne.openApi {
       *  *Browse Projects* and *Create attachments* [ project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/attachments")
-      operation com_atlassian_jira_rest_v2_issue_IssueAttachmentsResource_addAttachment_post(
+      write operation com_atlassian_jira_rest_v2_issue_IssueAttachmentsResource_addAttachment_post(
       [[ The ID or key of the issue that attachments are added to. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       @taxi.http.RequestBody binary : binary? ) : Attachment[]
@@ -6068,7 +6068,7 @@ namespace vyne.openApi {
       *  *Browse projects* and *Add comments* [ project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue containing the comment is in.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/comment")
-      operation com_atlassian_jira_rest_v2_issue_IssueCommentResource_addComment_post(
+      write operation com_atlassian_jira_rest_v2_issue_IssueCommentResource_addComment_post(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ Use [expand](#expansion) to include additional information about comments in the response. This parameter accepts `renderedBody`, which returns the comment body rendered in HTML. ]]
@@ -6098,7 +6098,7 @@ namespace vyne.openApi {
       *  *Edit all comments*[ project permission](https://confluence.atlassian.com/x/yodKLg) to update any comment or *Edit own comments* to update comment created by the user.
       *  If the comment has visibility restrictions, the user belongs to the group or has the role visibility is restricted to. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/comment/{id}")
-      operation com_atlassian_jira_rest_v2_issue_IssueCommentResource_updateComment_put(
+      write operation com_atlassian_jira_rest_v2_issue_IssueCommentResource_updateComment_put(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The ID of the comment. ]]
@@ -6113,7 +6113,7 @@ namespace vyne.openApi {
       *  *Delete all comments*[ project permission](https://confluence.atlassian.com/x/yodKLg) to delete any comment or *Delete own comments* to delete comment created by the user,
       *  If the comment has visibility restrictions, the user belongs to the group or has the role visibility is restricted to. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/comment/{id}")
-      operation com_atlassian_jira_rest_v2_issue_IssueCommentResource_deleteComment_delete(
+      write operation com_atlassian_jira_rest_v2_issue_IssueCommentResource_deleteComment_delete(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The ID of the comment. ]]
@@ -6144,7 +6144,7 @@ namespace vyne.openApi {
       *  *Browse Projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/notify")
-      operation com_atlassian_jira_rest_v2_issue_IssueResource_notify_post(
+      write operation com_atlassian_jira_rest_v2_issue_IssueResource_notify_post(
       [[ ID or key of the issue that the notification is sent for. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       @taxi.http.RequestBody notification : Notification? ) : Any
@@ -6179,7 +6179,7 @@ namespace vyne.openApi {
       *  *Browse projects* and *Edit issues* [project permissions](https://confluence.atlassian.com/x/yodKLg) for the project containing the issue.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_issue_IssuePropertyResource_setIssueProperty_put(
+      write operation com_atlassian_jira_rest_v2_issue_IssuePropertyResource_setIssueProperty_put(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The key of the issue property. The maximum length is 255 characters. ]]
@@ -6191,7 +6191,7 @@ namespace vyne.openApi {
       *  *Browse projects* and *Edit issues* [project permissions](https://confluence.atlassian.com/x/yodKLg) for the project containing the issue.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_issue_IssuePropertyResource_deleteIssueProperty_delete(
+      write operation com_atlassian_jira_rest_v2_issue_IssuePropertyResource_deleteIssueProperty_delete(
       [[ The key or ID of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The key of the property. ]]
@@ -6218,7 +6218,7 @@ namespace vyne.openApi {
       *  *Browse projects* and *Link issues* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/remotelink")
-      operation com_atlassian_jira_rest_v2_issue_IssueResource_createOrUpdateRemoteIssueLink_post(
+      write operation com_atlassian_jira_rest_v2_issue_IssueResource_createOrUpdateRemoteIssueLink_post(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       @taxi.http.RequestBody remoteIssueLinkRequest : RemoteIssueLinkRequest? ) : RemoteIssueLinkIdentifies
@@ -6229,7 +6229,7 @@ namespace vyne.openApi {
       *  *Browse projects* and *Link issues* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is implemented, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/remotelink")
-      operation com_atlassian_jira_rest_v2_issue_IssueResource_deleteRemoteIssueLinkByGlobalId_delete(
+      write operation com_atlassian_jira_rest_v2_issue_IssueResource_deleteRemoteIssueLinkByGlobalId_delete(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The global ID of a remote issue link. ]]
@@ -6256,7 +6256,7 @@ namespace vyne.openApi {
       *  *Browse projects* and *Link issues* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/remotelink/{linkId}")
-      operation com_atlassian_jira_rest_v2_issue_IssueResource_updateRemoteIssueLink_put(
+      write operation com_atlassian_jira_rest_v2_issue_IssueResource_updateRemoteIssueLink_put(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The ID of the remote issue link. ]]
@@ -6269,7 +6269,7 @@ namespace vyne.openApi {
       *  *Browse projects*, *Edit issues*, and *Link issues* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/remotelink/{linkId}")
-      operation com_atlassian_jira_rest_v2_issue_IssueResource_deleteRemoteIssueLinkById_delete(
+      write operation com_atlassian_jira_rest_v2_issue_IssueResource_deleteRemoteIssueLinkById_delete(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The ID of a remote issue link. ]]
@@ -6300,7 +6300,7 @@ namespace vyne.openApi {
       *  *Browse projects* and *Transition issues* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/transitions")
-      operation com_atlassian_jira_rest_v2_issue_IssueResource_doTransition_post(
+      write operation com_atlassian_jira_rest_v2_issue_IssueResource_doTransition_post(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       @taxi.http.RequestBody issueUpdateDetails : IssueUpdateDetails? ) : Any
@@ -6323,7 +6323,7 @@ namespace vyne.openApi {
       *  *Browse projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/votes")
-      operation com_atlassian_jira_rest_v2_issue_IssueResource_addVote_post(
+      write operation com_atlassian_jira_rest_v2_issue_IssueResource_addVote_post(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String ) : Any
       [[ Deletes a user's vote from an issue. This is the equivalent of the user clicking *Unvote* on an issue in Jira.
@@ -6332,7 +6332,7 @@ namespace vyne.openApi {
       *  *Browse projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/votes")
-      operation com_atlassian_jira_rest_v2_issue_IssueResource_removeVote_delete(
+      write operation com_atlassian_jira_rest_v2_issue_IssueResource_removeVote_delete(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String )
    }
@@ -6355,7 +6355,7 @@ namespace vyne.openApi {
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue.
       *  To add users other than themselves to the watchlist, *Manage watcher list* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/watchers")
-      operation com_atlassian_jira_rest_v2_issue_IssueResource_addWatcher_post(
+      write operation com_atlassian_jira_rest_v2_issue_IssueResource_addWatcher_post(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       @taxi.http.RequestBody string : String? ) : Any
@@ -6366,7 +6366,7 @@ namespace vyne.openApi {
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue.
       *  To remove users other than themselves from the watchlist, *Manage watcher list* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/watchers")
-      operation com_atlassian_jira_rest_v2_issue_IssueResource_removeWatcher_delete(
+      write operation com_atlassian_jira_rest_v2_issue_IssueResource_removeWatcher_delete(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
@@ -6401,7 +6401,7 @@ namespace vyne.openApi {
       *  *Browse projects* and *Work on issues* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/worklog")
-      operation com_atlassian_jira_rest_v2_issue_IssueWorklogsResource_addWorklog_post(
+      write operation com_atlassian_jira_rest_v2_issue_IssueWorklogsResource_addWorklog_post(
       [[ The ID or key the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ Indicates whether users watching the issue are notified by email. ]]
@@ -6448,7 +6448,7 @@ namespace vyne.openApi {
       *  *Edit all worklogs*[ project permission](https://confluence.atlassian.com/x/yodKLg) to update any worklog or *Edit own worklogs* to update worklogs created by the user.
       *  If the worklog has visibility restrictions, belongs to the group or has the role visibility is restricted to. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/worklog/{id}")
-      operation com_atlassian_jira_rest_v2_issue_IssueWorklogsResource_updateWorklog_put(
+      write operation com_atlassian_jira_rest_v2_issue_IssueWorklogsResource_updateWorklog_put(
       [[ The ID or key the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The ID of the worklog. ]]
@@ -6476,7 +6476,7 @@ namespace vyne.openApi {
       *  *Delete all worklogs*[ project permission](https://confluence.atlassian.com/x/yodKLg) to delete any worklog or *Delete own worklogs* to delete worklogs created by the user,
       *  If the worklog has visibility restrictions, belongs to the group or has the role visibility is restricted to. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/worklog/{id}")
-      operation com_atlassian_jira_rest_v2_issue_IssueWorklogsResource_deleteWorklog_delete(
+      write operation com_atlassian_jira_rest_v2_issue_IssueWorklogsResource_deleteWorklog_delete(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The ID of the worklog. ]]
@@ -6534,7 +6534,7 @@ namespace vyne.openApi {
       *  *Edit all worklogs*[ project permission](https://confluence.atlassian.com/x/yodKLg) to update any worklog or *Edit own worklogs* to update worklogs created by the user.
       *  If the worklog has visibility restrictions, belongs to the group or has the role visibility is restricted to. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/worklog/{worklogId}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_issue_WorklogPropertyResource_setWorklogProperty_put(
+      write operation com_atlassian_jira_rest_v2_issue_WorklogPropertyResource_setWorklogProperty_put(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The ID of the worklog. ]]
@@ -6549,7 +6549,7 @@ namespace vyne.openApi {
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue.
       *  If the worklog has visibility restrictions, belongs to the group or has the role visibility is restricted to. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/issue/{issueIdOrKey}/worklog/{worklogId}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_issue_WorklogPropertyResource_deleteWorklogProperty_delete(
+      write operation com_atlassian_jira_rest_v2_issue_WorklogPropertyResource_deleteWorklogProperty_delete(
       [[ The ID or key of the issue. ]]
       @taxi.http.PathVariable(value = "issueIdOrKey") issueIdOrKey : String,
       [[ The ID of the worklog. ]]
@@ -6568,7 +6568,7 @@ namespace vyne.openApi {
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue.
       *  If the comment has visibility restrictions, belongs to the group or has the role visibility is restricted to. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issueLink")
-      operation com_atlassian_jira_rest_v2_issue_LinkIssueResource_linkIssues_post( @taxi.http.RequestBody linkIssueRequestJsonBean : LinkIssueRequestJsonBean? ) : Any
+      write operation com_atlassian_jira_rest_v2_issue_LinkIssueResource_linkIssues_post( @taxi.http.RequestBody linkIssueRequestJsonBean : LinkIssueRequestJsonBean? ) : Any
    }
    service RestApiThreeIssueLinkLinkIdService {
       [[ Returns an issue link.
@@ -6587,7 +6587,7 @@ namespace vyne.openApi {
       *  *Link issues* [project permission](https://confluence.atlassian.com/x/yodKLg) for at least one of the projects containing issues in the link.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, permission to view both of the issues. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/issueLink/{linkId}")
-      operation com_atlassian_jira_rest_v2_issue_LinkIssueResource_deleteIssueLink_delete(
+      write operation com_atlassian_jira_rest_v2_issue_LinkIssueResource_deleteIssueLink_delete(
       [[ The ID of the issue link. ]]
       @taxi.http.PathVariable(value = "linkId") linkId : String )
    }
@@ -6602,7 +6602,7 @@ namespace vyne.openApi {
       To use this operation, the site must have [issue linking](https://confluence.atlassian.com/x/yoXKM) enabled.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issueLinkType")
-      operation com_atlassian_jira_rest_v2_issue_IssueLinkTypeResource_createIssueLinkType_post( @taxi.http.RequestBody issueLinkType : IssueLinkType? ) : IssueLinkType
+      write operation com_atlassian_jira_rest_v2_issue_IssueLinkTypeResource_createIssueLinkType_post( @taxi.http.RequestBody issueLinkType : IssueLinkType? ) : IssueLinkType
    }
    service RestApiThreeIssueLinkTypeIssueLinkTypeIdService {
       [[ Returns an issue link type.
@@ -6617,7 +6617,7 @@ namespace vyne.openApi {
       To use this operation, the site must have [issue linking](https://confluence.atlassian.com/x/yoXKM) enabled.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/issueLinkType/{issueLinkTypeId}")
-      operation com_atlassian_jira_rest_v2_issue_IssueLinkTypeResource_updateIssueLinkType_put(
+      write operation com_atlassian_jira_rest_v2_issue_IssueLinkTypeResource_updateIssueLinkType_put(
       [[ The ID of the issue link type. ]]
       @taxi.http.PathVariable(value = "issueLinkTypeId") issueLinkTypeId : String,
       @taxi.http.RequestBody issueLinkType : IssueLinkType? ) : IssueLinkType
@@ -6625,7 +6625,7 @@ namespace vyne.openApi {
       To use this operation, the site must have [issue linking](https://confluence.atlassian.com/x/yoXKM) enabled.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/issueLinkType/{issueLinkTypeId}")
-      operation com_atlassian_jira_rest_v2_issue_IssueLinkTypeResource_deleteIssueLinkType_delete(
+      write operation com_atlassian_jira_rest_v2_issue_IssueLinkTypeResource_deleteIssueLinkType_delete(
       [[ The ID of the issue link type. ]]
       @taxi.http.PathVariable(value = "issueLinkTypeId") issueLinkTypeId : String )
    }
@@ -6658,7 +6658,7 @@ namespace vyne.openApi {
       [[ Creates an issue type and adds it to the default issue type scheme.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issuetype")
-      operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_createIssueType_post( @taxi.http.RequestBody issueTypeCreateBean : IssueTypeCreateBean? ) : IssueTypeBean
+      write operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_createIssueType_post( @taxi.http.RequestBody issueTypeCreateBean : IssueTypeCreateBean? ) : IssueTypeBean
    }
    service RestApiThreeIssuetypeIdService {
       [[ Returns an issue type.
@@ -6671,14 +6671,14 @@ namespace vyne.openApi {
       [[ Updates the issue type.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/issuetype/{id}")
-      operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_updateIssueType_put(
+      write operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_updateIssueType_put(
       [[ The ID of the issue type. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       @taxi.http.RequestBody issueTypeUpdateBean : IssueTypeUpdateBean? ) : IssueTypeBean
       [[ Deletes the issue type. If the issue type is in use, all uses are updated with the alternative issue type (`alternativeIssueTypeId`). A list of alternative issue types are obtained from the [Get alternative issue types](#api-rest-api-3-issuetype-id-alternatives-get) resource.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/issuetype/{id}")
-      operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_deleteIssueType_delete(
+      write operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_deleteIssueType_delete(
       [[ The ID of the issue type. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       [[ The ID of the replacement issue type. ]]
@@ -6705,7 +6705,7 @@ namespace vyne.openApi {
       After creating the avatar, use [ Update issue type](#api-rest-api-3-issuetype-id-put) to set it as the issue type's displayed avatar.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/issuetype/{id}/avatar2")
-      operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_createIssueTypeAvatar_post(
+      write operation com_atlassian_jira_rest_v2_issue_IssueTypeResource_createIssueTypeAvatar_post(
       [[ The ID of the issue type. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       [[ The X coordinate of the top-left corner of the crop region. ]]
@@ -6743,7 +6743,7 @@ namespace vyne.openApi {
       The value of the request body must be a [valid](http://tools.ietf.org/html/rfc4627), non-empty JSON blob. The maximum length is 32768 characters.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/issuetype/{issueTypeId}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_issue_IssueTypePropertyResource_setIssueTypeProperty_put(
+      write operation com_atlassian_jira_rest_v2_issue_IssueTypePropertyResource_setIssueTypeProperty_put(
       [[ The ID of the issue type. ]]
       @taxi.http.PathVariable(value = "issueTypeId") issueTypeId : String,
       [[ The key of the issue type property. The maximum length is 255 characters. ]]
@@ -6752,7 +6752,7 @@ namespace vyne.openApi {
       [[ Deletes the [issue type property](https://developer.atlassian.com/cloud/jira/platform/storing-data-without-a-database/#a-id-jira-entity-properties-a-jira-entity-properties).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/issuetype/{issueTypeId}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_issue_IssueTypePropertyResource_deleteIssueTypeProperty_delete(
+      write operation com_atlassian_jira_rest_v2_issue_IssueTypePropertyResource_deleteIssueTypeProperty_delete(
       [[ The ID of the issue type. ]]
       @taxi.http.PathVariable(value = "issueTypeId") issueTypeId : String,
       [[ The key of the property. Use [Get issue type property keys](#api-rest-api-3-issuetype-issueTypeId-properties-get) to get a list of all issue type property keys. ]]
@@ -6791,7 +6791,7 @@ namespace vyne.openApi {
       *  *Browse projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that the issue is in.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/jql/match")
-      operation com_atlassian_jira_rest_v2_match_IssueMatchResource_matchIssues_post( @taxi.http.RequestBody issuesAndJQLQueries : IssuesAndJQLQueries? ) : IssueMatches
+      write operation com_atlassian_jira_rest_v2_match_IssueMatchResource_matchIssues_post( @taxi.http.RequestBody issuesAndJQLQueries : IssuesAndJQLQueries? ) : IssueMatches
    }
    service RestApiThreeJqlParseService {
       [[ Parses and validates JQL queries.
@@ -6799,14 +6799,14 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** None. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/jql/parse")
-      operation com_atlassian_jira_rest_v2_jql_JqlParserResource_parseJqlQueries_post( @taxi.http.RequestBody jqlQueriesToParse : JqlQueriesToParse? ) : ParsedJqlQueries
+      write operation com_atlassian_jira_rest_v2_jql_JqlParserResource_parseJqlQueries_post( @taxi.http.RequestBody jqlQueriesToParse : JqlQueriesToParse? ) : ParsedJqlQueries
    }
    service RestApiThreeJqlPdcleanerService {
       [[ Converts one or more JQL queries with user identifiers (username or user key) to equivalent JQL queries with account IDs.
       You may wish to use this operation if your system stores JQL queries and you want to make them GDPR-compliant. For more information about GDPR-related changes, see the [migration guide](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/).
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/jql/pdcleaner")
-      operation com_atlassian_jira_rest_v2_search_JQLPersonalDataMigrationResource_migrateQueries_post( @taxi.http.RequestBody jQLPersonalDataMigrationRequest : JQLPersonalDataMigrationRequest? ) : ConvertedJQLQueries
+      write operation com_atlassian_jira_rest_v2_search_JQLPersonalDataMigrationResource_migrateQueries_post( @taxi.http.RequestBody jQLPersonalDataMigrationRequest : JQLPersonalDataMigrationRequest? ) : ConvertedJQLQueries
    }
    service RestApiThreeLabelService {
       [[ Returns a [paginated](#pagination) list of labels. ]]
@@ -6865,7 +6865,7 @@ namespace vyne.openApi {
       Use [ Update a user profile](https://developer.atlassian.com/cloud/admin/user-management/rest/#api-users-account-id-manage-profile-patch) from the user management REST API to manage timezone and locale instead.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/mypreferences")
-      operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_setPreference_put(
+      write operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_setPreference_put(
       [[ The key of the preference. The maximum length is 255 characters. ]]
       @taxi.http.QueryVariable(value = "key") key : String,
       @taxi.http.RequestBody string : String? ) : Any
@@ -6876,7 +6876,7 @@ namespace vyne.openApi {
       Use [ Update a user profile](https://developer.atlassian.com/cloud/admin/user-management/rest/#api-users-account-id-manage-profile-patch) from the user management REST API to manage timezone and locale instead.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/mypreferences")
-      operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_removePreference_delete(
+      write operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_removePreference_delete(
       [[ The key of the preference. ]]
       @taxi.http.QueryVariable(value = "key") key : String )
    }
@@ -6891,12 +6891,12 @@ namespace vyne.openApi {
       Sets the locale of the user. The locale must be one supported by the instance of Jira.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/mypreferences/locale")
-      operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_setLocale_put( @taxi.http.RequestBody locale : Locale? ) : Any
+      write operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_setLocale_put( @taxi.http.RequestBody locale : Locale? ) : Any
       [[ Deprecated, use [ Update a user profile](https://developer.atlassian.com/cloud/admin/user-management/rest/#api-users-account-id-manage-profile-patch) from the user management REST API instead.
       Deletes the locale of the user, which restores the default setting.
       **[Permissions](#permissions) required:** Permission to access Jira. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/mypreferences/locale")
-      operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_deleteLocale_delete(  ) : Any
+      write operation com_atlassian_jira_rest_v2_preference_CurrentUserPreferencesResource_deleteLocale_delete(  ) : Any
    }
    service RestApiThreeMyselfService {
       [[ Returns details for the current user.
@@ -6978,14 +6978,14 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** None. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/permissions/check")
-      operation com_atlassian_jira_rest_v2_permission_PermissionsResource_getBulkPermissions_post( @taxi.http.RequestBody bulkPermissionsRequestBean : BulkPermissionsRequestBean? ) : BulkPermissionGrants
+      write operation com_atlassian_jira_rest_v2_permission_PermissionsResource_getBulkPermissions_post( @taxi.http.RequestBody bulkPermissionsRequestBean : BulkPermissionsRequestBean? ) : BulkPermissionGrants
    }
    service RestApiThreePermissionsProjectService {
       [[ Returns all the projects where the user is granted a list of project permissions.
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** None. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/permissions/project")
-      operation com_atlassian_jira_rest_v2_permission_PermissionsResource_getPermittedProjects_post( @taxi.http.RequestBody permissionsKeysBean : PermissionsKeysBean? ) : PermittedProjects
+      write operation com_atlassian_jira_rest_v2_permission_PermissionsResource_getPermittedProjects_post( @taxi.http.RequestBody permissionsKeysBean : PermissionsKeysBean? ) : PermittedProjects
    }
    service RestApiThreePermissionschemeService {
       [[ Returns all permission schemes.
@@ -7063,7 +7063,7 @@ namespace vyne.openApi {
       [[ Creates a new permission scheme. You can create a permission scheme with or without defining a set of permission grants.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/permissionscheme")
-      operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_createPermissionScheme_post(
+      write operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_createPermissionScheme_post(
       [[ Use expand to include additional information in the response. This parameter accepts a comma-separated list. Note that permissions are always included when you specify any value. Expand options include:
       *  `all` Returns all expandable information.
       *  `field` Returns information about the custom field granted the permission.
@@ -7097,7 +7097,7 @@ namespace vyne.openApi {
       See [About permission schemes and grants](#about-permission-schemes) for more details.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/permissionscheme/{schemeId}")
-      operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_updatePermissionScheme_put(
+      write operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_updatePermissionScheme_put(
       [[ The ID of the permission scheme to update. ]]
       @taxi.http.PathVariable(value = "schemeId") schemeId : Int,
       [[ Use expand to include additional information in the response. This parameter accepts a comma-separated list. Note that permissions are always included when you specify any value. Expand options include:
@@ -7112,7 +7112,7 @@ namespace vyne.openApi {
       [[ Deletes a permission scheme.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/permissionscheme/{schemeId}")
-      operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_deletePermissionScheme_delete(
+      write operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_deletePermissionScheme_delete(
       [[ The ID of the permission scheme being deleted. ]]
       @taxi.http.PathVariable(value = "schemeId") schemeId : Int )
    }
@@ -7134,7 +7134,7 @@ namespace vyne.openApi {
       [[ Creates a permission grant in a permission scheme.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/permissionscheme/{schemeId}/permission")
-      operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_createPermissionGrant_post(
+      write operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_createPermissionGrant_post(
       [[ The ID of the permission scheme in which to create a new permission grant. ]]
       @taxi.http.PathVariable(value = "schemeId") schemeId : Int,
       [[ Use expand to include additional information in the response. This parameter accepts a comma-separated list. Note that permissions are always included when you specify any value. Expand options include:
@@ -7167,7 +7167,7 @@ namespace vyne.openApi {
       [[ Deletes a permission grant from a permission scheme. See [About permission schemes and grants](#about-permission-schemes) for more details.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/permissionscheme/{schemeId}/permission/{permissionId}")
-      operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_deletePermissionSchemeEntity_delete(
+      write operation com_atlassian_jira_rest_v2_admin_permissionscheme_PermissionSchemeResource_deletePermissionSchemeEntity_delete(
       [[ The ID of the permission scheme to delete the permission grant from. ]]
       @taxi.http.PathVariable(value = "schemeId") schemeId : Int,
       [[ The ID of the permission grant to delete. ]]
@@ -7216,7 +7216,7 @@ namespace vyne.openApi {
       To determine which features are installed, go to **Jira settings** > **Apps** > **Manage apps** and review the System Apps list. To add JIRA Software or JIRA Service Desk into a JIRA instance, use **Jira settings** > **Apps** > **Finding new apps**. For more information, see [ Managing add-ons](https://confluence.atlassian.com/x/S31NLg).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/project")
-      operation com_atlassian_jira_rest_v2_issue_ProjectResource_createProject_post( @taxi.http.RequestBody projectInputBean : ProjectInputBean? ) : ProjectIdentifiers
+      write operation com_atlassian_jira_rest_v2_issue_ProjectResource_createProject_post( @taxi.http.RequestBody projectInputBean : ProjectInputBean? ) : ProjectIdentifiers
    }
    service RestApiThreeProjectSearchService {
       [[ Returns projects visible to the user.
@@ -7307,7 +7307,7 @@ namespace vyne.openApi {
       All parameters are optional in the body of the request.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/project/{projectIdOrKey}")
-      operation com_atlassian_jira_rest_v2_issue_ProjectResource_updateProject_put(
+      write operation com_atlassian_jira_rest_v2_issue_ProjectResource_updateProject_put(
       [[ The project ID or project key (case sensitive). ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       [[ Use [expand](#expansion) to include additional information in the response. This parameter accepts a comma-separated list. Note that the project description, issue types, and project lead are included in all responses by default. Expand options include:
@@ -7320,7 +7320,7 @@ namespace vyne.openApi {
       [[ Deletes a project.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/project/{projectIdOrKey}")
-      operation com_atlassian_jira_rest_v2_issue_ProjectResource_deleteProject_delete(
+      write operation com_atlassian_jira_rest_v2_issue_ProjectResource_deleteProject_delete(
       [[ The project ID or project key (case sensitive). ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String )
    }
@@ -7329,7 +7329,7 @@ namespace vyne.openApi {
       Use [Load project avatar](#api-rest-api-3-project-projectIdOrKey-avatar2-post) to store avatars against the project, before using this operation to set the displayed avatar.
       **[Permissions](#permissions) required:** *Administer projects* [project permission](https://confluence.atlassian.com/x/yodKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/project/{projectIdOrKey}/avatar")
-      operation com_atlassian_jira_rest_v2_issue_ProjectResource_updateProjectAvatar_put(
+      write operation com_atlassian_jira_rest_v2_issue_ProjectResource_updateProjectAvatar_put(
       [[ The ID or (case-sensitive) key of the project. ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       @taxi.http.RequestBody avatar : Avatar? ) : Any
@@ -7338,7 +7338,7 @@ namespace vyne.openApi {
       [[ Deletes a custom avatar from a project. Note that system avatars cannot be deleted.
       **[Permissions](#permissions) required:** *Administer projects* [project permission](https://confluence.atlassian.com/x/yodKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/project/{projectIdOrKey}/avatar/{id}")
-      operation com_atlassian_jira_rest_v2_issue_ProjectResource_deleteProjectAvatar_delete(
+      write operation com_atlassian_jira_rest_v2_issue_ProjectResource_deleteProjectAvatar_delete(
       [[ The project ID or (case-sensitive) key. ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       [[ The ID of the avatar. ]]
@@ -7361,7 +7361,7 @@ namespace vyne.openApi {
       After creating the avatar use [Set project avatar](#api-rest-api-3-project-projectIdOrKey-avatar-put) to set it as the project's displayed avatar.
       **[Permissions](#permissions) required:** *Administer projects* [project permission](https://confluence.atlassian.com/x/yodKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/project/{projectIdOrKey}/avatar2")
-      operation com_atlassian_jira_rest_v2_issue_ProjectResource_createProjectAvatar_post(
+      write operation com_atlassian_jira_rest_v2_issue_ProjectResource_createProjectAvatar_post(
       [[ The ID or (case-sensitive) key of the project. ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       [[ The X coordinate of the top-left corner of the crop region. ]]
@@ -7435,7 +7435,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) or *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project in which the property is created. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/project/{projectIdOrKey}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_issue_ProjectPropertyResource_setProjectProperty_put(
+      write operation com_atlassian_jira_rest_v2_issue_ProjectPropertyResource_setProjectProperty_put(
       [[ The project ID or project key (case sensitive). ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       [[ The key of the project property. The maximum length is 255 characters. ]]
@@ -7445,7 +7445,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) or *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project containing the property. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/project/{projectIdOrKey}/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_issue_ProjectPropertyResource_deleteProjectProperty_delete(
+      write operation com_atlassian_jira_rest_v2_issue_ProjectPropertyResource_deleteProjectProperty_delete(
       [[ The project ID or project key (case sensitive). ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       [[ The project property key. Use [Get project property keys](#api-rest-api-3-project-projectIdOrKey-properties-get) to get a list of all project property keys. ]]
@@ -7476,7 +7476,7 @@ namespace vyne.openApi {
       To add actors to the project without overwriting the existing list, use [Add actors to project role](#api-rest-api-3-project-projectIdOrKey-role-id-post).
       **[Permissions](#permissions) required:** *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project or *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/project/{projectIdOrKey}/role/{id}")
-      operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleResource_setActors_put(
+      write operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleResource_setActors_put(
       [[ The project ID or project key (case sensitive). ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       [[ The ID of the project role. Use [Get all project roles](#api-rest-api-3-role-get) to get a list of project role IDs. ]]
@@ -7487,7 +7487,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project or *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/project/{projectIdOrKey}/role/{id}")
-      operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleResource_addActorUsers_post(
+      write operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleResource_addActorUsers_post(
       [[ The project ID or project key (case sensitive). ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       [[ The ID of the project role. Use [Get all project roles](#api-rest-api-3-role-get) to get a list of project role IDs. ]]
@@ -7497,7 +7497,7 @@ namespace vyne.openApi {
       To remove default actors from the project role, use [Delete default actors from project role This operation can be accessed anonymously. ](#api-rest-api-3-role-id-actors-delete)
       [ ](#api-rest-api-3-role-id-actors-delete)**[Permissions](#permissions) required:** *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project or *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/project/{projectIdOrKey}/role/{id}")
-      operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleResource_deleteActor_delete(
+      write operation com_atlassian_jira_rest_v2_issue_project_ProjectRoleResource_deleteActor_delete(
       [[ The project ID or project key (case sensitive). ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       [[ The ID of the project role. Use [Get all project roles](#api-rest-api-3-role-get) to get a list of project role IDs. ]]
@@ -7542,7 +7542,7 @@ namespace vyne.openApi {
       [[ Deprecated, this feature is no longer supported and no alternatives are available, see [Convert project to a different template or type](https://confluence.atlassian.com/x/yEKeOQ). Updates a [project type](https://confluence.atlassian.com/x/GwiiLQ). The project type can be updated for classic projects only, project type cannot be updated for next-gen projects.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/project/{projectIdOrKey}/type/{newProjectTypeKey}")
-      operation com_atlassian_jira_rest_v2_issue_ProjectResource_updateProjectType_put(
+      write operation com_atlassian_jira_rest_v2_issue_ProjectResource_updateProjectType_put(
       [[ The project ID or project key (case sensitive). ]]
       @taxi.http.PathVariable(value = "projectIdOrKey") projectIdOrKey : String,
       [[ The key of the new project type. ]]
@@ -7641,7 +7641,7 @@ namespace vyne.openApi {
       [[ Assigns a permission scheme with a project. See [Managing project permissions](https://confluence.atlassian.com/x/yodKLg) for more information about permission schemes.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/project/{projectKeyOrId}/permissionscheme")
-      operation com_atlassian_jira_rest_v2_permission_ProjectPermissionSchemeResource_assignPermissionScheme_put(
+      write operation com_atlassian_jira_rest_v2_permission_ProjectPermissionSchemeResource_assignPermissionScheme_put(
       [[ The project ID or project key (case sensitive). ]]
       @taxi.http.PathVariable(value = "projectKeyOrId") projectKeyOrId : String,
       [[ Use [expand](#expansion) to include additional information in the response. This parameter accepts a comma-separated list. Note that permissions are included when you specify any value. Expand options include:
@@ -7671,7 +7671,7 @@ namespace vyne.openApi {
       [[ Creates a project category.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/projectCategory")
-      operation com_atlassian_jira_rest_v2_issue_ProjectCategoryResource_createProjectCategory_post( @taxi.http.RequestBody projectCategory : ProjectCategory? ) : ProjectCategory
+      write operation com_atlassian_jira_rest_v2_issue_ProjectCategoryResource_createProjectCategory_post( @taxi.http.RequestBody projectCategory : ProjectCategory? ) : ProjectCategory
    }
    service RestApiThreeProjectCategoryIdService {
       [[ Returns a project category.
@@ -7683,11 +7683,11 @@ namespace vyne.openApi {
       [[ Updates a project category.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/projectCategory/{id}")
-      operation com_atlassian_jira_rest_v2_issue_ProjectCategoryResource_updateProjectCategory_put( @taxi.http.PathVariable(value = "id") id : Int, @taxi.http.RequestBody projectCategory : ProjectCategory? ) : UpdatedProjectCategory
+      write operation com_atlassian_jira_rest_v2_issue_ProjectCategoryResource_updateProjectCategory_put( @taxi.http.PathVariable(value = "id") id : Int, @taxi.http.RequestBody projectCategory : ProjectCategory? ) : UpdatedProjectCategory
       [[ Deletes a project category.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/projectCategory/{id}")
-      operation com_atlassian_jira_rest_v2_issue_ProjectCategoryResource_removeProjectCategory_delete(
+      write operation com_atlassian_jira_rest_v2_issue_ProjectCategoryResource_removeProjectCategory_delete(
       [[ ID of the project category to delete. ]]
       @taxi.http.PathVariable(value = "id") id : Int )
    }
@@ -7749,7 +7749,7 @@ namespace vyne.openApi {
       *Note that although a new project role is available to all projects upon creation, any default actors that are associated with the project role are not added to projects that existed prior to the role being created.*<
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/role")
-      operation com_atlassian_jira_rest_v2_issue_project_RoleResource_createProjectRole_post( @taxi.http.RequestBody createUpdateRoleRequestBean : CreateUpdateRoleRequestBean? ) : ProjectRole
+      write operation com_atlassian_jira_rest_v2_issue_project_RoleResource_createProjectRole_post( @taxi.http.RequestBody createUpdateRoleRequestBean : CreateUpdateRoleRequestBean? ) : ProjectRole
    }
    service RestApiThreeRoleIdService {
       [[ Gets the project role details and the default actors associated with the role. The list of default actors is sorted by display name.
@@ -7761,7 +7761,7 @@ namespace vyne.openApi {
       [[ Updates the project role's name and description. You must include both a name and a description in the request.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/role/{id}")
-      operation com_atlassian_jira_rest_v2_issue_project_RoleResource_fullyUpdateProjectRole_put(
+      write operation com_atlassian_jira_rest_v2_issue_project_RoleResource_fullyUpdateProjectRole_put(
       [[ The ID of the project role. Use [Get all project roles](#api-rest-api-3-role-get) to get a list of project role IDs. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       @taxi.http.RequestBody createUpdateRoleRequestBean : CreateUpdateRoleRequestBean? ) : ProjectRole
@@ -7769,14 +7769,14 @@ namespace vyne.openApi {
       You cannot update both the name and description at the same time using this operation. If you send a request with a name and a description only the name is updated.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/role/{id}")
-      operation com_atlassian_jira_rest_v2_issue_project_RoleResource_partialUpdateProjectRole_post(
+      write operation com_atlassian_jira_rest_v2_issue_project_RoleResource_partialUpdateProjectRole_post(
       [[ The ID of the project role. Use [Get all project roles](#api-rest-api-3-role-get) to get a list of project role IDs. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       @taxi.http.RequestBody createUpdateRoleRequestBean : CreateUpdateRoleRequestBean? ) : ProjectRole
       [[ Deletes a project role. You must specify a replacement project role if you wish to delete a project role that is in use.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/role/{id}")
-      operation com_atlassian_jira_rest_v2_issue_project_RoleResource_deleteProjectRole_delete(
+      write operation com_atlassian_jira_rest_v2_issue_project_RoleResource_deleteProjectRole_delete(
       [[ The ID of the project role to delete. Use [Get all project roles](#api-rest-api-3-role-get) to get a list of project role IDs. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The ID of the project role that will replace the one being deleted. ]]
@@ -7793,7 +7793,7 @@ namespace vyne.openApi {
       Changing a project role's default actors does not affect project role members for projects already created.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/role/{id}/actors")
-      operation com_atlassian_jira_rest_v2_issue_project_RoleResource_addProjectRoleActorsToRole_post(
+      write operation com_atlassian_jira_rest_v2_issue_project_RoleResource_addProjectRoleActorsToRole_post(
       [[ The ID of the project role. Use [Get all project roles](#api-rest-api-3-role-get) to get a list of project role IDs. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       @taxi.http.RequestBody actorInputBean : ActorInputBean? ) : ProjectRole
@@ -7801,7 +7801,7 @@ namespace vyne.openApi {
       Changing a project role's default actors does not affect project role members for projects already created.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/role/{id}/actors")
-      operation com_atlassian_jira_rest_v2_issue_project_RoleResource_deleteProjectRoleActorsFromRole_delete(
+      write operation com_atlassian_jira_rest_v2_issue_project_RoleResource_deleteProjectRoleActorsFromRole_delete(
       [[ The ID of the project role. Use [Get all project roles](#api-rest-api-3-role-get) to get a list of project role IDs. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The user account ID of the user to remove as a default actor. ]]
@@ -7823,7 +7823,7 @@ namespace vyne.openApi {
       [[ Adds a field to the default tab of the default screen.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/screens/addToDefault/{fieldId}")
-      operation com_atlassian_jira_rest_v2_issue_ScreensResource_addFieldToDefaultScreen_post(
+      write operation com_atlassian_jira_rest_v2_issue_ScreensResource_addFieldToDefaultScreen_post(
       [[ The ID of the field. ]]
       @taxi.http.PathVariable(value = "fieldId") fieldId : String ) : Any
    }
@@ -7849,7 +7849,7 @@ namespace vyne.openApi {
       [[ Creates a tab for a screen.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/screens/{screenId}/tabs")
-      operation com_atlassian_jira_rest_v2_issue_ScreensResource_addScreenTab_post(
+      write operation com_atlassian_jira_rest_v2_issue_ScreensResource_addScreenTab_post(
       [[ The ID of the screen. ]]
       @taxi.http.PathVariable(value = "screenId") screenId : Int,
       @taxi.http.RequestBody screenableTab : ScreenableTab? ) : ScreenableTab
@@ -7858,7 +7858,7 @@ namespace vyne.openApi {
       [[ Updates the name of a screen tab.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/screens/{screenId}/tabs/{tabId}")
-      operation com_atlassian_jira_rest_v2_issue_ScreensResource_renameScreenTab_put(
+      write operation com_atlassian_jira_rest_v2_issue_ScreensResource_renameScreenTab_put(
       [[ The ID of the screen. ]]
       @taxi.http.PathVariable(value = "screenId") screenId : Int,
       [[ The ID of the screen tab. ]]
@@ -7867,7 +7867,7 @@ namespace vyne.openApi {
       [[ Deletes a screen tab.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/screens/{screenId}/tabs/{tabId}")
-      operation com_atlassian_jira_rest_v2_issue_ScreensResource_deleteScreenTab_delete(
+      write operation com_atlassian_jira_rest_v2_issue_ScreensResource_deleteScreenTab_delete(
       [[ The ID of the screen. ]]
       @taxi.http.PathVariable(value = "screenId") screenId : Int,
       [[ The ID of the screen tab. ]]
@@ -7889,7 +7889,7 @@ namespace vyne.openApi {
       [[ Adds a field to a screen tab.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/screens/{screenId}/tabs/{tabId}/fields")
-      operation com_atlassian_jira_rest_v2_issue_ScreensResource_addScreenTabField_post(
+      write operation com_atlassian_jira_rest_v2_issue_ScreensResource_addScreenTabField_post(
       [[ The ID of the screen. ]]
       @taxi.http.PathVariable(value = "screenId") screenId : Int,
       [[ The ID of the screen tab. ]]
@@ -7900,7 +7900,7 @@ namespace vyne.openApi {
       [[ Removes a field from a screen tab.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/screens/{screenId}/tabs/{tabId}/fields/{id}")
-      operation com_atlassian_jira_rest_v2_issue_ScreensResource_removeScreenTabField_delete(
+      write operation com_atlassian_jira_rest_v2_issue_ScreensResource_removeScreenTabField_delete(
       [[ The ID of the screen. ]]
       @taxi.http.PathVariable(value = "screenId") screenId : Int,
       [[ The ID of the screen tab. ]]
@@ -7913,7 +7913,7 @@ namespace vyne.openApi {
       If `after` and `position` are provided in the request, `position` is ignored.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/screens/{screenId}/tabs/{tabId}/fields/{id}/move")
-      operation com_atlassian_jira_rest_v2_issue_ScreensResource_moveScreenTabField_post(
+      write operation com_atlassian_jira_rest_v2_issue_ScreensResource_moveScreenTabField_post(
       [[ The ID of the screen. ]]
       @taxi.http.PathVariable(value = "screenId") screenId : Int,
       [[ The ID of the screen tab. ]]
@@ -7926,7 +7926,7 @@ namespace vyne.openApi {
       [[ Moves a screen tab.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/screens/{screenId}/tabs/{tabId}/move/{pos}")
-      operation com_atlassian_jira_rest_v2_issue_ScreensResource_moveScreenTab_post(
+      write operation com_atlassian_jira_rest_v2_issue_ScreensResource_moveScreenTab_post(
       [[ The ID of the screen. ]]
       @taxi.http.PathVariable(value = "screenId") screenId : Int,
       [[ The ID of the screen tab. ]]
@@ -8002,7 +8002,7 @@ namespace vyne.openApi {
       *  *Browse projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project containing the issue.
       *  If [issue-level security](https://confluence.atlassian.com/x/J4lKLg) is configured, issue-level security permission to view the issue. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/search")
-      operation com_atlassian_jira_rest_v2_search_SearchResource_searchForIssuesUsingJql_post( @taxi.http.RequestBody searchRequestBean : SearchRequestBean? ) : SearchResults
+      write operation com_atlassian_jira_rest_v2_search_SearchResource_searchForIssuesUsingJql_post( @taxi.http.RequestBody searchRequestBean : SearchRequestBean? ) : SearchResults
    }
    service RestApiThreeSecuritylevelIdService {
       [[ Returns details of an issue security level.
@@ -8033,7 +8033,7 @@ namespace vyne.openApi {
       A navigable field is one that can be used as a column on the issue navigator. Find details of navigable issue columns using [Get fields](#api-rest-api-3-field-get).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/settings/columns")
-      operation com_atlassian_jira_rest_v2_admin_SettingsResource_setIssueNavigatorDefaultColumns_put( @taxi.http.RequestBody array : String[]? ) : Any
+      write operation com_atlassian_jira_rest_v2_admin_SettingsResource_setIssueNavigatorDefaultColumns_put( @taxi.http.RequestBody array : String[]? ) : Any
    }
    service RestApiThreeStatusService {
       [[ Returns a list of all statuses associated with workflows.
@@ -8083,7 +8083,7 @@ namespace vyne.openApi {
       *  *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg).
       *  Creator of the task. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/task/{taskId}/cancel")
-      operation com_atlassian_jira_rest_v2_task_TaskResource_cancelTask_post(
+      write operation com_atlassian_jira_rest_v2_task_TaskResource_cancelTask_post(
       [[ The ID of the task. ]]
       @taxi.http.PathVariable(value = "taskId") taskId : String ) : Any
    }
@@ -8115,7 +8115,7 @@ namespace vyne.openApi {
       *  [Set project avatar](#api-rest-api-3-project-projectIdOrKey-avatar-put) to set it as the project's displayed avatar.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/universal_avatar/type/{type}/owner/{entityId}")
-      operation com_atlassian_jira_rest_v2_issue_UniversalAvatarResource_storeAvatar_post(
+      write operation com_atlassian_jira_rest_v2_issue_UniversalAvatarResource_storeAvatar_post(
       [[ The type of the entity. Valid values are `project` and `issuetype`. ]]
       @taxi.http.PathVariable(value = "type") `type` : String,
       [[ The ID of the entity item. ]]
@@ -8132,7 +8132,7 @@ namespace vyne.openApi {
       [[ Deletes an avatar from a project or issue type.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/universal_avatar/type/{type}/owner/{owningObjectId}/avatar/{id}")
-      operation com_atlassian_jira_rest_v2_issue_UniversalAvatarResource_deleteAvatar_delete(
+      write operation com_atlassian_jira_rest_v2_issue_UniversalAvatarResource_deleteAvatar_delete(
       [[ The type of the entity. Valid values are `project` and `issuetype`. ]]
       @taxi.http.PathVariable(value = "type") `type` : String,
       [[ The ID of the entity item. ]]
@@ -8159,11 +8159,11 @@ namespace vyne.openApi {
       The option is provided to set or generate a password for the user. When using the option to generate a password, by omitting `password` from the request, include `"notification": "true"` to ensure the user is sent an email advising them that their account is created. This email includes a link for the user to set their password. If the notification isn't sent for a generated password, the user will need to be sent a reset password request from Jira.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/user")
-      operation com_atlassian_jira_rest_v2_issue_UserResource_createUser_post( @taxi.http.RequestBody userWriteBean : UserWriteBean? ) : User
+      write operation com_atlassian_jira_rest_v2_issue_UserResource_createUser_post( @taxi.http.RequestBody userWriteBean : UserWriteBean? ) : User
       [[ Deletes a user.
       **[Permissions](#permissions) required:** Site administration (that is, membership of the *site-admin* [group](https://confluence.atlassian.com/x/24xjL)). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/user")
-      operation com_atlassian_jira_rest_v2_issue_UserResource_removeUser_delete(
+      write operation com_atlassian_jira_rest_v2_issue_UserResource_removeUser_delete(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. ]]
       @taxi.http.QueryVariable(value = "accountId") accountId : String,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
@@ -8269,7 +8269,7 @@ namespace vyne.openApi {
       *  *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg), to set the columns on any user.
       *  Permission to access Jira, to set the calling user's columns. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/user/columns")
-      operation com_atlassian_jira_rest_v2_issue_UserResource_setUserColumns_put(
+      write operation com_atlassian_jira_rest_v2_issue_UserResource_setUserColumns_put(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. ]]
       @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       @taxi.http.RequestBody array : String[]? ) : Any
@@ -8278,7 +8278,7 @@ namespace vyne.openApi {
       *  *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg), to set the columns on any user.
       *  Permission to access Jira, to set the calling user's columns. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/user/columns")
-      operation com_atlassian_jira_rest_v2_issue_UserResource_resetUserColumns_delete(
+      write operation com_atlassian_jira_rest_v2_issue_UserResource_resetUserColumns_delete(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. ]]
       @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
@@ -8428,7 +8428,7 @@ namespace vyne.openApi {
       *  *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg), to set a property on any user.
       *  Access to Jira, to set a property on the calling user's record. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/user/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_setUserProperty_put(
+      write operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_setUserProperty_put(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. ]]
       @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
@@ -8444,7 +8444,7 @@ namespace vyne.openApi {
       *  *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg), to delete a property from any user.
       *  Access to Jira, to delete a property from the calling user's record. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/user/properties/{propertyKey}")
-      operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_deleteUserProperty_delete(
+      write operation com_atlassian_jira_rest_v2_userproperty_UserPropertyResource_deleteUserProperty_delete(
       [[ The account ID of the user, which uniquely identifies the user across all Atlassian products. For example, *5b10ac8d82e05b22cc7d4ef5*. ]]
       @taxi.http.QueryVariable(value = "accountId") accountId : String?,
       [[ This parameter is no longer available and will be removed from the documentation soon. See the [deprecation notice](https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-user-privacy-api-migration-guide/) for details. ]]
@@ -8563,7 +8563,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) or *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project the version is added to. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/version")
-      operation com_atlassian_jira_rest_v2_issue_VersionResource_createVersion_post( @taxi.http.RequestBody version : Version? ) : Version
+      write operation com_atlassian_jira_rest_v2_issue_VersionResource_createVersion_post( @taxi.http.RequestBody version : Version? ) : Version
    }
    service RestApiThreeVersionIdService {
       [[ Returns a project version.
@@ -8581,7 +8581,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) or *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that contains the version. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/version/{id}")
-      operation com_atlassian_jira_rest_v2_issue_VersionResource_updateVersion_put(
+      write operation com_atlassian_jira_rest_v2_issue_VersionResource_updateVersion_put(
       [[ The ID of the version. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       @taxi.http.RequestBody version : Version? ) : Version
@@ -8591,7 +8591,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) or *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that contains the version. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/version/{id}")
-      operation com_atlassian_jira_rest_v2_issue_VersionResource_deleteVersion_delete(
+      write operation com_atlassian_jira_rest_v2_issue_VersionResource_deleteVersion_delete(
       [[ The ID of the version. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       [[ The ID of the version to update `fixVersion` to when the field contains the deleted version. The replacement version must be in the same project as the version being deleted and cannot be the version being deleted. ]]
@@ -8605,7 +8605,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) or *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that contains the version. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/version/{id}/mergeto/{moveIssuesTo}")
-      operation com_atlassian_jira_rest_v2_issue_VersionResource_mergeVersions_put(
+      write operation com_atlassian_jira_rest_v2_issue_VersionResource_mergeVersions_put(
       [[ The ID of the version to delete. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       [[ The ID of the version to merge into. ]]
@@ -8616,7 +8616,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** *Browse projects* project permission for the project that contains the version. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/version/{id}/move")
-      operation com_atlassian_jira_rest_v2_issue_VersionResource_moveVersion_post(
+      write operation com_atlassian_jira_rest_v2_issue_VersionResource_moveVersion_post(
       [[ The ID of the version to be moved. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       @taxi.http.RequestBody versionMoveBean : VersionMoveBean? ) : Version
@@ -8639,7 +8639,7 @@ namespace vyne.openApi {
       This operation can be accessed anonymously.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg) or *Administer Projects* [project permission](https://confluence.atlassian.com/x/yodKLg) for the project that contains the version. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/version/{id}/removeAndSwap")
-      operation com_atlassian_jira_rest_v2_issue_VersionResource_deleteAndReplaceVersion_post(
+      write operation com_atlassian_jira_rest_v2_issue_VersionResource_deleteAndReplaceVersion_post(
       [[ The ID of the version. ]]
       @taxi.http.PathVariable(value = "id") id : String,
       @taxi.http.RequestBody deleteAndReplaceVersionBean : DeleteAndReplaceVersionBean? ) : Any
@@ -8665,11 +8665,11 @@ namespace vyne.openApi {
       [[ Registers webhooks.
       **[Permissions](#permissions) required:** Only [Connect apps](https://developer.atlassian.com/cloud/jira/platform/integrating-with-jira-cloud/#atlassian-connect) can use this operation. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/webhook")
-      operation com_atlassian_jira_rest_v2_webhook_DynamicWebhookResource_registerDynamicWebhooks_post( @taxi.http.RequestBody webhookRegistrationDetails : WebhookRegistrationDetails? ) : ContainerForRegisteredWebhooks
+      write operation com_atlassian_jira_rest_v2_webhook_DynamicWebhookResource_registerDynamicWebhooks_post( @taxi.http.RequestBody webhookRegistrationDetails : WebhookRegistrationDetails? ) : ContainerForRegisteredWebhooks
       [[ Removes webhooks by ID. Only webhooks registered by the calling Connect app are removed. If webhooks created by other apps are specified, they are ignored.
       **[Permissions](#permissions) required:** Only [Connect apps](https://developer.atlassian.com/cloud/jira/platform/integrating-with-jira-cloud/#atlassian-connect) can use this operation. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/webhook")
-      operation com_atlassian_jira_rest_v2_webhook_DynamicWebhookResource_deleteWebhookById_delete( @taxi.http.RequestBody containerForWebhookIDs : ContainerForWebhookIDs? )
+      write operation com_atlassian_jira_rest_v2_webhook_DynamicWebhookResource_deleteWebhookById_delete( @taxi.http.RequestBody containerForWebhookIDs : ContainerForWebhookIDs? )
    }
    service RestApiThreeWebhookFailedService {
       [[ Returns webhooks that have recently failed to be delivered to the requesting app after the maximum number of retries.
@@ -8689,7 +8689,7 @@ namespace vyne.openApi {
       Unrecognized webhook IDs (nonexistent or belonging to other apps) are ignored.
       **[Permissions](#permissions) required:** Only [Connect apps](https://developer.atlassian.com/cloud/jira/platform/integrating-with-jira-cloud/#atlassian-connect) can use this operation. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/webhook/refresh")
-      operation com_atlassian_jira_rest_v2_webhook_DynamicWebhookResource_refreshWebhooks_put( @taxi.http.RequestBody containerForWebhookIDs : ContainerForWebhookIDs? ) : WebhooksExpirationDate
+      write operation com_atlassian_jira_rest_v2_webhook_DynamicWebhookResource_refreshWebhooks_put( @taxi.http.RequestBody containerForWebhookIDs : ContainerForWebhookIDs? ) : WebhooksExpirationDate
    }
    service RestApiThreeWorkflowService {
       [[ Returns all workflows in Jira or a workflow. Deprecated, use [Get workflows paginated](#api-rest-api-3-workflow-search-get).
@@ -8726,7 +8726,7 @@ namespace vyne.openApi {
       Only rules created by the calling Connect app can be updated.
       **[Permissions](#permissions) required:** Only Connect apps can use this operation. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/workflow/rule/config")
-      operation com_atlassian_jira_rest_v2_admin_workflow_WorkflowRuleConfigResource_updateWorkflowTransitionRuleConfigurations_put( @taxi.http.RequestBody workflowTransitionRulesUpdate : WorkflowTransitionRulesUpdate? ) : WorkflowTransitionRulesUpdateErrors
+      write operation com_atlassian_jira_rest_v2_admin_workflow_WorkflowRuleConfigResource_updateWorkflowTransitionRuleConfigurations_put( @taxi.http.RequestBody workflowTransitionRulesUpdate : WorkflowTransitionRulesUpdate? ) : WorkflowTransitionRulesUpdateErrors
    }
    service RestApiThreeWorkflowSearchService {
       [[ Returns a [paginated](#pagination) list of published classic workflows. When workflow names are specified, details of those workflows are returned. Otherwise, all published classic workflows are returned.
@@ -8765,7 +8765,7 @@ namespace vyne.openApi {
       [[ Updates a workflow transition by changing the property value. Trying to update a property that does not exist results in a new property being added to the transition. Transition properties are used to change the behavior of a transition. For more information, see [Transition properties](https://confluence.atlassian.com/x/zIhKLg#Advancedworkflowconfiguration-transitionproperties) and [Workflow properties](https://confluence.atlassian.com/x/JYlKLg).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/workflow/transitions/{transitionId}/properties")
-      operation com_atlassian_jira_rest_v2_admin_WorkflowTransitionResource_updateWorkflowTransitionProperty_put(
+      write operation com_atlassian_jira_rest_v2_admin_WorkflowTransitionResource_updateWorkflowTransitionProperty_put(
       [[ The ID of the transition. To get the ID, view the workflow in text mode in the Jira admin settings. The ID is shown next to the transition. ]]
       @taxi.http.PathVariable(value = "transitionId") transitionId : Int,
       [[ The key of the property being updated, also known as the name of the property. Set this to the same value as the `key` defined in the request body. ]]
@@ -8778,7 +8778,7 @@ namespace vyne.openApi {
       [[ Adds a property to a workflow transition. Transition properties are used to change the behavior of a transition. For more information, see [Transition properties](https://confluence.atlassian.com/x/zIhKLg#Advancedworkflowconfiguration-transitionproperties) and [Workflow properties](https://confluence.atlassian.com/x/JYlKLg).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/workflow/transitions/{transitionId}/properties")
-      operation com_atlassian_jira_rest_v2_admin_WorkflowTransitionResource_createWorkflowTransitionProperty_post(
+      write operation com_atlassian_jira_rest_v2_admin_WorkflowTransitionResource_createWorkflowTransitionProperty_post(
       [[ The ID of the transition. To get the ID, view the workflow in text mode in the Jira admin settings. The ID is shown next to the transition. ]]
       @taxi.http.PathVariable(value = "transitionId") transitionId : Int,
       [[ The key of the property being added, also known as the name of the property. Set this to the same value as the `key` defined in the request body. ]]
@@ -8791,7 +8791,7 @@ namespace vyne.openApi {
       [[ Deletes a property from a workflow transition. Transition properties are used to change the behavior of a transition. For more information, see [Transition properties](https://confluence.atlassian.com/x/zIhKLg#Advancedworkflowconfiguration-transitionproperties) and [Workflow properties](https://confluence.atlassian.com/x/JYlKLg).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/workflow/transitions/{transitionId}/properties")
-      operation com_atlassian_jira_rest_v2_admin_WorkflowTransitionResource_deleteWorkflowTransitionProperty_delete(
+      write operation com_atlassian_jira_rest_v2_admin_WorkflowTransitionResource_deleteWorkflowTransitionProperty_delete(
       [[ The ID of the transition. To get the ID, view the workflow in text mode in the Jira admin settings. The ID is shown next to the transition. ]]
       @taxi.http.PathVariable(value = "transitionId") transitionId : Int,
       [[ The name of the transition property to delete, also known as the name of the property. ]]
@@ -8813,7 +8813,7 @@ namespace vyne.openApi {
       [[ Creates a workflow scheme.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/workflowscheme")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_createWorkflowScheme_post( @taxi.http.RequestBody workflowScheme : WorkflowScheme? ) : WorkflowScheme
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_createWorkflowScheme_post( @taxi.http.RequestBody workflowScheme : WorkflowScheme? ) : WorkflowScheme
    }
    service RestApiThreeWorkflowschemeProjectService {
       [[ Returns a list of the workflow schemes associated with a list of projects. Each returned workflow scheme includes a list of the requested projects associated with it. Any next-gen or non-existent projects in the request are ignored and no errors are returned.
@@ -8835,14 +8835,14 @@ namespace vyne.openApi {
       [[ Updates a workflow scheme, including the name, default workflow, issue type to project mappings, and more. If the workflow scheme is active (that is, being used by at least one project), then a draft workflow scheme is created or updated instead, provided that `updateDraftIfNeeded` is set to `true`.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/workflowscheme/{id}")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateWorkflowScheme_put(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateWorkflowScheme_put(
       [[ The ID of the workflow scheme. Find this ID by editing the desired workflow scheme in Jira. The ID is shown in the URL as `schemeId`. For example, *schemeId=10301*. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       @taxi.http.RequestBody workflowScheme : WorkflowScheme? ) : WorkflowScheme
       [[ Deletes a workflow scheme. Note that a workflow scheme cannot be deleted if it is active (that is, being used by at least one project).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/workflowscheme/{id}")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowScheme_delete(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowScheme_delete(
       [[ The ID of the workflow scheme. Find this ID by editing the desired workflow scheme in Jira. The ID is shown in the URL as `schemeId`. For example, *schemeId=10301*. ]]
       @taxi.http.PathVariable(value = "id") id : Int )
    }
@@ -8850,7 +8850,7 @@ namespace vyne.openApi {
       [[ Create a draft workflow scheme from an active workflow scheme, by copying the active workflow scheme. Note that an active workflow scheme can only have one draft workflow scheme.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/workflowscheme/{id}/createdraft")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_createWorkflowSchemeDraftFromParent_post(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_createWorkflowSchemeDraftFromParent_post(
       [[ The ID of the active workflow scheme that the draft is created from. ]]
       @taxi.http.PathVariable(value = "id") id : Int ) : WorkflowScheme
    }
@@ -8867,7 +8867,7 @@ namespace vyne.openApi {
       Note that active workflow schemes cannot be edited. If the workflow scheme is active, set `updateDraftIfNeeded` to `true` in the request object and a draft workflow scheme is created or updated with the new default workflow. The draft workflow scheme can be published in Jira.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/workflowscheme/{id}/default")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateDefaultWorkflow_put(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateDefaultWorkflow_put(
       [[ The ID of the workflow scheme. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       @taxi.http.RequestBody defaultWorkflow : DefaultWorkflow? ) : WorkflowScheme
@@ -8875,7 +8875,7 @@ namespace vyne.openApi {
       Note that active workflow schemes cannot be edited. If the workflow scheme is active, set `updateDraftIfNeeded` to `true` and a draft workflow scheme is created or updated with the default workflow reset. The draft workflow scheme can be published in Jira.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/workflowscheme/{id}/default")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteDefaultWorkflow_delete(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteDefaultWorkflow_delete(
       [[ The ID of the workflow scheme. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ Set to true to create or update the draft of a workflow scheme and delete the mapping from the draft, when the workflow scheme cannot be edited. Defaults to `false`. ]]
@@ -8894,14 +8894,14 @@ namespace vyne.openApi {
       [[ Updates a draft workflow scheme. If a draft workflow scheme does not exist for the active workflow scheme, then a draft is created. Note that an active workflow scheme can only have one draft workflow scheme.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/workflowscheme/{id}/draft")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateWorkflowSchemeDraft_put(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateWorkflowSchemeDraft_put(
       [[ The ID of the active workflow scheme that the draft was created from. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       @taxi.http.RequestBody workflowScheme : WorkflowScheme? ) : WorkflowScheme
       [[ Deletes a draft workflow scheme.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/workflowscheme/{id}/draft")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowSchemeDraft_delete(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowSchemeDraft_delete(
       [[ The ID of the active workflow scheme that the draft was created from. ]]
       @taxi.http.PathVariable(value = "id") id : Int )
    }
@@ -8915,14 +8915,14 @@ namespace vyne.openApi {
       [[ Sets the default workflow for a workflow scheme's draft.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/workflowscheme/{id}/draft/default")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateDraftDefaultWorkflow_put(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateDraftDefaultWorkflow_put(
       [[ The ID of the workflow scheme that the draft belongs to. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       @taxi.http.RequestBody defaultWorkflow : DefaultWorkflow? ) : WorkflowScheme
       [[ Resets the default workflow for a workflow scheme's draft. That is, the default workflow is set to Jira's system workflow (the *jira* workflow).
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/workflowscheme/{id}/draft/default")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteDraftDefaultWorkflow_delete(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteDraftDefaultWorkflow_delete(
       [[ The ID of the workflow scheme that the draft belongs to. ]]
       @taxi.http.PathVariable(value = "id") id : Int ) : WorkflowScheme
    }
@@ -8938,7 +8938,7 @@ namespace vyne.openApi {
       [[ Sets the workflow for an issue type in a workflow scheme's draft.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/workflowscheme/{id}/draft/issuetype/{issueType}")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_setWorkflowSchemeDraftIssueType_put(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_setWorkflowSchemeDraftIssueType_put(
       [[ The ID of the workflow scheme that the draft belongs to. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The ID of the issue type. ]]
@@ -8947,7 +8947,7 @@ namespace vyne.openApi {
       [[ Deletes the issue type-workflow mapping for an issue type in a workflow scheme's draft.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/workflowscheme/{id}/draft/issuetype/{issueType}")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowSchemeDraftIssueType_delete(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowSchemeDraftIssueType_delete(
       [[ The ID of the workflow scheme that the draft belongs to. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The ID of the issue type. ]]
@@ -8965,7 +8965,7 @@ namespace vyne.openApi {
       [[ Sets the issue types for a workflow in a workflow scheme's draft. The workflow can also be set as the default workflow for the draft workflow scheme. Unmapped issues types are mapped to the default workflow.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/workflowscheme/{id}/draft/workflow")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateDraftWorkflowMapping_put(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateDraftWorkflowMapping_put(
       [[ The ID of the workflow scheme that the draft belongs to. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The name of the workflow. ]]
@@ -8974,7 +8974,7 @@ namespace vyne.openApi {
       [[ Deletes the workflow-issue type mapping for a workflow in a workflow scheme's draft.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/workflowscheme/{id}/draft/workflow")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteDraftWorkflowMapping_delete(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteDraftWorkflowMapping_delete(
       [[ The ID of the workflow scheme that the draft belongs to. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The name of the workflow. ]]
@@ -8995,7 +8995,7 @@ namespace vyne.openApi {
       Note that active workflow schemes cannot be edited. If the workflow scheme is active, set `updateDraftIfNeeded` to `true` in the request body and a draft workflow scheme is created or updated with the new issue type-workflow mapping. The draft workflow scheme can be published in Jira.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/workflowscheme/{id}/issuetype/{issueType}")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_setWorkflowSchemeIssueType_put(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_setWorkflowSchemeIssueType_put(
       [[ The ID of the workflow scheme. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The ID of the issue type. ]]
@@ -9005,7 +9005,7 @@ namespace vyne.openApi {
       Note that active workflow schemes cannot be edited. If the workflow scheme is active, set `updateDraftIfNeeded` to `true` and a draft workflow scheme is created or updated with the issue type-workflow mapping deleted. The draft workflow scheme can be published in Jira.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/workflowscheme/{id}/issuetype/{issueType}")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowSchemeIssueType_delete(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowSchemeIssueType_delete(
       [[ The ID of the workflow scheme. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The ID of the issue type. ]]
@@ -9028,7 +9028,7 @@ namespace vyne.openApi {
       Note that active workflow schemes cannot be edited. If the workflow scheme is active, set `updateDraftIfNeeded` to `true` in the request body and a draft workflow scheme is created or updated with the new workflow-issue types mappings. The draft workflow scheme can be published in Jira.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/api/3/workflowscheme/{id}/workflow")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateWorkflowMapping_put(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_updateWorkflowMapping_put(
       [[ The ID of the workflow scheme. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The name of the workflow. ]]
@@ -9038,7 +9038,7 @@ namespace vyne.openApi {
       Note that active workflow schemes cannot be edited. If the workflow scheme is active, set `updateDraftIfNeeded` to `true` and a draft workflow scheme is created or updated with the workflow-issue type mapping deleted. The draft workflow scheme can be published in Jira.
       **[Permissions](#permissions) required:** *Administer Jira* [global permission](https://confluence.atlassian.com/x/x4dKLg). ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/api/3/workflowscheme/{id}/workflow")
-      operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowMapping_delete(
+      write operation com_atlassian_jira_rest_v2_admin_workflowscheme_WorkflowSchemeResource_deleteWorkflowMapping_delete(
       [[ The ID of the workflow scheme. ]]
       @taxi.http.PathVariable(value = "id") id : Int,
       [[ The name of the workflow. ]]
@@ -9063,7 +9063,7 @@ namespace vyne.openApi {
       *  the worklog is set as *Viewable by All Users*.
       *  the user is a member of a project role or group with permission to view the worklog. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/api/3/worklog/list")
-      operation com_atlassian_jira_rest_v2_issue_worklog_WorklogResource_getWorklogsForIds_post(
+      write operation com_atlassian_jira_rest_v2_issue_worklog_WorklogResource_getWorklogsForIds_post(
       [[ Use [expand](#expansion) to include additional information about worklogs in the response. This parameter accepts `properties` that returns the properties of each worklog. ]]
       @taxi.http.QueryVariable(value = "expand") expand : String?,
       @taxi.http.RequestBody worklogIdsRequestBean : WorklogIdsRequestBean? ) : Worklog[]
@@ -9103,7 +9103,7 @@ namespace vyne.openApi {
       The value of the request body must be a [valid](http://tools.ietf.org/html/rfc4627), non-empty JSON blob. The maximum length is 32768 characters.
       **[Permissions](#permissions) required:** Only a Connect app whose key matches `addonKey` can make this request. ]]
       @taxi.http.HttpOperation(method = "PUT" , url = "http://myjira/rest/atlassian-connect/1/addons/{addonKey}/properties/{propertyKey}")
-      operation AddonPropertiesResource_putAddonProperty_put(
+      write operation AddonPropertiesResource_putAddonProperty_put(
       [[ The key of the app, as defined in its descriptor. ]]
       @taxi.http.PathVariable(value = "addonKey") addonKey : String,
       [[ The key of the property. ]]
@@ -9112,7 +9112,7 @@ namespace vyne.openApi {
       [[ Deletes an app's property.
       **[Permissions](#permissions) required:** Only a Connect app whose key matches `addonKey` can make this request. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/atlassian-connect/1/addons/{addonKey}/properties/{propertyKey}")
-      operation AddonPropertiesResource_deleteAddonProperty_delete(
+      write operation AddonPropertiesResource_deleteAddonProperty_delete(
       [[ The key of the app, as defined in its descriptor. ]]
       @taxi.http.PathVariable(value = "addonKey") addonKey : String,
       [[ The key of the property. ]]
@@ -9126,11 +9126,11 @@ namespace vyne.openApi {
       [[ Registers a list of modules.
       **[Permissions](#permissions) required:** Only Connect apps can make this request. ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://myjira/rest/atlassian-connect/1/app/module/dynamic")
-      operation DynamicModulesResource_registerModules_post( @taxi.http.RequestBody connectModules : ConnectModules? )
+      write operation DynamicModulesResource_registerModules_post( @taxi.http.RequestBody connectModules : ConnectModules? )
       [[ Remove all or a list of modules registered by the calling app.
       **[Permissions](#permissions) required:** Only Connect apps can make this request. ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://myjira/rest/atlassian-connect/1/app/module/dynamic")
-      operation DynamicModulesResource_removeModules_delete(
+      write operation DynamicModulesResource_removeModules_delete(
       [[ The key of the module to remove. To include multiple module keys, provide multiple copies of this parameter.
       For example, `moduleKey=dynamic-attachment-entity-property&moduleKey=dynamic-select-field`.
       Nonexistent keys are ignored. ]]
