@@ -8,7 +8,7 @@ namespace vyne.openApi {
    service StreamsService {
       [[ subscribes a client to receive out-of-band data ]]
       @taxi.http.HttpOperation(method = "POST" , url = "/streams")
-      operation PostStreams(
+      write operation PostStreams(
       [[ the location where data will be sent.  Must be network accessible
       by the source server ]]
       @taxi.http.QueryVariable(value = "callbackUrl") callbackUrl : String ) : AnonymousTypePostStreams

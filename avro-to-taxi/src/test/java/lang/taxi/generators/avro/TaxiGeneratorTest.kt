@@ -142,4 +142,77 @@ namespace foo.addressbook.people.phones {
          .generate(avroFile)
 
    }
+
+   @Test
+   fun `when taxi type is defined on model then can control type declaration`() {
+      val avroFile = Resources.getResource("film.avsc").toURI().toPath()
+      val generated = TaxiGenerator()
+         .generate(avroFile)
+
+      val externalSchema = """
+         namespace com.example {
+            model LeadActor {
+               name: String
+               age: Int
+            }
+            model Actor {
+               name : String
+               age : Int
+            }
+         }
+      """.trimIndent()
+      val concatenatedSource = """
+         $externalSchema
+         ${generated.concatenatedSource}
+      """.trimIndent()
+      val expected = """
+$externalSchema
+namespace com.example.media {
+   @lang.taxi.formats.AvroMessage
+   closed model Film {
+      @lang.taxi.formats.AvroField(ordinal = 0) title : com.example.media.film.Title
+      @lang.taxi.formats.AvroField(ordinal = 1) director : com.example.media.film.Director
+      @lang.taxi.formats.AvroField(ordinal = 2) producer : com.example.media.film.Producer
+      @lang.taxi.formats.AvroField(ordinal = 3) leadActor : com.example.LeadActor
+      @lang.taxi.formats.AvroField(ordinal = 4) cast : com.example.Actor[]?
+      @lang.taxi.formats.AvroField(ordinal = 5) crew : com.example.StageHand[]?
+   }
+}
+namespace com.example.media.film {
+   type Title inherits String
+
+   @lang.taxi.formats.AvroMessage
+   closed model Director {
+      @lang.taxi.formats.AvroField(ordinal = 0) name : com.example.media.film.director.Name
+      @lang.taxi.formats.AvroField(ordinal = 1) age : com.example.media.film.director.Age
+   }
+
+   @lang.taxi.formats.AvroMessage
+   closed model Producer {
+      @lang.taxi.formats.AvroField(ordinal = 0) name : com.example.media.film.producer.Name
+      @lang.taxi.formats.AvroField(ordinal = 1) age : com.example.media.film.producer.Age
+   }
+}
+namespace com.example.media.film.director {
+   type Name inherits String
+   type Age inherits Int
+}
+namespace com.example.media.film.producer {
+   type Name inherits String
+   type Age inherits Int
+}
+namespace com.example {
+   @lang.taxi.formats.AvroMessage
+   closed model StageHand {
+      @lang.taxi.formats.AvroField(ordinal = 0) name : com.example.stagehand.Name
+      @lang.taxi.formats.AvroField(ordinal = 1) age : com.example.stagehand.Age
+   }
+}
+namespace com.example.stagehand {
+   type Name inherits String
+   type Age inherits Int
+}
+      """.trimIndent()
+      concatenatedSource.shouldCompileTheSameAs(expected)
+   }
 }

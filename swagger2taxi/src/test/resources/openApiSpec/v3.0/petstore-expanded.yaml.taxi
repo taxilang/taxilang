@@ -25,7 +25,7 @@ namespace vyne.openApi {
       @taxi.http.QueryVariable(value = "limit") limit : Int? ) : Pet[]
       [[ Creates a new pet in the store.  Duplicates are allowed ]]
       @taxi.http.HttpOperation(method = "POST" , url = "http://petstore.swagger.io/api/pets")
-      operation addPet( @taxi.http.RequestBody newPet : NewPet? ) : Pet
+      write operation addPet( @taxi.http.RequestBody newPet : NewPet? ) : Pet
    }
    service PetsIdService {
       [[ Returns a user based on a single ID, if the user does not have access to the pet ]]
@@ -35,7 +35,7 @@ namespace vyne.openApi {
       @taxi.http.PathVariable(value = "id") id : Int ) : Pet
       [[ deletes a single pet based on the ID supplied ]]
       @taxi.http.HttpOperation(method = "DELETE" , url = "http://petstore.swagger.io/api/pets/{id}")
-      operation deletePet(
+      write operation deletePet(
       [[ ID of pet to delete ]]
       @taxi.http.PathVariable(value = "id") id : Int )
    }
