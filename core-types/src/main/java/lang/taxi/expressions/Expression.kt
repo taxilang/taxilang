@@ -300,10 +300,3 @@ fun List<Expression>.toExpressionGroup(): Expression {
       ExpressionGroup(this)
    }
 }
-
-
-data class ArrayAccessExpression(val arrayInstanceExpression: Expression, val arrayIndexExpression: Expression,
-                                 override val compilationUnits: List<CompilationUnit>) : Expression() {
-   override val returnType: Type
-      get() = Arrays.unwrapPossibleArrayType(arrayInstanceExpression.returnType)
-}
