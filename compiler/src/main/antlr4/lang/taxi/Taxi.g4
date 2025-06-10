@@ -124,7 +124,6 @@ expressionGroup:
    | expressionGroup (MULT | DIV) expressionGroup
    | expressionGroup (PLUS | MINUS) expressionGroup
    | castExpression expressionGroup
-   | expressionGroup LBRACKET expressionGroup RBRACKET // Array access
    | LPAREN expressionGroup RPAREN
    | (PLUS | MINUS)* expressionAtom
    // The below is added for lambdas, but not sure order of precedence
@@ -324,7 +323,7 @@ scalarAccessorExpression
 //               traderEmail: UserEmail (by this.traderId)
 // }
 //
-byFieldSourceExpression:  typeReference LBRACKET  StringLiteral RBRACKET;
+byFieldSourceExpression:  typeReference '['  StringLiteral  ']';
 xpathAccessorDeclaration : 'xpath' '(' StringLiteral ')';
 jsonPathAccessorDeclaration : 'jsonPath' '(' StringLiteral ')';
 
@@ -591,7 +590,7 @@ qualifiedName
     ;
 
 arrayMarker
-   : LBRACKET RBRACKET
+   : '[' ']'
    ;
 
 Nullable : '?';
@@ -1016,9 +1015,6 @@ DIV   : '/' ;
 PLUS  : '+' ;
 MINUS : '-' ;
 POW: '^';
-
-LBRACKET : '[';
-RBRACKET : ']';
 
 LPAREN : '(' ;
 RPAREN : ')' ;
