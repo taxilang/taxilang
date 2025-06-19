@@ -3,22 +3,20 @@ package lang.taxi.functions.stdlib
 import lang.taxi.types.QualifiedName
 
 object Functional {
-   val functions:List<FunctionApi>  = listOf(
+   val functions: List<FunctionApi> = listOf(
       Reduce,
       Fold,
       Map,
    )
 }
-object Reduce: FunctionApi {
-   override val taxi: String
-      get() = "declare extension function <T,A> reduce(collection: T[], callback: (T,A) -> A):A"
-   override val name: QualifiedName
-      get() = stdLibName("reduce")
+
+object Reduce : FunctionApi {
+   override val taxi: String = "declare extension function <T,A> reduce(collection: T[], callback: (T,A) -> A):A"
+   override val name: QualifiedName = stdLibName("reduce")
 }
 
 object Map : FunctionApi {
-   override val taxi: String
-      get() = """
+   override val taxi: String = """
          [[ Performs a mapping transformation function on every member of the provided array.
 
          If the callback is in the form of a type expression, then each input value is converted
@@ -42,12 +40,11 @@ object Map : FunctionApi {
          ```
          ]]
          declare extension function <T,A> map(collection: T[], callback: (T) -> A):A[]""".trimIndent()
-   override val name: QualifiedName
-      get() = stdLibName("map")
+   override val name: QualifiedName = stdLibName("map")
 }
+
 object Fold : FunctionApi {
-   override val taxi: String
-      get() = """
+   override val taxi: String = """
          |[[
          | Iterates over a collection, combining elements to produce a single accumulated result.
          |
@@ -67,7 +64,6 @@ object Fold : FunctionApi {
          |
       """.trimMargin()
 
-   override val name: QualifiedName
-      get() = stdLibName("fold")
+   override val name: QualifiedName = stdLibName("fold")
 }
 
