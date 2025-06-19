@@ -20,9 +20,13 @@ object Strings {
       Find,
       Replace,
       ContainsString,
+      ContainsPattern,
       PadStart,
       PadEnd,
-      ApplyFormat
+      ApplyFormat,
+      StartsWith,
+      EndsWith,
+      Matches
 //      Coalesce
    )
 }
@@ -101,30 +105,39 @@ object ApplyFormat : FunctionApi {
    override val name: QualifiedName = stdLibName("applyFormat")
 }
 
-object Length: FunctionApi {
-   override val taxi: String
-      get() = "declare extension function length(String):Int"
-   override val name: QualifiedName
-      get() = stdLibName("length")
+object Length : FunctionApi {
+   override val taxi: String = "declare extension function length(String):Int"
+   override val name: QualifiedName = stdLibName("length")
 }
 
-object Find: FunctionApi {
-   override val taxi: String
-      get() = """
+object Find : FunctionApi {
+   override val taxi: String = """
          [[ Returns the index of `valueToSearchFor` within `source` ]]
          declare extension function indexOf(source:String, valueToSearchFor:String):Int""".trimIndent()
-   override val name: QualifiedName
-      get() = stdLibName("indexOf")
+   override val name: QualifiedName = stdLibName("indexOf")
 }
 
 object ContainsString : FunctionApi {
-   override val taxi: String
-      get() = """
+   override val taxi: String = """
          [[ Returns true if `valueToSearchFor` within `source` ]]
          declare extension function containsString(source:String, valueToSearchFor:String):Boolean""".trimIndent()
-   override val name: QualifiedName
-      get() = stdLibName("containsString")
+   override val name: QualifiedName = stdLibName("containsString")
 }
+
+object StartsWith : FunctionApi {
+   override val taxi: String = """
+      [[ Returns true if the source string begins with the provided prefix ]]
+      declare extension function startsWith(source: String, valueToSearchFor:String):Boolean""".trimIndent()
+   override val name: QualifiedName = stdLibName("startsWith")
+}
+
+object EndsWith : FunctionApi {
+   override val taxi: String = """
+      [[ Returns true if the source string ends with the provided prefix ]]
+      declare extension function endsWith(source: String, valueToSearchFor:String):Boolean""".trimIndent()
+   override val name: QualifiedName = stdLibName("endsWith")
+}
+
 
 object Replace : FunctionApi {
    override val taxi: String = """[[
@@ -136,6 +149,37 @@ object Replace : FunctionApi {
       ]]
       declare extension function replace(source: String, searchValue:String, replacement: String):String""".trimIndent()
    override val name: QualifiedName = stdLibName("replace")
-
 }
+
+object Matches : FunctionApi {
+   override val taxi: String = """
+      [[
+        Returns `true` if the **entire** source string matches the provided regular expression.
+        This uses full-string matching — the pattern must match the **entire string**, not just a part of it.
+
+        For example:
+          `"hello".matches("^h.*o${'$'}")` => `true`
+          `"hello".matches("^he")`    => `false` (partial matches are not considered valid)
+      ]]
+      declare extension function matches(source: String, regex: String): Boolean
+      """.trimIndent()
+   override val name: QualifiedName = stdLibName("matches")
+}
+
+object ContainsPattern : FunctionApi {
+   override val taxi: String = """
+      [[
+        Returns true if any part of the source string matches the provided regular expression.
+        This allows partial matches and does not require the entire string to conform.
+
+        For example:
+          `"hello".containsPattern("^he")`   => `true`
+          `"hello".containsPattern("ell")`   => `true`
+          `"hello".containsPattern("xyz")`   => `false`
+      ]]
+      declare extension function containsPattern(source: String, regex: String): Boolean
+      """.trimIndent()
+   override val name: QualifiedName = stdLibName("containsPattern")
+}
+
 
