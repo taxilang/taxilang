@@ -1,5 +1,6 @@
 package lang.taxi.packages
 
+import com.google.common.base.Throwables
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigException
 import com.typesafe.config.ConfigFactory
@@ -88,7 +89,8 @@ class TaxiPackageLoader(val taxiConfFilePath: Path? = null) {
          } else {
             "File with error: ${pathsToLoad.single()}"
          }
-         val message = "An error occurred reading the Taxi project file - ${e.message} - $pathPart"
+         val rootCause = Throwables.getRootCause(e)
+         val message = "An error occurred reading the Taxi project file - ${rootCause.message ?: "A ${rootCause::class.simpleName} exception was thrown"} - $pathPart"
          throw MalformedTaxiConfFileException(
             pathsToLoad.first(),
             message
