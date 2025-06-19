@@ -42,6 +42,23 @@ declare function concat(Any...):String
 
 ------
 
+### containsPattern
+`taxi.stdlib.containsPattern`
+
+```taxi
+declare extension function containsPattern(source: String, regex: String): Boolean
+```
+
+Returns true if any part of the source string matches the provided regular expression.
+This allows partial matches and does not require the entire string to conform.
+
+For example:
+  `"hello".containsPattern("^he")`   => `true`
+  `"hello".containsPattern("ell")`   => `true`
+  `"hello".containsPattern("xyz")`   => `false`
+
+------
+
 ### containsString
 `taxi.stdlib.containsString`
 
@@ -50,6 +67,17 @@ declare extension function containsString(source:String, valueToSearchFor:String
 ```
 
 Returns true if `valueToSearchFor` within `source`
+
+------
+
+### endsWith
+`taxi.stdlib.endsWith`
+
+```taxi
+declare extension function endsWith(source: String, valueToSearchFor:String):Boolean
+```
+
+Returns true if the source string ends with the provided prefix
 
 ------
 
@@ -90,6 +118,22 @@ declare extension function length(String):Int
 ```taxi
 declare extension function lowerCase(String):String
 ```
+
+------
+
+### matches
+`taxi.stdlib.matches`
+
+```taxi
+declare extension function matches(source: String, regex: String): Boolean
+```
+
+Returns `true` if the **entire** source string matches the provided regular expression.
+This uses full-string matching — the pattern must match the **entire string**, not just a part of it.
+
+For example:
+  `"hello".matches("^h.*o$")` => `true`
+  `"hello".matches("^he")`    => `false` (partial matches are not considered valid)
 
 ------
 
@@ -155,6 +199,17 @@ declare extension function right(source:String,count:Int):String
 
 ------
 
+### startsWith
+`taxi.stdlib.startsWith`
+
+```taxi
+declare extension function startsWith(source: String, valueToSearchFor:String):Boolean
+```
+
+Returns true if the source string begins with the provided prefix
+
+------
+
 ### trim
 `taxi.stdlib.trim`
 
@@ -205,8 +260,7 @@ type CanPurchasePremium inherits Boolean by allOf(IsActive, HasSufficientFunds, 
 #### Examples
 This example demonstrates how to use `allOf()` to verify if a user meets all required criteria for premium access.
 
-<PlaygroundSnippet
-  scenario={{
+<PlaygroundSnippet scenario={{
   "schema" : "model Customer {\n   name: String\n   isActive: IsActive inherits Boolean\n   hasSufficientFunds: HasSufficientFunds inherits Boolean\n   isVerified: IsVerified inherits Boolean\n}\ntype HasPremiumAccess inherits Boolean by allOf(IsActive, HasSufficientFunds, IsVerified)",
   "query" : "given {\n   customer: Customer = {\n      name: 'Bob',\n      isActive: true,\n      hasSufficientFunds: true,\n      isVerified: true\n   }\n}\nfind {\n   name: customer.name\n   hasPremiumAccess: HasPremiumAccess\n}",
   "parameters" : { },
@@ -214,11 +268,7 @@ This example demonstrates how to use `allOf()` to verify if a user meets all req
   "expectedJson" : "{\n               \"name\": \"Bob\",\n               \"hasPremiumAccess\": true\n            }",
   "stackId" : null
 }
-}>
-  <PlaygroundSnippet.Description>
-    This example demonstrates how to use `allOf()` to verify if a user meets all required criteria for premium access.
-  </PlaygroundSnippet.Description>
-</PlaygroundSnippet>
+}></PlaygroundSnippet>
 
 ------
 
@@ -283,11 +333,11 @@ find { user: User } as {
 ```
 
 #### Examples
-This example demonstrates how to use `contains()` to check if a user has a specific role.
+undefined
 
 <PlaygroundSnippet scenario={{
-  "schema" : "model User {\n   username: String\n   roles: String[]\n}",
-  "query" : "given {\n   user: User = {\n      username: 'AdminUser',\n      roles: ['USER', 'EDITOR', 'ADMIN']\n   }\n}\nfind {\n   username: user.username\n   isAdmin: user.roles.contains(\"ADMIN\")\n   isGuest: user.roles.contains(\"GUEST\")\n}",
+  "schema" : "type Role inherits String\nmodel User {\n   username: Username inherits String\n   roles: Role[]\n}",
+  "query" : "          given {\n   user: User = {\n      username: 'AdminUser',\n      roles: ['USER', 'EDITOR', 'ADMIN']\n   }\n}\nfind {\n   username: user.username\n   // Using type selector\n   isAdmin: Boolean = Role[].contains(\"ADMIN\")\n   // Using field access\n   isGuest: Boolean = user.roles.contains(\"GUEST\")\n}",
   "parameters" : { },
   "stubs" : [ ],
   "expectedJson" : "{\n               \"username\": \"AdminUser\",\n               \"isAdmin\": true,\n               \"isGuest\": false\n            }",
@@ -319,8 +369,8 @@ find { user: User } as {
 This example demonstrates how to use `exactlyOne()` to retrieve the single active session for a user.
 
 <PlaygroundSnippet scenario={{
-  "schema" : "model Session {\n   id: String\n   isActive: Boolean\n}\n\nmodel User {\n   username: String\n   sessions: Session[]\n}",
-  "query" : "given {\n   user: User = {\n      username: 'ActiveUser',\n      sessions: [\n         { id: 'session-1', isActive: true },\n         { id: 'session-2', isActive: false }\n      ]\n   }\n}\nfind {\n   username: user.username\n   activeSessionId: user.sessions.filter((session) -> session.isActive).exactlyOne().id\n}",
+  "schema" : "model Session {\n   id: SessionId inherits String\n   isActive: IsActive inherits Boolean\n}\n\nmodel User {\n   username: Username inherits String\n   sessions: Session[]\n}",
+  "query" : "given {\n   user: User = {\n      username: 'ActiveUser',\n      sessions: [\n         { id: 'session-1', isActive: true },\n         { id: 'session-2', isActive: false }\n      ]\n   }\n}\nfind {\n   username: user.username\n   activeSessionId: SessionId = user.sessions.filter((Session) -> IsActive).exactlyOne().id\n}",
   "parameters" : { },
   "stubs" : [ ],
   "expectedJson" : "{\n               \"username\": \"ActiveUser\",\n               \"activeSessionId\": \"session-1\"\n            }",
@@ -354,7 +404,7 @@ This example demonstrates how to use `filter()` to find friends who meet a certa
 
 <PlaygroundSnippet scenario={{
   "schema" : "model Friend {\n   name: Name inherits String\n   age: Age inherits Int\n}",
-  "query" : "given {\n   friends: Friend[] = [\n      { name: 'Jim', age: 20 },\n      { name: 'Jack', age: 80 },\n      { name: 'Alice', age: 75 },\n      { name: 'Bob', age: 30 }\n   ]\n}\nfind {\n   // Names of seniors (over 70)\n   seniorFriends: friends.filter((friend) -> friend.age > 70) as Name[]\n   // Names of young adults (under 30)\n   youngFriends: friends.filter((friend) -> friend.age < 30) as Name[]\n}",
+  "query" : "given {\n   friends: Friend[] = [\n      { name: 'Jim', age: 20 },\n      { name: 'Jack', age: 80 },\n      { name: 'Alice', age: 75 },\n      { name: 'Bob', age: 30 }\n   ]\n}\nfind {\n   // Names of seniors (over 70)\n   seniorFriends: Friend[] = friends.filter((friend:Friend) -> friend.age > 70) as Name[]\n   // Names of young adults (under 30)\n   youngFriends: Friend[] = friends.filter((friend:Friend) -> friend.age < 30) as Name[]\n}",
   "parameters" : { },
   "stubs" : [ ],
   "expectedJson" : "{\n               \"seniorFriends\": [\n                  \"Jack\",\n                  \"Alice\"\n               ],\n               \"youngFriends\": [\n                  \"Jim\"\n               ]\n            }",
@@ -382,19 +432,6 @@ find { items: Item[] } as {
 }
 ```
 
-#### Examples
-This example demonstrates how to use `filterEach()` to process items in a stream-like manner, keeping only those that meet certain criteria.
-
-<PlaygroundSnippet scenario={{
-  "schema" : "model Item {\n   id: String\n   status: String\n   value: Int\n}",
-  "query" : "given {\n   items: Item[] = [\n      { id: 'item-1', status: 'READY', value: 100 },\n      { id: 'item-2', status: 'PENDING', value: 200 },\n      { id: 'item-3', status: 'READY', value: 300 },\n      { id: 'item-4', status: 'FAILED', value: 400 }\n   ]\n}\nfind {\n   // Only keep READY items with a value over 200\n   highValueReadyItems: items.map((item) ->\n      filterEach(item, (i) -> i.status == 'READY' && i.value > 200)\n   )\n}",
-  "parameters" : { },
-  "stubs" : [ ],
-  "expectedJson" : "{\n               \"highValueReadyItems\": [\n                  {\n                     \"id\": \"item-3\",\n                     \"status\": \"READY\",\n                     \"value\": 300\n                  }\n               ]\n            }",
-  "stackId" : null
-}
-}></PlaygroundSnippet>
-
 ------
 
 ### first
@@ -420,7 +457,7 @@ This example demonstrates how to use `first()` to retrieve the most recent trans
 
 <PlaygroundSnippet scenario={{
   "schema" : "model Transaction {\n   date: String\n   amount: Decimal\n   description: String\n}\n\nmodel Account {\n   accountNumber: String\n   transactions: Transaction[] // Assumed to be in descending date order\n}",
-  "query" : "given {\n   account: Account = {\n      accountNumber: 'ACC-12345',\n      transactions: [\n         { date: '2023-05-01', amount: 150.00, description: 'Grocery Store' },\n         { date: '2023-04-28', amount: 45.99, description: 'Online Shop' },\n         { date: '2023-04-25', amount: 20.00, description: 'Transfer' }\n      ]\n   }\n}\nfind {\n   accountNumber: account.accountNumber\n   mostRecentTransaction: account.transactions.first()\n}",
+  "query" : "given {\n   account: Account = {\n      accountNumber: 'ACC-12345',\n      transactions: [\n         { date: '2023-05-01', amount: 150.00, description: 'Grocery Store' },\n         { date: '2023-04-28', amount: 45.99, description: 'Online Shop' },\n         { date: '2023-04-25', amount: 20.00, description: 'Transfer' }\n      ]\n   }\n}\nfind {\n   accountNumber: account.accountNumber\n   mostRecentTransaction: Transaction = account.transactions.first()\n}",
   "parameters" : { },
   "stubs" : [ ],
   "expectedJson" : "{\n               \"accountNumber\": \"ACC-12345\",\n               \"mostRecentTransaction\": {\n                  \"date\": \"2023-05-01\",\n                  \"amount\": 150.00,\n                  \"description\": \"Grocery Store\"\n               }\n            }",
@@ -453,7 +490,7 @@ This example demonstrates how to use `getAtIndex()` to retrieve a specific song 
 
 <PlaygroundSnippet scenario={{
   "schema" : "model Song {\n   title: String\n   artist: String\n   duration: Int\n}\n\nmodel Playlist {\n   name: String\n   songs: Song[]\n}",
-  "query" : "given {\n   playlist: Playlist = {\n      name: 'Road Trip Mix',\n      songs: [\n         { title: 'Highway Star', artist: 'Deep Purple', duration: 372 },\n         { title: 'Born to Run', artist: 'Bruce Springsteen', duration: 270 },\n         { title: 'Life in the Fast Lane', artist: 'Eagles', duration: 251 }\n      ]\n   }\n}\nfind {\n   playlistName: playlist.name\n   firstSong: playlist.songs.getAtIndex(0)\n   secondSong: playlist.songs.getAtIndex(1)\n}",
+  "query" : "given {\n   playlist: Playlist = {\n      name: 'Road Trip Mix',\n      songs: [\n         { title: 'Highway Star', artist: 'Deep Purple', duration: 372 },\n         { title: 'Born to Run', artist: 'Bruce Springsteen', duration: 270 },\n         { title: 'Life in the Fast Lane', artist: 'Eagles', duration: 251 }\n      ]\n   }\n}\nfind {\n   playlistName: playlist.name\n   // Using property\n   firstSong: Song = playlist.songs.getAtIndex(0)\n   // using a type\n   secondSong: Song = Song[].getAtIndex(1)\n}",
   "parameters" : { },
   "stubs" : [ ],
   "expectedJson" : "{\n               \"playlistName\": \"Road Trip Mix\",\n               \"firstSong\": {\n                  \"title\": \"Highway Star\",\n                  \"artist\": \"Deep Purple\",\n                  \"duration\": 372\n               },\n               \"secondSong\": {\n                  \"title\": \"Born to Run\",\n                  \"artist\": \"Bruce Springsteen\",\n                  \"duration\": 270\n               }\n            }",
@@ -486,7 +523,7 @@ This example demonstrates how to use `intersection()` to find common elements be
 
 <PlaygroundSnippet scenario={{
   "schema" : "model Product {\n   name: String\n   tags: String[]\n}",
-  "query" : "given {\n   productA: Product = {\n      name: 'Smartphone',\n      tags: ['electronics', 'mobile', 'camera', 'touchscreen']\n   }\n   productB: Product = {\n      name: 'Digital Camera',\n      tags: ['electronics', 'camera', 'photography', 'zoom']\n   }\n}\nfind {\n   productAName: productA.name\n   productBName: productB.name\n   commonTags: intersection(productA.tags, productB.tags)\n}",
+  "query" : "given {\n   productA: Product = {\n      name: 'Smartphone',\n      tags: ['electronics', 'mobile', 'camera', 'touchscreen']\n   },\n   productB: Product = {\n      name: 'Digital Camera',\n      tags: ['electronics', 'camera', 'photography', 'zoom']\n   }\n}\nfind {\n   productAName: productA.name\n   productBName: productB.name\n   commonTags: intersection(productA.tags, productB.tags)\n}",
   "parameters" : { },
   "stubs" : [ ],
   "expectedJson" : "{\n               \"productAName\": \"Smartphone\",\n               \"productBName\": \"Digital Camera\",\n               \"commonTags\": [\n                  \"electronics\",\n                  \"camera\"\n               ]\n            }",
@@ -530,10 +567,10 @@ This example demonstrates how to use `last()` to retrieve the oldest transaction
 
 <PlaygroundSnippet scenario={{
   "schema" : "model Transaction {\n   date: String\n   amount: Decimal\n   description: String\n}\n\nmodel Account {\n   accountNumber: String\n   transactions: Transaction[] // Assumed to be in descending date order (newest first)\n}",
-  "query" : "given {\n   account: Account = {\n      accountNumber: 'ACC-12345',\n      transactions: [\n         { date: '2023-05-01', amount: 150.00, description: 'Grocery Store' },\n         { date: '2023-04-28', amount: 45.99, description: 'Online Shop' },\n         { date: '2023-04-25', amount: 20.00, description: 'Transfer' }\n      ]\n   }\n}\nfind {\n   accountNumber: account.accountNumber\n   oldestTransaction: account.transactions.last()\n}",
+  "query" : "given {\n   account: Account = {\n      accountNumber: 'ACC-12345',\n      transactions: [\n         { date: '2023-05-01', amount: 150.00, description: 'Grocery Store' },\n         { date: '2023-04-28', amount: 45.99, description: 'Online Shop' },\n         { date: '2023-04-25', amount: 20.00, description: 'Transfer' }\n      ]\n   }\n}\nfind {\n   accountNumber: account.accountNumber\n   // Using .last() against the type\n   oldestTransaction: Transaction =  Transaction[].last()\n   // or, alternatively, using against the property name\n   alsoOldestTransaction: Transaction = account.transactions.last()\n}",
   "parameters" : { },
   "stubs" : [ ],
-  "expectedJson" : "{\n               \"accountNumber\": \"ACC-12345\",\n               \"oldestTransaction\": {\n                  \"date\": \"2023-04-25\",\n                  \"amount\": 20.00,\n                  \"description\": \"Transfer\"\n               }\n            }",
+  "expectedJson" : "{\n   \"accountNumber\": \"ACC-12345\",\n   \"oldestTransaction\": {\n      \"date\": \"2023-04-25\",\n      \"amount\": 20,\n      \"description\": \"Transfer\"\n   },\n   \"alsoOldestTransaction\": {\n      \"date\": \"2023-04-25\",\n      \"amount\": 20,\n      \"description\": \"Transfer\"\n   }\n}",
   "stackId" : null
 }
 }></PlaygroundSnippet>
@@ -563,7 +600,7 @@ This example demonstrates how to use `listOf()` to create an inline collection a
 
 <PlaygroundSnippet scenario={{
   "schema" : "model Order {\n   id: String\n   status: String\n}",
-  "query" : "given {\n   orders: Order[] = [\n      { id: 'order-1', status: 'PENDING' },\n      { id: 'order-2', status: 'SHIPPED' },\n      { id: 'order-3', status: 'CANCELED' }\n   ]\n}\nfind {\n   validOrders: orders.filter((order) ->\n      listOf('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED').contains(order.status)\n   )\n   invalidOrders: orders.filter((order) ->\n      !listOf('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED').contains(order.status)\n   )\n}",
+  "query" : "given {\n   orders: Order[] = [\n      { id: 'order-1', status: 'PENDING' },\n      { id: 'order-2', status: 'SHIPPED' },\n      { id: 'order-3', status: 'CANCELED' }\n   ]\n}\nfind {\n   validOrders: Order[] = orders.filter((order:Order) ->\n      listOf('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED').contains(order.status)\n   )\n   invalidOrders: Order[] =  orders.filter((order:Order) ->\n      listOf('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED').contains(order.status) == false\n   )\n}",
   "parameters" : { },
   "stubs" : [ ],
   "expectedJson" : "{\n               \"validOrders\": [\n                  {\n                     \"id\": \"order-1\",\n                     \"status\": \"PENDING\"\n                  },\n                  {\n                     \"id\": \"order-2\",\n                     \"status\": \"SHIPPED\"\n                  }\n               ],\n               \"invalidOrders\": [\n                  {\n                     \"id\": \"order-3\",\n                     \"status\": \"CANCELED\"\n                  }\n               ]\n            }",
@@ -634,11 +671,11 @@ find { inventory: Inventory } as {
 ```
 
 #### Examples
-This example demonstrates how to use `single()` to find a specific product in an inventory.
+undefined
 
 <PlaygroundSnippet scenario={{
-  "schema" : "model Product {\n   name: String\n   sku: String\n   price: Decimal\n}\n\nmodel Inventory {\n   products: Product[]\n}",
-  "query" : "given {\n   inventory: Inventory = {\n      products: [\n         { name: 'Laptop', sku: 'LT-001', price: 1200.00 },\n         { name: 'Smartphone', sku: 'SP-002', price: 999.99 },\n         { name: 'Tablet', sku: 'TB-003', price: 499.50 }\n      ]\n   }\n}\nfind {\n   smartphoneDetails: inventory.products.single((product) -> product.sku == 'SP-002')\n}",
+  "schema" : "model Product {\n   name: ProductName inherits String\n   sku: SKU inherits String\n   price: Price inherits Decimal\n}\n\nmodel Inventory {\n   products: Product[]\n}",
+  "query" : "          given {\n   inventory: Inventory = {\n      products: [\n         { name: 'Laptop', sku: 'LT-001', price: 1200.00 },\n         { name: 'Smartphone', sku: 'SP-002', price: 999.99 },\n         { name: 'Tablet', sku: 'TB-003', price: 499.50 }\n      ]\n   }\n}\nfind {\n   smartphoneDetails: Product = inventory.products.single((product: Product) -> product.sku == 'SP-002')\n}",
   "parameters" : { },
   "stubs" : [ ],
   "expectedJson" : "{\n               \"smartphoneDetails\": {\n                  \"name\": \"Smartphone\",\n                  \"sku\": \"SP-002\",\n                  \"price\": 999.99\n               }\n            }",
@@ -668,14 +705,14 @@ find { inventory: Inventory } as {
 ```
 
 #### Examples
-This example demonstrates how to use `singleBy()` to efficiently find items in a collection by a specific property.
+undefined
 
 <PlaygroundSnippet scenario={{
-  "schema" : "model Product {\n   name: String\n   sku: String\n   price: Decimal\n}\n\nmodel Inventory {\n   products: Product[]\n}",
-  "query" : "given {\n   inventory: Inventory = {\n      products: [\n         { name: 'Laptop', sku: 'LT-001', price: 1200.00 },\n         { name: 'Smartphone', sku: 'SP-002', price: 999.99 },\n         { name: 'Tablet', sku: 'TB-003', price: 499.50 }\n      ]\n   }\n}\nfind {\n   // Find products by SKU code\n   laptop: inventory.products.singleBy((product) -> product.sku, 'LT-001')\n   tablet: inventory.products.singleBy((product) -> product.sku, 'TB-003')\n}",
+  "schema" : "model Product {\n   name: Name inherits String\n   sku: SKU inherits String\n}\n\nmodel Inventory {\n   products: Product[]\n}",
+  "query" : "          given {\n   inventory: Inventory = {\n      products: [\n         { name: 'Laptop', sku: 'LT-001'},\n         { name: 'Smartphone', sku: 'SP-002'},\n         { name: 'Tablet', sku: 'TB-003' }\n      ]\n   }\n}\nfind {\n   // Find products by SKU code\n   laptop: inventory.products.singleBy((product:Product) -> product.sku, 'LT-001' as SKU)\n   // Alternative syntax, using types for selection\n   tablet: inventory.products.singleBy((Product) -> SKU, 'TB-003' as SKU)\n}",
   "parameters" : { },
   "stubs" : [ ],
-  "expectedJson" : "{\n               \"laptop\": {\n                  \"name\": \"Laptop\",\n                  \"sku\": \"LT-001\",\n                  \"price\": 1200.00\n               },\n               \"tablet\": {\n                  \"name\": \"Tablet\",\n                  \"sku\": \"TB-003\",\n                  \"price\": 499.50\n               }\n            }",
+  "expectedJson" : "{\n   \"laptop\": {\n      \"name\": \"Laptop\",\n      \"sku\": \"LT-001\"\n   },\n   \"tablet\": {\n      \"name\": \"Tablet\",\n      \"sku\": \"TB-003\"\n   }\n}",
   "stackId" : null
 }
 }></PlaygroundSnippet>
