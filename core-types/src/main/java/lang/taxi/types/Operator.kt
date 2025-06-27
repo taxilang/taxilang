@@ -51,6 +51,7 @@ enum class FormulaOperator(
    Subtract("-", listOf(onlyNumericTypes())),
    Multiply("*", listOf(onlyNumericTypes())),
    Divide("/", listOf(onlyNumericTypes())),
+   Modulo("%", listOf(onlyNumericTypes())),
    GreaterThan(">", listOf(comparableTypes())),
    LessThan("<", listOf(comparableTypes())),
    GreaterThanOrEqual(">=", listOf(comparableTypes())),

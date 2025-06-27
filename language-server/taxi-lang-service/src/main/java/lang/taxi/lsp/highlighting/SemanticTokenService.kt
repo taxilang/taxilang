@@ -18,7 +18,7 @@ class SemanticTokenService {
          TaxiLexer.DIV,
          TaxiLexer.PLUS,
          TaxiLexer.MINUS,
-         TaxiLexer.POW,
+         TaxiLexer.MOD,
          TaxiLexer.GT,
          TaxiLexer.GE,
          TaxiLexer.LT,

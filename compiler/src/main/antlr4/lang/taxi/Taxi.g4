@@ -120,8 +120,7 @@ expressionInput: (identifier ':')? (nullableTypeReference accessor? | expression
 // which ensures order-of-precedence and supports grouped / parenthesis
 // expressions
 expressionGroup:
-   expressionGroup POW expressionGroup
-   | expressionGroup (MULT | DIV) expressionGroup
+   expressionGroup (MULT | DIV | MOD) expressionGroup
    | expressionGroup (PLUS | MINUS) expressionGroup
    | castExpression expressionGroup
    | LPAREN expressionGroup RPAREN
@@ -1014,7 +1013,7 @@ MULT  : '*' ;
 DIV   : '/' ;
 PLUS  : '+' ;
 MINUS : '-' ;
-POW: '^';
+MOD: '%';
 
 LPAREN : '(' ;
 RPAREN : ')' ;
