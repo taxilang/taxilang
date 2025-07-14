@@ -43,7 +43,7 @@ object NumberTypes {
    fun isNumberType(type: PrimitiveType) = NUMBER_TYPES.contains(type)
    fun areAllNumberTypes(types: Collection<PrimitiveType>) = types.all { isNumberType(it) }
 
-   fun getTypeWithHightestPrecision(types: Collection<PrimitiveType>): PrimitiveType {
+   fun getTypeWithHighestPrecision(types: Collection<PrimitiveType>): PrimitiveType {
       require(types.isNotEmpty()) { "Cannot evaluate an empty collection" }
       return types.maxByOrNull { NUMBER_TYPES.indexOf(it) }!!
    }

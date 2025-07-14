@@ -18,6 +18,8 @@ private fun areAllSameType(): (Set<PrimitiveType>) -> Boolean {
    return { types -> types.size == 1 }
 }
 
+private fun allow(): (Set<PrimitiveType>) -> Boolean { return { true } }
+
 private fun onlyContainsType(type: PrimitiveType): (Set<PrimitiveType>) -> Boolean {
    return { types ->
       types.all { it == type }
@@ -60,7 +62,7 @@ enum class FormulaOperator(
    LogicalOr("||", listOf(areAllBoolean())),
    Equal("==", listOf(areAllSameType(), comparableTypes())),
    NotEqual("!=", listOf(areAllSameType())),
-   Coalesce("?:", listOf(areAllSameType()))
+   Coalesce("?:", listOf(allow()))
    ;
 
 

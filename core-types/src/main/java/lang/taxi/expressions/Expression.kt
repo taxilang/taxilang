@@ -227,52 +227,57 @@ data class OperatorExpression(
    }
 
    companion object {
-      fun getReturnType(lhsType: PrimitiveType, operator: FormulaOperator, rhsType: PrimitiveType): Type? {
-         if (operator.isLogicalOrComparisonOperator()) {
-            return PrimitiveType.BOOLEAN
-         }
-         val types = setOf(lhsType, rhsType)
-
-         // If all the types are numeric, then choose the highest precision
-         // unless we're dividing...
-         // ie., Int - Double = Double
-         if (types.all { PrimitiveType.NUMBER_TYPES.contains(it) }) {
-            return if (operator == FormulaOperator.Divide) {
-               when {
-                  types.contains(PrimitiveType.DECIMAL) -> PrimitiveType.DECIMAL
-                  types.contains(PrimitiveType.DOUBLE) -> PrimitiveType.DOUBLE
-                  else -> PrimitiveType.DECIMAL // Int / Int = Decimal
-               }
-            } else {
-               NumberTypes.getTypeWithHightestPrecision(types)
-            }
-         }
-
-         // If there's only one type here, use that
-         if (types.distinct().size == 1) {
-            return types.distinct().single()
-         }
-         // special cases
-         if (types == setOf(PrimitiveType.TIME, PrimitiveType.LOCAL_DATE)) {
-            return PrimitiveType.INSTANT
-         }
-
-         // Give up.  TODO : Other scenarios
-         return null
-      }
+//      fun getReturnType(lhsType: PrimitiveType, operator: FormulaOperator, rhsType: PrimitiveType): Type? {
+//         val typeOrError = TypeResolver.getCommonType(lhsType, operator, rhsType)
+//         return when  (typeOrError) {
+//            is Either.Right -> typeOrError.value
+//            else -> TODO("Error handling when type coercion fails")
+//         }
+//         if (operator.isLogicalOrComparisonOperator()) {
+//            return PrimitiveType.BOOLEAN
+//         }
+//         val types = setOf(lhsType, rhsType)
+//
+//         // If all the types are numeric, then choose the highest precision
+//         // unless we're dividing...
+//         // ie., Int - Double = Double
+//         if (types.all { PrimitiveType.NUMBER_TYPES.contains(it) }) {
+//            return if (operator == FormulaOperator.Divide) {
+//               when {
+//                  types.contains(PrimitiveType.DECIMAL) -> PrimitiveType.DECIMAL
+//                  types.contains(PrimitiveType.DOUBLE) -> PrimitiveType.DOUBLE
+//                  else -> PrimitiveType.DECIMAL // Int / Int = Decimal
+//               }
+//            } else {
+//               NumberTypes.getTypeWithHighestPrecision(types)
+//            }
+//         }
+//
+//         // If there's only one type here, use that
+//         if (types.distinct().size == 1) {
+//            return types.distinct().single()
+//         }
+//         // special cases
+//         if (types == setOf(PrimitiveType.TIME, PrimitiveType.LOCAL_DATE)) {
+//            return PrimitiveType.INSTANT
+//         }
+//
+//         // Give up.  TODO : Other scenarios
+//         return null
+//      }
    }
 
-   override val strictReturnType: Either<String, Type>
-      get() {
-         val lhsType = lhs.returnType.basePrimitive ?: PrimitiveType.ANY
-         val rhsType = rhs.returnType.basePrimitive ?: PrimitiveType.ANY
-         return getReturnType(
-            lhsType = lhsType,
-            operator = operator,
-            rhsType = rhsType
-         )?.right()
-            ?: "Unable to determine the return type resulting from ${lhsType.name} ${operator.symbol} ${rhsType.name}".left()
-      }
+   override val strictReturnType: Either<String, Type> = TypeResolver.getCommonType(lhs.returnType, operator, rhs.returnType)
+//      get() {
+//         val lhsType = lhs.returnType.basePrimitive ?: PrimitiveType.ANY
+//         val rhsType = rhs.returnType.basePrimitive ?: PrimitiveType.ANY
+//         return getReturnType(
+//            lhsType = lhsType,
+//            operator = operator,
+//            rhsType = rhsType
+//         )?.right()
+//            ?: "Unable to determine the return type resulting from ${lhsType.name} ${operator.symbol} ${rhsType.name}".left()
+//      }
    override val returnType: Type = strictReturnType.getOrElse { PrimitiveType.ANY }
 
 }
