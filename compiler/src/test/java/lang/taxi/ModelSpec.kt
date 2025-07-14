@@ -41,7 +41,7 @@ model Person {
 
          // How is this used?
          xit("should set the source in the correct namespace") {
-            val capturedSource= """
+            val capturedSource = """
                namespace names {
                   type FirstName inherits String
                   type LastName inherits String
@@ -57,7 +57,8 @@ model Person {
             """.compiled()
                .model("foo.bar.Person")
                .compilationUnits.single().source
-            capturedSource.content.withoutWhitespace().should.equal("""import names.FirstName
+            capturedSource.content.withoutWhitespace().should.equal(
+               """import names.FirstName
 import names.LastName
 import names.NickName
 namespace foo.bar {
@@ -66,11 +67,10 @@ namespace foo.bar {
       lastName : names.LastName
       nickNames: names.NickName[]
    }
-}""".withoutWhitespace())
+}""".withoutWhitespace()
+            )
          }
-      }
 
-      describe("simple grammar") {
          it("should allow concatenation of a date + time fields to an instant") {
             val src = """
                type TransactionDate inherits Date
@@ -85,16 +85,16 @@ namespace foo.bar {
          }
 
          it("should not allow concatenation of time + date fields") {
-               val src = """
-                 type TransactionDate inherits Date
+            val src = """
+               type TransactionDate inherits Date
                type TransactionTime inherits Time
                type TransactionDateTime inherits String
                model Transaction {
                   timestamp : TransactionDateTime by (TransactionTime + TransactionDate)
                }
                """
-                  .validated()
-                  .shouldContainMessage("Type mismatch. Type of lang.taxi.Instant is not assignable to type TransactionDateTime")
+               .validated()
+               .shouldContainMessage("Type mismatch. Type of lang.taxi.Instant is not assignable to type TransactionDateTime")
          }
 
          it("should not allow invalid operations on Date Time fields") {
@@ -131,27 +131,27 @@ namespace foo.bar {
          }
 
          it("should not allow definition of calculated fields when one of the operand is String") {
-               val src = """
+            val src = """
                   type QtyTick inherits Decimal
                   type Qty inherits String
                   model Trade {
                      qtyTotal: Decimal by (QtyTick * Qty)
                   }
                """.trimIndent()
-                  .validated()
-                  .shouldContainMessage("Operations with symbol '*' is not supported on types Decimal and String")
+               .validated()
+               .shouldContainMessage("Operations with symbol '*' is not supported on types Decimal and String")
          }
 
          it("should not allow definition of calculated fields when one of the operand is inherited from Instant") {
-               val src = """
+            val src = """
                   type QtyTick inherits Decimal
                   type Qty inherits Instant
                   model Trade {
                      qtyTotal: Decimal by (QtyTick * Qty)
                   }
                """.trimIndent()
-                  .validated()
-                  .shouldContainMessage("Operations with symbol '*' is not supported on types Decimal and Instant")
+               .validated()
+               .shouldContainMessage("Operations with symbol '*' is not supported on types Decimal and Instant")
          }
 
          it("should not allow definition of calculated fields when one of the operand is inherited from Boolean") {
@@ -167,26 +167,26 @@ namespace foo.bar {
          }
 
          it("should not allow definition of calculated fields when one of the operand is inherited from Date") {
-               val src = """
+            val src = """
                   type QtyTick inherits Date
                   type Qty inherits Decimal
                   model Trade {
                      qtyTotal: Decimal by (QtyTick * Qty)
                   }
                """.validated()
-                  .shouldContainMessage("Operations with symbol '*' is not supported on types Date and Decimal")
+               .shouldContainMessage("Operations with symbol '*' is not supported on types Date and Decimal")
          }
 
          it("should not allow definition of calculated fields when one of the operand is inherited from Time") {
-               val src = """
+            val src = """
                   type QtyTick inherits Time
                   type Qty inherits Decimal
                   model Trade {
                      qtyTotal: Decimal by (QtyTick * Qty)
                   }
                """.trimIndent()
-                  .validated()
-                  .shouldContainMessage("Operations with symbol '*' is not supported on types Time and Decimal")
+               .validated()
+               .shouldContainMessage("Operations with symbol '*' is not supported on types Time and Decimal")
          }
 
          it("should allow formulas on fields") {
@@ -211,7 +211,7 @@ namespace foo.bar {
          }
 
          it("compilation should fail for invalid formulas") {
-               val src = """
+            val src = """
                type FirstName inherits String
                type LastName inherits String
                type FullName inherits String
@@ -223,7 +223,7 @@ namespace foo.bar {
                }
 
             """.validated()
-                  .shouldContainMessage("Field invalidField does not exist on type Person")
+               .shouldContainMessage("Field invalidField does not exist on type Person")
          }
 
          it("is possible to define an expression with a nested field") {
@@ -244,7 +244,7 @@ namespace foo.bar {
                .field("cityName")
             field.type.qualifiedName.should.equal("CityName")
             val accessor = field.accessor!!.asA<FieldReferenceExpression>()
-            accessor.fieldNames.should.contain.elements("location","address","city")
+            accessor.fieldNames.should.contain.elements("location", "address", "city")
             accessor.path.should.equal("location.address.city")
             accessor.returnType.qualifiedName.should.equal("CityName")
          }

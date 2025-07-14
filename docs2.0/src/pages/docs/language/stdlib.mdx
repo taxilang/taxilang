@@ -500,6 +500,17 @@ This example demonstrates how to use `getAtIndex()` to retrieve a specific song 
 
 ------
 
+### ifEmpty
+`taxi.stdlib.ifEmpty`
+
+```taxi
+declare extension function <T> ifEmpty(source:T[], defaultValue:T[]): T[]
+```
+
+If the provided source array is empty, returns the value from the default
+
+------
+
 ### intersection
 `taxi.stdlib.intersection`
 
@@ -834,6 +845,18 @@ declare extension function <T,A> sum(collection: T[], callback: (T) -> A):A
 ## Objects
 
 Utilities for dealing with equality, etc
+
+### emptyInstance
+`taxi.stdlib.emptyInstance`
+
+```taxi
+declare extension function <A> emptyInstance(instanceType:Type<A>): A
+```
+
+Returns an instance of the requested type, with all properties empty.
+Scalars are null, collections are empty, and object types are recursed into, also populated as empty
+
+------
 
 ### equals
 `taxi.stdlib.equals`
