@@ -22,7 +22,8 @@ object Collections {
       GetAtIndex,
       Intersection,
       ListOf,
-      JoinToString
+      JoinToString,
+      IfEmpty
    )
 }
 
@@ -844,4 +845,14 @@ object JoinToString : FunctionApi {
    """.trimIndent()
 
    override val name: QualifiedName = stdLibName("joinToString")
+}
+
+
+object IfEmpty : FunctionApi {
+   override val taxi: String = """
+   [[ If the provided source array is empty, returns the value from the default ]]
+   declare extension function <T> ifEmpty(source:T[], defaultValue:T[]): T[]
+   """.trimIndent()
+
+   override val name: QualifiedName = stdLibName("ifEmpty")
 }
