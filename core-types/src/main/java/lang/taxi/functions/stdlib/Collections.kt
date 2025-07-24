@@ -23,7 +23,8 @@ object Collections {
       Intersection,
       ListOf,
       JoinToString,
-      IfEmpty
+      IfEmpty,
+      Append
    )
 }
 
@@ -855,4 +856,13 @@ object IfEmpty : FunctionApi {
    """.trimIndent()
 
    override val name: QualifiedName = stdLibName("ifEmpty")
+}
+
+
+object Append : FunctionApi {
+   override val taxi: String = """
+   [[ Returns a new collection, containing the elements of array1, then the elements of array2 ]]
+   declare extension function <T> append(array1: T[], array2: T[]):T[]
+   """
+   override val name: QualifiedName = stdLibName("append")
 }
