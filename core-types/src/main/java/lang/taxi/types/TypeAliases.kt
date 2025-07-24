@@ -56,6 +56,9 @@ data class TypeAlias(
          return if (isDefined) wrapper.definitionHash else null
       }
 
+   override val isScalar: Boolean
+      get() = definition?.aliasType?.isScalar ?: false
+
    // Don't support a type alias overriding the format of it's aliased type,
    // as then they're no longer synonyms
    override val format: List<String>?
