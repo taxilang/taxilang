@@ -22,6 +22,7 @@ import lang.taxi.types.PrimitiveType
 import lang.taxi.types.Type
 import lang.taxi.utils.createCompilationError
 import lang.taxi.utils.createInternalError
+import lang.taxi.utils.unescaped
 import lang.taxi.utils.wrapErrorsInList
 import lang.taxi.values.PrimitiveValues
 
@@ -144,9 +145,10 @@ internal class ValueExpressionCompiler(private val expressionCompiler: Expressio
          ).left()
       }
       val mapResult = objectValue.objectField().map { objectField ->
-         val fieldName = objectField.identifier()?.IdentifierToken()?.text ?: objectField.StringLiteral()?.text?.let {
+         val fieldName = objectField.identifier()?.IdentifierToken()?.unescaped() ?: objectField.StringLiteral()?.text?.let {
             when {
                it.startsWith("\"") -> it.removeSurrounding("\"")
+               it.startsWith("`") -> it.removeSurrounding("`")
                else -> it.removeSurrounding("'")
             }
          } ?: return objectValue.createInternalError("A field identifier is expected here")
