@@ -5,6 +5,7 @@ import arrow.core.left
 import lang.taxi.CompilationError
 import lang.taxi.toCompilationUnit
 import org.antlr.v4.runtime.ParserRuleContext
+import org.antlr.v4.runtime.tree.TerminalNode
 
 fun ParserRuleContext.createCompilationError(message: String): Either<List<CompilationError>, Nothing> {
    return listOf(CompilationError(this.toCompilationUnit(), message))
@@ -13,4 +14,9 @@ fun ParserRuleContext.createCompilationError(message: String): Either<List<Compi
 fun ParserRuleContext.createInternalError(message: String): Either<List<CompilationError>, Nothing> {
    return listOf(CompilationError(this.toCompilationUnit(), "An internal error occurred: $message"))
       .left()
+}
+
+
+fun TerminalNode.unescaped():String {
+   return this.text.removeSurrounding("`")
 }
