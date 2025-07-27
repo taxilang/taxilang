@@ -121,6 +121,7 @@ expressionInput: (identifier ':')? (nullableTypeReference accessor? | expression
 // expressions
 expressionGroup:
    expressionGroup (MULT | DIV | MOD) expressionGroup
+   | negated expressionGroup
    | expressionGroup (PLUS | MINUS) expressionGroup
    | castExpression expressionGroup
    | LPAREN expressionGroup RPAREN
@@ -168,6 +169,7 @@ expressionAtom: functionCall | typeExpression | typeProjection | fieldReferenceS
 annotationTypeDeclaration
    : typeDoc? annotation* 'annotation' identifier annotationTypeBody?;
 
+negated: NOT;
 annotationTypeBody: '{' typeMemberDeclaration* '}';
 
 castExpression: LPAREN typeReference RPAREN;
@@ -1009,6 +1011,7 @@ LOGICAL_AND : '&&';
 TRUE  : 'true' ;
 FALSE : 'false' ;
 
+NOT : '!';
 MULT  : '*' ;
 DIV   : '/' ;
 PLUS  : '+' ;

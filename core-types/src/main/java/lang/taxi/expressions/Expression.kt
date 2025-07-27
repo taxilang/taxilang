@@ -179,6 +179,10 @@ data class CastExpression(val type: Type, val expression: Expression, override v
    override val returnType: Type = type
 }
 
+data class NegatedExpression(val expression: Expression, override val compilationUnits: List<CompilationUnit>) : Expression() {
+   override val returnType: Type = expression.returnType
+}
+
 data class FunctionExpression(val function: FunctionAccessor, override val compilationUnits: List<CompilationUnit>) :
    Expression() {
    override val returnType: Type = function.returnType
