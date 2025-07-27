@@ -71,6 +71,7 @@ class ExpressionCompiler(
          typedExpressionBuilder = typedExpressionBuilder
       )
    }
+
    fun forDiscoveryType(source: DiscoveryType): ExpressionCompiler {
       return ExpressionCompiler(
          tokenProcessor, typeChecker, errors, fieldCompiler, scopes, typedExpressionBuilder,
@@ -98,7 +99,8 @@ class ExpressionCompiler(
          // Top-level projections
          // find { Foo } as (Thing[]) -> Bar[] as {
          // }[]
-         expressionGroup.children.size ==1 && expressionGroup.expressionAtom()?.typeProjection() != null && discoveryType != null -> {
+         expressionGroup.children.size == 1 && expressionGroup.expressionAtom()
+            ?.typeProjection() != null && discoveryType != null -> {
             val anonymousTypeName = NameGenerator.generate()
             val fieldTypeSpec = FieldTypeSpec.forDiscoveryTypes(discoveryType)
             compileExpressionProjectionWithoutField(
@@ -111,6 +113,7 @@ class ExpressionCompiler(
                ProjectingExpression(discoveryType.expression, projection)
             }
          }
+
          expressionGroup.children.size == 2 && expressionGroup.children.last() is TypeProjectionContext && expressionGroup.children.first() is ExpressionGroupContext -> {
             // This is an expression with a projection.
             // Compile the expression first.
@@ -173,11 +176,13 @@ class ExpressionCompiler(
          }
 
          expressionGroup.children.size == 3 -> parseOperatorExpression(expressionGroup)
-
+         expressionGroup.negated() != null && expressionGroup.expressionGroup().size == 1 -> compileNegatedExpression(
+            expressionGroup.expressionGroup().single(),
+            targetType
+         )
          // lhs operator rhs
          expressionGroup.expressionGroup().isEmpty() -> compileSingleExpression(expressionGroup, targetType)
-
-         else -> error("Unhandled expression group scenario: ${expressionGroup.text}")
+         else -> expressionGroup.createInternalError("Unhandled expression group scenario: ${expressionGroup.text}")
       }.flatMap { expression ->
          when (targetType) {
             null -> expression.right() // we weren't given a type, so can't do type checking
@@ -193,6 +198,19 @@ class ExpressionCompiler(
                   expression.right()
                }
             }
+         }
+      }
+   }
+
+   private fun compileNegatedExpression(
+      expressionGroup: ExpressionGroupContext,
+      targetType: Type?
+   ): Either<List<CompilationError>, Expression> {
+      return compile(expressionGroup, targetType).flatMap { expression ->
+         if (expression.returnType.basePrimitive !== PrimitiveType.BOOLEAN) {
+            expressionGroup.createCompilationError("Cannot use ! operator against type ${expression.returnType.qualifiedName} - ! is supported against Boolean types only")
+         } else {
+            NegatedExpression(expression, expressionGroup.toCompilationUnits()).right()
          }
       }
    }
@@ -371,7 +389,11 @@ class ExpressionCompiler(
             expressionAtom.objectValue(),
             assignmentType
          )
-         expressionAtom.typeProjection() != null -> parseTypeProjectionExpression(expressionAtom.typeProjection(), assignmentType)
+
+         expressionAtom.typeProjection() != null -> parseTypeProjectionExpression(
+            expressionAtom.typeProjection(),
+            assignmentType
+         )
 
          else -> expressionAtom.createInternalError("Unhandled atom in expression: ${expressionAtom.text}")
       }
@@ -817,9 +839,13 @@ class ExpressionCompiler(
          return TypeExpression(forceCompiledType, emptyList(), functionCall.toCompilationUnits())
             .right()
       }
-      require(size == 1) { "Expected an argumentList with size of 1, but found $size: ${functionCall.source().content}" }
+      if (size != 1) {
+         return functionCall.createInternalError("Expected an argumentList with size of 1, but found $size: ${functionCall.source().content}")
+      }
       val argument = functionCall.argumentList().argument().single()
-      require(argument.scalarAccessorExpression() != null) { "Expected a scalar expression, but did not find one" }
+      if (argument.scalarAccessorExpression() == null) {
+         return argument.createInternalError("Expected a scalar expression, but did not find one")
+      }
       return compileScalarAccessor(argument.scalarAccessorExpression()).map { accessor ->
          require(accessor is Expression) { "Expected to receive an expression when parsing functionExpression" }
          // Note: We're intentionally not deferring to the typeExpressionBuilder here.
@@ -947,9 +973,13 @@ class ExpressionCompiler(
    }
 
 
-   private fun parseTypeProjectionExpression(typeProjection: TypeProjectionContext, assignmentType: Type?): Either<List<CompilationError>, Expression> {
+   private fun parseTypeProjectionExpression(
+      typeProjection: TypeProjectionContext,
+      assignmentType: Type?
+   ): Either<List<CompilationError>, Expression> {
       TODO()
    }
+
    private fun parseTypeExpression(typeExpression: TaxiParser.TypeExpressionContext): Either<List<CompilationError>, Expression> {
       val typeReference = typeExpression.nullableTypeReference().typeReference()
       if (typeReference != null && canResolveAsScopePath(typeReference.qualifiedName())) {
