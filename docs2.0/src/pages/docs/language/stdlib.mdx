@@ -314,6 +314,17 @@ This example demonstrates how to use `anyOf()` to verify if a user meets any of 
 
 ------
 
+### append
+`taxi.stdlib.append`
+
+```taxi
+declare extension function <T> append(array1: T[], array2: T[]):T[]
+```
+
+Returns a new collection, containing the elements of array1, then the elements of array2
+
+------
+
 ### contains
 `taxi.stdlib.contains`
 
@@ -805,6 +816,19 @@ declare function <T> parseDate(String):T
 ## Math
 
 Numbers 'n' such. Maths for the brits.
+
+### average
+`taxi.stdlib.average`
+
+```taxi
+declare extension function average(values: Any[]):Decimal
+```
+
+Returns an average value of elements in the collection.
+Function is defined as Any[], but only because of a lack of overloads in the
+language currently. Passing non-numeric values will cause exceptions
+
+------
 
 ### max
 `taxi.stdlib.max`
