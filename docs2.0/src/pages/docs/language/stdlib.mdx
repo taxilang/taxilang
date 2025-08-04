@@ -415,7 +415,7 @@ This example demonstrates how to use `filter()` to find friends who meet a certa
 
 <PlaygroundSnippet scenario={{
   "schema" : "model Friend {\n   name: Name inherits String\n   age: Age inherits Int\n}",
-  "query" : "given {\n   friends: Friend[] = [\n      { name: 'Jim', age: 20 },\n      { name: 'Jack', age: 80 },\n      { name: 'Alice', age: 75 },\n      { name: 'Bob', age: 30 }\n   ]\n}\nfind {\n   // Names of seniors (over 70)\n   seniorFriends: Friend[] = friends.filter((friend:Friend) -> friend.age > 70) as Name[]\n   // Names of young adults (under 30)\n   youngFriends: Friend[] = friends.filter((friend:Friend) -> friend.age < 30) as Name[]\n}",
+  "query" : "given {\n   friends: Friend[] = [\n      { name: 'Jim', age: 20 },\n      { name: 'Jack', age: 80 },\n      { name: 'Alice', age: 75 },\n      { name: 'Bob', age: 30 }\n   ]\n}\nfind {\n   // Names of seniors (over 70)\n   seniorFriends: Name[] = friends.filter((friend:Friend) -> friend.age > 70) as Name[]\n   // Names of young adults (under 30)\n   youngFriends: Name[] = friends.filter((friend:Friend) -> friend.age < 30) as Name[]\n}",
   "parameters" : { },
   "stubs" : [ ],
   "expectedJson" : "{\n               \"seniorFriends\": [\n                  \"Jack\",\n                  \"Alice\"\n               ],\n               \"youngFriends\": [\n                  \"Jim\"\n               ]\n            }",

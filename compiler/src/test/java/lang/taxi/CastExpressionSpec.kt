@@ -5,12 +5,15 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.expressions.CastExpression
+import lang.taxi.expressions.ExtensionFunctionExpression
+import lang.taxi.expressions.FieldReferenceExpression
 import lang.taxi.expressions.FunctionExpression
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.ObjectLiteralExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.types.ElseMatchExpression
 import lang.taxi.types.InlineAssignmentExpression
+import lang.taxi.types.MemberTypeReferenceExpression
 import lang.taxi.types.WhenExpression
 
 class CastExpressionSpec : DescribeSpec({
@@ -52,7 +55,6 @@ class CastExpressionSpec : DescribeSpec({
             .type.qualifiedName.shouldBe("PersonId")
          cast.type.qualifiedName.shouldBe("lang.taxi.Long")
       }
-
       it("should raise error if cast type is not assignable ") {
          """
       type CurrencyCode inherits String
@@ -109,6 +111,79 @@ class CastExpressionSpec : DescribeSpec({
           val errorValue = errorMessageLiteralExpression.asTypedValue()
          errorValue.value.shouldBe("Not Authorized")
          castExpression.type.qualifiedName.shouldBe("NotAuthorizedError")
+      }
+
+      it("should allow casting using attribute selector") {
+        val expression =  """
+            type EntityId inherits String
+            type FilmId inherits String
+
+            model Film
+
+            model Entity {
+              id : EntityId = (EntityId) Film::FilmId
+           }
+         """.compiled()
+            .model("Entity")
+            .field("id")
+            .accessor.shouldBeInstanceOf<CastExpression>()
+
+         val memberReference = expression.expression.shouldBeInstanceOf<MemberTypeReferenceExpression>()
+         memberReference.memberSource.parameterizedName.shouldBe("Film")
+         memberReference.targetType.qualifiedName.shouldBe("FilmId")
+
+         expression.returnType.qualifiedName.shouldBe("EntityId")
+      }
+
+      it("should allow casting using field selector") {
+         val expression =  """
+            type EntityId inherits String
+            type FilmId inherits String
+
+            model Film {
+               filmId : FilmId
+            }
+
+            model Entity {
+              film: Film
+              id : EntityId = (EntityId)  this.film.filmId
+           }
+         """.compiled()
+            .model("Entity")
+            .field("id")
+            .accessor.shouldBeInstanceOf<CastExpression>()
+
+         val fieldReferenceExpression = expression.expression.shouldBeInstanceOf<FieldReferenceExpression>()
+         fieldReferenceExpression.path.shouldBe("film.filmId")
+         fieldReferenceExpression.returnType.qualifiedName.shouldBe("FilmId")
+
+         expression.returnType.qualifiedName.shouldBe("EntityId")
+      }
+
+      it("should allow casting using extension function on field selector") {
+         val expression =  """
+            type EntityId inherits String
+            type FilmId inherits String
+
+            model Film {
+               filmId : FilmId
+            }
+
+            model Entity {
+              film: Film
+              id : EntityId = (EntityId)  this.film.filmId.upperCase()
+           }
+         """.compiled()
+            .model("Entity")
+            .field("id")
+            .accessor.shouldBeInstanceOf<CastExpression>()
+
+         val extensionFunctionExpression = expression.expression.shouldBeInstanceOf<ExtensionFunctionExpression>()
+         extensionFunctionExpression.receiverValue.shouldBeInstanceOf<FieldReferenceExpression>()
+            .path.shouldBe("film.filmId")
+         extensionFunctionExpression.functionExpression.function.qualifiedName.shouldBe("taxi.stdlib.upperCase")
+
+         expression.returnType.qualifiedName.shouldBe("EntityId")
       }
 
       it("should allow casting between compatible types inline") {
