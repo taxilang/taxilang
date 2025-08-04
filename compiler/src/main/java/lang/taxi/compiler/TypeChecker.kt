@@ -37,7 +37,7 @@ fun TypeChecker.assertIsAssignable(
          else -> return CompilationError(context.toCompilationUnit(), "Expected a lambda expression here")
       }
    }
-   return assertIsAssignable(inputAccessor.returnType, parameter.type.basePrimitive ?: PrimitiveType.ANY, context)
+   return assertIsAssignable(inputAccessor.returnType, parameter.type ?: PrimitiveType.ANY, context)
 }
 // These are TypeChecker extensions that require access to compiler specific concepts, such as compiler errors
 fun TypeChecker.assertIsAssignable(valueType: Type, receiverType: Type, token: ParserRuleContext): CompilationError? {
@@ -51,6 +51,8 @@ fun TypeChecker.assertIsAssignable(valueType: Type, receiverType: Type, token: P
       }
    }
 
+   val valueIsArray = Arrays.isArray(valueType)
+   val receiverIsArray = Arrays.isArray(receiverType)
    return when {
       valueType.isAssignableTo(receiverType) -> null
       // I *want* to use this check - which is the right check
@@ -64,8 +66,8 @@ fun TypeChecker.assertIsAssignable(valueType: Type, receiverType: Type, token: P
       Arrays.isArray(receiverType) != Arrays.isArray(valueType) -> error()
       // ValueType being an Any could happen in the else branch of a when clause, if using
       // an accessor (such as column/jsonPath/xpath) , where we can't infer the value type returned.
-      valueType.basePrimitive == PrimitiveType.ANY -> null
-      receiverType.basePrimitive == PrimitiveType.ANY -> null
+      !valueIsArray && valueType.basePrimitive == PrimitiveType.ANY -> null
+      !receiverIsArray && receiverType.basePrimitive == PrimitiveType.ANY -> null
 
 //         receiverType.basePrimitive == valueType.basePrimitive -> null
       else -> error()
