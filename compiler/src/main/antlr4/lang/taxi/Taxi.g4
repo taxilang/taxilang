@@ -123,14 +123,14 @@ expressionGroup:
    expressionGroup (MULT | DIV | MOD) expressionGroup
    | negated expressionGroup
    | expressionGroup (PLUS | MINUS) expressionGroup
+   // The below is added for lambdas, but not sure order of precedence
+   // is correct. TBD.
+   | expressionGroup memberReference // Member reference must have higher precedence that cast
+   | expressionGroup '.' methodCall // must be above cast
+   | expressionGroup '.' identifier // must be above cast
    | castExpression expressionGroup
    | LPAREN expressionGroup RPAREN
    | (PLUS | MINUS)* expressionAtom
-   // The below is added for lambdas, but not sure order of precedence
-   // is correct. TBD.
-   | expressionGroup memberReference
-   | expressionGroup '.' methodCall
-   | expressionGroup '.' identifier
    | expressionGroup comp_operator expressionGroup
    | expressionGroup COALESCE expressionGroup
    | expressionGroup LOGICAL_AND expressionGroup
