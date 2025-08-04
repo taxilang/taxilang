@@ -613,6 +613,35 @@ namespace pkgB {
                .objectType("reduce")
             TODO()
          }
+
+         it("reports an error if the arguments are of the wrong collection type") {
+            val error = """
+               model Film {}
+               model Actor {}
+               function onlyFilm(films:Film[]):Film -> films.getAtIndex(0)
+            """.compiledWithQueryProducingCompilationException("""
+               given { actors: Actor[] = [{}] }
+               find {
+                  // actors is not assignable to films
+                  one: Film = onlyFilm(actors)
+               }
+            """.trimIndent())
+            error.errors.shouldContainMessage("Type mismatch. Type of lang.taxi.Array<Actor> is not assignable to type lang.taxi.Array<Film>")
+         }
+         it("reports an error if the argument parameter is assigned primitive type") {
+            val error = """
+               model Film {}
+               function onlyFilm(films:Film[]):Film -> films.getAtIndex(0)
+//               function onlyFilm(films:Int):Int -> films
+            """.compiledWithQueryProducingCompilationException("""
+               find {
+                  // String is not assignable to films
+                  one: Film = onlyFilm("films")
+               }
+            """.trimIndent())
+            error.errors.shouldContainMessage("Type mismatch. Type of lang.taxi.String is not assignable to type lang.taxi.Array<Film>")
+         }
+
          // orb-715
          it("reports error if a lambda argument is supplied with an arg of the wrong type") {
             val f = """
