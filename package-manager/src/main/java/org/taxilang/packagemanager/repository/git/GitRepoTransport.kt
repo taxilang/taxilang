@@ -1,6 +1,7 @@
 package org.taxilang.packagemanager.repository.git
 
 import lang.taxi.packages.TaxiProjectLoader
+import lang.taxi.utils.log
 import org.eclipse.aether.RepositorySystemSession
 import org.eclipse.aether.repository.RemoteRepository
 import org.eclipse.aether.repository.RepositoryPolicy
@@ -10,11 +11,14 @@ import org.eclipse.aether.spi.connector.transport.PutTask
 import org.eclipse.aether.spi.connector.transport.Transporter
 import org.eclipse.aether.spi.connector.transport.TransporterFactory
 import org.eclipse.aether.transfer.NoTransporterException
+import org.eclipse.jgit.api.CreateBranchCommand
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.errors.GitAPIException
+import org.eclipse.jgit.lib.Ref
+import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.lib.RepositoryBuilder
 import org.taxilang.packagemanager.TaxiPackageBundler
 import org.taxilang.packagemanager.layout.TaxiArtifactType
-import lang.taxi.utils.log
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.inputStream
@@ -218,7 +222,12 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
     */
    private fun switchToRequiredBranch(branchName: String?, git: Git): String? {
       val branchNameToCheckout = branchName ?: findDefaultBranch(git)
-      return switchToBranchOrTag(branchNameToCheckout, git)
+      return if (git.repository.branch == branchNameToCheckout) {
+         branchNameToCheckout
+      } else {
+         switchToBranchOrTag(branchNameToCheckout, git)
+      }
+
    }
 
    /**
@@ -240,13 +249,33 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
       return defaultBranchName
    }
 
+
+   private fun resolveRefName(repository: Repository, refName: String): Ref? {
+      return repository.findRef(refName)
+         ?: repository.findRef("refs/tags/$refName")
+         ?: repository.findRef("refs/heads/$refName")
+   }
    private fun switchToBranchOrTag(refName: String?, git: Git): String? {
       val repository = git.repository
       val ref = refName?.let {
-         repository.findRef(refName)
-            ?: repository.findRef("refs/tags/$refName")
-            ?: repository.findRef("refs/heads/$refName")
-            ?: throw IllegalArgumentException("Could not find branch or tag '$refName' in repository '$repository'")
+         val resolvedRef = resolveRefName(repository, refName)
+         if (resolvedRef == null) {
+            log().info("Could not find branch or tag '$refName' in repository '$repository' - trying to pull from remote, then will try again")
+            val pullResult = try {
+               git.checkout()
+                  .setName(refName)
+                  .setCreateBranch(true)
+                  .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.TRACK)
+                  .call()
+            } catch (e:GitAPIException) {
+               log().error("Failed to check out branch or tag '$refName' in repository '$repository' - ${e.message}")
+               throw IllegalArgumentException("Failed to check out branch or tag '$refName' in repository '$repository'", e)
+            }
+            log().info("Successfully pulled branch or tag $refName in repository '$repository'")
+            pullResult
+         } else {
+            resolvedRef
+         }
       }
 
       if (ref != null) {

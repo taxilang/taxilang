@@ -52,7 +52,7 @@ class GitProjectLayout : RepositoryLayout {
          // This isn't the actual requested URI - it's a scheme that's internal to our layout.
          // In the GitRepoTransport we'll clone the git repo (the main URI),
          // and then provide the requested extension.
-         val resolvedGitUrl = GitRepoTransport.resolveGitShorthandIfPresent(artifact.requestedVersion)
+         val resolvedGitUrl: String = GitRepoTransport.resolveGitShorthandIfPresent(artifact.requestedVersion)
          URIBuilder(resolvedGitUrl)
             .addParameter(GitRepoTransport.EXTENSION_QUERY_PARAM, artifact.extension)
             .addParameter(GitRepoTransport.ARTIFACT_ID_PARAM, "${artifact.groupId}:${artifact.artifactId}")

@@ -223,43 +223,42 @@ class PackageManagerTest {
          }
          return packageIdentifier to taxiConfPath
       }
-
-      fun buildPackageManager(
-         remoteRepoDir: File,
-         cacheDir: File,
-         registerRemoteRepository: Boolean = true
-      ): PackageManager {
-         val (repoSystem, session) = RepositorySystemProvider.build(
-            mapOf("Transport" to TaxiFileSystemTransportFactory())
-         )
-//         val (repoSystem, session) = RepositorySystemProvider.build(
-//            mapOf("Transport" to TaxiFileSystemTransportFactory())
-//         )
-         val remoteRepositories = if (registerRemoteRepository) {
-            listOf(
-               RemoteRepository.Builder(
-                  "test-remote",
-                  "default", //TaxiProjectLayoutFactory.LAYOUT_TYPE,
-                  remoteRepoDir.canonicalPath
-               ).setPolicy(
-                  RepositoryPolicy(
-                     true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_IGNORE
-                  )
-               ).build()
-            )
-         } else emptyList()
-
-         val packageManager = PackageManager(
-            ImporterConfig(cacheDir.toPath()),
-            repoSystem,
-            session,
-            remoteRepositories
-         )
-         return packageManager
-      }
-
    }
 
 }
 
 fun loadProject(path: Path) = TaxiProjectLoader(path).load()
+
+fun buildPackageManager(
+   remoteRepoDir: File,
+   cacheDir: File,
+   registerRemoteRepository: Boolean = true
+): PackageManager {
+   val (repoSystem, session) = RepositorySystemProvider.build(
+      mapOf("Transport" to TaxiFileSystemTransportFactory())
+   )
+//         val (repoSystem, session) = RepositorySystemProvider.build(
+//            mapOf("Transport" to TaxiFileSystemTransportFactory())
+//         )
+   val remoteRepositories = if (registerRemoteRepository) {
+      listOf(
+         RemoteRepository.Builder(
+            "test-remote",
+            "default", //TaxiProjectLayoutFactory.LAYOUT_TYPE,
+            remoteRepoDir.canonicalPath
+         ).setPolicy(
+            RepositoryPolicy(
+               true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_IGNORE
+            )
+         ).build()
+      )
+   } else emptyList()
+
+   val packageManager = PackageManager(
+      ImporterConfig(cacheDir.toPath()),
+      repoSystem,
+      session,
+      remoteRepositories
+   )
+   return packageManager
+}

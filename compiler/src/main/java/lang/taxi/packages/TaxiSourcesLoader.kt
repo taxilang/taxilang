@@ -3,6 +3,7 @@ package lang.taxi.packages
 import lang.taxi.sources.SourceCode
 import lang.taxi.sources.SourceCodeLanguages
 import lang.taxi.utils.log
+import org.taxilang.packagemanager.DependencyFetcher
 import org.taxilang.packagemanager.PackageManager
 import java.io.FileNotFoundException
 import java.nio.file.Files
@@ -27,7 +28,7 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
       fun loadPackageAndDependencies(
          packageRootPath: Path,
          project: TaxiPackageProject,
-         packageManager: PackageManager = PackageManager.withDefaultRepositorySystem(ImporterConfig.forProject(project)),
+         packageManager: DependencyFetcher = PackageManager.withDefaultRepositorySystem(ImporterConfig.forProject(project)),
          builtInSourcesToInclude: List<SourceCode> = emptyList()
       ): TaxiPackageSources {
          val dependencySources = packageManager.fetchDependencies(project)
@@ -46,12 +47,19 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
       fun loadPackageAndDependencies(
          path: Path,
       ): TaxiPackageSources {
+         return loadPackageAndDependencies(path) { taxiPackageProject ->
+            PackageManager.withDefaultRepositorySystem(ImporterConfig.forProject(taxiPackageProject))
+         }
+      }
+
+      fun loadPackageAndDependencies(path:Path, dependencyFetcherProvider: (TaxiPackageProject) -> DependencyFetcher): TaxiPackageSources {
          val (packageRoot, taxiConfFile) = packageRootAndTaxiConfAtPath(path)
          val taxiPackage = TaxiPackageLoader(taxiConfFile).load()
+         val dependencyFetcher = dependencyFetcherProvider(taxiPackage)
          return loadPackageAndDependencies(
             packageRoot,
             taxiPackage,
-            PackageManager.withDefaultRepositorySystem(ImporterConfig.forProject(taxiPackage))
+            dependencyFetcher
          )
       }
 
