@@ -1,6 +1,7 @@
 package org.taxilang.packagemanager.layout
 
 import lang.taxi.packages.TaxiProjectLoader
+import lang.taxi.utils.log
 import org.eclipse.aether.RepositorySystemSession
 import org.eclipse.aether.artifact.Artifact
 import org.eclipse.aether.artifact.DefaultArtifact
@@ -60,6 +61,7 @@ class TaxiDescriptorReader(
          request.requestContext
       )
       return try {
+         log().info("Attempting to resolve ${resolveRequest.artifact}")
          val resolveResult = artifactResolver.resolveArtifact(session, resolveRequest)
          val project = TaxiProjectLoader(resolveResult.artifact.file.toPath())
             .load()

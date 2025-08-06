@@ -5,6 +5,7 @@ import lang.taxi.Compiler
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.taxilang.packagemanger.PackageManagerTest
+import org.taxilang.packagemanger.buildPackageManager
 import java.io.File
 
 class PackageManagerCompilerTest {
@@ -39,7 +40,7 @@ class PackageManagerCompilerTest {
          typeNames = listOf("Vehicle")
       )
 
-      val packageManager = PackageManagerTest.buildPackageManager(remoteRepoDir, cacheDir)
+      val packageManager = buildPackageManager(remoteRepoDir, cacheDir)
 
 
       val taxi = Compiler.forPackageWithDependencies(taxiConfPath.parent, packageManager)

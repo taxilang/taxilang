@@ -31,12 +31,28 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
+interface DependencyFetcher {
+   fun fetchDependencies(projectConfig: TaxiPackageProject): List<TaxiPackageProject>
+}
+
+typealias DependencyFetcherProvider = (TaxiPackageProject) -> DependencyFetcher
+
+val NoOpDependencyFetcherProvider: DependencyFetcherProvider = { NoOpDependencyFetcher }
+
+val DefaultDependencyFetcherProvider: DependencyFetcherProvider = { project ->
+   PackageManager.withDefaultRepositorySystem(ImporterConfig.forProject(project))
+}
+
+object NoOpDependencyFetcher : DependencyFetcher {
+   override fun fetchDependencies(projectConfig: TaxiPackageProject): List<TaxiPackageProject> = emptyList()
+}
+
 class PackageManager(
    private val importerConfig: ImporterConfig,
    private val repositorySystem: RepositorySystem,
    private val repositorySystemSession: RepositorySystemSession,
    private val defaultRepositories: List<RemoteRepository> = listOf(GitRepositorySupport.GIT_REMOTE_REPOSITORY)
-) {
+) : DependencyFetcher {
    init {
       configureLocalRepository()
    }
@@ -86,7 +102,7 @@ class PackageManager(
       return artifactPath.toPath().parent
    }
 
-   fun fetchDependencies(projectConfig: TaxiPackageProject): List<TaxiPackageProject> {
+   override fun fetchDependencies(projectConfig: TaxiPackageProject): List<TaxiPackageProject> {
       log().info("Fetching dependencies for ${projectConfig.identifier.id}")
       val request = buildDependencyRequest(projectConfig)
       val result = try {
