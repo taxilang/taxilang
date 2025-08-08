@@ -1,6 +1,7 @@
 package lang.taxi.lsp
 
 import lang.taxi.CompilerConfig
+import lang.taxi.lsp.workspace.TranspilingWorkspaceSourceService
 import lang.taxi.toggles.FeatureToggle
 import org.eclipse.lsp4j.launch.LSPLauncher
 import java.io.InputStream
@@ -43,11 +44,15 @@ object Launcher {
      * @throws InterruptedException Unable to start the server
      */
     private fun startServer(input: InputStream, outputStream: OutputStream, compilerConfig: CompilerConfig) {
-        // Initialize the HelloLanguageServer
         val taxiLanguageServer = TaxiLanguageServer(
            compilerConfig = compilerConfig,
-           lifecycleHandler = ProcessLifecycleHandler)
-        // Create JSON RPC launcher for HelloLanguageServer instance.
+           lifecycleHandler = ProcessLifecycleHandler,
+
+           // This enables support for transpiling sources from things like Avro, etc.
+           // To disable, revert to the default (FileBasedWorkspaceSourceService.Companion.Factory())
+           workspaceSourceServiceFactory = TranspilingWorkspaceSourceService.Companion.Factory()
+           )
+        // Create JSON RPC launcher for Taxi language server instance.
         val launcher = LSPLauncher.createServerLauncher(taxiLanguageServer, input, outputStream)
 
         // Get the client that request to launch the LS.

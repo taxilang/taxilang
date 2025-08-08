@@ -22,7 +22,7 @@ import kotlin.io.path.isDirectory
  *
  * Otherwise, just takes all the sources sitting under the root that end in .taxi
  */
-class FileBasedWorkspaceSourceService(
+open class FileBasedWorkspaceSourceService(
    private val root: Path,
 ) : WorkspaceSourceService {
 
@@ -38,7 +38,7 @@ class FileBasedWorkspaceSourceService(
       }
    }
 
-   private fun loadTaxiPackages(): List<TaxiPackageSources> {
+   protected fun loadTaxiPackages(): List<TaxiPackageSources> {
       val taxiConfFiles = FileWorkspaceProjectFinder.findTaxiConfFiles(root)
       return taxiConfFiles.map { path ->
          val packageRootPath = if (path.isDirectory()) {
@@ -67,7 +67,7 @@ class FileBasedWorkspaceSourceService(
       return taxiPackageSources.map { it.project }
    }
 
-   private fun loadAllTaxiFilesUnderRoot(): Sequence<SourceCode> {
+   protected fun loadAllTaxiFilesUnderRoot(): Sequence<SourceCode> {
       return root.toFile()
          .walk()
          .filter { it.extension == "taxi" && !it.isDirectory }
