@@ -21,9 +21,6 @@ data class PathGlob(val basePath: Path, val glob: String) {
    fun <T> mapEachDirectoryEntry(action: (Path) -> T): Map<Path, T> {
       val result = mutableMapOf<Path, T>()
       val expandedGlob = expandGlobWithBaseDirectory(glob)
-      if (expandedGlob != glob) {
-         println("Using expanded glob of: $expandedGlob")
-      }
 
       val pathMatcher = FileSystems.getDefault().getPathMatcher("glob:$expandedGlob")
 
