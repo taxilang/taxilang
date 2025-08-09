@@ -71,43 +71,52 @@ class TaxiLanguageServer(
 
    override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
       return Mono.defer {
-         workspaceService.initialize(params)
-         val workspaceSourceService = workspaceSourceServiceFactory.build(params, client)
-         textDocumentService.initialize(params, workspaceSourceService)
-         // Copied from:
-         // https://github.com/NipunaMarcus/hellols/blob/master/language-server/src/main/java/org/hello/ls/langserver/HelloLanguageServer.java
-
          // Initialize the InitializeResult for this LS.
          val initializeResult = InitializeResult(ServerCapabilities())
+         try {
+            workspaceService.initialize(params)
+            val workspaceSourceService = workspaceSourceServiceFactory.build(params, client)
+            textDocumentService.initialize(params, workspaceSourceService)
+            // Copied from:
+            // https://github.com/NipunaMarcus/hellols/blob/master/language-server/src/main/java/org/hello/ls/langserver/HelloLanguageServer.java
 
-         // Set the capabilities of the LS to inform the client.
-         val capabilities = initializeResult.capabilities
-         capabilities.setTextDocumentSync(TextDocumentSyncOptions().apply {
-            change = TextDocumentSyncKind.Full
-            save = Either.forRight(SaveOptions(false))
-         })
-         capabilities.semanticTokensProvider = SemanticTokensWithRegistrationOptions(
-            SemanticTokensLegend(
-               SemanticTokenTypes.ALL,
-               SemanticTokenModifiers.ALL
+            // Set the capabilities of the LS to inform the client.
+            val capabilities = initializeResult.capabilities
+            capabilities.setTextDocumentSync(TextDocumentSyncOptions().apply {
+               change = TextDocumentSyncKind.Full
+               save = Either.forRight(SaveOptions(false))
+            })
+            capabilities.semanticTokensProvider = SemanticTokensWithRegistrationOptions(
+               SemanticTokensLegend(
+                  SemanticTokenTypes.ALL,
+                  SemanticTokenModifiers.ALL
+               )
+            ).apply {
+               full = Either.forLeft(true)
+               range = Either.forLeft(true)
+            }
+            capabilities.definitionProvider = Either.forLeft(true)
+            capabilities.workspaceSymbolProvider = Either.forLeft(true)
+            capabilities.hoverProvider = Either.forLeft(true)
+            capabilities.documentFormattingProvider = Either.forLeft(true)
+            capabilities.signatureHelpProvider = SignatureHelpOptions(listOf("(", ","), listOf(",", ")"))
+            capabilities.setCodeActionProvider(true)
+            capabilities.workspace = WorkspaceServerCapabilities(WorkspaceFoldersOptions().apply {
+               supported = true
+               setChangeNotifications(true)
+            })
+            val completionOptions = CompletionOptions()
+            capabilities.completionProvider = completionOptions
+         } catch (e: Exception) {
+            client.logMessage(
+               MessageParams(
+                  MessageType.Error,
+                  "The Taxi language server failed to start: ${e.message}"
+               )
             )
-         ).apply {
-            full = Either.forLeft(true)
-            range = Either.forLeft(true)
          }
-         capabilities.definitionProvider = Either.forLeft(true)
-         capabilities.workspaceSymbolProvider = Either.forLeft(true)
-         capabilities.hoverProvider = Either.forLeft(true)
-         capabilities.documentFormattingProvider = Either.forLeft(true)
-         capabilities.signatureHelpProvider = SignatureHelpOptions(listOf("(", ","), listOf(",", ")"))
-         capabilities.setCodeActionProvider(true)
-         capabilities.workspace = WorkspaceServerCapabilities(WorkspaceFoldersOptions().apply {
-            supported = true
-            setChangeNotifications(true)
-         })
-         val completionOptions = CompletionOptions()
-         capabilities.completionProvider = completionOptions
          Mono.just(initializeResult)
+
       }.toFuture()
 
    }

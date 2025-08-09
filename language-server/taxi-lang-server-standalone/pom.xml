@@ -13,7 +13,7 @@
       <!-- We're depending on transpilation code here,
       so this doesn't need to stay always up-to-date, but avoid using a
       snapshot dependency -->
-      <orbital.version>0.36.0-SNAPSHOT</orbital.version>
+      <orbital.version>0.36.0-M9</orbital.version>
    </properties>
 
    <!--
