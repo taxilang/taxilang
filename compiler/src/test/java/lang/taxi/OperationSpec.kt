@@ -252,7 +252,7 @@ count
             }
          """.validated()
          errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("mismatched input 'guessing' expecting {'in', 'like', '>', '>=', '<', '<=', '==', '!='}")
+         errors.first().detailMessage.should.equal("mismatched input 'guessing' expecting {'not in', 'in', 'like', '>', '>=', '<', '<=', '==', '!='}")
       }
 
       it("should accept function names with findAll keyword") {

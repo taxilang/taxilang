@@ -15,6 +15,23 @@ data class QualifiedName(
       }
    }
 
+   val shortDisplayName: String
+      get() {
+         val shortTypeName = this.typeName
+         return when {
+            this.fullyQualifiedName == ArrayType.NAME && parameters.size == 1 -> parameters[0].shortDisplayName + "[]"
+            this.parameters.isNotEmpty() -> shortTypeName + this.parameters.joinToString(
+               ",",
+               prefix = "<",
+               postfix = ">"
+            ) { it.shortDisplayName }
+
+            else -> shortTypeName
+         }
+      }
+
+
+
    private val parameterizedTypeNames: String = if (parameters.isEmpty()) {
       ""
    } else {
