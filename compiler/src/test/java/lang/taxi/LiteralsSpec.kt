@@ -130,6 +130,19 @@ class LiteralsSpec : DescribeSpec({
           (map["title"]!! as LiteralExpression).value.shouldBe("Star Wars")
       }
 
+      it("should infer type of array from members") {
+         """[ 'a' , 'b']""".compiled().expressions.single()
+            .returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<lang.taxi.String>")
+
+         """[ 1, 2 ]""".compiled().expressions.single()
+            .returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<lang.taxi.Int>")
+
+         // Mixed arrays become Any
+         """[ "a", 1 ]""".compiled().expressions.single()
+            .returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<lang.taxi.Any>")
+
+      }
+
       it("should assign nested types based on target type within an array") {
          val cast = """
             model Film {

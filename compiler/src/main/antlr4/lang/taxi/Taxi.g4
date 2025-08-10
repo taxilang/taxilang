@@ -441,7 +441,7 @@ queryOperationCapability:
 
 queryFilterCapability: K_Filter( '(' filterCapability (',' filterCapability)* ')');
 
-filterCapability: EQ | NQ | IN | LIKE | GT | GE | LT | LE;
+filterCapability: EQ | NQ | IN | NOT_IN | LIKE | GT | GE | LT | LE;
 
 tableDeclaration: typeDoc? annotation* K_Table identifier ':' typeReference;
 streamDeclaration: typeDoc? annotation* K_Stream identifier ':' typeReference;
@@ -518,6 +518,8 @@ comp_operator : GT
               | LE
               | EQ
               | NQ
+              | IN
+              | NOT_IN
               ;
 
 

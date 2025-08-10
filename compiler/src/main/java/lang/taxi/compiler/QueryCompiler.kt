@@ -201,7 +201,14 @@ internal class QueryCompiler(
                // wrap stream { Foo } so that Foo becomes Stream<Foo>
                .withTypedExpressionBuilder(StreamDecoratingTypedExpressionBuilder)
                .withParameters(parameters)
-               .compile(queryBodyContext.queryOrMutation().queryInputExpressionGroup().expressionGroup(), targetType = PrimitiveType.ANY)
+               .compile(queryBodyContext.queryOrMutation().queryInputExpressionGroup().expressionGroup()
+//                  MP: 9-Aug-25:
+                  // Not specifying the target type here, in an attempt to let the type inference engine
+                  // work out the type by looking at the return type of the compiled expression.
+                  // Previously, this would use ANY.
+//                  , targetType = PrimitiveType.ANY
+
+               )
          }
 
          queryBodyContext.queryOrMutation()?.anonymousTypeDefinition() != null -> parseAnonymousTypesIfPresent(

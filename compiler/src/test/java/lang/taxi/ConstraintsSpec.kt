@@ -7,14 +7,17 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import lang.taxi.expressions.LiteralArray
 import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.MemberAccessExpression
 import lang.taxi.expressions.OperatorExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.query.convertToConstraint
 import lang.taxi.services.operations.constraints.ExpressionConstraint
+import lang.taxi.types.FormulaOperator
 import lang.taxi.types.MemberTypeReferenceExpression
 import lang.taxi.types.ObjectType
+import lang.taxi.types.PrimitiveType
 
 class ConstraintsSpec : DescribeSpec({
    describe("Constraints") {
@@ -40,30 +43,30 @@ type SomeServiceRequest {
          expression.lhs.asA<TypeExpression>().type.qualifiedName.shouldBe("Currency")
          expression.rhs.asA<LiteralExpression>().value.shouldBe("GBP")
       }
-   }
 
-   it("can downgrade expression constraints") {
-      val (schema,query) = """
+      it("can downgrade expression constraints") {
+         val (schema, query) = """
          model Person {
             name : Name inherits String
             lastName: LastName inherits String
             age: Age inherits Int
          }""".compiledWithQuery("find { Person[]( Name == 'Jimmy' && LastName == 'Page' || Age == 99) }")
-      val constraint = query.typesToFind.single().constraints.single() as ExpressionConstraint
-      val converted = constraint.convertToConstraint()
-      converted.size.should.equal(5)
-   }
+         val constraint = query.typesToFind.single().constraints.single() as ExpressionConstraint
+         val converted = constraint.convertToConstraint()
+         converted.size.should.equal(5)
+      }
 
-   // ORB-766
-   it("does not parse a function call as a constraint") {
-      val (schema,query) = """
+      // ORB-766
+      it("does not parse a function call as a constraint") {
+         val (schema, query) = """
          closed model Person {
            name : PersonName inherits String
           }
           model Movie {
             cast : Person[]
          }
-      """.compiledWithQuery("""
+      """.compiledWithQuery(
+            """
          find { Movie[] } as {
          // This isn't a constraint, it's a function call
          // but it could be parsed either way
@@ -71,14 +74,15 @@ type SomeServiceRequest {
                starsName : PersonName
             }
          }[]
-      """.trimIndent())
-      query.projectedObjectType!!
-         .field("starring")
-         .constraints.shouldBeEmpty()
-   }
+      """.trimIndent()
+         )
+         query.projectedObjectType!!
+            .field("starring")
+            .constraints.shouldBeEmpty()
+      }
 
-   it("parses constraints of nested properties") {
-      val (schema,query) = """
+      it("parses constraints of nested properties") {
+         val (schema, query) = """
    closed model Deal {
      id : DealId inherits Int
      borrowerId : BorrowerId inherits Int
@@ -91,35 +95,39 @@ type SomeServiceRequest {
      operation getDeal(DealId):Deal(...)
      operation getExistingDeals(BorrowerId):ExistingDeals(...)
    }
-""".compiledWithQuery("""
+""".compiledWithQuery(
+            """
 given { id: DealId = 1}
 find { Deal(DealId == id )} as(deal: Deal) -> {
     existing : ExistingDeals(BorrowerId == deal.borrowerId)
     ...
 }
-""".trimIndent())
-      query.projectedObjectType!!
-         .field("existing")
-   }
+""".trimIndent()
+         )
+         query.projectedObjectType!!
+            .field("existing")
+      }
 
-   it("compiles constraints on field of anonymous field type") {
-      val (schema, query) = """
+      it("compiles constraints on field of anonymous field type") {
+         val (schema, query) = """
       model Film {
          id : FilmId inherits Int
       }
       model FilmRevenue {}
-      """.trimIndent().compiledWithQuery("""
+      """.trimIndent().compiledWithQuery(
+            """
          find { Film[] } as (film:Film) -> {
             earnings: {
                revenue: FilmRevenue(FilmId == film.id)
             }
          }[]
-      """.trimIndent())
-      val revenueField = query.projectedObjectType!!.field("earnings").type.asA<ObjectType>().field("revenue")
-      revenueField.constraints.shouldHaveSize(1)
-   }
-   it("parses constraints of nested properties with projections") {
-val (schema,query) = """
+      """.trimIndent()
+         )
+         val revenueField = query.projectedObjectType!!.field("earnings").type.asA<ObjectType>().field("revenue")
+         revenueField.constraints.shouldHaveSize(1)
+      }
+      it("parses constraints of nested properties with projections") {
+         val (schema, query) = """
    closed model Deal {
      id : DealId inherits Int
      borrowerId : BorrowerId inherits Int
@@ -127,22 +135,24 @@ val (schema,query) = """
    closed model ExistingDeals {
      deals: Deal[]
    }
-""".compiledWithQuery("""
+""".compiledWithQuery(
+            """
 given { id: DealId = 1}
 find { Deal(DealId == id )} as(deal: Deal) -> {
     existing : Deal[] = ExistingDeals(BorrowerId == deal.borrowerId) as Deal[]
 //    existing : ExistingDeals(BorrowerId == deal.borrowerId)
     ...
 }
-""".trimIndent())
-      val field = query.projectedObjectType!!
-         .field("existing")
-      field.projection!!
-         .sourceTypeConstraints.shouldHaveSize(1)
-   }
+""".trimIndent()
+         )
+         val field = query.projectedObjectType!!
+            .field("existing")
+         field.projection!!
+            .sourceTypeConstraints.shouldHaveSize(1)
+      }
 
-   it("can use a field member accessor on the rhs of a constraints expression") {
-      val (schema,query) = """
+      it("can use a field member accessor on the rhs of a constraints expression") {
+         val (schema, query) = """
          model Film {
             filmId : FilmId inherits Int
          }
@@ -153,30 +163,32 @@ find { Deal(DealId == id )} as(deal: Deal) -> {
             reviewId: ReviewId
             review: FilmReview
          }
-      """.compiledWithQuery("""
+      """.compiledWithQuery(
+            """
          find { Film[] } as (film:Film) -> {
            review: FilmReview(ReviewId == ReviewWrapper(FilmId == film::FilmId).reviewId)
          }[]
-      """.trimIndent())
-      val reviewField = query.projectedObjectType!!.field("review")
-      val expression = reviewField.constraints.single()
-         .shouldBeInstanceOf<ExpressionConstraint>()
-         .expression.shouldBeInstanceOf<OperatorExpression>()
-      expression.lhs.shouldBeInstanceOf<TypeExpression>()
-         .type.qualifiedName.shouldBe("ReviewId")
+      """.trimIndent()
+         )
+         val reviewField = query.projectedObjectType!!.field("review")
+         val expression = reviewField.constraints.single()
+            .shouldBeInstanceOf<ExpressionConstraint>()
+            .expression.shouldBeInstanceOf<OperatorExpression>()
+         expression.lhs.shouldBeInstanceOf<TypeExpression>()
+            .type.qualifiedName.shouldBe("ReviewId")
 
-      val memberAccessExpression = expression.rhs.shouldBeInstanceOf<MemberAccessExpression>()
-      val memberTypeExpression = memberAccessExpression.lhs.shouldBeInstanceOf<TypeExpression>()
-      memberTypeExpression.type.qualifiedName.shouldBe("ReviewWrapper")
-      memberTypeExpression.constraints.single()
-         .shouldBeInstanceOf<ExpressionConstraint>()
-         .expression.shouldBeInstanceOf<OperatorExpression>()
+         val memberAccessExpression = expression.rhs.shouldBeInstanceOf<MemberAccessExpression>()
+         val memberTypeExpression = memberAccessExpression.lhs.shouldBeInstanceOf<TypeExpression>()
+         memberTypeExpression.type.qualifiedName.shouldBe("ReviewWrapper")
+         memberTypeExpression.constraints.single()
+            .shouldBeInstanceOf<ExpressionConstraint>()
+            .expression.shouldBeInstanceOf<OperatorExpression>()
 
-      memberAccessExpression.rhs.fieldName.shouldBe("reviewId")
-   }
+         memberAccessExpression.rhs.fieldName.shouldBe("reviewId")
+      }
 
-   it("can use a type member accessor on the rhs of a constraints expression") {
-      val (schema,query) = """
+      it("can use a type member accessor on the rhs of a constraints expression") {
+         val (schema, query) = """
          model Film {
             filmId : FilmId inherits Int
          }
@@ -186,26 +198,116 @@ find { Deal(DealId == id )} as(deal: Deal) -> {
          model ReviewWrapper {
             review: FilmReview
          }
-      """.compiledWithQuery("""
+      """.compiledWithQuery(
+            """
          find { Film[] } as (film:Film) -> {
            review: FilmReview(ReviewId == ReviewWrapper(FilmId == film::FilmId)::ReviewId)
          }[]
-      """.trimIndent())
-      val reviewField = query.projectedObjectType!!.field("review")
-      val expression = reviewField.constraints.single()
-         .shouldBeInstanceOf<ExpressionConstraint>()
-         .expression.shouldBeInstanceOf<OperatorExpression>()
-      expression.lhs.shouldBeInstanceOf<TypeExpression>()
-         .type.qualifiedName.shouldBe("ReviewId")
+      """.trimIndent()
+         )
+         val reviewField = query.projectedObjectType!!.field("review")
+         val expression = reviewField.constraints.single()
+            .shouldBeInstanceOf<ExpressionConstraint>()
+            .expression.shouldBeInstanceOf<OperatorExpression>()
+         expression.lhs.shouldBeInstanceOf<TypeExpression>()
+            .type.qualifiedName.shouldBe("ReviewId")
 
-      val memberAccessExpression = expression.rhs.shouldBeInstanceOf<MemberTypeReferenceExpression>()
-      memberAccessExpression.returnType.qualifiedName.shouldBe("ReviewId")
-      memberAccessExpression.targetType.qualifiedName.shouldBe("ReviewId")
-      memberAccessExpression.memberSource.parameterizedName.shouldBe("ReviewWrapper")
-      val memberTypeExpression = memberAccessExpression.sourceExpression.shouldBeInstanceOf<TypeExpression>()
-      memberTypeExpression.type.qualifiedName.shouldBe("ReviewWrapper")
-      memberTypeExpression.constraints.single()
-         .shouldBeInstanceOf<ExpressionConstraint>()
-         .expression.shouldBeInstanceOf<OperatorExpression>()
+         val memberAccessExpression = expression.rhs.shouldBeInstanceOf<MemberTypeReferenceExpression>()
+         memberAccessExpression.returnType.qualifiedName.shouldBe("ReviewId")
+         memberAccessExpression.targetType.qualifiedName.shouldBe("ReviewId")
+         memberAccessExpression.memberSource.parameterizedName.shouldBe("ReviewWrapper")
+         val memberTypeExpression = memberAccessExpression.sourceExpression.shouldBeInstanceOf<TypeExpression>()
+         memberTypeExpression.type.qualifiedName.shouldBe("ReviewWrapper")
+         memberTypeExpression.constraints.single()
+            .shouldBeInstanceOf<ExpressionConstraint>()
+            .expression.shouldBeInstanceOf<OperatorExpression>()
+      }
+   }
+
+   describe("in and 'not in' operator") {
+      it("should compile simple in statement") {
+         val (schema,query) = """
+            model Customer {
+                id : CustomerId inherits String
+                name : CustomerName inherits String
+            }
+         """.compiledWithQuery("""
+            find {
+                specificCustomers : Customer[](CustomerId in ["c1", "c2"])
+            }
+         """.trimIndent())
+         val fieldConstraint = query.returnType.asA<ObjectType>()
+            .field("specificCustomers")
+            .constraints
+            .shouldHaveSize(1)
+            .single()
+         val operatorExpression = fieldConstraint.shouldBeInstanceOf<ExpressionConstraint>()
+            .expression.shouldBeInstanceOf<OperatorExpression>()
+         operatorExpression.operator.shouldBe(FormulaOperator.In)
+         operatorExpression.lhs.shouldBeInstanceOf<TypeExpression>()
+            .type.toQualifiedName().shortDisplayName.shouldBe("CustomerId")
+
+         val rhs = operatorExpression.rhs.shouldBeInstanceOf<LiteralArray>()
+         rhs.returnType.toQualifiedName().shortDisplayName.shouldBe("String[]")
+         rhs.members.shouldHaveSize(2)
+
+         operatorExpression.returnType.shouldBe(PrimitiveType.BOOLEAN)
+      }
+
+      it("should compile simple in statement") {
+         val (schema,query) = """
+            model Customer {
+                id : CustomerId inherits String
+                name : CustomerName inherits String
+            }
+         """.compiledWithQuery("""
+            find {
+                specificCustomers : Customer[](CustomerId not in ["c1", "c2"])
+            }
+         """.trimIndent())
+         val fieldConstraint = query.returnType.asA<ObjectType>()
+            .field("specificCustomers")
+            .constraints
+            .shouldHaveSize(1)
+            .single()
+         val operatorExpression = fieldConstraint.shouldBeInstanceOf<ExpressionConstraint>()
+            .expression.shouldBeInstanceOf<OperatorExpression>()
+         operatorExpression.operator.shouldBe(FormulaOperator.NotIn)
+         operatorExpression.lhs.shouldBeInstanceOf<TypeExpression>()
+            .type.toQualifiedName().shortDisplayName.shouldBe("CustomerId")
+
+         val rhs = operatorExpression.rhs.shouldBeInstanceOf<LiteralArray>()
+         rhs.returnType.toQualifiedName().shortDisplayName.shouldBe("String[]")
+         rhs.members.shouldHaveSize(2)
+
+         operatorExpression.returnType.shouldBe(PrimitiveType.BOOLEAN)
+      }
+
+      it("gives compilation error if rhs array type is not assignable") {
+         val error = """
+            model Customer {
+                id : CustomerId inherits String
+                name : CustomerName inherits String
+            }
+         """.compiledWithQueryProducingCompilationException("""
+            find {
+                specificCustomers : Customer[](CustomerId in [1 , 2]) // CustomerId is String, so Int[] is not valid here
+            }
+         """.trimIndent())
+         error.errors.shouldContainMessage("Operations with symbol 'in' is not supported on types String and Int[]")
+      }
+      it("gives compilation error if lhs type is not scalar") {
+         val error = """
+            model Customer {
+                id : CustomerId inherits String
+                name : CustomerName inherits String
+            }
+         """.compiledWithQueryProducingCompilationException("""
+            find {
+                specificCustomers : Customer[](Customer in [1 , 2])
+            }
+         """.trimIndent())
+         error.errors.shouldContainMessage("Operations with symbol 'in' is not supported on types Customer and Int[]")
+      }
    }
 })

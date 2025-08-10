@@ -78,6 +78,7 @@ class TypeResolver {
    companion object {
       fun getCommonType(lhsType: Type, operator: FormulaOperator, rhsType: Type): Either<String, Type> {
          return when {
+            operator.isComparisonOperator() -> PrimitiveType.BOOLEAN.right()
             isGenericType(lhsType) && isGenericType(rhsType) -> getCommonGenericType(lhsType, operator, rhsType)
             lhsType.isScalar && rhsType.isScalar -> getCommonScalar(lhsType, operator, rhsType)
             else ->PrimitiveType.ANY.right() // error("Unhandled type resolver scenario: $lhsType $operator $rhsType")
@@ -119,6 +120,27 @@ class TypeResolver {
             }
          } else {
             PrimitiveType.ANY.right()
+         }
+      }
+
+      /**
+       * Finds the lowest common type (least upper bound) among a collection of types.
+       * This leverages the existing closestCommonType logic and type resolution rules.
+       *
+       * @param types The collection of types to find the common type for
+       * @return The lowest common type, or PrimitiveType.ANY if no common type exists
+       */
+      fun findLowestCommonType(types: List<Type>): Type {
+         if (types.isEmpty()) return PrimitiveType.ANY
+         if (types.size == 1) return types.first()
+
+         // Use the existing elvis operator logic to find common types
+         // by reducing the list using the coalesce operator rules
+         return types.reduce { acc, type ->
+            getCommonType(acc, FormulaOperator.Coalesce, type).fold(
+               ifLeft = { PrimitiveType.ANY },
+               ifRight = { it }
+            )
          }
       }
 
@@ -199,6 +221,7 @@ class TypeResolver {
                closestCommonType(lhsType,rhsType, primitiveType).right()
             }
             // ── Logical ops ─────────────────────────────────────────────────────────
+
             FormulaOperator.LogicalAnd,
             FormulaOperator.LogicalOr -> PrimitiveType.BOOLEAN.right()
 

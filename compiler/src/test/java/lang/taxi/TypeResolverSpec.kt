@@ -167,5 +167,73 @@ class TypeResolverSpec : DescribeSpec({
             query.returnType.qualifiedName.shouldBe(PrimitiveType.BOOLEAN.qualifiedName)
          }
       }
+      
+      describe("finding lowest common type among multiple types") {
+         
+         it("should return single type when only one type provided") {
+            val (_, query) = """
+               type A inherits String
+            """.compiledWithQuery("""find { [A] }""")
+            query.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<A>")
+         }
+         
+         it("should return common type when all types are identical") {
+            val (_, query) = """
+               type A inherits String
+            """.compiledWithQuery("""find { [A, A, A] }""")
+            query.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<A>")
+         }
+         
+         it("should find common inherited type") {
+            val (_, query) = """
+               type Base inherits String
+               type A inherits Base
+               type B inherits Base
+            """.compiledWithQuery("""find { [A, B] }""")
+            query.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<Base>")
+         }
+         
+         it("should fall back to primitive when no common semantic type") {
+            val (_, query) = """
+               type A inherits String
+               type B inherits String
+            """.compiledWithQuery("""find { [A, B] }""")
+            query.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<lang.taxi.String>")
+         }
+         
+         it("should fall back to Any when types have different primitives") {
+            val (_, query) = """
+               type A inherits String
+               type B inherits Int
+            """.compiledWithQuery("""find { [A, B] }""")
+            query.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<lang.taxi.Any>")
+         }
+         
+         it("should handle numeric promotion correctly") {
+            val (_, query) = "".compiledWithQuery("""find { [1, 2.5] }""")
+            query.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<lang.taxi.Decimal>")
+         }
+         
+         it("should handle mixed int and decimal types") {
+            val (_, query) = "".compiledWithQuery("""find { [1, 2, 3.14] }""")
+            query.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<lang.taxi.Decimal>")
+         }
+         
+         it("should handle complex inheritance hierarchies") {
+            val (_, query) = """
+               type Root inherits String
+               type Branch1 inherits Root
+               type Branch2 inherits Root
+               type Leaf1 inherits Branch1
+               type Leaf2 inherits Branch2
+            """.compiledWithQuery("""find { [Leaf1, Leaf2] }""")
+            query.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<Root>")
+         }
+         
+         it("should handle empty array gracefully") {
+            val (_, query) = "".compiledWithQuery("""find { [] }""")
+            query.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<lang.taxi.Any>")
+         }
+      }
    }
 })

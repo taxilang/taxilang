@@ -362,9 +362,17 @@ class ExpressionCompiler(
       return when {
          expression.expressionAtom() != null -> compileExpressionAtom(expression.expressionAtom(), assignmentType)
          expression.whenBlock() != null -> {
-            require(assignmentType != null) { "Cannot compile a When Block as no assignment type has been provided" }
+// MP - 9-Aug-25
+            // In order to improve type inference in expressions (ie., if a type isn't provided, look at the return
+            // type of the expression, and infer it)
+            // we need to relax this requirement.,
+            // If the assignment type wasn't provided, it becomes Any.
+            // In future, we might like to expand this to compile the when block, and
+            // infer the return type if not provided.
+            // However, that's beyond the current scope
+//            require(assignmentType != null) { "Cannot compile a When Block as no assignment type has been provided" }
             val whenCompiler = WhenBlockCompiler(this)
-            whenCompiler.compileWhenCondition(expression.whenBlock(), assignmentType)
+            whenCompiler.compileWhenCondition(expression.whenBlock(), assignmentType ?: PrimitiveType.ANY)
          }
 
          else -> TODO("Unhandled single expression: ${expression.text}")
@@ -504,14 +512,20 @@ class ExpressionCompiler(
          compile(expression, memberType)
       }.invertEitherList().flattenErrors()
          .map { compiledExpressions ->
+            val inferredAssignmentType = assignmentType ?: findCommonType(compiledExpressions.map { it.returnType })
+
             val arrayType = if (assignmentType != null && assignmentType != PrimitiveType.ANY) {
                assignmentType
             } else {
-               Arrays.arrayOf(memberType)
+               Arrays.arrayOf(inferredAssignmentType)
             }
             LiteralArray(arrayType, compiledExpressions, literalArray.toCompilationUnits())
          }
 //      return LiteralExpression(LiteralAccessor(literalArray.value()), literalArray.toCompilationUnits()).right()
+   }
+
+   private fun findCommonType(types: List<Type>): Type {
+      return TypeResolver.findLowestCommonType(types)
    }
 
    private fun parseLiteralExpression(
@@ -586,8 +600,20 @@ class ExpressionCompiler(
             return listOf(CompilationError(expressionGroup.toCompilationUnit(), error)).left()
          }
 
-         val lhsType = coercedLhs.returnType.basePrimitive ?: PrimitiveType.ANY
-         val rhsType = coercedRhs.returnType.basePrimitive ?: PrimitiveType.ANY
+         // MP 9-Aug-25:
+         // We used to coalesce this to any if there was no primitive type
+         // However, we need to support checks against array types
+         // for 'in' and 'not in' types - so if there isn't a base primitive type, use the actual type.
+         fun underlyingType(type: Type): Type {
+            return if (type.isScalar) {
+               type.basePrimitive ?: PrimitiveType.ANY
+            } else {
+               type
+            }
+         }
+
+         val lhsType = underlyingType(coercedLhs.returnType)
+         val rhsType = underlyingType(coercedRhs.returnType)
 
          return when {
             isNullCheck && !operator.supportsNullComparison() -> {
@@ -603,7 +629,7 @@ class ExpressionCompiler(
                listOf(
                   CompilationError(
                      expressionGroup.toCompilationUnit(),
-                     "Operations with symbol '${operator.symbol}' is not supported on types ${lhsType.declaration} and ${rhsType.declaration}"
+                     "Operations with symbol '${operator.symbol}' is not supported on types ${lhsType.toQualifiedName().shortDisplayName} and ${rhsType.toQualifiedName().shortDisplayName}"
                   )
                ).left()
             }
