@@ -7,5 +7,22 @@
 LspClientLogAppender
  -->
 <configuration>
-   <root level="off"/>
+   <!-- Where logs go -->
+   <property name="LOG_DIR" value="${user.home}/.taxi/language-server/logs"/>
+
+   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <file>${LOG_DIR}/language-server.log</file>
+      <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+         <!-- daily rollover -->
+         <fileNamePattern>${LOG_DIR}/language-server.%d{yyyy-MM-dd}.log</fileNamePattern>
+         <maxHistory>7</maxHistory>
+      </rollingPolicy>
+      <encoder>
+         <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+      </encoder>
+   </appender>
+
+   <root level="INFO">
+      <appender-ref ref="FILE"/>
+   </root>
 </configuration>

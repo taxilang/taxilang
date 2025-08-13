@@ -169,7 +169,10 @@ class TaxiCompilerService(
          cancelProgress("taxi.conf file is invalid")
          val message = FileDiagnosticMessage(e.path, e.message, e.lineNumber)
          taxiConfDiagnostics.emitNext(message, Sinks.EmitFailureHandler.FAIL_FAST)
-         throw e
+         return
+      } catch (e:Exception) {
+         log().error("Exception thrown while reading taxi projects", e)
+         return
       }
 
       val loadedSources = try {

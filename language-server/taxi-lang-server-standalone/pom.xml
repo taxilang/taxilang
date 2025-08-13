@@ -9,6 +9,13 @@
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
+   <properties>
+      <!-- We're depending on transpilation code here,
+      so this doesn't need to stay always up-to-date, but avoid using a
+      snapshot dependency -->
+      <orbital.version>0.36.0-M9</orbital.version>
+   </properties>
+
    <!--
 If you're reading this trying to manually build the vscode plugin,
 make sure you run maven with the shade profile enabled.  (-P shade)
@@ -19,6 +26,73 @@ disabled by default locally
    <artifactId>taxi-lang-server-standalone</artifactId>
 
    <dependencies>
+      <!--
+      This isn't great, I know.
+      We have a taxi dependency (albeit, very fringe)
+      The schema server project has all the code for transpilation of in-project sources.
+      Without this, taxi projects which have OAS / Avro dependencies within them
+      can't load / compile.
+
+      In the future, I guess we'll need to migrate this code, possibly.
+
+      However, this does introduce a challenge where the current version of Taxi
+      depends on a version of Orbital, which - by definition - must depend on
+      an OLDER version of Taxi. (It can't depend on this version, as it's not
+      released yet!)
+
+      We need to be careful with exclusions here, so that things like the compiler
+      aren't pulled in transitively from schema-server, so that the language server
+      is using the "current" version of the Taxi build chain.
+
+      However, some things - like language adaptors from Taxi - will always have to stay
+      a release behind inside the language server (LangServer (vT) -> Orbital -> TaxiLangAdaptors (vT-1) )
+
+      VERY IMPORTANT: This dependency intentionally DOES NOT live in general-purpose
+      language server jars, only in the standalone launcher jar.
+      This is so that Orbital dependencies on language server don't end up pulling
+      in these Orbital dependencies, which would create circular transitive dependencies
+      worse than Christopher Nolan's "Inception".
+      -->
+      <dependency>
+         <groupId>com.orbitalhq</groupId>
+         <artifactId>schema-server-core</artifactId>
+         <version>${orbital.version}</version>
+         <exclusions>
+            <exclusion>
+               <groupId>org.taxilang</groupId>
+               <artifactId>compiler</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>org.taxilang</groupId>
+               <artifactId>core-types</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>org.taxilang</groupId>
+               <artifactId>core-types</artifactId>
+            </exclusion>
+            <!-- try to keep the surface area of Orbital imports
+            very small - only what is needed for transpiling sources.
+             However, tread lightly, as if we remove something that is actually needed,
+             the language server will fail silently at runtime.
+             -->
+            <exclusion>
+               <groupId>com.orbitalhq</groupId>
+               <artifactId>vyne-spring</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>org.jooq.pro</groupId>
+               <artifactId>jooq</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>org.jooq</groupId>
+               <artifactId>jooq</artifactId>
+            </exclusion>
+            <exclusion>
+               <groupId>io.confluent</groupId>
+               <artifactId>kafka-avro-serializer</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
       <dependency>
          <groupId>org.taxilang</groupId>
          <artifactId>taxi-lang-service</artifactId>
@@ -71,4 +145,21 @@ disabled by default locally
       </plugins>
    </build>
 
+   <repositories>
+      <!-- for orbital snapshots -->
+      <repository>
+         <id>orbital-snapshots</id>
+         <url>https://repo.orbitalhq.com/snapshot</url>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+      </repository>
+      <repository>
+         <id>vyne</id>
+         <url>https://repo.orbitalhq.com/release</url>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
+      </repository>
+   </repositories>
 </project>
