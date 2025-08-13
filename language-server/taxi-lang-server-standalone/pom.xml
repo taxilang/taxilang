@@ -145,4 +145,21 @@ disabled by default locally
       </plugins>
    </build>
 
+   <repositories>
+      <!-- for orbital snapshots -->
+      <repository>
+         <id>orbital-snapshots</id>
+         <url>https://repo.orbitalhq.com/snapshot</url>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+      </repository>
+      <repository>
+         <id>vyne</id>
+         <url>https://repo.orbitalhq.com/release</url>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
+      </repository>
+   </repositories>
 </project>
