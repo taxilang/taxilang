@@ -1,6 +1,7 @@
 package lang.taxi.types
 
 import arrow.core.Either
+import arrow.core.sequence
 
 interface TypeProvider {
    fun getType(qualifiedName: String): Type
@@ -33,6 +34,16 @@ interface Annotatable {
 
 fun Annotatable.annotation(name: String): Annotation? {
    return this.annotations.singleOrNull { it.name == name }
+}
+
+fun Annotatable.annotationOrInheritedAnnotation(annotationType: AnnotationType): List<Annotation> {
+   val foundOnTarget = this.annotations.filter {
+      it.type != null && it.type.isAssignableTo(annotationType)
+   }
+   return if (this is ObjectType) {
+      foundOnTarget + this.inheritsFrom
+         .flatMap {  it.annotationOrInheritedAnnotation(annotationType) }
+   } else foundOnTarget
 }
 
 fun List<Annotatable>.annotations(): List<Annotation> {

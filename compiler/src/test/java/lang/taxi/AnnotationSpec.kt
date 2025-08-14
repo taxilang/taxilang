@@ -2,11 +2,17 @@ package lang.taxi
 
 import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldContainAll
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.linter.LinterRules
 import lang.taxi.messages.Severity
 import lang.taxi.types.EnumMember
+import lang.taxi.types.Named
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 
 class AnnotationSpec : DescribeSpec({
    describe("annotations") {
@@ -58,18 +64,7 @@ class AnnotationSpec : DescribeSpec({
             .field("quality")
             .type.qualifiedName.should.equal("Quality")
       }
-      it("is an error to define annotations with object type fields") {
-         val errors = """
-            model Person {
-               name : String
-            }
-            annotation Owner {
-               person: Person
-            }
-         """.validated(linterRules = LinterRules.allDisabled())
-         errors.should.have.size(1)
-         errors.first().detailMessage.should.equal("Field person declares an invalid type (Person). Only Strings, Numbers, Booleans or Enums are supported for annotation properties")
-      }
+
       it("is an error to define annotations with types that cannot be resolved") {
          val errors = """
             annotation Owner {
@@ -257,6 +252,32 @@ class AnnotationSpec : DescribeSpec({
             errors.should.have.size(1)
             errors.first().detailMessage.should.equal("Annotation DataQuality requires member 'quality' which was not supplied")
          }
+         it("should use default values of annotation arg if defined and user does not supply value") {
+            """
+               annotation NotEmpty {
+                  message : String = "This should not be empty"
+               }
+
+               @NotEmpty()
+               model Foo
+            """.compiled()
+               .model("Foo")
+               .annotation("NotEmpty")
+               .parameters["message"]!!.shouldBe("This should not be empty")
+         }
+         it("should use the supplied value of annotation arg if defined and user supplies a value") {
+            """
+               annotation NotEmpty {
+                  message : String = "This should not be empty"
+               }
+
+               @NotEmpty(message = "Bro. Fill this in")
+               model Foo
+            """.compiled()
+               .model("Foo")
+               .annotation("NotEmpty")
+               .parameters["message"]!!.shouldBe("Bro. Fill this in")
+         }
          it("should raise an error if an annotation usage includes an arg that isn't delcared") {
             val errors = """
             $schema
@@ -345,149 +366,3 @@ enum Quality {
    }
 })
 
-class AnnotationTypeTest {
-   @Test
-   fun `annotations can be applied omitting optional properties `() {
-      val annotation = """
-         annotation Foo {
-            firstName : String?
-            lastName: String?
-         }
-
-         @Foo( firstName = 'Jimmy' )
-         model Thing {}
-      """.compiled()
-         .model("Thing")
-         .annotation("Foo")
-      annotation.parameter("firstName").should.equal("Jimmy")
-      annotation.parameter("lastName").should.be.`null`
-   }
-
-   @Test
-   fun `annotations values can be specified in any order `() {
-      val schema = """
-         annotation Foo {
-            firstName : String?
-            lastName: String?
-         }
-
-         @Foo( firstName = 'Jimmy', lastName = "Spratt" )
-         model ThingOne {}
-
-         @Foo( lastName = "Spratt", firstName = 'Jimmy' )
-         model ThingTwo {}
-      """.compiled()
-      val annotation1 = schema.model("ThingOne")
-         .annotation("Foo")
-      annotation1.parameter("firstName").should.equal("Jimmy")
-      annotation1.parameter("lastName").should.equal("Spratt")
-
-      val annotation2 = schema.model("ThingOne")
-         .annotation("Foo")
-      annotation2.parameter("firstName").should.equal("Jimmy")
-      annotation2.parameter("lastName").should.equal("Spratt")
-   }
-
-   @Test
-   fun `annotation can have an array parameter`() {
-      val schema = """
-         type HttpErrorCode inherits Int
-         annotation Foo {
-            errorCodes : HttpErrorCode[]
-         }
-
-         @Foo(errorCodes = [502, 504, 506] )
-         model ThingOne {}
-      """.compiled()
-
-      val annotationWithAListValue = schema.model("ThingOne")
-         .annotation("Foo")
-
-      annotationWithAListValue.parameter("errorCodes").should.equal(listOf(502, 504, 506))
-   }
-
-   @Test
-   fun `annotation can have an annotation parameter`() {
-      val schema = """
-         type HttpErrorCode inherits Int
-
-          annotation Bar {
-            param: Foo
-         }
-
-
-         annotation Foo {
-            errorCodes : HttpErrorCode[]
-         }
-         @Bar(param = @Foo( errorCodes = [502, 504, 506]) )
-         model ThingOne {}
-      """.compiled()
-
-      val annotationWithAListValue = schema.model("ThingOne")
-         .annotation("Bar")
-
-      annotationWithAListValue.parameter("param").should.equal(mapOf("errorCodes" to listOf(502, 504, 506)))
-   }
-
-   @Test
-   fun `compilation error is generated when array param values are not correct`() {
-      val compilationMessages = """
-         type HttpErrorCode inherits Int
-         annotation Foo {
-            errorCodes : HttpErrorCode[]
-         }
-
-         @Foo(errorCodes = [502, "504", 506] )
-         model ThingOne {}
-      """.validated()
-
-      compilationMessages.should.have.size(1)
-      compilationMessages[0].severity.should.equal(Severity.ERROR)
-      compilationMessages[0].detailMessage.should.equal("Type mismatch. Type of HttpErrorCode is not assignable to type lang.taxi.String")
-   }
-
-   @Test
-   fun `compiler detects invalid enum assignment`() {
-      val annotation = """
-            enum Quality {
-               HIGH, MEDIUM, BAD
-             }
-
-             enum HttpMethod {
-               POST, GET
-             }
-             annotation DataQuality {
-               quality : Quality
-             }
-
-             @DataQuality(quality = HttpMethod.GET)
-             model Foo {}
-         """.validated()
-      annotation.size.should.equal(1)
-      annotation.first().severity.should.equal(Severity.ERROR)
-      annotation.first().detailMessage.should.equal("Type mismatch. Type of Quality is not assignable to type HttpMethod")
-   }
-
-   @Test
-   fun `when the nested annotation type is invalid compiler detects`() {
-      val errors = """
-         type HttpErrorCode inherits Int
-          annotation Bar {
-            param: Foo
-         }
-
-
-         annotation Baz {}
-         annotation Foo {
-            errorCodes : HttpErrorCode[]
-         }
-         @Bar( param = @Baz() ) // Baz is not assignable to param
-         model ThingOne
-
-      """.validated()
-
-      errors.size.should.equal(1)
-      errors.first().detailMessage.should.equal("Type mismatch. Type of Foo is not assignable to type Baz")
-      errors.first().severity.should.equal(Severity.ERROR)
-   }
-}

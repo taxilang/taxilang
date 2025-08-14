@@ -1,0 +1,326 @@
+---
+title: Annotations
+description: Learn how to define and use annotations in Taxi, including inheritance and best practices
+---
+
+import { Callout } from '@/components/docs/Callout';
+import { PlaygroundSnippet } from '@/components/PlaygroundSnippet';
+
+## Overview
+
+Annotations in Taxi provide a way to attach metadata to types, models, services, and operations. They enable you to add configuration, validation rules, formatting hints, and other metadata without polluting the core data structure.
+
+```taxi
+// Define an annotation
+annotation Deprecated {
+    reason: String
+    since: String
+}
+
+// Use the annotation
+@Deprecated(reason = "Use CustomerV2 instead", since = "2024-01-01")
+model Customer {
+    id: CustomerId
+    name: CustomerName
+}
+```
+
+## Defining Annotations
+
+Annotations are defined using the `annotation` keyword followed by a name and optional field declarations:
+
+```taxi
+// Simple annotation with no fields
+annotation Internal
+
+// Annotation with fields
+annotation Validation {
+    minLength: Int?
+    maxLength: Int?
+    pattern: String?
+}
+
+// Annotation with required and optional fields
+annotation Documentation {
+    description: String
+    example: String?
+    deprecated: Boolean = false
+}
+```
+
+
+### Supported Field Types
+
+Annotation fields support various types to provide flexibility while maintaining structure:
+
+- **Primitive types**: `String`, `Int`, `Double`, `Boolean`
+- **Enums**: Custom enum types
+- **Arrays**: Arrays of the above types
+- **Other annotations**: Annotations can contain other annotations as fields
+- **Objects**: Model types and structured data
+
+```taxi
+enum Severity {
+    LOW, MEDIUM, HIGH, CRITICAL
+}
+
+model ErrorDetails {
+    code: Int
+    description: String
+    timestamp: String?
+}
+
+annotation Alert {
+    message: String
+    severity: Severity
+    tags: String[]
+    details: ErrorDetails?  // Object field
+}
+
+annotation Metadata {
+    alert: Alert?
+    internal: Boolean = false
+}
+
+// Usage with object parameter
+@Alert(
+    message = "Validation failed", 
+    severity = Severity.HIGH,
+    tags = ["validation", "input"],
+    details = {
+        code = 1001,
+        description = "Email format is invalid",
+        timestamp = "2024-01-15T10:30:00Z"
+    }
+)
+type EmailAddress inherits String
+```
+
+### Object Parameters
+
+Annotations can accept object parameters, allowing you to pass structured data as annotation values:
+
+```taxi
+model ValidationError {
+    code: Int
+    message: String
+    field: String?
+}
+
+annotation Validate {
+    error: ValidationError
+    enabled: Boolean = true
+}
+
+// Using object literal syntax
+@Validate(error = {
+    code = 1001,
+    message = "Invalid email format",
+    field = "email"
+})
+type EmailAddress inherits String
+```
+
+Object parameters are validated at compile time to ensure they match the expected structure:
+
+```taxi
+model Error {
+    message: String
+    severity: Int
+}
+
+annotation Rule {
+    error: Error
+}
+
+// ✅ Valid - matches Error structure
+@Rule(error = { message = "Required field", severity = 1 })
+type RequiredField inherits String
+
+// ❌ Invalid - field name mismatch
+@Rule(error = { description = "Wrong field name" })  // Compilation error
+type InvalidField inherits String
+```
+
+## Annotation Inheritance
+
+Annotations support inheritance, allowing you to create hierarchies of related annotations. This is useful for creating specialized versions of common annotations.
+
+```taxi
+// Base annotation
+annotation Rule {
+    message: String
+}
+
+// Specialized annotations inheriting from Rule
+annotation ValidationRule inherits Rule {
+    errorCode: Int
+}
+
+annotation BusinessRule inherits Rule {
+    priority: Int
+    category: String
+}
+
+// Using inherited annotations
+@ValidationRule(message = "Invalid email format", errorCode = 1001)
+type EmailAddress inherits String
+
+@BusinessRule(message = "Customer must be active", priority = 1, category = "customer")
+service OrderService {
+   operation processOrder(customerId: CustomerId): Order
+}
+```
+
+### Inheritance Rules
+
+When working with annotation inheritance:
+
+1. **Annotations can only inherit from other annotations**
+2. **Types cannot inherit from annotations**  
+3. **Inherited fields are available on child annotations**
+4. **Child annotations can add new fields**
+5. **No multiple inheritance** - each annotation can inherit from only one parent
+
+```taxi
+// ✅ Valid: Annotation inheriting from annotation
+annotation BaseRule {
+    message: String
+}
+
+annotation ValidationRule inherits BaseRule {
+    errorCode: Int
+}
+
+// ❌ Invalid: Type inheriting from annotation
+// type CustomerId inherits ValidationRule  // Compilation error
+
+// ❌ Invalid: Annotation inheriting from type
+// annotation MyAnnotation inherits String  // Compilation error`
+```
+
+### Accessing Inherited Fields
+
+When using annotations with inheritance, all fields from the inheritance hierarchy are available:
+
+```taxi
+annotation Rule {
+    message: String
+    enabled: Boolean = true
+}
+
+annotation ValidationRule inherits Rule {
+    errorCode: Int
+    severity: String = "ERROR"
+}
+
+// Usage includes both inherited and declared fields
+@ValidationRule(
+    message = "Value must be positive",     // From Rule
+    enabled = true,                         // From Rule (optional)
+    errorCode = 1001,                      // From ValidationRule
+    severity = "ERROR"                     // From ValidationRule (optional)
+)
+type PositiveNumber inherits Int
+```
+
+### Inheritance with Object Fields
+
+Object fields are fully supported in inherited annotations:
+
+```taxi
+model ErrorInfo {
+    code: Int
+    description: String
+}
+
+annotation Rule {
+    error: ErrorInfo
+}
+
+annotation ValidationRule inherits Rule {
+    pattern: String?
+}
+
+// Child annotation can use inherited object field
+@ValidationRule(
+    error = { 
+        code = 1001, 
+        description = "Must match pattern" 
+    },
+    pattern = "^[A-Z]+$"
+)
+type UppercaseCode inherits String
+```
+
+## Using Annotations
+
+### On Types
+
+```taxi
+@Documentation(description = "Unique identifier for customers")
+@Validation(pattern = "CUST-\\d{6}")
+type CustomerId inherits String
+
+@Internal
+@Deprecated(reason = "Use PersonName instead", since = "2024-01-01")
+type CustomerName inherits String`
+```
+
+### On Models
+
+```taxi
+@Documentation(description = "Core customer data structure")
+@JsonSerializable(camelCase = true)
+model Customer {
+    @Validation(minLength = 1)
+    id: CustomerId
+    
+    @Documentation(description = "Customer's display name")
+    name: CustomerName
+    
+    @Internal
+    internalScore: Int?
+}
+```
+
+### On Services and Operations
+
+```taxi
+@HttpService(baseUrl = "https://api.example.com")
+@RateLimit(requestsPerMinute = 100)
+service CustomerService {
+    
+    @HttpOperation(method = "GET", url = "/customers/{id}")
+    @Cacheable(ttl = 300)
+    @Documentation(description = "Retrieve customer by ID")
+    operation getCustomer(id: CustomerId): Customer
+    
+    @HttpOperation(method = "POST", url = "/customers")
+    @Validation(required = true)
+    @Audit(level = "HIGH")
+    operation createCustomer(customer: Customer): CustomerId
+}
+```
+
+
+## Default Values
+
+Annotation fields can specify default values, making them optional when using the annotation:
+
+```taxi
+annotation Cache {
+    ttl: Int = 300          // Default 5 minutes
+    enabled: Boolean = true  // Default enabled
+    key: String?            // No default, optional
+    region: String          // No default, required
+}
+
+// Using with defaults
+@Cache(region = "customer-data")  // ttl=300, enabled=true
+type CustomerId inherits String
+
+// Overriding defaults
+@Cache(region = "temp-data", ttl = 60, enabled = false)
+type TemporaryId inherits String`
+```

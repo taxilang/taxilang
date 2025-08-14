@@ -6,6 +6,7 @@ import lang.taxi.ImmutableEquality
 data class AnnotationTypeDefinition(
    val fields: List<Field> = emptyList(),
    override val annotations: List<Annotation> = emptyList(),
+   val inheritsFrom: List<Type> = emptyList(),
    override val typeDoc: String? = null,
    override val compilationUnit: CompilationUnit
 ) : Annotatable, TypeDefinition, Documented {
@@ -13,6 +14,7 @@ data class AnnotationTypeDefinition(
       this,
       AnnotationTypeDefinition::fields,
       AnnotationTypeDefinition::annotations,
+      AnnotationTypeDefinition::inheritsFrom,
       AnnotationTypeDefinition::typeDoc
    )
 
@@ -36,8 +38,11 @@ data class AnnotationType(
       error("Extensions on annotations are not supported")
    }
 
+   fun fieldOrNull(name: String): Field? {
+      return allFields.firstOrNull { it.name == name }
+   }
    fun field(name: String): Field {
-      return fields.firstOrNull { it.name == name }
+      return fieldOrNull(name)
          ?: error("Annotation $qualifiedName does not have a field name $name")
    }
 
@@ -56,9 +61,32 @@ data class AnnotationType(
          return definition?.fields ?: emptyList()
       }
 
+   val inheritedFields: List<Field>
+      get() {
+         return allInheritedTypes
+            .filterIsInstance<AnnotationType>()
+            .flatMap { it.allFields }
+      }
+
+   private val allFieldsMap:Map<String, Field>
+      get() {
+         return Field.mergeInheritedFields(fields, inheritedFields)
+      }
+
+   val allFields: List<Field>
+      get() {
+         return allFieldsMap.values.toList()
+      }
+
    override val formatAndZoneOffset: FormatsAndZoneOffset? = null
-   override val inheritsFrom: List<Type> = emptyList()
-   override val allInheritedTypes: Set<Type> = emptySet()
+   override val inheritsFrom: List<Type>
+      get() {
+         return definition?.inheritsFrom ?: emptyList()
+      }
+   override val allInheritedTypes: Set<Type>
+      get() {
+         return if (isDefined) wrapper.allInheritedTypes else emptySet()
+      }
    override val format: List<String> = emptyList()
    override val inheritsFromPrimitive: Boolean = false
    override val basePrimitive: PrimitiveType? = null
@@ -80,9 +108,13 @@ data class AnnotationType(
          """$fieldAnnotations
 ${field.name} : ${field.type.qualifiedName}$nullableMarker""".trim()
       }
+      val inheritsClause = if (inheritsFrom.isNotEmpty()) {
+         " inherits " + inheritsFrom.joinToString(", ") { it.qualifiedName }
+      } else ""
+
       return """
 $annotationTaxi
-annotation ${this.toQualifiedName().typeName} {
+annotation ${this.toQualifiedName().typeName}$inheritsClause {
    $fieldTaxi
 }
 """.trim()

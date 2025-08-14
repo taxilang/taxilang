@@ -2,7 +2,7 @@
 :root {
   --playground-font-size: 0.95rem;
   --playground-line-height: 1.6;
-  --playground-font-family: 'Fira Code', 'IBM Plex Mono', monospace;
+  --playground-font-family: 'Google Sans Code', 'IBM Plex Mono', monospace;
   --playground-bg-color: rgba(30, 41, 59, 0.6);
   --playground-gutter-bg-color: rgba(30, 41, 59, 0.8);
   --playground-active-line-bg-color: rgba(30, 41, 59, 1);
@@ -23,7 +23,7 @@
 .cm-editor .cm-content {
   font-family: var(--playground-font-family);
   font-size: var(--playground-font-size) !important;
-  font-variant-ligatures: contextual; /* Enable ligatures for Fira Code */
+  font-variant-ligatures: contextual; /* Enable ligatures for Google Sans Code */
 }
 
 .cm-editor .cm-line {
