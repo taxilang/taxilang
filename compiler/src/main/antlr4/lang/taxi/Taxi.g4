@@ -167,7 +167,7 @@ expressionAtom: functionCall | typeExpression | typeProjection | fieldReferenceS
   //   | conditionalTypeConditionDeclaration
 
 annotationTypeDeclaration
-   : typeDoc? annotation* 'annotation' identifier annotationTypeBody?;
+   : typeDoc? annotation* 'annotation' identifier (K_Inherits listOfInheritedTypes)? annotationTypeBody?;
 
 negated: NOT;
 annotationTypeBody: '{' typeMemberDeclaration* '}';
@@ -415,6 +415,7 @@ elementValuePair
 
 elementValue
     : literal
+    | objectValue
     | qualifiedName // Support enum references within annotations
     | annotation
     | valueArray

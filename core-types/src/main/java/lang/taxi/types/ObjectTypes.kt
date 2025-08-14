@@ -74,7 +74,7 @@ data class ObjectTypeDefinition(
          return expression?.asTaxi()
       }
 
-    val isScalar = fields.isEmpty() && inheritsFrom.all { it.isScalar }
+   val isScalar = fields.isEmpty() && inheritsFrom.all { it.isScalar }
    val isPartial = this.partialOfType != null
 
    override fun equals(other: Any?) = equality.isEqualTo(other)
@@ -124,7 +124,7 @@ enum class Modifier(val token: String, val conventionalSortOrder: Int) {
    }
 }
 
-fun List<Modifier>.sortedConventionally():List<Modifier> {
+fun List<Modifier>.sortedConventionally(): List<Modifier> {
    return this.sortedBy { it.conventionalSortOrder }
 }
 
@@ -132,7 +132,8 @@ data class ObjectType(
    override val qualifiedName: String,
    override var definition: ObjectTypeDefinition?,
    override val extensions: MutableList<ObjectTypeExtension> = mutableListOf()
-) : UserType<ObjectTypeDefinition, ObjectTypeExtension>, Annotatable, Documented, HasChildSymbols<Type>, TypeWithFields {
+) : UserType<ObjectTypeDefinition, ObjectTypeExtension>, Annotatable, Documented, HasChildSymbols<Type>,
+   TypeWithFields {
    companion object {
       fun undefined(name: String): ObjectType {
          return ObjectType(name, definition = null)
@@ -145,11 +146,11 @@ data class ObjectType(
          return if (isDefined) wrapper.allInheritedTypes else emptySet()
       }
 
-   val isPartialType:Boolean
+   val isPartialType: Boolean
       get() {
          return definition?.isPartial ?: false
       }
-   val partialOfType:Type?
+   val partialOfType: Type?
       get() {
          return definition?.partialOfType
       }
@@ -241,7 +242,7 @@ data class ObjectType(
             .toList()
       }
 
-   private fun collectReferencedTypes(set:MutableSet<Type>):MutableSet<Type> {
+   private fun collectReferencedTypes(set: MutableSet<Type>): MutableSet<Type> {
       val inheritedTypes = this.definition?.inheritsFrom?.toList() ?: emptyList()
       set.addAll(inheritedTypes)
       val fieldTypes = this.allFields
@@ -249,7 +250,7 @@ data class ObjectType(
          .filter { !set.contains(it) }
       set.addAll(fieldTypes)
 
-      fun recurseIntoType(type:Type) {
+      fun recurseIntoType(type: Type) {
          when (type) {
             is ObjectType -> type.collectReferencedTypes(set)
             is ArrayType -> {
@@ -258,8 +259,8 @@ data class ObjectType(
             }
          }
       }
-      fieldTypes.forEach { recurseIntoType(it)}
-      return set.filterIsInstance<UserType<*,*>>()
+      fieldTypes.forEach { recurseIntoType(it) }
+      return set.filterIsInstance<UserType<*, *>>()
          .toMutableSet()
 
    }
@@ -355,7 +356,8 @@ data class ObjectType(
       return this.extensions.flatMap { it.fieldExtensions(fieldName) }
    }
 
-   fun annotation(name: String): Annotation = annotations.firstOrNull { it.qualifiedName == name } ?: error("Type ${this.qualifiedName} has no annotation named '$name'")
+   fun annotation(name: String): Annotation = annotations.firstOrNull { it.qualifiedName == name }
+      ?: error("Type ${this.qualifiedName} has no annotation named '$name'")
 
    /**
     * Returns a list of field references for any fields on this type, or
@@ -671,6 +673,14 @@ data class Field(
 
    fun annotation(name: String): Annotation {
       return annotations.single { it.qualifiedName == name }
+   }
+
+   companion object {
+      fun mergeInheritedFields(fields: List<Field>, inheritedFields: List<Field>): Map<String, Field> {
+         // Prefer definitions in fields (overriding)
+         // Putting fields after inheritedFields will override the value with the provided field (if present)
+         return inheritedFields.associateBy { it.name } + fields.associateBy { it.name }
+      }
    }
 
 }

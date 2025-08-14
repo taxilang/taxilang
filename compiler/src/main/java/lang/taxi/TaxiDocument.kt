@@ -43,6 +43,8 @@ open class TaxiDocument(
    private val functionsMap = functions.associateBy { it.qualifiedName }
    private val viewMap = views.associateBy { it.qualifiedName }
 
+   val annotationTypes = types.filterIsInstance<AnnotationType>()
+
    /**
     * Collects a list of annotations that were used throughout, but have not been declared.
     * We return annotation qualified names only, not full annotation instances, as the
@@ -236,6 +238,18 @@ open class TaxiDocument(
       return type(qualifiedName) as AnnotationType
    }
 
+   /**
+    * Returns all schema members where they (or one of their inherited types)
+    * has an annotation with the provided annotation type.
+    *
+    * If the annotation is a subtype of the requested annotationType, it is also included
+    */
+   fun membersWithAnnotation(annotationType: AnnotationType):List<Annotatable> {
+      return types.filter {
+         it.annotationOrInheritedAnnotation(annotationType).isNotEmpty()
+      }
+
+   }
 
    fun policy(qualifiedName: String): Policy {
       return policiesMap[qualifiedName] ?: error("Policy $qualifiedName is not defined")

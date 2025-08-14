@@ -51,9 +51,8 @@ class TokenProcessor(
 ) {
 
    companion object {
-      fun unescape(text: String): String {
-         return text.removeSurrounding("`")
-      }
+      @Deprecated("use String.unescaped() extension function")
+      fun unescape(text: String): String = text.unescaped()
 
    }
 
@@ -703,19 +702,28 @@ class TokenProcessor(
       )
       val fieldsOrErrors = fieldCompiler
          .compileAllFields()
-         .map { field ->
-            if (Arrays.unwrapPossibleArrayType(field.type).isScalar || field.type is AnnotationType) {
-               // Validate that annotation fields use primitive types, primitive arrays or another Annotation Type.
-               field.right()
+         .right()
+//         .map { field ->
+//            if (Arrays.unwrapPossibleArrayType(field.type).isScalar || field.type is AnnotationType) {
+//               // Validate that annotation fields use primitive types, primitive arrays or another Annotation Type.
+//               field.right()
+//
+//            } else {
+//               CompilationError(
+//                  token.start,
+//                  "Field ${field.name} declares an invalid type (${field.type.qualifiedName}). Only Strings, Numbers, Booleans or Enums are supported for annotation properties"
+//               ).left()
+//
+//            }
+//         }.invertEitherList()
 
-            } else {
-               CompilationError(
-                  token.start,
-                  "Field ${field.name} declares an invalid type (${field.type.qualifiedName}). Only Strings, Numbers, Booleans or Enums are supported for annotation properties"
-               ).left()
+      // Parse inheritance
+      val declaredInheritance = parseAnnotationTypeInheritance(namespace, token.listOfInheritedTypes())
+      val inheritanceErrors = validateAnnotationInheritance(name, token, declaredInheritance)
 
-            }
-         }.invertEitherList()
+      if (inheritanceErrors.isNotEmpty()) {
+         return inheritanceErrors.left()
+      }
 
       return fieldsOrErrors.map { fields ->
          val annotations = collateAnnotations(token.annotation())
@@ -723,6 +731,7 @@ class TokenProcessor(
          val definition = AnnotationTypeDefinition(
             fields,
             annotations,
+            declaredInheritance,
             typeDoc,
             token.toCompilationUnit()
          )
@@ -734,6 +743,52 @@ class TokenProcessor(
          )
       }
 
+   }
+
+   private fun parseAnnotationTypeInheritance(
+      namespace: Namespace,
+      listOfInheritedTypes: ListOfInheritedTypesContext?
+   ): List<Type> {
+      if (listOfInheritedTypes == null) return emptyList()
+      return listOfInheritedTypes.typeReference().mapNotNull { typeTypeContext ->
+         parseInheritedType(namespace, typeTypeContext) { it.right() }
+      }.distinct()
+   }
+
+   private fun validateAnnotationInheritance(
+      annotationName: String,
+      token: AnnotationTypeDeclarationContext,
+      inheritedTypes: List<Type>
+   ): List<CompilationError> {
+      val errors = mutableListOf<CompilationError>()
+
+      // Check that all inherited types are annotations
+      inheritedTypes.forEach { inheritedType ->
+         if (inheritedType !is AnnotationType) {
+            errors.add(
+               CompilationError(
+                  token.start,
+                  "$annotationName cannot inherits from ${inheritedType.qualifiedName} as ${inheritedType.qualifiedName} is not an annotation",
+                  token.source().normalizedSourceName
+               )
+            )
+         }
+      }
+
+      // Check for circular inheritance (similar to checkForCircularTypeInheritance)
+      inheritedTypes.forEach { inheritedType ->
+         if (inheritedType.allInheritedTypes.any { it.toQualifiedName().parameterizedName == annotationName }) {
+            errors.add(
+               CompilationError(
+                  token.start,
+                  "$annotationName contains a loop in its inheritance chain",
+                  token.source().normalizedSourceName
+               )
+            )
+         }
+      }
+
+      return errors
    }
 
    private fun compilePartialModel(tokenName: String, tokenRule: PartialModelDeclarationContext): Either<List<CompilationError>, ObjectType> {
@@ -1026,7 +1081,9 @@ class TokenProcessor(
 
          parseInheritedType(namespace, typeTypeContext) {
             when (it) {
-               is EnumType -> CompilationError(typeTypeContext.start, "A Type cannot inherit from an Enum").asList()
+               is EnumType -> CompilationError(typeTypeContext.start, "A type cannot inherit from an enum").asList()
+                  .left()
+               is AnnotationType -> CompilationError(typeTypeContext.start, "A type cannot inherit from an annotation").asList()
                   .left()
 
                else -> it.right()
@@ -1140,10 +1197,11 @@ class TokenProcessor(
    ): Either<List<CompilationError>, Map<String, Any>> {
       return when {
          annotation.elementValue() != null -> {
-            parseElementValue(annotation.elementValue()).map { mapOf("value" to it) }
+            val type = annotationType?.fieldOrNull("value")?.type ?: PrimitiveType.ANY
+            parseElementValue(annotation.elementValue(), type).map { mapOf("value" to it) }
          }
 
-         annotation.elementValuePairs() != null -> mapElementValuePairs(annotation.elementValuePairs())
+         annotation.elementValuePairs() != null -> mapElementValuePairs(annotation.elementValuePairs(), annotationType)
          else -> emptyMap<String, Any>().right()// No params specified
       }.flatMap { annotationParams ->
          if (annotationType != null) {
@@ -1160,7 +1218,7 @@ class TokenProcessor(
       annotationParameters: Map<String, Any>
    ): Either<List<CompilationError>, Map<String, Any>> {
       val mutableParams = annotationParameters.toMutableMap()
-      val fieldErrors = type.fields.mapNotNull { field ->
+      val fieldErrors = type.allFields.mapNotNull { field ->
          // Apply defaults if value not provided
          if (!annotationParameters.containsKey(field.name) && !field.nullable) {
             if (field.accessor is LiteralExpression) {
@@ -1208,7 +1266,7 @@ class TokenProcessor(
 
       // Were there any parameters passed that we didn't expect?
       val unexpectedParamErrors =
-         annotationParameters.filter { (parameterName, _) -> type.fields.none { field -> field.name == parameterName } }
+         annotationParameters.filter { (parameterName, _) -> type.allFields.none { field -> field.name == parameterName } }
             .map { (parameterName, _) ->
                CompilationError(
                   annotation.start,
@@ -1251,39 +1309,71 @@ class TokenProcessor(
             }
          }
 
-
          is AnnotationType -> {
             // an annotation type parameter has already been verified at this point.
             null
          }
-
          // Assuming
          else -> {
-            var compilationError: CompilationError? = null
-            val valueType = PrimitiveValues.getTaxiPrimitive(paramValue)
-            val errorOrValidParam =
-               typeChecker.ifAssignable(unwrappedFieldType, valueType, annotationCtx) { paramValue }
-            errorOrValidParam.onLeft { compilationError = it }
-            compilationError
+            if (!unwrappedFieldType.isScalar) {
+               // we do type checks on objects when they're instatiated,
+               // as after that we lose type information.
+               // So, at this point, type checking has already passed
+               null
+            } else {
+               var compilationError: CompilationError? = null
+               val valueType = PrimitiveValues.getTaxiPrimitive(paramValue)
+               val errorOrValidParam =
+                  typeChecker.ifAssignable(unwrappedFieldType, valueType, annotationCtx) { paramValue }
+               errorOrValidParam.onLeft { compilationError = it }
+               compilationError
+            }
+
          }
       }
 
    }
 
-   private fun mapElementValuePairs(tokenRule: ElementValuePairsContext): Either<List<CompilationError>, Map<String, Any>> {
+   private fun mapElementValuePairs(tokenRule: ElementValuePairsContext, annotationType: AnnotationType?): Either<List<CompilationError>, Map<String, Any>> {
       val pairs = tokenRule.elementValuePair() ?: return emptyMap<String, Any>().right()
       return pairs.map { keyValuePair ->
-         parseElementValue(keyValuePair.elementValue()).map { parsedValue ->
+         val fieldName = keyValuePair.identifier().text.unescaped()
+         // Note: a reference to a field on an annotation that isn't defined will result in a compilation error
+         // but that's handled elsewhere.
+         val type = annotationType?.fieldOrNull(fieldName)?.type ?: PrimitiveType.ANY
+         parseElementValue(keyValuePair.elementValue(), type).map { parsedValue ->
             keyValuePair.identifier().text to parsedValue
          }
       }.invertEitherList().flattenErrors()
          .map { parsedAnnotationPropertyPairs: List<Pair<String, Any>> -> parsedAnnotationPropertyPairs.toMap() }
    }
 
-   private fun parseElementValue(elementValue: ElementValueContext): Either<List<CompilationError>, Any> {
+   private fun parseElementValue(elementValue: ElementValueContext, elementType: Type): Either<List<CompilationError>, Any> {
       return when {
          elementValue.literal() != null -> elementValue.literal().value().right()
          elementValue.qualifiedName() != null -> resolveEnumMember(elementValue.qualifiedName())
+         elementValue.objectValue() != null -> {
+            ValueExpressionCompiler(expressionCompiler()).objectValueAsExpression(
+               elementValue.objectValue(),
+               elementType
+            ).flatMap { expression ->
+               when (expression) {
+                  is ObjectLiteralExpression -> {
+                     // MP : 13-Aug-=25
+                     // As below, preferrable to use a typedValue here, but
+                     // to be consistent with the current implementaiton, just returning the value.
+
+                     // However, run the type checker before we lose type information
+                     typeChecker.ifAssignableOrErrorList(expression.returnType, elementType, elementValue) {
+                        expression.asTypedValue().value
+                     }.flatMap { value ->
+                        value?.right() ?: elementValue.createInternalError("Expected a value to be present here, but was null")
+                     }
+                  }
+                  else -> elementValue.createInternalError("Expected an object literal expression, but found ${expression::class.simpleName}")
+               }
+            }
+         }
          elementValue.valueArray() != null -> {
             expressionCompiler().parseValueArray(elementValue.valueArray(), null)
                .map { value ->
@@ -1316,7 +1406,6 @@ class TokenProcessor(
                      .map { Pair(annotationType, it) }
                }.wrapErrorsInList().flattenErrors()
          }
-
          else -> error("Unhandled element value: ${elementValue.text}")
       }
    }
@@ -1856,7 +1945,7 @@ class TokenProcessor(
       return type.handleErrorWith { errors ->
          val tokenName = typeArgumentCtx.typeReference()?.qualifiedName()
          if (tokenName == null) {
-            TODO("Expected a token name here")
+            context.createInternalError("Expected a token name")
          }
          when {
             // If the only issue is that we couldn't find the type, check to see if it's a function

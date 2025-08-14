@@ -281,7 +281,7 @@ module.exports = {
         // sans: ['Inter var', ...defaultTheme.fontFamily.sans],
         sans: ['Inter', 'Helvetica', ...defaultTheme.fontFamily.sans],
         brand: ['Inter', 'Helvetica', ...defaultTheme.fontFamily.sans],
-        mono: ['Fira Code', ...defaultTheme.fontFamily.mono],
+        mono: ['Google Sans Code', ...defaultTheme.fontFamily.mono],
         // these didn't seem to be used
         // source: ['Source Sans Pro', ...defaultTheme.fontFamily.sans],
         // 'ubuntu-mono': ['Ubuntu Mono', ...defaultTheme.fontFamily.mono],

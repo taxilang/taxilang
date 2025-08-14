@@ -18,5 +18,8 @@ fun ParserRuleContext.createInternalError(message: String): Either<List<Compilat
 
 
 fun TerminalNode.unescaped():String {
-   return this.text.removeSurrounding("`")
+   return this.text.unescaped()
+}
+fun String.unescaped():String {
+   return this.removeSurrounding("`")
 }
