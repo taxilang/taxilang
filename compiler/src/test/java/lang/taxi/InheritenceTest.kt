@@ -161,7 +161,7 @@ type ListOfPerson inherits Person[]
       val exception = assertThrows<CompilationException> {
          Compiler(src).compile()
       }
-      exception.message.should.contain("UnknownSource(5,28) A Type cannot inherit from an Enum")
+      exception.message.should.contain("UnknownSource(5,28) A type cannot inherit from an enum")
    }
 
    @Test

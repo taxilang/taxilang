@@ -41,15 +41,7 @@
   font-named-instance: 'Italic';
   src: url('../fonts/Inter-italic-latin.var.woff2') format('woff2');
 } */
-/* Fira Code for code blocks */
-@font-face {
-  font-family: 'Fira Code';
-  font-weight: 300 700;
-  font-style: normal;
-  font-display: swap;
-  src: url('../fonts/FiraCode-VF.woff2') format('woff2-variations'),
-       url('../fonts/FiraCode-VF.woff') format('woff-variations');
-}
+/* Google Sans Code is now loaded from Google Fonts */
 
 .font-mono {
   font-variant-ligatures: none;

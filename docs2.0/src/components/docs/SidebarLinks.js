@@ -6,12 +6,13 @@ export const SidebarLinks = [
     ],
   },
   {
-    title: 'Describing schemas',
+    title: 'Language basics',
     links: [
       {title: 'Basic types', href: '/docs/language/basic-types'},
       {title: 'Semantic types', href: '/docs/language/semantic-types'},
       {title: 'Models', href: '/docs/language/models'},
       {title: 'Services', href: '/docs/language/services'},
+      {title: 'Annotations', href: '/docs/language/annotations'},
     ],
   },
   {

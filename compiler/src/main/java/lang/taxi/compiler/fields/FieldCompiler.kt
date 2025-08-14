@@ -78,15 +78,6 @@ class FieldCompiler(
    }
 
    fun compileAllFields(): List<Field> {
-      // SPIKE: Removing Conditional Fields
-//      val namespace = typeBody.findNamespace()
-//      val conditionalFieldStructures = typeBody.conditionalTypeDeclarations.mapNotNull { conditionalFieldBlock ->
-//         conditionalFieldSetProcessor.compileConditionalFieldStructure(conditionalFieldBlock, namespace)
-//            .collectErrors(errors).getOrElse { null }
-//      }
-
-//      val fieldsWithConditions = conditionalFieldStructures.flatMap { it.fields }
-
       val fields = buildObjectFields(typeBody.memberDeclarations)
 
       val spreadFields = buildSpreadFieldsIfEnabled()
