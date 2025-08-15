@@ -1,0 +1,32 @@
+---
+LastUpdated: 'Wed Aug 06 2025 01:00:00 GMT+0100 (British Summer Time)'
+version: '1.66'
+title: Release notes - 1.66
+---
+
+## 1.66.0
+2025-08-06
+
+### Bug Fixes
+
+* **compiler:** type inference engine rewrite - signficant improvement and test coverage around type inference, especially when coaelscing two types ([f96322f](https://gitlab.com/taxi-lang/taxi-lang/commit/f96322f52d233adbdca6a031f3f5dc7c08679d15))
+* **core:** casting order-of-precedence in grammar, so that cast memberReferences is possible ([9a7ac33](https://gitlab.com/taxi-lang/taxi-lang/commit/9a7ac331ff1fff100b95c8559ece614b878c5017))
+* **core:** resolve error when constructing object with field of reserved word ([e20c88b](https://gitlab.com/taxi-lang/taxi-lang/commit/e20c88b2c55e98bd290a60421a719cffcd9702de))
+* **docs:** fix incorrect example in docs ([f7cd954](https://gitlab.com/taxi-lang/taxi-lang/commit/f7cd9542aebacdee323ce1fc039c3753d1576c6a))
+* **type-checker:** Array types were not type-checked. ([01bd28b](https://gitlab.com/taxi-lang/taxi-lang/commit/01bd28b2fe050aa694c75b2603131cbe82ad0592))
+* typealiases are scalar if their aliased types are ([d45aa9e](https://gitlab.com/taxi-lang/taxi-lang/commit/d45aa9e8e7633d71c53f490fe0e01cacbb54f00a))
+
+
+### Features
+
+* **core:** add support for negate operator `!` ([a663c93](https://gitlab.com/taxi-lang/taxi-lang/commit/a663c93bd698cb81cc81e51823ebe4a7a74f3c4b))
+* **core:** added support for modulo operator ([a782622](https://gitlab.com/taxi-lang/taxi-lang/commit/a782622b4bc0b76ceff5811f346c6ac03e4765fc))
+* **packageManager:** Modify package manager so it's easier to inject in SDK code. ([5a168ee](https://gitlab.com/taxi-lang/taxi-lang/commit/5a168eed7a991db7a727cd987d44842f96f15d30))
+* **stdlib:** add append function ([2e9f75c](https://gitlab.com/taxi-lang/taxi-lang/commit/2e9f75c02f2c624c79c4d73915ac59f4e32f7da2))
+* **stdlib:** add average() function ([5c4b708](https://gitlab.com/taxi-lang/taxi-lang/commit/5c4b70857b13de3861c76f2b106d33f443428526))
+* **stdlib:** add emptyInstance() ([356e027](https://gitlab.com/taxi-lang/taxi-lang/commit/356e027f4261bc86eb66ce7bc72cd70acd51af40))
+* **stdlib:** add ifEmpty() ([8b787af](https://gitlab.com/taxi-lang/taxi-lang/commit/8b787af515745e1b6969cad307512a2fa4b4d9aa))
+
+
+
+

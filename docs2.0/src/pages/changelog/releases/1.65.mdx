@@ -1,0 +1,32 @@
+---
+LastUpdated: 'Mon Jun 23 2025 01:00:00 GMT+0100 (British Summer Time)'
+version: '1.65'
+title: Release notes - 1.65
+---
+
+## 1.65.0
+2025-06-23
+
+### Bug Fixes
+
+* **avro:** apply rules of schema definition to nested record types ([7799efc](https://gitlab.com/taxi-lang/taxi-lang/commit/7799efc0a09411c61aa74a2a364044a3b72ca183))
+* **core:** fix detection of iteration vs aggregation projections ([931d55d](https://gitlab.com/taxi-lang/taxi-lang/commit/931d55da01bd387b12ac0a328d4de3a70ff4fbc3))
+
+
+### Features
+
+* **avro:** avro schema parser now supports defining if a type should be declared or not ([faa6cc2](https://gitlab.com/taxi-lang/taxi-lang/commit/faa6cc24610a230dc9c2d9addda677c0eb74733e))
+* **docs:** Lots of docs enhancements, added runnable examples ([30c59cd](https://gitlab.com/taxi-lang/taxi-lang/commit/30c59cd2c14c393544e9bf3f2242ebbb91bc827b))
+* **openapi:** improve operation kind detection based on HTTP methods ([1aee7fe](https://gitlab.com/taxi-lang/taxi-lang/commit/1aee7fef5bd0a9d3c23f1cbec68d57dbd5566e2b))
+* **stdlib:** added all(), some() and none() to stdlib ([85e736d](https://gitlab.com/taxi-lang/taxi-lang/commit/85e736d802abda30943aaffec6972939c6f03689))
+* **stdlib:** added defs for startsWith, endsWith, matches and containsPattern ([d414449](https://gitlab.com/taxi-lang/taxi-lang/commit/d414449310d04df95ea9b3067e5907b1f2fb1741))
+* **stdlib:** added padStart, padEnd and applyFormat functions for working with strings in stdlib ([a0fed87](https://gitlab.com/taxi-lang/taxi-lang/commit/a0fed87ebbd895bb3e06d16db8d7239719e7b3c1))
+
+
+### Reverts
+
+* Revert "feat(core): support traditional array access statements" ([4dd45d9](https://gitlab.com/taxi-lang/taxi-lang/commit/4dd45d98e06f240ab67341dc014032586e77daa2))
+
+
+
+
