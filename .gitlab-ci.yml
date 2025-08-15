@@ -103,48 +103,49 @@ build-ts-codegen-tools-linux:
       - master
       - develop
 
-build-ts-codegen-tools-windows:
-   variables:
-      MAVEN_VERSION: 3.9.9
-      GRAALVM_HOME: "C:/graalvm"
-   stage: build
-   only:
-      - tags
-      - master
-      - develop
-   tags:
-      - saas-windows-medium-amd64
-   script:
-     ## Setup has been performed directly on the tagged windows box, to keep this build step faster.
-     ## It's not portable though!
-
-      - echo "Setting up Maven and GraalVM"
-
-      # Install Maven
-      - echo "Installing Maven"
-      - $env:MAVEN_HOME = "C:/maven"
-      - Invoke-WebRequest -Uri "https://downloads.apache.org/maven/maven-3/${env:MAVEN_VERSION}/binaries/apache-maven-${env:MAVEN_VERSION}-bin.zip" -OutFile "maven.zip"
-      - Expand-Archive -Path "maven.zip" -DestinationPath "C:/"
-      - Rename-Item "C:/apache-maven-${env:MAVEN_VERSION}" $env:MAVEN_HOME
-      - $env:Path += ";$env:MAVEN_HOME/bin"
-
-      # Install GraalVM
-      - echo "Installing GraalVM"
-      - Invoke-WebRequest -Uri "https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-23.0.2/graalvm-community-jdk-23.0.2_windows-x64_bin.zip" -OutFile "graalvm.zip"
-      - Expand-Archive -Path "graalvm.zip" -DestinationPath "C:/"
-      - Rename-Item "C:/graalvm-community-openjdk-23.0.2+7.1" $env:GRAALVM_HOME
-      - $env:Path += ";$env:GRAALVM_HOME/bin"
-
-      # Install Native Image Tool
-      - echo "Installing Native Image Tool"
-      - '"& $env:GRAALVM_HOME\bin\gu.cmd install native-image"'
-
-
-      # Don't run tests when building native tools
-      - '.\mvnw package -pl taxiql-codegen/taxiql-codegen-cli -am -Pnative -DskipTests'
-   artifacts:
-      paths:
-         - 'taxiql-codegen\taxiql-codegen-cli\target\taxiql-codegen-cli.exe'
+# Commenting out Windows build due to current failures
+#build-ts-codegen-tools-windows:
+#   variables:
+#      MAVEN_VERSION: 3.9.9
+#      GRAALVM_HOME: "C:/graalvm"
+#   stage: build
+#   only:
+#      - tags
+#      - master
+#      - develop
+#   tags:
+#      - saas-windows-medium-amd64
+#   script:
+#     ## Setup has been performed directly on the tagged windows box, to keep this build step faster.
+#     ## It's not portable though!
+#
+#      - echo "Setting up Maven and GraalVM"
+#
+#      # Install Maven
+#      - echo "Installing Maven"
+#      - $env:MAVEN_HOME = "C:/maven"
+#      - Invoke-WebRequest -Uri "https://downloads.apache.org/maven/maven-3/${env:MAVEN_VERSION}/binaries/apache-maven-${env:MAVEN_VERSION}-bin.zip" -OutFile "maven.zip"
+#      - Expand-Archive -Path "maven.zip" -DestinationPath "C:/"
+#      - Rename-Item "C:/apache-maven-${env:MAVEN_VERSION}" $env:MAVEN_HOME
+#      - $env:Path += ";$env:MAVEN_HOME/bin"
+#
+#      # Install GraalVM
+#      - echo "Installing GraalVM"
+#      - Invoke-WebRequest -Uri "https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-23.0.2/graalvm-community-jdk-23.0.2_windows-x64_bin.zip" -OutFile "graalvm.zip"
+#      - Expand-Archive -Path "graalvm.zip" -DestinationPath "C:/"
+#      - Rename-Item "C:/graalvm-community-openjdk-23.0.2+7.1" $env:GRAALVM_HOME
+#      - $env:Path += ";$env:GRAALVM_HOME/bin"
+#
+#      # Install Native Image Tool
+#      - echo "Installing Native Image Tool"
+#      - '"& $env:GRAALVM_HOME\bin\gu.cmd install native-image"'
+#
+#
+#      # Don't run tests when building native tools
+#      - '.\mvnw package -pl taxiql-codegen/taxiql-codegen-cli -am -Pnative -DskipTests'
+#   artifacts:
+#      paths:
+#         - 'taxiql-codegen\taxiql-codegen-cli\target\taxiql-codegen-cli.exe'
 
 
 build-ts-codegen-tools-macos:
@@ -185,21 +186,22 @@ build-ts-codegen-tools-macos:
    - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
    - npm publish
 
-publish-codegen-node-windows:
-   stage: deploy
-   image: node
-   only:
-      - tags
-      - master
-      - develop
-   dependencies:
-      - build-ts-codegen-tools-windows
-   script:
-      - mkdir -p typescript/taxiql-codegen/packages/win32/bin
-      - cp 'taxiql-codegen/taxiql-codegen-cli/target/taxiql-codegen-cli.exe' typescript/taxiql-codegen/packages/win32/bin
-      - *npm-install-sync-pom
-      - cd typescript/taxiql-codegen/packages/win32
-      - *npm-set-version-and-publish
+# Commenting out Windows publish job since Windows build is disabled
+#publish-codegen-node-windows:
+#   stage: deploy
+#   image: node
+#   only:
+#      - tags
+#      - master
+#      - develop
+#   dependencies:
+#      - build-ts-codegen-tools-windows
+#   script:
+#      - mkdir -p typescript/taxiql-codegen/packages/win32/bin
+#      - cp 'taxiql-codegen/taxiql-codegen-cli/target/taxiql-codegen-cli.exe' typescript/taxiql-codegen/packages/win32/bin
+#      - *npm-install-sync-pom
+#      - cd typescript/taxiql-codegen/packages/win32
+#      - *npm-set-version-and-publish
 
 publish-codegen-node-linux:
    stage: deploy
