@@ -6,7 +6,11 @@ import lang.taxi.types.Type
 import lang.taxi.utils.quoted
 import java.math.BigDecimal
 
-object NullValue
+object NullValue {
+   // This is the value that's output when this is .toString()'ed in a
+   // taxi expression that contains a null, which has .asTaxi() called on it
+   override fun toString(): String = "null"
+}
 
 data class LiteralAccessor(val value: Any, override val returnType:Type = returnTypeOf(value)) : Accessor, TaxiStatementGenerator {
    companion object {
