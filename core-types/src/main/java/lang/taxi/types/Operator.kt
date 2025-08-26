@@ -81,7 +81,7 @@ enum class FormulaOperator(
    fun isComparisonOperator(): Boolean = COMPARISON_OPERATORS.contains(this)
    fun isLogicalOrComparisonOperator(): Boolean = isLogicalOperator() || isComparisonOperator()
    fun supportsNullComparison(): Boolean {
-      return this == Equal || this == NotEqual
+      return this == Equal || this == NotEqual || this == Coalesce
    }
 
    fun supports(lhsType: Type, rhsType: Type): Boolean {

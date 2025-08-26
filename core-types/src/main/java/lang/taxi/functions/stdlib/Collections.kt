@@ -24,6 +24,7 @@ object Collections {
       ListOf,
       JoinToString,
       IfEmpty,
+      OrEmpty,
       Append
    )
 }
@@ -856,6 +857,15 @@ object IfEmpty : FunctionApi {
    """.trimIndent()
 
    override val name: QualifiedName = stdLibName("ifEmpty")
+}
+
+object OrEmpty : FunctionApi {
+   override val taxi: String = """
+   [[ If the provided source array is null, returns an empty collection ]]
+   declare extension function <T> orEmpty(source:T[]): T[]
+   """.trimIndent()
+
+   override val name: QualifiedName = stdLibName("orEmpty")
 }
 
 
