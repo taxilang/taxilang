@@ -853,10 +853,20 @@ IdentifierToken
 
 
 StringLiteral
-    :   '"' DoubleQuoteStringCharacter* '"'
+    :   '"""' MultiLineStringCharacter*? '"""'
+    |   '"' DoubleQuoteStringCharacter* '"'
     |   '\'' SingleQuoteStringCharacter* '\''
+
     ;
 
+
+// Add this new fragment for multi-line string content
+fragment
+MultiLineStringCharacter
+    :   ~["]           // Any character except quote
+    |   '"' ~["]       // Single quote followed by non-quote
+    |   '""' ~["]      // Double quotes followed by non-quote
+    ;
 
 fragment
 DoubleQuoteStringCharacter
