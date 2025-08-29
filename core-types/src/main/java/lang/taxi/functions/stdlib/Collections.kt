@@ -6,6 +6,8 @@ import lang.taxi.types.QualifiedName
 object Collections {
    val functions: List<FunctionApi> = listOf(
       Contains,
+      ContainsAll,
+      ContainsAny,
       AllOf,
       AnyOf,
       NoneOf,
@@ -258,6 +260,40 @@ find {
 
       )
    )
+}
+
+object ContainsAll : FunctionApi {
+   override val taxi: String = """
+      [[
+      Returns `true` if the collection contains all the specified search targets.
+
+      ```taxi
+      // Check if a user's roles include admin privileges
+      find { user: User } as {
+         hasAdminAccess: user.roles.containsAll("ADMIN", "HR")
+      }
+      ```
+      ]]
+      declare extension function <T> containsAll(collection: T[], searchTarget:T[]): Boolean""".trimIndent()
+   override val name: QualifiedName = stdLibName("containsAll")
+
+}
+
+object ContainsAny : FunctionApi {
+   override val taxi: String = """
+      [[
+      Returns `true` if the collection contains all the specified search targets.
+
+      ```taxi
+      // Check if a user's roles include admin privileges
+      find { user: User } as {
+         hasAdminAccess: user.roles.containsAny("ADMIN", "HR")
+      }
+      ```
+      ]]
+      declare extension function <T> containsAny(collection: T[], searchTarget:T[]): Boolean""".trimIndent()
+   override val name: QualifiedName = stdLibName("containsAny")
+
 }
 
 object ExactlyOne : FunctionApi, HasRunnableExamples {
