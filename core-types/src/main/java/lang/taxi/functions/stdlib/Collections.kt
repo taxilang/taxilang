@@ -25,7 +25,9 @@ object Collections {
       JoinToString,
       IfEmpty,
       OrEmpty,
-      Append
+      Append,
+      Size,
+      IsNullOrEmpty
    )
 }
 
@@ -568,6 +570,23 @@ find {
          )
       )
    )
+}
+
+object Size : FunctionApi {
+   override val taxi: String = """
+      [[ Returns the number of elements in the collection ]]
+      declare extension function <T> size(collection:T[]):Int
+      """
+   override val name: QualifiedName = stdLibName("size")
+}
+
+object IsNullOrEmpty : FunctionApi {
+   override val taxi: String = """
+      [[ Returns true if the provided collection is either null, or contains zero elements ]]
+      declare extension function <T> isNullOrEmpty(collection:T[]):Boolean
+      """
+   override val name: QualifiedName = stdLibName("isNullOrEmpty")
+
 }
 
 object GetAtIndex : FunctionApi, HasRunnableExamples {
