@@ -5,6 +5,7 @@ import lang.taxi.types.TaxiStatementGenerator
 import lang.taxi.types.Type
 import lang.taxi.utils.quoted
 import java.math.BigDecimal
+import java.time.temporal.Temporal
 
 object NullValue {
    // This is the value that's output when this is .toString()'ed in a
@@ -34,6 +35,7 @@ data class LiteralAccessor(val value: Any, override val returnType:Type = return
    override fun asTaxi(): String {
       return when (value) {
          is String -> value.quoted()
+         is Temporal -> value.toString().quoted()
          else -> value.toString()
       }
    }
