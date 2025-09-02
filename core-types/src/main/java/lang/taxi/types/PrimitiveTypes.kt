@@ -6,6 +6,8 @@ import arrow.core.right
 import lang.taxi.sources.SourceCode
 import java.time.*
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
+import java.time.temporal.ChronoField
 import java.util.EnumSet
 
 
@@ -70,7 +72,19 @@ private object NoOpCoercer : TypeCoercer {
 private class TemporalCaster(val stringParser: (String) -> Any) : TypeCoercer {
    companion object {
       val InstantParser = { input: String ->
-         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss[.SSS][X]")
+         val formatter = DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd'T'HH:mm:ss")
+            .optionalStart()
+            .appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true)
+            .optionalEnd()
+            .optionalStart()
+            // Accepts "Z", "+01", "+01:00", etc
+            .appendOffset("+HH:MM", "Z")
+            .optionalEnd()
+            .optionalStart()
+            .appendOffset("+HHMM", "Z")    // parses Z or +hhmm
+            .optionalEnd()
+            .toFormatter()
          val parsed = formatter.parseBest(
             input,
             OffsetDateTime::from,
