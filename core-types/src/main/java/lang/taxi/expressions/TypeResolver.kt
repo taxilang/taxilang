@@ -90,11 +90,15 @@ class TypeResolver {
          // But we don't have good support for sub-types of Array, Map or Stream, so let's just set up a
          // trap for now..
          val expectedGenericTypes = setOf(ArrayType.qualifiedName, StreamType.qualifiedName, MapType.qualifiedName)
-         if (lhsType.toQualifiedName() !in expectedGenericTypes) {
+            .map { it.fullyQualifiedName }
+         // Compare based on fullyQualifiedName, as parameterized type names (or even the QualifiedName
+         // reference itself has the full nam e(eg: Array<String>), which won't be in the
+         // set of expected generic types
+         if (lhsType.toQualifiedName().fullyQualifiedName !in expectedGenericTypes) {
             log().error("Unexpected generic type ${lhsType::class.simpleName} - type resolution may not behave as expected")
          }
-         if (rhsType.toQualifiedName() !in expectedGenericTypes) {
-            log().error("Unexpected generic type ${lhsType::class.simpleName} - type resolution may not behave as expected")
+         if (rhsType.toQualifiedName().fullyQualifiedName !in expectedGenericTypes) {
+            log().error("Unexpected generic type ${rhsType::class.simpleName} - type resolution may not behave as expected")
          }
          if (lhsType !is GenericType) {
             return "Expected a generic type, but found ${lhsType.javaClass.simpleName}".left()
