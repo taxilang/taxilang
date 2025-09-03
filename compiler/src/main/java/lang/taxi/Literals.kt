@@ -43,9 +43,16 @@ fun numericLiteralValue(literal: TerminalNode): Any {
    }
 }
 fun stringLiteralValue(stringLiteral: TerminalNode): String {
-   return stringLiteral.text.removeSurrounding(stringLiteral.text.substring(0, 1))
+   val raw: String = stringLiteral.text
+   return when {
+      // Triple quotes (multi-line strings
+      raw.startsWith(TRIPLE_QUOTE) && raw.endsWith(TRIPLE_QUOTE) -> raw.removeSurrounding(TRIPLE_QUOTE)
+      // Otherwise remove either the " or '
+      else -> stringLiteral.text.removeSurrounding(stringLiteral.text.substring(0, 1))
+   }
 }
 
+private const val TRIPLE_QUOTE = "\"\"\""
 
 //fun TaxiParser.InstantOffsetExpressionContext?.intValue(): Int? {
 //   return when {
