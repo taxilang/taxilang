@@ -29,7 +29,9 @@ object Collections {
       OrEmpty,
       Append,
       Size,
-      IsNullOrEmpty
+      IsNullOrEmpty,
+      CollectAllInstances,
+
    )
 }
 
@@ -199,6 +201,25 @@ object AllOf : FunctionApi, HasRunnableExamples {
          )
       )
    )
+}
+
+object CollectAllInstances : FunctionApi {
+   override val taxi: String =
+      """[[ Collects all the instances of the provided type that are currently available in the data context.
+
+          Normally, searches for an instance of a type will return null if the search leads to ambiguous results.
+          Specifically - when not using this function:
+           - searching for instance of T will return T if exactly one item is present, or null if >1
+           - searching for an instance of T[] will return:
+              - All T instances if there are no collections present
+              - However, if there is a collection of T present (T[]), then will return it
+              - If there are multiple collections of T present (T[][]), then the search is ambiguous, and returns null
+
+
+          This  method disables ambiguity checks, and returns all known instances, including merging all collections
+          ]]
+         declare extension function <T> collectAllInstances(collection: Type<T>): T""".trimIndent()
+   override val name: QualifiedName = stdLibName("collectAllInstances")
 }
 
 object All : FunctionApi {
