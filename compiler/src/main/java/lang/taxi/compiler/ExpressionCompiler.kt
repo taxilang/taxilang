@@ -1035,37 +1035,45 @@ class ExpressionCompiler(
                errors.left()
             }
          }
-         .handleErrorWith { errors ->
-            // This is possibly a reference to a service
-            if (typeReference != null) {
-               // TODO: MP 26-Mar-25: It'd be cleaner if we didn't have to specify the symbol kind here.
-               tokenProcessor.attemptToLookupSymbolByName(
-                  typeReference.findNamespace(),
-                  typeReference.qualifiedName().identifier().text(),
-                  typeReference,
-                  SymbolKind.SERVICE
-               ).wrapErrorsInList()
-                  // If this wasn't a service, stick with the previous set of errors, as they;re more relevant
-                  .mapLeft { errors }
-                  .flatMap {
-                     tokenProcessor.typeSystem.getTokenOrError(it, typeReference, SymbolKind.SERVICE).wrapErrorsInList()
-                        // If this wasn't a service, stick with the previous set of errors, as they;re more relevant
-                        .mapLeft { errors }
-                        .flatMap { importableToken ->
-                           when (importableToken) {
-                              is Service -> ServiceExpression(
-                                 importableToken,
-                                 typeReference.toCompilationUnits()
-                              ).right()
-
-                              else -> typeReference.createCompilationError("Expected a service reference here")
-                           }
-                        }
-                  }
-            } else {
-               errors.left()
-            }
-         }
+      // MP: 15-Sep-25: The error handling here seems messed up.
+      // If we restore it, we at least need to check that the error we're getting related
+      // to services.
+      // Otherwise, we are bascially swallowing real errors.
+      // See test in ExpressionsSpec "should show a meaningful error when using the wrong operator for an array check",
+      // which shows an error we were swallowing.
+      // NOte: After commenting this block out, zero tests failed, which suggest it was doing more harm than good...
+//         .handleErrorWith { errors ->
+//            // This is possibly a reference to a service
+//            if (typeReference != null) {
+//               // TODO: MP 26-Mar-25: It'd be cleaner if we didn't have to specify the symbol kind here.
+//               tokenProcessor.attemptToLookupSymbolByName(
+//                  typeReference.findNamespace(),
+//                  typeReference.qualifiedName().identifier().text(),
+//                  typeReference,
+//                  SymbolKind.SERVICE
+//               ).wrapErrorsInList()
+//                  // If this wasn't a service, stick with the previous set of errors, as they;re more relevant
+//                  .mapLeft { errors }
+//                  .flatMap {
+//                     tokenProcessor.typeSystem.getTokenOrError(it, typeReference, SymbolKind.SERVICE).wrapErrorsInList()
+//                        // If this wasn't a service, stick with the previous set of errors, as they;re more relevant
+//                        .mapLeft { errors }
+//                        .flatMap { importableToken ->
+//                           when (importableToken) {
+//                              is Service -> ServiceExpression(
+//                                 importableToken,
+//                                 typeReference.toCompilationUnits()
+//                              ).right()
+//
+//
+//                              else -> typeReference.createCompilationError("Expected a service reference here")
+//                           }
+//                        }
+//                  }
+//            } else {
+//               errors.left()
+//            }
+//         }
    }
 
    fun canResolveAsScopePath(qualifiedName: QualifiedNameContext): Boolean {

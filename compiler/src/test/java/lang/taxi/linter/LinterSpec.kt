@@ -2,6 +2,7 @@ package lang.taxi.linter
 
 import com.google.common.io.Resources
 import com.winterbe.expekt.should
+import io.kotest.core.spec.style.DescribeSpec
 import lang.taxi.linter.rules.NoPrimitiveTypesOnModelsRule
 import lang.taxi.messages.Severity
 import lang.taxi.packages.TaxiSourcesLoader
@@ -10,7 +11,7 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.nio.file.Paths
 
-object LinterSpec : Spek({
+class LinterSpec : DescribeSpec({
    describe("simple linter evaluation") {
       it("should report a model with a primitive type") {
          val messages = """

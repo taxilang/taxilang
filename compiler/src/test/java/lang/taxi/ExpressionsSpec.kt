@@ -7,6 +7,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.accessors.Argument
 import lang.taxi.expressions.*
@@ -562,7 +563,23 @@ find {  Errors.enumForName('BadRequest').message.upperCase() }
 
             function.body!!.returnType.toQualifiedName().parameterizedName.shouldBe("lang.taxi.Array<Person>")
          }
-
+         it("should show a meaningful error when using the wrong operator for an array check") {
+val error = """
+   model Person {
+       id :PersonId inherits String
+   }
+   model PersonResponse
+   model Address
+""".compiledWithQueryProducingCompilationException("""
+   find {
+       Person[](
+            // this isn't valid, but the error we're generating needs to be clear
+           PersonId == PersonResponse::PersonId[]
+       )
+   }
+""".trimIndent())
+            error.message.shouldNotContain("Expected a service reference here")
+         }
 
       }
    }
