@@ -325,6 +325,28 @@ Returns a new collection, containing the elements of array1, then the elements o
 
 ------
 
+### collectAllInstances
+`taxi.stdlib.collectAllInstances`
+
+```taxi
+declare extension function <T> collectAllInstances(collection: Type<T>): T
+```
+
+Collects all the instances of the provided type that are currently available in the data context.
+
+         Normally, searches for an instance of a type will return null if the search leads to ambiguous results.
+         Specifically - when not using this function:
+          - searching for instance of T will return T if exactly one item is present, or null if >1
+          - searching for an instance of T[] will return:
+             - All T instances if there are no collections present
+             - However, if there is a collection of T present (T[]), then will return it
+             - If there are multiple collections of T present (T[][]), then the search is ambiguous, and returns null
+
+
+         This  method disables ambiguity checks, and returns all known instances, including merging all collections
+
+------
+
 ### contains
 `taxi.stdlib.contains`
 
@@ -355,6 +377,42 @@ undefined
   "stackId" : null
 }
 }></PlaygroundSnippet>
+
+------
+
+### containsAll
+`taxi.stdlib.containsAll`
+
+```taxi
+declare extension function <T> containsAll(collection: T[], searchTarget:T[]): Boolean
+```
+
+Returns `true` if the collection contains all the specified search targets.
+
+```taxi
+// Check if a user's roles include admin privileges
+find { user: User } as {
+   hasAdminAccess: user.roles.containsAll("ADMIN", "HR")
+}
+```
+
+------
+
+### containsAny
+`taxi.stdlib.containsAny`
+
+```taxi
+declare extension function <T> containsAny(collection: T[], searchTarget:T[]): Boolean
+```
+
+Returns `true` if the collection contains all the specified search targets.
+
+```taxi
+// Check if a user's roles include admin privileges
+find { user: User } as {
+   hasAdminAccess: user.roles.containsAny("ADMIN", "HR")
+}
+```
 
 ------
 
@@ -555,6 +613,17 @@ This example demonstrates how to use `intersection()` to find common elements be
 
 ------
 
+### isNullOrEmpty
+`taxi.stdlib.isNullOrEmpty`
+
+```taxi
+declare extension function <T> isNullOrEmpty(collection:T[]):Boolean
+```
+
+Returns true if the provided collection is either null, or contains zero elements
+
+------
+
 ### joinToString
 `taxi.stdlib.joinToString`
 
@@ -674,6 +743,17 @@ This example demonstrates how to use `noneOf()` to verify if a user lacks all sp
 
 ------
 
+### orEmpty
+`taxi.stdlib.orEmpty`
+
+```taxi
+declare extension function <T> orEmpty(source:T[]): T[]
+```
+
+If the provided source array is null, returns an empty collection
+
+------
+
 ### single
 `taxi.stdlib.single`
 
@@ -738,6 +818,17 @@ undefined
   "stackId" : null
 }
 }></PlaygroundSnippet>
+
+------
+
+### size
+`taxi.stdlib.size`
+
+```taxi
+declare extension function <T> size(collection:T[]):Int
+```
+
+Returns the number of elements in the collection
 
 ## Dates
 
