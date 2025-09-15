@@ -197,7 +197,11 @@ function startPlugin(
 
       languageClient.onReady().then(() => {
          registerProgressNotifications(languageClient);
+      })
+      .catch(err => {
+         console.error("Language client failed start:", err);
       });
+
 
       const disposable = languageClient.start();
 
