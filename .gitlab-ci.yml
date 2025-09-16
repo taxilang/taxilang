@@ -32,8 +32,8 @@ default:
    - 'export NVM_DIR="$HOME/.nvm"'
    - 'unset NPM_CONFIG_PREFIX'
    - '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm'
-   - 'nvm install 16'
-   - 'nvm use 16'
+   - 'nvm install 22'
+   - 'nvm use 22'
 
 .prepare-vscode-plugin-build: &prepare-vscode-plugin-build
    - 'cd language-server/vscode-extension'
