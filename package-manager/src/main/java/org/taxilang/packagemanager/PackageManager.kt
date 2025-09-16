@@ -109,8 +109,7 @@ class PackageManager(
          repositorySystem.collectDependencies(repositorySystemSession, request)
       } catch (e: DependencyCollectionException) {
          log().error("Failed to collect dependencies: ${e.message}")
-         throw e
-//         return emptyList()
+         throw TaxiDependencyCollectionException(projectConfig, e)
       }
 
       val artifactRequests = collectArtifactRequests(result.root.children)
@@ -122,8 +121,7 @@ class PackageManager(
          )
       } catch (e: ArtifactResolutionException) {
          log().error("Failed to resolve artifacts: ${e.message}")
-         throw e
-//         return emptyList()
+         throw TaxiArtifactResolutionException(projectConfig, e)
       }
 
       return resolved.map { processArchive(it.artifact.file) }
@@ -241,3 +239,15 @@ fun PackageIdentifier.asDependency(file: Path? = null, extension: String? = null
       "compile"
    )
 }
+
+/**
+ * A base class for configuration exceptions - covers things that happen after the
+ * project file has been read. eg., issues with dependency resolutions, etc.
+ * This extends the underlying exceptions to add access to the TaxiPackageProject
+ */
+interface TaxiConfigurationException  {
+   val project: TaxiPackageProject
+   val message: String?
+}
+class TaxiArtifactResolutionException(override val project: TaxiPackageProject, e: ArtifactResolutionException) : ArtifactResolutionException(e.results, e.message, e), TaxiConfigurationException
+class TaxiDependencyCollectionException(override val project: TaxiPackageProject, e: DependencyCollectionException) : DependencyCollectionException(e.result, e.message, e), TaxiConfigurationException
