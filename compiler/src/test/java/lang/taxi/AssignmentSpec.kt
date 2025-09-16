@@ -105,5 +105,17 @@ class AssignmentSpec : DescribeSpec({
          schema.objectType("Source").field("eventDate").type.resolveAliases().qualifiedName.should.equal("EventDate")
          schema.objectType("ThingWithInlineInstant").field("eventDate").type.resolveAliases().qualifiedName.should.equal("lang.taxi.Instant")
       }
+
+      it("is possible to assign nothing to everything") {
+         val schema = """
+            model Person {
+               id : PersonId inherits String
+            }
+         """.compiled()
+         val nothing = schema.type("lang.taxi.Nothing")
+         nothing.isAssignableTo(schema.type("Person")).shouldBeTrue()
+         nothing.isAssignableTo(schema.type("lang.taxi.Array<Person>")).shouldBeTrue()
+         nothing.isAssignableTo(PrimitiveType.VOID).shouldBeTrue()
+      }
    }
 })

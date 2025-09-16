@@ -3,7 +3,7 @@ package lang.taxi.types
 import lang.taxi.toggles.FeatureToggle
 
 
-class TypeChecker(val enabled:FeatureToggle = FeatureToggle.DISABLED) {
+class TypeChecker(val enabled: FeatureToggle = FeatureToggle.DISABLED) {
    companion object {
       val DEFAULT = TypeChecker()
    }
@@ -12,6 +12,9 @@ class TypeChecker(val enabled:FeatureToggle = FeatureToggle.DISABLED) {
       val valueTypeWithoutAliases = valueType.resolveAliases()
       val assignmentTargetTypeWithoutAliases = assignmentTargetType.resolveAliases()
 
+      if (valueTypeWithoutAliases == PrimitiveType.NOTHING) {
+         return true
+      }
       if (assignmentTargetTypeWithoutAliases == PrimitiveType.ANY) {
          return true
       }
@@ -29,7 +32,8 @@ class TypeChecker(val enabled:FeatureToggle = FeatureToggle.DISABLED) {
       // We allow naked primitives to be assigned to compatible
       // subtypes.  This allows assignments like xpath() and jsonPath() to work
       if (valueTypeWithoutAliases is PrimitiveType &&
-         assignmentTargetTypeWithoutAliases.basePrimitive == valueTypeWithoutAliases) {
+         assignmentTargetTypeWithoutAliases.basePrimitive == valueTypeWithoutAliases
+      ) {
          return true
       }
 
@@ -54,12 +58,16 @@ class TypeChecker(val enabled:FeatureToggle = FeatureToggle.DISABLED) {
       }
 
 
-
       // Variance rules (simple implementation)
       if (considerTypeParameters && valueTypeWithoutAliases.typeParameters().isNotEmpty()) {
          // To check variance rules, we check that each of the raw types are assignable.
          // This feels like a naieve implementation.
-         if (!isAssignableTo(assignmentTargetTypeWithoutAliases, valueTypeWithoutAliases, considerTypeParameters = false)) {
+         if (!isAssignableTo(
+               assignmentTargetTypeWithoutAliases,
+               valueTypeWithoutAliases,
+               considerTypeParameters = false
+            )
+         ) {
             return false
          }
          valueTypeWithoutAliases.typeParameters().forEachIndexed { index, type ->
@@ -93,7 +101,7 @@ class TypeChecker(val enabled:FeatureToggle = FeatureToggle.DISABLED) {
       }
    }
 
-   fun resolvesSameAs(typeA:Type, typeB: Type, considerTypeParameters: Boolean = true): Boolean {
+   fun resolvesSameAs(typeA: Type, typeB: Type, considerTypeParameters: Boolean = true): Boolean {
       val unaliasedTypeA = TypeAlias.underlyingType(typeA.resolveAliases())
       val unaliasedTypeB = TypeAlias.underlyingType(typeB.resolveAliases())
 
