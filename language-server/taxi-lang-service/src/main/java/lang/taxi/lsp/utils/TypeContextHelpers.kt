@@ -1,12 +1,15 @@
 package lang.taxi.lsp.utils
 
+import lang.taxi.AmbiguousNameException
 import lang.taxi.Compiler
 import lang.taxi.TaxiParser
 import lang.taxi.TaxiParser.*
+import lang.taxi.UndefinedSymbolException
 import lang.taxi.searchUpForRule
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.QualifiedName
 import org.antlr.v4.runtime.ParserRuleContext
+import java.lang.Exception
 
 fun QualifiedName.isPrimitiveType(): Boolean {
    return PrimitiveType.isPrimitiveType(this.fullyQualifiedName)
@@ -21,23 +24,29 @@ fun getFieldDeclaration(context: ParserRuleContext?): TaxiParser.FieldTypeDeclar
 }
 
 fun getFieldType(context: ParserRuleContext, compiler: Compiler): QualifiedName? {
-   val typeContext = when (context) {
-      // The cursor is on the field name
-      is TaxiParser.IdentifierContext,
-      is ColumnDefinitionContext,
-      is ParameterConstraintContext, // when we're building an expression on a field
-      is ScalarAccessorExpressionContext, // when we're building an expression on a field
-      is ColumnIndexContext -> {
-         // When we're defining types
-         context.searchUpForRule<TaxiParser.FieldDeclarationContext>()?.fieldTypeDeclaration()?.typeExpression()?.nullableTypeReference()
-            ?.typeReference()
-         // when we're writing a query in a find<> block
-            ?: context.searchUpForRule<TypeReferenceContext>()
+   val typeContext = try {
+      when (context) {
+         // The cursor is on the field name
+         is TaxiParser.IdentifierContext,
+         is ColumnDefinitionContext,
+         is ParameterConstraintContext, // when we're building an expression on a field
+         is ScalarAccessorExpressionContext, // when we're building an expression on a field
+         is ColumnIndexContext -> {
+            // When we're defining types
+            context.searchUpForRule<TaxiParser.FieldDeclarationContext>()?.fieldTypeDeclaration()?.typeExpression()?.nullableTypeReference()
+               ?.typeReference()
+            // when we're writing a query in a find<> block
+               ?: context.searchUpForRule<TypeReferenceContext>()
 
+         }
+
+         is ArrayMarkerContext -> context.searchUpForRule<TypeReferenceContext>()!!
+         else -> return null
       }
-
-      is ArrayMarkerContext -> context.searchUpForRule<TypeReferenceContext>()!!
-      else -> return null
+   } catch (e:AmbiguousNameException) {
+      return null
+   } catch (e: UndefinedSymbolException) {
+      return null
    }
    return typeContext?.let { compiler.lookupTypeByName(it) }
 }
