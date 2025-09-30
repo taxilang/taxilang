@@ -31,6 +31,7 @@ object Collections {
       Size,
       IsNullOrEmpty,
       CollectAllInstances,
+      IndexOfItem
 
    )
 }
@@ -644,6 +645,15 @@ object IsNullOrEmpty : FunctionApi {
       """
    override val name: QualifiedName = stdLibName("isNullOrEmpty")
 
+}
+
+// Named to disambiguate between String.IndexOf and Array.IndexOf
+object IndexOfItem : FunctionApi {
+   override val taxi: String = """
+      [[ Returns the index of an item within a collection, or -1 if the item was not found ]]
+      declare extension function <T> indexOfItem(collection:T[], searchItem: T):Int
+      """
+   override val name: QualifiedName = stdLibName("indexOfItem")
 }
 
 object GetAtIndex : FunctionApi, HasRunnableExamples {

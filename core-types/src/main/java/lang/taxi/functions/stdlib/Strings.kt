@@ -17,7 +17,7 @@ object Strings {
       Lowercase,
       Trim,
       Length,
-      Find,
+      IndexOf,
       Replace,
       ContainsString,
       ContainsPattern,
@@ -110,7 +110,7 @@ object Length : FunctionApi {
    override val name: QualifiedName = stdLibName("length")
 }
 
-object Find : FunctionApi {
+object IndexOf : FunctionApi {
    override val taxi: String = """
          [[ Returns the index of `valueToSearchFor` within `source` ]]
          declare extension function indexOf(source:String, valueToSearchFor:String):Int""".trimIndent()
