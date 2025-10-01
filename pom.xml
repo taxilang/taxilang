@@ -156,7 +156,16 @@
          <version>3.24.2</version>
          <scope>test</scope>
       </dependency>
-
+      <dependency>
+         <groupId>io.kotest</groupId>
+         <artifactId>kotest-runner-junit5-jvm</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>io.kotest</groupId>
+         <artifactId>kotest-assertions-core-jvm</artifactId>
+         <scope>test</scope>
+      </dependency>
 
    </dependencies>
 
@@ -289,7 +298,7 @@
                <includes>
                   <include>Test*</include>
                   <include>*Tests</include>
-                  <include>*Tests</include>
+                  <include>*Test</include>
                   <include>*Spec</include>
                   <include>*Spek</include>
                </includes>

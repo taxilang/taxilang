@@ -57,10 +57,10 @@ namespace vyne.demo {
     }
 
     service CreditCostService {
-        @HttpOperation(method = "GET" , url = "http://my-app/costs/interestRates/{vyne.demo.ClientId}")
+        @taxi.http.HttpOperation(method = "GET" , url = "http://my-app/costs/interestRates/{vyne.demo.ClientId}")
         operation getInterestRate(  clientId: ClientId ) : Decimal
-        @HttpOperation(method = "POST" , url = "http://my-app/costs/{vyne.demo.ClientId}/doCalculate")
-        operation calculateCreditCosts(  clientId: ClientId, @RequestBody request: CreditCostRequest ) : CreditCostResponse
+        @taxi.http.HttpOperation(method = "POST" , url = "http://my-app/costs/{vyne.demo.ClientId}/doCalculate")
+        operation calculateCreditCosts(  clientId: ClientId, @taxi.http.RequestBody request: CreditCostRequest ) : CreditCostResponse
     }
 }
         """.trimIndent()

@@ -3,6 +3,7 @@ package lang.taxi.cli.utils
 import com.winterbe.expekt.should
 import io.kotest.matchers.shouldBe
 import lang.taxi.packages.TaxiPackageProject
+import lang.taxi.utils.trimEmptyLines
 import lang.taxi.writers.ConfigWriter
 import org.junit.jupiter.api.Test
 
@@ -12,12 +13,15 @@ class ConfigWriterTest {
    fun generatesExpectedConfig() {
       val project = TaxiPackageProject("foo/bar", version = "0.1.0", sourceRoot = "src/")
       val output = ConfigWriter().writeMinimal(project)
+        .trimEmptyLines()
       val expected = """name: foo/bar
 version: 0.1.0
 sourceRoot: src/
-additionalSources: {}
-dependencies: {}
+additionalSources: {
+}
+dependencies: {
+}
 """
-      output.shouldBe(expected)
+      output.shouldBe(expected.trimEmptyLines())
    }
 }

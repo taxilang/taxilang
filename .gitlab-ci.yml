@@ -284,7 +284,7 @@ publish-snapshot-jars:
         if git status --porcelain | grep -q "$STDLIB_FILE" || git diff --cached --name-only | grep -q "$STDLIB_FILE"; then
           echo "Changes detected in stdlib.mdx, committing back to repository"
           git add "$STDLIB_FILE"
-          git commit -m "chore(docs): update stdlib.mdx from build process"
+          git commit -m "chore(docs): update stdlib.mdx from build process [skip ci]"
           git push origin HEAD:${CI_COMMIT_REF_NAME}
         else
           echo "No changes detected in stdlib.mdx"

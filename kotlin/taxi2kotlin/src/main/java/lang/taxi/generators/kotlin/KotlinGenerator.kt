@@ -194,7 +194,7 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName: String = "taxi.g
             }.build()
          )
          .addProperties(properties)
-      if (type.inheritsFrom.size == 1) {
+      if (type.inheritsFrom.filterNot { it == PrimitiveType.ANY }.size == 1) {
          val superType = type.inheritsFrom.first()
          if (willGenerateAsInterface(superType)) {
             specBuilder.addSuperinterface(getJavaType(superType))
