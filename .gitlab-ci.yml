@@ -277,6 +277,21 @@ publish-snapshot-jars:
       #      - 'apk add gnupg'
       #      - gpg -v --import <(echo "$GPG_PRIVATE_KEY")
       - 'mvn $MAVEN_CLI_OPTS deploy -P snapshot-release,orbital-repo'
+      # Check for changes to stdlib.mdx and commit them back
+      - *git_setup
+      - |
+        if git diff --name-only | grep -q "docs2.0/src/pages/docs/language/stdlib.mdx"; then
+          echo "Changes detected in stdlib.mdx, committing back to repository"
+          git add docs2.0/src/pages/docs/language/stdlib.mdx
+          git commit -m "chore(docs): update stdlib.mdx from build process
+
+          🤖 Generated with [Claude Code](https://claude.ai/code)
+
+          Co-Authored-By: Claude <noreply@anthropic.com>"
+          git push origin HEAD:${CI_COMMIT_REF_NAME}
+        else
+          echo "No changes detected in stdlib.mdx"
+        fi
    services:
       -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
          alias: docker
