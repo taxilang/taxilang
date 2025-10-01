@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.winterbe.expekt.expect
 import com.winterbe.expekt.should
+import io.kotest.matchers.shouldBe
 import lang.taxi.Compiler
 import lang.taxi.generators.TaxiProjectEnvironment
 import lang.taxi.packages.TaxiPackageProject
@@ -70,13 +71,13 @@ object TypeNames {
   const val Person: String = "Person"
 }
 """.trimNewLines()
-      expect(output).to.equal(expected)
+      output.shouldBe(expected)
    }
 
    @Test
    fun givenTypeHasTypeAlias_then_itIsGenerated() {
       val taxi = """
-namespace vyne {
+namespace foo {
     type Person {
         firstName : FirstName inherits String
         lastName : LastName inherits String
@@ -87,10 +88,10 @@ namespace vyne {
         """.trimIndent()
       val output = compileAndGenerate(taxi).trimNewLines()
       val expected = """
-package vyne
+package foo
 
 import lang.taxi.annotations.DataType
-import taxi.generated.TypeNames.vyne.Person
+import taxi.generated.TypeNames.foo.Person
 
 @DataType(
   value = Person,
@@ -103,11 +104,11 @@ open class Person(
   val living: IsAlive
 )
 
-package vyne
+package foo
 
 import kotlin.String
 import lang.taxi.annotations.DataType
-import taxi.generated.TypeNames.vyne.FirstName
+import taxi.generated.TypeNames.foo.FirstName
 
 @DataType(
   value = FirstName,
@@ -115,11 +116,11 @@ import taxi.generated.TypeNames.vyne.FirstName
 )
 typealias FirstName = String
 
-package vyne
+package foo
 
 import kotlin.String
 import lang.taxi.annotations.DataType
-import taxi.generated.TypeNames.vyne.LastName
+import taxi.generated.TypeNames.foo.LastName
 
 @DataType(
   value = LastName,
@@ -127,11 +128,11 @@ import taxi.generated.TypeNames.vyne.LastName
 )
 typealias LastName = String
 
-package vyne
+package foo
 
 import kotlin.Int
 import lang.taxi.annotations.DataType
-import taxi.generated.TypeNames.vyne.Age
+import taxi.generated.TypeNames.foo.Age
 
 @DataType(
   value = Age,
@@ -139,11 +140,11 @@ import taxi.generated.TypeNames.vyne.Age
 )
 typealias Age = Int
 
-package vyne
+package foo
 
 import kotlin.Boolean
 import lang.taxi.annotations.DataType
-import taxi.generated.TypeNames.vyne.IsAlive
+import taxi.generated.TypeNames.foo.IsAlive
 
 @DataType(
   value = IsAlive,
@@ -156,26 +157,26 @@ package taxi.generated
 import kotlin.String
 
 object TypeNames {
-  object vyne {
-    const val Person: String = "vyne.Person"
+  object foo {
+    const val Person: String = "foo.Person"
 
-    const val FirstName: String = "vyne.FirstName"
+    const val FirstName: String = "foo.FirstName"
 
-    const val LastName: String = "vyne.LastName"
+    const val LastName: String = "foo.LastName"
 
-    const val Age: String = "vyne.Age"
+    const val Age: String = "foo.Age"
 
-    const val IsAlive: String = "vyne.IsAlive"
+    const val IsAlive: String = "foo.IsAlive"
   }
 }
 """.trimNewLines()
-      expect(output).to.equal(expected)
+      output.shouldBe(expected)
    }
 
    @Test
    fun generatesArraysAsLists() {
       val taxi = """
-namespace vyne {
+namespace com.foo {
     type Person {
         firstName : String
         friends : Person[]
@@ -184,12 +185,12 @@ namespace vyne {
 """.trimIndent()
       val output = compileAndGenerate(taxi).trimNewLines()
       val expected = """
-package vyne
+package com.foo
 
 import kotlin.String
 import kotlin.collections.List
 import lang.taxi.annotations.DataType
-import taxi.generated.TypeNames.vyne.Person
+import taxi.generated.TypeNames.com.foo.Person
 
 @DataType(
   value = Person,
@@ -205,11 +206,13 @@ package taxi.generated
 import kotlin.String
 
 object TypeNames {
-  object vyne {
-    const val Person: String = "vyne.Person"
+  object com {
+    object foo {
+      const val Person: String = "com.foo.Person"
+    }
   }
 }""".trimNewLines()
-      expect(output).to.equal(expected)
+      output.shouldBe(expected)
    }
 
    @Test
@@ -299,7 +302,7 @@ object TypeNames {
   const val Gender: String = "Gender"
 }
 """.trimNewLines()
-      expect(output).to.equal(expected)
+      output.shouldBe(expected)
    }
 
    @Test

@@ -227,3 +227,4 @@ fun error(message: String, expected: Any?, actual: Any?) =
 fun String.shouldCompileTheSameAs(expected: String): TaxiDocument {
    return TestHelpers.expectToCompileTheSame(listOf(this), expected)
 }
+

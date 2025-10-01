@@ -65,7 +65,7 @@ class HttpExtensionTest {
                id:FilmId
             }
             service FilmApi {
-               @HttpOperation(method = "GET", url="http://my-app/film/{lang.taxi.generators.java.spring.FilmId}")
+               @taxi.http.HttpOperation(method = "GET", url="http://my-app/film/{lang.taxi.generators.java.spring.FilmId}")
                operation lookupFilm(filmId : FilmId):Film
             }
          }
@@ -93,10 +93,10 @@ namespace vyne.demo {
     }
 
     service CreditCostService {
-        @HttpOperation(method = "GET" , url = "http://my-app/costs/interestRates/{vyne.demo.ClientId}")
+        @taxi.http.HttpOperation(method = "GET" , url = "http://my-app/costs/interestRates/{vyne.demo.ClientId}")
         operation getInterestRate(  clientId: ClientId ) : Decimal
-        @HttpOperation(method = "POST" , url = "http://my-app/costs/{vyne.demo.ClientId}/doCalculate")
-        operation calculateCreditCosts(  clientId: ClientId, @RequestBody request: CreditCostRequest ) : CreditCostResponse
+        @taxi.http.HttpOperation(method = "POST" , url = "http://my-app/costs/{vyne.demo.ClientId}/doCalculate")
+        operation calculateCreditCosts(  clientId: ClientId, @taxi.http.RequestBody request: CreditCostRequest ) : CreditCostResponse
     }
 }
         """.trimIndent()
@@ -126,7 +126,7 @@ namespace lang.taxi.generators.java.spring {
    type FilmId inherits Int
 
    service MyService {
-      @HttpOperation(method = "GET" , url = "http://my-app/films")
+      @taxi.http.HttpOperation(method = "GET" , url = "http://my-app/films")
       operation film1(  ) : Film
    }
 }
@@ -166,13 +166,13 @@ namespace lang.taxi.generators.java.spring {
    type FilmId inherits Int
 
    service MyService {
-      @HttpOperation(method = "GET" , url = "http://my-app/films")
+      @taxi.http.HttpOperation(method = "GET" , url = "http://my-app/films")
       operation filmWithResponseEntity(  ) : Film
-      @HttpOperation(method = "GET" , url = "http://my-app/films-flux")
+      @taxi.http.HttpOperation(method = "GET" , url = "http://my-app/films-flux")
       operation filmWithFlux(  ) : Film[]
-      @HttpOperation(method = "GET" , url = "http://my-app/films-mono")
+      @taxi.http.HttpOperation(method = "GET" , url = "http://my-app/films-mono")
       operation filmWithMono(  ) : Film
-      @HttpOperation(method = "GET" , url = "http://my-app/films-flow")
+      @taxi.http.HttpOperation(method = "GET" , url = "http://my-app/films-flow")
       operation filmWithFlow(  ) : Film[]
    }
 }

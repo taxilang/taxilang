@@ -2,7 +2,11 @@ package lang.taxi.generators.avro
 
 import com.google.common.io.Resources
 import com.winterbe.expekt.should
+import io.kotest.matchers.shouldBe
+import lang.taxi.TaxiDocument
+import lang.taxi.testing.TestHelpers
 import lang.taxi.testing.shouldCompileTheSameAs
+import lang.taxi.withoutWhitespace
 import org.junit.jupiter.api.Test
 import kotlin.io.path.toPath
 
@@ -14,8 +18,8 @@ class TaxiGeneratorTest {
          .toURI().toPath()
       val generated = TaxiGenerator()
          .generate(avroFile)
-      generated.concatenatedSource.shouldCompileTheSameAs(
-         """
+val concatenatedSource = generated.concatenatedSource.removeEmptyLines()
+   concatenatedSource.shouldBe("""
 namespace simple {
    [[ A full addressbook of people ]]
    @lang.taxi.formats.AvroMessage
@@ -53,8 +57,8 @@ namespace simple.addressbook.people.phones {
       HOME(1),
       WORK(2)
    }
-}""".trimIndent()
-      )
+}""".trimIndent().removeEmptyLines()
+         )
    }
 
 
@@ -215,4 +219,15 @@ namespace com.example.stagehand {
       """.trimIndent()
       concatenatedSource.shouldCompileTheSameAs(expected)
    }
+}
+
+
+fun List<String>.shouldCompileTheSameAsListOf(expected: List<String>): TaxiDocument {
+   return TestHelpers.expectToCompileTheSame(this, expected)
+}
+
+private fun String.removeEmptyLines():String {
+   return this.lines()
+      .filter { it.isNotBlank() }
+      .joinToString("\n")
 }
