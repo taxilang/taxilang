@@ -2366,7 +2366,8 @@ class TokenProcessor(
                "${enumType.qualifiedName} does not have a member $enumValueName"
             ).asList().left()
 
-            else -> enumType.member(enumValueName).right()
+            else -> enumType.member(enumValueName)
+               .mapLeft { listOf(CompilationError(token.start, it)) }
          }
       }
    }

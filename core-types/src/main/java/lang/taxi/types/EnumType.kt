@@ -331,9 +331,9 @@ data class EnumType(
          ?: defaultValue
          ?: error("Enum ${this.qualifiedName} does not contain either a name nor a value of $valueOrName")
 
-   fun member(valueOrName: Any?): EnumMember {
-      return members[this.of(valueOrName)]
-         ?: error("Enum ${this.qualifiedName} does nto contain a member with either name or value of $valueOrName")
+   fun member(valueOrName: Any?): Either<String,EnumMember> {
+      return members[this.of(valueOrName)]?.right()
+         ?: "Enum ${this.qualifiedName} does not contain a member with either name or value of $valueOrName".left()
    }
 
    private fun valueExtensions(valueName: String): List<EnumValueExtension> {
