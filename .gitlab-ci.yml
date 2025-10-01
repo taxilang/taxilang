@@ -280,14 +280,11 @@ publish-snapshot-jars:
       # Check for changes to stdlib.mdx and commit them back
       - *git_setup
       - |
-        if git diff --name-only | grep -q "docs2.0/src/pages/docs/language/stdlib.mdx"; then
+        STDLIB_FILE="docs2.0/src/pages/docs/language/stdlib.mdx"
+        if git status --porcelain | grep -q "$STDLIB_FILE" || git diff --cached --name-only | grep -q "$STDLIB_FILE"; then
           echo "Changes detected in stdlib.mdx, committing back to repository"
-          git add docs2.0/src/pages/docs/language/stdlib.mdx
-          git commit -m "chore(docs): update stdlib.mdx from build process
-
-          🤖 Generated with [Claude Code](https://claude.ai/code)
-
-          Co-Authored-By: Claude <noreply@anthropic.com>"
+          git add "$STDLIB_FILE"
+          git commit -m "chore(docs): update stdlib.mdx from build process"
           git push origin HEAD:${CI_COMMIT_REF_NAME}
         else
           echo "No changes detected in stdlib.mdx"
