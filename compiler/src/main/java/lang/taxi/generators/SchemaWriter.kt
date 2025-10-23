@@ -8,6 +8,7 @@ import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.*
 import lang.taxi.types.Annotation
 import lang.taxi.utils.trimEmptyLines
+import org.http4k.appendIfNotBlank
 
 
 open class SchemaWriter(
@@ -270,6 +271,16 @@ ${scope}operation $operationName( $params )$returnDeclaration""".trimIndent()
 
    private fun generateEnumDeclaration(type: EnumType, currentNamespace: String): String {
       val enumDocs = type.typeDoc.asTypeDocBlock()
+
+      if (type.inheritsFrom.isNotEmpty() && type.inheritsFrom.first() != PrimitiveType.ANY) {
+         // This is an inherited enum
+         // We just output the inheritence, as all the values come from the base typpe
+         return buildString {
+            appendLine(enumDocs)
+            appendLine("""${generateAnnotations(type).appendNewlineIfNotEmpty()} enum ${type.toQualifiedName().typeName}${getInheritanceString(type, currentNamespace)}""")
+         }.trimEmptyLines()
+      }
+
       val enumValueDeclarations = type.values.map { enumValue ->
          val enumValueTypedoc = enumValue.typeDoc.asTypeDocBlock()
          val enumValueDeclaration = if (enumValue.name != enumValue.value) {
@@ -330,7 +341,7 @@ $enumValueDeclarations
          .trimEmptyLines()
    }
 
-   private fun getInheritanceString(type: ObjectType, currentNamespace: String): String {
+   private fun getInheritanceString(type: Type, currentNamespace: String): String {
       val declaredInheritance = type.inheritsFrom.filter { it != PrimitiveType.ANY }
       return if (declaredInheritance.isEmpty()) {
          ""

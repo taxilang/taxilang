@@ -17,6 +17,21 @@ data class GeneratedTaxiCode(
    val errorCount = messages.errorCount
    val warningCount = messages.warningCount
    val concatenatedSource = taxi.joinToString("\n")
+   companion object {
+      val DEFAULT_EXCLUDED_NAMESPACES = listOf(
+         "org.w3",
+         "taxi.stdlib",
+         "lang.taxi.xml"
+      )
+   }
+
+   fun concatenatedSourceExcludingNamespaces(namespacesToExclude:List<String> = DEFAULT_EXCLUDED_NAMESPACES) : String {
+      return taxi.filterNot { source -> namespacesToExclude.any { namespace ->
+         source.contains("namespace $namespace {")
+      } }.joinToString("\n")
+   }
+
+
 }
 
 typealias SourceFileName = String
