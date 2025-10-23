@@ -22,6 +22,9 @@ data class TypeDefinitionHelper private constructor(private val hints: List<Type
       }
    }
 
+   val isDefiningField = hints.any { it is FieldName }
+   val hasExplicitName = hints.any { it is SchemaMetadataTaxiDefinition }
+
    fun declaresNewType(declarationLocation: SchemaTypeDeclaration.DeclarationLocation): Boolean {
       // We take the most recently appended TypeDeclarationHint
       val mostRecentDefinition = this.hints.reversed()
@@ -80,6 +83,7 @@ interface TypeNameHint : TypeDefinitionHint{
 }
 
 data class NamespacedType(val namespace: String, val typeName: String) : TypeNameHint {
+   constructor(qualifiedName: QualifiedName) : this(qualifiedName.namespace, qualifiedName.typeName)
    override fun decorateName(name: QualifiedName?): QualifiedName? {
       if (name == null) return QualifiedName(namespace, typeName)
       TODO("How does NamespacedType decorate?")

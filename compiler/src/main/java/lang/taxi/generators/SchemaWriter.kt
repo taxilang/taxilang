@@ -285,7 +285,7 @@ ${scope}operation $operationName( $params )$returnDeclaration""".trimIndent()
 ${generateAnnotations(enumValue)} ${enumValue.name.reservedWordEscaped()}$enumValueDeclaration${synonymDeclaration}""".trim().trimEmptyLines()
       }.joinToString(",\n").prependIndent()
       return """$enumDocs
-${generateAnnotations(type)} enum ${type.toQualifiedName().typeName} {
+${generateAnnotations(type).appendNewlineIfNotEmpty()} enum ${type.toQualifiedName().typeName} {
 $enumValueDeclarations
 }
         """.trimEmptyLines()
@@ -392,6 +392,14 @@ $enumValueDeclarations
          offset != null -> """@offset = $offset"""
          else -> ""
       }
+   }
+}
+
+private fun String.appendNewlineIfNotEmpty(): String {
+   return if (this.isBlank()) {
+      this
+   } else {
+      this + "\n"
    }
 }
 
