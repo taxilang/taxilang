@@ -67,7 +67,7 @@ data class XsdReaderConfig(
     *   "http://www.fsa.gov.uk/XMLSchema/FSAFeedCommon-v1-2" to Paths.get("./fsa-feed-common.xsd")
     * )
     */
-   val xsdImportOverrides: Map<String, Path>,
+   val xsdImportOverrides: Map<String, Path> = emptyMap(),
    val defaultModelModifiers: List<Modifier> = listOf(Modifier.CLOSED)
 ) {
    fun makeFilePathsRelativeTo(
