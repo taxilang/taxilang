@@ -17,6 +17,9 @@ object SchemaNames {
    }
 
    private fun tryParseAsUri(schemaNamespace: String): String? {
+      if (schemaNamespace.isEmpty()) {
+         return ""
+      }
       try {
          val uri = URI.create(schemaNamespace)
          if (uri.scheme == "urn") {

@@ -3,6 +3,7 @@ title: XML Integration
 description: Learn how to define XML formats and mappings in Taxi
 ---
 
+
 import { Callout } from '@/components/docs/Callout';
 
 ## Overview
@@ -13,7 +14,11 @@ Taxi provides XML format support through model annotations, enabling:
 - Collection handling
 - Expression evaluation
 
-## Declaring XML Models
+## Describing XML using Taxi
+
+It's possible to model XML structures directly in Taxi.
+
+If you're working with an existing schema - such as an Xsd, you may prefer [adding type definitions into your XSD](#adding-taxi-types-to-an-xsd)
 
 Add the `Xml` annotation to models that represent XML data:
 
@@ -27,7 +32,7 @@ Add the `Xml` annotation to models that represent XML data:
   }
 ```
 
-## Attributes vs Elements
+### Attributes vs Elements
 
 By default, fields are mapped to XML elements. To map a field to an XML attribute:
 
@@ -52,7 +57,7 @@ Results in:
 </Actor>
 ```
 
-## Collections
+### Collections
 
 Array fields automatically map to repeated XML elements:
 
@@ -78,7 +83,7 @@ Results in:
 </Movie>
 ```
 
-## Expressions
+### Expressions
 
 Models can include computed fields using expressions:
 
@@ -96,3 +101,188 @@ Models can include computed fields using expressions:
 
 ### Expression Handling
 - When serializing: Expression values are written as normal elements
+
+
+## Generating taxi from an Xsd
+The taxi compiler will generate a Taxi from an XSD document .
+
+```xml
+<xsd:schema 
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:taxi="http://taxilang.org/"
+  targetNamespace="http://tempuri.org/PurchaseOrderSchema.xsd">
+  
+  <xsd:complexType name="CountryInfo">
+    <xsd:sequence>
+      <!-- Create new semantic type -->
+      <xsd:element name="ISOCode" type="xsd:string" 
+                   taxi:createsType="com.foo.IsoCode"/>
+      
+      <!-- Reference existing semantic type -->
+      <xsd:element name="Name" type="xsd:string" 
+                   taxi:type="com.foo.CountryName"/>
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>
+```
+
+
+<Callout type="note" title="Namespace URL">
+  Note the trailing slash in the namespace URL - `xmlns:taxi="http://taxilang.org/` is required.
+</Callout>
+
+### Adding type annotations
+
+Use the `taxi:type` annotation within your XSD elements to map fields to **existing** types:
+
+```xml
+<xsd:complexType name="CountryInfo">
+   <xsd:sequence>
+      <xsd:element name="ISOCode" type="xsd:string" taxi:type="com.foo.IsoCode"/>
+      <xsd:element name="Name" type="xsd:string" taxi:type="com.foo.CountryName"/>
+      <xsd:element name="CapitalCity" type="xsd:string" taxi:type="com.foo.CapitalCityName" />
+   </xsd:sequence>
+</xsd:complexType>
+```
+
+Would generate:
+
+```taxi
+namespace org.tempuri {
+   closed model CountryInfo {
+      ISOCode : com.foo.IsoCode
+      Name : com.foo.CountryName
+      CapitalCity : com.foo.CapitalCityName
+   }
+}
+```
+
+Note that the type definitions for field types are not declared - it's expected these types exist elsewhere in your taxonomy
+
+### Mapping to an new type
+Use the `taxi:createType` annotation within your XSD elements to map fields to **new** types, which generates the type definitions as well as the corresponding model.
+
+```xml
+<xsd:complexType name="CountryInfo">
+   <xsd:sequence>
+      <xsd:element name="ISOCode" type="xsd:string" 
+        taxi:createType="com.foo.IsoCode"/>
+      <xsd:element name="Name" type="xsd:string" 
+        taxi:createType="com.foo.CountryName"/>
+      <xsd:element name="CapitalCity" type="xsd:string" 
+        taxi:createType="com.foo.CapitalCityName" />
+   </xsd:sequence>
+</xsd:complexType>
+```
+
+Would generate:
+
+```taxi
+namespace com.foo {
+   type IsoCode inherits String
+   type CountryName inherits String
+   type CapitalCityName inherits String
+}
+
+namespace org.tempuri {
+   closed model CountryInfo {
+      ISOCode : com.foo.IsoCode
+      Name : com.foo.CountryName
+      CapitalCity : com.foo.CapitalCityName
+   }
+}
+```
+
+### Nullable vs Mandatory fields
+Optional elements (minOccurs="0") generate nullable fields:
+
+```xml
+<!-- Optional field -->
+<xsd:element name="nickname" minOccurs="0" type="xsd:string"/>
+```
+
+Generates:
+```taxi
+nickname : String?  // Nullable
+```
+
+Required attributes generate non-nullable fields:
+
+```xml
+<xsd:attribute name="OrderDate" type="xsd:date" use="required"/>
+```
+
+Generates:
+```taxi
+@lang.taxi.xml.XmlAttribute 
+OrderDate : Date  // Non-nullable
+```
+
+### Enums
+
+XSD enumerations become Taxi enums:
+
+```xml
+<xsd:simpleType name="MandateClassification1Code">
+  <xsd:restriction base="xsd:string">
+    <xsd:enumeration value="FIXE"/>
+    <xsd:enumeration value="USGB"/>
+    <xsd:enumeration value="VARI"/>
+  </xsd:restriction>
+</xsd:simpleType>
+```
+
+```taxi
+enum MandateClassification1Code {
+   FIXE,
+   USGB,
+   VARI
+}
+```
+
+Enum values with spaces are automatically normalized:
+
+```xml
+<xsd:enumeration value="FOO BAR"/>
+```
+
+```taxi
+enum MandateClassification1Code {
+   FOO_BAR("FOO BAR")  // Name normalized, original value preserved
+}
+```
+
+### Documentation
+
+XSD documentation annotations are preserved in generated Taxi:
+
+```xml
+<xsd:attribute name="OrderDate" type="xsd:date">
+  <xsd:annotation>
+    <xsd:documentation>The date for an order</xsd:documentation>
+  </xsd:annotation>
+</xsd:attribute>
+```
+
+```taxi
+[[ The date for an order ]]
+@lang.taxi.xml.XmlAttribute
+OrderDate : Date?
+```
+
+## Xml types and Taxi types
+
+XSD primitive types map to Taxi types:
+
+| XSD Type     | Taxi Type |
+|--------------|-----------|
+| xsd:string   | String    |
+| xsd:integer  | Int       |
+| xsd:int      | Int       |
+| xsd:long     | Long      |
+| xsd:decimal  | Decimal   |
+| xsd:double   | Double    |
+| xsd:boolean  | Boolean   |
+| xsd:date     | Date      |
+| xsd:dateTime | DateTime  |
+| xsd:time     | Time      |

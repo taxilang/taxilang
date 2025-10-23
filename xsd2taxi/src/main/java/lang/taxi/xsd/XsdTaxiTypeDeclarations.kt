@@ -1,6 +1,7 @@
 package lang.taxi.xsd
 
 import com.sun.xml.xsom.ForeignAttributes
+import lang.taxi.generators.SchemaMetadataTaxiDefinition
 import lang.taxi.types.QualifiedName
 
 object XsdTaxiTypeDeclarations {
@@ -22,19 +23,19 @@ object XsdTaxiTypeDeclarations {
       return null
    }
 
-   private fun getTaxiTypeReference(foreignAttributes: ForeignAttributes): TaxiTypeReference? {
+   private fun getTaxiTypeReference(foreignAttributes: ForeignAttributes): SchemaMetadataTaxiDefinition? {
       val createdTypeName = foreignAttributes.getValueIfPresent(TAXI_XSD_NAMESPACE, CREATE_TYPE_SHORTHAND)
       if (createdTypeName != null) {
-         return TaxiTypeReference(QualifiedName.from(createdTypeName), true)
+         return SchemaMetadataTaxiDefinition(QualifiedName.from(createdTypeName), true)
       }
       val typeName: String = foreignAttributes.getValueIfPresent(TAXI_XSD_NAMESPACE, TYPE_DECLARATION) ?: return null
       val declaresCreation = foreignAttributes.getValueIfPresent(TAXI_XSD_NAMESPACE, CREATE)
          ?.toBoolean() ?: false
-      return TaxiTypeReference(QualifiedName.from(typeName), declaresCreation)
+      return SchemaMetadataTaxiDefinition(QualifiedName.from(typeName), declaresCreation)
    }
 
 
-   fun getTaxiTypeReference(foreignAttributesList: List<ForeignAttributes>): TaxiTypeReference? {
+   fun getTaxiTypeReference(foreignAttributesList: List<ForeignAttributes>): SchemaMetadataTaxiDefinition? {
       return foreignAttributesList
          .asSequence()
          .mapNotNull { getTaxiTypeReference(it) }
@@ -49,6 +50,7 @@ object XsdTaxiTypeDeclarations {
 
 }
 
+@Deprecated("Use SchemaMetadataTaxiDefinition")
 data class TaxiTypeReference(
    val typeName: QualifiedName,
    /**
