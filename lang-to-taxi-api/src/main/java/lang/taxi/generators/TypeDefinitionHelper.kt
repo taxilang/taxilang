@@ -25,6 +25,12 @@ data class TypeDefinitionHelper private constructor(private val hints: List<Type
    val isDefiningField = hints.any { it is FieldName }
    val hasExplicitName = hints.any { it is SchemaMetadataTaxiDefinition }
 
+   /**
+    * When parsing a type, indicates if we should consider creating a sepearte
+    * semantic subtype of this type
+    */
+   val considerCreatingSemanticSubtype = isDefiningField && !hasExplicitName
+
    fun declaresNewType(declarationLocation: SchemaTypeDeclaration.DeclarationLocation): Boolean {
       // We take the most recently appended TypeDeclarationHint
       val mostRecentDefinition = this.hints.reversed()

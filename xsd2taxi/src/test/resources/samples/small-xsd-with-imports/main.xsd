@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="http://example.com/main"
+           xmlns:cmn="http://example.com/common"
+           targetNamespace="http://example.com/main"
+           elementFormDefault="qualified">
+
+    <xs:import namespace="http://example.com/common"
+               schemaLocation="http://example.com/common-types.xsd"/>
+
+    <xs:element name="Document">
+        <xs:complexType>
+            <xs:sequence>
+                <!-- Element REFERENCE - keeps common namespace -->
+                <xs:element ref="cmn:Header"/>
+                <!-- Element DECLARATION - gets main namespace -->
+                <xs:element name="Item" type="ItemType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="ItemType">
+        <xs:sequence>
+            <!-- Local element declarations - get main namespace
+                 but use types from common namespace -->
+            <xs:element name="IsActive" type="cmn:YNType"/>
+            <xs:element name="PurchasePrice" type="cmn:HSFStdSterlingAmountType" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>Purchase price of property, as stated on application form.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>

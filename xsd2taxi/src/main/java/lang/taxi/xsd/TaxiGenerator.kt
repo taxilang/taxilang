@@ -165,6 +165,10 @@ class TaxiGenerator(
       return generateAsStrings(source.inputStream())
    }
 
+   private fun shouldCreateSemanticSubtype(type: XSType, typeDefinitionHelper: TypeDefinitionHelper): Boolean {
+      return typeDefinitionHelper.considerCreatingSemanticSubtype && getQualifiedNameOrNull(type) != null
+   }
+
    private fun parseComplexType(
       complexType: XSComplexType,
       typeDefinitionHelper: TypeDefinitionHelper
@@ -174,28 +178,26 @@ class TaxiGenerator(
 
       // If we're creating a field, which is a complex type, create a field-specific semantic subtype
       // of the complex type, rather than an entire new type
-      if (typeDefinitionHelper.isDefiningField && !typeDefinitionHelper.hasExplicitName) {
-         val baseTypeQualifiedName = getQualifiedNameOrNull(complexType)
-         if (baseTypeQualifiedName != null) {
-            val parsedBaseType = getOrParseType(
-               complexType,
-               typeDefinitionHelper = TypeDefinitionHelper.forHint(NamespacedType(baseTypeQualifiedName))
+      if (shouldCreateSemanticSubtype(complexType, typeDefinitionHelper)) {
+         val baseTypeQualifiedName = getQualifiedName(complexType)
+         val parsedBaseType = getOrParseType(
+            complexType,
+            typeDefinitionHelper = TypeDefinitionHelper.forHint(NamespacedType(baseTypeQualifiedName))
+         )
+         val semanticSubType = ObjectType(
+            typeDefinitionHelper.suggestName().parameterizedName,
+            ObjectTypeDefinition(
+               inheritsFrom = listOf(parsedBaseType),
+               compilationUnit = CompilationUnit.unspecified()
             )
-            val semanticSubType = ObjectType(
-               typeDefinitionHelper.suggestName().parameterizedName,
-               ObjectTypeDefinition(
-                  inheritsFrom = listOf(parsedBaseType),
-                  compilationUnit = CompilationUnit.unspecified()
-               )
-            )
-            return semanticSubType to null
-         }
+         )
+         return semanticSubType to null
       }
 
       val definitionBuilder: TypeDefinitionBuilder = {
          var isWildcard = isWildcardType(complexType, typeDefinitionHelper)
          val attributes = parseAttributesToFields(complexType, typeDefinitionHelper)
-         val fields = parseTypeBodyToFields(complexType, typeDefinitionHelper)
+         val fields = parseTypeBodyToFields(complexType, typeDefinitionHelper, complexType.targetNamespace)
          val allFields = fields + attributes
          val docs = getDocumentation(complexType)
 
@@ -205,7 +207,12 @@ class TaxiGenerator(
             if (baseTypeName == XsdPrimitives.ANY_TYPE) {
                INHERITS_FROM_ANY
             } else {
-               listOf(getOrParseType(baseType, typeDefinitionHelper = TypeDefinitionHelper.forHint(NamespacedType(baseTypeName))))
+               listOf(
+                  getOrParseType(
+                     baseType,
+                     typeDefinitionHelper = TypeDefinitionHelper.forHint(NamespacedType(baseTypeName))
+                  )
+               )
             }
          } ?: INHERITS_FROM_ANY
 
@@ -299,10 +306,10 @@ class TaxiGenerator(
 
    private fun parseParticle(complexType: XSComplexType, typeDefinitionHelper: TypeDefinitionHelper): ParsedContent? {
       val particle = complexType.contentType.asParticle() ?: return null
-      return parseParticle(particle, typeDefinitionHelper)
+      return parseParticle(particle, typeDefinitionHelper, complexType.targetNamespace)
    }
 
-   private fun parseTypeBodyToFields(complexType: XSComplexType, helper: TypeDefinitionHelper): List<Field> {
+   private fun parseTypeBodyToFields(complexType: XSComplexType, helper: TypeDefinitionHelper, declaringSchemaNamespace: String?): List<Field> {
       val parsedParticle = parseParticle(complexType, helper) ?: return emptyList()
       require(parsedParticle is ParsedList) { "Expected to receive a parsedList here" }
       val fields = parsedParticle.list
@@ -318,6 +325,7 @@ class TaxiGenerator(
                typeOrArrayType,
                nullable = nullable,
                typeDoc = it.docs,
+               annotations = listOfNotNull(XsdAnnotations.xmlNamespaceOrNull(it.elementNamespace)),
                compilationUnit = CompilationUnit.unspecified()
             )
          }
@@ -354,46 +362,61 @@ class TaxiGenerator(
       }
    }
 
-   private fun parseParticle(particle: XSParticle, typeDefinitionHelper: TypeDefinitionHelper): ParsedContent {
+   private fun parseParticle(particle: XSParticle, typeDefinitionHelper: TypeDefinitionHelper,
+                             declaringSchemaNamespace: String?
+   ): ParsedContent {
       return when (val term = particle.term) {
-         is XSModelGroup -> parseModelGroup(term, typeDefinitionHelper)
-         is XSElementDecl -> parseElement(particle, term, typeDefinitionHelper)
+         is XSModelGroup -> parseModelGroup(term, typeDefinitionHelper, declaringSchemaNamespace)
+         is XSElementDecl -> parseElement(particle, term, typeDefinitionHelper, declaringSchemaNamespace)
          is XSWildcard -> ParsedWildcard
-         is XSModelGroupDecl -> parseModelGroupDeclaration(term, typeDefinitionHelper)
+         is XSModelGroupDecl -> parseModelGroupDeclaration(term, typeDefinitionHelper, declaringSchemaNamespace)
          else -> TODO()
       }
    }
 
    private fun parseModelGroupDeclaration(
       term: XSModelGroupDecl,
-      typeDefinitionHelper: TypeDefinitionHelper
+      typeDefinitionHelper: TypeDefinitionHelper,
+      declaringSchemaNamespace: String?
    ): ParsedContent {
       return parsedModelGroups.getOrPut(getQualifiedName(term)) {
-         parseModelGroup(term.modelGroup, typeDefinitionHelper) as ParsedList
+         parseModelGroup(term.modelGroup, typeDefinitionHelper, declaringSchemaNamespace) as ParsedList
       }
    }
 
    private fun parseElement(
       particle: XSParticle,
       term: XSElementDecl,
-      typeDefinitionHelper: TypeDefinitionHelper
+      typeDefinitionHelper: TypeDefinitionHelper,
+      declaringSchemaNamespace: String?,
    ): ParsedElement {
-      val taxiTypeDeclaration = XsdTaxiTypeDeclarations.getTaxiTypeReference(term.foreignAttributes)
-
+      val typeHelper = if (term.isGlobal) {
+         // For global elements, don't create a semantic subtype wrapper
+         // Instead, use the element's type directly
+         TypeDefinitionHelper.forHint(NamespacedType(getQualifiedName(term)))
+      } else {
+         typeDefinitionHelper.append(FieldName(term.name))
+      }
       val type = getOrParseType(
          term.type,
-         anonymousTypeNamePrefix = term.name,
-         typeDefinitionHelper = typeDefinitionHelper.append(FieldName(term.name))
+         typeDefinitionHelper = typeHelper
       )
       val docs = getDocumentation(term)
-      return ParsedElement(term.name, type, particle.minOccurs.toInt(), particle.maxOccurs.toInt(), docs)
+
+      // Determine the element's namespace
+      val elementNamespace = when {
+         // If it's a local element declaration, use the declaring schema's namespace
+         !term.isGlobal -> declaringSchemaNamespace
+         // If it's a global element itself, use its own namespace
+         else -> term.targetNamespace
+      }
+
+      return ParsedElement(term.name, type, particle.minOccurs.toInt(), particle.maxOccurs.toInt(), docs, elementNamespace)
    }
 
 
    private fun getOrParseType(
       type: XSType,
-      anonymousTypeNamePrefix: String? = null,
-      taxiTypeReference: TaxiTypeReference? = null,
       typeDefinitionHelper: TypeDefinitionHelper,
       declarationLocation: SchemaTypeDeclaration.DeclarationLocation = SchemaTypeDeclaration.DeclarationLocation.Model
    ): Type {
@@ -467,7 +490,7 @@ class TaxiGenerator(
 //         return XsdPrimitives.getType(declaredTypeQualifiedName) to null
 //      }
       if (isEnum(simpleType)) {
-         return parseEnumType(typeDefinitionHelper.suggestName(), simpleType) to null
+         return parseEnumType(typeDefinitionHelper, simpleType) to null
       }
       if (isEnumUnionExtension(simpleType, typeDefinitionHelper = typeDefinitionHelper!!)) {
          return parseEnumUnionExtension(
@@ -486,9 +509,11 @@ class TaxiGenerator(
          )
 
          declaredTypeQualifiedName == null -> {
-            TODO("How do we end up with a null here?")
+            TODO("Unexpectedly received a null for the declared base type")
          }
-
+         shouldCreateSemanticSubtype(simpleType, typeDefinitionHelper) -> {
+            getOrParseType(simpleType, TypeDefinitionHelper.forHint(NamespacedType(getQualifiedName(simpleType))))
+         }
          else -> {
             val baseTypeDeclaration = simpleType.baseType
             val parsedBaseType = getOrParseType(
@@ -498,12 +523,6 @@ class TaxiGenerator(
             parsedBaseType
          }
       }
-//      val baseType = if (typeDefinitionHelper != null) {
-//         parseSimpleType(simpleType, getQualifiedName(simpleType), null).first
-//      } else {
-//         TODO("TypeDefinitionHelper is null -- how do I handle this?")
-////         getOrParseType(simpleType.baseType, typeDefinitionHelper)
-//      }
       val restictions = getRestrictions(simpleType)
 
       val type = ObjectType(
@@ -522,7 +541,7 @@ class TaxiGenerator(
             // The output is still generated correctly.
 //            formattedInstanceOfType = if (restictions.isNotEmpty()) baseType else null,
             compilationUnit = CompilationUnit.unspecified(),
-            annotations = setOfNotNull(XsdAnnotations.xmlNamespaceOrNull(simpleType.targetNamespace))
+            annotations = emptySet()  // Don't add namespace to semantic subtypes
          )
       }
       return type to builder
@@ -561,7 +580,7 @@ class TaxiGenerator(
             }
          }
       val localEnumValues = members.filter { it.isLocal }
-         .map { parseEnumType(qualifiedName, it) }
+         .map { parseEnumType(typeDefinitionHelper, it) }
          .flatMap { enumType -> enumType.values }
 
       return EnumType(
@@ -608,7 +627,28 @@ class TaxiGenerator(
       return emptyList()
    }
 
-   private fun parseEnumType(qualifiedName: QualifiedName, simpleType: XSSimpleType): EnumType {
+   private fun parseEnumType(typeDefinitionHelper: TypeDefinitionHelper, simpleType: XSSimpleType): EnumType {
+      val qualifiedName = typeDefinitionHelper.suggestName()
+      if (shouldCreateSemanticSubtype(simpleType, typeDefinitionHelper)) {
+         val baseTypeQualifiedName = getQualifiedName(simpleType)
+         val parsedBaseType = getOrParseType(
+            simpleType,
+            typeDefinitionHelper = TypeDefinitionHelper.forHint(NamespacedType(baseTypeQualifiedName))
+         ) as EnumType
+         val semanticSubType = EnumType(
+            qualifiedName.parameterizedName,
+            EnumDefinition(
+               emptyList(),
+               annotations = emptyList(),  // Don't copy namespace to semantic subtypes
+               inheritsFrom = listOf(parsedBaseType),
+               valueType = parsedBaseType.definition!!.valueType,
+               compilationUnit = CompilationUnit.unspecified()
+            )
+         )
+         return semanticSubType
+      }
+
+
       val enumValues = simpleType.getFacets("enumeration")
          .map { xsFacet ->
             val doc = getDocumentation(xsFacet)
@@ -633,13 +673,20 @@ class TaxiGenerator(
       return type.getFacets("enumeration")?.isNotEmpty() ?: false
    }
 
-   private fun parseModelGroup(term: XSModelGroup, typeDefinitionHelper: TypeDefinitionHelper): ParsedContent {
-      val children = term.children.map { parseParticle(it, typeDefinitionHelper) }
+   private fun parseModelGroup(term: XSModelGroup, typeDefinitionHelper: TypeDefinitionHelper, declaringSchemaNamespace: String?): ParsedContent {
+      val children = term.children.map { parseParticle(it, typeDefinitionHelper, declaringSchemaNamespace) }
       return ParsedList(children, term.compositor)
    }
 }
 
-data class ParsedElement(val name: String, val type: Type, val minOccurs: Int, val maxOccurs: Int, val docs: String?) :
+data class ParsedElement(
+   val name: String,
+   val type: Type,
+   val minOccurs: Int,
+   val maxOccurs: Int,
+   val docs: String?,
+   val elementNamespace: String?
+) :
    ParsedContent
 
 data class ParsedList(val list: List<ParsedContent>, val compositor: XSModelGroup.Compositor) : ParsedContent

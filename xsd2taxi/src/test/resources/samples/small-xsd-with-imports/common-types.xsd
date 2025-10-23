@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://example.com/common"
+           xmlns="http://example.com/common"
+           elementFormDefault="qualified">
+    
+    <xs:simpleType name="YNType">
+        <xs:annotation>
+            <xs:documentation>Y or N</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Y"/>
+            <xs:enumeration value="N"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:simpleType name="HSFStdSterlingAmountType">
+        <xs:annotation>
+            <xs:documentation>Integer from 1 to 999999999. Representing sterling-equivalent amount.</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:positiveInteger">
+            <xs:totalDigits value="9"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <!-- Global element definition - similar to FSAFeedHeader -->
+    <xs:element name="Header">
+        <xs:annotation>
+            <xs:documentation>Common header element</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Version" type="xs:string"/>
+                <xs:element name="Timestamp" type="xs:dateTime"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    
+</xs:schema>
