@@ -1,0 +1,70 @@
+<idea-plugin>
+    <id>org.taxilang.intellij</id>
+    <name>Taxi Language Support</name>
+    <vendor email="marty.pitt@orbitalhq.com" url="https://taxilang.org">Taxi Lang</vendor>
+
+    <description><![CDATA[
+    <p>Provides support for the Taxi language in IntelliJ IDEA.</p>
+
+    <p>Taxi is a language for defining semantic API and data contracts, and describing how data relates between systems.</p>
+
+    <h3>Features</h3>
+    <ul>
+        <li>Syntax highlighting for .taxi files</li>
+        <li>Code completion</li>
+        <li>Go to definition</li>
+        <li>Hover information</li>
+        <li>Diagnostics and error reporting</li>
+        <li>Code actions and quick fixes</li>
+        <li>Semantic tokens</li>
+        <li>Signature help</li>
+    </ul>
+
+    <p>For more information about Taxi, visit <a href="https://taxilang.org">taxilang.org</a></p>
+    ]]></description>
+
+    <change-notes><![CDATA[
+    <h3>1.66.0</h3>
+    <ul>
+        <li>Initial release of IntelliJ IDEA plugin</li>
+        <li>LSP-based language support using existing Taxi language server</li>
+    </ul>
+    ]]></change-notes>
+
+    <!-- Product and plugin compatibility requirements -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.redhat.devtools.lsp4ij</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- File Type -->
+        <fileType
+                name="Taxi"
+                implementationClass="org.taxilang.intellij.TaxiFileType"
+                fieldName="INSTANCE"
+                language="Taxi"
+                extensions="taxi"/>
+
+        <!-- Language -->
+        <lang.parserDefinition
+                language="Taxi"
+                implementationClass="com.redhat.devtools.lsp4ij.server.definition.extension.DummyParserDefinition"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+        <!-- Language Server Definition -->
+        <server
+                id="taxiLanguageServer"
+                name="Taxi Language Server"
+                factoryClass="org.taxilang.intellij.TaxiLanguageServerFactory">
+            <description><![CDATA[
+            Language server for Taxi, providing intelligent code assistance for .taxi files.
+            ]]></description>
+        </server>
+
+        <!-- Language Mapping -->
+        <languageMapping
+                language="Taxi"
+                serverId="taxiLanguageServer"
+                documentMatcher="org.taxilang.intellij.TaxiDocumentMatcher"/>
+    </extensions>
+</idea-plugin>
