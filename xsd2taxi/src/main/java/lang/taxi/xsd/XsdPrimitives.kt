@@ -131,6 +131,6 @@ type gMonth inherits String
 //      .toMap()
    val ANY_TYPE: QualifiedName = primitives.filter { (k, _) -> k.typeName == "anyType" }.keys.first()
    fun isPrimitive(namespace: String, name: String) = isPrimitive(QualifiedName(namespace, name))
-   fun isPrimitive(qualifiedName: QualifiedName) = primitives.containsKey(qualifiedName)
+   fun isPrimitive(qualifiedName: QualifiedName?) = qualifiedName != null && primitives.containsKey(qualifiedName)
    fun getType(qualifiedName: QualifiedName): Type = primitives.getValue(qualifiedName)
 }

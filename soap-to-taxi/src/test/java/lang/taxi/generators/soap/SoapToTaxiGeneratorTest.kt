@@ -18,13 +18,12 @@ class SoapToTaxiGeneratorTest {
 
 
    @Test
-   @Disabled // Upgrading XSD - will re-enable shortly.
    fun `generate from wsdl`() {
       val wsdl = deployToTempDir(Resources.getResource("CountryInfoServiceSpec.wsdl"))
       val generator = TaxiGenerator()
       println("Using URL at ${wsdl.toExternalForm()}")
       val taxi = generator.generateTaxiDocument(wsdl)
-      taxi.types.should.have.size(105)
+      taxi.types.should.have.size(160)
       taxi.services.should.have.size(1)
       taxi.services.single().operations.should.have.size(21)
    }
