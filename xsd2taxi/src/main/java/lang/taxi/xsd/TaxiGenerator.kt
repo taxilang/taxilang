@@ -96,7 +96,6 @@ data class XsdReaderConfig(
    }
 }
 
-//data class GeneratorOptions(val defaultNamespace: String)
 class TaxiGenerator(
    private val schemaWriter: SchemaWriter = SchemaWriter(),
    private val config: XsdReaderConfig = XsdReaderConfig.EMPTY,
@@ -309,7 +308,11 @@ class TaxiGenerator(
       return parseParticle(particle, typeDefinitionHelper, complexType.targetNamespace)
    }
 
-   private fun parseTypeBodyToFields(complexType: XSComplexType, helper: TypeDefinitionHelper, declaringSchemaNamespace: String?): List<Field> {
+   private fun parseTypeBodyToFields(
+      complexType: XSComplexType,
+      helper: TypeDefinitionHelper,
+      declaringSchemaNamespace: String?
+   ): List<Field> {
       val parsedParticle = parseParticle(complexType, helper) ?: return emptyList()
       require(parsedParticle is ParsedList) { "Expected to receive a parsedList here" }
       val fields = parsedParticle.list
@@ -362,8 +365,9 @@ class TaxiGenerator(
       }
    }
 
-   private fun parseParticle(particle: XSParticle, typeDefinitionHelper: TypeDefinitionHelper,
-                             declaringSchemaNamespace: String?
+   private fun parseParticle(
+      particle: XSParticle, typeDefinitionHelper: TypeDefinitionHelper,
+      declaringSchemaNamespace: String?
    ): ParsedContent {
       return when (val term = particle.term) {
          is XSModelGroup -> parseModelGroup(term, typeDefinitionHelper, declaringSchemaNamespace)
@@ -390,12 +394,16 @@ class TaxiGenerator(
       typeDefinitionHelper: TypeDefinitionHelper,
       declaringSchemaNamespace: String?,
    ): ParsedElement {
-      val typeHelper = if (term.isGlobal) {
-         // For global elements, don't create a semantic subtype wrapper
-         // Instead, use the element's type directly
-         TypeDefinitionHelper.forHint(NamespacedType(getQualifiedName(term)))
-      } else {
-         typeDefinitionHelper.append(FieldName(term.name))
+      val schemaMetadata = XsdTaxiTypeDeclarations.getTaxiTypeReference(term.foreignAttributes)
+      val typeHelper = when {
+         schemaMetadata != null -> TypeDefinitionHelper.forHint(schemaMetadata)
+         term.isGlobal -> {
+            // For global elements, don't create a semantic subtype wrapper
+            // Instead, use the element's type directly
+            TypeDefinitionHelper.forHint(NamespacedType(getQualifiedName(term)))
+         }
+
+         else -> typeDefinitionHelper.append(FieldName(term.name))
       }
       val type = getOrParseType(
          term.type,
@@ -411,7 +419,14 @@ class TaxiGenerator(
          else -> term.targetNamespace
       }
 
-      return ParsedElement(term.name, type, particle.minOccurs.toInt(), particle.maxOccurs.toInt(), docs, elementNamespace)
+      return ParsedElement(
+         term.name,
+         type,
+         particle.minOccurs.toInt(),
+         particle.maxOccurs.toInt(),
+         docs,
+         elementNamespace
+      )
    }
 
 
@@ -486,9 +501,7 @@ class TaxiGenerator(
       simpleType: XSSimpleType,
       typeDefinitionHelper: TypeDefinitionHelper,
    ): Pair<Type, TypeDefinitionBuilder?> {
-//      if (XsdPrimitives.isPrimitive(declaredTypeQualifiedName)) {
-//         return XsdPrimitives.getType(declaredTypeQualifiedName) to null
-//      }
+
       if (isEnum(simpleType)) {
          return parseEnumType(typeDefinitionHelper, simpleType) to null
       }
@@ -500,20 +513,28 @@ class TaxiGenerator(
          ) to null
       }
 
-      // When we've been provided a type reference, we need to use the underlying simple type
-      // as the inherited type.
+
+      val declaredBaseTypeName = getQualifiedNameOrBaseTypeQualifiedNameIfPresent(simpleType.baseType)
       val declaredTypeQualifiedName = getQualifiedNameOrBaseTypeQualifiedNameIfPresent(simpleType)
       val baseType = when {
-         declaredTypeQualifiedName != null && XsdPrimitives.isPrimitive(declaredTypeQualifiedName) -> XsdPrimitives.getType(
-            declaredTypeQualifiedName
-         )
 
-         declaredTypeQualifiedName == null -> {
-            TODO("Unexpectedly received a null for the declared base type")
+         // When we've been provided a type reference, we need to use the underlying simple type
+         // as the inherited type.
+         XsdPrimitives.isPrimitive(declaredTypeQualifiedName) -> XsdPrimitives.getType(declaredTypeQualifiedName!!)
+         typeDefinitionHelper.hasExplicitName && declaredTypeQualifiedName != null -> {
+            parseSimpleType(
+               simpleType,
+               TypeDefinitionHelper.forHint(NamespacedType(declaredTypeQualifiedName))
+            ).first
          }
+
+
+
          shouldCreateSemanticSubtype(simpleType, typeDefinitionHelper) -> {
             getOrParseType(simpleType, TypeDefinitionHelper.forHint(NamespacedType(getQualifiedName(simpleType))))
          }
+         XsdPrimitives.isPrimitive(declaredBaseTypeName) -> XsdPrimitives.getType(declaredBaseTypeName!!)
+
          else -> {
             val baseTypeDeclaration = simpleType.baseType
             val parsedBaseType = getOrParseType(
@@ -560,9 +581,10 @@ class TaxiGenerator(
       val members = (0 until simpleType.memberSize).map { idx -> simpleType.getMember(idx) }
       val valuesFromExtendedEnums = members.filter { it.isGlobal }
          .map {
+            val enumValueQualifiedName = getQualifiedNameOrNull(it) ?: error("Failed to parse qualified name of extended enum value $it")
             getOrParseType(
                it,
-               typeDefinitionHelper = typeDefinitionHelper,
+               typeDefinitionHelper = TypeDefinitionHelper.forHint(NamespacedType(enumValueQualifiedName)),
                declarationLocation = SchemaTypeDeclaration.DeclarationLocation.Field
             )
          }
@@ -673,7 +695,11 @@ class TaxiGenerator(
       return type.getFacets("enumeration")?.isNotEmpty() ?: false
    }
 
-   private fun parseModelGroup(term: XSModelGroup, typeDefinitionHelper: TypeDefinitionHelper, declaringSchemaNamespace: String?): ParsedContent {
+   private fun parseModelGroup(
+      term: XSModelGroup,
+      typeDefinitionHelper: TypeDefinitionHelper,
+      declaringSchemaNamespace: String?
+   ): ParsedContent {
       val children = term.children.map { parseParticle(it, typeDefinitionHelper, declaringSchemaNamespace) }
       return ParsedList(children, term.compositor)
    }

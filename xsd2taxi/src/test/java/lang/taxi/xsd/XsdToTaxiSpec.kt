@@ -10,7 +10,7 @@ import org.assertj.core.util.Files
 import java.io.File
 
 class XsdToTaxiSpec : DescribeSpec({
-   xdescribe("converting xsd to taxi") {
+   describe("converting xsd to taxi") {
       it("should set field docs from attributes") {
          val schema = xsd(
             """
@@ -24,15 +24,18 @@ class XsdToTaxiSpec : DescribeSpec({
           </xsd:complexType>
           """
          ).asTaxi()
-         val expected = """namespace org.tempuri {
-            @lang.taxi.xml.Xml
-            @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
-            closed model PurchaseOrderType {
-               [[ The date for an order ]]
-               @lang.taxi.xml.XmlAttribute
-               OrderDate : Date?
-            }
-         }
+         val expected = """
+         namespace org.tempuri {
+   @lang.taxi.xml.Xml
+   @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
+   closed model PurchaseOrderType {
+      [[ The date for an order ]]
+      @lang.taxi.xml.XmlAttribute OrderDate : org.tempuri.purchaseordertype.OrderDate?
+   }
+}
+namespace org.tempuri.purchaseordertype {
+   type OrderDate inherits Date
+}
          """
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
       }
@@ -69,22 +72,38 @@ class XsdToTaxiSpec : DescribeSpec({
             namespace org.tempuri {
                @lang.taxi.xml.Xml
                @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
-               closed type PurchaseOrderType {
-                  ShipTo : USAddress[]
-                  BillTo : USAddress
-                  @lang.taxi.xml.XmlAttribute OrderDate : Date?
+               closed model PurchaseOrderType {
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") ShipTo : org.tempuri.purchaseordertype.ShipTo[]
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") BillTo : org.tempuri.purchaseordertype.BillTo
+                  @lang.taxi.xml.XmlAttribute OrderDate : org.tempuri.purchaseordertype.OrderDate?
                }
 
                @lang.taxi.xml.Xml
                @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
-               closed type USAddress {
-                  name : String
-                  street : String
-                  city : String
-                  state : String
-                  zip : Int
-                  @lang.taxi.xml.XmlAttribute country : org.w3.NMTOKEN?
+               closed model USAddress {
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") name : org.tempuri.usaddress.Name
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") street : org.tempuri.usaddress.Street
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") city : org.tempuri.usaddress.City
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") state : org.tempuri.usaddress.State
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") zip : org.tempuri.usaddress.Zip
+                  @lang.taxi.xml.XmlAttribute country : org.tempuri.usaddress.Country?
                }
+
+
+            }
+            namespace org.tempuri.usaddress {
+               type Name inherits String
+               type Street inherits String
+               type City inherits String
+               type State inherits String
+               type Zip inherits Int
+               @Format("\\c+")
+               type Country inherits org.w3.NMTOKEN
+            }
+            namespace org.tempuri.purchaseordertype {
+               type ShipTo inherits org.tempuri.USAddress
+               type BillTo inherits org.tempuri.USAddress
+               type OrderDate inherits Date
             }
          """.trimIndent()
          TestHelpers.expectToCompileTheSame(taxi.taxi, xsdTaxiSources(expected))
@@ -98,9 +117,9 @@ class XsdToTaxiSpec : DescribeSpec({
          ).asTaxi()
 
          val expected = """namespace org.tempuri {
-   type ISODate inherits lang.taxi.Date(@format = "yyyy-MM-dd")
+   type ISODate inherits Date
 }"""
-         // TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
       }
 
       it("should parse enums") {
@@ -169,14 +188,19 @@ class XsdToTaxiSpec : DescribeSpec({
          val expected = """namespace org.tempuri {
    [[ A type extending the PayerReceiverEnum type wih an id attribute. ]]
    model IdentifiedPayerReceiver {
-      @lang.taxi.xml.XmlAttribute id : org.w3.ID?
+      @lang.taxi.xml.XmlAttribute id : org.tempuri.identifiedpayerreceiver.IdentifiedpayerreceiverId?
       @lang.taxi.xml.XmlBody payerReceiverEnum : PayerReceiverEnum
    }
-@lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
+
+   @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
    enum PayerReceiverEnum {
       Payer,
       Receiver
    }
+}
+namespace org.tempuri.identifiedpayerreceiver {
+   @Format("[\\i-[:]][\\c-[:]]*")
+   type IdentifiedpayerreceiverId inherits org.w3.ID
 }"""
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
       }
@@ -190,11 +214,14 @@ class XsdToTaxiSpec : DescribeSpec({
  </xsd:complexType>"""
          ).asTaxi()
          val expected = """namespace org.tempuri {
-            @lang.taxi.xml.Xml
-@lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
-   closed type USAddress {
-      name : String
+   @lang.taxi.xml.Xml
+   @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
+   closed model USAddress {
+      @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") name : org.tempuri.usaddress.Name
    }
+}
+namespace org.tempuri.usaddress {
+   type Name inherits String
 }"""
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
       }
@@ -207,11 +234,14 @@ class XsdToTaxiSpec : DescribeSpec({
  </xsd:complexType>"""
          ).asTaxi()
          val expected = """namespace org.tempuri {
-            @lang.taxi.xml.Xml
-@lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
-   closed type USAddress {
-      name : String?
+   @lang.taxi.xml.Xml
+   @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
+   closed model USAddress {
+      @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") name : org.tempuri.usaddress.Name?
    }
+}
+namespace org.tempuri.usaddress {
+   type Name inherits String
 }"""
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
       }
@@ -227,28 +257,10 @@ class XsdToTaxiSpec : DescribeSpec({
          val expected = """namespace org.tempuri
             |
             |@Format("[A-Z]{3,3}")
-            |@lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
             |type ActiveCurrencyCode inherits String
          """.trimMargin()
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
       }
-
-      it("should escape patterns with slashes") {
-         val schema = xsd(
-            """    <xsd:simpleType name="PhoneNumber">
-        <xsd:restriction base="xsd:string">
-            <xsd:pattern value="\+[0-9]{1,3}-[0-9()+\-]{1,30}"/>
-        </xsd:restriction>
-    </xsd:simpleType>"""
-         ).asTaxi()
-         val expected = """namespace org.tempuri
-            |@Format("\\+[0-9]{1,3}-[0-9()+\\-]{1,30}")
-            |@lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
-            |type PhoneNumber inherits String
-         """.trimMargin()
-         TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
-      }
-
       it("should generate documented enums correctly") {
          val schema = xsd(
             """  <xsd:simpleType name="DayTypeEnum">
@@ -280,6 +292,23 @@ class XsdToTaxiSpec : DescribeSpec({
          enum.typeDoc.should.equal("A day type classification used in counting the number of days between two dates.")
          enum.ofValue("Business").typeDoc.should.equal("When calculating the number of days between two dates the count includes only business days.")
       }
+
+
+      it("should escape patterns with slashes") {
+         val schema = xsd(
+            """    <xsd:simpleType name="PhoneNumber">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="\+[0-9]{1,3}-[0-9()+\-]{1,30}"/>
+        </xsd:restriction>
+    </xsd:simpleType>"""
+         ).asTaxi()
+         val expected = """namespace org.tempuri
+            |@Format("\\+[0-9]{1,3}-[0-9()+\\-]{1,30}")
+            |type PhoneNumber inherits String
+         """.trimMargin()
+         TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+      }
+
 
       it("should generate inherited enums") {
          val schema = xsd(
@@ -320,6 +349,30 @@ class XsdToTaxiSpec : DescribeSpec({
   """
          ).asTaxi()
 
+         val expected = """
+namespace org.tempuri {
+   [[ Specifies whether the option is a call or a put. ]]
+   @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
+   enum PutCallEnum {
+      [[ A put option gives the holder the right to sell the underlying asset by a certain date for a certain price. ]]
+      Put,
+      [[ A call option gives the holder the right to buy the underlying asset by a certain date for a certain price. ]]
+      Call
+   }
+
+   [[ Specifies an additional Forward type. ]]
+   @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
+   enum EquityOptionTypeEnum {
+      [[ A put option gives the holder the right to sell the underlying asset by a certain date for a certain price. ]]
+      Put synonym of org.tempuri.PutCallEnum.Put,
+      [[ A call option gives the holder the right to buy the underlying asset by a certain date for a certain price. ]]
+      Call synonym of org.tempuri.PutCallEnum.Call,
+      [[ DEPRECATED value which will be removed in FpML-5-0 onwards A forward contract is an agreement to buy or sell the underlying asset at a certain future time for a certain price. ]]
+      Forward
+   }
+}
+         """.trimIndent()
+
          // TestHelpers is not working for this test case.
          val enum = Compiler.forStrings(schema.taxi)
             .compile()
@@ -339,14 +392,18 @@ class XsdToTaxiSpec : DescribeSpec({
         </xsd:choice>
     </xsd:complexType>"""
          ).asTaxi()
-         val expected = """namespace org.tempuri
-            @lang.taxi.xml.Xml
-@lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
+         val expected = """namespace org.tempuri {
+   @lang.taxi.xml.Xml
+   @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
    closed model MandateClassification1Choice {
-      Cd : String?
-      Prtry : String?
+      @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") Cd : org.tempuri.mandateclassification1choice.Cd?
+      @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") Prtry : org.tempuri.mandateclassification1choice.Prtry?
    }
-
+}
+namespace org.tempuri.mandateclassification1choice {
+   type Cd inherits String
+   type Prtry inherits String
+}
 """.trimMargin()
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
       }
@@ -376,13 +433,20 @@ class XsdToTaxiSpec : DescribeSpec({
          val expected = """namespace org.tempuri {
    [[ The base type which all FpML products extend. ]]
    @lang.taxi.xml.Xml
-@lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
+   @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
    closed type Product {
       [[ A classification of the most important risk class of the trade. FpML defines a simple asset class categorization using a coding scheme. ]]
-      primaryAssetClass : String?
-      @lang.taxi.xml.XmlAttribute id : org.w3.ID?
+      @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") primaryAssetClass : org.tempuri.product.PrimaryAssetClass?
+      @lang.taxi.xml.XmlAttribute id : org.tempuri.product.ProductId?
    }
-}"""
+}
+namespace org.tempuri.product {
+   type PrimaryAssetClass inherits String
+
+   @Format("[\\i-[:]][\\c-[:]]*")
+   type ProductId inherits org.w3.ID
+}
+"""
 
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
       }
@@ -398,12 +462,14 @@ class XsdToTaxiSpec : DescribeSpec({
          )
             .asTaxi()
          val expected = """namespace org.tempuri {
-            @lang.taxi.xml.Xml
-@lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
-   closed type PurchaseOrderType {
-      // Note - not nullable
-      @lang.taxi.xml.XmlAttribute OrderDate : Date
+   @lang.taxi.xml.Xml
+   @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
+   closed model PurchaseOrderType {
+      @lang.taxi.xml.XmlAttribute OrderDate : org.tempuri.purchaseordertype.OrderDate
    }
+}
+namespace org.tempuri.purchaseordertype {
+   type OrderDate inherits Date
 }"""
 
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
@@ -431,17 +497,21 @@ class XsdToTaxiSpec : DescribeSpec({
          ).asTaxi()
 
          val expected = """namespace org.tempuri {
-   [[ The abstract base class for all types which define intra-document pointers. ]]
-   @lang.taxi.xml.Xml
-@lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
-   closed type Reference
-
    [[ A reference to the return swap notional amount. ]]
    @lang.taxi.xml.Xml
-@lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
-   closed type ReturnSwapNotionalAmountReference inherits org.tempuri.Reference {
-      @lang.taxi.xml.XmlAttribute href : org.w3.IDREF
+   @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
+   closed model ReturnSwapNotionalAmountReference inherits Reference {
+      @lang.taxi.xml.XmlAttribute href : org.tempuri.returnswapnotionalamountreference.Href
    }
+
+   [[ The abstract base class for all types which define intra-document pointers. ]]
+   @lang.taxi.xml.Xml
+   @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
+   closed type Reference
+}
+namespace org.tempuri.returnswapnotionalamountreference {
+   @Format("[\\i-[:]][\\c-[:]]*")
+   type Href inherits org.w3.IDREF
 }"""
          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
       }
@@ -470,9 +540,9 @@ class XsdToTaxiSpec : DescribeSpec({
             @lang.taxi.xml.Xml
             @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
                closed model CountryInfo {
-                  ISOCode : com.foo.IsoCode
-                  Name : com.foo.CountryName
-                  CapitalCity : com.foo.CapitalCityName
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") ISOCode : com.foo.IsoCode
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") Name : com.foo.CountryName
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") CapitalCity : com.foo.CapitalCityName
                }
             }
             """.trimIndent()
@@ -503,9 +573,9 @@ class XsdToTaxiSpec : DescribeSpec({
             @lang.taxi.xml.Xml
             @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
                closed model Pet {
-                  id : petstore.PetId
-                  name : petstore.Name
-                  tags : petstore.Tag[]?
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") id : petstore.PetId
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") name : petstore.Name
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") tags : petstore.Tag[]?
                }
             }
             """.trimIndent()
@@ -536,9 +606,9 @@ class XsdToTaxiSpec : DescribeSpec({
             @lang.taxi.xml.Xml
             @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
                closed model Pet {
-                  id : petstore.PetId
-                  name : petstore.Name
-                  tags : petstore.Tag[]
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") id : petstore.PetId
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") name : petstore.Name
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") tags : petstore.Tag[]
                }
             }
             """.trimIndent()
@@ -569,9 +639,9 @@ class XsdToTaxiSpec : DescribeSpec({
             @lang.taxi.xml.Xml
             @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
                closed model Pet {
-                  id : petstore.PetId
-                  name : petstore.Name
-                  tags : petstore.Tag[]
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") id : petstore.PetId
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") name : petstore.Name
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") tags : petstore.Tag[]
                }
             }
             """.trimIndent()
@@ -597,9 +667,9 @@ class XsdToTaxiSpec : DescribeSpec({
             @lang.taxi.xml.Xml
             @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
                closed model CountryInfo {
-                  ISOCode : com.foo.IsoCode
-                  Name : com.foo.CountryName
-                  CapitalCity : com.foo.CapitalCityName
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") ISOCode : com.foo.IsoCode
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") Name : com.foo.CountryName
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") CapitalCity : com.foo.CapitalCityName
                }
             }
             """.trimIndent()
@@ -640,9 +710,9 @@ namespace com.foo {
             @lang.taxi.xml.Xml
             @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd")
                closed model CountryInfo {
-                  ISOCode : com.foo.IsoCode
-                  Name : com.foo.CountryName
-                  CapitalCity : com.foo.CapitalCityName
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") ISOCode : com.foo.IsoCode
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") Name : com.foo.CountryName
+                  @lang.taxi.xml.XmlNamespace(uri = "http://tempuri.org/PurchaseOrderSchema.xsd") CapitalCity : com.foo.CapitalCityName
                }
             }
             """.trimIndent()
