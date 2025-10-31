@@ -329,7 +329,7 @@ Returns a new collection, containing the elements of array1, then the elements o
 `taxi.stdlib.collectAllInstances`
 
 ```taxi
-declare extension function <T> collectAllInstances(collection: Type<T>): T
+declare extension function <T> collectAllInstances(collection: lang.taxi.Type<T>): T
 ```
 
 Collects all the instances of the provided type that are currently available in the data context.
@@ -976,7 +976,7 @@ Utilities for dealing with equality, etc
 `taxi.stdlib.emptyInstance`
 
 ```taxi
-declare extension function <A> emptyInstance(instanceType:Type<A>): A
+declare extension function <A> emptyInstance(instanceType:lang.taxi.Type<A>): A
 ```
 
 Returns an instance of the requested type, with all properties empty.

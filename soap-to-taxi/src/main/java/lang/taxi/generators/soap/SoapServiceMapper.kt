@@ -9,12 +9,14 @@ import lang.taxi.services.Parameter
 import lang.taxi.services.Service
 import lang.taxi.sources.SourceCode
 import lang.taxi.types.*
+import lang.taxi.utils.log
 import org.apache.cxf.service.model.MessagePartInfo
 import org.apache.cxf.service.model.OperationInfo
 import org.apache.cxf.service.model.ServiceInfo
 import java.net.URI
 import java.net.URL
 import javax.xml.namespace.QName
+import kotlin.math.log
 
 class SoapServiceMapper(
    private val wsdlURL: URL,
@@ -43,7 +45,8 @@ class SoapServiceMapper(
          inputs.mapIndexed { index, type ->  Parameter(annotations = emptyList(), type = type, name = "p$index", constraints = emptyList()) }
       val responseTypes = messagePartsToTypes(operationInfo.output.messageParts, operationInfo.name, "output")
       require(responseTypes.size == 1) { "Expected a single response type for operation ${operationName}, but found ${responseTypes.size}" }
-      val responseType = unwrapEnvelopeType(responseTypes.single())
+      val isXsdScalarType = isXsdScalarType(operationInfo)
+      val responseType = unwrapEnvelopeType(responseTypes.single(), isXsdScalarType)
       val operation = Operation(
          name = operationName.typeName,
          scope = OperationScope.READ_ONLY, // TODO : How do we detect mutating services?
@@ -53,6 +56,42 @@ class SoapServiceMapper(
          compilationUnits = listOf(CompilationUnit.Companion.generatedFor(operationInfo.name.toString()))
       )
       return operation
+   }
+
+   /**
+    * Indicates if the return type of the operation will be a scalar type.
+    * Does this by looking at the XSD directly, rather than the parsed Taxi type.
+    *
+    * This is because if the Taxi type declared in the XSD schema is imported,
+    * then we don't have type information
+    */
+   private fun isXsdScalarType(operationInfo: OperationInfo): Boolean {
+      // CXF creates an unwrapped version for document/literal wrapped style
+      val unwrapped = operationInfo.unwrappedOperation ?: operationInfo
+      val outputMessage = unwrapped.output ?: return false
+      val parts = outputMessage.messageParts.toList()
+
+      if (parts.size != 1) {
+         return false
+      }
+
+      val part = parts.first()
+
+      // Check if it's a simple XSD type
+      part.typeQName?.let { qname ->
+         if (qname.namespaceURI == "http://www.w3.org/2001/XMLSchema") {
+            return true
+         }
+      }
+
+      // Check the XML schema for the element
+      val xmlSchema = part.xmlSchema
+      if (xmlSchema is org.apache.ws.commons.schema.XmlSchemaElement) {
+         val schemaType = xmlSchema.schemaType
+         return schemaType is org.apache.ws.commons.schema.XmlSchemaSimpleType
+      }
+
+      return false
    }
 
    private fun markInputsAsParameterTypes(inputs: List<Type>) {
@@ -87,12 +126,22 @@ class SoapServiceMapper(
     * </FooResponse>
     *
     * Will unwrap FooResult from FooResponse
+    *
+    * Note - the SOAP Client actually performs this unwrapping (ie., the returned value from the soapClient
+    * is FooResult, not the outer envelope type - FooResponse), so services must not declare their return type as
+    * the FooResponse envelope type
     */
-   private fun unwrapEnvelopeType(type: Type): Type {
-      if (type is ObjectType && type.fields.size == 1 && type.fields.single().type is ObjectType) {
-         return type.fields.single().type
+   private fun unwrapEnvelopeType(type: Type, isXsdScalarType: Boolean): Type {
+      val isTaxiEnvelopeType = type is ObjectType && type.fields.size == 1 && type.fields.single().type is ObjectType
+      return if (isTaxiEnvelopeType || isXsdScalarType) {
+         if (type is ObjectType) {
+            type.fields.single().type
+         } else {
+            log().error("An unexpected error when trying to unwrap envelope type ${type.qualifiedName} - expected this to be an ObjectType, but was ${type::class.simpleName}")
+            type
+         }
       } else {
-         return type
+         type
       }
    }
 
@@ -118,10 +167,11 @@ class SoapServiceMapper(
       return QualifiedName(namespace, typeName.localPart)
    }
 
-   fun generateService(): Service {
+   fun generateService(importedXsds: List<SourceCode>): Service {
       serviceInfo.`interface`.operations.forEach { operationInfo ->
          operations.add(generateOperation(operationInfo))
       }
+      val importedXsdCompilationUnits = importedXsds.map { CompilationUnit(it) }
 
       val service = Service(
          qualifiedName = serviceName.fullyQualifiedName,
@@ -130,7 +180,7 @@ class SoapServiceMapper(
          compilationUnits = listOf(
             CompilationUnit.generatedFor(serviceInfo.name.toString()),
             CompilationUnit(wsdlSource)
-         )
+         ) + importedXsdCompilationUnits
       )
 
       return service

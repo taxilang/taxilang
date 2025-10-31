@@ -17,6 +17,7 @@ data class GeneratedTaxiCode(
    val errorCount = messages.errorCount
    val warningCount = messages.warningCount
    val concatenatedSource = taxi.joinToString("\n")
+
    companion object {
       val DEFAULT_EXCLUDED_NAMESPACES = listOf(
          "org.w3",
@@ -25,10 +26,21 @@ data class GeneratedTaxiCode(
       )
    }
 
-   fun concatenatedSourceExcludingNamespaces(namespacesToExclude:List<String> = DEFAULT_EXCLUDED_NAMESPACES) : String {
-      return taxi.filterNot { source -> namespacesToExclude.any { namespace ->
-         source.contains("namespace $namespace {")
-      } }.joinToString("\n")
+   fun mergeWith(other: GeneratedTaxiCode, suggestedFileName: String? = null): GeneratedTaxiCode {
+      return GeneratedTaxiCode(
+         this.taxi + other.taxi,
+         this.messages + other.messages,
+         suggestedFileName,
+         this.sourceMap.combine(other.sourceMap)
+      )
+   }
+
+   fun concatenatedSourceExcludingNamespaces(namespacesToExclude: List<String> = DEFAULT_EXCLUDED_NAMESPACES): String {
+      return taxi.filterNot { source ->
+         namespacesToExclude.any { namespace ->
+            source.contains("namespace $namespace {")
+         }
+      }.joinToString("\n")
    }
 
 
@@ -44,36 +56,51 @@ data class SourceMap(
    // TODO : In future, it may make sense to expand this to include location as well?
    // However, in practice I suspect that's overkill, as the goal here is to re-parse the
    // source to do things like Protobuf of Avro serde, and in those cases, we need the whole file
-   val types: Map<ParameterizedName, SourceFileName>,
-   val services: Map<ParameterizedName, SourceFileName>
+   val types: Map<ParameterizedName, List<SourceFileName>>,
+   val services: Map<ParameterizedName, List<SourceFileName>>
 ) {
 
-   fun contains(name: ParameterizedName):Boolean {
+   fun contains(name: ParameterizedName): Boolean {
       return containsType(name) || containsService(name)
    }
+
    fun containsType(name: ParameterizedName): Boolean = types.containsKey(name)
    fun containsService(name: ParameterizedName): Boolean = services.containsKey(name)
 
-   fun getSourceFileName(name: ParameterizedName):SourceFileName {
+   fun getSourceFileName(name: ParameterizedName): List<SourceFileName> {
       return types[name] ?: services[name] ?: error("$name not found in this source map")
    }
-   fun getSourceFileNameForType(name: ParameterizedName):SourceFileName {
+
+   fun getSourceFileNameForType(name: ParameterizedName): List<SourceFileName> {
       return types[name] ?: error("$name not found in this source map")
    }
 
    companion object {
       val EMPTY = SourceMap(emptyMap(), emptyMap())
-      fun forMembers(fileName: SourceFileName, types: Collection<Type> = emptyList(), services: Collection<Service> = emptyList()): SourceMap {
+      fun forMembers(
+         fileName: SourceFileName,
+         types: Collection<Type> = emptyList(),
+         services: Collection<Service> = emptyList()
+      ): SourceMap {
+         return forMembers(listOf(fileName), types, services)
+      }
+
+      fun forMembers(
+         fileNames: List<SourceFileName>,
+         types: Collection<Type> = emptyList(),
+         services: Collection<Service> = emptyList()
+      ): SourceMap {
          return SourceMap(
-            types = types.associate { it.toQualifiedName().parameterizedName to fileName },
-            services = services.associate { it.toQualifiedName().parameterizedName to fileName }
+            types = types.associate { it.toQualifiedName().parameterizedName to fileNames },
+            services = services.associate { it.toQualifiedName().parameterizedName to fileNames }
          )
       }
    }
+
    val isEmpty = types.isEmpty() && services.isEmpty()
    val isNotEmpty = !isEmpty
 
-   fun combine(other: SourceMap):SourceMap {
+   fun combine(other: SourceMap): SourceMap {
       return SourceMap(
          types + other.types,
          services + other.services

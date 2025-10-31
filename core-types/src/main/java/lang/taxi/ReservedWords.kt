@@ -42,6 +42,7 @@ object ReservedWords {
        "of",
        "operation",
        "or",
+       "partial",
        "parameter",
        "permit",
        "policy",

@@ -13,6 +13,7 @@ import com.sun.xml.xsom.XSType
 import com.sun.xml.xsom.XSUnionSimpleType
 import com.sun.xml.xsom.XSWildcard
 import com.sun.xml.xsom.impl.Ref
+import com.sun.xml.xsom.impl.SchemaSetImpl.AnyType
 import com.sun.xml.xsom.parser.XSOMParser
 import lang.taxi.TaxiDocument
 import lang.taxi.generators.FieldName
@@ -70,6 +71,7 @@ data class XsdReaderConfig(
    val xsdImportOverrides: Map<String, Path> = emptyMap(),
    val defaultModelModifiers: List<Modifier> = listOf(Modifier.CLOSED)
 ) {
+//   private val xsdInputSourceCache = mutableMapOf<String, InputSource>()
    fun makeFilePathsRelativeTo(
       /**
        * The directory that config files should be resolved against
@@ -87,10 +89,17 @@ data class XsdReaderConfig(
       val EMPTY = XsdReaderConfig(emptyMap())
    }
 
+
    val entityResolver: EntityResolver = EntityResolver { publicId, systemId ->
+      if (publicId == null && systemId == null) return@EntityResolver null
+      val key = (publicId ?: systemId)!!
       val inputSource = xsdImportOverrides.get(publicId)
          ?.let { path ->
-            InputSource(path.inputStream())
+            InputSource(path.inputStream()).apply {
+               this.publicId = key
+               this.systemId = key
+            }
+
          }
       inputSource
    }
@@ -374,7 +383,7 @@ class TaxiGenerator(
          is XSElementDecl -> parseElement(particle, term, typeDefinitionHelper, declaringSchemaNamespace)
          is XSWildcard -> ParsedWildcard
          is XSModelGroupDecl -> parseModelGroupDeclaration(term, typeDefinitionHelper, declaringSchemaNamespace)
-         else -> TODO()
+         else -> TODO("parseParticle not implemented for term with class ${term::class.simpleName}")
       }
    }
 
@@ -492,7 +501,8 @@ class TaxiGenerator(
       return when (type) {
          is Ref.ComplexType -> parseComplexType(type.asComplexType(), typeDefinitionHelper)
          is Ref.SimpleType -> parseSimpleType(type.asSimpleType(), typeDefinitionHelper)
-         else -> TODO(type.name)
+         is AnyType -> PrimitiveType.ANY to null
+         else -> TODO("xsd parseType not implemented for type with name ${type.name}")
       }
 
    }
@@ -529,10 +539,10 @@ class TaxiGenerator(
          }
 
 
-
          shouldCreateSemanticSubtype(simpleType, typeDefinitionHelper) -> {
             getOrParseType(simpleType, TypeDefinitionHelper.forHint(NamespacedType(getQualifiedName(simpleType))))
          }
+
          XsdPrimitives.isPrimitive(declaredBaseTypeName) -> XsdPrimitives.getType(declaredBaseTypeName!!)
 
          else -> {
@@ -581,7 +591,8 @@ class TaxiGenerator(
       val members = (0 until simpleType.memberSize).map { idx -> simpleType.getMember(idx) }
       val valuesFromExtendedEnums = members.filter { it.isGlobal }
          .map {
-            val enumValueQualifiedName = getQualifiedNameOrNull(it) ?: error("Failed to parse qualified name of extended enum value $it")
+            val enumValueQualifiedName =
+               getQualifiedNameOrNull(it) ?: error("Failed to parse qualified name of extended enum value $it")
             getOrParseType(
                it,
                typeDefinitionHelper = TypeDefinitionHelper.forHint(NamespacedType(enumValueQualifiedName)),

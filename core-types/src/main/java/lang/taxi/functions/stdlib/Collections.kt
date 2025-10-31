@@ -219,7 +219,7 @@ object CollectAllInstances : FunctionApi {
 
           This  method disables ambiguity checks, and returns all known instances, including merging all collections
           ]]
-         declare extension function <T> collectAllInstances(collection: Type<T>): T""".trimIndent()
+         declare extension function <T> collectAllInstances(collection: lang.taxi.Type<T>): T""".trimIndent()
    override val name: QualifiedName = stdLibName("collectAllInstances")
 }
 

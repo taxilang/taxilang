@@ -18,6 +18,7 @@ namespace org.w3
 
 type alias string as String
 type alias anyType as Any
+type alias anySimpleType as Any
 type alias integer as Int
 type alias date as Date
 type alias boolean as Boolean
