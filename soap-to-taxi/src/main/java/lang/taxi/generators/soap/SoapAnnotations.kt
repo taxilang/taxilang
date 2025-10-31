@@ -6,6 +6,7 @@ import lang.taxi.types.QualifiedName
 
 object SoapLanguage {
    val WSDL = "wsdl"
+   val XSD = "xsd"
 }
 
 object SoapAnnotations {

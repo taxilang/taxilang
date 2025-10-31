@@ -20,6 +20,6 @@ object EmptyInstance : FunctionApi {
       [[ Returns an instance of the requested type, with all properties empty.
       Scalars are null, collections are empty, and object types are recursed into, also populated as empty
       ]]
-      declare extension function <A> emptyInstance(instanceType:Type<A>): A""".trimIndent()
+      declare extension function <A> emptyInstance(instanceType:lang.taxi.Type<A>): A""".trimIndent()
    override val name: QualifiedName = stdLibName("emptyInstance")
 }

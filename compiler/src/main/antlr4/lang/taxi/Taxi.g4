@@ -31,12 +31,13 @@ namespaceBody
     ;
 
 toplevelObject
-    :   typeDeclaration
+// Note: typeAlias must come before type, otherwise `type alias string as String` gets parsed as a type, not an alias.
+    :   typeAliasDeclaration
+    |   typeDeclaration
     |   partialModelDeclaration
     |   enumDeclaration
     |   enumExtensionDeclaration
     |   typeExtensionDeclaration
-    |   typeAliasDeclaration
     |   typeAliasExtensionDeclaration
     |   serviceDeclaration
     |   policyDeclaration
@@ -60,6 +61,15 @@ typeModifier
 
 typeKind : K_Type | K_Model;
 
+// type aliases
+typeAliasDeclaration
+    : typeDoc? annotation* K_Type K_Alias identifier aliasedType
+    ;
+
+aliasedType
+   : K_As typeReference
+   ;
+
 typeDeclaration
     :  typeDoc? annotation* typeModifier* typeKind identifier
          typeArguments?
@@ -67,7 +77,7 @@ typeDeclaration
         (typeBody | expressionTypeDeclaration)?
     ;
 
-partialModelDeclaration: typeDoc? annotation* 'partial' typeModifier* K_Model identifier 'from' typeReference;
+partialModelDeclaration: typeDoc? annotation* K_Partial typeModifier* K_Model identifier 'from' typeReference;
 
 listOfInheritedTypes
     : typeReference (',' typeReference)*
@@ -383,14 +393,7 @@ enumConstantExtension
    : typeDoc? annotation* identifier enumSynonymDeclaration?
    ;
 
-// type aliases
-typeAliasDeclaration
-    : typeDoc? annotation* K_Type 'alias' identifier aliasedType
-    ;
 
-aliasedType
-   : 'as' typeReference
-   ;
 
 inlineInheritedType
    : K_Inherits typeReference
@@ -668,7 +671,7 @@ query: namedQuery | anonymousQuery;
 namedQuery: typeDoc? annotation* queryName '{' queryBody '}';
 anonymousQuery: queryBody;
 
-queryName: 'query' identifier queryParameters?;
+queryName: K_Query identifier queryParameters?;
 
 queryParameters: '(' queryParamList ')';
 
@@ -742,7 +745,7 @@ serviceRestrictions: (K_Using | K_Excluding) '{' serviceOrMemberReferenceList '}
 // Note: 23-Apr-24...
 // tried allowing both 'as' and '->' here, but it created ambiguity with the
 // expressionInputs block, causing failing tests.
-typeProjection: ('as') expressionInputs? (anonymousTypeDefinition | typeReference);
+typeProjection: (K_As) expressionInputs? (anonymousTypeDefinition | typeReference);
 
 //as {
 //    orderId // if orderId is defined on the Order type, then the type is inferrable
@@ -776,10 +779,16 @@ BooleanLiteral
 // MP: 25-Mar-25: Unfortunately, allowing 'K_Extension' in the identifier group breaks the grammar parsing of
 // type extensions, so people are just gonna have to use backticks for that one.
 identifier:
-   K_Table | K_Stream | K_Find | K_Map | K_Except |  K_Filter | K_Query |  K_Read | K_Write | K_Declare | K_Type | K_Model | IdentifierToken;
+   K_Table | K_Stream |  K_Find | K_Map |  K_Except |  K_Filter | K_Query |  K_Read | K_Write | K_Declare | K_Type | K_Model | K_Alias | K_Partial | IdentifierToken
+   // | K_Call        // These are excluded as they break parsing elsewhere in the grammar
+   // | K_Extension   // These are excluded as they break parsing elsewhere in the grammar
+   // | K_As          // These are excluded as they break parsing elsewhere in the grammar
+   // | K_Given       // These are excluded as they break parsing elsewhere in the grammar
+   ;
 
+K_Given: 'given';
 K_Find: 'find';
-
+K_As: 'as';
 // map is the same as find, but it expects an array as an input,
 // and then iterates on each member of the array performing a find.
 // This is an experiment.
@@ -816,7 +825,7 @@ K_Map : 'map';
 
 K_Type : 'type';
 K_Model : 'model';
-
+K_Alias: 'alias';
 K_Table: 'table';
 K_Stream: 'stream';
 K_Filter: 'filter';
@@ -845,6 +854,8 @@ K_Namespace: 'namespace';
 K_Parameter: 'parameter';
 K_Closed: 'closed';
 K_Inherits: 'inherits';
+
+K_Partial: 'partial';
 
 IdentifierToken
     :   Letter LetterOrDigit*
