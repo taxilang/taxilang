@@ -163,7 +163,16 @@ expressionGroup:
 // No compiler tests broke, lets see what happens in Orbital
  // TODO :This has literla and literalArray, but not value, which also includes objects.
  // Should we replace literal | literalArray with value?
-expressionAtom: functionCall | operationInvocation | typeExpression | typeProjection | fieldReferenceSelector | objectValue | valueArray | literal;
+expressionAtom: functionCall
+               | typeExpression
+               // Must come after TypeExpression, or
+               // parsing of function calls fails
+               | operationInvocation
+               | typeProjection
+               | fieldReferenceSelector
+               | objectValue
+               | valueArray
+               | literal;
 
 //scalarAccessorExpression
   //    : xpathAccessorDeclaration
