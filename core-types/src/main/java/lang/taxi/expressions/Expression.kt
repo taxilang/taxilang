@@ -8,10 +8,15 @@ import lang.taxi.ImmutableEquality
 import lang.taxi.accessors.Accessor
 import lang.taxi.accessors.Argument
 import lang.taxi.accessors.LiteralAccessor
+import lang.taxi.functions.CallableInvocationExpression
 import lang.taxi.functions.FunctionAccessor
+import lang.taxi.services.Callable
+import lang.taxi.services.Operation
 import lang.taxi.services.Service
+import lang.taxi.services.ServiceMember
 import lang.taxi.services.operations.constraints.Constraint
 import lang.taxi.types.*
+import kotlin.system.measureTimeMillis
 
 // Note: Expression inheriting Accessor is tech debt,
 // and really around the wrong way.
@@ -41,7 +46,7 @@ data class LambdaExpression(
    // type Adults by (age:Age) -> (Person[](Age > age)) -> Person[].first()
    // This doesn't feel right - we shouldn't be collapsing inputs, we should be
    // recursing expressions.
-   val allInputs:List<Argument> = if (expression is LambdaExpression) {
+   val allInputs: List<Argument> = if (expression is LambdaExpression) {
       inputs + expression.allInputs
    } else {
       inputs
@@ -51,9 +56,13 @@ data class LambdaExpression(
 /**
  * An expression that returns an object literal
  */
-data class ObjectLiteralExpression(override val returnType: Type, val expressionMap: Map<String, Expression>, override val compilationUnits: List<CompilationUnit>): Literal, Expression() {
+data class ObjectLiteralExpression(
+   override val returnType: Type,
+   val expressionMap: Map<String, Expression>,
+   override val compilationUnits: List<CompilationUnit>
+) : Literal, Expression() {
    override fun asTypedValue(): TypedValue {
-      val values =  this.expressionMap.map {
+      val values = this.expressionMap.map {
          if (it.value !is Literal) {
             error("This variable does not contain a constant")
          }
@@ -68,7 +77,11 @@ interface Literal {
    fun asTypedValue(): TypedValue
 }
 
-data class LiteralArray(override val returnType: Type, val members: List<Expression>, override val compilationUnits: List<CompilationUnit>) : Literal, Expression() {
+data class LiteralArray(
+   override val returnType: Type,
+   val members: List<Expression>,
+   override val compilationUnits: List<CompilationUnit>
+) : Literal, Expression() {
    private val equality = ImmutableEquality(this, LiteralArray::returnType, LiteralArray::members)
    override fun hashCode(): Int = equality.hash()
    override fun asTypedValue(): TypedValue {
@@ -83,7 +96,7 @@ data class LiteralArray(override val returnType: Type, val members: List<Express
     */
    fun toListOfValues(): List<Any?> {
       return members.map { expression ->
-         require(expression is Literal) { "Cannot convert LiteralArray to list of values, as found member that was not a literal: ${expression::class.simpleName}"}
+         require(expression is Literal) { "Cannot convert LiteralArray to list of values, as found member that was not a literal: ${expression::class.simpleName}" }
          expression.asTypedValue().value
       }
    }
@@ -94,7 +107,7 @@ data class LiteralArray(override val returnType: Type, val members: List<Express
 // Decorator around a LiteralAccessor to make it an Expression.
 // Pure tech-debt, resulting in how Accessors and Expressions have evolved.
 data class LiteralExpression(val literal: LiteralAccessor, override val compilationUnits: List<CompilationUnit>) :
-   Literal,Expression() {
+   Literal, Expression() {
    companion object {
       fun isNullExpression(expression: Expression): Boolean {
          return expression is LiteralExpression && LiteralAccessor.isNullLiteral(expression.literal)
@@ -113,8 +126,8 @@ data class LiteralExpression(val literal: LiteralAccessor, override val compilat
 
    val value = literal.value
 
-   override fun asTypedValue():TypedValue {
-      val value = if (this.value is Map<*,*>) {
+   override fun asTypedValue(): TypedValue {
+      val value = if (this.value is Map<*, *>) {
          this.value.mapValues { (_, v) ->
             when (v) {
                null -> v
@@ -162,24 +175,32 @@ data class MemberAccessExpression(
    override val returnType: Type = rhs.returnType
 }
 
-data class TypeExpression(val type: Type,
-                          val constraints: List<Constraint>,
-                          override val compilationUnits: List<CompilationUnit>) : Expression() {
+data class TypeExpression(
+   val type: Type,
+   val constraints: List<Constraint>,
+   override val compilationUnits: List<CompilationUnit>
+) : Expression() {
    override val returnType: Type = type
 }
 
-data class ServiceExpression(val service: Service, override val compilationUnits: List<CompilationUnit>) : Expression() {
+data class ServiceExpression(val service: Service, override val compilationUnits: List<CompilationUnit>) :
+   Expression() {
    override val returnType: Type = PrimitiveType.VOID
 }
 
 /**
  * Instructs the runtime to cast the provided expression to the type
  */
-data class CastExpression(val type: Type, val expression: Expression, override val compilationUnits: List<CompilationUnit>) : Expression() {
+data class CastExpression(
+   val type: Type,
+   val expression: Expression,
+   override val compilationUnits: List<CompilationUnit>
+) : Expression() {
    override val returnType: Type = type
 }
 
-data class NegatedExpression(val expression: Expression, override val compilationUnits: List<CompilationUnit>) : Expression() {
+data class NegatedExpression(val expression: Expression, override val compilationUnits: List<CompilationUnit>) :
+   Expression() {
    override val returnType: Type = expression.returnType
 }
 
@@ -190,7 +211,22 @@ data class FunctionExpression(val function: FunctionAccessor, override val compi
    val inputs = function.inputs
 }
 
-data class ExtensionFunctionExpression(val functionExpression: FunctionExpression, val receiverValue: Expression, override val compilationUnits: List<CompilationUnit>) : Expression() {
+data class OperationInvocationExpression(
+   val service: Service,
+   val member: ServiceMember,
+   override val inputs: List<Accessor>,
+   override val compilationUnits: List<CompilationUnit>
+) :
+   Expression(), CallableInvocationExpression {
+   override val returnType: Type = member.returnType
+   override val callable: Callable = member
+}
+
+data class ExtensionFunctionExpression(
+   val functionExpression: FunctionExpression,
+   val receiverValue: Expression,
+   override val compilationUnits: List<CompilationUnit>
+) : Expression() {
    override val returnType: Type = functionExpression.returnType
    val inputs = functionExpression.inputs
 
@@ -217,13 +253,14 @@ data class OperatorExpression(
    val rhs: Expression,
    override val compilationUnits: List<CompilationUnit>
 ) : Expression() {
-   private val equality = ImmutableEquality(this,
+   private val equality = ImmutableEquality(
+      this,
       OperatorExpression::lhs,
       OperatorExpression::operator,
       OperatorExpression::rhs
-      )
+   )
 
-   override fun hashCode(): Int  = equality.hash()
+   override fun hashCode(): Int = equality.hash()
    override fun equals(other: Any?): Boolean = equality.isEqualTo(other)
 
    override fun asTaxi(): String {
@@ -271,8 +308,10 @@ data class OperatorExpression(
 //      }
    }
 
-   override val strictReturnType: Either<String, Type> = TypeResolver.getCommonType(lhs.returnType, operator, rhs.returnType)
-//      get() {
+   override val strictReturnType: Either<String, Type> =
+      TypeResolver.getCommonType(lhs.returnType, operator, rhs.returnType)
+
+   //      get() {
 //         val lhsType = lhs.returnType.basePrimitive ?: PrimitiveType.ANY
 //         val rhsType = rhs.returnType.basePrimitive ?: PrimitiveType.ANY
 //         return getReturnType(

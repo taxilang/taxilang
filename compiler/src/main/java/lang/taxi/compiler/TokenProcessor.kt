@@ -2115,6 +2115,38 @@ class TokenProcessor(
       return services.firstOrNull { it.qualifiedName == qualifiedName }?.right()
          ?: compileService(qualifiedName, tokens.unparsedServices[qualifiedName]!!)
    }
+   /**
+    * Given a service + operation call reference in the form of
+    * ServiceName::OperationName or, just a service reference in the form of ServiceName,
+    * will resolve both service and operation, returning compilation errors if encountered
+    */
+   fun resolveServiceAndOperation(
+      serviceToken: TypeReferenceContext,
+      operationToken: TypeReferenceContext?,
+      operationTokenRequired: Boolean,
+      context: ParserRuleContext
+   ): Either<List<CompilationError>, Pair<Service, ServiceMember?>> {
+      return resolveImportableToken(
+         serviceToken.qualifiedName(),
+         context,
+         SymbolKind.SERVICE
+      )
+         .flatMap { service ->
+            fun compilationError(message: String): Either<List<CompilationError>, Nothing> {
+               return listOf(CompilationError(serviceToken.start, message)).left()
+            }
+
+            if (service !is Service) return@flatMap compilationError("Expected a reference to a service.  ${service.qualifiedName} is not a service")
+            if (operationToken == null && operationTokenRequired) {
+               return@flatMap compilationError("Mutations require a reference to services and operations in the form of ServiceName::operationName. No operation name was provided")
+            }
+            val operation = if (operationToken != null) {
+               if (!service.containsMember(operationToken.text)) return@flatMap compilationError("Service ${service.qualifiedName} does not declare an operation ${operationToken.text}")
+               service.member(operationToken.text)
+            } else null
+            (service to operation).right()
+         }
+   }
 
    internal fun resolveImportableToken(
       tokenName: QualifiedNameContext,

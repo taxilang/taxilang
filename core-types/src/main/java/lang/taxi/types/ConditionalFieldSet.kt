@@ -113,6 +113,7 @@ data class FieldReferenceSelector(val fieldName: String, override val returnType
    override fun asTaxi(): String = "this.$fieldName"
 }
 
+// Probably deprecated, prefer MemberAccessExpression
 data class ArgumentSelector(
    val scope: Argument,
    val selectors: List<FieldReferenceSelector>,

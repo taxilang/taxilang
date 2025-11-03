@@ -15,8 +15,8 @@ import lang.taxi.compiler.fields.FieldTypeSpec
 import lang.taxi.expressions.*
 import lang.taxi.functions.Function
 import lang.taxi.query.ConstraintBuilder
-import lang.taxi.services.Service
 import lang.taxi.query.DiscoveryType
+import lang.taxi.services.ServiceMember
 import lang.taxi.services.operations.constraints.ExpressionConstraint
 import lang.taxi.types.*
 import lang.taxi.utils.*
@@ -403,10 +403,14 @@ class ExpressionCompiler(
             assignmentType
          )
 
+         expressionAtom.operationInvocation() != null -> parseOperationInvocationExpression(
+            expressionAtom.operationInvocation(),
+            assignmentType
+         )
+
          else -> expressionAtom.createInternalError("Unhandled atom in expression: ${expressionAtom.text}")
       }
    }
-
 
    private fun parseAttributeSelector(fieldReferenceSelector: TaxiParser.FieldReferenceSelectorContext): Either<List<CompilationError>, Expression> {
       return when {
@@ -649,8 +653,47 @@ class ExpressionCompiler(
             .leftOr(emptyList())
             .left()
       }
-
    }
+
+   private fun parseOperationInvocationExpression(
+      operationInvocation: TaxiParser.OperationInvocationContext,
+      assignmentType: Type?
+   ): Either<List<CompilationError>, OperationInvocationExpression> {
+      return tokenProcessor.resolveServiceAndOperation(
+         operationInvocation.typeReference(),
+         operationInvocation.memberReference()?.typeReference(),
+         true,
+         operationInvocation
+      ).flatMap { (service, member: ServiceMember?) ->
+         if (member == null) {
+            return operationInvocation.createCompilationError("An operation reference is require here")
+         }
+         if (assignmentType != null) {
+            val typeError = typeChecker.assertIsAssignable(member.returnType, assignmentType, operationInvocation)
+            if (typeError != null) {
+               return listOf(typeError).left()
+            }
+         }
+
+         val argumentContexts = operationInvocation.argumentList()?.argument() ?: emptyList()
+         functionCompiler.compileParameters(
+            member,
+            null,
+            argumentContexts,
+            operationInvocation,
+            member.qualifiedName,
+            operationInvocation.findNamespace()
+         ).map { parameters ->
+            OperationInvocationExpression(
+               service,
+               member,
+               parameters,
+               operationInvocation.toCompilationUnits()
+            )
+         }
+      }
+   }
+
 
    /**
     * Sometimes, the grammar gets it wrong, and parses a TypeExpression
@@ -1224,7 +1267,6 @@ class ExpressionCompiler(
    }
 
    override fun compileFieldReferenceAccessor(
-      function: Function,
       parameterContext: TaxiParser.ArgumentContext
    ): Either<List<CompilationError>, FieldReferenceSelector> {
       return requireFieldCompilerIsPresent(parameterContext).flatMap {

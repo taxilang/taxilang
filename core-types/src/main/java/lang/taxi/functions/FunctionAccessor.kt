@@ -1,18 +1,29 @@
 package lang.taxi.functions
 
 import lang.taxi.accessors.Accessor
+import lang.taxi.services.Callable
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TaxiStatementGenerator
 import lang.taxi.types.Type
 
 
+/**
+ * This is the invocation-expression side of a callable.
+ * Where a function or an operation is callable,
+ * this models the actual call-side
+ */
+interface CallableInvocationExpression {
+   val inputs: List<Accessor>
+   val callable: Callable
+}
 data class FunctionAccessor private constructor(
    val function: Function,
-   val inputs: List<Accessor>,
+   override val inputs: List<Accessor>,
    private val rawFunction: Function = function
-) : Accessor, TaxiStatementGenerator {
+) : Accessor, TaxiStatementGenerator, CallableInvocationExpression {
    val qualifiedName = function.qualifiedName
+   override val callable: Callable = function
    val parameters = function.parameters
    companion object {
       /**
