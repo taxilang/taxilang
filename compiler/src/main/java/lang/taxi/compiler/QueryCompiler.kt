@@ -123,13 +123,18 @@ internal class QueryCompiler(
             (service to operation).right()
          }.flatMap { (service, operation) ->
             when (val mutationProjection = mutationCtx.typeProjection()) {
-                null -> Triple(service, operation, null).right()
-                else -> {
-                   val mutationOperationResultExpression = TypeExpression(operation.returnType, emptyList(), mutationProjection.toCompilationUnits())
-                   parseTypeToProject(mutationProjection, DiscoveryType(mutationOperationResultExpression, emptyList()), emptyList()).flatMap { typeToProject ->
-                      Triple(service, operation, typeToProject).right()
-                   }
-                }
+               null -> Triple(service, operation, null).right()
+               else -> {
+                  val mutationOperationResultExpression =
+                     TypeExpression(operation.returnType, emptyList(), mutationProjection.toCompilationUnits())
+                  parseTypeToProject(
+                     mutationProjection,
+                     DiscoveryType(mutationOperationResultExpression, emptyList()),
+                     emptyList()
+                  ).flatMap { typeToProject ->
+                     Triple(service, operation, typeToProject).right()
+                  }
+               }
             }
          }
          .map { (service, operation, typeToProject) ->
@@ -153,26 +158,12 @@ internal class QueryCompiler(
       operationTokenRequired: Boolean,
       context: ParserRuleContext
    ): Either<List<CompilationError>, Pair<Service, ServiceMember?>> {
-      return tokenProcessor.resolveImportableToken(
-         serviceToken.qualifiedName(),
-         context,
-         SymbolKind.SERVICE
+      return tokenProcessor.resolveServiceAndOperation(
+         serviceToken,
+         operationToken,
+         operationTokenRequired,
+         context
       )
-         .flatMap { service ->
-            fun compilationError(message: String): Either<List<CompilationError>, Nothing> {
-               return listOf(CompilationError(serviceToken.start, message)).left()
-            }
-
-            if (service !is Service) return@flatMap compilationError("Expected a reference to a service.  ${service.qualifiedName} is not a service")
-            if (operationToken == null && operationTokenRequired) {
-               return@flatMap compilationError("Mutations require a reference to services and operations in the form of ServiceName::operationName. No operation name was provided")
-            }
-            val operation = if (operationToken != null) {
-               if (!service.containsMember(operationToken.text)) return@flatMap compilationError("Service ${service.qualifiedName} does not declare an operation ${operationToken.text}")
-               service.member(operationToken.text)
-            } else null
-            (service to operation).right()
-         }
    }
 
    private fun parseQueryBody(
@@ -201,7 +192,8 @@ internal class QueryCompiler(
                // wrap stream { Foo } so that Foo becomes Stream<Foo>
                .withTypedExpressionBuilder(StreamDecoratingTypedExpressionBuilder)
                .withParameters(parameters)
-               .compile(queryBodyContext.queryOrMutation().queryInputExpressionGroup().expressionGroup()
+               .compile(
+                  queryBodyContext.queryOrMutation().queryInputExpressionGroup().expressionGroup()
 //                  MP: 9-Aug-25:
                   // Not specifying the target type here, in an attempt to let the type inference engine
                   // work out the type by looking at the return type of the compiled expression.
@@ -217,6 +209,7 @@ internal class QueryCompiler(
             constraintBuilder,
             parameters
          )
+
          queryBodyContext.queryOrMutation()?.expressionGroup() != null -> {
             TODO()
          }
@@ -413,6 +406,7 @@ internal class QueryCompiler(
          .compile(expressionGroup, null)
       return expression
    }
+
    private fun parseTypeToProject(
       queryProjection: TaxiParser.TypeProjectionContext?,
       typesToDiscover: DiscoveryType?,

@@ -15,6 +15,7 @@ import lang.taxi.expressions.TypeExpression
 import lang.taxi.findNamespace
 import lang.taxi.functions.Function
 import lang.taxi.functions.FunctionAccessor
+import lang.taxi.services.Callable
 import lang.taxi.services.Parameter
 import lang.taxi.source
 import lang.taxi.text
@@ -41,7 +42,6 @@ interface FunctionParameterReferenceResolver {
    ): Either<List<CompilationError>, Accessor>
 
    fun compileFieldReferenceAccessor(
-      function: Function,
       parameterContext: TaxiParser.ArgumentContext
    ): Either<List<CompilationError>, FieldReferenceSelector>
 
@@ -113,50 +113,8 @@ class FunctionAccessorCompiler(
 
                }
 
-               val parametersOrErrors: Either<List<CompilationError>, List<Accessor>> = run {
-
-                  // First handle regular (non-vararg) parameters
-                  val nonVarArgParamsOrErrors = function.parameters
-                     .filter { !it.isVarArg }
-                     .mapIndexed { parameterIndex, parameter ->
-
-                        val argumentInputIndex = if (receiver != null) parameterIndex - 1 else parameterIndex
-                        val argumentInputContext = arguments.getOrNull(argumentInputIndex)
-                        val parameterType = function.getParameterType(parameterIndex)
-                        val parameterAccessor: Either<List<CompilationError>, Accessor> = when {
-                           parameterIndex == 0 && receiver != null -> receiver.right()
-                           argumentInputContext == null && parameter.defaultValue != null -> parameter.defaultValue!!.right()
-                           argumentInputContext == null -> context.createCompilationError("No value provided for parameter ${parameter.name} on function $functionName, and no default value is defined")
-                           else -> compileArgument(
-                              argumentInputContext,
-                              function,
-                              namespace,
-                              parameter,
-                              parameterType,
-                           )
-
-                        }
-                        parameterAccessor
-                     }
-
-                  // Now handle varargs (if present)
-                  val varargParam = function.parameters.lastOrNull()?.let { if (it.isVarArg) it else null }
-                  val varArgAccessorsOrErrors = if (varargParam != null) {
-                     val varArgIndex = function.parameters.indexOf(varargParam).let {
-                        if (receiver != null) it - 1 else it
-                     }
-                     val varArgInputs = arguments.drop(varArgIndex)
-                     varArgInputs.map { argumentInputContext ->
-                        compileArgument(argumentInputContext,
-                           function,
-                           namespace,
-                           varargParam,
-                           function.getParameterType(function.parameters.indexOf(varargParam)))
-                     }
-                  } else emptyList()
-
-                  (nonVarArgParamsOrErrors + varArgAccessorsOrErrors).invertEitherList().flattenErrors()
-               }
+               val parametersOrErrors: Either<List<CompilationError>, List<Accessor>> =
+                  compileParameters(function, receiver, arguments, context, functionName, namespace)
                parametersOrErrors.flatMap { parameters: List<Accessor> ->
                   // If we're invoked as an extension function, we'll be passed a receiver, which
                   // is to be used as the first parameter
@@ -187,9 +145,66 @@ class FunctionAccessorCompiler(
          }
    }
 
+   fun compileParameters(
+      function: Callable,
+      receiver: Expression?,
+      arguments: List<ArgumentContext>,
+      context: ParserRuleContext,
+      functionName: String,
+      namespace: String
+   ): Either<List<CompilationError>, List<Accessor>> {
+      val parametersOrErrors: Either<List<CompilationError>, List<Accessor>> = run {
+
+         // First handle regular (non-vararg) parameters
+         val nonVarArgParamsOrErrors = function.parameters
+            .filter { !it.isVarArg }
+            .mapIndexed { parameterIndex, parameter ->
+
+               val argumentInputIndex = if (receiver != null) parameterIndex - 1 else parameterIndex
+               val argumentInputContext = arguments.getOrNull(argumentInputIndex)
+               val parameterType = function.getParameterType(parameterIndex)
+               val parameterAccessor: Either<List<CompilationError>, Accessor> = when {
+                  parameterIndex == 0 && receiver != null -> receiver.right()
+                  argumentInputContext == null && parameter.defaultValue != null -> parameter.defaultValue!!.right()
+                  argumentInputContext == null -> context.createCompilationError("No value provided for parameter ${parameter.name} on function $functionName, and no default value is defined")
+                  else -> compileArgument(
+                     argumentInputContext,
+                     function,
+                     namespace,
+                     parameter,
+                     parameterType,
+                  )
+
+               }
+               parameterAccessor
+            }
+
+         // Now handle varargs (if present)
+         val varargParam = function.parameters.lastOrNull()?.let { if (it.isVarArg) it else null }
+         val varArgAccessorsOrErrors = if (varargParam != null) {
+            val varArgIndex = function.parameters.indexOf(varargParam).let {
+               if (receiver != null) it - 1 else it
+            }
+            val varArgInputs = arguments.drop(varArgIndex)
+            varArgInputs.map { argumentInputContext ->
+               compileArgument(
+                  argumentInputContext,
+                  function,
+                  namespace,
+                  varargParam,
+                  function.getParameterType(function.parameters.indexOf(varargParam))
+               )
+            }
+         } else emptyList()
+
+         (nonVarArgParamsOrErrors + varArgAccessorsOrErrors).invertEitherList().flattenErrors()
+      }
+      return parametersOrErrors
+   }
+
    private fun compileArgument(
       argumentInputContext: ArgumentContext,
-      function: Function,
+      function: Callable,
       namespace: Namespace,
       parameter: Parameter,
       parameterType: Type
@@ -205,7 +220,6 @@ class FunctionAccessorCompiler(
          )
 
          argumentInputContext.fieldReferenceSelector() != null -> referenceResolver.compileFieldReferenceAccessor(
-            function,
             argumentInputContext
          )
 

@@ -13,6 +13,7 @@ import lang.taxi.services.Parameter
 import lang.taxi.toCompilationUnit
 import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.Arrays
+import lang.taxi.types.EnumType
 import lang.taxi.types.LambdaExpressionType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.StreamType
@@ -61,6 +62,12 @@ fun TypeChecker.assertIsAssignable(valueType: Type, receiverType: Type, token: P
       // In that scenario, this check fails.
       // There's definitely a solution to this, but not one I've found.
       // Tests fail when this is uncommented.
+//      valueType is EnumType -> {
+//         val enumValueType = valueType.valueType
+//         if (enumValueType != null && enumValueType.isAssignableTo(receiverType)) {
+//            null
+//         } else error()
+//      }
 //      valueType.isScalar != receiverType.isScalar -> error()
       Arrays.isArray(valueType) != Arrays.isArray(receiverType) -> error()
       Arrays.isArray(receiverType) != Arrays.isArray(valueType) -> error()

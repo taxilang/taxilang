@@ -35,10 +35,32 @@ data class Parameter(
    }
 }
 
-interface ServiceMember : Annotatable, Compiled, Documented, Named {
-   val name: String
+interface Callable : Compiled, Named {
    val parameters: List<Parameter>
-   val returnType: Type
+   //only nullable because some impls. need to supprt
+   // late-bound definitions (ie., isDefined(...))
+   // Should not be nullable once the thing is defined.
+   val returnType: Type?
+
+   fun getParameterType(parameterIndex: Int): Type {
+      return when {
+         parameterIndex < this.parameters.size -> {
+            this.parameters[parameterIndex].type
+         }
+
+         this.parameters.last().isVarArg -> {
+            return this.parameters.last().type
+         }
+
+         else -> {
+            error("Parameter index $parameterIndex is out of bounds - function $qualifiedName only takes ${this.parameters.size} parameters")
+         }
+      }
+   }
+}
+interface ServiceMember : Annotatable, Compiled, Documented, Named, Callable {
+   val name: String
+   override val returnType: Type
 
    override val qualifiedName: String
       get() {

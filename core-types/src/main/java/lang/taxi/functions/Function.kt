@@ -9,6 +9,7 @@ import lang.taxi.accessors.Accessor
 import lang.taxi.expressions.Expression
 import lang.taxi.generics.TypeArgumentResolver
 import lang.taxi.generics.TypeResolutionFailedException
+import lang.taxi.services.Callable
 import lang.taxi.services.Parameter
 import lang.taxi.types.*
 import java.util.EnumSet
@@ -132,7 +133,7 @@ class FunctionDefinition(
 data class Function(
    override val qualifiedName: String,
    override var definition: FunctionDefinition?
-) : Named, Compiled, ImportableToken, DefinableToken<FunctionDefinition>, Documented {
+) : Named, Compiled, ImportableToken, DefinableToken<FunctionDefinition>, Documented, Callable {
    val typeArguments: List<TypeArgument>? = definition?.typeArguments
    fun getParameter(parameterIndex: Int): Parameter {
       return when {
@@ -149,21 +150,7 @@ data class Function(
          }
       }
    }
-   fun getParameterType(parameterIndex: Int): Type {
-      return when {
-         parameterIndex < this.parameters.size -> {
-            this.parameters[parameterIndex].type
-         }
 
-         this.parameters.last().isVarArg -> {
-            return this.parameters.last().type
-         }
-
-         else -> {
-            error("Parameter index $parameterIndex is out of bounds - function $qualifiedName only takes ${this.parameters.size} parameters")
-         }
-      }
-   }
 
    fun resolveTypeParametersFromInputs(
       inputs: List<Accessor>, targetType: Type,
@@ -203,7 +190,7 @@ data class Function(
          return if (isDefined) this.definition!!.typeDoc else null;
       }
 
-   val parameters: List<Parameter>
+   override val parameters: List<Parameter>
       get() {
          return if (isDefined) this.definition!!.parameters else emptyList()
       }
@@ -213,7 +200,7 @@ data class Function(
       get() {
          return if (isDefined) this.definition!!.returnTypeIsNullable else false
       }
-   val returnType: Type?
+   override val returnType: Type?
       get() {
          return if (isDefined) this.definition!!.returnType else null
       }
