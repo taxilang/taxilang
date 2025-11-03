@@ -19,6 +19,7 @@ import lang.taxi.linter.LinterRules
 import lang.taxi.types.ArgumentSelector
 import lang.taxi.types.FormulaOperator
 import lang.taxi.types.LambdaExpressionType
+import lang.taxi.types.MemberTypeReferenceExpression
 import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.TypeReferenceSelector
@@ -564,6 +565,25 @@ namespace pkgB {
          """.compiled()
             .function("foo")
             .typeDoc.should.equal("Is a foo")
+      }
+
+      it("is valid to reference a function parameter by name") {
+         val function = """
+            model Person {
+                name : Name inherits String
+            }
+            model Company {
+                employees: Person[]
+            }
+            function upperCaseName(person:Person):Name -> person::Name.upperCase()
+         """.compiled()
+            .function("upperCaseName")
+         function.definition!!.parameters.shouldHaveSize(1)
+         val body = function.definition!!.body!!
+            .shouldBeInstanceOf<ExtensionFunctionExpression>()
+         body.receiverValue.shouldBeInstanceOf<MemberTypeReferenceExpression>()
+            .argumentSelector!!.scopeWithPath.shouldBe("person")
+
       }
 
 
