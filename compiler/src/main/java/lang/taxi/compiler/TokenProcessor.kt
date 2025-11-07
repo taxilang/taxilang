@@ -832,7 +832,8 @@ class TokenProcessor(
          typeDoc = "This type is currently under construction",
          typeKind = typeKind,
          expression = null, // We'll parse the expression in a bit...
-         compilationUnit = ctx.toCompilationUnit()
+         compilationUnit = ctx.toCompilationUnit(),
+         definitionUnderConstruction = true
       )
       val interimType = ObjectType(
          typeName, interimDefinition
@@ -850,8 +851,7 @@ class TokenProcessor(
       val expression = ctx.expressionTypeDeclaration()?.let {
          parseTypeExpression(it.expressionGroup(), activeScopes, interimType)
       }?.getOrElse { errors ->
-         this.errors.addAll(errors)
-         null
+         return errors.left()
       }
 
       val inherits = declaredInheritence.let { explicitInheritence ->
@@ -861,7 +861,6 @@ class TokenProcessor(
          } else {
             explicitInheritence
          }
-
       }
 
       checkForCircularTypeInheritance(typeName, ctx, inherits)?.let { compilationError ->
@@ -903,6 +902,16 @@ class TokenProcessor(
             typeName,
             definition.copy(formatAndOffset = format)
          )
+      }
+
+      // Now that the type is fully constructed, we need to make sure that any expressions
+      // that were defined are actually assignable.
+      // Prevously this wasn't possible, as the type was under construction
+      if (type.expression != null) {
+         val expressionError = typeChecker.assertIsAssignable(type.expression!!.returnType, type, ctx.expressionTypeDeclaration())
+         if (expressionError != null) {
+            return listOf(expressionError).left()
+         }
       }
 
       return this.typeSystem.register(

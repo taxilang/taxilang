@@ -51,8 +51,11 @@ data class ObjectTypeDefinition(
     */
    val partialOfType: Type? = null,
    override val typeDoc: String? = null,
-   override val compilationUnit: CompilationUnit
+   override val compilationUnit: CompilationUnit,
+   val definitionUnderConstruction: Boolean = false
 ) : TypeDefinition, Documented {
+
+
    private val equality = ImmutableEquality(
       this,
       ObjectTypeDefinition::fields,

@@ -276,7 +276,9 @@ fieldTypeDeclaration: typeExpression? inlineInheritedType? accessor?;
 // A type expression is both a type, with optional contraints.
 // eg:
 // Film( ActorId == 123 )
-typeExpression: (nullableTypeReference | inlineAnonynousType) parameterConstraint?;
+typeExpression
+   : (nullableTypeReference parameterConstraint? // constraints are not permitted against anonymous types
+   | inlineAnonynousType);
 
 // This is a short-term workaround.
 // Problem:

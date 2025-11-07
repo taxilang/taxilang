@@ -7,7 +7,10 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import lang.taxi.accessors.LiteralAccessor
+import lang.taxi.accessors.NullValue
 import lang.taxi.expressions.ExtensionFunctionExpression
+import lang.taxi.expressions.LiteralExpression
 import lang.taxi.expressions.ProjectingExpression
 import lang.taxi.expressions.TypeExpression
 import lang.taxi.policies.PolicyOperationScope
@@ -85,7 +88,11 @@ class PolicySpec : DescribeSpec({
             yearReleased : YearReleased inherits Int
          }
          policy FilmsPolicy against Film {
-            read { Film as { ... except { yearReleased } } }
+            read { Film as {
+               yearReleased: YearReleased = null
+               ...
+             }
+          }
          }
          """.compiled()
             .policy("FilmsPolicy")
@@ -94,11 +101,12 @@ class PolicySpec : DescribeSpec({
          val projection = policy.rules.single()
             .expression
             .shouldBeInstanceOf<ProjectingExpression>()
-         val fields = projection.projection.projectedType
+         val responseType = projection.projection.projectedType
             .asA<ObjectType>()
-            .fields
-         fields.filter { it.name == "yearReleased" }
-            .shouldBeEmpty()
+         responseType.field("yearReleased")
+            .accessor.shouldBeInstanceOf<LiteralExpression>()
+            .value.shouldBe(NullValue)
+
       }
 
       it("uses expressions in policies") {

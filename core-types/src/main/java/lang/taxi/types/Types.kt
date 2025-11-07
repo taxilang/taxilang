@@ -196,9 +196,19 @@ interface Type : Formattable, Named, Compiled, ImportableToken, Documented, Anno
    fun isAssignableTo(
       assignmentTargetType: Type,
       considerTypeParameters: Boolean = true,
-      typeChecker: TypeChecker = TypeChecker.DEFAULT
+      typeChecker: TypeChecker = TypeChecker.DEFAULT,
+      permitStructurallyCompatible: Boolean = true,
    ): Boolean {
-      return typeChecker.isAssignableTo(this, assignmentTargetType, considerTypeParameters)
+      return typeChecker.isAssignableTo(this, assignmentTargetType, considerTypeParameters, permitStructurallyCompatible)
+   }
+
+   fun isAssignableOrErrors(
+      assignmentTargetType: Type,
+      considerTypeParameters: Boolean = true,
+      typeChecker: TypeChecker = TypeChecker.DEFAULT,
+      permitStructurallyCompatible: Boolean = true,
+   ):Either<String,Boolean> {
+      return typeChecker.isAssignableOrErrors(this, assignmentTargetType, considerTypeParameters, permitStructurallyCompatible)
    }
 
    fun resolveAliases(): Type {
@@ -282,6 +292,13 @@ interface DefinableToken<TDef : TokenDefinition> : ImportableToken {
    val isDefined: Boolean
       get() {
          return this.definition != null
+      }
+
+   val isUnderConstruction: Boolean
+      get() {
+         if (this.definition == null) return true
+         val definition = this.definition
+         return definition is ObjectTypeDefinition && definition.definitionUnderConstruction
       }
 }
 
