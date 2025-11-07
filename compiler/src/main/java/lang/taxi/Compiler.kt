@@ -25,7 +25,6 @@ import lang.taxi.types.*
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.ParseTree
-import org.antlr.v4.runtime.tree.TerminalNode
 import org.taxilang.packagemanager.PackageManager
 import java.io.File
 import java.io.Serializable
@@ -740,6 +739,19 @@ fun RuleContext.importsInFile(): List<QualifiedName> {
    return imports
 }
 
+inline fun <reified T : RuleContext, O> RuleContext.ifSearchUpForRuleFindsMatch(expression: (T) -> O?): O? {
+   val match = this.searchUpForRule<T>()
+   return if (match != null) {
+      expression(match)
+   } else null
+}
+
+inline fun <reified T : RuleContext> ParserRuleContext.hasChildOfType():Boolean {
+   return this.children.filterIsInstance<T>().isNotEmpty()
+}
+inline fun <reified T : RuleContext> ParserRuleContext.childrenOfType():List<T> {
+   return this.children.filterIsInstance<T>()
+}
 
 fun RuleContext.searchUpForRule(ruleType: Class<out RuleContext>): RuleContext? =
    searchUpForRule(listOf(ruleType))
