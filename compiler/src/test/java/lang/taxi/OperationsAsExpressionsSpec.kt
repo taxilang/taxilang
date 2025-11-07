@@ -18,8 +18,12 @@ class OperationsAsExpressionsSpec : DescribeSpec({
             model Person {
                name : PersonName inherits String
             }
+            parameter model PersonRequest {
+               email: String
+            }
             service PersonService {
                operation getName(emailAddress: String):Person
+               operation getPerson(PersonRequest):Person
             }
       """.trimIndent()
       it("should let me call an operation as an expression") {
@@ -51,6 +55,14 @@ class OperationsAsExpressionsSpec : DescribeSpec({
             }
          """.trimIndent())
          exception.errors.shouldContainMessage("Type mismatch. Type of lang.taxi.Int is not assignable to type lang.taxi.String")
+      }
+      it("should raise a compilation error if one of the parameters is of the wrong type - passing a scalar to an object") {
+         val exception = taxiSrc.compiledWithQueryProducingCompilationException("""
+            find {
+               name : Person = PersonService::getPerson(23)
+            }
+         """.trimIndent())
+         exception.errors.shouldContainMessage("Type mismatch. Type of lang.taxi.Int is not assignable to type PersonRequest")
       }
 
       // Disabled: ORB-1046

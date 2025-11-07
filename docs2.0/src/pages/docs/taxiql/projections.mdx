@@ -47,17 +47,6 @@ model CustomerTransaction {
 find { Purchase[] } as CustomerTransaction[]
 ```
 
-### Adding fields to existing models
-
-This pattern allows you to extend an existing model with additional fields without modifying the original type definition. It's particularly useful when you need most of a model's structure plus some extra enrichment.
-
-```taxi
-find { Book[] } as BookDatabaseRecord {
-   // Inherits all BookDatabaseRecord fields
-   rottenTomatoesReview : RottenTomatoesReview  // Plus this extra field
-}[]
-```
-
 ## Field selection
 
 Field selection gives you fine-grained control over which data to include in your projections, allowing you to optimize queries by only requesting the fields you actually need.

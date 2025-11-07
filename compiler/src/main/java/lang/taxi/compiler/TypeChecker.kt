@@ -15,11 +15,11 @@ import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.Arrays
 import lang.taxi.types.EnumType
 import lang.taxi.types.LambdaExpressionType
+import lang.taxi.types.ObjectType
 import lang.taxi.types.PrimitiveType
 import lang.taxi.types.StreamType
 import lang.taxi.types.Type
 import lang.taxi.types.TypeChecker
-import lang.taxi.utils.createCompilationError
 import org.antlr.v4.runtime.ParserRuleContext
 
 
@@ -51,30 +51,57 @@ fun TypeChecker.assertIsAssignable(valueType: Type, receiverType: Type, token: P
          FeatureToggle.SOFT_ENABLED -> Errors.typeMismatch(valueType, receiverType, token).copy(severity = Severity.WARNING)
       }
    }
+   val bothTypes = setOf(valueType, receiverType)
+   val eitherAreBeingConstructed = bothTypes.any { it is ObjectType && !it.isDefined || it is ObjectType && it.isUnderConstruction}
+   if (eitherAreBeingConstructed) return null
 
    val valueIsArray = Arrays.isArray(valueType)
    val receiverIsArray = Arrays.isArray(receiverType)
    return when {
       valueType.isAssignableTo(receiverType) -> null
-      // I *want* to use this check - which is the right check
-      // however, we have a nasty condition where, when compiling an expression type
-      // we have to use an interim type definition whilst we compile the expression itself.
-      // In that scenario, this check fails.
-      // There's definitely a solution to this, but not one I've found.
-      // Tests fail when this is uncommented.
-//      valueType is EnumType -> {
-//         val enumValueType = valueType.valueType
-//         if (enumValueType != null && enumValueType.isAssignableTo(receiverType)) {
-//            null
-//         } else error()
-//      }
+
+
+      receiverType is ObjectType && receiverType.expression != null -> {
+         val receiverTypeInherits = receiverType.inheritsFrom
+
+         // We want to allow things like:
+         // model TweetAndAnalytics = Tweet | Analytics
+         // which is a valid creation of a UnionType
+         // but disallow things like:
+         // type Adults inherits Person = (Person[]) -> Person[].first()::Age
+         // Which is a type mismatch.
+         // Note that the compiler will automatically make an expression type extend the return type
+         // so that it's assignable
+         // Current approach is to check that the receiverType inherits from somethign assignable
+         if (receiverTypeInherits.any { receiverSuperType -> valueType.isAssignableTo(receiverSuperType) }) {
+            null
+         } else {
+            error()
+         }
+      }
+      valueType.isScalar != receiverType.isScalar -> {
+         // These are edge cases.
+         when {
+            // We allow Enum<T> to be assignable to T.
+            valueType is EnumType -> {
+               val enumValueType = valueType.valueType
+               if (enumValueType != null && enumValueType.isAssignableTo(receiverType)) {
+                  null
+               } else error()
+            }
+            else -> error()
+         }
+      }
 //      valueType.isScalar != receiverType.isScalar -> error()
       Arrays.isArray(valueType) != Arrays.isArray(receiverType) -> error()
       Arrays.isArray(receiverType) != Arrays.isArray(valueType) -> error()
+      !valueIsArray && valueType == PrimitiveType.ANY -> null
+      !receiverIsArray && receiverType == PrimitiveType.ANY -> null
+
       // ValueType being an Any could happen in the else branch of a when clause, if using
       // an accessor (such as column/jsonPath/xpath) , where we can't infer the value type returned.
       !valueIsArray && valueType.basePrimitive == PrimitiveType.ANY -> null
-      !receiverIsArray && receiverType.basePrimitive == PrimitiveType.ANY -> null
+//      !receiverIsArray && receiverType.basePrimitive == PrimitiveType.ANY -> null
 
 //         receiverType.basePrimitive == valueType.basePrimitive -> null
       else -> error()

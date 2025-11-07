@@ -4,6 +4,7 @@ import com.winterbe.expekt.should
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainOnly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.accessors.ProjectionFunctionScope
@@ -234,7 +235,7 @@ class ExpressionTypesSpec : DescribeSpec({
             model Person {
                age : Age inherits Int
             }
-            type Adults by (Person[](Age > 18)) -> Person[].first()
+            type Adults = (Person[](Age > 18)) -> Person[].first()
          """.compiled()
          val adults = schema.type("Adults")
             .shouldBeInstanceOf<ObjectType>()
@@ -243,6 +244,38 @@ class ExpressionTypesSpec : DescribeSpec({
             .expression.shouldBeInstanceOf<TypeExpression>()
          typeExpression.constraints.shouldHaveSize(1)
       }
+
+      it("implies the inherited type") {
+         val schema = """
+            model Person {
+               age : Age inherits Int
+            }
+            type Adults = (Person[](Age > 18)) -> Person[].first()
+         """.compiled()
+         val adults = schema.type("Adults")
+            .shouldBeInstanceOf<ObjectType>()
+            .inheritsFromNames.shouldContainOnly("Person")
+      }
+      it("catches an invalid assignment from an expression type") {
+         """
+            model Person {
+               age : Age inherits Int
+            }
+            type Adults inherits Person = (Person[](Age > 18)) -> Person[].first()::Age
+         """.validated()
+            .shouldContainMessage("Type mismatch. Type of Age is not assignable to type Adults")
+      }
+
+      it("catches an invalid assignment from an expression type 2") {
+         """
+            model Person {
+               age : Age inherits Int
+            }
+            type Adults inherits String = (Person[](Age > 18)) -> Person[].first()
+         """.validated()
+            .shouldContainMessage("Type mismatch. Type of Person is not assignable to type Adults")
+      }
+
       it("is illegal to return an array from an expression type") {
          """
             model Person {
@@ -251,12 +284,7 @@ class ExpressionTypesSpec : DescribeSpec({
             type Adults by (Person[]) -> Person[].filter( (Age) -> Age > 18 )
          """.validated()
             .errors()
-
-            // Note: After fixing a bug in the type checker, this is now being returned.
-            // The real error is the commented out one, but it doesn't really matter which error
-            // so long as users cant do it.
-            .shouldContainMessage("Type mismatch. Type of lang.taxi.Array<Person> is not assignable to type Adults")
-//            .shouldContainMessage("Expression types may not return arrays. Use a function instead")
+            .shouldContainMessage("Expression types may not return arrays. Use a function instead")
       }
 
 
@@ -304,7 +332,7 @@ parameter model Customer { // ... which requires this type, which hasn't been co
     id: CustomerId
 }
 
-type AccountSubType inherits String by (customer:Customer(CustomerId == '123')) -> Customer
+type AccountSubType = (customer:Customer(CustomerId == '123')) -> Customer::CustomerId
          """.validated()
             .errors()
             .shouldBeEmpty()
