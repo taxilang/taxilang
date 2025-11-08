@@ -43,11 +43,6 @@
                 fieldName="INSTANCE"
                 language="Taxi"
                 extensions="taxi"/>
-
-        <!-- Language -->
-        <lang.parserDefinition
-                language="Taxi"
-                implementationClass="com.redhat.devtools.lsp4ij.server.definition.extension.DummyParserDefinition"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
