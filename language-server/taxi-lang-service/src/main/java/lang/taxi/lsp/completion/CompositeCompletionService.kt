@@ -151,6 +151,8 @@ class CompositeCompletionService(
       fun withDefaults(typeCompletionBuilder: TypeCompletionBuilder): CompositeCompletionService {
          return CompositeCompletionService(
             listOf(
+               // C3CompletionProvider first - provides grammar-based syntactic completions
+               C3CompletionProvider(),
                EditorCompletionService(typeCompletionBuilder),
                DefaultCompletionProvider(typeCompletionBuilder)
             )
