@@ -89,12 +89,21 @@ tasks {
         }
     }
 
+    // Ensure all tasks that need resources wait for the language server JAR
+    processResources {
+        dependsOn(copyLanguageServerJar)
+    }
+
     // Make jar task depend on copying the language server
     jar {
         dependsOn(copyLanguageServerJar)
     }
 
-    // Make prepareSandbox also copy the JAR
+    // Make IntelliJ-specific tasks depend on the language server JAR
+    instrumentedJar {
+        dependsOn(copyLanguageServerJar)
+    }
+
     prepareSandbox {
         dependsOn(copyLanguageServerJar)
     }
