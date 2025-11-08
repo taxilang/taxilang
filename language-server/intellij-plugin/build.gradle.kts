@@ -14,12 +14,18 @@ repositories {
     mavenLocal()
 }
 
+// Configuration for the language server JAR (bundled as resource, not classpath dependency)
+val languageServerJar: Configuration by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
 dependencies {
-    // Reference the Taxi language server JAR from Maven local repository
+    // Bundle the language server JAR as a resource (not on classpath)
     // This requires running: ./mvnw install -pl language-server/taxi-lang-server-standalone
-    implementation("org.taxilang:taxi-lang-server-standalone:${version}") {
-        // Exclude LSP4J to avoid conflicts with LSP4IJ's bundled version
-        exclude(group = "org.eclipse.lsp4j")
+    languageServerJar("org.taxilang:taxi-lang-server-standalone:${version}") {
+        // Exclude transitive dependencies - we only want the JAR
+        isTransitive = false
     }
 }
 
@@ -59,13 +65,15 @@ tasks {
         token.set(System.getenv("PUBLISH_TOKEN"))
     }
 
-    // Task to verify that the language server JAR is available
-    register("verifyLanguageServer") {
-        doLast {
-            val jarFound = configurations.runtimeClasspath.get().any {
-                it.name.contains("taxi-lang-server-standalone")
-            }
-            if (!jarFound) {
+    // Task to verify and copy the language server JAR
+    val copyLanguageServerJar by registering(Copy::class) {
+        from(languageServerJar)
+        into("${project.buildDir}/resources/main/languageServer")
+        rename { "taxi-language-server.jar" }
+
+        doFirst {
+            val jarFiles = languageServerJar.resolvedConfiguration.resolvedArtifacts
+            if (jarFiles.isEmpty()) {
                 throw GradleException(
                     """
                     |
@@ -77,12 +85,17 @@ tasks {
                     """.trimMargin()
                 )
             }
-            println("✓ Taxi Language Server JAR found in dependencies")
+            logger.lifecycle("✓ Copying Taxi Language Server JAR to plugin resources")
         }
     }
 
-    // Make build depend on verification
-    build {
-        dependsOn("verifyLanguageServer")
+    // Make jar task depend on copying the language server
+    jar {
+        dependsOn(copyLanguageServerJar)
+    }
+
+    // Make prepareSandbox also copy the JAR
+    prepareSandbox {
+        dependsOn(copyLanguageServerJar)
     }
 }

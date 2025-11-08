@@ -116,47 +116,62 @@ class TaxiLanguageServerFactory : LanguageServerFactory {
 
         /**
          * Find the Taxi language server JAR
-         * This expects the JAR to be bundled in the plugin's lib directory
+         * The JAR is bundled in the plugin's resources
          */
         private fun findLanguageServerJar(): String {
-            val pluginClassLoader = this::class.java.classLoader
+            val classLoader = this::class.java.classLoader
 
-            // Try to find the JAR in the classpath
-            val jarName = "taxi-lang-server-standalone"
+            // Try to find the JAR as a bundled resource
+            val resourcePath = "languageServer/taxi-language-server.jar"
+            val resourceUrl = classLoader.getResource(resourcePath)
 
-            // Get all JAR URLs from the classloader
-            pluginClassLoader.getResource("META-INF/plugin.xml")?.let { pluginXmlUrl ->
+            if (resourceUrl != null) {
+                logger.info("Found language server JAR at: $resourceUrl")
+
+                // If it's a JAR URL (jar:file:/path/to/plugin.jar!/languageServer/taxi-language-server.jar)
+                // we need to extract it to a temp location
+                if (resourceUrl.protocol == "jar") {
+                    val tempDir = File(System.getProperty("java.io.tmpdir"), "taxi-language-server")
+                    tempDir.mkdirs()
+                    val tempJar = File(tempDir, "taxi-language-server.jar")
+
+                    // Only extract if not already present or outdated
+                    if (!tempJar.exists() || tempJar.length() == 0L) {
+                        logger.info("Extracting language server JAR to: ${tempJar.absolutePath}")
+                        classLoader.getResourceAsStream(resourcePath)?.use { input ->
+                            tempJar.outputStream().use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                    }
+                    return tempJar.absolutePath
+                } else {
+                    // Direct file access (e.g., in development mode)
+                    val jarPath = resourceUrl.path.removePrefix("file:")
+                    return jarPath
+                }
+            }
+
+            // Fallback: Look in the plugin directory (for development/sandbox mode)
+            classLoader.getResource("META-INF/plugin.xml")?.let { pluginXmlUrl ->
                 val pluginPath = pluginXmlUrl.path.substringBefore("!/")
-                val pluginDir = File(pluginPath).parentFile.parentFile // Go up from classes to plugin root
+                val pluginDir = File(pluginPath).parentFile
 
-                // Look for the server JAR in the lib directory
-                val libDir = File(pluginDir, "lib")
-                if (libDir.exists()) {
-                    libDir.listFiles { file ->
-                        file.name.contains(jarName) && file.extension == "jar"
-                    }?.firstOrNull()?.let { serverJar ->
+                // Look in resources directory
+                val resourcesDir = File(pluginDir, "languageServer")
+                if (resourcesDir.exists()) {
+                    val serverJar = File(resourcesDir, "taxi-language-server.jar")
+                    if (serverJar.exists()) {
+                        logger.info("Found language server JAR in plugin directory: ${serverJar.absolutePath}")
                         return serverJar.absolutePath
                     }
                 }
             }
 
-            // Alternative: Look in the plugin's installation directory
-            // This works when the plugin is installed
-            try {
-                val urls = (pluginClassLoader as? java.net.URLClassLoader)?.urLs
-                urls?.forEach { url ->
-                    if (url.path.contains(jarName) && url.path.endsWith(".jar")) {
-                        val jarPath = url.path.removePrefix("file:")
-                        return jarPath
-                    }
-                }
-            } catch (e: Exception) {
-                logger.debug("Could not search URLClassLoader", e)
-            }
-
             throw IllegalStateException(
                 "Could not find Taxi language server JAR. " +
-                "Please ensure taxi-lang-server-standalone JAR is bundled with the plugin."
+                        "Expected location: $resourcePath in plugin resources. " +
+                        "Please ensure the language server was built and bundled with the plugin."
             )
         }
     }
