@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.24"
-    id("org.jetbrains.intellij") version "1.17.4"
+    id("org.jetbrains.intellij.platform") version "2.10.4"
 }
 
 group = providers.gradleProperty("pluginGroup").get()
@@ -12,6 +12,11 @@ version = providers.gradleProperty("pluginVersion").get()
 repositories {
     mavenCentral()
     mavenLocal()
+
+    // Required for IntelliJ Platform Gradle Plugin 2.x
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 dependencies {
@@ -25,16 +30,55 @@ dependencies {
     implementation("org.taxilang:taxi-lang-server-standalone:${version}") {
         exclude(group = "org.eclipse.lsp4j")
     }
+
+    // IntelliJ Platform dependencies (2.x style)
+    intellijPlatform {
+        create(providers.gradleProperty("platformType"), providers.gradleProperty("platformVersion"))
+
+        // Plugin dependencies
+        plugin("com.redhat.devtools.lsp4ij:0.18.0")
+
+        // Required for running tests
+        testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
+
+        // Plugin verifier for compatibility testing
+        pluginVerifier()
+
+        // Bundled plugins if needed (only add if not empty)
+        val bundledPluginsList = providers.gradleProperty("platformBundledPlugins").orElse("").get()
+        if (bundledPluginsList.isNotBlank()) {
+            bundledPlugins(bundledPluginsList.split(',').map(String::trim))
+        }
+    }
 }
 
-// Configure Gradle IntelliJ Plugin
-intellij {
-    pluginName.set(providers.gradleProperty("pluginName").get())
-    version.set(providers.gradleProperty("platformVersion").get())
-    type.set(providers.gradleProperty("platformType").get())
+// Configure IntelliJ Platform Plugin 2.x
+intellijPlatform {
+    pluginConfiguration {
+        name = providers.gradleProperty("pluginName")
+        version = providers.gradleProperty("pluginVersion")
 
-    // Plugin Dependencies
-    plugins.set(listOf("com.redhat.devtools.lsp4ij:0.18.0"))
+        ideaVersion {
+            sinceBuild = providers.gradleProperty("pluginSinceBuild")
+            untilBuild = providers.gradleProperty("pluginUntilBuild")
+        }
+    }
+
+    signing {
+        certificateChain = providers.environmentVariable("CERTIFICATE_CHAIN")
+        privateKey = providers.environmentVariable("PRIVATE_KEY")
+        password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
+    }
+
+    publishing {
+        token = providers.environmentVariable("PUBLISH_TOKEN")
+    }
+
+    pluginVerification {
+        ides {
+            recommended()
+        }
+    }
 }
 
 tasks {
@@ -46,20 +90,5 @@ tasks {
 
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "17"
-    }
-
-    patchPluginXml {
-        sinceBuild.set(providers.gradleProperty("pluginSinceBuild").get())
-        untilBuild.set(providers.gradleProperty("pluginUntilBuild").get())
-    }
-
-    signPlugin {
-        certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
-        privateKey.set(System.getenv("PRIVATE_KEY"))
-        password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
-    }
-
-    publishPlugin {
-        token.set(System.getenv("PUBLISH_TOKEN"))
     }
 }
