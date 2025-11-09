@@ -23,7 +23,7 @@ val languageServerJar: Configuration by configurations.creating {
 dependencies {
     // Bundle the language server JAR as a resource (not on classpath)
     // This requires running: ./mvnw install -pl language-server/taxi-lang-server-standalone
-    languageServerJar("org.taxilang:taxi-lang-server-standalone:${version}") {
+    languageServerJar("org.taxilang:taxi-lang-server-standalone:${version}:jar-with-dependencies") {
         // Exclude transitive dependencies - we only want the JAR
         isTransitive = false
     }

@@ -68,9 +68,9 @@ class TaxiLanguageServerFactory : LanguageServerFactory {
             return process?.outputStream
         }
 
-        override fun getErrorStream(): InputStream? {
-            return process?.errorStream
-        }
+//        override fun getErrorStream(): InputStream? {
+//            return process?.errorStream
+//        }
 
         override fun stop() {
             process?.let {
