@@ -23,7 +23,8 @@ val languageServerJar: Configuration by configurations.creating {
 dependencies {
     // Bundle the language server JAR as a resource (not on classpath)
     // This requires running: ./mvnw install -pl language-server/taxi-lang-server-standalone
-    languageServerJar("org.taxilang:taxi-lang-server-standalone:${version}") {
+    // Note: We need the "jar-with-dependencies" classifier for the fat JAR with Main-Class manifest
+    languageServerJar("org.taxilang:taxi-lang-server-standalone:${version}:jar-with-dependencies") {
         // Exclude transitive dependencies - we only want the JAR
         isTransitive = false
     }
@@ -78,14 +79,19 @@ tasks {
                     """
                     |
                     |Taxi Language Server JAR not found!
+                    |Looking for: taxi-lang-server-standalone-${version}-jar-with-dependencies.jar
+                    |
                     |Please build the language server first:
                     |  cd ../..
                     |  ./mvnw install -pl language-server/taxi-lang-server-standalone
                     |
+                    |The JAR should be installed to:
+                    |  ~/.m2/repository/org/taxilang/taxi-lang-server-standalone/${version}/
+                    |
                     """.trimMargin()
                 )
             }
-            logger.lifecycle("✓ Copying Taxi Language Server JAR to plugin resources")
+            logger.lifecycle("✓ Copying Taxi Language Server JAR: ${jarFiles.first().file.name}")
         }
     }
 
