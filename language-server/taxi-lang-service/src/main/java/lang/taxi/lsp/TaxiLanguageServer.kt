@@ -83,8 +83,11 @@ class TaxiLanguageServer(
             // Set the capabilities of the LS to inform the client.
             val capabilities = initializeResult.capabilities
             capabilities.setTextDocumentSync(TextDocumentSyncOptions().apply {
+               openClose = true
                change = TextDocumentSyncKind.Full
                save = Either.forRight(SaveOptions(false))
+               willSave = false
+               willSaveWaitUntil = false
             })
             capabilities.semanticTokensProvider = SemanticTokensWithRegistrationOptions(
                SemanticTokensLegend(

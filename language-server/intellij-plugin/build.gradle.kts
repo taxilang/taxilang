@@ -14,18 +14,16 @@ repositories {
     mavenLocal()
 }
 
-// Configuration for the language server JAR (bundled as resource, not classpath dependency)
-val languageServerJar: Configuration by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
-}
-
 dependencies {
-    // Bundle the language server JAR as a resource (not on classpath)
-    // This requires running: ./mvnw install -pl language-server/taxi-lang-server-standalone
-    languageServerJar("org.taxilang:taxi-lang-server-standalone:${version}:jar-with-dependencies") {
-        // Exclude transitive dependencies - we only want the JAR
-        isTransitive = false
+    // Add the language server as a direct dependency (will run in-process)
+    // Exclude LSP4J to use LSP4IJ's bundled version and avoid conflicts
+    implementation("org.taxilang:taxi-lang-service:${version}") {
+        exclude(group = "org.eclipse.lsp4j")
+    }
+
+    // We also need the standalone module for its factories and lifecycle handlers
+    implementation("org.taxilang:taxi-lang-server-standalone:${version}") {
+        exclude(group = "org.eclipse.lsp4j")
     }
 }
 
@@ -36,7 +34,7 @@ intellij {
     type.set(providers.gradleProperty("platformType").get())
 
     // Plugin Dependencies
-    plugins.set(listOf("com.redhat.devtools.lsp4ij:0.6.0"))
+    plugins.set(listOf("com.redhat.devtools.lsp4ij:0.18.0"))
 }
 
 tasks {
@@ -63,48 +61,5 @@ tasks {
 
     publishPlugin {
         token.set(System.getenv("PUBLISH_TOKEN"))
-    }
-
-    // Task to verify and copy the language server JAR
-    val copyLanguageServerJar by registering(Copy::class) {
-        from(languageServerJar)
-        into("${project.buildDir}/resources/main/languageServer")
-        rename { "taxi-language-server.jar" }
-
-        doFirst {
-            val jarFiles = languageServerJar.resolvedConfiguration.resolvedArtifacts
-            if (jarFiles.isEmpty()) {
-                throw GradleException(
-                    """
-                    |
-                    |Taxi Language Server JAR not found!
-                    |Please build the language server first:
-                    |  cd ../..
-                    |  ./mvnw install -pl language-server/taxi-lang-server-standalone
-                    |
-                    """.trimMargin()
-                )
-            }
-            logger.lifecycle("✓ Copying Taxi Language Server JAR to plugin resources")
-        }
-    }
-
-    // Ensure all tasks that need resources wait for the language server JAR
-    processResources {
-        dependsOn(copyLanguageServerJar)
-    }
-
-    // Make jar task depend on copying the language server
-    jar {
-        dependsOn(copyLanguageServerJar)
-    }
-
-    // Make IntelliJ-specific tasks depend on the language server JAR
-    instrumentedJar {
-        dependsOn(copyLanguageServerJar)
-    }
-
-    prepareSandbox {
-        dependsOn(copyLanguageServerJar)
     }
 }
