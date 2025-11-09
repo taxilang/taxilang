@@ -18,9 +18,9 @@
    <dependencies>
       <!-- ANTLR4 Code Completion Core for grammar-based completions -->
       <dependency>
-         <groupId>me.tomassetti.antlr4c3</groupId>
-         <artifactId>antlr4-c3-kotlin</artifactId>
-         <version>0.1.0</version>
+         <groupId>com.strumenta.antlr4-c3</groupId>
+         <artifactId>antlr4-c3-java</artifactId>
+         <version>1.2.0</version>
       </dependency>
       <dependency>
          <groupId>io.projectreactor</groupId>

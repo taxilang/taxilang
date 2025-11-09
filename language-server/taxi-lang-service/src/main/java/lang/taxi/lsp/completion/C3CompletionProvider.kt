@@ -1,10 +1,10 @@
 package lang.taxi.lsp.completion
 
+import com.strumenta.antlr4c3.CodeCompletionCore
 import lang.taxi.TaxiLexer
 import lang.taxi.TaxiParser
 import lang.taxi.lsp.CompilationResult
 import lang.taxi.utils.log
-import me.tomassetti.antlr4c3.CodeCompletionCore
 import org.antlr.v4.runtime.Parser
 import org.antlr.v4.runtime.ParserRuleContext
 import org.eclipse.lsp4j.CompletionItem
@@ -59,7 +59,7 @@ class C3CompletionProvider : CompletionProvider {
         contextAtCursor: ParserRuleContext?
     ): List<CompletionItem> {
 
-        // Get the parser from compilation result
+        // Get the source
         val source = compilationResult.getSource(params.textDocument) ?: run {
             log().debug("No source found for ${params.textDocument.uri}")
             return emptyList()
@@ -74,42 +74,20 @@ class C3CompletionProvider : CompletionProvider {
 
         log().debug("Found token index $tokenIndex at position ${params.position.line}:${params.position.character}")
 
-        // Get a parser instance to extract ATN and vocabulary
-        // We need to create a fresh parser just to get the metadata
-        val parser = createTaxiParser(compilationResult)
+        // Create a parser instance for the current source
+        val parser = createTaxiParser(compilationResult, params)
 
-        // Create the CodeCompletionCore
+        // Create the CodeCompletionCore with the Java API
+        // Constructor: CodeCompletionCore(Parser parser, Set<Integer> preferredRules, Set<Integer> ignoredTokens)
         val core = CodeCompletionCore(
-            atn = parser.atn,
-            vocabulary = parser.vocabulary,
-            ruleNames = parser.ruleNames,
-            languageName = "Taxi"
+            parser,
+            null, // preferredRules - null means no preference
+            IGNORED_TOKENS
         )
 
-        // Configure which tokens to ignore
-        core.ignoredTokens = IGNORED_TOKENS
-
-        // Optionally configure preferred rules - rules we want to see as completion candidates
-        // For now, let's try without this and see what we get
-        // core.preferredRules = setOf(TaxiParser.RULE_typeReference, TaxiParser.RULE_identifier)
-
-        // Collect candidates using the token stream
-        val tokenStream = compilationResult.compiler.inputs
-            .firstOrNull { it.sourceName == params.textDocument.normalizedUriPath() }
-            ?.let { input ->
-                // Create a token stream from the input
-                val lexer = TaxiLexer(input)
-                org.antlr.v4.runtime.CommonTokenStream(lexer)
-            } ?: run {
-            log().debug("Could not create token stream")
-            return emptyList()
-        }
-
-        val candidates = core.collectCandidates(
-            tokenStream = tokenStream,
-            caretTokenIndex = tokenIndex,
-            context = contextAtCursor
-        )
+        // Collect candidates
+        // Java API: collectCandidates(int caretTokenIndex, ParserRuleContext context)
+        val candidates = core.collectCandidates(tokenIndex, contextAtCursor)
 
         log().debug("C3 found ${candidates.tokens.size} token candidates and ${candidates.rules.size} rule candidates")
 
@@ -150,9 +128,20 @@ class C3CompletionProvider : CompletionProvider {
         return maxOf(0, tokenList.size - 1)
     }
 
-    private fun createTaxiParser(compilationResult: CompilationResult): TaxiParser {
-        // We just need any parser instance to get the ATN/vocabulary
-        // The specific input doesn't matter
+    private fun createTaxiParser(compilationResult: CompilationResult, params: CompletionParams): TaxiParser {
+        // Create a parser for the actual source file being edited
+        val normalizedUri = params.textDocument.normalizedUriPath()
+        val input = compilationResult.compiler.inputs.firstOrNull {
+            it.sourceName == normalizedUri
+        }
+
+        if (input != null) {
+            val lexer = TaxiLexer(input)
+            val tokens = org.antlr.v4.runtime.CommonTokenStream(lexer)
+            return TaxiParser(tokens)
+        }
+
+        // Fallback to dummy parser if source not found
         val dummyInput = org.antlr.v4.runtime.CharStreams.fromString("")
         val lexer = TaxiLexer(dummyInput)
         val tokens = org.antlr.v4.runtime.CommonTokenStream(lexer)
@@ -160,7 +149,7 @@ class C3CompletionProvider : CompletionProvider {
     }
 
     private fun convertCandidatesToCompletions(
-        candidates: me.tomassetti.antlr4c3.CandidatesCollection,
+        candidates: CodeCompletionCore.CandidatesCollection,
         parser: Parser
     ): List<CompletionItem> {
         val completions = mutableListOf<CompletionItem>()
