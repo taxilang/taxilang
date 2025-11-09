@@ -31,6 +31,8 @@ dependencies {
         exclude(group = "org.eclipse.lsp4j")
     }
 
+   implementation("org.antlr:antlr4-intellij-adaptor:0.1")
+
     // IntelliJ Platform dependencies (2.x style)
     intellijPlatform {
         create(providers.gradleProperty("platformType"), providers.gradleProperty("platformVersion"))

@@ -43,6 +43,20 @@
                 fieldName="INSTANCE"
                 language="Taxi"
                 extensions="taxi"/>
+
+       <!-- Parser definition - required even for syntax highlighting only -->
+       <lang.parserDefinition
+          language="Taxi"
+          implementationClass="org.taxilang.intellij.highlighting.TaxiParserDefinition"/>
+
+       <!-- Syntax highlighting -->
+       <lang.syntaxHighlighterFactory
+          language="Taxi"
+          implementationClass="org.taxilang.intellij.highlighting.TaxiSyntaxHighlighterFactory"/>
+
+       <!-- Optional: Color settings page for user customization -->
+       <colorSettingsPage
+          implementation="org.taxilang.intellij.highlighting.TaxiColorSettingsPage"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
@@ -61,5 +75,6 @@
                 language="Taxi"
                 serverId="taxiLanguageServer"
                 documentMatcher="org.taxilang.intellij.TaxiDocumentMatcher"/>
+
     </extensions>
 </idea-plugin>
