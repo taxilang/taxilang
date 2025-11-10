@@ -3,6 +3,7 @@ package org.taxilang.packagemanager.transports
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.mockk.InternalPlatformDsl.toStr
 import lang.taxi.packages.ImporterConfig
 import org.eclipse.jgit.api.Git
 import org.junit.jupiter.api.Test
@@ -41,6 +42,21 @@ class GitRepoTransportTest {
       GitRepoTransport.resolveGitShorthandIfPresent("gitlab:taxi-lang/test-project-a#0.34.0")
          .shouldBe("https://gitlab.com/taxi-lang/test-project-a.git#0.34.0")
 
+   }
+
+   @Test
+   fun `resolves uris to git workspace directories correctly`() {
+      GitRepoTransport.uriToGitWorkspaceDirectory(tempWorkdir.toPath(),"https://github.com/taxi-lang/test-project-a.git")
+         .relativeFrom(tempWorkdir)
+         .shouldBe("github.com/taxi-lang/test-project-a/@default")
+
+      GitRepoTransport.uriToGitWorkspaceDirectory(tempWorkdir.toPath(),"https://github.com/taxi-lang/test-project-a.git#0.34.0")
+         .relativeFrom(tempWorkdir)
+         .shouldBe("github.com/taxi-lang/test-project-a/0.34.0")
+
+      GitRepoTransport.uriToGitWorkspaceDirectory(tempWorkdir.toPath(),"https://github.com/taxi-lang/test-project-a.git#feature/my-branch")
+         .relativeFrom(tempWorkdir)
+         .shouldBe("github.com/taxi-lang/test-project-a/feature/my-branch")
    }
 
    @Test
@@ -154,6 +170,10 @@ class GitRepoTransportTest {
 
    }
 
+}
+
+private fun Path.relativeFrom(tempWorkdir: File): String {
+   return tempWorkdir.toPath().relativize(this).toString()
 }
 
 fun buildPackageManager(cacheDir:Path): PackageManager {
