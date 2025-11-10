@@ -325,13 +325,14 @@ build-intellij-plugin-beta:
    stage: build-tools
    image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/gradle:8.5-jdk17
    script:
-      # First build language server with Maven (required dependency)
-      - 'mvn $MAVEN_CLI_OPTS install -pl language-server/taxi-lang-server-standalone -DskipTests'
+      # First build language server with Maven daemon (required dependency)
+      - 'mvnd clean install -pl :taxi-lang-service -am -DskipTests'
       # Now build IntelliJ plugin
       - 'cd language-server/intellij-plugin'
       - './gradlew buildPlugin --no-daemon'
-   only:
-      - develop
+   except:
+      - tags
+      - master
    artifacts:
       paths:
          - 'language-server/intellij-plugin/build/distributions/*.zip'
@@ -372,8 +373,8 @@ publish-intellij-plugin:
    stage: deploy-plugin
    image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/gradle:8.5-jdk17
    script:
-      # First build language server with Maven (required dependency)
-      - 'mvn $MAVEN_CLI_OPTS install -pl language-server/taxi-lang-server-standalone -DskipTests'
+      # First build language server with Maven daemon (required dependency)
+      - 'mvnd clean install -pl :taxi-lang-service -am -DskipTests'
       # Now build and publish IntelliJ plugin
       - 'cd language-server/intellij-plugin'
       - './gradlew publishPlugin --no-daemon'

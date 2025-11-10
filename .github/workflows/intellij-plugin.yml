@@ -3,14 +3,14 @@ name: IntelliJ Plugin Build
 on:
   push:
     branches:
-      - 'develop'
+      - '**'
     tags:
       - '*'
 
 jobs:
   build-plugin-beta:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
+    if: github.ref_type == 'branch'
     steps:
       - uses: actions/checkout@v3
 
@@ -21,8 +21,16 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Install Maven Daemon
+        run: |
+          curl -s "https://get.sdkman.io" | bash
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sdk install maven
+
       - name: Build Maven dependencies
-        run: mvn -B install -pl language-server/taxi-lang-server-standalone -DskipTests
+        run: |
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          mvnd clean install -pl :taxi-lang-service -am -DskipTests
 
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
@@ -53,8 +61,16 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Install Maven Daemon
+        run: |
+          curl -s "https://get.sdkman.io" | bash
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sdk install maven
+
       - name: Build Maven dependencies
-        run: mvn -B install -pl language-server/taxi-lang-server-standalone -DskipTests
+        run: |
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          mvnd clean install -pl :taxi-lang-service -am -DskipTests
 
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
