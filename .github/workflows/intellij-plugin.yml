@@ -42,7 +42,7 @@ jobs:
         run: ./gradlew buildPlugin --no-daemon
 
       - name: Upload Plugin Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: intellij-plugin-beta
           path: language-server/intellij-plugin/build/distributions/*.zip
@@ -84,7 +84,7 @@ jobs:
         run: ./gradlew publishPlugin --no-daemon
 
       - name: Upload Plugin Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: intellij-plugin-release
           path: language-server/intellij-plugin/build/distributions/*.zip
