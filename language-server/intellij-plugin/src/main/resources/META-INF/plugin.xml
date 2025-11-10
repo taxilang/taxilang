@@ -24,7 +24,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
-    <h3>1.66.0</h3>
+    <h3>1.70.0</h3>
     <ul>
         <li>Initial release of IntelliJ IDEA plugin</li>
         <li>LSP-based language support using existing Taxi language server</li>
