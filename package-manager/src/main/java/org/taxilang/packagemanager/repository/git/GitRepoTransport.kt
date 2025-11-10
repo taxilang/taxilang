@@ -14,9 +14,9 @@ import org.eclipse.aether.transfer.NoTransporterException
 import org.eclipse.jgit.api.CreateBranchCommand
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.GitAPIException
+import org.eclipse.jgit.api.errors.RefNotFoundException
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.lib.RepositoryBuilder
 import org.taxilang.packagemanager.TaxiPackageBundler
 import org.taxilang.packagemanager.layout.TaxiArtifactType
 import java.net.URI
@@ -118,6 +118,29 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
          val resolved = resolveGitShorthandIfPresent(uri.toASCIIString())
          return URI.create(resolved)
       }
+
+      /**
+       * Returns the directory to clone the git URI to, relative to the provided
+       * git workspace directory.
+       *
+       * We use a hierarchical structure - so https://github.com/taxi-lang/test-project-a.git#0.34.0
+       * becomes github.com/taxi-lang/test-project-a/0.34.0
+       *
+       */
+      fun uriToGitWorkspaceDirectory(gitWorkspace: Path, uri: String) =
+         uriToGitWorkspaceDirectory(gitWorkspace, URI.create(uri))
+
+      /**
+       * Returns the directory to clone the git URI to, relative to the provided
+       * git workspace directory.
+       *
+       */
+      fun uriToGitWorkspaceDirectory(gitWorkspace: Path, uri: URI): Path {
+         val pathToRepo = listOfNotNull(uri.host, uri.path.removeSuffix(".git"), uri.fragment ?: "@default")
+            .joinToString("/")
+         val workspaceRelativePath = gitWorkspace.resolve(pathToRepo)
+         return workspaceRelativePath
+      }
    }
 
    override fun close() {
@@ -131,7 +154,7 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
    }
 
    override fun peek(task: PeekTask?) {
-      TODO("Not yet implemented")
+      error("Peek not supported by Git transport")
    }
 
    override fun get(task: GetTask) {
@@ -178,23 +201,21 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
    }
 
    fun cloneRepo(uri: URI): Path {
+
       val gitWorkspace = session.localRepository.basedir
          .resolve(".gitWorkspace")
-
       // Create a consistent directory name for checking out the git repo to.
-      val localRepoName = listOfNotNull(uri.host, uri.path)
-         .joinToString(".")
-         .replace("/", ".")
-         .removeSuffix(".")
-         .removePrefix(".")
-
-      val checkoutDir = gitWorkspace.resolve(localRepoName)
+      val checkoutDir = uriToGitWorkspaceDirectory(gitWorkspace.toPath(), uri)
+         .toFile()
       val branchName = uri.fragment
-      val gitUri = uri.withoutFragment()
       if (checkoutDir.exists()) {
-         log().debug("Using existing git repository at $checkoutDir")
-         val git = Git(RepositoryBuilder().setGitDir(checkoutDir.resolve(".git")).build())
-         switchToRequiredBranch(branchName, git)
+         // Conscious choice here.
+         // We're a package manager, so it's expected we're working against
+         // immutable version tags or branches.
+         // If not, and the package has been updated or tag moved, the user would need
+         // to do a "taxi update" (which doesn't currently exist) - so would need to delete
+         // and reclone the directory.
+         log().debug("Git repo exists for $uri at $checkoutDir - not updating")
       } else {
          checkoutDir.mkdirs()
          val branchPart = if (branchName == null) {
@@ -202,102 +223,33 @@ class GitRepoTransport(private val session: RepositorySystemSession) :
          } else {
             "on branch $branchName"
          }
+         val gitUri = uri.withoutFragment()
          log().info("Cloning git repo $gitUri $branchPart to directory $checkoutDir")
 
-         Git.cloneRepository()
-            .setURI(gitUri.toASCIIString())
-            .setDirectory(checkoutDir)
-            .setDepth(1)
-            .setBranch(branchName)
-            .setCloneAllBranches(false)
-            .call()
+         try {
+            Git.cloneRepository()
+               .setURI(gitUri.toASCIIString())
+               .setDirectory(checkoutDir)
+               .setDepth(1)
+               .setCloneAllBranches(false)
+               .apply {
+                  if (branchName != null && branchName.isNotEmpty()) {
+                     setBranch(branchName)
+                  }
+               }
+               .call()
+         } catch (e:RefNotFoundException) {
+            log().warn("Branch or tag '$branchName' not found in $gitUri")
+            throw IllegalArgumentException("Branch or tag '$branchName' not found in $gitUri", e)
+         }
+
       }
 
       return checkoutDir.toPath()
    }
 
-   /**
-    * Returns the branch to check out when a repository is cloned locally.
-    * If a branch name was provided, we use that. Otherwise, we find the "default" branch
-    */
-   private fun switchToRequiredBranch(branchName: String?, git: Git): String? {
-      val branchNameToCheckout = branchName ?: findDefaultBranch(git)
-      return if (git.repository.branch == branchNameToCheckout) {
-         branchNameToCheckout
-      } else {
-         switchToBranchOrTag(branchNameToCheckout, git)
-      }
-
-   }
-
-   /**
-    * Resolves the default branch (eg., master / main)
-    */
-   private fun findDefaultBranch(git: Git): String? {
-      val headRef = git.repository.exactRef("refs/remotes/origin/HEAD")
-         ?: git.repository.exactRef("HEAD")
-         ?: return null
-
-      val defaultBranchName = when {
-         headRef.target.name.startsWith("refs/remotes/origin/") -> headRef.target.name.removePrefix("refs/remotes/origin/")
-         headRef.target.name.startsWith("refs/heads/") -> headRef.target.name.removePrefix("refs/heads/")
-         else -> headRef.target.name
-      }
-      /// TODO: This still appears to be null sometimes in unit tests
-      // We could fetch the remote to find the HEAD, but will see if this is an issue
-      // with real repos.
-      return defaultBranchName
-   }
-
-
-   private fun resolveRefName(repository: Repository, refName: String): Ref? {
-      return repository.findRef(refName)
-         ?: repository.findRef("refs/tags/$refName")
-         ?: repository.findRef("refs/heads/$refName")
-   }
-   private fun switchToBranchOrTag(refName: String?, git: Git): String? {
-      val repository = git.repository
-      val ref = refName?.let {
-         val resolvedRef = resolveRefName(repository, refName)
-         if (resolvedRef == null) {
-            log().info("Could not find branch or tag '$refName' in repository '$repository' - trying to pull from remote, then will try again")
-            val pullResult = try {
-               git.checkout()
-                  .setName(refName)
-                  .setCreateBranch(true)
-                  .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.TRACK)
-                  .call()
-            } catch (e:GitAPIException) {
-               log().error("Failed to check out branch or tag '$refName' in repository '$repository' - ${e.message}")
-               throw IllegalArgumentException("Failed to check out branch or tag '$refName' in repository '$repository'", e)
-            }
-            log().info("Successfully pulled branch or tag $refName in repository '$repository'")
-            pullResult
-         } else {
-            resolvedRef
-         }
-      }
-
-      if (ref != null) {
-         log().info("Switching ${repository.identifier} to branch $refName")
-         git.checkout()
-            .setName(ref.name)
-            .call()
-      } else {
-         git.checkout().call()
-      }
-
-
-      val isTag = ref?.name?.startsWith("refs/tags/") ?: false
-      if (!isTag) {
-         log().debug("Pulling branch $refName")
-         git.pull().call()
-      }
-      return ref?.name
-   }
-
    override fun put(task: PutTask?) {
-      TODO("Not yet implemented")
+      error("Put not supported by Git transport")
    }
 
 }
