@@ -1,33 +1,4 @@
-# Gradle
+.intellijPlatform/
 .gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
-
-# IntelliJ IDEA
-.idea/
-*.iml
-*.ipr
-*.iws
-out/
-
-# Kotlin
-*.class
-*.log
-*.ctxt
-.mtj.tmp/
-*.jar
-!gradle-wrapper.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# macOS
-.DS_Store
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
