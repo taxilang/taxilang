@@ -9,7 +9,7 @@ plugins {
 }
 
 // Read version from root pom.xml
-fun getMavenVersion(): String {
+fun readMavenVersionFromPom(): String {
     val pomFile = file("../../pom.xml")
     val factory = DocumentBuilderFactory.newInstance()
     val builder = factory.newDocumentBuilder()
@@ -27,7 +27,7 @@ fun getMavenVersion(): String {
     throw GradleException("Could not find version in pom.xml")
 }
 
-val mavenVersion = getMavenVersion()
+val mavenVersion = readMavenVersionFromPom()
 
 group = providers.gradleProperty("pluginGroup").get()
 version = mavenVersion  // Use Maven version
