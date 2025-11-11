@@ -21,16 +21,8 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Install Maven Daemon
-        run: |
-          curl -s "https://get.sdkman.io" | bash
-          source "$HOME/.sdkman/bin/sdkman-init.sh"
-          sdk install maven
-
       - name: Build Maven dependencies
-        run: |
-          source "$HOME/.sdkman/bin/sdkman-init.sh"
-          mvnd clean install -pl :taxi-lang-service -am -DskipTests
+        run: mvn clean install -pl :taxi-lang-service -am -DskipTests
 
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
@@ -61,16 +53,8 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Install Maven Daemon
-        run: |
-          curl -s "https://get.sdkman.io" | bash
-          source "$HOME/.sdkman/bin/sdkman-init.sh"
-          sdk install maven
-
       - name: Build Maven dependencies
-        run: |
-          source "$HOME/.sdkman/bin/sdkman-init.sh"
-          mvnd clean install -pl :taxi-lang-service -am -DskipTests
+        run: mvn clean install -pl :taxi-lang-service -am -DskipTests
 
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
