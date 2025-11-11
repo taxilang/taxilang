@@ -83,18 +83,22 @@ class TaxiLanguageServer(
             // Set the capabilities of the LS to inform the client.
             val capabilities = initializeResult.capabilities
             capabilities.setTextDocumentSync(TextDocumentSyncOptions().apply {
+               openClose = true
                change = TextDocumentSyncKind.Full
                save = Either.forRight(SaveOptions(false))
+               willSave = false
+               willSaveWaitUntil = false
             })
-            capabilities.semanticTokensProvider = SemanticTokensWithRegistrationOptions(
-               SemanticTokensLegend(
-                  SemanticTokenTypes.ALL,
-                  SemanticTokenModifiers.ALL
-               )
-            ).apply {
-               full = Either.forLeft(true)
-               range = Either.forLeft(true)
-            }
+            // Semantic tokens don't actually work, and this breaks IntelliJ (but not VSCode)
+//            capabilities.semanticTokensProvider = SemanticTokensWithRegistrationOptions(
+//               SemanticTokensLegend(
+//                  SemanticTokenTypes.ALL,
+//                  SemanticTokenModifiers.ALL
+//               )
+//            ).apply {
+//               full = Either.forLeft(true)
+//               range = Either.forLeft(true)
+//            }
             capabilities.definitionProvider = Either.forLeft(true)
             capabilities.workspaceSymbolProvider = Either.forLeft(true)
             capabilities.hoverProvider = Either.forLeft(true)

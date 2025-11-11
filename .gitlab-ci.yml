@@ -321,6 +321,26 @@ build-plugin-beta:
       paths:
          - 'language-server/vscode-extension/*.vsix'
 
+build-intellij-plugin:
+   stage: build
+   variables:
+      ## Used by Gradle to find the output of the maven builds
+      MAVEN_LOCAL_REPO: ".m2/repository"
+
+   script:
+      # First build required Maven dependencies
+      - 'mvn clean install -pl :taxi-lang-server-standalone -am -DskipTests'
+      # Now build IntelliJ plugin
+      - 'cd language-server/intellij-plugin'
+      - './gradlew buildPlugin --no-daemon -DMAVEN_LOCAL_REPO="$CI_PROJECT_DIR/.m2/repository"'
+   except:
+      - tags
+      - master
+   artifacts:
+      paths:
+         - 'language-server/intellij-plugin/build/distributions/*.zip'
+      expire_in: 30 days
+
 publish-release:
    stage: deploy
    script:
@@ -351,6 +371,23 @@ publish-plugin:
          - 'language-server/vscode-extension/*.vsix'
    after_script:
       - *cleanup-after-vscode-plugin-build
+
+publish-intellij-plugin:
+   stage: deploy-plugin
+   script:
+      # First build required Maven dependencies
+      - 'mvn clean install -pl :taxi-lang-service -am -DskipTests'
+      # Now build and publish IntelliJ plugin
+      - 'cd language-server/intellij-plugin'
+      - './gradlew publishPlugin --no-daemon'
+   only:
+      - tags
+   environment:
+      name: jetbrains-marketplace
+   artifacts:
+      paths:
+         - 'language-server/intellij-plugin/build/distributions/*.zip'
+      expire_in: 90 days
 
 # TypeScript build & release jobs
 .setup-nx: &setup-nx
