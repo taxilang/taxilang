@@ -2,6 +2,8 @@ variables:
    # This will supress any download for dependencies and plugins or upload messages which would clutter the console log.
    # `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
    MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+   ## Used by Gradle to find the output of the maven builds
+   MAVEN_LOCAL_REPO: ".m2/repository"
    # As of Maven 3.3.0 instead of this you may define these options in `.mvn/maven.config` so the same config is used
    # when running from the command line.
    # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
@@ -321,6 +323,22 @@ build-plugin-beta:
       paths:
          - 'language-server/vscode-extension/*.vsix'
 
+build-intellij-plugin:
+   stage: build
+   script:
+      # First build required Maven dependencies
+      - 'mvn clean install -pl :taxi-lang-service -am -DskipTests'
+      # Now build IntelliJ plugin
+      - 'cd language-server/intellij-plugin'
+      - './gradlew buildPlugin --no-daemon'
+   except:
+      - tags
+      - master
+   artifacts:
+      paths:
+         - 'language-server/intellij-plugin/build/distributions/*.zip'
+      expire_in: 30 days
+
 publish-release:
    stage: deploy
    script:
@@ -351,6 +369,23 @@ publish-plugin:
          - 'language-server/vscode-extension/*.vsix'
    after_script:
       - *cleanup-after-vscode-plugin-build
+
+publish-intellij-plugin:
+   stage: deploy-plugin
+   script:
+      # First build required Maven dependencies
+      - 'mvn clean install -pl :taxi-lang-service -am -DskipTests'
+      # Now build and publish IntelliJ plugin
+      - 'cd language-server/intellij-plugin'
+      - './gradlew publishPlugin --no-daemon'
+   only:
+      - tags
+   environment:
+      name: jetbrains-marketplace
+   artifacts:
+      paths:
+         - 'language-server/intellij-plugin/build/distributions/*.zip'
+      expire_in: 90 days
 
 # TypeScript build & release jobs
 .setup-nx: &setup-nx
