@@ -321,12 +321,12 @@ build-plugin-beta:
       paths:
          - 'language-server/vscode-extension/*.vsix'
 
-build-intellij-plugin-beta:
-   stage: build-tools
-   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/gradle:8.5-jdk17
+build-intellij-plugin:
+   stage: build
+   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/gradle:8.5-jdk21
    script:
-      # First build language server with Maven daemon (required dependency)
-      - 'mvnd clean install -pl :taxi-lang-service -am -DskipTests'
+      # First build required Maven dependencies
+      - 'mvn clean install -pl :taxi-lang-service -am -DskipTests'
       # Now build IntelliJ plugin
       - 'cd language-server/intellij-plugin'
       - './gradlew buildPlugin --no-daemon'
@@ -371,10 +371,10 @@ publish-plugin:
 
 publish-intellij-plugin:
    stage: deploy-plugin
-   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/gradle:8.5-jdk17
+   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/gradle:8.5-jdk21
    script:
-      # First build language server with Maven daemon (required dependency)
-      - 'mvnd clean install -pl :taxi-lang-service -am -DskipTests'
+      # First build required Maven dependencies
+      - 'mvn clean install -pl :taxi-lang-service -am -DskipTests'
       # Now build and publish IntelliJ plugin
       - 'cd language-server/intellij-plugin'
       - './gradlew publishPlugin --no-daemon'

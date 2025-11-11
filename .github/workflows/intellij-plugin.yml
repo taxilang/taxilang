@@ -8,7 +8,7 @@ on:
       - '*'
 
 jobs:
-  build-plugin-beta:
+  build-intellij-plugin:
     runs-on: ubuntu-latest
     if: github.ref_type == 'branch'
     steps:
@@ -36,11 +36,11 @@ jobs:
       - name: Upload Plugin Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: intellij-plugin-beta
+          name: intellij-plugin
           path: language-server/intellij-plugin/build/distributions/*.zip
           retention-days: 30
 
-  publish-plugin:
+  publish-intellij-plugin:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
