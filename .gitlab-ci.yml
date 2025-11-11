@@ -323,7 +323,6 @@ build-plugin-beta:
 
 build-intellij-plugin:
    stage: build
-   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/gradle:8.5-jdk21
    script:
       # First build required Maven dependencies
       - 'mvn clean install -pl :taxi-lang-service -am -DskipTests'
@@ -371,7 +370,6 @@ publish-plugin:
 
 publish-intellij-plugin:
    stage: deploy-plugin
-   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/gradle:8.5-jdk21
    script:
       # First build required Maven dependencies
       - 'mvn clean install -pl :taxi-lang-service -am -DskipTests'
