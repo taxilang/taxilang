@@ -17,6 +17,7 @@ import org.eclipse.aether.graph.DependencyNode
 import org.eclipse.aether.installation.InstallRequest
 import org.eclipse.aether.repository.LocalRepository
 import org.eclipse.aether.repository.RemoteRepository
+import org.eclipse.aether.repository.WorkspaceReader
 import org.eclipse.aether.resolution.ArtifactRequest
 import org.eclipse.aether.resolution.ArtifactResolutionException
 import org.taxilang.packagemanager.layout.TaxiArtifactType
@@ -65,8 +66,9 @@ class PackageManager(
    }
 
    companion object {
-      fun withDefaultRepositorySystem(config: ImporterConfig): PackageManager {
-         val (system, session) = RepositorySystemProvider.build()
+      fun withDefaultRepositorySystem(config: ImporterConfig, workspaceReader: WorkspaceReader? = null): PackageManager {
+         val (system, session) = RepositorySystemProvider
+            .build(workspaceReader)
          val packageManager = PackageManager(config, system, session)
          return packageManager
       }

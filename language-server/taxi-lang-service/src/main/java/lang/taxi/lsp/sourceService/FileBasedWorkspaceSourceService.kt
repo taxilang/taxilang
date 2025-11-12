@@ -40,13 +40,14 @@ open class FileBasedWorkspaceSourceService(
 
    protected fun loadTaxiPackages(): List<TaxiPackageSources> {
       val taxiConfFiles = FileWorkspaceProjectFinder.findTaxiConfFiles(root)
+      val workspaceReader = TaxiWorkspaceReader(taxiConfFiles)
       return taxiConfFiles.map { path ->
          val packageRootPath = if (path.isDirectory()) {
             path
          } else {
             path.parent
          }
-         TaxiSourcesLoader.loadPackageAndDependencies(packageRootPath)
+         TaxiSourcesLoader.loadPackageAndDependencies(packageRootPath, workspaceReader = workspaceReader)
       }
    }
 
