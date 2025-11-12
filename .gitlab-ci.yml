@@ -207,9 +207,9 @@ publish-codegen-node-linux:
    stage: deploy
    image: node
    only:
+      #      Publishing to npm requires a tag, which we don't produce on develop
+      #      - develop
       - tags
-      - master
-      - develop
    dependencies:
       - build-ts-codegen-tools-linux
    script:
@@ -224,8 +224,8 @@ publish-codegen-node-mac:
    image: node
    only:
       - tags
-      - master
-      - develop
+#      Publishing to npm requires a tag, which we don't produce on develop
+#      - develop
    dependencies:
       - build-ts-codegen-tools-macos
    script:
