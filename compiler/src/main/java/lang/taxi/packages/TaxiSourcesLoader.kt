@@ -3,6 +3,7 @@ package lang.taxi.packages
 import lang.taxi.sources.SourceCode
 import lang.taxi.sources.SourceCodeLanguages
 import lang.taxi.utils.log
+import org.eclipse.aether.repository.WorkspaceReader
 import org.taxilang.packagemanager.DependencyFetcher
 import org.taxilang.packagemanager.PackageManager
 import java.io.FileNotFoundException
@@ -46,9 +47,13 @@ class TaxiSourcesLoader(private val sourceRoot: Path) {
 
       fun loadPackageAndDependencies(
          path: Path,
+         // A list of all paths in the workspace.
+         // Allows us to resolve projects within a workspace (in an IDE)
+         // rather than from the repository manager
+         workspaceReader: WorkspaceReader? = null
       ): TaxiPackageSources {
          return loadPackageAndDependencies(path) { taxiPackageProject ->
-            PackageManager.withDefaultRepositorySystem(ImporterConfig.forProject(taxiPackageProject))
+            PackageManager.withDefaultRepositorySystem(ImporterConfig.forProject(taxiPackageProject), workspaceReader)
          }
       }
 

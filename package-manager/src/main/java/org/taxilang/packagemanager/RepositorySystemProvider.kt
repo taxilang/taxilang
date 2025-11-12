@@ -13,6 +13,7 @@ import org.eclipse.aether.impl.RepositoryEventDispatcher
 import org.eclipse.aether.impl.VersionRangeResolver
 import org.eclipse.aether.impl.VersionResolver
 import org.eclipse.aether.internal.impl.LocalPathComposer
+import org.eclipse.aether.repository.WorkspaceReader
 import org.eclipse.aether.spi.connector.checksum.ChecksumAlgorithmFactorySelector
 import org.eclipse.aether.spi.connector.layout.RepositoryLayoutFactory
 import org.eclipse.aether.spi.connector.transport.TransporterFactory
@@ -29,13 +30,14 @@ import org.taxilang.packagemanager.repository.nexus.NexusLayoutFactory
 import org.taxilang.packagemanager.repository.nexus.NexusTransportFactory
 
 object RepositorySystemProvider {
-   fun build(): Pair<RepositorySystem, RepositorySystemSession> {
+   fun build(workspaceReader: WorkspaceReader? = null): Pair<RepositorySystem, RepositorySystemSession> {
       return build(
          mapOf(
             FileTransporterFactory.NAME to FileTransporterFactory(),
             "NexusTransportFactory" to NexusTransportFactory(),
             "GItRepoTransportFactory" to GitRepoTransportFactory(),
-         )
+         ),
+         workspaceReader
       )
    }
 
@@ -49,8 +51,12 @@ object RepositorySystemProvider {
 //      serviceLocator.setService(LocalPathComposer::class.java, TaxiLocalPathComposer::class.java)
 //      serviceLocator.setService(VersionResolver::class.java, GitVersionResolver::class.java)
 //      val repositorySystem = serviceLocator.getService(RepositorySystem::class.java)
-   fun build(transports: Map<String,TransporterFactory>): Pair<RepositorySystem, RepositorySystemSession> {
-      val session = MavenRepositorySystemUtils.newSession()
+   fun build(transports: Map<String,TransporterFactory>, workspaceReader: WorkspaceReader? = null): Pair<RepositorySystem, RepositorySystemSession> {
+      val session = MavenRepositorySystemUtils.newSession().let {
+         if (workspaceReader != null) {
+            it.setWorkspaceReader(workspaceReader)
+         } else it
+      }
       val repositorySystem = buildNew(transports)
       return repositorySystem to session
    }
