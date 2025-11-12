@@ -1,7 +1,7 @@
 <idea-plugin>
-    <id>org.taxilang.intellij</id>
-    <name>Taxi Language Support</name>
-    <vendor email="marty.pitt@orbitalhq.com" url="https://taxilang.org">Taxi Lang</vendor>
+    <id>org.taxilang</id>
+    <name>Taxi</name>
+    <vendor email="marty.pitt@orbitalhq.com" url="https://taxilang.org">Orbital</vendor>
 
     <description><![CDATA[
     <p>Provides support for the Taxi language in IntelliJ IDEA.</p>
@@ -16,7 +16,6 @@
         <li>Hover information</li>
         <li>Diagnostics and error reporting</li>
         <li>Code actions and quick fixes</li>
-        <li>Semantic tokens</li>
         <li>Signature help</li>
     </ul>
 
