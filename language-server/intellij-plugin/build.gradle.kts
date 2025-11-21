@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Document
+import java.util.Base64
 
 plugins {
    id("java")
@@ -102,13 +103,18 @@ intellijPlatform {
    }
 
    signing {
-      certificateChain = providers.environmentVariable("CERTIFICATE_CHAIN")
-      privateKey = providers.environmentVariable("PRIVATE_KEY")
-      password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
+      // The certificate chain has to be Base64 encoded to deal with Gitlab CI/CD env var's
+      certificateChain = providers.environmentVariable("JETBRAINS_PLUGIN_CERTIFICATE_CHAIN").map {
+         String(Base64.getDecoder().decode(it))
+      }
+      privateKey = providers.environmentVariable("JETBRAINS_PLUGIN_PRIVATE_KEY").map {
+         String(Base64.getDecoder().decode(it))
+      }
+      password = providers.environmentVariable("JETBRAINS_PLUGIN_PRIVATE_KEY_PASSWORD")
    }
 
    publishing {
-      token = providers.environmentVariable("PUBLISH_TOKEN")
+      token = providers.environmentVariable("JETBRAINS_PLUGIN_PUBLISH_TOKEN")
    }
 
    pluginVerification {
