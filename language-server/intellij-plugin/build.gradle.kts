@@ -22,7 +22,17 @@ fun readMavenVersionFromPom(): String {
       val node = versionNodes.item(i)
       // Get the first version tag (which should be the project version)
       if (node.parentNode.nodeName == "project") {
-         return node.textContent.trim()
+         var version = node.textContent.trim()
+
+         // In CI, replace -SNAPSHOT with pipeline ID
+         val ciPipelineId = System.getenv("CI_PIPELINE_ID")
+         if (ciPipelineId != null && version.endsWith("-SNAPSHOT")) {
+            version = version.replace("-SNAPSHOT", "-$ciPipelineId")
+            println("Replaced SNAPSHOT with CI pipeline ID: $version")
+         }
+
+         return version
+
       }
    }
    throw GradleException("Could not find version in pom.xml")
