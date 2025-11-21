@@ -10,7 +10,7 @@ plugins {
 }
 
 // Read version from root pom.xml
-fun readMavenVersionFromPom(): String {
+fun readMavenVersionFromPom(updateSnapshotToPipelineId:Boolean): String {
    val pomFile = file("../../pom.xml")
    val factory = DocumentBuilderFactory.newInstance()
    val builder = factory.newDocumentBuilder()
@@ -26,7 +26,7 @@ fun readMavenVersionFromPom(): String {
 
          // In CI, replace -SNAPSHOT with pipeline ID
          val ciPipelineId = System.getenv("CI_PIPELINE_ID")
-         if (ciPipelineId != null && version.endsWith("-SNAPSHOT")) {
+         if (ciPipelineId != null && version.endsWith("-SNAPSHOT") && updateSnapshotToPipelineId) {
             version = version.replace("-SNAPSHOT", "-$ciPipelineId")
             println("Replaced SNAPSHOT with CI pipeline ID: $version")
          }
@@ -38,10 +38,13 @@ fun readMavenVersionFromPom(): String {
    throw GradleException("Could not find version in pom.xml")
 }
 
-val mavenVersion = readMavenVersionFromPom()
+val mavenVersion = readMavenVersionFromPom(updateSnapshotToPipelineId = false)
 
 group = providers.gradleProperty("pluginGroup").get()
-version = mavenVersion  // Use Maven version
+
+// The plugin version needs to be unique, even on snapshot builds,
+// so update it with the PIPELINE_ID
+version = readMavenVersionFromPom(updateSnapshotToPipelineId = true)
 
 repositories {
    mavenCentral()
