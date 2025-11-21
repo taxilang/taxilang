@@ -45,6 +45,8 @@ group = providers.gradleProperty("pluginGroup").get()
 // The plugin version needs to be unique, even on snapshot builds,
 // so update it with the PIPELINE_ID
 version = readMavenVersionFromPom(updateSnapshotToPipelineId = true)
+// For exposing as a provider below
+val pluginVersion: String = readMavenVersionFromPom(updateSnapshotToPipelineId = true)
 
 repositories {
    mavenCentral()
@@ -107,7 +109,7 @@ dependencies {
 intellijPlatform {
    pluginConfiguration {
       name = providers.gradleProperty("pluginName")
-      version = provider { mavenVersion }  // Use Maven version
+      version = provider { pluginVersion }  // Use Maven version, with snapshots made unique
 
       ideaVersion {
          sinceBuild = providers.gradleProperty("pluginSinceBuild")
@@ -152,7 +154,7 @@ tasks {
    register("printVersion") {
       doLast {
          println("Maven version: $mavenVersion")
-         println("Plugin version: ${project.version}")
+         println("Plugin version: $pluginVersion")
       }
    }
 }
