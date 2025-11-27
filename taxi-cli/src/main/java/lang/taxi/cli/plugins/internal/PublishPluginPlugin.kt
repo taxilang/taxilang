@@ -100,8 +100,8 @@ enum class ReleaseType {
 
     companion object {
         fun parse(value: String): ReleaseType? {
-            return if (ReleaseType.values().map { it.name }.contains(value.toUpperCase())) {
-                valueOf(value.toUpperCase());
+            return if (ReleaseType.values().map { it.name }.contains(value.uppercase())) {
+                valueOf(value.uppercase());
             } else {
                 null
             }

@@ -102,7 +102,7 @@ data class FieldName(val fieldName: String) : TypeNameHint {
          .toCapitalizedWords()
 
       val nameParts = listOfNotNull(
-         name?.parameterizedName?.toLowerCase(),
+         name?.parameterizedName?.lowercase(),
          thisNamePart
       )
       return QualifiedName.from(nameParts.joinToString("."))
