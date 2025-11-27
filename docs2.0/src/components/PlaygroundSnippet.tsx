@@ -1,21 +1,22 @@
-import React, {useEffect, useState, ReactNode} from 'react';
-import { flushSync } from 'react-dom';
-import {PlayIcon} from "@heroicons/react/20/solid";
-import * as pako from 'pako';
-import axios from 'axios';
-import {XMarkIcon} from "@heroicons/react/24/solid";
-import CodeMirror from '@uiw/react-codemirror';
-import {taxi} from '@/utils/taxiCodeMirrorLanguage';
-import {json} from '@codemirror/lang-json';
-import {taxiDarkTheme} from '@/utils/taxiCodeMirrorTheme';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/Accordion"
-import { Prose } from "@/components/docs/Prose"
+import React, { ReactNode, useEffect, useState } from 'react'
+import { flushSync } from 'react-dom'
+import { PlayIcon } from '@heroicons/react/20/solid'
+import * as pako from 'pako'
+import axios from 'axios'
+import { XMarkIcon } from '@heroicons/react/24/solid'
+import CodeMirror from '@uiw/react-codemirror'
+import { taxi } from '@/utils/taxiCodeMirrorLanguage'
+import { json } from '@codemirror/lang-json'
+import { taxiDarkTheme } from '@/utils/taxiCodeMirrorTheme'
+import { Prose } from '@/components/docs/Prose'
 import ReactMarkdown from 'react-markdown'
+import dynamic from 'next/dynamic'
+
+// Dynamically import QueryPlanVisualization to avoid SSR issues
+const QueryPlanVisualization = dynamic(
+  () => import('@/components/query-plan/QueryPlanVisualization'),
+  { ssr: false }
+)
 
 const PanelHeader: React.FC<{
   headerText: string;
@@ -43,7 +44,7 @@ const Description: React.FC<{ children: string }> = ({ children }) => (
 
 const Scenario: React.FC<{ children: StubQueryMessage }> = ({ children }) => null;
 
-const PlaygroundSnippet: React.FC<StubQueryDisplayProps> = ({scenario, displayQuery, displaySchema, title = "Try it out", description, children}) => {
+const PlaygroundSnippet: React.FC<StubQueryDisplayProps> = ({scenario, displayQuery, displaySchema, title = "Try it out", description, primaryRunButton = false, showQueryPlan = false, children}) => {
   // Extract description and scenario from children
   const extractedDescription = React.Children.toArray(children).find(
     (child) => React.isValidElement(child) && child.type === Description
@@ -62,6 +63,9 @@ const PlaygroundSnippet: React.FC<StubQueryDisplayProps> = ({scenario, displayQu
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showSchema, setShowSchema] = useState<boolean>(false);
+  const [showQueryPlanState, setShowQueryPlanState] = useState<boolean>(showQueryPlan);
+  const [queryPlanData, setQueryPlanData] = useState<any>(null);
+  const [isLoadingQueryPlan, setIsLoadingQueryPlan] = useState<boolean>(false);
 
   // Determine if we're running on localhost
   const [isLocalhost, setIsLocalhost] = useState<boolean>(false);
@@ -96,6 +100,22 @@ const PlaygroundSnippet: React.FC<StubQueryDisplayProps> = ({scenario, displayQu
     setEmbeddingUrl(newUrl);
   }, [query, schema, actualScenario, playgroundUrl]);
 
+  // Parse query initially if showQueryPlan is true
+  useEffect(() => {
+    if (showQueryPlan && query && schema && playgroundUrl) {
+      parseQuery();
+    }
+  }, [playgroundUrl]); // Run when playground URL is set
+
+  // Parse query when query plan is shown or when query/schema changes
+  useEffect(() => {
+    if (showQueryPlanState && query && schema) {
+      parseQuery();
+    } else if (!showQueryPlanState) {
+      setQueryPlanData(null);
+    }
+  }, [showQueryPlanState, query, schema]);
+
   const getEmbeddingUrl = (query: StubQueryMessage): string => {
     const deflated = pako.gzip(JSON.stringify(query));
     const base64Encoded = btoa(String.fromCharCode.apply(null, deflated))
@@ -108,6 +128,31 @@ const PlaygroundSnippet: React.FC<StubQueryDisplayProps> = ({scenario, displayQu
 
   const handleSchemaChange = (value: string) => {
     setSchema(value);
+  };
+
+  const parseQuery = async () => {
+    if (!query || !schema) {
+      return;
+    }
+
+    setIsLoadingQueryPlan(true);
+    const updatedMessage = {...actualScenario, query, schema};
+
+    try {
+      const endpoint = `${playgroundUrl}/api/query/parse`;
+      console.log(`Parsing query at: ${endpoint}`);
+      const response = await axios.post(endpoint, updatedMessage);
+      console.log('Query parse response:', response.data);
+
+      if (response.data?.queryPlan?.diagramData) {
+        setQueryPlanData(response.data.queryPlan.diagramData);
+      }
+    } catch (err) {
+      console.error('Error parsing query:', err);
+      setQueryPlanData(null);
+    } finally {
+      setIsLoadingQueryPlan(false);
+    }
   };
 
   const submitQuery = async () => {
@@ -149,12 +194,20 @@ ${errDetails}`);
             {showSchema ? 'Hide Schema' : 'Show Schema'}
           </button>
           <button
-            className='flex items-center text-sky-400 hover:text-sky-300 text-sm'
+            className='text-sky-400 hover:text-sky-300 text-sm'
+            onClick={() => setShowQueryPlanState(!showQueryPlanState)}
+          >
+            {showQueryPlanState ? 'Hide Query Plan' : 'Show Query Plan'}
+          </button>
+          <button
+            className={primaryRunButton
+              ? 'flex items-center bg-sky-500 hover:bg-sky-600 text-slate-900 font-semibold text-sm px-3 py-1 rounded-md transition-colors'
+              : 'flex items-center text-sky-400 hover:text-sky-300 text-sm'}
             onClick={submitQuery}
             disabled={isLoading}
           >
             <span className='mr-1'>{isLoading ? 'Running...' : 'Run'}</span>
-            <PlayIcon className={'w-[16px]'}></PlayIcon>
+            <PlayIcon className={primaryRunButton ? 'w-[16px] text-slate-900' : 'w-[16px]'}></PlayIcon>
           </button>
         </div>
       </div>
@@ -191,7 +244,6 @@ ${errDetails}`);
         </div>
       </div>
 
-
       {/* Query Section */}
       {shouldDisplayQuery && (
         <div className="rounded-md overflow-hidden cm-wrapper">
@@ -211,6 +263,26 @@ ${errDetails}`);
           />
         </div>
       )}
+
+      {/* Query Plan Section */}
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+        showQueryPlanState ? 'max-h-[600px] opacity-100 my-4' : 'max-h-0 opacity-0 mb-0'
+      }`}>
+        <PanelHeader headerText="Query Plan" showCloseButton={false}/>
+        {isLoadingQueryPlan ? (
+          <div className="flex items-center justify-center py-8 text-slate-400">
+            <span>Loading query plan...</span>
+          </div>
+        ) : queryPlanData ? (
+          <div className="rounded-md overflow-hidden">
+            <QueryPlanVisualization queryPlanData={queryPlanData} height={500} />
+          </div>
+        ) : showQueryPlanState ? (
+          <div className="flex items-center justify-center py-8 text-slate-400">
+            <span>No query plan available. Make sure both query and schema are provided.</span>
+          </div>
+        ) : null}
+      </div>
 
       {/* Controls */}
       <div className='flex justify-between text-xs text-slate-300 mt-3'>
@@ -301,6 +373,8 @@ export interface StubQueryDisplayProps {
   displaySchema?: boolean
   title?: string
   description?: string
+  primaryRunButton?: boolean
+  showQueryPlan?: boolean
   children?: ReactNode
 }
 
