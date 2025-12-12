@@ -5,7 +5,7 @@ import java.util.Base64
 
 plugins {
    id("java")
-   id("org.jetbrains.kotlin.jvm") version "1.9.24"
+   id("org.jetbrains.kotlin.jvm") version "2.2.21"
    id("org.jetbrains.intellij.platform") version "2.10.4"
 }
 

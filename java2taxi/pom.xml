@@ -28,9 +28,9 @@
          <version>1.1.0.Final</version>
       </dependency>
       <dependency>
-         <groupId>org.jetbrains.kotlinx</groupId>
-         <artifactId>kotlinx-metadata-jvm</artifactId>
-         <version>0.6.0</version>
+         <groupId>org.jetbrains.kotlin</groupId>
+         <artifactId>kotlin-metadata-jvm</artifactId>
+         <version>${kotlin.version}</version>
       </dependency>
       <!-- Note: Using reflections8 instead of reflections because of
      this bug: https://github.com/ronmamo/reflections/issues/273

@@ -80,12 +80,12 @@
    <properties>
       <java.version>21</java.version>
       <kotlin.compiler.jvmTarget>${java.version}</kotlin.compiler.jvmTarget>
-      <kotlin.version>1.9.24</kotlin.version>
+      <kotlin.version>2.2.21</kotlin.version>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <arrow.version>1.1.5</arrow.version>
       <guava.version>33.0.0-jre</guava.version>
       <spek.version>2.0.19</spek.version>
-      <kotest.version>5.5.5</kotest.version>
+      <kotest.version>5.9.1</kotest.version>
       <junit.jupiter.version>5.9.1</junit.jupiter.version>
       <junit.vintage.version>5.6.2</junit.vintage.version>
       <zip4j.version>2.11.5</zip4j.version>
@@ -147,6 +147,11 @@
          <groupId>org.mockito.kotlin</groupId>
          <artifactId>mockito-kotlin</artifactId>
          <version>4.1.0</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
          <scope>test</scope>
       </dependency>
       <!-- https://mvnrepository.com/artifact/org.assertj/assertj-core -->
