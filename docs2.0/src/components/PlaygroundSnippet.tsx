@@ -140,9 +140,7 @@ const PlaygroundSnippet: React.FC<StubQueryDisplayProps> = ({scenario, displayQu
 
     try {
       const endpoint = `${playgroundUrl}/api/query/parse`;
-      console.log(`Parsing query at: ${endpoint}`);
       const response = await axios.post(endpoint, updatedMessage);
-      console.log('Query parse response:', response.data);
 
       if (response.data?.queryPlan?.diagramData) {
         setQueryPlanData(response.data.queryPlan.diagramData);
@@ -188,20 +186,20 @@ ${errDetails}`);
         <h3 className="text-md text-slate-200">{title}</h3>
         <div className="flex items-center gap-3">
           <button
-            className='text-sky-400 hover:text-sky-300 text-sm'
+            className='text-sky-400 hover:text-sky-300 border border-sky-400 hover:border-sky-300 px-2 py-1 text-xs rounded font-medium'
             onClick={() => setShowSchema(!showSchema)}
           >
             {showSchema ? 'Hide Schema' : 'Show Schema'}
           </button>
           <button
-            className='text-sky-400 hover:text-sky-300 text-sm'
+            className='text-sky-400 hover:text-sky-300 border border-sky-400 hover:border-sky-300 px-2 py-1 text-xs rounded font-medium'
             onClick={() => setShowQueryPlanState(!showQueryPlanState)}
           >
             {showQueryPlanState ? 'Hide Query Plan' : 'Show Query Plan'}
           </button>
           <button
             className={primaryRunButton
-              ? 'flex items-center bg-sky-500 hover:bg-sky-600 text-slate-900 font-semibold text-sm px-3 py-1 rounded-md transition-colors'
+              ? 'flex items-center bg-sky-500 hover:bg-sky-300 text-slate-900 font-semibold text-sm px-3 py-1 rounded-md transition-colors'
               : 'flex items-center text-sky-400 hover:text-sky-300 text-sm'}
             onClick={submitQuery}
             disabled={isLoading}

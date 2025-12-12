@@ -52,6 +52,9 @@ export interface DiagramNode {
   badgeLabel: string | null;
   qualifiedName: string | null;
   members: DiagramNodeMember[];
+  inboundHeaderLinks: DiagramLink[];
+  outboundHeaderLinks: DiagramLink[];
+  memberLinks: { [handleId: string]: DiagramLink[] };
 }
 
 export interface DiagramLink {
@@ -69,8 +72,19 @@ export interface QueryPlanDiagramData {
 
 export interface QueryPlan {
   steps: any[]; // QuerySankeyChartRow[] - simplified for now
-  queryExecutionMessages: any; // Message - simplified for now
+  queryExecutionMessages: Message[];
   diagramData: QueryPlanDiagramData;
+}
+
+export type Severity = 'INFO' | 'WARNING' | 'ERROR' |
+  // UI only messages:
+  'SUCCESS' | 'FAILURE';
+
+
+export interface Message {
+  message: string;
+  severity: Severity;
+  link?: string;
 }
 
 export interface QueryParseMetadata {

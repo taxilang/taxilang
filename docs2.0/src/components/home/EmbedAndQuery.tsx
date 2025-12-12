@@ -81,7 +81,7 @@ const TagYourApis = (highlightedCode) => {
       />
     </div>
     <div>
-      <Snippet highlightedCode={tabCodeSnippets[tab].highlightedCode} code={tabCodeSnippets[tab].code}/>
+      <Snippet key={tab} highlightedCode={tabCodeSnippets[tab].highlightedCode} code={tabCodeSnippets[tab].code}/>
     </div>
   </div>)
 }

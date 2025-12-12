@@ -1,37 +1,25 @@
 import React from 'react';
-import { Handle, Node, Position } from '@xyflow/react';
-import { DiagramNode, QualifiedName } from '../types'
+import { Handle, Position } from '@xyflow/react';
+import { DiagramNode } from '../types';
 import { NodeBadge } from '../NodeBadge';
 import { getNodeTheme } from '../theme';
 
-export interface QueryPlanNodeData extends Record<string, unknown> {
+interface BaseQueryPlanNodeProps {
   node: DiagramNode;
-  inboundLinks: Link[];
-  outboundLinks: Link[];
-  memberLinks: { [handleId: string]: Link[] };
+  headerHandles?: boolean; // Whether to show handles in the header
 }
 
-export interface Link {
-  linkId?: string
-  sourceNodeName: QualifiedName;
-  sourceNodeId: string;
-  sourceHandleId: string;
-
-  targetNodeName: QualifiedName;
-  targetNodeId: string;
-  targetHandleId: string;
-}
-export default function QueryPlanNode({ data }: Node<QueryPlanNodeData>) {
-  const { node } = data;
+export function BaseQueryPlanNode({ node }: BaseQueryPlanNodeProps) {
   const theme = getNodeTheme(node.kind);
   const badgeLabel = node.badgeLabel || node.kind;
 
   return (
     <div className="query-plan-node">
-      <Handle type="target" position={Position.Left} id={`${node.id}-left`} />
       <div className="query-plan-node-header">
+        <Handle type="target" position={Position.Left} id={`${node.id}-left`} />
         <span className="query-plan-node-title">{node.title}</span>
         <NodeBadge label={badgeLabel} kind={node.kind} iconId={node.icon} />
+        <Handle type="source" position={Position.Right} id={`${node.id}-right`} />
       </div>
       {node.members && node.members.length > 0 && (
         <div className="query-plan-node-body">
@@ -55,7 +43,6 @@ export default function QueryPlanNode({ data }: Node<QueryPlanNodeData>) {
           ))}
         </div>
       )}
-      <Handle type="source" position={Position.Right} id={`${node.id}-right`} />
 
       <style jsx>{`
         .query-plan-node {
@@ -67,6 +54,7 @@ export default function QueryPlanNode({ data }: Node<QueryPlanNodeData>) {
         }
 
         .query-plan-node-header {
+          position: relative;
           padding: 8px 12px;
           background: ${theme.backgroundColor};
           border-bottom: 1px solid ${theme.borderColor}30;

@@ -14,7 +14,7 @@ const ICON_COMPONENTS: Record<string, React.ComponentType<any>> = {
   'arrow-right-to-arc': TablerIcons.IconArrowRightToArc,
   'arrow-left-from-arc': TablerIcons.IconArrowLeftFromArc,
   'arrows-exchange': TablerIcons.IconArrowsExchange,
-  'blocks': TablerIcons.IconBoxMultiple,
+  'blocks': TablerIcons.IconBlocks,
   'help-hexagon': TablerIcons.IconHelpHexagon,
   'switch-horizontal': TablerIcons.IconSwitchHorizontal,
   'square-letter-c': TablerIcons.IconSquareLetterC,

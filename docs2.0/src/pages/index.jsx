@@ -18,7 +18,7 @@ const faqs = [
   {
     question: 'How does this compare to GraphQL?',
     answer: [
-      "Taxi provides many of the benefits of GraphQL—data federation and custom response schemas—without requiring resolvers or a single global schema. It integrates with your existing tech stack and supports more than just HTTP. TaxiQL works across all data sources and integration patterns, including Kafka streams, S3 buckets, API orchestration and batch workloads."
+      "Taxi provides many of the benefits of GraphQL - data federation and custom response schemas - without requiring resolvers or a single global schema. It integrates with your existing tech stack and supports more than just HTTP. TaxiQL works across all data sources and integration patterns, including Kafka streams, S3 buckets, API orchestration and batch workloads."
     ],
     learnMore: '/docs#taxi-vs-graph-ql'
   },

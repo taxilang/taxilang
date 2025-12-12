@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import {useEffect, useState} from 'react'
+import {useEffect, useState, useRef} from 'react'
 import redent from 'redent'
 import Alert from '@reach/alert'
 import {SnippetGroup} from '@/components/SnippetGroup'
@@ -129,11 +129,24 @@ function CopyButton({code}) {
 }
 
 function Code({code, lang, pad}) {
+  const preRef = useRef(null);
+
   useEffect(() => {
-    Prism.highlightAll()
-  }, []);
+    // Force a browser repaint to ensure CSS is applied
+    if (preRef.current) {
+      preRef.current.style.opacity = '0.99';
+      // Use requestAnimationFrame to ensure the repaint happens
+      requestAnimationFrame(() => {
+        if (preRef.current) {
+          preRef.current.style.opacity = '1';
+        }
+      });
+    }
+  }, [code]);
+
   return (
     <pre
+      ref={preRef}
       className={clsx(
         'text-sm leading-6 text-slate-50 flex ligatures-none',
         pad && 'overflow-auto'
