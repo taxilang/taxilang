@@ -55,6 +55,7 @@ object PrimitiveTypes {
       PrimitiveType.TIME to listOf(LocalTime::class.java, kotlinx.datetime.LocalTime::class.java),
       PrimitiveType.DATE_TIME to listOf(LocalDateTime::class.java, kotlinx.datetime.LocalDateTime::class.java),
       PrimitiveType.INSTANT to listOf(Instant::class.java, kotlinx.datetime.Instant::class.java),
+      PrimitiveType.VOID to listOf(Unit::class.java, Void::class.java)
    )
    private val javaTypeToPrimitive: Map<String, PrimitiveType> =
       taxiPrimitiveToJavaTypes.flatMap { (primitive, javaTypes) ->

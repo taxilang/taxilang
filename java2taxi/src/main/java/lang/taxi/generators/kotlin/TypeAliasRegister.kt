@@ -1,9 +1,5 @@
 package lang.taxi.generators.kotlin
 
-import kotlinx.metadata.KmAnnotation
-import kotlinx.metadata.KmAnnotationArgument
-import kotlinx.metadata.jvm.KotlinClassHeader
-import kotlinx.metadata.jvm.KotlinClassMetadata
 import lang.taxi.annotations.DataType
 import lang.taxi.utils.log
 import org.reflections8.Reflections
@@ -12,6 +8,9 @@ import org.reflections8.scanners.TypeAnnotationsScanner
 import org.reflections8.util.ClasspathHelper
 import org.reflections8.util.ConfigurationBuilder
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.metadata.KmAnnotation
+import kotlin.metadata.KmAnnotationArgument
+import kotlin.metadata.jvm.KotlinClassMetadata
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
@@ -44,10 +43,10 @@ class TypeAliasRegister private constructor(classes: List<Class<*>> = emptyList(
 
    private fun registerClasses(classes: Collection<Class<*>>) {
       val classesAndAliases = classes
-         .map { clazz -> clazz to KotlinClassMetadata.read(clazz.readMetadata()) }
+         .map { clazz -> clazz to KotlinClassMetadata.readLenient(clazz.readMetadata()) }
          .filter { (_, value) -> value is KotlinClassMetadata.FileFacade }
          .flatMap { (clazz, metadata) ->
-            val typeAliasesWithDataType = (metadata as KotlinClassMetadata.FileFacade).toKmPackage()
+            val typeAliasesWithDataType = (metadata as KotlinClassMetadata.FileFacade).kmPackage
                .typeAliases
                .mapNotNull { typeAlias ->
                   val annotation = typeAlias.annotations.dataTypeAnnotation()
@@ -188,8 +187,6 @@ private fun List<KmAnnotation>.dataTypeAnnotation(): DataType? {
    return dataType
 }
 
-private fun Class<*>.readMetadata(): KotlinClassHeader {
-   return getAnnotation(Metadata::class.java).run {
-      KotlinClassHeader(kind, metadataVersion, data1, data2, extraString, packageName, extraInt)
-   }
+private fun Class<*>.readMetadata(): Metadata {
+   return getAnnotation(Metadata::class.java)
 }
