@@ -1,3 +1,5 @@
+import org.jetbrains.intellij.platform.gradle.extensions.intellijPlatform
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Document
@@ -147,7 +149,9 @@ tasks {
    }
 
    withType<KotlinCompile> {
-      kotlinOptions.jvmTarget = "17"
+      compilerOptions {
+         jvmTarget.set(JvmTarget.JVM_17)
+      }
    }
 
    // Task to print version info for debugging
