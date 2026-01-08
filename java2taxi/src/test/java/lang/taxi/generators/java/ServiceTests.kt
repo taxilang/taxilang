@@ -73,6 +73,30 @@ service PersonService {
    }
 
    @Test
+   fun when_operationReturnsKotlinUnit_then_noReturnTypeIsDeclared() {
+      @Service("TestService")
+      @Namespace("taxi.example")
+      class TestService {
+         @Operation
+         fun doNothing(@DataType("taxi.example.PersonId") input: String) {
+            TODO("Not a real service")
+         }
+      }
+
+      val taxiDef = TaxiGenerator().forClasses(TestService::class.java).generateAsStrings()
+      expect(taxiDef).to.have.size(1)
+
+
+      val expected = """
+namespace taxi.example
+type PersonId inherits String
+service TestService {
+    operation doNothing(input:PersonId):Void
+}"""
+      TestHelpers.expectToCompileTheSame(taxiDef, expected)
+   }
+
+   @Test
    fun given_serviceReturnsPrimitiveWithAnnotation_then_typeAliasIsGenerated() {
       @Service("TestService")
       @Namespace("taxi.example")
