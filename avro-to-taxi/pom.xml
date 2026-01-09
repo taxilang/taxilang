@@ -10,6 +10,7 @@
    </parent>
 
    <artifactId>avro-to-taxi</artifactId>
+   <name>${artifactId}</name>
    <properties>
       <!--If bumping this version, revisit dependencyManagement
       for commons-compress below -->

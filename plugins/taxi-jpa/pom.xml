@@ -8,6 +8,7 @@
    <modelVersion>4.0.0</modelVersion>
 
    <artifactId>taxi-jpa</artifactId>
+   <name>${artifactId}</name>
    <properties>
       <plugin.id>taxi-kotlin-jpa-plugin</plugin.id>
       <!--<plugin.class>org.pf4j.demo.welcome.WelcomePlugin</plugin.class>-->

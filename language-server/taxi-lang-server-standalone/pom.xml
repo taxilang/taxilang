@@ -24,7 +24,7 @@ disabled by default locally
 -->
 
    <artifactId>taxi-lang-server-standalone</artifactId>
-
+   <name>${artifactId}</name>
    <dependencies>
       <!--
       This isn't great, I know.

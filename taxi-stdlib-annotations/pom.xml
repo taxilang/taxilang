@@ -14,7 +14,7 @@
    </description>
 
    <artifactId>taxi-stdlib-annotations</artifactId>
-
+   <name>${artifactId}</name>
    <dependencies>
       <dependency>
          <groupId>org.taxilang</groupId>

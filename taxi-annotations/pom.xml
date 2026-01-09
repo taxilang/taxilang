@@ -9,5 +9,5 @@
 
    <artifactId>taxi-annotations</artifactId>
 
-
+   <name>${artifactId}</name>
 </project>

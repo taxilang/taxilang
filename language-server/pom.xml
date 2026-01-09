@@ -11,6 +11,7 @@
    </parent>
 
    <artifactId>taxi-lang-server</artifactId>
+   <name>${artifactId}</name>
    <packaging>pom</packaging>
 
    <!--

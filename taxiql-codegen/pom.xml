@@ -10,7 +10,7 @@
    </parent>
 
    <artifactId>taxiql-codegen</artifactId>
-
+   <name>${artifactId}</name>
    <packaging>pom</packaging>
    <modules>
       <module>taxiql-codegen-core</module>

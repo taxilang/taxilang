@@ -10,7 +10,7 @@
    </parent>
 
    <artifactId>taxiql-codegen-cli</artifactId>
-
+   <name>${artifactId}</name>
    <properties>
       <picocli.version>4.7.6</picocli.version>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
