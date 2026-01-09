@@ -1,0 +1,198 @@
+>
+>@HttpOperation(url = '/api/q/brokerage/{brokerageId}/loanapplications', method = 'GET')
+#^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+# ^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#              ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#               ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                  ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                   ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                    ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                     ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.single.taxi punctuation.definition.string.begin.taxi
+#                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.single.taxi
+#                                                                     ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.single.taxi punctuation.definition.string.end.taxi
+#                                                                      ^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                        ^^^^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi constant.other.key.taxi
+#                                                                              ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                               ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi keyword.operator.assignment.taxi
+#                                                                                ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi
+#                                                                                 ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.single.taxi punctuation.definition.string.begin.taxi
+#                                                                                  ^^^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.single.taxi
+#                                                                                     ^ source.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.single.taxi punctuation.definition.string.end.taxi
+#                                                                                      ^ source.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+>query getBrokerageDeals(@PathVariable("brokerageId") brokerageId: BrokerageId) {
+#^^^^^ source.taxi meta.query.taxi keyword.control.query.taxi
+#     ^ source.taxi meta.query.taxi
+#      ^^^^^^^^^^^^^^^^^ source.taxi meta.query.taxi entity.name.query.taxi
+#                       ^ source.taxi meta.query.taxi meta.parameters.taxi punctuation.definition.parameters.begin.taxi
+#                        ^ source.taxi meta.query.taxi meta.parameters.taxi meta.declaration.annotation.taxi punctuation.definition.annotation.taxi
+#                         ^^^^^^^^^^^^ source.taxi meta.query.taxi meta.parameters.taxi meta.declaration.annotation.taxi storage.type.annotation.taxi
+#                                     ^ source.taxi meta.query.taxi meta.parameters.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.begin.bracket.round.taxi
+#                                      ^ source.taxi meta.query.taxi meta.parameters.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.begin.taxi
+#                                       ^^^^^^^^^^^ source.taxi meta.query.taxi meta.parameters.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi
+#                                                  ^ source.taxi meta.query.taxi meta.parameters.taxi meta.declaration.annotation.taxi meta.annotation.parameters.taxi string.quoted.double.taxi punctuation.definition.string.end.taxi
+#                                                   ^ source.taxi meta.query.taxi meta.parameters.taxi meta.declaration.annotation.taxi punctuation.definition.annotation-arguments.end.bracket.round.taxi
+#                                                    ^ source.taxi meta.query.taxi meta.parameters.taxi
+#                                                     ^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.parameters.taxi variable.parameter.name.taxi
+#                                                                  ^^^^^^^^^^^ source.taxi meta.query.taxi meta.parameters.taxi entity.name.type.taxi
+#                                                                             ^ source.taxi meta.query.taxi meta.parameters.taxi punctuation.definition.parameters.end.taxi
+#                                                                              ^ source.taxi meta.query.taxi
+#                                                                               ^ source.taxi meta.query.taxi punctuation.definition.block.taxi
+>given { brokerageId }
+#^^^^^ source.taxi meta.query.taxi meta.query.given.taxi keyword.control.given.taxi
+#     ^ source.taxi meta.query.taxi meta.query.given.taxi
+#      ^ source.taxi meta.query.taxi meta.query.given.taxi punctuation.definition.block.taxi
+#       ^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.given.taxi
+#                    ^ source.taxi meta.query.taxi meta.query.given.taxi punctuation.definition.block.taxi
+>
+> find { DealResponse } as (deal:Deal[]) -> {
+#^ source.taxi meta.query.taxi
+# ^^^^ source.taxi meta.query.taxi meta.query.find.taxi keyword.control.find.taxi
+#     ^ source.taxi meta.query.taxi meta.query.find.taxi
+#      ^ source.taxi meta.query.taxi meta.query.find.taxi punctuation.definition.block.taxi
+#       ^ source.taxi meta.query.taxi meta.query.find.taxi
+#        ^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi entity.name.type.taxi
+#                    ^ source.taxi meta.query.taxi meta.query.find.taxi
+#                     ^ source.taxi meta.query.taxi meta.query.find.taxi punctuation.definition.block.taxi
+#                      ^ source.taxi meta.query.taxi meta.query.find.taxi
+#                       ^^ source.taxi meta.query.taxi meta.query.find.taxi keyword.operator.projection.taxi
+#                         ^ source.taxi meta.query.taxi meta.query.find.taxi
+#                          ^ source.taxi meta.query.taxi meta.query.find.taxi punctuation.definition.parameters.begin.taxi
+#                           ^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.parameter.name.taxi
+#                                ^^^^ source.taxi meta.query.taxi meta.query.find.taxi entity.name.type.taxi
+#                                    ^^ source.taxi meta.query.taxi meta.query.find.taxi
+#                                      ^ source.taxi meta.query.taxi meta.query.find.taxi punctuation.definition.parameters.end.taxi
+#                                       ^ source.taxi meta.query.taxi meta.query.find.taxi
+#                                        ^^^^ source.taxi meta.query.taxi meta.query.find.taxi keyword.operator.lambda.taxi
+>           id : LoanApplicationId
+#^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi
+#           ^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi
+#              ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#               ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                ^^^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+>           name : LoanApplicationName
+#^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi
+#           ^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi
+#                ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                 ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                  ^^^^^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+>           amount: {
+#^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi
+#           ^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi
+#                 ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                  ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                   ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts punctuation.definition.block.ts
+>                 amount: LoanApplicationAmount
+#^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#                       ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                        ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi
+#                         ^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi entity.name.type.taxi
+>                 currency: LoanApplicationCurrency
+#^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#                         ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                          ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi
+#                           ^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi entity.name.type.taxi
+>             }
+#^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#             ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts punctuation.definition.block.ts
+>           createdTime : LoanApplicationCreatedTime
+#^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi
+#           ^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi
+#                       ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                        ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                         ^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+>           modifiedTime : LoanApplicationModifiedTime
+#^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi
+#           ^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi
+#                        ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                         ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+>           stage : LoanApplicationStage
+#^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi
+#           ^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi
+#                 ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                  ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                   ^^^^^^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+>           workflowStep : LoanApplicationStep
+#^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi
+#           ^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi
+#                        ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                         ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                          ^^^^^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+>           brokerage : Brokerage as (deal: first(Deal[])) -> {
+#^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi
+#           ^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi
+#                     ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                      ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                       ^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+#                                ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                                 ^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+#                                   ^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                                     ^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+#                                         ^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                                           ^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+#                                                ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                                                 ^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+#                                                     ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                                                      ^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi
+#                                                             ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.anonymous.type.taxi punctuation.definition.block.begin.taxi
+>               name : BrokerageName
+#^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.anonymous.type.taxi
+#               ^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.anonymous.type.taxi variable.object.property.taxi
+#                    ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.anonymous.type.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                     ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.anonymous.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                      ^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.anonymous.type.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+>               id : BrokerageId
+#^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.anonymous.type.taxi
+#               ^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.anonymous.type.taxi variable.object.property.taxi
+#                  ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.anonymous.type.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                   ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.anonymous.type.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                    ^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.anonymous.type.taxi variable.object.property.taxi meta.type.annotation.taxi entity.name.type.taxi
+>           }
+#^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.anonymous.type.taxi
+#           ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.anonymous.type.taxi punctuation.definition.block.end.taxi
+>           company : {
+#^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi
+#           ^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi
+#                   ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                    ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                     ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts punctuation.definition.block.ts
+>               name : BorrowerName
+#^^^^^^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#                    ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                     ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi
+#                      ^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi entity.name.type.taxi
+>               id : BorrowerId
+#^^^^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#                  ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                   ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi
+#                    ^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi entity.name.type.taxi
+>           }
+#^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#           ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts punctuation.definition.block.ts
+>           broker : {
+#^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi
+#           ^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi
+#                  ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                   ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi
+#                    ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts punctuation.definition.block.ts
+>               fullName : ContactName
+#^^^^^^^^^^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#                        ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                         ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi
+#                          ^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi entity.name.type.taxi
+>               id : ContactId
+#^^^^^^^^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#                  ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi keyword.operator.type.annotation.taxi
+#                   ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi
+#                    ^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts meta.type.annotation.taxi entity.name.type.taxi
+>           }
+#^^^^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts
+#           ^ source.taxi meta.query.taxi meta.query.find.taxi variable.object.property.taxi meta.type.annotation.taxi meta.object.type.ts punctuation.definition.block.ts
+>        }[]
+#^^^^^^^^ source.taxi meta.query.taxi meta.query.find.taxi
+#        ^ source.taxi meta.query.taxi meta.query.find.taxi punctuation.definition.block.taxi
+#         ^^ source.taxi meta.query.taxi meta.query.find.taxi meta.array.suffix.taxi
+>    }
+#^^^^ source.taxi meta.query.taxi
+#    ^ source.taxi meta.query.taxi punctuation.definition.block.taxi
+>
