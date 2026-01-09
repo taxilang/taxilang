@@ -10,6 +10,7 @@ variables:
    MAJOR_RELEASE_DIGIT: 0
    MINOR_RELEASE_DIGIT: 1
    PATCH_RELEASE_DIGIT: 2
+   MAVEN_GPG_PASSPHRASE: $GPG_KEY
 
 .git_template: &git_setup |
    git remote set-url --push origin "https://oauth2:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
@@ -335,28 +336,11 @@ build-intellij-plugin:
       - './gradlew buildPlugin --no-daemon -DMAVEN_LOCAL_REPO="$CI_PROJECT_DIR/.m2/repository"'
    except:
       - tags
-      - master
    artifacts:
       paths:
          - 'language-server/intellij-plugin/build/distributions/*.zip'
       expire_in: 30 days
 
-publish-release:
-   stage: deploy
-   script:
-      # Don't run tests on master, as already passed on develop
-      # Use -DskipTests, but not -Dmaven.test.skip=true as we need to compile the tests (as other projects have test dependencies), but not run them.
-      - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P release,orbital-repo -Daws.region=eu-west-2'
-      # Use jreleaser to publish to sdkman, and others
-      - 'cd taxi-cli'
-      - 'mvn deploy -P orbital-repo,sdkman -Daws.region=eu-west-2'
-   only:
-      - master
-   artifacts:
-      paths:
-         - "taxi-cli/target/*.zip"
-         - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-jar-with-dependencies.jar'
-         - "taxi-cli/target/jreleaser/*.log"
 
 publish-plugin:
    stage: deploy-plugin
@@ -365,7 +349,7 @@ publish-plugin:
       - *prepare-vscode-plugin-build
       - 'npm run vsce:publish'
    only:
-      - master
+      - tags
    artifacts:
       paths:
          - 'language-server/vscode-extension/*.vsix'
@@ -476,3 +460,30 @@ release-taxiql-codegen:
 #         - public
 #   rules:
 #      - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+
+
+# NEW JOB: Publish to Maven Central when tags are pushed
+publish-maven-central:
+   stage: deploy
+   before_script:
+      # Install GPG for signing
+      - apt-get update && apt-get install -y gnupg
+      # Import GPG private key
+      - echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
+   script:
+      # Don't run tests on tags, as already passed on develop
+      - 'mvn clean deploy -P maven-central -DskipTests -Dgpg.passphrase=$GPG_PASSPHRASE'
+   services:
+      - name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
+        alias: docker
+        command: ["--tls=false"]
+   variables:
+      DOCKER_HOST: "tcp://docker:2375"
+      DOCKER_TLS_CERTDIR: ""
+      DOCKER_DRIVER: overlay2
+   only:
+      - tags
+   artifacts:
+      paths:
+         - "taxi-cli/target/*.zip"
+         - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-jar-with-dependencies.jar'
