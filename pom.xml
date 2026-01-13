@@ -484,11 +484,27 @@
       </plugins>
    </build>
 
-   <!-- Publish to either maven central, or orbital repo.
-   Publishing to maven central is preferred, but requires GPG installed in the gitlab docker image,
-   which right now isn't working
-   -->
    <profiles>
+      <!-- configures loopback (ie., not prompting) for the GPG passphrase. Use this in the ci server -->
+      <profile>
+         <id>loopback-gpg</id>
+         <build>
+            <pluginManagement>
+               <plugins>
+                  <plugin>
+                     <groupId>org.apache.maven.plugins</groupId>
+                     <artifactId>maven-gpg-plugin</artifactId>
+                     <configuration>
+                        <gpgArguments>
+                           <arg>--pinentry-mode</arg>
+                           <arg>loopback</arg>
+                        </gpgArguments>
+                     </configuration>
+                  </plugin>
+               </plugins>
+            </pluginManagement>
+         </build>
+      </profile>
       <profile>
          <id>maven-central</id>
          <activation>

@@ -10,7 +10,6 @@ variables:
    MAJOR_RELEASE_DIGIT: 0
    MINOR_RELEASE_DIGIT: 1
    PATCH_RELEASE_DIGIT: 2
-   MAVEN_GPG_PASSPHRASE: $GPG_KEY
 
 .git_template: &git_setup |
    git remote set-url --push origin "https://oauth2:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
@@ -48,46 +47,13 @@ default:
    - 'git restore package.json package-lock.json'
 
 stages:
+   - do-this-first
    - build
    - build-tools
    - trigger-release
    - deploy
    - deploy-plugin
    - typescript-release
-
-
-# This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
-# Because some enforcer rules might check dependency convergence and class duplications
-# we use `test-compile` here instead of `validate`, so the correct classpath is picked up.
-validate:
-   stage: build
-   except:
-      - tags
-      - master
-      - develop
-   script:
-      # Don't run tests while experimenting with native builds.
-      # If this got merged to develop, that was a mistake!
-      - 'mvn $MAVEN_CLI_OPTS clean verify'
-   services:
-      -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
-         alias: docker
-         command: [ "--tls=false" ]
-   variables:
-      # Instruct Testcontainers to use the daemon of DinD.
-      DOCKER_HOST: "tcp://docker:2375"
-      # Instruct Docker not to start over TLS.
-      DOCKER_TLS_CERTDIR: ""
-      # Improve performance with overlayfs.
-      DOCKER_DRIVER: overlay2
-   artifacts:
-      paths:
-         - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-jar-with-dependencies.jar'
-      reports:
-         junit:
-            # Note:This won't actually work, b/c of https://gitlab.com/gitlab-org/gitlab-runner/issues/2620
-            # However, leaving this here to pick up later
-            - "*/target/surefire-reports/TEST-*.xml"
 
 
 build-ts-codegen-tools-linux:
@@ -461,18 +427,22 @@ release-taxiql-codegen:
 #   rules:
 #      - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
 
+.setup-gpg: &setup-gpg
+   - apt-get update && apt-get install -y gnupg
+   - echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
+   - echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+   - gpg-connect-agent reloadagent /bye
+   - echo "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --detach-sign /dev/null
+
 
 # NEW JOB: Publish to Maven Central when tags are pushed
 publish-maven-central:
-   stage: deploy
+   stage: build
    before_script:
-      # Install GPG for signing
-      - apt-get update && apt-get install -y gnupg
-      # Import GPG private key
-      - echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
+      - *setup-gpg
    script:
       # Don't run tests on tags, as already passed on develop
-      - 'mvn clean deploy -P maven-central -DskipTests -Dgpg.passphrase=$GPG_PASSPHRASE'
+      - 'mvn $MAVEN_CLI_OPTS clean deploy -P maven-central,loopback-gpg -DskipTests'
    services:
       - name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
         alias: docker
@@ -481,6 +451,7 @@ publish-maven-central:
       DOCKER_HOST: "tcp://docker:2375"
       DOCKER_TLS_CERTDIR: ""
       DOCKER_DRIVER: overlay2
+      MAVEN_GPG_PASSPHRASE: $GPG_PASSPHRASE
    only:
       - tags
    artifacts:
