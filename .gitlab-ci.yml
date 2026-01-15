@@ -56,6 +56,40 @@ stages:
    - typescript-release
 
 
+# This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
+# Because some enforcer rules might check dependency convergence and class duplications
+# we use `test-compile` here instead of `validate`, so the correct classpath is picked up.
+validate:
+   stage: build
+   except:
+      - tags
+      - master
+      - develop
+   script:
+      # Don't run tests while experimenting with native builds.
+      # If this got merged to develop, that was a mistake!
+      - 'mvn $MAVEN_CLI_OPTS clean verify'
+   services:
+      -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
+         alias: docker
+         command: [ "--tls=false" ]
+   variables:
+      # Instruct Testcontainers to use the daemon of DinD.
+      DOCKER_HOST: "tcp://docker:2375"
+      # Instruct Docker not to start over TLS.
+      DOCKER_TLS_CERTDIR: ""
+      # Improve performance with overlayfs.
+      DOCKER_DRIVER: overlay2
+   artifacts:
+      paths:
+         - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-jar-with-dependencies.jar'
+      reports:
+         junit:
+            # Note:This won't actually work, b/c of https://gitlab.com/gitlab-org/gitlab-runner/issues/2620
+            # However, leaving this here to pick up later
+            - "*/target/surefire-reports/TEST-*.xml"
+
+
 build-ts-codegen-tools-linux:
    stage: build
    image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/vegardit/graalvm-maven:latest-java23
