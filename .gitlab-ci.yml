@@ -278,17 +278,38 @@ publish-snapshot-jars:
       #      - 'apk add gnupg'
       #      - gpg -v --import <(echo "$GPG_PRIVATE_KEY")
       - 'mvn $MAVEN_CLI_OPTS deploy -P snapshot-release,orbital-repo -Daws.region=eu-west-2'
-      # Check for changes to stdlib.mdx and commit them back
+      # Setup git for committing changes back
       - *git_setup
+      # Generate changelog
+      - *setup-nvm
+      - cd docs2.0
+      - npm ci
+      - npm run changelog
+      - cd ..
+      # Check for changes to stdlib.mdx and changelog, and commit them back
       - |
         STDLIB_FILE="docs2.0/src/pages/docs/language/stdlib.mdx"
+        CHANGELOG_DIR="docs2.0/src/pages/changelog"
+        CHANGES_DETECTED=false
+
         if git status --porcelain | grep -q "$STDLIB_FILE" || git diff --cached --name-only | grep -q "$STDLIB_FILE"; then
-          echo "Changes detected in stdlib.mdx, committing back to repository"
+          echo "Changes detected in stdlib.mdx"
           git add "$STDLIB_FILE"
-          git commit -m "chore(docs): update stdlib.mdx from build process [skip ci]"
+          CHANGES_DETECTED=true
+        fi
+
+        if git status --porcelain | grep -q "$CHANGELOG_DIR" || git diff --cached --name-only | grep -q "$CHANGELOG_DIR"; then
+          echo "Changes detected in changelog"
+          git add "$CHANGELOG_DIR"
+          CHANGES_DETECTED=true
+        fi
+
+        if [ "$CHANGES_DETECTED" = true ]; then
+          echo "Committing changes back to repository"
+          git commit -m "chore(docs): update documentation from build process [skip ci]"
           git push origin HEAD:${CI_COMMIT_REF_NAME}
         else
-          echo "No changes detected in stdlib.mdx"
+          echo "No changes detected in stdlib.mdx or changelog"
         fi
    services:
       -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
