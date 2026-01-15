@@ -570,6 +570,98 @@ object TypeNames {
       output.should.equal(expected)
    }
 
+   @Test
+   fun `filters types by namespace`() {
+      val taxi = """
+         namespace com.foo {
+            type Person {
+               name : String
+            }
+         }
+         namespace com.bar {
+            type Company {
+               name : String
+            }
+         }
+      """.trimIndent()
+      val taxiDoc = Compiler.forStrings(taxi).compile()
+      val output = KotlinGenerator(typesOrNamespaces = listOf("com.foo")).generate(taxiDoc, emptyList(), MockEnvironment)
+      val generatedContent = output.joinToString("\n") { it.content }
+
+      generatedContent.should.contain("class Person")
+      generatedContent.should.not.contain("class Company")
+   }
+
+   @Test
+   fun `filters specific type by fully qualified name`() {
+      val taxi = """
+         namespace com.foo {
+            type Person {
+               name : String
+            }
+            type Company {
+               name : String
+            }
+         }
+      """.trimIndent()
+      val taxiDoc = Compiler.forStrings(taxi).compile()
+      val output = KotlinGenerator(typesOrNamespaces = listOf("com.foo.Person")).generate(taxiDoc, emptyList(), MockEnvironment)
+      val generatedContent = output.joinToString("\n") { it.content }
+
+      generatedContent.should.contain("class Person")
+      generatedContent.should.not.contain("class Company")
+   }
+
+   @Test
+   fun `generates all types when filter list is empty`() {
+      val taxi = """
+         namespace com.foo {
+            type Person {
+               name : String
+            }
+         }
+         namespace com.bar {
+            type Company {
+               name : String
+            }
+         }
+      """.trimIndent()
+      val taxiDoc = Compiler.forStrings(taxi).compile()
+      val output = KotlinGenerator(typesOrNamespaces = emptyList()).generate(taxiDoc, emptyList(), MockEnvironment)
+      val generatedContent = output.joinToString("\n") { it.content }
+
+      generatedContent.should.contain("class Person")
+      generatedContent.should.contain("class Company")
+   }
+
+   @Test
+   fun `filters types with multiple namespaces`() {
+      val taxi = """
+         namespace com.foo {
+            type Person {
+               name : String
+            }
+         }
+         namespace com.bar {
+            type Company {
+               name : String
+            }
+         }
+         namespace com.baz {
+            type Product {
+               name : String
+            }
+         }
+      """.trimIndent()
+      val taxiDoc = Compiler.forStrings(taxi).compile()
+      val output = KotlinGenerator(typesOrNamespaces = listOf("com.foo", "com.bar")).generate(taxiDoc, emptyList(), MockEnvironment)
+      val generatedContent = output.joinToString("\n") { it.content }
+
+      generatedContent.should.contain("class Person")
+      generatedContent.should.contain("class Company")
+      generatedContent.should.not.contain("class Product")
+   }
+
 
 }
 
