@@ -9,13 +9,16 @@
    },
    "version": "1.68.1",
    "engines": {
-      "vscode": "^1.44.0"
+      "vscode": "^1.68.0"
    },
    "categories": [
       "Other"
    ],
    "activationEvents": [
-      "onLanguage:taxi"
+      "onLanguage:taxi",
+      "onLanguage:taxiql",
+      "onLanguage:taxiql-stubs",
+      "onNotebook:taxiql-notebook"
    ],
    "main": "./out/extension.js",
    "contributes": {
@@ -42,6 +45,18 @@
                ".taxi"
             ],
             "configuration": "./language-configuration.json"
+         },
+         {
+            "id": "taxiql",
+            "aliases": [
+               "TaxiQL"
+            ]
+         },
+         {
+            "id": "taxiql-stubs",
+            "aliases": [
+               "TaxiQL Stubs"
+            ]
          }
       ],
       "grammars": [
@@ -51,6 +66,63 @@
             "path": "./syntaxes/taxi.tmLanguage.json"
          }
       ],
+      "notebooks": [
+         {
+            "type": "taxiql-notebook",
+            "displayName": "TaxiQL Notebook",
+            "selector": [
+               {
+                  "filenamePattern": "*.taxiqnb"
+               }
+            ]
+         }
+      ],
+      "notebookRenderer": [
+         {
+            "id": "taxiql-renderer",
+            "displayName": "TaxiQL Renderer",
+            "entrypoint": "./out/renderer/index.js",
+            "mimeTypes": [
+               "application/vnd.taxi.plan+json",
+               "application/vnd.taxi.results+json"
+            ]
+         }
+      ],
+      "commands": [
+         {
+            "command": "taxiql.notebook.attachStubs",
+            "title": "Attach Stubs...",
+            "category": "TaxiQL"
+         },
+         {
+            "command": "taxiql.notebook.changeStubs",
+            "title": "Change Stubs...",
+            "category": "TaxiQL"
+         },
+         {
+            "command": "taxiql.notebook.clearStubs",
+            "title": "Clear Stubs",
+            "category": "TaxiQL"
+         }
+      ],
+      "menus": {
+         "notebook/cell/title": [
+            {
+               "command": "taxiql.notebook.attachStubs",
+               "when": "notebookType == taxiql-notebook && notebookCellType == code && !notebookCellMetadata.taxi.stubsId",
+               "group": "inline"
+            },
+            {
+               "command": "taxiql.notebook.changeStubs",
+               "when": "notebookType == taxiql-notebook && notebookCellType == code && notebookCellMetadata.taxi.stubsId",
+               "group": "inline"
+            },
+            {
+               "command": "taxiql.notebook.clearStubs",
+               "when": "notebookType == taxiql-notebook && notebookCellType == code && notebookCellMetadata.taxi.stubsId"
+            }
+         ]
+      },
       "configuration": {
          "type": "object",
          "title": "Taxi",
@@ -103,7 +175,7 @@
       "@types/glob": "^7.1.1",
       "@types/mocha": "^7.0.2",
       "@types/node": "^13.11.0",
-      "@types/vscode": "^1.44.0",
+      "@types/vscode": "^1.68.0",
       "@types/ws": "^6.0.0",
       "@typescript-eslint/eslint-plugin": "^2.26.0",
       "@typescript-eslint/parser": "^2.26.0",

@@ -1,0 +1,59 @@
+{
+  "cells": [
+    {
+      "kind": "markdown",
+      "language": "markdown",
+      "value": "# TaxiQL Notebook Example\n\nThis is a sample TaxiQL notebook demonstrating the notebook features.\n\n## Features\n\n- **Query Plan Visualization**: Execute cells without stubs to see query plans\n- **Stubbed Execution**: Attach stubs to execute queries with mock data\n- **Rich Output**: HTML rendered output (placeholders for now)\n\n---"
+    },
+    {
+      "kind": "markdown",
+      "language": "markdown",
+      "value": "## Example 1: Query Without Stubs (Show Plan)\n\nThis cell will show a query plan visualization when executed."
+    },
+    {
+      "kind": "code",
+      "language": "taxiql",
+      "value": "find { Customer }"
+    },
+    {
+      "kind": "markdown",
+      "language": "markdown",
+      "value": "## Example 2: Query With Stubs (Execute)\n\nThis cell has stubs attached (see metadata) and will execute with stubbed data.\n\nTo attach stubs to a cell:\n1. Click the \"Attach Stubs...\" button in the cell toolbar\n2. Enter a stub ID (e.g., `customer-stubs`)\n3. Execute the cell"
+    },
+    {
+      "kind": "code",
+      "language": "taxiql",
+      "value": "find { Customer[] }\n  .filter { it.country == 'USA' }",
+      "metadata": {
+        "taxi": {
+          "stubsId": "customer-stubs"
+        }
+      }
+    },
+    {
+      "kind": "markdown",
+      "language": "markdown",
+      "value": "## Example 3: Stubs Definition Cell\n\nThis cell contains stub definitions. It's optional - stubs can also be managed through the stub editor UI (coming later)."
+    },
+    {
+      "kind": "code",
+      "language": "taxiql-stubs",
+      "value": "{\n  \"id\": \"customer-stubs\",\n  \"responses\": [\n    {\n      \"service\": \"CustomerService\",\n      \"operation\": \"getCustomers\",\n      \"response\": {\n        \"data\": [\n          {\n            \"id\": 1,\n            \"name\": \"Alice Johnson\",\n            \"email\": \"alice@example.com\",\n            \"country\": \"USA\"\n          },\n          {\n            \"id\": 2,\n            \"name\": \"Bob Smith\",\n            \"email\": \"bob@example.com\",\n            \"country\": \"UK\"\n          },\n          {\n            \"id\": 3,\n            \"name\": \"Charlie Brown\",\n            \"email\": \"charlie@example.com\",\n            \"country\": \"USA\"\n          }\n        ]\n      }\n    }\n  ]\n}"
+    },
+    {
+      "kind": "markdown",
+      "language": "markdown",
+      "value": "## Example 4: Complex Query\n\nA more complex query demonstrating joins and transformations."
+    },
+    {
+      "kind": "code",
+      "language": "taxiql",
+      "value": "find { Customer[] } as customers\njoin {\n  find { Order[] }\n    .filter { it.customerId in customers[].id }\n} as orders\nreturn {\n  customer: customers[],\n  orderCount: orders[].count()\n}"
+    },
+    {
+      "kind": "markdown",
+      "language": "markdown",
+      "value": "---\n\n## Next Steps\n\n1. Try executing cells to see the placeholder output\n2. Attach stubs to cells and execute again\n3. Modify queries and experiment\n4. Create your own notebook!\n\n**Note**: The current implementation uses placeholder HTML renderers. Rich visualizations (React Flow for plans, interactive tables for results) will be added in a future update."
+    }
+  ]
+}

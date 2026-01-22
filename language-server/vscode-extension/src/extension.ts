@@ -12,6 +12,11 @@ import {
    LanguageClientOptions,
    ServerOptions,
 } from "vscode-languageclient";
+
+// Import notebook support modules
+import { TaxiQLNotebookSerializer } from "./notebookSerializer";
+import { TaxiQLNotebookController } from "./notebookController";
+import { StubManager } from "./stubManager";
 class CompilerConfig {
    typeChecker: FeatureToggle = FeatureToggle.DISABLED;
 
@@ -34,6 +39,9 @@ export function activate(context: vscode.ExtensionContext) {
    // Use the console to output diagnostic information (console.log) and errors (console.error)
    // This line of code will only be executed once when your extension is activated
    console.log("Taxi language extension starting");
+
+   // Register notebook support
+   notebookController = registerNotebookSupport(context);
 
    const compilerConfig = new CompilerConfig();
 
@@ -151,10 +159,13 @@ function startPlugin(
 
       // Options to control the language client
       let clientOptions: LanguageClientOptions = {
-         // Register the server for plain text documents
+         // Register the server for plain text documents and notebook cells
          documentSelector: [
             { scheme: "file", language: "taxi" },
             { scheme: "file", pattern: "**/taxi.conf" },
+            // Support TaxiQL in notebook cells
+            { scheme: "vscode-notebook-cell", language: "taxiql" },
+            { scheme: "vscode-notebook-cell", language: "taxiql-stubs" },
          ],
          synchronize: {
             // Notify the server about file changes to .taxi files contained in the workspace
@@ -197,6 +208,12 @@ function startPlugin(
 
       languageClient.onReady().then(() => {
          registerProgressNotifications(languageClient);
+
+         // Connect the notebook controller to the language client
+         if (notebookController) {
+            notebookController.setLanguageClient(languageClient);
+            console.log("Notebook controller connected to language client");
+         }
       })
       .catch(err => {
          console.error("Language client failed start:", err);
@@ -255,6 +272,36 @@ function registerProgressNotifications(client: LanguageClient) {
       }
    });
 }
+
+/**
+ * Register notebook support (serializer, controller, commands)
+ */
+function registerNotebookSupport(context: vscode.ExtensionContext): TaxiQLNotebookController {
+   console.log("Registering TaxiQL Notebook support");
+
+   // Register notebook serializer
+   const serializer = new TaxiQLNotebookSerializer();
+   context.subscriptions.push(
+      vscode.workspace.registerNotebookSerializer(
+         "taxiql-notebook",
+         serializer
+      )
+   );
+
+   // Register notebook controller
+   const controller = new TaxiQLNotebookController();
+   context.subscriptions.push(controller);
+
+   // Register stub management commands
+   const stubManager = new StubManager();
+   StubManager.registerCommands(context, stubManager);
+
+   console.log("TaxiQL Notebook support registered");
+   return controller;
+}
+
+// Store the notebook controller globally so we can connect it to the language client
+let notebookController: TaxiQLNotebookController | null = null;
 
 // this method is called when your extension is deactivated
 export function deactivate() {
