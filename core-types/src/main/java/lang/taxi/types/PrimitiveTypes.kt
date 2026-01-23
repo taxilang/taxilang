@@ -41,7 +41,7 @@ object NumberTypes {
    // order of specificity.
    // Numeric expressions ensure that the return type
    // is the most specific
-   val NUMBER_TYPES = listOf(PrimitiveType.INTEGER, PrimitiveType.DECIMAL, PrimitiveType.DOUBLE)
+   val NUMBER_TYPES = listOf(PrimitiveType.INTEGER, PrimitiveType.LONG, PrimitiveType.DECIMAL, PrimitiveType.DOUBLE)
    fun isNumberType(type: PrimitiveType) = NUMBER_TYPES.contains(type)
    fun areAllNumberTypes(types: Collection<PrimitiveType>) = types.all { isNumberType(it) }
 

@@ -26,7 +26,10 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 
-class KotlinGenerator(private val typeNamesTopLevelPackageName: String = "taxi.generated") : ModelGenerator {
+class KotlinGenerator(
+   private val typeNamesTopLevelPackageName: String = "taxi.generated",
+   private val typesOrNamespaces: List<String> = emptyList()
+) : ModelGenerator {
    // TODO : This really shouldn't be a field.
    private lateinit var processorHelper: ProcessorHelper
    private val ignoredNamespaces = listOf(
@@ -42,6 +45,18 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName: String = "taxi.g
          .map { it.javaObjectType.name to it }
          .toMap()
 
+      /**
+       * Checks if a type name matches any of the provided namespaces or type names.
+       * If the list is empty, returns true (generate all).
+       * Otherwise, returns true if the name starts with any of the provided filters.
+       */
+      fun matchesTypeFilter(typeName: String, typesOrNamespaces: List<String>): Boolean {
+         return if (typesOrNamespaces.isEmpty()) {
+            true
+         } else {
+            typesOrNamespaces.any { filter -> typeName.startsWith(filter) }
+         }
+      }
    }
 
    override fun generate(
@@ -60,6 +75,7 @@ class KotlinGenerator(private val typeNamesTopLevelPackageName: String = "taxi.g
             ignoredNamespaces.none { ignoredNamespace -> namespace.startsWith(ignoredNamespace) }
          }
          .filter { !it.anonymous }
+         .filter { type -> matchesTypeFilter(type.qualifiedName, typesOrNamespaces) }
          .mapNotNull { generateType(it, typeNameConstantsGenerator) } +
          typeNameConstantsGenerator.generate()
    }

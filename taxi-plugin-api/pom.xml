@@ -3,12 +3,12 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>org.taxilang</groupId>
-      <version>1.70.0-SNAPSHOT</version>
+      <version>1.70.2</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
    <artifactId>taxi-plugin-api</artifactId>
-
+   <name>${artifactId}</name>
    <properties>
       <pf4j.version>3.10.0</pf4j.version>
    </properties>

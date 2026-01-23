@@ -65,7 +65,7 @@ data class Artifact(val id: ArtifactId, val version: String) {
     fun getIdentifier(): String = "$group/$name/$version"
 
     fun isAbsolute(): Boolean {
-        return !UNRESOLVED_VERSIONS.contains(version.toLowerCase())
+        return !UNRESOLVED_VERSIONS.contains(version.lowercase())
     }
 
     override fun toString(): String {

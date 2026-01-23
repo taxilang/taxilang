@@ -9,7 +9,7 @@ import java.net.URL
 object OperationIdProvider {
 
    private fun getOperationId(operationId: String?, pathMapping: String, methodName: String) =
-      operationId?.replaceIllegalCharacters() ?: generateOperationId(pathMapping, methodName.toLowerCase())
+      operationId?.replaceIllegalCharacters() ?: generateOperationId(pathMapping, methodName.lowercase())
 
    private fun generateOperationId(pathMapping: String, methodName: String): String {
       val path = pathMapping.urlPath().split("/")

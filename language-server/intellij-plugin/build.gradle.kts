@@ -1,15 +1,18 @@
+import org.jetbrains.intellij.platform.gradle.extensions.intellijPlatform
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Document
+import java.util.Base64
 
 plugins {
    id("java")
-   id("org.jetbrains.kotlin.jvm") version "1.9.24"
+   id("org.jetbrains.kotlin.jvm") version "2.2.21"
    id("org.jetbrains.intellij.platform") version "2.10.4"
 }
 
 // Read version from root pom.xml
-fun readMavenVersionFromPom(): String {
+fun readMavenVersionFromPom(updateSnapshotToPipelineId:Boolean): String {
    val pomFile = file("../../pom.xml")
    val factory = DocumentBuilderFactory.newInstance()
    val builder = factory.newDocumentBuilder()
@@ -21,16 +24,31 @@ fun readMavenVersionFromPom(): String {
       val node = versionNodes.item(i)
       // Get the first version tag (which should be the project version)
       if (node.parentNode.nodeName == "project") {
-         return node.textContent.trim()
+         var version = node.textContent.trim()
+
+         // In CI, replace -SNAPSHOT with pipeline ID
+         val ciPipelineId = System.getenv("CI_PIPELINE_ID")
+         if (ciPipelineId != null && version.endsWith("-SNAPSHOT") && updateSnapshotToPipelineId) {
+            version = version.replace("-SNAPSHOT", "-$ciPipelineId")
+            println("Replaced SNAPSHOT with CI pipeline ID: $version")
+         }
+
+         return version
+
       }
    }
    throw GradleException("Could not find version in pom.xml")
 }
 
-val mavenVersion = readMavenVersionFromPom()
+val mavenVersion = readMavenVersionFromPom(updateSnapshotToPipelineId = false)
 
 group = providers.gradleProperty("pluginGroup").get()
-version = mavenVersion  // Use Maven version
+
+// The plugin version needs to be unique, even on snapshot builds,
+// so update it with the PIPELINE_ID
+version = readMavenVersionFromPom(updateSnapshotToPipelineId = true)
+// For exposing as a provider below
+val pluginVersion: String = readMavenVersionFromPom(updateSnapshotToPipelineId = true)
 
 repositories {
    mavenCentral()
@@ -93,7 +111,7 @@ dependencies {
 intellijPlatform {
    pluginConfiguration {
       name = providers.gradleProperty("pluginName")
-      version = provider { mavenVersion }  // Use Maven version
+      version = provider { pluginVersion }  // Use Maven version, with snapshots made unique
 
       ideaVersion {
          sinceBuild = providers.gradleProperty("pluginSinceBuild")
@@ -102,13 +120,18 @@ intellijPlatform {
    }
 
    signing {
-      certificateChain = providers.environmentVariable("CERTIFICATE_CHAIN")
-      privateKey = providers.environmentVariable("PRIVATE_KEY")
-      password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
+      // The certificate chain has to be Base64 encoded to deal with Gitlab CI/CD env var's
+      certificateChain = providers.environmentVariable("JETBRAINS_PLUGIN_CERTIFICATE_CHAIN").map {
+         String(Base64.getDecoder().decode(it))
+      }
+      privateKey = providers.environmentVariable("JETBRAINS_PLUGIN_PRIVATE_KEY").map {
+         String(Base64.getDecoder().decode(it))
+      }
+      password = providers.environmentVariable("JETBRAINS_PLUGIN_PRIVATE_KEY_PASSWORD")
    }
 
    publishing {
-      token = providers.environmentVariable("PUBLISH_TOKEN")
+      token = providers.environmentVariable("JETBRAINS_PLUGIN_PUBLISH_TOKEN")
    }
 
    pluginVerification {
@@ -126,14 +149,16 @@ tasks {
    }
 
    withType<KotlinCompile> {
-      kotlinOptions.jvmTarget = "17"
+      compilerOptions {
+         jvmTarget.set(JvmTarget.JVM_17)
+      }
    }
 
    // Task to print version info for debugging
    register("printVersion") {
       doLast {
          println("Maven version: $mavenVersion")
-         println("Plugin version: ${project.version}")
+         println("Plugin version: $pluginVersion")
       }
    }
 }

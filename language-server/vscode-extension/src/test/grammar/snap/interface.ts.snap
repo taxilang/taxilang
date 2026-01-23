@@ -1,0 +1,30 @@
+>interface Person {
+#^^^^^^^^^ source.ts meta.class.ts storage.type.interface.ts
+#         ^ source.ts meta.class.ts
+#          ^^^^^^ source.ts meta.class.ts entity.name.type.class.ts
+#                ^ source.ts meta.class.ts
+#                 ^ source.ts meta.class.ts punctuation.definition.block.ts
+>   name: string
+#^^^ source.ts meta.class.ts
+#   ^^^^ source.ts meta.class.ts meta.field.declaration.ts variable.object.property.ts
+#       ^ source.ts meta.class.ts meta.field.declaration.ts meta.type.annotation.ts keyword.operator.type.annotation.ts
+#        ^ source.ts meta.class.ts meta.field.declaration.ts meta.type.annotation.ts
+#         ^^^^^^ source.ts meta.class.ts meta.field.declaration.ts meta.type.annotation.ts support.type.primitive.ts
+>   address: {
+#^^^ source.ts meta.class.ts
+#   ^^^^^^^ source.ts meta.class.ts meta.field.declaration.ts variable.object.property.ts
+#          ^ source.ts meta.class.ts meta.field.declaration.ts meta.type.annotation.ts keyword.operator.type.annotation.ts
+#           ^ source.ts meta.class.ts meta.field.declaration.ts meta.type.annotation.ts
+#            ^ source.ts meta.class.ts meta.field.declaration.ts meta.type.annotation.ts meta.object.type.ts punctuation.definition.block.ts
+>      street1: string
+#^^^^^^ source.ts meta.class.ts meta.field.declaration.ts meta.type.annotation.ts meta.object.type.ts
+#      ^^^^^^^ source.ts meta.class.ts meta.field.declaration.ts meta.type.annotation.ts meta.object.type.ts meta.field.declaration.ts variable.object.property.ts
+#             ^ source.ts meta.class.ts meta.field.declaration.ts meta.type.annotation.ts meta.object.type.ts meta.field.declaration.ts meta.type.annotation.ts keyword.operator.type.annotation.ts
+#              ^ source.ts meta.class.ts meta.field.declaration.ts meta.type.annotation.ts meta.object.type.ts meta.field.declaration.ts meta.type.annotation.ts
+#               ^^^^^^ source.ts meta.class.ts meta.field.declaration.ts meta.type.annotation.ts meta.object.type.ts meta.field.declaration.ts meta.type.annotation.ts support.type.primitive.ts
+>   }
+#^^^ source.ts meta.class.ts meta.field.declaration.ts meta.type.annotation.ts meta.object.type.ts
+#   ^ source.ts meta.class.ts meta.field.declaration.ts meta.type.annotation.ts meta.object.type.ts punctuation.definition.block.ts
+>}
+#^ source.ts meta.class.ts punctuation.definition.block.ts
+>

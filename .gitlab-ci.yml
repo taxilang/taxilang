@@ -5,7 +5,7 @@ variables:
    # As of Maven 3.3.0 instead of this you may define these options in `.mvn/maven.config` so the same config is used
    # when running from the command line.
    # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
-   MAVEN_CLI_OPTS: "-s mvn-settings.xml --batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true -Dsdkman.consumer.key=${SDKMAN_CONSUMER_KEY} -Dsdkman.consumer.token=${SDKMAN_CONSUMER_TOKEN} -P orbital-repo"
+   MAVEN_CLI_OPTS: "-s .mvn/ci-settings.xml --batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true -Dsdkman.consumer.key=${SDKMAN_CONSUMER_KEY} -Dsdkman.consumer.token=${SDKMAN_CONSUMER_TOKEN} -P orbital-repo"
    # Used during gitflow interaction.
    MAJOR_RELEASE_DIGIT: 0
    MINOR_RELEASE_DIGIT: 1
@@ -47,6 +47,7 @@ default:
    - 'git restore package.json package-lock.json'
 
 stages:
+   - do-this-first
    - build
    - build-tools
    - trigger-release
@@ -277,17 +278,38 @@ publish-snapshot-jars:
       #      - 'apk add gnupg'
       #      - gpg -v --import <(echo "$GPG_PRIVATE_KEY")
       - 'mvn $MAVEN_CLI_OPTS deploy -P snapshot-release,orbital-repo -Daws.region=eu-west-2'
-      # Check for changes to stdlib.mdx and commit them back
+      # Setup git for committing changes back
       - *git_setup
+      # Generate changelog
+      - *setup-nvm
+      - cd docs2.0
+      - npm ci
+      - npm run changelog
+      - cd ..
+      # Check for changes to stdlib.mdx and changelog, and commit them back
       - |
         STDLIB_FILE="docs2.0/src/pages/docs/language/stdlib.mdx"
+        CHANGELOG_DIR="docs2.0/src/pages/changelog"
+        CHANGES_DETECTED=false
+
         if git status --porcelain | grep -q "$STDLIB_FILE" || git diff --cached --name-only | grep -q "$STDLIB_FILE"; then
-          echo "Changes detected in stdlib.mdx, committing back to repository"
+          echo "Changes detected in stdlib.mdx"
           git add "$STDLIB_FILE"
-          git commit -m "chore(docs): update stdlib.mdx from build process [skip ci]"
+          CHANGES_DETECTED=true
+        fi
+
+        if git status --porcelain | grep -q "$CHANGELOG_DIR" || git diff --cached --name-only | grep -q "$CHANGELOG_DIR"; then
+          echo "Changes detected in changelog"
+          git add "$CHANGELOG_DIR"
+          CHANGES_DETECTED=true
+        fi
+
+        if [ "$CHANGES_DETECTED" = true ]; then
+          echo "Committing changes back to repository"
+          git commit -m "chore(docs): update documentation from build process [skip ci]"
           git push origin HEAD:${CI_COMMIT_REF_NAME}
         else
-          echo "No changes detected in stdlib.mdx"
+          echo "No changes detected in stdlib.mdx or changelog"
         fi
    services:
       -  name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
@@ -335,28 +357,11 @@ build-intellij-plugin:
       - './gradlew buildPlugin --no-daemon -DMAVEN_LOCAL_REPO="$CI_PROJECT_DIR/.m2/repository"'
    except:
       - tags
-      - master
    artifacts:
       paths:
          - 'language-server/intellij-plugin/build/distributions/*.zip'
       expire_in: 30 days
 
-publish-release:
-   stage: deploy
-   script:
-      # Don't run tests on master, as already passed on develop
-      # Use -DskipTests, but not -Dmaven.test.skip=true as we need to compile the tests (as other projects have test dependencies), but not run them.
-      - 'mvn $MAVEN_CLI_OPTS -DskipTests deploy -P release,orbital-repo -Daws.region=eu-west-2'
-      # Use jreleaser to publish to sdkman, and others
-      - 'cd taxi-cli'
-      - 'mvn deploy -P orbital-repo,sdkman -Daws.region=eu-west-2'
-   only:
-      - master
-   artifacts:
-      paths:
-         - "taxi-cli/target/*.zip"
-         - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-jar-with-dependencies.jar'
-         - "taxi-cli/target/jreleaser/*.log"
 
 publish-plugin:
    stage: deploy-plugin
@@ -365,7 +370,7 @@ publish-plugin:
       - *prepare-vscode-plugin-build
       - 'npm run vsce:publish'
    only:
-      - master
+      - tags
    artifacts:
       paths:
          - 'language-server/vscode-extension/*.vsix'
@@ -476,3 +481,35 @@ release-taxiql-codegen:
 #         - public
 #   rules:
 #      - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+
+.setup-gpg: &setup-gpg
+   - apt-get update && apt-get install -y gnupg
+   - echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
+   - echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+   - gpg-connect-agent reloadagent /bye
+   - echo "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --detach-sign /dev/null
+
+
+# NEW JOB: Publish to Maven Central when tags are pushed
+publish-maven-central:
+   stage: build
+   before_script:
+      - *setup-gpg
+   script:
+      # Don't run tests on tags, as already passed on develop
+      - 'mvn $MAVEN_CLI_OPTS clean deploy -P maven-central,loopback-gpg -DskipTests'
+   services:
+      - name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:20.10.23-dind
+        alias: docker
+        command: ["--tls=false"]
+   variables:
+      DOCKER_HOST: "tcp://docker:2375"
+      DOCKER_TLS_CERTDIR: ""
+      DOCKER_DRIVER: overlay2
+      MAVEN_GPG_PASSPHRASE: $GPG_PASSPHRASE
+   only:
+      - tags
+   artifacts:
+      paths:
+         - "taxi-cli/target/*.zip"
+         - 'language-server/taxi-lang-server-standalone/target/taxi-lang-server-jar-with-dependencies.jar'

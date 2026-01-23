@@ -312,7 +312,7 @@ data class EnumType(
          first.toString() == second.toString()
       } else {
          when {
-            (first is String && second is String) -> first.toLowerCase() == second.toLowerCase()
+            (first is String && second is String) -> first.lowercase() == second.lowercase()
             else -> first.toString() == second.toString()
          }
       }

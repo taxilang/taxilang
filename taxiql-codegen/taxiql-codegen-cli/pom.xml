@@ -6,11 +6,11 @@
    <parent>
       <groupId>org.taxilang</groupId>
       <artifactId>taxiql-codegen</artifactId>
-      <version>1.70.0-SNAPSHOT</version>
+      <version>1.70.2</version>
    </parent>
 
    <artifactId>taxiql-codegen-cli</artifactId>
-
+   <name>${artifactId}</name>
    <properties>
       <picocli.version>4.7.6</picocli.version>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
