@@ -13,7 +13,7 @@
       <!-- We're depending on transpilation code here,
       so this doesn't need to stay always up-to-date, but avoid using a
       snapshot dependency -->
-      <orbital.version>0.36.0-M11</orbital.version>
+      <orbital.version>0.37.0-SNAPSHOT</orbital.version>
    </properties>
 
    <!--
@@ -90,6 +90,17 @@ disabled by default locally
             <exclusion>
                <groupId>io.confluent</groupId>
                <artifactId>kafka-avro-serializer</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+      <dependency>
+         <groupId>com.orbitalhq</groupId>
+         <artifactId>taxi-playground-core</artifactId>
+         <version>${orbital.version}</version>
+         <exclusions>
+            <exclusion>
+               <groupId>org.taxilang</groupId>
+               <artifactId>compiler</artifactId>
             </exclusion>
          </exclusions>
       </dependency>
