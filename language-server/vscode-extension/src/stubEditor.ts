@@ -75,42 +75,61 @@ export class StubEditorPanel {
    }
 
    private async handleMessage(message: any) {
-      switch (message.type) {
-         case "getOperations":
-            await this.fetchOperations(message.projectRoot);
-            break;
+      try {
+         if (!message || !message.type) {
+            console.warn("[Stub Editor] Received invalid message:", message);
+            return;
+         }
 
-         case "selectStub":
-            // User selected/created a stub
-            if (this.resolveCallback) {
-               this.resolveCallback(message.stubsId);
-               this.resolveCallback = null;
-            }
-            // Don't close the panel - user might want to edit more stubs
-            break;
+         switch (message.type) {
+            case "getOperations":
+               await this.fetchOperations(message.projectRoot || "");
+               break;
 
-         case "cancel":
-            if (this.resolveCallback) {
-               this.resolveCallback(undefined);
-               this.resolveCallback = null;
-            }
-            this.panel.dispose();
-            break;
+            case "selectStub":
+               // User selected/created a stub
+               if (message.stubsId && this.resolveCallback) {
+                  this.resolveCallback(message.stubsId);
+                  this.resolveCallback = null;
+               }
+               // Don't close the panel - user might want to edit more stubs
+               break;
 
-         case "log":
-            console.log("[Stub Editor]", message.message);
-            break;
+            case "cancel":
+               if (this.resolveCallback) {
+                  this.resolveCallback(undefined);
+                  this.resolveCallback = null;
+               }
+               this.panel.dispose();
+               break;
+
+            case "log":
+               console.log("[Stub Editor]", message.message);
+               break;
+
+            default:
+               console.warn("[Stub Editor] Unknown message type:", message.type);
+         }
+      } catch (error) {
+         console.error("[Stub Editor] Error handling message:", error);
+         // Send error notification to webview
+         this.panel.webview.postMessage({
+            type: "operationsError",
+            error: "An error occurred processing your request",
+         });
       }
    }
 
    private async fetchOperations(projectRoot: string) {
+      // Send initial loading state to UI
+      this.panel.webview.postMessage({
+         type: "operationsLoading",
+      });
+
       if (!this.languageClient) {
          console.warn("Language client not available");
-         this.panel.webview.postMessage({
-            type: "operationsResponse",
-            operations: [],
-            error: "Language server not connected",
-         });
+         this.sendOperationsError("Language server not connected. Using stub data.");
+         this.sendStubOperations();
          return;
       }
 
@@ -119,40 +138,78 @@ export class StubEditorPanel {
             projectRoot,
          };
 
-         const response = await this.languageClient.sendRequest<ListOperationsResponse>(
+         // Add timeout to prevent hanging
+         const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error("Request timeout")), 10000);
+         });
+
+         const requestPromise = this.languageClient.sendRequest<ListOperationsResponse>(
             TAXIQL_LIST_OPERATIONS,
             request
          );
 
+         const response = await Promise.race([requestPromise, timeoutPromise]);
+
+         // Validate response
+         if (!response || !Array.isArray(response.operations)) {
+            throw new Error("Invalid response format from language server");
+         }
+
          this.panel.webview.postMessage({
             type: "operationsResponse",
             operations: response.operations,
+            isStub: false,
          });
       } catch (error) {
-         console.warn("taxiql/listOperations endpoint not available, using stub", error);
+         // Log the actual error for debugging
+         const errorMessage = error instanceof Error ? error.message : String(error);
+         console.warn("taxiql/listOperations failed:", errorMessage, error);
 
-         // Return stub data
-         this.panel.webview.postMessage({
-            type: "operationsResponse",
-            operations: [
-               {
-                  service: "CustomerService",
-                  operation: "findCustomers",
-                  returnType: "Customer[]",
-               },
-               {
-                  service: "OrderService",
-                  operation: "findOrders",
-                  returnType: "Order[]",
-               },
-               {
-                  service: "ProductService",
-                  operation: "getProduct",
-                  returnType: "Product",
-               },
-            ],
-         });
+         // Determine user-friendly error message
+         let userMessage = "Could not load operations from language server.";
+         if (errorMessage.includes("timeout")) {
+            userMessage = "Request timed out. Language server may be busy.";
+         } else if (errorMessage.includes("not found") || errorMessage.includes("No provider")) {
+            userMessage = "Language server endpoint not yet implemented.";
+         } else if (errorMessage.includes("connection")) {
+            userMessage = "Failed to connect to language server.";
+         }
+
+         this.sendOperationsError(userMessage + " Using stub data.");
+         this.sendStubOperations();
       }
+   }
+
+   private sendOperationsError(message: string) {
+      this.panel.webview.postMessage({
+         type: "operationsError",
+         error: message,
+      });
+   }
+
+   private sendStubOperations() {
+      // Return stub data as fallback
+      this.panel.webview.postMessage({
+         type: "operationsResponse",
+         operations: [
+            {
+               service: "CustomerService",
+               operation: "findCustomers",
+               returnType: "Customer[]",
+            },
+            {
+               service: "OrderService",
+               operation: "findOrders",
+               returnType: "Order[]",
+            },
+            {
+               service: "ProductService",
+               operation: "getProduct",
+               returnType: "Product",
+            },
+         ],
+         isStub: true,
+      });
    }
 
    private update() {
@@ -266,6 +323,31 @@ export class StubEditorPanel {
             color: var(--vscode-descriptionForeground);
             font-style: italic;
         }
+        .error {
+            padding: 10px;
+            background-color: var(--vscode-inputValidation-errorBackground);
+            border-left: 4px solid var(--vscode-inputValidation-errorBorder);
+            color: var(--vscode-errorForeground);
+            margin: 10px 0;
+            border-radius: 2px;
+        }
+        .warning {
+            padding: 10px;
+            background-color: var(--vscode-inputValidation-warningBackground);
+            border-left: 4px solid var(--vscode-inputValidation-warningBorder);
+            color: var(--vscode-editorWarning-foreground);
+            margin: 10px 0;
+            border-radius: 2px;
+        }
+        .stub-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background-color: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+            border-radius: 10px;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -309,9 +391,23 @@ export class StubEditorPanel {
     <script nonce="${nonce}">
         const vscode = acquireVsCodeApi();
 
+        // Global error handler
+        window.addEventListener('error', (event) => {
+            log('Webview error: ' + event.error);
+            const container = document.getElementById('operations-container');
+            if (container) {
+                container.innerHTML = '<div class="error">⚠️ An error occurred in the stub editor. Check the console for details.</div>';
+            }
+            document.getElementById('status').textContent = 'Error ❌';
+        });
+
         // Log helper
         function log(message) {
-            vscode.postMessage({ type: 'log', message });
+            try {
+                vscode.postMessage({ type: 'log', message });
+            } catch (e) {
+                console.error('Failed to send log message:', e);
+            }
             console.log(message);
         }
 
@@ -332,22 +428,41 @@ export class StubEditorPanel {
             const message = event.data;
 
             switch (message.type) {
+                case 'operationsLoading':
+                    handleOperationsLoading();
+                    break;
+                case 'operationsError':
+                    handleOperationsError(message);
+                    break;
                 case 'operationsResponse':
                     handleOperationsResponse(message);
                     break;
+                default:
+                    log('Unknown message type: ' + message.type);
             }
         });
 
+        function handleOperationsLoading() {
+            const container = document.getElementById('operations-container');
+            container.innerHTML = '<div class="loading">⏳ Loading operations from language server...</div>';
+            document.getElementById('status').textContent = 'Connecting to JVM...';
+        }
+
+        function handleOperationsError(message) {
+            const container = document.getElementById('operations-container');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'warning';
+            errorDiv.innerHTML = '⚠️ ' + (message.error || 'Failed to load operations');
+            container.innerHTML = '';
+            container.appendChild(errorDiv);
+
+            log('Operations error: ' + message.error);
+        }
+
         function handleOperationsResponse(message) {
             const container = document.getElementById('operations-container');
-
-            if (message.error) {
-                container.innerHTML = '<div class="placeholder">⚠️ ' + message.error + '</div>';
-                document.getElementById('status').textContent = 'Error loading operations';
-                return;
-            }
-
             const operations = message.operations || [];
+            const isStub = message.isStub || false;
 
             if (operations.length === 0) {
                 container.innerHTML = '<div class="placeholder">No operations found</div>';
@@ -355,8 +470,13 @@ export class StubEditorPanel {
                 return;
             }
 
-            log('Received ' + operations.length + ' operations from language server');
-            document.getElementById('status').textContent = 'Connected to JVM ✓';
+            log('Received ' + operations.length + ' operations' + (isStub ? ' (stub data)' : ' from language server'));
+
+            // Update status
+            const statusText = isStub
+                ? 'Using stub data (JVM endpoint not implemented)'
+                : 'Connected to JVM ✓';
+            document.getElementById('status').textContent = statusText;
 
             // Render operations
             const list = document.createElement('ul');
@@ -380,26 +500,51 @@ export class StubEditorPanel {
             });
 
             container.innerHTML = '';
+
+            // Add stub badge if using stub data
+            if (isStub) {
+                const stubWarning = document.createElement('div');
+                stubWarning.className = 'warning';
+                stubWarning.innerHTML = 'ℹ️ Showing example operations. Implement <code>taxiql/listOperations</code> endpoint to see real data.';
+                container.appendChild(stubWarning);
+            }
+
             container.appendChild(list);
         }
 
         function selectStub() {
-            const stubId = document.getElementById('stubId').value.trim();
-            if (!stubId) {
-                alert('Please enter a stub ID');
-                return;
-            }
+            try {
+                const stubIdInput = document.getElementById('stubId');
+                if (!stubIdInput) {
+                    throw new Error('Stub ID input not found');
+                }
 
-            log('User selected stub: ' + stubId);
-            vscode.postMessage({
-                type: 'selectStub',
-                stubsId: stubId
-            });
+                const stubId = stubIdInput.value.trim();
+                if (!stubId) {
+                    alert('Please enter a stub ID');
+                    return;
+                }
+
+                log('User selected stub: ' + stubId);
+                vscode.postMessage({
+                    type: 'selectStub',
+                    stubsId: stubId
+                });
+            } catch (error) {
+                log('Error in selectStub: ' + error);
+                alert('An error occurred. Please try again.');
+            }
         }
 
         function cancel() {
-            log('User cancelled');
-            vscode.postMessage({ type: 'cancel' });
+            try {
+                log('User cancelled');
+                vscode.postMessage({ type: 'cancel' });
+            } catch (error) {
+                log('Error in cancel: ' + error);
+                // Try to close anyway
+                window.close();
+            }
         }
     </script>
 </body>
