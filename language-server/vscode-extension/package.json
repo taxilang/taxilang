@@ -90,6 +90,12 @@
       ],
       "commands": [
          {
+            "command": "taxiql.notebook.new",
+            "title": "New TaxiQL Notebook",
+            "category": "TaxiQL",
+            "icon": "$(notebook)"
+         },
+         {
             "command": "taxiql.notebook.attachStubs",
             "title": "Attach Stubs...",
             "category": "TaxiQL"
@@ -106,6 +112,12 @@
          }
       ],
       "menus": {
+         "file/newFile": [
+            {
+               "command": "taxiql.notebook.new",
+               "group": "notebook"
+            }
+         ],
          "notebook/cell/title": [
             {
                "command": "taxiql.notebook.attachStubs",

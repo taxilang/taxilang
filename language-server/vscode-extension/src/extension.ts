@@ -296,6 +296,23 @@ function registerNotebookSupport(context: vscode.ExtensionContext): TaxiQLNotebo
    const stubManager = new StubManager();
    StubManager.registerCommands(context, stubManager);
 
+   // Register "New TaxiQL Notebook" command
+   context.subscriptions.push(
+      vscode.commands.registerCommand("taxiql.notebook.new", async () => {
+         const cell = new vscode.NotebookCellData(
+            vscode.NotebookCellKind.Markup,
+            "# TaxiQL Notebook\n\nStart writing your TaxiQL queries below.",
+            "markdown"
+         );
+         const data = new vscode.NotebookData([cell]);
+         const doc = await vscode.workspace.openNotebookDocument(
+            "taxiql-notebook",
+            data
+         );
+         await vscode.window.showNotebookDocument(doc);
+      })
+   );
+
    console.log("TaxiQL Notebook support registered");
    return controller;
 }
