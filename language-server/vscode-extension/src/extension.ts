@@ -41,7 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
    console.log("Taxi language extension starting");
 
    // Register notebook support
-   notebookController = registerNotebookSupport(context);
+   notebookComponents = registerNotebookSupport(context);
 
    const compilerConfig = new CompilerConfig();
 
@@ -209,10 +209,11 @@ function startPlugin(
       languageClient.onReady().then(() => {
          registerProgressNotifications(languageClient);
 
-         // Connect the notebook controller to the language client
-         if (notebookController) {
-            notebookController.setLanguageClient(languageClient);
-            console.log("Notebook controller connected to language client");
+         // Connect the notebook components to the language client
+         if (notebookComponents) {
+            notebookComponents.controller.setLanguageClient(languageClient);
+            notebookComponents.stubManager.setLanguageClient(languageClient);
+            console.log("Notebook components connected to language client");
          }
       })
       .catch(err => {
@@ -276,7 +277,7 @@ function registerProgressNotifications(client: LanguageClient) {
 /**
  * Register notebook support (serializer, controller, commands)
  */
-function registerNotebookSupport(context: vscode.ExtensionContext): TaxiQLNotebookController {
+function registerNotebookSupport(context: vscode.ExtensionContext): NotebookComponents {
    console.log("Registering TaxiQL Notebook support");
 
    // Register notebook serializer
@@ -293,7 +294,7 @@ function registerNotebookSupport(context: vscode.ExtensionContext): TaxiQLNotebo
    context.subscriptions.push(controller);
 
    // Register stub management commands
-   const stubManager = new StubManager();
+   const stubManager = new StubManager(context.extensionUri);
    StubManager.registerCommands(context, stubManager);
 
    // Register "New TaxiQL Notebook" command
@@ -314,11 +315,16 @@ function registerNotebookSupport(context: vscode.ExtensionContext): TaxiQLNotebo
    );
 
    console.log("TaxiQL Notebook support registered");
-   return controller;
+   return { controller, stubManager };
 }
 
-// Store the notebook controller globally so we can connect it to the language client
-let notebookController: TaxiQLNotebookController | null = null;
+interface NotebookComponents {
+   controller: TaxiQLNotebookController;
+   stubManager: StubManager;
+}
+
+// Store the notebook components globally so we can connect them to the language client
+let notebookComponents: NotebookComponents | null = null;
 
 // this method is called when your extension is deactivated
 export function deactivate() {

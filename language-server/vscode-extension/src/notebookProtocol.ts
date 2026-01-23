@@ -136,7 +136,54 @@ export interface ExecuteWithStubsResponse {
 }
 
 /**
+ * Request parameters for taxiql/listOperations
+ * This endpoint lists available operations from the Taxi schema
+ */
+export interface ListOperationsRequest {
+   /** Project root directory (for resolving Taxi schema) */
+   projectRoot: string;
+}
+
+/**
+ * Response from taxiql/listOperations
+ * Contains the list of available operations
+ */
+export interface ListOperationsResponse {
+   /** List of operations available in the schema */
+   operations: Operation[];
+}
+
+export interface Operation {
+   /** Service name */
+   service: string;
+
+   /** Operation name */
+   operation: string;
+
+   /** Return type of the operation */
+   returnType: string;
+
+   /** Optional metadata about the operation */
+   metadata?: {
+      /** HTTP method (if applicable) */
+      httpMethod?: string;
+
+      /** URL path (if applicable) */
+      path?: string;
+
+      /** Parameters */
+      parameters?: Array<{
+         name: string;
+         type: string;
+      }>;
+
+      [key: string]: any;
+   };
+}
+
+/**
  * LSP Custom Request Methods
  */
 export const TAXIQL_PLAN = "taxiql/plan";
 export const TAXIQL_EXECUTE_WITH_STUBS = "taxiql/executeWithStubs";
+export const TAXIQL_LIST_OPERATIONS = "taxiql/listOperations";

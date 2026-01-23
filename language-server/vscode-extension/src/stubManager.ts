@@ -1,9 +1,21 @@
 import * as vscode from "vscode";
+import { LanguageClient } from "vscode-languageclient";
+import { StubEditorPanel } from "./stubEditor";
 
 /**
  * Manages stub attachments for TaxiQL notebook cells
  */
 export class StubManager {
+   private languageClient: LanguageClient | null = null;
+   private extensionUri: vscode.Uri;
+
+   constructor(extensionUri: vscode.Uri) {
+      this.extensionUri = extensionUri;
+   }
+
+   setLanguageClient(client: LanguageClient) {
+      this.languageClient = client;
+   }
    /**
     * Attach stubs to a notebook cell
     */
@@ -14,21 +26,14 @@ export class StubManager {
          return;
       }
 
-      // For now, we'll use a simple input box to get the stubs ID
-      // In the future, this will open a web-based stub editor UI
-      const stubsId = await vscode.window.showInputBox({
-         prompt: "Enter Stubs ID",
-         placeHolder: "e.g., stubs-123",
-         validateInput: (value) => {
-            if (!value || value.trim().length === 0) {
-               return "Stubs ID cannot be empty";
-            }
-            return null;
-         },
-      });
+      // Open the stub editor webview
+      const stubsId = await StubEditorPanel.show(
+         this.extensionUri,
+         this.languageClient
+      );
 
       if (!stubsId) {
-         return;
+         return; // User cancelled
       }
 
       // Update cell metadata
@@ -49,21 +54,14 @@ export class StubManager {
          return;
       }
 
-      const currentStubsId = targetCell.metadata?.taxi?.stubsId;
-      const newStubsId = await vscode.window.showInputBox({
-         prompt: "Enter new Stubs ID",
-         placeHolder: "e.g., stubs-456",
-         value: currentStubsId,
-         validateInput: (value) => {
-            if (!value || value.trim().length === 0) {
-               return "Stubs ID cannot be empty";
-            }
-            return null;
-         },
-      });
+      // Open the stub editor webview
+      const newStubsId = await StubEditorPanel.show(
+         this.extensionUri,
+         this.languageClient
+      );
 
       if (!newStubsId) {
-         return;
+         return; // User cancelled
       }
 
       // Update cell metadata
