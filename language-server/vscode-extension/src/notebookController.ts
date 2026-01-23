@@ -1,11 +1,9 @@
 import * as vscode from "vscode";
 import { LanguageClient } from "vscode-languageclient";
 import {
-   PlanRequest,
-   PlanResponse,
-   ExecuteWithStubsRequest,
-   ExecuteWithStubsResponse,
-   TAXIQL_PLAN,
+   StubQueryRequest,
+   StubQueryResponse,
+   OperationStub,
    TAXIQL_EXECUTE_WITH_STUBS,
 } from "./notebookProtocol";
 
@@ -107,40 +105,25 @@ export class TaxiQLNotebookController {
    ): Promise<void> {
       const query = cell.document.getText();
       const metadata = cell.metadata || {};
-      const stubsId = metadata.taxi?.stubsId;
+
+      // Get stubs from cell metadata (stored as array of OperationStub)
+      const stubs: OperationStub[] = metadata.taxi?.stubs || [];
 
       // Resolve project context
       const projectContext = await this.resolveProjectContext(cell.notebook.uri);
 
       try {
-         // Check if we should run with stubs or just show plan
-         if (stubsId) {
-            // Execute with stubs
-            const result = await this.executeWithStubs(
-               query,
-               stubsId,
-               projectContext
-            );
-            execution.replaceOutput([
-               new vscode.NotebookCellOutput([
-                  vscode.NotebookCellOutputItem.json(
-                     result,
-                     "application/vnd.taxi.results+json"
-                  ),
-               ]),
-            ]);
-         } else {
-            // Show query plan
-            const plan = await this.showPlan(query, projectContext);
-            execution.replaceOutput([
-               new vscode.NotebookCellOutput([
-                  vscode.NotebookCellOutputItem.json(
-                     plan,
-                     "application/vnd.taxi.plan+json"
-                  ),
-               ]),
-            ]);
-         }
+         // Execute with stubs (empty array if no stubs configured)
+         const result = await this.executeWithStubs(query, stubs, projectContext);
+
+         execution.replaceOutput([
+            new vscode.NotebookCellOutput([
+               vscode.NotebookCellOutputItem.json(
+                  result,
+                  "application/vnd.taxi.results+json"
+               ),
+            ]),
+         ]);
          execution.end(true, Date.now());
       } catch (error) {
          execution.replaceOutput([
@@ -155,67 +138,26 @@ export class TaxiQLNotebookController {
       }
    }
 
-   private async showPlan(
-      query: string,
-      projectContext: ProjectContext
-   ): Promise<PlanResponse> {
-      if (!this.languageClient) {
-         throw new Error("Language client not initialized");
-      }
-
-      // Call the taxiql/plan RPC endpoint
-      const request: PlanRequest = {
-         query,
-         projectRoot: projectContext.projectRoot,
-         notebookPath: projectContext.notebookPath,
-      };
-
-      try {
-         const result = await this.languageClient.sendRequest<PlanResponse>(
-            TAXIQL_PLAN,
-            request
-         );
-         return result;
-      } catch (error) {
-         // If the endpoint doesn't exist yet, return a stub response
-         console.warn("taxiql/plan endpoint not available, returning stub", error);
-         return {
-            nodes: [
-               { id: "1", label: "Query Plan (Stub)", type: "root" },
-               { id: "2", label: "Operation 1", type: "operation" },
-               { id: "3", label: "Operation 2", type: "operation" },
-            ],
-            edges: [
-               { from: "1", to: "2" },
-               { from: "1", to: "3" },
-            ],
-            metadata: {
-               query: query.substring(0, 100),
-               status: "stub",
-            },
-         };
-      }
-   }
-
    private async executeWithStubs(
       query: string,
-      stubsId: string,
+      stubs: OperationStub[],
       projectContext: ProjectContext
-   ): Promise<ExecuteWithStubsResponse> {
+   ): Promise<StubQueryResponse> {
       if (!this.languageClient) {
          throw new Error("Language client not initialized");
       }
 
       // Call the taxiql/executeWithStubs RPC endpoint
-      const request: ExecuteWithStubsRequest = {
+      const request: StubQueryRequest = {
          query,
-         stubsId,
          projectRoot: projectContext.projectRoot,
          notebookPath: projectContext.notebookPath,
+         stubs,
+         parameters: {},
       };
 
       try {
-         const result = await this.languageClient.sendRequest<ExecuteWithStubsResponse>(
+         const result = await this.languageClient.sendRequest<StubQueryResponse>(
             TAXIQL_EXECUTE_WITH_STUBS,
             request
          );
@@ -231,9 +173,8 @@ export class TaxiQLNotebookController {
                { id: 1, name: "Sample Row 1", value: 100 },
                { id: 2, name: "Sample Row 2", value: 200 },
             ],
+            contentType: "application/json",
             metadata: {
-               query: query.substring(0, 100),
-               stubsId,
                rowCount: 2,
                executionTime: "42ms",
                status: "stub",

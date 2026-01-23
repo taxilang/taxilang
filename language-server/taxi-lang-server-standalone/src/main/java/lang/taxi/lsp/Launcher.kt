@@ -1,6 +1,7 @@
 package lang.taxi.lsp
 
 import lang.taxi.CompilerConfig
+import lang.taxi.lsp.notebook.TaxiNotebookService
 import lang.taxi.lsp.workspace.TranspilingWorkspaceSourceService
 import lang.taxi.toggles.FeatureToggle
 import org.eclipse.lsp4j.launch.LSPLauncher
@@ -44,22 +45,33 @@ object Launcher {
      * @throws InterruptedException Unable to start the server
      */
     private fun startServer(input: InputStream, outputStream: OutputStream, compilerConfig: CompilerConfig) {
+        val compilerService = TaxiCompilerService(compilerConfig)
+
         val taxiLanguageServer = TaxiLanguageServer(
            compilerConfig = compilerConfig,
+           compilerService = compilerService,
            lifecycleHandler = ProcessLifecycleHandler,
 
            // This enables support for transpiling sources from things like Avro, etc.
            // To disable, revert to the default (FileBasedWorkspaceSourceService.Companion.Factory())
            workspaceSourceServiceFactory = TranspilingWorkspaceSourceService.Companion.Factory()
            )
-        // Create JSON RPC launcher for Taxi language server instance.
-        val launcher = LSPLauncher.createServerLauncher(taxiLanguageServer, input, outputStream)
+
+        // Create the notebook service for handling TaxiQL notebook operations
+        val notebookService = TaxiNotebookService(compilerService)
+
+        // Create a composite server that implements both LanguageServer and NotebookService
+        // This allows the JSONRPC launcher to route requests to the appropriate service
+        val compositeServer = TaxiLanguageServerWithNotebooks(taxiLanguageServer, notebookService)
+
+        // Create JSON RPC launcher with the composite server
+        val launcher = LSPLauncher.createServerLauncher(compositeServer, input, outputStream)
 
         // Get the client that request to launch the LS.
         val client = launcher.remoteProxy
 
-        // Set the client to language server
-        taxiLanguageServer.connect(client)
+        // Set the client to language server (through the composite wrapper)
+        compositeServer.connect(client)
 
         // Start the listener for JsonRPC
         val startListening: Future<*> = launcher.startListening()

@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { LanguageClient } from "vscode-languageclient";
 import { StubEditorPanel } from "./stubEditor";
+import { OperationStub } from "./notebookProtocol";
 
 /**
  * Manages stub attachments for TaxiQL notebook cells
@@ -26,21 +27,25 @@ export class StubManager {
          return;
       }
 
+      // Get existing stubs (if any)
+      const existingStubs = targetCell.metadata?.taxi?.stubs || [];
+
       // Open the stub editor webview
-      const stubsId = await StubEditorPanel.show(
+      const stubs = await StubEditorPanel.show(
          this.extensionUri,
-         this.languageClient
+         this.languageClient,
+         existingStubs
       );
 
-      if (!stubsId) {
+      if (!stubs) {
          return; // User cancelled
       }
 
       // Update cell metadata
-      await this.updateCellMetadata(targetCell, stubsId);
+      await this.updateCellMetadata(targetCell, stubs);
 
       vscode.window.showInformationMessage(
-         `Stubs "${stubsId}" attached to cell`
+         `${stubs.length} stub(s) attached to cell`
       );
    }
 
@@ -54,21 +59,25 @@ export class StubManager {
          return;
       }
 
+      // Get existing stubs (if any)
+      const existingStubs = targetCell.metadata?.taxi?.stubs || [];
+
       // Open the stub editor webview
-      const newStubsId = await StubEditorPanel.show(
+      const stubs = await StubEditorPanel.show(
          this.extensionUri,
-         this.languageClient
+         this.languageClient,
+         existingStubs
       );
 
-      if (!newStubsId) {
+      if (!stubs) {
          return; // User cancelled
       }
 
       // Update cell metadata
-      await this.updateCellMetadata(targetCell, newStubsId);
+      await this.updateCellMetadata(targetCell, stubs);
 
       vscode.window.showInformationMessage(
-         `Stubs changed to "${newStubsId}"`
+         `Stubs changed (${stubs.length} stub(s))`
       );
    }
 
@@ -83,17 +92,17 @@ export class StubManager {
       }
 
       // Remove stubs from metadata
-      await this.updateCellMetadata(targetCell, undefined);
+      await this.updateCellMetadata(targetCell, []);
 
       vscode.window.showInformationMessage("Stubs cleared from cell");
    }
 
    /**
-    * Update cell metadata with stubs ID
+    * Update cell metadata with stubs array
     */
    private async updateCellMetadata(
       cell: vscode.NotebookCell,
-      stubsId: string | undefined
+      stubs: OperationStub[]
    ): Promise<void> {
       const edit = new vscode.WorkspaceEdit();
       const notebook = cell.notebook;
@@ -103,14 +112,15 @@ export class StubManager {
       const existingMetadata = cell.metadata || {};
       const taxiMetadata = existingMetadata.taxi || {};
 
-      // Update taxi metadata
-      const newTaxiMetadata = stubsId
-         ? { ...taxiMetadata, stubsId }
-         : { ...taxiMetadata };
+      // Update taxi metadata with stubs
+      const newTaxiMetadata = {
+         ...taxiMetadata,
+         stubs: stubs.length > 0 ? stubs : undefined,
+      };
 
-      // Remove stubsId if undefined
-      if (!stubsId && newTaxiMetadata.stubsId) {
-         delete newTaxiMetadata.stubsId;
+      // Remove stubs if empty array
+      if (stubs.length === 0 && newTaxiMetadata.stubs) {
+         delete newTaxiMetadata.stubs;
       }
 
       // Create new metadata object
