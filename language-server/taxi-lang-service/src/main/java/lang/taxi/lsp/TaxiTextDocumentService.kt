@@ -64,7 +64,7 @@ interface DiagnosticMessagesWrapper {
    val messages: Map<String, List<Diagnostic>>
 }
 
-object EmptyDiagnosticWrapper : DiagnosticMessagesWrapper{
+object EmptyDiagnosticWrapper : DiagnosticMessagesWrapper {
    override val countOfSources: Int = 0
    override val duration: Duration = Duration.ZERO
    override val messages: Map<String, List<Diagnostic>> = emptyMap()
@@ -191,7 +191,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    private var compilerErrorDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
    private var linterDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
 
-   fun forceCompilationNow():CompilationResult {
+   fun forceCompilationNow(): CompilationResult {
       return compilerService.compile()
    }
 
@@ -239,11 +239,16 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       }
       val lastCompilationResult =
          compilerService.getOrComputeLastCompilationResult(uriToAssertIsPreset = position.textDocument.uri)
-      return completionService.computeCompletions(
-         lastCompilationResult,
-         position,
-         compilerService.lastSuccessfulCompilation()
-      )
+      return try {
+         completionService.computeCompletions(
+            lastCompilationResult,
+            position,
+            compilerService.lastSuccessfulCompilation()
+         )
+      } catch (e: UnknownTokenReferenceException) {
+         client.logMessage(MessageParams(MessageType.Log, e.message))
+         return CompletableFuture.completedFuture(Either.forLeft(mutableListOf()))
+      }
 
    }
 
@@ -394,9 +399,9 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
          // by excluding those without messages, it removes the entry from the UI
          .filter { it.second.isNotEmpty() }
          .map { (uri, diagnostics) ->
-         val filePath = SourceNames.normalize(uri)
-         PublishDiagnosticsParams(filePath, diagnostics)
-      }
+            val filePath = SourceNames.normalize(uri)
+            PublishDiagnosticsParams(filePath, diagnostics)
+         }
 
       clearErrors()
       this.displayedMessages = diagnosticMessages
