@@ -153,9 +153,13 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    private val lintingService = services.lintingService
    private val signatureHelpService = services.signatureHelpService
    private val semanticTokenService = services.semanticTokenService
+   private val taxiConfService = services.taxiConfService
    private lateinit var client: LanguageClient
    private var progressUpdatesService: ProgressUpdatesService? = null
    private var rootUri: String? = null
+
+   // Store taxi.conf file contents for diagnostics
+   private val taxiConfContents = mutableMapOf<String, String>()
 
    private var initialized: Boolean = false
    private var connected: Boolean = false
@@ -190,6 +194,7 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
 
    private var compilerErrorDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
    private var linterDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
+   private var taxiConfDiagnostics: Map<String, List<Diagnostic>> = emptyMap()
 
    fun forceCompilationNow():CompilationResult {
       return compilerService.compile()
@@ -235,7 +240,10 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
 
    override fun completion(position: CompletionParams): CompletableFuture<Either<MutableList<CompletionItem>, CompletionList>> {
       if (position.textDocument.uri.endsWith(".conf")) {
-         return CompletableFuture.completedFuture(Either.forLeft(mutableListOf()))
+         // Handle taxi.conf completions
+         val content = taxiConfContents[position.textDocument.uri] ?: ""
+         val completionList = taxiConfService.getCompletions(position.textDocument.uri, content, position)
+         return CompletableFuture.completedFuture(Either.forRight(completionList))
       }
       val lastCompilationResult =
          compilerService.getOrComputeLastCompilationResult(uriToAssertIsPreset = position.textDocument.uri)
@@ -290,6 +298,14 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    override fun didOpen(params: DidOpenTextDocumentParams) {
+      // Handle taxi.conf files separately
+      if (params.textDocument.uri.endsWith(".conf")) {
+         taxiConfContents[params.textDocument.uri] = params.textDocument.text
+         computeTaxiConfDiagnostics(params.textDocument.uri, params.textDocument.text)
+         publishDiagnosticMessages()
+         return
+      }
+
       computeLinterMessages(params.textDocument.uri)
       publishDiagnosticMessages()
 
@@ -310,6 +326,12 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
       } catch (exception: Exception) {
          mapOf(normalizedUri to emptyList()) // Provide a fallback or empty result
       }
+   }
+
+   private fun computeTaxiConfDiagnostics(documentUri: String, content: String) {
+      val normalizedUri = SourceNames.normalize(documentUri)
+      val diagnostics = taxiConfService.getDiagnostics(normalizedUri, content)
+      this.taxiConfDiagnostics = mapOf(normalizedUri to diagnostics)
    }
 
 
@@ -333,6 +355,11 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    override fun didClose(params: DidCloseTextDocumentParams) {
+      // Clean up taxi.conf caches
+      if (params.textDocument.uri.endsWith(".conf")) {
+         taxiConfContents.remove(params.textDocument.uri)
+         taxiConfService.clearCache(params.textDocument.uri)
+      }
    }
 
    override fun didChange(params: DidChangeTextDocumentParams) {
@@ -348,7 +375,10 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
 
 
       if (sourceName.endsWith("taxi.conf")) {
-         // SKip it, we'll wait for a save.
+         // Store the content and compute diagnostics in real-time
+         taxiConfContents[sourceName] = content
+         computeTaxiConfDiagnostics(sourceName, content)
+         publishDiagnosticMessages()
       } else {
          triggerCompilation(params.textDocument, content)
       }
@@ -407,12 +437,14 @@ class TaxiTextDocumentService(services: LspServicesConfig) : TextDocumentService
    }
 
    private fun publishDiagnosticMessages() {
-      val diagnosticMessages = (compilerErrorDiagnostics.keys + linterDiagnostics.keys).map { uri ->
+      val allKeys = compilerErrorDiagnostics.keys + linterDiagnostics.keys + taxiConfDiagnostics.keys
+      val diagnosticMessages = allKeys.map { uri ->
          val normalisedUrl = SourceNames.normalize(uri)
          normalisedUrl to (compilerErrorDiagnostics.getOrDefault(
             normalisedUrl,
             emptyList()
-         ) + linterDiagnostics.getOrDefault(normalisedUrl, emptyList()))
+         ) + linterDiagnostics.getOrDefault(normalisedUrl, emptyList())
+           + taxiConfDiagnostics.getOrDefault(normalisedUrl, emptyList()))
       };
       publishDiagnosticMessages(diagnosticMessages)
 

@@ -9,6 +9,7 @@ import lang.taxi.lsp.highlighting.SemanticTokenService
 import lang.taxi.lsp.hover.HoverService
 import lang.taxi.lsp.linter.LintingService
 import lang.taxi.lsp.signatures.SignatureHelpService
+import lang.taxi.lsp.taxiconf.TaxiConfService
 
 /**
  * A set of all the services required by the Taxi language service.
@@ -23,5 +24,6 @@ data class LspServicesConfig(
     val codeActionService: CodeActionService = CodeActionService(),
     val signatureHelpService: SignatureHelpService = SignatureHelpService(),
     val lintingService: LintingService = LintingService(),
-   val semanticTokenService: SemanticTokenService = SemanticTokenService()
+   val semanticTokenService: SemanticTokenService = SemanticTokenService(),
+   val taxiConfService: TaxiConfService = TaxiConfService()
 )
