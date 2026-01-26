@@ -15,6 +15,7 @@ import lang.taxi.linter.LinterRuleConfiguration
 import lang.taxi.linter.toLinterRules
 import lang.taxi.messages.Severity
 import lang.taxi.packages.ImporterConfig
+import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.packages.TaxiPackageSources
 import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.query.TaxiQlQuery
@@ -253,14 +254,30 @@ data class TokenStreamParseResult(
 )
 
 data class CompilerConfig(
+   @Deprecated("Type checking is now always enabled and cannot be disabled")
    val typeCheckerEnabled: FeatureToggle = FeatureToggle.ENABLED,
-   val linterRuleConfiguration: List<LinterRuleConfiguration> = emptyList()
+   val linterRuleConfiguration: List<LinterRuleConfiguration> = emptyList(),
+   val compilerOptions: lang.taxi.packages.CompilerOptions = lang.taxi.packages.CompilerOptions.DEFAULT
 ) {
    val linter: Linter by lazy { Linter(linterRuleConfiguration) }
 
    companion object {
 
    }
+}
+
+/**
+ * Extension function to build a CompilerConfig from a TaxiPackageProject.
+ *
+ * This consolidates configuration from the project's linter settings and compiler options
+ * into a single CompilerConfig instance suitable for compilation.
+ */
+fun TaxiPackageProject.buildCompilerConfig(): CompilerConfig {
+   return CompilerConfig(
+      typeCheckerEnabled = FeatureToggle.ENABLED,
+      linterRuleConfiguration = this.linter.toLinterRules(),
+      compilerOptions = this.compilerOptions
+   )
 }
 
 class Compiler(
@@ -296,7 +313,7 @@ class Compiler(
 
    constructor(
       project: TaxiPackageSources,
-      config: CompilerConfig = CompilerConfig(linterRuleConfiguration = project.project.linter.toLinterRules())
+      config: CompilerConfig = project.project.buildCompilerConfig()
    ) : this(project.sources.map { CharStreams.fromString(it.content, it.sourceName) }, config = config)
 
    companion object {
@@ -628,8 +645,9 @@ class Compiler(
       }
 
       // Check for duplicate type and service declarations
-      val duplicateTypeErrors = timedTokens.value.detectDuplicateTypes()
-      val duplicateServiceErrors = timedTokens.value.detectDuplicateServices()
+      val duplicateSeverity = config.compilerOptions.duplicateDefinitionSeverity
+      val duplicateTypeErrors = timedTokens.value.detectDuplicateTypes(duplicateSeverity)
+      val duplicateServiceErrors = timedTokens.value.detectDuplicateServices(duplicateSeverity)
       val allErrors = errors + duplicateTypeErrors + duplicateServiceErrors
 
       return CollectedTokens(

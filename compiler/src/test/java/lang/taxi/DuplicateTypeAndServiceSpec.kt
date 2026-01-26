@@ -271,4 +271,96 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          errors.shouldContainMessage("Service PersonService is already defined. Services may be extended (using an extension), but not redefined")
       }
    }
+
+   describe("configurable duplicate definition severity") {
+
+      it("should report duplicates as errors by default") {
+         val source = """
+            type Person inherits String
+            type Person inherits String
+         """.trimIndent()
+
+         val errors = source.validated()
+         errors.filter { it.detailMessage == "Type Person is already defined" }.let { duplicateErrors ->
+            duplicateErrors shouldHaveSize 1
+            duplicateErrors.first().severity shouldBe lang.taxi.messages.Severity.ERROR
+         }
+      }
+
+      it("should report duplicates as warnings when configured") {
+         val source = """
+            type Person inherits String
+            type Person inherits String
+         """.trimIndent()
+
+         val config = CompilerConfig(
+            compilerOptions = lang.taxi.packages.CompilerOptions(
+               duplicateDefinitionSeverity = lang.taxi.messages.Severity.WARNING
+            )
+         )
+
+         val errors = Compiler(source, config = config).validate()
+         errors.filter { it.detailMessage == "Type Person is already defined" }.let { duplicateErrors ->
+            duplicateErrors shouldHaveSize 1
+            duplicateErrors.first().severity shouldBe lang.taxi.messages.Severity.WARNING
+         }
+      }
+
+      it("should report duplicates as info when configured") {
+         val source = """
+            type Person inherits String
+            type Person inherits String
+         """.trimIndent()
+
+         val config = CompilerConfig(
+            compilerOptions = lang.taxi.packages.CompilerOptions(
+               duplicateDefinitionSeverity = lang.taxi.messages.Severity.INFO
+            )
+         )
+
+         val errors = Compiler(source, config = config).validate()
+         errors.filter { it.detailMessage == "Type Person is already defined" }.let { duplicateErrors ->
+            duplicateErrors shouldHaveSize 1
+            duplicateErrors.first().severity shouldBe lang.taxi.messages.Severity.INFO
+         }
+      }
+
+      it("should allow compilation to succeed when duplicates are warnings") {
+         val source = """
+            type Person inherits String
+            type Person inherits String
+         """.trimIndent()
+
+         val config = CompilerConfig(
+            compilerOptions = lang.taxi.packages.CompilerOptions(
+               duplicateDefinitionSeverity = lang.taxi.messages.Severity.WARNING
+            )
+         )
+
+         // Should compile successfully (not throw) even with duplicates
+         val doc = Compiler(source, config = config).compile()
+         doc.containsType("Person") shouldBe true
+      }
+
+      it("should apply configured severity to service duplicates as well") {
+         val source = """
+            service PersonService {
+            }
+            service PersonService {
+            }
+         """.trimIndent()
+
+         val config = CompilerConfig(
+            compilerOptions = lang.taxi.packages.CompilerOptions(
+               duplicateDefinitionSeverity = lang.taxi.messages.Severity.WARNING
+            )
+         )
+
+         val errors = Compiler(source, config = config).validate()
+         errors.filter { it.detailMessage.contains("Service PersonService is already defined") }.let { duplicateErrors ->
+            duplicateErrors shouldHaveSize 1
+            duplicateErrors.first().severity shouldBe lang.taxi.messages.Severity.WARNING
+         }
+      }
+   }
 })

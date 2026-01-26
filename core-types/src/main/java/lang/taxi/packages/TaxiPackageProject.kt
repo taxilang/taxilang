@@ -33,7 +33,8 @@ data class TaxiPackageProject(
    val taxiHome: Path = SystemUtils.getUserHome().toPath().resolve(".taxi/"),
    val linter: Map<String, TaxiConfLinterRuleConfig> = emptyMap(),
    val additionalSources: Map<SourcesType, GlobPattern> = emptyMap(),
-   val taxiConfFile: Path? = null
+   val taxiConfFile: Path? = null,
+   val compilerOptions: CompilerOptions = CompilerOptions.DEFAULT
 ) : TaxiPackageSummary {
    val identifier: PackageIdentifier = PackageIdentifier(ProjectName.fromId(name), version)
    val dependencyPackages: List<PackageIdentifier> = dependencies.map { (projectId, version) ->

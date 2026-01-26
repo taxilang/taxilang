@@ -6,6 +6,7 @@ import lang.taxi.TaxiParser.ToplevelObjectContext
 import lang.taxi.TaxiParser.TypeDeclarationContext
 import lang.taxi.TaxiParser.TypeDocContext
 import lang.taxi.compiler.SymbolKind
+import lang.taxi.messages.Severity
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.ParserRuleContext
@@ -95,8 +96,10 @@ data class Tokens(
    /**
     * Detects duplicate type declarations within the combined tokens.
     * Types should not permit duplicates as defined by a clash in the fully qualified name.
+    *
+    * @param severity The severity level to use for duplicate type errors (ERROR, WARNING, or INFO)
     */
-   fun detectDuplicateTypes(): List<CompilationError> {
+   fun detectDuplicateTypes(severity: Severity): List<CompilationError> {
       val typesByQualifiedName = unparsedTypes.entries.groupBy { it.key }
       val duplicates = typesByQualifiedName.filter { (_, entries) -> entries.size > 1 }
 
@@ -107,7 +110,8 @@ data class Tokens(
             CompilationError(
                context.start,
                "Type $qualifiedName is already defined",
-               context.source().normalizedSourceName
+               context.source().normalizedSourceName,
+               severity = severity
             )
          }
       }
@@ -116,8 +120,10 @@ data class Tokens(
    /**
     * Detects duplicate service declarations within the combined tokens.
     * Services should not permit duplicates as defined by a clash in the fully qualified name.
+    *
+    * @param severity The severity level to use for duplicate service errors (ERROR, WARNING, or INFO)
     */
-   fun detectDuplicateServices(): List<CompilationError> {
+   fun detectDuplicateServices(severity: Severity): List<CompilationError> {
       val servicesByQualifiedName = unparsedServices.entries.groupBy { it.key }
       val duplicates = servicesByQualifiedName.filter { (_, entries) -> entries.size > 1 }
 
@@ -128,7 +134,8 @@ data class Tokens(
             CompilationError(
                context.start,
                "Service $qualifiedName is already defined. Services may be extended (using an extension), but not redefined",
-               context.source().normalizedSourceName
+               context.source().normalizedSourceName,
+               severity = severity
             )
          }
       }
