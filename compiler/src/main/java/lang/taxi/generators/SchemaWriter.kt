@@ -10,6 +10,33 @@ import lang.taxi.types.Annotation
 import lang.taxi.utils.trimEmptyLines
 import org.http4k.appendIfNotBlank
 
+typealias AnnotationFilter = (Annotatable, Annotation) -> Boolean
+typealias TypeFilter = (Type) -> Boolean
+object TypeFilters {
+   fun excludeIfNamespaceStartsWith(namespace: String): TypeFilter {
+      return { type ->
+         !type.toQualifiedName().namespace.startsWith(namespace)
+      }
+   }
+   fun allOf(vararg filters: TypeFilter): TypeFilter {
+
+      return allOf(filters.asList())
+   }
+   fun allOf(filters: List<TypeFilter>): TypeFilter {
+      return { type ->
+         filters.all { it(type) }
+      }
+   }
+   private val excludedNamespaces = setOf<String>(
+      "taxi.stdlib",
+      "lang.taxi"
+   )
+   val EVERYTHING: TypeFilter = { true }
+   val EXCLUDE_STD_LIB: TypeFilter = { type ->
+      val namespace = type.toQualifiedName().namespace
+      excludedNamespaces.none { namespace == it || namespace.startsWith(it) }
+   }
+}
 
 open class SchemaWriter(
    /**
@@ -24,7 +51,7 @@ open class SchemaWriter(
     * If a type is not written out, it's expected to be provided from another schema, or the
     * resulting code won't compile.
     */
-   private val typeFilter: (Type) -> Boolean = { true }
+   private val typeFilter: (Type) -> Boolean = TypeFilters.EXCLUDE_STD_LIB
 ) {
    private val formatter = SourceFormatter()
 

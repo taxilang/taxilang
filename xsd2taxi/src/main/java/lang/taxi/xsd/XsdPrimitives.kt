@@ -32,8 +32,6 @@ type base64Binary inherits String
 type hexBinary inherits String
 
 type anyURI inherits String
-type ID inherits String
-type IDREF inherits String
 type QName inherits String
 type NOTATION inherits String
 

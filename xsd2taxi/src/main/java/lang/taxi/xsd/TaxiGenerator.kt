@@ -23,6 +23,7 @@ import lang.taxi.generators.NamespacedType
 import lang.taxi.generators.SchemaTypeDeclaration
 import lang.taxi.generators.SchemaWriter
 import lang.taxi.generators.TypeDefinitionHelper
+import lang.taxi.generators.TypeFilters
 import lang.taxi.types.ArrayType
 import lang.taxi.types.CompilationUnit
 import lang.taxi.types.EnumDefinition
@@ -106,7 +107,13 @@ data class XsdReaderConfig(
 }
 
 class TaxiGenerator(
-   private val schemaWriter: SchemaWriter = SchemaWriter(),
+   private val schemaWriter: SchemaWriter = SchemaWriter(
+      typeFilter = TypeFilters.allOf(
+         TypeFilters.EXCLUDE_STD_LIB,
+         // Don't generate org.w3, as that would create duplicates for every XSD imported type.
+         TypeFilters.excludeIfNamespaceStartsWith("org.w3")
+      )
+   ),
    private val config: XsdReaderConfig = XsdReaderConfig.EMPTY,
 ) {
 
@@ -163,6 +170,7 @@ class TaxiGenerator(
 
       val taxi = schemaWriter.generateSchemas(
          listOf(taxiDoc)
+
       )
       return GeneratedTaxiCode(
          taxi, logger.messages
