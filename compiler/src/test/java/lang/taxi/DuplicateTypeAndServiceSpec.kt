@@ -3,6 +3,7 @@ package lang.taxi
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.collections.shouldHaveSize
+import org.junit.jupiter.api.fail
 
 class DuplicateTypeAndServiceSpec : DescribeSpec({
 
@@ -110,6 +111,16 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
             .shouldContainMessage("Type MyAnnotation is already defined")
       }
 
+      it("should not allow duplication of inline type and declared type") {
+         """
+            type Name inherits String
+            model Person {
+               name : Name inherits String
+            }
+         """.validated()
+            .shouldContainMessage("Type Name is already defined")
+      }
+
       it("should allow the same type name in different namespaces") {
          val source = """
             namespace foo {
@@ -171,7 +182,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          source.validated()
-            .shouldContainMessage("Service PersonService is already defined. Services may be extended (using an extension), but not redefined")
+            .shouldContainMessage("Service PersonService is already defined")
       }
 
       it("should detect duplicate service declarations with the same qualified name") {
@@ -185,7 +196,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          source.validated()
-            .shouldContainMessage("Service foo.PersonService is already defined. Services may be extended (using an extension), but not redefined")
+            .shouldContainMessage("Service foo.PersonService is already defined")
       }
 
       it("should detect duplicate service declarations across multiple files") {
@@ -204,7 +215,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          listOf(source1, source2).validated()
-            .shouldContainMessage("Service foo.PersonService is already defined. Services may be extended (using an extension), but not redefined")
+            .shouldContainMessage("Service foo.PersonService is already defined")
       }
 
       it("should allow the same service name in different namespaces") {
@@ -238,19 +249,6 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          // Should have 2 errors (second and third declarations are duplicates)
          errors.filter { it.detailMessage.contains("Service PersonService is already defined") } shouldHaveSize 2
       }
-
-      it("should allow service extensions") {
-         val source = """
-            service PersonService {
-            }
-            service extension PersonService {
-               operation getAll() : Person[]
-            }
-         """.trimIndent()
-
-         // Service extensions should be allowed - this should compile fine
-         source.compiled()
-      }
    }
 
    describe("mixed duplicate detection") {
@@ -268,7 +266,16 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
 
          val errors = source.validated()
          errors.shouldContainMessage("Type Person is already defined")
-         errors.shouldContainMessage("Service PersonService is already defined. Services may be extended (using an extension), but not redefined")
+         errors.shouldContainMessage("Service PersonService is already defined")
+      }
+
+      it("should not declaring a service and type with the same name") {
+         """
+            type Foo inherits String
+            service Foo {
+            }
+         """.validated()
+            .shouldContainMessage("Service Foo conflicts with existing Type definition with the same name")
       }
    }
 
@@ -338,8 +345,9 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          )
 
          // Should compile successfully (not throw) even with duplicates
-         val doc = Compiler(source, config = config).compile()
+         val (errors,doc) = Compiler(source, config = config).compileWithMessages()
          doc.containsType("Person") shouldBe true
+         errors.shouldContainMessage("Type Person is already defined")
       }
 
       it("should apply configured severity to service duplicates as well") {

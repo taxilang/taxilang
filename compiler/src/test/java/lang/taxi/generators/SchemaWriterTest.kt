@@ -170,8 +170,8 @@ model Person {
                type SomeAnotherQty inherits SomeQty
 
                model Foo {
-                  qty1: Qty inherits Decimal
-                  qty2: QtyHit inherits Decimal
+                  qty1: Qty
+                  qty2: QtyHit
                   field1: SomeAnotherQty by coalesce(this.qty1, this.qty2)
                }
 

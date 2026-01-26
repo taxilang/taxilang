@@ -1,0 +1,2 @@
+type Person inherits String
+type Person inherits String

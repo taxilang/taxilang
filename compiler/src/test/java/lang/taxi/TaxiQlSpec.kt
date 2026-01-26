@@ -46,8 +46,6 @@ class TaxiQlSpec : DescribeSpec({
             firstName : FirstName
             lastName : LastName
          }
-         model Trade
-
          model OutputOrder {
             outputId: OutputId
          }

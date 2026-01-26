@@ -478,14 +478,16 @@ class Compiler(
       val stopwatch = Stopwatch.createStarted()
       // Note - leaving this approach for backwards compatiability
       // We could try to continue compiling, with the tokens we do have
-      if (syntaxErrors.isNotEmpty()) {
+      if (syntaxErrors.errors().isNotEmpty()) {
          return syntaxErrors to TaxiDocument.empty()
       }
       val builder = tokenProcessorWithImports
-      // Similarly to above, we could do somethign with these errors now.
       val (errors, document) = builder.buildTaxiDocument()
-//      log().debug("Taxi schema compilation took ${stopwatch.elapsed().toMillis()}ms")
-      return errors to document
+
+      // Combine the errors (from the compiler) and syntaxErrors (from the parser)
+      // At this point, the syntaxErrors are just warnings / info - as actual errors would've prevented
+      // compilation
+      return (errors + syntaxErrors) to document
    }
 
    fun compile(): TaxiDocument {
@@ -644,11 +646,10 @@ class Compiler(
          Tokens.combine(tokensCollection)
       }
 
-      // Check for duplicate type and service declarations
+      // Check for duplicate symbol declarations across all named symbols
       val duplicateSeverity = config.compilerOptions.duplicateDefinitionSeverity
-      val duplicateTypeErrors = timedTokens.value.detectDuplicateTypes(duplicateSeverity)
-      val duplicateServiceErrors = timedTokens.value.detectDuplicateServices(duplicateSeverity)
-      val allErrors = errors + duplicateTypeErrors + duplicateServiceErrors
+      val duplicateErrors = timedTokens.value.detectDuplicates(duplicateSeverity)
+      val allErrors = errors + duplicateErrors
 
       return CollectedTokens(
          timedTokens.value,

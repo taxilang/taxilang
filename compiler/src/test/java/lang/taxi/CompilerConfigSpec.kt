@@ -14,7 +14,7 @@ class CompilerConfigSpec : DescribeSpec({
 
       it("should build CompilerConfig with default compiler options") {
          val project = TaxiPackageProject(
-            name = "test-project",
+            name = "foo/test-project",
             version = "1.0.0"
          )
 
@@ -26,7 +26,7 @@ class CompilerConfigSpec : DescribeSpec({
 
       it("should build CompilerConfig with custom compiler options") {
          val project = TaxiPackageProject(
-            name = "test-project",
+            name = "foo/test-project",
             version = "1.0.0",
             compilerOptions = CompilerOptions(
                duplicateDefinitionSeverity = Severity.WARNING
@@ -40,7 +40,7 @@ class CompilerConfigSpec : DescribeSpec({
 
       it("should include linter configuration from project") {
          val project = TaxiPackageProject(
-            name = "test-project",
+            name = "foo/test-project",
             version = "1.0.0",
             linter = mapOf(
                "some-rule" to TaxiConfLinterRuleConfig(
@@ -58,7 +58,7 @@ class CompilerConfigSpec : DescribeSpec({
 
       it("should combine both compiler options and linter configuration") {
          val project = TaxiPackageProject(
-            name = "test-project",
+            name = "foo/test-project",
             version = "1.0.0",
             compilerOptions = CompilerOptions(
                duplicateDefinitionSeverity = Severity.INFO
