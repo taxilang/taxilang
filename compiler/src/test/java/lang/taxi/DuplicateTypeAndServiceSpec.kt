@@ -3,7 +3,6 @@ package lang.taxi
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.collections.shouldHaveSize
-import lang.taxi.sources.SourceCode
 
 class DuplicateTypeAndServiceSpec : DescribeSpec({
 
@@ -273,24 +272,3 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
       }
    }
 })
-
-// Extension function to validate multiple sources
-fun List<String>.validated(
-   config: CompilerConfig = CompilerConfig(),
-   linterRules: List<lang.taxi.linter.LinterRuleConfiguration> = emptyList()
-): List<CompilationMessage> {
-   val sources = this.mapIndexed { index, source ->
-      SourceCode("source-$index.taxi", source)
-   }
-   return Compiler(sources, config = config.copy(linterRuleConfiguration = linterRules)).validate()
-}
-
-fun List<String>.compiled(
-   config: CompilerConfig = CompilerConfig(),
-   linterRules: List<lang.taxi.linter.LinterRuleConfiguration> = emptyList()
-): TaxiDocument {
-   val sources = this.mapIndexed { index, source ->
-      SourceCode("source-$index.taxi", source)
-   }
-   return Compiler(sources, config = config.copy(linterRuleConfiguration = linterRules)).compile()
-}
