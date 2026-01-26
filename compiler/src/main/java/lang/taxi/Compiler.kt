@@ -627,9 +627,14 @@ class Compiler(
          Tokens.combine(tokensCollection)
       }
 
+      // Check for duplicate type and service declarations
+      val duplicateTypeErrors = timedTokens.value.detectDuplicateTypes()
+      val duplicateServiceErrors = timedTokens.value.detectDuplicateServices()
+      val allErrors = errors + duplicateTypeErrors + duplicateServiceErrors
+
       return CollectedTokens(
          timedTokens.value,
-         errors,
+         allErrors,
          syntheticTokens,
       )
    }

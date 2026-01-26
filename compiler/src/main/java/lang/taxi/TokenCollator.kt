@@ -93,44 +93,45 @@ data class Tokens(
    }
 
    /**
-    * This method is currently stubbed out.
-    * There's a problem with the existing implementation that it incorrectly rejects
-    * types that are semantically equivalent.  We need to permit this, in order to let
-    * two microservices declare the same definition of a type, without requiring them to
-    * adopt a shared library.
-    * However, the original implementation of this worked, but then broke when we introduced imports.
-    * Then we provided an implementation that was too strict, and just rejected all redefinition of types,
-    * even if they have the same underlying definition.
-    *
-    * For now, this is disabled, but we need to resolve this.
+    * Detects duplicate type declarations within the combined tokens.
+    * Types should not permit duplicates as defined by a clash in the fully qualified name.
     */
-   private fun collectDuplicateTypes(others: Tokens): List<CompilationError> {
-      // Don't allow definition of given types in multiple files.
-      // Though this is a bit too strict (we'd like to allow multiple definitions that are semantically equivelant to each other)
-      // this is a quick update to resolve the immediate issue at client side.
-      val duplicateTypeNames = this.unparsedTypes.keys.filter { others.unparsedTypes.containsKey(it) }
-      val errors = if (duplicateTypeNames.isNotEmpty()) {
-         val compilationErrors = duplicateTypeNames.map {
+   fun detectDuplicateTypes(): List<CompilationError> {
+      val typesByQualifiedName = unparsedTypes.entries.groupBy { it.key }
+      val duplicates = typesByQualifiedName.filter { (_, entries) -> entries.size > 1 }
+
+      return duplicates.flatMap { (qualifiedName, entries) ->
+         // Report an error for all occurrences except the first one
+         entries.drop(1).map { (_, namespaceContextPair) ->
+            val (_, context) = namespaceContextPair
             CompilationError(
-               (others.unparsedTypes[it]
-                  ?: error("")).second.start,
-               "Duplicate type definition - $it is already defined"
+               context.start,
+               "Type $qualifiedName is already defined",
+               context.source().normalizedSourceName
             )
          }
-         compilationErrors
-      } else emptyList()
-      return errors
+      }
    }
 
-   private fun collectDuplicateServices(others: Tokens): List<CompilationError> {
-      val duplicateServices = this.unparsedServices.keys.filter { others.unparsedServices.containsKey(it) }
-      val errors = duplicateServices.map {
-         CompilationError(
-            others.unparsedServices[it]!!.second.start,
-            "Attempt to redefine service $it. Services may be extended (using an extension), but not redefined"
-         )
+   /**
+    * Detects duplicate service declarations within the combined tokens.
+    * Services should not permit duplicates as defined by a clash in the fully qualified name.
+    */
+   fun detectDuplicateServices(): List<CompilationError> {
+      val servicesByQualifiedName = unparsedServices.entries.groupBy { it.key }
+      val duplicates = servicesByQualifiedName.filter { (_, entries) -> entries.size > 1 }
+
+      return duplicates.flatMap { (qualifiedName, entries) ->
+         // Report an error for all occurrences except the first one
+         entries.drop(1).map { (_, namespaceContextPair) ->
+            val (_, context) = namespaceContextPair
+            CompilationError(
+               context.start,
+               "Service $qualifiedName is already defined. Services may be extended (using an extension), but not redefined",
+               context.source().normalizedSourceName
+            )
+         }
       }
-      return errors
    }
 
    fun importTokensInSource(sourceName: String): List<Pair<QualifiedName, TaxiParser.ImportDeclarationContext>> {
