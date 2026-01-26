@@ -44,8 +44,8 @@ class CompilerConfigSpec : DescribeSpec({
             version = "1.0.0",
             linter = mapOf(
                "some-rule" to TaxiConfLinterRuleConfig(
-                  severity = "error",
-                  options = emptyMap()
+                  enabled = true,
+                  severity = Severity.ERROR
                )
             )
          )
@@ -65,8 +65,8 @@ class CompilerConfigSpec : DescribeSpec({
             ),
             linter = mapOf(
                "some-rule" to TaxiConfLinterRuleConfig(
-                  severity = "warning",
-                  options = emptyMap()
+                  enabled = true,
+                  severity = Severity.WARNING
                )
             )
          )
