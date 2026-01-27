@@ -1,18 +1,20 @@
 package lang.taxi.annotations
 
 import lang.taxi.query.TaxiQlQuery
+import lang.taxi.sources.SourceCode
 import lang.taxi.types.Annotation
 import lang.taxi.types.AnnotationProvider
-import lang.taxi.types.BuiltIn
+import lang.taxi.types.BuiltInSourceCode
 import lang.taxi.types.QualifiedName
 
 
 data class HttpService(val baseUrl: String) : AnnotationProvider {
-   companion object : BuiltIn {
+   companion object : BuiltInSourceCode {
       const val RESPONSE_CODE_TYPE_NAME = "taxi.http.ResponseCode"
       const val RESPONSE_BODY_TYPE_NAME = "taxi.http.ResponseBody"
       const val NAME = "taxi.http.HttpService"
-      override fun asTaxi(): String = """
+      override val sourceCode = SourceCode("http.taxi", asTaxi())
+      fun asTaxi(): String = """
          namespace taxi.http {
             annotation HttpService {
                baseUrl : String
@@ -65,7 +67,7 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
 
       """
 
-      override val name: QualifiedName = QualifiedName.from("taxi.http.HttpService")
+      val name: QualifiedName = QualifiedName.from("taxi.http.HttpService")
 
       fun fromAnnotation(annotation: Annotation): HttpService {
          val parameters = annotation.parameters
@@ -107,7 +109,7 @@ data class HttpHeader(val name: String, val value: String? = null, val prefix: S
       val valueMap = value?.let { mapOf("value" to value) } ?: mapOf()
       val prefixMap = prefix?.let { mapOf("prefix" to prefix) } ?: mapOf()
       val suffixMap = suffix?.let { mapOf("suffix" to suffix) } ?: mapOf()
-      return Annotation(HttpHeader.NAME, mapOf("name" to name) + valueMap + prefixMap + suffixMap)
+      return Annotation(NAME, mapOf("name" to name) + valueMap + prefixMap + suffixMap)
    }
 }
 
@@ -168,7 +170,7 @@ object HttpRequestBody : AnnotationProvider {
 @Deprecated("This is no longer required")
 data class ServiceDiscoveryClient(val serviceName: String) : AnnotationProvider {
    override fun toAnnotation(): Annotation {
-      return lang.taxi.types.Annotation("ServiceDiscoveryClient", mapOf("serviceName" to serviceName))
+      return Annotation("ServiceDiscoveryClient", mapOf("serviceName" to serviceName))
    }
 }
 

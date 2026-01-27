@@ -16,8 +16,8 @@ class BuildCommandTest {
    fun `can build a project referencing stdlib types`() {
       folder.deployProject("samples/references-std-lib")
       executeBuild(folder.toPath(), emptyList())
-
    }
+
 }
 
 

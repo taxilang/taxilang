@@ -36,6 +36,16 @@ fun List<CompilationError>.shouldContainMessage(message: String) {
    }
 }
 
+fun List<CompilationError>.shouldContainMessageStartingWith(message: String) {
+   if (this.any { it.detailMessage.startsWith(message) }) return
+   val failure = "Expected a compilation message starting with message $message."
+   if (this.isEmpty()) {
+      fail("$failure  There were no compilation messages present")
+   } else {
+      fail("$failure  Instead, the following message(s) were present: \n${this.joinToString("\n") { it.detailMessage }}")
+   }
+}
+
 
 // Helpers for backwards compatibility
 val DiscoveryType.constraints:List<Constraint>

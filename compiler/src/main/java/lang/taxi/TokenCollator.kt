@@ -4,10 +4,12 @@ import lang.taxi.TaxiParser.AnnotationTypeDeclarationContext
 import lang.taxi.TaxiParser.ServiceDeclarationContext
 import lang.taxi.TaxiParser.ToplevelObjectContext
 import lang.taxi.TaxiParser.TypeDeclarationContext
-import lang.taxi.TaxiParser.TypeDocContext
 import lang.taxi.compiler.SymbolKind
+import lang.taxi.messages.Severity
+import lang.taxi.types.CompilationUnit
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.SourceNames
+import lang.taxi.utils.takeHead
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.io.File
@@ -16,14 +18,14 @@ internal typealias Namespace = String
 
 data class Tokens(
    val imports: List<Pair<String, TaxiParser.ImportDeclarationContext>>,
-   val unparsedTypes: Map<String, Pair<Namespace, ParserRuleContext>>,
-   // Key: QualifiedName of the inline type, Value: QualifiedName of the declaring model
-   val unparsedInlineTypes: Map<String, String>,
+   val unparsedTypes: List<Triple<String, Namespace, ParserRuleContext>>,
+   // List of inline types: (QualifiedName of inline type, QualifiedName of declaring model)
+   val unparsedInlineTypes: List<Pair<String, String>>,
    val unparsedExtensions: List<Pair<Namespace, ParserRuleContext>>,
-   val unparsedServices: Map<String, Pair<Namespace, ServiceDeclarationContext>>,
-   val unparsedPolicies: Map<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>,
-   val unparsedFunctions: Map<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>,
-   val namedQueries: List<Pair<Namespace, TaxiParser.NamedQueryContext>>,
+   val unparsedServices: List<Triple<String, Namespace, ServiceDeclarationContext>>,
+   val unparsedPolicies: List<Triple<String, Namespace, TaxiParser.PolicyDeclarationContext>>,
+   val unparsedFunctions: List<Triple<String, Namespace, TaxiParser.FunctionDeclarationContext>>,
+   val namedQueries: List<Triple<String, Namespace, TaxiParser.NamedQueryContext>>,
    val anonymousQueries: List<Pair<Namespace, TaxiParser.AnonymousQueryContext>>,
    val topLevelExpressions: List<TaxiParser.ExpressionGroupContext>,
    val tokenStore: TokenStore
@@ -36,24 +38,23 @@ data class Tokens(
        */
       fun combine(members: List<Tokens>): Tokens {
          val imports: MutableList<Pair<String, TaxiParser.ImportDeclarationContext>> = mutableListOf()
-         val unparsedTypes: MutableMap<String, Pair<Namespace, ParserRuleContext>> = mutableMapOf()
-         val unparsedInlineTypes = mutableMapOf<String, String>()
+         val unparsedTypes: MutableList<Triple<String, Namespace, ParserRuleContext>> = mutableListOf()
+         val unparsedInlineTypes: MutableList<Pair<String, String>> = mutableListOf()
          val unparsedExtensions: MutableList<Pair<Namespace, ParserRuleContext>> = mutableListOf()
-         val unparsedServices: MutableMap<String, Pair<Namespace, ServiceDeclarationContext>> = mutableMapOf()
-         val unparsedPolicies: MutableMap<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>> = mutableMapOf()
-         val unparsedFunctions: MutableMap<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>> =
-            mutableMapOf()
-         val namedQueries: MutableList<Pair<Namespace, TaxiParser.NamedQueryContext>> = mutableListOf()
+         val unparsedServices: MutableList<Triple<String, Namespace, ServiceDeclarationContext>> = mutableListOf()
+         val unparsedPolicies: MutableList<Triple<String, Namespace, TaxiParser.PolicyDeclarationContext>> = mutableListOf()
+         val unparsedFunctions: MutableList<Triple<String, Namespace, TaxiParser.FunctionDeclarationContext>> = mutableListOf()
+         val namedQueries: MutableList<Triple<String, Namespace, TaxiParser.NamedQueryContext>> = mutableListOf()
          val anonymousQueries: MutableList<Pair<Namespace, TaxiParser.AnonymousQueryContext>> = mutableListOf()
          val topLevelExpressions: MutableList<TaxiParser.ExpressionGroupContext> = mutableListOf()
          members.forEach { tokens ->
             imports.addAll(tokens.imports)
-            unparsedTypes.putAll(tokens.unparsedTypes)
-            unparsedInlineTypes.putAll(tokens.unparsedInlineTypes)
+            unparsedTypes.addAll(tokens.unparsedTypes)
+            unparsedInlineTypes.addAll(tokens.unparsedInlineTypes)
             unparsedExtensions.addAll(tokens.unparsedExtensions)
-            unparsedServices.putAll(tokens.unparsedServices)
-            unparsedPolicies.putAll(tokens.unparsedPolicies)
-            unparsedFunctions.putAll(tokens.unparsedFunctions)
+            unparsedServices.addAll(tokens.unparsedServices)
+            unparsedPolicies.addAll(tokens.unparsedPolicies)
+            unparsedFunctions.addAll(tokens.unparsedFunctions)
             namedQueries.addAll(tokens.namedQueries)
             anonymousQueries.addAll(tokens.anonymousQueries)
             topLevelExpressions.addAll(tokens.topLevelExpressions)
@@ -78,12 +79,11 @@ data class Tokens(
    }
 
    val unparsedTypeNames: Set<QualifiedName> by lazy {
-      unparsedTypes.keys.map { QualifiedName.from(it) }.toSet()
+      unparsedTypes.map { (name, _, _) -> QualifiedName.from(name) }.toSet()
    }
 
    private val typeNamesBySource: Map<String, List<QualifiedName>> by lazy {
-      unparsedTypes.map { (name, namespaceContextPair) ->
-         val (_, context) = namespaceContextPair
+      unparsedTypes.map { (name, _, context) ->
          context.source().normalizedSourceName to QualifiedName.from(name)
       }.groupBy { it.first }
          .mapValues { (_, value) -> value.map { it.second } }
@@ -93,44 +93,37 @@ data class Tokens(
    }
 
    /**
-    * This method is currently stubbed out.
-    * There's a problem with the existing implementation that it incorrectly rejects
-    * types that are semantically equivalent.  We need to permit this, in order to let
-    * two microservices declare the same definition of a type, without requiring them to
-    * adopt a shared library.
-    * However, the original implementation of this worked, but then broke when we introduced imports.
-    * Then we provided an implementation that was too strict, and just rejected all redefinition of types,
-    * even if they have the same underlying definition.
+    * Detects duplicate symbol declarations across all named symbols (types, services, policies, functions, named queries).
+    * It is illegal to declare multiple symbols with the same qualified name, even if they are of different kinds.
+    * For example, you cannot have both a type and a service with the same name.
     *
-    * For now, this is disabled, but we need to resolve this.
+    * This includes:
+    * - Duplicates within each symbol collection
+    * - Duplicates between unparsedTypes and unparsedInlineTypes
+    * - Duplicates across different symbol kinds (type vs service vs function etc)
+    *
+    * @param severity The severity level to use for duplicate symbol errors (ERROR, WARNING, or INFO)
     */
-   private fun collectDuplicateTypes(others: Tokens): List<CompilationError> {
-      // Don't allow definition of given types in multiple files.
-      // Though this is a bit too strict (we'd like to allow multiple definitions that are semantically equivelant to each other)
-      // this is a quick update to resolve the immediate issue at client side.
-      val duplicateTypeNames = this.unparsedTypes.keys.filter { others.unparsedTypes.containsKey(it) }
-      val errors = if (duplicateTypeNames.isNotEmpty()) {
-         val compilationErrors = duplicateTypeNames.map {
-            CompilationError(
-               (others.unparsedTypes[it]
-                  ?: error("")).second.start,
-               "Duplicate type definition - $it is already defined"
-            )
+   fun detectDuplicates(severity: Severity, importSources: List<TaxiDocument>, builtInCompiledTaxi: TaxiDocument): List<CompilationError> {
+      data class SymbolOccurrence(val name: String, val kind: String, val context: ParserRuleContext?, val sourceName: String?)
+      val duplicateDefinitionsFromImports = tokenStore.collectDuplicateDeclarationsDetectedInImports(importSources, builtInCompiledTaxi)
+         .map { (nameOfConflictingSymbol, pair) ->
+            val (placesDeclaredInTheseSources,placesDeclaredInImportedSources) = pair
+            placesDeclaredInTheseSources.map { redeclarationSite ->
+               val originalCompilationUnit = placesDeclaredInImportedSources.firstOrNull() ?: CompilationUnit.unspecified()
+               val originalLocation = originalCompilationUnit.locationDescription
+               CompilationError(redeclarationSite.start, "Symbol $nameOfConflictingSymbol is already declared at $originalLocation", severity = severity)
+            }
+         }.flatten()
+      val duplicateSymbols = tokenStore.collectDuplicateDeclarationsDetectedInSources()
+      val duplicateDefinitionsInSources = duplicateSymbols.flatMap { (nameOfConflictingSymbol, declarations) ->
+         val (first,duplicates) = declarations.toList().takeHead()
+         val firstLocation = "${first.source().sourceName} line ${first.start.line}, char ${first.start.charPositionInLine}"
+         duplicates.map { duplicateDefinition ->
+            CompilationError(duplicateDefinition.start, "Symbol $nameOfConflictingSymbol is already declared at $firstLocation", severity = severity)
          }
-         compilationErrors
-      } else emptyList()
-      return errors
-   }
-
-   private fun collectDuplicateServices(others: Tokens): List<CompilationError> {
-      val duplicateServices = this.unparsedServices.keys.filter { others.unparsedServices.containsKey(it) }
-      val errors = duplicateServices.map {
-         CompilationError(
-            others.unparsedServices[it]!!.second.start,
-            "Attempt to redefine service $it. Services may be extended (using an extension), but not redefined"
-         )
       }
-      return errors
+      return duplicateDefinitionsInSources + duplicateDefinitionsFromImports
    }
 
    fun importTokensInSource(sourceName: String): List<Pair<QualifiedName, TaxiParser.ImportDeclarationContext>> {
@@ -168,27 +161,26 @@ data class Tokens(
    }
 
    fun hasUnparsedImportableToken(qualifiedName: String): Boolean {
-      return this.unparsedTypes.containsKey(qualifiedName) || this.unparsedFunctions.containsKey(qualifiedName)
+      return this.unparsedTypes.any { (name, _, _) -> name == qualifiedName } ||
+             this.unparsedFunctions.any { (name, _, _) -> name == qualifiedName }
    }
 
    fun containsUnparsedType(qualifiedTypeName: String, symbolKind: SymbolKind): Boolean {
       return when {
          containsUnparsedInlineType(qualifiedTypeName) -> true
-         this.unparsedTypes.containsKey(qualifiedTypeName) -> {
-            val (_, unparsedToken) = this.unparsedTypes.getValue(qualifiedTypeName)
-            symbolKind.matches(unparsedToken)
+         else -> {
+            val unparsedToken = this.unparsedTypes.find { (name, _, _) -> name == qualifiedTypeName }
+            unparsedToken != null && symbolKind.matches(unparsedToken.third)
          }
-
-         else -> false
       }
    }
 
    private fun containsUnparsedInlineType(qualifiedName: String): Boolean {
-      return this.unparsedInlineTypes.containsKey(qualifiedName)
+      return this.unparsedInlineTypes.any { (name, _) -> name == qualifiedName }
    }
 
    fun containsUnparsedService(qualifiedName: String): Boolean {
-      return this.unparsedServices.containsKey(qualifiedName)
+      return this.unparsedServices.any { (name, _, _) -> name == qualifiedName }
    }
 
 }
@@ -199,15 +191,15 @@ class TokenCollator : TaxiBaseListener() {
    private var namespace: String = Namespaces.DEFAULT_NAMESPACE
    private var imports = mutableListOf<Pair<String, TaxiParser.ImportDeclarationContext>>()
 
-   private val unparsedTypes = mutableMapOf<String, Pair<Namespace, ParserRuleContext>>()
+   private val unparsedTypes = mutableListOf<Triple<String, Namespace, ParserRuleContext>>()
 
-   // Inline types are a map of the name of the inline type, to the name of the model type that declares it inline
-   private val unparsedInlineTypes = mutableMapOf<String, String>()
+   // Inline types are a list of pairs: (name of inline type, name of model type that declares it inline)
+   private val unparsedInlineTypes = mutableListOf<Pair<String, String>>()
    private val unparsedExtensions = mutableListOf<Pair<Namespace, ParserRuleContext>>()
-   private val unparsedServices = mutableMapOf<String, Pair<Namespace, ServiceDeclarationContext>>()
-   private val unparsedPolicies = mutableMapOf<String, Pair<Namespace, TaxiParser.PolicyDeclarationContext>>()
-   private val unparsedFunctions = mutableMapOf<String, Pair<Namespace, TaxiParser.FunctionDeclarationContext>>()
-   private val namedQueries = mutableListOf<Pair<Namespace, TaxiParser.NamedQueryContext>>()
+   private val unparsedServices = mutableListOf<Triple<String, Namespace, ServiceDeclarationContext>>()
+   private val unparsedPolicies = mutableListOf<Triple<String, Namespace, TaxiParser.PolicyDeclarationContext>>()
+   private val unparsedFunctions = mutableListOf<Triple<String, Namespace, TaxiParser.FunctionDeclarationContext>>()
+   private val namedQueries = mutableListOf<Triple<String, Namespace, TaxiParser.NamedQueryContext>>()
    private val anonymousQueries = mutableListOf<Pair<Namespace, TaxiParser.AnonymousQueryContext>>()
    private val topLevelExpressions = mutableListOf<TaxiParser.ExpressionGroupContext>()
 
@@ -278,7 +270,7 @@ class TokenCollator : TaxiBaseListener() {
 
 
 
-         unparsedInlineTypes.put(inlineTypeName, owningTypeName)
+         unparsedInlineTypes.add(inlineTypeName to owningTypeName)
       }
       super.exitFieldDeclaration(ctx)
    }
@@ -286,8 +278,8 @@ class TokenCollator : TaxiBaseListener() {
 
    override fun exitEnumDeclaration(ctx: TaxiParser.EnumDeclarationContext) {
       if (collateExceptions(ctx)) {
-         val name = qualify(ctx.qualifiedName().identifier().text())
-         unparsedTypes.put(name, namespace to ctx)
+         val name = qualify(ctx.identifier().text)
+         unparsedTypes.add(Triple(name, namespace, ctx))
       }
       super.exitEnumDeclaration(ctx)
    }
@@ -311,7 +303,7 @@ class TokenCollator : TaxiBaseListener() {
          // TODO : Why did I have to change this?  Why is Identifier() retuning null now?
          // Was:  qualify(ctx.policyIdentifier().identifier().text)
          val qualifiedName = qualify(ctx.identifier().text)
-         unparsedPolicies[qualifiedName] = namespace to ctx
+         unparsedPolicies.add(Triple(qualifiedName, namespace, ctx))
       }
       super.exitPolicyDeclaration(ctx)
    }
@@ -319,29 +311,29 @@ class TokenCollator : TaxiBaseListener() {
    override fun exitServiceDeclaration(ctx: ServiceDeclarationContext) {
       if (collateExceptions(ctx)) {
          val qualifiedName = qualify(ctx.identifier().text)
-         unparsedServices[qualifiedName] = namespace to ctx
+         unparsedServices.add(Triple(qualifiedName, namespace, ctx))
       }
       super.exitServiceDeclaration(ctx)
    }
 
    override fun exitFunctionDeclaration(ctx: TaxiParser.FunctionDeclarationContext) {
       if (collateExceptions(ctx)) {
-         val qualifiedName = qualify(ctx.qualifiedName().identifier().text())
-         unparsedFunctions[qualifiedName] = namespace to ctx
+         val qualifiedName = qualify(ctx.identifier().text)
+         unparsedFunctions.add(Triple(qualifiedName, namespace, ctx))
       }
    }
 
    override fun exitTypeDeclaration(ctx: TaxiParser.TypeDeclarationContext) {
       if (collateExceptions(ctx)) {
          val typeName = qualify(ctx.identifier().text)
-         unparsedTypes[typeName] = namespace to ctx
+         unparsedTypes.add(Triple(typeName,namespace,ctx))
       }
       super.exitTypeDeclaration(ctx)
    }
    override fun exitPartialModelDeclaration(ctx: TaxiParser.PartialModelDeclarationContext) {
       if (collateExceptions(ctx)) {
          val typeName = qualify(ctx.identifier().text)
-         unparsedTypes[typeName] = namespace to ctx
+         unparsedTypes.add(Triple(typeName,namespace,ctx))
       }
       super.exitPartialModelDeclaration(ctx)
    }
@@ -349,7 +341,7 @@ class TokenCollator : TaxiBaseListener() {
    override fun exitTypeAliasDeclaration(ctx: TaxiParser.TypeAliasDeclarationContext) {
       if (collateExceptions(ctx)) {
          val typeName = qualify(ctx.identifier().text)
-         unparsedTypes.put(typeName, namespace to ctx)
+         unparsedTypes.add(Triple(typeName,namespace,ctx))
       }
       super.exitTypeAliasDeclaration(ctx)
    }
@@ -375,13 +367,14 @@ class TokenCollator : TaxiBaseListener() {
    override fun exitAnnotationTypeDeclaration(ctx: TaxiParser.AnnotationTypeDeclarationContext) {
       if (collateExceptions(ctx)) {
          val typeName = qualify(ctx.identifier().text)
-         unparsedTypes[typeName] = namespace to ctx
+         unparsedTypes.add(Triple(typeName,namespace,ctx))
       }
       super.exitAnnotationTypeDeclaration(ctx)
    }
 
    override fun exitNamedQuery(ctx: TaxiParser.NamedQueryContext) {
-      namedQueries.add(namespace to ctx)
+      val queryName = qualify(ctx.queryName().identifier().text)
+      namedQueries.add(Triple(queryName, namespace, ctx))
    }
 
    override fun exitAnonymousQuery(ctx: TaxiParser.AnonymousQueryContext) {

@@ -2,6 +2,7 @@ package lang.taxi.cli.plugins.internal
 
 import com.google.common.io.Resources
 import com.winterbe.expekt.should
+import io.kotest.matchers.equals.shouldBeEqual
 import io.swagger.v3.core.util.Yaml
 import io.swagger.v3.oas.models.OpenAPI
 import org.apache.commons.io.FileUtils
@@ -32,7 +33,7 @@ class OpenApiGeneratorPluginTest {
       val actual = folder!!.toPath().resolve("dist/open-api/PersonService.yaml").readText()
       val actualOas = Yaml.mapper().readValue(actual, OpenAPI::class.java)
 
-      actualOas.should.equal(expectedOas)
+      actualOas.shouldBeEqual(expectedOas)
    }
 
    @Test

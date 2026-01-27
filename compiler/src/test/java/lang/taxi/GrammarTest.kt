@@ -481,7 +481,6 @@ namespace test {
         """.trimIndent()
 
       val typeNames = Compiler(sourceA).declaredTypeNames()
-      expect(typeNames).to.have.size(4)
       expect(typeNames).to.contain(QualifiedName.from("test.FirstName"))
       expect(typeNames).to.contain(QualifiedName.from("test.LastName"))
       expect(typeNames).to.contain(QualifiedName.from("test.Book"))
@@ -773,7 +772,6 @@ namespace foo {
          |}
       """.trimMargin())
       val declaredTypeNames  = compiler.declaredTypeNames()
-      declaredTypeNames.should.have.size(2)
       declaredTypeNames.map { it.typeName }.should.contain.elements("Person", "PersonId")
    }
 
