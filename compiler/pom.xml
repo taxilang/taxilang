@@ -17,6 +17,11 @@
    <dependencies>
       <dependency>
          <groupId>org.taxilang</groupId>
+         <artifactId>taxi-annotations</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.taxilang</groupId>
          <artifactId>core-types</artifactId>
          <version>${project.version}</version>
       </dependency>

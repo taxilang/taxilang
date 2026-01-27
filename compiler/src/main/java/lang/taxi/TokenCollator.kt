@@ -6,8 +6,10 @@ import lang.taxi.TaxiParser.ToplevelObjectContext
 import lang.taxi.TaxiParser.TypeDeclarationContext
 import lang.taxi.compiler.SymbolKind
 import lang.taxi.messages.Severity
+import lang.taxi.types.CompilationUnit
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.SourceNames
+import lang.taxi.utils.takeHead
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.io.File
@@ -102,74 +104,26 @@ data class Tokens(
     *
     * @param severity The severity level to use for duplicate symbol errors (ERROR, WARNING, or INFO)
     */
-   fun detectDuplicates(severity: Severity): List<CompilationError> {
+   fun detectDuplicates(severity: Severity, importSources: List<TaxiDocument>, builtInCompiledTaxi: TaxiDocument): List<CompilationError> {
       data class SymbolOccurrence(val name: String, val kind: String, val context: ParserRuleContext?, val sourceName: String?)
-
-      val allSymbols = mutableListOf<SymbolOccurrence>()
-
-      // Collect all types
-      unparsedTypes.forEach { (name, _, context) ->
-         allSymbols.add(SymbolOccurrence(name, "Type", context, context.source().normalizedSourceName))
-      }
-
-      // Collect all inline types
-      unparsedInlineTypes.forEach { (name, declaringModel) ->
-         // Find the declaring model's context
-         val modelContext = unparsedTypes.find { (modelName, _, _) -> modelName == declaringModel }?.third
-         allSymbols.add(SymbolOccurrence(name, "Type", modelContext, modelContext?.source()?.normalizedSourceName))
-      }
-
-      // Collect all services
-      unparsedServices.forEach { (name, _, context) ->
-         allSymbols.add(SymbolOccurrence(name, "Service", context, context.source().normalizedSourceName))
-      }
-
-      // Collect all policies
-      unparsedPolicies.forEach { (name, _, context) ->
-         allSymbols.add(SymbolOccurrence(name, "Policy", context, context.source().normalizedSourceName))
-      }
-
-      // Collect all functions
-      unparsedFunctions.forEach { (name, _, context) ->
-         allSymbols.add(SymbolOccurrence(name, "Function", context, context.source().normalizedSourceName))
-      }
-
-      // Collect all named queries
-      namedQueries.forEach { (name, _, context) ->
-         allSymbols.add(SymbolOccurrence(name, "Query", context, context.source().normalizedSourceName))
-      }
-
-      // Group by qualified name and find duplicates
-      val symbolsByName = allSymbols.groupBy { it.name }
-      val duplicates = symbolsByName.filter { (_, occurrences) -> occurrences.size > 1 }
-
-      return duplicates.flatMap { (qualifiedName, occurrences) ->
-         // Report an error for all occurrences except the first one
-         occurrences.drop(1).map { occurrence ->
-            val firstOccurrence = occurrences.first()
-            val message = if (occurrence.kind == firstOccurrence.kind) {
-               "${occurrence.kind} $qualifiedName is already defined"
-            } else {
-               "${occurrence.kind} $qualifiedName conflicts with existing ${firstOccurrence.kind} definition with the same name"
+      val duplicateDefinitionsFromImports = tokenStore.collectDuplicateDeclarationsDetectedInImports(importSources, builtInCompiledTaxi)
+         .map { (nameOfConflictingSymbol, pair) ->
+            val (placesDeclaredInTheseSources,placesDeclaredInImportedSources) = pair
+            placesDeclaredInTheseSources.map { redeclarationSite ->
+               val originalCompilationUnit = placesDeclaredInImportedSources.firstOrNull() ?: CompilationUnit.unspecified()
+               val originalLocation = originalCompilationUnit.locationDescription
+               CompilationError(redeclarationSite.start, "Symbol $nameOfConflictingSymbol is already declared at $originalLocation", severity = severity)
             }
-            if (occurrence.context != null) {
-               CompilationError(
-                  occurrence.context.start,
-                  message,
-                  occurrence.sourceName ?: "UnknownSource",
-                  severity = severity
-               )
-            } else {
-               // Fallback for cases where context is null (e.g., inline types)
-               CompilationError(
-                  0, 0,
-                  message,
-                  occurrence.sourceName ?: "UnknownSource",
-                  severity = severity
-               )
-            }
+         }.flatten()
+      val duplicateSymbols = tokenStore.collectDuplicateDeclarationsDetectedInSources()
+      val duplicateDefinitionsInSources = duplicateSymbols.flatMap { (nameOfConflictingSymbol, declarations) ->
+         val (first,duplicates) = declarations.toList().takeHead()
+         val firstLocation = "${first.source().sourceName} line ${first.start.line}, char ${first.start.charPositionInLine}"
+         duplicates.map { duplicateDefinition ->
+            CompilationError(duplicateDefinition.start, "Symbol $nameOfConflictingSymbol is already declared at $firstLocation", severity = severity)
          }
       }
+      return duplicateDefinitionsInSources + duplicateDefinitionsFromImports
    }
 
    fun importTokensInSource(sourceName: String): List<Pair<QualifiedName, TaxiParser.ImportDeclarationContext>> {
@@ -324,7 +278,7 @@ class TokenCollator : TaxiBaseListener() {
 
    override fun exitEnumDeclaration(ctx: TaxiParser.EnumDeclarationContext) {
       if (collateExceptions(ctx)) {
-         val name = qualify(ctx.qualifiedName().identifier().text())
+         val name = qualify(ctx.identifier().text)
          unparsedTypes.add(Triple(name, namespace, ctx))
       }
       super.exitEnumDeclaration(ctx)
@@ -364,7 +318,7 @@ class TokenCollator : TaxiBaseListener() {
 
    override fun exitFunctionDeclaration(ctx: TaxiParser.FunctionDeclarationContext) {
       if (collateExceptions(ctx)) {
-         val qualifiedName = qualify(ctx.qualifiedName().identifier().text())
+         val qualifiedName = qualify(ctx.identifier().text)
          unparsedFunctions.add(Triple(qualifiedName, namespace, ctx))
       }
    }

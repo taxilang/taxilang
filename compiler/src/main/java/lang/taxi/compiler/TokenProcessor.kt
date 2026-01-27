@@ -44,7 +44,7 @@ import kotlin.collections.set
 
 class TokenProcessor(
    val tokens: Tokens,
-   importSources: List<TaxiDocument> = emptyList(),
+   private val importSources: List<TaxiDocument> = emptyList(),
    collectImports: Boolean = true,
    val typeChecker: TypeChecker,
    private val linter: Linter
@@ -76,6 +76,7 @@ class TokenProcessor(
    private val policies = mutableListOf<Policy>()
    private val functions = mutableListOf<Function>()
    private val annotations = mutableListOf<Annotation>()
+   @Deprecated("views are deprecated")
    private val views = mutableListOf<View>()
 
    val errors = mutableListOf<CompilationError>()
@@ -102,17 +103,20 @@ class TokenProcessor(
 
    fun buildTaxiDocument(): Pair<List<CompilationError>, TaxiDocument> {
       compile()
-      // TODO: Unsure if including the imported types here is a good iddea or not.
       val types = typeSystem.typeList(includeImportedTypes = true).toSet()
+
+      // MP: 27-Jan-26: Previously we did not include imported services / functions / policies etc
+      // here. This was likely wrong, and broke things when we started fixing duplicate imports.
+      // However, this may have knock-on effects (targeted for Taxi 1.71)
       return errors to TaxiDocument(
-         types,
-         services.toSet(),
-         policies.toSet(),
-         functions.toSet(),
-         annotations.toSet(),
-         views.toSet(),
-         queries.toSet(),
-         topLevelExpressions.toSet()
+         types = types,
+         services = (importSources.flatMap { it.services } + services).toSet(),
+         policies = (importSources.flatMap { it.policies } + policies).toSet(),
+         functions = (importSources.flatMap { it.functions } + functions).toSet(),
+         annotations = (importSources.flatMap { it.annotations } + annotations).toSet(),
+         views = (importSources.flatMap { it.views } + views).toSet(),
+         queries = (importSources.flatMap { it.queries } + queries).toSet(),
+         expressions = topLevelExpressions.toSet(),
       )
    }
 
@@ -1753,7 +1757,7 @@ class TokenProcessor(
    ): Either<List<CompilationError>, FormatsAndZoneOffset?> {
 
       val formatAnnotations =
-         annotations.filter { it.type?.qualifiedName == BuiltIns.FormatAnnotation.name.fullyQualifiedName }
+         annotations.filter { it.type?.qualifiedName == BuiltInTypes.FormatAnnotation.name.fullyQualifiedName }
       if (formatAnnotations.isEmpty()) {
          return (null as? FormatsAndZoneOffset?).right()
       }

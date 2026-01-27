@@ -763,11 +763,11 @@ class TaxiQlSpec : DescribeSpec({
          """.compiled()
             .query("MoviesAndReviews")
          query.annotations.shouldHaveSize(1)
-         query.annotations.single().qualifiedName.shouldBe("HttpOperation")
+         query.annotations.single().qualifiedName.shouldBe("taxi.http.HttpOperation")
 
          val queryParam = query.parameters.single()
          queryParam.annotations.shouldHaveSize(1)
-         queryParam.annotations.single().qualifiedName.shouldBe("PathVariable")
+         queryParam.annotations.single().qualifiedName.shouldBe("taxi.http.PathVariable")
       }
 
       it("is possible to add docs to named queries and their params") {

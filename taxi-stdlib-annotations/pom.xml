@@ -18,9 +18,8 @@
    <dependencies>
       <dependency>
          <groupId>org.taxilang</groupId>
-         <artifactId>compiler</artifactId>
+         <artifactId>core-types</artifactId>
          <version>${project.version}</version>
       </dependency>
    </dependencies>
-
 </project>

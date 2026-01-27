@@ -16,7 +16,6 @@ import lang.taxi.types.ObjectType
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.StreamType
 import lang.taxi.types.Type
-import kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf.Type.Argument.Projection
 
 
 data class TaxiQlQuery(

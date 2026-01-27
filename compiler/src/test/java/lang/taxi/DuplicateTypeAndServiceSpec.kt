@@ -1,13 +1,34 @@
 package lang.taxi
 
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.collections.shouldHaveSize
-import org.junit.jupiter.api.fail
 
 class DuplicateTypeAndServiceSpec : DescribeSpec({
 
    describe("duplicate type detection") {
+
+      it("should detect duplicates when importing another compiled doc") {
+         val compiledSrcA = """type Person inherits String""".compiled()
+         val validationMessages =
+            Compiler("""type Person inherits String""", importSources = listOf(compiledSrcA))
+               .validate()
+
+         validationMessages.shouldContainMessageStartingWith("Symbol Person is already declared")
+      }
+
+      it("should allow importing another spec without erroring on stdlib types etc") {
+         val compiledSrcA = """type Person inherits String""".compiled()
+         compiledSrcA.containsFunction("taxi.stdlib.left").shouldBeTrue()
+         val compositeCompiled =
+            Compiler("""type AnotherPerson inherits String""", importSources = listOf(compiledSrcA))
+               .compile()
+
+         compositeCompiled.containsType("Person").shouldBeTrue()
+         compositeCompiled.containsType("AnotherPerson").shouldBeTrue()
+         compositeCompiled.containsFunction("taxi.stdlib.left").shouldBeTrue()
+      }
 
       it("should detect duplicate type declarations in the same file") {
          val source = """
@@ -16,7 +37,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          source.validated()
-            .shouldContainMessage("Type Person is already defined")
+            .shouldContainMessageStartingWith("Symbol Person is already declared")
       }
 
       it("should detect duplicate type declarations in different namespaces in the same file") {
@@ -42,7 +63,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          source.validated()
-            .shouldContainMessage("Type foo.Person is already defined")
+            .shouldContainMessageStartingWith("Symbol foo.Person is already declared")
       }
 
       it("should detect duplicate type declarations across multiple files") {
@@ -59,7 +80,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          listOf(source1, source2).validated()
-            .shouldContainMessage("Type foo.Person is already defined")
+            .shouldContainMessageStartingWith("Symbol foo.Person is already declared")
       }
 
       it("should detect duplicate model declarations") {
@@ -73,7 +94,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          source.validated()
-            .shouldContainMessage("Type Person is already defined")
+            .shouldContainMessageStartingWith("Symbol Person is already declared")
       }
 
       it("should detect duplicate enum declarations") {
@@ -88,7 +109,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          source.validated()
-            .shouldContainMessage("Type Status is already defined")
+            .shouldContainMessageStartingWith("Symbol Status is already declared")
       }
 
       it("should detect duplicate type alias declarations") {
@@ -98,7 +119,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          source.validated()
-            .shouldContainMessage("Type PersonId is already defined")
+            .shouldContainMessageStartingWith("Symbol PersonId is already declared")
       }
 
       it("should detect duplicate annotation type declarations") {
@@ -108,7 +129,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          source.validated()
-            .shouldContainMessage("Type MyAnnotation is already defined")
+            .shouldContainMessageStartingWith("Symbol MyAnnotation is already declared")
       }
 
       it("should not allow duplication of inline type and declared type") {
@@ -118,7 +139,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
                name : Name inherits String
             }
          """.validated()
-            .shouldContainMessage("Type Name is already defined")
+            .shouldContainMessageStartingWith("Symbol Name is already declared")
       }
 
       it("should allow the same type name in different namespaces") {
@@ -143,7 +164,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          source.validated()
-            .shouldContainMessage("Type Person is already defined")
+            .shouldContainMessageStartingWith("Symbol Person is already declared")
       }
 
       it("should detect multiple duplicate declarations") {
@@ -155,7 +176,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
 
          val errors = source.validated()
          // Should have 2 errors (second and third declarations are duplicates)
-         errors.filter { it.detailMessage == "Type Person is already defined" } shouldHaveSize 2
+         errors.filter { it.detailMessage.startsWith("Symbol Person is already declared") } shouldHaveSize 2
       }
 
       it("should detect duplicates of different type kinds") {
@@ -167,7 +188,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          source.validated()
-            .shouldContainMessage("Type Person is already defined")
+            .shouldContainMessageStartingWith("Symbol Person is already declared")
       }
    }
 
@@ -182,7 +203,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          source.validated()
-            .shouldContainMessage("Service PersonService is already defined")
+            .shouldContainMessageStartingWith("Symbol PersonService is already declared")
       }
 
       it("should detect duplicate service declarations with the same qualified name") {
@@ -196,7 +217,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          source.validated()
-            .shouldContainMessage("Service foo.PersonService is already defined")
+            .shouldContainMessageStartingWith("Symbol foo.PersonService is already declared")
       }
 
       it("should detect duplicate service declarations across multiple files") {
@@ -215,7 +236,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          listOf(source1, source2).validated()
-            .shouldContainMessage("Service foo.PersonService is already defined")
+            .shouldContainMessageStartingWith("Symbol foo.PersonService is already declared")
       }
 
       it("should allow the same service name in different namespaces") {
@@ -247,7 +268,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
 
          val errors = source.validated()
          // Should have 2 errors (second and third declarations are duplicates)
-         errors.filter { it.detailMessage.contains("Service PersonService is already defined") } shouldHaveSize 2
+         errors.filter { it.detailMessage.contains("Symbol PersonService is already declared") } shouldHaveSize 2
       }
    }
 
@@ -265,8 +286,8 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          val errors = source.validated()
-         errors.shouldContainMessage("Type Person is already defined")
-         errors.shouldContainMessage("Service PersonService is already defined")
+         errors.shouldContainMessageStartingWith("Symbol Person is already declared")
+         errors.shouldContainMessageStartingWith("Symbol PersonService is already declared")
       }
 
       it("should not declaring a service and type with the same name") {
@@ -275,7 +296,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
             service Foo {
             }
          """.validated()
-            .shouldContainMessage("Service Foo conflicts with existing Type definition with the same name")
+            .shouldContainMessageStartingWith("Symbol Foo is already declared")
       }
    }
 
@@ -288,7 +309,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          """.trimIndent()
 
          val errors = source.validated()
-         errors.filter { it.detailMessage == "Type Person is already defined" }.let { duplicateErrors ->
+         errors.filter { it.detailMessage.startsWith("Symbol Person is already declared") }.let { duplicateErrors ->
             duplicateErrors shouldHaveSize 1
             duplicateErrors.first().severity shouldBe lang.taxi.messages.Severity.ERROR
          }
@@ -307,7 +328,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          )
 
          val errors = Compiler(source, config = config).validate()
-         errors.filter { it.detailMessage == "Type Person is already defined" }.let { duplicateErrors ->
+         errors.filter { it.detailMessage.startsWith("Symbol Person is already declared") }.let { duplicateErrors ->
             duplicateErrors shouldHaveSize 1
             duplicateErrors.first().severity shouldBe lang.taxi.messages.Severity.WARNING
          }
@@ -326,7 +347,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          )
 
          val errors = Compiler(source, config = config).validate()
-         errors.filter { it.detailMessage == "Type Person is already defined" }.let { duplicateErrors ->
+         errors.filter { it.detailMessage.startsWith("Symbol Person is already declared") }.let { duplicateErrors ->
             duplicateErrors shouldHaveSize 1
             duplicateErrors.first().severity shouldBe lang.taxi.messages.Severity.INFO
          }
@@ -347,7 +368,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          // Should compile successfully (not throw) even with duplicates
          val (errors,doc) = Compiler(source, config = config).compileWithMessages()
          doc.containsType("Person") shouldBe true
-         errors.shouldContainMessage("Type Person is already defined")
+         errors.shouldContainMessageStartingWith("Symbol Person is already declared")
       }
 
       it("should apply configured severity to service duplicates as well") {
@@ -365,7 +386,7 @@ class DuplicateTypeAndServiceSpec : DescribeSpec({
          )
 
          val errors = Compiler(source, config = config).validate()
-         errors.filter { it.detailMessage.contains("Service PersonService is already defined") }.let { duplicateErrors ->
+         errors.filter { it.detailMessage.contains("Symbol PersonService is already declared") }.let { duplicateErrors ->
             duplicateErrors shouldHaveSize 1
             duplicateErrors.first().severity shouldBe lang.taxi.messages.Severity.WARNING
          }

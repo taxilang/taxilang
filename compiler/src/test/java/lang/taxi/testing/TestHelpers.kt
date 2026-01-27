@@ -27,16 +27,17 @@ object TestHelpers {
     */
 
    fun expectToCompileTheSame(generated: List<String>, expected: List<String>): TaxiDocument {
-      val generatedDoc = try {
-         compile(generated)
-      } catch (e: CompilationException) {
-         fail("Failed to compile the generated taxi - ${e.message}")
-      }
       val expectedDoc = try {
          compile(expected)
       } catch (e: CompilationException) {
          fail("Failed to compile the expected taxi - ${e.message}")
       }
+      val generatedDoc = try {
+         compile(generated)
+      } catch (e: CompilationException) {
+         fail("Failed to compile the generated taxi - ${e.message}")
+      }
+
 
       return assertAreTheSame(generatedDoc, expectedDoc, generated)
    }

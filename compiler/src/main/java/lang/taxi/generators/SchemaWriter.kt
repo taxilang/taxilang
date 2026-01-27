@@ -29,7 +29,8 @@ object TypeFilters {
    }
    private val excludedNamespaces = setOf<String>(
       "taxi.stdlib",
-      "lang.taxi"
+      "lang.taxi",
+      "taxi.http"
    )
    val EVERYTHING: TypeFilter = { true }
    val EXCLUDE_STD_LIB: TypeFilter = { type ->
