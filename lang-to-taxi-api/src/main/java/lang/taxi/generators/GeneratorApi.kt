@@ -22,7 +22,8 @@ data class GeneratedTaxiCode(
       val DEFAULT_EXCLUDED_NAMESPACES = listOf(
          "org.w3",
          "taxi.stdlib",
-         "lang.taxi.xml"
+         "lang.taxi.xml",
+         "taxi.http"
       )
    }
 

@@ -340,7 +340,7 @@ class TypeDefinitionHashTest {
 
          service UserService {
             @HttpOperation(method = "GET" , url = "/client/orderId/{common.OrderId}")
-            operation getOrderById( @PathVariable(name = "userId") userId : common.OrderId) : Order
+            operation getOrderById( @PathVariable("userId") userId : common.OrderId) : Order
          }
       """.trimIndent()
 

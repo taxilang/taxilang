@@ -32,6 +32,7 @@ data class ViewBodyDefinition(
       find { Broker1Order[]( joinTo Broker1Trade[]) }
    }
  */
+@Deprecated("This was an experiment that we have decided not to progress with")
 class View(
    override val qualifiedName: String,
    override var definition: ViewDefinition?) : DefinableToken<ViewDefinition>, Annotatable, Documented {

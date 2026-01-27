@@ -4,6 +4,9 @@ import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Table
 import com.google.common.collect.TreeBasedTable
 import lang.taxi.TaxiParser.TypeReferenceContext
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.Compiled
+import lang.taxi.types.QualifiedName
 import lang.taxi.types.SourceNames
 import org.antlr.v4.runtime.ParserRuleContext
 
@@ -23,7 +26,8 @@ class UnknownTokenReferenceException(val providedSourcePath: String, val current
 
 class TokenStore(
    private val tables: MutableMap<String, TokenTable> = mutableMapOf<String, TokenTable>(),
-   private val typeReferencesBySourceName: ArrayListMultimap<String, TypeReferenceContext> = ArrayListMultimap.create<String, TypeReferenceContext>()
+   private val typeReferencesBySourceName: ArrayListMultimap<String, TypeReferenceContext> = ArrayListMultimap.create<String, TypeReferenceContext>(),
+   private val namedSymbolDeclarations: ArrayListMultimap<String, ParserRuleContext> = ArrayListMultimap.create<String, ParserRuleContext>()
 ) {
 
    companion object {
@@ -32,12 +36,54 @@ class TokenStore(
          val typeReferencesBySourceName: ArrayListMultimap<String, TypeReferenceContext> =
             ArrayListMultimap.create<String, TypeReferenceContext>()
 
+         val namedSymbolDeclarations = ArrayListMultimap.create<String, ParserRuleContext>()
          members.forEach { tokenStore ->
             tables.putAll(tokenStore.tables)
             typeReferencesBySourceName.putAll(tokenStore.typeReferencesBySourceName)
+            namedSymbolDeclarations.putAll(tokenStore.namedSymbolDeclarations)
          }
-         return TokenStore(tables, typeReferencesBySourceName)
+         return TokenStore(tables, typeReferencesBySourceName, namedSymbolDeclarations)
       }
+   }
+
+   /**
+    * Returns a list of declarations found in these sources where the symbol is
+    * defined multiple times. Does not consider imported sources.
+    */
+   fun collectDuplicateDeclarationsDetectedInSources(): Map<String, Collection<ParserRuleContext>> {
+      val declaredInDocumentMultipleTimes = namedSymbolDeclarations.asMap()
+         .filter { (name, declarations) -> declarations.size > 1 }
+      return declaredInDocumentMultipleTimes
+   }
+
+   /**
+    * Returns a list of declarations found in this source which conflict
+    * with existing declarations from imported sources (dependencies, other compiled docs).
+    *
+    * Returned structure is a map
+    *  - Key: name of conflciting symbol
+    *  - Value: Pair - All the places this conflict was detected in the sources being compiled
+    *                - The places the symbol was declared in the imported sources
+    */
+   fun collectDuplicateDeclarationsDetectedInImports(
+      importSources: List<TaxiDocument>,
+      builtInCompiledTaxi: TaxiDocument
+   ): Map<String, Pair<Collection<ParserRuleContext>, List<CompilationUnit>>> {
+      val declarationsMap = namedSymbolDeclarations.asMap()
+      val duplicatesDeclaredInImports = declarationsMap
+         // exclude built-ins
+         .filter { (name, _) -> builtInCompiledTaxi.namedSymbolOrNull(name) == null }
+         .flatMap { (name, declarationsInCodeBeingCompiled) ->
+            val existingDeclarations = importSources.mapNotNull { importSource ->
+               importSource.namedSymbolOrNull(name)?.let { symbol ->
+                  // This shouldn't happen -- all things should be Compiled
+                  require(symbol is Compiled) { "Found a Named instance which is not a Compiled reference - is an instance of ${symbol::class.simpleName}" }
+                  name to (declarationsInCodeBeingCompiled to symbol.compilationUnits)
+               }
+            }
+            existingDeclarations
+         }.toMap()
+      return duplicatesDeclaredInImports
    }
 
    fun tokenTable(sourceName: String): TokenTable {
@@ -53,7 +99,7 @@ class TokenStore(
       return tables.containsKey(sourcePath)
    }
 
-   fun getTypeReferencesForSourceName(sourceName: String): List<TaxiParser.TypeReferenceContext> {
+   fun getTypeReferencesForSourceName(sourceName: String): List<TypeReferenceContext> {
       val normalized = SourceNames.normalize(sourceName)
       return typeReferencesBySourceName[normalized]
    }
@@ -63,8 +109,48 @@ class TokenStore(
       tables.getOrPut(sourcePath, { TreeBasedTable.create() })
          .put(rowNumber, columnIndex, context)
 
-      if (context is TaxiParser.TypeReferenceContext) {
+      appendNamedSymbolReference(context)
+      if (context is TypeReferenceContext) {
          typeReferencesBySourceName[sourceName].add(context)
       }
    }
+
+   /**
+    * If the token is declaring a new named symbol (eg., a type, a service, a policy),
+    * we capture the name and declaration so that later we can detect redeclarations
+    */
+   private fun appendNamedSymbolReference(context: ParserRuleContext) {
+      val name = when (context) {
+         is TaxiParser.TypeAliasDeclarationContext -> context.identifier().fullyQualified()
+         is TaxiParser.TypeDeclarationContext -> context.identifier().fullyQualified()
+         is TaxiParser.EnumDeclarationContext -> context.identifier().fullyQualified()
+         is TaxiParser.ServiceDeclarationContext -> context.identifier().fullyQualified()
+         is TaxiParser.FunctionDeclarationContext -> context.identifier().fullyQualified()
+         is TaxiParser.PolicyDeclarationContext -> context.identifier().fullyQualified()
+         is TaxiParser.NamedQueryContext -> context.queryName().identifier().fullyQualified()
+         is TaxiParser.AnnotationTypeDeclarationContext -> context.identifier().fullyQualified()
+         is TaxiParser.InlineInheritedTypeContext -> {
+            val fieldDeclaration = context.searchUpForRule<TaxiParser.FieldTypeDeclarationContext>()
+            val declaredTypeName = fieldDeclaration?.typeExpression()?.nullableTypeReference()?.typeReference()
+               ?.qualifiedName()?.text?.let { declaredTypeName ->
+                  val namespace = context.findNamespace()
+                  QualifiedName(namespace, declaredTypeName).parameterizedName
+               }
+            declaredTypeName
+         }
+
+         else -> null
+      }
+
+      if (name != null) {
+         namedSymbolDeclarations.put(name, context)
+      }
+
+   }
+}
+
+fun TaxiParser.IdentifierContext.fullyQualified(): String {
+   val ns = this.findNamespace()
+   val typeName = this.text
+   return QualifiedName(ns, typeName).parameterizedName
 }

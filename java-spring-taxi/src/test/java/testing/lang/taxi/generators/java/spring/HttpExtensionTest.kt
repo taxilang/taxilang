@@ -1,10 +1,13 @@
-package lang.taxi.generators.java.spring
+// This is not under lang.taxi, as we have filters set to up exclude that
+// package from generated code.
+package testing.lang.taxi.generators.java.spring
 
 import kotlinx.coroutines.flow.Flow
 import lang.taxi.annotations.DataType
 import lang.taxi.annotations.Namespace
 import lang.taxi.annotations.Operation
 import lang.taxi.annotations.Service
+import lang.taxi.generators.java.spring.SpringTaxiGenerator
 import lang.taxi.testing.TestHelpers
 import org.junit.jupiter.api.Test
 import org.springframework.http.ResponseEntity
@@ -59,13 +62,13 @@ class HttpExtensionTest {
          .generateAsStrings()
 
       val expected = """
-         namespace lang.taxi.generators.java.spring {
+         namespace testing.lang.taxi.generators.java.spring {
             type FilmId inherits Int
             model Film {
                id:FilmId
             }
             service FilmApi {
-               @taxi.http.HttpOperation(method = "GET", url="http://my-app/film/{lang.taxi.generators.java.spring.FilmId}")
+               @taxi.http.HttpOperation(method = "GET", url="http://my-app/film/{testing.lang.taxi.generators.java.spring.FilmId}")
                operation lookupFilm(filmId : FilmId):Film
             }
          }
@@ -118,7 +121,7 @@ namespace vyne.demo {
          .forClasses(MyService::class.java)
          .generateAsStrings()
       val expected = """
-namespace lang.taxi.generators.java.spring {
+namespace testing.lang.taxi.generators.java.spring {
    model Film {
       id : FilmId
    }
@@ -158,7 +161,7 @@ namespace lang.taxi.generators.java.spring {
          .generateAsStrings()
 
       val expected = """
-namespace lang.taxi.generators.java.spring {
+namespace testing.lang.taxi.generators.java.spring {
    model Film {
       id : FilmId
    }
