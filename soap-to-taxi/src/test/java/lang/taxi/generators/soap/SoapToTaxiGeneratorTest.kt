@@ -27,7 +27,7 @@ class SoapToTaxiGeneratorTest {
       val generator = TaxiGenerator()
       println("Using URL at ${wsdl.toExternalForm()}")
       val taxi = generator.generateTaxiDocument(wsdl)
-      taxi.types.should.have.size(161)
+      taxi.types.should.have.size(172)
       taxi.services.should.have.size(1)
       taxi.services.single().operations.should.have.size(21)
    }

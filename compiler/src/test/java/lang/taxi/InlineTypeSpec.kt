@@ -20,7 +20,7 @@ class InlineTypeSpec : DescribeSpec({
          """model Person {
   person : Person inherits String
 }""".validated()
-            .errors().shouldContainMessage("Type Person is redeclared within it's own type. This is invalid")
+            .errors().shouldContainMessageStartingWith("Symbol Person is already declared")
       }
    }
 })

@@ -6,8 +6,28 @@ import lang.taxi.functions.Function
 import lang.taxi.policies.Policy
 import lang.taxi.query.TaxiQlQuery
 import lang.taxi.services.Service
-import lang.taxi.types.*
+import lang.taxi.types.Annotatable
 import lang.taxi.types.Annotation
+import lang.taxi.types.AnnotationType
+import lang.taxi.types.ArrayType
+import lang.taxi.types.Arrays
+import lang.taxi.types.AttributePath
+import lang.taxi.types.CompilationUnit
+import lang.taxi.types.EnumType
+import lang.taxi.types.ImportableToken
+import lang.taxi.types.IntersectionType
+import lang.taxi.types.MapType
+import lang.taxi.types.Named
+import lang.taxi.types.ObjectType
+import lang.taxi.types.PrimitiveType
+import lang.taxi.types.QualifiedName
+import lang.taxi.types.StreamType
+import lang.taxi.types.Type
+import lang.taxi.types.TypeAlias
+import lang.taxi.types.TypeReference
+import lang.taxi.types.UnionType
+import lang.taxi.types.View
+import lang.taxi.types.annotationOrInheritedAnnotation
 import lang.taxi.utils.log
 
 
@@ -42,6 +62,7 @@ open class TaxiDocument(
    private val policiesMap = policies.associateBy { it.qualifiedName }
    private val functionsMap = functions.associateBy { it.qualifiedName }
    private val viewMap = views.associateBy { it.qualifiedName }
+   private val queriesMap = queries.associateBy { it.qualifiedName }
 
    val annotationTypes = types.filterIsInstance<AnnotationType>()
 
@@ -69,8 +90,21 @@ open class TaxiDocument(
    }
 
    companion object {
+
       fun empty(): TaxiDocument {
          return TaxiDocument(emptySet(), emptySet())
+      }
+      val EMPTY: TaxiDocument = empty()
+   }
+
+   fun namedSymbolOrNull(qualifiedName: String): Named? {
+      return when {
+         containsType(qualifiedName) -> type(qualifiedName)
+         containsFunction(qualifiedName) -> function(qualifiedName)
+         containsService(qualifiedName) -> service(qualifiedName)
+         containsPolicy(qualifiedName) -> policy(qualifiedName)
+         containsQuery(qualifiedName) -> query(qualifiedName)
+         else -> null
       }
    }
 
@@ -83,6 +117,9 @@ open class TaxiDocument(
       }
    }
 
+   fun containsQuery(qualifiedName: String): Boolean {
+      return queriesMap.containsKey(qualifiedName)
+   }
    fun query(qualifiedName: String): TaxiQlQuery {
       return query(QualifiedName.from(qualifiedName))
    }

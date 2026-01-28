@@ -1,7 +1,10 @@
-package lang.taxi.generators.java.spring
+// This is not under lang.taxi, as we have filters set to up exclude that
+// package from generated code.
+package testing.lang.taxi.generators.java.spring
 
 import lang.taxi.annotations.DataType
 import lang.taxi.annotations.Namespace
+import lang.taxi.generators.java.spring.SpringTaxiGenerator
 import lang.taxi.testing.TestHelpers
 import org.junit.jupiter.api.Test
 import org.springframework.web.bind.annotation.GetMapping
@@ -30,8 +33,8 @@ class HttpExtensionWithoutTaxiAnnotationsTest {
       // Back off, REST snobs.  Method names are here for testing.
       @PostMapping("/{clientId}/doCalculate")
       fun calculateCreditCosts(
-         @PathVariable("clientId") @DataType("vyne.demo.ClientId") clientId: String,
-         @RequestBody request: CreditCostRequest
+          @PathVariable("clientId") @DataType("vyne.demo.ClientId") clientId: String,
+          @RequestBody request: CreditCostRequest
       ): CreditCostResponse = CreditCostResponse("TODO")
    }
 

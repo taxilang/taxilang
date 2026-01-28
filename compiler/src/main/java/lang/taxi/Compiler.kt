@@ -9,12 +9,12 @@ import com.google.common.collect.Table
 import lang.taxi.TaxiParser.ExpressionGroupContext
 import lang.taxi.compiler.TokenProcessor
 import lang.taxi.expressions.Expression
-import lang.taxi.functions.stdlib.StdLib
 import lang.taxi.linter.Linter
 import lang.taxi.linter.LinterRuleConfiguration
 import lang.taxi.linter.toLinterRules
 import lang.taxi.messages.Severity
 import lang.taxi.packages.ImporterConfig
+import lang.taxi.packages.TaxiPackageProject
 import lang.taxi.packages.TaxiPackageSources
 import lang.taxi.packages.TaxiSourcesLoader
 import lang.taxi.query.TaxiQlQuery
@@ -22,6 +22,7 @@ import lang.taxi.sources.SourceCode
 import lang.taxi.sources.SourceLocation
 import lang.taxi.toggles.FeatureToggle
 import lang.taxi.types.*
+import lang.taxi.utils.log
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.ParseTree
@@ -30,6 +31,8 @@ import java.io.File
 import java.io.Serializable
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
@@ -253,14 +256,26 @@ data class TokenStreamParseResult(
 )
 
 data class CompilerConfig(
+   @Deprecated("Type checking is now always enabled and cannot be disabled")
    val typeCheckerEnabled: FeatureToggle = FeatureToggle.ENABLED,
-   val linterRuleConfiguration: List<LinterRuleConfiguration> = emptyList()
+   val linterRuleConfiguration: List<LinterRuleConfiguration> = emptyList(),
+   val compilerOptions: lang.taxi.packages.CompilerOptions = lang.taxi.packages.CompilerOptions.DEFAULT
 ) {
    val linter: Linter by lazy { Linter(linterRuleConfiguration) }
+}
 
-   companion object {
-
-   }
+/**
+ * Extension function to build a CompilerConfig from a TaxiPackageProject.
+ *
+ * This consolidates configuration from the project's linter settings and compiler options
+ * into a single CompilerConfig instance suitable for compilation.
+ */
+fun TaxiPackageProject.buildCompilerConfig(): CompilerConfig {
+   return CompilerConfig(
+      typeCheckerEnabled = FeatureToggle.ENABLED,
+      linterRuleConfiguration = this.linter.toLinterRules(),
+      compilerOptions = this.compilerOptions
+   )
 }
 
 class Compiler(
@@ -296,10 +311,52 @@ class Compiler(
 
    constructor(
       project: TaxiPackageSources,
-      config: CompilerConfig = CompilerConfig(linterRuleConfiguration = project.project.linter.toLinterRules())
+      config: CompilerConfig = project.project.buildCompilerConfig()
    ) : this(project.sources.map { CharStreams.fromString(it.content, it.sourceName) }, config = config)
 
+   init {
+      compileBuiltInsOnce()
+   }
+
    companion object {
+      /**
+       * This is the stdlib, and anything that's
+       * defined by BuiltIns.
+       * We compile this once, and use this to exclude things like
+       * stdlib from duplicate checking.
+       *
+       * Attempts to do this as a lazy { .. } caused a stack overflow,
+       * so using a static atomic reference, and init on construction
+       */
+      private val builtInCompiledTaxi: AtomicReference<TaxiDocument> = AtomicReference(TaxiDocument.EMPTY)
+      private val compilingBuiltIns: java.util.concurrent.atomic.AtomicBoolean =
+         java.util.concurrent.atomic.AtomicBoolean(false)
+
+
+      /**
+       * In a thread-safe way, ensures that built-in code is compiled exactly once.
+       * Also ensures that we don't try to compile the built-ins when we're currently
+       * compiling the built-ins, to avoid recursion
+       */
+      private fun compileBuiltInsOnce() {
+         if (builtInCompiledTaxi.get() === TaxiDocument.EMPTY) {
+            if (compilingBuiltIns.compareAndSet(false, true)) {
+               try {
+                  // Double-check after claiming (someone might have finished between our first check and claiming)
+                  if (builtInCompiledTaxi.get() === TaxiDocument.EMPTY) {
+                     val compiledBuiltIns = Compiler(BuiltInLibs.builtInSources).compile()
+                     builtInCompiledTaxi.set(compiledBuiltIns)
+                  }
+               } catch (e:Exception) {
+                  log().error("Failed to compile internal libraries - this is a fatal error", e)
+               } finally {
+                  compilingBuiltIns.set(false)
+               }
+            }
+         }
+      }
+
+
       const val UNKNOWN_SOURCE = "UnknownSource"
       fun forStrings(sources: List<String>) =
          Compiler(sources.mapIndexed { index, source -> CharStreams.fromString(source, "StringSource-$index") })
@@ -344,7 +401,7 @@ class Compiler(
       parseResult.errors
    }
    private val tokenProcessorWithImports: TokenProcessor by lazy {
-      TokenProcessor(tokens, importSources, typeChecker = typeChecker, linter = config.linter)
+      TokenProcessor(tokens, importSources + builtInCompiledTaxi.get(), typeChecker = typeChecker, linter = config.linter)
    }
    private val tokenProcessorWithoutImports: TokenProcessor by lazy {
       TokenProcessor(tokens, collectImports = false, typeChecker = typeChecker, linter = config.linter)
@@ -375,7 +432,7 @@ class Compiler(
     */
    fun declaredTypeNames(): List<QualifiedName> {
       return tokenProcessorWithoutImports.findDeclaredTypeNames()
-         .filterNot { BuiltIns.isBuiltIn(it) }
+         .filterNot { BuiltInTypes.isBuiltIn(it) }
    }
 
    fun declaredServiceNames(): List<QualifiedName> {
@@ -458,17 +515,18 @@ class Compiler(
 
 
    fun compileWithMessages(): Pair<List<CompilationError>, TaxiDocument> {
-      val stopwatch = Stopwatch.createStarted()
       // Note - leaving this approach for backwards compatiability
       // We could try to continue compiling, with the tokens we do have
-      if (syntaxErrors.isNotEmpty()) {
+      if (syntaxErrors.errors().isNotEmpty()) {
          return syntaxErrors to TaxiDocument.empty()
       }
       val builder = tokenProcessorWithImports
-      // Similarly to above, we could do somethign with these errors now.
       val (errors, document) = builder.buildTaxiDocument()
-//      log().debug("Taxi schema compilation took ${stopwatch.elapsed().toMillis()}ms")
-      return errors to document
+
+      // Combine the errors (from the compiler) and syntaxErrors (from the parser)
+      // At this point, the syntaxErrors are just warnings / info - as actual errors would've prevented
+      // compilation
+      return (errors + syntaxErrors) to document
    }
 
    fun compile(): TaxiDocument {
@@ -609,9 +667,11 @@ class Compiler(
     */
    @OptIn(ExperimentalTime::class)
    private fun collectTokens(): CollectedTokens {
-      val builtInSources = CharStreams.fromString(StdLib.taxi, "Native StdLib")
 
-      val allInputs = inputs + builtInSources
+//      val builtInSources =
+//         BuiltInLibs.builtInLibs.map { CharStreams.fromString(it.sourceCode.content, it.sourceCode.sourceName) }
+
+      val allInputs = inputs //+ builtInSources
       val collectionResult = allInputs.map { input ->
          // We cache the result.
          // This is primarily because the input is a stream, and once parsed the first
@@ -627,9 +687,15 @@ class Compiler(
          Tokens.combine(tokensCollection)
       }
 
+      // Check for duplicate symbol declarations across all named symbols
+      val duplicateSeverity = config.compilerOptions.duplicateDefinitionSeverity
+      val duplicateErrors =
+         timedTokens.value.detectDuplicates(duplicateSeverity, this.importSources, builtInCompiledTaxi.get())
+      val allErrors = errors + duplicateErrors
+
       return CollectedTokens(
          timedTokens.value,
-         errors,
+         allErrors,
          syntheticTokens,
       )
    }
@@ -663,7 +729,7 @@ class Compiler(
     * it's intended for compiler tooling like the Lang server), rather than
     * part of the initial compile process.
     */
-   fun compileExpression(expressionGroup:ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
+   fun compileExpression(expressionGroup: ExpressionGroupContext): Either<List<CompilationError>, out Expression> {
       return tokenProcessorWithImports.expressionCompiler()
          .compile(expressionGroup)
    }
@@ -746,10 +812,11 @@ inline fun <reified T : RuleContext, O> RuleContext.ifSearchUpForRuleFindsMatch(
    } else null
 }
 
-inline fun <reified T : RuleContext> ParserRuleContext.hasChildOfType():Boolean {
+inline fun <reified T : RuleContext> ParserRuleContext.hasChildOfType(): Boolean {
    return this.children.filterIsInstance<T>().isNotEmpty()
 }
-inline fun <reified T : RuleContext> ParserRuleContext.childrenOfType():List<T> {
+
+inline fun <reified T : RuleContext> ParserRuleContext.childrenOfType(): List<T> {
    return this.children.filterIsInstance<T>()
 }
 
