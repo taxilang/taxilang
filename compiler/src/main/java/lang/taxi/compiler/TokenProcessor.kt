@@ -47,7 +47,8 @@ class TokenProcessor(
    private val importSources: List<TaxiDocument> = emptyList(),
    collectImports: Boolean = true,
    val typeChecker: TypeChecker,
-   private val linter: Linter
+   private val linter: Linter,
+   private val compilerOptions: lang.taxi.packages.CompilerOptions = lang.taxi.packages.CompilerOptions.DEFAULT
 ) {
 
    companion object {
@@ -60,13 +61,15 @@ class TokenProcessor(
       tokens: Tokens,
       collectImports: Boolean,
       typeChecker: TypeChecker,
-      linter: Linter = Linter.empty()
+      linter: Linter = Linter.empty(),
+      compilerOptions: lang.taxi.packages.CompilerOptions = lang.taxi.packages.CompilerOptions.DEFAULT
    ) : this(
       tokens,
       emptyList(),
       collectImports,
       typeChecker,
-      linter
+      linter,
+      compilerOptions
    )
 
    private var createEmptyTypesPerformed: Boolean = false
@@ -1162,7 +1165,15 @@ class TokenProcessor(
 
             val constructedAnonymousAnnotation = Annotation(annotationName, annotationParameters)
             val resolvedAnnotation = when (annotationType) {
-               is Either.Left -> constructedAnonymousAnnotation.right()
+               is Either.Left -> {
+                  // Cannot resolve annotation type - report error based on configured severity
+                  val error = CompilationError(
+                     annotation.start,
+                     "Cannot resolve annotation type: $annotationName",
+                     severity = compilerOptions.unknownAnnotationSeverity
+                  )
+                  listOf(error).left()
+               }
                is Either.Right -> annotationType.flatMap { type ->
                   if (type is AnnotationType) {
                      buildTypedAnnotation(type, annotation, annotationParameters)

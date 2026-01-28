@@ -21,7 +21,21 @@ data class CompilerOptions(
     * Note: Service extensions are always allowed regardless of this setting.
     * This only affects duplicate declarations, not extensions.
     */
-   val duplicateDefinitionSeverity: Severity = Severity.ERROR
+   val duplicateDefinitionSeverity: Severity = Severity.ERROR,
+
+   /**
+    * Specifies the severity level for unknown annotation types.
+    *
+    * When an annotation is encountered that cannot be resolved to a known annotation type,
+    * this setting determines how the compiler should respond:
+    * - ERROR (default): Compilation fails with an error
+    * - WARNING: Compilation continues with a warning message
+    * - INFO: Compilation continues with an informational message
+    *
+    * This is a breaking change from previous behavior where unknown annotations
+    * were silently treated as dynamic annotations.
+    */
+   val unknownAnnotationSeverity: Severity = Severity.ERROR
 ) {
    companion object {
       /**
