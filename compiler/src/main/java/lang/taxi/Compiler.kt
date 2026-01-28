@@ -401,10 +401,10 @@ class Compiler(
       parseResult.errors
    }
    private val tokenProcessorWithImports: TokenProcessor by lazy {
-      TokenProcessor(tokens, importSources + builtInCompiledTaxi.get(), typeChecker = typeChecker, linter = config.linter)
+      TokenProcessor(tokens, importSources + builtInCompiledTaxi.get(), typeChecker = typeChecker, linter = config.linter, compilerOptions = config.compilerOptions)
    }
    private val tokenProcessorWithoutImports: TokenProcessor by lazy {
-      TokenProcessor(tokens, collectImports = false, typeChecker = typeChecker, linter = config.linter)
+      TokenProcessor(tokens, collectImports = false, typeChecker = typeChecker, linter = config.linter, compilerOptions = config.compilerOptions)
    }
 
    val typeSystem: TypeSystem

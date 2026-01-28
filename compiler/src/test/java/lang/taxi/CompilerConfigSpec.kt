@@ -76,5 +76,33 @@ class CompilerConfigSpec : DescribeSpec({
          config.compilerOptions.duplicateDefinitionSeverity shouldBe Severity.INFO
          config.linterRuleConfiguration.isNotEmpty() shouldBe true
       }
+
+      it("should allow configuring unknown annotation severity") {
+         val source = """
+            @UnknownAnnotation
+            type Person { name: String }
+         """.trimIndent()
+
+         // Default behavior (ERROR)
+         Compiler(source).compile().errors.size shouldBe 1
+
+         // Configured as WARNING
+         val warningConfig = CompilerConfig(
+            compilerOptions = CompilerOptions(unknownAnnotationSeverity = Severity.WARNING)
+         )
+         Compiler(source, warningConfig).compile().let { result ->
+            result.errors.size shouldBe 1
+            result.errors.first().severity shouldBe Severity.WARNING
+         }
+
+         // Configured as INFO
+         val infoConfig = CompilerConfig(
+            compilerOptions = CompilerOptions(unknownAnnotationSeverity = Severity.INFO)
+         )
+         Compiler(source, infoConfig).compile().let { result ->
+            result.errors.size shouldBe 1
+            result.errors.first().severity shouldBe Severity.INFO
+         }
+      }
    }
 })
