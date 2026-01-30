@@ -24,7 +24,9 @@ data class HttpService(val baseUrl: String) : AnnotationProvider {
                POST,
                PUT,
                DELETE,
-               PATCH
+               PATCH,
+               OPTIONS,
+               HEAD
             }
 
             annotation HttpOperation {

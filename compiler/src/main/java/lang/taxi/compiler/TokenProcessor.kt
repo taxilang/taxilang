@@ -51,7 +51,7 @@ class TokenProcessor(
 ) {
 
    companion object {
-      @Deprecated("use String.unescaped() extension function")
+      @Deprecated("Unescaping reserved words is handled at the grammar level now, and is not neccessary")
       fun unescape(text: String): String = text.unescaped()
 
    }
