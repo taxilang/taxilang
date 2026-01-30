@@ -49,6 +49,7 @@ object SourceNames {
       return try {
          return when {
             sourceName.startsWith("inmemory:") -> sourceName
+            sourceName.startsWith("vscode-notebook-cell:") -> sourceName
             sourceName.startsWith("file:///web/sandbox") -> sourceName
             else -> null
          }
