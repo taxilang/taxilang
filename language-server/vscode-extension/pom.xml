@@ -6,8 +6,13 @@
    <parent>
       <groupId>org.taxilang</groupId>
       <artifactId>taxi-lang-server</artifactId>
-      <version>1.70.0-SNAPSHOT</version>
+      <version>1.71.0-SNAPSHOT</version>
    </parent>
+
+   <properties>
+      <!-- Don't try and deploy this to maven central etc -->
+      <skipBundling>true</skipBundling>
+   </properties>
 
    <!-- This pom doesn't do anything except provide a convenient way
    to pass the version into the package.json file.

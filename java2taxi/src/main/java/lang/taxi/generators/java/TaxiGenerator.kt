@@ -32,8 +32,7 @@ class TaxiGenerator(
    }
 
 
-   fun forPackage(classInPackage: Class<*>): TaxiGenerator {
-      val packageName = classInPackage.`package`.name
+   fun forPackageName(packageName: String): TaxiGenerator {
       val reflections = Reflections(
          ConfigurationBuilder()
             .forPackages(packageName)
@@ -45,6 +44,14 @@ class TaxiGenerator(
       }
 
       return forClasses(classes.toList())
+   }
+   fun forPackageNames(packageNames: List<String>): TaxiGenerator {
+      packageNames.forEach { forPackageName(it) }
+      return this
+   }
+   fun forPackage(classInPackage: Class<*>): TaxiGenerator {
+      val packageName = classInPackage.`package`.name
+      return forPackageName(packageName)
    }
 
    fun forClasses(vararg classes: Class<*>): TaxiGenerator {

@@ -37,7 +37,7 @@ namespace org.tempuri.purchaseordertype {
    type OrderDate inherits Date
 }
          """
-         TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
       }
 
       it("should generate model for a complex type") {
@@ -106,7 +106,7 @@ namespace org.tempuri.purchaseordertype {
                type OrderDate inherits Date
             }
          """.trimIndent()
-         TestHelpers.expectToCompileTheSame(taxi.taxi, xsdTaxiSources(expected))
+         TestHelpers.expectToCompileTheSame(xsdTaxiSources(taxi.taxi), xsdTaxiSources(expected))
       }
 
       it("should generated inherited types correctly") {
@@ -119,7 +119,7 @@ namespace org.tempuri.purchaseordertype {
          val expected = """namespace org.tempuri {
    type ISODate inherits Date
 }"""
-          TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+          TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
       }
 
       it("should parse enums") {
@@ -140,7 +140,7 @@ namespace org.tempuri.purchaseordertype {
       VARI
    }
 }"""
-         TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
       }
 
       it("should handle enums with spaces") {
@@ -161,7 +161,7 @@ namespace org.tempuri.purchaseordertype {
       VARI
    }
 }"""
-         TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
       }
 
       it("should generate a synthetic type for xsd types that inherits enums") {
@@ -202,7 +202,7 @@ namespace org.tempuri.identifiedpayerreceiver {
    @Format("[\\i-[:]][\\c-[:]]*")
    type IdentifiedpayerreceiverId inherits org.w3.ID
 }"""
-         TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
       }
 
       it("should generate mandatory fields as non-nullable") {
@@ -223,7 +223,7 @@ namespace org.tempuri.identifiedpayerreceiver {
 namespace org.tempuri.usaddress {
    type Name inherits String
 }"""
-         TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
       }
       it("should generate optional fields as nullable") {
          val schema = xsd(
@@ -243,7 +243,7 @@ namespace org.tempuri.usaddress {
 namespace org.tempuri.usaddress {
    type Name inherits String
 }"""
-         TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
       }
 
       it("should generate string types with patterns") {
@@ -259,7 +259,7 @@ namespace org.tempuri.usaddress {
             |@Format("[A-Z]{3,3}")
             |type ActiveCurrencyCode inherits String
          """.trimMargin()
-         TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
       }
       it("should generate documented enums correctly") {
          val schema = xsd(
@@ -286,7 +286,7 @@ namespace org.tempuri.usaddress {
                Business
             }
          """.trimIndent()
-         val taxi = TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         val taxi = TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
          // docs are not asserted when comparing compiled objects, so doing that manually
          val enum = taxi.enumType("org.tempuri.DayTypeEnum")
          enum.typeDoc.should.equal("A day type classification used in counting the number of days between two dates.")
@@ -306,7 +306,7 @@ namespace org.tempuri.usaddress {
             |@Format("\\+[0-9]{1,3}-[0-9()+\\-]{1,30}")
             |type PhoneNumber inherits String
          """.trimMargin()
-         TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
       }
 
 
@@ -405,7 +405,7 @@ namespace org.tempuri.mandateclassification1choice {
    type Prtry inherits String
 }
 """.trimMargin()
-         TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
       }
 
       it("should generate types including xsd group elements") {
@@ -448,7 +448,7 @@ namespace org.tempuri.product {
 }
 """
 
-         TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
       }
 
       it("should mark required attributes as non-nullable") {
@@ -472,7 +472,7 @@ namespace org.tempuri.purchaseordertype {
    type OrderDate inherits Date
 }"""
 
-         TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
       }
 
       it("should generate inherited types") {
@@ -513,7 +513,7 @@ namespace org.tempuri.returnswapnotionalamountreference {
    @Format("[\\i-[:]][\\c-[:]]*")
    type Href inherits org.w3.IDREF
 }"""
-         TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+         TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
       }
 
       describe("generating semantic types") {
@@ -546,7 +546,7 @@ namespace org.tempuri.returnswapnotionalamountreference {
                }
             }
             """.trimIndent()
-            TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+            TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
          }
          it("correctly generates array types where minOccurs of 0 makes array nullable") {
             val schema = xsd(
@@ -579,7 +579,7 @@ namespace org.tempuri.returnswapnotionalamountreference {
                }
             }
             """.trimIndent()
-            TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+            TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
          }
          it("correctly generates array types where minOccurs of 1 makes array non-nullable") {
             val schema = xsd(
@@ -612,7 +612,7 @@ namespace org.tempuri.returnswapnotionalamountreference {
                }
             }
             """.trimIndent()
-            TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+            TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
          }
          it("correctly generates array types where maxOccurs of a fixed value makes array non-nullable") {
             val schema = xsd(
@@ -645,7 +645,7 @@ namespace org.tempuri.returnswapnotionalamountreference {
                }
             }
             """.trimIndent()
-            TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+            TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
          }
 
          it("uses existing declared taxi type") {
@@ -685,7 +685,7 @@ namespace com.foo {
 }
             """
             val generatedPlusExisting = schema.taxi + expectedExistingDefinition.trimIndent()
-            TestHelpers.expectToCompileTheSame(generatedPlusExisting, xsdTaxiSources(listOf(expected, expectedExistingDefinition)))
+            TestHelpers.expectToCompileTheSame(xsdTaxiSources(generatedPlusExisting), xsdTaxiSources(listOf(expected, expectedExistingDefinition)))
          }
          it("generates field attributes using declared taxi type with createsType shorthande") {
             val schema = xsd(
@@ -716,7 +716,7 @@ namespace com.foo {
                }
             }
             """.trimIndent()
-            TestHelpers.expectToCompileTheSame(schema.taxi, xsdTaxiSources(expected))
+            TestHelpers.expectToCompileTheSame(xsdTaxiSources(schema.taxi), xsdTaxiSources(expected))
          }
       }
    }
@@ -728,7 +728,7 @@ fun xsdTaxiSources(content: String): List<String> {
    )
 }
 fun xsdTaxiSources(content: List<String>): List<String> {
-   return mutableListOf(
+   return listOf(
       XsdAnnotations.annotationsTaxiSource, XsdPrimitives.primitivesTaxiSource
    ) + content
 }

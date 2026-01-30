@@ -40,4 +40,5 @@ data class CompilationUnit(
          return CompilationUnit(SourceCode("Generated for $name", ""))
       }
    }
+   val locationDescription = "${source.sourceName} [${location.line}, ${location.char}]"
 }

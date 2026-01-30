@@ -24,6 +24,7 @@ class TypeScriptGenerator : ModelGenerator {
    companion object {
       private val excludedNamespaces = listOf(
          "taxi.stdlib",
+         "taxi.http",
       )
    }
 

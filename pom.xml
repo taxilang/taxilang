@@ -6,7 +6,7 @@
    <groupId>org.taxilang</groupId>
    <artifactId>parent</artifactId>
    <packaging>pom</packaging>
-   <version>1.70.0-SNAPSHOT</version>
+   <version>1.71.0-SNAPSHOT</version>
    <parent>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-parent</artifactId>
@@ -71,21 +71,21 @@
       <module>java-spring-taxi</module>
       <module>typescript</module>
       <module>taxi-to-openapi-plugin</module>
-       <module>soap-to-taxi</module>
+      <module>soap-to-taxi</module>
       <module>package-manager</module>
-       <module>avro-to-taxi</module>
+      <module>avro-to-taxi</module>
       <module>taxiql-codegen</module>
    </modules>
 
    <properties>
       <java.version>21</java.version>
       <kotlin.compiler.jvmTarget>${java.version}</kotlin.compiler.jvmTarget>
-      <kotlin.version>1.9.24</kotlin.version>
+      <kotlin.version>2.2.21</kotlin.version>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <arrow.version>1.1.5</arrow.version>
       <guava.version>33.0.0-jre</guava.version>
       <spek.version>2.0.19</spek.version>
-      <kotest.version>5.5.5</kotest.version>
+      <kotest.version>5.9.1</kotest.version>
       <junit.jupiter.version>5.9.1</junit.jupiter.version>
       <junit.vintage.version>5.6.2</junit.vintage.version>
       <zip4j.version>2.11.5</zip4j.version>
@@ -147,6 +147,11 @@
          <groupId>org.mockito.kotlin</groupId>
          <artifactId>mockito-kotlin</artifactId>
          <version>4.1.0</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
          <scope>test</scope>
       </dependency>
       <!-- https://mvnrepository.com/artifact/org.assertj/assertj-core -->
@@ -423,19 +428,27 @@
                </execution>
             </executions>
          </plugin>
-
          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-source-plugin</artifactId>
-            <version>2.2.1</version>
+            <groupId>org.jetbrains.dokka</groupId>
+            <artifactId>dokka-maven-plugin</artifactId>
+            <version>2.1.0</version>
             <executions>
                <execution>
-                  <id>attach-sources</id>
+                  <phase>prepare-package</phase>
                   <goals>
-                     <goal>jar-no-fork</goal>
+                     <goal>javadocJar</goal>
                   </goals>
                </execution>
             </executions>
+            <configuration>
+               <dokkaPlugins>
+                  <plugin>
+                     <groupId>org.jetbrains.dokka</groupId>
+                     <artifactId>kotlin-as-java-plugin</artifactId>
+                     <version>2.1.0</version>
+                  </plugin>
+               </dokkaPlugins>
+            </configuration>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -448,31 +461,42 @@
                <goals>deploy</goals>
             </configuration>
          </plugin>
+
       </plugins>
    </build>
 
-   <!-- Publish to either maven central, or orbital repo.
-   Publishing to maven central is preferred, but requires GPG installed in the gitlab docker image,
-   which right now isn't working
-   -->
    <profiles>
+      <!-- configures loopback (ie., not prompting) for the GPG passphrase. Use this in the ci server -->
+      <profile>
+         <id>loopback-gpg</id>
+         <build>
+            <pluginManagement>
+               <plugins>
+                  <plugin>
+                     <groupId>org.apache.maven.plugins</groupId>
+                     <artifactId>maven-gpg-plugin</artifactId>
+                     <configuration>
+                        <gpgArguments>
+                           <arg>--pinentry-mode</arg>
+                           <arg>loopback</arg>
+                        </gpgArguments>
+                     </configuration>
+                  </plugin>
+               </plugins>
+            </pluginManagement>
+         </build>
+      </profile>
       <profile>
          <id>maven-central</id>
          <activation>
             <activeByDefault>false</activeByDefault>
          </activation>
-         <distributionManagement>
-            <snapshotRepository>
-               <id>ossrh</id>
-               <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-            </snapshotRepository>
-         </distributionManagement>
          <build>
             <plugins>
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-gpg-plugin</artifactId>
-                  <version>1.5</version>
+                  <version>3.2.8</version>
                   <executions>
                      <execution>
                         <id>sign-artifacts</id>
@@ -480,18 +504,23 @@
                         <goals>
                            <goal>sign</goal>
                         </goals>
+                        <configuration>
+                           <gpgArguments>
+                              <arg>--pinentry-mode</arg>
+                              <arg>loopback</arg>
+                           </gpgArguments>
+                        </configuration>
                      </execution>
                   </executions>
                </plugin>
                <plugin>
-                  <groupId>org.sonatype.plugins</groupId>
-                  <artifactId>nexus-staging-maven-plugin</artifactId>
-                  <version>1.6.13</version>
+                  <groupId>io.github.mavenplugins</groupId>
+                  <artifactId>central-publishing-maven-plugin</artifactId>
+                  <version>1.1.1</version>
                   <extensions>true</extensions>
                   <configuration>
-                     <serverId>ossrh</serverId>
-                     <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                     <publishingServerId>central</publishingServerId>
+                     <autoPublish>true</autoPublish>
                   </configuration>
                </plugin>
             </plugins>

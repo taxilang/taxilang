@@ -10,6 +10,7 @@ import lang.taxi.types.Annotation
 import lang.taxi.types.Named
 import lang.taxi.types.QualifiedName
 import lang.taxi.types.Type
+import org.junit.jupiter.api.fail
 
 object TestHelpers {
    /**
@@ -26,8 +27,18 @@ object TestHelpers {
     */
 
    fun expectToCompileTheSame(generated: List<String>, expected: List<String>): TaxiDocument {
-      val generatedDoc = compile(generated)
-      val expectedDoc = compile(expected)
+      val expectedDoc = try {
+         compile(expected)
+      } catch (e: CompilationException) {
+         fail("Failed to compile the expected taxi - ${e.message}")
+      }
+      val generatedDoc = try {
+         compile(generated)
+      } catch (e: CompilationException) {
+         fail("Failed to compile the generated taxi - ${e.message}")
+      }
+
+
       return assertAreTheSame(generatedDoc, expectedDoc, generated)
    }
 

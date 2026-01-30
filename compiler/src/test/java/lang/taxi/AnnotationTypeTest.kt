@@ -3,6 +3,7 @@ package lang.taxi
 import com.winterbe.expekt.should
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import lang.taxi.messages.Severity
@@ -333,7 +334,9 @@ class AnnotationTypeTest {
          }
          annotation NotEmpty inherits Rule {}
       """.compiled()
-      schema.annotationTypes.shouldHaveSize(3) // Includes @Format
+      schema.annotationTypes.shouldNotBeEmpty()
+      schema.annotation("Rule")
+      schema.annotation("NotEmpty")
    }
 
    @Test

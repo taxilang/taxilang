@@ -32,7 +32,7 @@ class FieldCompiler(
 
    private val fieldNamesToDefinitions: Map<String, TaxiParser.TypeMemberDeclarationContext> by lazy {
       fun getFieldNameAndDeclarationContext(memberDeclaration: TaxiParser.TypeMemberDeclarationContext): Pair<String, TaxiParser.TypeMemberDeclarationContext> {
-         return TokenProcessor.unescape(memberDeclaration.fieldDeclaration().identifier().text) to memberDeclaration
+         return memberDeclaration.fieldDeclaration().identifier().text to memberDeclaration
       }
 
       val fields = typeBody.memberDeclarations

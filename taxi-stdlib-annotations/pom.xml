@@ -3,7 +3,7 @@
    <parent>
       <artifactId>parent</artifactId>
       <groupId>org.taxilang</groupId>
-      <version>1.70.0-SNAPSHOT</version>
+      <version>1.71.0-SNAPSHOT</version>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -14,13 +14,12 @@
    </description>
 
    <artifactId>taxi-stdlib-annotations</artifactId>
-
+   <name>${artifactId}</name>
    <dependencies>
       <dependency>
          <groupId>org.taxilang</groupId>
-         <artifactId>compiler</artifactId>
+         <artifactId>core-types</artifactId>
          <version>${project.version}</version>
       </dependency>
    </dependencies>
-
 </project>

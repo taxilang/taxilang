@@ -1,3 +1,5 @@
+import org.jetbrains.intellij.platform.gradle.extensions.intellijPlatform
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Document
@@ -5,7 +7,7 @@ import java.util.Base64
 
 plugins {
    id("java")
-   id("org.jetbrains.kotlin.jvm") version "1.9.24"
+   id("org.jetbrains.kotlin.jvm") version "2.2.21"
    id("org.jetbrains.intellij.platform") version "2.10.4"
 }
 
@@ -147,7 +149,9 @@ tasks {
    }
 
    withType<KotlinCompile> {
-      kotlinOptions.jvmTarget = "17"
+      compilerOptions {
+         jvmTarget.set(JvmTarget.JVM_17)
+      }
    }
 
    // Task to print version info for debugging

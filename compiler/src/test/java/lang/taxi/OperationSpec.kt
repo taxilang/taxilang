@@ -96,7 +96,7 @@ class OperationSpec : DescribeSpec({
          }
          namespace test {
             service RewardsBalanceService {
-               operation findByCaskInsertedAtBetween( @PathVariable(name = "start") start : demo.CreatedAt, @PathVariable(name = "end") end : demo.CreatedAt ) : demo.RewardsAccountBalance[]( demo.CreatedAt >= start && demo.CreatedAt < end )
+               operation findByCaskInsertedAtBetween( @PathVariable("start") start : demo.CreatedAt, @PathVariable("end") end : demo.CreatedAt ) : demo.RewardsAccountBalance[]( demo.CreatedAt >= start && demo.CreatedAt < end )
             }
          }
          """.trimIndent()
@@ -128,7 +128,7 @@ class OperationSpec : DescribeSpec({
             parameter.name.should.equal("body")
             parameter.type.qualifiedName.should.equal("VyneQlQuery")
             parameter.annotations.should.have.size(1)
-            parameter.annotations.first().name.should.equal("RequestBody")
+            parameter.annotations.first().name.should.equal("taxi.http.RequestBody")
          }
          queryOperation.returnType.toQualifiedName().parameterizedName.should.equal("lang.taxi.Array<Person>")
          val capabilities = queryOperation.capabilities
@@ -155,7 +155,7 @@ class OperationSpec : DescribeSpec({
             .queryOperation("personQuery")
             .asTaxi()
          val expected =
-            """vyneQl query personQuery(@RequestBody body: VyneQlQuery):lang.taxi.Array<Person> with capabilities {
+            """vyneQl query personQuery(@taxi.http.RequestBody body: VyneQlQuery):lang.taxi.Array<Person> with capabilities {
 filter(==,in,like),
 sum,
 count

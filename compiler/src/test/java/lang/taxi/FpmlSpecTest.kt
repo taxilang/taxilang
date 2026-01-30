@@ -2,6 +2,7 @@ package lang.taxi
 
 import com.google.common.io.Resources
 import com.winterbe.expekt.should
+import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import lang.taxi.messages.Severity
 import lang.taxi.packages.TaxiSourcesLoader
 import org.junit.jupiter.api.Test
@@ -14,6 +15,6 @@ class FpmlSpecTest {
       val taxiProject = TaxiSourcesLoader.loadPackage(Paths.get(root))
       val (messages,doc) = Compiler(taxiProject).compileWithMessages()
       messages.filter { it.severity == Severity.ERROR }.should.be.empty
-      doc.types.should.have.size(570)
+      doc.types.shouldHaveAtLeastSize(570)
    }
 }

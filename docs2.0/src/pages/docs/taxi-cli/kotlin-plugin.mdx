@@ -10,6 +10,34 @@ import {Callout} from "../../../components/docs/Callout";
 
 The Kotlin Plugin generates Kotlin classes, annotated with `@DataType`.  This makes referencing taxi types in services more typesafe and robust.
 
+<Callout>
+  While this plugin generates Kotlin code, the generated code is designed to be usable in both Kotlin and Java projects without requiring a Kotlin runtime dependency.
+</Callout>
+
+Enable the plugin by configuring the `plugins` section of your `taxi.conf` file:
+
+```hocon
+   name: com.petflix/films
+   version: 0.1.0
+   sourceRoot: src/
+>  plugins: {
+>     taxi/kotlin: {
+>       ## Other config goes here if required (see below)
+>     }
+>  }
+```
+
+The plugin is then invoked when running the [Taxi CLI](/docs/taxi-cli/taxi-cli-intro) `build` command:
+
+```bash
+➜  taxi build
+Taxi 1.62.0 @89cba14 
+Fetching dependencies for com.petflix/films/0.1.0 
+Running generator @taxi/kotlin 
+Generator @taxi/kotlin generated 16 files 
+Wrote 16 files to /my-project/dist 
+```
+
 ## What's generated
 
 ### Scalar & Primitive types
@@ -29,20 +57,72 @@ Enums in Taxi are output as kotlin `enum`classes
 | Name                  | Usage                                                                                                                                                                                           | Default                                      |
 |:----------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------|
 | outputPath            | Defines where the generated kotlin code is written.  This is relative to the output parameter in the main project config                                                                        | kotlin                                       |
-| kotlinVersion         | The version of kotlin to use.  Defines the Maven dependencies that are generated                                                                                                                | 1.3.50                                       |
-| kotlinLanguageVersion | The kotlin language version.  Corresponds to the [languageVersion](https://kotlinlang.org/docs/reference/using-maven.html#attributes-common-for-jvm-and-js) property in Kotlin's configuration. | 1.3                                          |
-| jvmTarget             | Which version of the JVM to target.  Defaults t                                                                                                                                                 | 1.8                                          |
-| maven                 | Defines the properties used for Maven configuration.  If omitted, a `pom.xml` file is not generated.                                                                                            | -                                            |
+| types                 | A list of namespaces or fully-qualified type names to generate. If empty, all types are generated. Can contain namespaces (e.g., `com.foo`) to generate all types within that namespace, or specific types (e.g., `com.foo.Bar`) to generate only that type. | \[\] \(empty - generates all types\)         |
+| kotlinVersion         | The version of kotlin to use.  Defines the Maven dependencies that are generated                                                                                                                | 2.0.20                                       |
+| kotlinLanguageVersion | The kotlin language version.  Corresponds to the [languageVersion](https://kotlinlang.org/docs/reference/using-maven.html#attributes-common-for-jvm-and-js) property in Kotlin's configuration. | 2.0                                          |
+| jvmTarget             | Which version of the JVM to target.                                                                                                                                                   | 21                                          |
+| maven                 | Defines the properties used for [Maven configuration](#generating-a-maven-pom-xml).  If omitted, a `pom.xml` file is not generated.                                                                                            | -                                            |
 | taxiVersion           | The version of the taxi to depend on                                                                                                                                                            | The same version as the compiler being used. |
 
 For more details see the [KotlinPluginConfig](https://gitlab.com/taxi-lang/taxi-lang/-/blob/develop/taxi-cli/src/main/java/lang/taxi/cli/plugins/internal/KotlinPlugin.kt#L123) class.
+
+## Filtering Types
+
+You can selectively generate Kotlin code for specific namespaces or types using the `types` configuration option. This is useful when you only need a subset of your Taxi types in Kotlin.
+
+### Generate specific namespace
+
+```hocon
+plugins: {
+   taxi/kotlin: {
+      types: ["com.foo"]
+   }
+}
+```
+
+This will generate Kotlin code for all types in the `com.foo` namespace.
+
+### Generate multiple namespaces
+
+```hocon
+plugins: {
+   taxi/kotlin: {
+      types: ["com.foo", "com.bar"]
+   }
+}
+```
+
+### Generate specific types
+
+```hocon
+plugins: {
+   taxi/kotlin: {
+      types: ["com.foo.Person", "com.bar.Company"]
+   }
+}
+```
+
+This generates Kotlin code only for the `com.foo.Person` and `com.bar.Company` types.
+
+### Mixed filtering
+
+You can mix namespaces and specific types:
+
+```hocon
+plugins: {
+   taxi/kotlin: {
+      types: ["com.foo", "com.bar.Company"]
+   }
+}
+```
+
+This generates all types in `com.foo` namespace, plus the specific `com.bar.Company` type.
 
 ## Generating a Maven pom.xml
 
 The plugin will optionally generate a Maven `pom.xml` file, to allow you to then compile and publish a jar file containing the generated artifacts.
 
 <Callout>
-
   The plugin will generate a valid `pom.xml` file, but doesn't attempt to run maven to compile the generated code.  That's left to you, or your build server configuration.
 </Callout>
 
@@ -64,7 +144,7 @@ The following properties can be configured, which relate to the same concepts in
 
 ### Sample Configuration
 
-```text
+```hocon
 name: taxi/maven-sample
 version: 0.3.0
 sourceRoot: src/
@@ -89,3 +169,89 @@ plugins: {
 }
 
 ```
+
+## Using the Generated Code
+
+The Kotlin plugin generates code that can be consumed in both Kotlin and Java projects, enabling teams to create a shareable taxonomy of types that can be published and consumed across microservices.
+
+### TypeNames Object
+
+The generator creates a `TypeNames` object containing static constants for all type names. This provides Java-friendly interoperability while maintaining type safety.
+
+For example, given this Taxi schema:
+
+```taxi
+namespace films
+
+[[ The Id of a film ]]
+type FilmId inherits Int
+
+[[ The title of the film ]]
+type Title inherits String
+```
+
+The generator produces:
+
+```kotlin
+object TypeNames {
+  object films {
+    const val FilmId: String = "films.FilmId"
+
+    const val Title: String = "films.Title"
+  }
+}
+```
+
+### Usage in Java
+
+In Java, use the `TypeNames` constants to annotate fields and parameters with semantic metadata:
+
+```java
+@Service("JavaService")
+public class JavaServiceTest {
+
+   @Operation
+   public Film findById(
+      @DataType(value = TypeNames.films.FilmId, imported = true) String filmId
+   ) {
+      // implementation
+   }
+}
+```
+
+This pattern allows teams to create a shareable taxonomy of core scalars, generate the Kotlin/Java code, and consume it within their microservices.
+
+### Usage in Kotlin
+
+For Kotlin, it's even simpler. The code generator creates type aliases with `@DataType` annotations:
+
+```kotlin
+@DataType(
+  value = FilmId,
+  imported = true
+)
+typealias FilmId = Int
+```
+
+So the same service in Kotlin looks like:
+
+```kotlin
+@Service("KotlinService")
+class KotlinServiceTest {
+
+   @Operation
+   fun findById(filmId: FilmId): Film {
+      // implementation
+   }
+}
+```
+
+### Integration with Other Tools
+
+The generated code is designed to work seamlessly with:
+
+- **java2taxi** - Generates Taxi schemas from Java/Kotlin code
+- **Orbital's Spring Boot schema publisher starter** - Automatically publishes schemas from Spring Boot applications
+- Other Taxi ecosystem tooling
+
+This enables a workflow where teams can define core types in Taxi, generate code for use in services, and have tooling automatically discover and publish the semantic metadata.

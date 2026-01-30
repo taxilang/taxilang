@@ -40,7 +40,10 @@ class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGener
          .replace("/",".")
          .replace("@","")
 
-      val generator: KotlinGenerator = KotlinGenerator(typeNamesTopLevelPackageName = defaultPackageName)
+      val generator: KotlinGenerator = KotlinGenerator(
+         typeNamesTopLevelPackageName = defaultPackageName,
+         typesOrNamespaces = config.types
+      )
       val sources = generator.generate(taxi, processors, environment)
          .map { RelativeWriteableSource(outputPathRoot, it) }
 
@@ -106,12 +109,20 @@ class KotlinPlugin(val buildInfo: BuildProperties?) : InternalPlugin, ModelGener
 
 data class KotlinPluginConfig(
    val outputPath: String = "kotlin",
-   val kotlinVersion: String = "1.8.10",
-   val kotlinLanguageVersion: String = "1.8",
-   val jvmTarget: String = "17",
+   val kotlinVersion: String = "2.0.21",
+   val kotlinLanguageVersion: String = "2.0",
+   val jvmTarget: String = "21",
    val maven: MavenGeneratorPluginConfig?,
    val taxiVersion: String? = null,
    // Will default to the organisation name from the project if not defined
-   val generatedTypeNamesPackageName: String? = null
+   val generatedTypeNamesPackageName: String? = null,
+   /**
+    * A list of namespaces or types to generate.
+    * If left empty, then all types will be generated.
+    * Can contain:
+    * - Namespaces (e.g., "com.foo") - generates all types within that namespace
+    * - Specific types (e.g., "com.foo.Bar") - generates only that type
+    */
+   val types: List<String> = emptyList()
 )
 

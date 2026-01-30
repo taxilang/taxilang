@@ -241,7 +241,7 @@ export const taxonomy = { ...(new Taxonomy()) };
              }
          }
       """.trimIndent()
-      val output = compileAndGenerate(taxi).substringAfter(staticHeader).removeWhitespace()
+      val output = compileAndGenerate(taxi)
       val expected = """
 export namespace demos.esg {
   export type EnvironmentalScoreType = number;
@@ -284,7 +284,7 @@ export const taxonomy = {
   }
 };
       """.removeWhitespace()
-      expect(output).to.equal(expected)
+      output.shouldEqualIgnoringHeaderAndWhitespace(expected)
    }
 
    @Test
