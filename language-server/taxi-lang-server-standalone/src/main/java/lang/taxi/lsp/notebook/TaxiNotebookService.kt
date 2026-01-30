@@ -32,7 +32,8 @@ class TaxiNotebookService(
 
             // Get the compiled schema from the last successful compilation
             // The LSP already has the schema loaded, so we pass an empty string as per requirements
-            val schemaSource = ""
+            val taxiDocument = compilerService.lastSuccessfulCompilation()
+               ?.documentOrEmpty!!
 
             log().info("Executing query for project root: ${params.projectRoot}")
 
@@ -56,7 +57,7 @@ class TaxiNotebookService(
 
             // Create StubQueryMessage
             val stubQueryMessage = StubQueryMessage(
-               schema = schemaSource,
+               schema = "",
                query = params.query,
                parameters = params.parameters,
                stubs = playgroundStubs,
@@ -66,7 +67,7 @@ class TaxiNotebookService(
             )
 
             // Execute the query
-            val (publisher, contentType) = stubQueryService.submitQuery(stubQueryMessage, queryId)
+            val (publisher, contentType) = stubQueryService.submitQuery(stubQueryMessage, queryId, taxiDocument = taxiDocument)
 
             // Collect results
             val results = when (publisher) {
@@ -89,7 +90,7 @@ class TaxiNotebookService(
                   rowCount = rowCount,
                   executionTime = "${executionTime}ms",
                   status = "success",
-                  warnings = if (params.stubs.isEmpty()) listOf("No stubs provided - query may fail") else null,
+                  warnings = emptyList(),
                   profilerData = queryProfileData
                )
             )

@@ -95,6 +95,7 @@ function startPlugin(
             "../../../../taxi-lang/core-types",
             "../../../../taxi-lang/compiler",
             "../../../../vyne/vyne-core-types",
+            "../../../../vyne/taxi-playground-core",
             "../../taxi-lang-service",
             "../../taxi-lang-server-standalone",
          ];
@@ -311,6 +312,13 @@ function registerNotebookSupport(context: vscode.ExtensionContext): NotebookComp
             data
          );
          await vscode.window.showNotebookDocument(doc);
+      })
+   );
+
+   // Register "Show Query Plan" command
+   context.subscriptions.push(
+      vscode.commands.registerCommand("taxiql.notebook.showQueryPlan", async (cell?: vscode.NotebookCell) => {
+         vscode.window.showInformationMessage("Query plan visualization coming soon!");
       })
    );
 

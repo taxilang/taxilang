@@ -98,7 +98,8 @@
          {
             "command": "taxiql.notebook.attachStubs",
             "title": "Attach Stubs...",
-            "category": "TaxiQL"
+            "category": "TaxiQL",
+            "icon": "$(server-process)"
          },
          {
             "command": "taxiql.notebook.changeStubs",
@@ -109,6 +110,12 @@
             "command": "taxiql.notebook.clearStubs",
             "title": "Clear Stubs",
             "category": "TaxiQL"
+         },
+         {
+            "command": "taxiql.notebook.showQueryPlan",
+            "title": "Show Query Plan",
+            "category": "TaxiQL",
+            "icon": "$(type-hierarchy)"
          }
       ],
       "menus": {
@@ -127,6 +134,11 @@
             {
                "command": "taxiql.notebook.changeStubs",
                "when": "notebookType == taxiql-notebook && notebookCellType == code && notebookCellMetadata.taxi.stubsId",
+               "group": "inline"
+            },
+            {
+               "command": "taxiql.notebook.showQueryPlan",
+               "when": "notebookType == taxiql-notebook && notebookCellType == code",
                "group": "inline"
             },
             {
@@ -175,8 +187,14 @@
       "vsce:publish": "vsce publish"
    },
    "dependencies": {
+      "@vscode/codicons": "^0.0.44",
+      "ag-grid-community": "^35.0.1",
+      "ag-grid-react": "^35.0.1",
       "find-java-home": "^1.1.0",
       "glob": "^7.1.6",
+      "react": "^19.2.4",
+      "react-dom": "^19.2.4",
+      "react-json-tree": "^0.20.0",
       "vscode-languageclient": "5.1.1",
       "ws": "^6.0.0"
    },
@@ -188,6 +206,8 @@
       "@types/glob": "^7.1.1",
       "@types/mocha": "^7.0.2",
       "@types/node": "^13.11.0",
+      "@types/react": "^19.2.10",
+      "@types/react-dom": "^19.2.3",
       "@types/vscode": "^1.68.0",
       "@types/ws": "^6.0.0",
       "@typescript-eslint/eslint-plugin": "^2.26.0",
