@@ -20,6 +20,7 @@ fun ParserRuleContext.createInternalError(message: String): Either<List<Compilat
 fun TerminalNode.unescaped():String {
    return this.text.unescaped()
 }
+@Deprecated("Unescaping reserved words is handled at the grammar level now, and should not be necessary")
 fun String.unescaped():String {
    return this.removeSurrounding("`")
 }
