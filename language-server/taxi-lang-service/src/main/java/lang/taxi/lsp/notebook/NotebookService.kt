@@ -80,7 +80,7 @@ data class ExecutionMetadata(
    val executionTime: String? = null,
    val status: String,
    val warnings: List<String>? = null,
-   val trace: List<String>? = null
+   val profilerData: Any? // is actually an Orbital QueryProfileData, but that's not linked here.
 )
 
 data class ListOperationsRequest(

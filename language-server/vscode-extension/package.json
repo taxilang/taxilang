@@ -164,7 +164,8 @@
    "scripts": {
       "semantic-release": "semantic-release",
       "vscode:prepublish": "npm run sync-pom-version && npm run compile && cp ../taxi-lang-server-standalone/target/taxi-lang-server-jar-with-dependencies.jar out/",
-      "compile": "tsc -p ./",
+      "compile": "tsc -p ./ && npm run compile:renderer",
+      "compile:renderer": "node esbuild.renderer.js",
       "lint": "eslint src --ext ts",
       "watch": "tsc -watch -p ./",
       "pretest": "npm run compile && npm run lint",
@@ -175,9 +176,9 @@
    },
    "dependencies": {
       "find-java-home": "^1.1.0",
+      "glob": "^7.1.6",
       "vscode-languageclient": "5.1.1",
-      "ws": "^6.0.0",
-      "glob": "^7.1.6"
+      "ws": "^6.0.0"
    },
    "devDependencies": {
       "@semantic-release/changelog": "^5.0.1",
@@ -191,6 +192,7 @@
       "@types/ws": "^6.0.0",
       "@typescript-eslint/eslint-plugin": "^2.26.0",
       "@typescript-eslint/parser": "^2.26.0",
+      "esbuild": "^0.27.2",
       "eslint": "^6.8.0",
       "mocha": "^7.1.1",
       "semantic-release": "17.4.7",

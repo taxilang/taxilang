@@ -1,10 +1,14 @@
 package lang.taxi.lsp.notebook
 
+import com.fasterxml.jackson.module.kotlin.convertValue
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.orbitalhq.playground.StubQueryMessage
 import com.orbitalhq.playground.StubQueryService
+import com.orbitalhq.utils.Ids
 import lang.taxi.lsp.TaxiCompilerService
 import lang.taxi.utils.log
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -16,6 +20,7 @@ class TaxiNotebookService(
 ) : NotebookService {
 
    private val stubQueryService = StubQueryService()
+   private val jackson = jacksonObjectMapper().findAndRegisterModules()
 
    override fun executeWithStubs(params: StubQueryRequest): CompletableFuture<StubQueryResponse> {
       log().info("Received executeWithStubs request for query: ${params.query.take(50)}...")
@@ -47,6 +52,7 @@ class TaxiNotebookService(
                   }
                )
             }
+            val queryId: String = Ids.id("notebook-query")
 
             // Create StubQueryMessage
             val stubQueryMessage = StubQueryMessage(
@@ -60,33 +66,31 @@ class TaxiNotebookService(
             )
 
             // Execute the query
-            val (publisher, contentType) = stubQueryService.submitQuery(stubQueryMessage)
+            val (publisher, contentType) = stubQueryService.submitQuery(stubQueryMessage, queryId)
 
             // Collect results
-            val results = if (publisher is Flux<*>) {
-               publisher.collectList().block() ?: emptyList()
-            } else {
-               listOf(publisher)
+            val results = when (publisher) {
+               is Flux<*> -> publisher.collectList().block() ?: emptyList<Any>()
+               is Mono<*> -> publisher.block()
+               else -> error("Expected a Flux or Mono, but got ${publisher::class}")
             }
+
+            val rowCount = if (results is Collection<*>) results.size else 1
+            val queryProfileData = stubQueryService.getAndPurgeProfileData(queryId)
 
             val executionTime = System.currentTimeMillis() - startTime
 
             log().info("Query executed successfully in ${executionTime}ms")
 
             StubQueryResponse(
-               data = if (results.size == 1) results[0] ?: emptyList<Any>() else results,
+               data = results,
                contentType = contentType,
                metadata = ExecutionMetadata(
-                  rowCount = if (results.isNotEmpty() && results[0] is List<*>) (results[0] as List<*>).size else results.size,
+                  rowCount = rowCount,
                   executionTime = "${executionTime}ms",
                   status = "success",
                   warnings = if (params.stubs.isEmpty()) listOf("No stubs provided - query may fail") else null,
-                  trace = listOf(
-                     "Received request at TaxiNotebookService",
-                     "Project root: ${params.projectRoot}",
-                     "Stubs configured: ${params.stubs.size}",
-                     "Query executed via StubQueryService"
-                  )
+                  profilerData = queryProfileData
                )
             )
          } catch (e: Exception) {
@@ -97,10 +101,7 @@ class TaxiNotebookService(
                metadata = ExecutionMetadata(
                   status = "error",
                   warnings = listOf("Execution failed: ${e.message}"),
-                  trace = listOf(
-                     "Error: ${e.javaClass.simpleName}",
-                     "Message: ${e.message}"
-                  )
+                  profilerData = null
                )
             )
          }

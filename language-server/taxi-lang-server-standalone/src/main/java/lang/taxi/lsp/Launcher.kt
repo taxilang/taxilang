@@ -1,12 +1,23 @@
 package lang.taxi.lsp
 
+import com.google.gson.JsonElement
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
+import com.google.gson.TypeAdapter
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonWriter
 import lang.taxi.CompilerConfig
 import lang.taxi.lsp.notebook.TaxiNotebookService
 import lang.taxi.lsp.workspace.TranspilingWorkspaceSourceService
 import lang.taxi.toggles.FeatureToggle
 import org.eclipse.lsp4j.launch.LSPLauncher
+import org.eclipse.lsp4j.services.LanguageClient
+import org.eclipse.lsp4j.services.LanguageServer
 import java.io.InputStream
 import java.io.OutputStream
+import java.lang.reflect.Type
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.Future
 import java.util.logging.Level
 import java.util.logging.LogManager
@@ -65,7 +76,18 @@ object Launcher {
         val compositeServer = TaxiLanguageServerWithNotebooks(taxiLanguageServer, notebookService)
 
         // Create JSON RPC launcher with the composite server
-        val launcher = LSPLauncher.createServerLauncher(compositeServer, input, outputStream)
+//        val launcher = LSPLauncher.createServerLauncher(compositeServer, input, outputStream)
+
+
+       val launcher = LSPLauncher.Builder<LanguageClient>()
+          .setLocalService(compositeServer)
+          .setRemoteInterface(LanguageClient::class.java)
+          .setInput(input)
+          .setOutput(outputStream)
+          .configureGson { builder ->
+             GsonCustomizer.configureGson(builder)
+          }
+          .create()
 
         // Get the client that request to launch the LS.
         val client = launcher.remoteProxy
