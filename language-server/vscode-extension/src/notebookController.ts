@@ -14,7 +14,7 @@ export class TaxiQLNotebookController {
    readonly controllerId = "taxiql-notebook-controller";
    readonly notebookType = "taxiql-notebook";
    readonly label = "TaxiQL";
-   readonly supportedLanguages = ["taxiql", "taxiql-stubs", "markdown"];
+   readonly supportedLanguages = ["taxi", "taxiql-stubs", "markdown"];
 
    private readonly controller: vscode.NotebookController;
    private executionOrder = 0;
@@ -86,7 +86,7 @@ export class TaxiQLNotebookController {
          }
 
          // Execute TaxiQL query
-         if (cell.document.languageId === "taxiql") {
+         if (cell.document.languageId === "taxi") {
             await this.executeTaxiQLCell(cell, execution);
          }
       } catch (error) {

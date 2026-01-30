@@ -12,7 +12,7 @@
     },
     {
       "kind": "code",
-      "language": "taxiql",
+      "language": "taxi",
       "value": "find { Customer }"
     },
     {
@@ -22,7 +22,7 @@
     },
     {
       "kind": "code",
-      "language": "taxiql",
+      "language": "taxi",
       "value": "find { Customer[] }\n  .filter { it.country == 'USA' }",
       "metadata": {
         "taxi": {
@@ -47,7 +47,7 @@
     },
     {
       "kind": "code",
-      "language": "taxiql",
+      "language": "taxi",
       "value": "find { Customer[] } as customers\njoin {\n  find { Order[] }\n    .filter { it.customerId in customers[].id }\n} as orders\nreturn {\n  customer: customers[],\n  orderCount: orders[].count()\n}"
     },
     {

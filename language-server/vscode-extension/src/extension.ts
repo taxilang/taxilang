@@ -165,7 +165,7 @@ function startPlugin(
             { scheme: "file", language: "taxi" },
             { scheme: "file", pattern: "**/taxi.conf" },
             // Support TaxiQL in notebook cells
-            { scheme: "vscode-notebook-cell", language: "taxiql" },
+            { scheme: "vscode-notebook-cell", language: "taxi" },
             { scheme: "vscode-notebook-cell", language: "taxiql-stubs" },
          ],
          synchronize: {
@@ -174,6 +174,8 @@ function startPlugin(
                "{**/*.taxi,**/taxi.conf}"
             ),
          },
+         // Diagnostic collection for notebook cells
+         diagnosticCollectionName: "taxi",
          middleware: {
             // This doesn't work, but leaving it here for the next time
             // we try to implement this.

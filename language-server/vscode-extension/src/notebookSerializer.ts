@@ -18,15 +18,21 @@ export class TaxiQLNotebookSerializer implements vscode.NotebookSerializer {
          raw = { cells: [] };
       }
 
-      const cells = raw.cells.map((item) =>
-         new vscode.NotebookCellData(
+      const cells = raw.cells.map((item) => {
+         // Migrate old "taxiql" language ID to "taxi"
+         let language = item.language;
+         if (language === "taxiql") {
+            language = "taxi";
+         }
+
+         return new vscode.NotebookCellData(
             item.kind === "markdown"
                ? vscode.NotebookCellKind.Markup
                : vscode.NotebookCellKind.Code,
             item.value,
-            item.language
-         )
-      );
+            language
+         );
+      });
 
       // Restore cell metadata
       cells.forEach((cell, index) => {
