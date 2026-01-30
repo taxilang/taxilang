@@ -11,7 +11,7 @@ import {
    LanguageClient,
    LanguageClientOptions,
    ServerOptions,
-} from "vscode-languageclient";
+} from "vscode-languageclient/node";
 
 // Import notebook support modules
 import { TaxiQLNotebookSerializer } from "./notebookSerializer";
@@ -35,7 +35,7 @@ enum FeatureToggle {
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
    // Use the console to output diagnostic information (console.log) and errors (console.error)
    // This line of code will only be executed once when your extension is activated
    console.log("Taxi language extension starting");
@@ -55,18 +55,18 @@ export function activate(context: vscode.ExtensionContext) {
       .getConfiguration("taxi")
       .get("javaHome", "");
    if (definedJavaHome !== "") {
-      startPlugin(definedJavaHome, context, compilerConfig);
+      await startPlugin(definedJavaHome, context, compilerConfig);
    } else {
-      findJavaHome({ allowJre: true }, (err, home) => {
+      findJavaHome({ allowJre: true }, async (err, home) => {
          if (err) {
             return console.log(err);
          }
-         startPlugin(home, context, compilerConfig);
+         await startPlugin(home, context, compilerConfig);
       });
    }
 }
 
-function startPlugin(
+async function startPlugin(
    javaHome: string,
    context: vscode.ExtensionContext,
    config: CompilerConfig
@@ -209,31 +209,30 @@ function startPlugin(
          clientOptions
       );
 
-      languageClient.onReady().then(() => {
-         registerProgressNotifications(languageClient);
+      // Start the client and register for notifications
+      await languageClient.start();
 
-         // Connect the notebook components to the language client
-         if (notebookComponents) {
-            notebookComponents.controller.setLanguageClient(languageClient);
-            notebookComponents.stubManager.setLanguageClient(languageClient);
-            console.log("Notebook components connected to language client");
+      // Register for notifications after start
+      languageClient.onDidChangeState((event) => {
+         if (event.newState === 2) { // State.Running = 2
+            registerProgressNotifications(languageClient);
+
+            // Connect the notebook components to the language client
+            if (notebookComponents) {
+               notebookComponents.controller.setLanguageClient(languageClient);
+               notebookComponents.stubManager.setLanguageClient(languageClient);
+               console.log("Notebook components connected to language client");
+            }
          }
-      })
-      .catch(err => {
-         console.error("Language client failed start:", err);
       });
 
-
-      const disposable = languageClient.start();
-
-
       // Disposables to remove on deactivation.
-      context.subscriptions.push(disposable);
+      context.subscriptions.push(languageClient);
    }
 }
 
 function registerProgressNotifications(client: LanguageClient) {
-   client.onNotification("$/progress", (params) => {
+   client.onNotification("$/progress", (params: any) => {
       const { token, value } = params;
 
       // Handle beginning of progress
