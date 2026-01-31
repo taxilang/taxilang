@@ -1,4 +1,5 @@
 const esbuild = require('esbuild');
+const path = require('path');
 
 esbuild.build({
    entryPoints: ['src/renderer/index.tsx'],
@@ -20,4 +21,12 @@ esbuild.build({
       '.woff2': 'dataurl',
    },
    external: [],
+   alias: {
+      // Allow imports from the docs2.0 components directory
+      '@query-plan': path.resolve(__dirname, '../../docs2.0/src/components/query-plan'),
+      // Force all React imports to use the same version (from VSCode extension's node_modules)
+      'react': path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+      'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime'),
+   },
 }).catch(() => process.exit(1));

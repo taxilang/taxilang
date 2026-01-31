@@ -143,7 +143,20 @@ export interface Operation {
 }
 
 /**
+ * Response from taxiql/generateQueryPlan
+ * Contains the query plan visualization data
+ */
+export interface QueryPlanResponse {
+   /** The query plan data (structure defined in docs2.0 query-plan types) */
+   queryPlan: any;
+
+   /** Any compilation messages or errors */
+   messages?: string[];
+}
+
+/**
  * LSP Custom Request Methods
  */
 export const TAXIQL_EXECUTE_WITH_STUBS = "taxiql/executeWithStubs";
 export const TAXIQL_LIST_OPERATIONS = "taxiql/listOperations";
+export const TAXIQL_GENERATE_QUERY_PLAN = "taxiql/generateQueryPlan";

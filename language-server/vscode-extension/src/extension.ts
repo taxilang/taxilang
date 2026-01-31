@@ -212,19 +212,15 @@ async function startPlugin(
       // Start the client and register for notifications
       await languageClient.start();
 
-      // Register for notifications after start
-      languageClient.onDidChangeState((event) => {
-         if (event.newState === 2) { // State.Running = 2
-            registerProgressNotifications(languageClient);
+      // Connect the notebook components to the language client immediately after start
+      if (notebookComponents) {
+         notebookComponents.controller.setLanguageClient(languageClient);
+         notebookComponents.stubManager.setLanguageClient(languageClient);
+         console.log("Notebook components connected to language client");
+      }
 
-            // Connect the notebook components to the language client
-            if (notebookComponents) {
-               notebookComponents.controller.setLanguageClient(languageClient);
-               notebookComponents.stubManager.setLanguageClient(languageClient);
-               console.log("Notebook components connected to language client");
-            }
-         }
-      });
+      // Register progress notifications
+      registerProgressNotifications(languageClient);
 
       // Disposables to remove on deactivation.
       context.subscriptions.push(languageClient);
@@ -319,7 +315,17 @@ function registerNotebookSupport(context: vscode.ExtensionContext): NotebookComp
    // Register "Show Query Plan" command
    context.subscriptions.push(
       vscode.commands.registerCommand("taxiql.notebook.showQueryPlan", async (cell?: vscode.NotebookCell) => {
-         vscode.window.showInformationMessage("Query plan visualization coming soon!");
+         if (!cell) {
+            vscode.window.showErrorMessage("No cell selected");
+            return;
+         }
+
+         if (!notebookComponents) {
+            vscode.window.showErrorMessage("Notebook components not initialized");
+            return;
+         }
+
+         await notebookComponents.controller.showQueryPlan(cell);
       })
    );
 

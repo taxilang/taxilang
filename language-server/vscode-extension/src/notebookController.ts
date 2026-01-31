@@ -4,7 +4,9 @@ import {
    StubQueryRequest,
    StubQueryResponse,
    OperationStub,
+   QueryPlanResponse,
    TAXIQL_EXECUTE_WITH_STUBS,
+   TAXIQL_GENERATE_QUERY_PLAN,
 } from "./notebookProtocol";
 
 /**
@@ -194,6 +196,70 @@ export class TaxiQLNotebookController {
          projectRoot,
          notebookPath,
       };
+   }
+
+   /**
+    * Generate and display a query plan for the given cell
+    */
+   async showQueryPlan(cell: vscode.NotebookCell): Promise<void> {
+      if (!this.languageClient) {
+         vscode.window.showErrorMessage("Language client not initialized");
+         return;
+      }
+
+      const query = cell.document.getText();
+      const projectContext = await this.resolveProjectContext(cell.notebook.uri);
+
+      // Create a cell execution to show progress
+      const execution = this.controller.createNotebookCellExecution(cell);
+      execution.executionOrder = ++this.executionOrder;
+      execution.start(Date.now());
+
+      // Build the request (same as StubQueryRequest but for query plan)
+      const request: StubQueryRequest = {
+         query,
+         projectRoot: projectContext.projectRoot,
+         notebookPath: projectContext.notebookPath,
+         stubs: [], // Query plan doesn't need stubs
+         parameters: {},
+      };
+
+      try {
+         console.log("Sending query plan request:", TAXIQL_GENERATE_QUERY_PLAN, request);
+
+         // Call the language server to generate the query plan
+         const response = await this.languageClient.sendRequest<QueryPlanResponse>(
+            TAXIQL_GENERATE_QUERY_PLAN,
+            request
+         );
+
+         console.log("Received query plan response:", response);
+
+         // Replace cell outputs with the query plan visualization
+         execution.replaceOutput([
+            new vscode.NotebookCellOutput([
+               vscode.NotebookCellOutputItem.json(
+                  response,
+                  "application/vnd.taxi.queryplan+json"
+               ),
+            ]),
+         ]);
+         execution.end(true, Date.now());
+
+      } catch (error) {
+         console.error("Query plan error:", error);
+         console.error("Error details:", JSON.stringify(error, null, 2));
+
+         execution.replaceOutput([
+            new vscode.NotebookCellOutput([
+               vscode.NotebookCellOutputItem.error({
+                  name: "Query Plan Error",
+                  message: error instanceof Error ? error.message : String(error),
+               }),
+            ]),
+         ]);
+         execution.end(false, Date.now());
+      }
    }
 
    dispose() {

@@ -47,6 +47,10 @@ class TaxiLanguageServerWithNotebooks(
       languageServer.connect(client)
    }
 
+   override fun generateQueryPlan(params: StubQueryRequest): CompletableFuture<QueryPlanResponse> {
+      return notebookService.generateQueryPlan(params)
+   }
+
    // Delegate NotebookService methods to the notebook service
    override fun executeWithStubs(params: StubQueryRequest): CompletableFuture<StubQueryResponse> {
       return notebookService.executeWithStubs(params)

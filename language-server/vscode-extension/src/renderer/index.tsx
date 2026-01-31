@@ -11,6 +11,8 @@ import { createRoot } from 'react-dom/client';
 import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule, ColDef } from 'ag-grid-community';
 import { JSONTree } from 'react-json-tree';
+import QueryPlanVisualization from '@query-plan/QueryPlanVisualization';
+import type { QueryPlanDiagramData } from '@query-plan/types';
 
 // Import CSS as strings for manual injection
 import agGridCss from 'ag-grid-community/styles/ag-grid.css';
@@ -19,6 +21,9 @@ import agThemeAlpineCss from 'ag-grid-community/styles/ag-theme-alpine.css';
 // Import codicon CSS and font
 import codiconCssRaw from '@vscode/codicons/dist/codicon.css';
 import codiconFont from '@vscode/codicons/dist/codicon.ttf';
+
+// Import React Flow CSS
+import reactFlowCss from '@xyflow/react/dist/style.css';
 
 // Register AG-Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -78,6 +83,9 @@ injectCSS(agGridCss, 'ag-grid-css');
 injectCSS(agThemeAlpineCss, 'ag-theme-alpine-css');
 injectCSS(darkThemeOverrides, 'ag-grid-vscode-theme');
 injectCSS(codiconCss, 'codicon-css');
+
+// Inject React Flow styles
+injectCSS(reactFlowCss, 'react-flow-css');
 
 type RendererContext = any;
 
@@ -507,12 +515,109 @@ const TaxiQLResults: React.FC<TaxiQLResultsProps> = ({ outputItem }) => {
    );
 };
 
+// Query Plan Viewer Component
+const QueryPlanViewer: React.FC<{ outputItem: OutputItem }> = ({ outputItem }) => {
+   const data = outputItem.json();
+
+   // The response structure is { diagramData: { diagramData: {...}, steps: [...], ... } }
+   let queryPlanData = data.diagramData?.diagramData;
+
+   // Validate and fix node data - ensure kind is a string
+   if (queryPlanData?.nodes) {
+      queryPlanData = {
+         ...queryPlanData,
+         nodes: queryPlanData.nodes.map((node: any) => ({
+            ...node,
+            kind: String(node.kind || 'MODEL'), // Ensure kind is a string
+         })),
+      };
+   }
+
+   console.log('QueryPlanViewer data:', data);
+   console.log('Extracted queryPlanData:', queryPlanData);
+
+   return (
+      <div style={{
+         padding: '16px',
+         fontFamily: 'var(--vscode-font-family)',
+         fontSize: 'var(--vscode-font-size)',
+         color: 'var(--vscode-foreground)',
+      }}>
+         <h3 style={{
+            marginTop: 0,
+            marginBottom: '16px',
+            fontSize: '16px',
+            fontWeight: '600',
+         }}>
+            Query Plan
+         </h3>
+
+         {/* Query Plan Visualization */}
+         {queryPlanData ? (
+            <QueryPlanVisualization
+               queryPlanData={queryPlanData as QueryPlanDiagramData}
+               height={500}
+            />
+         ) : (
+            <div style={{
+               padding: '20px',
+               background: 'var(--vscode-editor-background)',
+               border: '1px solid var(--vscode-panel-border)',
+               borderRadius: '4px',
+            }}>
+               No query plan data available
+            </div>
+         )}
+
+         {/* Show any messages */}
+         {data.diagramData?.queryExecutionMessages && data.diagramData.queryExecutionMessages.length > 0 && (
+            <div style={{ marginTop: '16px' }}>
+               <h4 style={{ fontSize: '14px', marginBottom: '8px' }}>Messages:</h4>
+               {data.diagramData.queryExecutionMessages.map((msg: any, i: number) => (
+                  <div key={i} style={{
+                     padding: '8px',
+                     marginBottom: '4px',
+                     background: 'var(--vscode-inputValidation-infoBackground)',
+                     border: '1px solid var(--vscode-inputValidation-infoBorder)',
+                     borderRadius: '4px',
+                     fontSize: '12px',
+                  }}>
+                     {msg.message || String(msg)}
+                  </div>
+               ))}
+            </div>
+         )}
+      </div>
+   );
+};
+
+// Store roots to reuse them instead of creating new ones
+const rootMap = new WeakMap<HTMLElement, any>();
+
 // Renderer activation function
 export const activate = (context: RendererContext) => {
+   console.log('TaxiQL Renderer activated');
    return {
       renderOutputItem(outputItem: OutputItem, element: HTMLElement) {
-         const root = createRoot(element);
-         root.render(<TaxiQLResults outputItem={outputItem} />);
+         const mimeType = outputItem.mime;
+         console.log('Rendering output item with MIME type:', mimeType);
+         console.log('Output data:', outputItem.json());
+
+         // Reuse existing root or create a new one
+         let root = rootMap.get(element);
+         if (!root) {
+            root = createRoot(element);
+            rootMap.set(element, root);
+         }
+
+         // Render different components based on MIME type
+         if (mimeType === 'application/vnd.taxi.queryplan+json') {
+            console.log('Rendering QueryPlanViewer');
+            root.render(<QueryPlanViewer outputItem={outputItem} />);
+         } else {
+            console.log('Rendering TaxiQLResults');
+            root.render(<TaxiQLResults outputItem={outputItem} />);
+         }
       },
    };
 };

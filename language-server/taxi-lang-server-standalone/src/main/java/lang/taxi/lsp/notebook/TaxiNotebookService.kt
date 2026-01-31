@@ -2,8 +2,10 @@ package lang.taxi.lsp.notebook
 
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.orbitalhq.cockpit.core.query.QueryInsightUtils
 import com.orbitalhq.playground.StubQueryMessage
 import com.orbitalhq.playground.StubQueryService
+import com.orbitalhq.schemas.taxi.TaxiSchema
 import com.orbitalhq.utils.Ids
 import lang.taxi.lsp.TaxiCompilerService
 import lang.taxi.utils.log
@@ -20,7 +22,25 @@ class TaxiNotebookService(
 ) : NotebookService {
 
    private val stubQueryService = StubQueryService()
-   private val jackson = jacksonObjectMapper().findAndRegisterModules()
+   private val insightUtils = QueryInsightUtils()
+
+   override fun generateQueryPlan(params: StubQueryRequest): CompletableFuture<QueryPlanResponse> {
+      return CompletableFuture.supplyAsync {
+         val taxiDocument = compilerService.lastSuccessfulCompilation()
+            ?.documentOrEmpty!!
+         val schema = TaxiSchema(taxiDocument, emptyList())
+         val parseResult = insightUtils.parseQuery(
+            query = params.query,
+            schema = schema,
+            generateNewQueryPlan = true,
+            arguments = params.parameters
+         ).block()
+
+         QueryPlanResponse(
+            parseResult!!.queryPlan
+         )
+      }
+   }
 
    override fun executeWithStubs(params: StubQueryRequest): CompletableFuture<StubQueryResponse> {
       log().info("Received executeWithStubs request for query: ${params.query.take(50)}...")
@@ -67,7 +87,11 @@ class TaxiNotebookService(
             )
 
             // Execute the query
-            val (publisher, contentType) = stubQueryService.submitQuery(stubQueryMessage, queryId, taxiDocument = taxiDocument)
+            val (publisher, contentType) = stubQueryService.submitQuery(
+               stubQueryMessage,
+               queryId,
+               taxiDocument = taxiDocument
+            )
 
             // Collect results
             val results = when (publisher) {

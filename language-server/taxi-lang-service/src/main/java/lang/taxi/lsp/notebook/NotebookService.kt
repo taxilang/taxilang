@@ -12,6 +12,9 @@ import java.util.concurrent.CompletableFuture
  */
 interface NotebookService {
 
+   @JsonRequest("taxiql/generateQueryPlan")
+   fun generateQueryPlan(params: StubQueryRequest): CompletableFuture<QueryPlanResponse>
+
    /**
     * Execute a TaxiQL query using stubbed service responses.
     * Endpoint: taxiql/executeWithStubs
@@ -28,6 +31,14 @@ interface NotebookService {
 }
 
 // Request/Response data classes
+
+
+data class QueryPlanRequest(
+   val query: String
+)
+data class QueryPlanResponse(
+   val diagramData: Any // Is actually QueryPlanDiagramData, but that's not maven linked here.
+)
 
 /**
  * Request to execute a query with stubs.

@@ -84,7 +84,8 @@
             "entrypoint": "./out/renderer/index.js",
             "mimeTypes": [
                "application/vnd.taxi.plan+json",
-               "application/vnd.taxi.results+json"
+               "application/vnd.taxi.results+json",
+               "application/vnd.taxi.queryplan+json"
             ]
          }
       ],
@@ -187,9 +188,13 @@
       "vsce:publish": "vsce publish"
    },
    "dependencies": {
+      "@heroicons/react": "^2.2.0",
+      "@tabler/icons-react": "^3.36.1",
       "@vscode/codicons": "^0.0.44",
+      "@xyflow/react": "^12.10.0",
       "ag-grid-community": "^35.0.1",
       "ag-grid-react": "^35.0.1",
+      "elkjs": "^0.9.3",
       "find-java-home": "^1.1.0",
       "glob": "^7.1.6",
       "react": "^19.2.4",
