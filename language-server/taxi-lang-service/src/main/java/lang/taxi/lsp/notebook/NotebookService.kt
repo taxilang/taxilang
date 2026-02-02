@@ -1,5 +1,7 @@
 package lang.taxi.lsp.notebook
 
+import lang.taxi.services.Operation
+import lang.taxi.services.ServiceMember
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
 import java.util.concurrent.CompletableFuture
 
@@ -99,12 +101,6 @@ data class ListOperationsRequest(
 )
 
 data class ListOperationsResponse(
-   val operations: List<Operation>
+   val operations: List<ServiceMember>
 )
 
-data class Operation(
-   val service: String,
-   val operation: String,
-   val returnType: String,
-   val metadata: Map<String, Any>? = null
-)

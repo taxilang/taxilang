@@ -138,41 +138,11 @@ class TaxiNotebookService(
 
       return CompletableFuture.supplyAsync {
          try {
-            // TODO: Implement actual operation listing from schema
-            // For now, return test operations to validate the plumbing
-
-            log().info("Listing operations from project root: ${params.projectRoot}")
+            val taxiDocument = compilerService.lastSuccessfulCompilation()
+               ?.documentOrEmpty!!
 
             ListOperationsResponse(
-               operations = listOf(
-                  Operation(
-                     service = "CustomerService",
-                     operation = "getCustomer",
-                     returnType = "Customer",
-                     metadata = mapOf(
-                        "httpMethod" to "GET",
-                        "path" to "/customers/{id}"
-                     )
-                  ),
-                  Operation(
-                     service = "OrderService",
-                     operation = "listOrders",
-                     returnType = "Order[]",
-                     metadata = mapOf(
-                        "httpMethod" to "GET",
-                        "path" to "/orders"
-                     )
-                  ),
-                  Operation(
-                     service = "ProductService",
-                     operation = "findProduct",
-                     returnType = "Product",
-                     metadata = mapOf(
-                        "httpMethod" to "GET",
-                        "path" to "/products/{id}"
-                     )
-                  )
-               )
+               operations = taxiDocument.services.flatMap { it.members }
             )
          } catch (e: Exception) {
             log().error("Error listing operations", e)

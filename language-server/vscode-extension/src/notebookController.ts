@@ -19,6 +19,7 @@ export class TaxiQLNotebookController {
    readonly supportedLanguages = ["taxi", "taxiql-stubs", "markdown"];
 
    private readonly controller: vscode.NotebookController;
+   private readonly outputChannel: vscode.OutputChannel;
    private executionOrder = 0;
    private languageClient: LanguageClient | null = null;
 
@@ -32,6 +33,9 @@ export class TaxiQLNotebookController {
       this.controller.supportedLanguages = this.supportedLanguages;
       this.controller.supportsExecutionOrder = true;
       this.controller.executeHandler = this.execute.bind(this);
+
+      // Create output channel for detailed error logging
+      this.outputChannel = vscode.window.createOutputChannel("TaxiQL Errors");
    }
 
    setLanguageClient(client: LanguageClient) {
@@ -164,24 +168,41 @@ export class TaxiQLNotebookController {
             request
          );
          return result;
-      } catch (error) {
-         // If the endpoint doesn't exist yet, return a stub response
-         console.warn(
-            "taxiql/executeWithStubs endpoint not available, returning stub",
-            error
-         );
-         return {
-            data: [
-               { id: 1, name: "Sample Row 1", value: 100 },
-               { id: 2, name: "Sample Row 2", value: 200 },
-            ],
-            contentType: "application/json",
-            metadata: {
-               rowCount: 2,
-               executionTime: "42ms",
-               status: "stub",
-            },
-         };
+      } catch (error: any) {
+         // Extract JSONRPC error details
+         const errorMessage = error?.message || String(error);
+         const errorData = error?.data; // This contains the server-side error details
+         const errorCode = error?.code;
+
+         // Log detailed error information to output channel
+         const timestamp = new Date().toISOString();
+         this.outputChannel.appendLine(`[${timestamp}] TaxiQL Execution Error`);
+         this.outputChannel.appendLine(`Query: ${query.substring(0, 100)}${query.length > 100 ? '...' : ''}`);
+         this.outputChannel.appendLine(`Message: ${errorMessage}`);
+         if (errorCode !== undefined) {
+            this.outputChannel.appendLine(`Code: ${errorCode}`);
+         }
+         if (errorData) {
+            this.outputChannel.appendLine(`Details: ${JSON.stringify(errorData, null, 2)}`);
+         }
+         this.outputChannel.appendLine(`Full error: ${JSON.stringify(error, null, 2)}`);
+         this.outputChannel.appendLine('---');
+
+         // Also log to console for debugging
+         console.error("Failed to execute TaxiQL query:", error);
+
+         // Show user-friendly error notification with option to view details
+         vscode.window.showErrorMessage(
+            `TaxiQL execution failed: ${errorMessage}`,
+            'Show Details'
+         ).then(selection => {
+            if (selection === 'Show Details') {
+               this.outputChannel.show();
+            }
+         });
+
+         // Re-throw to let the caller handle it properly
+         throw error;
       }
    }
 
@@ -264,6 +285,7 @@ export class TaxiQLNotebookController {
 
    dispose() {
       this.controller.dispose();
+      this.outputChannel.dispose();
    }
 }
 

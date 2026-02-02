@@ -70,6 +70,11 @@ class TaxiLanguageServer(
    }
 
    override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
+      // Debug logging to file
+      try {
+         java.io.File("/tmp/taxi-lsp-debug.log").appendText("TaxiLanguageServer.initialize() called!\n")
+      } catch (e: Exception) { /* ignore */ }
+
       return Mono.defer {
          // Initialize the InitializeResult for this LS.
          val initializeResult = InitializeResult(ServerCapabilities())
@@ -136,11 +141,13 @@ class TaxiLanguageServer(
          .forEach { it.connect(client) }
 
       configureLoggers(client)
-      client.logMessage(
-         MessageParams(
-            MessageType.Info, "Taxi Language Server Connected"
-         )
-      )
+      // Note: Cannot send messages before initialize handshake completes
+      // This was breaking the LSP protocol
+      // client.logMessage(
+      //    MessageParams(
+      //       MessageType.Info, "Taxi Language Server Connected"
+      //    )
+      // )
    }
 
    private fun configureLoggers(client: LanguageClient) {

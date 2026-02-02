@@ -93,7 +93,7 @@ async function startPlugin(
          // saving us another maven build cycle.
          const projectJars = [
             "../../../../taxi-lang/core-types",
-            "../../../../taxi-lang/compiler",
+            // "../../../../taxi-lang/compiler",
             "../../../../vyne/vyne-core-types",
             "../../../../vyne/taxi-playground-core",
             "../../taxi-lang-service",
@@ -132,6 +132,7 @@ async function startPlugin(
               `-agentlib:jdwp=transport=dt_socket,server=y,suspend=${
                  waitForDebuggerToAttach ? "y" : "n"
               },address=5005,quiet=y`,
+               `--add-opens=java.base/java.time=ALL-UNNAMED`  // Add this line
            ]
          : [];
       const args: string[] = debugSettings.concat(["-cp", classPath]);
@@ -210,7 +211,14 @@ async function startPlugin(
       );
 
       // Start the client and register for notifications
-      await languageClient.start();
+      console.log("Starting language client...");
+      try {
+         await languageClient.start();
+         console.log("Language client started successfully!");
+      } catch (error) {
+         console.error("Failed to start language client:", error);
+         throw error;
+      }
 
       // Connect the notebook components to the language client immediately after start
       if (notebookComponents) {

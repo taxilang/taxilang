@@ -520,18 +520,7 @@ const QueryPlanViewer: React.FC<{ outputItem: OutputItem }> = ({ outputItem }) =
    const data = outputItem.json();
 
    // The response structure is { diagramData: { diagramData: {...}, steps: [...], ... } }
-   let queryPlanData = data.diagramData?.diagramData;
-
-   // Validate and fix node data - ensure kind is a string
-   if (queryPlanData?.nodes) {
-      queryPlanData = {
-         ...queryPlanData,
-         nodes: queryPlanData.nodes.map((node: any) => ({
-            ...node,
-            kind: String(node.kind || 'MODEL'), // Ensure kind is a string
-         })),
-      };
-   }
+   const queryPlanData = data.diagramData?.diagramData;
 
    console.log('QueryPlanViewer data:', data);
    console.log('Extracted queryPlanData:', queryPlanData);

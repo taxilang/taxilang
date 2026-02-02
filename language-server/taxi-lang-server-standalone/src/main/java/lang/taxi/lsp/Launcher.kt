@@ -79,6 +79,9 @@ object Launcher {
 //        val launcher = LSPLauncher.createServerLauncher(compositeServer, input, outputStream)
 
 
+       // Add message tracer for debugging
+       val traceWriter = java.io.PrintWriter(java.io.FileWriter("/tmp/taxi-lsp-jsonrpc.log", true))
+
        val launcher = LSPLauncher.Builder<LanguageClient>()
           .setLocalService(compositeServer)
           .setRemoteInterface(LanguageClient::class.java)
@@ -87,6 +90,7 @@ object Launcher {
           .configureGson { builder ->
              GsonCustomizer.configureGson(builder)
           }
+          .traceMessages(traceWriter)
           .create()
 
         // Get the client that request to launch the LS.
@@ -95,8 +99,18 @@ object Launcher {
         // Set the client to language server (through the composite wrapper)
         compositeServer.connect(client)
 
+        // Debug logging to file (won't interfere with stdio)
+        try {
+            java.io.File("/tmp/taxi-lsp-debug.log").appendText("Launcher: About to start listening...\n")
+        } catch (e: Exception) { /* ignore */ }
+
         // Start the listener for JsonRPC
         val startListening: Future<*> = launcher.startListening()
+
+        // Debug logging
+        try {
+            java.io.File("/tmp/taxi-lsp-debug.log").appendText("Launcher: startListening() returned, now waiting...\n")
+        } catch (e: Exception) { /* ignore */ }
 
         // Get the computed result from LS.
         startListening.get()
