@@ -25,7 +25,8 @@ export class StubEditorPanel {
       panel: vscode.WebviewPanel,
       extensionUri: vscode.Uri,
       private languageClient: LanguageClient | null,
-      private existingStubs: OperationStub[]
+      private existingStubs: OperationStub[],
+      private onStubsUpdate?: (stubs: OperationStub[]) => Promise<void>
    ) {
       this._panel = panel;
       this._extensionUri = extensionUri;
@@ -50,7 +51,8 @@ export class StubEditorPanel {
    public static async show(
       extensionUri: vscode.Uri,
       languageClient: LanguageClient | null,
-      existingStubs: OperationStub[] = []
+      existingStubs: OperationStub[] = [],
+      onStubsUpdate?: (stubs: OperationStub[]) => Promise<void>
    ): Promise<OperationStub[] | null> {
       const column = vscode.window.activeTextEditor
          ? vscode.window.activeTextEditor.viewColumn
@@ -76,7 +78,7 @@ export class StubEditorPanel {
          }
       );
 
-      const stubEditor = new StubEditorPanel(panel, extensionUri, languageClient, existingStubs);
+      const stubEditor = new StubEditorPanel(panel, extensionUri, languageClient, existingStubs, onStubsUpdate);
       StubEditorPanel.currentPanel = stubEditor;
 
       return new Promise((resolve) => {
@@ -92,17 +94,23 @@ export class StubEditorPanel {
             await this._loadOperations();
             break;
 
-         case "save":
-            // User clicked save
-            const stubs: OperationStub[] = message.stubs;
+         case "updateStubs":
+            // Auto-save stubs as they're edited
+            if (this.onStubsUpdate) {
+               await this.onStubsUpdate(message.stubs);
+            }
+            break;
+
+         case "close":
+            // User clicked close
             if (this._resolveStubs) {
-               this._resolveStubs(stubs);
+               this._resolveStubs(message.stubs || []);
             }
             this.dispose();
             break;
 
          case "cancel":
-            // User clicked cancel
+            // User clicked cancel (kept for backwards compatibility)
             if (this._resolveStubs) {
                this._resolveStubs(null);
             }

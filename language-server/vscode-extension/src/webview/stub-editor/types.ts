@@ -48,7 +48,8 @@ export interface Parameter {
  */
 export type WebviewMessage =
    | { type: 'getOperations' }
-   | { type: 'save'; stubs: OperationStub[] }
+   | { type: 'updateStubs'; stubs: OperationStub[] }
+   | { type: 'close'; stubs: OperationStub[] }
    | { type: 'cancel' }
    | { type: 'generatePlaceholder'; operationQualifiedName: string };
 

@@ -112,8 +112,12 @@ export class TaxiQLNotebookController {
       const query = cell.document.getText();
       const metadata = cell.metadata || {};
 
+      console.log('[NotebookController] Cell metadata:', JSON.stringify(metadata, null, 2));
+
       // Get stubs from cell metadata (stored as array of OperationStub)
       const stubs: OperationStub[] = metadata.taxi?.stubs || [];
+
+      console.log(`[NotebookController] Found ${stubs.length} stubs in cell metadata:`, JSON.stringify(stubs, null, 2));
 
       // Resolve project context
       const projectContext = await this.resolveProjectContext(cell.notebook.uri);
@@ -161,6 +165,8 @@ export class TaxiQLNotebookController {
          stubs,
          parameters: {},
       };
+
+      console.log('[NotebookController] Sending request to backend:', JSON.stringify(request, null, 2));
 
       try {
          const result = await this.languageClient.sendRequest<StubQueryResponse>(

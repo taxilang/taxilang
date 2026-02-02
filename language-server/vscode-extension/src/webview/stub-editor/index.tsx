@@ -46,14 +46,12 @@ const App: React.FC = () => {
 
    const handleStubsChange = (updatedStubs: OperationStub[]) => {
       setStubs(updatedStubs);
+      // Auto-save stubs as they're edited
+      vscode.postMessage({ type: 'updateStubs', stubs: updatedStubs } as WebviewMessage);
    };
 
-   const handleSave = () => {
-      vscode.postMessage({ type: 'save', stubs } as WebviewMessage);
-   };
-
-   const handleCancel = () => {
-      vscode.postMessage({ type: 'cancel' } as WebviewMessage);
+   const handleClose = () => {
+      vscode.postMessage({ type: 'close', stubs } as WebviewMessage);
    };
 
    if (loading) {
@@ -100,22 +98,7 @@ const App: React.FC = () => {
             paddingTop: '16px',
          }}>
             <button
-               onClick={handleCancel}
-               style={{
-                  padding: '6px 14px',
-                  background: 'transparent',
-                  color: 'var(--vscode-button-secondaryForeground)',
-                  border: '1px solid var(--vscode-button-border)',
-                  borderRadius: '2px',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  fontSize: 'inherit',
-               }}
-            >
-               Cancel
-            </button>
-            <button
-               onClick={handleSave}
+               onClick={handleClose}
                style={{
                   padding: '6px 14px',
                   background: 'var(--vscode-button-background)',
@@ -127,7 +110,7 @@ const App: React.FC = () => {
                   fontSize: 'inherit',
                }}
             >
-               Save
+               Close
             </button>
          </div>
       </div>

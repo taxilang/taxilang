@@ -30,23 +30,23 @@ export class StubManager {
       // Get existing stubs (if any)
       const existingStubs = targetCell.metadata?.taxi?.stubs || [];
 
-      // Open the stub editor webview
+      // Open the stub editor webview with auto-save callback
       const stubs = await StubEditorPanel.show(
          this.extensionUri,
          this.languageClient,
-         existingStubs
+         existingStubs,
+         async (updatedStubs) => {
+            // Auto-save stubs as they're edited
+            await this.updateCellMetadata(targetCell, updatedStubs);
+         }
       );
 
-      if (!stubs) {
-         return; // User cancelled
+      // Stubs are already saved via the callback, just show confirmation
+      if (stubs !== null) {
+         vscode.window.showInformationMessage(
+            `${stubs.length} stub(s) configured`
+         );
       }
-
-      // Update cell metadata
-      await this.updateCellMetadata(targetCell, stubs);
-
-      vscode.window.showInformationMessage(
-         `${stubs.length} stub(s) attached to cell`
-      );
    }
 
    /**
@@ -62,23 +62,23 @@ export class StubManager {
       // Get existing stubs (if any)
       const existingStubs = targetCell.metadata?.taxi?.stubs || [];
 
-      // Open the stub editor webview
+      // Open the stub editor webview with auto-save callback
       const stubs = await StubEditorPanel.show(
          this.extensionUri,
          this.languageClient,
-         existingStubs
+         existingStubs,
+         async (updatedStubs) => {
+            // Auto-save stubs as they're edited
+            await this.updateCellMetadata(targetCell, updatedStubs);
+         }
       );
 
-      if (!stubs) {
-         return; // User cancelled
+      // Stubs are already saved via the callback, just show confirmation
+      if (stubs !== null) {
+         vscode.window.showInformationMessage(
+            `${stubs.length} stub(s) configured`
+         );
       }
-
-      // Update cell metadata
-      await this.updateCellMetadata(targetCell, stubs);
-
-      vscode.window.showInformationMessage(
-         `Stubs changed (${stubs.length} stub(s))`
-      );
    }
 
    /**
@@ -104,6 +104,8 @@ export class StubManager {
       cell: vscode.NotebookCell,
       stubs: OperationStub[]
    ): Promise<void> {
+      console.log(`[StubManager] Updating cell metadata with ${stubs.length} stubs:`, JSON.stringify(stubs, null, 2));
+
       const edit = new vscode.WorkspaceEdit();
       const notebook = cell.notebook;
       const index = cell.index;
@@ -129,6 +131,8 @@ export class StubManager {
          taxi: newTaxiMetadata,
       };
 
+      console.log('[StubManager] New metadata:', JSON.stringify(newMetadata, null, 2));
+
       // Apply the edit
       const notebookEdit = vscode.NotebookEdit.updateCellMetadata(
          index,
@@ -137,6 +141,8 @@ export class StubManager {
 
       edit.set(notebook.uri, [notebookEdit]);
       await vscode.workspace.applyEdit(edit);
+
+      console.log('[StubManager] Metadata edit applied successfully');
    }
 
    /**

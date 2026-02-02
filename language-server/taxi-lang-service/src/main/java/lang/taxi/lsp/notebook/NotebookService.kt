@@ -69,7 +69,7 @@ data class OperationStub(
    val operationName: String,
    val response: String,
    val echoInput: Boolean = false,
-   val conditionalResponses: List<ResponseCondition> = emptyList()
+   val conditionalResponses: List<ResponseCondition>? = emptyList()
 )
 
 data class ResponseCondition(

@@ -68,7 +68,7 @@ class TaxiNotebookService(
                   operationName = stub.operationName,
                   response = stub.response,
                   echoInput = stub.echoInput,
-                  conditionalResponses = stub.conditionalResponses.map { condition ->
+                  conditionalResponses = (stub.conditionalResponses.orEmpty()).map { condition ->
                      com.orbitalhq.playground.ResponseCondition(
                         inputs = condition.inputs.map { param ->
                            com.orbitalhq.playground.ParameterValue(param.name, param.value)
