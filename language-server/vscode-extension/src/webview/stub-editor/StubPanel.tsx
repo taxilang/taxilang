@@ -16,9 +16,10 @@ interface StubPanelProps {
    stubs: OperationStub[];
    operations: ServiceMember[];
    onStubsChange: (stubs: OperationStub[]) => void;
+   vscode: any; // VS Code API instance
 }
 
-export const StubPanel: React.FC<StubPanelProps> = ({ stubs, operations, onStubsChange }) => {
+export const StubPanel: React.FC<StubPanelProps> = ({ stubs, operations, onStubsChange, vscode }) => {
    const [editingStub, setEditingStub] = useState<{ stub: OperationStub; index: number } | null>(null);
 
    const handleAddStub = () => {
@@ -79,7 +80,7 @@ export const StubPanel: React.FC<StubPanelProps> = ({ stubs, operations, onStubs
 
    const getOperationDisplayName = (operationName: string): string => {
       const operation = operations.find(op => op.qualifiedName === operationName);
-      return operation ? `${operation.serviceName}.${operation.name}` : operationName;
+      return operation ? operation.displayName : operationName;
    };
 
    return (
@@ -236,6 +237,7 @@ export const StubPanel: React.FC<StubPanelProps> = ({ stubs, operations, onStubs
                operation={operations.find(op => op.qualifiedName === editingStub.stub.operationName)!}
                onSave={handleStubUpdated}
                onCancel={handleStubEditCancelled}
+               vscode={vscode}
             />
          )}
       </>

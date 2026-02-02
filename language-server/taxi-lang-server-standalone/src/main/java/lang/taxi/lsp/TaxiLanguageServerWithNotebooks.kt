@@ -59,4 +59,8 @@ class TaxiLanguageServerWithNotebooks(
    override fun listOperations(params: ListOperationsRequest): CompletableFuture<ListOperationsResponse> {
       return notebookService.listOperations(params)
    }
+
+   override fun generatePlaceholderStub(params: GeneratePlaceholderRequest): CompletableFuture<GeneratePlaceholderResponse> {
+      return notebookService.generatePlaceholderStub(params)
+   }
 }

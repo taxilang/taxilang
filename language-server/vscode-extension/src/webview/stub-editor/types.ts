@@ -26,11 +26,11 @@ export interface ParameterValue {
 
 export interface ServiceMember {
    qualifiedName: string;
-   name: string;
    serviceName: string;
-   returnType: TypeReference;
+   name: string;
    parameters: Parameter[];
-   type: 'OPERATION' | 'STREAM' | 'TABLE';
+   returnType: TypeReference;
+   displayName: string;
 }
 
 export interface TypeReference {
@@ -49,8 +49,10 @@ export interface Parameter {
 export type WebviewMessage =
    | { type: 'getOperations' }
    | { type: 'save'; stubs: OperationStub[] }
-   | { type: 'cancel' };
+   | { type: 'cancel' }
+   | { type: 'generatePlaceholder'; operationQualifiedName: string };
 
 export type ExtensionMessage =
    | { type: 'init'; stubs: OperationStub[]; operations: ServiceMember[] }
-   | { type: 'operationsLoaded'; operations: ServiceMember[] };
+   | { type: 'operationsLoaded'; operations: ServiceMember[] }
+   | { type: 'placeholderGenerated'; jsonStub: string };

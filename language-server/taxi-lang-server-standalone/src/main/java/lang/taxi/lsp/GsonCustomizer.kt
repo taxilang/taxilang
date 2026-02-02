@@ -1,12 +1,20 @@
 package lang.taxi.lsp
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonElement
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import com.orbitalhq.query.history.DiagramNodeKind
 import com.orbitalhq.query.history.HandleKind
+import com.orbitalhq.schemas.RemoteOperation
+import com.orbitalhq.schemas.SchemaMember
+import lang.taxi.lsp.notebook.ListOperationsResponse
+import java.lang.reflect.Type
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
@@ -18,8 +26,6 @@ object GsonCustomizer {
          builder.registerTypeAdapter(it.java, EnumTypeAdapter(it.java))
       }
 
-      // Use registerTypeHierarchyAdapter for better type matching
-      // This ensures the adapter is used even when the type is wrapped or in collections
       builder.registerTypeHierarchyAdapter(ZonedDateTime::class.java, ZonedDateTypeAdapter)
       builder.registerTypeHierarchyAdapter(LocalDateTime::class.java, LocalDateTimeTypeAdapter)
       builder.registerTypeHierarchyAdapter(Instant::class.java, InstantAdapter)
@@ -28,7 +34,6 @@ object GsonCustomizer {
       builder.disableHtmlEscaping()
    }
 }
-
 
 /**
  * Type adapter for enums that uses name() for serialization and valueOf() for deserialization

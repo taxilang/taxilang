@@ -3,9 +3,12 @@ import { LanguageClient } from "vscode-languageclient/node";
 import {
    ListOperationsRequest,
    ListOperationsResponse,
-   Operation,
+   ServiceMemberDto,
    OperationStub,
+   GeneratePlaceholderRequest,
+   GeneratePlaceholderResponse,
    TAXIQL_LIST_OPERATIONS,
+   TAXIQL_GENERATE_PLACEHOLDER_STUB,
 } from "./notebookProtocol";
 
 /**
@@ -84,7 +87,8 @@ export class StubEditorPanel {
    private async _handleMessage(message: any) {
       switch (message.type) {
          case "ready":
-            // Webview is ready, send initial data
+         case "getOperations":
+            // Webview is ready or requesting operations, send initial data
             await this._loadOperations();
             break;
 
@@ -105,6 +109,11 @@ export class StubEditorPanel {
             this.dispose();
             break;
 
+         case "generatePlaceholder":
+            // Generate placeholder stub for operation
+            await this._generatePlaceholder(message.operationQualifiedName);
+            break;
+
          case "error":
             vscode.window.showErrorMessage(`Stub Editor Error: ${message.message}`);
             break;
@@ -116,9 +125,9 @@ export class StubEditorPanel {
          if (!this.languageClient) {
             console.warn("Language client not available, using empty operations list");
             this._panel.webview.postMessage({
-               type: "operations",
+               type: "init",
                operations: [],
-               existingStubs: this.existingStubs,
+               stubs: this.existingStubs,
             });
             return;
          }
@@ -135,18 +144,52 @@ export class StubEditorPanel {
          );
 
          this._panel.webview.postMessage({
-            type: "operations",
+            type: "init",
             operations: response.operations,
-            existingStubs: this.existingStubs,
+            stubs: this.existingStubs,
          });
       } catch (error) {
          console.warn("Failed to load operations", error);
          // Send empty list if error
          this._panel.webview.postMessage({
-            type: "operations",
+            type: "init",
             operations: [],
-            existingStubs: this.existingStubs,
+            stubs: this.existingStubs,
          });
+      }
+   }
+
+   private async _generatePlaceholder(operationQualifiedName: string) {
+      try {
+         if (!this.languageClient) {
+            console.warn("Language client not available, cannot generate placeholder");
+            return;
+         }
+
+         // Get workspace folder as project root
+         const workspaceFolders = vscode.workspace.workspaceFolders;
+         const projectRoot = workspaceFolders?.[0]?.uri.fsPath || "";
+
+         const request: GeneratePlaceholderRequest = {
+            operationQualifiedName,
+            projectRoot,
+         };
+
+         const response = await this.languageClient.sendRequest<GeneratePlaceholderResponse>(
+            TAXIQL_GENERATE_PLACEHOLDER_STUB,
+            request
+         );
+
+         // Send the generated placeholder back to the webview
+         this._panel.webview.postMessage({
+            type: "placeholderGenerated",
+            jsonStub: response.jsonStub,
+         });
+      } catch (error) {
+         console.error("Failed to generate placeholder", error);
+         vscode.window.showErrorMessage(
+            `Failed to generate placeholder: ${error instanceof Error ? error.message : String(error)}`
+         );
       }
    }
 

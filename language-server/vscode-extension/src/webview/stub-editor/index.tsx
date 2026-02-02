@@ -88,6 +88,7 @@ const App: React.FC = () => {
                stubs={stubs}
                operations={operations}
                onStubsChange={handleStubsChange}
+               vscode={vscode}
             />
          </div>
 

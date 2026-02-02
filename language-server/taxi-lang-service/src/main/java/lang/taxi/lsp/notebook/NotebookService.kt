@@ -30,6 +30,13 @@ interface NotebookService {
     */
    @JsonRequest("taxiql/listOperations")
    fun listOperations(params: ListOperationsRequest): CompletableFuture<ListOperationsResponse>
+
+   /**
+    * Generate a placeholder stub response for an operation.
+    * Endpoint: taxiql/generatePlaceholderStub
+    */
+   @JsonRequest("taxiql/generatePlaceholderStub")
+   fun generatePlaceholderStub(params: GeneratePlaceholderRequest): CompletableFuture<GeneratePlaceholderResponse>
 }
 
 // Request/Response data classes
@@ -101,6 +108,38 @@ data class ListOperationsRequest(
 )
 
 data class ListOperationsResponse(
-   val operations: List<ServiceMember>
+   val operations: List<ServiceMemberDto>
+)
+
+/**
+ * Simple DTO for service members (operations, queries, etc.)
+ * to avoid GSON serialization issues with complex Taxi/Orbital types.
+ */
+data class ServiceMemberDto(
+   val qualifiedName: String,
+   val serviceName: String,
+   val name: String,
+   val parameters: List<ParameterDto>,
+   val returnType: TypeReferenceDto,
+   val displayName: String
+)
+
+data class ParameterDto(
+   val name: String,
+   val type: TypeReferenceDto
+)
+
+data class TypeReferenceDto(
+   val qualifiedName: String,
+   val typeName: String
+)
+
+data class GeneratePlaceholderRequest(
+   val operationQualifiedName: String,
+   val projectRoot: String
+)
+
+data class GeneratePlaceholderResponse(
+   val jsonStub: String
 )
 

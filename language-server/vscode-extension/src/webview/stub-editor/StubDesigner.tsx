@@ -17,17 +17,19 @@ interface StubDesignerProps {
    operation: ServiceMember;
    onSave: (stub: OperationStub) => void;
    onCancel: () => void;
+   vscode: any; // VS Code API instance from parent
 }
 
 type ViewMode = 'simple' | 'advanced';
 type AdvancedSubMode = 'form' | 'json';
 
-export const StubDesigner: React.FC<StubDesignerProps> = ({ stub, operation, onSave, onCancel }) => {
+export const StubDesigner: React.FC<StubDesignerProps> = ({ stub, operation, onSave, onCancel, vscode }) => {
    // Deep copy the stub to allow cancellation
    const [editedStub, setEditedStub] = useState<OperationStub>(() => JSON.parse(JSON.stringify(stub)));
    const [viewMode, setViewMode] = useState<ViewMode>('simple');
    const [advancedSubMode, setAdvancedSubMode] = useState<AdvancedSubMode>('form');
    const [expandedConditions, setExpandedConditions] = useState<Set<number>>(new Set());
+   const [generatingPlaceholder, setGeneratingPlaceholder] = useState(false);
 
    // Check if echo input is available
    const canEchoInput = operation.parameters.length === 1 &&
@@ -36,8 +38,34 @@ export const StubDesigner: React.FC<StubDesignerProps> = ({ stub, operation, onS
    // Check if advanced mode is available
    const canUseAdvanced = operation.parameters.length > 0;
 
+   // Listen for messages from the extension
+   useEffect(() => {
+      const handleMessage = (event: MessageEvent) => {
+         const message = event.data;
+
+         if (message.type === 'placeholderGenerated') {
+            setEditedStub({
+               ...editedStub,
+               response: message.jsonStub,
+            });
+            setGeneratingPlaceholder(false);
+         }
+      };
+
+      window.addEventListener('message', handleMessage);
+      return () => window.removeEventListener('message', handleMessage);
+   }, [editedStub]);
+
    const handleSave = () => {
       onSave(editedStub);
+   };
+
+   const handleGeneratePlaceholder = () => {
+      setGeneratingPlaceholder(true);
+      vscode.postMessage({
+         type: 'generatePlaceholder',
+         operationQualifiedName: operation.qualifiedName,
+      });
    };
 
    const handleToggleEchoInput = () => {
@@ -293,9 +321,28 @@ export const StubDesigner: React.FC<StubDesignerProps> = ({ stub, operation, onS
                         </div>
                      ) : (
                         <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                           <label style={{ marginBottom: '8px', fontSize: '13px', fontWeight: '600' }}>
-                              Response Body (JSON):
-                           </label>
+                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                              <label style={{ fontSize: '13px', fontWeight: '600' }}>
+                                 Response Body (JSON):
+                              </label>
+                              <button
+                                 onClick={handleGeneratePlaceholder}
+                                 disabled={generatingPlaceholder}
+                                 style={{
+                                    padding: '4px 10px',
+                                    background: 'var(--vscode-button-secondaryBackground)',
+                                    color: 'var(--vscode-button-secondaryForeground)',
+                                    border: '1px solid var(--vscode-button-border)',
+                                    borderRadius: '2px',
+                                    cursor: generatingPlaceholder ? 'not-allowed' : 'pointer',
+                                    fontSize: '12px',
+                                    opacity: generatingPlaceholder ? 0.5 : 1,
+                                 }}
+                                 title="Generate a placeholder stub based on the return type"
+                              >
+                                 {generatingPlaceholder ? 'Generating...' : 'Generate Placeholder'}
+                              </button>
+                           </div>
                            <textarea
                               value={editedStub.response}
                               onChange={(e) => handleSimpleResponseChange(e.target.value)}

@@ -3,9 +3,14 @@ package lang.taxi.lsp.notebook
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.orbitalhq.cockpit.core.query.QueryInsightUtils
+import com.orbitalhq.models.json.Jackson
 import com.orbitalhq.playground.StubQueryMessage
 import com.orbitalhq.playground.StubQueryService
+import com.orbitalhq.schemas.OperationNames
+import com.orbitalhq.schemas.fqn
 import com.orbitalhq.schemas.taxi.TaxiSchema
+import com.orbitalhq.stubbing.MockTypedInstanceBuilder
+import com.orbitalhq.stubbing.StubService
 import com.orbitalhq.utils.Ids
 import lang.taxi.lsp.TaxiCompilerService
 import lang.taxi.utils.log
@@ -141,11 +146,77 @@ class TaxiNotebookService(
             val taxiDocument = compilerService.lastSuccessfulCompilation()
                ?.documentOrEmpty!!
 
+            val schema = TaxiSchema(taxiDocument, emptyList())
+            val members = schema.remoteOperations
+
             ListOperationsResponse(
-               operations = taxiDocument.services.flatMap { it.members }
+               operations = taxiDocument.services.flatMap { service ->
+                  service.members.map { member ->
+                     toServiceMemberDto(member, service.qualifiedName)
+                  }
+               }
             )
          } catch (e: Exception) {
             log().error("Error listing operations", e)
+            throw e
+         }
+      }
+   }
+
+   /**
+    * Map a Taxi ServiceMember to a simple DTO for JSONRPC serialization.
+    * Handles all subtypes: Operation, Query, etc.
+    */
+   private fun toServiceMemberDto(member: lang.taxi.services.ServiceMember, serviceQualifiedName: String): ServiceMemberDto {
+      val qualifiedName = member.qualifiedName
+      // Extract the name from the qualified name (after the ::)
+      val name = qualifiedName.split("::").last()
+
+      // Extract parameters if available (Operations and Queries have them)
+      val parameters = when (member) {
+         is lang.taxi.services.Operation -> member.parameters.map { param ->
+            ParameterDto(
+               name = param.name,
+               type = TypeReferenceDto(
+                  qualifiedName = param.type.qualifiedName,
+                  typeName = param.type.toQualifiedName().typeName
+               )
+            )
+         }
+         else -> emptyList()
+      }
+
+      // Get return type
+      val returnType = TypeReferenceDto(
+         qualifiedName = member.returnType.qualifiedName,
+         typeName = member.returnType.toQualifiedName().typeName
+      )
+
+      return ServiceMemberDto(
+         qualifiedName = OperationNames.qualifiedName(serviceQualifiedName,member.name).fullyQualifiedName,
+         serviceName = serviceQualifiedName,
+         name = name,
+         parameters = parameters,
+         returnType = returnType,
+         displayName = OperationNames.displayName(serviceQualifiedName, member.qualifiedName)
+      )
+   }
+
+   override fun generatePlaceholderStub(params: GeneratePlaceholderRequest): CompletableFuture<GeneratePlaceholderResponse> {
+      log().info("Received generatePlaceholderStub request for operation: ${params.operationQualifiedName}")
+
+      return CompletableFuture.supplyAsync {
+         try {
+            val schema = compilerService.lastSuccessfulCompilation()?.let { TaxiSchema(it.documentOrEmpty, emptyList()) }
+               ?: TaxiSchema.empty()
+            val operationQualifiedName = params.operationQualifiedName.fqn()
+            val (service,operation) = schema.remoteOperation(operationQualifiedName)
+            val mockInstance = MockTypedInstanceBuilder.build(operation.returnType, schema)
+            val rawValue = mockInstance.toRawObject()
+            val json = Jackson.defaultObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rawValue)
+            GeneratePlaceholderResponse(jsonStub = json)
+         } catch (e: Exception) {
+            log().error("Error generating placeholder stub", e)
             throw e
          }
       }

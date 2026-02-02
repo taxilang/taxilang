@@ -111,35 +111,47 @@ export interface ListOperationsRequest {
  */
 export interface ListOperationsResponse {
    /** List of operations available in the schema */
-   operations: Operation[];
+   operations: ServiceMemberDto[];
 }
 
-export interface Operation {
-   /** Service name */
-   service: string;
+/**
+ * DTO for service members (operations, queries, etc.)
+ * Matches ServiceMemberDto from the JVM
+ */
+export interface ServiceMemberDto {
+   /** Fully qualified name (for requests) */
+   qualifiedName: string;
 
-   /** Operation name */
-   operation: string;
+   /** Service qualified name */
+   serviceName: string;
 
-   /** Return type of the operation */
-   returnType: string;
+   /** Member name (operation name, query name, etc.) */
+   name: string;
 
-   /** Optional metadata about the operation */
-   metadata?: {
-      /** HTTP method (if applicable) */
-      httpMethod?: string;
+   /** Operation parameters */
+   parameters: ParameterDto[];
 
-      /** URL path (if applicable) */
-      path?: string;
+   /** Return type */
+   returnType: TypeReferenceDto;
 
-      /** Parameters */
-      parameters?: Array<{
-         name: string;
-         type: string;
-      }>;
+   /** Display name for UI */
+   displayName: string;
+}
 
-      [key: string]: any;
-   };
+export interface ParameterDto {
+   /** Parameter name */
+   name: string;
+
+   /** Parameter type */
+   type: TypeReferenceDto;
+}
+
+export interface TypeReferenceDto {
+   /** Fully qualified type name */
+   qualifiedName: string;
+
+   /** Simple type name */
+   typeName: string;
 }
 
 /**
@@ -155,8 +167,28 @@ export interface QueryPlanResponse {
 }
 
 /**
+ * Request to generate a placeholder stub for an operation
+ */
+export interface GeneratePlaceholderRequest {
+   /** Fully qualified operation name */
+   operationQualifiedName: string;
+
+   /** Project root directory */
+   projectRoot: string;
+}
+
+/**
+ * Response containing generated placeholder JSON
+ */
+export interface GeneratePlaceholderResponse {
+   /** Generated JSON stub */
+   jsonStub: string;
+}
+
+/**
  * LSP Custom Request Methods
  */
 export const TAXIQL_EXECUTE_WITH_STUBS = "taxiql/executeWithStubs";
 export const TAXIQL_LIST_OPERATIONS = "taxiql/listOperations";
 export const TAXIQL_GENERATE_QUERY_PLAN = "taxiql/generateQueryPlan";
+export const TAXIQL_GENERATE_PLACEHOLDER_STUB = "taxiql/generatePlaceholderStub";
